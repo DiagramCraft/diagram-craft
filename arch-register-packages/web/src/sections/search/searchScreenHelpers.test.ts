@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { getFileContextLabel, getFileFolder, snippetAround } from './searchScreenHelpers';
-import type { ProjectFileSearchResult } from '@arch-register/api-types/searchContract';
+import {
+  buildSearchGroups,
+  findSearchPreview,
+  getFileContextLabel,
+  getFileFolder,
+  getSearchCategoryCounts,
+  snippetAround
+} from './searchScreenHelpers';
+import type { ProjectFileSearchResult, SearchResponse } from '@arch-register/api-types/searchContract';
 
 describe('snippetAround', () => {
   it('returns the full text untruncated when short and query empty', () => {
@@ -52,5 +59,42 @@ describe('getFileContextLabel', () => {
 
   it('falls back to Workspace for workspace-scoped files', () => {
     expect(getFileContextLabel(base)).toBe('Workspace');
+  });
+});
+
+describe('search result transformations', () => {
+  const results = {
+    query: 'payments',
+    entities: [{ entityId: 'entity-1', publicId: 'APP-1' }],
+    projects: [{ id: 'project-1' }],
+    files: [{ fileId: 'file-1' }],
+    schemas: [{ schemaId: 'schema-1' }]
+  } as unknown as SearchResponse;
+
+  it('builds filtered groups in the display order', () => {
+    expect(buildSearchGroups(results, 'all').map(group => group.id)).toEqual([
+      'entities',
+      'projects',
+      'files',
+      'schemas'
+    ]);
+    expect(buildSearchGroups(results, 'files')).toEqual([
+      { id: 'files', label: 'Diagrams', rows: [{ kind: 'file', id: 'file-1', data: results.files[0] }] }
+    ]);
+  });
+
+  it('counts categories and resolves selected previews', () => {
+    expect(getSearchCategoryCounts(results)).toEqual({
+      all: 4,
+      entities: 1,
+      projects: 1,
+      files: 1,
+      schemas: 1
+    });
+    expect(findSearchPreview({ kind: 'project', id: 'project-1' }, results)).toEqual({
+      type: 'project',
+      data: results.projects[0]
+    });
+    expect(findSearchPreview(null, results)).toBeNull();
   });
 });

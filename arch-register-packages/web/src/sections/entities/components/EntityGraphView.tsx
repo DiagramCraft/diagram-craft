@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { DependencyGraph } from '../../../components/DependencyGraph';
 import type {
   LayoutAlgorithm,
-  DependencyGraphEdge,
   DependencyGraphNode,
   LayoutOptions
 } from '../../../components/DependencyGraph';
@@ -12,7 +11,6 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { getRelationDisplayLabel } from '../../../lib/entityRelations';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { TbEyeOff, TbFileExport, TbPlus, TbVectorTriangle } from 'react-icons/tb';
@@ -22,13 +20,11 @@ import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
 import { createDiagramFromGraph } from '../../../lib/diagramFromGraph';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
-
-type EntityNodeData = {
-  entityId: string;
-  entityName: string;
-  entitySchemaId: string;
-  isRoot: boolean;
-};
+import {
+  buildEntityGraphData,
+  collectEntityGraphIds,
+  type EntityNodeData
+} from './entityGraphState';
 
 type Props = {
   workspaceId: string;
@@ -77,28 +73,13 @@ export const EntityGraphView = ({
 
   // Reactively expand fetchIds as relation data arrives (BFS waterfall)
   useEffect(() => {
-    const ids = new Set<string>([rootEntityId]);
-    const queue: Array<{ id: string; depth: number }> = [{ id: rootEntityId, depth: 0 }];
-    const visited = new Set<string>([rootEntityId]);
-
-    while (queue.length > 0) {
-      const { id, depth } = queue.shift()!;
-      const data = relationsData.get(id);
-      if (!data || data.isLoading) continue;
-
-      const shouldExpand = depth < maxDepth || manuallyExpanded.has(id);
-      if (!shouldExpand) continue;
-
-      const neighbors = [...data.outgoing, ...data.incoming];
-      for (const rel of neighbors) {
-        if (excludedIds.has(rel.entityId) || visited.has(rel.entityId)) continue;
-        visited.add(rel.entityId);
-        ids.add(rel.entityId);
-        queue.push({ id: rel.entityId, depth: depth + 1 });
-      }
-    }
-
-    const next = Array.from(ids);
+    const next = collectEntityGraphIds({
+      rootEntityId,
+      relationsData,
+      maxDepth,
+      excludedIds,
+      manuallyExpanded
+    });
     setFetchIds(prev => {
       const prevSet = new Set(prev);
       return next.some(id => !prevSet.has(id)) ? next : prev;
@@ -106,90 +87,27 @@ export const EntityGraphView = ({
   }, [rootEntityId, relationsData, maxDepth, excludedIds, manuallyExpanded]);
 
   // Build the visible graph via BFS
-  const { nodes, edges, hiddenCountMap } = useMemo(() => {
-    const visibleNodes = new Map<string, EntityNodeData>();
-    const queue: Array<{ id: string; depth: number }> = [{ id: rootEntityId, depth: 0 }];
-    const visited = new Set<string>([rootEntityId]);
-
-    visibleNodes.set(rootEntityId, {
-      entityId: rootEntityId,
-      entityName: rootEntityName,
-      entitySchemaId: rootEntitySchemaId,
-      isRoot: true
-    });
-
-    while (queue.length > 0) {
-      const { id, depth } = queue.shift()!;
-      const data = relationsData.get(id);
-      if (!data || data.isLoading) continue;
-
-      const shouldExpand = depth < maxDepth || manuallyExpanded.has(id);
-      if (!shouldExpand) continue;
-
-      const neighbors = [...data.outgoing, ...data.incoming];
-      for (const rel of neighbors) {
-        if (excludedIds.has(rel.entityId)) continue;
-        if (!visited.has(rel.entityId)) {
-          visited.add(rel.entityId);
-          visibleNodes.set(rel.entityId, {
-            entityId: rel.entityId,
-            entityName: rel.entityName,
-            entitySchemaId: rel.entitySchemaId,
-            isRoot: false
-          });
-          queue.push({ id: rel.entityId, depth: depth + 1 });
-        }
-      }
-    }
-
-    // Build edges (deduplicating by from::to::fieldName) and hidden counts in one pass
-    const edgeSet = new Set<string>();
-    const visibleEdges: DependencyGraphEdge[] = [];
-    const hiddenCountMap = new Map<string, number>();
-    for (const [id] of visibleNodes) {
-      const data = relationsData.get(id);
-      if (!data || data.isLoading) {
-        hiddenCountMap.set(id, 0);
-        continue;
-      }
-      let hiddenCount = 0;
-      for (const rel of data.outgoing) {
-        if (visibleNodes.has(rel.entityId)) {
-          const edgeId = `${id}::${rel.entityId}::${rel.fieldName}`;
-          if (!edgeSet.has(edgeId)) {
-            edgeSet.add(edgeId);
-            visibleEdges.push({
-              id: edgeId,
-              from: id,
-              to: rel.entityId,
-              label: getRelationDisplayLabel(rel),
-              kind: rel.kind
-            });
-          }
-        } else {
-          hiddenCount++;
-        }
-      }
-      for (const rel of data.incoming) {
-        if (!visibleNodes.has(rel.entityId)) hiddenCount++;
-      }
-      hiddenCountMap.set(id, hiddenCount);
-    }
-
-    const nodeArray: DependencyGraphNode<EntityNodeData>[] = Array.from(visibleNodes.entries()).map(
-      ([id, data]) => ({ id, data })
-    );
-
-    return { nodes: nodeArray, edges: visibleEdges, hiddenCountMap };
-  }, [
-    rootEntityId,
-    rootEntityName,
-    rootEntitySchemaId,
-    relationsData,
-    maxDepth,
-    excludedIds,
-    manuallyExpanded
-  ]);
+  const { nodes, edges, hiddenCountMap } = useMemo(
+    () =>
+      buildEntityGraphData({
+        rootEntityId,
+        rootEntityName,
+        rootEntitySchemaId,
+        relationsData,
+        maxDepth,
+        excludedIds,
+        manuallyExpanded
+      }),
+    [
+      rootEntityId,
+      rootEntityName,
+      rootEntitySchemaId,
+      relationsData,
+      maxDepth,
+      excludedIds,
+      manuallyExpanded
+    ]
+  );
 
   const isAnyLoading = Array.from(relationsData.values()).some(d => d.isLoading);
 

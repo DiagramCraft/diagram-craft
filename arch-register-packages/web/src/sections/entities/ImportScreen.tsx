@@ -19,27 +19,20 @@ import styles from './ImportScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../../lib/entityCsv';
 import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
+import {
+  buildImportCommitEntities,
+  formatImportFieldLabel,
+  formatImportValue,
+  getChangedImportFields,
+  getImportDetailEntries,
+  isEmptyImportValue,
+  toImportReviewRow,
+  type ImportReviewRow
+} from './importReviewState';
 
 type Phase = 'upload' | 'parsing' | 'review' | 'done';
 
-type ParsedRow = {
-  rowNumber: number;
-  errors: string[];
-  entity: Record<string, unknown> | null;
-  accepted: boolean;
-  expanded: boolean;
-  isUpdate: boolean;
-  hasChanges: boolean;
-  matchType: 'id' | 'slug' | 'name' | 'none';
-  nameMatches: Array<{ id: string; name: string; slug?: string; namespace?: string }>;
-  userChoice?: 'update' | 'create'; // User's decision for name matches
-  existingId?: string;
-  existingEntity?: Record<string, unknown> | null;
-  constraintViolations?: Array<{
-    type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema';
-    message: string;
-  }>;
-};
+type ParsedRow = ImportReviewRow;
 
 type CommittedEntity = {
   id: string;
@@ -75,76 +68,18 @@ const Stepper = ({ phase }: { phase: Phase }) => {
   );
 };
 
-// Helper to normalize values for comparison (treat empty string, null, undefined as equivalent)
-const normalizeValue = (val: unknown) => {
-  if (val === '' || val === null || val === undefined) return null;
-  return val;
-};
-
-// Helper to detect if an update has actual changes
-const hasActualChanges = (
-  newEntity: Record<string, unknown>,
-  oldEntity: Record<string, unknown>
-): boolean => {
-  const newEntityKeys = Object.keys(newEntity);
-  const fieldsToCompare = newEntityKeys.filter(k => !['_existingId', '_schemaId'].includes(k));
-
-  return fieldsToCompare.some(key => {
-    const oldVal = normalizeValue(oldEntity[key]);
-    const newVal = normalizeValue(newEntity[key]);
-    return JSON.stringify(oldVal) !== JSON.stringify(newVal);
-  });
-};
-
 const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
   if (!row.entity) return null;
-
-  const formatFieldLabel = (key: string) => {
-    if (key.startsWith('_')) {
-      // Remove _ prefix and capitalize for metadata fields
-      return key.substring(1).charAt(0).toUpperCase() + key.substring(2);
-    }
-    return key;
-  };
-
-  const formatValue = (value: unknown) => {
-    if (value === undefined || value === null || value === '') {
-      return <em className={styles.emptyValue}>(empty)</em>;
-    }
-    if (Array.isArray(value)) {
-      return value.join(', ');
-    }
-    return String(value);
-  };
 
   // For updates, show before/after comparison
   if (row.isUpdate && row.existingEntity) {
     const newEntity = row.entity;
     const oldEntity = row.existingEntity;
 
-    // Only compare fields that are present in the new entity (from CSV)
-    // This excludes internal fields and fields not in the CSV
-    const newEntityKeys = Object.keys(newEntity);
-
-    // Filter out internal fields that shouldn't be shown in comparison
-    const fieldsToCompare = newEntityKeys.filter(k => !['_existingId', '_schemaId'].includes(k));
-
-    // Separate metadata and custom fields
-    const metadataKeys = fieldsToCompare.filter(k => k.startsWith('_')).sort();
-    const customKeys = fieldsToCompare.filter(k => !k.startsWith('_')).sort();
-
-    // Only show fields that have changed
-    const changedMetadata = metadataKeys.filter(key => {
-      const oldVal = normalizeValue(oldEntity[key]);
-      const newVal = normalizeValue(newEntity[key]);
-      return JSON.stringify(oldVal) !== JSON.stringify(newVal);
-    });
-
-    const changedCustom = customKeys.filter(key => {
-      const oldVal = normalizeValue(oldEntity[key]);
-      const newVal = normalizeValue(newEntity[key]);
-      return JSON.stringify(oldVal) !== JSON.stringify(newVal);
-    });
+    const { metadata: changedMetadata, custom: changedCustom } = getChangedImportFields(
+      newEntity,
+      oldEntity
+    );
 
     if (changedMetadata.length === 0 && changedCustom.length === 0) {
       return <div className={styles.detailContainer}>No changes detected</div>;
@@ -157,15 +92,27 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
             <div className={styles.sectionTitle}>Metadata</div>
             {changedMetadata.map(key => (
               <div key={key} className={styles.detailFieldWide}>
-                <div className={styles.detailLabel}>{formatFieldLabel(key)}</div>
+                <div className={styles.detailLabel}>{formatImportFieldLabel(key)}</div>
                 <div className={styles.comparisonRow}>
                   <div className={styles.beforeAfter}>
                     <div className={styles.beforeLabel}>Before:</div>
-                    <div className={styles.oldValue}>{formatValue(oldEntity[key])}</div>
+                    <div className={styles.oldValue}>
+                      {isEmptyImportValue(oldEntity[key]) ? (
+                        <em className={styles.emptyValue}>(empty)</em>
+                      ) : (
+                        formatImportValue(oldEntity[key])
+                      )}
+                    </div>
                   </div>
                   <div className={styles.beforeAfter}>
                     <div className={styles.afterLabel}>After:</div>
-                    <div className={styles.newValue}>{formatValue(newEntity[key])}</div>
+                    <div className={styles.newValue}>
+                      {isEmptyImportValue(newEntity[key]) ? (
+                        <em className={styles.emptyValue}>(empty)</em>
+                      ) : (
+                        formatImportValue(newEntity[key])
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -178,15 +125,27 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
             <div className={styles.sectionTitle}>Fields</div>
             {changedCustom.map(key => (
               <div key={key} className={styles.detailFieldWide}>
-                <div className={styles.detailLabel}>{formatFieldLabel(key)}</div>
+                <div className={styles.detailLabel}>{formatImportFieldLabel(key)}</div>
                 <div className={styles.comparisonRow}>
                   <div className={styles.beforeAfter}>
                     <div className={styles.beforeLabel}>Before:</div>
-                    <div className={styles.oldValue}>{formatValue(oldEntity[key])}</div>
+                    <div className={styles.oldValue}>
+                      {isEmptyImportValue(oldEntity[key]) ? (
+                        <em className={styles.emptyValue}>(empty)</em>
+                      ) : (
+                        formatImportValue(oldEntity[key])
+                      )}
+                    </div>
                   </div>
                   <div className={styles.beforeAfter}>
                     <div className={styles.afterLabel}>After:</div>
-                    <div className={styles.newValue}>{formatValue(newEntity[key])}</div>
+                    <div className={styles.newValue}>
+                      {isEmptyImportValue(newEntity[key]) ? (
+                        <em className={styles.emptyValue}>(empty)</em>
+                      ) : (
+                        formatImportValue(newEntity[key])
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -198,17 +157,7 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
   }
 
   // For creates, show all fields including metadata
-  const allEntries = Object.entries(row.entity).filter(
-    ([_k, v]) => v !== undefined && v !== '' && v !== null
-  );
-
-  // Separate metadata and custom fields
-  const metadataEntries = allEntries
-    .filter(([k]) => k.startsWith('_'))
-    .sort(([a], [b]) => a.localeCompare(b));
-  const customEntries = allEntries
-    .filter(([k]) => !k.startsWith('_'))
-    .sort(([a], [b]) => a.localeCompare(b));
+  const { metadata: metadataEntries, custom: customEntries } = getImportDetailEntries(row.entity);
 
   if (metadataEntries.length === 0 && customEntries.length === 0) return null;
 
@@ -220,8 +169,8 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
           <div className={styles.detailGrid}>
             {metadataEntries.map(([key, value]) => (
               <div key={key} className={styles.detailField}>
-                <div className={styles.detailLabel}>{formatFieldLabel(key)}</div>
-                <div className={styles.detailValue}>{formatValue(value)}</div>
+                <div className={styles.detailLabel}>{formatImportFieldLabel(key)}</div>
+                <div className={styles.detailValue}>{formatImportValue(value)}</div>
               </div>
             ))}
           </div>
@@ -234,8 +183,8 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
           <div className={styles.detailGrid}>
             {customEntries.map(([key, value]) => (
               <div key={key} className={styles.detailField}>
-                <div className={styles.detailLabel}>{formatFieldLabel(key)}</div>
-                <div className={styles.detailValue}>{formatValue(value)}</div>
+                <div className={styles.detailLabel}>{formatImportFieldLabel(key)}</div>
+                <div className={styles.detailValue}>{formatImportValue(value)}</div>
               </div>
             ))}
           </div>
@@ -288,36 +237,7 @@ export const ImportScreen = () => {
       const text = await file.text();
       const result = await parseCsvImport(workspaceSlug, selectedSchemaId, text);
       setRows(
-        result.entities.map(e => {
-          const matchType = e.matchType || 'none';
-          const hasChanges =
-            e.isUpdate && e.entity && e.existingEntity
-              ? hasActualChanges(e.entity, e.existingEntity)
-              : true; // Creates always have "changes"
-
-          // For name matches, don't auto-accept - require user decision
-          const needsUserDecision = matchType === 'name';
-
-          // Don't auto-accept if there are constraint violations
-          const hasConstraintViolations = (e.constraintViolations?.length ?? 0) > 0;
-
-          return {
-            rowNumber: e.rowNumber,
-            errors: e.errors,
-            entity: e.entity,
-            accepted:
-              e.errors.length === 0 && hasChanges && !needsUserDecision && !hasConstraintViolations,
-            expanded: false,
-            isUpdate: e.isUpdate,
-            hasChanges,
-            matchType,
-            nameMatches: e.nameMatches || [],
-            userChoice: undefined, // User hasn't made a choice yet
-            existingId: e.existingId,
-            existingEntity: e.existingEntity,
-            constraintViolations: e.constraintViolations
-          };
-        })
+        result.entities.map(toImportReviewRow)
       );
       setTotalRows(result.totalRows);
       setPhase('review');
@@ -353,28 +273,9 @@ export const ImportScreen = () => {
   }, []);
 
   const commit = useCallback(async () => {
-    const accepted = rows.filter(r => r.accepted && r.entity);
     try {
-      const entities = accepted.map(r => {
-        const entity: Record<string, unknown> = {
-          ...r.entity!,
-          _schemaId: selectedSchemaId
-        };
-
-        // Only include _existingId if:
-        // 1. It's an ID-based match (matchType === 'id'), OR
-        // 2. It's a slug-based match (matchType === 'slug'), OR
-        // 3. It's a name-based match AND user chose 'update'
-        if (
-          r.matchType === 'id' ||
-          r.matchType === 'slug' ||
-          (r.matchType === 'name' && r.userChoice === 'update')
-        ) {
-          entity._existingId = r.existingId ?? r.nameMatches[0]?.id;
-        }
-
-        return entity;
-      });
+      const accepted = rows.filter(r => r.accepted && r.entity);
+      const entities = buildImportCommitEntities(rows, selectedSchemaId);
       const result = await commitCsvImport(workspaceSlug, selectedSchemaId, entities);
       setCommitted(
         accepted.map((r, i) => ({

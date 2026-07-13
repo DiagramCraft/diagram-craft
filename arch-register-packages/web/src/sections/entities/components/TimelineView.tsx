@@ -13,6 +13,13 @@ import {
   getTodayTimelinePx,
   type TimelineColumnWidths
 } from '../../../components/timeline/timelineUtils';
+import {
+  collectTimelineDates,
+  getDatedTimelineRows,
+  getOwnTimelineSnapshots,
+  groupTimelineRows,
+  groupTimelineSnapshotsByProject
+} from './timelineViewState';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
@@ -117,25 +124,11 @@ const SnapBlock = ({
   const { data: snaps = [] } = useEntitySnapshots(workspaceId, entity._uid, true);
 
   const ownSnaps = useMemo(
-    () =>
-      snaps
-        .filter(s => s.status === 'autosave' || s.status === 'saved_version')
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
+    () => getOwnTimelineSnapshots(snaps),
     [snaps]
   );
 
-  const projectLanes = useMemo(() => {
-    const byProject: Record<string, EntitySnapshot[]> = {};
-    for (const s of snaps) {
-      if (s.project_id) {
-        (byProject[s.project_id] ??= []).push(s);
-      }
-    }
-    return Object.entries(byProject).map(([pid, laneSnaps]) => ({
-      projectId: pid,
-      snaps: laneSnaps
-    }));
-  }, [snaps]);
+  const projectLanes = useMemo(() => groupTimelineSnapshotsByProject(snaps), [snaps]);
 
   const toPx = (d: Date | null): number => {
     return dateToTimelinePx(d, rangeStart, rangeEnd, totalWidth);
@@ -620,40 +613,25 @@ export const TimelineView = ({
 
   // Entities with at least one configured date
   const datedRows = useMemo(
-    () => rows.filter(e => getDateValue(e, cfg.startFieldId) ?? getDateValue(e, cfg.endFieldId)),
+    () => getDatedTimelineRows(rows, cfg.startFieldId, cfg.endFieldId, getDateValue),
     [rows, cfg.startFieldId, cfg.endFieldId]
   );
 
   // Group by owner or type (not used in snapshot mode)
   const groups = useMemo(() => {
     if (cfg.groupBy === 'snapshot') return [];
-    const g: Record<string, EntityRecord[]> = {};
-    for (const e of datedRows) {
-      const key =
-        cfg.groupBy === 'type'
-          ? (schemaMap.get(e._schema.id)?.schema.name ?? e._schema.id)
-          : (e._owner?.name ?? 'Unassigned');
-      (g[key] ??= []).push(e);
-    }
-    return Object.entries(g).sort(([a], [b]) => a.localeCompare(b));
+    return groupTimelineRows(datedRows, cfg.groupBy, schemaMap);
   }, [datedRows, cfg.groupBy, schemaMap]);
 
   // Date range + columns
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
-    const dates: Date[] = [];
     const sourceRows = cfg.groupBy === 'snapshot' ? rows : datedRows;
-    for (const e of sourceRows) {
-      const s = getDateValue(e, cfg.startFieldId);
-      const en = getDateValue(e, cfg.endFieldId);
-      if (s) dates.push(s);
-      if (en) dates.push(en);
-    }
     const fallbackDates =
       cfg.groupBy === 'snapshot'
         ? [new Date(TODAY.getFullYear() - 1, 0, 1), new Date(TODAY.getFullYear() + 1, 11, 31)]
         : [];
     return buildTimelineRange({
-      dates,
+      dates: collectTimelineDates(sourceRows, cfg.startFieldId, cfg.endFieldId, getDateValue, fallbackDates),
       zoom: cfg.zoom,
       columnWidths: TL_COL_W,
       today: TODAY,

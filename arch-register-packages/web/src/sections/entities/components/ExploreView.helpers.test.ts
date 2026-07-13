@@ -4,6 +4,7 @@ import type { EntityRelationData } from '../../../hooks/useEntities';
 import {
   buildDefaultRelationFieldNames,
   buildExploreGraph,
+  normalizeExploreConfig,
   parseExploreConfigValue
 } from './ExploreView.helpers';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -260,6 +261,23 @@ describe('parseExploreConfigValue', () => {
   it('returns null for invalid config payloads', () => {
     expect(parseExploreConfigValue('{"leftDepth":"bad"}')).toBeNull();
     expect(parseExploreConfigValue('{')).toBeNull();
+  });
+});
+
+describe('normalizeExploreConfig', () => {
+  it('uses defaults and clamps depth values to non-negative integers', () => {
+    expect(normalizeExploreConfig({ leftDepth: -2, rightDepth: 2.9 })).toMatchObject({
+      leftDepth: 0,
+      rightDepth: 2,
+      relationFieldNames: []
+    });
+  });
+
+  it('deduplicates selected relation fields while preserving their order', () => {
+    expect(
+      normalizeExploreConfig({ relationFieldNames: ['dependsOn', 'ownedBy', 'dependsOn'] })
+        .relationFieldNames
+    ).toEqual(['dependsOn', 'ownedBy']);
   });
 });
 

@@ -40,7 +40,8 @@ import { EntityDependentsTab } from './components/EntityDependentsTab';
 import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
 import { DiscussionThread } from '../discussions/DiscussionThread';
 import { EmptyState } from '../../components/EmptyState';
-import type { TabId, Relation, RefLookup } from './types/entityDetailTypes';
+import type { TabId, Relation } from './types/entityDetailTypes';
+import { buildEntityRefLookup } from './entityDetailHelpers';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/$entityId');
 
@@ -146,34 +147,7 @@ export const EntityDetailScreen = () => {
   }, [referenceSchemaIds, referenceQueries]);
 
   // Build reference lookup from relations
-  const refLookup = useMemo(() => {
-    const lookup: RefLookup = new Map();
-    relations.outgoing.forEach(relation => {
-      lookup.set(relation.entityId, {
-        _uid: relation.entityId,
-        _publicId: relation.publicId,
-        _schema: { id: relation.entitySchemaId, name: '' },
-        _name: relation.entityName,
-        _slug: relation.entitySlug,
-        _namespace: '',
-        _description: '',
-        _owner: null,
-        _lifecycle: null,
-        _targetLifecycle: null,
-        _targetLifecycleDate: null,
-        _tags: [],
-        _links: [],
-        _visibilityMode: null,
-        _completeness: null,
-        canView: true,
-        canEdit: false,
-        canDelete: false,
-        canAdmin: false,
-        canCreateChild: false
-      });
-    });
-    return lookup;
-  }, [relations]);
+  const refLookup = useMemo(() => buildEntityRefLookup(relations), [relations]);
 
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
