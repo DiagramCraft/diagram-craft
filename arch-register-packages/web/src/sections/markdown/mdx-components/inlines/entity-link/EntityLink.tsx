@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
@@ -7,7 +7,6 @@ import styles from './EntityLink.module.css';
 export const EntityLink = ({ id }: { id: string }) => {
   const { workspaceSlug } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
-  const navigate = useNavigate();
 
   if (!id) return null;
 
@@ -27,19 +26,13 @@ export const EntityLink = ({ id }: { id: string }) => {
     );
   }
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)));
-  };
-
   return (
-    <a
-      href="#"
+    <Link
+      {...entityDetailRoute(workspaceSlug, asEntityPublicId(id))}
       className={styles.link}
-      onClick={handleClick}
+      onClick={event => event.stopPropagation()}
     >
       {entity._name}
-    </a>
+    </Link>
   );
 };

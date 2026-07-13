@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
 import { TypeBadge } from '../../../../../components/TypeBadge';
@@ -10,7 +10,6 @@ import styles from './EntityMention.module.css';
 export const EntityMention = ({ id }: { id: string }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
-  const navigate = useNavigate();
 
   if (!id) return null;
 
@@ -34,14 +33,12 @@ export const EntityMention = ({ id }: { id: string }) => {
   const schema = schemaIdx >= 0 ? schemas[schemaIdx] : undefined;
   const color = schema ? resolveSchemaColor(schema, schemaIdx) : 'var(--accent-fg)';
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)));
-  };
-
   return (
-    <button type="button" className={styles.mention} onClick={handleClick}>
+    <Link
+      {...entityDetailRoute(workspaceSlug, asEntityPublicId(id))}
+      className={styles.mention}
+      onClick={event => event.stopPropagation()}
+    >
       <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={16} />
       <span className={styles.name}>{entity._name}</span>
       {schema && (
@@ -56,6 +53,6 @@ export const EntityMention = ({ id }: { id: string }) => {
           <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
         </>
       )}
-    </button>
+    </Link>
   );
 };

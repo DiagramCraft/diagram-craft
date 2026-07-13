@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useAuditLog } from '../../../../../hooks/useAudit';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
@@ -50,7 +50,6 @@ type Props = {
 
 export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: Props) => {
   const { workspaceSlug } = useWorkspaceContext();
-  const navigate = useNavigate();
 
   const hasFilter = !!(id || schema || owner || lifecycle);
   const startDate = useMemo(() => parseSince(since), [since]);
@@ -118,17 +117,12 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
                 </Table.Cell>
                 <Table.Cell>
                   {entry.public_id ? (
-                    <button
-                      type="button"
+                    <Link
+                      {...entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id!))}
                       className={styles.entityLink}
-                      onClick={() =>
-                        navigate(
-                          entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id!))
-                        )
-                      }
                     >
                       {entry.entity_name}
-                    </button>
+                    </Link>
                   ) : (
                     entry.entity_name
                   )}

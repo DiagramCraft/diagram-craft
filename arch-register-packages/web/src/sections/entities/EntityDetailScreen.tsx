@@ -388,7 +388,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           setValidationErrors={setValidationErrors}
           refLookup={refLookup}
           referenceOptions={referenceOptions}
-          onEntityClick={navigateToEntity}
           teams={teams}
           lifecycleStates={lifecycleStates}
           entityProjects={entityProjects}
@@ -431,7 +430,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           outgoing={outgoing}
           incoming={incoming}
           schemas={schemas}
-          onEntityClick={navigateToEntity}
         />
       )}
 
@@ -442,7 +440,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           entityId={entityId}
           schemas={schemas}
           lifecycleStates={lifecycleStates}
-          onEntityClick={navigateToEntity}
         />
       )}
 

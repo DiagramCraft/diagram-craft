@@ -126,6 +126,7 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .linkButton:hover {

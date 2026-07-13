@@ -12,21 +12,20 @@ import { EmptyState } from '../../../components/EmptyState';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { EntityDependent } from '@arch-register/api-types/entityContract';
+import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 
 type Props = {
   workspaceId: string;
   entityId: string;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
-  onEntityClick: (publicId: string) => void;
 };
 
 export const EntityDependentsTab = ({
   workspaceId,
   entityId,
   schemas,
-  lifecycleStates,
-  onEntityClick
+  lifecycleStates
 }: Props) => {
   const [transitive, setTransitive] = useState(false);
   const [schemaFilter, setSchemaFilter] = useState('all');
@@ -119,7 +118,6 @@ export const EntityDependentsTab = ({
                 schemas={schemas}
                 lifecycleStates={lifecycleStates}
                 showDepth={transitive}
-                onEntityClick={onEntityClick}
               />
             ))}
           </div>
@@ -138,14 +136,12 @@ const DependentRow = ({
   dependent,
   schemas,
   lifecycleStates,
-  showDepth,
-  onEntityClick
+  showDepth
 }: {
   dependent: EntityDependent;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   showDepth: boolean;
-  onEntityClick: (publicId: string) => void;
 }) => {
   const schemaIdx = schemas.findIndex(s => s.id === dependent.entitySchemaId);
   const schema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
@@ -153,10 +149,9 @@ const DependentRow = ({
   const indent = showDepth ? (dependent.depth - 1) * 20 : 0;
 
   return (
-    <button
-      type="button"
+    <EntityNavigationLink
+      publicId={dependent.publicId}
       className={styles.row}
-      onClick={() => onEntityClick(dependent.publicId)}
     >
       {indent > 0 && <span className={styles.rowIndent} style={{ width: indent }} />}
       <span className={styles.rowLead}>
@@ -170,6 +165,6 @@ const DependentRow = ({
           <StatusChip value={dependent.lifecycleState} lifecycleStates={lifecycleStates} />
         )}
       </span>
-    </button>
+    </EntityNavigationLink>
   );
 };

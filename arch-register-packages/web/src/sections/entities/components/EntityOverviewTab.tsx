@@ -15,6 +15,7 @@ import type { Project, ProjectEntity, DiagramEntityFile } from '@arch-register/a
 import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityOverviewTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
+import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -31,7 +32,6 @@ type Props = {
   setValidationErrors: Dispatch<SetStateAction<Set<string>>>;
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
-  onEntityClick: (entityId: string) => void;
   teams: WorkspaceTeam[];
   lifecycleStates: WorkspaceLifecycleState[];
   entityProjects: EntityProjectAssoc[];
@@ -52,7 +52,6 @@ export const EntityOverviewTab = ({
   setValidationErrors,
   refLookup,
   referenceOptions,
-  onEntityClick,
   teams,
   lifecycleStates,
   entityProjects,
@@ -85,7 +84,6 @@ export const EntityOverviewTab = ({
                 }}
                 refLookup={refLookup}
                 referenceOptions={referenceOptions}
-                onEntityClick={onEntityClick}
                 hasError={validationErrors.has(f.id)}
               />
             ))}
@@ -459,7 +457,6 @@ const PropertyRow = ({
   onChange,
   refLookup,
   referenceOptions,
-  onEntityClick,
   hasError
 }: {
   field: EntitySchema['fields'][number];
@@ -469,7 +466,6 @@ const PropertyRow = ({
   onChange: (v: unknown) => void;
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
-  onEntityClick: (entityId: string) => void;
   hasError?: boolean;
 }) => {
   const renderEditor = () => {
@@ -584,9 +580,9 @@ const PropertyRow = ({
             return (
               <span key={id}>
                 {index > 0 && ', '}
-                <button type="button" className={styles.propLink} onClick={() => onEntityClick(ref?._publicId ?? id)}>
+                <EntityNavigationLink publicId={ref?._publicId ?? id} className={styles.propLink}>
                   {label}
-                </button>
+                </EntityNavigationLink>
               </span>
             );
           })}
