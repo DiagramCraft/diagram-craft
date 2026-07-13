@@ -12,6 +12,7 @@ import type { ImageEmbedSlateElement } from './types';
 import { isEmbeddableImageAttachment } from './imageEmbedUtils';
 import styles from './ImageEmbedDialog.module.css';
 import { EmptyState } from '../../../../../components/EmptyState';
+import type { ContentScope } from '../../../../../hooks/useContentScope';
 
 type EmbedMode = 'upload' | 'existing';
 type ImageAlign = 'left' | 'center' | 'right';
@@ -53,11 +54,13 @@ export const ImageEmbedDialog = ({
   );
   const [isUploading, setIsUploading] = useState(false);
 
+  const contentScope: ContentScope = projectId
+    ? { kind: 'project', workspaceId: workspaceSlug, projectId }
+    : entityId
+      ? { kind: 'entity', workspaceId: workspaceSlug, entityId }
+      : { kind: 'workspace', workspaceId: workspaceSlug };
   const { data } = useMarkdownContent(workspaceSlug, nodeId ?? '');
-  const uploadAttachment = useUploadMarkdownAttachment(workspaceSlug, nodeId ?? '', {
-    projectId,
-    entityId
-  });
+  const uploadAttachment = useUploadMarkdownAttachment(contentScope, nodeId ?? '');
   const imageAttachments = useMemo(
     () => (data?.attachments ?? []).filter(isEmbeddableImageAttachment),
     [data?.attachments]

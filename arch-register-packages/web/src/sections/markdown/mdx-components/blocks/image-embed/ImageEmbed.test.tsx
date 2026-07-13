@@ -8,8 +8,8 @@ import { ImageEmbed } from './ImageEmbed';
 const useProjectFileMock = vi.fn();
 const fetchWithAuthResponseMock = vi.fn();
 
-vi.mock('../../../../../hooks/useFileOperations', () => ({
-  useProjectFile: (...args: unknown[]) => useProjectFileMock(...args)
+vi.mock('../../../../../hooks/useContentScope', () => ({
+  useContentFile: (...args: unknown[]) => useProjectFileMock(...args)
 }));
 
 vi.mock('../../../../../auth/authClient', () => ({

@@ -78,12 +78,12 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
     nodes.map(node => node.children.length ? (
       <Menu.SubMenu key={node.path} label={node.name} leftSlot={<TbFolder size={13} />}>
         <Menu.Item disabled={node.path === current} leftSlot={<TbFolder size={13} />}
-          onClick={() => operations.moveFile(file, node.path)}>{node.name}</Menu.Item>
+          onClick={() => operations.moveFile.mutate({ file, targetFolder: node.path })}>{node.name}</Menu.Item>
         {renderMoveNodes(file, node.children, current)}
       </Menu.SubMenu>
     ) : (
       <Menu.Item key={node.path} disabled={node.path === current} leftSlot={<TbFolder size={13} />}
-        onClick={() => operations.moveFile(file, node.path)}>{node.name}</Menu.Item>
+        onClick={() => operations.moveFile.mutate({ file, targetFolder: node.path })}>{node.name}</Menu.Item>
     ));
 
   const renderMenu = (target: MenuTarget) => {
@@ -105,12 +105,12 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
         <Menu.Separator />
       </>}
       {target.type === 'diagram' && <>
-        <Menu.Item leftSlot={<TbCopy size={13} />} onClick={() => operations.clone.mutate(target.file)}>Clone</Menu.Item>
+        <Menu.Item leftSlot={<TbCopy size={13} />} onClick={() => operations.cloneFile.mutate(target.file)}>Clone</Menu.Item>
         <Menu.Separator />
       </>}
       <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
         <Menu.Item disabled={current === null} leftSlot={<TbFolderOpen size={13} />}
-          onClick={() => operations.moveFile(target.file, null)}>Root</Menu.Item>
+          onClick={() => operations.moveFile.mutate({ file: target.file, targetFolder: null })}>Root</Menu.Item>
         {renderMoveNodes(target.file, tree, current)}
       </Menu.SubMenu>
       <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>Rename</Menu.Item>
@@ -162,7 +162,7 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
           if (renameTarget.type === 'folder' && trimmed !== renameTarget.path)
             operations.renameFolder.mutate({ oldPath: renameTarget.path, newPath: trimmed });
           else if (renameTarget.type !== 'folder' && trimmed !== renameTarget.file.name)
-            operations.renameFile(renameTarget.file, trimmed);
+            operations.renameFile.mutate({ file: renameTarget.file, newName: trimmed });
         }
         setRenameTarget(null);
       }} onCancel={() => setRenameTarget(null)} />

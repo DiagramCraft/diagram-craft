@@ -13,7 +13,7 @@ import { Marquee } from '@diagram-craft/canvas/marquee';
 import type { Context } from '@diagram-craft/canvas/context';
 import type { ToolType } from '@diagram-craft/canvas/tool';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { useProjectFile, useProjectFileContent } from '../../../../../hooks/useFileOperations';
+import { useContentFile, useContentFileContent } from '../../../../../hooks/useContentScope';
 import { initializeDiagramCraft } from '../../../../../diagramcraft-initial-config';
 import {
   asEntityPublicId,
@@ -47,8 +47,8 @@ const VIEWER_CONTEXT: Context = {
 
 export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) => {
   const { workspaceSlug } = useWorkspaceContext();
-  const { data: file, isLoading, isError } = useProjectFile(workspaceSlug, id);
-  const { data: rawContent } = useProjectFileContent(workspaceSlug, id);
+  const { data: file, isLoading, isError } = useContentFile(workspaceSlug, id);
+  const { data: rawContent } = useContentFileContent(workspaceSlug, id);
   const [diagram, setDiagram] = useState<Diagram | null>(null);
   const navigate = useNavigate();
   const location = useLocation();

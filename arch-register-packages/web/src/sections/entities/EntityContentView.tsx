@@ -3,7 +3,6 @@ import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
-import { useEntityContentNodes } from '../../hooks/useProjects';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../components/Title';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
@@ -22,9 +21,12 @@ import {
   entityMarkdownRoute,
   projectDiagramRoute
 } from '../../routes/publicObjectRoutes';
-import { useUploadFile } from '../../hooks/useFileOperations';
-import { useCreateMarkdown } from '../../hooks/useMarkdownContent';
-import type { ContentScope } from '../../hooks/contentScope';
+import {
+  contentDownloadUrl,
+  useContentScopeOperations,
+  useContentTree,
+  type ContentScope
+} from '../../hooks/useContentScope';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 
 type EntityContentViewProps = {
@@ -36,13 +38,12 @@ type EntityContentViewProps = {
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
-  const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const scope: ContentScope = useMemo(
     () => ({ kind: 'entity', workspaceId: workspaceSlug, entityId }),
     [workspaceSlug, entityId]
   );
-  const uploadFileMutation = useUploadFile(scope);
-  const createMarkdownMutation = useCreateMarkdown(scope);
+  const { data } = useContentTree(scope);
+  const contentOperations = useContentScopeOperations(scope);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
@@ -95,7 +96,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
 
   const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
     const a = document.createElement('a');
-    a.href = `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(path)}`;
+    a.href = contentDownloadUrl(scope, path);
     a.download = originalFilename ?? name;
     document.body.appendChild(a);
     a.click();
@@ -105,7 +106,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
-      uploadFileMutation.mutate({ file: f, folder });
+      contentOperations.upload.mutate({ file: f, folder });
     }
     e.target.value = '';
   };
@@ -221,8 +222,8 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
         }}
-        onCreate={name => createMarkdownMutation.mutateAsync({ name, folder })}
-        isPending={createMarkdownMutation.isPending}
+        onCreate={name => contentOperations.createMarkdown.mutateAsync({ name, folder })}
+        isPending={contentOperations.createMarkdown.isPending}
       />
 
       <AddEntityFolderDialog

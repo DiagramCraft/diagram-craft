@@ -41,6 +41,7 @@ import { MarkdownCloseDialog } from './MarkdownCloseDialog';
 import { useMarkdownDiagramSessionTracking } from './useMarkdownDiagramSessionTracking';
 import { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
 import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
+import type { ContentScope } from '../../hooks/useContentScope';
 
 const extractToc = (markdown: string): string[] =>
   markdown.match(/^## .+$/gm)?.map(l => l.slice(3).trim()) ?? [];
@@ -75,25 +76,21 @@ export const MarkdownEditorScreen = () => {
   const requestedPanel = search.panel;
   const historyMode = search.historyMode === 'compare' ? 'compare' : 'preview';
   const compareMode = search.compareMode ?? 'to-current';
+  const contentScope: ContentScope = projectId
+    ? { kind: 'project', workspaceId: workspaceSlug, projectId }
+    : entityId
+      ? { kind: 'entity', workspaceId: workspaceSlug, entityId }
+      : { kind: 'workspace', workspaceId: workspaceSlug };
 
   const { data, isLoading, isError } = useMarkdownContent(workspaceSlug, nodeId);
   const { data: revisions = [], isLoading: revisionsLoading } = useMarkdownRevisions(
     workspaceSlug,
     nodeId
   );
-  const saveMutation = useSaveMarkdownContent(workspaceSlug, nodeId, { projectId, entityId });
-  const restoreMutation = useRestoreMarkdownRevision(workspaceSlug, nodeId, {
-    projectId,
-    entityId
-  });
-  const uploadAttachmentMutation = useUploadMarkdownAttachment(workspaceSlug, nodeId, {
-    projectId,
-    entityId
-  });
-  const deleteAttachmentMutation = useDeleteMarkdownAttachment(workspaceSlug, nodeId, {
-    projectId,
-    entityId
-  });
+  const saveMutation = useSaveMarkdownContent(contentScope, nodeId);
+  const restoreMutation = useRestoreMarkdownRevision(contentScope, nodeId);
+  const uploadAttachmentMutation = useUploadMarkdownAttachment(contentScope, nodeId);
+  const deleteAttachmentMutation = useDeleteMarkdownAttachment(contentScope, nodeId);
   const { file, parentLabel, renameFile, deleteFile } = useMarkdownDocumentScope({
     workspaceSlug,
     nodeId,
