@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), yaml()],
     resolve: {
+      dedupe: ['@platejs/core'],
       tsconfigPaths: true
     },
     css: {

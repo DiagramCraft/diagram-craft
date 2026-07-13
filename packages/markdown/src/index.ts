@@ -156,6 +156,7 @@ export const markdownToPlainText = (markdown: string): string => {
   text = text.replace(/^#{1,6}\s+/gm, ''); // Headers
   text = text.replace(/\*\*(.*?)\*\*/g, '$1'); // Bold
   text = text.replace(/\*(.*?)\*/g, '$1'); // Italic
+  text = text.replace(/~~(.*?)~~/g, '$1'); // Strikethrough
   text = text.replace(/```[\s\S]*?```/g, ''); // Code blocks
   text = text.replace(/`(.*?)`/g, '$1'); // Inline code
   text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Links

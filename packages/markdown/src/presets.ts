@@ -17,7 +17,7 @@ import {
   SetextHeaderHandler,
   SmallHandler
 } from './handlers';
-import { TableHandler } from './gfm-handlers';
+import { InlineStrikethroughHandler, TableHandler } from './gfm-handlers';
 import type { ParserConfiguration } from './parser';
 
 export const commonmarkPreset: ParserConfiguration = {
@@ -52,7 +52,8 @@ export const commonmarkPreset: ParserConfiguration = {
 // GFM extends CommonMark with table support
 export const gfmPreset: ParserConfiguration = {
   parent: 'commonmark',
-  block: [new TableHandler()]
+  block: [new TableHandler()],
+  inline: [new InlineStrikethroughHandler()]
 };
 
 // Extended adds custom extensions on top of GFM

@@ -71,4 +71,46 @@ describe('renderNodes — component children threading', () => {
     expect(markup).toContain('leaf-2');
     expect(markup).not.toContain('data-testid="wrapper"');
   });
+
+  it('renders checklist controls as disabled in view mode', () => {
+    const markup = renderToStaticMarkup(
+      renderNodes(
+        [
+          {
+            type: 'list',
+            subtype: 'unordered',
+            children: [
+              { type: 'item', checked: true, children: [{ type: 'literal', value: 'Done' }] },
+              {
+                type: 'item',
+                checked: false,
+                children: [{ type: 'literal', value: 'Not done' }]
+              }
+            ]
+          }
+        ],
+        'root'
+      )
+    );
+
+    expect(markup).toContain('class="task-list"');
+    expect(markup).toContain('checked=""');
+    expect(markup.match(/disabled=""/g)).toHaveLength(2);
+  });
+
+  it('renders strikethrough text in view mode', () => {
+    const markup = renderToStaticMarkup(
+      renderNodes(
+        [
+          {
+            type: 'strikethrough',
+            children: [{ type: 'literal', value: 'Removed text' }]
+          }
+        ],
+        'root'
+      )
+    );
+
+    expect(markup).toBe('<del>Removed text</del>');
+  });
 });

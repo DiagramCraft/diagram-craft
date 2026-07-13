@@ -47,10 +47,57 @@ describe('Markdown Parser', () => {
     expect(html).toContain('Link text');
   });
 
+  test('parses checklist state without including the marker in the item text', () => {
+    const result = parseMarkdown('- [x] Done\n- [ ] Not done', 'gfm');
+    const list = result[0];
+
+    expect(list?.type).toBe('list');
+    if (list?.type !== 'list') return;
+
+    expect(list.children).toEqual([
+      expect.objectContaining({
+        type: 'item',
+        checked: true,
+        children: [{ type: 'literal', value: 'Done' }]
+      }),
+      expect.objectContaining({
+        type: 'item',
+        checked: false,
+        children: [{ type: 'literal', value: 'Not done' }]
+      })
+    ]);
+  });
+
+  test('keeps bracket-prefixed list items as regular list items', () => {
+    const result = parseMarkdown('- [note] Keep this marker', 'gfm');
+    const list = result[0];
+
+    expect(list?.type).toBe('list');
+    if (list?.type !== 'list') return;
+    expect(list.children?.[0]).not.toHaveProperty('checked');
+  });
+
+  test('renders checklist state to HTML', () => {
+    const html = markdownToHTML('- [x] Done\n- [ ] Not done', 'gfm');
+
+    expect(html).toContain('<ul class="task-list">');
+    expect(html).toContain('<input type="checkbox" disabled checked />Done');
+    expect(html).toContain('<input type="checkbox" disabled />Not done');
+  });
+
   test('should handle emphasis', () => {
     const html = markdownToHTML('This is *italic* and **bold** text.');
     expect(html).toContain('<em>italic</em>');
     expect(html).toContain('<strong>bold</strong>');
+  });
+
+  test('parses multiple emphasis styles in one paragraph', () => {
+    const markdown =
+      'Plain text, **bold text**, *italic text*, ***bold italic text***, and ~~strikethrough text~~.';
+
+    expect(markdownToHTML(markdown, 'gfm')).toBe(
+      '<p>Plain text, <strong>bold text</strong>, <em>italic text</em>, <em><strong>bold italic text</strong></em>, and <del>strikethrough text</del>.</p>'
+    );
   });
 
   test('should handle small text with extended parser', () => {

@@ -19,6 +19,37 @@
   cursor: text;
 }
 
+.todoListItem {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+
+/* Plate's list wrapper treats every non-bullet list style as ordered. Task
+   paragraphs therefore need their generated marker suppressed explicitly. */
+.plateContent :global(ol[style*='list-style-type: todo']) {
+  list-style: none;
+  margin: 0;
+  padding-left: 4px;
+}
+
+.plateContent :global(ol[style*='list-style-type: todo'] > li) {
+  margin: 0;
+  list-style: none;
+}
+
+.todoListItem input {
+  flex: none;
+  transform: translateY(1px);
+  accent-color: var(--accent-fg);
+  cursor: pointer;
+}
+
+.todoListContent {
+  min-width: 0;
+}
+
 /* ── Slash command ────────────────────────────────────────────────────────── */
 
 .slashTrigger {

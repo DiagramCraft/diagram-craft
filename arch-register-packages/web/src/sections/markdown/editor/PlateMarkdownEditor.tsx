@@ -32,7 +32,12 @@ import {
 } from '@platejs/floating';
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
-import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
+import {
+  EditorBlock,
+  isListParagraph,
+  isTodoListParagraph,
+  getNodeText
+} from './EditorBlock';
 import { MdxBlockRegistryProvider } from './MdxBlockRegistryContext';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -42,9 +47,34 @@ import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
 
-const PElement = (props: PlateElementProps) => (
-  <EditorBlock as={isListParagraph(props.element) ? 'div' : 'p'} {...props} />
-);
+const TodoListElement = ({ element, children, ...props }: PlateElementProps) => {
+  const editor = useEditorRef();
+  const checked = (element as TElement & { checked?: boolean }).checked ?? false;
+
+  return (
+    <EditorBlock as="div" element={element} {...props} className={styles.todoListItem}>
+      <input
+        type="checkbox"
+        checked={checked}
+        contentEditable={false}
+        aria-label={checked ? 'Mark task incomplete' : 'Mark task complete'}
+        onChange={event => {
+          const path = editor.api.findPath(element);
+          if (path) editor.tf.setNodes({ checked: event.target.checked }, { at: path });
+        }}
+        onClick={event => event.stopPropagation()}
+      />
+      <span className={styles.todoListContent}>{children}</span>
+    </EditorBlock>
+  );
+};
+
+const PElement = (props: PlateElementProps) =>
+  isTodoListParagraph(props.element) ? (
+    <TodoListElement {...props} />
+  ) : (
+    <EditorBlock as={isListParagraph(props.element) ? 'div' : 'p'} {...props} />
+  );
 const H1Element = (props: PlateElementProps) => <EditorBlock as="h1" {...props} />;
 const H2Element = (props: PlateElementProps) => <EditorBlock as="h2" {...props} />;
 const H3Element = (props: PlateElementProps) => <EditorBlock as="h3" {...props} />;
@@ -66,7 +96,7 @@ const ListItemContentElement = (props: PlateElementProps) => <PlateElement {...p
 const LinkElement = ({ element, children, ...props }: PlateElementProps) => {
   const url = (element as TElement & { url?: string }).url;
   return (
-    <PlateElement element={element} {...props}>
+    <PlateElement as="span" element={element} {...props}>
       <a href={url}>{children}</a>
     </PlateElement>
   );
@@ -363,6 +393,14 @@ const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     icon: <span className={styles.slashIcon}>1.</span>,
     keywords: ['numbered', 'ordered'],
     onSelect: editor => toggleList(editor, { listStyleType: 'decimal' })
+  },
+  {
+    key: 'checklist',
+    label: 'Checklist',
+    description: 'List of tasks with checkboxes',
+    icon: <span className={styles.slashIcon}>☑</span>,
+    keywords: ['task', 'todo', 'checkbox', 'list'],
+    onSelect: editor => toggleList(editor, { listStyleType: 'todo' })
   },
   {
     key: 'code',

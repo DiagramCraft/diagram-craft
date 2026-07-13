@@ -18,6 +18,18 @@ vi.mock('../mdx-components/mdxRegistry', () => {
 const { parseMarkdownWithComponents } = await import('./mdxMarkdown');
 
 describe('parseMarkdownWithComponents', () => {
+  it('parses GFM checklist items with their checked state', () => {
+    const ast = parseMarkdownWithComponents('- [x] Done\n- [ ] Not done');
+    const list = ast[0];
+
+    expect(list?.type).toBe('list');
+    if (list?.type !== 'list') return;
+    expect(list.children?.map(item => (item.type === 'item' ? item.checked : undefined))).toEqual([
+      true,
+      false
+    ]);
+  });
+
   it('parses a self-closing block component (regression)', () => {
     const ast = parseMarkdownWithComponents('<DiagramEmbed id="d1" />');
     expect(ast).toEqual([

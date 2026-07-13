@@ -8,6 +8,7 @@ import yaml from '@rollup/plugin-yaml';
 export default defineConfig({
   plugins: [react(), yaml()],
   resolve: {
+    dedupe: ['@platejs/core'],
     tsconfigPaths: true
   },
   css: {

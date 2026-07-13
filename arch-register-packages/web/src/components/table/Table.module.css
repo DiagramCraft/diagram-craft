@@ -35,6 +35,14 @@
   font-size: 12px;
 }
 
+/* Keep contextual table typography from adding a second surface around Table.Root. */
+.wrap .table {
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  margin: 0;
+}
+
 /* border-collapse: separate is required in scroll mode — collapse breaks sticky column/header borders */
 .wrapScroll .table {
   border-collapse: separate;

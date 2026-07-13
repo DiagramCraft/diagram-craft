@@ -85,6 +85,32 @@
   margin: 0 0 6px;
 }
 
+.articleTypography :global(.task-list) {
+  padding-left: 4px;
+  list-style: none;
+}
+
+.articleTypography :global(.task-list-item) {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-left: 0;
+}
+
+.articleTypography :global(.task-list-item::before) {
+  display: none;
+}
+
+.articleTypography :global(.task-list-item input) {
+  flex: none;
+  transform: translateY(1px);
+  accent-color: var(--accent-fg);
+}
+
+.articleTypography :global(.task-list-item input:disabled) {
+  opacity: 1;
+}
+
 .articleTypography :global(pre) {
   background: var(--cmp-bg);
   border: 1px solid var(--panel-border);
@@ -125,6 +151,10 @@
   border-left: 3px solid var(--accent-fg);
   background: var(--panel-bg);
   color: var(--base-fg-dim);
+}
+
+.articleTypography :global(blockquote p:last-child) {
+  margin-bottom: 0;
 }
 
 .articleTypography :global(table),
