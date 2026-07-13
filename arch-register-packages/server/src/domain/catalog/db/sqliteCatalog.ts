@@ -13,9 +13,13 @@ import type {
   EntitySnapshotDbCreate,
   TimelineMarkerDbResult
 } from './catalogDatabase';
-import { ENTITY_SELECT_SQL, ENTITY_SNAPSHOT_SELECT_SQL, catalogMappers } from './catalogDatabase';
+import {
+  ENTITY_SELECT_SQL,
+  ENTITY_SNAPSHOT_SELECT_SQL,
+  catalogMappers,
+  resolveEntityListPagination
+} from './catalogDatabase';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
-import { ENTITY_DEFAULTS } from '../../../constants';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
   ENTITY_BUILTIN_COLUMNS,
@@ -170,8 +174,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     filters?: EntityListDbFilters,
     pagination?: EntityListDbPagination
   ) {
-    const limit = pagination?.limit ?? ENTITY_DEFAULTS.PAGE_SIZE;
-    const offset = pagination?.offset ?? 0;
+    const { limit, offset } = resolveEntityListPagination(pagination);
     const whereParts: string[] = ['e.workspace = ? AND e.deleted_at IS NULL'];
     const params: unknown[] = [workspace];
     const addParam = (v: unknown) => {

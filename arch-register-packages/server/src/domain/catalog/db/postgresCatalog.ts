@@ -13,10 +13,14 @@ import type {
   EntitySnapshotDbCreate,
   TimelineMarkerDbResult
 } from './catalogDatabase';
-import { ENTITY_SELECT_SQL, ENTITY_SNAPSHOT_SELECT_SQL, catalogMappers } from './catalogDatabase';
+import {
+  ENTITY_SELECT_SQL,
+  ENTITY_SNAPSHOT_SELECT_SQL,
+  catalogMappers,
+  resolveEntityListPagination
+} from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
-import { ENTITY_DEFAULTS } from '../../../constants';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
   ENTITY_BUILTIN_COLUMNS,
@@ -173,8 +177,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     filters?: EntityListDbFilters,
     pagination?: EntityListDbPagination
   ) {
-    const limit = pagination?.limit ?? ENTITY_DEFAULTS.PAGE_SIZE;
-    const offset = pagination?.offset ?? 0;
+    const { limit, offset } = resolveEntityListPagination(pagination);
     const whereParts: string[] = ['e.workspace = $1 AND e.deleted_at IS NULL'];
     const params: unknown[] = [workspace];
     const addParam = (v: unknown) => {
@@ -205,11 +208,13 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       if (clause) whereParts.push(clause);
     }
 
+    const limitParam = addParam(limit);
+    const offsetParam = addParam(offset);
     const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${ENTITY_SELECT_SQL} WHERE ${whereParts.join(' AND ')}
        ORDER BY e.name, e.id
-       LIMIT ${limit}
-       OFFSET ${offset}`,
+       LIMIT ${limitParam}
+       OFFSET ${offsetParam}`,
       // postgres.js accepts string | number | boolean | null | Date; cast from unknown[] is safe
       // because all values we push are those types
       params as Parameters<typeof this.sql.unsafe>[1]
