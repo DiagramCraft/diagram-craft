@@ -15,6 +15,7 @@ import {
   parseDatabaseJson,
   type DatabaseRow
 } from '../../../db/rowMappers';
+import { ENTITY_DEFAULTS } from '../../../constants';
 
 export const ENTITY_SELECT_SQL = `
   SELECT e.*,
@@ -46,6 +47,18 @@ export type EntityListDbFilters = {
 export type EntityListDbPagination = {
   limit?: number | null;
   offset?: number | null;
+};
+
+export const resolveEntityListPagination = (pagination?: EntityListDbPagination) => {
+  const limit = pagination?.limit ?? ENTITY_DEFAULTS.PAGE_SIZE;
+  const offset = pagination?.offset ?? 0;
+  if (!Number.isInteger(limit) || limit <= 0) {
+    throw new Error(`Invalid pagination limit: ${limit}`);
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error(`Invalid pagination offset: ${offset}`);
+  }
+  return { limit, offset };
 };
 
 // -- Entity Schema
