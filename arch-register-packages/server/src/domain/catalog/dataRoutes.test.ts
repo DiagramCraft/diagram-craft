@@ -4,6 +4,7 @@ import {
   buildEntityRelations,
   filterEntities,
   getEntityParentsFromPayload,
+  matchesFilterCondition,
   parseEntityMutationPayload,
   resolveCreateOwner
 } from './dataHelpers';
@@ -246,6 +247,33 @@ describe('data route helpers', () => {
     });
 
     expect(result.map(entity => entity.id)).toEqual(['component-1']);
+  });
+
+  it('matches _tags filter conditions against any tag', () => {
+    expect(
+      matchesFilterCondition(component, { fieldId: '_tags', op: 'equals', value: 'react' }, null)
+    ).toBe(true);
+    expect(
+      matchesFilterCondition(component, { fieldId: '_tags', op: 'equals', value: 'frontend' }, null)
+    ).toBe(false);
+    expect(
+      matchesFilterCondition(component, { fieldId: '_tags', op: 'not_equals', value: 'react' }, null)
+    ).toBe(false);
+    expect(
+      matchesFilterCondition(system, { fieldId: '_tags', op: 'not_equals', value: 'react' }, null)
+    ).toBe(true);
+    expect(
+      matchesFilterCondition(component, { fieldId: '_tags', op: 'contains', value: 'EAC' }, null)
+    ).toBe(true);
+    expect(
+      matchesFilterCondition(component, { fieldId: '_tags', op: 'empty', value: '' }, null)
+    ).toBe(false);
+    expect(
+      matchesFilterCondition(component, { fieldId: '_tags', op: 'not_empty', value: '' }, null)
+    ).toBe(true);
+    expect(
+      matchesFilterCondition({ ...component, tags: [] }, { fieldId: '_tags', op: 'empty', value: '' }, null)
+    ).toBe(true);
   });
 
   it('builds incoming and outgoing relations for an entity', () => {

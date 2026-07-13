@@ -109,6 +109,7 @@ export const FilterBuilder = ({
       },
       { id: '_description', name: 'Description', type: 'text' },
       { id: '_namespace', name: 'Namespace', type: 'text' },
+      { id: '_tags', name: 'Tags', type: 'text' },
       {
         id: '_schemaId',
         name: 'Type',

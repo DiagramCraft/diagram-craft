@@ -80,7 +80,8 @@ const useScopeFields = ({
         type: 'select',
         options: lifecycleStates.map(state => ({ value: state.id, label: state.label }))
       },
-      { id: '_namespace', name: 'Namespace', type: 'text' }
+      { id: '_namespace', name: 'Namespace', type: 'text' },
+      { id: '_tags', name: 'Tags', type: 'text' }
     ];
 
     const customFields = new Map<string, ScopeField>();

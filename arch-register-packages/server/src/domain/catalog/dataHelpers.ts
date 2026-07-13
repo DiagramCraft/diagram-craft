@@ -46,6 +46,19 @@ export const matchesFilterCondition = (
   condition: FilterCondition,
   completeness: number | null
 ): boolean => {
+  if (condition.fieldId === '_tags') {
+    const tags = entity.tags;
+    if (condition.op === 'empty') return tags.length === 0;
+    if (condition.op === 'not_empty') return tags.length > 0;
+    const expected = String(condition.value ?? '');
+    switch (condition.op) {
+      case 'equals': return tags.some(t => t === expected);
+      case 'not_equals': return !tags.some(t => t === expected);
+      case 'contains': return tags.some(t => t.toLowerCase().includes(expected.toLowerCase()));
+      default: return true;
+    }
+  }
+
   let value: unknown;
   switch (condition.fieldId) {
     case '_schemaId': value = entity.schema_id; break;

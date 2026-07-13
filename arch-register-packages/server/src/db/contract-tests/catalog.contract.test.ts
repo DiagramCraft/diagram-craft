@@ -263,6 +263,56 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(result[0]?.name).toBe('Match');
     });
 
+    it('filters entities by _tags conditions', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'React entity',
+        tags: ['react', 'frontend']
+      });
+      await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Vue entity',
+        tags: ['vue', 'frontend']
+      });
+      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Untagged entity', tags: [] });
+
+      const equalsResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { conditions: [{ fieldId: '_tags', op: 'equals', value: 'react' }] },
+        { limit: 10, offset: 0 }
+      );
+      expect(equalsResult.map(e => e.name)).toEqual(['React entity']);
+
+      const notEqualsResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { conditions: [{ fieldId: '_tags', op: 'not_equals', value: 'react' }] },
+        { limit: 10, offset: 0 }
+      );
+      expect(notEqualsResult.map(e => e.name).sort()).toEqual(['Untagged entity', 'Vue entity']);
+
+      const containsResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { conditions: [{ fieldId: '_tags', op: 'contains', value: 'ont' }] },
+        { limit: 10, offset: 0 }
+      );
+      expect(containsResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
+
+      const emptyResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { conditions: [{ fieldId: '_tags', op: 'empty', value: '' }] },
+        { limit: 10, offset: 0 }
+      );
+      expect(emptyResult.map(e => e.name)).toEqual(['Untagged entity']);
+
+      const notEmptyResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { conditions: [{ fieldId: '_tags', op: 'not_empty', value: '' }] },
+        { limit: 10, offset: 0 }
+      );
+      expect(notEmptyResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
+    });
+
 
   describe('entity grants', () => {
     it('replaces entity grants atomically', async () => {
