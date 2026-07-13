@@ -5,14 +5,9 @@ import { apiFetchResponse, ApiError } from '../lib/http';
 import { orpcClient } from '../lib/orpcClient';
 import { emptyDiagram, prepareTemplateDiagramDocument } from '../lib/diagramDocuments';
 import { movePath, renamePath } from '../lib/contentPath';
-import {
-  entityContentKeys,
-  invalidateAuditQueries,
-  invalidateProjectQueries,
-  projectEntityKeys,
-  projectFileKeys,
-  workspaceContentKeys
-} from './queryKeys';
+import { entityContentKeys, projectFileKeys, workspaceContentKeys } from '../queries/content';
+import { invalidateAuditQueries } from '../queries/audit';
+import { invalidateProjectQueries, projectEntityKeys } from '../queries/projects';
 
 export type ContentScope =
   | { kind: 'project'; workspaceId: string; projectId: string }

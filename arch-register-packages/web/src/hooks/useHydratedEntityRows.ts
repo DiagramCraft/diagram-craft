@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import { entityKeys } from './queryKeys';
+import { entityKeys } from '../queries/entities';
 import { orpcClient } from '../lib/orpcClient';
 import { toEntityListQuery } from './entityListQuery';
 

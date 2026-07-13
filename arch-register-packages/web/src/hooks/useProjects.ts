@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   projectKeys,
   projectEntityKeys,
-  invalidateAuditQueries,
-  invalidateAllProjectCaches,
-  invalidateEntityQueries
-} from './queryKeys';
+  invalidateDeletedProject
+} from '../queries/projects';
+import { invalidateAuditQueries } from '../queries/audit';
+import { invalidateEntityQueries } from '../queries/entities';
 import { Project, ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 import { fetchEntityProjects } from '../lib/projectOperations';
@@ -102,8 +102,8 @@ export const useDeleteProject = (workspaceId: string) => {
   return useMutation({
     mutationFn: (projectId: string) =>
       orpcClient.projects.remove({ params: { workspace: workspaceId, id: projectId } }),
-    onSuccess: async () => {
-      await invalidateAllProjectCaches(queryClient, workspaceId);
+    onSuccess: async (_, projectId) => {
+      await invalidateDeletedProject(queryClient, workspaceId, projectId);
     }
   });
 };

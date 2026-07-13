@@ -4,7 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { commitCsvImport, downloadCsvTemplate, parseCsvImport } from '../../lib/entityCsv';
 import { downloadBlob } from '../../lib/browserDownload';
-import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
+import { invalidateEntityQueries } from '../../queries/entities';
+import { schemaKeys } from '../../queries/schemas';
 import {
   buildImportCommitEntities,
   toImportReviewRow,
@@ -91,7 +92,7 @@ export const useImportController = () => {
           name: (row.entity!._name as string) ?? `Row ${row.rowNumber}`
         }))
       );
-      await queryClient.invalidateQueries({ queryKey: entityKeys.all });
+      await invalidateEntityQueries(queryClient, workspaceSlug);
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
       setPhase('done');
     } catch (error) {

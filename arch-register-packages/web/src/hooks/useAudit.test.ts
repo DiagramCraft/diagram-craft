@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { auditKeys, invalidateAuditQueries, workspaceAnalyticsKeys } from './queryKeys';
+import { auditKeys, invalidateAuditQueries } from '../queries/audit';
+import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
 
 describe('auditKeys', () => {
   it('nests log queries under a workspace-scoped prefix', () => {

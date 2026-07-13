@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { assessmentResponseKeys, assessmentKeys, invalidateAuditQueries } from './queryKeys';
+import { assessmentResponseKeys, assessmentKeys } from '../queries/assessments';
+import { invalidateAuditQueries } from '../queries/audit';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';

@@ -5,6 +5,7 @@ import { orpcClient } from '../lib/orpcClient';
 export const searchKeys = {
   all: ['search'] as const,
   searches: () => [...searchKeys.all, 'query'] as const,
+  workspaceSearches: (workspaceId: string) => [...searchKeys.searches(), workspaceId] as const,
   search: (
     workspaceId: string,
     query: string,
@@ -12,7 +13,7 @@ export const searchKeys = {
       limitPerType?: number | null;
       types?: Array<'projects' | 'files' | 'entities' | 'schemas'> | null;
     }
-  ) => [...searchKeys.searches(), workspaceId, query, options] as const
+  ) => [...searchKeys.workspaceSearches(workspaceId), query, options] as const
 };
 
 // Hook for searching across the workspace
