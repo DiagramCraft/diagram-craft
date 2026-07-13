@@ -1,21 +1,32 @@
-import { createRoute, getRouteApi, type AnyRoute } from '@tanstack/react-router';
+import { createRoute, useParams, type AnyRoute } from '@tanstack/react-router';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
 import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
 import { WorkspaceContentSidebar } from '../../sections/workspace-content/WorkspaceContentSidebar';
 import { WorkspaceContentScreen } from '../../sections/workspace-content/WorkspaceContentScreen';
-import { validateDiagramSearch, validateEntityDetailSearch, validateMarkdownSearch } from '../searchParams';
+import {
+  validateDiagramSearch,
+  validateMarkdownSearch,
+  validateWorkspaceContentSearch
+} from '../searchParams';
 import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
-const contentRouteApi = getRouteApi('/authenticated/$workspaceSlug/content');
-
 const WorkspaceContentRoute = () => {
-  const { workspaceSlug } = contentRouteApi.useParams();
-  const search = contentRouteApi.useSearch();
+  const { workspaceSlug } = useParams({ strict: false });
   return (
     <WorkspaceContentScreen
-      workspaceSlug={workspaceSlug}
-      folder={search.contentFolder ?? ''}
+      workspaceSlug={workspaceSlug!}
+      folder=""
+    />
+  );
+};
+
+const WorkspaceContentFolderRoute = () => {
+  const { workspaceSlug, _splat } = useParams({ strict: false });
+  return (
+    <WorkspaceContentScreen
+      workspaceSlug={workspaceSlug!}
+      folder={_splat ?? ''}
     />
   );
 };
@@ -27,8 +38,23 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: 'content',
-      validateSearch: validateEntityDetailSearch,
+      validateSearch: validateWorkspaceContentSearch,
       component: WorkspaceContentRoute
+    }),
+    ctx => ({
+      variant: 'standard',
+      activeRailItem: 'content',
+      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
+      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
+    })
+  );
+
+  const contentFolderRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'content/folders/$',
+      validateSearch: validateWorkspaceContentSearch,
+      component: WorkspaceContentFolderRoute
     }),
     ctx => ({
       variant: 'standard',
@@ -63,5 +89,5 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
-  return [contentRoute, contentDiagramRoute, contentMarkdownRoute] as const;
+  return [contentRoute, contentFolderRoute, contentDiagramRoute, contentMarkdownRoute] as const;
 };

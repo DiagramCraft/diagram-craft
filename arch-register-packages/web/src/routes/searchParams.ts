@@ -56,7 +56,6 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
 
 // Entity detail params
 export type EntityDetailSearchParams = {
-  contentFolder?: string;
   contentQuery?: string;
   contentView?: 'grid' | 'list';
   tab?:
@@ -83,9 +82,14 @@ const validateSharedContentBrowserSearch = (
   contentView: raw.contentView === 'grid' || raw.contentView === 'list' ? raw.contentView : undefined,
 });
 
+export type WorkspaceContentSearchParams = SharedContentBrowserSearchParams;
+
+export const validateWorkspaceContentSearch = (
+  raw: Record<string, unknown>
+): WorkspaceContentSearchParams => validateSharedContentBrowserSearch(raw);
+
 export const validateEntityDetailSearch = (raw: Record<string, unknown>): EntityDetailSearchParams => ({
   ...validateSharedContentBrowserSearch(raw),
-  contentFolder: typeof raw.contentFolder === 'string' ? raw.contentFolder : undefined,
   tab:
     raw.tab === 'overview' ||
     raw.tab === 'topology' ||
@@ -121,7 +125,6 @@ export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSe
 // Project detail params
 export type ProjectSearchParams = {
   tab?: 'projects' | 'archive';
-  folder?: string;
   section?: 'home' | 'entities' | 'assessments';
   assessmentId?: string;
   assessmentTab?: 'details' | 'summary' | 'discussion';
@@ -132,7 +135,6 @@ export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSear
   ...validateSharedEntityBrowserSearch(raw),
   ...validateSharedContentBrowserSearch(raw),
   tab: raw.tab === 'projects' || raw.tab === 'archive' ? raw.tab : undefined,
-  folder: typeof raw.folder === 'string' ? raw.folder : undefined,
   section:
     raw.section === 'home' || raw.section === 'entities' || raw.section === 'assessments'
       ? raw.section

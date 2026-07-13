@@ -47,3 +47,16 @@ test('restores workspace content filter and view mode through reload and browser
   await expect(page).toHaveURL(/contentView=list/);
   await expect(page.getByText('Name')).toBeVisible();
 });
+
+test('navigates directly to workspace content folders, including nested folders', async ({ page }) => {
+  await page.goto(`/${defaultWorkspace.slug}/content/folders/wiki?contentQuery=Home&contentView=list`);
+
+  await expect(page).toHaveURL(/\/content\/folders\/wiki\?contentQuery=Home&contentView=list/);
+  await expect(page.getByPlaceholder('Filter diagrams…')).toHaveValue('Home');
+  await expect(page.getByText('Name')).toBeVisible();
+
+  await page.goto(`/${defaultWorkspace.slug}/content/folders/docs/guides`);
+
+  await expect(page).toHaveURL(/\/content\/folders\/docs\/guides$/);
+  await expect(page.getByText('No content here')).toBeVisible();
+});
