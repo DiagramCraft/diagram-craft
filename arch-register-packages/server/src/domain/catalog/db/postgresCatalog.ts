@@ -24,6 +24,7 @@ import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
   ENTITY_BUILTIN_COLUMNS,
+  ENTITY_ARRAY_COLUMNS,
   isValidFieldId,
   escapeLike,
   buildConditionClause
@@ -198,13 +199,17 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
       // For custom fields, also verify they don't match Object.prototype property names
       let col: string | null = null;
+      let kind: 'scalar' | 'array' = 'scalar';
       if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
         col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
+      } else if (Object.hasOwn(ENTITY_ARRAY_COLUMNS, cond.fieldId)) {
+        col = ENTITY_ARRAY_COLUMNS[cond.fieldId] ?? null;
+        kind = 'array';
       } else if (isValidFieldId(cond.fieldId) && !Object.hasOwn(Object.prototype, cond.fieldId)) {
         col = `(e.data->>'${cond.fieldId}')`;
       }
       if (!col) continue;
-      const clause = buildConditionClause(col, cond, addParam, 'postgres');
+      const clause = buildConditionClause(col, cond, addParam, 'postgres', kind);
       if (clause) whereParts.push(clause);
     }
 

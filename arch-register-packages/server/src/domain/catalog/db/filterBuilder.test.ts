@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { ENTITY_BUILTIN_COLUMNS, isValidFieldId, buildConditionClause } from './filterBuilder';
+import {
+  ENTITY_BUILTIN_COLUMNS,
+  ENTITY_ARRAY_COLUMNS,
+  isValidFieldId,
+  buildConditionClause
+} from './filterBuilder';
 
 describe('filterBuilder', () => {
   describe('ENTITY_BUILTIN_COLUMNS', () => {
@@ -30,6 +35,18 @@ describe('filterBuilder', () => {
       expect(Object.hasOwn(ENTITY_BUILTIN_COLUMNS, '__proto__')).toBe(false);
       expect(Object.hasOwn(ENTITY_BUILTIN_COLUMNS, 'hasOwnProperty')).toBe(false);
       expect(Object.hasOwn(ENTITY_BUILTIN_COLUMNS, '_name')).toBe(true);
+    });
+  });
+
+  describe('ENTITY_ARRAY_COLUMNS', () => {
+    it('should contain _tags mapped to the tags column', () => {
+      expect(ENTITY_ARRAY_COLUMNS._tags).toBe('e.tags');
+    });
+
+    it('should only have own properties, not inherited ones', () => {
+      expect(Object.hasOwn(ENTITY_ARRAY_COLUMNS, 'toString')).toBe(false);
+      expect(Object.hasOwn(ENTITY_ARRAY_COLUMNS, 'constructor')).toBe(false);
+      expect(Object.hasOwn(ENTITY_ARRAY_COLUMNS, '_tags')).toBe(true);
     });
   });
 
@@ -166,6 +183,111 @@ describe('filterBuilder', () => {
         'postgres'
       );
       expect(result).toBeNull();
+    });
+
+    describe('array kind (_tags)', () => {
+      it('should build equals condition with EXISTS on postgres', () => {
+        const result = buildConditionClause(
+          'e.tags',
+          { fieldId: '_tags', op: 'equals', value: 'react' },
+          mockAddParam,
+          'postgres',
+          'array'
+        );
+        expect(result).toBe('EXISTS (SELECT 1 FROM jsonb_array_elements_text(e.tags) t WHERE t = $react)');
+      });
+
+      it('should build not_equals condition with NOT EXISTS on postgres', () => {
+        const result = buildConditionClause(
+          'e.tags',
+          { fieldId: '_tags', op: 'not_equals', value: 'react' },
+          mockAddParam,
+          'postgres',
+          'array'
+        );
+        expect(result).toBe(
+          'NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(e.tags) t WHERE t = $react)'
+        );
+      });
+
+      it('should build contains condition with ILIKE on postgres', () => {
+        const result = buildConditionClause(
+          'e.tags',
+          { fieldId: '_tags', op: 'contains', value: 'rea' },
+          mockAddParam,
+          'postgres',
+          'array'
+        );
+        expect(result).toBe(
+          'EXISTS (SELECT 1 FROM jsonb_array_elements_text(e.tags) t WHERE t ILIKE $%rea%)'
+        );
+      });
+
+      it('should build empty/not_empty using jsonb_array_length on postgres', () => {
+        expect(
+          buildConditionClause('e.tags', { fieldId: '_tags', op: 'empty', value: '' }, mockAddParam, 'postgres', 'array')
+        ).toBe('jsonb_array_length(e.tags) = 0');
+        expect(
+          buildConditionClause(
+            'e.tags',
+            { fieldId: '_tags', op: 'not_empty', value: '' },
+            mockAddParam,
+            'postgres',
+            'array'
+          )
+        ).toBe('jsonb_array_length(e.tags) > 0');
+      });
+
+      it('should build equals condition with json_each on sqlite', () => {
+        const result = buildConditionClause(
+          'e.tags',
+          { fieldId: '_tags', op: 'equals', value: 'react' },
+          mockAddParam,
+          'sqlite',
+          'array'
+        );
+        expect(result).toBe('EXISTS (SELECT 1 FROM json_each(e.tags) WHERE value = $react)');
+      });
+
+      it('should build contains condition with LOWER/LIKE on sqlite', () => {
+        const result = buildConditionClause(
+          'e.tags',
+          { fieldId: '_tags', op: 'contains', value: 'rea' },
+          mockAddParam,
+          'sqlite',
+          'array'
+        );
+        expect(result).toBe(
+          'EXISTS (SELECT 1 FROM json_each(e.tags) WHERE LOWER(value) LIKE LOWER($%rea%))'
+        );
+      });
+
+      it('should build empty/not_empty using json_array_length on sqlite', () => {
+        expect(
+          buildConditionClause('e.tags', { fieldId: '_tags', op: 'empty', value: '' }, mockAddParam, 'sqlite', 'array')
+        ).toBe('json_array_length(e.tags) = 0');
+        expect(
+          buildConditionClause(
+            'e.tags',
+            { fieldId: '_tags', op: 'not_empty', value: '' },
+            mockAddParam,
+            'sqlite',
+            'array'
+          )
+        ).toBe('json_array_length(e.tags) > 0');
+      });
+
+      it('should return null for unsupported operators on array columns', () => {
+        expect(
+          buildConditionClause(
+            'e.tags',
+            { fieldId: '_tags', op: 'starts_with', value: 'rea' },
+            mockAddParam,
+            'postgres',
+            'array'
+          )
+        ).toBeNull();
+      });
     });
   });
 });
