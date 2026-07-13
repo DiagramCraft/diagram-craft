@@ -14,23 +14,27 @@ import {
   getCategoricalFields,
   getNumericFields,
   getCategoricalFieldValues,
-  getCategoricalValue,
-  getNumericValue,
   getNumericFieldRange,
   type FieldOption,
   type JoinedAssessmentContext
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
 import { TooltipChip, TooltipChips, TooltipRow } from './entityTooltipParts';
+import {
+  BUBBLE_COLORS,
+  MARGIN_LEFT,
+  MARGIN_TOP,
+  PLOT_H,
+  PLOT_W,
+  VB_H,
+  VB_W,
+  buildBubbles,
+  type BubbleConfig
+} from './bubbleViewState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type BubbleConfig = {
-  xFieldId: string;
-  yFieldId: string;
-  sizeFieldId: string | null;
-  colorFieldId: string | null;
-};
+export type { BubbleConfig } from './bubbleViewState';
 
 // bubbleViewConfigSchema has no sensible non-empty defaults (all fields are workspace-specific
 // selections), so normalizeViewConfig is given an empty sentinel here and the result is treated
@@ -43,55 +47,10 @@ const EMPTY_BUBBLE_CONFIG: BubbleConfig = {
   colorFieldId: null
 };
 
-type Bubble = {
-  id: string;
-  name: string;
-  description: string;
-  schemaName: string;
-  colorValue: string | null;
-  cx: number;
-  cy: number;
-  r: number;
-  color: string;
-  clusterCount: number;
-  xDisplay: string;
-  yDisplay: string;
-  sizeDisplay: string | null;
-  colorDisplay: string | null;
-};
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const MARGIN_LEFT = 64;
-const MARGIN_RIGHT = 24;
-const MARGIN_TOP = 24;
-const MARGIN_BOTTOM = 48;
-const PLOT_W = 760;
-const PLOT_H = 480;
-const VB_W = MARGIN_LEFT + PLOT_W + MARGIN_RIGHT;
-const VB_H = MARGIN_TOP + PLOT_H + MARGIN_BOTTOM;
-
-const MIN_R = 6;
-const MAX_R = 26;
-const UNIFORM_R = 10;
-
 const OPEN_DELAY_MS = 250;
 const CLOSE_DELAY_MS = 120;
 
 const LABEL_DENSITY_THRESHOLD = 40;
-
-const BUBBLE_COLORS = [
-  'var(--tag-api)',
-  'var(--tag-component)',
-  'var(--tag-database)',
-  'var(--tag-system)',
-  'var(--tag-service)',
-  'var(--accent-fg)',
-  'var(--warning-fg)',
-  'oklch(0.62 0.14 180)'
-];
-
-const UNIFORM_COLOR = 'var(--accent-fg)';
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 
@@ -108,33 +67,6 @@ const loadConfig = (workspaceSlug: string): BubbleConfig | null => {
 
 const saveConfig = (workspaceSlug: string, config: BubbleConfig) => {
   localStorage.setItem(configKey(workspaceSlug), JSON.stringify(config));
-};
-
-// Deterministic hash for stable-but-scattered jitter placement (same approach as RadarView's blips).
-function rHash(s: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
-
-const formatNumber = (value: number) =>
-  Number.isInteger(value) ? String(value) : value.toFixed(2);
-
-const formatAxisValue = (
-  entity: EntityRecord,
-  fieldId: string,
-  categories: FieldOption[] | null
-): string | null => {
-  if (categories) {
-    const value = getCategoricalValue(entity, fieldId);
-    if (value == null) return null;
-    return categories.find(c => c.id === value)?.label ?? value;
-  }
-  const value = getNumericValue(entity, fieldId);
-  return value == null ? null : formatNumber(value);
 };
 
 // ── BubbleView ────────────────────────────────────────────────────────────────
@@ -332,155 +264,31 @@ export const BubbleView = ({
     return m;
   }, [colorCategories]);
 
-  const posForAxis = useCallback(
-    (
-      entity: EntityRecord,
-      fieldId: string,
-      range: { min: number; max: number } | null,
-      categories: FieldOption[] | null,
-      pixelMin: number,
-      pixelMax: number,
-      invert: boolean
-    ): number | null => {
-      let t: number | null = null;
-      if (categories) {
-        const value = getCategoricalValue(entity, fieldId);
-        const idx = value == null ? -1 : categories.findIndex(c => c.id === value);
-        if (idx === -1) return null;
-        t = (idx + 0.5) / categories.length;
-      } else if (range) {
-        const value = getNumericValue(entity, fieldId);
-        if (value == null) return null;
-        t = range.max === range.min ? 0.5 : (value - range.min) / (range.max - range.min);
-      }
-      if (t == null) return null;
-      const clamped = Math.min(1, Math.max(0, t));
-      return invert
-        ? pixelMax - clamped * (pixelMax - pixelMin)
-        : pixelMin + clamped * (pixelMax - pixelMin);
-    },
-    []
+  const { bubbles, clusterBadges } = useMemo(
+    () =>
+      buildBubbles({
+        entities,
+        config,
+        xRange,
+        yRange,
+        sizeRange,
+        xCategories,
+        yCategories,
+        colorCategories,
+        colorMap
+      }),
+    [
+      entities,
+      config,
+      xRange,
+      yRange,
+      sizeRange,
+      xCategories,
+      yCategories,
+      colorCategories,
+      colorMap
+    ]
   );
-
-  const { bubbles, clusterBadges } = useMemo((): {
-    bubbles: Bubble[];
-    clusterBadges: { cx: number; cy: number; count: number }[];
-  } => {
-    if (!config) return { bubbles: [], clusterBadges: [] };
-    const raw = entities
-      .map(e => {
-        const cx = posForAxis(
-          e,
-          config.xFieldId,
-          xRange,
-          xCategories,
-          MARGIN_LEFT,
-          MARGIN_LEFT + PLOT_W,
-          false
-        );
-        const cy = posForAxis(
-          e,
-          config.yFieldId,
-          yRange,
-          yCategories,
-          MARGIN_TOP,
-          MARGIN_TOP + PLOT_H,
-          true
-        );
-        if (cx == null || cy == null) return null;
-
-        let r = UNIFORM_R;
-        if (config.sizeFieldId && sizeRange) {
-          const value = getNumericValue(e, config.sizeFieldId);
-          if (value != null) {
-            const t =
-              sizeRange.max === sizeRange.min
-                ? 0.5
-                : (value - sizeRange.min) / (sizeRange.max - sizeRange.min);
-            const clamped = Math.min(1, Math.max(0, t));
-            r = MIN_R + Math.sqrt(clamped) * (MAX_R - MIN_R);
-          }
-        }
-
-        const colorValue = config.colorFieldId ? getCategoricalValue(e, config.colorFieldId) : null;
-        const color = config.colorFieldId
-          ? colorValue != null
-            ? (colorMap.get(colorValue) ?? UNIFORM_COLOR)
-            : UNIFORM_COLOR
-          : UNIFORM_COLOR;
-
-        return {
-          id: e._uid,
-          name: e._name ?? e._slug,
-          description: e._description ?? '',
-          schemaName: e._schema?.name ?? '',
-          colorValue,
-          cx,
-          cy,
-          r,
-          color,
-          clusterCount: 1,
-          xDisplay: formatAxisValue(e, config.xFieldId, xCategories) ?? '—',
-          yDisplay: formatAxisValue(e, config.yFieldId, yCategories) ?? '—',
-          sizeDisplay: config.sizeFieldId ? formatAxisValue(e, config.sizeFieldId, null) : null,
-          colorDisplay:
-            colorValue != null
-              ? (colorCategories.find(c => c.id === colorValue)?.label ?? colorValue)
-              : null
-        } satisfies Bubble;
-      })
-      .filter((b): b is Bubble => b != null);
-
-    // Jitter overlapping bubbles apart, grouped by rounded pixel bucket.
-    const buckets = new Map<string, Bubble[]>();
-    raw.forEach(b => {
-      const key = `${Math.round(b.cx / 8)}_${Math.round(b.cy / 8)}`;
-      const list = buckets.get(key) ?? [];
-      list.push(b);
-      buckets.set(key, list);
-    });
-
-    const result: Bubble[] = [];
-    const badges: { cx: number; cy: number; count: number }[] = [];
-    buckets.forEach(group => {
-      if (group.length === 1) {
-        result.push(group[0]!);
-        return;
-      }
-      const cx0 = group.reduce((s, b) => s + b.cx, 0) / group.length;
-      const cy0 = group.reduce((s, b) => s + b.cy, 0) / group.length;
-      const jitterR = 10 + 4 * Math.sqrt(group.length);
-      badges.push({ cx: cx0, cy: cy0 - jitterR - 8, count: group.length });
-      group.forEach((b, i) => {
-        // Base angle evenly spread around the cluster, perturbed by a per-entity hash so
-        // bubbles don't line up in an obviously regular polygon.
-        const baseAngle = (2 * Math.PI * i) / group.length;
-        const h1 = rHash(`${b.id}~jitter-angle`);
-        const h2 = rHash(`${b.id}~jitter-radius`);
-        const angle = baseAngle + ((h1 % 1000) / 1000 - 0.5) * ((2 * Math.PI) / group.length) * 0.9;
-        const radius = jitterR * (0.55 + ((h2 % 1000) / 1000) * 0.7);
-        result.push({
-          ...b,
-          cx: cx0 + radius * Math.cos(angle),
-          cy: cy0 + radius * Math.sin(angle),
-          clusterCount: group.length
-        });
-      });
-    });
-
-    return { bubbles: result, clusterBadges: badges };
-  }, [
-    config,
-    entities,
-    posForAxis,
-    xRange,
-    yRange,
-    xCategories,
-    yCategories,
-    sizeRange,
-    colorMap,
-    colorCategories
-  ]);
 
   const showLabels = bubbles.length <= LABEL_DENSITY_THRESHOLD;
 

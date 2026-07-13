@@ -7,10 +7,11 @@ import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { Relation, RelationGroup } from '../types/entityDetailTypes';
+import type { Relation } from '../types/entityDetailTypes';
 import styles from './EntityTopologyTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { EmptyState } from '../../../components/EmptyState';
+import { groupRelationsByField } from './entityTopologyState';
 
 type EdgePath = {
   key: string;
@@ -26,24 +27,6 @@ type Props = {
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   onEntityClick: (entityId: string) => void;
-};
-
-const groupByField = (rels: Relation[]): RelationGroup[] => {
-  const groups = new Map<string, RelationGroup>();
-  for (const r of rels) {
-    const key = r.fieldName;
-    const group = groups.get(key);
-    if (group) {
-      group.relations.push(r);
-    } else {
-      groups.set(key, {
-        key,
-        label: getRelationDisplayLabel(r),
-        relations: [r]
-      });
-    }
-  }
-  return [...groups.values()];
 };
 
 export const EntityTopologyTab = ({
@@ -261,7 +244,7 @@ export const EntityTopologyTab = ({
             {usedByRefs.length === 0 && (
               <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>No incoming references</div>
             )}
-            {groupByField(usedByRefs).map(group => (
+            {groupRelationsByField(usedByRefs).map(group => (
               <div key={group.key} className={styles.topoRefGroup}>
                 <div className={styles.topoAxisLabel}>{group.label}</div>
                 {group.relations.map((r, i) => {
@@ -292,7 +275,7 @@ export const EntityTopologyTab = ({
             {consumesRefs.length === 0 && (
               <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>No outgoing references</div>
             )}
-            {groupByField(consumesRefs).map(group => (
+            {groupRelationsByField(consumesRefs).map(group => (
               <div key={group.key} className={styles.topoRefGroup}>
                 <div className={styles.topoAxisLabel}>{group.label}</div>
                 {group.relations.map((r, i) => {

@@ -17,6 +17,14 @@ export type SearchPreview =
 
 export type RowId = { kind: string; id: string };
 
+export type SearchRow = { kind: string; id: string; data: unknown };
+
+export type SearchGroup = {
+  id: string;
+  label: string;
+  rows: SearchRow[];
+};
+
 export const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: typeof TbFolders }> = [
   { value: 'all', label: 'All', icon: TbFolders },
   { value: 'entities', label: 'Entities', icon: TbDatabase },
@@ -31,6 +39,75 @@ export const EMPTY_RESULTS: SearchResponse = {
   files: [],
   entities: [],
   schemas: []
+};
+
+export const buildSearchGroups = (results: SearchResponse, filter: SearchFilter): SearchGroup[] => {
+  const groups: SearchGroup[] = [];
+  if (filter === 'all' || filter === 'entities') {
+    groups.push({
+      id: 'entities',
+      label: 'Entities',
+      rows: results.entities.map(entity => ({ kind: 'entity', id: entity.publicId, data: entity }))
+    });
+  }
+  if (filter === 'all' || filter === 'projects') {
+    groups.push({
+      id: 'projects',
+      label: 'Projects',
+      rows: results.projects.map(project => ({ kind: 'project', id: project.id, data: project }))
+    });
+  }
+  if (filter === 'all' || filter === 'files') {
+    groups.push({
+      id: 'files',
+      label: 'Diagrams',
+      rows: results.files.map(file => ({ kind: 'file', id: file.fileId, data: file }))
+    });
+  }
+  if (filter === 'all' || filter === 'schemas') {
+    groups.push({
+      id: 'schemas',
+      label: 'Schemas',
+      rows: results.schemas.map(schema => ({ kind: 'schema', id: schema.schemaId, data: schema }))
+    });
+  }
+  return groups.filter(group => group.rows.length > 0);
+};
+
+export const getSearchCategoryCounts = (results: SearchResponse) => ({
+  all:
+    results.entities.length +
+    results.projects.length +
+    results.files.length +
+    results.schemas.length,
+  entities: results.entities.length,
+  projects: results.projects.length,
+  files: results.files.length,
+  schemas: results.schemas.length
+});
+
+export const findSearchPreview = (
+  selected: RowId | null,
+  results: SearchResponse
+): SearchPreview | null => {
+  if (!selected) return null;
+  if (selected.kind === 'entity') {
+    const data = results.entities.find(entity => entity.entityId === selected.id);
+    return data ? { type: 'entity', data } : null;
+  }
+  if (selected.kind === 'project') {
+    const data = results.projects.find(project => project.id === selected.id);
+    return data ? { type: 'project', data } : null;
+  }
+  if (selected.kind === 'file') {
+    const data = results.files.find(file => file.fileId === selected.id);
+    return data ? { type: 'file', data } : null;
+  }
+  if (selected.kind === 'schema') {
+    const data = results.schemas.find(schema => schema.schemaId === selected.id);
+    return data ? { type: 'schema', data } : null;
+  }
+  return null;
 };
 
 export const snippetAround = (text: string | null | undefined, q: string, max = 140) => {

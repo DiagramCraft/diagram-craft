@@ -14,8 +14,8 @@ import {
   buildRelationFieldOptions,
   DEFAULT_EXPLORE_CONFIG,
   normalizeExploreConfig,
-  type ExploreConnector
 } from './ExploreView.helpers';
+import { connectorDistance, type ExploreConnectorLine } from './exploreGeometry';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
@@ -27,12 +27,7 @@ type ExploreViewProps = EntityBrowserRowViewProps & {
   displayFields: EntityDisplayField[];
 };
 
-type ConnectorLine = ExploreConnector & {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-};
+type ConnectorLine = ExploreConnectorLine;
 
 type ConnectorTooltip = {
   fromEntityName: string;
@@ -41,59 +36,6 @@ type ConnectorTooltip = {
   x: number;
   y: number;
 } | null;
-
-const pointToSegmentDistance = (
-  px: number,
-  py: number,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number
-) => {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  if (dx === 0 && dy === 0) return Math.hypot(px - x1, py - y1);
-
-  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)));
-  const cx = x1 + t * dx;
-  const cy = y1 + t * dy;
-  return Math.hypot(px - cx, py - cy);
-};
-
-const cubicPoint = (
-  t: number,
-  x1: number,
-  y1: number,
-  cx1: number,
-  cy1: number,
-  cx2: number,
-  cy2: number,
-  x2: number,
-  y2: number
-) => {
-  const mt = 1 - t;
-  const x = mt * mt * mt * x1 + 3 * mt * mt * t * cx1 + 3 * mt * t * t * cx2 + t * t * t * x2;
-  const y = mt * mt * mt * y1 + 3 * mt * mt * t * cy1 + 3 * mt * t * t * cy2 + t * t * t * y2;
-  return { x, y };
-};
-
-const connectorDistance = (line: ConnectorLine, px: number, py: number) => {
-  const cx = line.x1 + (line.x2 - line.x1) / 2;
-  let minDistance = Number.POSITIVE_INFINITY;
-  let prev = { x: line.x1, y: line.y1 };
-
-  for (let i = 1; i <= 24; i++) {
-    const t = i / 24;
-    const next = cubicPoint(t, line.x1, line.y1, cx, line.y1, cx, line.y2, line.x2, line.y2);
-    minDistance = Math.min(
-      minDistance,
-      pointToSegmentDistance(px, py, prev.x, prev.y, next.x, next.y)
-    );
-    prev = next;
-  }
-
-  return minDistance;
-};
 
 export const ExploreView = ({
   rows,
