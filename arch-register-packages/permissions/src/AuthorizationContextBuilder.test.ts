@@ -1,19 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildAuthorizationContext,
+  buildWorkspaceAuthorizationContext,
   fetchAuthorizationContextData
 } from './AuthorizationContextBuilder.js';
 import type {
   PermissionDataProvider,
   AuthorizationContextData
 } from './AuthorizationContextBuilder.js';
-import type {
-  Entity,
-  EntitySchema,
-  EntityGrant,
-  GlobalRole,
-  WorkspaceTeam
-} from './types.js';
+import type { Entity, EntitySchema, EntityGrant, GlobalRole, WorkspaceTeam } from './types.js';
 
 const makeTeamAssignments = (teamIds: string[]) =>
   teamIds.map(teamId => ({ teamId, role: 'team_admin' as const }));
@@ -22,6 +17,24 @@ const makeTeams = (teamIds: string[]): WorkspaceTeam[] =>
   teamIds.map(teamId => ({ id: teamId, name: teamId, type: 'team' as const }));
 
 describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
+  it('builds a workspace context without entity authorization data', () => {
+    const context = buildWorkspaceAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: ['workspace_admin'],
+      workspaceRole: 'editor',
+      teamAssignments: makeTeamAssignments(['team-1']),
+      teams: makeTeams(['team-1'])
+    });
+
+    expect(context.userId).toBe('user-1');
+    expect(context.globalPermissions.has('create_workspaces')).toBe(true);
+    expect(context.workspaceRole).toBe('editor');
+    expect(context.teamIds).toEqual(new Set(['team-1']));
+    expect(context).not.toHaveProperty('schemas');
+    expect(context).not.toHaveProperty('entities');
+    expect(context).not.toHaveProperty('grants');
+  });
+
   it('builds context with all required fields', () => {
     const data: AuthorizationContextData = {
       userId: 'user-1',
