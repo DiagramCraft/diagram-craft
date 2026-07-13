@@ -27,6 +27,7 @@ const config: StorybookConfig = {
       ...config,
       resolve: {
         ...config.resolve,
+        dedupe: [...(config.resolve?.dedupe ?? []), '@platejs/core'],
         alias: {
           ...config.resolve?.alias
         }

@@ -155,6 +155,8 @@ const renderNode = (node: ASTNode, key: string, options: RenderOptions): ReactNo
       return [<em key={key}>{rendered()}</em>];
     case 'strong':
       return [<strong key={key}>{rendered()}</strong>];
+    case 'strikethrough':
+      return [<del key={key}>{rendered()}</del>];
     case 'blockquote':
       return [<blockquote key={key}>{rendered()}</blockquote>];
     case 'line-break':

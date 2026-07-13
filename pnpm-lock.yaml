@@ -320,6 +320,9 @@ importers:
       '@orpc/openapi-client':
         specifier: ^1.14.5
         version: 1.14.5
+      '@platejs/core':
+        specifier: ^53.2.1
+        version: 53.2.1(@types/react@19.2.17)(immer@11.1.9)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@platejs/dnd':
         specifier: ^53.1.0
         version: 53.1.0(platejs@53.2.1(@types/react@19.2.17)(immer@11.1.9)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/node@24.12.4)(@types/react@19.2.17)(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -13895,38 +13898,6 @@ snapshots:
       react-compiler-runtime: 1.0.0(react@19.2.7)
       react-dom: 19.2.7(react@19.2.7)
 
-  '@platejs/core@53.2.1(@types/react@19.2.17)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7))':
-    dependencies:
-      '@platejs/slate': 53.0.7
-      '@udecode/react-hotkeys': 52.0.11(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@udecode/react-utils': 52.3.4(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@udecode/utils': 52.3.4
-      clsx: 2.1.1
-      html-entities: 2.6.0
-      is-hotkey: 0.2.0
-      jotai: 2.8.4(@types/react@19.2.17)(react@19.2.7)
-      jotai-optics: 0.4.0(jotai@2.8.4(@types/react@19.2.17)(react@19.2.7))(optics-ts@2.4.1)
-      jotai-x: 2.3.4(@types/react@19.2.17)(jotai@2.8.4(@types/react@19.2.17)(react@19.2.7))(react@19.2.7)
-      lodash: 4.18.1
-      nanoid: 3.3.12
-      optics-ts: 2.4.1
-      react: 19.2.7
-      react-compiler-runtime: 1.0.0(react@19.2.7)
-      react-dom: 19.2.7(react@19.2.7)
-      slate: 0.124.1
-      slate-dom: 0.124.1(slate@0.124.1)
-      slate-hyperscript: 0.125.0(slate@0.124.1)
-      slate-react: 0.124.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(slate-dom@0.124.1(slate@0.124.1))(slate@0.124.1)
-      use-deep-compare: 1.3.0(react@19.2.7)
-      zustand: 5.0.14(@types/react@19.2.17)(immer@10.2.0)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
-      zustand-x: 6.2.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(zustand@5.0.14(@types/react@19.2.17)(immer@10.2.0)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7)))
-    transitivePeerDependencies:
-      - '@types/react'
-      - immer
-      - react-native
-      - scheduler
-      - use-sync-external-store
-
   '@platejs/core@53.2.1(@types/react@19.2.17)(immer@11.1.9)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7))':
     dependencies:
       '@platejs/slate': 53.0.7
@@ -13951,7 +13922,7 @@ snapshots:
       slate-react: 0.124.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(slate-dom@0.124.1(slate@0.124.1))(slate@0.124.1)
       use-deep-compare: 1.3.0(react@19.2.7)
       zustand: 5.0.14(@types/react@19.2.17)(immer@11.1.9)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
-      zustand-x: 6.2.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(zustand@5.0.14(@types/react@19.2.17)(immer@10.2.0)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7)))
+      zustand-x: 6.2.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(zustand@5.0.14(@types/react@19.2.17)(immer@11.1.9)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7)))
     transitivePeerDependencies:
       - '@types/react'
       - immer
@@ -19505,7 +19476,7 @@ snapshots:
 
   platejs@53.2.1(@types/react@19.2.17)(immer@11.1.9)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)):
     dependencies:
-      '@platejs/core': 53.2.1(@types/react@19.2.17)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7))
+      '@platejs/core': 53.2.1(@types/react@19.2.17)(immer@11.1.9)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@platejs/slate': 53.0.7
       '@platejs/utils': 53.2.1(@types/react@19.2.17)(immer@11.1.9)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@udecode/react-hotkeys': 52.0.11(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -22373,26 +22344,19 @@ snapshots:
 
   zod@4.4.3: {}
 
-  zustand-x@6.2.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(zustand@5.0.14(@types/react@19.2.17)(immer@10.2.0)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))):
+  zustand-x@6.2.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(zustand@5.0.14(@types/react@19.2.17)(immer@11.1.9)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))):
     dependencies:
       immer: 10.2.0
       lodash.mapvalues: 4.6.0
       mutative: 1.1.0
       react-tracked: 1.7.14(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)
       use-sync-external-store: 1.4.0(react@19.2.7)
-      zustand: 5.0.14(@types/react@19.2.17)(immer@10.2.0)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
+      zustand: 5.0.14(@types/react@19.2.17)(immer@11.1.9)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
     transitivePeerDependencies:
       - react
       - react-dom
       - react-native
       - scheduler
-
-  zustand@5.0.14(@types/react@19.2.17)(immer@10.2.0)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7)):
-    optionalDependencies:
-      '@types/react': 19.2.17
-      immer: 10.2.0
-      react: 19.2.7
-      use-sync-external-store: 1.6.0(react@19.2.7)
 
   zustand@5.0.14(@types/react@19.2.17)(immer@11.1.9)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7)):
     optionalDependencies:

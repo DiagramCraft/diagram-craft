@@ -1,5 +1,20 @@
-import { type ASTNode, type BlockParser, type Parser } from './parser';
+import {
+  type ASTNode,
+  type BlockParser,
+  InlineParser,
+  type Parser,
+  type ParserState
+} from './parser';
 import type { TokenStream } from './token-stream';
+
+export class InlineStrikethroughHandler extends InlineParser {
+  parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
+    return this.applyInlineRegExp(parser, parserState, s, /~~(?=\S)([\s\S]*?\S)~~/g, match => ({
+      type: 'strikethrough',
+      children: parser.parseInlines(match[1]!, parserState, ['strikethrough'])
+    }));
+  }
+}
 
 const parseTableCells = (line: string): string[] => {
   const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '');

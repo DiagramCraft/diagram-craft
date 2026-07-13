@@ -53,6 +53,10 @@ interface StrongASTNode extends BaseASTNode {
   type: 'strong';
 }
 
+interface StrikethroughASTNode extends BaseASTNode {
+  type: 'strikethrough';
+}
+
 interface SmallASTNode extends BaseASTNode {
   type: 'small';
 }
@@ -121,6 +125,7 @@ export type ASTNode =
   | BlockquoteASTNode
   | EmphasisASTNode
   | StrongASTNode
+  | StrikethroughASTNode
   | SmallASTNode
   | LineBreakASTNode
   | HRASTNode

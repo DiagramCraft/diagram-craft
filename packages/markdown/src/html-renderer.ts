@@ -26,7 +26,7 @@ export class HTMLRenderer {
     for (let i = 0; i < renderedChildren.length; i++) {
       const rendered = renderedChildren[i]!;
 
-      if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|code)/)) {
+      if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|del|code)/)) {
         isText = true;
       }
 
@@ -134,6 +134,9 @@ export class HTMLRenderer {
 
       case 'strong':
         return this.makeTag('strong', this.processNodeArray(astNode.children ?? []));
+
+      case 'strikethrough':
+        return this.makeTag('del', this.processNodeArray(astNode.children ?? []));
 
       case 'small':
         return this.makeTag('small', this.processNodeArray(astNode.children ?? []));

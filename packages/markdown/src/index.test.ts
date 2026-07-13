@@ -91,6 +91,15 @@ describe('Markdown Parser', () => {
     expect(html).toContain('<strong>bold</strong>');
   });
 
+  test('parses multiple emphasis styles in one paragraph', () => {
+    const markdown =
+      'Plain text, **bold text**, *italic text*, ***bold italic text***, and ~~strikethrough text~~.';
+
+    expect(markdownToHTML(markdown, 'gfm')).toBe(
+      '<p>Plain text, <strong>bold text</strong>, <em>italic text</em>, <em><strong>bold italic text</strong></em>, and <del>strikethrough text</del>.</p>'
+    );
+  });
+
   test('should handle small text with extended parser', () => {
     const html = markdownToHTML('-# small text', 'extended');
     expect(html).toContain('<small>small text</small>');
