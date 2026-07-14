@@ -4,7 +4,7 @@ import { defaultWorkspace } from '../support/workspaces';
 const extractModule = '**/src/sections/ai-extract/ExtractScreen.tsx*';
 
 test.describe('lazy workspace routes', () => {
-  test('opens lazy feature routes directly', async ({ page }) => {
+  test('opens lazy feature routes directly @quick', async ({ page }) => {
     await page.goto(`/${defaultWorkspace.slug}/content`);
     await expect(page.getByPlaceholder('Filter diagrams…')).toBeVisible();
 

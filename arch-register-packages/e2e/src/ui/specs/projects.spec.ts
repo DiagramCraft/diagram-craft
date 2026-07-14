@@ -9,7 +9,7 @@ import {
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('projects section', () => {
-  test('opens the projects section without pre-selecting a project from the workspace rail', async ({
+  test('opens the projects section without pre-selecting a project from the workspace rail @quick', async ({
     page
   }) => {
     const homePage = new HomePage(page, defaultWorkspace.slug);
@@ -53,7 +53,7 @@ test.describe('projects section', () => {
     );
   });
 
-  test('switches between active projects from the sidebar', async ({ page }) => {
+  test('switches between active projects from the sidebar @quick', async ({ page }) => {
     const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
 
     await projectsPage.gotoProject(portalRedesignProject.id);
@@ -64,7 +64,7 @@ test.describe('projects section', () => {
     await projectsPage.openProjectFromSidebar(portalRedesignProject.name);
   });
 
-  test('switches to entities from the secondary sidebar', async ({ page }) => {
+  test('switches to entities from the secondary sidebar @quick', async ({ page }) => {
     const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
 
     await projectsPage.gotoProject(authMigrationProject.id);

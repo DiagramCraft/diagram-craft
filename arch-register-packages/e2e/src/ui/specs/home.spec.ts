@@ -5,7 +5,7 @@ import { authMigrationProject } from '../support/projects';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('home section', () => {
-  test('shows workspace overview', async ({ page }) => {
+  test('shows workspace overview @quick', async ({ page }) => {
     const homePage = new HomePage(page, defaultWorkspace.slug);
 
     await homePage.goto();
@@ -28,7 +28,7 @@ test.describe('home section', () => {
     await homePage.openNewEntityDialog();
   });
 
-  test('opens a project from the home page project list', async ({ page }) => {
+  test('opens a project from the home page project list @quick', async ({ page }) => {
     const homePage = new HomePage(page, defaultWorkspace.slug);
     const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
 

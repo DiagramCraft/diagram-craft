@@ -4,7 +4,7 @@ import { secondWorkspace } from '../support/workspaces';
 
 // This suite intentionally mutates seeded notification/watch state in the reserved second workspace.
 test.describe.serial('topbar notifications', () => {
-  test('notification bell shows 4 unread', async ({ page }) => {
+  test('notification bell shows 4 unread @quick', async ({ page }) => {
     const homePage = new HomePage(page, secondWorkspace.slug);
 
     await homePage.goto();
@@ -12,7 +12,7 @@ test.describe.serial('topbar notifications', () => {
     await homePage.workspaceShell.topBar.expectUnreadNotificationCount(4);
   });
 
-  test('notification popup shows 4 items', async ({ page }) => {
+  test('notification popup shows 4 items @quick', async ({ page }) => {
     const homePage = new HomePage(page, secondWorkspace.slug);
 
     await homePage.goto();
