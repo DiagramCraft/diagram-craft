@@ -38,6 +38,30 @@ test.describe('entities section', () => {
     await entitiesPage.startEditingEntity();
   });
 
+  test('shows the entity browser in table view', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.switchView('table');
+    await expect(page).toHaveURL(/viewMode=table/);
+    await entitiesPage.expectLoaded();
+  });
+
+  test('shows the entity browser in cards view', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.switchView('cards');
+    await expect(page).toHaveURL(/viewMode=cards/);
+    await entitiesPage.expectLoaded();
+  });
+
+  test('shows the entity browser in tree view', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.switchView('tree');
+    await expect(page).toHaveURL(/viewMode=tree/);
+    await entitiesPage.expectLoaded();
+  });
+
   test('restores entity tabs through reload and browser history', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
