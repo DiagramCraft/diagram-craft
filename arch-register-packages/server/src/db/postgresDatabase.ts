@@ -15,10 +15,12 @@ import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
 import { PostgresDiscussionDatabase } from '../domain/discussion/db/postgresDiscussion';
+import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
+const logger = createLogger('postgres');
 
 export class PostgresDatabase implements DatabaseAdapter {
   private readonly sql: PostgresSqlClient;
@@ -68,10 +70,15 @@ export class PostgresDatabase implements DatabaseAdapter {
       connect_timeout: SERVER_DEFAULTS.DB_CONNECT_TIMEOUT,
       ...(schema ? { connection: { search_path: schema } } : {}),
       onnotice: notice => {
-        if (notice.code === '42710' && notice.message === PGCRYPTO_EXISTS_NOTICE) {
+        const message = notice.message ?? '';
+        if (
+          (notice.code === '42710' && message === PGCRYPTO_EXISTS_NOTICE) ||
+          message.endsWith(' does not exist, skipping') ||
+          message.startsWith('drop cascades to ')
+        ) {
           return;
         }
-        console.log(notice);
+        logger.info(message || 'PostgreSQL notice', notice);
       }
     });
 

@@ -167,10 +167,6 @@ const seedBootstrapUsers = async (db: Database) => {
       member.created_at
     );
   }
-
-  console.log(
-    `  Created ${seedLocalUsers.length} test users with seeded team assignments, workspace roles and global roles (password: ${seededTestPassword})`
-  );
 };
 
 const seedBootstrapWatchesAndNotifications = async (db: Database) => {
@@ -203,10 +199,6 @@ const seedBootstrapWatchesAndNotifications = async (db: Database) => {
       changedByDisplayName: event.changed_by_display_name
     });
   }
-
-  console.log(
-    `  Seeded ${seedUserWatches.length} watches and ${seedNotificationEvents.length} notifications for demo users`
-  );
 };
 
 export const seedBootstrapData = async (db: Database, storage: StorageAdapter) => {

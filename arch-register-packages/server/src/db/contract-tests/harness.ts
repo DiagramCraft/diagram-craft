@@ -5,6 +5,9 @@ import {
   provisionSqliteDatabase,
   type ProvisionedDatabase
 } from '../testSupport/provisionDatabase';
+import { setLogLevel } from '../../utils/logger';
+
+setLogLevel('error');
 
 type ContractSuite = (getDb: () => DatabaseAdapter, driver: DbDriver) => void;
 
