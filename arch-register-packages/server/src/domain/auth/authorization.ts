@@ -201,6 +201,20 @@ export const buildApiAuthCtx = async (
     message: 'Authentication required'
   });
 
+  const apiToken = event.context.apiToken;
+  if (apiToken) {
+    httpAssert.true(workspace !== GLOBAL_WS, {
+      status: 403,
+      statusText: 'Forbidden',
+      message: 'API tokens cannot access global operations'
+    });
+    httpAssert.true(apiToken.workspace === workspace, {
+      status: 403,
+      statusText: 'Forbidden',
+      message: 'API token is not valid for this workspace'
+    });
+  }
+
   const cache = (event.context.authorizationContextCache ??= new Map<
     string,
     Promise<AuthorizationContext>
@@ -224,6 +238,14 @@ export const buildApiAuthCtx = async (
     }
 
     const contextData = await fetchAuthorizationContextData(dataProvider, workspace, userId);
+    if (apiToken) {
+      return buildAuthorizationContext({
+        ...contextData,
+        // API tokens are workspace-scoped and the ceiling limits every
+        // permission source, including workspace roles, team roles, and grants.
+        workspaceCapabilityCeiling: apiToken.capabilities
+      });
+    }
     return buildAuthorizationContext(contextData);
   })();
 

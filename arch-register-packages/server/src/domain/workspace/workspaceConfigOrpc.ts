@@ -24,6 +24,11 @@ import {
   replaceProjectEntityTypes
 } from './workspaceConfigOperations';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
+import {
+  createApiToken,
+  listApiTokens,
+  revokeApiToken
+} from '../auth/apiTokenOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -118,6 +123,20 @@ export const workspaceConfigORPCRouter = configRouter.router({
       list: configRouter.config.users.list.handler(async ({ input, context }) => {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         return await listUsers(context.db, workspace, context.event);
+      })
+    },
+    tokens: {
+      list: configRouter.config.tokens.list.handler(async ({ input, context }) => {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await listApiTokens(context.db, workspace, context.event);
+      }),
+      create: configRouter.config.tokens.create.handler(async ({ input, context }) => {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await createApiToken(context.db, workspace, input.body, context.event);
+      }),
+      revoke: configRouter.config.tokens.revoke.handler(async ({ input, context }) => {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await revokeApiToken(context.db, workspace, input.params.id, context.event);
       })
     },
     projectEntityTypes: {

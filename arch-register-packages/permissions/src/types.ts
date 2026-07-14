@@ -138,6 +138,7 @@ export type WorkspaceAuthorizationContext = {
   teamAssignments: TeamAssignment[];
   teamRolesByTeam: Map<string, Set<TeamRole>>;
   teams: WorkspaceTeam[];
+  workspaceCapabilityCeiling?: Set<WorkspaceCapability>;
 };
 
 export type AuthorizationContext = WorkspaceAuthorizationContext & {

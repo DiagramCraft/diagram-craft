@@ -162,6 +162,64 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
     });
   });
 
+  describe('API tokens', () => {
+    it('creates, finds, lists, updates, and deletes workspace tokens', async () => {
+      const db = getDb();
+      const user = await createFixtureUser(db);
+      const now = new Date();
+      const workspace = await db.workspace.createWorkspace({
+        id: randomUUID(),
+        name: `Token workspace ${randomUUID()}`,
+        url_slug: `token-workspace-${randomUUID()}`,
+        short_code: 'TOK',
+        color: '',
+        description: '',
+        created_at: now,
+        updated_at: now
+      });
+
+      const created = await db.auth.createApiToken({
+        id: randomUUID(),
+        workspace: workspace.id,
+        name: 'Release pipeline',
+        token_hash: 'hash-1',
+        capabilities: ['ent.edit', 'content.view'],
+        created_by: user.id,
+        created_at: now,
+        last_used_at: null,
+        expires_at: new Date(now.getTime() + 60_000)
+      });
+
+      expect(created.capabilities).toEqual(['ent.edit', 'content.view']);
+      expect(await db.auth.getApiTokenByHash('hash-1')).toMatchObject({ id: created.id });
+      expect(await db.auth.listApiTokens(workspace.id)).toEqual([created]);
+      expect(await db.auth.countApiTokens(workspace.id, user.id)).toBe(1);
+      expect(await db.auth.listApiTokensByCreator(user.id)).toEqual([created]);
+
+      const audit = await db.auth.createApiTokenAudit({
+        id: randomUUID(),
+        workspace: workspace.id,
+        token_id: created.id,
+        user_id: user.id,
+        event: 'created',
+        created_at: now,
+        metadata: { name: created.name }
+      });
+      expect(await db.auth.listApiTokenAudit(workspace.id)).toEqual([audit]);
+
+      const lastUsed = new Date(now.getTime() + 10_000);
+      await db.auth.updateApiTokenLastUsed(created.id, lastUsed);
+      expect((await db.auth.getApiTokenByHash('hash-1'))?.last_used_at).toEqual(lastUsed);
+
+      expect(await db.auth.deleteApiToken(workspace.id, created.id)).toMatchObject({
+        id: created.id
+      });
+      expect(await db.auth.getApiTokenByHash('hash-1')).toBeNull();
+      expect(await db.auth.deleteApiToken(workspace.id, created.id)).toBeNull();
+      expect(await db.auth.deleteApiTokenByCreator(user.id, created.id)).toBeNull();
+    });
+  });
+
   describe('oidc auth state', () => {
     it('stores, reads and deletes auth state', async () => {
       const db = getDb();

@@ -56,7 +56,12 @@ const AccountSettingsRedirect = () => {
   const ctx = useWorkspaceContext();
 
   useEffect(() => {
-    const target = search.section === 'appearance' ? 'appearance' : 'profile';
+    const target =
+      search.section === 'api-tokens'
+        ? 'api-tokens'
+        : search.section === 'appearance'
+          ? 'appearance'
+          : 'profile';
     navigate({
       to: '/$workspaceSlug/account/$section',
       params: { workspaceSlug: ctx.workspaceSlug, section: target },

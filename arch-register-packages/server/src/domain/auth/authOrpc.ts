@@ -23,6 +23,11 @@ import { resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
 import type { TeamRole } from '@arch-register/permissions';
 import type { UserDbResult } from './db/authDatabase';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
+import {
+  createUserApiToken,
+  listUserApiTokens,
+  revokeUserApiToken
+} from './apiTokenOperations';
 
 const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
 
@@ -150,6 +155,13 @@ type ProtectedORPCContext = {
   event: AuthenticatedEvent;
 };
 
+const requireInteractiveSession = (event: AuthenticatedEvent) => {
+  orpcAssert.true(!event.context.apiToken, {
+    code: 'FORBIDDEN',
+    message: 'API tokens cannot access user account operations'
+  });
+};
+
 const protectedRouter = implement(authProtectedContract)
   .$context<ProtectedORPCContext>()
   .use(orpcErrorMiddleware);
@@ -157,6 +169,7 @@ const protectedRouter = implement(authProtectedContract)
 export const authProtectedORPCRouter = protectedRouter.router({
   authProtected: {
     me: protectedRouter.authProtected.me.handler(async ({ context }) => {
+      requireInteractiveSession(context.event);
       const user = context.event.context.user as UserDbResult;
       const [roleAssignments, workspaces] = await Promise.all([
         context.db.auth.listGlobalRoleAssignments(user.id),
@@ -188,6 +201,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
     }),
 
     updateUser: protectedRouter.authProtected.updateUser.handler(async ({ input, context }) => {
+      requireInteractiveSession(context.event);
       const authenticatedUser = context.event.context.user as UserDbResult;
       if (input.params.id !== authenticatedUser.id) {
         throw new ORPCError('FORBIDDEN', {
@@ -214,6 +228,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
     }),
 
     listUsers: protectedRouter.authProtected.listUsers.handler(async ({ context }) => {
+      requireInteractiveSession(context.event);
       const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
       requireGlobalPermission(authCtx, 'admin_platform');
       return (await context.db.auth.listUsers()).map(user => ({
@@ -229,6 +244,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
 
     getGlobalRoles: protectedRouter.authProtected.getGlobalRoles.handler(
       async ({ input, context }) => {
+        requireInteractiveSession(context.event);
         const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
         requireGlobalPermission(authCtx, 'manage_workspace_roles');
         const assignments = await context.db.auth.listGlobalRoleAssignments(input.params.id);
@@ -242,6 +258,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
 
     replaceGlobalRoles: protectedRouter.authProtected.replaceGlobalRoles.handler(
       async ({ input, context }) => {
+        requireInteractiveSession(context.event);
         const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
         requireGlobalPermission(authCtx, 'manage_workspace_roles');
         const roles = parseRequestedGlobalRoles(input.body.roles);
@@ -256,7 +273,22 @@ export const authProtectedORPCRouter = protectedRouter.router({
           created_at: a.created_at instanceof Date ? a.created_at.toISOString() : a.created_at
         }));
       }
-    )
+    ),
+
+    apiTokens: {
+      list: protectedRouter.authProtected.apiTokens.list.handler(async ({ context }) => {
+        requireInteractiveSession(context.event);
+        return listUserApiTokens(context.db, context.event);
+      }),
+      create: protectedRouter.authProtected.apiTokens.create.handler(async ({ input, context }) => {
+        requireInteractiveSession(context.event);
+        return createUserApiToken(context.db, input.body, context.event);
+      }),
+      revoke: protectedRouter.authProtected.apiTokens.revoke.handler(async ({ input, context }) => {
+        requireInteractiveSession(context.event);
+        return revokeUserApiToken(context.db, input.params.id, context.event);
+      })
+    }
   }
 });
 

@@ -147,9 +147,16 @@ const buildDefaultWorkspaceTeams = (workspace: string, createdAt: Date) => [
 const normalizeInclude = (include: string[] | undefined): Set<string> =>
   new Set<string>(include ?? ['schemas', 'settings']);
 
-export const listWorkspaces = async (db: DatabaseAdapter): Promise<Workspace[]> => {
+export const listWorkspaces = async (
+  db: DatabaseAdapter,
+  event?: AuthenticatedEvent
+): Promise<Workspace[]> => {
   try {
-    const workspaces = await db.workspace.listWorkspaces();
+    const workspaces = event?.context.apiToken
+      ? await db.workspace.getWorkspace(event.context.apiToken.workspace).then(workspace =>
+          workspace ? [workspace] : []
+        )
+      : await db.workspace.listWorkspaces();
     return workspaces.map(toApiWorkspace);
   } catch (e) {
     return handleDbError(e, 'Failed to retrieve workspaces', {

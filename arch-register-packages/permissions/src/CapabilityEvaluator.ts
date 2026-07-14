@@ -39,6 +39,13 @@ export class CapabilityEvaluator {
       return false;
     }
 
+    if (
+      context.workspaceCapabilityCeiling &&
+      !context.workspaceCapabilityCeiling.has('proj.create')
+    ) {
+      return false;
+    }
+
     const teamRoles = context.teamRolesByTeam.get(ownerTeamId);
     if (!teamRoles) {
       return false;
@@ -64,6 +71,13 @@ export class CapabilityEvaluator {
     }
 
     if (ownerTeamId == null) {
+      return false;
+    }
+
+    if (
+      context.workspaceCapabilityCeiling &&
+      !context.workspaceCapabilityCeiling.has('ent.edit')
+    ) {
       return false;
     }
 

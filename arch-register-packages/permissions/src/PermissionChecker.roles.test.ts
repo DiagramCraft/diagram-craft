@@ -111,6 +111,57 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
     }
   });
 
+  it('applies a token capability ceiling before global-admin shortcuts', () => {
+    const context = buildAuthorizationContext({
+      userId: 'token-owner',
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['ent.edit'],
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(checker.hasWorkspaceCapability(context, 'ent.edit')).toBe(true);
+    expect(checker.hasWorkspaceCapability(context, 'ws.settings')).toBe(false);
+    expect(checker.hasGlobalPermission(context, 'admin_platform')).toBe(false);
+  });
+
+  it('applies a token capability ceiling to team and entity-grant permissions', () => {
+    const entity = createEntity('token-entity', 'team-1');
+    const context = buildAuthorizationContext({
+      userId: 'token-owner',
+      globalRoles: [],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['content.view'],
+      teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
+      teams: [],
+      schemas: [],
+      entities: [entity],
+      grants: [
+        {
+          id: 'token-grant',
+          workspace: 'workspace-1',
+          entity_id: entity.id,
+          principal_type: 'user',
+          principal_id: 'token-owner',
+          role: 'entity_admin',
+          applies_to: 'self',
+          created_at: new Date()
+        }
+      ]
+    });
+
+    expect(checker.hasEntityPermission(context, entity, 'view_entity')).toBe(true);
+    expect(checker.hasEntityPermission(context, entity, 'edit_entity')).toBe(false);
+    expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(false);
+    expect(checker.hasEntityPermission(context, entity, 'admin_entity')).toBe(false);
+    expect(checker.hasProjectPermission(context, 'team-1', 'edit_project')).toBe(false);
+    expect(checker.hasProjectPermission(context, 'team-1', 'delete_project')).toBe(false);
+  });
+
   it('user with no workspace role and no global role has no capabilities', () => {
     const context = buildAuthorizationContext({
       userId: 'nobody',
