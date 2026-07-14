@@ -1,6 +1,11 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { teamRoleSchema, workspaceCapabilitySchema, UUID_REGEX } from '@arch-register/api-types/common';
+import {
+  apiTokenCreateSchema,
+  apiTokenCreatedSchema,
+  apiTokenSchema
+} from '@arch-register/api-types/apiTokenContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -73,6 +78,10 @@ const globalRoleAssignmentSchema = z.object({
   user_id: z.string().describe('User identifier'),
   role: globalRoleSchema.describe('Assigned global role'),
   created_at: z.string().optional().describe('ISO 8601 assignment timestamp')
+});
+
+const accountApiTokenCreateSchema = apiTokenCreateSchema.extend({
+  workspace: z.string().describe('Workspace slug where the token will be valid')
 });
 
 // ── Public contract (no auth required) ───────────────────────
@@ -217,6 +226,39 @@ export const authProtectedContract = oc
             body: z.object({ roles: z.array(globalRoleSchema).describe('Complete list of global roles to assign') })
           })
         )
-        .output(z.array(globalRoleAssignmentSchema))
+        .output(z.array(globalRoleAssignmentSchema)),
+      apiTokens: {
+        list: oc
+          .route({
+            method: 'GET',
+            path: '/auth/api-tokens',
+            summary: 'List current user API tokens',
+            description: 'Lists API tokens created by the current user across workspaces.',
+            tags: ['Auth']
+          })
+          .output(z.array(apiTokenSchema)),
+        create: oc
+          .route({
+            method: 'POST',
+            path: '/auth/api-tokens',
+            inputStructure: 'detailed',
+            summary: 'Create current user API token',
+            description: 'Creates a workspace-scoped API token for the current user.',
+            tags: ['Auth']
+          })
+          .input(z.object({ body: accountApiTokenCreateSchema }))
+          .output(apiTokenCreatedSchema),
+        revoke: oc
+          .route({
+            method: 'DELETE',
+            path: '/auth/api-tokens/{id}',
+            inputStructure: 'detailed',
+            summary: 'Revoke current user API token',
+            description: 'Revokes an API token created by the current user.',
+            tags: ['Auth']
+          })
+          .input(z.object({ params: z.object({ id: z.string().regex(UUID_REGEX) }) }))
+          .output(apiTokenSchema)
+      }
     }
   });

@@ -8,7 +8,8 @@ import type {
   WorkspaceAuthorizationContext,
   WorkspaceTeam,
   WorkspaceRole,
-  WorkspaceRoleDefinition
+  WorkspaceRoleDefinition,
+  WorkspaceCapability
 } from './types.js';
 import { getGlobalPermissionsForRoles, resolveWorkspaceRoleDefinitions } from './constants.js';
 
@@ -65,6 +66,7 @@ export type WorkspaceAuthorizationContextData = {
   workspaceRoles?: WorkspaceRoleDefinition[];
   teamAssignments?: TeamAssignment[];
   teams?: WorkspaceTeam[];
+  workspaceCapabilityCeiling?: WorkspaceCapability[];
 };
 
 export type AuthorizationContextData = WorkspaceAuthorizationContextData & {
@@ -79,7 +81,8 @@ export const buildWorkspaceAuthorizationContext = ({
   workspaceRole,
   workspaceRoles,
   teamAssignments,
-  teams
+  teams,
+  workspaceCapabilityCeiling
 }: WorkspaceAuthorizationContextData): WorkspaceAuthorizationContext => {
   const normalizedTeams = teams ?? [];
   const normalizedWorkspaceRoles = resolveWorkspaceRoleDefinitions(workspaceRoles ?? []);
@@ -102,7 +105,10 @@ export const buildWorkspaceAuthorizationContext = ({
     teamIds: new Set(normalizedAssignments.map(assignment => assignment.teamId)),
     teamAssignments: normalizedAssignments,
     teamRolesByTeam,
-    teams: normalizedTeams
+    teams: normalizedTeams,
+    ...(workspaceCapabilityCeiling
+      ? { workspaceCapabilityCeiling: new Set(workspaceCapabilityCeiling) }
+      : {})
   };
 };
 

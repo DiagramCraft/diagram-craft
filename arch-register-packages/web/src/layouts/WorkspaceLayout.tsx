@@ -108,7 +108,13 @@ export const WorkspaceLayout = () => {
       ...(canManageWorkspaces ? ['ai'] : []),
       ...(canViewAudit ? ['analytics', 'audit'] : [])
     ],
-    [canManageWorkspaces, canManageTeams, canViewSchemas, canManageMembers, canViewAudit]
+    [
+      canManageWorkspaces,
+      canManageTeams,
+      canViewSchemas,
+      canManageMembers,
+      canViewAudit
+    ]
   );
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;

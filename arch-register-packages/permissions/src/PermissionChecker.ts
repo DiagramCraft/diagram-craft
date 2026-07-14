@@ -68,7 +68,10 @@ export class PermissionChecker {
     action: ProjectAction
   ): boolean {
     if (context.globalPermissions.has('admin_platform')) {
-      return true;
+      if (!context.workspaceCapabilityCeiling) return true;
+      return action === 'delete_project'
+        ? context.workspaceCapabilityCeiling.has('proj.delete')
+        : context.workspaceCapabilityCeiling.has('proj.edit');
     }
 
     if (action === 'delete_project') {
@@ -81,7 +84,10 @@ export class PermissionChecker {
 
     if (ownerTeamId != null) {
       for (const role of this.getTeamRoles(context, ownerTeamId)) {
-        if (TEAM_ROLE_PERMISSIONS[role].projectActions.includes(action)) {
+        if (
+          this.isProjectActionAllowedByCeiling(context, action) &&
+          TEAM_ROLE_PERMISSIONS[role].projectActions.includes(action)
+        ) {
           return true;
         }
       }
@@ -99,8 +105,12 @@ export class PermissionChecker {
     context: WorkspaceAuthorizationContext,
     capability: WorkspaceCapability
   ): boolean {
+    if (context.workspaceCapabilityCeiling && !context.workspaceCapabilityCeiling.has(capability)) {
+      return false;
+    }
+
     if (context.globalPermissions.has('admin_platform')) {
-      return true;
+      return !context.workspaceCapabilityCeiling || context.workspaceCapabilityCeiling.has(capability);
     }
 
     if (context.workspaceRole == null) {
@@ -126,7 +136,7 @@ export class PermissionChecker {
     context: WorkspaceAuthorizationContext,
     permission: GlobalPermission
   ): boolean {
-    return (
+    return !context.workspaceCapabilityCeiling && (
       context.globalPermissions.has(permission) || context.globalPermissions.has('admin_platform')
     );
   }
@@ -145,17 +155,20 @@ export class PermissionChecker {
     const actions = new Set<EntityAction>();
 
     // Global admins get all entity actions
-    if (context.globalPermissions.has('admin_platform')) {
+    if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
       ROLE_ACTIONS['entity_admin'].forEach(action => actions.add(action));
     }
 
     // Workspace role grants entity actions
-    if (context.workspaceRole != null) {
+    if (context.workspaceRole != null || context.globalPermissions.has('admin_platform')) {
       if (this.hasWorkspaceCapability(context, 'ent.edit')) {
         ROLE_ACTIONS['contributor'].forEach(action => actions.add(action));
       } else if (this.hasWorkspaceCapability(context, 'ent.propose')) {
         ROLE_ACTIONS['editor'].forEach(action => actions.add(action));
-      } else if (this.hasWorkspaceCapability(context, 'ws.view')) {
+      } else if (
+        this.hasWorkspaceCapability(context, 'ws.view') ||
+        this.hasWorkspaceCapability(context, 'content.view')
+      ) {
         actions.add('view_entity');
       }
     }
@@ -170,8 +183,10 @@ export class PermissionChecker {
     // Direct owner team permissions apply to the entity itself
     if (entity.owner) {
       for (const role of this.getTeamRoles(context, entity.owner)) {
-        TEAM_ROLE_PERMISSIONS[role].directEntityActions.forEach(teamAction =>
-          actions.add(teamAction)
+        this.addCappedEntityActions(
+          actions,
+          context,
+          TEAM_ROLE_PERMISSIONS[role].directEntityActions
         );
       }
     }
@@ -181,8 +196,10 @@ export class PermissionChecker {
       const ancestor = context.entities.get(ancestorId);
       if (!ancestor?.owner) continue;
       for (const role of this.getTeamRoles(context, ancestor.owner)) {
-        TEAM_ROLE_PERMISSIONS[role].descendantEntityActions.forEach(teamAction =>
-          actions.add(teamAction)
+        this.addCappedEntityActions(
+          actions,
+          context,
+          TEAM_ROLE_PERMISSIONS[role].descendantEntityActions
         );
       }
     }
@@ -196,10 +213,53 @@ export class PermissionChecker {
       if (!principalMatches) continue;
       if (!this.hasApplicableGrant(grant, entity.id, ancestorIds)) continue;
 
-      ROLE_ACTIONS[grant.role].forEach(action => actions.add(action));
+      this.addCappedEntityActions(actions, context, ROLE_ACTIONS[grant.role]);
     }
 
     return actions;
+  }
+
+  private isProjectActionAllowedByCeiling(
+    context: WorkspaceAuthorizationContext,
+    action: ProjectAction
+  ): boolean {
+    const ceiling = context.workspaceCapabilityCeiling;
+    if (!ceiling) return true;
+    return ceiling.has(action === 'delete_project' ? 'proj.delete' : 'proj.edit');
+  }
+
+  private isEntityActionAllowedByCeiling(
+    context: AuthorizationContext,
+    action: EntityAction
+  ): boolean {
+    const ceiling = context.workspaceCapabilityCeiling;
+    if (!ceiling) return true;
+
+    switch (action) {
+      case 'view_entity':
+        return (
+          ceiling.has('ws.view') ||
+          ceiling.has('content.view') ||
+          ceiling.has('ent.edit') ||
+          ceiling.has('ent.propose')
+        );
+      case 'edit_entity':
+        return ceiling.has('ent.edit') || ceiling.has('ent.propose');
+      case 'create_child':
+        return ceiling.has('ent.edit');
+      case 'admin_entity':
+        return false;
+    }
+  }
+
+  private addCappedEntityActions(
+    actions: Set<EntityAction>,
+    context: AuthorizationContext,
+    candidateActions: EntityAction[]
+  ): void {
+    for (const action of candidateActions) {
+      if (this.isEntityActionAllowedByCeiling(context, action)) actions.add(action);
+    }
   }
 
   /**

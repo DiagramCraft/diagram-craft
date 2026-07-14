@@ -1,6 +1,11 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndUUID, teamRoleSchema, workspaceCapabilitySchema } from '@arch-register/api-types/common';
+import {
+  apiTokenSchema,
+  apiTokenCreateSchema,
+  apiTokenCreatedSchema
+} from '@arch-register/api-types/apiTokenContract';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])
@@ -316,6 +321,41 @@ export const workspaceConfigContract = oc
           .input(z.object({ params: ws }))
           .output(z.array(userInfoSchema))
       },
+      tokens: {
+        list: oc
+          .route({
+            method: 'GET',
+            path: '/{workspace}/config/tokens',
+            inputStructure: 'detailed',
+            summary: 'List workspace API tokens',
+            description: 'Lists API tokens for the workspace without exposing token secrets.',
+            tags: ['Workspace Config']
+          })
+          .input(z.object({ params: ws }))
+          .output(z.array(apiTokenSchema)),
+        create: oc
+          .route({
+            method: 'POST',
+            path: '/{workspace}/config/tokens',
+            inputStructure: 'detailed',
+            summary: 'Create workspace API token',
+            description: 'Creates a workspace API token and returns its secret once.',
+            tags: ['Workspace Config']
+          })
+          .input(z.object({ params: ws, body: apiTokenCreateSchema }))
+          .output(apiTokenCreatedSchema),
+        revoke: oc
+          .route({
+            method: 'DELETE',
+            path: '/{workspace}/config/tokens/{id}',
+            inputStructure: 'detailed',
+            summary: 'Revoke workspace API token',
+            description: 'Revokes a workspace API token.',
+            tags: ['Workspace Config']
+          })
+          .input(z.object({ params: wsAndUUID }))
+          .output(apiTokenSchema)
+      },
       projectEntityTypes: {
         list: oc
           .route({
@@ -359,3 +399,8 @@ export type WorkspaceRoleCapability = z.infer<typeof workspaceCapabilitySchema>;
 export type WorkspaceTeam = z.infer<typeof teamSchema>;
 export type WorkspaceTeamInput = z.infer<typeof teamInputSchema>;
 export type TeamAssignmentInfo = z.infer<typeof teamAssignmentSchema>;
+export type {
+  WorkspaceApiToken,
+  WorkspaceApiTokenCreate,
+  WorkspaceApiTokenCreated
+} from '@arch-register/api-types/apiTokenContract';

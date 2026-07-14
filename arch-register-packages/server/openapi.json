@@ -16032,6 +16032,406 @@
         }
       }
     },
+    "/{workspace}/config/tokens": {
+      "get": {
+        "operationId": "config.tokens.list",
+        "summary": "List workspace API tokens",
+        "description": "Lists API tokens for the workspace without exposing token secrets.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique API token identifier"
+                      },
+                      "workspace": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Human-readable token name"
+                      },
+                      "capabilities": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "ws.view",
+                            "ws.settings",
+                            "ws.delete",
+                            "ws.audit",
+                            "ws.manage_views",
+                            "people.invite",
+                            "people.role",
+                            "people.remove",
+                            "people.teams",
+                            "proj.create",
+                            "proj.edit",
+                            "proj.delete",
+                            "content.view",
+                            "content.edit",
+                            "ent.edit",
+                            "ent.propose",
+                            "comments",
+                            "export",
+                            "schema.edit",
+                            "schema.publish"
+                          ],
+                          "type": "string"
+                        },
+                        "description": "Workspace capabilities granted to the token"
+                      },
+                      "created_by": {
+                        "type": "string",
+                        "description": "User who created the token"
+                      },
+                      "created_at": {
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "last_used_at": {
+                        "anyOf": [
+                          {},
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 last-use timestamp"
+                      },
+                      "expires_at": {
+                        "anyOf": [
+                          {},
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 expiration timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "name",
+                      "capabilities",
+                      "created_by"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "config.tokens.create",
+        "summary": "Create workspace API token",
+        "description": "Creates a workspace API token and returns its secret once.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Human-readable token name"
+                  },
+                  "capabilities": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "ws.view",
+                        "ws.settings",
+                        "ws.delete",
+                        "ws.audit",
+                        "ws.manage_views",
+                        "people.invite",
+                        "people.role",
+                        "people.remove",
+                        "people.teams",
+                        "proj.create",
+                        "proj.edit",
+                        "proj.delete",
+                        "content.view",
+                        "content.edit",
+                        "ent.edit",
+                        "ent.propose",
+                        "comments",
+                        "export",
+                        "schema.edit",
+                        "schema.publish"
+                      ],
+                      "type": "string"
+                    },
+                    "description": "Workspace capabilities to grant"
+                  },
+                  "expires_at": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional ISO 8601 expiration timestamp"
+                  }
+                },
+                "required": [
+                  "name",
+                  "capabilities"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique API token identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Human-readable token name"
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "ws.view",
+                          "ws.settings",
+                          "ws.delete",
+                          "ws.audit",
+                          "ws.manage_views",
+                          "people.invite",
+                          "people.role",
+                          "people.remove",
+                          "people.teams",
+                          "proj.create",
+                          "proj.edit",
+                          "proj.delete",
+                          "content.view",
+                          "content.edit",
+                          "ent.edit",
+                          "ent.propose",
+                          "comments",
+                          "export",
+                          "schema.edit",
+                          "schema.publish"
+                        ],
+                        "type": "string"
+                      },
+                      "description": "Workspace capabilities granted to the token"
+                    },
+                    "created_by": {
+                      "type": "string",
+                      "description": "User who created the token"
+                    },
+                    "created_at": {
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "last_used_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last-use timestamp"
+                    },
+                    "expires_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 expiration timestamp"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Raw API token. It is returned only once at creation time."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "name",
+                    "capabilities",
+                    "created_by",
+                    "token"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/config/tokens/{id}": {
+      "delete": {
+        "operationId": "config.tokens.revoke",
+        "summary": "Revoke workspace API token",
+        "description": "Revokes a workspace API token.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique API token identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Human-readable token name"
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "ws.view",
+                          "ws.settings",
+                          "ws.delete",
+                          "ws.audit",
+                          "ws.manage_views",
+                          "people.invite",
+                          "people.role",
+                          "people.remove",
+                          "people.teams",
+                          "proj.create",
+                          "proj.edit",
+                          "proj.delete",
+                          "content.view",
+                          "content.edit",
+                          "ent.edit",
+                          "ent.propose",
+                          "comments",
+                          "export",
+                          "schema.edit",
+                          "schema.publish"
+                        ],
+                        "type": "string"
+                      },
+                      "description": "Workspace capabilities granted to the token"
+                    },
+                    "created_by": {
+                      "type": "string",
+                      "description": "User who created the token"
+                    },
+                    "created_at": {
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "last_used_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last-use timestamp"
+                    },
+                    "expires_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 expiration timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "name",
+                    "capabilities",
+                    "created_by"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/config/project-entity-types": {
       "get": {
         "operationId": "config.projectEntityTypes.list",
@@ -31278,6 +31678,383 @@
                       "role"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/api-tokens": {
+      "get": {
+        "operationId": "authProtected.apiTokens.list",
+        "summary": "List current user API tokens",
+        "description": "Lists API tokens created by the current user across workspaces.",
+        "tags": [
+          "Auth",
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique API token identifier"
+                      },
+                      "workspace": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Human-readable token name"
+                      },
+                      "capabilities": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "ws.view",
+                            "ws.settings",
+                            "ws.delete",
+                            "ws.audit",
+                            "ws.manage_views",
+                            "people.invite",
+                            "people.role",
+                            "people.remove",
+                            "people.teams",
+                            "proj.create",
+                            "proj.edit",
+                            "proj.delete",
+                            "content.view",
+                            "content.edit",
+                            "ent.edit",
+                            "ent.propose",
+                            "comments",
+                            "export",
+                            "schema.edit",
+                            "schema.publish"
+                          ],
+                          "type": "string"
+                        },
+                        "description": "Workspace capabilities granted to the token"
+                      },
+                      "created_by": {
+                        "type": "string",
+                        "description": "User who created the token"
+                      },
+                      "created_at": {
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "last_used_at": {
+                        "anyOf": [
+                          {},
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 last-use timestamp"
+                      },
+                      "expires_at": {
+                        "anyOf": [
+                          {},
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 expiration timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "name",
+                      "capabilities",
+                      "created_by"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "authProtected.apiTokens.create",
+        "summary": "Create current user API token",
+        "description": "Creates a workspace-scoped API token for the current user.",
+        "tags": [
+          "Auth",
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Human-readable token name"
+                  },
+                  "capabilities": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "ws.view",
+                        "ws.settings",
+                        "ws.delete",
+                        "ws.audit",
+                        "ws.manage_views",
+                        "people.invite",
+                        "people.role",
+                        "people.remove",
+                        "people.teams",
+                        "proj.create",
+                        "proj.edit",
+                        "proj.delete",
+                        "content.view",
+                        "content.edit",
+                        "ent.edit",
+                        "ent.propose",
+                        "comments",
+                        "export",
+                        "schema.edit",
+                        "schema.publish"
+                      ],
+                      "type": "string"
+                    },
+                    "description": "Workspace capabilities to grant"
+                  },
+                  "expires_at": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional ISO 8601 expiration timestamp"
+                  },
+                  "workspace": {
+                    "type": "string",
+                    "description": "Workspace slug where the token will be valid"
+                  }
+                },
+                "required": [
+                  "name",
+                  "capabilities",
+                  "workspace"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique API token identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Human-readable token name"
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "ws.view",
+                          "ws.settings",
+                          "ws.delete",
+                          "ws.audit",
+                          "ws.manage_views",
+                          "people.invite",
+                          "people.role",
+                          "people.remove",
+                          "people.teams",
+                          "proj.create",
+                          "proj.edit",
+                          "proj.delete",
+                          "content.view",
+                          "content.edit",
+                          "ent.edit",
+                          "ent.propose",
+                          "comments",
+                          "export",
+                          "schema.edit",
+                          "schema.publish"
+                        ],
+                        "type": "string"
+                      },
+                      "description": "Workspace capabilities granted to the token"
+                    },
+                    "created_by": {
+                      "type": "string",
+                      "description": "User who created the token"
+                    },
+                    "created_at": {
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "last_used_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last-use timestamp"
+                    },
+                    "expires_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 expiration timestamp"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Raw API token. It is returned only once at creation time."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "name",
+                    "capabilities",
+                    "created_by",
+                    "token"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/api-tokens/{id}": {
+      "delete": {
+        "operationId": "authProtected.apiTokens.revoke",
+        "summary": "Revoke current user API token",
+        "description": "Revokes an API token created by the current user.",
+        "tags": [
+          "Auth",
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique API token identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Human-readable token name"
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "ws.view",
+                          "ws.settings",
+                          "ws.delete",
+                          "ws.audit",
+                          "ws.manage_views",
+                          "people.invite",
+                          "people.role",
+                          "people.remove",
+                          "people.teams",
+                          "proj.create",
+                          "proj.edit",
+                          "proj.delete",
+                          "content.view",
+                          "content.edit",
+                          "ent.edit",
+                          "ent.propose",
+                          "comments",
+                          "export",
+                          "schema.edit",
+                          "schema.publish"
+                        ],
+                        "type": "string"
+                      },
+                      "description": "Workspace capabilities granted to the token"
+                    },
+                    "created_by": {
+                      "type": "string",
+                      "description": "User who created the token"
+                    },
+                    "created_at": {
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "last_used_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last-use timestamp"
+                    },
+                    "expires_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 expiration timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "name",
+                    "capabilities",
+                    "created_by"
+                  ]
                 }
               }
             }

@@ -4,13 +4,14 @@ import screenStyles from '../workspace-settings/WorkspaceSettingsScreen.module.c
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbCheck } from 'react-icons/tb';
+import { TbCheck, TbPlus } from 'react-icons/tb';
 import { Title } from '../../components/Title';
 import { useAuth } from '../../auth/AuthContext';
 import { ColorPicker } from '../../components/ColorPicker';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { useUpdateUser } from '../../hooks/useUsers';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { ApiTokensSubSection } from './ApiTokensSubSection';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   profile: {
@@ -20,6 +21,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   appearance: {
     title: 'Appearance',
     sub: 'Customize how your account is represented throughout the workspace.',
+  },
+  'api-tokens': {
+    title: 'API tokens',
+    sub: 'Manage the workspace-scoped tokens created by your account.',
   },
 };
 
@@ -37,8 +42,14 @@ export const AccountSettingsScreen = () => {
   const [displayName, setDisplayName] = useState(user?.display_name ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [apiTokenAddDialogOpen, setApiTokenAddDialogOpen] = useState(false);
 
-  const section = params.section === 'appearance' ? 'appearance' : 'profile';
+  const section =
+    params.section === 'appearance'
+      ? 'appearance'
+      : params.section === 'api-tokens'
+        ? 'api-tokens'
+        : 'profile';
 
   useEffect(() => {
     if (user) {
@@ -76,6 +87,16 @@ export const AccountSettingsScreen = () => {
   };
 
   const hasChanges = selectedColor !== user.color || displayName.trim() !== user.display_name;
+  const sectionButton =
+    section === 'api-tokens' ? (
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setApiTokenAddDialogOpen(true)}
+      >
+        New API token
+      </Button>
+    ) : undefined;
 
   return (
     <div className={screenStyles.screen}>
@@ -87,9 +108,16 @@ export const AccountSettingsScreen = () => {
           ]}
           title={meta.title}
           description={meta.sub}
+          buttons={sectionButton}
         />
       </div>
 
+      {section === 'api-tokens' ? (
+        <ApiTokensSubSection
+          createDialogOpen={apiTokenAddDialogOpen}
+          onCloseCreateDialog={() => setApiTokenAddDialogOpen(false)}
+        />
+      ) : (
       <div className={styles.blockList}>
         {section === 'profile' && (
           <>
@@ -233,6 +261,7 @@ export const AccountSettingsScreen = () => {
           </>
         )}
       </div>
+      )}
     </div>
   );
 };
