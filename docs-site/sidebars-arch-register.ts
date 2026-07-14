@@ -57,6 +57,7 @@ const sidebars: SidebarsConfig = {
         'reference/permission-model',
         'reference/entity-screen-reference',
         'reference/project-content-screen-reference',
+        'reference/mcp-server',
         'reference/api-integrations'
       ]
     },
