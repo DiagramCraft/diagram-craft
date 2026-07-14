@@ -41,6 +41,8 @@ export type MdxComponentSpec = {
   component: React.ComponentType<Record<string, string>>;
   mode: 'block' | 'inline';
   allowedProps: ReadonlyArray<string>;
+  /** Normalizes string props before they are exposed to the preview renderer. */
+  normalizeProps?: (props: Record<string, string>) => Record<string, string>;
   /**
    * Marks a block-level component as a wrapper that accepts exactly one other
    * block-level (non-wrapper) MDX component as its child, e.g. Caption. Depth is

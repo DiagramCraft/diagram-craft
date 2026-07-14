@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import { DependencyGraph } from '../../../components/DependencyGraph';
 import type { LayoutAlgorithm, DependencyGraphNode } from '../../../components/DependencyGraph';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -13,8 +13,9 @@ import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
-import { type EntityNodeData } from './entityGraphState';
+import { type EntityGraphDirection, type EntityNodeData } from './entityGraphState';
 import { useEntityGraphController } from './useEntityGraphController';
+import { LoadingState } from '../../../components/LoadingState';
 
 type Props = {
   workspaceId: string;
@@ -23,6 +24,10 @@ type Props = {
   rootEntitySchemaId: string;
   schemas: EntitySchema[];
   onEntityClick: (id: string) => void;
+  readOnly?: boolean;
+  maxDepth?: number;
+  direction?: EntityGraphDirection;
+  fullGraphLink?: ReactNode;
 };
 
 export const EntityGraphView = ({
@@ -31,13 +36,19 @@ export const EntityGraphView = ({
   rootEntityName,
   rootEntitySchemaId,
   schemas,
-  onEntityClick
+  onEntityClick,
+  readOnly = false,
+  maxDepth: configuredMaxDepth,
+  direction,
+  fullGraphLink
 }: Props) => {
   const controller = useEntityGraphController({
     workspaceId,
     rootEntityId,
     rootEntityName,
-    rootEntitySchemaId
+    rootEntitySchemaId,
+    maxDepth: configuredMaxDepth,
+    direction
   });
   const {
     layout,
@@ -62,6 +73,13 @@ export const EntityGraphView = ({
     expandEntity,
     createDiagram
   } = controller;
+
+  const graphLayout = readOnly ? 'hierarchy' : layout;
+  const graphLayoutOptions = layoutOptions;
+  const hasHiddenRelations = useMemo(
+    () => Array.from(hiddenCountMap.values()).some(count => count > 0),
+    [hiddenCountMap]
+  );
 
   const schemaMap = useMemo(
     () => new Map(schemas.map((s, i) => [s.id, { schema: s, idx: i }])),
@@ -96,7 +114,7 @@ export const EntityGraphView = ({
   const rootHighlight = useMemo(() => new Set([rootEntityId]), [rootEntityId]);
 
   return (
-    <div className={styles.icEntityGraphView}>
+    <div className={`${styles.icEntityGraphView} ${readOnly ? styles.readOnly : ''}`}>
       <div className={styles.eToolbar}>
         <span className={styles.eToolbarLabel}>Layout</span>
         <Select.Root
@@ -225,29 +243,36 @@ export const EntityGraphView = ({
       </div>
 
       <div className={styles.eCanvas}>
-        {nodes.length === 0 && !isAnyLoading ? (
+        {isAnyLoading && nodes.length <= 1 ? (
+          <div className={styles.eEmpty}>
+            <LoadingState text="Loading relationships…" size="sm" />
+          </div>
+        ) : nodes.length <= 1 && edges.length === 0 && !isAnyLoading ? (
           <div className={styles.eEmpty}>
             <TbVectorTriangle size={22} />
             <div className={styles.eEmptyTitle}>No relationships found.</div>
-            <div>This entity has no outgoing relationships to display.</div>
+            <div>This entity has no relationships in the selected direction.</div>
           </div>
         ) : (
           <DependencyGraph<EntityNodeData>
             nodes={nodes}
             edges={edges}
-            layout={layout}
-            layoutOptions={layoutOptions}
+            layout={graphLayout}
+            layoutOptions={graphLayoutOptions}
             nodeWidth={200}
             nodeHeight={52}
             renderNode={renderNode}
             onNodeClick={onEntityClick}
-            onNodeContextMenu={handleNodeContextMenu}
+            onNodeContextMenu={readOnly ? undefined : handleNodeContextMenu}
             highlightedIds={rootHighlight}
           />
         )}
+        {readOnly && isAnyLoading && nodes.length > 1 && (
+          <div className={styles.eLoadingOverlay}>Loading relationships…</div>
+        )}
       </div>
 
-      {contextMenu && (
+      {!readOnly && contextMenu && (
         <ContextMenu.Imperative
           x={contextMenu.x}
           y={contextMenu.y}
@@ -266,7 +291,7 @@ export const EntityGraphView = ({
         </ContextMenu.Imperative>
       )}
 
-      {saveDiagramOpen && pendingDiagramContent && (
+      {!readOnly && saveDiagramOpen && pendingDiagramContent && (
         <SaveDiagramFromGraphDialog
           open={saveDiagramOpen}
           onClose={() => setSaveDiagramOpen(false)}
@@ -280,6 +305,10 @@ export const EntityGraphView = ({
             entityName: rootEntityName
           }}
         />
+      )}
+
+      {readOnly && hasHiddenRelations && !isAnyLoading && fullGraphLink && (
+        <div className={styles.eReadOnlyFooter}>{fullGraphLink}</div>
       )}
     </div>
   );

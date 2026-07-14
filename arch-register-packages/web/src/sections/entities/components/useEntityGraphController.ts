@@ -3,7 +3,11 @@ import type { LayoutAlgorithm, LayoutOptions } from '../../../components/Depende
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { createDiagramFromGraph } from '../../../lib/diagramFromGraph';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
-import { buildEntityGraphData, collectEntityGraphIds } from './entityGraphState';
+import {
+  buildEntityGraphData,
+  collectEntityGraphIds,
+  type EntityGraphDirection
+} from './entityGraphState';
 
 const defaultLayoutOptions: LayoutOptions = {
   horizontalSpacing: 230,
@@ -20,17 +24,22 @@ type UseEntityGraphControllerOptions = {
   rootEntityId: string;
   rootEntityName: string;
   rootEntitySchemaId: string;
+  maxDepth?: number;
+  direction?: EntityGraphDirection;
 };
 
 export const useEntityGraphController = ({
   workspaceId,
   rootEntityId,
   rootEntityName,
-  rootEntitySchemaId
+  rootEntitySchemaId,
+  maxDepth: configuredMaxDepth,
+  direction: configuredDirection
 }: UseEntityGraphControllerOptions) => {
   const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
   const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>(defaultLayoutOptions);
-  const [maxDepth, setMaxDepth] = useState(2);
+  const [maxDepth, setMaxDepth] = useState(configuredMaxDepth ?? 2);
+  const direction = configuredDirection ?? 'both';
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [manuallyExpanded, setManuallyExpanded] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<{
@@ -49,6 +58,10 @@ export const useEntityGraphController = ({
     setManuallyExpanded(new Set());
   }, [rootEntityId]);
 
+  useEffect(() => {
+    if (configuredMaxDepth !== undefined) setMaxDepth(configuredMaxDepth);
+  }, [configuredMaxDepth]);
+
   const relationsData = useMultipleEntityRelations(workspaceId, fetchIds);
 
   useEffect(() => {
@@ -57,13 +70,14 @@ export const useEntityGraphController = ({
       relationsData,
       maxDepth,
       excludedIds,
-      manuallyExpanded
+      manuallyExpanded,
+      direction
     });
     setFetchIds(previous => {
       const previousIds = new Set(previous);
       return next.some(id => !previousIds.has(id)) ? next : previous;
     });
-  }, [rootEntityId, relationsData, maxDepth, excludedIds, manuallyExpanded]);
+  }, [rootEntityId, relationsData, maxDepth, excludedIds, manuallyExpanded, direction]);
 
   const { nodes, edges, hiddenCountMap } = useMemo(
     () =>
@@ -74,7 +88,8 @@ export const useEntityGraphController = ({
         relationsData,
         maxDepth,
         excludedIds,
-        manuallyExpanded
+        manuallyExpanded,
+        direction
       }),
     [
       rootEntityId,
@@ -83,7 +98,8 @@ export const useEntityGraphController = ({
       relationsData,
       maxDepth,
       excludedIds,
-      manuallyExpanded
+      manuallyExpanded,
+      direction
     ]
   );
 
@@ -103,7 +119,12 @@ export const useEntityGraphController = ({
       const nodeData = relationsData.get(id);
       if (nodeData) {
         const neighborIds = new Set(
-          [...nodeData.outgoing, ...nodeData.incoming].map(relation => relation.entityId)
+          (direction === 'upstream'
+            ? nodeData.outgoing
+            : direction === 'downstream'
+              ? nodeData.incoming
+              : [...nodeData.outgoing, ...nodeData.incoming]
+          ).map(relation => relation.entityId)
         );
         setExcludedIds(previous => {
           const next = new Set(previous);
@@ -113,7 +134,7 @@ export const useEntityGraphController = ({
       }
       setContextMenu(null);
     },
-    [relationsData]
+    [direction, relationsData]
   );
 
   const createDiagram = useCallback(() => {
@@ -148,6 +169,7 @@ export const useEntityGraphController = ({
     setMaxDepth,
     excludedIds,
     manuallyExpanded,
+    direction,
     contextMenu,
     setContextMenu,
     saveDiagramOpen,

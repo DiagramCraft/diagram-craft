@@ -60,14 +60,17 @@ const makeComponentNode = (
   rawProps: string | undefined,
   source: string,
   children?: ASTNode[]
-): ASTNode => ({
-  type: 'component',
-  subtype,
-  name,
-  props: validateProps(name, parseJsxProps(rawProps ?? '', parser)),
-  source,
-  ...(children ? { children } : {})
-});
+): ASTNode => {
+  const props = validateProps(name, parseJsxProps(rawProps ?? '', parser));
+  return {
+    type: 'component',
+    subtype,
+    name,
+    props: MDX_COMPONENTS[name].normalizeProps?.(props) ?? props,
+    source,
+    ...(children ? { children } : {})
+  };
+};
 
 /**
  * Handles wrapper components (e.g. Caption) that accept exactly one other
