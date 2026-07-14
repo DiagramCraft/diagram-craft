@@ -18,6 +18,10 @@ import type {
 
 const JOB_TYPE = 'external-content.refresh';
 const SYSTEM_IDENTITY = 'external-content';
+const configuredMaxMounts = Number(process.env['EXTERNAL_CONTENT_MAX_MOUNTS_PER_WORKSPACE'] ?? 50);
+const MAX_MOUNTS_PER_WORKSPACE = Number.isFinite(configuredMaxMounts) && configuredMaxMounts > 0
+  ? Math.max(1, Math.floor(configuredMaxMounts))
+  : 50;
 
 const normalizeUrl = (value: string) => {
   let url: URL;
@@ -195,6 +199,11 @@ export const createExternalContentMount = async (
   const sourceKey = identityKey(config);
   const scopeInput = scopeFields(normalizedScope);
   const result = await db.core.transaction(async tx => {
+    const mounts = await tx.externalContent.listMounts(ws);
+    httpAssert.true(mounts.length < MAX_MOUNTS_PER_WORKSPACE, {
+      status: 409,
+      message: `A workspace can have at most ${MAX_MOUNTS_PER_WORKSPACE} external content mounts`
+    });
     let source = await tx.externalContent.getSourceByIdentity(ws, 'git', sourceKey);
     if (!source) {
       source = await tx.externalContent.createSource({
@@ -208,6 +217,16 @@ export const createExternalContentMount = async (
         status: 'pending',
         created_at: now,
         updated_at: now
+      });
+    }
+    if (source?.schedule_id) {
+      const schedule = await tx.jobs.getSchedule(source.schedule_id);
+      const existingInterval = schedule?.recurrence.type === 'hours'
+        ? schedule.recurrence.intervalHours
+        : undefined;
+      httpAssert.true(existingInterval === undefined || existingInterval === input.interval_hours, {
+        status: 409,
+        message: `This repository is already configured to refresh every ${existingInterval} hour${existingInterval === 1 ? '' : 's'}`
       });
     }
     source = await ensureSourceSchedule(tx, source, ws, input.interval_hours, now);
@@ -291,6 +310,16 @@ export const updateExternalContentMount = async (
         status: 'pending',
         created_at: now,
         updated_at: now
+      });
+    }
+    if (source.id !== oldSource.id && source.schedule_id) {
+      const schedule = await tx.jobs.getSchedule(source.schedule_id);
+      const existingInterval = schedule?.recurrence.type === 'hours'
+        ? schedule.recurrence.intervalHours
+        : undefined;
+      httpAssert.true(existingInterval === undefined || existingInterval === input.interval_hours, {
+        status: 409,
+        message: `This repository is already configured to refresh every ${existingInterval} hour${existingInterval === 1 ? '' : 's'}`
       });
     }
     source = await ensureSourceSchedule(tx, source, ws, input.interval_hours, now);

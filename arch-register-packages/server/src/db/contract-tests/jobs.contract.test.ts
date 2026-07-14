@@ -26,6 +26,37 @@ const makeSchedule = (
 };
 
 runContractSuiteAgainstBothDrivers('JobDatabase', getDb => {
+  it('enqueues an explicit run with all job_run fields populated', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schedule = await db.jobs.createSchedule(makeSchedule(workspace));
+    const now = new Date('2026-01-01T00:05:00.000Z');
+
+    const run = await db.jobs.enqueueRun(schedule.id, now);
+
+    expect(run).toMatchObject({
+      schedule_id: schedule.id,
+      workspace,
+      occurrence_at: now,
+      coalesced_through_at: now,
+      coalesced_count: 1,
+      planned_at: now,
+      created_at: now,
+      status: 'queued'
+    });
+    expect(await db.jobs.enqueueRun(schedule.id, new Date('2026-01-01T00:06:00.000Z'))).toEqual(run);
+    await db.jobs.updateSchedule(schedule.id, {
+      job_type: schedule.job_type,
+      system_identity: schedule.system_identity,
+      payload: schedule.payload,
+      priority: schedule.priority,
+      recurrence: schedule.recurrence,
+      enabled: false,
+      next_occurrence_at: new Date('2099-01-01T00:00:00.000Z'),
+      updated_at: now
+    });
+  });
+
   it('materializes due occurrences and coalesces them idempotently', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

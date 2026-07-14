@@ -23,7 +23,7 @@ procs:
     shell: |
       cd arch-register-packages/server && \
       pnpm dev
-    stop: SIGKILL
+    stop: SIGTERM
     log:
       file: ar-server.log
   "AR job server":

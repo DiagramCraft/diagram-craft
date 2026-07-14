@@ -108,10 +108,25 @@ const main = async () => {
   const server = createServer(toNodeHandler(app));
   collaborationServer.bind(server);
 
-  server.listen(PORT, () => {
+  // node --watch can respawn before the OS releases the previous instance's port; retry briefly.
+  let listenRetriesLeft = 10;
+
+  server.on('listening', () => {
     logger.info(`Server listening on http://localhost:${PORT}`);
     logger.info(`WebSocket collaboration listening on ws://localhost:${PORT}/ws`);
   });
+
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE' && listenRetriesLeft > 0) {
+      listenRetriesLeft--;
+      logger.warn(`Port ${PORT} still in use, retrying in 300ms...`);
+      setTimeout(() => server.listen(PORT), 300);
+      return;
+    }
+    throw error;
+  });
+
+  server.listen(PORT);
 
   const shutdown = async () => {
     logger.info('Shutting down...');

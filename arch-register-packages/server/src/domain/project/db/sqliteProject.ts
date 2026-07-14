@@ -361,14 +361,17 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     const ownerValue = isWorkspaceOwned ? null : (input.entity_id != null ? input.entity_id : input.project_id);
 
     const tx = this.db.transaction(() => {
-      const existing = this.get<{ id: string; created_at: string }>(
+      const existing = this.get<{ id: string; created_at: string; mount_id: string | null }>(
         isWorkspaceOwned
-          ? `SELECT id, created_at FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ?`
-          : `SELECT id, created_at FROM content_node WHERE workspace = ? AND ${ownerClause} AND path = ?`,
+          ? `SELECT id, created_at, mount_id FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ?`
+          : `SELECT id, created_at, mount_id FROM content_node WHERE workspace = ? AND ${ownerClause} AND path = ?`,
         isWorkspaceOwned ? [input.workspace, input.path] : [input.workspace, ownerValue, input.path]
       );
 
       if (existing) {
+        if (existing.mount_id !== (input.mount_id ?? null)) {
+          throw new Error('Content node ownership conflict');
+        }
         this.run(
           'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), role = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = COALESCE(?, original_filename), mount_id = COALESCE(?, mount_id) WHERE id = ?',
           [

@@ -377,7 +377,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       const isWorkspaceOwned = input.project_id == null && input.entity_id == null;
       // Partial unique indexes require ON CONFLICT (cols) WHERE condition, not ON CONSTRAINT
       if (input.entity_id != null) {
-        await this.sql`
+        const [row] = await this.sql<DatabaseRow[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename, mount_id)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null}, ${input.mount_id ?? null})
           ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL
@@ -392,10 +392,13 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename),
-            mount_id = COALESCE(EXCLUDED.mount_id, content_node.mount_id)
+            mount_id = EXCLUDED.mount_id
+          WHERE content_node.mount_id IS NOT DISTINCT FROM EXCLUDED.mount_id
+          RETURNING id
         `;
+        if (!row) throw new Error('Content node ownership conflict');
       } else if (isWorkspaceOwned) {
-        await this.sql`
+        const [row] = await this.sql<DatabaseRow[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename, mount_id)
           VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null}, ${input.mount_id ?? null})
           ON CONFLICT (workspace, path) WHERE project_id IS NULL AND entity_id IS NULL
@@ -410,10 +413,13 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename),
-            mount_id = COALESCE(EXCLUDED.mount_id, content_node.mount_id)
+            mount_id = EXCLUDED.mount_id
+          WHERE content_node.mount_id IS NOT DISTINCT FROM EXCLUDED.mount_id
+          RETURNING id
         `;
+        if (!row) throw new Error('Content node ownership conflict');
       } else {
-        await this.sql`
+        const [row] = await this.sql<DatabaseRow[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename, mount_id)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null}, ${input.mount_id ?? null})
           ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL
@@ -428,8 +434,11 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename),
-            mount_id = COALESCE(EXCLUDED.mount_id, content_node.mount_id)
+            mount_id = EXCLUDED.mount_id
+          WHERE content_node.mount_id IS NOT DISTINCT FROM EXCLUDED.mount_id
+          RETURNING id
         `;
+        if (!row) throw new Error('Content node ownership conflict');
       }
       if (input.project_id != null) {
         return (await this.getContentNodeByPath(input.workspace, input.project_id, input.path))!;

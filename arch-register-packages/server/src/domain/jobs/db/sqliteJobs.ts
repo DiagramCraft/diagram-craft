@@ -194,9 +194,9 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
       `INSERT INTO job_run (
         id, schedule_id, workspace, job_type, system_identity, payload, priority,
         occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'queued')`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued')`,
       [randomUUID(), schedule.id, schedule.workspace, schedule.job_type, schedule.system_identity,
-        JSON.stringify(schedule.payload), schedule.priority, iso(now), iso(now), iso(now)]
+        JSON.stringify(schedule.payload), schedule.priority, iso(now), iso(now), 1, iso(now), iso(now)]
     );
     if (schedule.next_occurrence_at <= now) {
       this.run('UPDATE job_schedule SET next_occurrence_at = ?, updated_at = ? WHERE id = ?', [

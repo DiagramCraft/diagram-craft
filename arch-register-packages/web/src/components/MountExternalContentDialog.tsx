@@ -134,7 +134,10 @@ export const MountExternalContentDialog = ({ workspaceId, open, mount, onClose }
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="Refresh interval (hours)">
+        <FormElement
+          label="Refresh interval (hours)"
+          hint="This interval applies to all mounts using the same repository URL."
+        >
           <TextInput
             value={intervalHours}
             onChange={value => setIntervalHours(value ?? '')}
