@@ -6,14 +6,14 @@ import { apiSchema } from '../support/schemas';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('entities section', () => {
-  test('shows entity browser', async ({ page }) => {
+  test('shows entity browser @quick', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
     await entitiesPage.goto();
     await entitiesPage.expectLoaded();
   });
 
-  test('filters entities by type in the sidebar', async ({ page }) => {
+  test('filters entities by type in the sidebar @quick', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
     await entitiesPage.goto();

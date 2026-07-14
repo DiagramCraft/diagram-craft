@@ -5,14 +5,14 @@ import { componentSchema } from '../support/schemas';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('data model section', () => {
-  test('shows schema editor', async ({ page }) => {
+  test('shows schema editor @quick', async ({ page }) => {
     const dataModelPage = new DataModelPage(page, defaultWorkspace.slug);
 
     await dataModelPage.goto();
     await dataModelPage.expectLoaded();
   });
 
-  test('opens a schema type from the sidebar', async ({ page }) => {
+  test('opens a schema type from the sidebar @quick', async ({ page }) => {
     const dataModelPage = new DataModelPage(page, defaultWorkspace.slug);
 
     await dataModelPage.goto();

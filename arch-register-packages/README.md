@@ -192,9 +192,16 @@ E2E tests live in `e2e/` and are split into two suites.
 pnpm --filter @arch-register/e2e test:api
 ```
 
-**UI tests** — Playwright tests that auto-start both the server and the web dev server before running.
+**UI tests** — Playwright tests that auto-start both the server and the web dev server before running. The quick suite provides broad, fast feedback across the main workspace features; the full suite includes complete UI validation, including detailed history, failure-mode, export, and state-mutation coverage.
 
 ```bash
+# Fast representative suite
+pnpm --filter @arch-register/e2e test:ui:quick
+
+# Complete suite
+pnpm --filter @arch-register/e2e test:ui:full
+
+# Backward-compatible alias for the complete suite
 pnpm --filter @arch-register/e2e test:ui
 
 # With browser visible

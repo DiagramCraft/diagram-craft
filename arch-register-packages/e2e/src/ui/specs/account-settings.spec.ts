@@ -5,7 +5,7 @@ import { seededUser } from '../support/users';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('account settings', () => {
-  test('changes the display name and changes it back', async ({ page }) => {
+  test('changes the display name and changes it back @quick', async ({ page }) => {
     const accountSettingsPage = new AccountSettingsPage(page, defaultWorkspace.slug);
     const updatedDisplayName = `${seededUser.displayName} Test`;
 
@@ -28,7 +28,7 @@ test.describe('account settings', () => {
     );
   });
 
-  test('changes the avatar color and updates the topbar avatar color', async ({ page }) => {
+  test('changes the avatar color and updates the topbar avatar color @quick', async ({ page }) => {
     const accountSettingsPage = new AccountSettingsPage(page, defaultWorkspace.slug);
 
     await accountSettingsPage.goto('appearance');
