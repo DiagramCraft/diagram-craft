@@ -23,6 +23,18 @@ export type JobScheduleRecurrence =
 
 export type JobRunStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 
+export type JobServerStatus = 'available' | 'unavailable';
+
+export type JobServerDbResult = {
+  id: string;
+  name: string;
+  instance_id: string;
+  status: JobServerStatus;
+  last_seen_at: Date;
+};
+
+export type JobServerDbRegistration = JobServerDbResult;
+
 export type JobScheduleDbResult = {
   id: string;
   workspace: string;
@@ -108,6 +120,11 @@ export type JobRunPage = {
 };
 
 export type JobDatabase = {
+  registerServer(input: JobServerDbRegistration): Promise<JobServerDbResult>;
+  heartbeatServer(id: string, instanceId: string, lastSeenAt: Date): Promise<boolean>;
+  markServerUnavailable(id: string, instanceId: string, lastSeenAt: Date): Promise<boolean>;
+  listServers(): Promise<JobServerDbResult[]>;
+
   createSchedule(input: JobScheduleDbCreate): Promise<JobScheduleDbResult>;
   updateSchedule(id: string, input: JobScheduleDbUpdate): Promise<JobScheduleDbResult | null>;
   getSchedule(id: string): Promise<JobScheduleDbResult | null>;
@@ -133,6 +150,13 @@ export type JobDatabase = {
 };
 
 export const jobMappers = {
+  server: (row: DatabaseRow): JobServerDbResult => ({
+    id: String(row['id']),
+    name: String(row['name']),
+    instance_id: String(row['instance_id']),
+    status: String(row['status']) as JobServerStatus,
+    last_seen_at: databaseDate(row['last_seen_at'])
+  }),
   schedule: (row: DatabaseRow): JobScheduleDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),

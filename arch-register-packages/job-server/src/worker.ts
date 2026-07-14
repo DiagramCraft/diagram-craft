@@ -22,10 +22,13 @@ export type JobServerOptions = {
   db: DatabaseAdapter;
   handlers?: ReadonlyMap<string, JobHandler>;
   workerId: string;
+  serverName: string;
+  instanceId: string;
   maxConcurrency: number;
   pollIntervalMs: number;
   leaseDurationMs: number;
   heartbeatIntervalMs: number;
+  serverPingIntervalMs: number;
   now?: () => Date;
 };
 
@@ -112,12 +115,17 @@ export const createJobServer = (options: JobServerOptions) => {
   if (options.leaseDurationMs <= options.heartbeatIntervalMs) {
     throw new Error('leaseDurationMs must be greater than heartbeatIntervalMs');
   }
+  if (!Number.isInteger(options.serverPingIntervalMs) || options.serverPingIntervalMs < 1) {
+    throw new Error('serverPingIntervalMs must be a positive integer');
+  }
 
   const handlers = options.handlers ?? new Map<string, JobHandler>();
   const now = options.now ?? (() => new Date());
   const running = new Set<Promise<void>>();
   let active = true;
   let loopPromise: Promise<void> | null = null;
+  let serverPing: ReturnType<typeof setInterval> | null = null;
+  let serverPingInFlight: Promise<void> | null = null;
 
   const launchAvailable = async () => {
     while (active && running.size < options.maxConcurrency) {
@@ -163,7 +171,29 @@ export const createJobServer = (options: JobServerOptions) => {
   return {
     start: () => {
       if (loopPromise) return loopPromise;
-      loopPromise = runLoop().catch(error => {
+      loopPromise = (async () => {
+        const startedAt = now();
+        await options.db.jobs.registerServer({
+          id: options.workerId,
+          name: options.serverName,
+          instance_id: options.instanceId,
+          status: 'available',
+          last_seen_at: startedAt
+        });
+        serverPing = setInterval(() => {
+          if (serverPingInFlight) return;
+          serverPingInFlight = options.db.jobs
+            .heartbeatServer(options.workerId, options.instanceId, now())
+            .then(updated => {
+              if (!updated) logger.warn(`Status ping rejected for job server ${options.workerId}`);
+            })
+            .catch(error => logger.error('Job server status ping failed', error))
+            .finally(() => {
+              serverPingInFlight = null;
+            });
+        }, options.serverPingIntervalMs);
+        await runLoop();
+      })().catch(error => {
         logger.error('Worker loop stopped unexpectedly', error);
         throw error;
       });
@@ -171,8 +201,21 @@ export const createJobServer = (options: JobServerOptions) => {
     },
     stop: async () => {
       active = false;
+      if (serverPing) {
+        clearInterval(serverPing);
+        serverPing = null;
+      }
       if (loopPromise) await loopPromise;
       await Promise.all([...running]);
+      await serverPingInFlight;
+      if (loopPromise) {
+        const updated = await options.db.jobs.markServerUnavailable(
+          options.workerId,
+          options.instanceId,
+          now()
+        );
+        if (!updated) logger.warn(`Shutdown status rejected for job server ${options.workerId}`);
+      }
     },
     activeRuns: () => running.size
   };

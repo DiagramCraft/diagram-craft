@@ -253,9 +253,11 @@ procs:
   "AR job server":
     shell: |
       cd arch-register-packages/job-server && \\
+      JOB_SERVER_ID=worktree-${NEXT_INDEX} \\
+      JOB_SERVER_NAME="Worktree ${NEXT_INDEX} job server" \\
       pnpm dev
     autostart: false
-    stop: SIGKILL
+    stop: SIGTERM
     log:
       file: ar-job-server.log
 

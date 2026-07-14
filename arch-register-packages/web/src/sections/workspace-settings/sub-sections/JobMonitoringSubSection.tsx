@@ -3,7 +3,12 @@ import { TbPlayerPause, TbRefresh } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import type { JobRunStatus } from '@arch-register/api-types/jobsContract';
-import { useCancelJobRun, useJobRuns, useJobSchedules } from '../../../hooks/useJobs';
+import {
+  useCancelJobRun,
+  useJobRuns,
+  useJobSchedules,
+  useJobServers
+} from '../../../hooks/useJobs';
 import { Table } from '../../../components/table/Table';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
@@ -67,6 +72,13 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
 
   const {
+    data: servers = [],
+    isLoading: serversLoading,
+    isError: serversError,
+    refetch: refetchServers
+  } = useJobServers(workspaceSlug);
+
+  const {
     data: schedules = [],
     isLoading: schedulesLoading,
     isError: schedulesError,
@@ -108,6 +120,63 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
         capacity or another scheduled job is using this workspace. Running jobs cannot be stopped
         from here.
       </div>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div>
+            <div className={styles.sectionTitle}>Job servers</div>
+            <div className={styles.sectionSub}>
+              Servers are unavailable after two minutes without a status ping.
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<TbRefresh size={13} />}
+            onClick={() => void refetchServers()}
+          >
+            Refresh
+          </Button>
+        </div>
+        {serversLoading ? (
+          <LoadingState text="Loading job servers…" size="sm" />
+        ) : serversError ? (
+          <div className={styles.error}>Job servers could not be loaded.</div>
+        ) : servers.length === 0 ? (
+          <EmptyState compact title="No job servers have registered yet." />
+        ) : (
+          <div className={styles.tableWrap}>
+            <Table.Root layout="fixed" bordered={false}>
+              <Table.Head>
+                <Table.Row>
+                  <Table.HeaderCell>Name</Table.HeaderCell>
+                  <Table.HeaderCell width={130}>Status</Table.HeaderCell>
+                  <Table.HeaderCell width={180}>Last seen</Table.HeaderCell>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
+                {servers.map(server => (
+                  <Table.Row key={server.id}>
+                    <Table.Cell>
+                      <div>{server.name}</div>
+                      <div className={styles.muted}>{server.id}</div>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Chip
+                        dot={server.status === 'available' ? 'var(--green)' : 'var(--error-fg)'}
+                        tone="ghost"
+                      >
+                        {server.status === 'available' ? 'Available' : 'Unavailable'}
+                      </Chip>
+                    </Table.Cell>
+                    <Table.Cell>{formatDateTime(server.last_seen_at)}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </div>
+        )}
+      </section>
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>
@@ -180,7 +249,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
             variant="ghost"
             size="sm"
             icon={<TbRefresh size={13} />}
-            onClick={() => void Promise.all([refetchSchedules(), refetchRuns()])}
+            onClick={() => void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])}
           >
             Refresh
           </Button>

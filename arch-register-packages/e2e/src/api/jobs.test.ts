@@ -24,6 +24,20 @@ const test = createApiTest({
   afterSeed: async server => {
     await server.db.jobs.createSchedule(makeSchedule());
     await server.db.jobs.materializeDueSchedules(now);
+    await server.db.jobs.registerServer({
+      id: 'e2e-worker',
+      name: 'E2E job server',
+      instance_id: randomUUID(),
+      status: 'available',
+      last_seen_at: new Date()
+    });
+    await server.db.jobs.registerServer({
+      id: 'stale-worker',
+      name: 'Stale job server',
+      instance_id: randomUUID(),
+      status: 'available',
+      last_seen_at: new Date('2020-01-01T00:00:00.000Z')
+    });
   }
 });
 
@@ -52,6 +66,25 @@ test.describe('workspace job monitoring', () => {
       completed_at: null
     });
     expect(page.items[0]?.queue_delay_ms).toBeGreaterThanOrEqual(0);
+  });
+
+  test('lists job servers and derives stale servers as unavailable', async ({ orpc }) => {
+    const servers = await orpc.jobs.servers.list({ params: { workspace: 'default' } });
+
+    expect(servers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'e2e-worker',
+          name: 'E2E job server',
+          status: 'available'
+        }),
+        expect.objectContaining({
+          id: 'stale-worker',
+          name: 'Stale job server',
+          status: 'unavailable'
+        })
+      ])
+    );
   });
 
   test('cancels a queued run without disabling its schedule', async ({ orpc }) => {

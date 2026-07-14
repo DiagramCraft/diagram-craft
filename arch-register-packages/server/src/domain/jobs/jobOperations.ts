@@ -8,6 +8,8 @@ import { nextJobOccurrence, validateJobScheduleRecurrence } from './jobRecurrenc
 import type {
   JobRunDbResult,
   JobRunListOptions,
+  JobServerDbResult,
+  JobServerStatus,
   JobScheduleDbResult,
   JobScheduleRecurrence
 } from './jobsDatabase';
@@ -33,6 +35,8 @@ const assertPriority = (priority: number) => {
 const assertScheduleText = (value: string, name: string) => {
   if (value.trim().length === 0) throw new Error(`${name} must not be empty`);
 };
+
+export const JOB_SERVER_UNAVAILABLE_AFTER_MS = 2 * 60 * 1000;
 
 export const createJobSchedule = async (
   db: DatabaseAdapter,
@@ -146,6 +150,20 @@ export const toApiJobSchedule = (schedule: JobScheduleDbResult) => ({
   updated_at: schedule.updated_at.toISOString()
 });
 
+export const toApiJobServer = (server: JobServerDbResult, now = new Date()) => {
+  const status: JobServerStatus =
+    server.status === 'available' &&
+    now.getTime() - server.last_seen_at.getTime() < JOB_SERVER_UNAVAILABLE_AFTER_MS
+      ? 'available'
+      : 'unavailable';
+  return {
+    id: server.id,
+    name: server.name,
+    status,
+    last_seen_at: server.last_seen_at.toISOString()
+  };
+};
+
 export const toApiJobRun = (run: JobRunDbResult, now = new Date()) => {
   const queueDelayEnd = run.started_at ?? (run.status === 'queued' ? now : null);
   const durationEnd = run.completed_at ?? (run.status === 'running' ? now : null);
@@ -186,6 +204,19 @@ type JobRunListQuery = {
   plannedTo?: string;
   limit?: number;
   offset?: number;
+};
+
+export const listJobServers = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent,
+  now = new Date()
+) => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  requireWorkspaceAdmin(authCtx);
+  const servers = await db.jobs.listServers();
+  return servers.map(server => toApiJobServer(server, now));
 };
 
 export const listJobSchedules = async (

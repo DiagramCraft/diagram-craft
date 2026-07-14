@@ -5,7 +5,7 @@ import { jobsContract } from '@arch-register/api-types/jobsContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { cancelJobRun, listJobRuns, listJobSchedules } from './jobOperations';
+import { cancelJobRun, listJobRuns, listJobSchedules, listJobServers } from './jobOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -16,6 +16,11 @@ const jobsRouter = implement(jobsContract).$context<ORPCContext>().use(orpcError
 
 export const jobsORPCRouter = jobsRouter.router({
   jobs: {
+    servers: {
+      list: jobsRouter.jobs.servers.list.handler(async ({ input, context }) => {
+        return await listJobServers(context.db, input.params.workspace, context.event);
+      })
+    },
     schedules: {
       list: jobsRouter.jobs.schedules.list.handler(async ({ input, context }) => {
         return await listJobSchedules(context.db, input.params.workspace, context.event);

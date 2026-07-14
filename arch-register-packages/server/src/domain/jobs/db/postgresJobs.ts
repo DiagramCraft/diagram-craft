@@ -9,6 +9,7 @@ import type {
   JobRunClaim,
   JobRunCompletion,
   JobRunFailure,
+  JobServerDbRegistration,
   JobScheduleDbCreate,
   JobScheduleDbUpdate,
   JobRunListOptions
@@ -16,6 +17,59 @@ import type {
 import { jobMappers } from '../jobsDatabase';
 
 export class PostgresJobDatabase extends PostgresDatabaseBase implements JobDatabase {
+  async registerServer(input: JobServerDbRegistration) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO job_server (id, name, instance_id, status, last_seen_at)
+        VALUES (${input.id}, ${input.name}, ${input.instance_id}, ${input.status}, ${input.last_seen_at})
+        ON CONFLICT (id) DO UPDATE
+        SET name = EXCLUDED.name,
+            instance_id = EXCLUDED.instance_id,
+            status = EXCLUDED.status,
+            last_seen_at = EXCLUDED.last_seen_at
+        RETURNING *
+      `;
+      return jobMappers.server(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async heartbeatServer(id: string, instanceId: string, lastSeenAt: Date) {
+    try {
+      const rows = await this.sql<{ id: string }[]>`
+        UPDATE job_server
+        SET status = 'available', last_seen_at = ${lastSeenAt}
+        WHERE id = ${id} AND instance_id = ${instanceId}
+        RETURNING id
+      `;
+      return rows.length > 0;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async markServerUnavailable(id: string, instanceId: string, lastSeenAt: Date) {
+    try {
+      const rows = await this.sql<{ id: string }[]>`
+        UPDATE job_server
+        SET status = 'unavailable', last_seen_at = ${lastSeenAt}
+        WHERE id = ${id} AND instance_id = ${instanceId}
+        RETURNING id
+      `;
+      return rows.length > 0;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listServers() {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM job_server ORDER BY name, id
+    `;
+    return mapDatabaseRows(rows, jobMappers.server);
+  }
+
   private readonly mapSchedule = jobMappers.schedule;
   private readonly mapRun = jobMappers.run;
 

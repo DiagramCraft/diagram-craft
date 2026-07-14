@@ -34337,6 +34337,66 @@
         }
       }
     },
+    "/{workspace}/jobs/servers": {
+      "get": {
+        "operationId": "jobs.servers.list",
+        "summary": "List job servers",
+        "description": "Lists known job servers for workspace administrators. Available servers with no status ping in the last two minutes are reported as unavailable.",
+        "tags": [
+          "Jobs",
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "enum": [
+                          "available",
+                          "unavailable"
+                        ],
+                        "type": "string"
+                      },
+                      "last_seen_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "status",
+                      "last_seen_at"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/jobs/schedules": {
       "get": {
         "operationId": "jobs.schedules.list",
