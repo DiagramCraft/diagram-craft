@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import { dueJobOccurrences } from '../jobRecurrence';
+import { nextJobOccurrence } from '../jobRecurrence';
 import type {
   JobDatabase,
   JobRunClaim,
@@ -178,6 +179,37 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
       return created;
     });
     return transaction();
+  }
+
+  async enqueueRun(scheduleId: string, now: Date) {
+    const existing = this.get(
+      `SELECT * FROM job_run WHERE schedule_id = ? AND status IN ('queued', 'running') ORDER BY created_at LIMIT 1`,
+      [scheduleId],
+      jobMappers.run
+    );
+    if (existing) return existing;
+    const schedule = await this.getSchedule(scheduleId);
+    if (!schedule?.enabled) return null;
+    this.run(
+      `INSERT INTO job_run (
+        id, schedule_id, workspace, job_type, system_identity, payload, priority,
+        occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'queued')`,
+      [randomUUID(), schedule.id, schedule.workspace, schedule.job_type, schedule.system_identity,
+        JSON.stringify(schedule.payload), schedule.priority, iso(now), iso(now), iso(now)]
+    );
+    if (schedule.next_occurrence_at <= now) {
+      this.run('UPDATE job_schedule SET next_occurrence_at = ?, updated_at = ? WHERE id = ?', [
+        iso(nextJobOccurrence(schedule.recurrence, new Date(now.getTime() + 1))),
+        iso(now),
+        schedule.id
+      ]);
+    }
+    return this.get(
+      `SELECT * FROM job_run WHERE schedule_id = ? AND occurrence_at = ?`,
+      [scheduleId, iso(now)],
+      jobMappers.run
+    );
   }
 
   async recoverExpiredRuns(now: Date) {

@@ -34,7 +34,9 @@ import {
   listSiblingNodes,
   projectDbErrorMessages,
   requireNonProjectContentAccess,
-  storageScope
+  storageScope,
+  assertContentPathWritable,
+  assertContentNodeWritable
 } from './projectOperationHelpers';
 
 const toApiMarkdownRevisionSummary = (
@@ -143,9 +145,10 @@ const requireMarkdownNodeAccess = async (
   db: DatabaseAdapter,
   ws: string,
   authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
-  node: { project_id: string | null },
+  node: { project_id: string | null; mount_id?: string | null },
   action: 'read' | 'edit'
 ) => {
+  if (action === 'edit') assertContentNodeWritable(node);
   if (!node.project_id) {
     requireNonProjectContentAccess(authCtx, action);
     return;
@@ -186,6 +189,7 @@ const createScopedMarkdownDoc = async (
   const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
   const nodes = await resolved.listNodes(db, ws);
   const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
+  assertContentPathWritable(nodes, filePath);
   const parentId = folder
     ? (nodes.find(node => node.path === folder && node.type === 'folder')?.id ?? null)
     : null;

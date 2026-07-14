@@ -130,6 +130,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async listContentNodesByMount(workspace: string, mountId: string) {
+    return this.all(
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.mount_id = ? ORDER BY cn.path`,
+      [workspace, mountId],
+      projectMappers.contentNode
+    );
+  }
+
   async getContentNodeByPath(workspace: string, projectId: string, path: string) {
     return this.get(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? AND cn.path = ?`,
@@ -362,7 +370,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
       if (existing) {
         this.run(
-          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), role = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = COALESCE(?, original_filename) WHERE id = ?',
+          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), role = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = COALESCE(?, original_filename), mount_id = COALESCE(?, mount_id) WHERE id = ?',
           [
             input.name,
             input.parent_id ?? null,
@@ -374,12 +382,13 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
             input.updated_by ?? null,
             input.mime_type ?? null,
             input.original_filename ?? null,
+            input.mount_id ?? null,
             existing.id
           ]
         );
       } else {
         this.run(
-          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename, mount_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
@@ -400,7 +409,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
             input.created_byIfNew ?? null,
             input.updated_by ?? null,
             input.mime_type ?? null,
-            input.original_filename ?? null
+            input.original_filename ?? null,
+            input.mount_id ?? null
           ]
         );
       }
@@ -448,6 +458,15 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       path
     ]);
     return row;
+  }
+
+  async deleteContentNodesByIds(workspace: string, nodeIds: readonly string[]) {
+    if (nodeIds.length === 0) return;
+    const placeholders = nodeIds.map(() => '?').join(', ');
+    this.run(
+      `DELETE FROM content_node WHERE workspace = ? AND id IN (${placeholders})`,
+      [workspace, ...nodeIds]
+    );
   }
 
   async renameContentNodeFolder(

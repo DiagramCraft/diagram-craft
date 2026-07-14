@@ -18,6 +18,7 @@ import { aiContract } from '@arch-register/api-types/aiContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import { jobsContract } from '@arch-register/api-types/jobsContract';
+import { externalContentContract } from '@arch-register/api-types/externalContentContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
@@ -37,7 +38,8 @@ export const allContracts = {
   ...aiContract,
   ...diagramCraftContract,
   ...workspaceAnalyticsContract,
-  ...jobsContract
+  ...jobsContract,
+  ...externalContentContract
 };
 
 let generatedUnifiedSpec: Promise<object> | null = null;

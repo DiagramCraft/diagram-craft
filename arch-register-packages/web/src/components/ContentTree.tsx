@@ -123,7 +123,7 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
     key={file.id} depth={depth} icon={getFileNodeIcon(file.type)}
     label={file.original_filename ?? file.name} active={file.id === activeFileId}
     onClick={() => file.type === 'file' ? onDownload(file) : onFileClick(file)}
-    onContextMenu={event => {
+    onContextMenu={file.read_only ? undefined : event => {
       event.preventDefault(); event.stopPropagation();
       setMenu({ x: event.clientX, y: event.clientY, target: { type: fileMenuTargetType(file.type), file } });
     }}
@@ -135,7 +135,7 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
       <TreeRow icon={<TbFolder size={13} />} label={node.name} expandable expanded={open}
         active={activeFolder === node.path} depth={depth} onExpand={() => toggle(node.path)}
         onClick={() => onFolderClick(node.path)}
-        onContextMenu={event => {
+        onContextMenu={node.read_only ? undefined : event => {
           event.preventDefault(); event.stopPropagation();
           setMenu({ x: event.clientX, y: event.clientY, target: { type: 'folder', path: node.path } });
         }} />

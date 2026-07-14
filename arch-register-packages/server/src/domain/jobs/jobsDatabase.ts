@@ -118,6 +118,7 @@ export type JobDatabase = {
   cancelQueuedRun(workspace: string, id: string, completedAt: Date): Promise<JobRunDbResult | null>;
 
   materializeDueSchedules(now: Date): Promise<number>;
+  enqueueRun(scheduleId: string, now: Date): Promise<JobRunDbResult | null>;
   recoverExpiredRuns(now: Date): Promise<number>;
   claimNextRun(workerId: string, leaseDurationMs: number, now: Date): Promise<JobRunClaim | null>;
   heartbeatRun(

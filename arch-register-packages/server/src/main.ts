@@ -44,6 +44,12 @@ const main = async () => {
       return;
     }
 
+    const node = await db.project.getAnyContentNodeById(workspace, fileId);
+    if (node?.mount_id) {
+      logger.warn(`Ignored collaboration save for read-only mounted node ${fileId}`);
+      return;
+    }
+
     const buf = Buffer.from(content, 'utf8');
     const updatedAt = new Date();
     await storage.write(workspace, projectId, fileId, buf);

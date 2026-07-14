@@ -4,10 +4,11 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { TbFileText, TbFolderOpen, TbHome, TbPlus, TbUpload } from 'react-icons/tb';
+import { TbFileText, TbFolderOpen, TbGitBranch, TbHome, TbPlus, TbUpload } from 'react-icons/tb';
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
 import { ContentTree, type ContentTreeHandle } from '../../components/ContentTree';
 import { TreeRow } from '../../components/TreeRow';
+import { MountExternalContentDialog } from '../../components/MountExternalContentDialog';
 import {
   contentDownloadUrl,
   useContentScopeOperations,
@@ -32,11 +33,15 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   });
   const [diagramFolder, setDiagramFolder] = useState<string | null | undefined>(undefined);
   const [markdownFolder, setMarkdownFolder] = useState<string | null | undefined>(undefined);
+  const [mountDialogOpen, setMountDialogOpen] = useState(false);
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as WorkspaceContentSearchParams;
   const contentFolder = params._splat ?? null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
+  const activeFolderData = contentFolder
+    ? data?.folders.find(folder => folder.path === contentFolder)
+    : undefined;
 
   const navigateHome = (folder?: string) => {
     const nextSearch = { contentQuery: search.contentQuery, contentView: search.contentView };
@@ -59,6 +64,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
           </Tabs.List>
         </Tabs.Root>
         <div className={styles.headerActions}>
+          {!activeFolderData?.read_only && (
           <MenuButton.Root>
             <MenuButton.Trigger
               element={
@@ -92,8 +98,16 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
               >
                 New wiki page
               </Menu.Item>
+              <Menu.Separator />
+              <Menu.Item
+                leftSlot={<TbGitBranch size={13} />}
+                onClick={() => setMountDialogOpen(true)}
+              >
+                Mount Git repository
+              </Menu.Item>
             </MenuButton.Menu>
           </MenuButton.Root>
+          )}
         </div>
       </div>
       <div className={styles.scroll}>
@@ -119,7 +133,8 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
               file.type === 'markdown'
                 ? {
                     to: '/$workspaceSlug/content/wiki/$nodeId',
-                    params: { workspaceSlug, nodeId: file.id }
+                    params: { workspaceSlug, nodeId: file.id },
+                    search: file.read_only ? { mode: 'preview' } : undefined
                   }
                 : {
                     to: '/$workspaceSlug/content/diagrams/$diagramId',
@@ -170,6 +185,11 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
           operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
         }
         isPending={operations.createMarkdown.isPending}
+      />
+      <MountExternalContentDialog
+        workspaceId={workspaceSlug}
+        open={mountDialogOpen}
+        onClose={() => setMountDialogOpen(false)}
       />
     </>
   );

@@ -4,6 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { createDatabase } from '@arch-register/server/db/factory';
 import { createLogger } from '@arch-register/server/utils/logger';
 import { createJobServer, type JobHandler } from './worker';
+import { createStorage } from '@arch-register/server/storage/storage';
+import { createExternalContentJobHandler } from '@arch-register/server/domain/external-content/externalContentJobs';
 
 const logger = createLogger('job-server');
 
@@ -28,6 +30,8 @@ const main = async () => {
   const leaseDurationMs = positiveInteger('JOB_SERVER_LEASE_DURATION_MS', 30000);
   const heartbeatIntervalMs = positiveInteger('JOB_SERVER_HEARTBEAT_INTERVAL_MS', 5000);
   const handlers = new Map<string, JobHandler>();
+  const storage = createStorage();
+  handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   const server = createJobServer({
     db,
     handlers,
