@@ -19,7 +19,7 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
-import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -29,7 +29,7 @@ import { applyTemplate } from '@diagram-craft/utils/template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { htmlToText } from '@diagram-craft/utils/html';
 import { Anchor } from './anchor';
-import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
+import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import type { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
@@ -39,6 +39,12 @@ import type { ModificationLayer } from './diagramLayerModification';
 import { getAdjustments } from './diagramLayerUtils';
 import type { NodeDefinition } from './elementDefinitionRegistry';
 import type { PropertyInfo } from './property';
+import {
+  resolveEditProps,
+  resolvePropsInfo,
+  resolveRenderProps,
+  type PropertySource
+} from './propertyResolver';
 import {
   MappedCRDTMap,
   type MappedCRDTMapMapType
@@ -53,7 +59,6 @@ import { EffectsRegistry } from './effect';
 import {
   ensureCustomProp,
   type CustomNodeProps,
-  type EdgeProps,
   type ElementMetadata,
   type NodeProps
 } from './diagramProps';
@@ -92,6 +97,11 @@ const makeEdgesMapper = (
 };
 
 const DEFAULT_BOUNDS = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+
+const withoutTextColor = <T extends { text?: object }>(props: T | undefined): T | undefined => {
+  if (!props?.text) return props;
+  return { ...props, text: { ...props.text, color: undefined } } as T;
+};
 
 /**
  * Shared implementation for transforming a node.
@@ -399,98 +409,28 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     path: T,
     defaultValue?: PropPathValue<NodeProps, T>
   ): PropertyInfo<PropPathValue<NodeProps, T>> {
-    const {
-      parentProps,
-      styleProps,
-      textStyleProps,
-      ruleProps,
-      ruleStyleProps,
-      ruleTextStyleProps
-    } = this.getPropsSources();
-
-    const accessor = new DynamicAccessor<NodeProps>();
-
-    const dest: PropertyInfo<PropPathValue<NodeProps, T>> = [];
-
-    if (defaultValue !== undefined) {
-      dest.push({
-        val: defaultValue,
-        type: 'default'
-      });
-    } else {
-      dest.push({
-        val: nodeDefaults.get(path) as PropPathValue<NodeProps, T>,
-        type: 'default'
-      });
-    }
-
-    if (styleProps) {
-      dest.push({
-        val: accessor.get(styleProps, path) as PropPathValue<NodeProps, T>,
-        type: 'style',
-        id: this.metadata.style
-      });
-    }
-
-    if (textStyleProps) {
-      dest.push({
-        val: accessor.get(textStyleProps, path) as PropPathValue<NodeProps, T>,
-        type: 'textStyle',
-        id: this.metadata.textStyle
-      });
-    }
-
-    if (ruleStyleProps) {
-      dest.push({
-        val: accessor.get(ruleStyleProps, path) as PropPathValue<NodeProps, T>,
-        type: 'ruleStyle'
-      });
-    }
-
-    if (ruleTextStyleProps) {
-      dest.push({
-        val: accessor.get(ruleTextStyleProps, path) as PropPathValue<NodeProps, T>,
-        type: 'ruleTextStyle'
-      });
-    }
-
-    dest.push({
-      val: accessor.get(parentProps, path) as PropPathValue<NodeProps, T>,
-      type: 'parent'
-    });
-
-    dest.push({
-      val: accessor.get(this.#props.get() as NodeProps, path) as PropPathValue<NodeProps, T>,
-      type: 'stored'
-    });
-
-    for (const rp of ruleProps) {
-      dest.push({
-        val: accessor.get(rp[1], path) as PropPathValue<NodeProps, T>,
-        type: 'rule',
-        id: rp[0]
-      });
-    }
-
-    return dest.filter(e => e.val !== undefined);
+    return resolvePropsInfo(this.getPropsSources(), nodeDefaults, path, defaultValue);
   }
 
-  private getPropsSources() {
+  private getPropsSources(): ReadonlyArray<PropertySource<NodeProps>> {
     const styleProps = this.diagram.document.styles.getNodeStyle(this.metadata.style)?.props;
 
     const textStyleProps = this.diagram.document.styles.getTextStyle(
       this.metadata.textStyle
     )?.props;
 
-    const parentProps: Partial<NodeProps & EdgeProps> = deepClone(
+    const parentProps = deepClone(
       this._parent.get() && this.#props.get().capabilities?.inheritStyle
         ? // @ts-expect-error this.#parent.editProps cannot be properly typed
-          makeWriteable(this._parent.get().editProps)
+          this._parent.get().editProps
         : {}
-    );
+    ) as Partial<NodeProps>;
 
     const adjustments = getAdjustments(this._activeDiagram, this.id);
-    const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
+    const ruleProps = adjustments.map(([id, adjustment]) => ({
+      id,
+      props: adjustment.props as NodeProps
+    }));
 
     const ruleElementStyle = adjustments
       .map(([, v]) => v.elementStyle)
@@ -504,58 +444,78 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       .at(-1);
     const ruleTextStyleProps = this.diagram.document.styles.getTextStyle(ruleTextStyle)?.props;
 
-    return {
-      parentProps,
-      styleProps,
-      textStyleProps,
-      ruleProps: ruleProps as [string, NodeProps][],
-      ruleStyleProps,
-      ruleTextStyleProps
-    };
+    const normalizedParentProps = deepClone(parentProps) as NodeProps;
+    normalizedParentProps.debug = {};
+
+    const sources: PropertySource<NodeProps>[] = [
+      { type: 'default', mode: 'info-only' }
+    ];
+
+    if (styleProps) {
+      sources.push({
+        type: 'style',
+        props: styleProps,
+        id: this.metadata.style,
+        mode: 'editing-and-rendering'
+      });
+    }
+
+    if (textStyleProps) {
+      sources.push({
+        type: 'textStyle',
+        props: withoutTextColor(textStyleProps),
+        infoProps: textStyleProps,
+        id: this.metadata.textStyle,
+        mode: 'editing-and-rendering'
+      });
+    }
+
+    if (ruleStyleProps) {
+      sources.push({
+        type: 'ruleStyle',
+        props: ruleStyleProps,
+        mode: 'editing-and-rendering'
+      });
+    }
+
+    if (ruleTextStyleProps) {
+      sources.push({
+        type: 'ruleTextStyle',
+        props: withoutTextColor(ruleTextStyleProps),
+        infoProps: ruleTextStyleProps,
+        mode: 'editing-and-rendering'
+      });
+    }
+
+    sources.push({
+      type: 'parent',
+      props: normalizedParentProps,
+      infoProps: parentProps,
+      mode: 'editing-and-rendering'
+    });
+
+    sources.push({
+      type: 'stored',
+      props: this.#props.get() as Partial<NodeProps>,
+      mode: 'editing-and-rendering'
+    });
+
+    for (const { id, props } of ruleProps) {
+      sources.push({
+        type: 'rule',
+        props,
+        id,
+        mode: 'rendering'
+      });
+    }
+
+    return sources;
   }
 
   _populatePropsCache() {
-    const {
-      parentProps,
-      styleProps,
-      textStyleProps,
-      ruleProps,
-      ruleStyleProps,
-      ruleTextStyleProps
-    } = this.getPropsSources();
-
-    // Let's not inherit the debug property - as it's useful to be able
-    // to set this on individual nodes
-    parentProps.debug = {};
-
-    const consolidatedRulesProps = ruleProps.reduce(
-      (p, c) => deepMerge<NodeProps>({}, p, c[1]),
-      {}
-    );
-
-    // Exclude text.color from textStyleProps — color is owned by the node stylesheet
-    const filteredTextProps = textStyleProps?.text
-      ? { ...textStyleProps, text: { ...textStyleProps.text, color: undefined } }
-      : textStyleProps;
-
-    // Exclude text.color from ruleTextStyleProps for the same reason
-    const filteredRuleTextProps = ruleTextStyleProps?.text
-      ? { ...ruleTextStyleProps, text: { ...ruleTextStyleProps.text, color: undefined } }
-      : ruleTextStyleProps;
-
-    const propsForEditing = deepMerge<NodeProps>(
-      {},
-      styleProps ?? {},
-      filteredTextProps ?? {},
-      ruleStyleProps,
-      filteredRuleTextProps,
-      parentProps,
-      this.#props.get() as NodeProps
-    ) as DeepRequired<NodeProps>;
-
-    const propsForRendering = nodeDefaults.applyDefaults(
-      deepMerge({}, propsForEditing, consolidatedRulesProps)
-    );
+    const sources = this.getPropsSources();
+    const propsForEditing = resolveEditProps(sources) as DeepRequired<NodeProps>;
+    const propsForRendering = resolveRenderProps(sources, nodeDefaults);
 
     this.cache.set('props.forEditing', propsForEditing);
     this.cache.set('props.forRendering', propsForRendering);

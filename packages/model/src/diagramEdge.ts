@@ -42,7 +42,7 @@ import { isDifferent, isSame } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert, is, mustExist } from '@diagram-craft/utils/assert';
-import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
+import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
 import type { Layer } from './diagramLayer';
@@ -51,6 +51,12 @@ import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { ModificationLayer } from './diagramLayerModification';
 import type { Path } from '@diagram-craft/geometry/path';
 import type { PropertyInfo } from './property';
+import {
+  resolveEditProps,
+  resolvePropsInfo,
+  resolveRenderProps,
+  type PropertySource
+} from './propertyResolver';
 import type { EdgeDefinition } from './edgeDefinition';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import {
@@ -371,53 +377,17 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   /* Props *************************************************************************************************** */
 
   getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>> {
-    const { styleProps, ruleProps, ruleStyleProps } = this.getPropsSources();
-
-    const accessor = new DynamicAccessor<EdgeProps>();
-
-    const dest: PropertyInfo<PropPathValue<EdgeProps, T>> = [];
-
-    dest.push({
-      val: edgeDefaults.get(path) as PropPathValue<EdgeProps, T>,
-      type: 'default'
-    });
-
-    if (styleProps) {
-      dest.push({
-        val: accessor.get(styleProps, path) as PropPathValue<EdgeProps, T>,
-        type: 'style',
-        id: this.metadata.style
-      });
-    }
-
-    if (ruleStyleProps) {
-      dest.push({
-        val: accessor.get(ruleStyleProps, path) as PropPathValue<EdgeProps, T>,
-        type: 'ruleStyle'
-      });
-    }
-
-    dest.push({
-      val: accessor.get(this.#props.get(), path) as PropPathValue<EdgeProps, T>,
-      type: 'stored'
-    });
-
-    for (const rp of ruleProps) {
-      dest.push({
-        val: accessor.get(rp[1], path) as PropPathValue<EdgeProps, T>,
-        type: 'rule',
-        id: rp[0]
-      });
-    }
-
-    return dest.filter(e => e.val !== undefined);
+    return resolvePropsInfo(this.getPropsSources(), edgeDefaults, path);
   }
 
-  private getPropsSources() {
+  private getPropsSources(): ReadonlyArray<PropertySource<EdgeProps>> {
     const styleProps = this.diagram.document.styles.getEdgeStyle(this.metadata.style)?.props;
 
     const adjustments = getAdjustments(this._activeDiagram, this.id);
-    const ruleProps = adjustments.map(([k, v]) => [k, v.props]);
+    const ruleProps = adjustments.map(([id, adjustment]) => ({
+      id,
+      props: adjustment.props as EdgeProps
+    }));
 
     const ruleElementStyle = adjustments
       .map(([, v]) => v.elementStyle)
@@ -425,31 +395,49 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       .at(-1);
     const ruleStyleProps = this.diagram.document.styles.getEdgeStyle(ruleElementStyle)?.props;
 
-    return {
-      styleProps,
-      ruleProps: ruleProps as [string, EdgeProps][],
-      ruleStyleProps
-    };
+    const sources: PropertySource<EdgeProps>[] = [
+      { type: 'default', mode: 'info-only' }
+    ];
+
+    if (styleProps) {
+      sources.push({
+        type: 'style',
+        props: styleProps,
+        id: this.metadata.style,
+        mode: 'editing-and-rendering'
+      });
+    }
+
+    if (ruleStyleProps) {
+      sources.push({
+        type: 'ruleStyle',
+        props: ruleStyleProps,
+        mode: 'editing-and-rendering'
+      });
+    }
+
+    sources.push({
+      type: 'stored',
+      props: this.#props.get(),
+      mode: 'editing-and-rendering'
+    });
+
+    for (const { id, props } of ruleProps) {
+      sources.push({
+        type: 'rule',
+        props,
+        id,
+        mode: 'rendering'
+      });
+    }
+
+    return sources;
   }
 
   private populatePropsCache() {
-    const { styleProps, ruleProps, ruleStyleProps } = this.getPropsSources();
-
-    const consolidatedRulesProps = ruleProps.reduce(
-      (p, c) => deepMerge<EdgeProps>({}, p, c[1]),
-      {}
-    );
-
-    const propsForEditing = deepMerge(
-      {},
-      styleProps ?? {},
-      ruleStyleProps ?? {},
-      this.#props.get()
-    ) as DeepRequired<EdgeProps>;
-
-    const propsForRendering = edgeDefaults.applyDefaults(
-      deepMerge({}, propsForEditing, consolidatedRulesProps)
-    );
+    const sources = this.getPropsSources();
+    const propsForEditing = resolveEditProps(sources) as DeepRequired<EdgeProps>;
+    const propsForRendering = resolveRenderProps(sources, edgeDefaults);
 
     this.cache.set('props.forEditing', propsForEditing);
     this.cache.set('props.forRendering', propsForRendering);
