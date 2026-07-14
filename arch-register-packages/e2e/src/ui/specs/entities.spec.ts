@@ -22,6 +22,22 @@ test.describe('entities section', () => {
     await entitiesPage.expectFilteredResultCount(2);
   });
 
+  test('opens an entity detail from the browser @quick', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.openEntity(authApiEntity.name);
+    await entitiesPage.expectEntityDetailLoaded(authApiEntity.name);
+  });
+
+  test('enters entity edit mode without saving', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.openEntity(authApiEntity.name);
+    await entitiesPage.startEditingEntity();
+  });
+
   test('shows the entity browser in table view', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
