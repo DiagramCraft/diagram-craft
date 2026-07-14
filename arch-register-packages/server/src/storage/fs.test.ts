@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -45,5 +45,18 @@ describe('FilesystemStorage staged mutations', () => {
     await expect(readFile(join(root, 'ws', 'project', 'node'))).rejects.toMatchObject({
       code: 'ENOENT'
     });
+  });
+
+  it('reads from a fallback directory when content has not been migrated', async () => {
+    const primaryRoot = await mkdtemp(join(tmpdir(), 'arch-register-storage-primary-'));
+    const fallbackRoot = await mkdtemp(join(tmpdir(), 'arch-register-storage-fallback-'));
+    roots.push(primaryRoot, fallbackRoot);
+    const storage = new FilesystemStorage(primaryRoot, [fallbackRoot]);
+    await mkdir(join(fallbackRoot, 'ws', 'project'), { recursive: true });
+    await writeFile(join(fallbackRoot, 'ws', 'project', 'node'), 'legacy content');
+
+    await expect(storage.read('ws', 'project', 'node')).resolves.toEqual(
+      Buffer.from('legacy content')
+    );
   });
 });

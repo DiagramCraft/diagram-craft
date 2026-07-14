@@ -203,7 +203,8 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
           occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at, status
         ) VALUES (
           ${randomUUID()}, ${schedule.id}, ${schedule.workspace}, ${schedule.job_type},
-          ${this.json(schedule.payload)}, ${schedule.priority}, ${now}, ${now}, 1, ${now}, ${now}, 'queued'
+          ${schedule.system_identity}, ${this.json(schedule.payload)}, ${schedule.priority},
+          ${now}, ${now}, 1, ${now}, ${now}, 'queued'
         ) RETURNING *
       `;
       if (schedule.next_occurrence_at <= now) {

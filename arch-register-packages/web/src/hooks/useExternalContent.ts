@@ -15,6 +15,10 @@ export type CreateExternalContentMountInput = {
   interval_hours: number;
 };
 
+export type UpdateExternalContentMountInput = Omit<CreateExternalContentMountInput, 'scope'> & {
+  id: string;
+};
+
 export const useExternalContentMounts = (workspaceId: string, enabled = true) =>
   useQuery<ExternalContentMount[]>({
     queryKey: externalContentKeys.list(workspaceId),
@@ -37,6 +41,12 @@ export const useExternalContentOperations = (workspaceId: string) => {
     onSuccess: invalidate
   });
 
+  const update = useMutation({
+    mutationFn: ({ id, ...body }: UpdateExternalContentMountInput) =>
+      orpcClient.externalContent.update({ params: { workspace: workspaceId, id }, body }),
+    onSuccess: invalidate
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) =>
       orpcClient.externalContent.remove({ params: { workspace: workspaceId, id } }),
@@ -49,5 +59,5 @@ export const useExternalContentOperations = (workspaceId: string) => {
     onSuccess: invalidate
   });
 
-  return { create, remove, sync };
+  return { create, update, remove, sync };
 };

@@ -174,6 +174,22 @@ const requireMarkdownNodeAccess = async (
 
 const EMPTY_MARKDOWN_BODY = JSON.stringify({ body: '' });
 
+const readMarkdownBody = (content: Buffer) => {
+  const rawContent = content.toString('utf8');
+
+  try {
+    const parsed = JSON.parse(rawContent) as { body?: unknown };
+    if (parsed !== null && typeof parsed === 'object' && typeof parsed.body === 'string') {
+      return parsed.body;
+    }
+  } catch {
+    // External markdown mounts may contain the source file directly. Keep
+    // accepting that representation so existing mounts remain readable.
+  }
+
+  return rawContent;
+};
+
 const createScopedMarkdownDoc = async (
   scope: ContentScopeResolver,
   db: DatabaseAdapter,
@@ -339,8 +355,7 @@ export const getMarkdownContent = async (
       const siblingNodes = await listSiblingNodes(db, ws, node);
       const attachments = getMarkdownAttachmentNodes(siblingNodes, node.id).map(toApiProjectFile);
       const content = await storage.read(ws, storageScope(ws, node), node.id);
-      const parsed = JSON.parse(content.toString('utf8')) as { body?: string };
-      return { body: parsed.body ?? '', attachments };
+      return { body: readMarkdownBody(content), attachments };
     }
   );
 };

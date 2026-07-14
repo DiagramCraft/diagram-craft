@@ -4,7 +4,8 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
-  TbCopy, TbDownload, TbFileText, TbFolder, TbFolderOpen, TbPencil, TbPlus, TbTrash, TbUpload
+  TbCopy, TbDownload, TbFileText, TbFolder, TbFolderOpen, TbFolderSymlink, TbPencil, TbPlus,
+  TbTrash, TbUpload
 } from 'react-icons/tb';
 import type { useContentScopeOperations } from '../hooks/useContentScope';
 import {
@@ -32,6 +33,7 @@ type Props = {
   onCreateFolder: (parent: string) => void;
   onCreateDiagram: (folder: string) => void;
   onCreateMarkdown: (folder: string) => void;
+  onMountContextMenu?: (event: React.MouseEvent, mountId: string) => void;
   initiallyExpanded?: boolean;
   beforeTree?: ReactNode;
 };
@@ -41,7 +43,7 @@ export type ContentTreeHandle = { openUpload: (folder: string | null) => void };
 export const ContentTree = forwardRef<ContentTreeHandle, Props>(function ContentTree({
   rootFiles, folders, activeFileId, activeFolder, operations, onFolderClick, onFileClick,
   onDownload, onCreateFolder, onCreateDiagram, onCreateMarkdown, initiallyExpanded = false,
-  beforeTree
+  beforeTree, onMountContextMenu
 }, ref) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -132,13 +134,17 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
   const folderNode = (node: ContentFolderNode, depth = 0): ReactNode => {
     const open = isExpanded(node.path);
     return <div key={node.path}>
-      <TreeRow icon={<TbFolder size={13} />} label={node.name} expandable expanded={open}
+      <TreeRow icon={node.read_only && parentPath(node.path) === null ? <TbFolderSymlink size={13} /> : <TbFolder size={13} />} label={node.name} expandable expanded={open}
         active={activeFolder === node.path} depth={depth} onExpand={() => toggle(node.path)}
         onClick={() => onFolderClick(node.path)}
-        onContextMenu={node.read_only ? undefined : event => {
-          event.preventDefault(); event.stopPropagation();
-          setMenu({ x: event.clientX, y: event.clientY, target: { type: 'folder', path: node.path } });
-        }} />
+        onContextMenu={node.read_only
+          ? node.mount_id && parentPath(node.path) === null && onMountContextMenu
+            ? event => onMountContextMenu(event, node.mount_id!)
+            : undefined
+          : event => {
+            event.preventDefault(); event.stopPropagation();
+            setMenu({ x: event.clientX, y: event.clientY, target: { type: 'folder', path: node.path } });
+          }} />
       {open && <>{node.files.map(file => fileRow(file, depth + 1))}{node.children.map(child => folderNode(child, depth + 1))}</>}
     </div>;
   };

@@ -89,8 +89,8 @@ export class SqliteExternalContentDatabase extends SqliteDatabaseBase implements
     if (!existing) return null;
     const next = { ...existing, ...input };
     this.run(
-      `UPDATE content_mount SET status = ?, last_synced_at = ?, last_revision = ?, last_error = ?, updated_at = ? WHERE id = ?`,
-      [next.status, iso(next.last_synced_at), next.last_revision, next.last_error, next.updated_at.toISOString(), id]
+      `UPDATE content_mount SET source_id = ?, destination_path = ?, source_path = ?, status = ?, last_synced_at = ?, last_revision = ?, last_error = ?, updated_at = ? WHERE id = ?`,
+      [next.source_id, next.destination_path, next.source_path, next.status, iso(next.last_synced_at), next.last_revision, next.last_error, next.updated_at.toISOString(), id]
     );
     return this.getMount(next.workspace, id);
   }

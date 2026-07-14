@@ -100,7 +100,8 @@ export class PostgresExternalContentDatabase extends PostgresDatabaseBase implem
     const next = { ...existing, ...input };
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        UPDATE content_mount SET status = ${next.status}, last_synced_at = ${next.last_synced_at},
+        UPDATE content_mount SET source_id = ${next.source_id}, destination_path = ${next.destination_path},
+          source_path = ${next.source_path}, status = ${next.status}, last_synced_at = ${next.last_synced_at},
           last_revision = ${next.last_revision}, last_error = ${next.last_error}, updated_at = ${next.updated_at}
         WHERE id = ${id} RETURNING *
       `;

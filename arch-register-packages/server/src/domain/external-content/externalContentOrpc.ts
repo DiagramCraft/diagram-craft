@@ -9,7 +9,8 @@ import {
   createExternalContentMount,
   listExternalContentMounts,
   removeExternalContentMount,
-  syncExternalContentMount
+  syncExternalContentMount,
+  updateExternalContentMount
 } from './externalContentOperations';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 
@@ -23,6 +24,9 @@ const externalContentRouter = router.router({
     ),
     create: router.externalContent.create.handler(({ input, context }) =>
       createExternalContentMount(context.db, input.params.workspace, input.body, context.event)
+    ),
+    update: router.externalContent.update.handler(({ input, context }) =>
+      updateExternalContentMount(context.db, input.params.workspace, input.params.id, input.body, context.event)
     ),
     remove: router.externalContent.remove.handler(({ input, context }) =>
       removeExternalContentMount(context.db, context.storage, input.params.workspace, input.params.id, context.event)

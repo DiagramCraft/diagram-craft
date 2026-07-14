@@ -109,7 +109,7 @@ export type ExternalContentDatabase = {
   listMountsBySource(workspace: string, sourceId: string): Promise<ExternalContentMountDbResult[]>;
   updateMount(
     id: string,
-    input: Partial<Pick<ExternalContentMountDbResult, 'status' | 'last_synced_at' | 'last_revision' | 'last_error' | 'updated_at'>>
+    input: Partial<Pick<ExternalContentMountDbResult, 'source_id' | 'destination_path' | 'source_path' | 'status' | 'last_synced_at' | 'last_revision' | 'last_error' | 'updated_at'>>
   ): Promise<ExternalContentMountDbResult | null>;
   deleteMount(workspace: string, id: string): Promise<void>;
 };

@@ -35035,6 +35035,12 @@
                       "source_path": {
                         "type": "string"
                       },
+                      "interval_hours": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "exclusiveMinimum": 0
+                      },
                       "status": {
                         "enum": [
                           "pending",
@@ -35190,6 +35196,7 @@
                       "scope",
                       "destination_path",
                       "source_path",
+                      "interval_hours",
                       "status",
                       "last_synced_at",
                       "last_revision",
@@ -35292,7 +35299,8 @@
                   },
                   "destination_path": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "pattern": "^[^/]+$"
                   },
                   "source_path": {
                     "type": "string",
@@ -35382,6 +35390,12 @@
                     },
                     "source_path": {
                       "type": "string"
+                    },
+                    "interval_hours": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "exclusiveMinimum": 0
                     },
                     "status": {
                       "enum": [
@@ -35538,6 +35552,7 @@
                     "scope",
                     "destination_path",
                     "source_path",
+                    "interval_hours",
                     "status",
                     "last_synced_at",
                     "last_revision",
@@ -35554,6 +35569,323 @@
       }
     },
     "/{workspace}/content-mounts/{id}": {
+      "put": {
+        "operationId": "externalContent.update",
+        "summary": "Update an external content mount",
+        "tags": [
+          "External Content",
+          "External Content"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "const": "git"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "url"
+                    ]
+                  },
+                  "destination_path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[^/]+$"
+                  },
+                  "source_path": {
+                    "type": "string",
+                    "default": ""
+                  },
+                  "interval_hours": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "exclusiveMinimum": 0,
+                    "default": 1
+                  }
+                },
+                "required": [
+                  "source",
+                  "destination_path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "workspace": {
+                      "type": "string"
+                    },
+                    "source_id": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "workspace"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "project"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "entity"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        }
+                      ]
+                    },
+                    "destination_path": {
+                      "type": "string"
+                    },
+                    "source_path": {
+                      "type": "string"
+                    },
+                    "interval_hours": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "exclusiveMinimum": 0
+                    },
+                    "status": {
+                      "enum": [
+                        "pending",
+                        "syncing",
+                        "succeeded",
+                        "failed"
+                      ],
+                      "type": "string"
+                    },
+                    "last_synced_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "last_revision": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "last_error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "workspace": {
+                          "type": "string"
+                        },
+                        "source_type": {
+                          "const": "git"
+                        },
+                        "source_config": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "git"
+                            },
+                            "url": {
+                              "type": "string",
+                              "format": "uri"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "url"
+                          ]
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "status": {
+                          "enum": [
+                            "pending",
+                            "syncing",
+                            "succeeded",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        "last_attempt_at": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "last_synced_at": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "last_revision": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "last_error": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "updated_at": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "workspace",
+                        "source_type",
+                        "source_config",
+                        "enabled",
+                        "status",
+                        "last_attempt_at",
+                        "last_synced_at",
+                        "last_revision",
+                        "last_error",
+                        "created_at",
+                        "updated_at"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "source_id",
+                    "scope",
+                    "destination_path",
+                    "source_path",
+                    "interval_hours",
+                    "status",
+                    "last_synced_at",
+                    "last_revision",
+                    "last_error",
+                    "created_at",
+                    "updated_at",
+                    "source"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "operationId": "externalContent.remove",
         "summary": "Remove an external content mount",

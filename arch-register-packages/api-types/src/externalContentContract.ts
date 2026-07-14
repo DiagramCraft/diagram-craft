@@ -36,6 +36,7 @@ const mountSchema = z.object({
   scope: scopeSchema,
   destination_path: z.string(),
   source_path: z.string(),
+  interval_hours: z.number().int().positive(),
   status: z.enum(['pending', 'syncing', 'succeeded', 'failed']),
   last_synced_at: z.string().nullable(),
   last_revision: z.string().nullable(),
@@ -71,7 +72,35 @@ export const externalContentContract = oc.tag('External Content').router({
           body: z.object({
             source: sourceConfigSchema,
             scope: scopeSchema,
-            destination_path: z.string().min(1),
+            destination_path: z
+              .string()
+              .trim()
+              .min(1)
+              .regex(/^[^/]+$/, 'Mount point must not contain /'),
+            source_path: z.string().default(''),
+            interval_hours: z.number().int().positive().default(1)
+          })
+        })
+      )
+      .output(mountSchema),
+    update: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/content-mounts/{id}',
+        inputStructure: 'detailed',
+        summary: 'Update an external content mount',
+        tags: ['External Content']
+      })
+      .input(
+        z.object({
+          params: ws.extend({ id: z.string() }),
+          body: z.object({
+            source: sourceConfigSchema,
+            destination_path: z
+              .string()
+              .trim()
+              .min(1)
+              .regex(/^[^/]+$/, 'Mount point must not contain /'),
             source_path: z.string().default(''),
             interval_hours: z.number().int().positive().default(1)
           })

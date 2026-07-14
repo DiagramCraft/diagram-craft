@@ -5,7 +5,11 @@ import type { StorageAdapter } from '../../storage/storage';
 import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import { createJobSchedule, enqueueJobRun, setJobScheduleEnabled } from '../jobs/jobOperations';
+import {
+  createJobSchedule,
+  enqueueJobRun,
+  updateJobSchedule
+} from '../jobs/jobOperations';
 import type {
   ExternalContentMountDbResult,
   ExternalContentSourceDbResult,
@@ -34,6 +38,7 @@ const normalizeUrl = (value: string) => {
 const normalizePath = (value: string, name: string, allowEmpty: boolean) => {
   const normalized = value.trim().replace(/^\/+|\/+$/g, '');
   if (!allowEmpty && normalized.length === 0) throw new Error(`${name} must not be empty`);
+  if (allowEmpty && normalized.length === 0) return '';
   if (normalized.split('/').some(part => part === '' || part === '.' || part === '..')) {
     throw new Error(`${name} contains an invalid path segment`);
   }
@@ -66,6 +71,7 @@ const toApiSource = (source: ExternalContentSourceDbResult) => ({
 const toApiMount = async (db: DatabaseAdapter, mount: ExternalContentMountDbResult) => {
   const source = await db.externalContent.getSource(mount.workspace, mount.source_id);
   httpAssert.present(source, { status: 500, message: 'External content source not found' });
+  const schedule = source.schedule_id ? await db.jobs.getSchedule(source.schedule_id) : null;
   return {
     id: mount.id,
     workspace: mount.workspace,
@@ -77,6 +83,7 @@ const toApiMount = async (db: DatabaseAdapter, mount: ExternalContentMountDbResu
         : { type: 'workspace' as const },
     destination_path: mount.destination_path,
     source_path: mount.source_path,
+    interval_hours: schedule?.recurrence.type === 'hours' ? schedule.recurrence.intervalHours : 1,
     status: mount.status,
     last_synced_at: mount.last_synced_at?.toISOString() ?? null,
     last_revision: mount.last_revision,
@@ -85,6 +92,34 @@ const toApiMount = async (db: DatabaseAdapter, mount: ExternalContentMountDbResu
     updated_at: mount.updated_at.toISOString(),
     source: toApiSource(source)
   };
+};
+
+const ensureSourceSchedule = async (
+  db: DatabaseAdapter,
+  source: ExternalContentSourceDbResult,
+  workspace: string,
+  intervalHours: number,
+  now: Date
+) => {
+  const recurrence = { type: 'hours' as const, intervalHours, startsAt: now };
+  if (source.schedule_id) {
+    await updateJobSchedule(db, source.schedule_id, { enabled: true, recurrence }, now);
+    return (await db.externalContent.updateSource(source.id, { enabled: true, updated_at: now }))!;
+  }
+
+  const schedule = await createJobSchedule(db, {
+    workspace,
+    jobType: JOB_TYPE,
+    systemIdentity: SYSTEM_IDENTITY,
+    payload: { sourceId: source.id },
+    priority: 5,
+    recurrence
+  }, now);
+  return (await db.externalContent.updateSource(source.id, {
+    schedule_id: schedule.id,
+    enabled: true,
+    updated_at: now
+  }))!;
 };
 
 const validateScope = async (db: DatabaseAdapter, workspace: string, scope: { type: 'workspace' | 'project' | 'entity'; id?: string }) => {
@@ -140,6 +175,11 @@ export const createExternalContentMount = async (
   requireWorkspaceAdmin(authCtx);
   const normalizedScope = await validateScope(db, ws, input.scope);
   const destinationPath = normalizePath(input.destination_path, 'destination_path', false);
+  httpAssert.true(!destinationPath.includes('/'), {
+    status: 400,
+    statusText: 'Bad Request',
+    message: 'Mount point must not contain /'
+  });
   const sourcePath = normalizePath(input.source_path, 'source_path', true);
   const config: GitSourceConfig = { type: 'git', url: normalizeUrl(input.source.url) };
   const existingNodes = await scopeNodes(db, ws, normalizedScope);
@@ -169,36 +209,8 @@ export const createExternalContentMount = async (
         created_at: now,
         updated_at: now
       });
-      const schedule = await createJobSchedule(tx, {
-        workspace: ws,
-        jobType: JOB_TYPE,
-        systemIdentity: SYSTEM_IDENTITY,
-        payload: { sourceId: source.id },
-        priority: 5,
-        recurrence: { type: 'hours', intervalHours: input.interval_hours, startsAt: now }
-      }, now);
-      source = (await tx.externalContent.updateSource(source.id, {
-        schedule_id: schedule.id,
-        updated_at: now
-      }))!;
-    } else if (source.schedule_id) {
-      await setJobScheduleEnabled(tx, source.schedule_id, true, now);
-      source = (await tx.externalContent.updateSource(source.id, { enabled: true, updated_at: now }))!;
-    } else {
-      const schedule = await createJobSchedule(tx, {
-        workspace: ws,
-        jobType: JOB_TYPE,
-        systemIdentity: SYSTEM_IDENTITY,
-        payload: { sourceId: source.id },
-        priority: 5,
-        recurrence: { type: 'hours', intervalHours: input.interval_hours, startsAt: now }
-      }, now);
-      source = (await tx.externalContent.updateSource(source.id, {
-        schedule_id: schedule.id,
-        enabled: true,
-        updated_at: now
-      }))!;
     }
+    source = await ensureSourceSchedule(tx, source, ws, input.interval_hours, now);
 
     const mount = await tx.externalContent.createMount({
       id: randomUUID(),
@@ -216,6 +228,97 @@ export const createExternalContentMount = async (
     });
     if (source.schedule_id) await enqueueJobRun(tx, source.schedule_id, now);
     return mount;
+  });
+  return toApiMount(db, result);
+};
+
+export const updateExternalContentMount = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  mountId: string,
+  input: {
+    source: GitSourceConfig;
+    destination_path: string;
+    source_path: string;
+    interval_hours: number;
+  },
+  event: AuthenticatedEvent
+) => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  requireWorkspaceAdmin(authCtx);
+  const mount = await db.externalContent.getMount(ws, mountId);
+  httpAssert.present(mount, { status: 404, message: 'Content mount not found' });
+
+  const destinationPath = normalizePath(input.destination_path, 'destination_path', false);
+  httpAssert.true(!destinationPath.includes('/'), {
+    status: 400,
+    statusText: 'Bad Request',
+    message: 'Mount point must not contain /'
+  });
+  const sourcePath = normalizePath(input.source_path, 'source_path', true);
+  const config: GitSourceConfig = { type: 'git', url: normalizeUrl(input.source.url) };
+  const nodes = await scopeNodes(db, ws, mount.project_id
+    ? { type: 'project', id: mount.project_id }
+    : mount.entity_id
+      ? { type: 'entity', id: mount.entity_id }
+      : { type: 'workspace' });
+  const conflictingNode = nodes.find(node =>
+    node.mount_id !== mount.id &&
+    (node.path === destinationPath || node.path.startsWith(`${destinationPath}/`))
+  );
+  httpAssert.true(!conflictingNode, {
+    status: 409,
+    message: `Destination path '${destinationPath}' is already in use`
+  });
+
+  const now = new Date();
+  const sourceKey = identityKey(config);
+  const result = await db.core.transaction(async tx => {
+    const oldSource = await tx.externalContent.getSource(ws, mount.source_id);
+    httpAssert.present(oldSource, { status: 500, message: 'External content source not found' });
+
+    let source = await tx.externalContent.getSourceByIdentity(ws, 'git', sourceKey);
+    if (!source) {
+      source = await tx.externalContent.createSource({
+        id: randomUUID(),
+        workspace: ws,
+        source_type: 'git',
+        source_config: config,
+        identity_key: sourceKey,
+        schedule_id: null,
+        enabled: true,
+        status: 'pending',
+        created_at: now,
+        updated_at: now
+      });
+    }
+    source = await ensureSourceSchedule(tx, source, ws, input.interval_hours, now);
+
+    const updatedMount = await tx.externalContent.updateMount(mount.id, {
+      source_id: source.id,
+      destination_path: destinationPath,
+      source_path: sourcePath,
+      status: 'pending',
+      last_synced_at: null,
+      last_revision: null,
+      last_error: null,
+      updated_at: now
+    });
+    httpAssert.present(updatedMount, { status: 404, message: 'Content mount not found' });
+
+    if (oldSource.id !== source.id) {
+      const remaining = await tx.externalContent.listMountsBySource(ws, oldSource.id);
+      if (remaining.length === 0) {
+        if (oldSource.schedule_id) {
+          await updateJobSchedule(tx, oldSource.schedule_id, { enabled: false }, now);
+        }
+        await tx.externalContent.updateSource(oldSource.id, { enabled: false, updated_at: now });
+      }
+    }
+
+    if (source.schedule_id) await enqueueJobRun(tx, source.schedule_id, now);
+    return updatedMount;
   });
   return toApiMount(db, result);
 };
@@ -245,7 +348,7 @@ export const removeExternalContentMount = async (
     if (source) {
       const remaining = await tx.externalContent.listMountsBySource(ws, source.id);
       if (remaining.length === 0) {
-        if (source.schedule_id) await setJobScheduleEnabled(tx, source.schedule_id, false);
+        if (source.schedule_id) await updateJobSchedule(tx, source.schedule_id, { enabled: false });
         await tx.externalContent.updateSource(source.id, { enabled: false, updated_at: new Date() });
       }
     }
