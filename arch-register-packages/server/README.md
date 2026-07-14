@@ -24,6 +24,23 @@ SQLITE_PATH=./data/arch-register.sqlite
 
 If `DB_DRIVER` is omitted, the server defaults to `postgres`.
 
+## Job server
+
+Recurring schedules and durable job runs share this database through the standalone
+`@arch-register/job-server` package. Start it separately from the API server:
+
+```bash
+pnpm --filter @arch-register/job-server start
+```
+
+Production and multi-worker job deployments require PostgreSQL. SQLite is available only
+for explicitly enabled, single-worker local development with
+`JOB_SERVER_ALLOW_SQLITE=true`; it must not be used as the production job-server backend.
+
+The worker concurrency and lease settings are configured with
+`JOB_SERVER_MAX_CONCURRENCY`, `JOB_SERVER_POLL_INTERVAL_MS`,
+`JOB_SERVER_LEASE_DURATION_MS`, and `JOB_SERVER_HEARTBEAT_INTERVAL_MS`.
+
 ## Local PostgreSQL setup
 
 ### 1. Install PostgreSQL
