@@ -82,6 +82,8 @@ export type {
   JobRunCompletion,
   JobRunDbResult,
   JobRunFailure,
+  JobRunListOptions,
+  JobRunPage,
   JobRunStatus,
   JobScheduleDbCreate,
   JobScheduleDbResult,

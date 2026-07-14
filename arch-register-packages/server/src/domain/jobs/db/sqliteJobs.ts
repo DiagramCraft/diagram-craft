@@ -8,7 +8,8 @@ import type {
   JobRunFailure,
   JobScheduleDbCreate,
   JobScheduleDbUpdate,
-  JobRunDbResult
+  JobRunDbResult,
+  JobRunListOptions
 } from '../jobsDatabase';
 import { jobMappers } from '../jobsDatabase';
 
@@ -83,43 +84,52 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
       : this.all('SELECT * FROM job_schedule ORDER BY created_at, id', [], jobMappers.schedule);
   }
 
-  async listRuns(workspace?: string, scheduleId?: string) {
-    if (workspace && scheduleId) {
-      return this.all(
-        'SELECT * FROM job_run WHERE workspace = ? AND schedule_id = ? ORDER BY planned_at, created_at, id',
-        [workspace, scheduleId],
-        jobMappers.run
-      );
+  async listRuns(workspace: string, options: JobRunListOptions) {
+    const conditions = ['workspace = ?'];
+    const params: unknown[] = [workspace];
+
+    if (options.scheduleId) {
+      conditions.push('schedule_id = ?');
+      params.push(options.scheduleId);
     }
-    if (workspace) {
-      return this.all(
-        'SELECT * FROM job_run WHERE workspace = ? ORDER BY planned_at, created_at, id',
-        [workspace],
-        jobMappers.run
-      );
+    if (options.status) {
+      conditions.push('status = ?');
+      params.push(options.status);
     }
-    if (scheduleId) {
-      return this.all(
-        'SELECT * FROM job_run WHERE schedule_id = ? ORDER BY planned_at, created_at, id',
-        [scheduleId],
-        jobMappers.run
-      );
+    if (options.plannedFrom) {
+      conditions.push('planned_at >= ?');
+      params.push(iso(options.plannedFrom));
     }
-    return this.all(
-      'SELECT * FROM job_run ORDER BY planned_at, created_at, id',
-      [],
+    if (options.plannedTo) {
+      conditions.push('planned_at <= ?');
+      params.push(iso(options.plannedTo));
+    }
+
+    const where = conditions.join(' AND ');
+    const totalRow = this.get<{ count: number }>(
+      `SELECT COUNT(*) AS count FROM job_run WHERE ${where}`,
+      params
+    );
+    const items = this.all(
+      `SELECT * FROM job_run
+       WHERE ${where}
+       ORDER BY planned_at DESC, created_at DESC, id DESC
+       LIMIT ? OFFSET ?`,
+      [...params, options.limit, options.offset],
       jobMappers.run
     );
+
+    return { items, total: Number(totalRow?.count ?? 0) };
   }
 
   async getRun(id: string) {
     return await this.get('SELECT * FROM job_run WHERE id = ?', [id], jobMappers.run);
   }
 
-  async cancelQueuedRun(id: string, completedAt: Date) {
+  async cancelQueuedRun(workspace: string, id: string, completedAt: Date) {
     const result = this.run(
-      "UPDATE job_run SET status = 'cancelled', completed_at = ? WHERE id = ? AND status = 'queued'",
-      [iso(completedAt), id]
+      "UPDATE job_run SET status = 'cancelled', completed_at = ? WHERE workspace = ? AND id = ? AND status = 'queued'",
+      [iso(completedAt), workspace, id]
     );
     if (result.changes === 0) return null;
     return await this.get('SELECT * FROM job_run WHERE id = ?', [id], jobMappers.run);

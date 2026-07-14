@@ -9,7 +9,8 @@ import type {
   JobRunCompletion,
   JobRunFailure,
   JobScheduleDbCreate,
-  JobScheduleDbUpdate
+  JobScheduleDbUpdate,
+  JobRunListOptions
 } from '../jobsDatabase';
 import { jobMappers } from '../jobsDatabase';
 
@@ -77,30 +78,45 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
     return mapDatabaseRows(rows, this.mapSchedule);
   }
 
-  async listRuns(workspace?: string, scheduleId?: string) {
-    const rows =
-      workspace && scheduleId
-        ? await this.sql<DatabaseRow[]>`
-          SELECT * FROM job_run
-          WHERE workspace = ${workspace} AND schedule_id = ${scheduleId}
-          ORDER BY planned_at, created_at, id
-        `
-        : workspace
-          ? await this.sql<DatabaseRow[]>`
-            SELECT * FROM job_run
-            WHERE workspace = ${workspace}
-            ORDER BY planned_at, created_at, id
-          `
-          : scheduleId
-            ? await this.sql<DatabaseRow[]>`
-              SELECT * FROM job_run
-              WHERE schedule_id = ${scheduleId}
-              ORDER BY planned_at, created_at, id
-            `
-            : await this.sql<DatabaseRow[]>`
-              SELECT * FROM job_run ORDER BY planned_at, created_at, id
-            `;
-    return mapDatabaseRows(rows, this.mapRun);
+  async listRuns(workspace: string, options: JobRunListOptions) {
+    const conditions = ['workspace = $1'];
+    const params: unknown[] = [workspace];
+
+    if (options.scheduleId) {
+      params.push(options.scheduleId);
+      conditions.push(`schedule_id = $${params.length}`);
+    }
+    if (options.status) {
+      params.push(options.status);
+      conditions.push(`status = $${params.length}`);
+    }
+    if (options.plannedFrom) {
+      params.push(options.plannedFrom);
+      conditions.push(`planned_at >= $${params.length}`);
+    }
+    if (options.plannedTo) {
+      params.push(options.plannedTo);
+      conditions.push(`planned_at <= $${params.length}`);
+    }
+
+    const where = conditions.join(' AND ');
+    const countRows = await this.sql.unsafe<{ count: string }[]>(
+      `SELECT COUNT(*) AS count FROM job_run WHERE ${where}`,
+      params as Parameters<typeof this.sql.unsafe>[1]
+    );
+    const pageParams = [...params, options.limit, options.offset];
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `SELECT * FROM job_run
+       WHERE ${where}
+       ORDER BY planned_at DESC, created_at DESC, id DESC
+       LIMIT $${pageParams.length - 1} OFFSET $${pageParams.length}`,
+      pageParams as Parameters<typeof this.sql.unsafe>[1]
+    );
+
+    return {
+      items: mapDatabaseRows(rows, this.mapRun),
+      total: Number(countRows[0]?.count ?? 0)
+    };
   }
 
   async getRun(id: string) {
@@ -110,12 +126,12 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
     return row ? this.mapRun(row) : null;
   }
 
-  async cancelQueuedRun(id: string, completedAt: Date) {
+  async cancelQueuedRun(workspace: string, id: string, completedAt: Date) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         UPDATE job_run
         SET status = 'cancelled', completed_at = ${completedAt}
-        WHERE id = ${id} AND status = 'queued'
+        WHERE workspace = ${workspace} AND id = ${id} AND status = 'queued'
         RETURNING *
       `;
       return row ? this.mapRun(row) : null;

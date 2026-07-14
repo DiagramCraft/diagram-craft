@@ -1,0 +1,120 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.notice {
+  border: 1px solid color-mix(in oklch, var(--warning-fg) 45%, var(--cmp-border));
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--warning-fg) 9%, var(--base-bg));
+  color: var(--base-fg);
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.section {
+  border: 1px solid var(--cmp-border);
+  border-radius: 8px;
+  background: var(--base-bg);
+  overflow: hidden;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--cmp-border);
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sectionSub {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.5fr) repeat(3, minmax(110px, 1fr));
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--cmp-border);
+}
+
+.input {
+  min-width: 0;
+  border: 1px solid var(--cmp-border);
+  border-radius: 5px;
+  background: var(--base-bg);
+  color: var(--base-fg);
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.muted {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.summary {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--cmp-border);
+}
+
+.pageLabel {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  margin-right: auto;
+}
+
+.error {
+  color: var(--error-fg);
+  padding: 14px 16px;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .stack {
+    padding: 0 12px 16px;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionHead {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

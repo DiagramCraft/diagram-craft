@@ -24,6 +24,7 @@ export type WorkspaceContextType = {
     canCreateProjects: boolean;
     canCreateEntities: boolean;
     canManageMembers: boolean;
+    canManageJobs: boolean;
     canManageViews: boolean;
     canManageAdminViews: boolean;
   };

@@ -15,6 +15,7 @@ import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
 import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
 import { RoutePendingComponent } from '../../routes/RoutePendingComponent';
+import { JobMonitoringSubSection } from './sub-sections/JobMonitoringSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -63,6 +64,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'audit': {
     title: 'Audit log',
     sub: 'Browse recent activity across the workspace with filters for object type and date range.'
+  },
+  'jobs': {
+    title: 'Job monitoring',
+    sub: 'Monitor system-owned scheduled work and cancel queued runs.'
   },
   'danger': {
     title: 'Danger zone',
@@ -207,6 +212,7 @@ export const WorkspaceSettingsScreen = () => {
           }}
         />
       )}
+      {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
       {section === 'danger' && <DangerZoneSubSection workspace={workspace} />}
     </div>
   );

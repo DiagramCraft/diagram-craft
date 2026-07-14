@@ -31,6 +31,7 @@ import {
 import { createAiORPCHandler } from './domain/ai/aiOrpc';
 import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
 import { createWorkspaceAnalyticsORPCHandler } from './domain/analytics/workspaceAnalyticsOrpc';
+import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -122,6 +123,7 @@ export const createApp = (
   app.use(createWorkspaceCollectionORPCHandler(db));
   app.use(createWorkspaceConfigORPCHandler(db));
   app.use(createWorkspaceAnalyticsORPCHandler(db));
+  app.use(createJobsORPCHandler(db));
   app.use(createProjectFileRoutesHandler(db, storage));
   app.use(createProjectORPCHandler(db, storage));
   app.use(createAssessmentORPCHandler(db));
