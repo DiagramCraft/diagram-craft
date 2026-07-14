@@ -4,7 +4,7 @@
 #   - Prunes registry entries for worktrees that no longer exist on disk
 #   - Allocates a unique port block
 #   - Registers the worktree in the main tree's .worktrees/registry.json
-#   - Writes mprocs.local.yaml, arch-register server .env, and AR web .env
+#   - Writes mprocs.local.yaml, Arch Register server/job-server .env files, and AR web .env
 #
 # Usage: ./scripts/worktree-init.sh
 # Must be run from within the worktree root.
@@ -53,7 +53,23 @@ for rel in "${LINK_TARGETS[@]}"; do
 done
 
 # ---------------------------------------------------------------------------
-# 3. Idempotency guard — if already initialised, print info and exit cleanly
+# 3. Ensure the local job-server environment exists
+# ---------------------------------------------------------------------------
+JOB_SERVER_DIR="${WORKTREE_ROOT}/arch-register-packages/job-server"
+JOB_SERVER_ENV="${JOB_SERVER_DIR}/.env"
+
+if [ ! -f "${JOB_SERVER_ENV}" ]; then
+  mkdir -p "${JOB_SERVER_DIR}"
+  cat >"${JOB_SERVER_ENV}" <<EOF
+JOB_SERVER_ALLOW_SQLITE=true
+DB_DRIVER=sqlite
+SQLITE_PATH=../server/data/arch-register.sqlite
+JOB_SERVER_MAX_CONCURRENCY=2
+EOF
+fi
+
+# ---------------------------------------------------------------------------
+# 4. Idempotency guard — if already initialised, print info and exit cleanly
 # ---------------------------------------------------------------------------
 if [ -f "${WORKTREE_ROOT}/mprocs.local.yaml" ]; then
   echo "This worktree is already initialised."
@@ -92,7 +108,7 @@ for e in reg.get('worktrees', []):
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Ensure registry directory and file exist in the main tree
+# 5. Ensure registry directory and file exist in the main tree
 # ---------------------------------------------------------------------------
 REGISTRY_DIR="${MAIN_TREE}/.worktrees"
 REGISTRY="${REGISTRY_DIR}/registry.json"
@@ -104,7 +120,7 @@ if [ ! -f "${REGISTRY}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Prune registry entries for worktrees that no longer exist on disk
+# 6. Prune registry entries for worktrees that no longer exist on disk
 # ---------------------------------------------------------------------------
 PRUNED="$(
   python3 - <<PYEOF
@@ -132,12 +148,12 @@ if [ "${PRUNED}" -gt 0 ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 6. Determine the current branch name
+# 7. Determine the current branch name
 # ---------------------------------------------------------------------------
 BRANCH="$(git -C "${WORKTREE_ROOT}" symbolic-ref --short HEAD 2>/dev/null || git -C "${WORKTREE_ROOT}" rev-parse --short HEAD)"
 
 # ---------------------------------------------------------------------------
-# 7. Find the next free index
+# 8. Find the next free index
 # ---------------------------------------------------------------------------
 NEXT_INDEX="$(python3 -c "
 import json
@@ -147,7 +163,7 @@ print(max(existing, default=0) + 1)
 ")"
 
 # ---------------------------------------------------------------------------
-# 8. Compute port block
+# 9. Compute port block
 # ---------------------------------------------------------------------------
 BASE=$((7000 + NEXT_INDEX * 10))
 PORT_DC_WEB=$((BASE + 1))
@@ -159,7 +175,7 @@ PORT_SB_AR=$((BASE + 6))
 PORT_DOCS=$((BASE + 7))
 
 # ---------------------------------------------------------------------------
-# 9. Append entry to registry
+# 10. Append entry to registry
 # ---------------------------------------------------------------------------
 TODAY="$(date +%Y-%m-%d)"
 
@@ -196,7 +212,7 @@ print("Registry updated:", registry_path)
 PYEOF
 
 # ---------------------------------------------------------------------------
-# 10. Write mprocs.local.yaml
+# 11. Write mprocs.local.yaml
 # ---------------------------------------------------------------------------
 BOOTSTRAP_DATA="${MAIN_TREE}/packages/main/public/data/dataset1/data.json"
 BOOTSTRAP_SCHEMAS="${MAIN_TREE}/packages/main/public/data/dataset1/schemas.json"
@@ -234,6 +250,14 @@ procs:
     stop: SIGKILL
     log:
       file: ar-server.log
+  "AR job server":
+    shell: |
+      cd arch-register-packages/job-server && \\
+      pnpm dev
+    autostart: false
+    stop: SIGKILL
+    log:
+      file: ar-job-server.log
 
   "Storybook :${PORT_SB_DC}":
     cwd: "packages/main"
@@ -267,7 +291,7 @@ proc_log:
 EOF
 
 # ---------------------------------------------------------------------------
-# 11. Write packages/main/.env
+# 12. Write packages/main/.env
 # ---------------------------------------------------------------------------
 DC_WEB_ENV="${WORKTREE_ROOT}/packages/main/.env"
 
@@ -276,7 +300,7 @@ VITE_DC_SERVER_PORT=${PORT_DC_SERVER}
 EOF
 
 # ---------------------------------------------------------------------------
-# 13. Write arch-register-packages/server/.env
+# 14. Write arch-register-packages/server/.env
 # ---------------------------------------------------------------------------
 AR_SERVER_ENV="${WORKTREE_ROOT}/arch-register-packages/server/.env"
 
@@ -288,7 +312,7 @@ JWT_SECRET=your-secret-key-here-min-32-characters-required
 EOF
 
 # ---------------------------------------------------------------------------
-# 14. Bootstrap AR server database (SQLite, first run only)
+# 15. Bootstrap AR server database (SQLite, first run only)
 # ---------------------------------------------------------------------------
 AR_SERVER_DIR="${WORKTREE_ROOT}/arch-register-packages/server"
 AR_DB_PATH="${AR_SERVER_DIR}/data/arch-register.sqlite"
@@ -301,7 +325,7 @@ if [ ! -f "${AR_DB_PATH}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 15. Write arch-register-packages/web/.env
+# 16. Write arch-register-packages/web/.env
 # ---------------------------------------------------------------------------
 AR_WEB_ENV="${WORKTREE_ROOT}/arch-register-packages/web/.env"
 
@@ -324,6 +348,7 @@ printf "  DC web           %s\n" "${PORT_DC_WEB}"
 printf "  DC server        %s\n" "${PORT_DC_SERVER}"
 printf "  AR web           %s\n" "${PORT_AR_WEB}"
 printf "  AR server        %s\n" "${PORT_AR_SERVER}"
+printf "  AR job server    local SQLite worker\n"
 printf "  Storybook DC     %s\n" "${PORT_SB_DC}"
 printf "  Storybook AR     %s\n" "${PORT_SB_AR}"
 printf "  Docs             %s\n" "${PORT_DOCS}"

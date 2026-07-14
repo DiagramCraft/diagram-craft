@@ -1,0 +1,25 @@
+# @arch-register/job-server
+
+Standalone scheduler and worker process for system-created recurring workspace jobs.
+
+## Local development
+
+The worker can use SQLite for a single local worker when explicitly enabled:
+
+```bash
+JOB_SERVER_ALLOW_SQLITE=true \
+DB_DRIVER=sqlite \
+SQLITE_PATH=../server/data/arch-register.sqlite \
+pnpm dev
+```
+
+Production and multi-worker deployments must use PostgreSQL:
+
+```bash
+DB_DRIVER=postgres \
+DATABASE_URL=postgresql://arch_register:password@localhost:5432/arch_register \
+JOB_SERVER_MAX_CONCURRENCY=4 \
+pnpm start
+```
+
+The worker does not expose an HTTP listener. Job handlers are registered by system components and receive the run ID as `jobId` together with the workspace, schedule, system identity, and payload.

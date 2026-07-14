@@ -26,6 +26,15 @@ procs:
     stop: SIGKILL
     log:
       file: ar-server.log
+  "AR job server":
+    shell: |
+      cd arch-register-packages/job-server && \
+      DOTENV_CONFIG_PATH=../server/.env \
+      pnpm dev
+    autostart: false
+    stop: SIGKILL
+    log:
+      file: ar-job-server.log
 
   "Storybook :6006":
     cwd: "packages/main"

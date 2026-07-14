@@ -13,6 +13,7 @@ import { SqliteAiDatabase } from '../domain/ai/db/sqliteAi';
 import { SqliteViewDatabase } from '../domain/catalog/db/sqliteView';
 import { SqliteWatchDatabase } from '../domain/watch/db/sqliteWatch';
 import { SqliteDiscussionDatabase } from '../domain/discussion/db/sqliteDiscussion';
+import { SqliteJobDatabase } from '../domain/jobs/db/sqliteJobs';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -28,6 +29,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly auth;
   readonly ai;
   readonly discussion;
+  readonly jobs;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -45,6 +47,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.auth = new SqliteAuthDatabase(() => this.db);
     this.ai = new SqliteAiDatabase(() => this.db);
     this.discussion = new SqliteDiscussionDatabase(() => this.db);
+    this.jobs = new SqliteJobDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 

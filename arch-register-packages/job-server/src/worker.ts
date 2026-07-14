@@ -1,0 +1,188 @@
+import { createLogger } from '@arch-register/server/utils/logger';
+import type {
+  DatabaseAdapter,
+  JobRunClaim,
+  JobRunDbResult
+} from '@arch-register/server/db/database';
+
+export type JobExecutionContext = {
+  jobId: string;
+  scheduleId: string;
+  workspace: string;
+  jobType: string;
+  systemIdentity: string;
+  payload: Record<string, unknown>;
+};
+
+export type JobExecutionResult = Record<string, unknown> | null | void;
+
+export type JobHandler = (context: JobExecutionContext) => Promise<JobExecutionResult>;
+
+export type JobServerOptions = {
+  db: DatabaseAdapter;
+  handlers?: ReadonlyMap<string, JobHandler>;
+  workerId: string;
+  maxConcurrency: number;
+  pollIntervalMs: number;
+  leaseDurationMs: number;
+  heartbeatIntervalMs: number;
+  now?: () => Date;
+};
+
+const logger = createLogger('job-server');
+
+const formatError = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+const executeClaim = async (
+  db: DatabaseAdapter,
+  handlers: ReadonlyMap<string, JobHandler>,
+  claim: JobRunClaim,
+  workerId: string,
+  heartbeatIntervalMs: number,
+  leaseDurationMs: number,
+  now: () => Date
+) => {
+  const handler = handlers.get(claim.run.job_type);
+  logger.info(
+    `Picked up job ${claim.run.id} (${claim.run.job_type}) for workspace ${claim.run.workspace}`
+  );
+  let heartbeatInFlight = false;
+  const heartbeat = setInterval(() => {
+    if (heartbeatInFlight) return;
+    heartbeatInFlight = true;
+    void db.jobs
+      .heartbeatRun(
+        claim.run.id,
+        workerId,
+        claim.leaseToken,
+        now(),
+        new Date(now().getTime() + leaseDurationMs)
+      )
+      .then(healthy => {
+        if (!healthy) logger.warn(`Lease heartbeat rejected for job ${claim.run.id}`);
+      })
+      .catch(error => logger.error(`Lease heartbeat failed for job ${claim.run.id}`, error))
+      .finally(() => {
+        heartbeatInFlight = false;
+      });
+  }, heartbeatIntervalMs);
+
+  try {
+    if (!handler) throw new Error(`No handler registered for job type '${claim.run.job_type}'`);
+    const result = await handler({
+      jobId: claim.run.id,
+      scheduleId: claim.run.schedule_id,
+      workspace: claim.run.workspace,
+      jobType: claim.run.job_type,
+      systemIdentity: claim.run.system_identity,
+      payload: claim.run.payload
+    });
+    const completed = await db.jobs.completeRun({
+      runId: claim.run.id,
+      workerId,
+      leaseToken: claim.leaseToken,
+      completedAt: now(),
+      result: result ?? null
+    });
+    if (!completed) {
+      logger.warn(`Completion rejected for job ${claim.run.id}`);
+    } else {
+      logger.info(`Completed job ${claim.run.id} (${claim.run.job_type})`);
+    }
+  } catch (error) {
+    const failure = error instanceof Error ? error : new Error(String(error));
+    logger.error(`Job ${claim.run.id} (${claim.run.job_type}) failed`, failure);
+    const failed = await db.jobs.failRun({
+      runId: claim.run.id,
+      workerId,
+      leaseToken: claim.leaseToken,
+      completedAt: now(),
+      error: formatError(failure)
+    });
+    if (!failed) logger.warn(`Failure update rejected for job ${claim.run.id}`);
+  } finally {
+    clearInterval(heartbeat);
+  }
+};
+
+export const createJobServer = (options: JobServerOptions) => {
+  if (!Number.isInteger(options.maxConcurrency) || options.maxConcurrency < 1) {
+    throw new Error('maxConcurrency must be a positive integer');
+  }
+  if (options.leaseDurationMs <= options.heartbeatIntervalMs) {
+    throw new Error('leaseDurationMs must be greater than heartbeatIntervalMs');
+  }
+
+  const handlers = options.handlers ?? new Map<string, JobHandler>();
+  const now = options.now ?? (() => new Date());
+  const running = new Set<Promise<void>>();
+  let active = true;
+  let loopPromise: Promise<void> | null = null;
+
+  const launchAvailable = async () => {
+    while (active && running.size < options.maxConcurrency) {
+      const claim = await options.db.jobs.claimNextRun(
+        options.workerId,
+        options.leaseDurationMs,
+        now()
+      );
+      if (!claim) return;
+
+      let execution!: Promise<void>;
+      execution = executeClaim(
+        options.db,
+        handlers,
+        claim,
+        options.workerId,
+        options.heartbeatIntervalMs,
+        options.leaseDurationMs,
+        now
+      ).finally(() => {
+        running.delete(execution);
+      });
+      running.add(execution);
+    }
+  };
+
+  const runLoop = async () => {
+    while (active) {
+      const timestamp = now();
+      const recovered = await options.db.jobs.recoverExpiredRuns(timestamp);
+      if (recovered > 0) {
+        logger.warn(`Marked ${recovered} expired job lease(s) as failed`);
+      }
+      const materialized = await options.db.jobs.materializeDueSchedules(timestamp);
+      if (materialized > 0) {
+        logger.info(`Materialized ${materialized} due job run(s)`);
+      }
+      await launchAvailable();
+      if (active) await new Promise(resolve => setTimeout(resolve, options.pollIntervalMs));
+    }
+  };
+
+  return {
+    start: () => {
+      if (loopPromise) return loopPromise;
+      loopPromise = runLoop().catch(error => {
+        logger.error('Worker loop stopped unexpectedly', error);
+        throw error;
+      });
+      return loopPromise;
+    },
+    stop: async () => {
+      active = false;
+      if (loopPromise) await loopPromise;
+      await Promise.all([...running]);
+    },
+    activeRuns: () => running.size
+  };
+};
+
+export const jobRunToExecutionContext = (run: JobRunDbResult): JobExecutionContext => ({
+  jobId: run.id,
+  scheduleId: run.schedule_id,
+  workspace: run.workspace,
+  jobType: run.job_type,
+  systemIdentity: run.system_identity,
+  payload: run.payload
+});

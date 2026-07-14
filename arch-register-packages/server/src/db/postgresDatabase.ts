@@ -15,6 +15,7 @@ import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
 import { PostgresDiscussionDatabase } from '../domain/discussion/db/postgresDiscussion';
+import { PostgresJobDatabase } from '../domain/jobs/db/postgresJobs';
 import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,6 +35,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly auth: PostgresAuthDatabase;
   readonly ai: PostgresAiDatabase;
   readonly discussion: PostgresDiscussionDatabase;
+  readonly jobs: PostgresJobDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -46,7 +48,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       watch: new PostgresWatchDatabase(sql),
       auth: new PostgresAuthDatabase(sql),
       ai: new PostgresAiDatabase(sql),
-      discussion: new PostgresDiscussionDatabase(sql)
+      discussion: new PostgresDiscussionDatabase(sql),
+      jobs: new PostgresJobDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -91,6 +94,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.auth = new PostgresAuthDatabase(this.sql);
     this.ai = new PostgresAiDatabase(this.sql);
     this.discussion = new PostgresDiscussionDatabase(this.sql);
+    this.jobs = new PostgresJobDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,
