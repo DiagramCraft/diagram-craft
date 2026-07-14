@@ -10,6 +10,7 @@ The implemented account area currently focuses on:
 
 - profile details
 - appearance
+- API tokens for service integrations
 
 ## Profile
 
@@ -26,6 +27,17 @@ Profile covers the identity data tied to the current sign-in, such as display na
 ## Appearance
 
 Appearance controls how your account is represented visually in the workspace, including avatar color choices.
+
+## API Tokens
+
+API tokens are workspace-scoped credentials for tools and service integrations. Create them from the **API tokens**
+section, choose a workspace and capability set, and copy the secret when it is shown. The complete token is shown
+only once.
+
+For an external AI client, grant `ws.view` for read access. Add `ent.edit` only when the integration must create or
+update entities. Treat tokens like passwords and revoke them when they are no longer needed.
+
+See [MCP Server](../reference/mcp-server) for connecting an AI client to the Arch Register catalog.
 
 ## Why This Is Separate
 
