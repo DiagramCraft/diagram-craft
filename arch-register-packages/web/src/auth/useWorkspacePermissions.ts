@@ -14,6 +14,7 @@ type WorkspacePermissions = {
   canCreateProjects: boolean;
   canCreateEntities: boolean;
   canManageMembers: boolean;
+  canManageJobs: boolean;
   canManageViews: boolean;
   canManageAdminViews: boolean;
 };
@@ -47,6 +48,10 @@ export const useWorkspacePermissions = (
     const canViewAudit = hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.audit');
     const canManageMembers =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'people.invite');
+    const canManageJobs =
+      hasWorkspaceContext &&
+      (checker.hasWorkspaceCapability(context, 'people.role') ||
+        checker.hasGlobalPermission(context, 'admin_platform'));
     const canManageViews =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.manage_views');
     const canManageAdminViews =
@@ -70,6 +75,7 @@ export const useWorkspacePermissions = (
       canCreateProjects,
       canCreateEntities,
       canManageMembers,
+      canManageJobs,
       canManageViews,
       canManageAdminViews
     };

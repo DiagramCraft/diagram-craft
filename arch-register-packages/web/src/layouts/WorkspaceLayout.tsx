@@ -90,6 +90,7 @@ export const WorkspaceLayout = () => {
     canCreateProjects,
     canCreateEntities,
     canManageMembers,
+    canManageJobs,
     canManageViews,
     canManageAdminViews
   } = useWorkspacePermissions(ws?.id);
@@ -106,6 +107,7 @@ export const WorkspaceLayout = () => {
       ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
       ...(canManageWorkspaces ? ['ai'] : []),
+      ...(canManageJobs ? ['jobs'] : []),
       ...(canViewAudit ? ['analytics', 'audit'] : [])
     ],
     [
@@ -113,7 +115,8 @@ export const WorkspaceLayout = () => {
       canManageTeams,
       canViewSchemas,
       canManageMembers,
-      canViewAudit
+      canViewAudit,
+      canManageJobs
     ]
   );
 
@@ -189,6 +192,7 @@ export const WorkspaceLayout = () => {
         canCreateProjects,
         canCreateEntities,
         canManageMembers,
+        canManageJobs,
         canManageViews,
         canManageAdminViews
       },
@@ -214,6 +218,7 @@ export const WorkspaceLayout = () => {
       canCreateProjects,
       canCreateEntities,
       canManageMembers,
+      canManageJobs,
       canManageViews,
       canManageAdminViews,
       availableSettingsSections,

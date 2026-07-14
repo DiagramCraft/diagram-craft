@@ -93,15 +93,29 @@ export type JobRunFailure = {
   error: string;
 };
 
+export type JobRunListOptions = {
+  scheduleId?: string;
+  status?: JobRunStatus;
+  plannedFrom?: Date;
+  plannedTo?: Date;
+  limit: number;
+  offset: number;
+};
+
+export type JobRunPage = {
+  items: JobRunDbResult[];
+  total: number;
+};
+
 export type JobDatabase = {
   createSchedule(input: JobScheduleDbCreate): Promise<JobScheduleDbResult>;
   updateSchedule(id: string, input: JobScheduleDbUpdate): Promise<JobScheduleDbResult | null>;
   getSchedule(id: string): Promise<JobScheduleDbResult | null>;
   listSchedules(workspace?: string): Promise<JobScheduleDbResult[]>;
 
-  listRuns(workspace?: string, scheduleId?: string): Promise<JobRunDbResult[]>;
+  listRuns(workspace: string, options: JobRunListOptions): Promise<JobRunPage>;
   getRun(id: string): Promise<JobRunDbResult | null>;
-  cancelQueuedRun(id: string, completedAt: Date): Promise<JobRunDbResult | null>;
+  cancelQueuedRun(workspace: string, id: string, completedAt: Date): Promise<JobRunDbResult | null>;
 
   materializeDueSchedules(now: Date): Promise<number>;
   recoverExpiredRuns(now: Date): Promise<number>;

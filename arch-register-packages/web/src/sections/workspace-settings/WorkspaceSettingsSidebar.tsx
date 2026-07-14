@@ -12,7 +12,8 @@ import {
   TbCode,
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand,
-  TbFileExport
+  TbFileExport,
+  TbActivity
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -54,6 +55,7 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   },
   { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
+  { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Workspace' },
   {
     id: 'danger',
     label: 'Danger zone',
