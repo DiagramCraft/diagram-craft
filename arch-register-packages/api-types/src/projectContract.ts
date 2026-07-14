@@ -69,6 +69,8 @@ export const projectFileSchema = z.object({
   updated_by: z.string().nullable().optional().describe('User who last updated the file'),
   mime_type: z.string().nullable().optional().describe('MIME type for generic files'),
   original_filename: z.string().nullable().optional().describe('Original filename for uploaded files'),
+  read_only: z.boolean().optional().describe('Whether this content is managed by an external mount'),
+  mount_id: z.string().nullable().optional().describe('External content mount identifier'),
   content_metadata: contentMetadataSchema.nullable().describe('Content metadata (for diagrams)')
 });
 
@@ -94,7 +96,9 @@ const markdownContentSchema = z.object({
 const fileFolderSchema = z.object({
   path: z.string().describe('Folder path'),
   name: z.string().describe('Folder name'),
-  files: z.array(projectFileSchema).describe('Files in this folder')
+  files: z.array(projectFileSchema).describe('Files in this folder'),
+  read_only: z.boolean().optional().describe('Whether this folder is managed by an external mount'),
+  mount_id: z.string().nullable().optional().describe('External content mount identifier')
 });
 
 const fileTreeSchema = z.object({

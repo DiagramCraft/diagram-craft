@@ -42,7 +42,9 @@ import {
   projectDbErrorMessages,
   reloadContentNode,
   requireNonProjectContentAccess,
-  syncDiagramContentMetadata
+  syncDiagramContentMetadata,
+  assertContentPathWritable,
+  assertContentNodeWritable
 } from './projectOperationHelpers';
 
 const getNodeExtension = (node: Pick<ContentNodeDbResult, 'type'>) => {
@@ -124,6 +126,7 @@ export const createFolder = async (
         'edit_project',
         'You do not have permission to modify this project'
       );
+      assertContentPathWritable(await db.project.listContentNodes(ws, project.id), folderPath);
 
       const lastSlash = folderPath.lastIndexOf('/');
       const folderName = lastSlash !== -1 ? folderPath.substring(lastSlash + 1) : folderPath;
@@ -187,6 +190,7 @@ export const createEntityFolder = async (
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
       const entityUuid = entity.id;
+      assertContentPathWritable(await db.project.listEntityContentNodes(ws, entityUuid), folderPath);
 
       const lastSlash = folderPath.lastIndexOf('/');
       const folderName = lastSlash !== -1 ? folderPath.substring(lastSlash + 1) : folderPath;
@@ -247,6 +251,7 @@ const writeScopedDiagram = async (
   const authCtx = await buildApiAuthCtx(db, ws, event);
   const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
   const nodes = await resolved.listNodes(db, ws);
+  assertContentPathWritable(nodes, filePath);
   const existing = nodes.find(node => node.path === filePath && node.type === 'diagram');
   const folderPath = folderFromPath(filePath);
   const parentId = folderPath
@@ -451,6 +456,8 @@ export const saveFile = async (
       );
 
       const existingFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
+      if (existingFile) assertContentNodeWritable(existingFile);
+      assertContentPathWritable(await db.project.listContentNodes(ws, projectUuid), filePath);
       const isUpdate = !!existingFile;
 
       const fileLastSlash = filePath.lastIndexOf('/');
@@ -571,6 +578,7 @@ export const cloneContentFile = async (
     clonePath = folder ? `${folder}/${cloneName}${extension}` : `${cloneName}${extension}`;
     if (!nodes.some(node => node.path === clonePath)) break;
   }
+  assertContentPathWritable(nodes, clonePath);
 
   const timestamp = new Date();
   const rootId = randomUUID();
@@ -758,6 +766,8 @@ export const relocateContentFile = async (
   const source = nodes.find(node => node.path === filePath);
   httpAssert.present(source, { status: 404, message: `File '${filePath}' not found` });
   if (filePath === newPath) return toApiProjectFile(source);
+  assertContentNodeWritable(source);
+  assertContentPathWritable(nodes, newPath);
   httpAssert.true(!nodes.some(node => node.path === newPath), {
     status: 409,
     message: `A file already exists at '${newPath}'`
@@ -1055,6 +1065,7 @@ export const createWorkspaceFolder = async (
     },
     async ({ ws, authCtx }) => {
       requireNonProjectContentAccess(authCtx, 'edit');
+      assertContentPathWritable(await db.project.listWorkspaceContentNodes(ws), folderPath);
 
       const lastSlash = folderPath.lastIndexOf('/');
       const folderName = lastSlash !== -1 ? folderPath.substring(lastSlash + 1) : folderPath;
@@ -1225,4 +1236,3 @@ export const getFileContentById = async (
     }
   );
 };
-

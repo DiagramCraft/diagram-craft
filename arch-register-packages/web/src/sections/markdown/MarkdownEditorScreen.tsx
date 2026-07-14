@@ -122,6 +122,7 @@ export const MarkdownEditorScreen = () => {
   const selectedRevisionId = search.revisionId;
 
   const documentTitle = file?.name ?? 'Markdown document';
+  const isReadOnly = !!file?.read_only;
   const attachments = data?.attachments ?? [];
   const headingTitle = useMemo(() => extractFirstHeadingTitle(body), [body]);
   const resolvedTitle = headingTitle ?? documentTitle;
@@ -164,6 +165,12 @@ export const MarkdownEditorScreen = () => {
     },
     [navigate]
   );
+
+  useEffect(() => {
+    if (!isReadOnly || requestedMode !== 'edit') return;
+    setPaneMode('preview');
+    updateSearch({ mode: 'preview', panel: 'preview' }, true);
+  }, [isReadOnly, requestedMode, updateSearch]);
 
   const {
     sessionId,
@@ -293,6 +300,7 @@ export const MarkdownEditorScreen = () => {
   }, []);
 
   const handleSave = useCallback(async () => {
+    if (isReadOnly) return;
     if (!dirty) {
       if (hasPendingDiagramChanges) {
         rotateDiagramSession();
@@ -312,10 +320,17 @@ export const MarkdownEditorScreen = () => {
     headingTitle,
     saveMutation,
     rotateDiagramSession,
-    clearCloseSummary
+    clearCloseSummary,
+    isReadOnly
   ]);
 
   const handleSaveAndClose = useCallback(async () => {
+    if (isReadOnly) {
+      clearDiagramSessionState();
+      clearCloseSummary();
+      exitMarkdownEditor();
+      return;
+    }
     if (dirty) {
       if (saveMutation.isPending) return;
       await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
@@ -331,10 +346,12 @@ export const MarkdownEditorScreen = () => {
     saveMutation,
     clearDiagramSessionState,
     clearCloseSummary,
-    exitMarkdownEditor
+    exitMarkdownEditor,
+    isReadOnly
   ]);
 
   const handleEnterEdit = useCallback(() => {
+    if (isReadOnly) return;
     setPaneMode('edit');
     updateSearch({
       mode: 'edit',
@@ -344,7 +361,7 @@ export const MarkdownEditorScreen = () => {
       compareMode: undefined,
       diagramSessionId: sessionId
     });
-  }, [sessionId, updateSearch]);
+  }, [isReadOnly, sessionId, updateSearch]);
 
   const handlePreview = useCallback(() => {
     updateSearch({
@@ -374,25 +391,25 @@ export const MarkdownEditorScreen = () => {
 
   const handleRenameConfirm = useCallback(
     async (newName: string) => {
-      if (!file) return;
+      if (!file || isReadOnly) return;
       await renameFile(newName);
       setRenameOpen(false);
     },
-    [file, renameFile]
+    [file, isReadOnly, renameFile]
   );
 
   const handleDeleteConfirm = useCallback(async () => {
-    if (!file) return;
+    if (!file || isReadOnly) return;
     await deleteFile();
     setDeleteOpen(false);
     handleNavigateBack();
-  }, [file, deleteFile, handleNavigateBack]);
+  }, [file, isReadOnly, deleteFile, handleNavigateBack]);
 
   const handleAttachmentDeleteConfirm = useCallback(async () => {
-    if (!attachmentDeleteTarget) return;
+    if (!attachmentDeleteTarget || isReadOnly) return;
     await deleteAttachment(attachmentDeleteTarget.path);
     setAttachmentDeleteTarget(null);
-  }, [attachmentDeleteTarget, deleteAttachment]);
+  }, [attachmentDeleteTarget, isReadOnly, deleteAttachment]);
 
   const handleSelectRevision = useCallback(
     (revisionId: string) => {
@@ -435,13 +452,13 @@ export const MarkdownEditorScreen = () => {
 
   const handleRestore = useCallback(
     async (revisionId: string) => {
-      if (restoreMutation.isPending) return;
+      if (isReadOnly || restoreMutation.isPending) return;
       await restoreMutation.mutateAsync(revisionId);
       setDirty(false);
       clearDiagramSessionState();
       exitMarkdownEditor();
     },
-    [restoreMutation, clearDiagramSessionState, exitMarkdownEditor]
+    [isReadOnly, restoreMutation, clearDiagramSessionState, exitMarkdownEditor]
   );
 
   const handleOpenAttachment = useCallback(
@@ -532,12 +549,14 @@ export const MarkdownEditorScreen = () => {
             parentLabel={parentLabel}
             resolvedTitle={resolvedTitle}
             description={titleView.description}
-            isViewMode={titleView.isViewMode}
-            attachDisabled={titleView.attachDisabled}
+            isViewMode={titleView.isViewMode && !isReadOnly}
+            attachDisabled={titleView.attachDisabled || isReadOnly}
             isUploadingAttachment={uploadAttachmentMutation.isPending}
             onNavigateBack={handleNavigateBack}
             actions={{
-              onAttachClick: () => fileInputRef.current?.click(),
+              onAttachClick: () => {
+                if (!isReadOnly) fileInputRef.current?.click();
+              },
               onEnterEdit: handleEnterEdit,
               onOpenHistory: handleOpenHistory,
               onRenameRequest: () => setRenameOpen(true),
@@ -545,7 +564,7 @@ export const MarkdownEditorScreen = () => {
             }}
           />
 
-          {screenState.screenMode === 'edit' && (
+          {!isReadOnly && screenState.screenMode === 'edit' && (
             <MarkdownEditorToolbar
               paneMode={screenState.paneMode}
               hasUnsavedChanges={hasUnsavedChanges}
@@ -576,10 +595,10 @@ export const MarkdownEditorScreen = () => {
             />
           ) : (
             <MarkdownEditorPane
-              screenMode={screenState.screenMode}
-              paneMode={screenState.paneMode}
+              screenMode={isReadOnly ? 'preview' : screenState.screenMode}
+              paneMode={isReadOnly ? 'preview' : screenState.paneMode}
               body={body}
-              onChange={handleChange}
+              onChange={isReadOnly ? () => {} : handleChange}
               toc={toc}
               updatedLabel={updatedLabel}
               readTime={readTime}

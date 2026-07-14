@@ -7,6 +7,7 @@ import type { WatchDatabase } from '../domain/watch/db/watchDatabase';
 import type { DiscussionDatabase } from '../domain/discussion/db/discussionDatabase';
 import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase';
 import type { JobDatabase } from '../domain/jobs/jobsDatabase';
+import type { ExternalContentDatabase } from '../domain/external-content/db/externalContentDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -32,6 +33,7 @@ export type DatabaseAdapter = {
   ai: AiDatabase;
   discussion: DiscussionDatabase;
   jobs: JobDatabase;
+  externalContent: ExternalContentDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -90,6 +92,15 @@ export type {
   JobScheduleDbUpdate,
   JobScheduleRecurrence
 } from '../domain/jobs/jobsDatabase';
+export type {
+  ExternalContentDatabase,
+  ExternalContentMountDbCreate,
+  ExternalContentMountDbResult,
+  ExternalContentSourceDbCreate,
+  ExternalContentSourceDbResult,
+  ExternalContentStatus,
+  GitSourceConfig
+} from '../domain/external-content/db/externalContentDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

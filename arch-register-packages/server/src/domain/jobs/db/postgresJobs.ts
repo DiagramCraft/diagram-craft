@@ -3,6 +3,7 @@ import type { PostgresSqlClient } from '../../../db/postgresBase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { dueJobOccurrences } from '../jobRecurrence';
+import { nextJobOccurrence } from '../jobRecurrence';
 import type {
   JobDatabase,
   JobRunClaim,
@@ -181,6 +182,40 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
 
         return created;
       });
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async enqueueRun(scheduleId: string, now: Date) {
+    const [existing] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM job_run
+      WHERE schedule_id = ${scheduleId} AND status IN ('queued', 'running')
+      ORDER BY created_at LIMIT 1
+    `;
+    if (existing) return this.mapRun(existing);
+    const schedule = await this.getSchedule(scheduleId);
+    if (!schedule?.enabled) return null;
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO job_run (
+          id, schedule_id, workspace, job_type, system_identity, payload, priority,
+          occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at, status
+        ) VALUES (
+          ${randomUUID()}, ${schedule.id}, ${schedule.workspace}, ${schedule.job_type},
+          ${schedule.system_identity}, ${this.json(schedule.payload)}, ${schedule.priority},
+          ${now}, ${now}, 1, ${now}, ${now}, 'queued'
+        ) RETURNING *
+      `;
+      if (schedule.next_occurrence_at <= now) {
+        await this.sql`
+          UPDATE job_schedule
+          SET next_occurrence_at = ${nextJobOccurrence(schedule.recurrence, new Date(now.getTime() + 1))},
+              updated_at = ${now}
+          WHERE id = ${schedule.id}
+        `;
+      }
+      return row ? this.mapRun(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }

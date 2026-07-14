@@ -1,3 +1,8 @@
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const serverPackageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+
 /**
  * Server configuration constants
  */
@@ -49,7 +54,7 @@ export const ENTITY_DEFAULTS = {
  */
 export const STORAGE_DEFAULTS = {
   BACKEND: 'fs',
-  FS_BASE_DIR: './data/projects',
+  FS_BASE_DIR: resolve(serverPackageDir, 'data/projects'),
 } as const;
 
 /**

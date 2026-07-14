@@ -34,7 +34,9 @@ import {
   listSiblingNodes,
   projectDbErrorMessages,
   requireNonProjectContentAccess,
-  storageScope
+  storageScope,
+  assertContentPathWritable,
+  assertContentNodeWritable
 } from './projectOperationHelpers';
 
 const toApiMarkdownRevisionSummary = (
@@ -143,9 +145,10 @@ const requireMarkdownNodeAccess = async (
   db: DatabaseAdapter,
   ws: string,
   authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
-  node: { project_id: string | null },
+  node: { project_id: string | null; mount_id?: string | null },
   action: 'read' | 'edit'
 ) => {
+  if (action === 'edit') assertContentNodeWritable(node);
   if (!node.project_id) {
     requireNonProjectContentAccess(authCtx, action);
     return;
@@ -171,6 +174,22 @@ const requireMarkdownNodeAccess = async (
 
 const EMPTY_MARKDOWN_BODY = JSON.stringify({ body: '' });
 
+const readMarkdownBody = (content: Buffer) => {
+  const rawContent = content.toString('utf8');
+
+  try {
+    const parsed = JSON.parse(rawContent) as { body?: unknown };
+    if (parsed !== null && typeof parsed === 'object' && typeof parsed.body === 'string') {
+      return parsed.body;
+    }
+  } catch {
+    // External markdown mounts may contain the source file directly. Keep
+    // accepting that representation so existing mounts remain readable.
+  }
+
+  return rawContent;
+};
+
 const createScopedMarkdownDoc = async (
   scope: ContentScopeResolver,
   db: DatabaseAdapter,
@@ -186,6 +205,7 @@ const createScopedMarkdownDoc = async (
   const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
   const nodes = await resolved.listNodes(db, ws);
   const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
+  assertContentPathWritable(nodes, filePath);
   const parentId = folder
     ? (nodes.find(node => node.path === folder && node.type === 'folder')?.id ?? null)
     : null;
@@ -335,8 +355,7 @@ export const getMarkdownContent = async (
       const siblingNodes = await listSiblingNodes(db, ws, node);
       const attachments = getMarkdownAttachmentNodes(siblingNodes, node.id).map(toApiProjectFile);
       const content = await storage.read(ws, storageScope(ws, node), node.id);
-      const parsed = JSON.parse(content.toString('utf8')) as { body?: string };
-      return { body: parsed.body ?? '', attachments };
+      return { body: readMarkdownBody(content), attachments };
     }
   );
 };

@@ -13,21 +13,61 @@ const ignoreMissing = async (operation: () => Promise<void>) => {
 
 export class FilesystemStorage implements StorageAdapter {
   private readonly resolvedBaseDir: string;
+  private readonly resolvedFallbackBaseDirs: string[];
 
-  constructor(private baseDir: string) {
+  constructor(private baseDir: string, fallbackBaseDirs: readonly string[] = []) {
     this.resolvedBaseDir = resolve(baseDir);
+    this.resolvedFallbackBaseDirs = fallbackBaseDirs.map(fallbackBaseDir => resolve(fallbackBaseDir));
   }
 
-  private resolvePath(workspace: string, projectId: string, fileId: string): string {
-    const fullPath = resolve(join(this.baseDir, workspace, projectId, fileId));
-    if (!fullPath.startsWith(this.resolvedBaseDir + sep) && fullPath !== this.resolvedBaseDir) {
+  private resolvePathFromBase(
+    baseDir: string,
+    resolvedBaseDir: string,
+    workspace: string,
+    projectId: string,
+    fileId: string
+  ): string {
+    const fullPath = resolve(join(baseDir, workspace, projectId, fileId));
+    if (!fullPath.startsWith(resolvedBaseDir + sep) && fullPath !== resolvedBaseDir) {
       throw new Error(`Path traversal detected: resolved path escapes base directory`);
     }
     return fullPath;
   }
 
+  private resolvePath(workspace: string, projectId: string, fileId: string): string {
+    return this.resolvePathFromBase(
+      this.baseDir,
+      this.resolvedBaseDir,
+      workspace,
+      projectId,
+      fileId
+    );
+  }
+
   async read(workspace: string, projectId: string, fileId: string): Promise<Buffer> {
-    return readFile(this.resolvePath(workspace, projectId, fileId));
+    const primaryPath = this.resolvePath(workspace, projectId, fileId);
+    try {
+      return await readFile(primaryPath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+
+      for (const fallbackBaseDir of this.resolvedFallbackBaseDirs) {
+        const fallbackPath = this.resolvePathFromBase(
+          fallbackBaseDir,
+          fallbackBaseDir,
+          workspace,
+          projectId,
+          fileId
+        );
+        try {
+          return await readFile(fallbackPath);
+        } catch (fallbackError) {
+          if ((fallbackError as NodeJS.ErrnoException).code !== 'ENOENT') throw fallbackError;
+        }
+      }
+
+      throw error;
+    }
   }
 
   async write(

@@ -102,6 +102,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
 
   // If folder is set, show that folder's files; otherwise show root files
   const folderData = folder ? data?.folders.find(f => f.path === folder) : undefined;
+  const isReadOnly = folderData?.read_only ?? false;
   const files = folder ? (folderData?.files ?? []) : (data?.rootFiles ?? []);
 
   const lc = filter.toLowerCase();
@@ -119,6 +120,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           ]}
           title={workspace?.name ?? workspaceSlug}
           buttons={
+            !isReadOnly && (
             <MenuButton.Root>
               <MenuButton.Trigger
                 element={
@@ -151,6 +153,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
                 </Menu.Item>
               </MenuButton.Menu>
             </MenuButton.Root>
+            )
           }
         />
       </div>

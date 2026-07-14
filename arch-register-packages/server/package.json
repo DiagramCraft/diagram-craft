@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/main.ts",
   "scripts": {
-    "dev": "node --watch --import tsx --import ./src/serverSetup.mjs ./src/main.ts",
+    "dev": "tsx watch --import ./src/serverSetup.mjs ./src/main.ts",
     "start": "node --import tsx --import ./src/serverSetup.mjs ./src/main.ts",
     "bootstrap": "node --import tsx ./src/scripts/bootstrap.ts",
     "openapi:generate": "node --import tsx ./src/scripts/generateOpenApi.ts",

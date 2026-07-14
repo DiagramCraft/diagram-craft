@@ -1,6 +1,12 @@
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 
-export type ContentFolder = { path: string; name: string; files: ProjectFile[] };
+export type ContentFolder = {
+  path: string;
+  name: string;
+  files: ProjectFile[];
+  read_only?: boolean;
+  mount_id?: string | null;
+};
 
 export type ContentFolderNode = ContentFolder & { children: ContentFolderNode[] };
 

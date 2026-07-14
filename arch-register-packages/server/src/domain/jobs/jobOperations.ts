@@ -116,6 +116,9 @@ export const setJobScheduleEnabled = async (
   });
 };
 
+export const enqueueJobRun = async (db: DatabaseAdapter, scheduleId: string, now = new Date()) =>
+  db.jobs.enqueueRun(scheduleId, now);
+
 const parseOptionalDate = (value: string | undefined, name: string): Date | undefined => {
   if (value === undefined) return undefined;
   const date = new Date(value);

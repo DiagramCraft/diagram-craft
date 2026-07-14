@@ -105,7 +105,8 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   updated_by: file.updated_by ?? null,
   mime_type: file.mime_type ?? null,
   original_filename: file.original_filename ?? null,
-  content_metadata: toApiContentMetadata(file)
+  content_metadata: toApiContentMetadata(file),
+  ...(file.mount_id ? { read_only: true, mount_id: file.mount_id } : {})
 });
 
 export const toApiProjectDetail = (

@@ -109,6 +109,7 @@ export type ContentNodeDbResult = {
   updated_by: string | null;
   mime_type: string | null;
   original_filename: string | null;
+  mount_id?: string | null;
   metadata_title?: string | null;
   metadata_description?: string | null;
   metadata_company?: string | null;
@@ -157,6 +158,7 @@ export type ContentNodeDbUpsert = {
   updated_by?: string | null;
   mime_type?: string | null;
   original_filename?: string | null;
+  mount_id?: string | null;
 };
 
 export type MarkdownRevisionDbResult = {
@@ -349,6 +351,7 @@ export const projectMappers = {
     updated_by: row['updated_by'] == null ? null : String(row['updated_by']),
     mime_type: row['mime_type'] == null ? null : String(row['mime_type']),
     original_filename: row['original_filename'] == null ? null : String(row['original_filename']),
+    mount_id: row['mount_id'] == null ? null : String(row['mount_id']),
     metadata_title: row['metadata_title'] == null ? null : String(row['metadata_title']),
     metadata_description:
       row['metadata_description'] == null ? null : String(row['metadata_description']),
@@ -465,6 +468,7 @@ export type ProjectDatabase = {
   listAllContentNodes(ws: string): Promise<ContentNodeDbResult[]>;
   listEntityContentNodes(ws: string, entityId: string): Promise<ContentNodeDbResult[]>;
   listWorkspaceContentNodes(ws: string): Promise<ContentNodeDbResult[]>;
+  listContentNodesByMount(ws: string, mountId: string): Promise<ContentNodeDbResult[]>;
   getContentNodeByPath(
     ws: string,
     projectId: string,
@@ -524,6 +528,7 @@ export type ProjectDatabase = {
   deleteContentMetadata(ws: string, nodeId: string): Promise<void>;
   upsertContentNode(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult>;
   createContentNodeIfAbsent(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult | null>;
+  deleteContentNodesByIds(ws: string, nodeIds: readonly string[]): Promise<void>;
   deleteContentNodeByPath(
     ws: string,
     projectId: string,

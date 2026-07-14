@@ -16,6 +16,7 @@ import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
 import { PostgresDiscussionDatabase } from '../domain/discussion/db/postgresDiscussion';
 import { PostgresJobDatabase } from '../domain/jobs/db/postgresJobs';
+import { PostgresExternalContentDatabase } from '../domain/external-content/db/postgresExternalContent';
 import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -36,6 +37,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly ai: PostgresAiDatabase;
   readonly discussion: PostgresDiscussionDatabase;
   readonly jobs: PostgresJobDatabase;
+  readonly externalContent: PostgresExternalContentDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -49,7 +51,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       auth: new PostgresAuthDatabase(sql),
       ai: new PostgresAiDatabase(sql),
       discussion: new PostgresDiscussionDatabase(sql),
-      jobs: new PostgresJobDatabase(sql)
+      jobs: new PostgresJobDatabase(sql),
+      externalContent: new PostgresExternalContentDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -95,6 +98,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.ai = new PostgresAiDatabase(this.sql);
     this.discussion = new PostgresDiscussionDatabase(this.sql);
     this.jobs = new PostgresJobDatabase(this.sql);
+    this.externalContent = new PostgresExternalContentDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,
