@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { normalizeEntityGraphProps } from '../mdx-components/blocks/entity-graph/types';
 
 // Stub the component registry so this test only exercises the parser grammar,
 // independent of each component's own (heavy) implementation modules.
@@ -6,6 +7,11 @@ vi.mock('../mdx-components/mdxRegistry', () => {
   const MDX_COMPONENTS = {
     DiagramEmbed: { mode: 'block', allowedProps: ['id'] },
     EntityCard: { mode: 'block', allowedProps: ['id'] },
+    EntityGraph: {
+      mode: 'block',
+      allowedProps: ['id', 'depth', 'direction'],
+      normalizeProps: normalizeEntityGraphProps
+    },
     EntityMention: { mode: 'inline', allowedProps: ['id'] },
     Caption: { mode: 'block', allowedProps: ['caption'], acceptsChildren: true }
   };
@@ -111,6 +117,20 @@ describe('parseMarkdownWithComponents', () => {
         name: 'EntityCard',
         props: { id: 'e1' },
         source: '<EntityCard id="e1" />'
+      }
+    ]);
+  });
+
+  it('normalizes EntityGraph depth and direction props while parsing', () => {
+    expect(
+      parseMarkdownWithComponents('<EntityGraph id="APP-001" depth="4.8" direction="sideways" />')
+    ).toEqual([
+      {
+        type: 'component',
+        subtype: 'block',
+        name: 'EntityGraph',
+        props: { id: 'APP-001', depth: '3', direction: 'both' },
+        source: '<EntityGraph id="APP-001" depth="4.8" direction="sideways" />'
       }
     ]);
   });

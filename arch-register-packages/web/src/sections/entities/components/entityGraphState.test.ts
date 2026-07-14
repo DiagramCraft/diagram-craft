@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { EntityRelationData } from '../../../hooks/useEntities';
-import { buildEntityGraphData, collectEntityGraphIds } from './entityGraphState';
+import {
+  buildEntityGraphData,
+  collectEntityGraphIds,
+  type EntityGraphDirection
+} from './entityGraphState';
 
 const relation = (entityId: string, fieldName = 'dependsOn') => ({
   entityId,
@@ -60,6 +64,45 @@ describe('collectEntityGraphIds', () => {
       )
     ).toEqual(['root', 'child', 'grandchild']);
   });
+
+  it.each([
+    ['upstream', ['root', 'dependency']],
+    ['downstream', ['root', 'dependent']],
+    ['both', ['root', 'dependency', 'dependent']]
+  ] as const)('%s follows only its selected relation direction', (direction, expected) => {
+    const relations = new Map([
+      [
+        'root',
+        data({
+          outgoing: [relation('dependency')],
+          incoming: [relation('dependent')]
+        })
+      ],
+      ['dependency', data()],
+      ['dependent', data()]
+    ]);
+
+    expect(
+      collectEntityGraphIds(options(relations, { direction: direction as EntityGraphDirection }))
+    ).toEqual(expected);
+  });
+
+  it('stops traversal at max depth while still exposing relations on the boundary node', () => {
+    const relations = new Map([
+      ['root', data({ outgoing: [relation('child')] })],
+      ['child', data({ outgoing: [relation('grandchild')] })],
+      ['grandchild', data()]
+    ]);
+
+    const result = buildEntityGraphData({
+      ...options(relations),
+      rootEntityName: 'Root',
+      rootEntitySchemaId: 'application'
+    });
+
+    expect(result.nodes.map(node => node.id)).toEqual(['root', 'child']);
+    expect(result.hiddenCountMap.get('child')).toBe(1);
+  });
 });
 
 describe('buildEntityGraphData', () => {
@@ -105,5 +148,26 @@ describe('buildEntityGraphData', () => {
     expect(result.nodes).toHaveLength(1);
     expect(result.edges).toEqual([]);
     expect(result.hiddenCountMap.get('root')).toBe(0);
+  });
+
+  it('orients downstream and bidirectional edges from the dependent to its dependency', () => {
+    const relations = new Map([
+      ['root', data({ incoming: [relation('dependent', 'uses')] })],
+      ['dependent', data({ outgoing: [relation('root', 'uses')] })]
+    ]);
+
+    const result = buildEntityGraphData({
+      ...options(relations, { direction: 'downstream' }),
+      rootEntityName: 'Root',
+      rootEntitySchemaId: 'application'
+    });
+
+    expect(result.edges).toEqual([
+      expect.objectContaining({
+        id: 'dependent::root::uses',
+        from: 'dependent',
+        to: 'root'
+      })
+    ]);
   });
 });

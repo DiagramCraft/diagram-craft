@@ -24,7 +24,11 @@ type MdxAstNode<Mode extends MdxMode> = Mode extends 'block'
 export type AllowedPropKey<P> = Exclude<Extract<keyof P, string>, 'children'>;
 
 export type MdxRuleDef<E extends TElement, Mode extends MdxMode> = {
-  deserialize: (mdastNode: MdxAstNode<Mode>, deco: MdDecoration, options: DeserializeMdOptions) => E;
+  deserialize: (
+    mdastNode: MdxAstNode<Mode>,
+    deco: MdDecoration,
+    options: DeserializeMdOptions
+  ) => E;
   serialize: (slateNode: E, options: SerializeMdOptions) => MdxAstNode<Mode>;
 };
 
@@ -68,6 +72,8 @@ export type MdxComponentDef<
   component: React.ComponentType<P>;
   mode: Mode;
   allowedProps: ReadonlyArray<AllowedPropKey<P>>;
+  /** Normalizes string props parsed from authored MDX. */
+  normalizeProps?: (props: Record<string, string>) => Record<string, string>;
   /**
    * Marks a block-level component as a wrapper that accepts exactly one other
    * block-level (non-wrapper) MDX component as its child, e.g. Caption. Depth is

@@ -33,6 +33,18 @@ The markdown surface also supports:
 - embedded entity references and MDX blocks
 - revision history and compare flows
 
+### Entity Graphs
+
+Embed a compact, read-only dependency or impact graph for one entity with `EntityGraph`:
+
+```mdx
+<EntityGraph id="APP-001" depth="2" direction="both" />
+```
+
+`id` accepts an entity public ID or UUID. `depth` defaults to `1` and is limited to `1–3`; `direction` can be
+`upstream`, `downstream`, or `both` (the default). Nodes are clickable, and a graph truncated by the selected depth
+links to the entity’s full Graph tab.
+
 This makes the wiki/content surface more than plain markdown editing.
 
 ## Choosing The Right Scope

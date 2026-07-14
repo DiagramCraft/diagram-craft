@@ -1,0 +1,15 @@
+.container {
+  height: 420px;
+  min-height: 0;
+  margin: 12px 0;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--panel-bg);
+}
+
+@media (max-width: 560px) {
+  .container {
+    height: 340px;
+  }
+}
