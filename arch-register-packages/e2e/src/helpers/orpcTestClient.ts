@@ -10,6 +10,7 @@ import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
+import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
@@ -45,6 +46,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     search: make(searchContract).search,
     templates: make(workspaceTemplateContract).templates,
     views: make(workspaceViewContract).views,
+    collections: make(workspaceCollectionContract).collections,
     workspaces: make(workspaceManagementContract).workspaces,
     config: make(workspaceConfigContract).config,
     audit: make(auditContract).audit,

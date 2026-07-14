@@ -51,6 +51,11 @@ const entityHandlers = {
   list: entityRouter.entities.list.handler(async ({ input, context }) => {
     const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
     const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const query = parseEntityQuery(input.query);
+    if (query.collectionId) {
+      const collection = await context.db.view.getCollection(authCtx.userId, workspace, query.collectionId);
+      httpAssert.present(collection, { status: 404, message: 'Collection not found' });
+    }
     if (input.query.projectId) {
       const project = await context.db.project.getProject(workspace, input.query.projectId);
       httpAssert.present(project, {
@@ -59,12 +64,17 @@ const entityHandlers = {
       });
       requireProjectAccess(authCtx, project.owner);
     }
-    return await listEntities(context.db, workspace, authCtx, parseEntityQuery(input.query));
+    return await listEntities(context.db, workspace, authCtx, query);
   }),
 
   count: entityRouter.entities.count.handler(async ({ input, context }) => {
     const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
     const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const query = parseEntityQuery(input.query);
+    if (query.collectionId) {
+      const collection = await context.db.view.getCollection(authCtx.userId, workspace, query.collectionId);
+      httpAssert.present(collection, { status: 404, message: 'Collection not found' });
+    }
     if (input.query.projectId) {
       const project = await context.db.project.getProject(workspace, input.query.projectId);
       httpAssert.present(project, {
@@ -77,7 +87,7 @@ const entityHandlers = {
       context.db,
       workspace,
       authCtx,
-      parseEntityQuery(input.query)
+      query
     );
     return { total };
   }),
@@ -106,6 +116,10 @@ const entityHandlers = {
       requireProjectAccess(authCtx, project.owner);
     }
     const query = parseEntityQuery(input.query);
+    httpAssert.true(!query.collectionId, {
+      status: 400,
+      message: 'Collections support table and cards views only'
+    });
     return await getEntityTree(context.db, workspace, authCtx, {
       schemaId: query.schemaId,
       owner: query.owner,

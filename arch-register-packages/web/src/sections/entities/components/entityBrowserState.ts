@@ -14,7 +14,8 @@ import type { EntitySearchParams, ProjectSearchParams } from '../../../routes/se
 
 export type BrowserSearch = EntitySearchParams &
   ProjectSearchParams & {
-    sidebarTab?: 'filters' | 'views' | 'pinned';
+    sidebarTab?: 'filters' | 'views' | 'bookmarks';
+    collectionId?: string;
   };
 
 export type ProjectLinkState = {

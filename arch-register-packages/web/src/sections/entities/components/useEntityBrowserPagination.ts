@@ -9,6 +9,7 @@ type UseEntityBrowserPaginationProps = {
   ownerFilter: string | null;
   statusFilter: string | null;
   projectId?: string;
+  collectionId?: string | null;
   projectScope: 'project' | 'all';
 };
 
@@ -20,6 +21,7 @@ export const useEntityBrowserPagination = ({
   ownerFilter,
   statusFilter,
   projectId,
+  collectionId,
   projectScope
 }: UseEntityBrowserPaginationProps) => {
   const [pageSize, setPageSize] = useState(200);
@@ -29,7 +31,7 @@ export const useEntityBrowserPagination = ({
   useEffect(() => {
     if (!isPagedBrowse) return;
     setPageIndex(0);
-  }, [isPagedBrowse, q, conditions, typeFilter, ownerFilter, statusFilter, projectId, projectScope]);
+  }, [isPagedBrowse, q, conditions, typeFilter, ownerFilter, statusFilter, projectId, collectionId, projectScope]);
 
   const handlePageSizeChange = useCallback((value: string | undefined) => {
     const next = Number(value ?? 50);

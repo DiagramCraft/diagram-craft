@@ -107,6 +107,7 @@ export const entityListFiltersSchema = z.object({
   assessmentId: z.string().optional().describe('Joined assessment identifier — required when conditions reference assessment fields'),
   projectId: z.string().optional().describe('Filter by project identifier'),
   projectScope: z.enum(['project', 'all']).optional().describe('Project scope filter'),
+  collectionId: z.string().optional().describe('Filter by the current user\'s collection identifier'),
   asOf: z
     .string()
     .optional()

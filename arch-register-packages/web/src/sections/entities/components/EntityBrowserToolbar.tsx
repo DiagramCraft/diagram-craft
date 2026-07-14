@@ -49,6 +49,7 @@ type EntityBrowserToolbarProps = {
   joinAssessmentId?: string | null;
   onJoinAssessmentChange?: (assessmentId: string | null) => void;
   joinedAssessment?: Assessment | null;
+  allowedViews?: Array<{ value: BrowserView; label: string }>;
 };
 
 export const EntityBrowserToolbar = ({
@@ -80,7 +81,8 @@ export const EntityBrowserToolbar = ({
   joinOptions,
   joinAssessmentId,
   onJoinAssessmentChange,
-  joinedAssessment
+  joinedAssessment,
+  allowedViews
 }: EntityBrowserToolbarProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
@@ -150,7 +152,7 @@ export const EntityBrowserToolbar = ({
         label="View"
         value={view}
         onChange={v => setView(v as BrowserView)}
-        options={[
+        options={allowedViews ?? [
           { value: 'table', label: 'Table' },
           { value: 'cards', label: 'Cards' },
           { value: 'tree', label: 'Tree' },

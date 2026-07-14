@@ -8,6 +8,7 @@ import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy } from 'react-ico
 import { useTimelineMarkers } from '../../hooks/useEntities';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useCollections } from '../../hooks/useCollections';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import { EntityBrowser, SaveViewDialog } from './components/EntityBrowser';
 import {
@@ -27,9 +28,11 @@ export const EntityBrowserScreen = () => {
   const { workspaceSlug, schemas, permissions, openAddEntityDialog } = useWorkspaceContext();
   const search = routeApi.useSearch();
   const workspaceId = workspaceSlug;
+  const collectionId = search.collectionId ?? null;
   const [count, setCount] = useState(0);
   const [isSavingView, setIsSavingView] = useState(false);
   const { data: savedViews = [] } = useSavedViews(workspaceId);
+  const { data: collections = [] } = useCollections(workspaceId);
   const { data: timelineMarkers = [] } = useTimelineMarkers(workspaceId);
   const createSavedViewMutation = useCreateSavedView(workspaceId);
   const updateSavedViewMutation = useUpdateSavedView(workspaceId);
@@ -37,9 +40,13 @@ export const EntityBrowserScreen = () => {
   const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
   const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
-  const view = search.viewMode ?? 'table';
+  const requestedView = search.viewMode ?? 'table';
+  const view =
+    collectionId && requestedView !== 'table' && requestedView !== 'cards'
+      ? 'table'
+      : requestedView;
   const asOf = search.asOf;
-  const readOnly = !!asOf;
+  const readOnly = !!asOf && !collectionId;
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
   const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
@@ -47,9 +54,11 @@ export const EntityBrowserScreen = () => {
     () => savedViews.find(savedView => savedView.id === search.viewId) ?? null,
     [savedViews, search.viewId]
   );
-  const typeName = typeFilter
-    ? (schemas.find(schema => schema.id === typeFilter)?.name ?? 'Entities')
-    : 'All entities';
+  const typeName = collectionId
+    ? (collections.find(collection => collection.id === collectionId)?.name ?? 'Collection')
+    : typeFilter
+      ? (schemas.find(schema => schema.id === typeFilter)?.name ?? 'Entities')
+      : 'All entities';
 
   const handleSaveView = async (
     name: string,
@@ -81,7 +90,7 @@ export const EntityBrowserScreen = () => {
   };
 
   const handleUpdateSavedView = useCallback(async () => {
-    if (!permissions.canManageViews || activeSavedView == null) return;
+    if (collectionId || !permissions.canManageViews || activeSavedView == null) return;
     try {
       await updateSavedViewMutation.mutateAsync({
         id: activeSavedView.id,
@@ -105,6 +114,7 @@ export const EntityBrowserScreen = () => {
     }
   }, [
     activeSavedView,
+    collectionId,
     conditions,
     ownerFilter,
     permissions.canManageViews,
@@ -137,7 +147,7 @@ export const EntityBrowserScreen = () => {
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
 
-    if (permissions.canManageViews && !readOnly) {
+    if (permissions.canManageViews && !readOnly && !collectionId) {
       if (activeSavedView != null) {
         items.push({
           label: `Save View (${activeSavedView.name})`,
@@ -180,6 +190,7 @@ export const EntityBrowserScreen = () => {
     navigate,
     permissions.canCreateEntities,
     permissions.canManageViews,
+    collectionId,
     readOnly,
     typeFilter,
     workspaceSlug

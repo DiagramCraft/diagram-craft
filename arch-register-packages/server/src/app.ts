@@ -13,6 +13,7 @@ import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
+import { createWorkspaceCollectionORPCHandler } from './domain/catalog/collectionOrpc';
 import { createWorkspaceManagementORPCHandler } from './domain/workspace/workspaceOrpc';
 import { createWorkspaceConfigORPCHandler } from './domain/workspace/workspaceConfigOrpc';
 import { createProjectORPCHandler } from './domain/project/projectOrpc';
@@ -118,6 +119,7 @@ export const createApp = (
   app.use(createWorkspaceEntityORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
+  app.use(createWorkspaceCollectionORPCHandler(db));
   app.use(createWorkspaceConfigORPCHandler(db));
   app.use(createWorkspaceAnalyticsORPCHandler(db));
   app.use(createProjectFileRoutesHandler(db, storage));

@@ -8,6 +8,7 @@ import { parseDateValue } from './entityBrowserState';
 type UseEntityBrowserDataProps = {
   workspaceId: string;
   projectId?: string;
+  collectionId?: string | null;
   projectScope: 'project' | 'all';
   schemas: EntitySchema[];
   q: string;
@@ -30,6 +31,7 @@ type UseEntityBrowserDataProps = {
 export const useEntityBrowserData = ({
   workspaceId,
   projectId,
+  collectionId,
   projectScope,
   schemas,
   q,
@@ -69,6 +71,7 @@ export const useEntityBrowserData = ({
       assessmentId: joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
+      collectionId: collectionId ?? undefined,
       view: 'full',
       limit: isPagedBrowse ? pageSize : undefined,
       offset: isPagedBrowse ? pagedOffset : undefined,
@@ -93,6 +96,7 @@ export const useEntityBrowserData = ({
       assessmentId: joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
+      collectionId: collectionId ?? undefined,
       view: 'full',
       asOf,
       includeProjectSnapshots
@@ -113,6 +117,7 @@ export const useEntityBrowserData = ({
       assessmentId: joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
+      collectionId: collectionId ?? undefined,
       asOf,
       includeProjectSnapshots
     },
@@ -125,7 +130,7 @@ export const useEntityBrowserData = ({
   }, [schemas]);
 
   const owners = useMemo(() => {
-    if (projectId) {
+    if (projectId || collectionId) {
       return [
         ...new Map(
           entities
@@ -151,7 +156,7 @@ export const useEntityBrowserData = ({
         name: bucket.label ?? bucket.value,
         sort_order: index
       }));
-  }, [entities, facets, projectId]);
+  }, [collectionId, entities, facets, projectId]);
 
   const selectedSchema = typeFilter != null ? (schemaMap.get(typeFilter)?.schema ?? null) : null;
   const dateFields = useMemo(
