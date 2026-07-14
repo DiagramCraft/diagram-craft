@@ -1,8 +1,10 @@
+import { TbMessage } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
 import { MdxPreview } from './preview/MdxPreview';
 import { MarkdownAttachmentManager } from './MarkdownAttachmentManager';
 import { DiscussionThread } from '../discussions/DiscussionThread';
+import { useDiscussions } from '../../hooks/useDiscussions';
 import type { MarkdownPaneMode, MarkdownScreenMode } from './MarkdownEditorScreen.state';
 import styles from './MarkdownEditorScreen.module.css';
 
@@ -28,6 +30,8 @@ export const MarkdownEditorPane = (props: {
 }) => {
   const { screenMode, paneMode, body, onChange, toc, updatedLabel, readTime, attachments, workspaceId, nodeId } =
     props;
+
+  const { data: discussionPosts = [] } = useDiscussions(workspaceId, 'content_node', nodeId, screenMode !== 'edit');
 
   const showPlateEditor = screenMode === 'edit' && paneMode === 'edit';
   const showRawEditor = screenMode === 'edit' && paneMode === 'raw';
@@ -91,7 +95,13 @@ export const MarkdownEditorPane = (props: {
               {readTime} min read
             </div>
             <section className={styles.discussionSection}>
-              <h2 className={styles.attachmentsTitle}>Discussion</h2>
+              <div className={styles.discussionHead}>
+                <TbMessage size={14} />
+                <span className={styles.discussionTitle}>Discussion</span>
+                {discussionPosts.length > 0 && (
+                  <span className={styles.discussionCount}>{discussionPosts.length}</span>
+                )}
+              </div>
               <DiscussionThread
                 workspaceId={workspaceId}
                 objectType="content_node"

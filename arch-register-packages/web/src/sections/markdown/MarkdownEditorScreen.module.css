@@ -182,6 +182,41 @@
 
 .discussionSection {
   margin-top: 36px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 21px 20px 6px;
+}
+
+.discussionHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1;
+  margin-bottom: 14px;
+  color: var(--cmp-fg-dimmed);
+}
+
+.discussionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--base-fg);
+}
+
+.discussionCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--base-bg);
+  background: var(--accent-fg);
+  border-radius: 8px;
 }
 
 .attachmentsHeader {
