@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { EntitiesPage } from '../pages/EntitiesPage';
 import { HomePage } from '../pages/HomePage';
+import { SearchPage } from '../pages/SearchPage';
 import { defaultWorkspace } from '../support/workspaces';
 
 test('shows default workspace after login', async ({ page }) => {
@@ -59,4 +60,26 @@ test('navigates directly to workspace content folders, including nested folders'
 
   await expect(page).toHaveURL(/\/content\/folders\/docs\/guides$/);
   await expect(page.getByText('No content here')).toBeVisible();
+});
+
+test.describe('workspace rail navigation', () => {
+  test('navigates to entities from workspace home through the rail @quick', async ({ page }) => {
+    const homePage = new HomePage(page, defaultWorkspace.slug);
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await homePage.goto();
+    await homePage.expectLoaded(defaultWorkspace.name);
+    await entitiesPage.workspaceShell.openNav('entities');
+    await entitiesPage.expectLoaded();
+  });
+
+  test('navigates to search from workspace home through the rail @quick', async ({ page }) => {
+    const homePage = new HomePage(page, defaultWorkspace.slug);
+    const searchPage = new SearchPage(page, defaultWorkspace.slug);
+
+    await homePage.goto();
+    await homePage.expectLoaded(defaultWorkspace.name);
+    await searchPage.workspaceShell.openNav('search');
+    await searchPage.expectLoaded();
+  });
 });
