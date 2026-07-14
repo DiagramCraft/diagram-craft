@@ -1,4 +1,4 @@
-import { TbCheck, TbCopy, TbTrash } from 'react-icons/tb';
+import { TbBookmark, TbCheck, TbCopy, TbTrash } from 'react-icons/tb';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -14,6 +14,7 @@ export type EntityBrowserBaseViewProps = {
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
+  onManageCollections?: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
@@ -24,7 +25,8 @@ export const entityName = (entity: EntityRecord) => entity._name || entity._slug
 export const entityMenuItems = (
   entity: EntityRecord,
   onClone: (entity: EntityRecord) => void,
-  onDelete: (entity: EntityRecord) => void
+  onDelete: (entity: EntityRecord) => void,
+  onManageCollections?: (entity: EntityRecord) => void
 ): MenuItem[] => {
   const items: MenuItem[] = [];
   if (entity.canCreateChild) {
@@ -36,6 +38,13 @@ export const entityMenuItems = (
       icon: <TbTrash size={14} />,
       danger: true,
       onClick: () => onDelete(entity)
+    });
+  }
+  if (onManageCollections) {
+    items.push({
+      label: 'Collections…',
+      icon: <TbBookmark size={14} />,
+      onClick: () => onManageCollections(entity)
     });
   }
   return items;

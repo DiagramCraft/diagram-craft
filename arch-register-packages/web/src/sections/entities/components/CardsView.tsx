@@ -21,6 +21,7 @@ export const CardsView = ({
   onEntityClick,
   onDelete,
   onClone,
+  onManageCollections,
   lifecycleStates,
   projectContext,
   readOnly, config, displayFields
@@ -36,7 +37,7 @@ export const CardsView = ({
       const menuItems = readOnly
         ? []
         : [
-            ...entityMenuItems(entity, onClone, onDelete),
+            ...entityMenuItems(entity, onClone, onDelete, onManageCollections),
             ...projectEntityMenuItems(entity, projectContext)
           ];
 

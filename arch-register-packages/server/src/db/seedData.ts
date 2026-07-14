@@ -18,6 +18,8 @@ import {
 } from '../domain/workspace/db/workspaceDatabase';
 import {
   Entity,
+  CollectionDbCreate,
+  CollectionEntityDbResult,
   SchemaDbResult,
   SavedViewDbResult,
   WorkspaceEnumDbResult
@@ -69,6 +71,11 @@ const TEAM2_IDS = {
   backend: '90000000-0000-0000-0000-000000000026'
 } as const;
 
+const COLLECTION_IDS = {
+  criticalSystems: '00000000-0000-0000-0030-000000000001',
+  apisToReview: '00000000-0000-0000-0030-000000000002'
+} as const;
+
 const USER_IDS = {
   globaladmin: seededUsers.globalAdmin.id,
   workspaceadmin: seededUsers.workspaceAdmin.id,
@@ -91,6 +98,7 @@ export const seedIds = {
   lifecycle2: LIFECYCLE2_IDS,
   teams: TEAM_IDS,
   teams2: TEAM2_IDS,
+  collections: COLLECTION_IDS,
   users: USER_IDS
 } as const;
 
@@ -1104,6 +1112,48 @@ export const seedSavedViews: SavedViewDbResult[] = [
     config: null,
     created_at: now,
     updated_at: now
+  }
+];
+
+export const seedCollections: CollectionDbCreate[] = [
+  {
+    id: COLLECTION_IDS.criticalSystems,
+    workspace: WORKSPACE_ID,
+    user_id: USER_IDS.globaladmin,
+    name: 'Critical systems',
+    created_at: new Date('2026-01-02T10:00:00.000Z'),
+    updated_at: new Date('2026-01-02T10:00:00.000Z')
+  },
+  {
+    id: COLLECTION_IDS.apisToReview,
+    workspace: WORKSPACE_ID,
+    user_id: USER_IDS.globaladmin,
+    name: 'APIs to review',
+    created_at: new Date('2026-01-02T10:05:00.000Z'),
+    updated_at: new Date('2026-01-02T10:05:00.000Z')
+  }
+];
+
+export const seedCollectionEntities: CollectionEntityDbResult[] = [
+  {
+    collection_id: COLLECTION_IDS.criticalSystems,
+    entity_id: '00000000-0000-0000-0002-000000000001',
+    created_at: new Date('2026-01-02T10:01:00.000Z')
+  },
+  {
+    collection_id: COLLECTION_IDS.criticalSystems,
+    entity_id: '00000000-0000-0000-0002-000000000002',
+    created_at: new Date('2026-01-02T10:02:00.000Z')
+  },
+  {
+    collection_id: COLLECTION_IDS.apisToReview,
+    entity_id: '00000000-0000-0000-0004-000000000001',
+    created_at: new Date('2026-01-02T10:06:00.000Z')
+  },
+  {
+    collection_id: COLLECTION_IDS.apisToReview,
+    entity_id: '00000000-0000-0000-0004-000000000002',
+    created_at: new Date('2026-01-02T10:07:00.000Z')
   }
 ];
 

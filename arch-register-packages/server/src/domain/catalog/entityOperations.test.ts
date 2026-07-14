@@ -63,6 +63,9 @@ const makeDb = (entities: EntityDbResult[]) => {
     },
     project: {
       listProjectEntities: vi.fn(async () => [])
+    },
+    view: {
+      listCollectionEntityIds: vi.fn(async () => [])
     }
   } as unknown as DatabaseAdapter;
 };
@@ -144,6 +147,29 @@ describe('countEntities', () => {
     });
 
     expect(total).toBe(47);
+  });
+});
+
+describe('collection filtering', () => {
+  it('returns only entities in the requested collection', async () => {
+    const db = makeDb([makeEntity(1), makeEntity(2)]);
+    const listCollectionEntityIds = vi.mocked(db.view.listCollectionEntityIds);
+    listCollectionEntityIds.mockResolvedValue(['entity-2']);
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const result = await listEntities(db, 'ws-1', authCtx, {
+      collectionId: 'collection-1'
+    });
+
+    expect(result.map(entity => entity._uid)).toEqual(['entity-2']);
+    expect(listCollectionEntityIds).toHaveBeenCalledWith('user-1', 'ws-1', 'collection-1');
   });
 });
 

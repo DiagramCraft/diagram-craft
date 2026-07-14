@@ -1,4 +1,10 @@
-import type { SavedViewDbCreate, SavedViewDbUpdate, ViewDatabase } from './catalogDatabase';
+import type {
+  CollectionDbCreate,
+  CollectionDbUpdate,
+  SavedViewDbCreate,
+  SavedViewDbUpdate,
+  ViewDatabase
+} from './catalogDatabase';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import { catalogMappers } from './catalogDatabase';
 
@@ -100,5 +106,116 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
 
     this.run('DELETE FROM saved_view WHERE workspace = ? AND id = ?', [workspace, id]);
     return existing;
+  }
+
+  async listCollections(userId: string, workspace: string, entityId?: string) {
+    return this.all(
+      `SELECT c.*,
+              COUNT(ce.entity_id) AS entity_count,
+              CASE WHEN ? IS NOT NULL AND EXISTS (
+                SELECT 1 FROM user_collection_entity member
+                WHERE member.collection_id = c.id AND member.entity_id = ?
+              ) THEN 1 ELSE 0 END AS is_member
+       FROM user_collection c
+       LEFT JOIN user_collection_entity ce ON ce.collection_id = c.id
+       WHERE c.user_id = ? AND c.workspace = ?
+       GROUP BY c.id
+       ORDER BY c.name, c.created_at`,
+      [entityId ?? null, entityId ?? null, userId, workspace],
+      catalogMappers.collection
+    );
+  }
+
+  async getCollection(userId: string, workspace: string, id: string) {
+    return this.get(
+      `SELECT c.*, COUNT(ce.entity_id) AS entity_count
+       FROM user_collection c
+       LEFT JOIN user_collection_entity ce ON ce.collection_id = c.id
+       WHERE c.id = ? AND c.user_id = ? AND c.workspace = ?
+       GROUP BY c.id`,
+      [id, userId, workspace],
+      catalogMappers.collection
+    );
+  }
+
+  async createCollection(input: CollectionDbCreate) {
+    this.run(
+      'INSERT INTO user_collection (id, user_id, workspace, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.user_id,
+        input.workspace,
+        input.name,
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getCollection(input.user_id, input.workspace, input.id))!;
+  }
+
+  async updateCollection(userId: string, workspace: string, id: string, input: CollectionDbUpdate) {
+    const existing = await this.getCollection(userId, workspace, id);
+    if (!existing) return null;
+    this.run(
+      'UPDATE user_collection SET name = ?, updated_at = ? WHERE id = ? AND user_id = ? AND workspace = ?',
+      [input.name, input.updated_at.toISOString(), id, userId, workspace]
+    );
+    return await this.getCollection(userId, workspace, id);
+  }
+
+  async deleteCollection(userId: string, workspace: string, id: string) {
+    const existing = await this.getCollection(userId, workspace, id);
+    if (!existing) return null;
+    this.run('DELETE FROM user_collection WHERE id = ? AND user_id = ? AND workspace = ?', [
+      id,
+      userId,
+      workspace
+    ]);
+    return existing;
+  }
+
+  async addCollectionEntity(
+    userId: string,
+    workspace: string,
+    collectionId: string,
+    entityId: string,
+    createdAt: Date
+  ) {
+    const collection = await this.getCollection(userId, workspace, collectionId);
+    if (!collection) return null!;
+    this.run(
+      'INSERT OR IGNORE INTO user_collection_entity (collection_id, entity_id, created_at) VALUES (?, ?, ?)',
+      [collectionId, entityId, createdAt.toISOString()]
+    );
+    return (await this.getCollectionEntity(collectionId, entityId))!;
+  }
+
+  async removeCollectionEntity(userId: string, workspace: string, collectionId: string, entityId: string) {
+    const collection = await this.getCollection(userId, workspace, collectionId);
+    if (!collection) return null;
+    const existing = await this.getCollectionEntity(collectionId, entityId);
+    if (!existing) return null;
+    this.run('DELETE FROM user_collection_entity WHERE collection_id = ? AND entity_id = ?', [
+      collectionId,
+      entityId
+    ]);
+    return existing;
+  }
+
+  async listCollectionEntityIds(userId: string, workspace: string, collectionId: string) {
+    const collection = await this.getCollection(userId, workspace, collectionId);
+    if (!collection) return [];
+    return this.all<{ entity_id: string }>(
+      'SELECT entity_id FROM user_collection_entity WHERE collection_id = ? ORDER BY created_at, entity_id',
+      [collectionId]
+    ).map(row => row.entity_id);
+  }
+
+  private async getCollectionEntity(collectionId: string, entityId: string) {
+    return this.get(
+      'SELECT * FROM user_collection_entity WHERE collection_id = ? AND entity_id = ?',
+      [collectionId, entityId],
+      catalogMappers.collectionEntity
+    );
   }
 }

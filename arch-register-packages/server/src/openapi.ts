@@ -5,6 +5,7 @@ import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
+import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
@@ -22,6 +23,7 @@ export const allContracts = {
   ...workspaceSchemaContract,
   ...workspaceEntityContract,
   ...workspaceViewContract,
+  ...workspaceCollectionContract,
   ...workspaceManagementContract,
   ...workspaceConfigContract,
   ...projectContract,

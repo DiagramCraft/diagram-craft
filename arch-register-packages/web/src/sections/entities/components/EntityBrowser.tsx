@@ -28,6 +28,7 @@ import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityBrowser.module.css';
 import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from './entityDisplayFields';
 import type { BrowserEntityRecord } from './entityBrowserState';
+import { CollectionPickerDialog } from './CollectionPickerDialog';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
@@ -158,6 +159,7 @@ export const EntityBrowser = ({
     setIncludeProjectSnapshots,
     conditions,
     activeViewConfig,
+    collectionId,
     joinAssessmentId,
     ownerFilter,
     projectScope,
@@ -181,8 +183,9 @@ export const EntityBrowser = ({
     workspaceId,
     joinAssessmentId
   );
-  const readOnly = !!asOf;
-  const [tlOpen, setTlOpen] = useState(!!asOf);
+  const readOnly = !!asOf && !collectionId;
+  const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
+  const [collectionTarget, setCollectionTarget] = useState<BrowserEntityRecord | null>(null);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
     useEntityBrowserPagination({
@@ -193,6 +196,7 @@ export const EntityBrowser = ({
       ownerFilter,
       statusFilter,
       projectId,
+      collectionId,
       projectScope
     });
   const {
@@ -207,6 +211,7 @@ export const EntityBrowser = ({
   } = useEntityBrowserData({
     workspaceId,
     projectId,
+    collectionId,
     projectScope,
     schemas,
     q,
@@ -324,8 +329,9 @@ export const EntityBrowser = ({
         setView={setView}
         readOnly={readOnly}
         tlOpen={tlOpen}
-        onToggleTimeline={() => setTlOpen(o => !o)}
-        asOf={asOf}
+        onToggleTimeline={collectionId ? undefined : () => setTlOpen(o => !o)}
+        asOf={collectionId ? undefined : asOf}
+        allowedViews={collectionId ? [{ value: 'table', label: 'Table' }, { value: 'cards', label: 'Cards' }] : undefined}
         displayFields={displayView && !readOnly ? displayFields : undefined}
         selectedDisplayFieldIds={!readOnly ? selectedDisplayFieldIds : undefined}
         onDisplayFieldsChange={displayView && !readOnly ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds)) : undefined}
@@ -335,7 +341,7 @@ export const EntityBrowser = ({
         onJoinAssessmentChange={setJoinAssessmentId}
         joinedAssessment={joined?.assessment}
       />
-      {tlOpen && (
+      {!collectionId && tlOpen && (
         <TimelineStrip
           markers={timelineMarkers}
           selectedDate={asOf}
@@ -408,6 +414,7 @@ export const EntityBrowser = ({
                     onEntityClick: navigateToEntity,
                     onDelete: handleDeleteEntity,
                     onClone: handleCloneEntity,
+                    onManageCollections: entity => setCollectionTarget(entity),
                     selectedIds,
                     onSelectAll: handleSelectAll,
                     onSelectRow: handleSelectRow
@@ -470,6 +477,15 @@ export const EntityBrowser = ({
         onConfirm={confirmDeleteEntity}
         onCancel={() => setHookDeleteTarget(null)}
       />
+      {collectionTarget && (
+        <CollectionPickerDialog
+          open={true}
+          workspaceId={workspaceId}
+          entityId={collectionTarget._uid}
+          entityName={collectionTarget._name || collectionTarget._slug}
+          onClose={() => setCollectionTarget(null)}
+        />
+      )}
     </>
   );
 };

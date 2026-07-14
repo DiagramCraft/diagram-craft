@@ -8,7 +8,8 @@ export type SharedEntityBrowserSearchParams = {
   sort?: string;
   projectScope?: 'project' | 'all';
   viewConfigs?: string;
-  sidebarTab?: 'filters' | 'views' | 'pinned';
+  sidebarTab?: 'filters' | 'views' | 'bookmarks';
+  collectionId?: string;
   filters?: string; // JSON string of FilterCondition[]
   asOf?: string; // ISO 8601 date — when set, browser enters read-only point-in-time snapshot mode
   asOfIncludeProjects?: 'true' | 'false'; // whether asOf reconstruction applies project future_update snapshots; defaults to 'true'
@@ -38,7 +39,15 @@ const validateSharedEntityBrowserSearch = (
   sort: typeof raw.sort === 'string' ? raw.sort : undefined,
   projectScope: raw.projectScope === 'project' || raw.projectScope === 'all' ? raw.projectScope : undefined,
   viewConfigs: typeof raw.viewConfigs === 'string' ? raw.viewConfigs : undefined,
-  sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'pinned' ? raw.sidebarTab : undefined,
+  sidebarTab:
+    raw.sidebarTab === 'filters' ||
+    raw.sidebarTab === 'views' ||
+    raw.sidebarTab === 'bookmarks'
+      ? raw.sidebarTab
+      : raw.sidebarTab === 'pinned' || raw.sidebarTab === 'collections'
+        ? 'bookmarks'
+      : undefined,
+  collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
   asOf: typeof raw.asOf === 'string' ? raw.asOf : undefined,
   asOfIncludeProjects:
@@ -58,6 +67,8 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
 export type EntityDetailSearchParams = {
   contentQuery?: string;
   contentView?: 'grid' | 'list';
+  sidebarTab?: SharedEntityBrowserSearchParams['sidebarTab'];
+  collectionId?: string;
   tab?:
     | 'overview'
     | 'topology'
@@ -90,6 +101,8 @@ export const validateWorkspaceContentSearch = (
 
 export const validateEntityDetailSearch = (raw: Record<string, unknown>): EntityDetailSearchParams => ({
   ...validateSharedContentBrowserSearch(raw),
+  sidebarTab: validateSharedEntityBrowserSearch(raw).sidebarTab,
+  collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
   tab:
     raw.tab === 'overview' ||
     raw.tab === 'topology' ||

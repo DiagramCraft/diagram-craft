@@ -18,6 +18,7 @@ import {
   TbLayoutBoard,
   TbColumns3,
   TbPinned,
+  TbBookmark,
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand
 } from 'react-icons/tb';
@@ -28,6 +29,11 @@ import type { SavedView } from '@arch-register/api-types/viewContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { usePinnedEntities } from '../../hooks/useNotifications';
+import {
+  useCollections,
+  useDeleteCollection,
+  useUpdateCollection
+} from '../../hooks/useCollections';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { RenameDialog } from '../../components/RenameDialog';
 import { SidebarGroupLabel } from '../../components/sidebar/SidebarPrimitives';
@@ -38,6 +44,7 @@ import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import { toSavedViewSearch } from './components/entityBrowserState';
+import type { Collection } from '@arch-register/api-types/collectionContract';
 
 export const EntitiesSidebar = ({
   schemas,
@@ -89,11 +96,21 @@ export const EntitiesSidebar = ({
   const { data: savedViews = [] } = useSavedViews(workspaceSlug);
   const { data: pinnedEntities = [], isLoading: isPinnedEntitiesLoading } =
     usePinnedEntities(workspaceSlug);
+  const { data: collections = [], isLoading: isCollectionsLoading } = useCollections(workspaceSlug);
   const deleteViewMutation = useDeleteSavedView(workspaceSlug);
   const updateViewMutation = useUpdateSavedView(workspaceSlug);
+  const updateCollectionMutation = useUpdateCollection(workspaceSlug);
+  const deleteCollectionMutation = useDeleteCollection(workspaceSlug);
   const [deleteViewTarget, setDeleteViewTarget] = useState<SavedView | null>(null);
   const [renameViewTarget, setRenameViewTarget] = useState<SavedView | null>(null);
   const [viewMenu, setViewMenu] = useState<{ x: number; y: number; view: SavedView } | null>(null);
+  const [collectionMenu, setCollectionMenu] = useState<{
+    x: number;
+    y: number;
+    collection: Collection;
+  } | null>(null);
+  const [renameCollectionTarget, setRenameCollectionTarget] = useState<Collection | null>(null);
+  const [deleteCollectionTarget, setDeleteCollectionTarget] = useState<Collection | null>(null);
 
   useEffect(() => {
     if (!workspaceSlug) {
@@ -138,12 +155,14 @@ export const EntitiesSidebar = ({
     type?: string;
     status?: string;
     owner?: string;
-    sidebarTab?: 'filters' | 'views' | 'pinned';
+    sidebarTab?: 'filters' | 'views' | 'bookmarks';
+    collectionId?: string;
   }) => {
     // Start with a clean search object, only preserving sidebarTab if not explicitly set
     const nextSearch: Record<string, unknown> = {
       sidebarTab: params.sidebarTab ?? sidebarTab
     };
+    if (params.collectionId !== undefined) nextSearch.collectionId = params.collectionId;
 
     // If any filter is being set, reset to default list view and clear all other filters
     if (params.type !== undefined || params.status !== undefined || params.owner !== undefined) {
@@ -182,6 +201,18 @@ export const EntitiesSidebar = ({
     });
   };
 
+  const openCollection = (collection: Collection) => {
+    navigate({
+      to: '/$workspaceSlug/entities',
+      params: { workspaceSlug },
+      search: {
+        sidebarTab: 'bookmarks',
+        collectionId: collection.id,
+        viewMode: 'table'
+      }
+    });
+  };
+
   const getViewIcon = (mode: string) => {
     switch (mode) {
       case 'table':
@@ -212,17 +243,21 @@ export const EntitiesSidebar = ({
             navigate({
               to: '/$workspaceSlug/entities',
               params: { workspaceSlug },
-              search: (prev: Record<string, unknown>) => ({
-                ...prev,
-                sidebarTab: v as 'filters' | 'views' | 'pinned'
-              })
+              search: (prev: Record<string, unknown>) => {
+                const collectionId = typeof prev.collectionId === 'string' ? prev.collectionId : undefined;
+                return {
+                  ...prev,
+                  sidebarTab: v as 'filters' | 'views' | 'bookmarks',
+                  collectionId: v === 'bookmarks' ? collectionId : undefined
+                };
+              }
             })
           }
         >
           <Tabs.List>
             <Tabs.Trigger value="filters">Filters</Tabs.Trigger>
             <Tabs.Trigger value="views">Views</Tabs.Trigger>
-            <Tabs.Trigger value="pinned">Pinned</Tabs.Trigger>
+            <Tabs.Trigger value="bookmarks">Bookmarks</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
         {(onCollapse || onExpand) && (
@@ -367,7 +402,7 @@ export const EntitiesSidebar = ({
           </>
         ) : (
           <>
-            <SidebarGroupLabel>Pinned entities</SidebarGroupLabel>
+            <SidebarGroupLabel>Pinned</SidebarGroupLabel>
             {isPinnedEntitiesLoading && (
               <div className={`${styles.emptyState} dim`}>Loading pinned entities…</div>
             )}
@@ -396,7 +431,7 @@ export const EntitiesSidebar = ({
                   onClick={() =>
                     navigate(
                       entityDetailRoute(workspaceSlug, asEntityPublicId(entity.entity_public_id), {
-                        sidebarTab: 'pinned'
+                        sidebarTab: 'bookmarks'
                       })
                     )
                   }
@@ -405,6 +440,27 @@ export const EntitiesSidebar = ({
                 />
               );
             })}
+            {(isCollectionsLoading || collections.length > 0) && (
+              <>
+                <SidebarGroupLabel>Collections</SidebarGroupLabel>
+                {isCollectionsLoading && <div className={`${styles.emptyState} dim`}>Loading collections…</div>}
+                {collections.map(collection => (
+                  <TreeRow
+                    key={collection.id}
+                    icon={<TbBookmark size={12} />}
+                    label={collection.name}
+                    active={search.collectionId === collection.id}
+                    onClick={() => openCollection(collection)}
+                    onContextMenu={event => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setCollectionMenu({ x: event.clientX, y: event.clientY, collection });
+                    }}
+                    trailing={<span className="dim mono">{collection.entityCount}</span>}
+                  />
+                ))}
+              </>
+            )}
           </>
         )}
       </div>
@@ -459,6 +515,50 @@ export const EntitiesSidebar = ({
           onCancel={() => setRenameViewTarget(null)}
         />
       )}
+
+      {collectionMenu && (
+        <ContextMenu.Imperative x={collectionMenu.x} y={collectionMenu.y} onClose={() => setCollectionMenu(null)}>
+          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameCollectionTarget(collectionMenu.collection)}>
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteCollectionTarget(collectionMenu.collection)}>
+            Delete
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
+
+      {renameCollectionTarget && (
+        <RenameDialog
+          open={true}
+          currentName={renameCollectionTarget.name}
+          entityType="collection"
+          onRename={name => {
+            updateCollectionMutation.mutate({ id: renameCollectionTarget.id, name });
+            setRenameCollectionTarget(null);
+          }}
+          onCancel={() => setRenameCollectionTarget(null)}
+        />
+      )}
+
+      <DeleteConfirmationDialog
+        open={!!deleteCollectionTarget}
+        title="Delete collection?"
+        message={<>The collection <b>{deleteCollectionTarget?.name}</b> will be deleted.</>}
+        detail="Entities in the collection will not be changed."
+        confirmLabel="Delete collection"
+        onConfirm={() => {
+          if (deleteCollectionTarget) {
+            deleteCollectionMutation.mutate(deleteCollectionTarget.id);
+            if (search.collectionId === deleteCollectionTarget.id) {
+              navigateEntities({ sidebarTab: 'bookmarks', collectionId: undefined });
+            }
+            setDeleteCollectionTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteCollectionTarget(null)}
+      />
+
     </>
   );
 };

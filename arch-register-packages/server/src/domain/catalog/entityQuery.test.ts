@@ -12,6 +12,7 @@ describe('parseEntityQuery', () => {
       assessmentId: null,
       projectId: null,
       projectScope: 'all',
+      collectionId: null,
       view: 'full',
       limit: null,
       offset: 0,
@@ -30,6 +31,10 @@ describe('parseEntityQuery', () => {
     expect(result.conditions).toHaveLength(1);
     expect(result.asOf?.toISOString()).toBe('2026-07-05T12:00:00.000Z');
     expect(result.includeProjectSnapshots).toBe(false);
+  });
+
+  it('parses a collection filter', () => {
+    expect(parseEntityQuery({ collectionId: 'collection-1' }).collectionId).toBe('collection-1');
   });
 
   it('treats absent filters and malformed dates as absent', () => {

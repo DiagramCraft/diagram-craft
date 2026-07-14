@@ -274,6 +274,24 @@ export const catalogMappers = {
     role: String(row['role']) as EntityGrantDbResult['role'], applies_to: String(row['applies_to']) as EntityGrantDbResult['applies_to'],
     created_at: databaseDate(row['created_at'])
   }),
+  collection: (row: DatabaseRow): CollectionDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    user_id: String(row['user_id']),
+    name: String(row['name']),
+    entity_count: Number(row['entity_count'] ?? 0),
+    is_member:
+      row['is_member'] == null
+        ? undefined
+        : row['is_member'] === true || row['is_member'] === 1 || row['is_member'] === '1',
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
+  collectionEntity: (row: DatabaseRow): CollectionEntityDbResult => ({
+    collection_id: String(row['collection_id']),
+    entity_id: String(row['entity_id']),
+    created_at: databaseDate(row['created_at'])
+  }),
   savedView: (row: DatabaseRow): SavedViewDbResult => ({
     id: String(row['id']), workspace: String(row['workspace']), project_id: row['project_id'] == null ? null : String(row['project_id']),
     project_scope: row['project_scope'] == null ? null : (String(row['project_scope']) as 'project' | 'all'),
@@ -396,6 +414,28 @@ export type SavedViewDbUpdate = Partial<
   updated_at: Date;
 };
 
+// -- Personal Collection
+
+export type CollectionDbResult = {
+  id: string;
+  workspace: string;
+  user_id: string;
+  name: string;
+  entity_count: number;
+  is_member?: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type CollectionDbCreate = Omit<CollectionDbResult, 'entity_count' | 'is_member'>;
+export type CollectionDbUpdate = { name: string; updated_at: Date };
+
+export type CollectionEntityDbResult = {
+  collection_id: string;
+  entity_id: string;
+  created_at: Date;
+};
+
 export type ViewDatabase = {
   listSavedViews(
     ws: string,
@@ -412,4 +452,29 @@ export type ViewDatabase = {
     input: SavedViewDbUpdate
   ): Promise<SavedViewDbResult | null>;
   deleteSavedView(ws: string, id: string): Promise<SavedViewDbResult | null>;
+
+  listCollections(userId: string, ws: string, entityId?: string): Promise<CollectionDbResult[]>;
+  getCollection(userId: string, ws: string, id: string): Promise<CollectionDbResult | null>;
+  createCollection(input: CollectionDbCreate): Promise<CollectionDbResult>;
+  updateCollection(
+    userId: string,
+    ws: string,
+    id: string,
+    input: CollectionDbUpdate
+  ): Promise<CollectionDbResult | null>;
+  deleteCollection(userId: string, ws: string, id: string): Promise<CollectionDbResult | null>;
+  addCollectionEntity(
+    userId: string,
+    ws: string,
+    collectionId: string,
+    entityId: string,
+    createdAt: Date
+  ): Promise<CollectionEntityDbResult>;
+  removeCollectionEntity(
+    userId: string,
+    ws: string,
+    collectionId: string,
+    entityId: string
+  ): Promise<CollectionEntityDbResult | null>;
+  listCollectionEntityIds(userId: string, ws: string, collectionId: string): Promise<string[]>;
 };

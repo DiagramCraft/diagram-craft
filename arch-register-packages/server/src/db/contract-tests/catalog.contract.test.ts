@@ -656,4 +656,59 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       );
     });
   });
+
+  describe('entity collections', () => {
+    it('supports private collections, multiple memberships and idempotent membership changes', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const firstUser = await createFixtureUser(db);
+      const secondUser = await createFixtureUser(db);
+      const now = new Date();
+
+      const first = await db.view.createCollection({
+        id: randomUUID(),
+        workspace,
+        user_id: firstUser.id,
+        name: 'Important systems',
+        created_at: now,
+        updated_at: now
+      });
+      const second = await db.view.createCollection({
+        id: randomUUID(),
+        workspace,
+        user_id: firstUser.id,
+        name: 'Important systems',
+        created_at: now,
+        updated_at: now
+      });
+
+      await db.view.addCollectionEntity(firstUser.id, workspace, first.id, entity.id, now);
+      await db.view.addCollectionEntity(firstUser.id, workspace, first.id, entity.id, now);
+      await db.view.addCollectionEntity(firstUser.id, workspace, second.id, entity.id, now);
+
+      const visibleToOwner = await db.view.listCollections(firstUser.id, workspace, entity.id);
+      expect(visibleToOwner.map(collection => collection.name)).toEqual([
+        'Important systems',
+        'Important systems'
+      ]);
+      expect(visibleToOwner.every(collection => collection.is_member)).toBe(true);
+      expect(visibleToOwner.every(collection => collection.entity_count === 1)).toBe(true);
+      expect(await db.view.listCollectionEntityIds(firstUser.id, workspace, first.id)).toEqual([
+        entity.id
+      ]);
+
+      expect(await db.view.listCollections(secondUser.id, workspace)).toEqual([]);
+      expect(await db.view.removeCollectionEntity(firstUser.id, workspace, first.id, entity.id)).toMatchObject({
+        collection_id: first.id,
+        entity_id: entity.id
+      });
+      expect(await db.view.listCollectionEntityIds(firstUser.id, workspace, first.id)).toEqual([]);
+
+      await db.view.deleteCollection(firstUser.id, workspace, second.id);
+      expect(await db.view.getCollection(firstUser.id, workspace, second.id)).toBeNull();
+      expect(await db.catalog.getEntity(workspace, entity.id)).not.toBeNull();
+    });
+  });
 });

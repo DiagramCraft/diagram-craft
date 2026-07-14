@@ -36,7 +36,12 @@ export const useEntityBrowserSearchState = ({
   const projectScope = projectId ? (search.projectScope ?? 'project') : 'all';
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
-  const view = search.viewMode ?? 'table';
+  const collectionId = search.collectionId ?? null;
+  const requestedView = search.viewMode ?? 'table';
+  const view =
+    collectionId && requestedView !== 'table' && requestedView !== 'cards'
+      ? 'table'
+      : requestedView;
   const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
   const activeViewConfig = viewConfigs[view] ?? null;
 
@@ -95,9 +100,11 @@ export const useEntityBrowserSearchState = ({
     [navigateBrowser]
   );
   const setView = useCallback(
-    (next: BrowserView) =>
-      navigateBrowser({ viewMode: next === 'table' ? undefined : next, viewId: undefined }),
-    [navigateBrowser]
+    (next: BrowserView) => {
+      if (collectionId && next !== 'table' && next !== 'cards') return;
+      navigateBrowser({ viewMode: next === 'table' ? undefined : next, viewId: undefined });
+    },
+    [collectionId, navigateBrowser]
   );
   const setViewConfigs = useCallback(
     (next: BrowserViewConfigMap) =>
@@ -153,6 +160,7 @@ export const useEntityBrowserSearchState = ({
     setIncludeProjectSnapshots,
     conditions,
     joinAssessmentId: search.joinAssessmentId ?? null,
+    collectionId,
     ownerFilter: getFilterValue(conditions, '_owner'),
     projectScope,
     q,

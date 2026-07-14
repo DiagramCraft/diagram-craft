@@ -9,6 +9,7 @@ export type EntityListOptions = {
   assessmentId?: string | null;
   projectId?: string | null;
   projectScope?: 'project' | 'all';
+  collectionId?: string | null;
   view?: 'summary' | 'full';
   limit?: number | null;
   offset?: number | null;
@@ -25,6 +26,7 @@ export const toEntityListQuery = (options: EntityListOptions) => ({
   assessmentId: options.assessmentId ?? undefined,
   projectId: options.projectId ?? undefined,
   projectScope: options.projectScope ?? undefined,
+  collectionId: options.collectionId ?? undefined,
   asOf: options.asOf ?? undefined,
   includeProjectSnapshots: options.includeProjectSnapshots ?? undefined
 });

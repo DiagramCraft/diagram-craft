@@ -1,6 +1,8 @@
 import { createDatabase } from './factory';
 import {
   seedEntities,
+  seedCollectionEntities,
+  seedCollections,
   seedAiConfig,
   seedAssessments,
   seedGlobalRoleAssignments,
@@ -201,6 +203,24 @@ const seedBootstrapWatchesAndNotifications = async (db: Database) => {
   }
 };
 
+const seedBootstrapCollections = async (db: Database) => {
+  for (const collection of seedCollections) {
+    await db.view.createCollection(collection);
+  }
+
+  for (const membership of seedCollectionEntities) {
+    const collection = seedCollections.find(item => item.id === membership.collection_id);
+    if (!collection) continue;
+    await db.view.addCollectionEntity(
+      collection.user_id,
+      collection.workspace,
+      membership.collection_id,
+      membership.entity_id,
+      membership.created_at
+    );
+  }
+};
+
 export const seedBootstrapData = async (db: Database, storage: StorageAdapter) => {
   const syncTimestamp = new Date();
   for (const workspace of seedWorkspaces) {
@@ -298,5 +318,6 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
   }
 
   await seedBootstrapUsers(db);
+  await seedBootstrapCollections(db);
   await seedBootstrapWatchesAndNotifications(db);
 };

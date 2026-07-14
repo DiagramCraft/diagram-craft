@@ -9,6 +9,7 @@ type EntityQuery = {
   assessmentId?: string;
   projectId?: string;
   projectScope?: 'project' | 'all';
+  collectionId?: string;
   view?: 'summary' | 'full';
   limit?: number;
   offset?: number;
@@ -31,6 +32,7 @@ export const parseEntityQuery = (query: EntityQuery) => ({
   assessmentId: query.assessmentId ?? null,
   projectId: query.projectId ?? null,
   projectScope: query.projectScope ?? 'all',
+  collectionId: query.collectionId ?? null,
   view: query.view ?? 'full',
   limit: query.limit ?? null,
   offset: query.offset ?? 0,

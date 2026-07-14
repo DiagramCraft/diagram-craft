@@ -129,6 +129,7 @@ export const listEntities = async (
     assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
+    collectionId?: string | null;
     view?: 'summary' | 'full';
     limit?: number | null;
     offset?: number | null;
@@ -145,6 +146,7 @@ export const listEntities = async (
     assessmentId = null,
     projectId = null,
     projectScope = 'all',
+    collectionId = null,
     view = 'full',
     limit,
     offset = 0,
@@ -163,6 +165,7 @@ export const listEntities = async (
       assessmentId,
       projectId,
       projectScope,
+      collectionId,
       view,
       asOf,
       includeProjectSnapshots
@@ -188,6 +191,7 @@ export const countEntities = async (
     assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
+    collectionId?: string | null;
     asOf?: Date | null;
     includeProjectSnapshots?: boolean;
   }
@@ -201,6 +205,7 @@ export const countEntities = async (
     assessmentId: options.assessmentId ?? null,
     projectId: options.projectId ?? null,
     projectScope: options.projectScope ?? 'all',
+    collectionId: options.collectionId ?? null,
     view: 'full',
     asOf: options.asOf ?? null,
     includeProjectSnapshots: options.includeProjectSnapshots ?? true
@@ -221,6 +226,7 @@ const collectEntities = async (
     assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
+    collectionId?: string | null;
     view?: 'summary' | 'full';
     asOf?: Date | null;
     includeProjectSnapshots?: boolean;
@@ -235,6 +241,7 @@ const collectEntities = async (
     assessmentId = null,
     projectId = null,
     projectScope = 'all',
+    collectionId = null,
     view = 'full',
     asOf = null,
     includeProjectSnapshots = true
@@ -244,17 +251,22 @@ const collectEntities = async (
   const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
   const sqlConditions = otherConditions.filter(c => c.fieldId !== '_completeness');
   const completenessConditions = otherConditions.filter(c => c.fieldId === '_completeness');
-  const [schemas, projectEntities, joinedAssessment] = await Promise.all([
+  const [schemas, projectEntities, joinedAssessment, collectionEntityIds] = await Promise.all([
     db.catalog.listSchemas(workspace),
     projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
-    resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0)
+    resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0),
+    collectionId && authCtx
+      ? db.view.listCollectionEntityIds(authCtx.userId, workspace, collectionId)
+      : Promise.resolve(null)
   ]);
+  const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const rows: CollectedEntity[] = [];
 
   const processEntity = (entity: EntityDbResult, extraConditions: FilterCondition[]) => {
     if (authCtx && !checker.hasEntityPermission(authCtx, entity, 'view_entity')) return;
+    if (collectionEntityIdSet && !collectionEntityIdSet.has(entity.id)) return;
     // In asOf mode, candidateEntityIds passed to reconstructEntitiesAsOf already scopes to
     // project-linked entities as of that date; the live projectEntityMap doesn't apply here.
     if (!asOf && projectId && projectScope === 'project' && !projectEntityMap.has(entity.id)) return;

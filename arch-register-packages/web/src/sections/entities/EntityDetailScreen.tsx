@@ -1,11 +1,11 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../components/TypeBadge';
 import { StatusChip } from '../../components/StatusChip';
-import { TbChevronLeft, TbEdit, TbDots, TbTrash, TbCopy, TbBell, TbPinned } from 'react-icons/tb';
+import { TbChevronLeft, TbEdit, TbDots, TbTrash, TbCopy, TbBell, TbPinned, TbBookmark } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -48,6 +48,7 @@ import { LoadingState } from '../../components/LoadingState';
 import type { TabId, Relation } from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
+import { CollectionPickerDialog } from './components/CollectionPickerDialog';
 
 export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigate = useNavigate();
@@ -118,6 +119,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   }, [entity, schemas]);
   const isWatched = watchedEntities.some(item => item.entity_public_id === entityId);
   const isPinned = pinnedEntities.some(item => item.entity_public_id === entityId);
+  const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
 
   const schema = schemaEntry?.schema ?? null;
   const color = schemaEntry
@@ -219,6 +221,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
   const entityName = entity._name || entity._slug;
   const menuItems: MenuItem[] = [
+    {
+      label: 'Collections…',
+      icon: <TbBookmark size={14} />,
+      onClick: () => setCollectionPickerOpen(true)
+    },
     ...(entity.canCreateChild
       ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }]
       : []),
@@ -528,6 +535,15 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(false)}
       />
+      {collectionPickerOpen && (
+        <CollectionPickerDialog
+          open={true}
+          workspaceId={workspaceId}
+          entityId={entity._uid}
+          entityName={entityName}
+          onClose={() => setCollectionPickerOpen(false)}
+        />
+      )}
     </div>
   );
 };
