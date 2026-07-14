@@ -29,10 +29,12 @@ procs:
   "AR job server":
     shell: |
       cd arch-register-packages/job-server && \
+      JOB_SERVER_ID=local \
+      JOB_SERVER_NAME="Local job server" \
       DOTENV_CONFIG_PATH=../server/.env \
       pnpm dev
     autostart: false
-    stop: SIGKILL
+    stop: SIGTERM
     log:
       file: ar-job-server.log
 

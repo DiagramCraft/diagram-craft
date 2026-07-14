@@ -16,6 +16,9 @@ const makeDb = (claim: JobRunClaim | null): DatabaseAdapter =>
       }),
       recoverExpiredRuns: vi.fn(async () => 0),
       materializeDueSchedules: vi.fn(async () => 0),
+      registerServer: vi.fn(async input => input),
+      heartbeatServer: vi.fn(async () => true),
+      markServerUnavailable: vi.fn(async () => true),
       heartbeatRun: vi.fn(async () => true),
       completeRun: vi.fn(async () => true),
       failRun: vi.fn(async () => true)
@@ -48,6 +51,28 @@ const claim: JobRunClaim = {
 };
 
 describe('createJobServer', () => {
+  it('records periodic status pings', async () => {
+    const db = makeDb(null);
+    const worker = createJobServer({
+      db,
+      workerId: 'worker-1',
+      serverName: 'Worker one',
+      instanceId: 'instance-1',
+      maxConcurrency: 1,
+      pollIntervalMs: 1,
+      leaseDurationMs: 100,
+      heartbeatIntervalMs: 10,
+      serverPingIntervalMs: 5
+    });
+
+    const start = worker.start();
+    await vi.waitFor(() => expect(db.jobs.heartbeatServer).toHaveBeenCalled());
+    await worker.stop();
+    await start;
+
+    expect(db.jobs.markServerUnavailable).toHaveBeenCalled();
+  });
+
   it('executes a claimed handler and stores its result', async () => {
     const db = makeDb(claim);
     const handler = vi.fn<JobHandler>(async context => ({ received: context.payload.value }));
@@ -55,10 +80,13 @@ describe('createJobServer', () => {
       db,
       handlers: new Map([['test', handler]]),
       workerId: 'worker-1',
+      serverName: 'Worker one',
+      instanceId: 'instance-1',
       maxConcurrency: 1,
       pollIntervalMs: 1,
       leaseDurationMs: 100,
-      heartbeatIntervalMs: 10
+      heartbeatIntervalMs: 10,
+      serverPingIntervalMs: 10
     });
 
     const start = worker.start();
@@ -74,6 +102,14 @@ describe('createJobServer', () => {
         result: { received: 1 }
       })
     );
+    expect(db.jobs.registerServer).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'worker-1', name: 'Worker one', status: 'available' })
+    );
+    expect(db.jobs.markServerUnavailable).toHaveBeenCalledWith(
+      'worker-1',
+      'instance-1',
+      expect.any(Date)
+    );
   });
 
   it('records handler failures', async () => {
@@ -85,10 +121,13 @@ describe('createJobServer', () => {
       db,
       handlers: new Map([['test', handler]]),
       workerId: 'worker-1',
+      serverName: 'Worker one',
+      instanceId: 'instance-1',
       maxConcurrency: 1,
       pollIntervalMs: 1,
       leaseDurationMs: 100,
-      heartbeatIntervalMs: 10
+      heartbeatIntervalMs: 10,
+      serverPingIntervalMs: 10
     });
 
     const start = worker.start();

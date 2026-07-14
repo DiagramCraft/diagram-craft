@@ -26,6 +26,42 @@ const makeSchedule = (
 };
 
 runContractSuiteAgainstBothDrivers('JobDatabase', getDb => {
+  it('tracks job server status and fences updates from replaced instances', async () => {
+    const db = getDb();
+    const firstSeen = new Date('2026-01-01T00:00:00.000Z');
+    await db.jobs.registerServer({
+      id: 'worker-1',
+      name: 'Primary worker',
+      instance_id: randomUUID(),
+      status: 'available',
+      last_seen_at: firstSeen
+    });
+    const first = (await db.jobs.listServers()).find(server => server.id === 'worker-1')!;
+    const replacementInstance = randomUUID();
+    const replacementSeen = new Date('2026-01-01T00:01:00.000Z');
+
+    expect(await db.jobs.heartbeatServer(first.id, randomUUID(), replacementSeen)).toBe(false);
+    await db.jobs.registerServer({
+      id: first.id,
+      name: 'Renamed worker',
+      instance_id: replacementInstance,
+      status: 'available',
+      last_seen_at: replacementSeen
+    });
+    expect(await db.jobs.markServerUnavailable(first.id, first.instance_id, replacementSeen)).toBe(
+      false
+    );
+    expect(
+      await db.jobs.markServerUnavailable(first.id, replacementInstance, replacementSeen)
+    ).toBe(true);
+    expect((await db.jobs.listServers()).find(server => server.id === first.id)).toMatchObject({
+      name: 'Renamed worker',
+      instance_id: replacementInstance,
+      status: 'unavailable',
+      last_seen_at: replacementSeen
+    });
+  });
+
   it('enqueues an explicit run with all job_run fields populated', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
@@ -44,7 +80,9 @@ runContractSuiteAgainstBothDrivers('JobDatabase', getDb => {
       created_at: now,
       status: 'queued'
     });
-    expect(await db.jobs.enqueueRun(schedule.id, new Date('2026-01-01T00:06:00.000Z'))).toEqual(run);
+    expect(await db.jobs.enqueueRun(schedule.id, new Date('2026-01-01T00:06:00.000Z'))).toEqual(
+      run
+    );
     await db.jobs.updateSchedule(schedule.id, {
       job_type: schedule.job_type,
       system_identity: schedule.system_identity,

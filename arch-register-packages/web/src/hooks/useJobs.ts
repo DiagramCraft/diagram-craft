@@ -12,6 +12,14 @@ export type JobRunFilters = {
   offset?: number;
 };
 
+export const useJobServers = (workspaceSlug: string, enabled = true) =>
+  useQuery({
+    queryKey: jobKeys.servers(workspaceSlug),
+    queryFn: () => orpcClient.jobs.servers.list({ params: { workspace: workspaceSlug } }),
+    enabled: enabled && !!workspaceSlug,
+    refetchInterval: 5000
+  });
+
 export const useJobSchedules = (workspaceSlug: string, enabled = true) =>
   useQuery({
     queryKey: jobKeys.schedules(workspaceSlug),

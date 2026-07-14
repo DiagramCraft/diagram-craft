@@ -3,6 +3,14 @@ import { z } from 'zod';
 import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 const jobRunStatusSchema = z.enum(['queued', 'running', 'succeeded', 'failed', 'cancelled']);
+const jobServerStatusSchema = z.enum(['available', 'unavailable']);
+
+const jobServerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: jobServerStatusSchema,
+  last_seen_at: z.string()
+});
 
 const recurrenceSchema = z.discriminatedUnion('type', [
   z.object({
@@ -80,6 +88,20 @@ const jobRunPageSchema = z.object({
 
 export const jobsContract = oc.tag('Jobs').router({
   jobs: {
+    servers: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/jobs/servers',
+          inputStructure: 'detailed',
+          summary: 'List job servers',
+          description:
+            'Lists known job servers for workspace administrators. Available servers with no status ping in the last two minutes are reported as unavailable.',
+          tags: ['Jobs']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(jobServerSchema))
+    },
     schedules: {
       list: oc
         .route({
@@ -129,6 +151,8 @@ export const jobsContract = oc.tag('Jobs').router({
 });
 
 export type JobRunStatus = z.infer<typeof jobRunStatusSchema>;
+export type JobServerStatus = z.infer<typeof jobServerStatusSchema>;
+export type JobServer = z.infer<typeof jobServerSchema>;
 export type JobSchedule = z.infer<typeof jobScheduleSchema>;
 export type JobRun = z.infer<typeof jobRunSchema>;
 export type JobRunPage = z.infer<typeof jobRunPageSchema>;

@@ -24,11 +24,16 @@ const main = async () => {
     );
   }
 
-  const workerId = process.env['JOB_SERVER_ID'] ?? `${hostname()}-${randomUUID()}`;
+  const workerId = process.env['JOB_SERVER_ID'] ?? hostname();
+  if (workerId.trim().length === 0) throw new Error('JOB_SERVER_ID must not be empty');
+  const serverName = process.env['JOB_SERVER_NAME'] ?? hostname();
+  if (serverName.trim().length === 0) throw new Error('JOB_SERVER_NAME must not be empty');
+  const instanceId = randomUUID();
   const maxConcurrency = positiveInteger('JOB_SERVER_MAX_CONCURRENCY', 2);
   const pollIntervalMs = positiveInteger('JOB_SERVER_POLL_INTERVAL_MS', 1000);
   const leaseDurationMs = positiveInteger('JOB_SERVER_LEASE_DURATION_MS', 30000);
   const heartbeatIntervalMs = positiveInteger('JOB_SERVER_HEARTBEAT_INTERVAL_MS', 5000);
+  const serverPingIntervalMs = positiveInteger('JOB_SERVER_PING_INTERVAL_MS', 60000);
   const handlers = new Map<string, JobHandler>();
   const storage = createStorage();
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
@@ -36,10 +41,13 @@ const main = async () => {
     db,
     handlers,
     workerId,
+    serverName,
+    instanceId,
     maxConcurrency,
     pollIntervalMs,
     leaseDurationMs,
-    heartbeatIntervalMs
+    heartbeatIntervalMs,
+    serverPingIntervalMs
   });
 
   const shutdown = async () => {
@@ -52,7 +60,7 @@ const main = async () => {
   process.on('SIGINT', shutdown);
 
   logger.info(
-    `Job server ${workerId} started with concurrency ${maxConcurrency} using ${db.core.driver}`
+    `Job server ${serverName} (${workerId}) started with concurrency ${maxConcurrency} using ${db.core.driver}`
   );
   await server.start();
 };

@@ -7,6 +7,7 @@ import type {
   JobRunClaim,
   JobRunCompletion,
   JobRunFailure,
+  JobServerDbRegistration,
   JobScheduleDbCreate,
   JobScheduleDbUpdate,
   JobRunDbResult,
@@ -17,6 +18,44 @@ import { jobMappers } from '../jobsDatabase';
 const iso = (date: Date) => date.toISOString();
 
 export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase {
+  async registerServer(input: JobServerDbRegistration) {
+    this.run(
+      `INSERT INTO job_server (id, name, instance_id, status, last_seen_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         name = excluded.name,
+         instance_id = excluded.instance_id,
+         status = excluded.status,
+         last_seen_at = excluded.last_seen_at`,
+      [input.id, input.name, input.instance_id, input.status, iso(input.last_seen_at)]
+    );
+    return this.get('SELECT * FROM job_server WHERE id = ?', [input.id], jobMappers.server)!;
+  }
+
+  async heartbeatServer(id: string, instanceId: string, lastSeenAt: Date) {
+    const result = this.run(
+      `UPDATE job_server
+       SET status = 'available', last_seen_at = ?
+       WHERE id = ? AND instance_id = ?`,
+      [iso(lastSeenAt), id, instanceId]
+    );
+    return result.changes > 0;
+  }
+
+  async markServerUnavailable(id: string, instanceId: string, lastSeenAt: Date) {
+    const result = this.run(
+      `UPDATE job_server
+       SET status = 'unavailable', last_seen_at = ?
+       WHERE id = ? AND instance_id = ?`,
+      [iso(lastSeenAt), id, instanceId]
+    );
+    return result.changes > 0;
+  }
+
+  async listServers() {
+    return this.all('SELECT * FROM job_server ORDER BY name, id', [], jobMappers.server);
+  }
+
   async createSchedule(input: JobScheduleDbCreate) {
     this.run(
       `INSERT INTO job_schedule (
@@ -195,8 +234,20 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
         id, schedule_id, workspace, job_type, system_identity, payload, priority,
         occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at, status
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued')`,
-      [randomUUID(), schedule.id, schedule.workspace, schedule.job_type, schedule.system_identity,
-        JSON.stringify(schedule.payload), schedule.priority, iso(now), iso(now), 1, iso(now), iso(now)]
+      [
+        randomUUID(),
+        schedule.id,
+        schedule.workspace,
+        schedule.job_type,
+        schedule.system_identity,
+        JSON.stringify(schedule.payload),
+        schedule.priority,
+        iso(now),
+        iso(now),
+        1,
+        iso(now),
+        iso(now)
+      ]
     );
     if (schedule.next_occurrence_at <= now) {
       this.run('UPDATE job_schedule SET next_occurrence_at = ?, updated_at = ? WHERE id = ?', [

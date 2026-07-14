@@ -18,8 +18,17 @@ Production and multi-worker deployments must use PostgreSQL:
 ```bash
 DB_DRIVER=postgres \
 DATABASE_URL=postgresql://arch_register:password@localhost:5432/arch_register \
+JOB_SERVER_ID=jobs-eu-1 \
+JOB_SERVER_NAME="EU job server 1" \
 JOB_SERVER_MAX_CONCURRENCY=4 \
 pnpm start
 ```
 
 The worker does not expose an HTTP listener. Job handlers are registered by system components and receive the run ID as `jobId` together with the workspace, schedule, system identity, and payload.
+
+`JOB_SERVER_ID` is the stable server identity and must be unique among active job servers. It
+defaults to the host name, so deployments that run multiple job servers on one host must configure
+it explicitly.
+`JOB_SERVER_NAME` controls the display name in job monitoring and defaults to the host name. The
+server records a status ping every minute by default; `JOB_SERVER_PING_INTERVAL_MS` can override
+that interval.
