@@ -6,7 +6,9 @@ const apiSchemaId = '00000000-0000-0000-0000-000000000004';
 const apiTypeEnumId = '00000000-0000-0000-0000-e00000000001';
 
 test.describe('schema routes', () => {
-  test('GET /api/:workspace/schemas returns seeded schemas with expanded select options', async ({ orpc }) => {
+  test('GET /api/:workspace/schemas returns seeded schemas with expanded select options', async ({
+    orpc
+  }) => {
     const schemas = await orpc.schemas.list({ params: { workspace: 'default' } });
     expect(schemas.length).toBeGreaterThan(0);
     expect(schemas).toEqual(
@@ -35,15 +37,17 @@ test.describe('schema routes', () => {
 
   test('GET /api/:workspace/schemas returns 401 without authentication', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
-    await expect(anonOrpc.schemas.list({ params: { workspace: 'default' } })).rejects.toMatchObject({
-      code: 'UNAUTHORIZED'
-    });
+    await expect(anonOrpc.schemas.list({ params: { workspace: 'default' } })).rejects.toMatchObject(
+      {
+        code: 'UNAUTHORIZED'
+      }
+    );
   });
 
   test('GET /api/:workspace/schemas returns 404 for unknown workspace', async ({ orpc }) => {
-    await expect(
-      orpc.schemas.list({ params: { workspace: 'nonexistent' } })
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(orpc.schemas.list({ params: { workspace: 'nonexistent' } })).rejects.toMatchObject(
+      { code: 'NOT_FOUND' }
+    );
   });
 
   test('GET /api/:workspace/schemas/:id returns a seeded schema by id', async ({ orpc }) => {
@@ -61,7 +65,9 @@ test.describe('schema routes', () => {
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
-  test('POST /api/:workspace/schemas creates a schema with normalized optional fields', async ({ orpc }) => {
+  test('POST /api/:workspace/schemas creates a schema with normalized optional fields', async ({
+    orpc
+  }) => {
     const schema = await orpc.schemas.create({
       params: { workspace: 'default' },
       body: { name: 'Capability', icon: 'star' }
@@ -76,7 +82,9 @@ test.describe('schema routes', () => {
     });
   });
 
-  test('POST /api/:workspace/schemas creates a schema with explicit fields and default owner', async ({ orpc }) => {
+  test('POST /api/:workspace/schemas creates a schema with explicit fields and default owner', async ({
+    orpc
+  }) => {
     const schema = await orpc.schemas.create({
       params: { workspace: 'default' },
       body: {
@@ -105,15 +113,22 @@ test.describe('schema routes', () => {
         expect.objectContaining({
           id: 'tier',
           type: 'select',
-          options: expect.arrayContaining([expect.objectContaining({ value: 'openapi', label: 'OpenAPI' })])
+          options: expect.arrayContaining([
+            expect.objectContaining({ value: 'openapi', label: 'OpenAPI' })
+          ])
         })
       ])
     );
   });
 
-  test('POST /api/:workspace/schemas returns 400 for a non-object request body', async ({ orpc }) => {
+  test('POST /api/:workspace/schemas returns 400 for a non-object request body', async ({
+    orpc
+  }) => {
     await expect(
-      orpc.schemas.create({ params: { workspace: 'default' }, body: { name: undefined as unknown as string } })
+      orpc.schemas.create({
+        params: { workspace: 'default' },
+        body: { name: undefined as unknown as string }
+      })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
@@ -126,7 +141,9 @@ test.describe('schema routes', () => {
     });
   });
 
-  test('PUT /api/:workspace/schemas/:id updates a schema and preserves omitted fields', async ({ orpc }) => {
+  test('PUT /api/:workspace/schemas/:id updates a schema and preserves omitted fields', async ({
+    orpc
+  }) => {
     const created = await orpc.schemas.create({
       params: { workspace: 'default' },
       body: {
@@ -187,7 +204,9 @@ test.describe('schema routes', () => {
         expect.objectContaining({
           id: 'type',
           type: 'select',
-          options: expect.arrayContaining([expect.objectContaining({ value: 'openapi', label: 'OpenAPI' })])
+          options: expect.arrayContaining([
+            expect.objectContaining({ value: 'openapi', label: 'OpenAPI' })
+          ])
         })
       ]
     });
@@ -195,7 +214,10 @@ test.describe('schema routes', () => {
 
   test('PUT /api/:workspace/schemas/:id returns 404 for an unknown schema id', async ({ orpc }) => {
     await expect(
-      orpc.schemas.update({ params: { workspace: 'default', id: NONEXISTENT_UUID }, body: { name: 'Nope' } })
+      orpc.schemas.update({
+        params: { workspace: 'default', id: NONEXISTENT_UUID },
+        body: { name: 'Nope' }
+      })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
@@ -209,7 +231,10 @@ test.describe('schema routes', () => {
     expect(result).toMatchObject({ success: true, message: `Schema '${created.id}' deleted` });
   });
 
-  test('DELETE /api/:workspace/schemas/:id returns 409 for a referenced seeded schema', async ({ server, orpc }) => {
+  test('DELETE /api/:workspace/schemas/:id returns 409 for a referenced seeded schema', async ({
+    server,
+    orpc
+  }) => {
     await server.db.catalog.createEntity({
       id: SCHEMA_REF_ENTITY_ID,
       workspace: seedIds.workspace.default,
@@ -233,10 +258,15 @@ test.describe('schema routes', () => {
 
     await expect(
       orpc.schemas.remove({ params: { workspace: 'default', id: apiSchemaId } })
-    ).rejects.toMatchObject({ code: 'CONFLICT', message: 'Cannot delete schema: entities still reference it' });
+    ).rejects.toMatchObject({
+      code: 'CONFLICT',
+      message: 'Cannot delete schema: entities still reference it'
+    });
   });
 
-  test('DELETE /api/:workspace/schemas/:id returns 404 for an unknown schema id', async ({ orpc }) => {
+  test('DELETE /api/:workspace/schemas/:id returns 404 for an unknown schema id', async ({
+    orpc
+  }) => {
     await expect(
       orpc.schemas.remove({ params: { workspace: 'default', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });

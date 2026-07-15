@@ -6,7 +6,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TypeBadge } from '../../components/TypeBadge';
-import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
+import { TbPlus, TbCode, TbEdit, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { Title } from '../../components/Title';
 import { resolveSchemaColor, FIELD_TYPES, SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
@@ -17,12 +17,17 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { EnumEditorScreen } from './EnumEditorScreen';
-import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntitySchema, EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { EmptyState } from '../../components/EmptyState';
+import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
 
 const toFieldId = (name: string) =>
-  name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
 
 const deriveKeyPrefix = (value: string) =>
   value
@@ -37,17 +42,21 @@ export const SchemaSettingsScreen = () => {
   const search = routeApi.useSearch();
   const selectedSchemaId = search.schema;
   const activeTab = search.tab ?? 'types';
-  const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
+  const { workspaceSlug, schemas, enums, permissions, teams, lifecycleStates } =
+    useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
   const [name, setName] = useState('');
   const [keyPrefix, setKeyPrefix] = useState('');
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
+  const [templates, setTemplates] = useState<EntityTemplate[]>([]);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EntityTemplate | null>(null);
   const fieldKeysRef = useRef<Map<string, string>>(new Map());
 
   const createSchemaMutation = useCreateSchema(workspaceSlug);
@@ -74,9 +83,11 @@ export const SchemaSettingsScreen = () => {
       setKeyPrefix(selected.key_prefix);
       setDescription(selected.description);
       setFields(selected.fields);
+      setTemplates(selected.templates);
       setColor(selected.color);
       setIcon(selected.icon);
       setDirty(false);
+      setTemplateDialogOpen(false);
       fieldKeysRef.current.clear();
     }
   }, [selected]);
@@ -86,13 +97,24 @@ export const SchemaSettingsScreen = () => {
     try {
       await updateSchemaMutation.mutateAsync({
         schemaId: selected.id,
-        data: { name, key_prefix: keyPrefix, description, fields, color, icon }
+        data: { name, key_prefix: keyPrefix, description, fields, templates, color, icon }
       });
       setDirty(false);
     } catch (e: unknown) {
       setErrorMessage(e instanceof Error ? e.message : 'Failed to save entity type');
     }
-  }, [selected, name, keyPrefix, description, fields, color, icon, dirty, updateSchemaMutation]);
+  }, [
+    selected,
+    name,
+    keyPrefix,
+    description,
+    fields,
+    templates,
+    color,
+    icon,
+    dirty,
+    updateSchemaMutation
+  ]);
 
   const handleCreateType = useCallback(async () => {
     try {
@@ -130,6 +152,15 @@ export const SchemaSettingsScreen = () => {
         fieldKeysRef.current.delete(fieldId);
         fieldKeysRef.current.set(patch.id, stableKey);
       }
+      setTemplates(prev =>
+        prev.map(template => {
+          if (!(fieldId in template.values.fields)) return template;
+          const nextFields = { ...template.values.fields };
+          nextFields[patch.id!] = nextFields[fieldId]!;
+          delete nextFields[fieldId];
+          return { ...template, values: { ...template.values, fields: nextFields } };
+        })
+      );
     }
     setFields(prev => prev.map(f => (f.id === fieldId ? ({ ...f, ...patch } as SchemaField) : f)));
     setDirty(true);
@@ -137,6 +168,13 @@ export const SchemaSettingsScreen = () => {
 
   const removeField = (fieldId: string) => {
     setFields(prev => prev.filter(f => f.id !== fieldId));
+    setTemplates(prev =>
+      prev.map(template => {
+        const nextFields = { ...template.values.fields };
+        delete nextFields[fieldId];
+        return { ...template, values: { ...template.values, fields: nextFields } };
+      })
+    );
     setDirty(true);
   };
 
@@ -165,13 +203,49 @@ export const SchemaSettingsScreen = () => {
           case 'select':
             return { ...base, type: 'select', enumId: enums[0]?.id ?? '', options: [] };
           case 'reference':
-            return { ...base, type: 'reference', predicate: '', schemaId: '', minCount: 0, maxCount: -1 };
+            return {
+              ...base,
+              type: 'reference',
+              predicate: '',
+              schemaId: '',
+              minCount: 0,
+              maxCount: -1
+            };
           case 'containment':
-            return { ...base, type: 'containment', predicate: '', schemaId: '', minCount: 0, maxCount: 1 };
+            return {
+              ...base,
+              type: 'containment',
+              predicate: '',
+              schemaId: '',
+              minCount: 0,
+              maxCount: 1
+            };
         }
       })
     );
+    setTemplates(prev =>
+      prev.map(template => {
+        const nextFields = { ...template.values.fields };
+        delete nextFields[fieldId];
+        return { ...template, values: { ...template.values, fields: nextFields } };
+      })
+    );
     setDirty(true);
+  };
+
+  const openNewTemplate = () => {
+    setEditingTemplate(null);
+    setTemplateDialogOpen(true);
+  };
+
+  const saveTemplate = (template: EntityTemplate) => {
+    setTemplates(current => {
+      const index = current.findIndex(item => item.id === template.id);
+      if (index === -1) return [...current, template];
+      return current.map(item => (item.id === template.id ? template : item));
+    });
+    setDirty(true);
+    setTemplateDialogOpen(false);
   };
 
   if (activeTab === 'enums') {
@@ -185,7 +259,10 @@ export const SchemaSettingsScreen = () => {
           <div className={styles.editorHead}>
             <Title
               breadcrumb={[
-                { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+                {
+                  label: 'Home',
+                  onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+                },
                 { label: 'Settings' }
               ]}
               titleTestId="schema-editor-title"
@@ -351,13 +428,60 @@ export const SchemaSettingsScreen = () => {
               </div>
             )}
 
+            <div className={styles.fieldsHead}>
+              <div className={styles.sectionLabel}>Entity templates</div>
+              {canEdit && (
+                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openNewTemplate}>
+                  Add template
+                </Button>
+              )}
+            </div>
+            <div className={styles.templateList}>
+              {templates.length === 0 ? (
+                <div className={styles.templateEmpty}>No templates defined.</div>
+              ) : (
+                templates.map(template => (
+                  <div className={styles.templateRow} key={template.id}>
+                    <div>
+                      <div className={styles.templateName}>{template.name}</div>
+                      <div className={styles.templateSummary}>
+                        {Object.keys(template.values.fields).length} field defaults
+                      </div>
+                    </div>
+                    {canEdit && (
+                      <div className={styles.templateActions}>
+                        <Button
+                          variant="ghost"
+                          icon={<TbEdit size={12} />}
+                          onClick={() => {
+                            setEditingTemplate(template);
+                            setTemplateDialogOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          icon={<TbTrash size={12} />}
+                          onClick={() => {
+                            setTemplates(current =>
+                              current.filter(item => item.id !== template.id)
+                            );
+                            setDirty(true);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
             <div className={styles.formActions}>
               {canEdit && (
-                <Button
-                  variant="danger"
-                  icon={<TbTrash size={12} />}
-                  onClick={handleDeleteType}
-                >
+                <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDeleteType}>
                   Delete type
                 </Button>
               )}
@@ -413,6 +537,19 @@ export const SchemaSettingsScreen = () => {
         message={errorMessage}
         onClose={() => setErrorMessage(null)}
       />
+      {selected && (
+        <EntityTemplateDialog
+          open={templateDialogOpen}
+          onClose={() => setTemplateDialogOpen(false)}
+          onSave={saveTemplate}
+          workspaceId={workspaceSlug}
+          schema={{ ...selected, fields, templates } as EntitySchema}
+          template={editingTemplate}
+          templates={templates}
+          teams={teams}
+          lifecycleStates={lifecycleStates}
+        />
+      )}
     </div>
   );
 };
@@ -468,9 +605,9 @@ const FieldRow = ({
           >
             {schemas.map(s => (
               <Select.Item key={s.id} value={s.id}>
-              {s.name}
-            </Select.Item>
-          ))}
+                {s.name}
+              </Select.Item>
+            ))}
           </Select.Root>
           <div style={{ display: 'grid', gap: 4 }}>
             <span className="dim" style={{ fontSize: 11 }}>
@@ -479,7 +616,9 @@ const FieldRow = ({
             <TextInput
               value={field.predicate ?? ''}
               disabled={!canEdit}
-              onChange={value => onUpdate({ predicate: value?.trim() || undefined } as Partial<SchemaField>)}
+              onChange={value =>
+                onUpdate({ predicate: value?.trim() || undefined } as Partial<SchemaField>)
+              }
               style={{ width: '100%' }}
               placeholder="e.g., belongs to, depends on"
             />

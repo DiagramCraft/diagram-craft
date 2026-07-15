@@ -153,9 +153,9 @@ export const listWorkspaces = async (
 ): Promise<Workspace[]> => {
   try {
     const workspaces = event?.context.apiToken
-      ? await db.workspace.getWorkspace(event.context.apiToken.workspace).then(workspace =>
-          workspace ? [workspace] : []
-        )
+      ? await db.workspace
+          .getWorkspace(event.context.apiToken.workspace)
+          .then(workspace => (workspace ? [workspace] : []))
       : await db.workspace.listWorkspaces();
     return workspaces.map(toApiWorkspace);
   } catch (e) {
@@ -248,6 +248,27 @@ export const createWorkspace = async (
               }
               return field;
             });
+            const relationshipFieldIds = new Set(
+              schema.fields
+                .filter(field => field.type === 'reference' || field.type === 'containment')
+                .map(field => field.id)
+            );
+            const templates = (schema.templates ?? []).map(template => {
+              const templateFields = Object.fromEntries(
+                Object.entries(template.values.fields).filter(
+                  ([fieldId]) => !relationshipFieldIds.has(fieldId)
+                )
+              );
+              return {
+                ...template,
+                values: {
+                  ...template.values,
+                  fields: templateFields,
+                  owner: includeSet.has('settings') ? template.values.owner : undefined,
+                  lifecycle: includeSet.has('settings') ? template.values.lifecycle : undefined
+                }
+              };
+            });
             await db.catalog.createSchema({
               id: idMap.get(schema.id)!,
               workspace: row.id,
@@ -257,6 +278,7 @@ export const createWorkspace = async (
               color: schema.color,
               icon: schema.icon,
               fields: remappedFields,
+              templates,
               default_owner: null,
               created_at: timestamp,
               updated_at: timestamp
