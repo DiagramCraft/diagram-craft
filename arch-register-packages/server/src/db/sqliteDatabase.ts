@@ -15,6 +15,7 @@ import { SqliteWatchDatabase } from '../domain/watch/db/sqliteWatch';
 import { SqliteDiscussionDatabase } from '../domain/discussion/db/sqliteDiscussion';
 import { SqliteJobDatabase } from '../domain/jobs/db/sqliteJobs';
 import { SqliteExternalContentDatabase } from '../domain/external-content/db/sqliteExternalContent';
+import { SqliteWebhookDatabase } from '../domain/webhook/db/sqliteWebhook';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -32,6 +33,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly discussion;
   readonly jobs;
   readonly externalContent;
+  readonly webhook;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -51,6 +53,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.discussion = new SqliteDiscussionDatabase(() => this.db);
     this.jobs = new SqliteJobDatabase(() => this.db);
     this.externalContent = new SqliteExternalContentDatabase(() => this.db);
+    this.webhook = new SqliteWebhookDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -79,7 +82,7 @@ export class SqliteDatabase implements DatabaseAdapter {
         try {
           this.db.exec('BEGIN IMMEDIATE');
           try {
-            const result = await callback(this);
+            const result = await callback(this.transactionAdapter());
             this.db.exec('COMMIT');
             return result;
           } catch (error) {
@@ -90,6 +93,34 @@ export class SqliteDatabase implements DatabaseAdapter {
           release();
         }
       }
+    };
+  }
+
+  private transactionAdapter(): DatabaseAdapter {
+    return {
+      core: {
+        driver: 'sqlite',
+        isTransaction: true,
+        close: async () => {
+          throw new Error('Cannot close a transaction-bound database adapter');
+        },
+        reset: async () => {
+          throw new Error('Cannot reset a transaction-bound database adapter');
+        },
+        transaction: async callback => callback(this.transactionAdapter())
+      },
+      workspace: this.workspace,
+      catalog: this.catalog,
+      view: this.view,
+      project: this.project,
+      audit: this.audit,
+      watch: this.watch,
+      auth: this.auth,
+      ai: this.ai,
+      discussion: this.discussion,
+      jobs: this.jobs,
+      externalContent: this.externalContent,
+      webhook: this.webhook
     };
   }
 

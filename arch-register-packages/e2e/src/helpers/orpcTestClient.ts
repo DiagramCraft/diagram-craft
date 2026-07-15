@@ -17,6 +17,7 @@ import { auditContract } from '@arch-register/api-types/auditContract';
 import { aiContract } from '@arch-register/api-types/aiContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { jobsContract } from '@arch-register/api-types/jobsContract';
+import { webhookContract } from '@arch-register/api-types/webhookContract';
 
 const makeFetch =
   (auth?: string) =>
@@ -53,7 +54,8 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     audit: make(auditContract).audit,
     ai: make(aiContract).ai,
     diagramCraft: make(diagramCraftContract).diagramCraft,
-    jobs: make(jobsContract).jobs
+    jobs: make(jobsContract).jobs,
+    webhooks: make(webhookContract).webhooks
   };
 };
 

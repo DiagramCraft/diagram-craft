@@ -23,6 +23,7 @@ import { workspaceManagementContract } from '@arch-register/api-types/workspaceC
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import { jobsContract } from '@arch-register/api-types/jobsContract';
 import { externalContentContract } from '@arch-register/api-types/externalContentContract';
+import { webhookContract } from '@arch-register/api-types/webhookContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
@@ -49,6 +50,7 @@ const webContracts = {
   ...workspaceAnalyticsContract,
   ...jobsContract,
   ...externalContentContract,
+  ...webhookContract,
   ...diagramCraftContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,

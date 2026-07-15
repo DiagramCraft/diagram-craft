@@ -44,7 +44,7 @@ const jobScheduleSchema = z.object({
 
 const jobRunSchema = z.object({
   id: z.string(),
-  schedule_id: z.string(),
+  schedule_id: z.string().nullable(),
   workspace: z.string(),
   job_type: z.string(),
   system_identity: z.string(),
@@ -61,7 +61,9 @@ const jobRunSchema = z.object({
   duration_ms: z.number().int().nonnegative().nullable(),
   worker_id: z.string().nullable(),
   result: z.record(z.string(), z.unknown()).nullable(),
-  error: z.string().nullable()
+  error: z.string().nullable(),
+  attempt_count: z.number().int().nonnegative(),
+  max_attempts: z.number().int().positive()
 });
 
 const jobRunListQuerySchema = z.object({

@@ -4,11 +4,14 @@ import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgr
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { dueJobOccurrences } from '../jobRecurrence';
 import { nextJobOccurrence } from '../jobRecurrence';
+import { retryDelayMs } from '../jobRetry';
 import type {
   JobDatabase,
   JobRunClaim,
   JobRunCompletion,
   JobRunFailure,
+  JobRunRetry,
+  OneOffJobRunDbCreate,
   JobServerDbRegistration,
   JobScheduleDbCreate,
   JobScheduleDbUpdate,
@@ -275,21 +278,54 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
     }
   }
 
+  async enqueueOneOffRun(input: OneOffJobRunDbCreate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO job_run (
+          id, schedule_id, workspace, job_type, system_identity, payload, priority,
+          occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at,
+          status, max_attempts
+        ) VALUES (
+          ${input.id}, NULL, ${input.workspace}, ${input.job_type}, ${input.system_identity},
+          ${this.json(input.payload)}, ${input.priority}, ${input.created_at}, ${input.created_at},
+          1, ${input.planned_at}, ${input.created_at}, 'queued', ${input.max_attempts}
+        ) RETURNING *
+      `;
+      return this.mapRun(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async recoverExpiredRuns(now: Date) {
     try {
       return await this.sql.begin(async transaction => {
         const sql = transaction as unknown as PostgresSqlClient;
-        const stale = await sql<{ id: string; lease_token: string }[]>`
-          SELECT r.id, r.lease_token
+        const stale = await sql<
+          {
+            id: string;
+            lease_token: string;
+            attempt_count: number;
+            max_attempts: number;
+          }[]
+        >`
+          SELECT r.id, r.lease_token, r.attempt_count, r.max_attempts
           FROM job_run r
           JOIN job_workspace_lease l ON l.run_id = r.id
           WHERE r.status = 'running' AND l.expires_at <= ${now}
           FOR UPDATE OF r, l SKIP LOCKED
         `;
         for (const run of stale) {
+          const retry = run.attempt_count < run.max_attempts;
+          const retryAt = new Date(now.getTime() + retryDelayMs(run.attempt_count));
           await sql`
             UPDATE job_run
-            SET status = 'failed', completed_at = ${now}, lease_token = NULL,
+            SET status = ${retry ? 'queued' : 'failed'},
+                completed_at = ${retry ? null : now},
+                planned_at = ${retry ? retryAt : now},
+                started_at = CASE WHEN ${retry} THEN NULL ELSE started_at END,
+                worker_id = CASE WHEN ${retry} THEN NULL ELSE worker_id END,
+                lease_token = NULL,
                 error = 'Worker lease expired'
             WHERE id = ${run.id} AND status = 'running' AND lease_token = ${run.lease_token}
           `;
@@ -351,7 +387,8 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
 
           const [row] = await sql<DatabaseRow[]>`
             UPDATE job_run
-            SET status = 'running', started_at = ${now}, worker_id = ${workerId}, lease_token = ${token}
+            SET status = 'running', started_at = ${now}, worker_id = ${workerId},
+                lease_token = ${token}, attempt_count = attempt_count + 1
             WHERE id = ${String(candidate['id'])} AND status = 'queued'
             RETURNING *
           `;
@@ -447,6 +484,40 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
               WHERE l.run_id = r.id AND l.worker_id = ${input.workerId}
                 AND l.lease_token = ${input.leaseToken}
                 AND l.expires_at > ${input.completedAt}
+            )
+          RETURNING r.*
+        `;
+        if (!row) return false;
+        await sql`
+          DELETE FROM job_workspace_lease
+          WHERE run_id = ${input.runId} AND worker_id = ${input.workerId}
+            AND lease_token = ${input.leaseToken}
+        `;
+        return true;
+      });
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async retryRun(input: JobRunRetry) {
+    try {
+      return await this.sql.begin(async transaction => {
+        const sql = transaction as unknown as PostgresSqlClient;
+        const [row] = await sql<DatabaseRow[]>`
+          UPDATE job_run r
+          SET status = 'queued', planned_at = ${input.retryAt}, started_at = NULL,
+              completed_at = NULL, worker_id = NULL, lease_token = NULL, error = ${input.error}
+          WHERE r.id = ${input.runId}
+            AND r.status = 'running'
+            AND r.worker_id = ${input.workerId}
+            AND r.lease_token = ${input.leaseToken}
+            AND r.attempt_count < r.max_attempts
+            AND EXISTS (
+              SELECT 1 FROM job_workspace_lease l
+              WHERE l.run_id = r.id AND l.worker_id = ${input.workerId}
+                AND l.lease_token = ${input.leaseToken}
+                AND l.expires_at > ${input.attemptedAt}
             )
           RETURNING r.*
         `;
