@@ -73,12 +73,12 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
 
   async deleteNotification(userId: string, workspace: string, notificationId: string) {
     try {
-    const [row] = await this.sql<DatabaseRow[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         DELETE FROM user_notification
         WHERE id = ${notificationId} AND user_id = ${userId} AND workspace = ${workspace}
         RETURNING *
       `;
-    return row ? watchMappers.notification(row) : null;
+      return row ? watchMappers.notification(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }

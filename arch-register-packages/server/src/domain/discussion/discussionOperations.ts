@@ -39,10 +39,17 @@ const resolveObjectContext = async (
 
     if (node.project_id) {
       const project = await db.project.getProject(ws, node.project_id);
-      httpAssert.present(project, { status: 404, message: `Project '${node.project_id}' not found` });
+      httpAssert.present(project, {
+        status: 404,
+        message: `Project '${node.project_id}' not found`
+      });
       requireProjectAccess(authCtx, project.owner, 'You do not have permission to view this page');
     } else {
-      requireWorkspaceCapability(authCtx, 'content.view', 'You do not have permission to view this page');
+      requireWorkspaceCapability(
+        authCtx,
+        'content.view',
+        'You do not have permission to view this page'
+      );
     }
 
     const entity = node.entity_id ? await db.catalog.getEntity(ws, node.entity_id) : null;
@@ -60,8 +67,15 @@ const resolveObjectContext = async (
     const assessment = await db.project.getAssessmentById(ws, objectId);
     httpAssert.present(assessment, { status: 404, message: `Assessment '${objectId}' not found` });
     const project = await db.project.getProject(ws, assessment.project_id);
-    httpAssert.present(project, { status: 404, message: `Project '${assessment.project_id}' not found` });
-    requireProjectAccess(authCtx, project.owner, 'You do not have permission to view this assessment');
+    httpAssert.present(project, {
+      status: 404,
+      message: `Project '${assessment.project_id}' not found`
+    });
+    requireProjectAccess(
+      authCtx,
+      project.owner,
+      'You do not have permission to view this assessment'
+    );
     return {
       title: assessment.name,
       nav: { type: 'assessment', projectPublicId: project.public_id ?? project.id }
@@ -70,14 +84,22 @@ const resolveObjectContext = async (
 
   const entity = await db.catalog.getEntity(ws, objectId);
   httpAssert.present(entity, { status: 404, message: `Entity '${objectId}' not found` });
-  requireEntityAction(authCtx, entity, 'view_entity', 'You do not have permission to view this entity');
+  requireEntityAction(
+    authCtx,
+    entity,
+    'view_entity',
+    'You do not have permission to view this entity'
+  );
   return {
     title: entity.name,
     nav: { type: 'entity', entityPublicId: entity.public_id ?? entity.id }
   };
 };
 
-const toApiPost = (row: DiscussionPostDbResult, authorNames: Map<string, string>): DiscussionPost => ({
+const toApiPost = (
+  row: DiscussionPostDbResult,
+  authorNames: Map<string, string>
+): DiscussionPost => ({
   id: row.id,
   workspace: row.workspace,
   objectType: row.object_type,
@@ -123,7 +145,10 @@ export const summarizeDiscussions = async (
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const [rows, authorNames] = await Promise.all([db.discussion.listAll(ws), buildAuthorNameMap(db)]);
+  const [rows, authorNames] = await Promise.all([
+    db.discussion.listAll(ws),
+    buildAuthorNameMap(db)
+  ]);
 
   const byObject = new Map<string, DiscussionPostDbResult[]>();
   for (const row of rows) {
@@ -143,7 +168,9 @@ export const summarizeDiscussions = async (
     } catch {
       continue;
     }
-    const lastPost = posts.reduce((latest, post) => (post.created_at > latest.created_at ? post : latest));
+    const lastPost = posts.reduce((latest, post) =>
+      post.created_at > latest.created_at ? post : latest
+    );
     entries.push({
       objectType: first.object_type,
       objectId: first.object_id,

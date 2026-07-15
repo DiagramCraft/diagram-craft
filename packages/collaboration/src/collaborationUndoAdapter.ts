@@ -33,8 +33,7 @@ export type CollaborationUndoAdapterEvents = {
  */
 export interface CollaborationUndoAdapter
   extends Emitter<CollaborationUndoAdapterEvents>,
-    Releasable
-{
+    Releasable {
   /**
    * Returns whether an undo operation can currently be performed.
    */

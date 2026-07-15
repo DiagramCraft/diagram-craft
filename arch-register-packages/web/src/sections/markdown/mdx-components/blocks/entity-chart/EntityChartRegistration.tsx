@@ -1,11 +1,7 @@
 import { TbChartDonut } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityChart } from './EntityChart';
-import {
-  ENTITY_CHART_TYPE,
-  EntityChartEditable,
-  entityChartMdxRule
-} from './EntityChartEditable';
+import { ENTITY_CHART_TYPE, EntityChartEditable, entityChartMdxRule } from './EntityChartEditable';
 import type { EntityChartSlateElement } from './types';
 
 /**

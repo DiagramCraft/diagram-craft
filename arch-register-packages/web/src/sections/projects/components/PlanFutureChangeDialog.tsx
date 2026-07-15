@@ -39,7 +39,7 @@ export const PlanFutureChangeDialog = ({
   const { data: entity } = useEntity(workspaceId, entityId);
   const createFutureUpdate = useCreateFutureUpdate(workspaceId, entityId);
 
-  const schema = entity ? schemas.find(s => s.id === entity._schema.id) ?? null : null;
+  const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
 
   const [targetDate, setTargetDate] = useState('');
   const [commitMessage, setCommitMessage] = useState('');
@@ -149,7 +149,9 @@ export const PlanFutureChangeDialog = ({
             >
               <option value="">—</option>
               {teams.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </select>
           </FormElement>
@@ -162,40 +164,46 @@ export const PlanFutureChangeDialog = ({
             >
               <option value="">—</option>
               {lifecycleStates.map(ls => (
-                <option key={ls.id} value={ls.id}>{ls.label}</option>
+                <option key={ls.id} value={ls.id}>
+                  {ls.label}
+                </option>
               ))}
             </select>
           </FormElement>
 
-          {schema?.fields.filter(f => !isReference(f)).map(f => (
-            <FormElement key={f.id} label={f.name}>
-              {f.type === 'boolean' ? (
-                <input
-                  type="checkbox"
-                  checked={!!(planState[f.id])}
-                  onChange={e => setPlanState(s => ({ ...s, [f.id]: e.target.checked }))}
-                />
-              ) : f.type === 'select' ? (
-                <select
-                  className={styles.inlineSelect}
-                  value={(planState[f.id] as string) ?? ''}
-                  onChange={e => setPlanState(s => ({ ...s, [f.id]: e.target.value }))}
-                  style={{ width: '100%' }}
-                >
-                  <option value="">—</option>
-                  {f.options.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              ) : (
-                <TextInput
-                  value={(planState[f.id] as string) ?? ''}
-                  onChange={v => setPlanState(s => ({ ...s, [f.id]: v ?? '' }))}
-                  style={{ width: '100%' }}
-                />
-              )}
-            </FormElement>
-          ))}
+          {schema?.fields
+            .filter(f => !isReference(f))
+            .map(f => (
+              <FormElement key={f.id} label={f.name}>
+                {f.type === 'boolean' ? (
+                  <input
+                    type="checkbox"
+                    checked={!!planState[f.id]}
+                    onChange={e => setPlanState(s => ({ ...s, [f.id]: e.target.checked }))}
+                  />
+                ) : f.type === 'select' ? (
+                  <select
+                    className={styles.inlineSelect}
+                    value={(planState[f.id] as string) ?? ''}
+                    onChange={e => setPlanState(s => ({ ...s, [f.id]: e.target.value }))}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">—</option>
+                    {f.options.map(o => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <TextInput
+                    value={(planState[f.id] as string) ?? ''}
+                    onChange={v => setPlanState(s => ({ ...s, [f.id]: v ?? '' }))}
+                    style={{ width: '100%' }}
+                  />
+                )}
+              </FormElement>
+            ))}
         </div>
       )}
     </Dialog>

@@ -33,7 +33,9 @@ test.describe('data model section', () => {
     }
   });
 
-  test('restores model overview layout state through reload and browser history', async ({ page }) => {
+  test('restores model overview layout state through reload and browser history', async ({
+    page
+  }) => {
     const route = workspaceModelOverviewRoute(defaultWorkspace.slug);
     const layoutTrigger = page.getByTestId('model-overview-layout');
     const horizontalSpacingInput = page
@@ -99,9 +101,7 @@ test.describe('data model section', () => {
     const route = `${workspaceModelOverviewRoute(defaultWorkspace.slug)}?layout=force&iterations=5&springStrength=0.8`;
     const layoutTrigger = page.getByTestId('model-overview-layout');
     const iterationsInput = page.getByTestId('model-overview-iterations').locator('input');
-    const springStrengthInput = page
-      .getByTestId('model-overview-spring-strength')
-      .locator('input');
+    const springStrengthInput = page.getByTestId('model-overview-spring-strength').locator('input');
 
     await page.goto(route);
 

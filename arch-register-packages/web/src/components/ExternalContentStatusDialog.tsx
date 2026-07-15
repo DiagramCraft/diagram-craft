@@ -7,7 +7,7 @@ type Props = {
   onClose: () => void;
 };
 
-const formatDate = (value: string | null) => value ? new Date(value).toLocaleString() : 'Never';
+const formatDate = (value: string | null) => (value ? new Date(value).toLocaleString() : 'Never');
 
 const statusLabel = (mount: ExternalContentMount) => {
   if (mount.status === 'syncing' || mount.source.status === 'syncing') return 'Syncing';
@@ -26,13 +26,32 @@ export const ExternalContentStatusDialog = ({ mount, open, onClose }: Props) => 
   >
     {mount && (
       <div style={{ display: 'grid', gap: 10, fontSize: 13 }}>
-        <div><strong>Status:</strong> {statusLabel(mount)}</div>
-        <div><strong>Repository:</strong> {mount.source.source_config.url}</div>
-        <div><strong>Repository path:</strong> {mount.source_path || '/'}</div>
-        <div><strong>Refresh interval:</strong> Every {mount.interval_hours} hour{mount.interval_hours === 1 ? '' : 's'}</div>
-        <div><strong>Last synchronized:</strong> {formatDate(mount.last_synced_at)}</div>
-        {mount.last_revision && <div><strong>Revision:</strong> <code>{mount.last_revision}</code></div>}
-        {mount.last_error && <div style={{ color: 'var(--error, #b42318)' }}><strong>Error:</strong> {mount.last_error}</div>}
+        <div>
+          <strong>Status:</strong> {statusLabel(mount)}
+        </div>
+        <div>
+          <strong>Repository:</strong> {mount.source.source_config.url}
+        </div>
+        <div>
+          <strong>Repository path:</strong> {mount.source_path || '/'}
+        </div>
+        <div>
+          <strong>Refresh interval:</strong> Every {mount.interval_hours} hour
+          {mount.interval_hours === 1 ? '' : 's'}
+        </div>
+        <div>
+          <strong>Last synchronized:</strong> {formatDate(mount.last_synced_at)}
+        </div>
+        {mount.last_revision && (
+          <div>
+            <strong>Revision:</strong> <code>{mount.last_revision}</code>
+          </div>
+        )}
+        {mount.last_error && (
+          <div style={{ color: 'var(--error, #b42318)' }}>
+            <strong>Error:</strong> {mount.last_error}
+          </div>
+        )}
       </div>
     )}
   </Dialog>

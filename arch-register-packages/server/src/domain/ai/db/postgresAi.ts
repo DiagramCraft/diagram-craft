@@ -2,7 +2,7 @@ import type {
   AiDatabase,
   AiConversationDbCreate,
   AiMessageDbCreate,
-  AiConfigInputDbUpsert,
+  AiConfigInputDbUpsert
 } from './aiDatabase';
 import { aiMappers } from './aiDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';

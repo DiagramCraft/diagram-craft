@@ -131,9 +131,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               canvasFactory={canvasFactory}
             />
 
-            <div
-              className={styles.ePreviewText}
-            >
+            <div className={styles.ePreviewText}>
               {props.name && <div className={styles.ePreviewName}>{props.name}</div>}
               {props.description && (
                 <div className={styles.ePreviewDescription}>{props.description}</div>

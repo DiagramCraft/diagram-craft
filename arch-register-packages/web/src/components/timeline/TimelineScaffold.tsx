@@ -31,10 +31,7 @@ export const TimelineScaffold = ({
   useEffect(() => {
     const element = scrollRef.current;
     if (!element || todayPx === null) return;
-    element.scrollLeft = Math.max(
-      0,
-      labelWidth + todayPx - element.clientWidth * todayScrollAlign
-    );
+    element.scrollLeft = Math.max(0, labelWidth + todayPx - element.clientWidth * todayScrollAlign);
   }, [labelWidth, todayPx, todayScrollAlign]);
 
   return (

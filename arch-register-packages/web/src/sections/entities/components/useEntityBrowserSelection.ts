@@ -176,7 +176,10 @@ export const useEntityBrowserSelection = ({
           if (!field) continue;
           applyFieldRowToBody(body, row, field);
         }
-        const updated = await updateEntityMutation.mutateAsync({ entityId: entity._uid, data: body });
+        const updated = await updateEntityMutation.mutateAsync({
+          entityId: entity._uid,
+          data: body
+        });
         applied.push(updated);
       } catch (error) {
         skipped.push({
@@ -189,7 +192,15 @@ export const useEntityBrowserSelection = ({
     setResult({ applied, skipped });
     setStep('done');
     if (skipped.length === 0) setTimeout(clearSelection, 1800);
-  }, [selectedEntities, schemaMap, fieldRows, availableFields, updateEntityMutation, workspaceId, clearSelection]);
+  }, [
+    selectedEntities,
+    schemaMap,
+    fieldRows,
+    availableFields,
+    updateEntityMutation,
+    workspaceId,
+    clearSelection
+  ]);
 
   return {
     addFieldRow,

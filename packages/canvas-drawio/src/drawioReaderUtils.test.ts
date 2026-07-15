@@ -140,7 +140,6 @@ describe('MxPoint', () => {
     const point = MxPoint.pointFrom(element);
     expect(point).toEqual({ x: 10.5, y: 20.75 });
   });
-
 });
 
 describe('MxGeometry', () => {

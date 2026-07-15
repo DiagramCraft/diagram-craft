@@ -169,7 +169,9 @@ export const buildMarkdownCloseImpactSummary = ({
   }
 
   return {
-    createdDiagramsToDelete: createdDiagrams.filter(record => createdDiagramIdsToDelete.has(record.id)),
+    createdDiagramsToDelete: createdDiagrams.filter(record =>
+      createdDiagramIdsToDelete.has(record.id)
+    ),
     revertableDiagrams,
     nonRevertableDiagrams
   };

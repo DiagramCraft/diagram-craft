@@ -115,7 +115,9 @@ type NumKey =
 type AllKeys = StringKey | BooleanKey | NumKey;
 
 type Style = Partial<Record<AllKeys, string>>;
-type StyleDefaults = Readonly<Partial<Record<string, Readonly<Style>>> & { default: Readonly<Style> }>;
+type StyleDefaults = Readonly<
+  Partial<Record<string, Readonly<Style>>> & { default: Readonly<Style> }
+>;
 
 const DEFAULTS = {
   default: {

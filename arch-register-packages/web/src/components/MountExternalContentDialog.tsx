@@ -65,9 +65,13 @@ export const MountExternalContentDialog = ({ workspaceId, open, mount, onClose }
         setMountPoint('');
       }
     } catch (caught) {
-      setError(caught instanceof ApiError
-        ? caught.message
-        : editing ? 'Unable to update content mount' : 'Unable to create content mount');
+      setError(
+        caught instanceof ApiError
+          ? caught.message
+          : editing
+            ? 'Unable to update content mount'
+            : 'Unable to create content mount'
+      );
     }
   };
 
@@ -82,8 +86,12 @@ export const MountExternalContentDialog = ({ workspaceId, open, mount, onClose }
         { label: 'Close', type: 'cancel', onClick: onClose },
         {
           label: editing
-            ? operations.update.isPending ? 'Saving…' : 'Save changes'
-            : operations.create.isPending ? 'Mounting…' : 'Mount repository',
+            ? operations.update.isPending
+              ? 'Saving…'
+              : 'Save changes'
+            : operations.create.isPending
+              ? 'Mounting…'
+              : 'Mount repository',
           type: 'default',
           disabled: operations.create.isPending || operations.update.isPending,
           onClick: () => {

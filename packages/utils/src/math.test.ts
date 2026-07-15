@@ -136,11 +136,11 @@ describe('mod', () => {
   test('handles edge cases correctly', () => {
     // Zero as dividend
     expect(mod(0, 5)).toBe(0);
-    
+
     // Large numbers
     expect(mod(1000000, 7)).toBe(1);
     expect(mod(-1000000, 7)).toBe(6);
-    
+
     // Decimal modulo
     expect(mod(5.5, 2)).toBe(1.5);
     expect(mod(-5.5, 2)).toBe(0.5);

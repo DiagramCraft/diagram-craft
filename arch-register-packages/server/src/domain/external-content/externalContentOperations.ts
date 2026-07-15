@@ -5,11 +5,7 @@ import type { StorageAdapter } from '../../storage/storage';
 import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import {
-  createJobSchedule,
-  enqueueJobRun,
-  updateJobSchedule
-} from '../jobs/jobOperations';
+import { createJobSchedule, enqueueJobRun, updateJobSchedule } from '../jobs/jobOperations';
 import type {
   ExternalContentMountDbResult,
   ExternalContentSourceDbResult,
@@ -19,9 +15,10 @@ import type {
 const JOB_TYPE = 'external-content.refresh';
 const SYSTEM_IDENTITY = 'external-content';
 const configuredMaxMounts = Number(process.env['EXTERNAL_CONTENT_MAX_MOUNTS_PER_WORKSPACE'] ?? 50);
-const MAX_MOUNTS_PER_WORKSPACE = Number.isFinite(configuredMaxMounts) && configuredMaxMounts > 0
-  ? Math.max(1, Math.floor(configuredMaxMounts))
-  : 50;
+const MAX_MOUNTS_PER_WORKSPACE =
+  Number.isFinite(configuredMaxMounts) && configuredMaxMounts > 0
+    ? Math.max(1, Math.floor(configuredMaxMounts))
+    : 50;
 
 const normalizeUrl = (value: string) => {
   let url: URL;
@@ -32,7 +29,8 @@ const normalizeUrl = (value: string) => {
   }
   if (url.protocol !== 'https:') throw new Error('Only Git HTTPS URLs are supported');
   if (url.username || url.password) throw new Error('Git source URLs must not contain credentials');
-  if (url.search || url.hash) throw new Error('Git source URLs must not contain query or hash components');
+  if (url.search || url.hash)
+    throw new Error('Git source URLs must not contain query or hash components');
   url.protocol = 'https:';
   url.hostname = url.hostname.toLowerCase();
   url.pathname = url.pathname.replace(/\/+$/, '');
@@ -50,7 +48,9 @@ const normalizePath = (value: string, name: string, allowEmpty: boolean) => {
 };
 
 const identityKey = (config: GitSourceConfig) =>
-  createHash('sha256').update(JSON.stringify({ type: config.type, url: config.url })).digest('hex');
+  createHash('sha256')
+    .update(JSON.stringify({ type: config.type, url: config.url }))
+    .digest('hex');
 
 const scopeFields = (scope: { type: 'workspace' | 'project' | 'entity'; id?: string }) => ({
   project_id: scope.type === 'project' ? scope.id! : null,
@@ -111,14 +111,18 @@ const ensureSourceSchedule = async (
     return (await db.externalContent.updateSource(source.id, { enabled: true, updated_at: now }))!;
   }
 
-  const schedule = await createJobSchedule(db, {
-    workspace,
-    jobType: JOB_TYPE,
-    systemIdentity: SYSTEM_IDENTITY,
-    payload: { sourceId: source.id },
-    priority: 5,
-    recurrence
-  }, now);
+  const schedule = await createJobSchedule(
+    db,
+    {
+      workspace,
+      jobType: JOB_TYPE,
+      systemIdentity: SYSTEM_IDENTITY,
+      payload: { sourceId: source.id },
+      priority: 5,
+      recurrence
+    },
+    now
+  );
   return (await db.externalContent.updateSource(source.id, {
     schedule_id: schedule.id,
     enabled: true,
@@ -126,7 +130,11 @@ const ensureSourceSchedule = async (
   }))!;
 };
 
-const validateScope = async (db: DatabaseAdapter, workspace: string, scope: { type: 'workspace' | 'project' | 'entity'; id?: string }) => {
+const validateScope = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  scope: { type: 'workspace' | 'project' | 'entity'; id?: string }
+) => {
   if (scope.type === 'project') {
     const project = await db.project.getProject(workspace, scope.id!);
     httpAssert.present(project, { status: 404, message: `Project '${scope.id}' not found` });
@@ -140,7 +148,11 @@ const validateScope = async (db: DatabaseAdapter, workspace: string, scope: { ty
   return { type: 'workspace' as const };
 };
 
-const scopeNodes = async (db: DatabaseAdapter, workspace: string, scope: { type: 'workspace' | 'project' | 'entity'; id?: string }) => {
+const scopeNodes = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  scope: { type: 'workspace' | 'project' | 'entity'; id?: string }
+) => {
   if (scope.type === 'project') {
     const project = await db.project.getProject(workspace, scope.id!);
     httpAssert.present(project, { status: 404, message: `Project '${scope.id}' not found` });
@@ -154,7 +166,11 @@ const scopeNodes = async (db: DatabaseAdapter, workspace: string, scope: { type:
   return db.project.listWorkspaceContentNodes(workspace);
 };
 
-export const listExternalContentMounts = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
+export const listExternalContentMounts = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+) => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceAdmin(authCtx);
@@ -221,9 +237,8 @@ export const createExternalContentMount = async (
     }
     if (source?.schedule_id) {
       const schedule = await tx.jobs.getSchedule(source.schedule_id);
-      const existingInterval = schedule?.recurrence.type === 'hours'
-        ? schedule.recurrence.intervalHours
-        : undefined;
+      const existingInterval =
+        schedule?.recurrence.type === 'hours' ? schedule.recurrence.intervalHours : undefined;
       httpAssert.true(existingInterval === undefined || existingInterval === input.interval_hours, {
         status: 409,
         message: `This repository is already configured to refresh every ${existingInterval} hour${existingInterval === 1 ? '' : 's'}`
@@ -277,14 +292,19 @@ export const updateExternalContentMount = async (
   });
   const sourcePath = normalizePath(input.source_path, 'source_path', true);
   const config: GitSourceConfig = { type: 'git', url: normalizeUrl(input.source.url) };
-  const nodes = await scopeNodes(db, ws, mount.project_id
-    ? { type: 'project', id: mount.project_id }
-    : mount.entity_id
-      ? { type: 'entity', id: mount.entity_id }
-      : { type: 'workspace' });
-  const conflictingNode = nodes.find(node =>
-    node.mount_id !== mount.id &&
-    (node.path === destinationPath || node.path.startsWith(`${destinationPath}/`))
+  const nodes = await scopeNodes(
+    db,
+    ws,
+    mount.project_id
+      ? { type: 'project', id: mount.project_id }
+      : mount.entity_id
+        ? { type: 'entity', id: mount.entity_id }
+        : { type: 'workspace' }
+  );
+  const conflictingNode = nodes.find(
+    node =>
+      node.mount_id !== mount.id &&
+      (node.path === destinationPath || node.path.startsWith(`${destinationPath}/`))
   );
   httpAssert.true(!conflictingNode, {
     status: 409,
@@ -314,9 +334,8 @@ export const updateExternalContentMount = async (
     }
     if (source.id !== oldSource.id && source.schedule_id) {
       const schedule = await tx.jobs.getSchedule(source.schedule_id);
-      const existingInterval = schedule?.recurrence.type === 'hours'
-        ? schedule.recurrence.intervalHours
-        : undefined;
+      const existingInterval =
+        schedule?.recurrence.type === 'hours' ? schedule.recurrence.intervalHours : undefined;
       httpAssert.true(existingInterval === undefined || existingInterval === input.interval_hours, {
         status: 409,
         message: `This repository is already configured to refresh every ${existingInterval} hour${existingInterval === 1 ? '' : 's'}`
@@ -368,17 +387,25 @@ export const removeExternalContentMount = async (
   const nodes = await db.project.listContentNodesByMount(ws, mount.id);
   for (const node of nodes) {
     if (node.type !== 'folder') {
-      await storage.delete(ws, node.project_id ?? node.entity_id ?? ws, node.id).catch(() => undefined);
+      await storage
+        .delete(ws, node.project_id ?? node.entity_id ?? ws, node.id)
+        .catch(() => undefined);
     }
   }
   await db.core.transaction(async tx => {
-    await tx.project.deleteContentNodesByIds(ws, nodes.map(node => node.id));
+    await tx.project.deleteContentNodesByIds(
+      ws,
+      nodes.map(node => node.id)
+    );
     await tx.externalContent.deleteMount(ws, mount.id);
     if (source) {
       const remaining = await tx.externalContent.listMountsBySource(ws, source.id);
       if (remaining.length === 0) {
         if (source.schedule_id) await updateJobSchedule(tx, source.schedule_id, { enabled: false });
-        await tx.externalContent.updateSource(source.id, { enabled: false, updated_at: new Date() });
+        await tx.externalContent.updateSource(source.id, {
+          enabled: false,
+          updated_at: new Date()
+        });
       }
     }
   });

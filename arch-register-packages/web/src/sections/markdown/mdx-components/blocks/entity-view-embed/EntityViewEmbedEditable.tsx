@@ -47,7 +47,12 @@ export const EntityViewEmbedEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={<><TbLayoutGrid size={16} /><span>Select a saved view…</span></>}
+      placeholder={
+        <>
+          <TbLayoutGrid size={16} />
+          <span>Select a saved view…</span>
+        </>
+      }
       content={<EntityViewEmbed viewId={viewId === '' ? undefined : viewId} />}
       dialog={(open, onClose) => (
         <EntityViewEmbedDialog element={element} open={open} onClose={onClose} isNew={!hasValue} />

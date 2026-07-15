@@ -46,10 +46,13 @@ export const projectMarkdownRoute = <TSearch = undefined>(
   nodeId: string,
   search?: TSearch
 ) =>
-  withSearch({
-    to: '/$workspaceSlug/projects/$projectId/wiki/$nodeId' as const,
-    params: { workspaceSlug, projectId, nodeId }
-  }, search);
+  withSearch(
+    {
+      to: '/$workspaceSlug/projects/$projectId/wiki/$nodeId' as const,
+      params: { workspaceSlug, projectId, nodeId }
+    },
+    search
+  );
 
 export const projectContentFolderRoute = <TSearch = undefined>(
   workspaceSlug: string,
@@ -97,10 +100,13 @@ export const entityMarkdownRoute = <TSearch = undefined>(
   nodeId: string,
   search?: TSearch
 ) =>
-  withSearch({
-    to: '/$workspaceSlug/entities/$entityId/wiki/$nodeId' as const,
-    params: { workspaceSlug, entityId, nodeId }
-  }, search);
+  withSearch(
+    {
+      to: '/$workspaceSlug/entities/$entityId/wiki/$nodeId' as const,
+      params: { workspaceSlug, entityId, nodeId }
+    },
+    search
+  );
 
 export const entityDetailRoute = <TSearch = undefined>(
   workspaceSlug: string,
@@ -147,4 +153,5 @@ export const projectDiagramHref = (
   workspaceSlug: string,
   projectId: ProjectPublicId,
   diagramId: string
-) => `/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/diagrams/${encodeURIComponent(diagramId)}`;
+) =>
+  `/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/diagrams/${encodeURIComponent(diagramId)}`;

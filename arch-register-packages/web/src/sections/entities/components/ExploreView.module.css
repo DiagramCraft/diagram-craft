@@ -78,7 +78,6 @@
   }
 }
 
-
 .emptyToggle {
   display: inline-flex;
   align-items: center;
@@ -198,7 +197,6 @@
   color: var(--base-fg-more-dim);
 }
 
-
 .columnBody {
   display: flex;
   flex-direction: column;
@@ -231,7 +229,6 @@
     border-color: var(--base-fg-more-dim);
   }
 }
-
 
 .entityTop {
   display: flex;
@@ -288,4 +285,3 @@
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
-

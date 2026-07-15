@@ -96,11 +96,7 @@ export const LifecycleSubSection = ({
         </div>
         <div className={styles.sectionBody}>
           {states.map((s, i) => (
-            <div
-              key={i}
-              className={styles.field}
-              style={{ gridTemplateColumns: '1fr auto auto' }}
-            >
+            <div key={i} className={styles.field} style={{ gridTemplateColumns: '1fr auto auto' }}>
               <div className={styles.fieldRight}>
                 <TextInput
                   value={s.label}

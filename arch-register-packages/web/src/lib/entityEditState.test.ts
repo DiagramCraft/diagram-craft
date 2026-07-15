@@ -53,7 +53,11 @@ describe('entity detail edit state', () => {
     const body = createEntityUpdateBody(
       entity,
       schema,
-      { ...createEntityEditState(entity, schema), _tags: 'critical,  new ', dependsOn: ['entity-2'] },
+      {
+        ...createEntityEditState(entity, schema),
+        _tags: 'critical,  new ',
+        dependsOn: ['entity-2']
+      },
       [...links, { url: '', title: '', type: '' }]
     );
     expect(body).toMatchObject({ _tags: ['critical', 'new'], dependsOn: ['entity-2'] });

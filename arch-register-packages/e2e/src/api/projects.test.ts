@@ -17,8 +17,19 @@ const minimalDiagramDocument = (name: string) => ({
 
 const createProject = async (
   orpc: TestORPCClient,
-  body: { name: string; description?: unknown; owner?: string | null; status?: 'draft' | 'active' | 'complete' | 'cancelled'; pinned?: boolean; color?: string | null | number }
-) => orpc.projects.create({ params: { workspace: 'default' }, body: body as Parameters<typeof orpc.projects.create>[0]['body'] });
+  body: {
+    name: string;
+    description?: unknown;
+    owner?: string | null;
+    status?: 'draft' | 'active' | 'complete' | 'cancelled';
+    pinned?: boolean;
+    color?: string | null | number;
+  }
+) =>
+  orpc.projects.create({
+    params: { workspace: 'default' },
+    body: body as Parameters<typeof orpc.projects.create>[0]['body']
+  });
 
 const uploadMarkdownAttachment = async (
   baseUrl: string,
@@ -44,16 +55,23 @@ const uploadMarkdownAttachment = async (
 
 test.describe('project routes', () => {
   test('GET /api/:workspace/projects lists created projects', async ({ orpc }) => {
-    await createProject(orpc, { name: 'Portal Redesign', owner: seedIds.teams.design, status: 'active' });
-    await createProject(orpc, { name: 'Auth Migration', owner: seedIds.teams.security, status: 'active', pinned: true });
+    await createProject(orpc, {
+      name: 'Portal Redesign',
+      owner: seedIds.teams.design,
+      status: 'active'
+    });
+    await createProject(orpc, {
+      name: 'Auth Migration',
+      owner: seedIds.teams.security,
+      status: 'active',
+      pinned: true
+    });
 
     const projects = await orpc.projects.list({ params: { workspace: 'default' } });
 
     expect(projects.length).toBeGreaterThanOrEqual(2);
     expect(projects).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: 'Auth Migration', pinned: true })
-      ])
+      expect.arrayContaining([expect.objectContaining({ name: 'Auth Migration', pinned: true })])
     );
   });
 
@@ -110,7 +128,9 @@ test.describe('project routes', () => {
     expect(project.files).toEqual({ folders: [], rootFiles: [] });
   });
 
-  test('POST /api/:workspace/projects creates a project with normalized optional fields', async ({ orpc }) => {
+  test('POST /api/:workspace/projects creates a project with normalized optional fields', async ({
+    orpc
+  }) => {
     const project = await orpc.projects.create({
       params: { workspace: 'default' },
       body: { name: 'Coverage Project', description: undefined, owner: undefined, color: undefined }
@@ -125,18 +145,25 @@ test.describe('project routes', () => {
     });
   });
 
-  test('POST /api/:workspace/projects returns 409 for duplicate project names', async ({ orpc }) => {
+  test('POST /api/:workspace/projects returns 409 for duplicate project names', async ({
+    orpc
+  }) => {
     await createProject(orpc, { name: 'Duplicate Project' });
 
     await expect(
-      orpc.projects.create({ params: { workspace: 'default' }, body: { name: 'Duplicate Project' } })
+      orpc.projects.create({
+        params: { workspace: 'default' },
+        body: { name: 'Duplicate Project' }
+      })
     ).rejects.toMatchObject({
       code: 'CONFLICT',
       message: 'A project with that name already exists in this workspace'
     });
   });
 
-  test('PUT /api/:workspace/projects/:id updates a project and preserves omitted fields', async ({ orpc }) => {
+  test('PUT /api/:workspace/projects/:id updates a project and preserves omitted fields', async ({
+    orpc
+  }) => {
     const created = await createProject(orpc, {
       name: 'Mutable Project',
       description: 'Original',
@@ -185,7 +212,9 @@ test.describe('project routes', () => {
       body: minimalDiagramDocument('Overview')
     });
 
-    const files = await orpc.projects.listFiles({ params: { workspace: 'default', id: projectId } });
+    const files = await orpc.projects.listFiles({
+      params: { workspace: 'default', id: projectId }
+    });
 
     expect(files.rootFiles).toEqual(
       expect.arrayContaining([expect.objectContaining({ path: 'overview.dgc' })])
@@ -302,7 +331,9 @@ test.describe('project routes', () => {
       name: 'Overview'
     });
 
-    const files = await orpc.projects.listFiles({ params: { workspace: 'default', id: projectId } });
+    const files = await orpc.projects.listFiles({
+      params: { workspace: 'default', id: projectId }
+    });
     expect(files.folders).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -316,7 +347,9 @@ test.describe('project routes', () => {
     );
   });
 
-  test('saving markdown updates the document name from the first h1 without renaming the path', async ({ orpc }) => {
+  test('saving markdown updates the document name from the first h1 without renaming the path', async ({
+    orpc
+  }) => {
     const created = await createProject(orpc, { name: 'Markdown Title Project' });
 
     const markdownResult = await orpc.projects.createProjectMarkdown({
@@ -349,7 +382,9 @@ test.describe('project routes', () => {
     });
   });
 
-  test('markdown revisions can be listed, fetched, and restored for project content', async ({ orpc }) => {
+  test('markdown revisions can be listed, fetched, and restored for project content', async ({
+    orpc
+  }) => {
     const created = await createProject(orpc, { name: 'Markdown History Project' });
     const markdownResult = await orpc.projects.createProjectMarkdown({
       params: { workspace: 'default', id: created.public_id },
@@ -523,7 +558,9 @@ entityTest.describe('entity content routes', () => {
       type: 'diagram'
     });
 
-    const files = await orpc.projects.listEntityFiles({ params: { workspace: 'default', entityId } });
+    const files = await orpc.projects.listEntityFiles({
+      params: { workspace: 'default', entityId }
+    });
     expect(files.folders).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

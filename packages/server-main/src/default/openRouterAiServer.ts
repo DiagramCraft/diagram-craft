@@ -1,10 +1,5 @@
 import { HTTPError } from 'h3';
-import type {
-  AIGenerateRequest,
-  AIResult,
-  AIServer,
-  AIMessage
-} from '../aiServer';
+import type { AIGenerateRequest, AIResult, AIServer, AIMessage } from '../aiServer';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const REQUEST_TIMEOUT = 120000;

@@ -12,7 +12,13 @@ import type {
 import { emptyDiagram } from './diagramDocuments';
 
 export type GraphNodeInput = { id: string; label: string };
-export type GraphEdgeInput = { id: string; from: string; to: string; label?: string; kind?: string };
+export type GraphEdgeInput = {
+  id: string;
+  from: string;
+  to: string;
+  label?: string;
+  kind?: string;
+};
 
 export type GraphLayoutOptions = {
   layout: 'hierarchy' | 'layered' | 'force' | 'tree';
@@ -107,7 +113,7 @@ const computePositions = (
     const componentVertexIds = new Set(component.vertices.map(vertex => vertex.id));
     const startId =
       layout === 'tree'
-        ? pickTreeRootId(componentVertexIds, layoutEdges) ?? component.vertices[0]!.id
+        ? (pickTreeRootId(componentVertexIds, layoutEdges) ?? component.vertices[0]!.id)
         : component.vertices[0]!.id;
 
     let componentPositions: Map<string, Point>;
@@ -327,7 +333,10 @@ export const createDiagramFromGraph = (
   }
 
   // Compute canvas bounds from generated geometry, including edge curves and labels.
-  let minX = 0, minY = 0, maxX = 800, maxY = 600;
+  let minX = 0,
+    minY = 0,
+    maxX = 800,
+    maxY = 600;
   if (serializedNodes.length > 0) {
     const bounds = {
       minX: Number.POSITIVE_INFINITY,

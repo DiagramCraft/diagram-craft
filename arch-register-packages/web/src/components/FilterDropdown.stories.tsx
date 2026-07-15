@@ -49,7 +49,7 @@ export const WithSelection: Story = {
   args: {
     label: 'Type',
     value: 'service',
-    onChange: (value) => console.log('Selected:', value),
+    onChange: value => console.log('Selected:', value),
     options: typeOptions
   }
 };
@@ -58,7 +58,7 @@ export const SortDropdown: Story = {
   args: {
     label: 'Sort by',
     value: 'name-asc',
-    onChange: (value) => console.log('Selected:', value),
+    onChange: value => console.log('Selected:', value),
     options: sortOptions
   }
 };
@@ -68,7 +68,7 @@ export const Interactive = {
     const [status, setStatus] = useState('all');
     const [type, setType] = useState('all');
     const [sort, setSort] = useState('name-asc');
-    
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '300px' }}>
         <div>
@@ -79,27 +79,21 @@ export const Interactive = {
             options={statusOptions}
           />
         </div>
-        
+
         <div>
-          <FilterDropdown
-            label="Type"
-            value={type}
-            onChange={setType}
-            options={typeOptions}
-          />
+          <FilterDropdown label="Type" value={type} onChange={setType} options={typeOptions} />
         </div>
-        
+
         <div>
-          <FilterDropdown
-            label="Sort by"
-            value={sort}
-            onChange={setSort}
-            options={sortOptions}
-          />
+          <FilterDropdown label="Sort by" value={sort} onChange={setSort} options={sortOptions} />
         </div>
-        
-        <div style={{ padding: '1rem', background: '#f9fafb', borderRadius: '4px', fontSize: '12px' }}>
-          <div><strong>Current Selection:</strong></div>
+
+        <div
+          style={{ padding: '1rem', background: '#f9fafb', borderRadius: '4px', fontSize: '12px' }}
+        >
+          <div>
+            <strong>Current Selection:</strong>
+          </div>
           <div>Status: {statusOptions.find(o => o.value === status)?.label}</div>
           <div>Type: {typeOptions.find(o => o.value === type)?.label}</div>
           <div>Sort: {sortOptions.find(o => o.value === sort)?.label}</div>
@@ -109,13 +103,12 @@ export const Interactive = {
   }
 };
 
-
 export const MultipleInRow = {
   render: () => {
     const [filter1, setFilter1] = useState('all');
     const [filter2, setFilter2] = useState('all');
     const [filter3, setFilter3] = useState('name-asc');
-    
+
     return (
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         <FilterDropdown
@@ -124,18 +117,8 @@ export const MultipleInRow = {
           onChange={setFilter1}
           options={statusOptions}
         />
-        <FilterDropdown
-          label="Type"
-          value={filter2}
-          onChange={setFilter2}
-          options={typeOptions}
-        />
-        <FilterDropdown
-          label="Sort"
-          value={filter3}
-          onChange={setFilter3}
-          options={sortOptions}
-        />
+        <FilterDropdown label="Type" value={filter2} onChange={setFilter2} options={typeOptions} />
+        <FilterDropdown label="Sort" value={filter3} onChange={setFilter3} options={sortOptions} />
       </div>
     );
   }
@@ -145,7 +128,7 @@ export const LongLabels: Story = {
   args: {
     label: 'Environment',
     value: 'prod',
-    onChange: (value) => console.log('Selected:', value),
+    onChange: value => console.log('Selected:', value),
     options: [
       { value: 'dev', label: 'Development Environment' },
       { value: 'staging', label: 'Staging Environment' },
@@ -159,7 +142,7 @@ export const ManyOptions: Story = {
   args: {
     label: 'Region',
     value: 'us-east-1',
-    onChange: (value) => console.log('Selected:', value),
+    onChange: value => console.log('Selected:', value),
     options: [
       { value: 'us-east-1', label: 'US East (N. Virginia)' },
       { value: 'us-east-2', label: 'US East (Ohio)' },
@@ -177,10 +160,8 @@ export const SingleOption: Story = {
   args: {
     label: 'Mode',
     value: 'readonly',
-    onChange: (value) => console.log('Selected:', value),
-    options: [
-      { value: 'readonly', label: 'Read Only' }
-    ]
+    onChange: value => console.log('Selected:', value),
+    options: [{ value: 'readonly', label: 'Read Only' }]
   }
 };
 
@@ -188,12 +169,12 @@ export const WithCallback = {
   render: () => {
     const [value, setValue] = useState('all');
     const [lastChanged, setLastChanged] = useState<string | null>(null);
-    
+
     const handleChange = (newValue: string) => {
       setValue(newValue);
       setLastChanged(new Date().toLocaleTimeString());
     };
-    
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <FilterDropdown
@@ -202,15 +183,11 @@ export const WithCallback = {
           onChange={handleChange}
           options={statusOptions}
         />
-        
+
         {lastChanged && (
-          <div style={{ fontSize: '12px', color: '#666' }}>
-            Last changed at: {lastChanged}
-          </div>
+          <div style={{ fontSize: '12px', color: '#666' }}>Last changed at: {lastChanged}</div>
         )}
       </div>
     );
   }
 };
-
-

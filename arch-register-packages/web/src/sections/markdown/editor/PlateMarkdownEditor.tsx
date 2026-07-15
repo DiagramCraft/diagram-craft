@@ -32,12 +32,7 @@ import {
 } from '@platejs/floating';
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
-import {
-  EditorBlock,
-  isListParagraph,
-  isTodoListParagraph,
-  getNodeText
-} from './EditorBlock';
+import { EditorBlock, isListParagraph, isTodoListParagraph, getNodeText } from './EditorBlock';
 import { MdxBlockRegistryProvider } from './MdxBlockRegistryContext';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';

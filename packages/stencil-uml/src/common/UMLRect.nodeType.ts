@@ -1,5 +1,8 @@
 import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/layoutCapableShapeNodeDefinition';
-import { CustomPropertyDefinition, NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   BaseNodeComponent,
@@ -49,7 +52,12 @@ export class UMLRectNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return new CustomPropertyDefinition(p => [
-      p.select(def, 'Stereotype Icon', 'custom.umlRect.stereotypeIcon', UML_STEREOTYPE_ICON_OPTIONS),
+      p.select(
+        def,
+        'Stereotype Icon',
+        'custom.umlRect.stereotypeIcon',
+        UML_STEREOTYPE_ICON_OPTIONS
+      ),
       p.icon(def, 'Custom Icon', 'custom.umlRect.icon')
     ]);
   }

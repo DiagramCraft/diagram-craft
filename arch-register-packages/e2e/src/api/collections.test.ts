@@ -53,16 +53,16 @@ test.describe('Collections API', () => {
       params: { workspace: 'default', id: first.id, entityId }
     });
     expect(
-      (await orpc.entities.list({
+      await orpc.entities.list({
         params: { workspace: 'default' },
         query: { collectionId: first.id }
-      }))
+      })
     ).toEqual([]);
 
     await orpc.collections.remove({ params: { workspace: 'default', id: second.id } });
-    expect(
-      (await orpc.entities.get({ params: { workspace: 'default', id: entityId } }))._uid
-    ).toBe(entityId);
+    expect((await orpc.entities.get({ params: { workspace: 'default', id: entityId } }))._uid).toBe(
+      entityId
+    );
   });
 
   test('rejects blank collection names', async ({ orpc }) => {

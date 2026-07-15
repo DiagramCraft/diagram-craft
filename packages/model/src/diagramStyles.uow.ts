@@ -11,10 +11,9 @@ import { mustExist } from '@diagram-craft/utils/assert';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
-export class StylesheetUOWAdapter implements UOWAdapter<
-  StylesheetSnapshot,
-  Stylesheet<StylesheetType>
-> {
+export class StylesheetUOWAdapter
+  implements UOWAdapter<StylesheetSnapshot, Stylesheet<StylesheetType>>
+{
   id = (e: Stylesheet<StylesheetType>) => e.id;
 
   onNotify(operations: Array<UOWOperation>, _phase: NotificationPhase, uow: UnitOfWork): void {

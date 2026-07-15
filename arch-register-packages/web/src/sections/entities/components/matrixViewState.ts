@@ -1,4 +1,7 @@
-import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
+import {
+  ASSESSMENT_FIELD_PREFIX,
+  resolveAssessmentValue
+} from '@arch-register/api-types/assessmentFilter';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityRelationData } from '../../../hooks/useEntities';
 import { getCategoricalValue } from './entityFieldSources';
@@ -84,8 +87,16 @@ export const buildMatrixData = ({
 
   const allCols: MatrixColumn[] =
     colMode === 'entity'
-      ? colEntities.map(entity => ({ id: entity._uid, publicId: entity._publicId, label: entity._name }))
-      : (attrField?.options ?? []).map(option => ({ id: option.value, publicId: option.value, label: option.label }));
+      ? colEntities.map(entity => ({
+          id: entity._uid,
+          publicId: entity._publicId,
+          label: entity._name
+        }))
+      : (attrField?.options ?? []).map(option => ({
+          id: option.value,
+          publicId: option.value,
+          label: option.label
+        }));
   if (!allCols.length) return emptyMatrixData();
 
   const full = rows.map(row => {
@@ -93,10 +104,15 @@ export const buildMatrixData = ({
     return allCols.map(column => {
       if (colMode === 'entity') {
         if (!relationData) return false;
-        const matchesField = (fieldName: string) => filterFieldName === null || fieldName === filterFieldName;
+        const matchesField = (fieldName: string) =>
+          filterFieldName === null || fieldName === filterFieldName;
         return (
-          relationData.outgoing.some(relation => relation.entityId === column.id && matchesField(relation.fieldName)) ||
-          relationData.incoming.some(relation => relation.entityId === column.id && matchesField(relation.fieldName))
+          relationData.outgoing.some(
+            relation => relation.entityId === column.id && matchesField(relation.fieldName)
+          ) ||
+          relationData.incoming.some(
+            relation => relation.entityId === column.id && matchesField(relation.fieldName)
+          )
         );
       }
 
@@ -115,15 +131,21 @@ export const buildMatrixData = ({
   });
 
   const rowMask = rows.map((_, rowIndex) => !hideEmptyRows || full[rowIndex]!.some(Boolean));
-  const colMask = allCols.map((_, columnIndex) => !hideEmptyCols || rows.some((_, rowIndex) => full[rowIndex]![columnIndex]));
+  const colMask = allCols.map(
+    (_, columnIndex) => !hideEmptyCols || rows.some((_, rowIndex) => full[rowIndex]![columnIndex])
+  );
   const rowIndexes = rows.flatMap((_, index) => (rowMask[index] ? [index] : []));
   const colIndexes = allCols.flatMap((_, index) => (colMask[index] ? [index] : []));
   const displayRows = rowIndexes.map(index => rows[index]!);
   const displayCols = colIndexes.map(index => allCols[index]!);
-  const cellMatrix = rowIndexes.map(rowIndex => colIndexes.map(columnIndex => full[rowIndex]![columnIndex]!));
+  const cellMatrix = rowIndexes.map(rowIndex =>
+    colIndexes.map(columnIndex => full[rowIndex]![columnIndex]!)
+  );
   const totalFilled = cellMatrix.flat().filter(Boolean).length;
   const rowCounts = cellMatrix.map(row => row.filter(Boolean).length);
-  const colCounts = displayCols.map((_, columnIndex) => cellMatrix.filter(row => row[columnIndex]).length);
+  const colCounts = displayCols.map(
+    (_, columnIndex) => cellMatrix.filter(row => row[columnIndex]).length
+  );
 
   return { displayRows, displayCols, cellMatrix, totalFilled, rowCounts, colCounts };
 };

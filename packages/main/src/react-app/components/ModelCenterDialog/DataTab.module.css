@@ -19,7 +19,6 @@
     .eTitle {
       margin: 0;
     }
-
   }
 
   .eHeaderActions {
@@ -165,7 +164,7 @@
           border-color: var(--accent-fg);
 
           &::after {
-            content: '';
+            content: "";
             position: absolute;
             left: 4px;
             top: 1px;
@@ -180,17 +179,17 @@
     }
 
     .eOverrideStatus {
-      &[data-status=modified] {
+      &[data-status="modified"] {
         color: var(--warning-fg);
         font-weight: 500;
       }
 
-      &[data-status=error] {
+      &[data-status="error"] {
         color: var(--error-fg);
         font-weight: 500;
       }
 
-      &[data-status=na] {
+      &[data-status="na"] {
         color: var(--base-fg-more-dim);
       }
     }

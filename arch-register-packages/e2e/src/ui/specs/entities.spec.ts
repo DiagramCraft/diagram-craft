@@ -120,7 +120,9 @@ test.describe('entities section', () => {
     await entitiesPage.openNewEntityDialog();
   });
 
-  test('restores entity content filter and view mode through reload and browser history', async ({ page }) => {
+  test('restores entity content filter and view mode through reload and browser history', async ({
+    page
+  }) => {
     await page.goto(
       `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security`
     );

@@ -59,7 +59,9 @@ export const Title = ({
             <div className={styles.titleCol}>
               {eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
               <div className={styles.titleLine}>
-                <h1 className={styles.title} data-testid={titleTestId}>{title}</h1>
+                <h1 className={styles.title} data-testid={titleTestId}>
+                  {title}
+                </h1>
                 {chips && <div className={styles.chips}>{chips}</div>}
               </div>
             </div>

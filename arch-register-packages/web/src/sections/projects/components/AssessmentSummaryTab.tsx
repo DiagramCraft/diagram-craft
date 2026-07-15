@@ -30,7 +30,9 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
             {total} / {entityCount}
           </div>
           <ProgressBar pct={pctAssessed} />
-          <div className={styles.statSub}>{pctAssessed}% of in-scope entities have a recorded response</div>
+          <div className={styles.statSub}>
+            {pctAssessed}% of in-scope entities have a recorded response
+          </div>
         </div>
 
         {total === 0 ? (
@@ -43,7 +45,8 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
               const values = responses
                 .map(r => r.values[field.id])
                 .filter((v): v is number => typeof v === 'number');
-              const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+              const avg =
+                values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
               return (
                 <div key={field.id} className={styles.card}>
                   <div className={styles.cardTitle}>{field.label}</div>

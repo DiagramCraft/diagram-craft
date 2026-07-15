@@ -26,9 +26,21 @@ export interface ResolvedContentScope {
   readonly auditMetadata: Record<string, string>;
 
   listNodes(db: DatabaseAdapter, ws: string): Promise<ContentNodeDbResult[]>;
-  findNodeByPath(db: DatabaseAdapter, ws: string, path: string): Promise<ContentNodeDbResult | null>;
-  deleteNodeByPath(db: DatabaseAdapter, ws: string, path: string): Promise<ContentNodeDbResult | null>;
-  deleteNodeFolder(db: DatabaseAdapter, ws: string, folderPath: string): Promise<ContentNodeDbResult[]>;
+  findNodeByPath(
+    db: DatabaseAdapter,
+    ws: string,
+    path: string
+  ): Promise<ContentNodeDbResult | null>;
+  deleteNodeByPath(
+    db: DatabaseAdapter,
+    ws: string,
+    path: string
+  ): Promise<ContentNodeDbResult | null>;
+  deleteNodeFolder(
+    db: DatabaseAdapter,
+    ws: string,
+    folderPath: string
+  ): Promise<ContentNodeDbResult[]>;
   renameNodeFolder(
     db: DatabaseAdapter,
     ws: string,
@@ -81,7 +93,8 @@ export const PROJECT_SCOPE: ContentScopeResolver = {
       listNodes: (db, ws) => db.project.listContentNodes(ws, projectId),
       findNodeByPath: (db, ws, path) => db.project.getContentNodeByPath(ws, projectId, path),
       deleteNodeByPath: (db, ws, path) => db.project.deleteContentNodeByPath(ws, projectId, path),
-      deleteNodeFolder: (db, ws, folderPath) => db.project.deleteContentNodeFolder(ws, projectId, folderPath),
+      deleteNodeFolder: (db, ws, folderPath) =>
+        db.project.deleteContentNodeFolder(ws, projectId, folderPath),
       renameNodeFolder: (db, ws, oldPath, newPath, updatedAt) =>
         db.project.renameContentNodeFolder(ws, projectId, oldPath, newPath, updatedAt)
     };
@@ -107,8 +120,10 @@ export const ENTITY_SCOPE: ContentScopeResolver = {
         const nodes = await db.project.listEntityContentNodes(ws, entityId);
         return nodes.find(n => n.path === path) ?? null;
       },
-      deleteNodeByPath: (db, ws, path) => db.project.deleteEntityContentNodeByPath(ws, entityId, path),
-      deleteNodeFolder: (db, ws, folderPath) => db.project.deleteEntityContentNodeFolder(ws, entityId, folderPath),
+      deleteNodeByPath: (db, ws, path) =>
+        db.project.deleteEntityContentNodeByPath(ws, entityId, path),
+      deleteNodeFolder: (db, ws, folderPath) =>
+        db.project.deleteEntityContentNodeFolder(ws, entityId, folderPath),
       renameNodeFolder: (db, ws, oldPath, newPath, updatedAt) =>
         db.project.renameEntityContentNodeFolder(ws, entityId, oldPath, newPath, updatedAt)
     };
@@ -131,7 +146,8 @@ export const WORKSPACE_SCOPE: ContentScopeResolver = {
         return nodes.find(n => n.path === path) ?? null;
       },
       deleteNodeByPath: (db, ws, path) => db.project.deleteWorkspaceContentNodeByPath(ws, path),
-      deleteNodeFolder: (db, ws, folderPath) => db.project.deleteWorkspaceContentNodeFolder(ws, folderPath),
+      deleteNodeFolder: (db, ws, folderPath) =>
+        db.project.deleteWorkspaceContentNodeFolder(ws, folderPath),
       renameNodeFolder: (db, ws, oldPath, newPath, updatedAt) =>
         db.project.renameWorkspaceContentNodeFolder(ws, oldPath, newPath, updatedAt)
     };

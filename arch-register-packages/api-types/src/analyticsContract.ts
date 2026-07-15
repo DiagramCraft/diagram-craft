@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 
 const lifecycleBucketSchema = z.object({
-  lifecycleId: z.string().nullable().describe('Lifecycle state identifier (null for entities without lifecycle)'),
+  lifecycleId: z
+    .string()
+    .nullable()
+    .describe('Lifecycle state identifier (null for entities without lifecycle)'),
   label: z.string().describe('Lifecycle state label'),
   color: z.string().nullable().describe('Lifecycle state color (hex format)'),
   count: z.number().int().describe('Number of entities in this lifecycle state'),
@@ -57,7 +60,7 @@ const staleSchemaSchema = z.object({
   schemaName: z.string().describe('Schema name'),
   totalCount: z.number().int().describe('Total number of entities using this schema'),
   staleCount: z.number().int().describe('Number of entities updated before the stale cutoff'),
-  stalePercent: z.number().describe('Percentage of this schema\'s entities that are stale')
+  stalePercent: z.number().describe("Percentage of this schema's entities that are stale")
 });
 
 const staleAnalyticsSchema = z.object({
@@ -69,47 +72,62 @@ const staleAnalyticsSchema = z.object({
 });
 
 const analyticsResponseSchema = z.object({
-  summary: z.object({
-    totalEntities: z.number().int().describe('Total number of entities in the workspace'),
-    percentWithOwner: z.number().describe('Percentage of entities with an assigned owner'),
-    percentCompleteness80Plus: z.number().describe('Percentage of entities with 80% or more fields filled')
-  }).describe('High-level summary statistics'),
-  lifecycleBreakdown: z.array(lifecycleBucketSchema).describe('Distribution of entities across lifecycle states'),
+  summary: z
+    .object({
+      totalEntities: z.number().int().describe('Total number of entities in the workspace'),
+      percentWithOwner: z.number().describe('Percentage of entities with an assigned owner'),
+      percentCompleteness80Plus: z
+        .number()
+        .describe('Percentage of entities with 80% or more fields filled')
+    })
+    .describe('High-level summary statistics'),
+  lifecycleBreakdown: z
+    .array(lifecycleBucketSchema)
+    .describe('Distribution of entities across lifecycle states'),
   coverage: z.array(schemaCoverageSchema).describe('Schema coverage analysis by lifecycle state'),
-  ownershipGaps: z.array(schemaOwnershipGapSchema).describe('Analysis of entities missing owners by schema'),
-  completeness: z.array(schemaCompletenessSchema).describe('Analysis of entity field completeness by schema'),
+  ownershipGaps: z
+    .array(schemaOwnershipGapSchema)
+    .describe('Analysis of entities missing owners by schema'),
+  completeness: z
+    .array(schemaCompletenessSchema)
+    .describe('Analysis of entity field completeness by schema'),
   schemaUtilization: z.array(schemaCountSchema).describe('Number of entities per schema'),
-  activityTrends: z.object({
-    days30: z.array(activityTrendBucketSchema).describe('Daily entity create/update activity for the last 30 days'),
-    days90: z.array(activityTrendBucketSchema).describe('Daily entity create/update activity for the last 90 days')
-  }).describe('Entity activity trends derived from audit history'),
+  activityTrends: z
+    .object({
+      days30: z
+        .array(activityTrendBucketSchema)
+        .describe('Daily entity create/update activity for the last 30 days'),
+      days90: z
+        .array(activityTrendBucketSchema)
+        .describe('Daily entity create/update activity for the last 90 days')
+    })
+    .describe('Entity activity trends derived from audit history'),
   stale: staleAnalyticsSchema.describe('Entities whose last update predates the selected cutoff')
 });
 
-export const workspaceAnalyticsContract = oc
-  .tag('Analytics')
-  .router({
-    analytics: {
-      get: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/analytics',
-          inputStructure: 'detailed',
-          summary: 'Get workspace analytics',
-          description: 'Retrieves comprehensive analytics about the workspace, including entity distribution, lifecycle coverage, ownership gaps, and field completeness metrics.',
-          tags: ['Analytics']
-        })
-        .input(
-          z.object({
-            params: ws,
-            query: z.object({
-              staleAfterDays: z.coerce.number().int().min(1).max(3650).default(90)
-            })
+export const workspaceAnalyticsContract = oc.tag('Analytics').router({
+  analytics: {
+    get: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/analytics',
+        inputStructure: 'detailed',
+        summary: 'Get workspace analytics',
+        description:
+          'Retrieves comprehensive analytics about the workspace, including entity distribution, lifecycle coverage, ownership gaps, and field completeness metrics.',
+        tags: ['Analytics']
+      })
+      .input(
+        z.object({
+          params: ws,
+          query: z.object({
+            staleAfterDays: z.coerce.number().int().min(1).max(3650).default(90)
           })
-        )
-        .output(analyticsResponseSchema)
-    }
-  });
+        })
+      )
+      .output(analyticsResponseSchema)
+  }
+});
 
 export type LifecycleAnalyticsBucket = z.infer<typeof lifecycleBucketSchema>;
 export type SchemaLifecycleAnalyticsBucket = z.infer<typeof schemaLifecycleBucketSchema>;

@@ -15,7 +15,10 @@ const projectSearchResultSchema = z.object({
 const fileSearchResultSchema = z.object({
   scope: z.enum(['project', 'entity', 'workspace']).describe('Scope where the file is located'),
   projectId: z.string().nullable().describe('Project identifier (if scope is project)'),
-  projectPublicId: z.string().nullable().describe('Public project identifier (if scope is project)'),
+  projectPublicId: z
+    .string()
+    .nullable()
+    .describe('Public project identifier (if scope is project)'),
   projectName: z.string().nullable().describe('Project name (if scope is project)'),
   entityId: z.string().nullable().describe('Entity identifier (if scope is entity)'),
   entityPublicId: z.string().nullable().describe('Public entity identifier (if scope is entity)'),
@@ -25,7 +28,9 @@ const fileSearchResultSchema = z.object({
   name: z.string().describe('File name'),
   comment_count: z.number().describe('Total number of comments on the file'),
   unresolved_comment_count: z.number().describe('Number of unresolved comments'),
-  content_metadata: contentMetadataSchema.nullable().describe('File content metadata (for diagrams)')
+  content_metadata: contentMetadataSchema
+    .nullable()
+    .describe('File content metadata (for diagrams)')
 });
 
 const entitySearchResultSchema = z.object({
@@ -64,35 +69,44 @@ const searchResponseSchema = z.object({
 
 // ── Contract ──────────────────────────────────────────────────
 
-export const searchContract = oc
-  .tag('Search')
-  .router({
-    search: {
-      query: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/search',
-          inputStructure: 'detailed',
-          summary: 'Search workspace content',
-          description: 'Performs a full-text search across projects, files, entities, and schemas within the workspace. Returns results grouped by type with configurable limits per type.',
-          tags: ['Search']
-        })
-        .input(
-          z.object({
-            params: ws,
-            query: z.object({
-              q: z.string().optional().describe('Search query string'),
-              limitPerType: z.preprocess(
-                v => (v !== undefined ? Number(v) : undefined),
-                z.number().int().positive().optional().describe('Maximum number of results per type (default varies by type)')
-              ),
-              types: z.string().optional().describe('Comma-separated list of types to search (projects, files, entities, schemas)')
-            })
+export const searchContract = oc.tag('Search').router({
+  search: {
+    query: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/search',
+        inputStructure: 'detailed',
+        summary: 'Search workspace content',
+        description:
+          'Performs a full-text search across projects, files, entities, and schemas within the workspace. Returns results grouped by type with configurable limits per type.',
+        tags: ['Search']
+      })
+      .input(
+        z.object({
+          params: ws,
+          query: z.object({
+            q: z.string().optional().describe('Search query string'),
+            limitPerType: z.preprocess(
+              v => (v !== undefined ? Number(v) : undefined),
+              z
+                .number()
+                .int()
+                .positive()
+                .optional()
+                .describe('Maximum number of results per type (default varies by type)')
+            ),
+            types: z
+              .string()
+              .optional()
+              .describe(
+                'Comma-separated list of types to search (projects, files, entities, schemas)'
+              )
           })
-        )
-        .output(searchResponseSchema)
-    }
-  });
+        })
+      )
+      .output(searchResponseSchema)
+  }
+});
 
 export type ProjectSearchResult = z.infer<typeof projectSearchResultSchema>;
 export type ProjectFileSearchResult = z.infer<typeof fileSearchResultSchema>;

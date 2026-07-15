@@ -1,11 +1,7 @@
 import { TbTable } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityTable } from './EntityTable';
-import {
-  ENTITY_TABLE_TYPE,
-  EntityTableEditable,
-  entityTableMdxRule
-} from './EntityTableEditable';
+import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
 import type { EntityTableSlateElement } from './types';
 
 export const entityTableSpec = defineMdxComponent<

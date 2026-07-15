@@ -10,7 +10,10 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { CustomPropertyDefinition, NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { getStereotypeIconTextProps } from '@diagram-craft/stencil-uml/common/stereotypeIcon';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -187,12 +190,7 @@ export class UMLActivityNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode) {
     return new CustomPropertyDefinition(p => [
-      p.select(
-        def,
-        'Type',
-        'custom.umlActivity.type',
-        UML_ACTIVITY_TYPE_OPTIONS
-      )
+      p.select(def, 'Type', 'custom.umlActivity.type', UML_ACTIVITY_TYPE_OPTIONS)
     ]);
   }
 

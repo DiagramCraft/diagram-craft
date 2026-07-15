@@ -14,8 +14,7 @@ export const resolveCanvasDragElementId = (target: EventTarget | null) => {
   const canvasElement = CanvasDomHelper.canvasElement(target);
   if (!canvasElement) return undefined;
 
-  let element =
-    targetElement?.closest('.svg-hover-overlay')?.parentElement ?? targetElement;
+  let element = targetElement?.closest('.svg-hover-overlay')?.parentElement ?? targetElement;
   while (element) {
     if (element.id.startsWith('node-')) {
       return removeSuffix(element.id.slice('node-'.length));
@@ -57,17 +56,13 @@ export const bindDocumentDragAndDrop = () => {
     const point = { x: event.clientX, y: event.clientY };
     const initialTarget = resolveTargetAtPoint(point) ?? event.target!;
 
-    drag.onDrag(
-      new DragEvents.DragStart(point, event, initialTarget)
-    );
+    drag.onDrag(new DragEvents.DragStart(point, event, initialTarget));
 
     const { target: hoverTarget, id: resolvedHoverId } = drag.resolveDragTarget(
       point,
       initialTarget
     );
-    drag.onDragEnter(
-      new DragEvents.DragEnter(point, hoverTarget, resolvedHoverId)
-    );
+    drag.onDragEnter(new DragEvents.DragEnter(point, hoverTarget, resolvedHoverId));
   });
   document.addEventListener('mouseup', event => {
     const drag = DRAG_DROP_MANAGER.current();
@@ -164,7 +159,10 @@ export abstract class Drag extends EventEmitter<{
 
   onDragLeave(_event: DragEvents.DragLeave): void {}
 
-  resolveDragTarget(point: Point, fallbackTarget: EventTarget): { target: EventTarget; id?: string } {
+  resolveDragTarget(
+    point: Point,
+    fallbackTarget: EventTarget
+  ): { target: EventTarget; id?: string } {
     const target = resolveTargetAtPoint(point) ?? fallbackTarget;
     return { target, id: resolveCanvasDragElementId(target) };
   }

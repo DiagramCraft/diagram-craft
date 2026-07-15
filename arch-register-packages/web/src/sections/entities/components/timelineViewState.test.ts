@@ -21,8 +21,12 @@ const entity = (id: string, start?: Date, end?: Date, owner?: string): EntityRec
     end
   }) as unknown as EntityRecord;
 
-const snapshot = (id: string, status: EntitySnapshot['status'], createdAt: string, projectId?: string) =>
-  ({ id, status, created_at: createdAt, project_id: projectId }) as unknown as EntitySnapshot;
+const snapshot = (
+  id: string,
+  status: EntitySnapshot['status'],
+  createdAt: string,
+  projectId?: string
+) => ({ id, status, created_at: createdAt, project_id: projectId }) as unknown as EntitySnapshot;
 
 describe('timeline view state', () => {
   it('filters and sorts own history snapshots', () => {
@@ -40,7 +44,9 @@ describe('timeline view state', () => {
       snapshot('b', 'future_update', '2024-01-02T00:00:00Z'),
       snapshot('c', 'future_update', '2024-01-03T00:00:00Z', 'p1')
     ];
-    expect(groupTimelineSnapshotsByProject(snapshots)).toEqual([{ projectId: 'p1', snaps: [snapshots[0], snapshots[2]] }]);
+    expect(groupTimelineSnapshotsByProject(snapshots)).toEqual([
+      { projectId: 'p1', snaps: [snapshots[0], snapshots[2]] }
+    ]);
   });
 
   it('filters dated rows, groups them, and collects both date fields', () => {
@@ -52,15 +58,18 @@ describe('timeline view state', () => {
     const getDate = (row: EntityRecord, fieldId: string | null) =>
       fieldId && row[fieldId] instanceof Date ? (row[fieldId] as Date) : null;
 
-    expect(getDatedTimelineRows(rows, 'start', 'end', getDate).map(row => row._uid)).toEqual(['b', 'a']);
+    expect(getDatedTimelineRows(rows, 'start', 'end', getDate).map(row => row._uid)).toEqual([
+      'b',
+      'a'
+    ]);
     expect(groupTimelineRows(rows.slice(0, 2), 'owner', new Map())).toEqual([
       ['Amy', [rows[1]]],
       ['Zed', [rows[0]]]
     ]);
-    expect(collectTimelineDates(rows, 'start', 'end', getDate, [new Date('2020-01-01')]).map(date => date.toISOString())).toEqual([
-      '2024-02-01T00:00:00.000Z',
-      '2024-01-01T00:00:00.000Z',
-      '2020-01-01T00:00:00.000Z'
-    ]);
+    expect(
+      collectTimelineDates(rows, 'start', 'end', getDate, [new Date('2020-01-01')]).map(date =>
+        date.toISOString()
+      )
+    ).toEqual(['2024-02-01T00:00:00.000Z', '2024-01-01T00:00:00.000Z', '2020-01-01T00:00:00.000Z']);
   });
 });

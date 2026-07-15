@@ -447,9 +447,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     const normalizedParentProps = deepClone(parentProps) as NodeProps;
     normalizedParentProps.debug = {};
 
-    const sources: PropertySource<NodeProps>[] = [
-      { type: 'default', mode: 'info-only' }
-    ];
+    const sources: PropertySource<NodeProps>[] = [{ type: 'default', mode: 'info-only' }];
 
     if (styleProps) {
       sources.push({

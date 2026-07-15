@@ -11,19 +11,11 @@ export const EntityLink = ({ id }: { id: string }) => {
   if (!id) return null;
 
   if (isLoading) {
-    return (
-      <span className={styles.linkLoading}>
-        {id}
-      </span>
-    );
+    return <span className={styles.linkLoading}>{id}</span>;
   }
 
   if (isError || !entity) {
-    return (
-      <span className={styles.linkUnavailable}>
-        not found
-      </span>
-    );
+    return <span className={styles.linkUnavailable}>not found</span>;
   }
 
   return (

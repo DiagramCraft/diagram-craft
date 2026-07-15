@@ -362,7 +362,13 @@ export const SchemaGraphView = () => {
           size={'sm'}
           onClick={() => {
             const graphNodes = schemas.map(s => ({ id: s.id, label: s.name }));
-            const graphEdges = edges.map(e => ({ id: e.id, from: e.from, to: e.to, label: e.label, kind: e.kind }));
+            const graphEdges = edges.map(e => ({
+              id: e.id,
+              from: e.from,
+              to: e.to,
+              label: e.label,
+              kind: e.kind
+            }));
             const diagramName = workspace?.name ? `${workspace.name} model` : 'Model overview';
             const content = createDiagramFromGraph(diagramName, graphNodes, graphEdges, {
               layout,

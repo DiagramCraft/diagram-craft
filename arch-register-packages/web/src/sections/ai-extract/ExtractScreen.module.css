@@ -183,7 +183,6 @@
   text-align: center;
 }
 
-
 .segBtn:hover {
   color: var(--base-fg);
 }
@@ -227,7 +226,9 @@
   background: var(--panel-bg);
   text-align: center;
   padding: 24px;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
 .dropzone:hover {
@@ -289,7 +290,9 @@
   color: var(--base-fg);
   font-size: 12px;
   font-weight: 500;
-  transition: background 80ms, border-color 80ms;
+  transition:
+    background 80ms,
+    border-color 80ms;
 }
 
 .primaryBtn:hover:not(:disabled) {
@@ -313,7 +316,9 @@
   border: 1px solid transparent;
   color: var(--base-fg-more-dim);
   font-size: 12px;
-  transition: background 80ms, color 80ms;
+  transition:
+    background 80ms,
+    color 80ms;
 }
 
 .ghostBtn:hover {
@@ -346,8 +351,15 @@
 }
 
 @keyframes scanPulseAnim {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50% { transform: scale(1.08); opacity: 1; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
 }
 
 .scanTitle {
@@ -425,8 +437,6 @@
   border-color: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-border));
 }
 
-
-
 .cellInput {
   background: transparent;
   border: 1px solid transparent;
@@ -473,9 +483,15 @@
   max-width: 56px;
 }
 
-.confHi { background: var(--green); }
-.confMid { background: var(--accent-fg); }
-.confLo { background: var(--warning-fg); }
+.confHi {
+  background: var(--green);
+}
+.confMid {
+  background: var(--accent-fg);
+}
+.confLo {
+  background: var(--warning-fg);
+}
 
 .confNum {
   font-size: 11px;
@@ -507,7 +523,9 @@
   justify-content: center;
   color: var(--cmp-fg-disabled);
   border: 1px solid transparent;
-  transition: background 80ms, color 80ms;
+  transition:
+    background 80ms,
+    color 80ms;
 }
 
 .expBtn svg {
@@ -573,7 +591,10 @@
   justify-content: center;
   color: var(--cmp-fg-disabled);
   border: 1px solid transparent;
-  transition: background 80ms, color 80ms, border-color 80ms;
+  transition:
+    background 80ms,
+    color 80ms,
+    border-color 80ms;
 }
 
 .rejectBtn:hover {
@@ -689,7 +710,9 @@
   color: var(--base-fg);
   font-size: 13px;
   text-align: left;
-  transition: border-color 80ms, background 80ms;
+  transition:
+    border-color 80ms,
+    background 80ms;
   cursor: pointer;
 }
 

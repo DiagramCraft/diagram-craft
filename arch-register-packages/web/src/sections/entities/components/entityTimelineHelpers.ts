@@ -13,7 +13,7 @@ const BUILT_IN: { key: string; label: string }[] = [
   { key: 'lifecycle', label: 'Lifecycle' },
   { key: 'target_lifecycle', label: 'Target lifecycle' },
   { key: 'target_lifecycle_date', label: 'Target date' },
-  { key: 'owner', label: 'Owner' },
+  { key: 'owner', label: 'Owner' }
 ];
 
 export function resolveBuiltIn(

@@ -63,7 +63,15 @@ export const DiagramCard = ({
         <div className={styles.diagramThumbGrid} />
         <div className={styles.diagramThumbNodes}>
           {file.type === 'markdown' ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--base-fg-more-dim)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: 'var(--base-fg-more-dim)'
+              }}
+            >
               <TbFileText size={36} />
             </div>
           ) : file.preview_svg ? (
@@ -170,7 +178,9 @@ export const DiagramRow = ({
       onContextMenu={onContextMenu}
     >
       <div className={styles.diagramRowName}>
-        {file.type === 'markdown' && <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />}
+        {file.type === 'markdown' && (
+          <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+        )}
         <span>{file.content_metadata?.title ?? file.name}</span>
         {file.is_workspace_template && (
           <span className={styles.templateBadge} title="Workspace template">

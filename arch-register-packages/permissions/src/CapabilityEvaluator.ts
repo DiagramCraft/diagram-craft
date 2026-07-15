@@ -74,10 +74,7 @@ export class CapabilityEvaluator {
       return false;
     }
 
-    if (
-      context.workspaceCapabilityCeiling &&
-      !context.workspaceCapabilityCeiling.has('ent.edit')
-    ) {
+    if (context.workspaceCapabilityCeiling && !context.workspaceCapabilityCeiling.has('ent.edit')) {
       return false;
     }
 

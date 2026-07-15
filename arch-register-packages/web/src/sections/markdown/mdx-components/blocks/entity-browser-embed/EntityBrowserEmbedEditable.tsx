@@ -47,10 +47,20 @@ export const EntityBrowserEmbedEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={<><TbListSearch size={16} /><span>Configure an entity browser…</span></>}
+      placeholder={
+        <>
+          <TbListSearch size={16} />
+          <span>Configure an entity browser…</span>
+        </>
+      }
       content={<EntityBrowserEmbed config={config === '' ? undefined : config} />}
       dialog={(open, onClose) => (
-        <EntityBrowserEmbedDialog element={element} open={open} onClose={onClose} isNew={!hasValue} />
+        <EntityBrowserEmbedDialog
+          element={element}
+          open={open}
+          onClose={onClose}
+          isNew={!hasValue}
+        />
       )}
       {...props}
     >

@@ -82,10 +82,7 @@ export const DiagramEmbedDialog = ({
       return;
     }
 
-    editor.tf.setNodes(
-      { fileId: resolvedFileId, caption: caption.trim() },
-      { at: path }
-    );
+    editor.tf.setNodes({ fileId: resolvedFileId, caption: caption.trim() }, { at: path });
     onClose();
   };
 
@@ -97,9 +94,7 @@ export const DiagramEmbedDialog = ({
     onClose();
   };
 
-  const isSaveDisabled =
-    createDiagramAttachment.isPending ||
-    (mode === 'existing' && !fileId);
+  const isSaveDisabled = createDiagramAttachment.isPending || (mode === 'existing' && !fileId);
 
   return (
     <Dialog

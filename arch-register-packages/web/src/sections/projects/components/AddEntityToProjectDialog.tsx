@@ -37,7 +37,7 @@ export const AddEntityToProjectDialog = ({
   const filtered = allResults.filter(e => {
     if (!q.trim()) return true;
     const lower = q.toLowerCase();
-    return (`${e._name} ${e._slug}`).toLowerCase().includes(lower);
+    return `${e._name} ${e._slug}`.toLowerCase().includes(lower);
   });
 
   // Auto-select first result

@@ -52,9 +52,9 @@ export const isConnectedEndpoint = (
  *
  * @typeParam T - The serialized endpoint shape
  */
-export abstract class NodeConnectedEndpoint<
-  T extends SerializedEndpoint = SerializedEndpoint
-> implements Endpoint {
+export abstract class NodeConnectedEndpoint<T extends SerializedEndpoint = SerializedEndpoint>
+  implements Endpoint
+{
   protected constructor(readonly nodeFn: DiagramNode | (() => DiagramNode)) {}
 
   get node(): DiagramNode {
@@ -78,9 +78,9 @@ export abstract class NodeConnectedEndpoint<
  *
  * @typeParam T - The serialized endpoint shape
  */
-export abstract class EdgeConnectedEndpoint<
-  T extends SerializedEndpoint = SerializedEndpoint
-> implements Endpoint {
+export abstract class EdgeConnectedEndpoint<T extends SerializedEndpoint = SerializedEndpoint>
+  implements Endpoint
+{
   protected constructor(readonly edgeFn: DiagramEdge | (() => DiagramEdge)) {}
 
   get edge(): DiagramEdge {

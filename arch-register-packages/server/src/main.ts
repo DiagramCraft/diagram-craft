@@ -57,8 +57,7 @@ const main = async () => {
     try {
       const parsed = JSON.parse(content);
       const commentCounts = getDiagramCommentCounts(parsed);
-      const previewSvg =
-        (await generateAccurateSvgPreview(parsed)) ?? generateSvgPreview(parsed);
+      const previewSvg = (await generateAccurateSvgPreview(parsed)) ?? generateSvgPreview(parsed);
       await db.project.updateContentNodeDerivedData(
         workspace,
         projectId,

@@ -31,9 +31,7 @@ export const FormElement = ({
         {label}
         {required && <span className={styles.eRequired}>*</span>}
       </label>
-      <div>
-        {children}
-      </div>
+      <div>{children}</div>
       {hint && !error && (
         <div id={hintId} className={styles.eHint}>
           {hint}

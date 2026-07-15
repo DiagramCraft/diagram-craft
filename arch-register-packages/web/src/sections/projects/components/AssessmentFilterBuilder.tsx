@@ -16,14 +16,20 @@ export type AssessmentFilterCondition =
   | { fieldId: '_owner'; kind: 'owner'; value?: string }
   | { fieldId: '_schema'; kind: 'schemaType'; value?: string };
 
-const conditionKindForField = (fieldId: string, fields: AssessmentField[]): AssessmentFilterCondition['kind'] => {
+const conditionKindForField = (
+  fieldId: string,
+  fields: AssessmentField[]
+): AssessmentFilterCondition['kind'] => {
   if (fieldId === '_owner') return 'owner';
   if (fieldId === '_schema') return 'schemaType';
   const field = fields.find(f => f.id === fieldId);
   return field?.type ?? 'text';
 };
 
-const defaultConditionFor = (fieldId: string, fields: AssessmentField[]): AssessmentFilterCondition => {
+const defaultConditionFor = (
+  fieldId: string,
+  fields: AssessmentField[]
+): AssessmentFilterCondition => {
   const kind = conditionKindForField(fieldId, fields);
   if (kind === 'rating') return { fieldId, kind: 'rating' };
   if (kind === 'enum') return { fieldId, kind: 'enum', op: 'equals', value: '' };
@@ -257,7 +263,10 @@ const AssessmentFilterRow = ({
 
       {condition.kind === 'text' && condition.op === 'contains' && (
         <div className={styles.rowBody}>
-          <TextInput value={condition.value ?? ''} onChange={v => onChange({ ...condition, value: v ?? '' })} />
+          <TextInput
+            value={condition.value ?? ''}
+            onChange={v => onChange({ ...condition, value: v ?? '' })}
+          />
         </div>
       )}
 

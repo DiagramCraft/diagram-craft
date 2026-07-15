@@ -83,11 +83,7 @@ export const buildTimelineColumns = (
     }
   } else if (zoom === 'quarter') {
     let date = new Date(minDate.getFullYear(), Math.floor(minDate.getMonth() / 3) * 3 - 3, 1);
-    const end = new Date(
-      maxDate.getFullYear(),
-      Math.ceil((maxDate.getMonth() + 1) / 3) * 3 + 3,
-      1
-    );
+    const end = new Date(maxDate.getFullYear(), Math.ceil((maxDate.getMonth() + 1) / 3) * 3 + 3, 1);
     while (date < end) {
       const quarter = Math.floor(date.getMonth() / 3) + 1;
       const currentQuarter = Math.floor(today.getMonth() / 3) + 1;
@@ -132,7 +128,8 @@ export const buildTimelineRange = ({
   const maxDate = new Date(Math.max(...resolvedDates.map(date => date.getTime())));
   const columns = buildTimelineColumns(minDate, maxDate, zoom, columnWidths, 'en-US', today);
   const rangeStart = columns[0]?.date ?? minDate;
-  const rangeEnd = columns.length > 0 ? getTimelineColumnEnd(columns[columns.length - 1]!, zoom) : maxDate;
+  const rangeEnd =
+    columns.length > 0 ? getTimelineColumnEnd(columns[columns.length - 1]!, zoom) : maxDate;
   const totalWidth = columns.reduce((sum, column) => sum + column.width, 0);
 
   return { rangeStart, rangeEnd, columns, totalWidth };
@@ -184,7 +181,7 @@ export const getTimelineMinWidthStyle = (
   labelWidth: number,
   totalWidth: number,
   style?: CSSProperties
-) : CSSProperties => ({
+): CSSProperties => ({
   minWidth: labelWidth + totalWidth,
   position: 'relative',
   ...style

@@ -148,16 +148,16 @@ export const SearchScreen = () => {
   const navigateToProjectFolder = useCallback(
     (projectId: string, folder: string | null) => {
       if (folder) {
-        routerNavigate(projectContentFolderRoute(
-          workspaceSlug,
-          asProjectPublicId(projectId),
-          folder
-        ));
+        routerNavigate(
+          projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folder)
+        );
       } else {
-        routerNavigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-          tab: 'projects' as const,
-          section: 'home' as const
-        }));
+        routerNavigate(
+          projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+            tab: 'projects' as const,
+            section: 'home' as const
+          })
+        );
       }
     },
     [routerNavigate, workspaceSlug]
@@ -177,11 +177,7 @@ export const SearchScreen = () => {
   const navigateToEntityFolder = useCallback(
     (entityId: string, folder: string | null) => {
       if (folder) {
-        routerNavigate(entityContentFolderRoute(
-          workspaceSlug,
-          asEntityPublicId(entityId),
-          folder
-        ));
+        routerNavigate(entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), folder));
       } else {
         routerNavigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
       }
@@ -220,7 +216,14 @@ export const SearchScreen = () => {
         navigateToSchema(row.id);
       }
     },
-    [navigateToEntity, navigateToProject, navigateToProjectFolder, navigateToSchema, navigateToEntityFolder, navigateToWorkspaceFolder]
+    [
+      navigateToEntity,
+      navigateToProject,
+      navigateToProjectFolder,
+      navigateToSchema,
+      navigateToEntityFolder,
+      navigateToWorkspaceFolder
+    ]
   );
 
   // Keyboard navigation

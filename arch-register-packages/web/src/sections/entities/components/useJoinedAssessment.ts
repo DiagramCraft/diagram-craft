@@ -17,7 +17,10 @@ export type AssessmentJoinOption = {
  * display. Fetches responses once via the existing assessmentResponses.list endpoint —
  * never per-entity.
  */
-export const useJoinedAssessment = (workspaceId: string, joinAssessmentId: string | null | undefined) => {
+export const useJoinedAssessment = (
+  workspaceId: string,
+  joinAssessmentId: string | null | undefined
+) => {
   const { data: projects = [] } = useProjects(workspaceId);
   const projectIds = useMemo(() => projects.map(p => p.id), [projects]);
   const assessmentQueries = useAssessmentsForProjects(workspaceId, projectIds);
@@ -37,7 +40,8 @@ export const useJoinedAssessment = (workspaceId: string, joinAssessmentId: strin
   }, [assessmentQueries, projectIds, projects]);
 
   const joined = useMemo(
-    () => (joinAssessmentId ? (options.find(o => o.assessment.id === joinAssessmentId) ?? null) : null),
+    () =>
+      joinAssessmentId ? (options.find(o => o.assessment.id === joinAssessmentId) ?? null) : null,
     [options, joinAssessmentId]
   );
 

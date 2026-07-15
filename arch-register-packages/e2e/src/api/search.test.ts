@@ -90,12 +90,21 @@ const test = baseTest.extend<{ seeded: true }>({
 });
 
 test.describe('search routes', () => {
-  test('GET /api/:workspace/search returns empty results when q is blank', async ({ orpc, seeded: _ }) => {
-    const result = await orpc.search.query({ params: { workspace: 'default' }, query: { q: '  ' } });
+  test('GET /api/:workspace/search returns empty results when q is blank', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: '  ' }
+    });
     expect(result).toEqual({ query: '', projects: [], files: [], entities: [], schemas: [] });
   });
 
-  test('GET /api/:workspace/search finds matching projects and files', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search finds matching projects and files', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'portal', types: 'projects,files' }
@@ -157,7 +166,10 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search finds files by metadata category', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search finds files by metadata category', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'security', types: 'files' }
@@ -177,7 +189,10 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search finds files by metadata keywords', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search finds files by metadata keywords', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'onboarding', types: 'files' }
@@ -219,7 +234,10 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search finds matching schemas by field name', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search finds matching schemas by field name', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'technology', types: 'schemas' }
@@ -236,7 +254,10 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search applies limitPerType after sorting', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search applies limitPerType after sorting', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'diagram', types: 'files', limitPerType: 1 }
@@ -255,21 +276,30 @@ test.describe('search routes', () => {
 
   test('GET /api/:workspace/search returns 400 for invalid types', async ({ orpc, seeded: _ }) => {
     await expect(
-      orpc.search.query({ params: { workspace: 'default' }, query: { q: 'portal', types: 'files,invalid' } })
+      orpc.search.query({
+        params: { workspace: 'default' },
+        query: { q: 'portal', types: 'files,invalid' }
+      })
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
       message: 'types must be a comma-separated list of: projects, files, entities, schemas'
     });
   });
 
-  test('GET /api/:workspace/search returns 401 without authentication', async ({ server, seeded: _ }) => {
+  test('GET /api/:workspace/search returns 401 without authentication', async ({
+    server,
+    seeded: _
+  }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
     await expect(
       anonOrpc.search.query({ params: { workspace: 'default' }, query: { q: 'portal' } })
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('GET /api/:workspace/search returns 404 for an unknown workspace', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search returns 404 for an unknown workspace', async ({
+    orpc,
+    seeded: _
+  }) => {
     await expect(
       orpc.search.query({ params: { workspace: 'nonexistent' }, query: { q: 'portal' } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });

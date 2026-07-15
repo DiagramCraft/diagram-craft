@@ -25,13 +25,14 @@ export type SearchGroup = {
   rows: SearchRow[];
 };
 
-export const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: typeof TbFolders }> = [
-  { value: 'all', label: 'All', icon: TbFolders },
-  { value: 'entities', label: 'Entities', icon: TbDatabase },
-  { value: 'projects', label: 'Projects', icon: TbFolders },
-  { value: 'files', label: 'Diagrams', icon: TbFolder },
-  { value: 'schemas', label: 'Schemas', icon: TbCode }
-];
+export const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: typeof TbFolders }> =
+  [
+    { value: 'all', label: 'All', icon: TbFolders },
+    { value: 'entities', label: 'Entities', icon: TbDatabase },
+    { value: 'projects', label: 'Projects', icon: TbFolders },
+    { value: 'files', label: 'Diagrams', icon: TbFolder },
+    { value: 'schemas', label: 'Schemas', icon: TbCode }
+  ];
 
 export const EMPTY_RESULTS: SearchResponse = {
   query: '',

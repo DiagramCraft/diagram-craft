@@ -80,27 +80,27 @@ const makeDb = (
   liveEntities: EntityDbResult[] = [],
   projects: Array<{ id: string; owner: string | null }> = []
 ) => {
-  const listSnapshotsAsOf = vi.fn(
-    async (_workspace: string, asOf: Date, entityIds?: string[]) =>
-      snapshots
-        .filter(s => {
-          if (entityIds != null && !entityIds.includes(s.entity_id)) return false;
-          if (s.status === 'future_update') {
-            return (
-              s.target_date != null &&
-              new Date(s.target_date) <= asOf &&
-              s.created_at <= asOf
-            );
-          }
-          return s.created_at <= asOf;
-        })
-        .sort((a, b) => a.entity_id.localeCompare(b.entity_id) || a.created_at.getTime() - b.created_at.getTime())
+  const listSnapshotsAsOf = vi.fn(async (_workspace: string, asOf: Date, entityIds?: string[]) =>
+    snapshots
+      .filter(s => {
+        if (entityIds != null && !entityIds.includes(s.entity_id)) return false;
+        if (s.status === 'future_update') {
+          return s.target_date != null && new Date(s.target_date) <= asOf && s.created_at <= asOf;
+        }
+        return s.created_at <= asOf;
+      })
+      .sort(
+        (a, b) =>
+          a.entity_id.localeCompare(b.entity_id) || a.created_at.getTime() - b.created_at.getTime()
+      )
   );
 
   const listEntityIdsWithAnySnapshot = vi.fn(async (_workspace: string, entityIds?: string[]) => {
     const ids = new Set(
       snapshots
-        .filter(s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'deleted')
+        .filter(
+          s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'deleted'
+        )
         .map(s => s.entity_id)
     );
     return [...ids].filter(id => entityIds == null || entityIds.includes(id));
@@ -111,9 +111,15 @@ const makeDb = (
       listSnapshotsAsOf,
       listEntityIdsWithAnySnapshot,
       listSchemas: vi.fn(async () => [schema]),
-      getEntity: vi.fn(async (_workspace: string, id: string) => liveEntities.find(e => e.id === id) ?? null),
+      getEntity: vi.fn(
+        async (_workspace: string, id: string) => liveEntities.find(e => e.id === id) ?? null
+      ),
       listEntitiesPaginated: vi.fn(
-        async (_workspace: string, _filters?: unknown, pagination?: { limit?: number; offset?: number }) =>
+        async (
+          _workspace: string,
+          _filters?: unknown,
+          pagination?: { limit?: number; offset?: number }
+        ) =>
           liveEntities.slice(
             pagination?.offset ?? 0,
             (pagination?.offset ?? 0) + (pagination?.limit ?? liveEntities.length)
@@ -121,7 +127,9 @@ const makeDb = (
       )
     },
     project: {
-      getProject: vi.fn(async (_workspace: string, id: string) => projects.find(p => p.id === id) ?? null)
+      getProject: vi.fn(
+        async (_workspace: string, id: string) => projects.find(p => p.id === id) ?? null
+      )
     },
     workspace: {
       listTeams: vi.fn(async () => [{ id: 'owner-1', name: 'Team A' }]),
@@ -142,7 +150,12 @@ describe('reconstructEntitiesAsOf', () => {
     ];
     const db = makeDb(snapshots);
 
-    const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-02-01T00:00:00.000Z'), null);
+    const result = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-02-01T00:00:00.000Z'),
+      null
+    );
 
     expect(result).toHaveLength(0);
   });
@@ -191,11 +204,21 @@ describe('reconstructEntitiesAsOf', () => {
     ];
     const db = makeDb(snapshots);
 
-    const asOfBetween = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-01-15T00:00:00.000Z'), null);
+    const asOfBetween = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-01-15T00:00:00.000Z'),
+      null
+    );
     expect(asOfBetween).toHaveLength(1);
     expect(asOfBetween[0]?.name).toBe('Original Name');
 
-    const asOfAfterUpdate = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-03-01T00:00:00.000Z'), null);
+    const asOfAfterUpdate = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-03-01T00:00:00.000Z'),
+      null
+    );
     expect(asOfAfterUpdate).toHaveLength(1);
     expect(asOfAfterUpdate[0]?.name).toBe('Updated Name');
   });
@@ -219,10 +242,20 @@ describe('reconstructEntitiesAsOf', () => {
     ];
     const db = makeDb(snapshots);
 
-    const beforeDeletion = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-01-15T00:00:00.000Z'), null);
+    const beforeDeletion = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-01-15T00:00:00.000Z'),
+      null
+    );
     expect(beforeDeletion).toHaveLength(1);
 
-    const afterDeletion = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-03-01T00:00:00.000Z'), null);
+    const afterDeletion = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-03-01T00:00:00.000Z'),
+      null
+    );
     expect(afterDeletion).toHaveLength(0);
   });
 
@@ -262,15 +295,30 @@ describe('reconstructEntitiesAsOf', () => {
     ];
     const db = makeDb(snapshots);
 
-    const beforeAnyFutureUpdate = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-03-01T00:00:00.000Z'), null);
+    const beforeAnyFutureUpdate = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-03-01T00:00:00.000Z'),
+      null
+    );
     expect(beforeAnyFutureUpdate[0]?.name).toBe('Current Name');
     expect(beforeAnyFutureUpdate[0]?.lifecycle).toBeNull();
 
-    const afterFirstOnly = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-07-01T00:00:00.000Z'), null);
+    const afterFirstOnly = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-07-01T00:00:00.000Z'),
+      null
+    );
     expect(afterFirstOnly[0]?.name).toBe('First Planned Name');
     expect(afterFirstOnly[0]?.lifecycle).toBeNull();
 
-    const afterBoth = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-10-01T00:00:00.000Z'), null);
+    const afterBoth = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-10-01T00:00:00.000Z'),
+      null
+    );
     expect(afterBoth[0]?.name).toBe('First Planned Name');
     expect(afterBoth[0]?.lifecycle).toBe('lc-1');
     expect(afterBoth[0]?.lifecycle_label).toBe('Active');
@@ -299,35 +347,66 @@ describe('reconstructEntitiesAsOf', () => {
     ];
 
     it('does not apply a future_update from a project the user cannot access', async () => {
-      const db = makeDb(makeFutureUpdateSnapshots(), [], [{ id: 'project-private', owner: 'team-private' }]);
+      const db = makeDb(
+        makeFutureUpdateSnapshots(),
+        [],
+        [{ id: 'project-private', owner: 'team-private' }]
+      );
       const authCtx = makeAuthCtx(['team-other']); // no access to team-private's projects
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-07-01T00:00:00.000Z'), authCtx);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-07-01T00:00:00.000Z'),
+        authCtx
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]?.name).toBe('Current Name');
     });
 
     it('applies a future_update from a project the user can access', async () => {
-      const db = makeDb(makeFutureUpdateSnapshots(), [], [{ id: 'project-private', owner: 'team-private' }]);
+      const db = makeDb(
+        makeFutureUpdateSnapshots(),
+        [],
+        [{ id: 'project-private', owner: 'team-private' }]
+      );
       const authCtx = makeAuthCtx(['team-private']);
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-07-01T00:00:00.000Z'), authCtx);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-07-01T00:00:00.000Z'),
+        authCtx
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]?.name).toBe('Leaked Planned Name');
     });
 
     it('applies all future_update snapshots when authCtx is null (system/internal context)', async () => {
-      const db = makeDb(makeFutureUpdateSnapshots(), [], [{ id: 'project-private', owner: 'team-private' }]);
+      const db = makeDb(
+        makeFutureUpdateSnapshots(),
+        [],
+        [{ id: 'project-private', owner: 'team-private' }]
+      );
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-07-01T00:00:00.000Z'), null);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-07-01T00:00:00.000Z'),
+        null
+      );
 
       expect(result[0]?.name).toBe('Leaked Planned Name');
     });
 
     it('does not apply any future_update snapshot when includeProjectSnapshots is false, even for an accessible project', async () => {
-      const db = makeDb(makeFutureUpdateSnapshots(), [], [{ id: 'project-private', owner: 'team-private' }]);
+      const db = makeDb(
+        makeFutureUpdateSnapshots(),
+        [],
+        [{ id: 'project-private', owner: 'team-private' }]
+      );
       const authCtx = makeAuthCtx(['team-private']);
 
       const result = await reconstructEntitiesAsOf(
@@ -361,7 +440,13 @@ describe('reconstructEntitiesAsOf', () => {
     ];
     const db = makeDb(snapshots);
 
-    const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-02-01T00:00:00.000Z'), null, ['entity-1']);
+    const result = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-02-01T00:00:00.000Z'),
+      null,
+      ['entity-1']
+    );
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe('entity-1');
@@ -376,7 +461,12 @@ describe('reconstructEntitiesAsOf', () => {
       });
       const db = makeDb([], [live]);
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-02-01T00:00:00.000Z'), null);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-02-01T00:00:00.000Z'),
+        null
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]?.id).toBe('entity-imported');
@@ -390,7 +480,12 @@ describe('reconstructEntitiesAsOf', () => {
       });
       const db = makeDb([], [live]);
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-02-01T00:00:00.000Z'), null);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-02-01T00:00:00.000Z'),
+        null
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -403,7 +498,12 @@ describe('reconstructEntitiesAsOf', () => {
       });
       const db = makeDb([], [live]);
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2027-01-01T00:00:00.000Z'), null);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2027-01-01T00:00:00.000Z'),
+        null
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]?.name).toBe('Imported Entity');
@@ -425,7 +525,12 @@ describe('reconstructEntitiesAsOf', () => {
       });
       const db = makeDb([futureUpdate], [live]);
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-07-01T00:00:00.000Z'), null);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-07-01T00:00:00.000Z'),
+        null
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]?.name).toBe('Renamed After Import');
@@ -443,7 +548,12 @@ describe('reconstructEntitiesAsOf', () => {
       const live = makeLiveEntity({ id: 'entity-gone', name: 'Gone Entity' });
       const db = makeDb([deleted], [live]);
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-02-01T00:00:00.000Z'), null);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-02-01T00:00:00.000Z'),
+        null
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -453,7 +563,13 @@ describe('reconstructEntitiesAsOf', () => {
       const liveB = makeLiveEntity({ id: 'entity-b', name: 'B' });
       const db = makeDb([], [liveA, liveB]);
 
-      const result = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-02-01T00:00:00.000Z'), null, ['entity-a']);
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-02-01T00:00:00.000Z'),
+        null,
+        ['entity-a']
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]?.id).toBe('entity-a');
@@ -478,13 +594,23 @@ describe('reconstructEntitiesAsOf', () => {
       });
       const db = makeDb([firstEverEdit], [live]);
 
-      const yesterday = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-02-09T00:00:00.000Z'), null);
+      const yesterday = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-02-09T00:00:00.000Z'),
+        null
+      );
 
       // Must NOT show the live (New Name) state — there is no data for yesterday, so the
       // entity should be excluded rather than incorrectly showing today's current name.
       expect(yesterday).toHaveLength(0);
 
-      const today = await reconstructEntitiesAsOf(db, 'ws-1', new Date('2026-02-10T12:00:00.000Z'), null);
+      const today = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-02-10T12:00:00.000Z'),
+        null
+      );
       expect(today).toHaveLength(1);
       expect(today[0]?.name).toBe('New Name');
     });

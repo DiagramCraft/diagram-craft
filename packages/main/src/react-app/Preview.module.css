@@ -44,7 +44,8 @@
       }
     }
 
-    .svg-node, .svg-edge {
+    .svg-node,
+    .svg-edge {
       cursor: default;
     }
 
@@ -53,4 +54,3 @@
     }
   }
 }
-

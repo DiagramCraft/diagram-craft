@@ -111,13 +111,20 @@ export class GuideCreateDrag extends BaseGuideDrag {
     const snappedPosition = this.snapGuidePosition(rawPosition, event.modifiers);
 
     if (!this.guide) {
-      this.guide = this.diagram.addGuide({
-        type: this.guideType,
-        position: round(snappedPosition),
-        color: DEFAULT_GUIDE_COLOR
-      }, this.capture.uow);
+      this.guide = this.diagram.addGuide(
+        {
+          type: this.guideType,
+          position: round(snappedPosition),
+          color: DEFAULT_GUIDE_COLOR
+        },
+        this.capture.uow
+      );
     } else {
-      this.diagram.updateGuide(this.guide.id, { position: round(snappedPosition) }, this.capture.uow);
+      this.diagram.updateGuide(
+        this.guide.id,
+        { position: round(snappedPosition) },
+        this.capture.uow
+      );
     }
     this.capture.uow.notify();
 

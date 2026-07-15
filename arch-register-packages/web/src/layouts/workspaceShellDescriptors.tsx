@@ -73,7 +73,8 @@ export const buildHomeBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem
   {
     label: 'Home',
     icon: <TbHome size={12} />,
-    onClick: () => ctx.navigate({ to: '/$workspaceSlug', params: { workspaceSlug: ctx.workspaceSlug } })
+    onClick: () =>
+      ctx.navigate({ to: '/$workspaceSlug', params: { workspaceSlug: ctx.workspaceSlug } })
   }
 ];
 
@@ -86,18 +87,26 @@ export const buildProjectBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbI
     {
       label: 'Projects',
       icon: <TbFolders size={12} />,
-      onClick: () => ctx.navigate({ to: '/$workspaceSlug/projects', params: { workspaceSlug: ctx.workspaceSlug } })
+      onClick: () =>
+        ctx.navigate({
+          to: '/$workspaceSlug/projects',
+          params: { workspaceSlug: ctx.workspaceSlug }
+        })
     },
     ...(project ? [{ label: project.name, onClick: () => {} }] : [])
   ];
 };
 
-export const buildEntityBreadcrumbs = (ctx: WorkspaceShellContext, detail: boolean): BreadcrumbItem[] => [
+export const buildEntityBreadcrumbs = (
+  ctx: WorkspaceShellContext,
+  detail: boolean
+): BreadcrumbItem[] => [
   ...buildHomeBreadcrumbs(ctx),
   {
     label: 'Entities',
     icon: <TbDatabase size={12} />,
-    onClick: () => ctx.navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug: ctx.workspaceSlug } })
+    onClick: () =>
+      ctx.navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug: ctx.workspaceSlug } })
   },
   ...(detail ? [{ label: 'Detail', onClick: () => {} }] : [])
 ];
@@ -107,7 +116,8 @@ export const buildWorkspaceContentBreadcrumbs = (ctx: WorkspaceShellContext): Br
   {
     label: 'Content',
     icon: <TbFiles size={12} />,
-    onClick: () => ctx.navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug: ctx.workspaceSlug } })
+    onClick: () =>
+      ctx.navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug: ctx.workspaceSlug } })
   }
 ];
 
@@ -116,7 +126,8 @@ export const buildSearchBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbIt
   {
     label: 'Search',
     icon: <TbSearch size={12} />,
-    onClick: () => ctx.navigate({ to: '/$workspaceSlug/search', params: { workspaceSlug: ctx.workspaceSlug } })
+    onClick: () =>
+      ctx.navigate({ to: '/$workspaceSlug/search', params: { workspaceSlug: ctx.workspaceSlug } })
   }
 ];
 
@@ -136,9 +147,7 @@ export const buildSettingsBreadcrumbs = (
 export const resolveWorkspaceShellDescriptor = (
   ctx: WorkspaceShellContext
 ): WorkspaceShellDescriptor => {
-  const activeMatch = [...ctx.matches]
-    .reverse()
-    .find(match => match.buildShell !== undefined);
+  const activeMatch = [...ctx.matches].reverse().find(match => match.buildShell !== undefined);
 
   if (!activeMatch?.buildShell) {
     return {

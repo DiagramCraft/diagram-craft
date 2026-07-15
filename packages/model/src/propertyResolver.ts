@@ -14,11 +14,7 @@ export type PropertySourceType =
   | 'ruleTextStyle'
   | 'parent';
 
-export type PropertySourceMode =
-  | 'info-only'
-  | 'editing'
-  | 'rendering'
-  | 'editing-and-rendering';
+export type PropertySourceMode = 'info-only' | 'editing' | 'rendering' | 'editing-and-rendering';
 
 /**
  * A property source in precedence order.
@@ -41,14 +37,10 @@ const isEditingSource = (source: PropertySource<object>) =>
 const isRenderingSource = (source: PropertySource<object>) =>
   source.mode === 'rendering' || source.mode === 'editing-and-rendering';
 
-export const resolveEditProps = <P extends object>(
-  sources: ReadonlyArray<PropertySource<P>>
-): P =>
+export const resolveEditProps = <P extends object>(sources: ReadonlyArray<PropertySource<P>>): P =>
   deepMerge<Record<string, unknown>>(
     {},
-    ...sources
-      .filter(isEditingSource)
-      .map(source => source.props as Record<string, unknown>)
+    ...sources.filter(isEditingSource).map(source => source.props as Record<string, unknown>)
   ) as P;
 
 export const resolveRenderProps = <P extends object>(
@@ -57,9 +49,7 @@ export const resolveRenderProps = <P extends object>(
 ): P => {
   const merged = deepMerge<Record<string, unknown>>(
     {},
-    ...sources
-      .filter(isRenderingSource)
-      .map(source => source.props as Record<string, unknown>)
+    ...sources.filter(isRenderingSource).map(source => source.props as Record<string, unknown>)
   );
   return defaults.applyDefaults(merged as DeepPartial<P>) as P;
 };

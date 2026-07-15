@@ -109,10 +109,9 @@ test('opens an external MDX file through the Markdown API as read-only content',
     const files = await orpc.projects.listWorkspaceFiles({
       params: { workspace: 'default' }
     });
-    const mdxFile = [
-      ...files.rootFiles,
-      ...files.folders.flatMap(folder => folder.files)
-    ].find(file => file.path === 'external-docs/docs/architecture.mdx');
+    const mdxFile = [...files.rootFiles, ...files.folders.flatMap(folder => folder.files)].find(
+      file => file.path === 'external-docs/docs/architecture.mdx'
+    );
 
     expect(mdxFile).toMatchObject({
       path: 'external-docs/docs/architecture.mdx',

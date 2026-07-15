@@ -18,7 +18,13 @@ type Params = {
   onDeleted: () => void;
 };
 
-export const useEntityEditController = ({ workspaceId, entityId, entity, schema, onDeleted }: Params) => {
+export const useEntityEditController = ({
+  workspaceId,
+  entityId,
+  entity,
+  schema,
+  onDeleted
+}: Params) => {
   const updateEntity = useUpdateEntity(workspaceId);
   const deleteEntity = useDeleteEntity(workspaceId);
   const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);

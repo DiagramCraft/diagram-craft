@@ -466,7 +466,10 @@ describe('cloneHelper', () => {
     it('should delete child edges before child nodes sharing the same parent', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const parent = layer.addNode({ id: 'parent' });
-      const childA = layer.createNode({ id: 'child-a', bounds: { x: 0, y: 0, w: 40, h: 40, r: 0 } });
+      const childA = layer.createNode({
+        id: 'child-a',
+        bounds: { x: 0, y: 0, w: 40, h: 40, r: 0 }
+      });
       const childB = layer.createNode({
         id: 'child-b',
         bounds: { x: 100, y: 0, w: 40, h: 40, r: 0 }
@@ -515,7 +518,10 @@ describe('cloneHelper', () => {
     it('should apply the same top-level reference bounds to nested children', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const parent = layer.addNode({ id: 'parent', bounds: { x: 10, y: 20, w: 40, h: 30, r: 0 } });
-      const sibling = layer.addNode({ id: 'sibling', bounds: { x: 60, y: 20, w: 20, h: 20, r: 0 } });
+      const sibling = layer.addNode({
+        id: 'sibling',
+        bounds: { x: 60, y: 20, w: 20, h: 20, r: 0 }
+      });
       const child = layer.createNode({ id: 'child', bounds: { x: 20, y: 25, w: 10, h: 5, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => {

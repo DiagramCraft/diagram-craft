@@ -81,7 +81,10 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
 
   const viewConfig = config.viewConfigs[config.view] ?? null;
   const browserRows = rows as BrowserEntityRecord[];
-  const displayFields = buildEntityDisplayFields(typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas, !!resolvedProjectId);
+  const displayFields = buildEntityDisplayFields(
+    typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
+    !!resolvedProjectId
+  );
 
   return (
     <EntityBrowserView

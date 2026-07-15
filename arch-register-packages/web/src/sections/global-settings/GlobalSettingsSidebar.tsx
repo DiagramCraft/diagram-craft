@@ -4,10 +4,7 @@ import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
 import { TbShieldLock } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import {
-  SidebarGroupLabel,
-  SidebarTitleHeader
-} from '../../components/sidebar/SidebarPrimitives';
+import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 
 type GlobalSettingsNavItem = {
   id: string;
@@ -17,7 +14,12 @@ type GlobalSettingsNavItem = {
 };
 
 const GLOBAL_SETTINGS_SECTIONS: GlobalSettingsNavItem[] = [
-  { id: 'global-permissions', label: 'Global permissions', icon: <TbShieldLock size={12} />, group: 'Administration' },
+  {
+    id: 'global-permissions',
+    label: 'Global permissions',
+    icon: <TbShieldLock size={12} />,
+    group: 'Administration'
+  }
 ];
 
 export const GlobalSettingsSidebar = () => {
@@ -47,10 +49,12 @@ export const GlobalSettingsSidebar = () => {
                 icon={s.icon}
                 label={s.label}
                 active={section === s.id}
-                onClick={() => navigate({ 
-                  to: '/$workspaceSlug/settings/global',
-                  params: { workspaceSlug }
-                })}
+                onClick={() =>
+                  navigate({
+                    to: '/$workspaceSlug/settings/global',
+                    params: { workspaceSlug }
+                  })
+                }
               />
             ))}
           </div>

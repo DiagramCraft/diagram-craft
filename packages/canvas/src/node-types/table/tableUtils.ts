@@ -95,10 +95,7 @@ export const getTableColumnsSorted = (row: DiagramNode): DiagramNode[] => {
   return (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
 };
 
-export const getTableDividerBands = (
-  table: DiagramNode,
-  bandSize: number
-): TableDividerBand[] => {
+export const getTableDividerBands = (table: DiagramNode, bandSize: number): TableDividerBand[] => {
   if (table.nodeType !== 'table') return [];
 
   const rows = getTableRowsSorted(table);

@@ -3,7 +3,10 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
+import {
+  ASSESSMENT_FIELD_PREFIX,
+  resolveAssessmentValue
+} from '@arch-register/api-types/assessmentFilter';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { formatDate } from '../../../utils/dateFormat';
 
@@ -73,7 +76,12 @@ export const buildEntityDisplayFields = (
       seen.add(id);
       const options =
         field.type === 'enum' ? joined.enums.find(e => e.id === field.enumId)?.options : undefined;
-      fields.push({ id, label: field.label, group, assessmentField: { type: field.type, options } });
+      fields.push({
+        id,
+        label: field.label,
+        group,
+        assessmentField: { type: field.type, options }
+      });
     }
   }
   return fields;
@@ -106,7 +114,10 @@ export const withDisplayFieldIds = (config: unknown, fieldIds: string[]) => ({
 
 export const withoutDisplayFieldIds = (config: unknown): unknown => {
   if (config == null || typeof config !== 'object') return null;
-  const { fieldIds: _fieldIds, ...rest } = config as { fieldIds?: unknown } & Record<string, unknown>;
+  const { fieldIds: _fieldIds, ...rest } = config as { fieldIds?: unknown } & Record<
+    string,
+    unknown
+  >;
   return Object.keys(rest).length === 0 ? null : rest;
 };
 
@@ -130,7 +141,9 @@ export const formatEntityDisplayValue = (
     const value = resolveAssessmentValue(entity as BrowserEntityRecord, field.id);
     if (value == null) return null;
     if (field.assessmentField.type === 'enum') {
-      return field.assessmentField.options?.find(o => o.value === String(value))?.label ?? String(value);
+      return (
+        field.assessmentField.options?.find(o => o.value === String(value))?.label ?? String(value)
+      );
     }
     return String(value);
   }

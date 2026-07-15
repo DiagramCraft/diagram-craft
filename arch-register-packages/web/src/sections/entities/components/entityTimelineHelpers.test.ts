@@ -11,7 +11,11 @@ describe('diffSnapshotState', () => {
     const changes = diffSnapshotState(
       { name: 'A', data: { technology: 'Java' } },
       { name: 'B', data: { technology: 'Kotlin' } },
-      { id: 's', name: 'Service', fields: [{ id: 'technology', name: 'Technology', type: 'text' }] } as never,
+      {
+        id: 's',
+        name: 'Service',
+        fields: [{ id: 'technology', name: 'Technology', type: 'text' }]
+      } as never,
       [],
       []
     );
@@ -24,10 +28,7 @@ describe('diffSnapshotState', () => {
       { lifecycle: 'l1' },
       { lifecycle: 'l2' },
       null,
-      [
-        { id: 'l1', label: 'Active' } as never,
-        { id: 'l2', label: 'Deprecated' } as never
-      ],
+      [{ id: 'l1', label: 'Active' } as never, { id: 'l2', label: 'Deprecated' } as never],
       []
     );
     expect(changes).toContainEqual({ label: 'Lifecycle', from: 'Active', to: 'Deprecated' });

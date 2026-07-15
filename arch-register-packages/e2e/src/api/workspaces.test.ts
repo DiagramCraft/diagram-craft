@@ -33,10 +33,15 @@ test.describe('workspace routes', () => {
 
   test('GET /api/workspaces returns 401 without token', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
-    await expect(anonOrpc.workspaces.list(undefined)).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    await expect(anonOrpc.workspaces.list(undefined)).rejects.toMatchObject({
+      code: 'UNAUTHORIZED'
+    });
   });
 
-  test('POST /api/workspaces creates a workspace with default settings', async ({ server, orpc }) => {
+  test('POST /api/workspaces creates a workspace with default settings', async ({
+    server,
+    orpc
+  }) => {
     const created = await orpc.workspaces.create({ body: { name: 'Platform Strategy' } });
     expect(created).toMatchObject({
       id: expect.any(String),
@@ -86,10 +91,15 @@ test.describe('workspace routes', () => {
   test('POST /api/workspaces returns 409 for a duplicate workspace name', async ({ orpc }) => {
     await expect(
       orpc.workspaces.create({ body: { name: 'Default Workspace' } })
-    ).rejects.toMatchObject({ code: 'CONFLICT', message: 'A workspace with that name already exists' });
+    ).rejects.toMatchObject({
+      code: 'CONFLICT',
+      message: 'A workspace with that name already exists'
+    });
   });
 
-  test('PUT /api/workspaces/:id updates a workspace and preserves omitted fields', async ({ orpc }) => {
+  test('PUT /api/workspaces/:id updates a workspace and preserves omitted fields', async ({
+    orpc
+  }) => {
     const created = await orpc.workspaces.create({
       body: { name: 'Workspace To Rename', color: '#123456', description: 'Original description' }
     });
@@ -140,7 +150,10 @@ test.describe('workspace routes', () => {
     const created = await orpc.workspaces.create({ body: { name: 'Workspace To Delete' } });
 
     const result = await orpc.workspaces.remove({ params: { workspace: created.id } });
-    expect(result).toMatchObject({ success: true, message: "Workspace 'Workspace To Delete' deleted" });
+    expect(result).toMatchObject({
+      success: true,
+      message: "Workspace 'Workspace To Delete' deleted"
+    });
   });
 
   test('DELETE /api/workspaces/:id returns 404 for an unknown workspace id', async ({ orpc }) => {

@@ -32,7 +32,7 @@ export const MemberAvatar = ({
   userId,
   color,
   size = 28,
-  hideTooltip = false,
+  hideTooltip = false
 }: {
   name: string | null;
   email: string | null;
@@ -52,7 +52,7 @@ export const MemberAvatar = ({
           width: size,
           height: size,
           fontSize: Math.max(9, Math.round(size * 0.38)),
-          background,
+          background
         }}
       >
         {initials}

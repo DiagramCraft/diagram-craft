@@ -7,7 +7,10 @@ import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
 import { useProjects } from '../../../hooks/useProjects';
 import { useAssessmentsForProjects } from '../../../hooks/useAssessments';
-import { useAssessmentResponses, useUpsertAssessmentResponse } from '../../../hooks/useAssessmentResponses';
+import {
+  useAssessmentResponses,
+  useUpsertAssessmentResponse
+} from '../../../hooks/useAssessmentResponses';
 import { AssessmentFieldCell } from '../../projects/components/AssessmentFieldCells';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { MemberAvatar } from '../../../components/MemberAvatar';
@@ -103,14 +106,23 @@ const AssessmentFillCard = ({
 }) => {
   const [open, setOpen] = useState(false);
   const { data: responses = [] } = useAssessmentResponses(workspaceId, projectId, assessment.id);
-  const upsertResponse = useUpsertAssessmentResponse(workspaceId, projectId, assessment.id, assessment.fields);
+  const upsertResponse = useUpsertAssessmentResponse(
+    workspaceId,
+    projectId,
+    assessment.id,
+    assessment.fields
+  );
 
   const response = responses.find(r => r.entity_id === entityId);
   const status = response?.status ?? computeAssessmentStatus(assessment.fields, undefined);
 
   return (
     <div className={styles.card}>
-      <button type="button" className={`${styles.head} ${open ? styles.headOpen : ''}`} onClick={() => setOpen(o => !o)}>
+      <button
+        type="button"
+        className={`${styles.head} ${open ? styles.headOpen : ''}`}
+        onClick={() => setOpen(o => !o)}
+      >
         <div className={styles.headBody}>
           <div className={styles.name}>{assessment.name}</div>
           {projectName && <div className={styles.proj}>{projectName}</div>}
@@ -125,7 +137,10 @@ const AssessmentFillCard = ({
             size={16}
           />
         )}
-        <TbChevronRight size={12} className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} />
+        <TbChevronRight
+          size={12}
+          className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
+        />
       </button>
       {open && (
         <div className={styles.body}>

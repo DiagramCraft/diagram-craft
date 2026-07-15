@@ -1,8 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import {
-  WORKSPACE_ROLE_CAPABILITIES,
-  type WorkspaceCapability
-} from '@arch-register/permissions';
+import { WORKSPACE_ROLE_CAPABILITIES, type WorkspaceCapability } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
@@ -39,10 +36,13 @@ const parseCreateInput = (input: CreateApiTokenInput, now: Date) => {
     status: 400,
     message: 'At least one capability is required'
   });
-  httpAssert.true(capabilities.every(capability => EDITOR_CAPABILITIES.has(capability)), {
-    status: 400,
-    message: 'API tokens may only use editor capabilities'
-  });
+  httpAssert.true(
+    capabilities.every(capability => EDITOR_CAPABILITIES.has(capability)),
+    {
+      status: 400,
+      message: 'API tokens may only use editor capabilities'
+    }
+  );
 
   const maximumExpiresAt = getOneYearFrom(now);
   let expiresAt = maximumExpiresAt;

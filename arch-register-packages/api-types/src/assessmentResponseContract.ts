@@ -12,7 +12,7 @@ const wsProjectAssessmentAndEntityId = wsProjectAndAssessmentId.extend({
 
 const assessmentResponseStatusSchema = z
   .enum(['not_started', 'in_progress', 'complete'])
-  .describe('Completion status derived from the assessment\'s required fields');
+  .describe("Completion status derived from the assessment's required fields");
 
 const assessmentResponseSchema = z.object({
   id: z.string().describe('Response identifier'),
@@ -23,7 +23,10 @@ const assessmentResponseSchema = z.object({
   status: assessmentResponseStatusSchema,
   updated_at: z.string().describe('ISO 8601 last update timestamp'),
   updated_by: z.string().nullable().describe('User who last updated this response'),
-  updated_by_name: z.string().nullable().describe('Display name of the user who last updated this response')
+  updated_by_name: z
+    .string()
+    .nullable()
+    .describe('Display name of the user who last updated this response')
 });
 
 const upsertAssessmentResponseBodySchema = z.object({
@@ -52,11 +55,14 @@ export const assessmentResponseContract = oc.tag('Assessments').router({
         inputStructure: 'detailed',
         summary: 'Record an assessment response',
         description:
-          'Merges the given field values into the entity\'s response for this assessment. A null value clears that field.',
+          "Merges the given field values into the entity's response for this assessment. A null value clears that field.",
         tags: ['Assessments']
       })
       .input(
-        z.object({ params: wsProjectAssessmentAndEntityId, body: upsertAssessmentResponseBodySchema })
+        z.object({
+          params: wsProjectAssessmentAndEntityId,
+          body: upsertAssessmentResponseBodySchema
+        })
       )
       .output(assessmentResponseSchema),
     exportCsv: oc
@@ -73,7 +79,9 @@ export const assessmentResponseContract = oc.tag('Assessments').router({
       .input(z.object({ params: wsProjectAndAssessmentId }))
       .output(
         z.object({
-          headers: z.record(z.string(), z.string()).describe('Response headers including Content-Disposition'),
+          headers: z
+            .record(z.string(), z.string())
+            .describe('Response headers including Content-Disposition'),
           body: z.instanceof(Blob).describe('CSV file as binary blob')
         })
       )

@@ -27,13 +27,18 @@ export const useDiscussions = (
 export const useDiscussionSummary = (workspaceId: string, enabled = true) => {
   return useQuery({
     queryKey: discussionKeys.summary(workspaceId),
-    queryFn: async () => await orpcClient.discussions.summary({ params: { workspace: workspaceId } }),
+    queryFn: async () =>
+      await orpcClient.discussions.summary({ params: { workspace: workspaceId } }),
     enabled: enabled && !!workspaceId,
     refetchInterval: 60_000
   });
 };
 
-export const useCreateDiscussionPost = (workspaceId: string, objectType: DiscussionObjectType, objectId: string) => {
+export const useCreateDiscussionPost = (
+  workspaceId: string,
+  objectType: DiscussionObjectType,
+  objectId: string
+) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -48,7 +53,11 @@ export const useCreateDiscussionPost = (workspaceId: string, objectType: Discuss
   });
 };
 
-export const useUpdateDiscussionPost = (workspaceId: string, objectType: DiscussionObjectType, objectId: string) => {
+export const useUpdateDiscussionPost = (
+  workspaceId: string,
+  objectType: DiscussionObjectType,
+  objectId: string
+) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -63,7 +72,11 @@ export const useUpdateDiscussionPost = (workspaceId: string, objectType: Discuss
   });
 };
 
-export const useDeleteDiscussionPost = (workspaceId: string, objectType: DiscussionObjectType, objectId: string) => {
+export const useDeleteDiscussionPost = (
+  workspaceId: string,
+  objectType: DiscussionObjectType,
+  objectId: string
+) => {
   const queryClient = useQueryClient();
 
   return useMutation({

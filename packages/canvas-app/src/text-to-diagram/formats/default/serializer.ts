@@ -60,7 +60,8 @@ const serializeProps = (data: ElementProps | undefined) => {
 const getSerializedStyles = (metadata: ElementMetadata) => {
   let style = metadata.style;
   let textStyle = metadata.textStyle;
-  if (style === 'default' || style === 'default-text' || style === 'default-edge') style = undefined;
+  if (style === 'default' || style === 'default-text' || style === 'default-edge')
+    style = undefined;
   if (textStyle === 'default-text-default') textStyle = undefined;
   return { style, textStyle };
 };

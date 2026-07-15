@@ -394,8 +394,7 @@ export const projectMappers = {
     project: projectMappers.project(row),
     file_count: Number(row['file_count'] ?? 0),
     entity_type_id: row['entity_type_id'] == null ? null : String(row['entity_type_id']),
-    entity_type_label:
-      row['entity_type_label'] == null ? null : String(row['entity_type_label'])
+    entity_type_label: row['entity_type_label'] == null ? null : String(row['entity_type_label'])
   }),
   diagramEntityFile: (row: DatabaseRow): DiagramEntityFileDbResult => ({
     file_id: String(row['file_id']),
@@ -433,11 +432,7 @@ export const projectMappers = {
     description: String(row['description'] ?? ''),
     status: row['status'] as AssessmentDbResult['status'],
     scope: parseDatabaseJson(row['scope'], [], 'assessment.scope'),
-    scope_conditions: parseDatabaseJson(
-      row['scope_conditions'],
-      [],
-      'assessment.scope_conditions'
-    ),
+    scope_conditions: parseDatabaseJson(row['scope_conditions'], [], 'assessment.scope_conditions'),
     fields: parseDatabaseJson(row['fields'], [], 'assessment.fields'),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
@@ -481,7 +476,11 @@ export type ProjectDatabase = {
   ): Promise<ContentNodeDbResult | null>;
   getAnyContentNodeById(ws: string, id: string): Promise<ContentNodeDbResult | null>;
   listMarkdownRevisions(ws: string, nodeId: string): Promise<MarkdownRevisionDbResult[]>;
-  getMarkdownRevision(ws: string, nodeId: string, revisionId: string): Promise<MarkdownRevisionDbResult | null>;
+  getMarkdownRevision(
+    ws: string,
+    nodeId: string,
+    revisionId: string
+  ): Promise<MarkdownRevisionDbResult | null>;
   createMarkdownRevision(input: MarkdownRevisionDbCreate): Promise<MarkdownRevisionDbResult>;
   getNextMarkdownRevisionNumber(ws: string, nodeId: string): Promise<number>;
   updateContentNodeSizeById(
@@ -571,10 +570,7 @@ export type ProjectDatabase = {
     newPath: string,
     updated_at: Date
   ): Promise<string[]>;
-  deleteWorkspaceContentNodeFolder(
-    ws: string,
-    folderPath: string
-  ): Promise<ContentNodeDbResult[]>;
+  deleteWorkspaceContentNodeFolder(ws: string, folderPath: string): Promise<ContentNodeDbResult[]>;
 
   listProjectEntities(ws: string, projectId: string): Promise<ProjectEntityDbResult[]>;
   listProjectEntityLinks(ws: string, projectId: string): Promise<ProjectEntityLinkDbResult[]>;

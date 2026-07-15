@@ -139,7 +139,8 @@ export const assessmentContract = oc.tag('Assessments').router({
         path: '/{workspace}/projects/{id}/assessments/{assessmentId}/status',
         inputStructure: 'detailed',
         summary: 'Update assessment status',
-        description: 'Sets the assessment status to draft, open, closed, or archived without deleting its data.',
+        description:
+          'Sets the assessment status to draft, open, closed, or archived without deleting its data.',
         tags: ['Assessments']
       })
       .input(z.object({ params: wsProjectAndAssessmentId, body: updateAssessmentStatusBodySchema }))
@@ -150,7 +151,8 @@ export const assessmentContract = oc.tag('Assessments').router({
         path: '/{workspace}/projects/{id}/assessments/{assessmentId}',
         inputStructure: 'detailed',
         summary: 'Delete assessment',
-        description: 'Permanently deletes an assessment template. Fails if it has any recorded responses.',
+        description:
+          'Permanently deletes an assessment template. Fails if it has any recorded responses.',
         tags: ['Assessments']
       })
       .input(z.object({ params: wsProjectAndAssessmentId }))

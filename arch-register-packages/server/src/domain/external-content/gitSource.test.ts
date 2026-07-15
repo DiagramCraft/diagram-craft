@@ -30,11 +30,18 @@ describe('fetchGitSnapshot', () => {
 
   afterEach(async () => {
     delete process.env['EXTERNAL_CONTENT_CACHE_DIR'];
-    await Promise.all([rm(repository, { recursive: true, force: true }), rm(cache, { recursive: true, force: true })]);
+    await Promise.all([
+      rm(repository, { recursive: true, force: true }),
+      rm(cache, { recursive: true, force: true })
+    ]);
   });
 
   it('clones the source once and reads the default branch tree', async () => {
-    const first = await fetchGitSnapshot('source-1', { type: 'git', url: `file://${repository}` }, 'docs');
+    const first = await fetchGitSnapshot(
+      'source-1',
+      { type: 'git', url: `file://${repository}` },
+      'docs'
+    );
 
     expect(first.files).toEqual([
       expect.objectContaining({ path: 'readme.md', content: Buffer.from('# First revision\n') })
@@ -45,13 +52,21 @@ describe('fetchGitSnapshot', () => {
     await git('add', '.');
     await git('commit', '-q', '-m', 'Second revision');
 
-    const second = await fetchGitSnapshot('source-1', { type: 'git', url: `file://${repository}` }, 'docs');
+    const second = await fetchGitSnapshot(
+      'source-1',
+      { type: 'git', url: `file://${repository}` },
+      'docs'
+    );
     expect(second.files.map(file => file.path)).toEqual(['readme.md', 'second.txt']);
     expect(second.revision).not.toBe(first.revision);
   });
 
   it('reads the repository root when no source path is configured', async () => {
-    const snapshot = await fetchGitSnapshot('source-root', { type: 'git', url: `file://${repository}` }, '');
+    const snapshot = await fetchGitSnapshot(
+      'source-root',
+      { type: 'git', url: `file://${repository}` },
+      ''
+    );
 
     expect(snapshot.files.map(file => file.path)).toEqual(['README.md', 'docs/readme.md']);
   });

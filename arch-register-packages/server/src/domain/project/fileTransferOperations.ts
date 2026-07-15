@@ -13,7 +13,11 @@ import { httpAssert } from '../../utils/httpAssert';
 import type { ContentScopeResolver } from './contentScope';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
-import { projectDbErrorMessages, requireNonProjectContentAccess, assertContentPathWritable } from './projectOperationHelpers';
+import {
+  projectDbErrorMessages,
+  requireNonProjectContentAccess,
+  assertContentPathWritable
+} from './projectOperationHelpers';
 
 export const uploadContentFile = async (
   scope: ContentScopeResolver,

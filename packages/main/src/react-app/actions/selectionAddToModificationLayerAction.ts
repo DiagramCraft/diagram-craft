@@ -15,9 +15,8 @@ import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMapExtensions extends ReturnType<
-      typeof selectionAddToModificationLayerActions
-    > {}
+    interface ActionMapExtensions
+      extends ReturnType<typeof selectionAddToModificationLayerActions> {}
   }
 }
 

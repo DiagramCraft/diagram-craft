@@ -59,7 +59,11 @@ export const externalContentMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     source_type: String(row['source_type']) as 'git',
-    source_config: parseDatabaseJson(row['source_config'], { type: 'git', url: '' }, 'external_content_source.source_config'),
+    source_config: parseDatabaseJson(
+      row['source_config'],
+      { type: 'git', url: '' },
+      'external_content_source.source_config'
+    ),
     identity_key: String(row['identity_key']),
     schedule_id: row['schedule_id'] == null ? null : String(row['schedule_id']),
     enabled: databaseBoolean(row['enabled']),
@@ -99,7 +103,19 @@ export type ExternalContentDatabase = {
   listSources(workspace: string): Promise<ExternalContentSourceDbResult[]>;
   updateSource(
     id: string,
-    input: Partial<Pick<ExternalContentSourceDbResult, 'schedule_id' | 'enabled' | 'status' | 'last_attempt_at' | 'last_synced_at' | 'last_revision' | 'last_error' | 'updated_at'>>
+    input: Partial<
+      Pick<
+        ExternalContentSourceDbResult,
+        | 'schedule_id'
+        | 'enabled'
+        | 'status'
+        | 'last_attempt_at'
+        | 'last_synced_at'
+        | 'last_revision'
+        | 'last_error'
+        | 'updated_at'
+      >
+    >
   ): Promise<ExternalContentSourceDbResult | null>;
   deleteSource(workspace: string, id: string): Promise<void>;
 
@@ -109,7 +125,19 @@ export type ExternalContentDatabase = {
   listMountsBySource(workspace: string, sourceId: string): Promise<ExternalContentMountDbResult[]>;
   updateMount(
     id: string,
-    input: Partial<Pick<ExternalContentMountDbResult, 'source_id' | 'destination_path' | 'source_path' | 'status' | 'last_synced_at' | 'last_revision' | 'last_error' | 'updated_at'>>
+    input: Partial<
+      Pick<
+        ExternalContentMountDbResult,
+        | 'source_id'
+        | 'destination_path'
+        | 'source_path'
+        | 'status'
+        | 'last_synced_at'
+        | 'last_revision'
+        | 'last_error'
+        | 'updated_at'
+      >
+    >
   ): Promise<ExternalContentMountDbResult | null>;
   deleteMount(workspace: string, id: string): Promise<void>;
 };

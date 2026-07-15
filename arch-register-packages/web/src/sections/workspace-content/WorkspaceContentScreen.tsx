@@ -121,38 +121,41 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           title={workspace?.name ?? workspaceSlug}
           buttons={
             !isReadOnly && (
-            <MenuButton.Root>
-              <MenuButton.Trigger
-                element={
-                  <Button variant="primary" icon={<TbPlus size={12} />}>
-                    New
-                  </Button>
-                }
-              />
-              <MenuButton.Menu align="end">
-                <Menu.Item
-                  leftSlot={<TbFolderOpen size={13} />}
-                  onClick={() => setAddFolderOpen(true)}
-                >
-                  New folder
-                </Menu.Item>
-                <Menu.Item
-                  leftSlot={<TbUpload size={13} />}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Upload file
-                </Menu.Item>
-                <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramOpen(true)}>
-                  New diagram
-                </Menu.Item>
-                <Menu.Item
-                  leftSlot={<TbFileText size={13} />}
-                  onClick={() => setAddMarkdownOpen(true)}
-                >
-                  New wiki page
-                </Menu.Item>
-              </MenuButton.Menu>
-            </MenuButton.Root>
+              <MenuButton.Root>
+                <MenuButton.Trigger
+                  element={
+                    <Button variant="primary" icon={<TbPlus size={12} />}>
+                      New
+                    </Button>
+                  }
+                />
+                <MenuButton.Menu align="end">
+                  <Menu.Item
+                    leftSlot={<TbFolderOpen size={13} />}
+                    onClick={() => setAddFolderOpen(true)}
+                  >
+                    New folder
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSlot={<TbUpload size={13} />}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Upload file
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSlot={<TbPlus size={13} />}
+                    onClick={() => setAddDiagramOpen(true)}
+                  >
+                    New diagram
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSlot={<TbFileText size={13} />}
+                    onClick={() => setAddMarkdownOpen(true)}
+                  >
+                    New wiki page
+                  </Menu.Item>
+                </MenuButton.Menu>
+              </MenuButton.Root>
             )
           }
         />

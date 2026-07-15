@@ -8,7 +8,9 @@ test('shows default workspace after login', async ({ page }) => {
   const homePage = new HomePage(page, defaultWorkspace.slug);
 
   await homePage.goto();
-  await expect(page.getByRole('main').getByText(defaultWorkspace.name, { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('main').getByText(defaultWorkspace.name, { exact: true })
+  ).toBeVisible();
 });
 
 test('navigates to entity list', async ({ page }) => {
@@ -18,7 +20,9 @@ test('navigates to entity list', async ({ page }) => {
   await entitiesPage.workspaceShell.expectMainVisible();
 });
 
-test('restores workspace content filter and view mode through reload and browser history', async ({ page }) => {
+test('restores workspace content filter and view mode through reload and browser history', async ({
+  page
+}) => {
   await page.goto(`/${defaultWorkspace.slug}/content`);
 
   const filterInput = page.getByPlaceholder('Filter diagrams…');
@@ -49,8 +53,12 @@ test('restores workspace content filter and view mode through reload and browser
   await expect(page.getByText('Name')).toBeVisible();
 });
 
-test('navigates directly to workspace content folders, including nested folders', async ({ page }) => {
-  await page.goto(`/${defaultWorkspace.slug}/content/folders/wiki?contentQuery=Home&contentView=list`);
+test('navigates directly to workspace content folders, including nested folders', async ({
+  page
+}) => {
+  await page.goto(
+    `/${defaultWorkspace.slug}/content/folders/wiki?contentQuery=Home&contentView=list`
+  );
 
   await expect(page).toHaveURL(/\/content\/folders\/wiki\?contentQuery=Home&contentView=list/);
   await expect(page.getByPlaceholder('Filter diagrams…')).toHaveValue('Home');

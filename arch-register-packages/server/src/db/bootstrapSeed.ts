@@ -76,7 +76,10 @@ export const validateBootstrapSeed = async (db: Database) => {
       const f = field as ReferenceField | ContainmentField;
       const refs = decodeRefs(entity.data[f.id]);
 
-      if (f.type === 'containment' && (f.maxCount !== 1 || (f.minCount !== 0 && f.minCount !== 1))) {
+      if (
+        f.type === 'containment' &&
+        (f.maxCount !== 1 || (f.minCount !== 0 && f.minCount !== 1))
+      ) {
         console.error(
           `  [schema:${schema.id}] containment field '${f.id}' must use minCount 0|1 and maxCount 1`
         );

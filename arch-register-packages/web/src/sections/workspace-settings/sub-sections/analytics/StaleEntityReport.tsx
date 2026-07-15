@@ -21,7 +21,11 @@ export const StaleEntityReport = ({
   const [staleAfterDays, setStaleAfterDays] = useState(90);
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 25;
-  const { data: analytics, isLoading, isError } = useWorkspaceAnalytics(workspaceSlug, staleAfterDays);
+  const {
+    data: analytics,
+    isLoading,
+    isError
+  } = useWorkspaceAnalytics(workspaceSlug, staleAfterDays);
   const conditions = analytics
     ? [{ fieldId: '_updatedAt', op: 'before' as const, value: analytics.stale.cutoffAt }]
     : [];
@@ -41,7 +45,8 @@ export const StaleEntityReport = ({
   };
 
   if (isLoading) return <LoadingState text="Loading stale entities…" size="sm" />;
-  if (isError || analytics == null) return <EmptyState compact title="Stale entities could not be loaded." />;
+  if (isError || analytics == null)
+    return <EmptyState compact title="Stale entities could not be loaded." />;
 
   return (
     <div className={styles.stack}>
@@ -49,7 +54,8 @@ export const StaleEntityReport = ({
 
       <div className={styles.staleReportControls}>
         <div className={styles.reportSub}>
-          {analytics.stale.totalCount} entities not changed in the last {analytics.stale.thresholdDays} days.
+          {analytics.stale.totalCount} entities not changed in the last{' '}
+          {analytics.stale.thresholdDays} days.
         </div>
         <label className={styles.staleLabel}>
           Not changed in
@@ -107,7 +113,8 @@ export const StaleEntityReport = ({
       {analytics.stale.totalCount > pageSize && (
         <div className={styles.pagination}>
           <span>
-            {pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, analytics.stale.totalCount)} of{' '}
+            {pageIndex * pageSize + 1}–
+            {Math.min((pageIndex + 1) * pageSize, analytics.stale.totalCount)} of{' '}
             {analytics.stale.totalCount}
           </span>
           <div>

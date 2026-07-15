@@ -29,9 +29,7 @@ import { resolveFillForRendering } from './shapeFill';
 const defaultOnChange =
   (element: DiagramNode, textId: string = '1') =>
   (text: string) => {
-    element.diagram.undoManager.execute('Change text', uow =>
-      element.setText(text, uow, textId)
-    );
+    element.diagram.undoManager.execute('Change text', uow => element.setText(text, uow, textId));
   };
 
 type ShapeBuilderProps = {

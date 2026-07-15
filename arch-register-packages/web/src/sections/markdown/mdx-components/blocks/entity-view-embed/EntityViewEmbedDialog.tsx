@@ -76,7 +76,10 @@ export const EntityViewEmbedDialog = ({
       <DialogContent>
         <DialogSection label="View">
           {adminViews.length === 0 ? (
-            <EmptyState compact title="No saved views available. Create an admin view in the entity browser first." />
+            <EmptyState
+              compact
+              title="No saved views available. Create an admin view in the entity browser first."
+            />
           ) : (
             <Select.Root value={viewId} onChange={value => setViewId(value ?? '')}>
               {adminViews.map(view => (

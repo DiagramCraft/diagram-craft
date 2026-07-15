@@ -248,7 +248,9 @@ export const PreviewPane = ({
               }
             }}
           >
-            Open {f.scope === 'project' ? 'in project' : f.scope === 'entity' ? 'entity' : 'workspace'} <TbArrowRight size={11} />
+            Open{' '}
+            {f.scope === 'project' ? 'in project' : f.scope === 'entity' ? 'entity' : 'workspace'}{' '}
+            <TbArrowRight size={11} />
           </button>
         </div>
       </div>

@@ -26,7 +26,13 @@ import { useJoinedAssessment } from './useJoinedAssessment';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
 import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityBrowser.module.css';
-import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from './entityDisplayFields';
+import {
+  buildEntityDisplayFields,
+  DISPLAY_FIELD_VIEWS,
+  getDisplayFieldIds,
+  withDisplayFieldIds,
+  withoutDisplayFieldIds
+} from './entityDisplayFields';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { CollectionPickerDialog } from './CollectionPickerDialog';
 
@@ -179,10 +185,11 @@ export const EntityBrowser = ({
     workspaceSlug,
     projectId
   });
-  const { options: joinOptions, joined, responsesByEntity } = useJoinedAssessment(
-    workspaceId,
-    joinAssessmentId
-  );
+  const {
+    options: joinOptions,
+    joined,
+    responsesByEntity
+  } = useJoinedAssessment(workspaceId, joinAssessmentId);
   const readOnly = !!asOf && !collectionId;
   const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
   const [collectionTarget, setCollectionTarget] = useState<BrowserEntityRecord | null>(null);
@@ -291,7 +298,10 @@ export const EntityBrowser = ({
         : undefined,
     [filtered, projectContext]
   );
-  const displayFieldSchemas = useMemo(() => typeFilter ? schemas.filter(schema => schema.id === typeFilter) : schemas, [schemas, typeFilter]);
+  const displayFieldSchemas = useMemo(
+    () => (typeFilter ? schemas.filter(schema => schema.id === typeFilter) : schemas),
+    [schemas, typeFilter]
+  );
   const joinedAssessmentContext = useMemo(
     () => (joined ? { assessment: joined.assessment, enums } : null),
     [joined, enums]
@@ -300,8 +310,12 @@ export const EntityBrowser = ({
     () => buildEntityDisplayFields(displayFieldSchemas, !!projectContext, joinedAssessmentContext),
     [displayFieldSchemas, projectContext, joinedAssessmentContext]
   );
-  const displayView = DISPLAY_FIELD_VIEWS.has(view) ? view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore' : null;
-  const selectedDisplayFieldIds = displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined;
+  const displayView = DISPLAY_FIELD_VIEWS.has(view)
+    ? (view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore')
+    : null;
+  const selectedDisplayFieldIds = displayView
+    ? getDisplayFieldIds(displayView, activeViewConfig)
+    : undefined;
   const joinedRows = useMemo<BrowserEntityRecord[]>(() => {
     if (!joined) return filtered;
     return filtered.map(row => ({ ...row, _assessment: responsesByEntity.get(row._uid) ?? null }));
@@ -331,11 +345,26 @@ export const EntityBrowser = ({
         tlOpen={tlOpen}
         onToggleTimeline={collectionId ? undefined : () => setTlOpen(o => !o)}
         asOf={collectionId ? undefined : asOf}
-        allowedViews={collectionId ? [{ value: 'table', label: 'Table' }, { value: 'cards', label: 'Cards' }] : undefined}
+        allowedViews={
+          collectionId
+            ? [
+                { value: 'table', label: 'Table' },
+                { value: 'cards', label: 'Cards' }
+              ]
+            : undefined
+        }
         displayFields={displayView && !readOnly ? displayFields : undefined}
         selectedDisplayFieldIds={!readOnly ? selectedDisplayFieldIds : undefined}
-        onDisplayFieldsChange={displayView && !readOnly ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds)) : undefined}
-        onDisplayFieldsReset={displayView && !readOnly ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
+        onDisplayFieldsChange={
+          displayView && !readOnly
+            ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds))
+            : undefined
+        }
+        onDisplayFieldsReset={
+          displayView && !readOnly
+            ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig))
+            : undefined
+        }
         joinOptions={joinOptions}
         joinAssessmentId={joinAssessmentId}
         onJoinAssessmentChange={setJoinAssessmentId}
@@ -354,10 +383,7 @@ export const EntityBrowser = ({
       )}
 
       {(view === 'table' || view === 'cards') && filtered.length === 0 ? (
-        <EmptyState
-          title="No entities found"
-          subtitle="Try adjusting your search or filters."
-        />
+        <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
       ) : (
         <>
           {view === 'table' && !readOnly && selectedIds.size > 0 && (

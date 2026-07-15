@@ -4,10 +4,7 @@ import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
 import { useEntities } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import {
-  asEntityPublicId,
-  entityDetailRoute
-} from '../../../../../routes/publicObjectRoutes';
+import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';
 import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { Table } from '../../../../../components/table/Table';
 import styles from './EntityTable.module.css';

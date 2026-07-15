@@ -154,7 +154,8 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
   useEffect(() => {
     if (mode === 'copy' && workspaces.length === 0) {
-      orpcClient.workspaces.list()
+      orpcClient.workspaces
+        .list()
         .then(ws => {
           setWorkspaces(ws);
           if (ws.length > 0) setCopyFrom(ws[0]!.id);

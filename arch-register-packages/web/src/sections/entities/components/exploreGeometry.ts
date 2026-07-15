@@ -49,7 +49,17 @@ export const connectorDistance = (line: ExploreConnectorLine, px: number, py: nu
   let previous = { x: line.x1, y: line.y1 };
 
   for (let i = 1; i <= 24; i++) {
-    const next = cubicPoint(i / 24, line.x1, line.y1, centerX, line.y1, centerX, line.y2, line.x2, line.y2);
+    const next = cubicPoint(
+      i / 24,
+      line.x1,
+      line.y1,
+      centerX,
+      line.y1,
+      centerX,
+      line.y2,
+      line.x2,
+      line.y2
+    );
     minDistance = Math.min(
       minDistance,
       pointToSegmentDistance(px, py, previous.x, previous.y, next.x, next.y)

@@ -16,12 +16,7 @@ describe('UMLForkJoin', () => {
     const anchors = new UMLForkJoinNodeDefinition().getAnchors(node);
 
     expect(node.renderProps.capabilities.resizable.horizontal).toBe(false);
-    expect(anchors.map(a => a.id)).toEqual([
-      'left-edge',
-      'right-edge',
-      'l',
-      'r'
-    ]);
+    expect(anchors.map(a => a.id)).toEqual(['left-edge', 'right-edge', 'l', 'r']);
     expect(anchors[0]).toMatchObject({ type: 'edge', start: { x: 0, y: 0 }, end: { x: 0, y: 1 } });
     expect(anchors[1]).toMatchObject({ type: 'edge', start: { x: 1, y: 0 }, end: { x: 1, y: 1 } });
   });

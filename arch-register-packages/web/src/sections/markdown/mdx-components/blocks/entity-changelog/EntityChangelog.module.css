@@ -11,8 +11,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* The .article container this renders into composes articleTypography.module.css, whose
@@ -40,9 +45,18 @@
   white-space: nowrap;
 }
 
-.op_create  { background: color-mix(in srgb, var(--success-bg) 60%, transparent); color: var(--success-fg); }
-.op_update  { background: color-mix(in srgb, var(--accent-bg) 60%, transparent);  color: var(--accent-fg); }
-.op_delete  { background: color-mix(in srgb, var(--danger-bg) 60%, transparent);  color: var(--danger-fg); }
+.op_create {
+  background: color-mix(in srgb, var(--success-bg) 60%, transparent);
+  color: var(--success-fg);
+}
+.op_update {
+  background: color-mix(in srgb, var(--accent-bg) 60%, transparent);
+  color: var(--accent-fg);
+}
+.op_delete {
+  background: color-mix(in srgb, var(--danger-bg) 60%, transparent);
+  color: var(--danger-fg);
+}
 
 .entityLink {
   color: var(--accent-fg);

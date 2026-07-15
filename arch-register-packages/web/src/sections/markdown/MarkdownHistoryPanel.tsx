@@ -1,10 +1,5 @@
 import { useMemo } from 'react';
-import {
-  TbChevronLeft,
-  TbChevronRight,
-  TbRestore,
-  TbX
-} from 'react-icons/tb';
+import { TbChevronLeft, TbChevronRight, TbRestore, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useMarkdownRevision } from '../../hooks/useMarkdownContent';
 import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectContract';
@@ -243,9 +238,7 @@ export const MarkdownHistoryPanel = ({
           <Button
             variant="secondary"
             icon={<TbChevronRight size={14} />}
-            disabled={
-              !selectedRevisionSummary || revisions.indexOf(selectedRevisionSummary) === 0
-            }
+            disabled={!selectedRevisionSummary || revisions.indexOf(selectedRevisionSummary) === 0}
             onClick={() => {
               const idx = revisions.indexOf(selectedRevisionSummary!);
               onSelectRevision(revisions[idx - 1]!.id);

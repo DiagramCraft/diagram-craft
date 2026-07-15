@@ -20,7 +20,8 @@ type Props<T> = {
 export class MappedCRDTMap<
   T,
   C extends Record<string, CRDTCompatibleObject> = Record<string, string>
-> implements Releasable {
+> implements Releasable
+{
   #map: Map<string, T> = new Map<string, T>();
   #current: CRDTMap<MappedCRDTMapMapType<C>>;
   readonly #remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']>;

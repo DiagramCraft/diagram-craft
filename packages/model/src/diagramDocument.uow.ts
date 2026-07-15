@@ -54,4 +54,3 @@ export class DocumentDiagramChildAdapter implements UOWChildAdapter<DiagramSnaps
     diagram.document.removeDiagram(mustExist(diagram.document.byId(childId)));
   }
 }
-

@@ -15,17 +15,15 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const wrap =
-  (theme: 'light-theme' | 'dark-theme') =>
-  (args: Story['args']) => (
-    <div className={theme}>
-      <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
-        <PortalContextProvider>
-          <DeleteConfirmationDialog {...args} />
-        </PortalContextProvider>
-      </DialogContextProvider>
-    </div>
-  );
+const wrap = (theme: 'light-theme' | 'dark-theme') => (args: Story['args']) => (
+  <div className={theme}>
+    <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+      <PortalContextProvider>
+        <DeleteConfirmationDialog {...args} />
+      </PortalContextProvider>
+    </DialogContextProvider>
+  </div>
+);
 
 const renderLight = wrap('light-theme');
 const renderDark = wrap('dark-theme');

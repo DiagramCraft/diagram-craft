@@ -50,11 +50,7 @@ export const RestoreSnapshotDialog = ({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={onClose}
-      title="Restore Entity Version"
-    >
+    <Dialog open={isOpen} onClose={onClose} title="Restore Entity Version">
       <div className={styles.content}>
         <div className={styles.warning}>
           <strong>Warning:</strong> This will restore the entity to a previous state. The current

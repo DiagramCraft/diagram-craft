@@ -124,7 +124,10 @@ describe('Markdown Parser', () => {
 
     test('produces header and body rows', () => {
       const result = parseMarkdown('| A | B |\n| --- | --- |\n| 1 | 2 |', 'gfm');
-      const table = result[0]! as { type: 'table'; children: Array<{ type: string; header?: boolean; children: unknown[] }> };
+      const table = result[0]! as {
+        type: 'table';
+        children: Array<{ type: string; header?: boolean; children: unknown[] }>;
+      };
       const rows = table.children;
       expect(rows[0]!.header).toBe(true);
       expect(rows[1]!.header).toBeFalsy();
@@ -132,7 +135,10 @@ describe('Markdown Parser', () => {
 
     test('detects column alignment', () => {
       const result = parseMarkdown('| A | B | C |\n| :--- | :---: | ---: |\n| 1 | 2 | 3 |', 'gfm');
-      const table = result[0]! as { type: 'table'; children: Array<{ children: Array<{ align?: string }> }> };
+      const table = result[0]! as {
+        type: 'table';
+        children: Array<{ children: Array<{ align?: string }> }>;
+      };
       const headerCells = table.children[0]!.children;
       expect(headerCells[0]!.align).toBe('left');
       expect(headerCells[1]!.align).toBe('center');

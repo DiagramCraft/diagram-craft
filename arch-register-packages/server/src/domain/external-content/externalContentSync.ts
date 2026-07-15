@@ -4,10 +4,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import { syncDiagramContentMetadata } from '../project/projectOperationHelpers';
-import {
-  isMarkdownPath,
-  stripMarkdownExtension
-} from '../project/contentFileHelpers';
+import { isMarkdownPath, stripMarkdownExtension } from '../project/contentFileHelpers';
 import type { ExternalContentMountDbResult } from './db/externalContentDatabase';
 import {
   prepareGitRepository,
@@ -36,11 +33,7 @@ const mimeTypes: Record<string, string> = {
 };
 
 const fileType = (path: string): 'diagram' | 'markdown' | 'file' =>
-  isMarkdownPath(path)
-    ? 'markdown'
-    : path.toLowerCase().endsWith('.json')
-      ? 'diagram'
-      : 'file';
+  isMarkdownPath(path) ? 'markdown' : path.toLowerCase().endsWith('.json') ? 'diagram' : 'file';
 
 const isDiagramDocument = (content: Buffer) => {
   if (!content.toString('utf8').trim()) return false;

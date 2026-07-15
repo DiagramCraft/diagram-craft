@@ -91,7 +91,8 @@ export const useEntityBrowserSearchState = ({
     [navigateBrowser]
   );
   const setQ = useCallback(
-    (next: string) => navigateBrowser({ q: next === '' ? undefined : next, viewId: undefined }, true),
+    (next: string) =>
+      navigateBrowser({ q: next === '' ? undefined : next, viewId: undefined }, true),
     [navigateBrowser]
   );
   const setSort = useCallback(
@@ -121,26 +122,17 @@ export const useEntityBrowserSearchState = ({
     [setViewConfigs, view, viewConfigs]
   );
 
-  const setAsOf = useCallback(
-    (date: string) => navigateBrowser({ asOf: date }),
-    [navigateBrowser]
-  );
-  const clearAsOf = useCallback(
-    () => navigateBrowser({ asOf: undefined }),
-    [navigateBrowser]
-  );
+  const setAsOf = useCallback((date: string) => navigateBrowser({ asOf: date }), [navigateBrowser]);
+  const clearAsOf = useCallback(() => navigateBrowser({ asOf: undefined }), [navigateBrowser]);
   const setIncludeProjectSnapshots = useCallback(
-    (include: boolean) =>
-      navigateBrowser({ asOfIncludeProjects: include ? undefined : 'false' }),
+    (include: boolean) => navigateBrowser({ asOfIncludeProjects: include ? undefined : 'false' }),
     [navigateBrowser]
   );
 
   const setJoinAssessmentId = useCallback(
     (next: string | null) => {
-      const { conditions: prunedConditions, viewConfigs: prunedViewConfigs } = pruneAssessmentReferences(
-        conditions,
-        viewConfigs
-      );
+      const { conditions: prunedConditions, viewConfigs: prunedViewConfigs } =
+        pruneAssessmentReferences(conditions, viewConfigs);
       navigateBrowser({
         joinAssessmentId: next ?? undefined,
         filters: prunedConditions.length > 0 ? JSON.stringify(prunedConditions) : undefined,

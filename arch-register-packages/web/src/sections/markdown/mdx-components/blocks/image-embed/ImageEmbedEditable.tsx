@@ -52,7 +52,12 @@ export const ImageEmbedEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={!!fileId}
-      placeholder={<><TbPhoto size={16} /><span>Choose image…</span></>}
+      placeholder={
+        <>
+          <TbPhoto size={16} />
+          <span>Choose image…</span>
+        </>
+      }
       content={
         <ImageEmbed
           id={fileId}

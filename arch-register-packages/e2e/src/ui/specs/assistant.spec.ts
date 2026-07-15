@@ -6,9 +6,7 @@ test.describe('assistant section', () => {
     await page.goto(`/${defaultWorkspace.slug}/assistant`);
 
     await page.getByRole('button', { name: 'New chat' }).first().click();
-    await expect
-      .poll(() => new URL(page.url()).searchParams.get('conversation'))
-      .not.toBeNull();
+    await expect.poll(() => new URL(page.url()).searchParams.get('conversation')).not.toBeNull();
     const firstConversation = new URL(page.url()).searchParams.get('conversation');
 
     await page.getByRole('button', { name: 'New chat' }).first().click();

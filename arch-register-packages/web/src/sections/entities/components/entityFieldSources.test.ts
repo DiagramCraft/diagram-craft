@@ -129,7 +129,13 @@ describe('getNumericFields', () => {
 
 describe('getCategoricalFieldValues', () => {
   it('returns the 1-5 rating bucket values for a rating-typed assessment field', () => {
-    const values = getCategoricalFieldValues([schema], '_assessment:rating1', [], [], joinedAssessment);
+    const values = getCategoricalFieldValues(
+      [schema],
+      '_assessment:rating1',
+      [],
+      [],
+      joinedAssessment
+    );
     expect(values).toEqual([
       { id: '1', label: '1' },
       { id: '2', label: '2' },
@@ -140,7 +146,13 @@ describe('getCategoricalFieldValues', () => {
   });
 
   it('returns enum options for an enum-typed assessment field', () => {
-    const values = getCategoricalFieldValues([schema], '_assessment:enum1', [], [], joinedAssessment);
+    const values = getCategoricalFieldValues(
+      [schema],
+      '_assessment:enum1',
+      [],
+      [],
+      joinedAssessment
+    );
     expect(values).toEqual([
       { id: 'low', label: 'Low' },
       { id: 'high', label: 'High' }
@@ -208,7 +220,10 @@ describe('getNumericFieldRange', () => {
 describe('getDateFields', () => {
   it('unions date-typed fields across schemas and appends extra pseudo-fields', () => {
     const duplicate = { ...schema, id: 'app', name: 'Application' };
-    const fields = getDateFields([schema, duplicate], [{ id: '_targetLifecycleDate', label: 'Target Lifecycle Date' }]);
+    const fields = getDateFields(
+      [schema, duplicate],
+      [{ id: '_targetLifecycleDate', label: 'Target Lifecycle Date' }]
+    );
     expect(fields).toEqual([
       { id: 'launched', label: 'Launched' },
       { id: '_targetLifecycleDate', label: 'Target Lifecycle Date' }

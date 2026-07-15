@@ -28,7 +28,9 @@
   border-radius: var(--r-sm);
   color: var(--cmp-fg-disabled);
   font-size: 0.9em;
-  transition: border-color 80ms, color 80ms;
+  transition:
+    border-color 80ms,
+    color 80ms;
 }
 
 .placeholder:hover {

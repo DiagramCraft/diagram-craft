@@ -5,7 +5,10 @@ import { Chip } from '../../../components/Chip';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import { exploreViewConfigSchema, type ExploreViewConfig } from '@arch-register/api-types/viewContract';
+import {
+  exploreViewConfigSchema,
+  type ExploreViewConfig
+} from '@arch-register/api-types/viewContract';
 import styles from './ExploreView.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import {
@@ -13,12 +16,17 @@ import {
   buildExploreGraph,
   buildRelationFieldOptions,
   DEFAULT_EXPLORE_CONFIG,
-  normalizeExploreConfig,
+  normalizeExploreConfig
 } from './ExploreView.helpers';
 import { connectorDistance, type ExploreConnectorLine } from './exploreGeometry';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
-import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
+import {
+  findEntityDisplayField,
+  formatEntityDisplayValue,
+  getDisplayFieldIds,
+  type EntityDisplayField
+} from './entityDisplayFields';
 
 type ExploreViewProps = EntityBrowserRowViewProps & {
   config: unknown;
@@ -43,7 +51,8 @@ export const ExploreView = ({
   config,
   onConfigChange,
   linkedEntityIds,
-  hideToolbar, displayFields
+  hideToolbar,
+  displayFields
 }: ExploreViewProps) => {
   const parsedConfig = useMemo(() => {
     const result = exploreViewConfigSchema.safeParse(config);
@@ -61,7 +70,10 @@ export const ExploreView = ({
     });
     return map;
   }, [schemas]);
-  const fullSchemaMap = useMemo(() => new Map(schemas.map((schema, index) => [schema.id, { schema, index }])), [schemas]);
+  const fullSchemaMap = useMemo(
+    () => new Map(schemas.map((schema, index) => [schema.id, { schema, index }])),
+    [schemas]
+  );
 
   const [localConfig, setLocalConfig] = useState<ExploreViewConfig>(
     normalizeExploreConfig(parsedConfig ?? DEFAULT_EXPLORE_CONFIG)
@@ -256,10 +268,7 @@ export const ExploreView = ({
             </div>
           </div>
         )}
-        <EmptyState
-          title="No entities found"
-          subtitle="Try adjusting your search or filters."
-        />
+        <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
       </div>
     );
   }
@@ -281,7 +290,9 @@ export const ExploreView = ({
                     aria-pressed={active}
                     onClick={() => {
                       const nextValues = active
-                        ? normalizedConfig.relationFieldNames.filter(value => value !== option.value)
+                        ? normalizedConfig.relationFieldNames.filter(
+                            value => value !== option.value
+                          )
                         : [...normalizedConfig.relationFieldNames, option.value];
                       updateConfig({ relationFieldNames: nextValues });
                     }}
@@ -486,11 +497,15 @@ export const ExploreView = ({
                               <div className={styles.entityText}>
                                 <div
                                   className={styles.entityName}
-                                  style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+                                  style={
+                                    isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }
+                                  }
                                 >
                                   {entity.name || entity.slug}
                                 </div>
-                                {selectedDisplayFields.includes('_slug') && <div className={styles.entitySlug}>{entity.slug}</div>}
+                                {selectedDisplayFields.includes('_slug') && (
+                                  <div className={styles.entitySlug}>{entity.slug}</div>
+                                )}
                               </div>
                             </div>
                             {isDuplicate && (
@@ -499,13 +514,31 @@ export const ExploreView = ({
                           </div>
 
                           <div className={styles.entityMeta}>
-                            {entity.record && selectedDisplayFields.filter(id => id !== '_slug' && id !== '_description').map(id => {
-                              const field = findEntityDisplayField(id, entity.record!, fullSchemaMap, displayFields);
-                              const value = field ? formatEntityDisplayValue(entity.record!, field) : null;
-                              return value == null ? null : <Chip key={id} tone="ghost">{field!.label}: {value}</Chip>;
-                            })}
+                            {entity.record &&
+                              selectedDisplayFields
+                                .filter(id => id !== '_slug' && id !== '_description')
+                                .map(id => {
+                                  const field = findEntityDisplayField(
+                                    id,
+                                    entity.record!,
+                                    fullSchemaMap,
+                                    displayFields
+                                  );
+                                  const value = field
+                                    ? formatEntityDisplayValue(entity.record!, field)
+                                    : null;
+                                  return value == null ? null : (
+                                    <Chip key={id} tone="ghost">
+                                      {field!.label}: {value}
+                                    </Chip>
+                                  );
+                                })}
                           </div>
-                          {entity.record && selectedDisplayFields.includes('_description') && entity.record._description && <div className={styles.entitySlug}>{entity.record._description}</div>}
+                          {entity.record &&
+                            selectedDisplayFields.includes('_description') &&
+                            entity.record._description && (
+                              <div className={styles.entitySlug}>{entity.record._description}</div>
+                            )}
                         </button>
                       );
                     })

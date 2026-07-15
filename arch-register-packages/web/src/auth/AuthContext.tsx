@@ -38,44 +38,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuthBaseData(null);
   }, []);
 
-  const fetchCurrentUser = useCallback(async (retryOnUnauthorized = true): Promise<boolean> => {
-    try {
-      const res = await fetchWithAuthResponse(
-        '/api/auth/me',
-        undefined,
-        { retryOnUnauthorized }
-      );
+  const fetchCurrentUser = useCallback(
+    async (retryOnUnauthorized = true): Promise<boolean> => {
+      try {
+        const res = await fetchWithAuthResponse('/api/auth/me', undefined, { retryOnUnauthorized });
 
-      if (!res.ok) {
+        if (!res.ok) {
+          clearAuthState();
+          return false;
+        }
+
+        const userData = (await res.json()) as AuthMeResponse;
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          display_name: userData.display_name,
+          auth_provider: userData.auth_provider,
+          color: userData.color,
+          created_at: userData.created_at,
+          last_login_at: userData.last_login_at
+        });
+        setAuthBaseData({
+          global_roles: userData.global_roles,
+          global_permissions: userData.global_permissions,
+          team_assignments_by_workspace: userData.team_assignments_by_workspace ?? {},
+          workspace_roles: userData.workspace_roles ?? {},
+          workspace_role_definitions_by_workspace:
+            userData.workspace_role_definitions_by_workspace ?? {},
+          teams_by_workspace: userData.teams_by_workspace ?? {}
+        });
+        return true;
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
         clearAuthState();
         return false;
       }
-
-      const userData = (await res.json()) as AuthMeResponse;
-      setUser({
-        id: userData.id,
-        email: userData.email,
-        display_name: userData.display_name,
-        auth_provider: userData.auth_provider,
-        color: userData.color,
-        created_at: userData.created_at,
-        last_login_at: userData.last_login_at
-      });
-      setAuthBaseData({
-        global_roles: userData.global_roles,
-        global_permissions: userData.global_permissions,
-        team_assignments_by_workspace: userData.team_assignments_by_workspace ?? {},
-        workspace_roles: userData.workspace_roles ?? {},
-        workspace_role_definitions_by_workspace: userData.workspace_role_definitions_by_workspace ?? {},
-        teams_by_workspace: userData.teams_by_workspace ?? {}
-      });
-      return true;
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      clearAuthState();
-      return false;
-    }
-  }, [clearAuthState]);
+    },
+    [clearAuthState]
+  );
 
   const refreshToken = useCallback(
     async (reloadUser = true) => {
@@ -102,9 +102,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const res = await fetchWithAuthResponse(
         '/api/auth/login',
         {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
         },
         { requiresAuth: false, retryOnUnauthorized: false }
       );
@@ -122,11 +122,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const loginWithOidc = useCallback(async () => {
-    const res = await fetchWithAuthResponse(
-      '/api/auth/oidc/authorize',
-      undefined,
-      { requiresAuth: false, retryOnUnauthorized: false }
-    );
+    const res = await fetchWithAuthResponse('/api/auth/oidc/authorize', undefined, {
+      requiresAuth: false,
+      retryOnUnauthorized: false
+    });
     if (!res.ok) {
       throw new Error('Failed to initiate OIDC login');
     }
@@ -213,9 +212,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={authValue}>
-      <AuthorizationDataProvider value={authBaseData}>
-        {children}
-      </AuthorizationDataProvider>
+      <AuthorizationDataProvider value={authBaseData}>{children}</AuthorizationDataProvider>
     </AuthContext.Provider>
   );
 };

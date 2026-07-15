@@ -39,7 +39,9 @@ export const App = (props: {
   const application = useRef(new Application(userState.current, props.awareness));
 
   const [dirty, setDirty] = useState(false);
-  const [hash, setHash] = useState(application.current.model.activeDocument?.hash ?? props.doc.hash);
+  const [hash, setHash] = useState(
+    application.current.model.activeDocument?.hash ?? props.doc.hash
+  );
   const [progress, setProgress] = useState<Progress | undefined>(undefined);
 
   const progressCallback = useCallback<ProgressCallback>(
@@ -98,11 +100,7 @@ export const App = (props: {
     },
     newDocument: async (size?: Extent, offset?: Point) => {
       const doc = await props.documentFactory.createDocument(
-        await props.documentFactory.loadCRDT(
-          undefined,
-          props.awareness.state,
-          progressCallback
-        ),
+        await props.documentFactory.loadCRDT(undefined, props.awareness.state, progressCallback),
         undefined,
         progressCallback
       );

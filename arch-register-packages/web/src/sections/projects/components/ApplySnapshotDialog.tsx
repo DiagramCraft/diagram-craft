@@ -19,11 +19,20 @@ type Props = {
   onClose: () => void;
 };
 
-export const ApplySnapshotDialog = ({ open, snapshot, workspaceId, projectId, schemas, onClose }: Props) => {
+export const ApplySnapshotDialog = ({
+  open,
+  snapshot,
+  workspaceId,
+  projectId,
+  schemas,
+  onClose
+}: Props) => {
   const { data: entity } = useEntity(workspaceId, snapshot.entity_id);
   const applyMutation = useApplySnapshot(workspaceId, snapshot.entity_id, projectId);
   const updateSnapshotMutation = useUpdateSnapshot(workspaceId, snapshot.entity_id);
-  const [conflictChoices, setConflictChoices] = useState<Record<string, 'proposed' | 'current'>>({});
+  const [conflictChoices, setConflictChoices] = useState<Record<string, 'proposed' | 'current'>>(
+    {}
+  );
   const [targetDate, setTargetDate] = useState(snapshot.target_date ?? '');
 
   useEffect(() => {
@@ -32,7 +41,7 @@ export const ApplySnapshotDialog = ({ open, snapshot, workspaceId, projectId, sc
     setTargetDate(snapshot.target_date ?? '');
   }, [open, snapshot.target_date]);
 
-  const schema = entity ? schemas.find(s => s.id === entity._schema.id) ?? null : null;
+  const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
 
   const proposed = snapshot.proposed_state as Record<string, unknown> | null;
   const base = snapshot.base_state as Record<string, unknown>;
@@ -95,7 +104,8 @@ export const ApplySnapshotDialog = ({ open, snapshot, workspaceId, projectId, sc
           </div>
           {conflicts.length === 0 ? (
             <p style={{ margin: 0 }}>
-              This will apply all planned changes to the entity. Confirm or adjust the date before applying.
+              This will apply all planned changes to the entity. Confirm or adjust the date before
+              applying.
             </p>
           ) : (
             <>
@@ -112,18 +122,26 @@ export const ApplySnapshotDialog = ({ open, snapshot, workspaceId, projectId, sc
                         type="radio"
                         name={`conflict-${c.key}`}
                         checked={(conflictChoices[c.key] ?? 'proposed') === 'proposed'}
-                        onChange={() => setConflictChoices(prev => ({ ...prev, [c.key]: 'proposed' }))}
+                        onChange={() =>
+                          setConflictChoices(prev => ({ ...prev, [c.key]: 'proposed' }))
+                        }
                       />
-                      <span className={styles.conflictOptionLabel}>Planned: {formatVal(c.proposedVal)}</span>
+                      <span className={styles.conflictOptionLabel}>
+                        Planned: {formatVal(c.proposedVal)}
+                      </span>
                     </label>
                     <label className={styles.conflictOption}>
                       <input
                         type="radio"
                         name={`conflict-${c.key}`}
                         checked={conflictChoices[c.key] === 'current'}
-                        onChange={() => setConflictChoices(prev => ({ ...prev, [c.key]: 'current' }))}
+                        onChange={() =>
+                          setConflictChoices(prev => ({ ...prev, [c.key]: 'current' }))
+                        }
                       />
-                      <span className={styles.conflictOptionLabel}>Current: {formatVal(c.currentVal)}</span>
+                      <span className={styles.conflictOptionLabel}>
+                        Current: {formatVal(c.currentVal)}
+                      </span>
                     </label>
                   </div>
                 ))}

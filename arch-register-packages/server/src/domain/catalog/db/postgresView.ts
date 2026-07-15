@@ -186,7 +186,12 @@ export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDa
     }
   }
 
-  async removeCollectionEntity(userId: string, workspace: string, collectionId: string, entityId: string) {
+  async removeCollectionEntity(
+    userId: string,
+    workspace: string,
+    collectionId: string,
+    entityId: string
+  ) {
     const collection = await this.getCollection(userId, workspace, collectionId);
     if (!collection) return null;
     try {

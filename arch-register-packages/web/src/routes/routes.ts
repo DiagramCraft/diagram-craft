@@ -87,7 +87,5 @@ const workspaceRouteEntries = createWorkspaceRouteEntries(workspaceRoute);
 export const routeTree = rootRoute.addChildren([
   loginRoute,
   indexRoute,
-  authenticatedRoute.addChildren([
-    workspaceRoute.addChildren(workspaceRouteEntries)
-  ])
+  authenticatedRoute.addChildren([workspaceRoute.addChildren(workspaceRouteEntries)])
 ]);

@@ -6,14 +6,20 @@ export type HierarchyTreeIndex = {
   childrenOf: Map<string, string[]>;
 };
 
-export const getChildSchemas = (schemas: EntitySchema[], parentSchemaId: string | null): EntitySchema[] => {
+export const getChildSchemas = (
+  schemas: EntitySchema[],
+  parentSchemaId: string | null
+): EntitySchema[] => {
   if (!parentSchemaId) return schemas;
   return schemas.filter(schema =>
     schema.fields.some(field => field.type === 'containment' && field.schemaId === parentSchemaId)
   );
 };
 
-export const buildHierarchyTreeIndex = (nodes: TreeNode[], edges: TreeEdge[]): HierarchyTreeIndex => {
+export const buildHierarchyTreeIndex = (
+  nodes: TreeNode[],
+  edges: TreeEdge[]
+): HierarchyTreeIndex => {
   const nodeMap = new Map<string, TreeNode>();
   for (const node of nodes) nodeMap.set(node._uid, node);
 

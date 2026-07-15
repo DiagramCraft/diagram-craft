@@ -123,7 +123,8 @@ export const EntityTimelineTab = ({
         </div>
         <div style={{ flex: 1 }} />
         <span className={styles.etlConfigMeta}>
-          {ownSnaps.length} own · {projectLanes.length} project{projectLanes.length !== 1 ? 's' : ''}
+          {ownSnaps.length} own · {projectLanes.length} project
+          {projectLanes.length !== 1 ? 's' : ''}
         </span>
         <div className={styles.etlSep} />
         <div className={styles.etlSegmented}>
@@ -244,7 +245,8 @@ const OwnHistoryLane = ({
         if (px === null) return null;
         const isSaved = snap.status === 'saved_version';
         const isSelected = selectedId === snap.id;
-        const dotClass = snap.status === 'autosave' ? styles.etlDotAutosave : styles.etlDotSavedVersion;
+        const dotClass =
+          snap.status === 'autosave' ? styles.etlDotAutosave : styles.etlDotSavedVersion;
         return (
           <div
             key={snap.id}
@@ -302,7 +304,12 @@ const ProjectLane = ({
         className={`${styles.etlLaneLabel} ${styles.etlLaneLabelClickable}`}
         onClick={() => setCollapsed(c => !c)}
       >
-        <span className={styles.etlChevron} style={{ transform: collapsed ? 'none' : 'rotate(90deg)' }}>›</span>
+        <span
+          className={styles.etlChevron}
+          style={{ transform: collapsed ? 'none' : 'rotate(90deg)' }}
+        >
+          ›
+        </span>
         {projectColor && (
           <span className={styles.etlProjDot} style={{ background: projectColor }} />
         )}
@@ -318,14 +325,16 @@ const ProjectLane = ({
         <div className={styles.etlTrack} style={{ width: totalWidth }}>
           <div className={styles.etlBaseline} />
           {snaps.map(snap => {
-            const dateStr = snap.status === 'future_update' || snap.status === 'applied'
-              ? (snap.target_date ?? snap.created_at)
-              : snap.created_at;
+            const dateStr =
+              snap.status === 'future_update' || snap.status === 'applied'
+                ? (snap.target_date ?? snap.created_at)
+                : snap.created_at;
             const px = stringDateToTimelinePx(dateStr, rangeStart, rangeEnd, totalWidth);
             if (px === null) return null;
             const isSelected = selectedId === snap.id;
             const isSnapConflict = conflictedSnapIds.has(snap.id);
-            const dotClass = snap.status === 'applied' ? styles.etlDotApplied : styles.etlDotFutureUpdate;
+            const dotClass =
+              snap.status === 'applied' ? styles.etlDotApplied : styles.etlDotFutureUpdate;
             return (
               <div
                 key={snap.id}
@@ -336,7 +345,11 @@ const ProjectLane = ({
               >
                 <div
                   className={styles.etlDotInner}
-                  style={snap.status === 'future_update' && projectColor ? { background: projectColor } : undefined}
+                  style={
+                    snap.status === 'future_update' && projectColor
+                      ? { background: projectColor }
+                      : undefined
+                  }
                 />
               </div>
             );
@@ -419,9 +432,7 @@ const SnapDetail = ({
             {statusLabel[snapshot.status] ?? snapshot.status}
           </span>
           {snapshot.target_date && (
-            <span className={styles.etlDetailSub}>
-              Target: {snapshot.target_date}
-            </span>
+            <span className={styles.etlDetailSub}>Target: {snapshot.target_date}</span>
           )}
         </div>
 

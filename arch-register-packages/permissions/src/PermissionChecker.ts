@@ -110,7 +110,9 @@ export class PermissionChecker {
     }
 
     if (context.globalPermissions.has('admin_platform')) {
-      return !context.workspaceCapabilityCeiling || context.workspaceCapabilityCeiling.has(capability);
+      return (
+        !context.workspaceCapabilityCeiling || context.workspaceCapabilityCeiling.has(capability)
+      );
     }
 
     if (context.workspaceRole == null) {
@@ -136,8 +138,9 @@ export class PermissionChecker {
     context: WorkspaceAuthorizationContext,
     permission: GlobalPermission
   ): boolean {
-    return !context.workspaceCapabilityCeiling && (
-      context.globalPermissions.has(permission) || context.globalPermissions.has('admin_platform')
+    return (
+      !context.workspaceCapabilityCeiling &&
+      (context.globalPermissions.has(permission) || context.globalPermissions.has('admin_platform'))
     );
   }
 

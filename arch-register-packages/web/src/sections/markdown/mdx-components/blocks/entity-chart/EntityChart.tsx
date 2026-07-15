@@ -54,13 +54,7 @@ const DonutChart = ({ groups, total }: { groups: ChartGroup[]; total: number }) 
   return (
     <svg width={200} height={200} viewBox="0 0 200 200">
       {segments.map(seg => (
-        <path
-          key={seg.key}
-          d={seg.path}
-          fill={seg.color}
-          stroke="var(--base-bg)"
-          strokeWidth={2}
-        />
+        <path key={seg.key} d={seg.path} fill={seg.color} stroke="var(--base-bg)" strokeWidth={2} />
       ))}
       <text
         x="100"
@@ -109,7 +103,13 @@ type Props = {
   chartType?: string;
 };
 
-export const EntityChart = ({ schema, owner, lifecycle, groupBy = 'lifecycle', chartType = 'donut' }: Props) => {
+export const EntityChart = ({
+  schema,
+  owner,
+  lifecycle,
+  groupBy = 'lifecycle',
+  chartType = 'donut'
+}: Props) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
 
@@ -160,7 +160,9 @@ export const EntityChart = ({ schema, owner, lifecycle, groupBy = 'lifecycle', c
           color = lifecycleStates.find(s => s.id === key)?.color ?? schemaColor(colorIndex);
         } else if (groupBy === 'schema') {
           const schemaDef = schemas.find(s => s.id === key);
-          color = schemaDef ? resolveSchemaColor(schemaDef, schemas.indexOf(schemaDef)) : schemaColor(colorIndex);
+          color = schemaDef
+            ? resolveSchemaColor(schemaDef, schemas.indexOf(schemaDef))
+            : schemaColor(colorIndex);
         } else {
           color = schemaColor(colorIndex);
         }
@@ -232,7 +234,9 @@ export const EntityChart = ({ schema, owner, lifecycle, groupBy = 'lifecycle', c
         onClick={() => {
           const conditions = [
             ...(schema ? [{ fieldId: '_schemaId', op: 'equals' as const, value: schema }] : []),
-            ...(lifecycle ? [{ fieldId: '_lifecycle', op: 'equals' as const, value: lifecycle }] : []),
+            ...(lifecycle
+              ? [{ fieldId: '_lifecycle', op: 'equals' as const, value: lifecycle }]
+              : []),
             ...(owner ? [{ fieldId: '_owner', op: 'equals' as const, value: owner }] : [])
           ];
           navigate({

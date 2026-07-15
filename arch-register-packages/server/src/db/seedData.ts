@@ -111,7 +111,7 @@ export const seedWorkspaces: WorkspaceDbResult[] = [
     description: seededWorkspaces.default.description,
     color: '',
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: WORKSPACE2_ID,
@@ -194,14 +194,62 @@ export const seedLifecycleStates: LifecycleStateDbResult[] = [
 ];
 
 export const seedProjectEntityTypes: ProjectEntityTypeDbResult[] = [
-  { id: '90000000-0000-0000-0000-000000000201', workspace: WORKSPACE_ID, label: 'Introduced', sort_order: 0, created_at: now },
-  { id: '90000000-0000-0000-0000-000000000202', workspace: WORKSPACE_ID, label: 'Decommissioned', sort_order: 1, created_at: now },
-  { id: '90000000-0000-0000-0000-000000000203', workspace: WORKSPACE_ID, label: 'Modified', sort_order: 2, created_at: now },
-  { id: '90000000-0000-0000-0000-000000000204', workspace: WORKSPACE_ID, label: 'Used', sort_order: 3, created_at: now },
-  { id: '90000000-0000-0000-0000-000000000205', workspace: WORKSPACE2_ID, label: 'Introduced', sort_order: 0, created_at: now },
-  { id: '90000000-0000-0000-0000-000000000206', workspace: WORKSPACE2_ID, label: 'Decommissioned', sort_order: 1, created_at: now },
-  { id: '90000000-0000-0000-0000-000000000207', workspace: WORKSPACE2_ID, label: 'Modified', sort_order: 2, created_at: now },
-  { id: '90000000-0000-0000-0000-000000000208', workspace: WORKSPACE2_ID, label: 'Used', sort_order: 3, created_at: now }
+  {
+    id: '90000000-0000-0000-0000-000000000201',
+    workspace: WORKSPACE_ID,
+    label: 'Introduced',
+    sort_order: 0,
+    created_at: now
+  },
+  {
+    id: '90000000-0000-0000-0000-000000000202',
+    workspace: WORKSPACE_ID,
+    label: 'Decommissioned',
+    sort_order: 1,
+    created_at: now
+  },
+  {
+    id: '90000000-0000-0000-0000-000000000203',
+    workspace: WORKSPACE_ID,
+    label: 'Modified',
+    sort_order: 2,
+    created_at: now
+  },
+  {
+    id: '90000000-0000-0000-0000-000000000204',
+    workspace: WORKSPACE_ID,
+    label: 'Used',
+    sort_order: 3,
+    created_at: now
+  },
+  {
+    id: '90000000-0000-0000-0000-000000000205',
+    workspace: WORKSPACE2_ID,
+    label: 'Introduced',
+    sort_order: 0,
+    created_at: now
+  },
+  {
+    id: '90000000-0000-0000-0000-000000000206',
+    workspace: WORKSPACE2_ID,
+    label: 'Decommissioned',
+    sort_order: 1,
+    created_at: now
+  },
+  {
+    id: '90000000-0000-0000-0000-000000000207',
+    workspace: WORKSPACE2_ID,
+    label: 'Modified',
+    sort_order: 2,
+    created_at: now
+  },
+  {
+    id: '90000000-0000-0000-0000-000000000208',
+    workspace: WORKSPACE2_ID,
+    label: 'Used',
+    sort_order: 3,
+    created_at: now
+  }
 ];
 
 export const seedOwners: OwnerDbResult[] = [
@@ -476,7 +524,12 @@ export const seedWorkspaceMembers: MemberDbResult[] = [
   // Second workspace members
   { workspace: WORKSPACE2_ID, user_id: USER_IDS.globaladmin, role: 'admin', created_at: now },
   { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceadmin, role: 'admin', created_at: now },
-  { workspace: WORKSPACE2_ID, user_id: USER_IDS.platformteamadmin, role: 'editor', created_at: now },
+  {
+    workspace: WORKSPACE2_ID,
+    user_id: USER_IDS.platformteamadmin,
+    role: 'editor',
+    created_at: now
+  },
   { workspace: WORKSPACE2_ID, user_id: USER_IDS.designteamadmin, role: 'editor', created_at: now },
   { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceeditor, role: 'editor', created_at: now },
   { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now }
@@ -495,7 +548,7 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     ],
     sort_order: 0,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   // Second workspace enums
   {
@@ -525,7 +578,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'DOM',
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000002',
@@ -549,7 +602,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'SYS',
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000003',
@@ -600,7 +653,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'CMP',
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000004',
@@ -629,7 +682,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'API',
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000005',
@@ -653,7 +706,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'RES',
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   // Second workspace schemas
   {
@@ -674,16 +727,14 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'APP',
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000012',
     workspace: WORKSPACE2_ID,
     name: 'Service',
     description: 'A backend service or microservice.',
-    fields: [
-      { id: 'technology', name: 'Technology', type: 'text' }
-    ],
+    fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
     color: AR_COLOR_CYAN,
     icon: 'layers',
     default_owner: null,
@@ -713,7 +764,7 @@ export const seedEntities: Entity[] = [
     data: {},
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0002-000000000001',
@@ -733,7 +784,7 @@ export const seedEntities: Entity[] = [
     data: { domain: ['00000000-0000-0000-0001-000000000001'] },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0002-000000000002',
@@ -753,7 +804,7 @@ export const seedEntities: Entity[] = [
     data: { domain: ['00000000-0000-0000-0001-000000000001'] },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0004-000000000001',
@@ -773,7 +824,7 @@ export const seedEntities: Entity[] = [
     data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000001'] },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0004-000000000002',
@@ -793,7 +844,7 @@ export const seedEntities: Entity[] = [
     data: { api_type: 'grpc', system: ['00000000-0000-0000-0002-000000000002'] },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0003-000000000001',
@@ -819,7 +870,7 @@ export const seedEntities: Entity[] = [
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0003-000000000002',
@@ -843,14 +894,11 @@ export const seedEntities: Entity[] = [
         '00000000-0000-0000-0004-000000000001',
         '00000000-0000-0000-0004-000000000002'
       ],
-      depends_on: [
-        '00000000-0000-0000-0003-000000000001',
-        '00000000-0000-0000-0003-000000000003'
-      ]
+      depends_on: ['00000000-0000-0000-0003-000000000001', '00000000-0000-0000-0003-000000000003']
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0003-000000000003',
@@ -874,7 +922,7 @@ export const seedEntities: Entity[] = [
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0005-000000000001',
@@ -899,7 +947,7 @@ export const seedEntities: Entity[] = [
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   // Second workspace entities
   {
@@ -920,7 +968,7 @@ export const seedEntities: Entity[] = [
     data: { platform: 'ios' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0012-000000000001',
@@ -940,7 +988,7 @@ export const seedEntities: Entity[] = [
     data: { technology: 'Node' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0012-000000000002',
@@ -977,7 +1025,7 @@ export const seedProjects: ProjectDbCreate[] = [
     target_date: null,
     pinned: false,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: seededProjects.authMigration.id,
@@ -991,7 +1039,7 @@ export const seedProjects: ProjectDbCreate[] = [
     target_date: null,
     pinned: true,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: seededProjects.checkoutRevamp.id,
@@ -1068,7 +1116,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     },
     config: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0020-000000000002',
@@ -1094,7 +1142,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
       }
     },
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0020-000000000003',
@@ -1365,7 +1413,8 @@ const encodeEntityBrowserEmbedConfig = (config: {
     conditions: config.conditions,
     sort: config.sort,
     view: config.view,
-    viewConfigs: Object.keys(config.viewConfigs).length === 0 ? undefined : JSON.stringify(config.viewConfigs)
+    viewConfigs:
+      Object.keys(config.viewConfigs).length === 0 ? undefined : JSON.stringify(config.viewConfigs)
   };
   return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
 };
@@ -1497,7 +1546,9 @@ This page demonstrates the custom MDX components that pull live data from the ca
 
 <EntityBrowserEmbed config="${encodeEntityBrowserEmbedConfig({
     q: '',
-    conditions: [{ fieldId: 'schemaId', op: 'equals', value: '00000000-0000-0000-0000-000000000002' }],
+    conditions: [
+      { fieldId: 'schemaId', op: 'equals', value: '00000000-0000-0000-0000-000000000002' }
+    ],
     sort: 'name',
     view: 'table',
     viewConfigs: {}

@@ -45,15 +45,43 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       const idB = randomUUID();
 
       const first = await db.workspace.replaceLifecycleStates(workspace, [
-        { id: idA, workspace, label: 'Draft', color: '#111111', sort_order: 0, created_at: new Date() },
-        { id: idB, workspace, label: 'Live', color: '#222222', sort_order: 1, created_at: new Date() }
+        {
+          id: idA,
+          workspace,
+          label: 'Draft',
+          color: '#111111',
+          sort_order: 0,
+          created_at: new Date()
+        },
+        {
+          id: idB,
+          workspace,
+          label: 'Live',
+          color: '#222222',
+          sort_order: 1,
+          created_at: new Date()
+        }
       ]);
       expect(first.map(s => s.label)).toEqual(['Draft', 'Live']);
 
       const idC = randomUUID();
       const second = await db.workspace.replaceLifecycleStates(workspace, [
-        { id: idA, workspace, label: 'Draft (renamed)', color: '#111111', sort_order: 0, created_at: new Date() },
-        { id: idC, workspace, label: 'Archived', color: '#333333', sort_order: 1, created_at: new Date() }
+        {
+          id: idA,
+          workspace,
+          label: 'Draft (renamed)',
+          color: '#111111',
+          sort_order: 0,
+          created_at: new Date()
+        },
+        {
+          id: idC,
+          workspace,
+          label: 'Archived',
+          color: '#333333',
+          sort_order: 1,
+          created_at: new Date()
+        }
       ]);
 
       expect(second.map(s => s.id).sort()).toEqual([idA, idC].sort());
@@ -90,8 +118,24 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       const teamB = randomUUID();
 
       await db.workspace.replaceTeams(workspace, [
-        { id: teamA, workspace, name: 'Team A', sort_order: 0, color: null, description: '', created_at: new Date() },
-        { id: teamB, workspace, name: 'Team B', sort_order: 1, color: null, description: '', created_at: new Date() }
+        {
+          id: teamA,
+          workspace,
+          name: 'Team A',
+          sort_order: 0,
+          color: null,
+          description: '',
+          created_at: new Date()
+        },
+        {
+          id: teamB,
+          workspace,
+          name: 'Team B',
+          sort_order: 1,
+          color: null,
+          description: '',
+          created_at: new Date()
+        }
       ]);
 
       await db.workspace.replaceTeamAssignments(workspace, [
@@ -99,7 +143,15 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       ]);
 
       const teamsAfterRemoval = await db.workspace.replaceTeams(workspace, [
-        { id: teamA, workspace, name: 'Team A (renamed)', sort_order: 0, color: '#abcdef', description: '', created_at: new Date() }
+        {
+          id: teamA,
+          workspace,
+          name: 'Team A (renamed)',
+          sort_order: 0,
+          color: '#abcdef',
+          description: '',
+          created_at: new Date()
+        }
       ]);
       expect(teamsAfterRemoval.map(t => t.id)).toEqual([teamA]);
 
@@ -114,7 +166,12 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       const workspace = await createFixtureWorkspace(db);
       const user = await createFixtureUser(db);
 
-      const set = await db.workspace.setWorkspaceMemberRole(workspace, user.id, 'editor', new Date());
+      const set = await db.workspace.setWorkspaceMemberRole(
+        workspace,
+        user.id,
+        'editor',
+        new Date()
+      );
       expect(set.role).toBe('editor');
 
       expect(await db.workspace.getWorkspaceRole(workspace, user.id)).toBe('editor');
@@ -227,7 +284,13 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       await db.workspace.registerPublicIdPrefix(oldPrefix, 'workspace', workspace, new Date());
       await db.workspace.allocatePublicId(oldPrefix, new Date());
 
-      await db.workspace.updatePublicIdPrefix(oldPrefix, newPrefix, 'workspace', workspace, new Date());
+      await db.workspace.updatePublicIdPrefix(
+        oldPrefix,
+        newPrefix,
+        'workspace',
+        workspace,
+        new Date()
+      );
 
       const next = await db.workspace.allocatePublicId(newPrefix, new Date());
       expect(next).toBe(2);

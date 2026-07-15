@@ -190,7 +190,10 @@ export const createEntityFolder = async (
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
       const entityUuid = entity.id;
-      assertContentPathWritable(await db.project.listEntityContentNodes(ws, entityUuid), folderPath);
+      assertContentPathWritable(
+        await db.project.listEntityContentNodes(ws, entityUuid),
+        folderPath
+      );
 
       const lastSlash = folderPath.lastIndexOf('/');
       const folderName = lastSlash !== -1 ? folderPath.substring(lastSlash + 1) : folderPath;

@@ -34,7 +34,9 @@ type StylesheetTypeImplementations = {
 };
 
 type TextStyleProps = { text: Omit<NodeProps['text'], 'text' | 'style' | 'color'> };
-type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'> & { text?: { color?: string } };
+type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'> & {
+  text?: { color?: string };
+};
 type EdgeStyleProps = Omit<EdgeProps, 'name' | 'text' | 'data' | 'style'>;
 
 export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements UOWTrackable {

@@ -114,13 +114,10 @@ describe('diagram property resolution', () => {
       }, uow)
     );
 
-    addMatchingRuleLayer(
-      diagram,
-      'node',
-      'node-rule-style',
-      'text-rule-style',
-      { fill: { color: 'rule-props' }, stroke: { width: 5 } }
-    );
+    addMatchingRuleLayer(diagram, 'node', 'node-rule-style', 'text-rule-style', {
+      fill: { color: 'rule-props' },
+      stroke: { width: 5 }
+    });
 
     expect(node.editProps.fill?.color).toBe('stored');
     expect(node.editProps.text?.color).toBe('var(--canvas-fg)');
@@ -175,13 +172,9 @@ describe('diagram property resolution', () => {
       }, uow);
     });
 
-    addMatchingRuleLayer(
-      diagram,
-      'edge',
-      'edge-rule-style',
-      '',
-      { stroke: { color: 'edge-rule', width: 5 } }
-    );
+    addMatchingRuleLayer(diagram, 'edge', 'edge-rule-style', '', {
+      stroke: { color: 'edge-rule', width: 5 }
+    });
 
     expect(edge.editProps.stroke?.color).toBe('edge-rule-style');
     expect(edge.editProps.stroke?.width).toBe(1);

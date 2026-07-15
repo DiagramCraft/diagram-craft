@@ -28,13 +28,16 @@
     font-size: 12px;
     font-family: var(--font-sans);
     cursor: pointer;
-    transition: background 80ms, color 80ms, border-color 80ms;
+    transition:
+      background 80ms,
+      color 80ms,
+      border-color 80ms;
 
     &:hover {
       color: var(--base-fg);
     }
 
-    &[data-active='true'] {
+    &[data-active="true"] {
       background: var(--_active-bg);
       color: var(--base-fg);
       border-color: var(--panel-border);

@@ -3,9 +3,13 @@ import { Path } from './path';
 
 describe('Path', () => {
   test('rejects smooth quadratic segments without a preceding quadratic segment', () => {
-    expect(() => new Path({ x: 0, y: 0 }, [['L', 10, 0], ['T', 20, 0]]).segments).toThrow(
-      'T segment requires a preceding quadratic segment'
-    );
+    expect(
+      () =>
+        new Path({ x: 0, y: 0 }, [
+          ['L', 10, 0],
+          ['T', 20, 0]
+        ]).segments
+    ).toThrow('T segment requires a preceding quadratic segment');
   });
 
   test('joins contiguous paths', () => {

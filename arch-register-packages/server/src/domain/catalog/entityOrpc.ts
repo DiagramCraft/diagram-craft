@@ -53,7 +53,11 @@ const entityHandlers = {
     const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
     const query = parseEntityQuery(input.query);
     if (query.collectionId) {
-      const collection = await context.db.view.getCollection(authCtx.userId, workspace, query.collectionId);
+      const collection = await context.db.view.getCollection(
+        authCtx.userId,
+        workspace,
+        query.collectionId
+      );
       httpAssert.present(collection, { status: 404, message: 'Collection not found' });
     }
     if (input.query.projectId) {
@@ -72,7 +76,11 @@ const entityHandlers = {
     const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
     const query = parseEntityQuery(input.query);
     if (query.collectionId) {
-      const collection = await context.db.view.getCollection(authCtx.userId, workspace, query.collectionId);
+      const collection = await context.db.view.getCollection(
+        authCtx.userId,
+        workspace,
+        query.collectionId
+      );
       httpAssert.present(collection, { status: 404, message: 'Collection not found' });
     }
     if (input.query.projectId) {
@@ -83,12 +91,7 @@ const entityHandlers = {
       });
       requireProjectAccess(authCtx, project.owner);
     }
-    const total = await countEntities(
-      context.db,
-      workspace,
-      authCtx,
-      query
-    );
+    const total = await countEntities(context.db, workspace, authCtx, query);
     return { total };
   }),
 

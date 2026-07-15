@@ -39,7 +39,8 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
     });
 
   if (isLoading) return <LoadingState text="Loading analytics…" size="sm" />;
-  if (isError || analytics == null) return <EmptyState compact title="Analytics could not be loaded." />;
+  if (isError || analytics == null)
+    return <EmptyState compact title="Analytics could not be loaded." />;
 
   const selectView = (view: 'overview' | 'stale') =>
     navigate({

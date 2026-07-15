@@ -15,9 +15,14 @@ export class FilesystemStorage implements StorageAdapter {
   private readonly resolvedBaseDir: string;
   private readonly resolvedFallbackBaseDirs: string[];
 
-  constructor(private baseDir: string, fallbackBaseDirs: readonly string[] = []) {
+  constructor(
+    private baseDir: string,
+    fallbackBaseDirs: readonly string[] = []
+  ) {
     this.resolvedBaseDir = resolve(baseDir);
-    this.resolvedFallbackBaseDirs = fallbackBaseDirs.map(fallbackBaseDir => resolve(fallbackBaseDir));
+    this.resolvedFallbackBaseDirs = fallbackBaseDirs.map(fallbackBaseDir =>
+      resolve(fallbackBaseDir)
+    );
   }
 
   private resolvePathFromBase(

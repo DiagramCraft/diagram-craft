@@ -33,8 +33,12 @@ export const entityChartMdxRule: MdxRuleDef<EntityChartSlateElement, 'block'> = 
       ...(slateNode.schema ? { schema: slateNode.schema } : {}),
       ...(slateNode.owner ? { owner: slateNode.owner } : {}),
       ...(slateNode.lifecycle ? { lifecycle: slateNode.lifecycle } : {}),
-      ...(slateNode.groupBy && slateNode.groupBy !== 'lifecycle' ? { groupBy: slateNode.groupBy } : {}),
-      ...(slateNode.chartType && slateNode.chartType !== 'donut' ? { type: slateNode.chartType } : {})
+      ...(slateNode.groupBy && slateNode.groupBy !== 'lifecycle'
+        ? { groupBy: slateNode.groupBy }
+        : {}),
+      ...(slateNode.chartType && slateNode.chartType !== 'donut'
+        ? { type: slateNode.chartType }
+        : {})
     }),
     children: [],
     name: ENTITY_CHART_TYPE,
@@ -58,7 +62,12 @@ export const EntityChartEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={hasValue}
-      placeholder={<><TbChartDonut size={16} /><span>Configure entity chart…</span></>}
+      placeholder={
+        <>
+          <TbChartDonut size={16} />
+          <span>Configure entity chart…</span>
+        </>
+      }
       content={
         <EntityChart
           schema={schema === '' ? undefined : schema}

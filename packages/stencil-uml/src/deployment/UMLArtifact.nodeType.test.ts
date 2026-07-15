@@ -13,7 +13,10 @@ describe('UMLArtifact', () => {
       bounds: { x: 10, y: 20, w: 100, h: 50, r: 0 }
     });
 
-    const path = new UMLArtifactNodeDefinition().getBoundingPathBuilder(artifact).getPaths().asSvgPath();
+    const path = new UMLArtifactNodeDefinition()
+      .getBoundingPathBuilder(artifact)
+      .getPaths()
+      .asSvgPath();
 
     expect(path).toBe('M 10,20 L 97.5,20 L 110,32.5 L 110,70 L 10,70 L 10,20');
   });

@@ -58,7 +58,12 @@ describe('pruneAssessmentReferences', () => {
 
   it('clears radar quadrant/ring fields and matrix colEnumFieldId when they reference the assessment', () => {
     const { viewConfigs } = pruneAssessmentReferences([], {
-      radar: { schemaId: 's', quadrantFieldId: '_assessment:enum1', ringFieldId: 'severity', ringOrder: [] },
+      radar: {
+        schemaId: 's',
+        quadrantFieldId: '_assessment:enum1',
+        ringFieldId: 'severity',
+        ringOrder: []
+      },
       matrix: {
         colMode: 'attribute',
         colSchemaId: null,

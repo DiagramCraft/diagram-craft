@@ -98,7 +98,8 @@ export const AssessmentFieldCell = ({
   onChange: (value: string | number | null) => void;
   disabled?: boolean;
 }) => {
-  if (field.type === 'rating') return <RatingCell value={value} onChange={onChange} disabled={disabled} />;
+  if (field.type === 'rating')
+    return <RatingCell value={value} onChange={onChange} disabled={disabled} />;
   if (field.type === 'enum')
     return <EnumCell field={field} value={value} onChange={onChange} disabled={disabled} />;
   return <TextCell value={value} onChange={onChange} disabled={disabled} />;

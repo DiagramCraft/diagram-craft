@@ -10,9 +10,9 @@ const meta = {
   title: 'Components/FormElement',
   component: FormElement,
   parameters: {
-    layout: 'centered',
+    layout: 'centered'
   },
-  decorators: [themeDecorator()],
+  decorators: [themeDecorator()]
 } satisfies Meta<typeof FormElement>;
 
 export default meta;
@@ -70,11 +70,7 @@ export const WithHint: Story = {
     const [value, setValue] = useState('');
     return (
       <div style={{ width: '300px' }}>
-        <FormElement
-          label="Password"
-          required
-          hint="Must be at least 8 characters"
-        >
+        <FormElement label="Password" required hint="Must be at least 8 characters">
           <TextInput
             value={value}
             onChange={v => setValue(v ?? '')}
@@ -99,11 +95,7 @@ export const WithError: Story = {
     const [value, setValue] = useState('invalid-email');
     return (
       <div style={{ width: '300px' }}>
-        <FormElement
-          label="Email"
-          required
-          error="Please enter a valid email address"
-        >
+        <FormElement label="Email" required error="Please enter a valid email address">
           <TextInput
             value={value}
             onChange={v => setValue(v ?? '')}
@@ -179,17 +171,13 @@ export const MultipleFields: Story = {
     const [type, setType] = useState<string | undefined>(undefined);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [description, setDescription] = useState('');
-    
+
     return (
       <div style={{ width: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <FormElement label="Name" required>
-          <TextInput
-            value={name}
-            onChange={v => setName(v ?? '')}
-            placeholder="Enter your name"
-          />
+          <TextInput value={name} onChange={v => setName(v ?? '')} placeholder="Enter your name" />
         </FormElement>
-        
+
         <FormElement label="Email" required hint="We'll never share your email">
           <TextInput
             value={email}
@@ -198,7 +186,7 @@ export const MultipleFields: Story = {
             type="email"
           />
         </FormElement>
-        
+
         <FormElement label="Account Type" required>
           <Select.Root value={type} onChange={setType}>
             <Select.Item value="personal">Personal</Select.Item>
@@ -206,7 +194,7 @@ export const MultipleFields: Story = {
             <Select.Item value="enterprise">Enterprise</Select.Item>
           </Select.Root>
         </FormElement>
-        
+
         <FormElement label="Bio">
           <TextArea
             value={description}

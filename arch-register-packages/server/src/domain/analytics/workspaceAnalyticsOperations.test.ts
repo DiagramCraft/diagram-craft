@@ -192,8 +192,16 @@ describe('computeWorkspaceAnalytics', () => {
     const trend = computeActivityTrend(
       [
         makeAuditRow({ timestamp: new Date('2025-12-30T23:59:59.000Z'), operation: 'create' }),
-        makeAuditRow({ id: 'audit-2', timestamp: new Date('2025-12-31T00:00:00.000Z'), operation: 'update' }),
-        makeAuditRow({ id: 'audit-3', timestamp: new Date('2026-01-01T20:00:00.000Z'), operation: 'create' }),
+        makeAuditRow({
+          id: 'audit-2',
+          timestamp: new Date('2025-12-31T00:00:00.000Z'),
+          operation: 'update'
+        }),
+        makeAuditRow({
+          id: 'audit-3',
+          timestamp: new Date('2026-01-01T20:00:00.000Z'),
+          operation: 'create'
+        }),
         makeAuditRow({ id: 'audit-4', operation: 'delete' }),
         makeAuditRow({ id: 'audit-5', entity_type: 'project' })
       ],

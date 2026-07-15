@@ -14,19 +14,11 @@ export const EntityMention = ({ id }: { id: string }) => {
   if (!id) return null;
 
   if (isLoading) {
-    return (
-      <span className={`${styles.mention} ${styles.mentionLoading}`}>
-        {id}
-      </span>
-    );
+    return <span className={`${styles.mention} ${styles.mentionLoading}`}>{id}</span>;
   }
 
   if (isError || !entity) {
-    return (
-      <span className={`${styles.mention} ${styles.mentionUnavailable}`}>
-        not found
-      </span>
-    );
+    return <span className={`${styles.mention} ${styles.mentionUnavailable}`}>not found</span>;
   }
 
   const schemaIdx = schemas.findIndex(s => s.id === entity._schema?.id);

@@ -13,7 +13,7 @@ export const EntityPicker = ({
   selectedEntityId,
   selectedEntity,
   onSelectEntity,
-  onClearEntity,
+  onClearEntity
 }: {
   selectedEntityId: string;
   selectedEntity?: { _name: string; _schema?: { name?: string } | null } | null;
@@ -26,7 +26,7 @@ export const EntityPicker = ({
   const { data: searchResults = [] } = useEntities(workspaceSlug, {
     q: query || undefined,
     view: 'summary',
-    limit: 8,
+    limit: 8
   });
 
   return (
@@ -35,11 +35,7 @@ export const EntityPicker = ({
         <div className={styles.selectedChip}>
           <span className={styles.pickerName}>{selectedEntity._name}</span>
           <span className={styles.pickerSchema}>{selectedEntity._schema?.name}</span>
-          <button
-            type="button"
-            className={styles.chipClear}
-            onClick={onClearEntity}
-          >
+          <button type="button" className={styles.chipClear} onClick={onClearEntity}>
             ×
           </button>
         </div>
@@ -53,15 +49,18 @@ export const EntityPicker = ({
         value={query}
         onChange={e => setQuery(e.target.value)}
       />
-      {query && (
-        searchResults.length > 0 ? (
+      {query &&
+        (searchResults.length > 0 ? (
           <div className={styles.pickerResults}>
             {searchResults.map(entity => (
               <button
                 key={entity._publicId}
                 type="button"
                 className={`${styles.pickerItem} ${entity._publicId === selectedEntityId ? styles.pickerItemActive : ''}`}
-                onClick={() => { onSelectEntity(entity); setQuery(''); }}
+                onClick={() => {
+                  onSelectEntity(entity);
+                  setQuery('');
+                }}
               >
                 <span className={styles.pickerName}>{entity._name}</span>
                 <span className={styles.pickerSchema}>{entity._schema?.name}</span>
@@ -70,8 +69,7 @@ export const EntityPicker = ({
           </div>
         ) : (
           <div className={styles.pickerHint}>No entities found</div>
-        )
-      )}
+        ))}
     </>
   );
 };

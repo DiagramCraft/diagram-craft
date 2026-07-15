@@ -1,8 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type {
-  WorkspaceEnumDbCreate,
-  WorkspaceEnumDbUpdate
-} from '../../db/database';
+import type { WorkspaceEnumDbCreate, WorkspaceEnumDbUpdate } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
 

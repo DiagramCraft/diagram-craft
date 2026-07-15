@@ -65,7 +65,9 @@ export const EntityMetric = ({ schema, owner, lifecycle, label }: Props) => {
         onClick={() => {
           const conditions = [
             ...(schema ? [{ fieldId: '_schemaId', op: 'equals' as const, value: schema }] : []),
-            ...(lifecycle ? [{ fieldId: '_lifecycle', op: 'equals' as const, value: lifecycle }] : []),
+            ...(lifecycle
+              ? [{ fieldId: '_lifecycle', op: 'equals' as const, value: lifecycle }]
+              : []),
             ...(owner ? [{ fieldId: '_owner', op: 'equals' as const, value: owner }] : [])
           ];
           navigate({

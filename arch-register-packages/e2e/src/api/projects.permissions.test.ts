@@ -91,9 +91,7 @@ test.describe('project permission routes', () => {
       params: { workspace: 'default', entityId: resources.entityIds.customerPortal }
     });
 
-    expect(projects.map(entry => entry.project.id)).toEqual([
-      resources.projectIds.portalRedesign
-    ]);
+    expect(projects.map(entry => entry.project.id)).toEqual([resources.projectIds.portalRedesign]);
   });
 
   test('authorization: direct reads reject users without project access', async ({

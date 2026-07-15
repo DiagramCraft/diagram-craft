@@ -18,11 +18,7 @@ export class UndoAction extends AbstractAction {
 
   getCriteria(context: ActionContext) {
     const undoManager = context.model.activeDiagram.undoManager;
-    return ActionCriteria.EventTriggered(
-      undoManager,
-      'change',
-      () => undoManager.canUndo()
-    );
+    return ActionCriteria.EventTriggered(undoManager, 'change', () => undoManager.canUndo());
   }
 
   execute(): void {
@@ -36,11 +32,7 @@ export class RedoAction extends AbstractAction {
 
   getCriteria(context: ActionContext) {
     const undoManager = context.model.activeDiagram.undoManager;
-    return ActionCriteria.EventTriggered(
-      undoManager,
-      'change',
-      () => undoManager.canRedo()
-    );
+    return ActionCriteria.EventTriggered(undoManager, 'change', () => undoManager.canRedo());
   }
 
   execute(): void {

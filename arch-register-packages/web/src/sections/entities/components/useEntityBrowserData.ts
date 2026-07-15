@@ -213,7 +213,9 @@ export const useEntityBrowserData = ({
 
   const filteredCount = filtered.length;
   const totalCount = entityCount?.total ?? filteredCount;
-  const isLoading = isPagedBrowse ? isPagedLoading || isPagedFetching : isFullLoading || isFullFetching;
+  const isLoading = isPagedBrowse
+    ? isPagedLoading || isPagedFetching
+    : isFullLoading || isFullFetching;
 
   useEffect(() => {
     onCountChange?.(totalCount);

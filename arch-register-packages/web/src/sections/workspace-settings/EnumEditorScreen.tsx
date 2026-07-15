@@ -175,7 +175,8 @@ export const EnumEditorScreen = () => {
                       gap: 10,
                       padding: '8px 10px',
                       fontSize: 12,
-                      borderBottom: i < options.length - 1 ? '1px solid var(--panel-border)' : 'none'
+                      borderBottom:
+                        i < options.length - 1 ? '1px solid var(--panel-border)' : 'none'
                     }}
                   >
                     <TextInput
@@ -219,13 +220,21 @@ export const EnumEditorScreen = () => {
 
             <div className={styles.formActions}>
               {canEdit && (
-                <Button variant="danger" icon={<TbTrash size={12} />} onClick={() => setConfirmDelete(true)}>
+                <Button
+                  variant="danger"
+                  icon={<TbTrash size={12} />}
+                  onClick={() => setConfirmDelete(true)}
+                >
                   Delete enum
                 </Button>
               )}
               <div style={{ flex: 1 }} />
               {canEdit && dirty && (
-                <Button variant="primary" onClick={handleSave} disabled={updateEnumMutation.isPending}>
+                <Button
+                  variant="primary"
+                  onClick={handleSave}
+                  disabled={updateEnumMutation.isPending}
+                >
                   {updateEnumMutation.isPending ? 'Saving...' : 'Save'}
                 </Button>
               )}
@@ -242,7 +251,15 @@ export const EnumEditorScreen = () => {
       <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete enum?"
-        message={selected ? <>The enum <b>{selected.name}</b> will be permanently deleted.</> : ''}
+        message={
+          selected ? (
+            <>
+              The enum <b>{selected.name}</b> will be permanently deleted.
+            </>
+          ) : (
+            ''
+          )
+        }
         detail="This can't be undone. The delete will fail if any schema field still references this enum."
         confirmLabel="Delete enum"
         onConfirm={doDelete}

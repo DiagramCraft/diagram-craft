@@ -12,7 +12,12 @@ type Props = {
 
 export const NodeActionChooserDialog = (props: Props) => {
   return (
-    <Dialog open={props.open} title={props.title} buttons={[]} onClose={props.onCancel ?? (() => {})}>
+    <Dialog
+      open={props.open}
+      title={props.title}
+      buttons={[]}
+      onClose={props.onCancel ?? (() => {})}
+    >
       <div className={styles.cGrid}>
         {props.actions.map(action => (
           <button

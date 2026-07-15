@@ -80,7 +80,7 @@
 }
 
 .leg::before {
-  content: '';
+  content: "";
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -145,7 +145,6 @@
   border-color: var(--accent-9);
 }
 
-
 .exitBtn:hover {
   background: var(--accent-11);
 }
@@ -159,7 +158,9 @@
   border: 1px solid var(--cmp-border);
   color: var(--base-fg-dim);
   white-space: nowrap;
-  transition: background 80ms, color 80ms;
+  transition:
+    background 80ms,
+    color 80ms;
 }
 
 .ghostBtn:hover {
@@ -175,7 +176,9 @@
   justify-content: center;
   border-radius: var(--r);
   color: var(--cmp-fg-disabled);
-  transition: background 80ms, color 80ms;
+  transition:
+    background 80ms,
+    color 80ms;
 }
 
 .closeBtn:hover {
@@ -205,7 +208,11 @@
 
 .rgnPast {
   left: 0;
-  background: linear-gradient(90deg, transparent 0%, color-mix(in oklch, var(--accent-9) 7%, transparent) 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--accent-9) 7%, transparent) 100%
+  );
 }
 
 .rgnFuture {

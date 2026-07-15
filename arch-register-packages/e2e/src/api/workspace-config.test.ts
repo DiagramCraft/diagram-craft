@@ -312,7 +312,9 @@ test.describe('workspace config routes', () => {
       capabilities: ['ws.view']
     });
 
-    const result = await orpc.config.roles.remove({ params: { workspace: 'default', id: created.id } });
+    const result = await orpc.config.roles.remove({
+      params: { workspace: 'default', id: created.id }
+    });
     expect(result).toMatchObject({
       id: created.id,
       name: 'Temporary Role'
@@ -354,7 +356,9 @@ test.describe('workspace config routes', () => {
       })
     ]);
 
-    const assignments = await orpc.config.teamAssignments.list({ params: { workspace: 'default' } });
+    const assignments = await orpc.config.teamAssignments.list({
+      params: { workspace: 'default' }
+    });
     expect(assignments).toEqual([
       expect.objectContaining({
         team_id: TEAM_PLATFORM_ID,

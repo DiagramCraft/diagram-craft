@@ -80,13 +80,30 @@ export const DangerDisabled: Story = {
 // ---- DangerSolid -------------------------------------------------------
 
 export const DangerSolid: Story = {
-  args: { variant: 'danger-solid', icon: <TbTrash />, children: 'Delete permanently', onClick: () => {} }
+  args: {
+    variant: 'danger-solid',
+    icon: <TbTrash />,
+    children: 'Delete permanently',
+    onClick: () => {}
+  }
 };
 export const DangerSolidHover: Story = {
-  args: { 'variant': 'danger-solid', 'icon': <TbTrash />, 'children': 'Delete permanently', 'onClick': () => {}, 'data-hover': 'true' }
+  args: {
+    'variant': 'danger-solid',
+    'icon': <TbTrash />,
+    'children': 'Delete permanently',
+    'onClick': () => {},
+    'data-hover': 'true'
+  }
 };
 export const DangerSolidFocus: Story = {
-  args: { 'variant': 'danger-solid', 'icon': <TbTrash />, 'children': 'Delete permanently', 'onClick': () => {}, 'data-focus': 'true' }
+  args: {
+    'variant': 'danger-solid',
+    'icon': <TbTrash />,
+    'children': 'Delete permanently',
+    'onClick': () => {},
+    'data-focus': 'true'
+  }
 };
 
 // ---- Sizes -------------------------------------------------------------

@@ -122,10 +122,7 @@ export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
         </dl>
       )}
 
-      <Link
-        {...entityDetailRoute(workspaceSlug, asEntityPublicId(id))}
-        className={styles.link}
-      >
+      <Link {...entityDetailRoute(workspaceSlug, asEntityPublicId(id))} className={styles.link}>
         View in catalog →
       </Link>
     </div>

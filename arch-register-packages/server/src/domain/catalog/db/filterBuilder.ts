@@ -34,13 +34,13 @@ const buildArrayConditionClause = (
   addParam: (v: unknown) => string,
   dialect: 'postgres' | 'sqlite'
 ): string | null => {
-  const from =
-    dialect === 'postgres' ? `jsonb_array_elements_text(${col}) t` : `json_each(${col})`;
+  const from = dialect === 'postgres' ? `jsonb_array_elements_text(${col}) t` : `json_each(${col})`;
   const element = dialect === 'postgres' ? 't' : 'value';
   const exists = (predicate: string) => `EXISTS (SELECT 1 FROM ${from} WHERE ${predicate})`;
   const ilike = (ph: string) =>
     dialect === 'postgres' ? `${element} ILIKE ${ph}` : `LOWER(${element}) LIKE LOWER(${ph})`;
-  const arrayLength = dialect === 'postgres' ? `jsonb_array_length(${col})` : `json_array_length(${col})`;
+  const arrayLength =
+    dialect === 'postgres' ? `jsonb_array_length(${col})` : `json_array_length(${col})`;
 
   switch (cond.op) {
     case 'empty':

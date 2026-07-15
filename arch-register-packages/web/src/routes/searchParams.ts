@@ -4,7 +4,16 @@ export type SharedEntityBrowserSearchParams = {
   owner?: string;
   q?: string;
   viewId?: string;
-  viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix' | 'hierarchy' | 'explore' | 'bubble';
+  viewMode?:
+    | 'table'
+    | 'cards'
+    | 'tree'
+    | 'radar'
+    | 'timeline'
+    | 'matrix'
+    | 'hierarchy'
+    | 'explore'
+    | 'bubble';
   sort?: string;
   projectScope?: 'project' | 'all';
   viewConfigs?: string;
@@ -37,16 +46,15 @@ const validateSharedEntityBrowserSearch = (
       ? raw.viewMode
       : undefined,
   sort: typeof raw.sort === 'string' ? raw.sort : undefined,
-  projectScope: raw.projectScope === 'project' || raw.projectScope === 'all' ? raw.projectScope : undefined,
+  projectScope:
+    raw.projectScope === 'project' || raw.projectScope === 'all' ? raw.projectScope : undefined,
   viewConfigs: typeof raw.viewConfigs === 'string' ? raw.viewConfigs : undefined,
   sidebarTab:
-    raw.sidebarTab === 'filters' ||
-    raw.sidebarTab === 'views' ||
-    raw.sidebarTab === 'bookmarks'
+    raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'bookmarks'
       ? raw.sidebarTab
       : raw.sidebarTab === 'pinned' || raw.sidebarTab === 'collections'
         ? 'bookmarks'
-      : undefined,
+        : undefined,
   collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
   asOf: typeof raw.asOf === 'string' ? raw.asOf : undefined,
@@ -54,7 +62,7 @@ const validateSharedEntityBrowserSearch = (
     raw.asOfIncludeProjects === 'true' || raw.asOfIncludeProjects === 'false'
       ? raw.asOfIncludeProjects
       : undefined,
-  joinAssessmentId: typeof raw.joinAssessmentId === 'string' ? raw.joinAssessmentId : undefined,
+  joinAssessmentId: typeof raw.joinAssessmentId === 'string' ? raw.joinAssessmentId : undefined
 });
 
 // Entity browser filters
@@ -90,7 +98,8 @@ const validateSharedContentBrowserSearch = (
   raw: Record<string, unknown>
 ): SharedContentBrowserSearchParams => ({
   contentQuery: typeof raw.contentQuery === 'string' ? raw.contentQuery : undefined,
-  contentView: raw.contentView === 'grid' || raw.contentView === 'list' ? raw.contentView : undefined,
+  contentView:
+    raw.contentView === 'grid' || raw.contentView === 'list' ? raw.contentView : undefined
 });
 
 export type WorkspaceContentSearchParams = SharedContentBrowserSearchParams;
@@ -99,7 +108,9 @@ export const validateWorkspaceContentSearch = (
   raw: Record<string, unknown>
 ): WorkspaceContentSearchParams => validateSharedContentBrowserSearch(raw);
 
-export const validateEntityDetailSearch = (raw: Record<string, unknown>): EntityDetailSearchParams => ({
+export const validateEntityDetailSearch = (
+  raw: Record<string, unknown>
+): EntityDetailSearchParams => ({
   ...validateSharedContentBrowserSearch(raw),
   sidebarTab: validateSharedEntityBrowserSearch(raw).sidebarTab,
   collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
@@ -114,7 +125,7 @@ export const validateEntityDetailSearch = (raw: Record<string, unknown>): Entity
     raw.tab === 'changes' ||
     raw.tab === 'timeline'
       ? raw.tab
-      : undefined,
+      : undefined
 });
 
 export type MarkdownSearchParams = {
@@ -130,9 +141,13 @@ export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSe
   mode: raw.mode === 'edit' || raw.mode === 'preview' ? raw.mode : undefined,
   panel: raw.panel === 'preview' || raw.panel === 'history' ? raw.panel : undefined,
   revisionId: typeof raw.revisionId === 'string' ? raw.revisionId : undefined,
-  historyMode: raw.historyMode === 'preview' || raw.historyMode === 'compare' ? raw.historyMode : undefined,
-  compareMode: raw.compareMode === 'to-current' || raw.compareMode === 'changes-in-version' ? raw.compareMode : undefined,
-  diagramSessionId: typeof raw.diagramSessionId === 'string' ? raw.diagramSessionId : undefined,
+  historyMode:
+    raw.historyMode === 'preview' || raw.historyMode === 'compare' ? raw.historyMode : undefined,
+  compareMode:
+    raw.compareMode === 'to-current' || raw.compareMode === 'changes-in-version'
+      ? raw.compareMode
+      : undefined,
+  diagramSessionId: typeof raw.diagramSessionId === 'string' ? raw.diagramSessionId : undefined
 });
 
 // Project detail params
@@ -142,7 +157,8 @@ export type ProjectSearchParams = {
   assessmentId?: string;
   assessmentTab?: 'details' | 'summary' | 'discussion';
   dialog?: 'add-entity';
-} & SharedEntityBrowserSearchParams & SharedContentBrowserSearchParams;
+} & SharedEntityBrowserSearchParams &
+  SharedContentBrowserSearchParams;
 
 export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSearchParams => ({
   ...validateSharedEntityBrowserSearch(raw),
@@ -154,10 +170,12 @@ export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSear
       : undefined,
   assessmentId: typeof raw.assessmentId === 'string' ? raw.assessmentId : undefined,
   assessmentTab:
-    raw.assessmentTab === 'details' || raw.assessmentTab === 'summary' || raw.assessmentTab === 'discussion'
+    raw.assessmentTab === 'details' ||
+    raw.assessmentTab === 'summary' ||
+    raw.assessmentTab === 'discussion'
       ? raw.assessmentTab
       : undefined,
-  dialog: raw.dialog === 'add-entity' ? raw.dialog : undefined,
+  dialog: raw.dialog === 'add-entity' ? raw.dialog : undefined
 });
 
 // Settings params
@@ -172,7 +190,9 @@ export type SettingsSearchParams = {
 export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSearchParams => ({
   auditEntityType: typeof raw.auditEntityType === 'string' ? raw.auditEntityType : undefined,
   auditOperation:
-    raw.auditOperation === 'create' || raw.auditOperation === 'update' || raw.auditOperation === 'delete'
+    raw.auditOperation === 'create' ||
+    raw.auditOperation === 'update' ||
+    raw.auditOperation === 'delete'
       ? raw.auditOperation
       : undefined,
   auditStartDate: typeof raw.auditStartDate === 'string' ? raw.auditStartDate : undefined,
@@ -216,7 +236,7 @@ export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteS
     raw.category === 'files' ||
     raw.category === 'schemas'
       ? raw.category
-      : undefined,
+      : undefined
 });
 
 // Diagram params
@@ -227,7 +247,7 @@ export type DiagramSearchParams = {
 
 export const validateDiagramSearch = (raw: Record<string, unknown>): DiagramSearchParams => ({
   returnTo: typeof raw.returnTo === 'string' ? raw.returnTo : undefined,
-  markdownSessionId: typeof raw.markdownSessionId === 'string' ? raw.markdownSessionId : undefined,
+  markdownSessionId: typeof raw.markdownSessionId === 'string' ? raw.markdownSessionId : undefined
 });
 
 // Data model params
@@ -240,7 +260,7 @@ export type ModelSearchParams = {
 export const validateModelSearch = (raw: Record<string, unknown>): ModelSearchParams => ({
   tab: raw.tab === 'types' || raw.tab === 'enums' || raw.tab === 'graph' ? raw.tab : undefined,
   schema: typeof raw.schema === 'string' ? raw.schema : undefined,
-  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined,
+  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined
 });
 
 // Schema settings params (for settings/schemas route)
@@ -250,10 +270,12 @@ export type SchemaSettingsSearchParams = {
   enumId?: string;
 };
 
-export const validateSchemaSettingsSearch = (raw: Record<string, unknown>): SchemaSettingsSearchParams => ({
+export const validateSchemaSettingsSearch = (
+  raw: Record<string, unknown>
+): SchemaSettingsSearchParams => ({
   tab: raw.tab === 'types' || raw.tab === 'enums' ? raw.tab : undefined,
   schema: typeof raw.schema === 'string' ? raw.schema : undefined,
-  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined,
+  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined
 });
 
 export type ModelOverviewSearchParams = {
@@ -311,7 +333,7 @@ export const validateModelOverviewSearch = (
   iterations: parseNumberInRange(raw.iterations, 50, 1000, 300, true),
   springStrength: parseNumberInRange(raw.springStrength, 0.1, 2.0, 0.5),
   repulsionStrength: parseNumberInRange(raw.repulsionStrength, 0.1, 3.0, 1.0),
-  idealEdgeLength: parseNumberInRange(raw.idealEdgeLength, 50, 500, 160),
+  idealEdgeLength: parseNumberInRange(raw.idealEdgeLength, 50, 500, 160)
 });
 
 // Assistant params
@@ -322,5 +344,5 @@ export type AssistantSearchParams = {
 
 export const validateAssistantSearch = (raw: Record<string, unknown>): AssistantSearchParams => ({
   conversation: typeof raw.conversation === 'string' ? raw.conversation : undefined,
-  layout: raw.layout === 'conversation' || raw.layout === 'split' ? raw.layout : undefined,
+  layout: raw.layout === 'conversation' || raw.layout === 'split' ? raw.layout : undefined
 });

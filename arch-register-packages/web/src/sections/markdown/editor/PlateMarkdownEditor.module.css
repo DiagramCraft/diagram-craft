@@ -8,7 +8,7 @@
 }
 
 .plateContent {
-  composes: articleTypography from '../articleTypography.module.css';
+  composes: articleTypography from "../articleTypography.module.css";
   flex: 1;
   width: 100%;
   padding: 28px 100px 80px 40px;
@@ -28,13 +28,13 @@
 
 /* Plate's list wrapper treats every non-bullet list style as ordered. Task
    paragraphs therefore need their generated marker suppressed explicitly. */
-.plateContent :global(ol[style*='list-style-type: todo']) {
+.plateContent :global(ol[style*="list-style-type: todo"]) {
   list-style: none;
   margin: 0;
   padding-left: 4px;
 }
 
-.plateContent :global(ol[style*='list-style-type: todo'] > li) {
+.plateContent :global(ol[style*="list-style-type: todo"] > li) {
   margin: 0;
   list-style: none;
 }
@@ -153,7 +153,9 @@
   cursor: pointer;
   color: var(--base-fg-dim);
   font-size: 13px;
-  transition: background 0.08s, color 0.08s;
+  transition:
+    background 0.08s,
+    color 0.08s;
 }
 
 .toolbarBtn:hover {

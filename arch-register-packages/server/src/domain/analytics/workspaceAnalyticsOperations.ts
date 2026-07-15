@@ -1,7 +1,14 @@
-import type { ActivityTrendBucket, WorkspaceAnalytics } from '@arch-register/api-types/analyticsContract';
+import type {
+  ActivityTrendBucket,
+  WorkspaceAnalytics
+} from '@arch-register/api-types/analyticsContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, filterVisibleEntities, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  filterVisibleEntities,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
@@ -26,7 +33,10 @@ const makeLifecycleBucket = (
   percent: roundPercent(count, total)
 });
 
-const summarizeCompleteness = (entities: EntityDbResult[], schemaMap: Map<string, SchemaDbResult>) => {
+const summarizeCompleteness = (
+  entities: EntityDbResult[],
+  schemaMap: Map<string, SchemaDbResult>
+) => {
   let above80Count = 0;
   let below50Count = 0;
   let between50And79Count = 0;
@@ -68,7 +78,8 @@ export const computeActivityTrend = (
   const bucketByDate = new Map(buckets.map(bucket => [bucket.date, bucket]));
 
   for (const row of auditRows) {
-    if (row.entity_type !== 'entity' || (row.operation !== 'create' && row.operation !== 'update')) continue;
+    if (row.entity_type !== 'entity' || (row.operation !== 'create' && row.operation !== 'update'))
+      continue;
     const bucket = bucketByDate.get(row.timestamp.toISOString().slice(0, 10));
     if (bucket) bucket[row.operation === 'create' ? 'created' : 'updated']++;
   }

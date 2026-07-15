@@ -104,7 +104,8 @@ export const AuditLogSubSection = ({
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        if (entry.public_id) navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
+        if (entry.public_id)
+          navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
         return;
       case 'project':
         if (entry.public_id) {
@@ -128,16 +129,16 @@ export const AuditLogSubSection = ({
         const folderFilter = path?.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
         if (projectId) {
           if (folderFilter) {
-            navigate(projectContentFolderRoute(
-              workspaceSlug,
-              asProjectPublicId(projectId),
-              folderFilter
-            ));
+            navigate(
+              projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folderFilter)
+            );
           } else {
-            navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-              tab: 'projects' as const,
-              section: 'home' as const
-            }));
+            navigate(
+              projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+                tab: 'projects' as const,
+                section: 'home' as const
+              })
+            );
           }
         }
       }

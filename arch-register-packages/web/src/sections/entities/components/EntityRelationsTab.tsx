@@ -35,12 +35,7 @@ export const EntityRelationsTab = ({ outgoing, incoming, schemas }: Props) => {
       <div className={sharedStyles.sectionLabel}>Outgoing ({outgoing.length})</div>
       <div className={styles.relationsList}>
         {outgoing.map((r, i) => (
-          <RelationRow
-            key={`o-${i}`}
-            relation={r}
-            direction="outgoing"
-            schemas={schemas}
-          />
+          <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} />
         ))}
         {outgoing.length === 0 && (
           <div className={sharedStyles.dim} style={{ padding: 8 }}>
@@ -51,12 +46,7 @@ export const EntityRelationsTab = ({ outgoing, incoming, schemas }: Props) => {
       <div className={sharedStyles.sectionLabel}>Incoming ({incoming.length})</div>
       <div className={styles.relationsList}>
         {incoming.map((r, i) => (
-          <RelationRow
-            key={`i-${i}`}
-            relation={r}
-            direction="incoming"
-            schemas={schemas}
-          />
+          <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} />
         ))}
         {incoming.length === 0 && (
           <div className={sharedStyles.dim} style={{ padding: 8 }}>
@@ -85,10 +75,7 @@ const RelationRow = ({
     : 'var(--accent-fg)';
 
   return (
-    <EntityNavigationLink
-      publicId={relation.publicId}
-      className={styles.relation}
-    >
+    <EntityNavigationLink publicId={relation.publicId} className={styles.relation}>
       <span className={styles.relationLead}>
         {direction === 'incoming' ? (
           <>

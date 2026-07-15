@@ -1,8 +1,4 @@
-import {
-  defineHandler,
-  H3,
-  serveStatic
-} from 'h3';
+import { defineHandler, H3, serveStatic } from 'h3';
 import { readFile } from 'node:fs/promises';
 import type { FileSystemServer } from '../fileSystemServer';
 

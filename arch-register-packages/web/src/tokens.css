@@ -1,4 +1,4 @@
-@import '../../../packages/main/src/tokens.css';
+@import "../../../packages/main/src/tokens.css";
 
 :root {
   text-rendering: optimizeLegibility;
@@ -26,7 +26,7 @@
   --tag-component: oklch(0.52 0.14 145);
   --tag-api: oklch(0.52 0.17 258);
   --tag-service: oklch(0.55 0.16 35);
-  --tag-database: oklch(0.50 0.16 295);
+  --tag-database: oklch(0.5 0.16 295);
   --tag-system: oklch(0.58 0.13 80);
 }
 
@@ -64,7 +64,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
-  font-feature-settings: "cv11" 1, "ss01" 1;
+  font-feature-settings:
+    "cv11" 1,
+    "ss01" 1;
 }
 
 :where(.ar-app) *,

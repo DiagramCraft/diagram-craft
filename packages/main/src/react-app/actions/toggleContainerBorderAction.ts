@@ -5,8 +5,7 @@ const HIDE_CONTAINER_CLASS = 'hide_container';
 
 declare global {
   namespace DiagramCraft {
-    interface ActionMapExtensions extends ReturnType<typeof toggleContainerBorderActions> {
-    }
+    interface ActionMapExtensions extends ReturnType<typeof toggleContainerBorderActions> {}
   }
 }
 

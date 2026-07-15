@@ -4,10 +4,9 @@ import type { EventReceiver } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import type { Releasable } from '@diagram-craft/utils/releasable';
 
-export class CRDTProp<
-  T extends { [key: string]: CRDTCompatibleObject },
-  N extends keyof T & string
-> implements Releasable {
+export class CRDTProp<T extends { [key: string]: CRDTCompatibleObject }, N extends keyof T & string>
+  implements Releasable
+{
   #cachedValue: T[N] | undefined;
   #current: CRDTMap<T>;
   readonly #remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> | undefined;

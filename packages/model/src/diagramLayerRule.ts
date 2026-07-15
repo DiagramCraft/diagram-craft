@@ -110,7 +110,9 @@ export class RuleLayer extends Layer<RuleLayer> {
   ) {
     super(id, name, diagram, 'rule', crdt);
 
-    this.#rules = this.watchCrdtField(crdt => crdt.get('rules', () => diagram.document.root.factory.makeList())!);
+    this.#rules = this.watchCrdtField(
+      crdt => crdt.get('rules', () => diagram.document.root.factory.makeList())!
+    );
     for (const rule of rules) {
       this.#rules.get().push(rule);
     }
@@ -312,7 +314,10 @@ export class RuleLayer extends Layer<RuleLayer> {
   }
 
   byId(id: string): AdjustmentRule | undefined {
-    return this.#rules.get().toArray().find(r => r.id === id);
+    return this.#rules
+      .get()
+      .toArray()
+      .find(r => r.id === id);
   }
 
   runRule(rule: AdjustmentRule): Result {
@@ -386,7 +391,10 @@ export class RuleLayer extends Layer<RuleLayer> {
 
   removeRule(rule: AdjustmentRule, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      const idx = this.#rules.get().toArray().findIndex(r => r.id === rule.id);
+      const idx = this.#rules
+        .get()
+        .toArray()
+        .findIndex(r => r.id === rule.id);
       this.#rules.get().delete(idx);
     });
     this.#cache.clear();
@@ -395,7 +403,10 @@ export class RuleLayer extends Layer<RuleLayer> {
 
   replaceRule(existing: AdjustmentRule, newRule: AdjustmentRule, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      const idx = this.#rules.get().toArray().findIndex(r => r.id === existing.id);
+      const idx = this.#rules
+        .get()
+        .toArray()
+        .findIndex(r => r.id === existing.id);
       this.#rules.get().delete(idx);
       this.#rules.get().insert(idx, [newRule]);
     });

@@ -9,7 +9,9 @@ export const apiTokenSchema = z.object({
   id: z.string().describe('Unique API token identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Human-readable token name'),
-  capabilities: z.array(workspaceCapabilitySchema).describe('Workspace capabilities granted to the token'),
+  capabilities: z
+    .array(workspaceCapabilitySchema)
+    .describe('Workspace capabilities granted to the token'),
   created_by: z.string().describe('User who created the token'),
   created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp'),
   last_used_at: timestampOutputSchema.nullable().describe('ISO 8601 last-use timestamp'),
@@ -19,7 +21,12 @@ export const apiTokenSchema = z.object({
 export const apiTokenCreateSchema = z.object({
   name: z.string().describe('Human-readable token name'),
   capabilities: z.array(workspaceCapabilitySchema).describe('Workspace capabilities to grant'),
-  expires_at: z.string().datetime().nullable().optional().describe('Optional ISO 8601 expiration timestamp')
+  expires_at: z
+    .string()
+    .datetime()
+    .nullable()
+    .optional()
+    .describe('Optional ISO 8601 expiration timestamp')
 });
 
 export const apiTokenCreatedSchema = apiTokenSchema.extend({

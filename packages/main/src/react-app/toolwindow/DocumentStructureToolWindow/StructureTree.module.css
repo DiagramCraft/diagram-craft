@@ -18,7 +18,7 @@
 
     &[data-pendingdrop="before"] {
       &:before {
-        content: '';
+        content: "";
         position: absolute;
         top: -2px;
         left: 0;
@@ -32,7 +32,7 @@
 
     &[data-pendingdrop="after"] {
       &:before {
-        content: '';
+        content: "";
         position: absolute;
         bottom: -2px;
         left: 0;
@@ -53,9 +53,10 @@
       font-weight: bold;
     }
 
-    &[data-selected="true"], &[data-selected="true"] + div > * {
+    &[data-selected="true"],
+    &[data-selected="true"] + div > * {
       &:after {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         bottom: -1px;

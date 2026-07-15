@@ -52,9 +52,6 @@ importers:
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1
-      prettier:
-        specifier: ^3.8.4
-        version: 3.8.4
       skott:
         specifier: ^0.35.10
         version: 0.35.11
@@ -20294,7 +20291,8 @@ snapshots:
       tar-fs: 2.1.4
       tunnel-agent: 0.6.0
 
-  prettier@3.8.4: {}
+  prettier@3.8.4:
+    optional: true
 
   pretty-error@4.0.0:
     dependencies:

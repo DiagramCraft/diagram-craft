@@ -26,7 +26,14 @@ type Props = {
   onDelete: () => void;
 };
 
-export const ProjectSettingsForm = ({ project, workspaceId, teams, onSaved, onClose, onDelete }: Props) => {
+export const ProjectSettingsForm = ({
+  project,
+  workspaceId,
+  teams,
+  onSaved,
+  onClose,
+  onDelete
+}: Props) => {
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
   const [owner, setOwner] = useState(project.owner?.id ?? '');

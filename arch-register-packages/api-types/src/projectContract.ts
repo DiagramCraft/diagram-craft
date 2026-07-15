@@ -51,7 +51,10 @@ export const contentMetadataSchema = z.object({
 
 export const projectFileSchema = z.object({
   id: z.string().describe('Unique file identifier'),
-  project_id: z.string().nullable().describe('Parent project identifier (null for entity/workspace files)'),
+  project_id: z
+    .string()
+    .nullable()
+    .describe('Parent project identifier (null for entity/workspace files)'),
   project_public_id: z.string().nullable().optional().describe('Public project identifier'),
   path: z.string().describe('File path within the project/entity/workspace'),
   name: z.string().describe('File name'),
@@ -60,7 +63,10 @@ export const projectFileSchema = z.object({
   comment_count: z.number().optional().describe('Number of comments on the file'),
   unresolved_comment_count: z.number().optional().describe('Number of unresolved comments'),
   is_template: z.boolean().optional().describe('Whether the file is a project template'),
-  is_workspace_template: z.boolean().optional().describe('Whether the file is a workspace-level template'),
+  is_workspace_template: z
+    .boolean()
+    .optional()
+    .describe('Whether the file is a workspace-level template'),
   preview_svg: z.string().nullable().optional().describe('SVG preview of the file (for diagrams)'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp'),
@@ -68,8 +74,15 @@ export const projectFileSchema = z.object({
   created_by: z.string().nullable().optional().describe('User who created the file'),
   updated_by: z.string().nullable().optional().describe('User who last updated the file'),
   mime_type: z.string().nullable().optional().describe('MIME type for generic files'),
-  original_filename: z.string().nullable().optional().describe('Original filename for uploaded files'),
-  read_only: z.boolean().optional().describe('Whether this content is managed by an external mount'),
+  original_filename: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Original filename for uploaded files'),
+  read_only: z
+    .boolean()
+    .optional()
+    .describe('Whether this content is managed by an external mount'),
   mount_id: z.string().nullable().optional().describe('External content mount identifier'),
   content_metadata: contentMetadataSchema.nullable().describe('Content metadata (for diagrams)')
 });
@@ -112,11 +125,13 @@ const projectDetailSchema = projectSchema.extend({
 
 const diagramEntityFileSchema = z.object({
   file: projectFileSchema.describe('Diagram file'),
-  project: z.object({
-    id: z.string().describe('Project identifier'),
-    public_id: z.string().describe('Public project identifier'),
-    name: z.string().describe('Project name')
-  }).describe('Parent project information')
+  project: z
+    .object({
+      id: z.string().describe('Project identifier'),
+      public_id: z.string().describe('Public project identifier'),
+      name: z.string().describe('Project name')
+    })
+    .describe('Parent project information')
 });
 
 // ── Request schemas ───────────────────────────────────────────
@@ -149,792 +164,884 @@ const deleteFolderResponseSchema = z.object({
 
 // ── Contract ──────────────────────────────────────────────────
 
-export const projectContract = oc
-  .tag('Projects')
-  .router({
-    projects: {
-      list: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/projects',
-          inputStructure: 'detailed',
-          summary: 'List projects',
-          description: 'Retrieves all projects in the workspace with their metadata and file counts.',
-          tags: ['Projects']
+export const projectContract = oc.tag('Projects').router({
+  projects: {
+    list: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects',
+        inputStructure: 'detailed',
+        summary: 'List projects',
+        description: 'Retrieves all projects in the workspace with their metadata and file counts.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: ws
         })
-        .input(
-          z.object({
-            params: ws
+      )
+      .output(z.array(projectSchema)),
+    get: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{id}',
+        inputStructure: 'detailed',
+        summary: 'Get project details',
+        description: 'Retrieves complete project details including the file tree structure.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId
+        })
+      )
+      .output(projectDetailSchema),
+    create: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects',
+        inputStructure: 'detailed',
+        summary: 'Create project',
+        description: 'Creates a new project with the specified metadata.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({
+            name: z.string().describe('Project name'),
+            description: z.preprocess(
+              v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
+              z.string().optional().describe('Project description')
+            ),
+            owner: z.string().nullable().optional().describe('Project owner identifier'),
+            status: z
+              .enum(['draft', 'active', 'complete', 'cancelled'])
+              .optional()
+              .describe('Project status'),
+            color: z.preprocess(
+              v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
+              z.string().nullable().optional().describe('Project color (hex format)')
+            ),
+            target_date: z
+              .string()
+              .nullable()
+              .optional()
+              .describe('Target completion date (ISO 8601)'),
+            pinned: z.boolean().optional().describe('Whether to pin the project')
           })
-        )
-        .output(z.array(projectSchema)),
-      get: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/projects/{id}',
-          inputStructure: 'detailed',
-          summary: 'Get project details',
-          description: 'Retrieves complete project details including the file tree structure.',
-          tags: ['Projects']
         })
-        .input(
-          z.object({
-            params: wsAndId
+      )
+      .output(projectSchema),
+    update: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}',
+        inputStructure: 'detailed',
+        summary: 'Update project',
+        description: 'Updates project metadata. Only provided fields will be updated.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          body: z.object({
+            name: z.string().describe('Project name'),
+            description: z.string().optional().describe('Project description'),
+            owner: z.string().nullable().optional().describe('Project owner identifier'),
+            status: z
+              .enum(['draft', 'active', 'complete', 'cancelled'])
+              .optional()
+              .describe('Project status'),
+            color: z.string().nullable().optional().describe('Project color (hex format)'),
+            target_date: z
+              .string()
+              .nullable()
+              .optional()
+              .describe('Target completion date (ISO 8601)'),
+            pinned: z.boolean().optional().describe('Whether the project is pinned')
           })
-        )
-        .output(projectDetailSchema),
-      create: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/projects',
-          inputStructure: 'detailed',
-          summary: 'Create project',
-          description: 'Creates a new project with the specified metadata.',
-          tags: ['Projects']
         })
-        .input(
-          z.object({
-            params: ws,
-            body: z.object({
-              name: z.string().describe('Project name'),
-              description: z.preprocess(
-                v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
-                z.string().optional().describe('Project description')
-              ),
-              owner: z.string().nullable().optional().describe('Project owner identifier'),
-              status: z.enum(['draft', 'active', 'complete', 'cancelled']).optional().describe('Project status'),
-              color: z.preprocess(
-                v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
-                z.string().nullable().optional().describe('Project color (hex format)')
-              ),
-              target_date: z.string().nullable().optional().describe('Target completion date (ISO 8601)'),
-              pinned: z.boolean().optional().describe('Whether to pin the project')
-            })
+      )
+      .output(projectSchema),
+    remove: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/projects/{id}',
+        inputStructure: 'detailed',
+        summary: 'Delete project',
+        description:
+          'Permanently deletes a project and all its files. This operation cannot be undone.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId
+        })
+      )
+      .output(deleteProjectResponseSchema),
+    listFiles: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{id}/files',
+        inputStructure: 'detailed',
+        summary: 'List project files',
+        description:
+          'Retrieves the file tree structure for a project, including folders and files.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId
+        })
+      )
+      .output(fileTreeSchema),
+    createFolder: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/folders',
+        inputStructure: 'detailed',
+        summary: 'Create project folder',
+        description: 'Creates a new folder in the project at the specified path.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          body: z.object({
+            path: z.string().describe('Folder path to create')
           })
-        )
-        .output(projectSchema),
-      update: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/projects/{id}',
-          inputStructure: 'detailed',
-          summary: 'Update project',
-          description: 'Updates project metadata. Only provided fields will be updated.',
-          tags: ['Projects']
         })
-        .input(
-          z.object({
-            params: wsAndId,
-            body: z.object({
-              name: z.string().describe('Project name'),
-              description: z.string().optional().describe('Project description'),
-              owner: z.string().nullable().optional().describe('Project owner identifier'),
-              status: z.enum(['draft', 'active', 'complete', 'cancelled']).optional().describe('Project status'),
-              color: z.string().nullable().optional().describe('Project color (hex format)'),
-              target_date: z.string().nullable().optional().describe('Target completion date (ISO 8601)'),
-              pinned: z.boolean().optional().describe('Whether the project is pinned')
-            })
+      )
+      .output(createFolderResponseSchema),
+    renameFolder: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/folders/rename',
+        inputStructure: 'detailed',
+        summary: 'Rename project folder',
+        description: 'Renames a folder and updates all file paths within it.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          body: z.object({
+            oldPath: z.string().describe('Current folder path'),
+            newPath: z.string().describe('New folder path')
           })
-        )
-        .output(projectSchema),
-      remove: oc
-        .route({
-          method: 'DELETE',
-          path: '/{workspace}/projects/{id}',
-          inputStructure: 'detailed',
-          summary: 'Delete project',
-          description: 'Permanently deletes a project and all its files. This operation cannot be undone.',
-          tags: ['Projects']
         })
-        .input(
-          z.object({
-            params: wsAndId
+      )
+      .output(renameFolderResponseSchema),
+    deleteFolder: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/projects/{id}/folders',
+        inputStructure: 'detailed',
+        summary: 'Delete project folder',
+        description: 'Deletes a folder and all its contents. This operation cannot be undone.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z.object({ path: z.string().describe('Folder path to delete') })
+        })
+      )
+      .output(deleteFolderResponseSchema),
+    getFileContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{id}/files/content',
+        inputStructure: 'detailed',
+        summary: 'Get project file content',
+        description: 'Retrieves the content of a diagram file in the project.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z.object({ path: z.string().describe('File path') })
+        })
+      )
+      .output(z.record(z.string(), z.unknown())),
+    saveFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/files',
+        inputStructure: 'detailed',
+        summary: 'Save project file',
+        description: 'Saves or updates a diagram file in the project.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z.object({ path: z.string().describe('File path') }),
+          body: z.record(z.string(), z.unknown()).describe('File content')
+        })
+      )
+      .output(projectFileSchema),
+    deleteFile: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/projects/{id}/files',
+        inputStructure: 'detailed',
+        summary: 'Delete project file',
+        description:
+          'Permanently deletes a file from the project. This operation cannot be undone.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z.object({ path: z.string().describe('File path to delete') })
+        })
+      )
+      .output(deleteFileResponseSchema),
+    cloneFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/files/clone',
+        inputStructure: 'detailed',
+        summary: 'Clone project file',
+        description: 'Creates a copy of a file in the same project with a new name.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z.object({ path: z.string().describe('File path to clone') })
+        })
+      )
+      .output(projectFileSchema),
+    relocateFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/files/relocate',
+        inputStructure: 'detailed',
+        summary: 'Move project file',
+        description: 'Moves or renames a file within the project.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z.object({ path: z.string().describe('Current file path') }),
+          body: z.object({
+            newPath: z.string().describe('New file path')
           })
-        )
-        .output(deleteProjectResponseSchema),
-      listFiles: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/projects/{id}/files',
-          inputStructure: 'detailed',
-          summary: 'List project files',
-          description: 'Retrieves the file tree structure for a project, including folders and files.',
-          tags: ['Projects']
         })
-        .input(
-          z.object({
-            params: wsAndId
+      )
+      .output(projectFileSchema),
+    updateTemplateStatus: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/template-status',
+        inputStructure: 'detailed',
+        summary: 'Update file template status',
+        description: 'Marks a file as a template or removes its template status.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z.object({ path: z.string().describe('File path') }),
+          body: z.object({
+            is_template: z.boolean().describe('Whether the file is a project template'),
+            is_workspace_template: z
+              .boolean()
+              .describe('Whether the file is a workspace-level template')
           })
-        )
-        .output(fileTreeSchema),
-      createFolder: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/projects/{id}/folders',
-          inputStructure: 'detailed',
-          summary: 'Create project folder',
-          description: 'Creates a new folder in the project at the specified path.',
-          tags: ['Projects']
         })
-        .input(
-          z.object({
-            params: wsAndId,
-            body: z.object({
-              path: z.string().describe('Folder path to create')
-            })
+      )
+      .output(projectFileSchema),
+    listEntities: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{id}/entities',
+        inputStructure: 'detailed',
+        summary: 'List project entities',
+        description: 'Retrieves all entities linked to the project.',
+        tags: ['Projects']
+      })
+      .input(z.object({ params: wsAndId }))
+      .output(z.array(projectEntitySchema)),
+    listEntityProjects: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entities/{entityId}/projects',
+        inputStructure: 'detailed',
+        summary: 'List projects containing an entity',
+        description: 'Retrieves accessible projects linked to an entity in a single request.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({ params: ws.extend({ entityId: z.string().describe('Entity identifier') }) })
+      )
+      .output(z.array(entityProjectSchema)),
+    addEntity: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/entities',
+        inputStructure: 'detailed',
+        summary: 'Link entity to project',
+        description:
+          'Links an entity to the project with optional type classification and completion status.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          body: z.object({
+            entity_id: z.string().describe('Entity identifier to link'),
+            entity_type: z
+              .string()
+              .nullable()
+              .optional()
+              .describe('Project entity type classification'),
+            is_done: z.boolean().optional().describe('Whether the entity is marked as done')
           })
-        )
-        .output(createFolderResponseSchema),
-      renameFolder: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/projects/{id}/folders/rename',
-          inputStructure: 'detailed',
-          summary: 'Rename project folder',
-          description: 'Renames a folder and updates all file paths within it.',
-          tags: ['Projects']
         })
-        .input(
-          z.object({
-            params: wsAndId,
-            body: z.object({
-              oldPath: z.string().describe('Current folder path'),
-              newPath: z.string().describe('New folder path')
-            })
+      )
+      .output(projectEntitySchema),
+    updateEntity: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/entities/{entityId}',
+        inputStructure: 'detailed',
+        summary: 'Update project entity',
+        description: 'Updates the type classification or completion status of a linked entity.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: wsAndId.extend({ entityId: z.string().describe('Entity identifier') }),
+          body: z.object({
+            entity_type: z
+              .string()
+              .nullable()
+              .optional()
+              .describe('Project entity type classification'),
+            is_done: z.boolean().optional().describe('Whether the entity is marked as done')
           })
-        )
-        .output(renameFolderResponseSchema),
-      deleteFolder: oc
-        .route({
-          method: 'DELETE',
-          path: '/{workspace}/projects/{id}/folders',
-          inputStructure: 'detailed',
-          summary: 'Delete project folder',
-          description: 'Deletes a folder and all its contents. This operation cannot be undone.',
-          tags: ['Projects']
         })
-        .input(
-          z.object({
-            params: wsAndId,
-            query: z.object({ path: z.string().describe('Folder path to delete') })
-          })
-        )
-        .output(deleteFolderResponseSchema),
-      getFileContent: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/projects/{id}/files/content',
-          inputStructure: 'detailed',
-          summary: 'Get project file content',
-          description: 'Retrieves the content of a diagram file in the project.',
-          tags: ['Projects']
-        })
-        .input(
-          z.object({
-            params: wsAndId,
-            query: z.object({ path: z.string().describe('File path') })
-          })
-        )
-        .output(z.record(z.string(), z.unknown())),
-      saveFile: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/projects/{id}/files',
-          inputStructure: 'detailed',
-          summary: 'Save project file',
-          description: 'Saves or updates a diagram file in the project.',
-          tags: ['Projects']
-        })
-        .input(
-          z.object({
-            params: wsAndId,
-            query: z.object({ path: z.string().describe('File path') }),
-            body: z.record(z.string(), z.unknown()).describe('File content')
-          })
-        )
-        .output(projectFileSchema),
-      deleteFile: oc
-        .route({
-          method: 'DELETE',
-          path: '/{workspace}/projects/{id}/files',
-          inputStructure: 'detailed',
-          summary: 'Delete project file',
-          description: 'Permanently deletes a file from the project. This operation cannot be undone.',
-          tags: ['Projects']
-        })
-        .input(
-          z.object({
-            params: wsAndId,
-            query: z.object({ path: z.string().describe('File path to delete') })
-          })
-        )
-        .output(deleteFileResponseSchema),
-      cloneFile: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/projects/{id}/files/clone',
-          inputStructure: 'detailed',
-          summary: 'Clone project file',
-          description: 'Creates a copy of a file in the same project with a new name.',
-          tags: ['Projects']
-        })
-        .input(
-          z.object({
-            params: wsAndId,
-            query: z.object({ path: z.string().describe('File path to clone') })
-          })
-        )
-        .output(projectFileSchema),
-      relocateFile: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/projects/{id}/files/relocate',
-          inputStructure: 'detailed',
-          summary: 'Move project file',
-          description: 'Moves or renames a file within the project.',
-          tags: ['Projects']
-        })
-        .input(
-          z.object({
-            params: wsAndId,
-            query: z.object({ path: z.string().describe('Current file path') }),
-            body: z.object({
-              newPath: z.string().describe('New file path')
-            })
-          })
-        )
-        .output(projectFileSchema),
-      updateTemplateStatus: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/projects/{id}/template-status',
-          inputStructure: 'detailed',
-          summary: 'Update file template status',
-          description: 'Marks a file as a template or removes its template status.',
-          tags: ['Projects']
-        })
-        .input(
-          z.object({
-            params: wsAndId,
-            query: z.object({ path: z.string().describe('File path') }),
-            body: z.object({
-              is_template: z.boolean().describe('Whether the file is a project template'),
-              is_workspace_template: z.boolean().describe('Whether the file is a workspace-level template')
-            })
-          })
-        )
-        .output(projectFileSchema),
-      listEntities: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/projects/{id}/entities',
-          inputStructure: 'detailed',
-          summary: 'List project entities',
-          description: 'Retrieves all entities linked to the project.',
-          tags: ['Projects']
-        })
-        .input(z.object({ params: wsAndId }))
-        .output(z.array(projectEntitySchema)),
-      listEntityProjects: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/entities/{entityId}/projects',
-          inputStructure: 'detailed',
-          summary: 'List projects containing an entity',
-          description: 'Retrieves accessible projects linked to an entity in a single request.',
-          tags: ['Projects']
-        })
-        .input(z.object({ params: ws.extend({ entityId: z.string().describe('Entity identifier') }) }))
-        .output(z.array(entityProjectSchema)),
-      addEntity: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/projects/{id}/entities',
-          inputStructure: 'detailed',
-          summary: 'Link entity to project',
-          description: 'Links an entity to the project with optional type classification and completion status.',
-          tags: ['Projects']
-        })
-        .input(
-          z.object({
-            params: wsAndId,
-            body: z.object({
-              entity_id: z.string().describe('Entity identifier to link'),
-              entity_type: z.string().nullable().optional().describe('Project entity type classification'),
-              is_done: z.boolean().optional().describe('Whether the entity is marked as done')
-            })
-          })
-        )
-        .output(projectEntitySchema),
-      updateEntity: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/projects/{id}/entities/{entityId}',
-          inputStructure: 'detailed',
-          summary: 'Update project entity',
-          description: 'Updates the type classification or completion status of a linked entity.',
-          tags: ['Projects']
-        })
-        .input(
-          z.object({
-            params: wsAndId.extend({ entityId: z.string().describe('Entity identifier') }),
-            body: z.object({
-              entity_type: z.string().nullable().optional().describe('Project entity type classification'),
-              is_done: z.boolean().optional().describe('Whether the entity is marked as done')
-            })
-          })
-        )
-        .output(projectEntitySchema),
-      removeEntity: oc
-        .route({
-          method: 'DELETE',
-          path: '/{workspace}/projects/{id}/entities/{entityId}',
-          inputStructure: 'detailed',
-          summary: 'Unlink entity from project',
-          description: 'Removes the link between an entity and the project. The entity itself is not deleted.',
-          tags: ['Projects']
-        })
-        .input(z.object({ params: wsAndId.extend({ entityId: z.string().describe('Entity identifier') }) }))
-        .output(z.object({ success: z.boolean().describe('Whether the unlink was successful') })),
-      getEntityDiagramFiles: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/entities/{entityId}/diagram-files',
-          inputStructure: 'detailed',
-          summary: 'Get entity diagram files',
-          description: 'Retrieves all diagram files associated with an entity across all projects.',
-          tags: ['Projects']
-        })
-        .input(z.object({ params: ws.extend({ entityId: z.string().describe('Entity identifier') }) }))
-        .output(z.array(diagramEntityFileSchema)),
-      listEntityFiles: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/entities/{entityId}/content',
-          inputStructure: 'detailed',
-          summary: 'List entity files',
-          description: 'Retrieves the file tree structure for entity-scoped content.',
-          tags: ['Projects']
-        })
-        .input(z.object({ params: ws.extend({ entityId: z.string().describe('Entity identifier') }) }))
-        .output(fileTreeSchema),
-      createEntityFolder: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/entities/{entityId}/content/folders',
-          inputStructure: 'detailed',
-          summary: 'Create entity folder',
-          description: 'Creates a new folder in the entity content area.',
-          tags: ['Projects']
-        })
-        .input(z.object({
+      )
+      .output(projectEntitySchema),
+    removeEntity: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/projects/{id}/entities/{entityId}',
+        inputStructure: 'detailed',
+        summary: 'Unlink entity from project',
+        description:
+          'Removes the link between an entity and the project. The entity itself is not deleted.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({ params: wsAndId.extend({ entityId: z.string().describe('Entity identifier') }) })
+      )
+      .output(z.object({ success: z.boolean().describe('Whether the unlink was successful') })),
+    getEntityDiagramFiles: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entities/{entityId}/diagram-files',
+        inputStructure: 'detailed',
+        summary: 'Get entity diagram files',
+        description: 'Retrieves all diagram files associated with an entity across all projects.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({ params: ws.extend({ entityId: z.string().describe('Entity identifier') }) })
+      )
+      .output(z.array(diagramEntityFileSchema)),
+    listEntityFiles: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entities/{entityId}/content',
+        inputStructure: 'detailed',
+        summary: 'List entity files',
+        description: 'Retrieves the file tree structure for entity-scoped content.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({ params: ws.extend({ entityId: z.string().describe('Entity identifier') }) })
+      )
+      .output(fileTreeSchema),
+    createEntityFolder: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/content/folders',
+        inputStructure: 'detailed',
+        summary: 'Create entity folder',
+        description: 'Creates a new folder in the entity content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ entityId: z.string().describe('Entity identifier') }),
           body: z.object({ path: z.string().describe('Folder path to create') })
-        }))
-        .output(createFolderResponseSchema),
-      createEntityFile: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/entities/{entityId}/content/files',
-          inputStructure: 'detailed',
-          summary: 'Create entity file',
-          description: 'Creates a new diagram file in the entity content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(createFolderResponseSchema),
+    createEntityFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/content/files',
+        inputStructure: 'detailed',
+        summary: 'Create entity file',
+        description: 'Creates a new diagram file in the entity content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ entityId: z.string().describe('Entity identifier') }),
           query: z.object({ path: z.string().describe('File path') }),
           body: z.record(z.string(), z.unknown()).describe('File content')
-        }))
-        .output(projectFileSchema),
-      listWorkspaceFiles: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/content',
-          inputStructure: 'detailed',
-          summary: 'List workspace files',
-          description: 'Retrieves the file tree structure for workspace-scoped content.',
-          tags: ['Projects']
         })
-        .input(z.object({ params: ws }))
-        .output(fileTreeSchema),
-      deleteEntityFile: oc
-        .route({
-          method: 'DELETE',
-          path: '/{workspace}/entities/{entityId}/content/files',
-          inputStructure: 'detailed',
-          summary: 'Delete entity file',
-          description: 'Permanently deletes a file from the entity content area.',
-          tags: ['Projects']
-        })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    listWorkspaceFiles: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/content',
+        inputStructure: 'detailed',
+        summary: 'List workspace files',
+        description: 'Retrieves the file tree structure for workspace-scoped content.',
+        tags: ['Projects']
+      })
+      .input(z.object({ params: ws }))
+      .output(fileTreeSchema),
+    deleteEntityFile: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/entities/{entityId}/content/files',
+        inputStructure: 'detailed',
+        summary: 'Delete entity file',
+        description: 'Permanently deletes a file from the entity content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ entityId: z.string().describe('Entity identifier') }),
           query: z.object({ path: z.string().describe('File path to delete') })
-        }))
-        .output(deleteFileResponseSchema),
-      deleteEntityFolder: oc
-        .route({
-          method: 'DELETE',
-          path: '/{workspace}/entities/{entityId}/content/folders',
-          inputStructure: 'detailed',
-          summary: 'Delete entity folder',
-          description: 'Deletes a folder and all its contents from the entity content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(deleteFileResponseSchema),
+    deleteEntityFolder: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/entities/{entityId}/content/folders',
+        inputStructure: 'detailed',
+        summary: 'Delete entity folder',
+        description: 'Deletes a folder and all its contents from the entity content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ entityId: z.string().describe('Entity identifier') }),
           query: z.object({ path: z.string().describe('Folder path to delete') })
-        }))
-        .output(deleteFolderResponseSchema),
-      renameEntityFolder: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/entities/{entityId}/content/folders/rename',
-          inputStructure: 'detailed',
-          summary: 'Rename entity folder',
-          description: 'Renames a folder in the entity content area and updates all file paths within it.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(deleteFolderResponseSchema),
+    renameEntityFolder: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/entities/{entityId}/content/folders/rename',
+        inputStructure: 'detailed',
+        summary: 'Rename entity folder',
+        description:
+          'Renames a folder in the entity content area and updates all file paths within it.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ entityId: z.string().describe('Entity identifier') }),
           body: z.object({
             oldPath: z.string().describe('Current folder path'),
             newPath: z.string().describe('New folder path')
           })
-        }))
-        .output(renameFolderResponseSchema),
-      cloneEntityFile: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/entities/{entityId}/content/files/clone',
-          inputStructure: 'detailed',
-          summary: 'Clone entity file',
-          description: 'Creates a copy of a file in the entity content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(renameFolderResponseSchema),
+    cloneEntityFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/content/files/clone',
+        inputStructure: 'detailed',
+        summary: 'Clone entity file',
+        description: 'Creates a copy of a file in the entity content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ entityId: z.string().describe('Entity identifier') }),
           query: z.object({ path: z.string().describe('File path to clone') })
-        }))
-        .output(projectFileSchema),
-      relocateEntityFile: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/entities/{entityId}/content/files/relocate',
-          inputStructure: 'detailed',
-          summary: 'Move entity file',
-          description: 'Moves or renames a file within the entity content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    relocateEntityFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/entities/{entityId}/content/files/relocate',
+        inputStructure: 'detailed',
+        summary: 'Move entity file',
+        description: 'Moves or renames a file within the entity content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ entityId: z.string().describe('Entity identifier') }),
           query: z.object({ path: z.string().describe('Current file path') }),
           body: z.object({ newPath: z.string().describe('New file path') })
-        }))
-        .output(projectFileSchema),
-      deleteWorkspaceFile: oc
-        .route({
-          method: 'DELETE',
-          path: '/{workspace}/content/files',
-          inputStructure: 'detailed',
-          summary: 'Delete workspace file',
-          description: 'Permanently deletes a file from the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    deleteWorkspaceFile: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/content/files',
+        inputStructure: 'detailed',
+        summary: 'Delete workspace file',
+        description: 'Permanently deletes a file from the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           query: z.object({ path: z.string().describe('File path to delete') })
-        }))
-        .output(deleteFileResponseSchema),
-      deleteWorkspaceFolder: oc
-        .route({
-          method: 'DELETE',
-          path: '/{workspace}/content/folders',
-          inputStructure: 'detailed',
-          summary: 'Delete workspace folder',
-          description: 'Deletes a folder and all its contents from the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(deleteFileResponseSchema),
+    deleteWorkspaceFolder: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/content/folders',
+        inputStructure: 'detailed',
+        summary: 'Delete workspace folder',
+        description: 'Deletes a folder and all its contents from the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           query: z.object({ path: z.string().describe('Folder path to delete') })
-        }))
-        .output(deleteFolderResponseSchema),
-      renameWorkspaceFolder: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/content/folders/rename',
-          inputStructure: 'detailed',
-          summary: 'Rename workspace folder',
-          description: 'Renames a folder in the workspace content area and updates all file paths within it.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(deleteFolderResponseSchema),
+    renameWorkspaceFolder: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/content/folders/rename',
+        inputStructure: 'detailed',
+        summary: 'Rename workspace folder',
+        description:
+          'Renames a folder in the workspace content area and updates all file paths within it.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           body: z.object({
             oldPath: z.string().describe('Current folder path'),
             newPath: z.string().describe('New folder path')
           })
-        }))
-        .output(renameFolderResponseSchema),
-      cloneWorkspaceFile: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/content/files/clone',
-          inputStructure: 'detailed',
-          summary: 'Clone workspace file',
-          description: 'Creates a copy of a file in the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(renameFolderResponseSchema),
+    cloneWorkspaceFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/content/files/clone',
+        inputStructure: 'detailed',
+        summary: 'Clone workspace file',
+        description: 'Creates a copy of a file in the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           query: z.object({ path: z.string().describe('File path to clone') })
-        }))
-        .output(projectFileSchema),
-      relocateWorkspaceFile: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/content/files/relocate',
-          inputStructure: 'detailed',
-          summary: 'Move workspace file',
-          description: 'Moves or renames a file within the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    relocateWorkspaceFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/content/files/relocate',
+        inputStructure: 'detailed',
+        summary: 'Move workspace file',
+        description: 'Moves or renames a file within the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           query: z.object({ path: z.string().describe('Current file path') }),
           body: z.object({ newPath: z.string().describe('New file path') })
-        }))
-        .output(projectFileSchema),
-      createWorkspaceFolder: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/content/folders',
-          inputStructure: 'detailed',
-          summary: 'Create workspace folder',
-          description: 'Creates a new folder in the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    createWorkspaceFolder: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/content/folders',
+        inputStructure: 'detailed',
+        summary: 'Create workspace folder',
+        description: 'Creates a new folder in the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           body: z.object({ path: z.string().describe('Folder path to create') })
-        }))
-        .output(createFolderResponseSchema),
-      createWorkspaceFile: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/content/files',
-          inputStructure: 'detailed',
-          summary: 'Create workspace file',
-          description: 'Creates a new diagram file in the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(createFolderResponseSchema),
+    createWorkspaceFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/content/files',
+        inputStructure: 'detailed',
+        summary: 'Create workspace file',
+        description: 'Creates a new diagram file in the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           query: z.object({ path: z.string().describe('File path') }),
           body: z.record(z.string(), z.unknown()).describe('File content')
-        }))
-        .output(projectFileSchema),
-      getWorkspaceFileContent: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/content/files/content',
-          inputStructure: 'detailed',
-          summary: 'Get workspace file content',
-          description: 'Retrieves the content of a diagram file in the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    getWorkspaceFileContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/content/files/content',
+        inputStructure: 'detailed',
+        summary: 'Get workspace file content',
+        description: 'Retrieves the content of a diagram file in the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           query: z.object({ path: z.string().describe('File path') })
-        }))
-        .output(z.record(z.string(), z.unknown())),
-      saveWorkspaceFile: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/content/files',
-          inputStructure: 'detailed',
-          summary: 'Save workspace file',
-          description: 'Saves or updates a diagram file in the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(z.record(z.string(), z.unknown())),
+    saveWorkspaceFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/content/files',
+        inputStructure: 'detailed',
+        summary: 'Save workspace file',
+        description: 'Saves or updates a diagram file in the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           query: z.object({ path: z.string().describe('File path') }),
           body: z.record(z.string(), z.unknown()).describe('File content')
-        }))
-        .output(projectFileSchema),
-      createProjectMarkdown: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/projects/{id}/markdown',
-          inputStructure: 'detailed',
-          summary: 'Create project markdown',
-          description: 'Creates a new markdown document in the project.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    createProjectMarkdown: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/markdown',
+        inputStructure: 'detailed',
+        summary: 'Create project markdown',
+        description: 'Creates a new markdown document in the project.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: wsAndId,
           body: z.object({
             name: z.string().describe('Markdown document name'),
             folder: z.string().optional().describe('Optional folder path')
           })
-        }))
-        .output(projectFileSchema),
-      createEntityMarkdown: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/entities/{entityId}/markdown',
-          inputStructure: 'detailed',
-          summary: 'Create entity markdown',
-          description: 'Creates a new markdown document in the entity content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    createEntityMarkdown: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/markdown',
+        inputStructure: 'detailed',
+        summary: 'Create entity markdown',
+        description: 'Creates a new markdown document in the entity content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ entityId: z.string().describe('Entity identifier') }),
           body: z.object({
             name: z.string().describe('Markdown document name'),
             folder: z.string().optional().describe('Optional folder path')
           })
-        }))
-        .output(projectFileSchema),
-      createWorkspaceMarkdown: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/content/markdown',
-          inputStructure: 'detailed',
-          summary: 'Create workspace markdown',
-          description: 'Creates a new markdown document in the workspace content area.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    createWorkspaceMarkdown: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/content/markdown',
+        inputStructure: 'detailed',
+        summary: 'Create workspace markdown',
+        description: 'Creates a new markdown document in the workspace content area.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws,
           body: z.object({
             name: z.string().describe('Markdown document name'),
             folder: z.string().optional().describe('Optional folder path')
           })
-        }))
-        .output(projectFileSchema),
-      getFile: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/files/{fileId}',
-          inputStructure: 'detailed',
-          summary: 'Get file metadata',
-          description: 'Retrieves metadata for a specific file by its identifier.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    getFile: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/files/{fileId}',
+        inputStructure: 'detailed',
+        summary: 'Get file metadata',
+        description: 'Retrieves metadata for a specific file by its identifier.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ fileId: z.string().describe('File identifier') })
-        }))
-        .output(projectFileSchema),
-      getDiagramContent: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/files/{fileId}/content',
-          inputStructure: 'detailed',
-          summary: 'Get diagram content by ID',
-          description: 'Retrieves the content of a diagram file by its identifier.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    getDiagramContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/files/{fileId}/content',
+        inputStructure: 'detailed',
+        summary: 'Get diagram content by ID',
+        description: 'Retrieves the content of a diagram file by its identifier.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ fileId: z.string().describe('File identifier') })
-        }))
-        .output(z.record(z.string(), z.unknown())),
-      getMarkdownContent: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/markdown/{nodeId}',
-          inputStructure: 'detailed',
-          summary: 'Get markdown content',
-          description: 'Retrieves the content of a markdown document including its attachments.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(z.record(z.string(), z.unknown())),
+    getMarkdownContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/markdown/{nodeId}',
+        inputStructure: 'detailed',
+        summary: 'Get markdown content',
+        description: 'Retrieves the content of a markdown document including its attachments.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ nodeId: z.string().describe('Markdown node identifier') })
-        }))
-        .output(markdownContentSchema),
-      saveMarkdownContent: oc
-        .route({
-          method: 'PUT',
-          path: '/{workspace}/markdown/{nodeId}',
-          inputStructure: 'detailed',
-          summary: 'Save markdown content',
-          description: 'Saves or updates the content of a markdown document.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(markdownContentSchema),
+    saveMarkdownContent: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/markdown/{nodeId}',
+        inputStructure: 'detailed',
+        summary: 'Save markdown content',
+        description: 'Saves or updates the content of a markdown document.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ nodeId: z.string().describe('Markdown node identifier') }),
           body: z.object({
             body: z.string().describe('Markdown content'),
             name: z.string().optional().describe('Optional new name for the document')
           })
-        }))
-        .output(projectFileSchema),
-      listMarkdownRevisions: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/markdown/{nodeId}/revisions',
-          inputStructure: 'detailed',
-          summary: 'List markdown revisions',
-          description: 'Retrieves the revision history for a markdown document.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    listMarkdownRevisions: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/markdown/{nodeId}/revisions',
+        inputStructure: 'detailed',
+        summary: 'List markdown revisions',
+        description: 'Retrieves the revision history for a markdown document.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ nodeId: z.string().describe('Markdown node identifier') })
-        }))
-        .output(z.array(markdownRevisionSummarySchema)),
-      getMarkdownRevision: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/markdown/{nodeId}/revisions/{revisionId}',
-          inputStructure: 'detailed',
-          summary: 'Get markdown revision',
-          description: 'Retrieves a specific revision of a markdown document.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(z.array(markdownRevisionSummarySchema)),
+    getMarkdownRevision: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/markdown/{nodeId}/revisions/{revisionId}',
+        inputStructure: 'detailed',
+        summary: 'Get markdown revision',
+        description: 'Retrieves a specific revision of a markdown document.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({
             nodeId: z.string().describe('Markdown node identifier'),
             revisionId: z.string().describe('Revision identifier')
           })
-        }))
-        .output(markdownRevisionDetailSchema),
-      restoreMarkdownRevision: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/markdown/{nodeId}/revisions/{revisionId}/restore',
-          inputStructure: 'detailed',
-          summary: 'Restore markdown revision',
-          description: 'Restores a markdown document to a previous revision, creating a new revision in the process.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(markdownRevisionDetailSchema),
+    restoreMarkdownRevision: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/markdown/{nodeId}/revisions/{revisionId}/restore',
+        inputStructure: 'detailed',
+        summary: 'Restore markdown revision',
+        description:
+          'Restores a markdown document to a previous revision, creating a new revision in the process.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({
             nodeId: z.string().describe('Markdown node identifier'),
             revisionId: z.string().describe('Revision identifier to restore')
           })
-        }))
-        .output(projectFileSchema),
-      createMarkdownDiagramAttachment: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/markdown/{nodeId}/attachments/diagram',
-          inputStructure: 'detailed',
-          summary: 'Create markdown diagram attachment',
-          description: 'Creates a new diagram attachment for a markdown document.',
-          tags: ['Projects']
         })
-        .input(z.object({
+      )
+      .output(projectFileSchema),
+    createMarkdownDiagramAttachment: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/markdown/{nodeId}/attachments/diagram',
+        inputStructure: 'detailed',
+        summary: 'Create markdown diagram attachment',
+        description: 'Creates a new diagram attachment for a markdown document.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
           params: ws.extend({ nodeId: z.string().describe('Markdown node identifier') }),
           body: z.object({
             name: z.string().describe('Diagram name'),
             content: z.record(z.string(), z.unknown()).describe('Diagram content')
           })
-        }))
-        .output(projectFileSchema)
-    }
-  });
+        })
+      )
+      .output(projectFileSchema)
+  }
+});
 
 export type Project = z.infer<typeof projectSchema>;
 export type ProjectFile = z.infer<typeof projectFileSchema>;

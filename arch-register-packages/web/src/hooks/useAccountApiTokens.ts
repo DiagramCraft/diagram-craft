@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
-import type {
-  WorkspaceApiTokenCreate
-} from '@arch-register/api-types/apiTokenContract';
+import type { WorkspaceApiTokenCreate } from '@arch-register/api-types/apiTokenContract';
 
 export const accountApiTokenKeys = {
   all: ['account-api-tokens'] as const,

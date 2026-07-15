@@ -12,8 +12,6 @@ export const NodeActionPropertiesEditor: Editor = props => {
   };
 
   return (
-    <NodeActionPropertiesPanelForm
-      actions={makeProperty($p, 'actions', nodeDefaults, onChange)}
-    />
+    <NodeActionPropertiesPanelForm actions={makeProperty($p, 'actions', nodeDefaults, onChange)} />
   );
 };

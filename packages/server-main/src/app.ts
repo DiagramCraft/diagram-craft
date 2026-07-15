@@ -37,7 +37,9 @@ export const createServerApp = (servers: ServerModules) => {
 
   if (servers.aiServer) {
     app.use(createAIRoutes(servers.aiServer));
-    log.info(`AI routes enabled with model: ${servers.aiDefaultModel ?? 'anthropic/claude-3.5-sonnet'}`);
+    log.info(
+      `AI routes enabled with model: ${servers.aiDefaultModel ?? 'anthropic/claude-3.5-sonnet'}`
+    );
   } else {
     log.info('AI routes disabled: No OpenRouter API key configured');
     log.info('Set OPENROUTER_API_KEY environment variable or use --openrouter-api-key flag');

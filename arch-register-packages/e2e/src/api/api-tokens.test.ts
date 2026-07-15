@@ -28,9 +28,7 @@ test.describe('workspace API tokens', () => {
       token: expect.stringMatching(/^ar_pat_/)
     });
     expect(await server.db.auth.listApiTokenAudit(seedIds.workspace.default)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ token_id: created.id, event: 'created' })
-      ])
+      expect.arrayContaining([expect.objectContaining({ token_id: created.id, event: 'created' })])
     );
 
     const tokenClient = createTestORPCClient(server.baseUrl, `Bearer ${created.token}`);
@@ -40,9 +38,7 @@ test.describe('workspace API tokens', () => {
     });
     expect(entities.length).toBeGreaterThan(0);
     expect(await server.db.auth.listApiTokenAudit(seedIds.workspace.default)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ token_id: created.id, event: 'used' })
-      ])
+      expect.arrayContaining([expect.objectContaining({ token_id: created.id, event: 'used' })])
     );
 
     await expect(
@@ -54,9 +50,7 @@ test.describe('workspace API tokens', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 
     const listed = await orpc.authProtected.apiTokens.list();
-    expect(listed).toEqual([
-      expect.objectContaining({ id: created.id, name: 'Release pipeline' })
-    ]);
+    expect(listed).toEqual([expect.objectContaining({ id: created.id, name: 'Release pipeline' })]);
     expect(listed[0]).not.toHaveProperty('token');
     expect(listed[0]).not.toHaveProperty('token_hash');
     expect(await server.db.auth.getApiTokenByHash(hashApiToken(created.token))).toMatchObject({
@@ -65,9 +59,7 @@ test.describe('workspace API tokens', () => {
 
     await orpc.authProtected.apiTokens.revoke({ params: { id: created.id } });
     expect(await server.db.auth.listApiTokenAudit(seedIds.workspace.default)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ token_id: created.id, event: 'revoked' })
-      ])
+      expect.arrayContaining([expect.objectContaining({ token_id: created.id, event: 'revoked' })])
     );
 
     await expect(

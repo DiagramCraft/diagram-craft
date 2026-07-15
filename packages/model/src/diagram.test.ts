@@ -44,9 +44,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(() => {
         doc2 = TestModel.newDocument(root2);
       }).not.toThrow();
-      expect((doc2?.diagrams[0]?.layers.all[0] as RegularLayerType | undefined)?.elements).toHaveLength(
-        1
-      );
+      expect(
+        (doc2?.diagrams[0]?.layers.all[0] as RegularLayerType | undefined)?.elements
+      ).toHaveLength(1);
     });
   });
 

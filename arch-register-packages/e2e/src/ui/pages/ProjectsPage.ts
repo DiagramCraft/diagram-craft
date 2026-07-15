@@ -14,15 +14,14 @@ export class ProjectsPage extends WorkspacePage {
   };
 
   gotoProject = async (projectId: string, tab: 'projects' | 'archive' = 'projects') => {
-    await this.page.addInitScript(
-      ({ key, value }) => window.localStorage.setItem(key, value),
-      { key: this.primarySidebarStorageKey, value: 'expanded' }
-    );
+    await this.page.addInitScript(({ key, value }) => window.localStorage.setItem(key, value), {
+      key: this.primarySidebarStorageKey,
+      value: 'expanded'
+    });
     await this.page.goto(projectDetailRoute(this.workspaceSlug, projectId, tab));
   };
 
-  pinProjectButton = () =>
-    this.page.getByRole('button', { name: /Pin project|Unpin project/ });
+  pinProjectButton = () => this.page.getByRole('button', { name: /Pin project|Unpin project/ });
 
   editProjectButton = () => this.page.getByRole('button', { name: 'Edit' });
 
@@ -39,7 +38,8 @@ export class ProjectsPage extends WorkspacePage {
   secondaryHomeRow = () => this.page.getByTestId('project-secondary-home');
   secondaryEntitiesRow = () => this.page.getByTestId('project-secondary-entities');
   emptySelectionTitle = () => this.page.getByText('Select a project');
-  addEntityButton = () => this.page.getByRole('main').getByRole('button', { name: 'Add entity' }).first();
+  addEntityButton = () =>
+    this.page.getByRole('main').getByRole('button', { name: 'Add entity' }).first();
   entitiesSectionLabel = () => this.page.getByRole('main').getByText(/^Entities \(/);
 
   openProject = async (name: string) => {
@@ -74,14 +74,18 @@ export class ProjectsPage extends WorkspacePage {
     groupTitle: 'Pinned Projects' | 'Active Projects' | 'Archived Projects',
     projectName: string
   ) => {
-    await expect(this.sidebarGroup(groupTitle).getByTestId(`project-row-${projectName}`)).toBeVisible();
+    await expect(
+      this.sidebarGroup(groupTitle).getByTestId(`project-row-${projectName}`)
+    ).toBeVisible();
   };
 
   expectProjectNotInSidebarGroup = async (
     groupTitle: 'Pinned Projects' | 'Active Projects' | 'Archived Projects',
     projectName: string
   ) => {
-    await expect(this.sidebarGroup(groupTitle).getByTestId(`project-row-${projectName}`)).toHaveCount(0);
+    await expect(
+      this.sidebarGroup(groupTitle).getByTestId(`project-row-${projectName}`)
+    ).toHaveCount(0);
   };
 
   openProjectFromSidebar = async (projectName: string) => {

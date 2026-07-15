@@ -162,7 +162,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const root = createEntity('root');
     const level1 = createEntity('level1', 'root');
     const level2 = createEntity('level2', 'level1');
-    
+
     const rootGrant = createGrant('root', 'user-1', 'viewer', 'subtree');
     const level1Grant = createGrant('level1', 'user-1', 'editor', 'subtree');
 
@@ -279,7 +279,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const tree1Child = createEntity('tree1-child', 'tree1-root');
     const tree2Root = createEntity('tree2-root');
     const tree2Child = createEntity('tree2-child', 'tree2-root');
-    
+
     const grant = createGrant('tree1-root', 'user-1', 'entity_admin', 'subtree');
 
     const context = buildAuthorizationContext({
@@ -477,10 +477,10 @@ describe('PermissionChecker - Visibility Inheritance', () => {
     // Root and level1 are restricted
     expect(checker.hasEntityPermission(context, root, 'view_entity')).toBe(false);
     expect(checker.hasEntityPermission(context, level1, 'view_entity')).toBe(false);
-    
+
     // Level2 is explicitly public
     expect(checker.hasEntityPermission(context, level2, 'view_entity')).toBe(true);
-    
+
     // Level3 inherits public from level2
     expect(checker.hasEntityPermission(context, level3, 'view_entity')).toBe(true);
   });

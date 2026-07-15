@@ -147,9 +147,7 @@ export const BulkEditToolbar = ({
                 return (
                   <span key={row.rowId}>
                     {i > 0 && <span className={styles.bulkDim}> · </span>}
-                    <span className={styles.bulkDim}>
-                      {field ? field.label : row.fieldId} →
-                    </span>{' '}
+                    <span className={styles.bulkDim}>{field ? field.label : row.fieldId} →</span>{' '}
                     {row.clearing ? <em>cleared</em> : <b>{row.value}</b>}
                   </span>
                 );

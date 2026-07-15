@@ -38,11 +38,7 @@ const FolderSection = ({
   const [expanded, setExpanded] = useState(true);
   return (
     <div className={styles.folder}>
-      <button
-        type="button"
-        className={styles.folderRow}
-        onClick={() => setExpanded(e => !e)}
-      >
+      <button type="button" className={styles.folderRow} onClick={() => setExpanded(e => !e)}>
         {expanded ? <TbChevronDown size={13} /> : <TbChevronRight size={13} />}
         <TbFolder size={14} />
         {name}

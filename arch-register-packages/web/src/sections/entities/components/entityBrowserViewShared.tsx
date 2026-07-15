@@ -3,10 +3,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { MenuItem } from '../../../components/DropdownMenu';
-import type {
-  BrowserEntityRecord,
-  ProjectBrowserContext
-} from './entityBrowserState';
+import type { BrowserEntityRecord, ProjectBrowserContext } from './entityBrowserState';
 
 export type EntityBrowserBaseViewProps = {
   rows: BrowserEntityRecord[];

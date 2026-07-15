@@ -23,7 +23,10 @@ const findDeepestNodeAtPoint = (node: DiagramNode, point: Point): DiagramNode | 
   return node;
 };
 
-export const resolveEdgeEndpointTarget = (element: DiagramElement, point: Point): DiagramElement => {
+export const resolveEdgeEndpointTarget = (
+  element: DiagramElement,
+  point: Point
+): DiagramElement => {
   if (!isNode(element)) return element;
   return findDeepestNodeAtPoint(element, point) ?? element;
 };
