@@ -37,8 +37,8 @@ import { Releasables, type Releasable } from './releasable';
  */
 export class WatchableValue<T>
   extends EventEmitter<{
-  change: { newValue: T };
-}>
+    change: { newValue: T };
+  }>
   implements Releasable
 {
   #value: T;

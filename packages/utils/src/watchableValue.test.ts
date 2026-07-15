@@ -150,10 +150,10 @@ describe('WatchableValue', () => {
     it('should stop emitting change events after release', () => {
       const a = new WatchableValue(3);
       const b = new WatchableValue(4);
-      const sum = WatchableValue.from(
-        args => args.reduce((acc, val) => acc + val.get(), 0),
-        [a, b] as const
-      );
+      const sum = WatchableValue.from(args => args.reduce((acc, val) => acc + val.get(), 0), [
+        a,
+        b
+      ] as const);
       const changeListener = vi.fn();
 
       sum.on('change', changeListener);
@@ -166,8 +166,9 @@ describe('WatchableValue', () => {
 
     it('should only subscribe once per unique dependency', () => {
       const a = new WatchableValue(3);
-      const compute = vi.fn((args: readonly [WatchableValue<number>, WatchableValue<number>]) =>
-        args[0].get() + args[1].get()
+      const compute = vi.fn(
+        (args: readonly [WatchableValue<number>, WatchableValue<number>]) =>
+          args[0].get() + args[1].get()
       );
 
       const sum = WatchableValue.from(compute, [a, a] as const);

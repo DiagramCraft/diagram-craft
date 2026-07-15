@@ -5,9 +5,9 @@ describe('applyTemplate', () => {
   test('replaces single and multiple variables', () => {
     expect(applyTemplate('Hello %name%!', { name: 'Alice' })).toBe('Hello Alice!');
     expect(applyTemplate('%name% likes %name%', { name: 'Bob' })).toBe('Bob likes Bob');
-    expect(
-      applyTemplate('User: %name%, Age: %age%', { name: 'Charlie', age: 30 })
-    ).toBe('User: Charlie, Age: 30');
+    expect(applyTemplate('User: %name%, Age: %age%', { name: 'Charlie', age: 30 })).toBe(
+      'User: Charlie, Age: 30'
+    );
   });
 
   test('handles missing and falsy values', () => {
