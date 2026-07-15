@@ -24,8 +24,7 @@ export class WorkspaceTopBar {
 
   accountMenuButton = (): Locator => this.page.getByRole('button', { name: 'Account menu' });
 
-  searchInput = (): Locator =>
-    this.page.getByPlaceholder('Search entities, diagrams, projects...');
+  searchInput = (): Locator => this.page.getByPlaceholder('Search entities, diagrams, projects...');
 
   signOutMenuItem = (): Locator => this.page.getByRole('menuitem', { name: 'Sign out' });
 
@@ -41,9 +40,11 @@ export class WorkspaceTopBar {
   newWorkspaceMenuItem = (): Locator =>
     this.workspaceMenu().getByRole('button', { name: 'New workspace...' });
 
-  addWorkspaceDialog = (): Locator => this.page.getByRole('alertdialog', { name: 'Create a workspace' });
+  addWorkspaceDialog = (): Locator =>
+    this.page.getByRole('alertdialog', { name: 'Create a workspace' });
 
-  createWorkspaceButton = (): Locator => this.page.getByRole('button', { name: 'Create workspace' });
+  createWorkspaceButton = (): Locator =>
+    this.page.getByRole('button', { name: 'Create workspace' });
 
   notificationsButton = (): Locator => this.page.locator('button[aria-label="Notifications"]');
 

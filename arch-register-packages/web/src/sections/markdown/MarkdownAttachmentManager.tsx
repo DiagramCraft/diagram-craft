@@ -29,9 +29,7 @@ export const MarkdownAttachmentManager = (props: {
               className={styles.attachmentMain}
               onClick={() => onOpen(attachment)}
             >
-              <span className={styles.attachmentIcon}>
-                {getFileNodeIcon(attachment.type, 14)}
-              </span>
+              <span className={styles.attachmentIcon}>{getFileNodeIcon(attachment.type, 14)}</span>
               <span className={styles.attachmentBody}>
                 <span className={styles.attachmentName}>
                   {attachment.original_filename ?? attachment.name}

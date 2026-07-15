@@ -37,7 +37,12 @@ export const discussionORPCRouter = discussionRouter.router({
       return await summarizeDiscussions(context.db, input.params.workspace, context.event);
     }),
     create: discussionRouter.discussions.create.handler(async ({ input, context }) => {
-      return await createDiscussionPost(context.db, input.params.workspace, input.body, context.event);
+      return await createDiscussionPost(
+        context.db,
+        input.params.workspace,
+        input.body,
+        context.event
+      );
     }),
     update: discussionRouter.discussions.update.handler(async ({ input, context }) => {
       return await updateDiscussionPost(
@@ -49,7 +54,12 @@ export const discussionORPCRouter = discussionRouter.router({
       );
     }),
     remove: discussionRouter.discussions.remove.handler(async ({ input, context }) => {
-      return await deleteDiscussionPost(context.db, input.params.workspace, input.params.postId, context.event);
+      return await deleteDiscussionPost(
+        context.db,
+        input.params.workspace,
+        input.params.postId,
+        context.event
+      );
     })
   }
 });

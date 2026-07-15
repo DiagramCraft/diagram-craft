@@ -126,9 +126,7 @@ export const assertContentSubtreeWritable = (
   const mount = nodes.find(
     node =>
       node.mount_id &&
-      (path === node.path ||
-        path.startsWith(`${node.path}/`) ||
-        node.path.startsWith(`${path}/`))
+      (path === node.path || path.startsWith(`${node.path}/`) || node.path.startsWith(`${path}/`))
   );
   httpAssert.true(!mount, {
     status: 403,
@@ -136,9 +134,7 @@ export const assertContentSubtreeWritable = (
   });
 };
 
-export const assertContentNodeWritable = (
-  node: Pick<ContentNodeDbResult, 'mount_id'>
-) => {
+export const assertContentNodeWritable = (node: Pick<ContentNodeDbResult, 'mount_id'>) => {
   httpAssert.true(!node.mount_id, {
     status: 403,
     message: 'Mounted external content is read-only'

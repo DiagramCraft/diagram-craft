@@ -102,7 +102,7 @@ export class ZipBuilder {
     const output = createWriteStream(filepath);
     this.archive.pipe(output);
     await this.archive.finalize();
-    
+
     return new Promise((resolve, reject) => {
       output.on('close', resolve);
       output.on('error', reject);
@@ -118,7 +118,7 @@ export class ZipExtractor {
   static async extractFileAsString(zipBuffer: Buffer, filename: string): Promise<string | null> {
     const directory = await unzipper.Open.buffer(zipBuffer);
     const file = directory.files.find(f => f.path === filename);
-    
+
     if (!file) {
       return null;
     }
@@ -133,7 +133,7 @@ export class ZipExtractor {
   static async extractFileAsBuffer(zipBuffer: Buffer, filename: string): Promise<Buffer | null> {
     const directory = await unzipper.Open.buffer(zipBuffer);
     const file = directory.files.find(f => f.path === filename);
-    
+
     if (!file) {
       return null;
     }
@@ -144,10 +144,7 @@ export class ZipExtractor {
   /**
    * Extract multiple files from a ZIP buffer
    */
-  static async extractFiles(
-    zipBuffer: Buffer,
-    filenames: string[]
-  ): Promise<Map<string, string>> {
+  static async extractFiles(zipBuffer: Buffer, filenames: string[]): Promise<Map<string, string>> {
     const directory = await unzipper.Open.buffer(zipBuffer);
     const results = new Map<string, string>();
 
@@ -203,7 +200,7 @@ export class ZipExtractor {
     jsonFiles: Map<string, string>;
   }> {
     const directory = await unzipper.Open.buffer(zipBuffer);
-    
+
     // Extract JSON metadata files
     const files = await ZipExtractor.extractFiles(zipBuffer, [
       'manifest.json',
@@ -256,7 +253,7 @@ export class ZipExtractor {
         contentFiles.set(file.path, buffer);
       }
     }
-    
+
     if (contentFiles.size > 0) {
       result.contentFiles = contentFiles;
     }

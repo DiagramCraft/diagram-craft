@@ -7,7 +7,7 @@ export const BaseInlineEditable = ({
   hasValue,
   placeholder,
   dialog,
-  children,
+  children
 }: {
   hasValue: boolean;
   placeholder: React.ReactNode;

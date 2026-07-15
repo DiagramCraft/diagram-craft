@@ -51,13 +51,7 @@ export const ProjectScreenLayout = ({
   );
 };
 
-export const ProjectMetaItem = ({
-  label,
-  value
-}: {
-  label: string;
-  value: ReactNode;
-}) => (
+export const ProjectMetaItem = ({ label, value }: { label: string; value: ReactNode }) => (
   <div className={styles.metaItem}>
     <div className={styles.metaLabel}>{label}</div>
     <div className={styles.metaValue}>{value}</div>

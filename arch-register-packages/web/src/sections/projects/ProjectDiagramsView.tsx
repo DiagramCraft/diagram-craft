@@ -112,7 +112,9 @@ export const ProjectDiagramsView = ({
     );
   }
 
-  const rootFiles = project.files.rootFiles.filter(file => !lc || file.name.toLowerCase().includes(lc));
+  const rootFiles = project.files.rootFiles.filter(
+    file => !lc || file.name.toLowerCase().includes(lc)
+  );
 
   const folderGroups = project.files.folders
     .map(folder => ({
@@ -153,8 +155,7 @@ export const ProjectDiagramsView = ({
       onDownloadFile={onDownloadFile}
       onContextMenu={
         onContextMenu
-          ? (event, file) =>
-              onContextMenu(event, { type: fileMenuTargetType(file.type), file })
+          ? (event, file) => onContextMenu(event, { type: fileMenuTargetType(file.type), file })
           : undefined
       }
       onNewDiagram={onNewDiagram}

@@ -39,7 +39,8 @@ const CAPABILITY_LABELS: Record<string, string> = {
   export: 'Export data'
 };
 
-const formatDate = (value: string | null) => (value ? new Date(value).toLocaleDateString() : 'Never');
+const formatDate = (value: string | null) =>
+  value ? new Date(value).toLocaleDateString() : 'Never';
 
 const toExpiryIso = (value: string) =>
   value === '' ? null : new Date(`${value}T23:59:59.999Z`).toISOString();
@@ -91,7 +92,14 @@ const TokenCreateDialog = ({
       title="Create API token"
       sup="Account security"
       className={styles.dialog}
-      footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'create']]} />}
+      footerLeft={
+        <KbdHints
+          hints={[
+            ['Esc', 'cancel'],
+            ['⌘↵', 'create']
+          ]}
+        />
+      }
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
@@ -133,9 +141,7 @@ const TokenCreateDialog = ({
         <label className={styles.field}>
           <span className={styles.label}>Expires</span>
           <DateInput value={expiresAt} onChange={value => setExpiresAt(value ?? '')} />
-          <span className={styles.hint}>
-            Leave empty to use the one-year maximum lifetime.
-          </span>
+          <span className={styles.hint}>Leave empty to use the one-year maximum lifetime.</span>
         </label>
 
         <div className={styles.capabilityField}>
@@ -196,8 +202,16 @@ export const ApiTokensSubSection = ({
   createDialogOpen: boolean;
   onCloseCreateDialog: () => void;
 }) => {
-  const { data: tokens = [], isLoading: isLoadingTokens, error: tokenError } = useAccountApiTokens();
-  const { data: workspaces = [], isLoading: isLoadingWorkspaces, error: workspaceError } = useWorkspaces();
+  const {
+    data: tokens = [],
+    isLoading: isLoadingTokens,
+    error: tokenError
+  } = useAccountApiTokens();
+  const {
+    data: workspaces = [],
+    isLoading: isLoadingWorkspaces,
+    error: workspaceError
+  } = useWorkspaces();
   const createToken = useCreateAccountApiToken();
   const revokeToken = useRevokeAccountApiToken();
   const [secret, setSecret] = useState<string | null>(null);
@@ -262,9 +276,7 @@ export const ApiTokensSubSection = ({
               <div className={styles.workspaceName}>
                 {group.workspace?.name ?? 'Unknown workspace'}
               </div>
-              <div className={styles.workspaceSlug}>
-                {group.workspace?.url_slug ?? workspaceId}
-              </div>
+              <div className={styles.workspaceSlug}>{group.workspace?.url_slug ?? workspaceId}</div>
             </div>
             <Table.Root>
               <Table.Head>
@@ -286,7 +298,9 @@ export const ApiTokensSubSection = ({
                     />
                     <Table.Cell>{token.capabilities.length} editor capabilities</Table.Cell>
                     <Table.Cell>{formatDate(token.last_used_at)}</Table.Cell>
-                    <Table.Cell>{token.expires_at ? formatDate(token.expires_at) : 'Never'}</Table.Cell>
+                    <Table.Cell>
+                      {token.expires_at ? formatDate(token.expires_at) : 'Never'}
+                    </Table.Cell>
                     <Table.ActionsCell>
                       <Button
                         variant="icon-only"

@@ -170,7 +170,9 @@
   font-size: 11px;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
 }
 
 .pill:hover {
@@ -480,7 +482,7 @@
 }
 
 .ringOrderCheck:checked::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 4px;
   top: 1px;

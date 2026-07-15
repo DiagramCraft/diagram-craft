@@ -16,16 +16,16 @@ import { ApiTokensSubSection } from './ApiTokensSubSection';
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   profile: {
     title: 'Profile',
-    sub: 'Review the account details associated with your current sign-in.',
+    sub: 'Review the account details associated with your current sign-in.'
   },
   appearance: {
     title: 'Appearance',
-    sub: 'Customize how your account is represented throughout the workspace.',
+    sub: 'Customize how your account is represented throughout the workspace.'
   },
   'api-tokens': {
     title: 'API tokens',
-    sub: 'Manage the workspace-scoped tokens created by your account.',
-  },
+    sub: 'Manage the workspace-scoped tokens created by your account.'
+  }
 };
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/account/$section');
@@ -69,10 +69,10 @@ export const AccountSettingsScreen = () => {
     try {
       await updateUser.mutateAsync({
         userId: user.id,
-        updates: { 
+        updates: {
           color: selectedColor,
-          display_name: displayName.trim() || user.display_name,
-        },
+          display_name: displayName.trim() || user.display_name
+        }
       });
 
       await reloadUser();
@@ -103,7 +103,10 @@ export const AccountSettingsScreen = () => {
       <div className={screenStyles.head}>
         <Title
           breadcrumb={[
-            { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+            {
+              label: 'Home',
+              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+            },
             { label: 'Account settings' }
           ]}
           title={meta.title}
@@ -118,149 +121,155 @@ export const AccountSettingsScreen = () => {
           onCloseCreateDialog={() => setApiTokenAddDialogOpen(false)}
         />
       ) : (
-      <div className={styles.blockList}>
-        {section === 'profile' && (
-          <>
-            <div className={styles.sectionActions}>
-              <Button
-                onClick={() => setDisplayName(user.display_name)}
-                disabled={!hasChanges || isSaving}
-              >
-                Reset
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSave}
-                disabled={!hasChanges || isSaving}
-              >
-                {isSaving ? (
-                  'Saving...'
-                ) : saveSuccess ? (
-                  <><TbCheck size={14} /> Saved</>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </div>
-            <div className={styles.section}>
-              <div className={styles.sectionHead}>
-                <div className={styles.sectionTitle}>Profile</div>
-                <div className={styles.sectionSub}>Basic account details for your current user.</div>
+        <div className={styles.blockList}>
+          {section === 'profile' && (
+            <>
+              <div className={styles.sectionActions}>
+                <Button
+                  onClick={() => setDisplayName(user.display_name)}
+                  disabled={!hasChanges || isSaving}
+                >
+                  Reset
+                </Button>
+                <Button variant="primary" onClick={handleSave} disabled={!hasChanges || isSaving}>
+                  {isSaving ? (
+                    'Saving...'
+                  ) : saveSuccess ? (
+                    <>
+                      <TbCheck size={14} /> Saved
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
               </div>
-              <div className={styles.sectionBody}>
-                <div className={styles.field}>
-                  <div className={styles.fieldLeft}>
-                    <div className={styles.fieldLabel}>Display Name</div>
-                    <div className={styles.fieldHint}>Your name as it appears throughout the application.</div>
-                  </div>
-                  <div className={styles.fieldRight}>
-                    <TextInput
-                      aria-label="Display name"
-                      value={displayName}
-                      onChange={value => setDisplayName(value ?? '')}
-                      placeholder="Enter display name"
-                      style={{ maxWidth: 340 }}
-                    />
+              <div className={styles.section}>
+                <div className={styles.sectionHead}>
+                  <div className={styles.sectionTitle}>Profile</div>
+                  <div className={styles.sectionSub}>
+                    Basic account details for your current user.
                   </div>
                 </div>
-
-                {user.email && (
+                <div className={styles.sectionBody}>
                   <div className={styles.field}>
                     <div className={styles.fieldLeft}>
-                      <div className={styles.fieldLabel}>Email</div>
+                      <div className={styles.fieldLabel}>Display Name</div>
+                      <div className={styles.fieldHint}>
+                        Your name as it appears throughout the application.
+                      </div>
                     </div>
                     <div className={styles.fieldRight}>
-                      <div>{user.email}</div>
+                      <TextInput
+                        aria-label="Display name"
+                        value={displayName}
+                        onChange={value => setDisplayName(value ?? '')}
+                        placeholder="Enter display name"
+                        style={{ maxWidth: 340 }}
+                      />
                     </div>
                   </div>
-                )}
 
-                <div className={styles.field}>
-                  <div className={styles.fieldLeft}>
-                    <div className={styles.fieldLabel}>Authentication Provider</div>
-                  </div>
-                  <div className={styles.fieldRight}>
-                    <div>{user.auth_provider === 'local' ? 'Local' : 'OIDC'}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+                  {user.email && (
+                    <div className={styles.field}>
+                      <div className={styles.fieldLeft}>
+                        <div className={styles.fieldLabel}>Email</div>
+                      </div>
+                      <div className={styles.fieldRight}>
+                        <div>{user.email}</div>
+                      </div>
+                    </div>
+                  )}
 
-        {section === 'appearance' && (
-          <>
-            <div className={styles.sectionActions}>
-              <Button
-                onClick={() => setSelectedColor(user.color)}
-                disabled={!hasChanges || isSaving}
-              >
-                Reset
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSave}
-                disabled={!hasChanges || isSaving}
-              >
-                {isSaving ? (
-                  'Saving...'
-                ) : saveSuccess ? (
-                  <><TbCheck size={14} /> Saved</>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </div>
-            <div className={styles.section}>
-              <div className={styles.sectionHead}>
-                <div className={styles.sectionTitle}>Avatar Color</div>
-                <div className={styles.sectionSub}>
-                  Choose a color for your avatar that appears throughout the application
-                </div>
-              </div>
-              <div className={styles.sectionBody}>
-                <div className={styles.field}>
-                  <div className={styles.fieldLeft}>
-                    <div className={styles.fieldLabel}>Preview</div>
-                    <div className={styles.fieldHint}>See how your avatar will appear in lists and assignments.</div>
-                  </div>
-                  <div className={styles.fieldRight}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div data-testid="account-avatar-preview">
-                        <MemberAvatar
-                          name={user.display_name}
-                          email={user.email}
-                          userId={user.id}
-                          color={selectedColor}
-                          size={48}
-                        />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--base-fg)' }}>
-                          {user.display_name}
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--base-fg-more-dim)' }}>
-                          {user.email ?? 'No email'}
-                        </div>
-                      </div>
+                  <div className={styles.field}>
+                    <div className={styles.fieldLeft}>
+                      <div className={styles.fieldLabel}>Authentication Provider</div>
+                    </div>
+                    <div className={styles.fieldRight}>
+                      <div>{user.auth_provider === 'local' ? 'Local' : 'OIDC'}</div>
                     </div>
                   </div>
                 </div>
+              </div>
+            </>
+          )}
 
-                <div className={styles.field}>
-                  <div className={styles.fieldLeft}>
-                    <div className={styles.fieldLabel}>Color</div>
-                    <div className={styles.fieldHint}>Pick a preset or clear it to fall back to the generated avatar style.</div>
+          {section === 'appearance' && (
+            <>
+              <div className={styles.sectionActions}>
+                <Button
+                  onClick={() => setSelectedColor(user.color)}
+                  disabled={!hasChanges || isSaving}
+                >
+                  Reset
+                </Button>
+                <Button variant="primary" onClick={handleSave} disabled={!hasChanges || isSaving}>
+                  {isSaving ? (
+                    'Saving...'
+                  ) : saveSuccess ? (
+                    <>
+                      <TbCheck size={14} /> Saved
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
+              </div>
+              <div className={styles.section}>
+                <div className={styles.sectionHead}>
+                  <div className={styles.sectionTitle}>Avatar Color</div>
+                  <div className={styles.sectionSub}>
+                    Choose a color for your avatar that appears throughout the application
                   </div>
-                  <div className={styles.fieldRight}>
-                    <ColorPicker value={selectedColor} onChange={setSelectedColor} size="small" />
+                </div>
+                <div className={styles.sectionBody}>
+                  <div className={styles.field}>
+                    <div className={styles.fieldLeft}>
+                      <div className={styles.fieldLabel}>Preview</div>
+                      <div className={styles.fieldHint}>
+                        See how your avatar will appear in lists and assignments.
+                      </div>
+                    </div>
+                    <div className={styles.fieldRight}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div data-testid="account-avatar-preview">
+                          <MemberAvatar
+                            name={user.display_name}
+                            email={user.email}
+                            userId={user.id}
+                            color={selectedColor}
+                            size={48}
+                          />
+                        </div>
+                        <div>
+                          <div
+                            style={{ fontSize: '14px', fontWeight: 500, color: 'var(--base-fg)' }}
+                          >
+                            {user.display_name}
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--base-fg-more-dim)' }}>
+                            {user.email ?? 'No email'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.field}>
+                    <div className={styles.fieldLeft}>
+                      <div className={styles.fieldLabel}>Color</div>
+                      <div className={styles.fieldHint}>
+                        Pick a preset or clear it to fall back to the generated avatar style.
+                      </div>
+                    </div>
+                    <div className={styles.fieldRight}>
+                      <ColorPicker value={selectedColor} onChange={setSelectedColor} size="small" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

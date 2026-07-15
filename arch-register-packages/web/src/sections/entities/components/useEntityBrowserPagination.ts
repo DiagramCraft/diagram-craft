@@ -31,7 +31,17 @@ export const useEntityBrowserPagination = ({
   useEffect(() => {
     if (!isPagedBrowse) return;
     setPageIndex(0);
-  }, [isPagedBrowse, q, conditions, typeFilter, ownerFilter, statusFilter, projectId, collectionId, projectScope]);
+  }, [
+    isPagedBrowse,
+    q,
+    conditions,
+    typeFilter,
+    ownerFilter,
+    statusFilter,
+    projectId,
+    collectionId,
+    projectScope
+  ]);
 
   const handlePageSizeChange = useCallback((value: string | undefined) => {
     const next = Number(value ?? 50);

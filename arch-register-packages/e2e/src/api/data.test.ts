@@ -34,7 +34,12 @@ test.describe('data routes', () => {
   }) => {
     const body = await orpc.entities.list({
       params: { workspace: 'default' },
-      query: { view: 'summary', _schemaId: componentSchemaId, owner: seedIds.teams.design, q: 'react' }
+      query: {
+        view: 'summary',
+        _schemaId: componentSchemaId,
+        owner: seedIds.teams.design,
+        q: 'react'
+      }
     });
     expect(body).toEqual([
       expect.objectContaining({
@@ -97,12 +102,9 @@ test.describe('data routes', () => {
     auth,
     seeded: _
   }) => {
-    const res = await fetch(
-      `${server.baseUrl}/api/default/data/export?_schemaId=${apiSchemaId}`,
-      {
-        headers: { Authorization: auth }
-      }
-    );
+    const res = await fetch(`${server.baseUrl}/api/default/data/export?_schemaId=${apiSchemaId}`, {
+      headers: { Authorization: auth }
+    });
 
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/csv');
@@ -272,19 +274,13 @@ test.describe('data routes', () => {
     expect(matches).toEqual([]);
   });
 
-  test('GET /api/:workspace/data/:id returns entity detail', async ({
-    orpc,
-    seeded: _
-  }) => {
+  test('GET /api/:workspace/data/:id returns entity detail', async ({ orpc, seeded: _ }) => {
     const body = await orpc.entities.get({ params: { workspace: 'default', id: componentId } });
     expect(body).toMatchObject({
       _uid: componentId,
       _name: 'Frontend App',
       technology: 'React',
-      depends_on: [
-        '00000000-0000-0000-0003-000000000001',
-        '00000000-0000-0000-0003-000000000003'
-      ]
+      depends_on: ['00000000-0000-0000-0003-000000000001', '00000000-0000-0000-0003-000000000003']
     });
   });
 
@@ -292,7 +288,9 @@ test.describe('data routes', () => {
     orpc,
     seeded: _
   }) => {
-    const body = await orpc.entities.relations({ params: { workspace: 'default', id: componentId } });
+    const body = await orpc.entities.relations({
+      params: { workspace: 'default', id: componentId }
+    });
     expect(body.outgoing).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -412,7 +410,9 @@ test.describe('data routes', () => {
     orpc,
     seeded: _
   }) => {
-    const getBody = await orpc.entities.getAccess({ params: { workspace: 'default', id: componentId } });
+    const getBody = await orpc.entities.getAccess({
+      params: { workspace: 'default', id: componentId }
+    });
     expect(getBody).toMatchObject({
       owner: seedIds.teams.design,
       visibility_mode: null,
@@ -483,10 +483,7 @@ test.describe('data routes', () => {
     });
   });
 
-  test('POST /api/:workspace/data/:id/clone clones an entity', async ({
-    orpc,
-    seeded: _
-  }) => {
+  test('POST /api/:workspace/data/:id/clone clones an entity', async ({ orpc, seeded: _ }) => {
     const body = await orpc.entities.clone({ params: { workspace: 'default', id: apiId } });
     expect(body).toMatchObject({
       _name: 'Customer API (copy)',
@@ -571,7 +568,9 @@ test.describe('data routes', () => {
       system: [systemId]
     });
 
-    const result = await orpc.entities.remove({ params: { workspace: 'default', id: created._uid } });
+    const result = await orpc.entities.remove({
+      params: { workspace: 'default', id: created._uid }
+    });
     expect(result).toMatchObject({
       success: true,
       message: `Data record '${created._uid}' deleted`
@@ -606,10 +605,7 @@ test.describe('data routes', () => {
     });
   });
 
-  test('PUT /api/:workspace/data/:id updates target lifecycle', async ({
-    orpc,
-    seeded: _
-  }) => {
+  test('PUT /api/:workspace/data/:id updates target lifecycle', async ({ orpc, seeded: _ }) => {
     const created = await createEntity(orpc, {
       _schemaId: apiSchemaId,
       _name: 'Future API',

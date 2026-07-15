@@ -24,7 +24,7 @@ vi.mock('../../utils/logger', () => ({
 import { exportWorkspace } from './exportOperations';
 import { executeImport, parseImport } from './importOperations';
 
-const makeAuthCtx = (): AuthorizationContext => ({ userId: 'user-1' } as AuthorizationContext);
+const makeAuthCtx = (): AuthorizationContext => ({ userId: 'user-1' }) as AuthorizationContext;
 
 const makeDb = () =>
   ({
@@ -127,13 +127,7 @@ describe('workspace export/import guards', () => {
     hasWorkspaceCapability.mockImplementation((_ctx, capability) => capability === 'export');
 
     await expect(
-      exportWorkspace(
-        makeDb(),
-        undefined,
-        makeAuthCtx(),
-        'workspace-1',
-        { include: ['config'] }
-      )
+      exportWorkspace(makeDb(), undefined, makeAuthCtx(), 'workspace-1', { include: ['config'] })
     ).rejects.toMatchObject({ status: 403 });
   });
 
@@ -185,17 +179,21 @@ describe('workspace export/import guards', () => {
 
   it('persists imported projects and content files during executeImport', async () => {
     const db = makeDb();
-    const write = vi.fn(async (_workspace: string, _storageId: string, _nodeId: string, _content: Buffer) => {});
+    const write = vi.fn(
+      async (_workspace: string, _storageId: string, _nodeId: string, _content: Buffer) => {}
+    );
     const storage = {
       write,
       read: vi.fn(),
       delete: vi.fn(),
       deleteAll: vi.fn(),
-      stageWrite: vi.fn(async (workspace: string, storageId: string, nodeId: string, content: Buffer) => ({
-        commit: () => write(workspace, storageId, nodeId, content),
-        rollback: async () => {},
-        finalize: async () => {}
-      }))
+      stageWrite: vi.fn(
+        async (workspace: string, storageId: string, nodeId: string, content: Buffer) => ({
+          commit: () => write(workspace, storageId, nodeId, content),
+          rollback: async () => {},
+          finalize: async () => {}
+        })
+      )
     };
 
     const contentBuffer = Buffer.from('diagram payload', 'utf8');
@@ -257,7 +255,18 @@ describe('workspace export/import guards', () => {
     hasWorkspaceCapability.mockReturnValue(true);
     const db = makeDb();
     db.catalog.listSchemas.mockResolvedValueOnce([
-      { id: 'existing-schema', name: 'Service', description: '', fields: [], color: null, icon: null, default_owner: null, key_prefix: 'SVC', created_at: new Date(), updated_at: new Date() }
+      {
+        id: 'existing-schema',
+        name: 'Service',
+        description: '',
+        fields: [],
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: 'SVC',
+        created_at: new Date(),
+        updated_at: new Date()
+      }
     ]);
 
     const result = await executeImport(
@@ -265,8 +274,25 @@ describe('workspace export/import guards', () => {
       undefined,
       makeAuthCtx(),
       'workspace-1',
-      { import_id: 'import-1', include: ['schemas'], conflict_resolutions: {}, preserve_ids: false },
-      { schemas: [{ id: 'source-schema', name: 'Service', fields: [], color: null, icon: null, default_owner: null, key_prefix: null }] }
+      {
+        import_id: 'import-1',
+        include: ['schemas'],
+        conflict_resolutions: {},
+        preserve_ids: false
+      },
+      {
+        schemas: [
+          {
+            id: 'source-schema',
+            name: 'Service',
+            fields: [],
+            color: null,
+            icon: null,
+            default_owner: null,
+            key_prefix: null
+          }
+        ]
+      }
     );
 
     expect(result.success).toBe(false);
@@ -278,21 +304,61 @@ describe('workspace export/import guards', () => {
   it('compensates staged storage when the database transaction fails', async () => {
     hasWorkspaceCapability.mockReturnValue(true);
     const db = makeDb();
-    const staged = { commit: vi.fn(async () => {}), rollback: vi.fn(async () => {}), finalize: vi.fn(async () => {}) };
-    db.core = {
-      transaction: vi.fn(async () => { throw new Error('database failed'); })
+    const staged = {
+      commit: vi.fn(async () => {}),
+      rollback: vi.fn(async () => {}),
+      finalize: vi.fn(async () => {})
     };
-    const storage = { write: vi.fn(), read: vi.fn(), delete: vi.fn(), deleteAll: vi.fn(), stageWrite: vi.fn(async () => staged) };
+    db.core = {
+      transaction: vi.fn(async () => {
+        throw new Error('database failed');
+      })
+    };
+    const storage = {
+      write: vi.fn(),
+      read: vi.fn(),
+      delete: vi.fn(),
+      deleteAll: vi.fn(),
+      stageWrite: vi.fn(async () => staged)
+    };
 
     const result = await executeImport(
       db,
       storage as any,
       makeAuthCtx(),
       'workspace-1',
-      { import_id: 'import-1', include: ['projects', 'content_nodes'], conflict_resolutions: {}, preserve_ids: false },
       {
-        projects: [{ id: 'project-old', name: 'Imported project', description: '', owner: null, status: 'active', color: null }],
-        content_nodes: [{ id: 'node-old', project_id: 'project-old', entity_id: null, parent_id: null, path: 'diagram.json', name: 'diagram', type: 'diagram', size_bytes: 1, is_template: false, is_workspace_template: false, content_file: 'content/diagrams/node-old.json' }]
+        import_id: 'import-1',
+        include: ['projects', 'content_nodes'],
+        conflict_resolutions: {},
+        preserve_ids: false
+      },
+      {
+        projects: [
+          {
+            id: 'project-old',
+            name: 'Imported project',
+            description: '',
+            owner: null,
+            status: 'active',
+            color: null
+          }
+        ],
+        content_nodes: [
+          {
+            id: 'node-old',
+            project_id: 'project-old',
+            entity_id: null,
+            parent_id: null,
+            path: 'diagram.json',
+            name: 'diagram',
+            type: 'diagram',
+            size_bytes: 1,
+            is_template: false,
+            is_workspace_template: false,
+            content_file: 'content/diagrams/node-old.json'
+          }
+        ]
       },
       new Map([['content/diagrams/node-old.json', Buffer.from('x')]])
     );

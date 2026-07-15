@@ -25,8 +25,18 @@ export const findSnapshotConflicts = (
     ['description', 'Description', proposed.description, entity._description],
     ['owner', 'Owner', proposed.owner, entity._owner?.id ?? null],
     ['lifecycle', 'Lifecycle', proposed.lifecycle, entity._lifecycle?.id ?? null],
-    ['target_lifecycle', 'Target Lifecycle', proposed.target_lifecycle, entity._targetLifecycle?.id ?? null],
-    ['target_lifecycle_date', 'Target Date', proposed.target_lifecycle_date, entity._targetLifecycleDate ?? null],
+    [
+      'target_lifecycle',
+      'Target Lifecycle',
+      proposed.target_lifecycle,
+      entity._targetLifecycle?.id ?? null
+    ],
+    [
+      'target_lifecycle_date',
+      'Target Date',
+      proposed.target_lifecycle_date,
+      entity._targetLifecycleDate ?? null
+    ],
     ['tags', 'Tags', proposed.tags, entity._tags]
   ];
   for (const [key, label, proposedVal, currentVal] of metaFields) {
@@ -73,7 +83,11 @@ export const resolveSnapshotEntityData = ({
     _description: choose('description', entity._description, proposed.description),
     _owner: choose('owner', entity._owner?.id ?? null, proposed.owner),
     _lifecycle: choose('lifecycle', entity._lifecycle?.id ?? null, proposed.lifecycle),
-    _targetLifecycle: choose('target_lifecycle', entity._targetLifecycle?.id ?? null, proposed.target_lifecycle),
+    _targetLifecycle: choose(
+      'target_lifecycle',
+      entity._targetLifecycle?.id ?? null,
+      proposed.target_lifecycle
+    ),
     _targetLifecycleDate: choose(
       'target_lifecycle_date',
       entity._targetLifecycleDate ?? null,

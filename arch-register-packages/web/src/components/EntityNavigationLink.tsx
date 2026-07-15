@@ -10,7 +10,13 @@ type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
 export const EntityNavigationLink = forwardRef<HTMLAnchorElement, Props>(
   ({ publicId, ...props }, ref) => {
     const { workspaceSlug } = useWorkspaceContext();
-    return <Link {...entityDetailRoute(workspaceSlug, asEntityPublicId(publicId))} {...props} ref={ref} />;
+    return (
+      <Link
+        {...entityDetailRoute(workspaceSlug, asEntityPublicId(publicId))}
+        {...props}
+        ref={ref}
+      />
+    );
   }
 );
 

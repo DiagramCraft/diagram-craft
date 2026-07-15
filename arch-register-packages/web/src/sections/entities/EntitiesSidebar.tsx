@@ -195,7 +195,7 @@ export const EntitiesSidebar = ({
       params: { workspaceSlug },
       search: {
         ...toSavedViewSearch(view),
-        sidebarTab: 'views',
+        sidebarTab: 'views'
         // biome-ignore lint/suspicious/noExplicitAny: bypass
       } as any
     });
@@ -244,7 +244,8 @@ export const EntitiesSidebar = ({
               to: '/$workspaceSlug/entities',
               params: { workspaceSlug },
               search: (prev: Record<string, unknown>) => {
-                const collectionId = typeof prev.collectionId === 'string' ? prev.collectionId : undefined;
+                const collectionId =
+                  typeof prev.collectionId === 'string' ? prev.collectionId : undefined;
                 return {
                   ...prev,
                   sidebarTab: v as 'filters' | 'views' | 'bookmarks',
@@ -263,12 +264,22 @@ export const EntitiesSidebar = ({
         {(onCollapse || onExpand) && (
           <div className={styles.headerActions}>
             {onExpand && (
-              <button type="button" className={styles.action} title="Pin sidebar open" onClick={onExpand}>
+              <button
+                type="button"
+                className={styles.action}
+                title="Pin sidebar open"
+                onClick={onExpand}
+              >
                 <TbLayoutSidebarLeftExpand size={14} />
               </button>
             )}
             {onCollapse && (
-              <button type="button" className={styles.action} title="Collapse to rail" onClick={onCollapse}>
+              <button
+                type="button"
+                className={styles.action}
+                title="Collapse to rail"
+                onClick={onCollapse}
+              >
                 <TbLayoutSidebarLeftCollapse size={14} />
               </button>
             )}
@@ -363,42 +374,46 @@ export const EntitiesSidebar = ({
             {savedViews.filter(v => v.isAdminView).length > 0 && (
               <>
                 <SidebarGroupLabel>Workspace views</SidebarGroupLabel>
-                {savedViews.filter(v => v.isAdminView).map(view => (
-                  <TreeRow
-                    key={view.id}
-                    icon={getViewIcon(view.viewMode)}
-                    label={view.name}
-                    active={search.viewId === view.id}
-                    onClick={() => applySavedView(view)}
-                    onContextMenu={e => {
-                      if (!permissions.canManageAdminViews) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setViewMenu({ x: e.clientX, y: e.clientY, view });
-                    }}
-                  />
-                ))}
+                {savedViews
+                  .filter(v => v.isAdminView)
+                  .map(view => (
+                    <TreeRow
+                      key={view.id}
+                      icon={getViewIcon(view.viewMode)}
+                      label={view.name}
+                      active={search.viewId === view.id}
+                      onClick={() => applySavedView(view)}
+                      onContextMenu={e => {
+                        if (!permissions.canManageAdminViews) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setViewMenu({ x: e.clientX, y: e.clientY, view });
+                      }}
+                    />
+                  ))}
               </>
             )}
             <SidebarGroupLabel>Saved views</SidebarGroupLabel>
             {savedViews.filter(v => !v.isAdminView).length === 0 && (
               <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
             )}
-            {savedViews.filter(v => !v.isAdminView).map(view => (
-              <TreeRow
-                key={view.id}
-                icon={getViewIcon(view.viewMode)}
-                label={view.name}
-                active={search.viewId === view.id}
-                onClick={() => applySavedView(view)}
-                onContextMenu={e => {
-                  if (!permissions.canManageViews) return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setViewMenu({ x: e.clientX, y: e.clientY, view });
-                }}
-              />
-            ))}
+            {savedViews
+              .filter(v => !v.isAdminView)
+              .map(view => (
+                <TreeRow
+                  key={view.id}
+                  icon={getViewIcon(view.viewMode)}
+                  label={view.name}
+                  active={search.viewId === view.id}
+                  onClick={() => applySavedView(view)}
+                  onContextMenu={e => {
+                    if (!permissions.canManageViews) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setViewMenu({ x: e.clientX, y: e.clientY, view });
+                  }}
+                />
+              ))}
           </>
         ) : (
           <>
@@ -443,7 +458,9 @@ export const EntitiesSidebar = ({
             {(isCollectionsLoading || collections.length > 0) && (
               <>
                 <SidebarGroupLabel>Collections</SidebarGroupLabel>
-                {isCollectionsLoading && <div className={`${styles.emptyState} dim`}>Loading collections…</div>}
+                {isCollectionsLoading && (
+                  <div className={`${styles.emptyState} dim`}>Loading collections…</div>
+                )}
                 {collections.map(collection => (
                   <TreeRow
                     key={collection.id}
@@ -517,12 +534,23 @@ export const EntitiesSidebar = ({
       )}
 
       {collectionMenu && (
-        <ContextMenu.Imperative x={collectionMenu.x} y={collectionMenu.y} onClose={() => setCollectionMenu(null)}>
-          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameCollectionTarget(collectionMenu.collection)}>
+        <ContextMenu.Imperative
+          x={collectionMenu.x}
+          y={collectionMenu.y}
+          onClose={() => setCollectionMenu(null)}
+        >
+          <Menu.Item
+            leftSlot={<TbPencil size={13} />}
+            onClick={() => setRenameCollectionTarget(collectionMenu.collection)}
+          >
             Rename
           </Menu.Item>
           <Menu.Separator />
-          <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteCollectionTarget(collectionMenu.collection)}>
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteCollectionTarget(collectionMenu.collection)}
+          >
             Delete
           </Menu.Item>
         </ContextMenu.Imperative>
@@ -544,7 +572,11 @@ export const EntitiesSidebar = ({
       <DeleteConfirmationDialog
         open={!!deleteCollectionTarget}
         title="Delete collection?"
-        message={<>The collection <b>{deleteCollectionTarget?.name}</b> will be deleted.</>}
+        message={
+          <>
+            The collection <b>{deleteCollectionTarget?.name}</b> will be deleted.
+          </>
+        }
         detail="Entities in the collection will not be changed."
         confirmLabel="Delete collection"
         onConfirm={() => {
@@ -558,7 +590,6 @@ export const EntitiesSidebar = ({
         }}
         onCancel={() => setDeleteCollectionTarget(null)}
       />
-
     </>
   );
 };

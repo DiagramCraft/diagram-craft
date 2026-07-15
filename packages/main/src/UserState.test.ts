@@ -118,8 +118,9 @@ describe('UserState', () => {
       userState.setDocumentTab(`/tmp/${i}.diagram`, `diagram-${i}`);
     }
 
-    const documentTabs = JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}')
-      .documentTabs;
+    const documentTabs = JSON.parse(
+      localStorage.getItem('diagram-craft.user-state') ?? '{}'
+    ).documentTabs;
 
     expect(documentTabs).toHaveLength(10);
     expect(documentTabs[0]).toEqual({ documentKey: '/tmp/11.diagram', tabId: 'diagram-11' });

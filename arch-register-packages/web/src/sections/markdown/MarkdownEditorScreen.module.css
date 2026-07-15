@@ -69,7 +69,6 @@
   background: var(--panel-bg);
 }
 
-
 .historySidebarBody {
   flex: 1;
   min-height: 0;
@@ -87,7 +86,9 @@
   border-radius: var(--r-md);
   padding: 12px;
   cursor: pointer;
-  transition: border-color 80ms, background 80ms;
+  transition:
+    border-color 80ms,
+    background 80ms;
 }
 
 .revisionItem:hover,
@@ -148,7 +149,6 @@
   padding: 28px 40px 80px;
 }
 
-
 @media (max-width: 1100px) {
   .historyGrid {
     grid-template-columns: minmax(0, 1fr);
@@ -162,7 +162,7 @@
 }
 
 .article {
-  composes: articleTypography from './articleTypography.module.css';
+  composes: articleTypography from "./articleTypography.module.css";
   min-width: 0;
 }
 
@@ -258,7 +258,9 @@
   color: inherit;
   text-align: left;
   cursor: pointer;
-  transition: border-color 80ms, background 80ms;
+  transition:
+    border-color 80ms,
+    background 80ms;
 }
 
 .attachmentItem:hover {
@@ -320,7 +322,10 @@
   background: var(--base-bg);
   color: var(--cmp-fg-dimmed);
   cursor: pointer;
-  transition: border-color 80ms, color 80ms, background 80ms;
+  transition:
+    border-color 80ms,
+    color 80ms,
+    background 80ms;
 }
 
 .attachmentDelete:hover {
@@ -352,7 +357,9 @@
   padding: 4px 0 4px 10px;
   border-left: 2px solid var(--panel-border);
   cursor: default;
-  transition: color 80ms, border-color 80ms;
+  transition:
+    color 80ms,
+    border-color 80ms;
 }
 
 .tocItem:hover {
@@ -407,7 +414,9 @@
   background: transparent;
   color: var(--cmp-fg-dimmed);
   cursor: pointer;
-  transition: background 80ms, color 80ms;
+  transition:
+    background 80ms,
+    color 80ms;
 }
 
 .paneToggleBtn:hover {
@@ -547,7 +556,6 @@
     --article-block-gap: 0;
   }
 }
-
 
 .diffRowModified :global(ins) {
   background: color-mix(in srgb, #22c55e 18%, transparent);

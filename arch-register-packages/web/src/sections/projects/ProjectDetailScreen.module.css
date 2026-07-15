@@ -26,7 +26,10 @@
   border: 1px solid transparent;
   border-radius: var(--r);
   cursor: pointer;
-  transition: background 80ms, border-color 80ms, color 80ms;
+  transition:
+    background 80ms,
+    border-color 80ms,
+    color 80ms;
 }
 
 .pinBtn:hover:not(:disabled) {
@@ -127,7 +130,6 @@
   padding-bottom: 3px;
 }
 
-
 .iconBtn {
   width: 28px;
   height: 28px;
@@ -169,7 +171,9 @@
   color: var(--base-fg-dim);
   display: flex;
   flex-direction: column;
-  transition: border-color 80ms, background 80ms;
+  transition:
+    border-color 80ms,
+    background 80ms;
   cursor: pointer;
 }
 
@@ -188,8 +192,9 @@
 .diagramThumbGrid {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
-  linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
   background-size: 12px 12px;
 }
 
@@ -585,7 +590,10 @@
   color: var(--base-fg-more-dim);
   background: none;
   cursor: pointer;
-  transition: background 80ms, color 80ms, border-color 80ms;
+  transition:
+    background 80ms,
+    color 80ms,
+    border-color 80ms;
   flex-shrink: 0;
 }
 
@@ -857,7 +865,11 @@
   background: var(--panel-bg);
 }
 
-.ptlLegend { display: flex; align-items: center; gap: 12px; }
+.ptlLegend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
 .ptlLegItem {
   display: flex;
@@ -912,8 +924,13 @@
   cursor: pointer;
 }
 
-.ptlSegmented button:last-child { border-right: 0; }
-.ptlSegmented button:hover { color: var(--base-fg); background: var(--cmp-bg); }
+.ptlSegmented button:last-child {
+  border-right: 0;
+}
+.ptlSegmented button:hover {
+  color: var(--base-fg);
+  background: var(--cmp-bg);
+}
 
 .ptlSegActive {
   color: var(--accent-fg) !important;
@@ -928,8 +945,14 @@
   position: relative;
 }
 
-.ptlScroll { flex: 1; overflow: auto; min-width: 0; }
-.ptlInner  { position: relative; }
+.ptlScroll {
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+}
+.ptlInner {
+  position: relative;
+}
 
 .ptlHead {
   display: flex;
@@ -960,7 +983,11 @@
   font-family: var(--font-mono);
 }
 
-.ptlCols { display: flex; align-items: stretch; flex-shrink: 0; }
+.ptlCols {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
 
 .ptlCol {
   flex-shrink: 0;
@@ -1049,8 +1076,13 @@
   transition: background 45ms;
 }
 
-.ptlRow:hover     { background: var(--cmp-bg); cursor: pointer; }
-.ptlRowActive     { background: color-mix(in oklch, var(--accent-fg) 6%, transparent); }
+.ptlRow:hover {
+  background: var(--cmp-bg);
+  cursor: pointer;
+}
+.ptlRowActive {
+  background: color-mix(in oklch, var(--accent-fg) 6%, transparent);
+}
 
 .ptlLabel {
   position: sticky;
@@ -1068,8 +1100,12 @@
   overflow: hidden;
 }
 
-.ptlRow:hover .ptlLabel   { background: var(--cmp-bg); }
-.ptlRowActive .ptlLabel   { background: color-mix(in oklch, var(--accent-fg) 6%, transparent); }
+.ptlRow:hover .ptlLabel {
+  background: var(--cmp-bg);
+}
+.ptlRowActive .ptlLabel {
+  background: color-mix(in oklch, var(--accent-fg) 6%, transparent);
+}
 
 .ptlName {
   flex: 1;
@@ -1116,8 +1152,12 @@
   transition: transform 80ms;
 }
 
-.ptlMarker:hover .ptlMarkerDiamond { transform: rotate(45deg) scale(1.3); }
-.ptlMarker:hover .ptlMarkerDot { transform: scale(1.3); }
+.ptlMarker:hover .ptlMarkerDiamond {
+  transform: rotate(45deg) scale(1.3);
+}
+.ptlMarker:hover .ptlMarkerDot {
+  transform: scale(1.3);
+}
 
 .ptlMarkerSelected .ptlMarkerDiamond {
   transform: rotate(45deg) scale(1.3);
@@ -1157,7 +1197,9 @@
   font-size: 12px;
 }
 
-.ptlUndatedRow:last-child { border-bottom: 0; }
+.ptlUndatedRow:last-child {
+  border-bottom: 0;
+}
 
 .ptlUndatedNote {
   font-size: 11px;
@@ -1222,7 +1264,10 @@
   color: var(--cmp-fg-disabled);
 }
 
-.ptlDetailCloseBtn:hover { background: var(--cmp-bg); color: var(--base-fg); }
+.ptlDetailCloseBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
 
 .ptlDetailBody {
   flex: 1;
@@ -1256,7 +1301,11 @@
   line-height: 1.45;
 }
 
-.ptlDetailChanges { display: flex; flex-direction: column; gap: 4px; }
+.ptlDetailChanges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .ptlDetailSectionLabel {
   font-size: 10.5px;
@@ -1278,10 +1327,21 @@
   background: var(--cmp-bg);
 }
 
-.ptlChgField { font-weight: 500; color: var(--base-fg-more-dim); }
-.ptlChgFrom  { font-size: 10.5px; color: var(--cmp-fg-disabled); }
-.ptlChgArrow { color: var(--cmp-fg-disabled); }
-.ptlChgTo    { font-weight: 500; color: var(--base-fg); }
+.ptlChgField {
+  font-weight: 500;
+  color: var(--base-fg-more-dim);
+}
+.ptlChgFrom {
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+}
+.ptlChgArrow {
+  color: var(--cmp-fg-disabled);
+}
+.ptlChgTo {
+  font-weight: 500;
+  color: var(--base-fg);
+}
 
 .ptlDetailMeta {
   display: flex;
@@ -1322,4 +1382,3 @@
   color: var(--cmp-fg-disabled);
   max-width: 320px;
 }
-

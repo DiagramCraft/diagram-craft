@@ -31,7 +31,12 @@ import { useEntitySnapshots } from '../../../hooks/useSnapshots';
 import { EmptyState } from '../../../components/EmptyState';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import { normalizeViewConfig } from './entityViewConfig';
-import { getDateFields, getDateValue as sharedGetDateValue, getRawDateValue as sharedGetRawDateValue, type FieldOption } from './entityFieldSources';
+import {
+  getDateFields,
+  getDateValue as sharedGetDateValue,
+  getRawDateValue as sharedGetRawDateValue,
+  type FieldOption
+} from './entityFieldSources';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -47,7 +52,9 @@ export type TimelineConfig = {
 const TL_LABEL_W = 252;
 const TL_COL_W: TimelineColumnWidths = { month: 76, quarter: 106, year: 142 };
 
-const METADATA_DATE_FIELDS: FieldOption[] = [{ id: '_targetLifecycleDate', label: 'Target Lifecycle Date' }];
+const METADATA_DATE_FIELDS: FieldOption[] = [
+  { id: '_targetLifecycleDate', label: 'Target Lifecycle Date' }
+];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 //
@@ -123,10 +130,7 @@ const SnapBlock = ({
 }: SnapBlockProps) => {
   const { data: snaps = [] } = useEntitySnapshots(workspaceId, entity._uid, true);
 
-  const ownSnaps = useMemo(
-    () => getOwnTimelineSnapshots(snaps),
-    [snaps]
-  );
+  const ownSnaps = useMemo(() => getOwnTimelineSnapshots(snaps), [snaps]);
 
   const projectLanes = useMemo(() => groupTimelineSnapshotsByProject(snaps), [snaps]);
 
@@ -136,8 +140,7 @@ const SnapBlock = ({
 
   const s = schemaMap.get(entity._schema.id);
   const barColor =
-    lifecycleStates.find(ls => ls.id === entity._lifecycle?.id)?.color ??
-    'var(--base-fg-more-dim)';
+    lifecycleStates.find(ls => ls.id === entity._lifecycle?.id)?.color ?? 'var(--base-fg-more-dim)';
 
   const startD = getDateValue(entity, startFieldId);
   const endD = getDateValue(entity, endFieldId);
@@ -156,7 +159,10 @@ const SnapBlock = ({
     <div className={styles.snapBlock}>
       {/* Entity header row */}
       <div className={styles.snapHeader}>
-        <div className={`${styles.labelCol} ${styles.labelColClickable}`} onClick={() => onEntityClick(entity._publicId)}>
+        <div
+          className={`${styles.labelCol} ${styles.labelColClickable}`}
+          onClick={() => onEntityClick(entity._publicId)}
+        >
           {s && (
             <TypeBadge
               color={resolveSchemaColor(s.schema, s.index)}
@@ -180,14 +186,20 @@ const SnapBlock = ({
             <div
               className={`${styles.bar} ${!endD ? styles.barOpen : ''}`}
               style={{ left: barLeft, width: barWidth, background: barColor }}
-              onClick={ev => { ev.stopPropagation(); onBarClick(entity); }}
+              onClick={ev => {
+                ev.stopPropagation();
+                onBarClick(entity);
+              }}
             />
           )}
           {isMilestone && (
             <div
               className={styles.milestone}
               style={{ left: milestoneX, background: barColor }}
-              onClick={ev => { ev.stopPropagation(); onBarClick(entity); }}
+              onClick={ev => {
+                ev.stopPropagation();
+                onBarClick(entity);
+              }}
             />
           )}
         </div>
@@ -249,9 +261,7 @@ const SnapBlock = ({
                   <div
                     key={snap.id}
                     className={`${styles.snapDot} ${dotClass} ${isSel ? styles.snapDotSelected : ''}`}
-                    style={
-                      { left: px, '--snap-color': projectColor } as React.CSSProperties
-                    }
+                    style={{ left: px, '--snap-color': projectColor } as React.CSSProperties}
                     onClick={ev => {
                       ev.stopPropagation();
                       onSnapSelect(isSel ? null : snap, entity);
@@ -321,9 +331,7 @@ const SnapDetailPanel = ({
           <div className={styles.detailBody}>
             <div className={styles.detailField}>
               <div className={styles.detailFieldLabel}>Snapshot type</div>
-              <span
-                className={`${styles.snapStatusBadge} ${SNAP_STATUS_CLASS[snap.status] ?? ''}`}
-              >
+              <span className={`${styles.snapStatusBadge} ${SNAP_STATUS_CLASS[snap.status] ?? ''}`}>
                 {SNAP_STATUS_LABEL[snap.status] ?? snap.status}
               </span>
             </div>
@@ -482,7 +490,9 @@ const DetailPanel = ({
   const endField = dateFields.find(f => f.id === cfg.endFieldId);
   const startVal = entity ? getRawDateValue(entity, cfg.startFieldId) : null;
   const endVal = entity ? getRawDateValue(entity, cfg.endFieldId) : null;
-  const isMilestone = entity ? !getDateValue(entity, cfg.startFieldId) && !!getDateValue(entity, cfg.endFieldId) : false;
+  const isMilestone = entity
+    ? !getDateValue(entity, cfg.startFieldId) && !!getDateValue(entity, cfg.endFieldId)
+    : false;
 
   return (
     <div className={`${styles.detail} ${entity ? styles.detailOpen : ''}`}>
@@ -631,7 +641,13 @@ export const TimelineView = ({
         ? [new Date(TODAY.getFullYear() - 1, 0, 1), new Date(TODAY.getFullYear() + 1, 11, 31)]
         : [];
     return buildTimelineRange({
-      dates: collectTimelineDates(sourceRows, cfg.startFieldId, cfg.endFieldId, getDateValue, fallbackDates),
+      dates: collectTimelineDates(
+        sourceRows,
+        cfg.startFieldId,
+        cfg.endFieldId,
+        getDateValue,
+        fallbackDates
+      ),
       zoom: cfg.zoom,
       columnWidths: TL_COL_W,
       today: TODAY,
@@ -647,7 +663,8 @@ export const TimelineView = ({
   const activeEntity = useMemo(
     () =>
       activeEntityId
-        ? ((cfg.groupBy === 'snapshot' ? rows : datedRows).find(e => e._uid === activeEntityId) ?? null)
+        ? ((cfg.groupBy === 'snapshot' ? rows : datedRows).find(e => e._uid === activeEntityId) ??
+          null)
         : null,
     [activeEntityId, datedRows, rows, cfg.groupBy]
   );
@@ -663,13 +680,10 @@ export const TimelineView = ({
     [cfg, onConfigChange]
   );
 
-  const handleSnapSelect = useCallback(
-    (snap: EntitySnapshot | null, entity: EntityRecord) => {
-      setSnapDetail(snap ? { snap, entity } : null);
-      setActiveEntityId(null);
-    },
-    []
-  );
+  const handleSnapSelect = useCallback((snap: EntitySnapshot | null, entity: EntityRecord) => {
+    setSnapDetail(snap ? { snap, entity } : null);
+    setActiveEntityId(null);
+  }, []);
 
   const handleBarClick = useCallback((entity: EntityRecord) => {
     setActiveEntityId(entity._uid);
@@ -739,144 +753,147 @@ export const TimelineView = ({
             )
           }
         >
-
-            {/* Standard groups (owner / type) */}
-            {!isSnapshotMode &&
-              groups.map(([groupKey, entities]) => (
-                <div key={groupKey}>
-                  {/* Group header */}
-                  <div className={styles.groupRow}>
-                    <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-                      {groupKey}
-                      <span className={styles.groupCount}>({entities.length})</span>
-                    </div>
-                    <div className={styles.groupSpacer} style={{ width: totalWidth }} />
+          {/* Standard groups (owner / type) */}
+          {!isSnapshotMode &&
+            groups.map(([groupKey, entities]) => (
+              <div key={groupKey}>
+                {/* Group header */}
+                <div className={styles.groupRow}>
+                  <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
+                    {groupKey}
+                    <span className={styles.groupCount}>({entities.length})</span>
                   </div>
-
-                  {/* Entity rows */}
-                  {entities.map(e => {
-                    const startD = getDateValue(e, cfg.startFieldId);
-                    const endD = getDateValue(e, cfg.endFieldId);
-                    const isMilestone = !startD && !!endD;
-                    const isActive = activeEntityId === e._uid;
-                    const sc = schemaMap.get(e._schema.id);
-
-                    const barColor =
-                      lifecycleStates.find(ls => ls.id === e._lifecycle?.id)?.color ??
-                      'var(--base-fg-more-dim)';
-
-                    let barLeft = 0;
-                    let barWidth = 0;
-                    if (!isMilestone && startD) {
-                      barLeft = dateToTimelinePx(startD, rangeStart, rangeEnd, totalWidth);
-                      const endX = dateToTimelinePx(endD ?? TODAY, rangeStart, rangeEnd, totalWidth);
-                      barWidth = Math.max(6, endX - barLeft);
-                    }
-                    const milestoneX = isMilestone
-                      ? dateToTimelinePx(endD, rangeStart, rangeEnd, totalWidth)
-                      : 0;
-
-                    const togglePanel = (ev: React.MouseEvent) => {
-                      ev.stopPropagation();
-                      setActiveEntityId(p => (p === e._uid ? null : e._uid));
-                    };
-
-                    return (
-                      <div
-                        key={e._uid}
-                        className={`${styles.entityRow} ${isActive ? styles.entityRowActive : ''}`}
-                      >
-                        {/* Sticky label — click navigates to entity */}
-                        <div
-                          className={`${styles.labelCol} ${styles.labelColClickable}`}
-                          onClick={() => onEntityClick(e._publicId)}
-                        >
-                          {sc && (
-                            <TypeBadge
-                              color={resolveSchemaColor(sc.schema, sc.index)}
-                              name={sc.schema.name}
-                              icon={sc.schema.icon}
-                              size={14}
-                            />
-                          )}
-                          <span
-                            className={styles.entityName}
-                            style={
-                              linkedEntityIds != null && !linkedEntityIdSet.has(e._uid)
-                                ? { color: 'var(--base-fg-more-dim)' }
-                                : undefined
-                            }
-                          >
-                            {e._name ?? e._slug}
-                          </span>
-                          {e._lifecycle && (
-                            <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
-                          )}
-                        </div>
-
-                        {/* Bar track — click on bar/milestone opens detail panel */}
-                        <div className={styles.barCell} style={{ width: totalWidth }}>
-                          {!isMilestone && startD && (
-                            <div
-                              className={`${styles.bar} ${!endD ? styles.barOpen : ''}`}
-                              style={{
-                                left: barLeft,
-                                width: barWidth,
-                                background: barColor
-                              }}
-                              title={`${e._name ?? e._slug} · ${formatTimelineDate(getRawDateValue(e, cfg.startFieldId))} → ${endD ? formatTimelineDate(getRawDateValue(e, cfg.endFieldId)) : 'ongoing'}`}
-                              onClick={togglePanel}
-                            >
-                              {barWidth > 54 && (
-                                <span className={styles.barLabel}>{e._name ?? e._slug}</span>
-                              )}
-                            </div>
-                          )}
-                          {isMilestone && (
-                            <div
-                              className={styles.milestone}
-                              style={{ left: milestoneX, background: barColor }}
-                              title={`${e._name ?? e._slug} · target: ${formatTimelineDate(getRawDateValue(e, cfg.endFieldId))}`}
-                              onClick={togglePanel}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  <div className={styles.groupSpacer} style={{ width: totalWidth }} />
                 </div>
-              ))}
 
-            {/* Snapshot mode: one block per entity */}
-            {isSnapshotMode &&
-              rows.map(entity => (
-                <SnapBlock
-                  key={entity._uid}
-                  entity={entity}
-                  workspaceId={workspaceId}
-                  projects={projects}
-                  schemaMap={schemaMap}
-                  rangeStart={rangeStart}
-                  rangeEnd={rangeEnd}
-                  totalWidth={totalWidth}
-                  startFieldId={cfg.startFieldId}
-                  endFieldId={cfg.endFieldId}
-                  TODAY={TODAY}
-                  lifecycleStates={lifecycleStates}
-                  isLinked={linkedEntityIds == null || linkedEntityIdSet.has(entity._uid)}
-                  selectedSnapId={snapDetail?.snap.id ?? null}
-                  onSnapSelect={handleSnapSelect}
-                  onEntityClick={onEntityClick}
-                  onBarClick={handleBarClick}
-                />
-              ))}
+                {/* Entity rows */}
+                {entities.map(e => {
+                  const startD = getDateValue(e, cfg.startFieldId);
+                  const endD = getDateValue(e, cfg.endFieldId);
+                  const isMilestone = !startD && !!endD;
+                  const isActive = activeEntityId === e._uid;
+                  const sc = schemaMap.get(e._schema.id);
+
+                  const barColor =
+                    lifecycleStates.find(ls => ls.id === e._lifecycle?.id)?.color ??
+                    'var(--base-fg-more-dim)';
+
+                  let barLeft = 0;
+                  let barWidth = 0;
+                  if (!isMilestone && startD) {
+                    barLeft = dateToTimelinePx(startD, rangeStart, rangeEnd, totalWidth);
+                    const endX = dateToTimelinePx(endD ?? TODAY, rangeStart, rangeEnd, totalWidth);
+                    barWidth = Math.max(6, endX - barLeft);
+                  }
+                  const milestoneX = isMilestone
+                    ? dateToTimelinePx(endD, rangeStart, rangeEnd, totalWidth)
+                    : 0;
+
+                  const togglePanel = (ev: React.MouseEvent) => {
+                    ev.stopPropagation();
+                    setActiveEntityId(p => (p === e._uid ? null : e._uid));
+                  };
+
+                  return (
+                    <div
+                      key={e._uid}
+                      className={`${styles.entityRow} ${isActive ? styles.entityRowActive : ''}`}
+                    >
+                      {/* Sticky label — click navigates to entity */}
+                      <div
+                        className={`${styles.labelCol} ${styles.labelColClickable}`}
+                        onClick={() => onEntityClick(e._publicId)}
+                      >
+                        {sc && (
+                          <TypeBadge
+                            color={resolveSchemaColor(sc.schema, sc.index)}
+                            name={sc.schema.name}
+                            icon={sc.schema.icon}
+                            size={14}
+                          />
+                        )}
+                        <span
+                          className={styles.entityName}
+                          style={
+                            linkedEntityIds != null && !linkedEntityIdSet.has(e._uid)
+                              ? { color: 'var(--base-fg-more-dim)' }
+                              : undefined
+                          }
+                        >
+                          {e._name ?? e._slug}
+                        </span>
+                        {e._lifecycle && (
+                          <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
+                        )}
+                      </div>
+
+                      {/* Bar track — click on bar/milestone opens detail panel */}
+                      <div className={styles.barCell} style={{ width: totalWidth }}>
+                        {!isMilestone && startD && (
+                          <div
+                            className={`${styles.bar} ${!endD ? styles.barOpen : ''}`}
+                            style={{
+                              left: barLeft,
+                              width: barWidth,
+                              background: barColor
+                            }}
+                            title={`${e._name ?? e._slug} · ${formatTimelineDate(getRawDateValue(e, cfg.startFieldId))} → ${endD ? formatTimelineDate(getRawDateValue(e, cfg.endFieldId)) : 'ongoing'}`}
+                            onClick={togglePanel}
+                          >
+                            {barWidth > 54 && (
+                              <span className={styles.barLabel}>{e._name ?? e._slug}</span>
+                            )}
+                          </div>
+                        )}
+                        {isMilestone && (
+                          <div
+                            className={styles.milestone}
+                            style={{ left: milestoneX, background: barColor }}
+                            title={`${e._name ?? e._slug} · target: ${formatTimelineDate(getRawDateValue(e, cfg.endFieldId))}`}
+                            onClick={togglePanel}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+
+          {/* Snapshot mode: one block per entity */}
+          {isSnapshotMode &&
+            rows.map(entity => (
+              <SnapBlock
+                key={entity._uid}
+                entity={entity}
+                workspaceId={workspaceId}
+                projects={projects}
+                schemaMap={schemaMap}
+                rangeStart={rangeStart}
+                rangeEnd={rangeEnd}
+                totalWidth={totalWidth}
+                startFieldId={cfg.startFieldId}
+                endFieldId={cfg.endFieldId}
+                TODAY={TODAY}
+                lifecycleStates={lifecycleStates}
+                isLinked={linkedEntityIds == null || linkedEntityIdSet.has(entity._uid)}
+                selectedSnapId={snapDetail?.snap.id ?? null}
+                onSnapSelect={handleSnapSelect}
+                onEntityClick={onEntityClick}
+                onBarClick={handleBarClick}
+              />
+            ))}
         </TimelineScaffold>
       )}
 
       {/* Entity detail panel (bar/milestone click in all modes) */}
       <DetailPanel
         entity={activeEntity}
-        isLinked={activeEntity == null || linkedEntityIds == null || linkedEntityIdSet.has(activeEntity._uid)}
+        isLinked={
+          activeEntity == null ||
+          linkedEntityIds == null ||
+          linkedEntityIdSet.has(activeEntity._uid)
+        }
         cfg={cfg}
         dateFields={dateFields}
         schemaMap={schemaMap}
@@ -889,7 +906,11 @@ export const TimelineView = ({
       {/* Snapshot detail panel (snap dot click in snapshot mode) */}
       <SnapDetailPanel
         detail={snapDetail}
-        isLinked={snapDetail == null || linkedEntityIds == null || linkedEntityIdSet.has(snapDetail.entity._uid)}
+        isLinked={
+          snapDetail == null ||
+          linkedEntityIds == null ||
+          linkedEntityIdSet.has(snapDetail.entity._uid)
+        }
         projects={projects}
         schemaMap={schemaMap}
         lifecycleStates={lifecycleStates}

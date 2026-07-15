@@ -28,10 +28,7 @@ export const stripJsonExtension = (fileName: string): string =>
  * Derives a human-readable display name for a content node.
  * Prefers the `name` field from the body, then falls back to the filename without extension.
  */
-export const displayNameFromBody = (
-  body: Record<string, unknown>,
-  filePath: string
-): string => {
+export const displayNameFromBody = (body: Record<string, unknown>, filePath: string): string => {
   const fileName = fileNameFromPath(filePath);
   return String(body['name'] ?? stripJsonExtension(fileName));
 };

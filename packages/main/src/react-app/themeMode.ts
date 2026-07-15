@@ -22,5 +22,4 @@ export const applyThemeMode = (theme: EffectiveTheme) => {
   if (appRoot) {
     appRoot.setAttribute('data-theme', theme);
   }
-
 };

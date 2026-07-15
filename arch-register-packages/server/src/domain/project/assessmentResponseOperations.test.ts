@@ -69,18 +69,27 @@ const makeDb = (assessment: AssessmentDbResult): DatabaseAdapter =>
   }) as unknown as DatabaseAdapter;
 
 describe('upsertAssessmentResponse', () => {
-  it.each(['draft', 'closed', 'archived'] as const)(
-    'rejects with a 409 when the assessment is %s',
-    async status => {
-      const db = makeDb(makeAssessment(status));
+  it.each([
+    'draft',
+    'closed',
+    'archived'
+  ] as const)('rejects with a 409 when the assessment is %s', async status => {
+    const db = makeDb(makeAssessment(status));
 
-      await expect(
-        upsertAssessmentResponse(db, 'ws-1', 'proj-1', 'asmnt-1', 'entity-1', { values: { f1: 5 } }, event)
-      ).rejects.toMatchObject({ status: 409 });
+    await expect(
+      upsertAssessmentResponse(
+        db,
+        'ws-1',
+        'proj-1',
+        'asmnt-1',
+        'entity-1',
+        { values: { f1: 5 } },
+        event
+      )
+    ).rejects.toMatchObject({ status: 409 });
 
-      expect(db.project.upsertAssessmentResponse).not.toHaveBeenCalled();
-    }
-  );
+    expect(db.project.upsertAssessmentResponse).not.toHaveBeenCalled();
+  });
 
   it('succeeds when the assessment is open', async () => {
     const db = makeDb(makeAssessment('open'));

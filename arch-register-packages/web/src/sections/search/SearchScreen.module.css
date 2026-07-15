@@ -91,7 +91,10 @@
   border-radius: 999px;
   color: var(--base-fg-more-dim);
   font-size: 12px;
-  transition: background 80ms, color 80ms, border-color 80ms;
+  transition:
+    background 80ms,
+    color 80ms,
+    border-color 80ms;
 }
 
 .cat:hover {

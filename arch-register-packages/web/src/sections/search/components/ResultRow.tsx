@@ -27,7 +27,15 @@ type Props = {
   lifecycleStates: WorkspaceLifecycleState[];
 };
 
-export const ResultRow = ({ row, q, isSelected, onSelect, onOpen, schemaMap, lifecycleStates }: Props) => {
+export const ResultRow = ({
+  row,
+  q,
+  isSelected,
+  onSelect,
+  onOpen,
+  schemaMap,
+  lifecycleStates
+}: Props) => {
   if (row.kind === 'entity') {
     const e = row.data as EntitySearchResult;
     const schemaMeta = schemaMap.get(e.schemaId);

@@ -28,7 +28,7 @@
 }
 
 .cActionButton:focus,
-.cActionButton[data-focus='true'] {
+.cActionButton[data-focus="true"] {
   position: relative;
   box-shadow: var(--cmp-border-shadow-focus);
   outline: none;

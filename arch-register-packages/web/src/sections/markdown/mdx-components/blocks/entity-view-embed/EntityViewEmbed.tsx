@@ -23,7 +23,19 @@ import { buildEntityDisplayFields } from '../../../../entities/components/entity
 const noop = () => {};
 const emptySet = new Set<string>();
 
-const getViewConfig = (savedView: { viewMode: string; config: { table?: unknown; cards?: unknown; tree?: unknown; radar?: unknown; timeline?: unknown; matrix?: unknown; hierarchy?: unknown; explore?: unknown } | null }): unknown => {
+const getViewConfig = (savedView: {
+  viewMode: string;
+  config: {
+    table?: unknown;
+    cards?: unknown;
+    tree?: unknown;
+    radar?: unknown;
+    timeline?: unknown;
+    matrix?: unknown;
+    hierarchy?: unknown;
+    explore?: unknown;
+  } | null;
+}): unknown => {
   if (!savedView.config) return null;
   if (savedView.viewMode === 'radar') return savedView.config.radar ?? null;
   if (savedView.viewMode === 'timeline') return savedView.config.timeline ?? null;
@@ -115,7 +127,10 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   const q = savedView.filters.q ?? '';
   const resolvedProjectId = savedView.projectId ?? projectId;
   const projectScope = savedView.projectScope ?? 'all';
-  const displayFields = buildEntityDisplayFields(typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas, !!resolvedProjectId);
+  const displayFields = buildEntityDisplayFields(
+    typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
+    !!resolvedProjectId
+  );
 
   switch (savedView.viewMode) {
     case 'table':

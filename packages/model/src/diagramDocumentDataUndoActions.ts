@@ -151,11 +151,7 @@ export class DataManagerUndoableFacade {
 
   async updateSchema(beforeSchema: DataSchema, afterSchema: DataSchema): Promise<void> {
     if (this.dataManager.supportsUndo(afterSchema.providerId)) {
-      const action = new UpdateSchemaUndoableAction(
-        this.dataManager,
-        beforeSchema,
-        afterSchema
-      );
+      const action = new UpdateSchemaUndoableAction(this.dataManager, beforeSchema, afterSchema);
       this.undoManager.addAndExecute(action);
     } else {
       await this.dataManager.updateSchema(afterSchema);
@@ -164,11 +160,7 @@ export class DataManagerUndoableFacade {
 
   async deleteSchema(schema: DataSchema): Promise<void> {
     if (this.dataManager.supportsUndo(schema.providerId)) {
-      const action = new DeleteSchemaUndoableAction(
-        this.dataManager,
-        schema,
-        schema.providerId
-      );
+      const action = new DeleteSchemaUndoableAction(this.dataManager, schema, schema.providerId);
       this.undoManager.addAndExecute(action);
     } else {
       await this.dataManager.deleteSchema(schema);

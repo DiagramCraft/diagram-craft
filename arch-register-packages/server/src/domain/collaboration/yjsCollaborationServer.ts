@@ -93,8 +93,6 @@ class WSSharedDoc extends Y.Doc {
   }
 }
 
-
-
 export class YjsCollaborationServer implements CollaborationServer {
   private readonly docs = new Map<string, WSSharedDoc>();
   private readonly autoSaves = new Map<string, DiagramAutoSave>();
@@ -117,7 +115,10 @@ export class YjsCollaborationServer implements CollaborationServer {
         if (doc) {
           const tempPath = this.tempPathResolver?.(docName) ?? docName;
           log.debug(`Setting up auto-save on WebSocket connect: ${docName}`);
-          this.autoSaves.set(docName, new DiagramAutoSave(doc, docName, tempPath, this.autoSaveWriter));
+          this.autoSaves.set(
+            docName,
+            new DiagramAutoSave(doc, docName, tempPath, this.autoSaveWriter)
+          );
         }
       }
     });
@@ -223,7 +224,10 @@ export class YjsCollaborationServer implements CollaborationServer {
     return doc;
   }
 
-  private flushAutoSave(docName: string, reason: 'room-enter' | 'room-leave' | 'dispose'): Promise<void> {
+  private flushAutoSave(
+    docName: string,
+    reason: 'room-enter' | 'room-leave' | 'dispose'
+  ): Promise<void> {
     const autoSave = this.autoSaves.get(docName);
     return autoSave?.flushPrimaryIfDirty(reason) ?? Promise.resolve();
   }

@@ -64,8 +64,8 @@
         border-radius: 6px;
         cursor: pointer;
         transition: background-color 0.15s ease;
-        
-        &[data-selected='true'] {
+
+        &[data-selected="true"] {
           background: var(--accent-9) !important;
           color: white !important;
 
@@ -79,7 +79,7 @@
           }
         }
 
-        &[data-disabled='true'] {
+        &[data-disabled="true"] {
           opacity: 0.5;
           cursor: not-allowed;
 
@@ -119,8 +119,8 @@
         padding: 24px;
       }
 
-      &[data-mouse-enabled='true'] {
-        .eCommandItem:hover:not([data-selected='true']) {
+      &[data-mouse-enabled="true"] {
+        .eCommandItem:hover:not([data-selected="true"]) {
           background: var(--cmp-bg-hover);
         }
       }

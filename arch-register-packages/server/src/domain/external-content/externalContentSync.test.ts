@@ -76,10 +76,18 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
     process.env['EXTERNAL_CONTENT_CACHE_DIR'] = cache;
     try {
       const { source, mount: failedMount } = await createSourceAndMount(
-        db, workspace, repository, 'missing', 'missing'
+        db,
+        workspace,
+        repository,
+        'missing',
+        'missing'
       );
       const { mount: healthyMount } = await createSourceAndMount(
-        db, workspace, repository, 'docs', 'docs'
+        db,
+        workspace,
+        repository,
+        'docs',
+        'docs'
       );
       await db.externalContent.updateMount(healthyMount.id, { source_id: source.id });
 
@@ -92,8 +100,14 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
 
       expect(result.results).toHaveLength(1);
       expect((await db.externalContent.getMount(workspace, failedMount.id))?.status).toBe('failed');
-      expect((await db.externalContent.getMount(workspace, healthyMount.id))?.status).toBe('succeeded');
-      expect((await db.project.listWorkspaceContentNodes(workspace)).some(node => node.path === 'docs/readme.md')).toBe(true);
+      expect((await db.externalContent.getMount(workspace, healthyMount.id))?.status).toBe(
+        'succeeded'
+      );
+      expect(
+        (await db.project.listWorkspaceContentNodes(workspace)).some(
+          node => node.path === 'docs/readme.md'
+        )
+      ).toBe(true);
     } finally {
       delete process.env['EXTERNAL_CONTENT_CACHE_DIR'];
       await Promise.all([
@@ -131,13 +145,21 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
         mount_id: null
       });
       const { source, mount } = await createSourceAndMount(
-        db, workspace, repository, 'docs', 'docs'
+        db,
+        workspace,
+        repository,
+        'docs',
+        'docs'
       );
 
       await syncExternalContentSource(db, new FilesystemStorage(storageRoot), workspace, source.id);
 
       expect((await db.externalContent.getMount(workspace, mount.id))?.status).toBe('failed');
-      expect((await db.project.listWorkspaceContentNodes(workspace)).find(node => node.id === existing?.id)?.mount_id).toBeNull();
+      expect(
+        (await db.project.listWorkspaceContentNodes(workspace)).find(
+          node => node.id === existing?.id
+        )?.mount_id
+      ).toBeNull();
     } finally {
       delete process.env['EXTERNAL_CONTENT_CACHE_DIR'];
       await Promise.all([
@@ -160,7 +182,11 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
 
       await syncExternalContentSource(db, new FilesystemStorage(storageRoot), workspace, source.id);
 
-      expect((await db.project.listWorkspaceContentNodes(workspace)).find(node => node.path === 'repo/data.json')?.type).toBe('file');
+      expect(
+        (await db.project.listWorkspaceContentNodes(workspace)).find(
+          node => node.path === 'repo/data.json'
+        )?.type
+      ).toBe('file');
     } finally {
       delete process.env['EXTERNAL_CONTENT_CACHE_DIR'];
       await Promise.all([

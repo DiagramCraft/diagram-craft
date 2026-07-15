@@ -1,9 +1,5 @@
 import type { Application } from './application';
-import {
-  AbstractAction,
-  AbstractToggleAction,
-  ActionCriteria
-} from '@diagram-craft/canvas/action';
+import { AbstractAction, AbstractToggleAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';

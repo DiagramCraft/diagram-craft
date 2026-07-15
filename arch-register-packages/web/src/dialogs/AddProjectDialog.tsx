@@ -134,7 +134,9 @@ export const AddProjectDialog = ({
           <Select.Root
             value={status}
             onChange={value =>
-              setStatus((value as 'draft' | 'active' | 'complete' | 'cancelled' | undefined) ?? 'active')
+              setStatus(
+                (value as 'draft' | 'active' | 'complete' | 'cancelled' | undefined) ?? 'active'
+              )
             }
             style={{ width: '100%' }}
           >

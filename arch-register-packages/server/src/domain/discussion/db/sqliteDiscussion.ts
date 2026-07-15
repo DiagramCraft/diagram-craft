@@ -54,13 +54,10 @@ export class SqliteDiscussionDatabase extends SqliteDatabaseBase implements Disc
   async updatePost(ws: string, id: string, body: string, updatedAt: Date, editedAt: Date) {
     const existing = await this.getPost(ws, id);
     if (!existing) return null;
-    this.run('UPDATE discussion_post SET body = ?, updated_at = ?, edited_at = ? WHERE workspace = ? AND id = ?', [
-      body,
-      updatedAt.toISOString(),
-      editedAt.toISOString(),
-      ws,
-      id
-    ]);
+    this.run(
+      'UPDATE discussion_post SET body = ?, updated_at = ?, edited_at = ? WHERE workspace = ? AND id = ?',
+      [body, updatedAt.toISOString(), editedAt.toISOString(), ws, id]
+    );
     return await this.getPost(ws, id);
   }
 

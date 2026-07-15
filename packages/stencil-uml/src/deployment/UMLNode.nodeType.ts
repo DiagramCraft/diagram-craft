@@ -114,7 +114,12 @@ export class UMLNodeNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode) {
     return new CustomPropertyDefinition(p => [
-      p.select(def, 'Stereotype Icon', 'custom.umlNode.stereotypeIcon', UML_STEREOTYPE_ICON_OPTIONS),
+      p.select(
+        def,
+        'Stereotype Icon',
+        'custom.umlNode.stereotypeIcon',
+        UML_STEREOTYPE_ICON_OPTIONS
+      ),
       p.icon(def, 'Custom Icon', 'custom.umlNode.icon')
     ]);
   }
@@ -144,8 +149,12 @@ class UMLNodeComponent extends BaseNodeComponent<UMLNodeNodeDefinition> {
 
     const front = new PathListBuilder();
     front.moveTo(Point.of(unrotatedBounds.x, unrotatedBounds.y + depth));
-    front.lineTo(Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + depth));
-    front.lineTo(Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + unrotatedBounds.h));
+    front.lineTo(
+      Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + depth)
+    );
+    front.lineTo(
+      Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + unrotatedBounds.h)
+    );
     front.lineTo(Point.of(unrotatedBounds.x, unrotatedBounds.y + unrotatedBounds.h));
     front.close();
     shapeBuilder.path(front.getPaths().all());
@@ -159,9 +168,7 @@ class UMLNodeComponent extends BaseNodeComponent<UMLNodeNodeDefinition> {
     shapeBuilder.path(top.getPaths().all());
 
     const side = new PathListBuilder();
-    side.moveTo(
-      Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + depth)
-    );
+    side.moveTo(Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + depth));
     side.lineTo(Point.of(unrotatedBounds.x + unrotatedBounds.w, unrotatedBounds.y));
     side.lineTo(
       Point.of(unrotatedBounds.x + unrotatedBounds.w, unrotatedBounds.y + unrotatedBounds.h - depth)

@@ -1,7 +1,11 @@
 import { TbAt } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityMention } from './EntityMention';
-import { ENTITY_MENTION_TYPE, EntityMentionEditable, entityMentionMdxRule } from './EntityMentionEditable';
+import {
+  ENTITY_MENTION_TYPE,
+  EntityMentionEditable,
+  entityMentionMdxRule
+} from './EntityMentionEditable';
 import type { EntityMentionSlateElement } from './types';
 
 export const entityMentionSpec = defineMdxComponent<

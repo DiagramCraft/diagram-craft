@@ -31,9 +31,7 @@ describe('getFileLoaderForUrl()', () => {
     const factory = vi.fn(async () => vi.fn(async () => undefined));
     fileLoaderRegistry['.dcd'] = factory;
 
-    expect(getFileLoaderForUrl('https://example.test/diagram.dcd?version=1#preview')).toBe(
-      factory
-    );
+    expect(getFileLoaderForUrl('https://example.test/diagram.dcd?version=1#preview')).toBe(factory);
   });
 });
 
@@ -49,13 +47,7 @@ describe('loadFileFromUrl()', () => {
     const loadFromUrl = vi.spyOn(FileSystem, 'loadFromUrl').mockResolvedValue('ignored');
 
     await expect(
-      loadFileFromUrl(
-        'unknown.ext',
-        {} as never,
-        vi.fn() as never,
-        {} as never,
-        {} as never
-      )
+      loadFileFromUrl('unknown.ext', {} as never, vi.fn() as never, {} as never, {} as never)
     ).rejects.toThrow('File loader for unknown.ext not found');
 
     expect(loadFromUrl).not.toHaveBeenCalled();

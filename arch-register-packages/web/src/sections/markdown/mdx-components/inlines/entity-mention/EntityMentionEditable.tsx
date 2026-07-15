@@ -47,7 +47,12 @@ export const EntityMentionEditable = ({
     <PlateElement element={element} as="span" {...props}>
       <BaseInlineEditable
         hasValue={!!entityId}
-        placeholder={<><TbAt size={12} /><span>mention…</span></>}
+        placeholder={
+          <>
+            <TbAt size={12} />
+            <span>mention…</span>
+          </>
+        }
         dialog={(open, onClose) => (
           <EntityMentionDialog element={element} open={open} onClose={onClose} isNew={isNew} />
         )}

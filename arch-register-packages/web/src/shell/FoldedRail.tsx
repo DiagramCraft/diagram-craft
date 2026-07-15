@@ -9,7 +9,7 @@ import styles from './FoldedRail.module.css';
 export const FoldedRail = ({
   label,
   onExpand,
-  children,
+  children
 }: {
   label: string;
   onExpand: () => void;
@@ -25,7 +25,12 @@ export const FoldedRail = ({
   const leave = () => {
     timerRef.current = setTimeout(() => setOpen(false), 160);
   };
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    []
+  );
 
   return (
     <div className={`${styles.rail} ${open ? styles.isOpen : ''}`}>
@@ -33,7 +38,14 @@ export const FoldedRail = ({
         className={styles.strip}
         onMouseEnter={enter}
         onMouseLeave={leave}
-        onClick={open ? () => { setOpen(false); onExpand(); } : undefined}
+        onClick={
+          open
+            ? () => {
+                setOpen(false);
+                onExpand();
+              }
+            : undefined
+        }
       >
         <span className={styles.label}>{label}</span>
         <div className={styles.hint}>
@@ -53,9 +65,5 @@ export const FoldedRail = ({
 // --- NavSidebar ---
 // Full 280px sidebar wrapper. Rendered when the user pins the sidebar open.
 export const NavSidebar = ({ children }: { children: ReactNode }) => {
-  return (
-    <div className={styles.navSidebar}>
-      {children}
-    </div>
-  );
+  return <div className={styles.navSidebar}>{children}</div>;
 };

@@ -22,12 +22,7 @@ type Props = {
   lifecycleStates: WorkspaceLifecycleState[];
 };
 
-export const EntityDependentsTab = ({
-  workspaceId,
-  entityId,
-  schemas,
-  lifecycleStates
-}: Props) => {
+export const EntityDependentsTab = ({ workspaceId, entityId, schemas, lifecycleStates }: Props) => {
   const [transitive, setTransitive] = useState(false);
   const [schemaFilter, setSchemaFilter] = useState('all');
   const [lifecycleFilter, setLifecycleFilter] = useState('all');
@@ -150,10 +145,7 @@ const DependentRow = ({
   const indent = showDepth ? (dependent.depth - 1) * 20 : 0;
 
   return (
-    <EntityNavigationLink
-      publicId={dependent.publicId}
-      className={styles.row}
-    >
+    <EntityNavigationLink publicId={dependent.publicId} className={styles.row}>
       {indent > 0 && <span className={styles.rowIndent} style={{ width: indent }} />}
       <span className={styles.rowLead}>
         <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={16} />

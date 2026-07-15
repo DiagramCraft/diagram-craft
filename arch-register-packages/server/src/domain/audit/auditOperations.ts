@@ -53,7 +53,8 @@ const resolveAuditPublicIds = async (
   }
 
   if (entry.entity_type === 'content_node') {
-    const projectId = typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
+    const projectId =
+      typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
     if (!projectId) return entry;
     const project = await db.project.getProject(workspace, projectId);
     return {

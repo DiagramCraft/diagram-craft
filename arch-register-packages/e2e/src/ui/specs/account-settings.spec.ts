@@ -34,17 +34,20 @@ test.describe('account settings', () => {
     await accountSettingsPage.goto('appearance');
     await accountSettingsPage.expectAppearanceLoaded();
 
-    const originalBackground = await accountSettingsPage.workspaceShell.topBar.accountMenuButton()
+    const originalBackground = await accountSettingsPage.workspaceShell.topBar
+      .accountMenuButton()
       .evaluate(element => getComputedStyle(element).backgroundImage);
 
-    const updatedColor = SCHEMA_COLORS.find(color => color !== seededUser.color) ?? SCHEMA_COLORS[0]!;
+    const updatedColor =
+      SCHEMA_COLORS.find(color => color !== seededUser.color) ?? SCHEMA_COLORS[0]!;
 
     await accountSettingsPage.selectColor(updatedColor);
     await accountSettingsPage.saveChanges();
 
     await expect
       .poll(async () =>
-        accountSettingsPage.workspaceShell.topBar.accountMenuButton()
+        accountSettingsPage.workspaceShell.topBar
+          .accountMenuButton()
           .evaluate(element => getComputedStyle(element).backgroundImage)
       )
       .not.toBe(originalBackground);
@@ -54,7 +57,8 @@ test.describe('account settings', () => {
 
     await expect
       .poll(async () =>
-        accountSettingsPage.workspaceShell.topBar.accountMenuButton()
+        accountSettingsPage.workspaceShell.topBar
+          .accountMenuButton()
           .evaluate(element => getComputedStyle(element).backgroundImage)
       )
       .toBe(originalBackground);

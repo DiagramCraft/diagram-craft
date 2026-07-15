@@ -121,7 +121,9 @@ const shouldRenderAnchorHandles = (
   node: DiagramNode,
   selectedNodes: ReadonlyArray<DiagramNode>
 ) => {
-  return node.getDefinition().hasFlag(NodeFlags.AnchorsVisibleOnHover) || selectedNodes.includes(node);
+  return (
+    node.getDefinition().hasFlag(NodeFlags.AnchorsVisibleOnHover) || selectedNodes.includes(node)
+  );
 };
 
 export class AnchorHandlesComponent extends Component<Props> {

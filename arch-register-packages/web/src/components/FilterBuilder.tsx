@@ -13,7 +13,10 @@ import {
 } from '@arch-register/api-types/workspaceContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import { ASSESSMENT_FIELD_PREFIX, ASSESSMENT_PRESENCE_FIELD_ID } from '@arch-register/api-types/assessmentFilter';
+import {
+  ASSESSMENT_FIELD_PREFIX,
+  ASSESSMENT_PRESENCE_FIELD_ID
+} from '@arch-register/api-types/assessmentFilter';
 
 const TEXT_OPERATORS = [
   { value: 'equals', label: 'Equals' },
@@ -253,9 +256,7 @@ const FilterRow = ({
   const field = fields.find(f => f.id === condition.fieldId) ?? fields[0]!;
 
   // Local draft value for text inputs — only committed on Enter to avoid per-keystroke requests
-  const [localTextValue, setLocalTextValue] = React.useState(
-    (condition.value as string) || ''
-  );
+  const [localTextValue, setLocalTextValue] = React.useState((condition.value as string) || '');
   // biome-ignore lint/correctness/useExhaustiveDependencies: fieldId is intentional — resets localTextValue when field changes, even if condition.value was already ''
   React.useEffect(() => {
     setLocalTextValue((condition.value as string) || '');

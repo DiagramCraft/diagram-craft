@@ -9,7 +9,8 @@ export class MappedCRDTProp<
   C extends { [key: string]: CRDTCompatibleObject },
   N extends keyof C & string,
   T = C[N]
-> implements Releasable {
+> implements Releasable
+{
   #value: T | undefined;
   #current: CRDTMap<C>;
   readonly #remoteUpdate: EventReceiver<CRDTMapEvents<C[string]>['remoteUpdate']>;

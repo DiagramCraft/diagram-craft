@@ -33,11 +33,10 @@ describe('ShapesPickerTab helpers', () => {
     };
 
     expect(
-      _test.getVisibleStencilPackages(
-        registry as never,
-        appConfig.stencils.registry,
-        ['uml', 'default']
-      )
+      _test.getVisibleStencilPackages(registry as never, appConfig.stencils.registry, [
+        'uml',
+        'default'
+      ])
     ).toEqual([
       {
         id: 'default',

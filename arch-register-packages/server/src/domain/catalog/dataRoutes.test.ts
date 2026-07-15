@@ -257,7 +257,11 @@ describe('data route helpers', () => {
       matchesFilterCondition(component, { fieldId: '_tags', op: 'equals', value: 'frontend' }, null)
     ).toBe(false);
     expect(
-      matchesFilterCondition(component, { fieldId: '_tags', op: 'not_equals', value: 'react' }, null)
+      matchesFilterCondition(
+        component,
+        { fieldId: '_tags', op: 'not_equals', value: 'react' },
+        null
+      )
     ).toBe(false);
     expect(
       matchesFilterCondition(system, { fieldId: '_tags', op: 'not_equals', value: 'react' }, null)
@@ -272,7 +276,11 @@ describe('data route helpers', () => {
       matchesFilterCondition(component, { fieldId: '_tags', op: 'not_empty', value: '' }, null)
     ).toBe(true);
     expect(
-      matchesFilterCondition({ ...component, tags: [] }, { fieldId: '_tags', op: 'empty', value: '' }, null)
+      matchesFilterCondition(
+        { ...component, tags: [] },
+        { fieldId: '_tags', op: 'empty', value: '' },
+        null
+      )
     ).toBe(true);
   });
 

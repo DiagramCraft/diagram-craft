@@ -146,7 +146,9 @@ export const ImageEmbedDialog = ({
               >
                 {isUploading ? 'Uploading…' : 'Choose image…'}
               </button>
-              <span className={styles.helperText}>Upload an image attachment for this document.</span>
+              <span className={styles.helperText}>
+                Upload an image attachment for this document.
+              </span>
             </div>
           </DialogSection>
         ) : (
@@ -199,7 +201,11 @@ export const ImageEmbedDialog = ({
         </DialogSection>
 
         <DialogSection label="Align">
-          <ModeSwitcher modes={ALIGN_MODES} value={align} onChange={value => setAlign(value as ImageAlign)} />
+          <ModeSwitcher
+            modes={ALIGN_MODES}
+            value={align}
+            onChange={value => setAlign(value as ImageAlign)}
+          />
         </DialogSection>
       </DialogContent>
     </Dialog>

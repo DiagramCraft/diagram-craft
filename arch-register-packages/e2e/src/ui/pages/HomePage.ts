@@ -1,9 +1,8 @@
-import { expect, } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { workspaceHomeRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
 
 export class HomePage extends WorkspacePage {
-
   goto = async () => {
     await this.page.goto(workspaceHomeRoute(this.workspaceSlug));
   };

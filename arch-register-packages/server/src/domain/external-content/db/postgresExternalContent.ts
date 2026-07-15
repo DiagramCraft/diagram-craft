@@ -8,7 +8,10 @@ import type {
 } from './externalContentDatabase';
 import { externalContentMappers } from './externalContentDatabase';
 
-export class PostgresExternalContentDatabase extends PostgresDatabaseBase implements ExternalContentDatabase {
+export class PostgresExternalContentDatabase
+  extends PostgresDatabaseBase
+  implements ExternalContentDatabase
+{
   async createSource(input: ExternalContentSourceDbCreate) {
     try {
       const rows = await this.sql`
@@ -22,21 +25,29 @@ export class PostgresExternalContentDatabase extends PostgresDatabaseBase implem
       `;
       const row = rows[0] as unknown as DatabaseRow | undefined;
       return externalContentMappers.source(row!);
-    } catch (error) { return normalizePostgresError(error); }
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
   }
 
   async getSource(workspace: string, id: string) {
-    const [row] = await this.sql<DatabaseRow[]>`SELECT * FROM external_content_source WHERE workspace = ${workspace} AND id = ${id}`;
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM external_content_source WHERE workspace = ${workspace} AND id = ${id}`;
     return row ? externalContentMappers.source(row) : null;
   }
 
   async getSourceByIdentity(workspace: string, sourceType: 'git', identityKey: string) {
-    const [row] = await this.sql<DatabaseRow[]>`SELECT * FROM external_content_source WHERE workspace = ${workspace} AND source_type = ${sourceType} AND identity_key = ${identityKey}`;
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM external_content_source WHERE workspace = ${workspace} AND source_type = ${sourceType} AND identity_key = ${identityKey}`;
     return row ? externalContentMappers.source(row) : null;
   }
 
   async listSources(workspace: string) {
-    const rows = await this.sql<DatabaseRow[]>`SELECT * FROM external_content_source WHERE workspace = ${workspace} ORDER BY created_at, id`;
+    const rows = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM external_content_source WHERE workspace = ${workspace} ORDER BY created_at, id`;
     return mapDatabaseRows(rows, externalContentMappers.source);
   }
 
@@ -52,17 +63,25 @@ export class PostgresExternalContentDatabase extends PostgresDatabaseBase implem
         WHERE id = ${id} RETURNING *
       `;
       return row ? externalContentMappers.source(row) : null;
-    } catch (error) { return normalizePostgresError(error); }
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
   }
 
   private async getById(id: string) {
-    const [row] = await this.sql<DatabaseRow[]>`SELECT * FROM external_content_source WHERE id = ${id}`;
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM external_content_source WHERE id = ${id}`;
     return row ? externalContentMappers.source(row) : null;
   }
 
   async deleteSource(workspace: string, id: string) {
-    try { await this.sql`DELETE FROM external_content_source WHERE workspace = ${workspace} AND id = ${id}`; }
-    catch (error) { return normalizePostgresError(error); }
+    try {
+      await this
+        .sql`DELETE FROM external_content_source WHERE workspace = ${workspace} AND id = ${id}`;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
   }
 
   async createMount(input: ExternalContentMountDbCreate) {
@@ -76,21 +95,29 @@ export class PostgresExternalContentDatabase extends PostgresDatabaseBase implem
           ${input.last_revision}, ${input.last_error}, ${input.created_at}, ${input.updated_at}) RETURNING *
       `;
       return externalContentMappers.mount(row!);
-    } catch (error) { return normalizePostgresError(error); }
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
   }
 
   async getMount(workspace: string, id: string) {
-    const [row] = await this.sql<DatabaseRow[]>`SELECT * FROM content_mount WHERE workspace = ${workspace} AND id = ${id}`;
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM content_mount WHERE workspace = ${workspace} AND id = ${id}`;
     return row ? externalContentMappers.mount(row) : null;
   }
 
   async listMounts(workspace: string) {
-    const rows = await this.sql<DatabaseRow[]>`SELECT * FROM content_mount WHERE workspace = ${workspace} ORDER BY destination_path, id`;
+    const rows = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM content_mount WHERE workspace = ${workspace} ORDER BY destination_path, id`;
     return mapDatabaseRows(rows, externalContentMappers.mount);
   }
 
   async listMountsBySource(workspace: string, sourceId: string) {
-    const rows = await this.sql<DatabaseRow[]>`SELECT * FROM content_mount WHERE workspace = ${workspace} AND source_id = ${sourceId} ORDER BY destination_path, id`;
+    const rows = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM content_mount WHERE workspace = ${workspace} AND source_id = ${sourceId} ORDER BY destination_path, id`;
     return mapDatabaseRows(rows, externalContentMappers.mount);
   }
 
@@ -106,7 +133,9 @@ export class PostgresExternalContentDatabase extends PostgresDatabaseBase implem
         WHERE id = ${id} RETURNING *
       `;
       return row ? externalContentMappers.mount(row) : null;
-    } catch (error) { return normalizePostgresError(error); }
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
   }
 
   private async getByMountId(id: string) {
@@ -115,7 +144,10 @@ export class PostgresExternalContentDatabase extends PostgresDatabaseBase implem
   }
 
   async deleteMount(workspace: string, id: string) {
-    try { await this.sql`DELETE FROM content_mount WHERE workspace = ${workspace} AND id = ${id}`; }
-    catch (error) { return normalizePostgresError(error); }
+    try {
+      await this.sql`DELETE FROM content_mount WHERE workspace = ${workspace} AND id = ${id}`;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
   }
 }

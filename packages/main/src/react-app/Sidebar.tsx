@@ -147,7 +147,7 @@ export const Sidebar = (props: Props) => {
       const item: NavRailItem = {
         id: idx.toString(),
         icon: element.props.icon,
-        tooltip: element.props.tooltip,
+        tooltip: element.props.tooltip
       };
       if (element.props.extra) item.extra = element.props.extra;
       return item;

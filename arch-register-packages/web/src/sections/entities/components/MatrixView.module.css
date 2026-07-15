@@ -52,7 +52,6 @@
   color: var(--base-fg);
 }
 
-
 .cross {
   font-size: 15px;
   color: var(--base-fg-more-dim);
@@ -109,7 +108,7 @@
     height: 24px;
 
     &::after {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       right: 0;
@@ -181,7 +180,6 @@
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
-
 
 /* ── Scroll container ────────────────────────────────────────── */
 

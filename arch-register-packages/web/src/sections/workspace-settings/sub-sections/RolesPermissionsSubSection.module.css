@@ -329,7 +329,7 @@
 }
 
 .capabilityCheckbox:checked::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 4px;
   top: 1px;
@@ -344,7 +344,6 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
-
 
 .dialogError {
   color: var(--error-fg);

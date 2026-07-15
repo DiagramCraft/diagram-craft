@@ -104,12 +104,15 @@ test.describe('data permission routes', () => {
       resources.entityIds.customerApi,
       resources.entityIds.frontendApp,
       resources.entityIds.customerPortal,
-      '00000000-0000-0000-0001-000000000001',
+      '00000000-0000-0000-0001-000000000001'
     ]);
     expect(tree.edges).toEqual([
       { childId: resources.entityIds.customerApi, parentId: resources.entityIds.customerPortal },
       { childId: resources.entityIds.frontendApp, parentId: resources.entityIds.customerPortal },
-      { childId: resources.entityIds.customerPortal, parentId: '00000000-0000-0000-0001-000000000001' }
+      {
+        childId: resources.entityIds.customerPortal,
+        parentId: '00000000-0000-0000-0001-000000000001'
+      }
     ]);
   });
 

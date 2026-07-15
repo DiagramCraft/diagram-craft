@@ -47,7 +47,12 @@ export const EntityLinkEditable = ({
     <PlateElement element={element} as="span" {...props}>
       <BaseInlineEditable
         hasValue={!!entityId}
-        placeholder={<><TbLink size={12} /><span>link…</span></>}
+        placeholder={
+          <>
+            <TbLink size={12} />
+            <span>link…</span>
+          </>
+        }
         dialog={(open, onClose) => (
           <EntityLinkDialog element={element} open={open} onClose={onClose} isNew={isNew} />
         )}

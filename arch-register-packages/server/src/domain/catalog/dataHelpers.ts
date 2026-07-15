@@ -52,25 +52,48 @@ export const matchesFilterCondition = (
     if (condition.op === 'not_empty') return tags.length > 0;
     const expected = String(condition.value ?? '');
     switch (condition.op) {
-      case 'equals': return tags.some(t => t === expected);
-      case 'not_equals': return !tags.some(t => t === expected);
-      case 'contains': return tags.some(t => t.toLowerCase().includes(expected.toLowerCase()));
-      default: return true;
+      case 'equals':
+        return tags.some(t => t === expected);
+      case 'not_equals':
+        return !tags.some(t => t === expected);
+      case 'contains':
+        return tags.some(t => t.toLowerCase().includes(expected.toLowerCase()));
+      default:
+        return true;
     }
   }
 
   let value: unknown;
   switch (condition.fieldId) {
-    case '_schemaId': value = entity.schema_id; break;
-    case '_lifecycle': value = entity.lifecycle; break;
-    case '_owner': value = entity.owner; break;
-    case '_name': value = entity.name; break;
-    case '_slug': value = entity.slug; break;
-    case '_description': value = entity.description; break;
-    case '_namespace': value = entity.namespace; break;
-    case '_completeness': value = completeness; break;
-    case '_updatedAt': value = entity.updated_at; break;
-    default: value = entity.data[condition.fieldId];
+    case '_schemaId':
+      value = entity.schema_id;
+      break;
+    case '_lifecycle':
+      value = entity.lifecycle;
+      break;
+    case '_owner':
+      value = entity.owner;
+      break;
+    case '_name':
+      value = entity.name;
+      break;
+    case '_slug':
+      value = entity.slug;
+      break;
+    case '_description':
+      value = entity.description;
+      break;
+    case '_namespace':
+      value = entity.namespace;
+      break;
+    case '_completeness':
+      value = completeness;
+      break;
+    case '_updatedAt':
+      value = entity.updated_at;
+      break;
+    default:
+      value = entity.data[condition.fieldId];
   }
 
   if (condition.op === 'empty') return value == null || value === '';
@@ -79,21 +102,31 @@ export const matchesFilterCondition = (
 
   const expected = condition.value;
   switch (condition.op) {
-    case 'equals': return String(value) === String(expected);
-    case 'not_equals': return String(value) !== String(expected);
-    case 'contains': return String(value).toLowerCase().includes(String(expected).toLowerCase());
-    case 'starts_with': return String(value).toLowerCase().startsWith(String(expected).toLowerCase());
-    case 'ends_with': return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
-    case 'gt': return Number(value) > Number(expected);
-    case 'lt': return Number(value) < Number(expected);
-    case 'gte': return Number(value) >= Number(expected);
-    case 'lte': return Number(value) <= Number(expected);
+    case 'equals':
+      return String(value) === String(expected);
+    case 'not_equals':
+      return String(value) !== String(expected);
+    case 'contains':
+      return String(value).toLowerCase().includes(String(expected).toLowerCase());
+    case 'starts_with':
+      return String(value).toLowerCase().startsWith(String(expected).toLowerCase());
+    case 'ends_with':
+      return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
+    case 'gt':
+      return Number(value) > Number(expected);
+    case 'lt':
+      return Number(value) < Number(expected);
+    case 'gte':
+      return Number(value) >= Number(expected);
+    case 'lte':
+      return Number(value) <= Number(expected);
     case 'before': {
       const valueTime = value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
       const expectedTime = new Date(String(expected)).getTime();
       return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime < expectedTime;
     }
-    default: return true;
+    default:
+      return true;
   }
 };
 
@@ -154,7 +187,10 @@ export const relationFields = (fields: SchemaField[]) =>
       field.type === 'reference' || field.type === 'containment'
   );
 
-const normalizeRelationIds = (value: unknown, field: Extract<SchemaField, { type: 'reference' | 'containment' }>) => {
+const normalizeRelationIds = (
+  value: unknown,
+  field: Extract<SchemaField, { type: 'reference' | 'containment' }>
+) => {
   httpAssert.true(Array.isArray(value), {
     message: `${field.name} must be provided as an array of entity ids`
   });
@@ -196,10 +232,7 @@ export const normalizeEntityRelationFields = ({
     if (field.type === 'containment') validateContainmentField(field);
 
     const rawValue = normalizedFields[field.id];
-    const ids =
-      rawValue == null || rawValue === ''
-        ? []
-        : normalizeRelationIds(rawValue, field);
+    const ids = rawValue == null || rawValue === '' ? [] : normalizeRelationIds(rawValue, field);
 
     httpAssert.true(ids.length >= field.minCount, {
       message: `${field.name} requires at least ${field.minCount} relation(s)`
@@ -404,14 +437,29 @@ export const buildEntityDependents = (
   const entityMap = new Map(entities.map(e => [e.id, e]));
 
   // Build inverse index: for each entity id, which entities reference it
-  const incomingIndex = new Map<string, Array<{ entity: Entity; fieldName: string; fieldPredicate?: string; kind: 'reference' | 'containment' }>>();
+  const incomingIndex = new Map<
+    string,
+    Array<{
+      entity: Entity;
+      fieldName: string;
+      fieldPredicate?: string;
+      kind: 'reference' | 'containment';
+    }>
+  >();
   for (const entity of entities) {
     const schema = schemaMap.get(entity.schema_id);
     if (!schema) continue;
     for (const field of relationFields(schema.fields)) {
       for (const refId of decodeRefs(entity.data[field.id])) {
         if (!incomingIndex.has(refId)) incomingIndex.set(refId, []);
-        incomingIndex.get(refId)!.push({ entity, fieldName: field.name, fieldPredicate: field.predicate, kind: field.type });
+        incomingIndex
+          .get(refId)!
+          .push({
+            entity,
+            fieldName: field.name,
+            fieldPredicate: field.predicate,
+            kind: field.type
+          });
       }
     }
   }
@@ -461,7 +509,13 @@ export const buildEntityDependents = (
         queue.push([
           entity.id,
           depth + 1,
-          [...viaPath, { entityId: currentId, entityName: currentEntity?.name || currentEntity?.slug || currentId }]
+          [
+            ...viaPath,
+            {
+              entityId: currentId,
+              entityName: currentEntity?.name || currentEntity?.slug || currentId
+            }
+          ]
         ]);
       }
     }

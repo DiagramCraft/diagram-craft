@@ -1,9 +1,8 @@
-import { expect, } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { workspaceSettingsRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
 
 export class SettingsPage extends WorkspacePage {
-
   goto = async (section?: string) => {
     await this.page.goto(workspaceSettingsRoute(this.workspaceSlug, section));
   };

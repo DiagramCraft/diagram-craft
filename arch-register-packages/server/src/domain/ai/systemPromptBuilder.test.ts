@@ -24,7 +24,11 @@ describe('buildSystemPrompt', () => {
             updated_at: now
           }
         ],
-        listEntitiesPaginated: async (_ws: string, _filters: unknown, { limit, offset }: { limit: number; offset: number }) => {
+        listEntitiesPaginated: async (
+          _ws: string,
+          _filters: unknown,
+          { limit, offset }: { limit: number; offset: number }
+        ) => {
           const all = [
             {
               id: 'entity-public',

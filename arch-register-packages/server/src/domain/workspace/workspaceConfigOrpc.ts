@@ -24,11 +24,7 @@ import {
   replaceProjectEntityTypes
 } from './workspaceConfigOperations';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
-import {
-  createApiToken,
-  listApiTokens,
-  revokeApiToken
-} from '../auth/apiTokenOperations';
+import { createApiToken, listApiTokens, revokeApiToken } from '../auth/apiTokenOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;

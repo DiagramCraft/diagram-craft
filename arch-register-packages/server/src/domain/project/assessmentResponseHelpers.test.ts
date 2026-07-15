@@ -19,7 +19,13 @@ const makeAssessment = (overrides: Partial<AssessmentDbResult> = {}): Assessment
   scope: ['schema-service'],
   scope_conditions: [],
   fields: [
-    { id: 'f1', label: 'Auth maturity', type: 'enum', enumId: 'enum-maturity', requirementLevel: 'required' },
+    {
+      id: 'f1',
+      label: 'Auth maturity',
+      type: 'enum',
+      enumId: 'enum-maturity',
+      requirementLevel: 'required'
+    },
     { id: 'f2', label: 'Notes', type: 'text', requirementLevel: 'optional' }
   ],
   created_at: now,
@@ -127,7 +133,9 @@ describe('buildAssessmentResultsCsvData', () => {
     ];
     const responses = [makeResponse({ entity_id: 'e1', values: { f1: 'Managed', f2: 'note' } })];
 
-    const { columns, rows } = buildAssessmentResultsCsvData(entities, responses, assessment, [enumDef]);
+    const { columns, rows } = buildAssessmentResultsCsvData(entities, responses, assessment, [
+      enumDef
+    ]);
 
     expect(columns).toEqual(['Entity', 'Owner', 'Schema Type', 'Auth maturity', 'Notes', 'Status']);
     expect(rows).toEqual([
@@ -152,7 +160,10 @@ describe('buildAssessmentResultsCsvData', () => {
 
   it('excludes entities outside the assessment scope', () => {
     const assessment = makeAssessment();
-    const entities = [makeEntity({ id: 'e1' }), makeEntity({ id: 'e2', schema_id: 'schema-other' })];
+    const entities = [
+      makeEntity({ id: 'e1' }),
+      makeEntity({ id: 'e2', schema_id: 'schema-other' })
+    ];
 
     const { rows } = buildAssessmentResultsCsvData(entities, [], assessment, []);
 

@@ -116,7 +116,11 @@ export const reconstructEntitiesAsOf = async (
     }
   }
 
-  const buildResult = (entityId: string, state: Record<string, unknown>, fallbackCreatedAt: Date): EntityDbResult => {
+  const buildResult = (
+    entityId: string,
+    state: Record<string, unknown>,
+    fallbackCreatedAt: Date
+  ): EntityDbResult => {
     const createdAt = parseDate(state['created_at'], fallbackCreatedAt);
     const updatedAt = parseDate(state['updated_at'], createdAt);
     const ownerId = (state['owner'] as string | null) ?? null;

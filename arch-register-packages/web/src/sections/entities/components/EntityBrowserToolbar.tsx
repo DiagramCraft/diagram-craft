@@ -152,17 +152,19 @@ export const EntityBrowserToolbar = ({
         label="View"
         value={view}
         onChange={v => setView(v as BrowserView)}
-        options={allowedViews ?? [
-          { value: 'table', label: 'Table' },
-          { value: 'cards', label: 'Cards' },
-          { value: 'tree', label: 'Tree' },
-          { value: 'radar', label: 'Radar' },
-          { value: 'bubble', label: 'Bubble' },
-          { value: 'timeline', label: 'Timeline' },
-          { value: 'matrix', label: 'Matrix' },
-          { value: 'hierarchy', label: 'Hierarchy' },
-          { value: 'explore', label: 'Explore' }
-        ]}
+        options={
+          allowedViews ?? [
+            { value: 'table', label: 'Table' },
+            { value: 'cards', label: 'Cards' },
+            { value: 'tree', label: 'Tree' },
+            { value: 'radar', label: 'Radar' },
+            { value: 'bubble', label: 'Bubble' },
+            { value: 'timeline', label: 'Timeline' },
+            { value: 'matrix', label: 'Matrix' },
+            { value: 'hierarchy', label: 'Hierarchy' },
+            { value: 'explore', label: 'Explore' }
+          ]
+        }
       />
       <ManageFieldsPopover
         fields={displayFields ?? []}

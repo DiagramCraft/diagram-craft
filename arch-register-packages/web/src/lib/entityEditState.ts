@@ -13,7 +13,10 @@ export const slugifyEntityName = (name: string) =>
 export const relationIds = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
-export const createEntityEditState = (entity: EntityRecord, schema: EntitySchema): EntityEditState => {
+export const createEntityEditState = (
+  entity: EntityRecord,
+  schema: EntitySchema
+): EntityEditState => {
   const state: EntityEditState = {
     _name: entity._name ?? '',
     _slug: entity._slug ?? '',
@@ -34,7 +37,10 @@ export const createEntityEditState = (entity: EntityRecord, schema: EntitySchema
   return state;
 };
 
-export const requiredEntityFieldIds = (editState: EntityEditState, schema: EntitySchema): Set<string> => {
+export const requiredEntityFieldIds = (
+  editState: EntityEditState,
+  schema: EntitySchema
+): Set<string> => {
   const errors = new Set<string>();
   for (const field of schema.fields) {
     if (field.requirementLevel !== 'required') continue;

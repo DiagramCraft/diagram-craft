@@ -23,11 +23,7 @@ import { resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
 import type { TeamRole } from '@arch-register/permissions';
 import type { UserDbResult } from './db/authDatabase';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
-import {
-  createUserApiToken,
-  listUserApiTokens,
-  revokeUserApiToken
-} from './apiTokenOperations';
+import { createUserApiToken, listUserApiTokens, revokeUserApiToken } from './apiTokenOperations';
 
 const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
 

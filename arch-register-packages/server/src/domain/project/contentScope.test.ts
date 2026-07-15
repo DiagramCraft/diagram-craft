@@ -161,10 +161,18 @@ describe('ENTITY_SCOPE.resolve', () => {
     const scope = await ENTITY_SCOPE.resolve(db, 'ws-1', 'entity-1', allowedAuthCtx, 'edit');
 
     await scope.deleteNodeByPath(db, 'ws-1', '/a.md');
-    expect(db.project.deleteEntityContentNodeByPath).toHaveBeenCalledWith('ws-1', 'entity-1', '/a.md');
+    expect(db.project.deleteEntityContentNodeByPath).toHaveBeenCalledWith(
+      'ws-1',
+      'entity-1',
+      '/a.md'
+    );
 
     await scope.deleteNodeFolder(db, 'ws-1', '/folder');
-    expect(db.project.deleteEntityContentNodeFolder).toHaveBeenCalledWith('ws-1', 'entity-1', '/folder');
+    expect(db.project.deleteEntityContentNodeFolder).toHaveBeenCalledWith(
+      'ws-1',
+      'entity-1',
+      '/folder'
+    );
 
     const updatedAt = new Date('2026-07-04T00:00:00.000Z');
     await scope.renameNodeFolder(db, 'ws-1', '/old', '/new', updatedAt);

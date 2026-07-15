@@ -217,7 +217,10 @@ describe('TableHelper', () => {
     const before = child.bounds;
 
     UnitOfWork.execute(diagram, uow => {
-      table.transform(TransformFactory.fromTo(table.bounds, { ...table.bounds, x: 50, y: 40 }), uow);
+      table.transform(
+        TransformFactory.fromTo(table.bounds, { ...table.bounds, x: 50, y: 40 }),
+        uow
+      );
     });
 
     expect(child.bounds).toEqual({ ...before, x: before.x + 50, y: before.y + 40 });

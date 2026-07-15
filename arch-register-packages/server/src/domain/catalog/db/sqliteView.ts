@@ -190,7 +190,12 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
     return (await this.getCollectionEntity(collectionId, entityId))!;
   }
 
-  async removeCollectionEntity(userId: string, workspace: string, collectionId: string, entityId: string) {
+  async removeCollectionEntity(
+    userId: string,
+    workspace: string,
+    collectionId: string,
+    entityId: string
+  ) {
     const collection = await this.getCollection(userId, workspace, collectionId);
     if (!collection) return null;
     const existing = await this.getCollectionEntity(collectionId, entityId);

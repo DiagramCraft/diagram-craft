@@ -1,5 +1,5 @@
 /* Import all styles from ExtractScreen */
-@import '../ai-extract/ExtractScreen.module.css';
+@import "../ai-extract/ExtractScreen.module.css";
 
 .inputFoot {
   justify-content: flex-end;
@@ -99,5 +99,3 @@
   cursor: pointer;
   font: inherit;
 }
-
-

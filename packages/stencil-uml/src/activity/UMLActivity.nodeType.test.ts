@@ -36,9 +36,9 @@ describe('UMLActivity', () => {
     const activity = await createActivity();
 
     const definition = new UMLActivityNodeDefinition();
-    const propertyLabels = definition.getCustomPropertyDefinitions(activity).entries.map(p =>
-      'label' in p ? p.label : undefined
-    );
+    const propertyLabels = definition
+      .getCustomPropertyDefinitions(activity)
+      .entries.map(p => ('label' in p ? p.label : undefined));
 
     expect(activity.getDefinition().name).toBe('UML Activity');
     expect(activity.getDefinition().hasFlag(NodeFlags.ChildrenAllowed)).toBe(true);
@@ -50,7 +50,10 @@ describe('UMLActivity', () => {
   test('uses a rounded rectangle bounding path', async () => {
     const activity = await createActivity();
 
-    const path = new UMLActivityNodeDefinition().getBoundingPathBuilder(activity).getPaths().asSvgPath();
+    const path = new UMLActivityNodeDefinition()
+      .getBoundingPathBuilder(activity)
+      .getPaths()
+      .asSvgPath();
 
     expect(path).toBe(
       'M 28,20 L 112,20 A 18,18,0,0,1,130,38 L 130,62 A 18,18,0,0,1,112,80 L 28,80 A 18,18,0,0,1,10,62 L 10,38 A 18,18,0,0,1,28,20'
@@ -60,7 +63,10 @@ describe('UMLActivity', () => {
   test('uses a convex pentagon path for send signal action', async () => {
     const activity = await createActivity('send-signal-action');
 
-    const path = new UMLActivityNodeDefinition().getBoundingPathBuilder(activity).getPaths().asSvgPath();
+    const path = new UMLActivityNodeDefinition()
+      .getBoundingPathBuilder(activity)
+      .getPaths()
+      .asSvgPath();
 
     expect(path).toBe('M 10,20 L 112,20 L 130,50 L 112,80 L 10,80 L 10,20');
   });
@@ -68,7 +74,10 @@ describe('UMLActivity', () => {
   test('uses a concave arrow path for accept event action', async () => {
     const activity = await createActivity('accept-event-action');
 
-    const path = new UMLActivityNodeDefinition().getBoundingPathBuilder(activity).getPaths().asSvgPath();
+    const path = new UMLActivityNodeDefinition()
+      .getBoundingPathBuilder(activity)
+      .getPaths()
+      .asSvgPath();
 
     expect(path).toBe('M 10,20 L 130,20 L 130,80 L 10,80 L 28,50 L 10,20');
   });
@@ -76,7 +85,10 @@ describe('UMLActivity', () => {
   test('uses an hourglass path for wait time action', async () => {
     const activity = await createActivity('wait-time-action');
 
-    const path = new UMLActivityNodeDefinition().getBoundingPathBuilder(activity).getPaths().asSvgPath();
+    const path = new UMLActivityNodeDefinition()
+      .getBoundingPathBuilder(activity)
+      .getPaths()
+      .asSvgPath();
 
     expect(path).toBe('M 10,20 L 130,20 L 70,50 L 130,80 L 10,80 L 70,50 L 10,20');
   });

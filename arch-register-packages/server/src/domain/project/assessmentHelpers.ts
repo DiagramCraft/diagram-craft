@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type { AssessmentDbCreate, AssessmentDbResult, AssessmentDbUpdate } from './db/projectDatabase';
+import type {
+  AssessmentDbCreate,
+  AssessmentDbResult,
+  AssessmentDbUpdate
+} from './db/projectDatabase';
 import { httpAssert } from '../../utils/httpAssert';
 import { Assessment, AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';

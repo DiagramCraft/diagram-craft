@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureEntity, createFixtureSchema, createFixtureWorkspace } from './projectFixtures';
+import {
+  createFixtureEntity,
+  createFixtureSchema,
+  createFixtureWorkspace
+} from './projectFixtures';
 import { createFixtureUser } from './authFixtures';
 
 runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {

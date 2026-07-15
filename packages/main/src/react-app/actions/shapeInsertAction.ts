@@ -61,7 +61,9 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
               for (const node of newElements) {
                 layer.addElement(node, uow);
                 if (isNode(node) && stencil.settings?.nodeLinkOptions !== undefined) {
-                  node.getDefinition().setNodeLinkOptions?.(node, stencil.settings.nodeLinkOptions, uow);
+                  node
+                    .getDefinition()
+                    .setNodeLinkOptions?.(node, stencil.settings.nodeLinkOptions, uow);
                 }
               }
 

@@ -94,7 +94,9 @@ test.describe('projects section', () => {
     await projectsPage.expectProjectInSidebarGroup('Active Projects', projectName);
   });
 
-  test('restores project content filter and view mode without colliding with entity browser params', async ({ page }) => {
+  test('restores project content filter and view mode without colliding with entity browser params', async ({
+    page
+  }) => {
     await page.goto(
       `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=home&q=auth&viewMode=timeline`
     );
@@ -124,10 +126,16 @@ test.describe('projects section', () => {
     await expect(gridViewButton).toHaveClass(/iconBtnActive/);
   });
 
-  test('navigates directly to project content folders, including nested folders', async ({ page }) => {
-    await page.goto(`/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test?contentQuery=migration&contentView=list`);
+  test('navigates directly to project content folders, including nested folders', async ({
+    page
+  }) => {
+    await page.goto(
+      `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test?contentQuery=migration&contentView=list`
+    );
 
-    await expect(page).toHaveURL(/\/projects\/DW-2\/folders\/Test\?contentQuery=migration&contentView=list/);
+    await expect(page).toHaveURL(
+      /\/projects\/DW-2\/folders\/Test\?contentQuery=migration&contentView=list/
+    );
     await expect(page.getByPlaceholder('Filter diagrams…')).toHaveValue('migration');
     await expect(page.locator('button[title="List view"]')).toHaveClass(/iconBtnActive/);
 
@@ -136,7 +144,9 @@ test.describe('projects section', () => {
     await expect(page).toHaveURL(/\/projects\/DW-2\/folders\/Test$/);
     await expect(page.getByText(authMigrationProject.name, { exact: true })).toBeVisible();
 
-    await page.goto(`/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/docs/guides`);
+    await page.goto(
+      `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/docs/guides`
+    );
 
     await expect(page).toHaveURL(/\/projects\/DW-2\/folders\/docs\/guides$/);
     await expect(page.getByRole('heading', { name: 'docs/guides', exact: true })).toBeVisible();

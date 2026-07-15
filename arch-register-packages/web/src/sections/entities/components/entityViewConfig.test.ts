@@ -31,9 +31,9 @@ describe('normalizeViewConfig', () => {
   });
 
   it('returns the defaults unchanged when the raw config fails to parse', () => {
-    expect(normalizeViewConfig(timelineViewConfigSchema, { groupBy: 'nonsense' }, defaults)).toEqual(
-      defaults
-    );
+    expect(
+      normalizeViewConfig(timelineViewConfigSchema, { groupBy: 'nonsense' }, defaults)
+    ).toEqual(defaults);
     expect(normalizeViewConfig(timelineViewConfigSchema, null, defaults)).toEqual(defaults);
     expect(normalizeViewConfig(timelineViewConfigSchema, undefined, defaults)).toEqual(defaults);
   });
@@ -65,7 +65,12 @@ describe('normalizeViewConfig', () => {
   });
 
   it('supports an empty-sentinel default for views with no natural default value (e.g. Radar)', () => {
-    const emptyRadarConfig = { schemaId: '', quadrantFieldId: '', ringFieldId: '', ringOrder: [] as string[] };
+    const emptyRadarConfig = {
+      schemaId: '',
+      quadrantFieldId: '',
+      ringFieldId: '',
+      ringOrder: [] as string[]
+    };
 
     // Invalid/missing config -> caller can treat the empty sentinel as "unconfigured".
     const unconfigured = normalizeViewConfig(radarViewConfigSchema, undefined, emptyRadarConfig);

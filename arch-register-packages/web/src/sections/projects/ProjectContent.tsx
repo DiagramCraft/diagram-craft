@@ -59,7 +59,10 @@ export const ProjectContent = ({
   return (
     <ProjectScreenLayout
       breadcrumbs={[
-        { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+        {
+          label: 'Home',
+          onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+        },
         { label: 'Projects', onClick: onNavigateHome },
         { label: project.name, onClick: onNavigateProject },
         { label: folderPath }
@@ -68,7 +71,13 @@ export const ProjectContent = ({
       actions={
         project.canManageFiles ? (
           <MenuButton.Root>
-            <MenuButton.Trigger element={<Button variant="primary" icon={<TbPlus size={12} />}>New</Button>} />
+            <MenuButton.Trigger
+              element={
+                <Button variant="primary" icon={<TbPlus size={12} />}>
+                  New
+                </Button>
+              }
+            />
             <MenuButton.Menu align="end">
               <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={onAddFolder}>
                 New folder
@@ -90,15 +99,26 @@ export const ProjectContent = ({
       }
       meta={
         <>
-          <ProjectMetaItem label="Items" value={<span className="mono tabular">{allFilesCount}</span>} />
-          <ProjectMetaItem label="Folders" value={<span className="mono tabular">{folderCount}</span>} />
+          <ProjectMetaItem
+            label="Items"
+            value={<span className="mono tabular">{allFilesCount}</span>}
+          />
+          <ProjectMetaItem
+            label="Folders"
+            value={<span className="mono tabular">{folderCount}</span>}
+          />
           <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
           <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
         </>
       }
       toolbar={
         <DiagramBrowserToolbar
-          label={<div className={styles.sectionLabel} style={{ margin: 0 }}>{`Content (${visibleFiles.length})`}</div>}
+          label={
+            <div
+              className={styles.sectionLabel}
+              style={{ margin: 0 }}
+            >{`Content (${visibleFiles.length})`}</div>
+          }
           filter={filter}
           onFilterChange={onSetFilter}
           viewMode={viewMode}

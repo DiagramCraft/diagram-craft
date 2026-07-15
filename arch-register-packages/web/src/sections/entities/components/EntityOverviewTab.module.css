@@ -176,8 +176,9 @@
 .miniDiagramThumbGrid {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
-  linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
   background-size: 8px 8px;
 }
 

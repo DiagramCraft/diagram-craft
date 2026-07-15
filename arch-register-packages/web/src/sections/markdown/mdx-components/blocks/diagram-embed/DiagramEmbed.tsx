@@ -83,7 +83,12 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
 
     if (file.project_public_id) {
       void navigate(
-        projectDiagramRoute(workspaceSlug, asProjectPublicId(file.project_public_id), file.id, search)
+        projectDiagramRoute(
+          workspaceSlug,
+          asProjectPublicId(file.project_public_id),
+          file.id,
+          search
+        )
       );
     } else if (params.entityId) {
       void navigate(

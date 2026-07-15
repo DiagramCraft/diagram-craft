@@ -46,7 +46,12 @@ export const DiagramEmbedEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={!!fileId}
-      placeholder={<><TbChartLine size={16} /><span>Choose diagram…</span></>}
+      placeholder={
+        <>
+          <TbChartLine size={16} />
+          <span>Choose diagram…</span>
+        </>
+      }
       content={<DiagramEmbed id={fileId} caption={caption || undefined} />}
       dialog={(open, onClose) => (
         <DiagramEmbedDialog element={element} open={open} onClose={onClose} isNew={isNew} />

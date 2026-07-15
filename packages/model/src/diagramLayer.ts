@@ -37,8 +37,7 @@ export abstract class Layer<
     | RegularLayer
     | RuleLayer
     | ModificationLayer
->
-  implements UOWTrackable, AttachmentConsumer, Releasable, Detachable<LayerAttachParent>
+> implements UOWTrackable, AttachmentConsumer, Releasable, Detachable<LayerAttachParent>
 {
   #locked = false;
   #id: CRDTProp<LayerCRDT, 'id'>;

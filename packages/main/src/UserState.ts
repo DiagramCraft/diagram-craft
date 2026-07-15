@@ -62,7 +62,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#stencilPickerViewMode = state.stencilPickerViewMode === 'list' ? 'list' : 'grid';
     this.#stencilSearchAllPackages = state.stencilSearchAllPackages ?? true;
     this.#recentFiles = state.recentFiles ?? [];
-    
+
     // Handle theme preference with backward compatibility
     const storedTheme = state.themePreference ?? state.themeMode;
     if (storedTheme === 'light' || storedTheme === 'dark') {
@@ -70,11 +70,11 @@ export class UserState extends EventEmitter<UserStateEvents> {
     } else {
       this.#themePreference = 'system';
     }
-    
+
     // Compute effective theme and set up listener
     this.#effectiveTheme = this.computeEffectiveTheme();
     this.setupMediaQueryListener();
-    
+
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
     this.#documentTabs = state.documentTabs ?? [];
     this.#persistedState = this.serializeState();
@@ -109,12 +109,12 @@ export class UserState extends EventEmitter<UserStateEvents> {
   set themePreference(preference: ThemePreference) {
     if (this.#themePreference === preference) return;
     this.#themePreference = preference;
-    
+
     const newEffectiveTheme = this.computeEffectiveTheme();
     if (newEffectiveTheme !== this.#effectiveTheme) {
       this.#effectiveTheme = newEffectiveTheme;
     }
-    
+
     this.setupMediaQueryListener();
     this.triggerChange();
   }

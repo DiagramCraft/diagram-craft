@@ -60,9 +60,9 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
     {
       entityType: 'entity',
       entityId: id || undefined,
-      schemaId: id ? undefined : (schema || undefined),
-      owner: id ? undefined : (owner || undefined),
-      lifecycle: id ? undefined : (lifecycle || undefined),
+      schemaId: id ? undefined : schema || undefined,
+      owner: id ? undefined : owner || undefined,
+      lifecycle: id ? undefined : lifecycle || undefined,
       startDate: startDate ?? undefined,
       limit: limitNum
     },

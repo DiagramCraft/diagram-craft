@@ -123,11 +123,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "**/*.test.ts",
-        "**/*.bench.ts",
-        "**/test-support/*"
-      ],
+      "includes": ["**/*.test.ts", "**/*.bench.ts", "**/test-support/*"],
       "linter": {
         "rules": {
           "correctness": {

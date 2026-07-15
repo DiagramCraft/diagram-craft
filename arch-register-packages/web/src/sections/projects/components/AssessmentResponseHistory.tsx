@@ -14,7 +14,6 @@ const OPERATION_LABEL: Record<AuditLogEntry['operation'], string> = {
   delete: 'deleted'
 };
 
-
 const changedFieldLabels = (entry: AuditLogEntry, assessment: Assessment): string[] => {
   if (entry.operation === 'create') return [];
   const oldValues = (entry.changes.old?.['values'] as Record<string, unknown> | undefined) ?? {};

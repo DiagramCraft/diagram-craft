@@ -84,15 +84,15 @@ test.describe('Saved Views API', () => {
 
   test('returns 401 without auth', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
-    await expect(
-      anonOrpc.views.list({ params: { workspace: 'default' } })
-    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    await expect(anonOrpc.views.list({ params: { workspace: 'default' } })).rejects.toMatchObject({
+      code: 'UNAUTHORIZED'
+    });
   });
 
   test('returns 404 for unknown workspace', async ({ orpc }) => {
-    await expect(
-      orpc.views.list({ params: { workspace: 'nonexistent' } })
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(orpc.views.list({ params: { workspace: 'nonexistent' } })).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    });
   });
 
   test('validation: name is required', async ({ orpc }) => {
@@ -100,5 +100,4 @@ test.describe('Saved Views API', () => {
       orpc.views.create({ params: { workspace: 'default' }, body: { ...viewData, name: '' } })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
-
 });

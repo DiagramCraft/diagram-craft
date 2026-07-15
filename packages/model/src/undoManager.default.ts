@@ -29,10 +29,7 @@ const DEFAULT_MARK = '__default__';
  * - extracting actions back to a mark via {@link getToMark}
  * - post-processing newly added entries via {@link combine}
  */
-export class DefaultUndoManager
-  extends EventEmitter<UndoEvents>
-  implements StackedUndoManager
-{
+export class DefaultUndoManager extends EventEmitter<UndoEvents> implements StackedUndoManager {
   undoableActions: UndoableAction[];
   redoableActions: UndoableAction[];
   private readonly marks = new Map<string, UndoableAction | undefined>();

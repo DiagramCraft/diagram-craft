@@ -100,18 +100,24 @@ export const CanvasGuidesPanel = (props: Props) => {
     diagram.undoManager.execute('Create guide', uow => {
       if (existingGuides.length === 0) {
         const centerX = diagram.bounds.x + diagram.bounds.w / 2;
-        diagram.addGuide({
-          type: 'vertical',
-          position: centerX,
-          color: DEFAULT_GUIDE_COLOR
-        }, uow);
+        diagram.addGuide(
+          {
+            type: 'vertical',
+            position: centerX,
+            color: DEFAULT_GUIDE_COLOR
+          },
+          uow
+        );
       } else {
         const lastGuide = existingGuides[existingGuides.length - 1]!;
-        diagram.addGuide({
-          type: lastGuide.type,
-          position: lastGuide.position + 100,
-          color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
-        }, uow);
+        diagram.addGuide(
+          {
+            type: lastGuide.type,
+            position: lastGuide.position + 100,
+            color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
+          },
+          uow
+        );
       }
     });
 

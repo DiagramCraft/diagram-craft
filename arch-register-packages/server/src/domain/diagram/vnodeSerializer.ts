@@ -10,8 +10,7 @@ const XML_ESCAPE: Record<string, string> = {
   '"': '&quot;'
 };
 
-const escapeXml = (str: string): string =>
-  str.replace(/[&<>"]/g, c => XML_ESCAPE[c] ?? c);
+const escapeXml = (str: string): string => str.replace(/[&<>"]/g, c => XML_ESCAPE[c] ?? c);
 
 const serializeAttrs = (data: VNodeData): string => {
   let result = '';

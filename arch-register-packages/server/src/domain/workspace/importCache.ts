@@ -1,5 +1,12 @@
 import type { DatabaseAdapter } from '../../db/database';
-import type { ExportManifest, ExportConfig, ExportSchema, ExportEntity, ExportProject, ExportContentNode } from './exportTypes';
+import type {
+  ExportManifest,
+  ExportConfig,
+  ExportSchema,
+  ExportEntity,
+  ExportProject,
+  ExportContentNode
+} from './exportTypes';
 
 export interface ImportCacheEntry {
   import_id: string;
@@ -110,18 +117,13 @@ export const getImportCache = async (
 /**
  * Delete import cache entry after successful import
  */
-export const deleteImportCache = async (
-  db: DatabaseAdapter,
-  importId: string
-): Promise<void> => {
+export const deleteImportCache = async (db: DatabaseAdapter, importId: string): Promise<void> => {
   await db.workspace.deleteImportCache(importId);
 };
 
 /**
  * Clean up expired import cache entries (should be run periodically)
  */
-export const cleanupExpiredImportCache = async (
-  db: DatabaseAdapter
-): Promise<number> => {
+export const cleanupExpiredImportCache = async (db: DatabaseAdapter): Promise<number> => {
   return await db.workspace.cleanupExpiredImportCache();
 };

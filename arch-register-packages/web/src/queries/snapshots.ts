@@ -19,7 +19,11 @@ export const invalidateSnapshotQueries = async (
     queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) }),
     invalidateAuditQueries(queryClient, workspaceId),
     ...(projectId
-      ? [queryClient.invalidateQueries({ queryKey: snapshotKeys.byProject(workspaceId, projectId) })]
+      ? [
+          queryClient.invalidateQueries({
+            queryKey: snapshotKeys.byProject(workspaceId, projectId)
+          })
+        ]
       : [])
   ]);
 };

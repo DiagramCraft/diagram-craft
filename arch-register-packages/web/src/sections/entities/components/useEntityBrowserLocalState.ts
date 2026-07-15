@@ -28,9 +28,7 @@ export const useEntityBrowserLocalState = ({
   );
   const [sort, setSort] = useState(initial?.sort ?? 'name');
   const [view, setView] = useState<BrowserView>(initial?.view ?? 'table');
-  const [viewConfigs, setViewConfigs] = useState<BrowserViewConfigMap>(
-    initial?.viewConfigs ?? {}
-  );
+  const [viewConfigs, setViewConfigs] = useState<BrowserViewConfigMap>(initial?.viewConfigs ?? {});
 
   const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);

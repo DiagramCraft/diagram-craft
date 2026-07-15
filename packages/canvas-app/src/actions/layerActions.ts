@@ -1,7 +1,4 @@
-import {
-  AbstractAction,
-  AbstractToggleAction
-} from '@diagram-craft/canvas/action';
+import { AbstractAction, AbstractToggleAction } from '@diagram-craft/canvas/action';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';

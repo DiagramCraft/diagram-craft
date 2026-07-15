@@ -6,7 +6,7 @@
 
 .draggableBlock {
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     background: var(--panel-bg);
     border-radius: var(--r-sm);
@@ -20,7 +20,6 @@
 }
 
 .draggableBlock:hover {
-
   &::before {
     visibility: visible;
   }
@@ -43,7 +42,9 @@
   cursor: grab;
   color: var(--cmp-fg-disabled);
   border-radius: var(--r-sm);
-  transition: opacity 0.1s, color 0.1s;
+  transition:
+    opacity 0.1s,
+    color 0.1s;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -71,7 +72,7 @@
 }
 
 .dropLine::before {
-  content: '';
+  content: "";
   position: absolute;
   left: -4px;
   top: -3px;
@@ -91,7 +92,8 @@
 /* ── Table cell hover: outline the hovered cell, suppress nested bg ───────── */
 
 .suppressCellHover {
-  td:hover, th:hover {
+  td:hover,
+  th:hover {
     outline: 1px solid var(--cmp-border-focus);
     outline-offset: -1px;
 
@@ -125,7 +127,9 @@
   justify-content: center;
   border-radius: var(--r);
   color: var(--cmp-fg-disabled);
-  transition: background 60ms, color 60ms;
+  transition:
+    background 60ms,
+    color 60ms;
 }
 
 .blockActionBtn:hover {

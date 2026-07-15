@@ -4,7 +4,14 @@ import { ObjectTreeNode } from './ObjectTreeNode';
 import { useRedraw } from '../../hooks/useRedraw';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { useEventListener } from '../../hooks/useEventListener';
-import { TbBoxMultiple, TbLine, TbRectangle, TbTable, TbTableRow, TbLayoutGrid } from 'react-icons/tb';
+import {
+  TbBoxMultiple,
+  TbLine,
+  TbRectangle,
+  TbTable,
+  TbTableRow,
+  TbLayoutGrid
+} from 'react-icons/tb';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import { useDiagram } from '../../../application';

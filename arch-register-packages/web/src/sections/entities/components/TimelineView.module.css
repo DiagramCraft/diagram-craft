@@ -237,7 +237,9 @@
   border-radius: 4px;
   cursor: pointer;
   opacity: 0.85;
-  transition: opacity 0.1s, filter 0.1s;
+  transition:
+    opacity 0.1s,
+    filter 0.1s;
   min-width: 6px;
 }
 
@@ -277,7 +279,9 @@
   cursor: pointer;
   transform: translateY(-50%) translateX(-5px) rotate(45deg);
   opacity: 0.85;
-  transition: opacity 0.1s, filter 0.1s;
+  transition:
+    opacity 0.1s,
+    filter 0.1s;
 }
 
 .milestone:hover {
@@ -530,7 +534,9 @@
 
 .snapDotSelected {
   z-index: 6;
-  box-shadow: 0 0 0 2px var(--base-bg), 0 0 0 4px rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 0 0 2px var(--base-bg),
+    0 0 0 4px rgba(255, 255, 255, 0.7);
 }
 
 .snapProjDot {

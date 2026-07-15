@@ -29,7 +29,10 @@
   background: var(--base-bg);
   border: 1px solid var(--panel-border);
   overflow: hidden;
-  transition: border-color 150ms, box-shadow 150ms, opacity 150ms;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms,
+    opacity 150ms;
 
   &:focus-within {
     border-color: var(--accent-border);
@@ -87,9 +90,12 @@
     margin-left: auto;
     margin-top: -1px;
     opacity: 0;
-    transition: opacity 80ms, background 70ms, color 70ms;
+    transition:
+      opacity 80ms,
+      background 70ms,
+      color 70ms;
 
-    &[aria-expanded='true'],
+    &[aria-expanded="true"],
     &:focus-visible {
       opacity: 1;
     }
@@ -186,9 +192,8 @@
       padding: 7px 0;
       position: relative;
 
-
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         left: 9px;
         top: 0;
@@ -284,7 +289,9 @@
         color: var(--base-fg-more-dim);
         border-radius: var(--r);
         padding: 0;
-        transition: background 80ms, color 80ms;
+        transition:
+          background 80ms,
+          color 80ms;
 
         &:hover:not(:disabled) {
           background: var(--cmp-bg-hover);

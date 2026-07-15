@@ -56,7 +56,12 @@ export const EntityTableEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={<><TbTable size={16} /><span>Configure entity table…</span></>}
+      placeholder={
+        <>
+          <TbTable size={16} />
+          <span>Configure entity table…</span>
+        </>
+      }
       content={
         <EntityTable
           schema={schema === '' ? undefined : schema}

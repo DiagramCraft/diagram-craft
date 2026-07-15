@@ -8,7 +8,10 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
-import { CustomPropertyDefinition, NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const FORK_JOIN_RADIUS = 2.5;

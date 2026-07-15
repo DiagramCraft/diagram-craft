@@ -47,7 +47,10 @@ const test = createPermissionApiTest().extend<{ templateSeed: true }>({
 });
 
 test.describe('template permission routes', () => {
-  test('authentication: template listing returns 401 without auth', async ({ server, templateSeed: _ }) => {
+  test('authentication: template listing returns 401 without auth', async ({
+    server,
+    templateSeed: _
+  }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
     await expect(
       anonOrpc.templates.listAll({ params: { workspace: 'default' } })

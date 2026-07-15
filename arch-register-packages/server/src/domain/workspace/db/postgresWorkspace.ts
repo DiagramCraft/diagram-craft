@@ -99,7 +99,10 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM workspace WHERE id = ${id}`;
       });
 
-      return { workspace: workspace ? workspaceMappers.workspace(workspace) : null, projectIds: projects.map(project => project.id) };
+      return {
+        workspace: workspace ? workspaceMappers.workspace(workspace) : null,
+        projectIds: projects.map(project => project.id)
+      };
     } catch (error) {
       return normalizePostgresError(error);
     }

@@ -5,8 +5,15 @@ import { PermissionChecker } from '@arch-register/permissions';
 import { slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { computeEntityCompleteness } from '../../utils/completeness';
-import { requireEntityAction, requireCanCreateTopLevelEntity, requireProjectAccess } from '../auth/authorization';
-import { splitAssessmentConditions, matchesAssessmentConditions } from '@arch-register/api-types/assessmentFilter';
+import {
+  requireEntityAction,
+  requireCanCreateTopLevelEntity,
+  requireProjectAccess
+} from '../auth/authorization';
+import {
+  splitAssessmentConditions,
+  matchesAssessmentConditions
+} from '@arch-register/api-types/assessmentFilter';
 import type { AssessmentDbResult } from '../project/db/projectDatabase';
 import type { EntityMutationActor } from './entityMutations';
 import { createEntityWithAudit, updateEntityWithAudit, entityToBaseState } from './entityMutations';
@@ -39,12 +46,7 @@ import {
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
-import type {
-  Entity,
-  EntityDbCreate,
-  EntityDbResult,
-  SchemaDbResult
-} from './db/catalogDatabase';
+import type { Entity, EntityDbCreate, EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 
 const checker = new PermissionChecker();
 
@@ -57,7 +59,10 @@ const attachProjectLink = (
   entity: EntityRecord,
   rowId: string,
   projectId: string | null,
-  projectEntityMap: Map<string, { entity_type_id: string | null; entity_type_label: string | null; is_done: boolean }>
+  projectEntityMap: Map<
+    string,
+    { entity_type_id: string | null; entity_type_label: string | null; is_done: boolean }
+  >
 ): EntityRecord => {
   if (!projectId) return entity;
   const projectEntity = projectEntityMap.get(rowId);
@@ -67,7 +72,10 @@ const attachProjectLink = (
       ? {
           linked: true,
           entityType: projectEntity.entity_type_id
-            ? { id: projectEntity.entity_type_id, name: projectEntity.entity_type_label ?? projectEntity.entity_type_id }
+            ? {
+                id: projectEntity.entity_type_id,
+                name: projectEntity.entity_type_label ?? projectEntity.entity_type_id
+              }
             : null,
           isDone: projectEntity.is_done
         }
@@ -85,17 +93,26 @@ const resolveJoinedAssessment = async (
   authCtx: AuthorizationContext | null,
   assessmentId: string | null,
   hasAssessmentConditions: boolean
-): Promise<{ assessment: AssessmentDbResult; responsesByEntity: Map<string, Record<string, string | number>> } | null> => {
+): Promise<{
+  assessment: AssessmentDbResult;
+  responsesByEntity: Map<string, Record<string, string | number>>;
+} | null> => {
   if (!hasAssessmentConditions) return null;
   httpAssert.present(assessmentId, {
     status: 400,
     message: 'Assessment filter conditions require assessmentId'
   });
   const assessment = await db.project.getAssessmentById(workspace, assessmentId);
-  httpAssert.present(assessment, { status: 404, message: `Assessment '${assessmentId}' not found` });
+  httpAssert.present(assessment, {
+    status: 404,
+    message: `Assessment '${assessmentId}' not found`
+  });
   if (authCtx) {
     const project = await db.project.getProject(workspace, assessment.project_id);
-    httpAssert.present(project, { status: 404, message: `Project '${assessment.project_id}' not found` });
+    httpAssert.present(project, {
+      status: 404,
+      message: `Project '${assessment.project_id}' not found`
+    });
     requireProjectAccess(authCtx, project.owner);
   }
   const responses = await db.project.listAssessmentResponses(workspace, assessmentId);
@@ -111,7 +128,10 @@ const allocateEntityPublicId = async (
 ) => {
   const schema = await db.catalog.getSchema(workspace, schemaId);
   httpAssert.present(schema, { status: 404, message: `Schema '${schemaId}' not found` });
-  httpAssert.present(schema.key_prefix, { status: 409, message: `Schema '${schemaId}' is missing a key prefix` });
+  httpAssert.present(schema.key_prefix, {
+    status: 409,
+    message: `Schema '${schemaId}' is missing a key prefix`
+  });
   const sequenceNumber = await db.workspace.allocatePublicId(schema.key_prefix, timestamp);
   return formatPublicId(schema.key_prefix, sequenceNumber);
 };
@@ -269,7 +289,8 @@ const collectEntities = async (
     if (collectionEntityIdSet && !collectionEntityIdSet.has(entity.id)) return;
     // In asOf mode, candidateEntityIds passed to reconstructEntitiesAsOf already scopes to
     // project-linked entities as of that date; the live projectEntityMap doesn't apply here.
-    if (!asOf && projectId && projectScope === 'project' && !projectEntityMap.has(entity.id)) return;
+    if (!asOf && projectId && projectScope === 'project' && !projectEntityMap.has(entity.id))
+      return;
 
     const schema = schemaMap.get(entity.schema_id);
     const completeness = schema != null ? computeEntityCompleteness(entity, schema) : null;
@@ -313,7 +334,9 @@ const collectEntities = async (
     let candidateEntityIds: string[] | undefined;
     if (projectId && projectScope === 'project') {
       const links = await db.project.listProjectEntityLinks(workspace, projectId);
-      candidateEntityIds = links.filter(link => link.created_at <= asOf).map(link => link.entity_id);
+      candidateEntityIds = links
+        .filter(link => link.created_at <= asOf)
+        .map(link => link.entity_id);
     }
     const reconstructed = await reconstructEntitiesAsOf(
       db,
@@ -506,7 +529,8 @@ export const getEntityTree = async (
           hasCompletenessCondition && schema != null
             ? computeEntityCompleteness(entity, schema)
             : null;
-        if (!otherConditions.every(c => matchesFilterCondition(entity, c, completeness))) return false;
+        if (!otherConditions.every(c => matchesFilterCondition(entity, c, completeness)))
+          return false;
         if (
           joinedAssessment &&
           !matchesAssessmentConditions(
@@ -830,11 +854,14 @@ const resolveBulkOwners = (
       .filter(field => field.type === 'containment')
       .flatMap(field => {
         const value = draft.entity.data[field.id];
-        return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [];
+        return Array.isArray(value)
+          ? value.filter((id): id is string => typeof id === 'string')
+          : [];
       });
     for (const parentId of parentIds) {
       const parent = existingById.get(parentId);
-      const owner = parent?.owner ?? (draftById.get(parentId) ? resolveOwner(draftById.get(parentId)!) : null);
+      const owner =
+        parent?.owner ?? (draftById.get(parentId) ? resolveOwner(draftById.get(parentId)!) : null);
       if (owner && teamIds.has(owner)) {
         draft.entity.owner = owner;
         resolving.delete(draft.entity.id);

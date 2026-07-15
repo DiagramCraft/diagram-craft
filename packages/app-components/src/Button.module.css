@@ -20,7 +20,10 @@
   margin: 0;
   width: fit-content !important;
   box-sizing: content-box;
-  transition: background 80ms, border-color 80ms, color 80ms;
+  transition:
+    background 80ms,
+    border-color 80ms,
+    color 80ms;
 
   /* --- Sizes --- */
 
@@ -180,4 +183,3 @@
     opacity: 0.6;
   }
 }
-

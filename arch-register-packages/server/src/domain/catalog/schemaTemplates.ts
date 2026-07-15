@@ -838,7 +838,9 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Sc
       workspace: workspaceId,
       name: schema.name,
       description: schema.description,
-      key_prefix: normalizePublicIdPrefix(schema.symId.replace(/[^a-z]/gi, '').slice(0, 5) || schema.name.slice(0, 5)),
+      key_prefix: normalizePublicIdPrefix(
+        schema.symId.replace(/[^a-z]/gi, '').slice(0, 5) || schema.name.slice(0, 5)
+      ),
       color: schema.color,
       icon: schema.icon,
       fields: resolvedFields,

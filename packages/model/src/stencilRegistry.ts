@@ -135,9 +135,7 @@ declare global {
 }
 
 export const stencilLoaderBasic: StencilLoader<'basic'> = async (registry, opts) => {
-  return await (
-    await opts.stencils()
-  )(registry);
+  return await (await opts.stencils())(registry);
 };
 
 /* Stencil Registry ***************************************************************** */

@@ -75,8 +75,8 @@ export class ModificationLayer extends Layer<ModificationLayer> {
     super(id, name, diagram, 'modification', crdt);
 
     this.#modifications = new MappedCRDTOrderedMap<Modification, ModificationCRDT>(
-      this.watchCrdtField(crdt =>
-        crdt.get('modifications', () => diagram.document.root.factory.makeMap())!
+      this.watchCrdtField(
+        crdt => crdt.get('modifications', () => diagram.document.root.factory.makeMap())!
       ),
       {
         fromCRDT: (e: CRDTMap<ModificationCRDT>) => {

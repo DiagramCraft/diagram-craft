@@ -68,7 +68,9 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
 
       const found = await db.auth.getUserByOidc('https://issuer.example.com', 'subject-1');
       expect(found!.id).toBe(id);
-      expect(await db.auth.getUserByOidc('https://issuer.example.com', 'no-such-subject')).toBeNull();
+      expect(
+        await db.auth.getUserByOidc('https://issuer.example.com', 'no-such-subject')
+      ).toBeNull();
     });
 
     it('lists users ordered by display name', async () => {
@@ -225,7 +227,12 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
       const db = getDb();
       const state = randomUUID();
 
-      await db.auth.storeOidcAuthState(state, 'nonce-1', 'verifier-1', new Date(Date.now() + 60_000));
+      await db.auth.storeOidcAuthState(
+        state,
+        'nonce-1',
+        'verifier-1',
+        new Date(Date.now() + 60_000)
+      );
 
       const found = await db.auth.getOidcAuthState(state);
       expect(found).toEqual({ nonce: 'nonce-1', code_verifier: 'verifier-1' });
@@ -239,12 +246,7 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
       const expiredState = randomUUID();
       const activeState = randomUUID();
 
-      await db.auth.storeOidcAuthState(
-        expiredState,
-        'n',
-        'v',
-        new Date(Date.now() - 60_000)
-      );
+      await db.auth.storeOidcAuthState(expiredState, 'n', 'v', new Date(Date.now() - 60_000));
       await db.auth.storeOidcAuthState(activeState, 'n', 'v', new Date(Date.now() + 60_000));
 
       await db.auth.cleanupExpiredOidcAuthStates();

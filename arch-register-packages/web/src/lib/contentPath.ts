@@ -49,6 +49,6 @@ export const findContentFilePath = (
   fileId: string | null
 ): string | null =>
   fileId
-    ? [...rootFiles, ...folders.flatMap(folder => folder.files)].find(file => file.id === fileId)
-        ?.path ?? null
+    ? ([...rootFiles, ...folders.flatMap(folder => folder.files)].find(file => file.id === fileId)
+        ?.path ?? null)
     : null;

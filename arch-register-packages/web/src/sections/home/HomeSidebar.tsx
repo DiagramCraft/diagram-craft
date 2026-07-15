@@ -7,10 +7,7 @@ import styles from '../../shell/SidePanel.module.css';
 import { Project } from '@arch-register/api-types/projectContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
-import {
-  SidebarGroupLabel,
-  SidebarTitleHeader
-} from '../../components/sidebar/SidebarPrimitives';
+import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 
 const getSidebarProjectGroups = (projects: Project[]) => {
   const pinned = projects.filter(p => p.pinned);

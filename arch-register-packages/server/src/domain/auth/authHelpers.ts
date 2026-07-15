@@ -1,4 +1,7 @@
-import { getGlobalPermissionsForRoles, resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
+import {
+  getGlobalPermissionsForRoles,
+  resolveWorkspaceRoleDefinitions
+} from '@arch-register/permissions';
 import type { TeamRole } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import { GlobalRole, UserDbResult } from './db/authDatabase';

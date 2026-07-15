@@ -48,14 +48,16 @@
     background: none;
     border: none;
     cursor: pointer;
-    transition: background 80ms, color 80ms;
+    transition:
+      background 80ms,
+      color 80ms;
 
     &:hover:not(:disabled) {
       background: var(--cmp-bg-hover);
       color: var(--base-fg);
     }
 
-    &[data-current='true'] {
+    &[data-current="true"] {
       color: var(--base-fg);
       font-weight: 500;
       cursor: default;

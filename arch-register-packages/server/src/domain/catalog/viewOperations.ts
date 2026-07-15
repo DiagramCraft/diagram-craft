@@ -66,7 +66,7 @@ export const createSavedView = async (
   httpAssert.true(body.viewMode, { status: 400, message: 'viewMode is required' });
   httpAssert.true(body.filters, { status: 400, message: 'filters is required' });
   const scope = body.scope ?? 'workspace';
-  const projectId = scope === 'project' ? body.projectId ?? null : null;
+  const projectId = scope === 'project' ? (body.projectId ?? null) : null;
 
   httpAssert.true(scope === 'workspace' || projectId != null, {
     status: 400,

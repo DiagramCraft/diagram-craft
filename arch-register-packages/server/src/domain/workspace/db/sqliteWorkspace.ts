@@ -64,8 +64,14 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     ]).map(project => project.id);
 
     const tx = this.db.transaction((workspaceId: string) => {
-      this.run('DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id IN (SELECT id FROM entity_schema WHERE workspace = ?)', ['schema', workspaceId]);
-      this.run('DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id = ?', ['workspace', workspaceId]);
+      this.run(
+        'DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id IN (SELECT id FROM entity_schema WHERE workspace = ?)',
+        ['schema', workspaceId]
+      );
+      this.run('DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id = ?', [
+        'workspace',
+        workspaceId
+      ]);
       this.run('DELETE FROM content_node WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM project WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_grant WHERE workspace = ?', [workspaceId]);
@@ -97,9 +103,10 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       const stateIds = states.map(state => state.id);
 
       if (stateIds.length === 0) {
-        this.run('UPDATE entity SET lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ?', [
-          workspace
-        ]);
+        this.run(
+          'UPDATE entity SET lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ?',
+          [workspace]
+        );
         this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspace]);
         return;
       }
@@ -160,7 +167,13 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       for (const type of types) {
         this.run(
           'INSERT INTO project_entity_type (id, workspace, label, sort_order, created_at) VALUES (?, ?, ?, ?, ?)',
-          [type.id, workspace, type.label, type.sort_order, type.created_at instanceof Date ? type.created_at.toISOString() : type.created_at]
+          [
+            type.id,
+            workspace,
+            type.label,
+            type.sort_order,
+            type.created_at instanceof Date ? type.created_at.toISOString() : type.created_at
+          ]
         );
       }
     });

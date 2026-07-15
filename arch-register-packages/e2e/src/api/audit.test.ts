@@ -60,19 +60,28 @@ test.describe('GET /api/:workspace/audit', () => {
   });
 
   test('filters by entityType', async ({ orpc, seeded: _ }) => {
-    const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { entityType: 'entity' } });
+    const logs = await orpc.audit.list({
+      params: { workspace: 'default' },
+      query: { entityType: 'entity' }
+    });
     expect(logs.length).toBeGreaterThan(0);
     expect(logs.every(r => r.entity_type === 'entity')).toBe(true);
   });
 
   test('filters by entityId', async ({ orpc, seeded: _ }) => {
-    const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { entityId: AUDIT_ENTITY_1_ID } });
+    const logs = await orpc.audit.list({
+      params: { workspace: 'default' },
+      query: { entityId: AUDIT_ENTITY_1_ID }
+    });
     expect(logs.length).toBe(1);
     expect(logs[0]?.entity_id).toBe(AUDIT_ENTITY_1_ID);
   });
 
   test('filters by operation', async ({ orpc, seeded: _ }) => {
-    const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { operation: 'delete' } });
+    const logs = await orpc.audit.list({
+      params: { workspace: 'default' },
+      query: { operation: 'delete' }
+    });
     expect(logs.length).toBeGreaterThan(0);
     expect(logs.every(r => r.operation === 'delete')).toBe(true);
   });
@@ -94,10 +103,16 @@ test.describe('GET /api/:workspace/audit', () => {
     expect(ids).not.toContain(AUDIT_ENTITY_1_ID);
   });
 
-  test('filters by startDate and endDate range around the 20-day-old entry', async ({ orpc, seeded: _ }) => {
+  test('filters by startDate and endDate range around the 20-day-old entry', async ({
+    orpc,
+    seeded: _
+  }) => {
     const startDate = daysAgo(25).toISOString();
     const endDate = daysAgo(15).toISOString();
-    const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { startDate, endDate } });
+    const logs = await orpc.audit.list({
+      params: { workspace: 'default' },
+      query: { startDate, endDate }
+    });
     expect(logs.length).toBe(1);
     expect(logs[0]?.entity_id).toBe(AUDIT_ENTITY_2_ID);
   });
@@ -109,7 +124,10 @@ test.describe('GET /api/:workspace/audit', () => {
 
   test('limit=1&offset=1 returns the second entry', async ({ orpc, seeded: _ }) => {
     const all = await orpc.audit.list({ params: { workspace: 'default' }, query: {} });
-    const page = await orpc.audit.list({ params: { workspace: 'default' }, query: { limit: 1, offset: 1 } });
+    const page = await orpc.audit.list({
+      params: { workspace: 'default' },
+      query: { limit: 1, offset: 1 }
+    });
     expect(page.length).toBe(1);
     expect(page[0]?.id).toBe(all[1]?.id);
   });
@@ -174,8 +192,8 @@ test.describe('GET /api/:workspace/audit/stats', () => {
   });
 
   test('returns 404 for unknown workspace', async ({ orpc }) => {
-    await expect(
-      orpc.audit.stats({ params: { workspace: 'nonexistent' } })
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(orpc.audit.stats({ params: { workspace: 'nonexistent' } })).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    });
   });
 });

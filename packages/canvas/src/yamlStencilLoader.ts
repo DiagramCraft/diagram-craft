@@ -106,7 +106,11 @@ export class YamlStencilLoader {
       if (finalization.variants) {
         for (const variant of finalization.variants) {
           if (!variantMap.has(variant.id)) {
-            variantMap.set(variant.id, { id: variant.id, name: variant.name, styles: variant.styles });
+            variantMap.set(variant.id, {
+              id: variant.id,
+              name: variant.name,
+              styles: variant.styles
+            });
           }
         }
       }
@@ -174,10 +178,17 @@ export class YamlStencilLoader {
       // When variants are defined, also add the first variant's styles so that
       // stencil `styles:` references that point to variant IDs resolve correctly.
       // Variant IDs must not overlap with flat style IDs (they are separate sets).
-      if (resolution.variants && resolution.variants.length > 0 && resolution.variants[0] !== undefined) {
+      if (
+        resolution.variants &&
+        resolution.variants.length > 0 &&
+        resolution.variants[0] !== undefined
+      ) {
         for (const style of resolution.variants[0].styles) {
           const existing = stylesById.get(style.id);
-          assert.true(existing === undefined, `dup style ${style.id} (also defined in flat styles)`);
+          assert.true(
+            existing === undefined,
+            `dup style ${style.id} (also defined in flat styles)`
+          );
           stylesById.set(style.id, style);
         }
       }
@@ -382,7 +393,10 @@ function assertTopLevelStyles(value: Record<string, unknown>, errorPrefix: strin
     if (!Array.isArray(variants)) throw new Error(`${errorPrefix}: bad variants`);
     for (const variant of variants) {
       assert.true(
-        isNonNullObj(variant) && typeof variant.id === 'string' && typeof variant.name === 'string' && Array.isArray(variant.styles),
+        isNonNullObj(variant) &&
+          typeof variant.id === 'string' &&
+          typeof variant.name === 'string' &&
+          Array.isArray(variant.styles),
         `${errorPrefix}: bad variant`
       );
       for (const style of variant.styles as unknown[]) {

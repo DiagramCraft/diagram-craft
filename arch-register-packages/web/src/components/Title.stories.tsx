@@ -34,7 +34,6 @@ export const WithBreadcrumb: Story = {
   }
 };
 
-
 export const WithEyebrow: Story = {
   args: {
     eyebrow: 'Architecture',
@@ -65,7 +64,8 @@ export const WithChips: Story = {
 export const WithDescription: Story = {
   args: {
     title: 'User Management Service',
-    description: 'Handles user authentication, authorization, and profile management across all applications.'
+    description:
+      'Handles user authentication, authorization, and profile management across all applications.'
   }
 };
 
@@ -86,7 +86,6 @@ export const WithButtons: Story = {
     )
   }
 };
-
 
 export const WithMenu: Story = {
   args: {
@@ -117,7 +116,8 @@ export const FullFeatured: Story = {
         <Chip icon={<TbSettings size={12} />}>Configured</Chip>
       </>
     ),
-    description: 'Handles all payment transactions, refunds, and billing operations. Integrates with Stripe, PayPal, and internal accounting systems.',
+    description:
+      'Handles all payment transactions, refunds, and billing operations. Integrates with Stripe, PayPal, and internal accounting systems.',
     buttons: (
       <>
         <Button>
@@ -140,14 +140,16 @@ export const FullFeatured: Story = {
 
 export const LongTitle: Story = {
   args: {
-    title: 'This is a very long title that might wrap to multiple lines depending on the viewport width and container size'
+    title:
+      'This is a very long title that might wrap to multiple lines depending on the viewport width and container size'
   }
 };
 
 export const LongDescription: Story = {
   args: {
     title: 'Complex System',
-    description: 'This is a comprehensive description that provides detailed information about the system architecture, its components, dependencies, and operational characteristics. It may span multiple lines and should be properly formatted for readability.'
+    description:
+      'This is a comprehensive description that provides detailed information about the system architecture, its components, dependencies, and operational characteristics. It may span multiple lines and should be properly formatted for readability.'
   }
 };
 
@@ -177,11 +179,7 @@ export const WithTestId: Story = {
 export const MinimalWithActions: Story = {
   args: {
     title: 'Quick Actions',
-    buttons: (
-      <Button variant="primary">
-        Action
-      </Button>
-    )
+    buttons: <Button variant="primary">Action</Button>
   }
 };
 
@@ -196,5 +194,3 @@ export const BreadcrumbOnly: Story = {
     title: 'Deep Navigation Example'
   }
 };
-
-

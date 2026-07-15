@@ -1,11 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  requireEntityAction,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type { Collection } from '@arch-register/api-types/collectionContract';
 
-const toApiCollection = (collection: Awaited<ReturnType<DatabaseAdapter['view']['getCollection']>>): Collection => {
+const toApiCollection = (
+  collection: Awaited<ReturnType<DatabaseAdapter['view']['getCollection']>>
+): Collection => {
   if (!collection) throw new Error('Collection not found');
   return {
     id: collection.id,

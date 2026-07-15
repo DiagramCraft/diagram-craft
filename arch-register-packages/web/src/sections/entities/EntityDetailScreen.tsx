@@ -5,14 +5,28 @@ import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../components/TypeBadge';
 import { StatusChip } from '../../components/StatusChip';
-import { TbChevronLeft, TbEdit, TbDots, TbTrash, TbCopy, TbBell, TbPinned, TbBookmark } from 'react-icons/tb';
+import {
+  TbChevronLeft,
+  TbEdit,
+  TbDots,
+  TbTrash,
+  TbCopy,
+  TbBell,
+  TbPinned,
+  TbBookmark
+} from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { useEntity, useEntityRelations, useCloneEntity, useEntitiesBySchema } from '../../hooks/useEntities';
+import {
+  useEntity,
+  useEntityRelations,
+  useCloneEntity,
+  useEntitiesBySchema
+} from '../../hooks/useEntities';
 import { useEntitySnapshots } from '../../hooks/useSnapshots';
 import { useEntityEditController } from '../../hooks/useEntityEditController';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
@@ -434,11 +448,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
       {/* Relationships */}
       {!contentFolder && tab === 'relations' && (
-        <EntityRelationsTab
-          outgoing={outgoing}
-          incoming={incoming}
-          schemas={schemas}
-        />
+        <EntityRelationsTab outgoing={outgoing} incoming={incoming} schemas={schemas} />
       )}
 
       {/* Dependents (impact analysis) */}

@@ -174,9 +174,7 @@ const requireMarkdownNodeAccess = async (
 
 const EMPTY_MARKDOWN_BODY = JSON.stringify({ body: '' });
 
-const isMarkdownNode = (
-  node: Pick<ContentNodeDbResult, 'type' | 'path' | 'mount_id'>
-) =>
+const isMarkdownNode = (node: Pick<ContentNodeDbResult, 'type' | 'path' | 'mount_id'>) =>
   node.type === 'markdown' ||
   (node.type === 'file' && node.mount_id != null && isMarkdownPath(node.path));
 

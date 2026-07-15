@@ -57,8 +57,10 @@ export type BaseShapeBuildShapeProps = {
 };
 
 export class BaseNodeComponent<
-  T extends Pick<ShapeNodeDefinition, 'getBoundingPathBuilder' | 'getHitArea' | 'hasFlag'> =
-    ShapeNodeDefinition
+  T extends Pick<
+    ShapeNodeDefinition,
+    'getBoundingPathBuilder' | 'getHitArea' | 'hasFlag'
+  > = ShapeNodeDefinition
 > extends Component<NodeComponentProps> {
   constructor(protected readonly def: T) {
     super();

@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, EntityDbUpdate, EntityDbCreate } from '../../db/database';
 import { parseCsv, validateCsvData, csvRowToEntity } from '../../utils/csvImport';
-import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
+import {
+  computeChanges,
+  extractEntityFields,
+  flattenEntityAuditFields,
+  logAudit
+} from '../audit/db/auditLogging';
 import { slugify } from '../../utils/http';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
@@ -116,9 +121,7 @@ export const importParse = async (
             message: `Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`
           });
           if (matchType === 'none') {
-            row.errors.push(
-              `Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`
-            );
+            row.errors.push(`Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`);
           }
         }
       }
@@ -262,10 +265,7 @@ export const importCommit = async (
 
     const resolvedData = { ...entityData };
     for (const field of schema.fields) {
-      if (
-        (field.type === 'reference' || field.type === 'containment') &&
-        resolvedData[field.id]
-      ) {
+      if ((field.type === 'reference' || field.type === 'containment') && resolvedData[field.id]) {
         const value = resolvedData[field.id];
         if (typeof value === 'string') {
           const refNames = value
@@ -286,7 +286,9 @@ export const importCommit = async (
 
     const normalizedRelationFields = normalizeEntityRelationFields({
       schema,
-      fields: Object.fromEntries(Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'))),
+      fields: Object.fromEntries(
+        Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'))
+      ),
       entities: allEntities
     });
 
@@ -339,7 +341,10 @@ export const importCommit = async (
       updatedIds.push(existingId);
       nameToId.set(updatedEntity.name.toLowerCase(), existingId);
     } else {
-      httpAssert.present(schema.key_prefix, { status: 409, message: `Schema '${schemaId}' is missing a key prefix` });
+      httpAssert.present(schema.key_prefix, {
+        status: 409,
+        message: `Schema '${schemaId}' is missing a key prefix`
+      });
       const createInput: EntityDbCreate = {
         public_id: formatPublicId(
           schema.key_prefix,
@@ -383,5 +388,9 @@ export const importCommit = async (
     }
   }
 
-  return { created: createdIds.length, updated: updatedIds.length, ids: [...createdIds, ...updatedIds] };
+  return {
+    created: createdIds.length,
+    updated: updatedIds.length,
+    ids: [...createdIds, ...updatedIds]
+  };
 };

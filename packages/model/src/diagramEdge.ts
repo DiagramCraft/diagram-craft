@@ -395,9 +395,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       .at(-1);
     const ruleStyleProps = this.diagram.document.styles.getEdgeStyle(ruleElementStyle)?.props;
 
-    const sources: PropertySource<EdgeProps>[] = [
-      { type: 'default', mode: 'info-only' }
-    ];
+    const sources: PropertySource<EdgeProps>[] = [{ type: 'default', mode: 'info-only' }];
 
     if (styleProps) {
       sources.push({

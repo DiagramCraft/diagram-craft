@@ -181,7 +181,9 @@ export const DiagramBrowserView = ({
             {section.items.map(item => (
               <DiagramCard key={item.file.path} {...renderItem(item)} />
             ))}
-            {section.showAddButton && onNewDiagram ? <AddDiagramCard onClick={onNewDiagram} /> : null}
+            {section.showAddButton && onNewDiagram ? (
+              <AddDiagramCard onClick={onNewDiagram} />
+            ) : null}
           </div>
         </div>
       ))}

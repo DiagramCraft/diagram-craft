@@ -98,8 +98,7 @@ export const EntityChangelogDialog = ({
   };
 
   const hasSingleEntity = mode === 'single' && !!selectedEntityId;
-  const hasFilter =
-    mode === 'filtered' && !!(filter.schemaId || filter.owner || filter.lifecycle);
+  const hasFilter = mode === 'filtered' && !!(filter.schemaId || filter.owner || filter.lifecycle);
   const canSave = hasSingleEntity || hasFilter;
 
   return (

@@ -182,24 +182,21 @@ export const workspaceManagementORPCRouter = wsRouter.router({
       for (const [path, checksum] of Object.entries(manifest.checksums ?? {})) {
         const content = extracted.jsonFiles.get(path);
         if (!content || calculateChecksum(content) !== checksum) {
-          throw new HTTPError({ status: 400, message: `Import archive checksum mismatch: ${path}` });
+          throw new HTTPError({
+            status: 400,
+            message: `Import archive checksum mismatch: ${path}`
+          });
         }
       }
 
       // Parse and validate the import data
-      const result = await parseImport(
-        context.db,
-        authCtx,
-        workspaceId,
-        manifest,
-        {
-          config: extracted.config as ExportConfig | undefined,
-          schemas: extracted.schemas as ExportSchema[] | undefined,
-          entities: extracted.entities as ExportEntity[] | undefined,
-          projects: extracted.projects as ExportProject[] | undefined,
-          content_nodes: extracted.content_nodes as ExportContentNode[] | undefined
-        }
-      );
+      const result = await parseImport(context.db, authCtx, workspaceId, manifest, {
+        config: extracted.config as ExportConfig | undefined,
+        schemas: extracted.schemas as ExportSchema[] | undefined,
+        entities: extracted.entities as ExportEntity[] | undefined,
+        projects: extracted.projects as ExportProject[] | undefined,
+        content_nodes: extracted.content_nodes as ExportContentNode[] | undefined
+      });
 
       if (!result.valid) return result;
 

@@ -13,7 +13,10 @@ export const collectionSchema = z.object({
   workspaceId: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Collection name'),
   entityCount: z.number().int().min(0).describe('Number of entities in the collection'),
-  isMember: z.boolean().optional().describe('Whether the requested entity belongs to the collection'),
+  isMember: z
+    .boolean()
+    .optional()
+    .describe('Whether the requested entity belongs to the collection'),
   createdAt: z.string().describe('ISO 8601 creation timestamp'),
   updatedAt: z.string().describe('ISO 8601 last update timestamp')
 });
@@ -35,7 +38,7 @@ export const workspaceCollectionContract = oc.tag('Collections').router({
         path: '/{workspace}/collections',
         inputStructure: 'detailed',
         summary: 'List personal collections',
-        description: 'Lists the current user\'s personal entity collections in the workspace.',
+        description: "Lists the current user's personal entity collections in the workspace.",
         tags: ['Collections']
       })
       .input(
@@ -43,7 +46,11 @@ export const workspaceCollectionContract = oc.tag('Collections').router({
           params: ws,
           query: z
             .object({
-              entityId: z.string().regex(UUID_REGEX).optional().describe('Entity identifier used to report membership')
+              entityId: z
+                .string()
+                .regex(UUID_REGEX)
+                .optional()
+                .describe('Entity identifier used to report membership')
             })
             .optional()
         })

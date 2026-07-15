@@ -285,7 +285,15 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
            preview_svg = ?,
            updated_at = ?
        WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND id = ?`,
-      [sizeBytes, commentCount, unresolvedCommentCount, previewSvg, updated_at.toISOString(), workspace, fileId]
+      [
+        sizeBytes,
+        commentCount,
+        unresolvedCommentCount,
+        previewSvg,
+        updated_at.toISOString(),
+        workspace,
+        fileId
+      ]
     );
   }
 
@@ -358,7 +366,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       : input.entity_id != null
         ? 'entity_id = ?'
         : 'project_id = ?';
-    const ownerValue = isWorkspaceOwned ? null : (input.entity_id != null ? input.entity_id : input.project_id);
+    const ownerValue = isWorkspaceOwned
+      ? null
+      : input.entity_id != null
+        ? input.entity_id
+        : input.project_id;
 
     const tx = this.db.transaction(() => {
       const existing = this.get<{ id: string; created_at: string; mount_id: string | null }>(
@@ -443,13 +455,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     if (input.project_id != null) {
       existing = await this.getContentNodeByPath(input.workspace, input.project_id, input.path);
     } else if (input.entity_id != null) {
-      existing = (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
-        n => n.path === input.path
-      ) ?? null;
+      existing =
+        (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
+          n => n.path === input.path
+        ) ?? null;
     } else {
-      existing = (await this.listWorkspaceContentNodes(input.workspace)).find(
-        n => n.path === input.path
-      ) ?? null;
+      existing =
+        (await this.listWorkspaceContentNodes(input.workspace)).find(n => n.path === input.path) ??
+        null;
     }
     if (existing) return null;
     return await this.upsertContentNode(input);
@@ -469,10 +482,10 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   async deleteContentNodesByIds(workspace: string, nodeIds: readonly string[]) {
     if (nodeIds.length === 0) return;
     const placeholders = nodeIds.map(() => '?').join(', ');
-    this.run(
-      `DELETE FROM content_node WHERE workspace = ? AND id IN (${placeholders})`,
-      [workspace, ...nodeIds]
-    );
+    this.run(`DELETE FROM content_node WHERE workspace = ? AND id IN (${placeholders})`, [
+      workspace,
+      ...nodeIds
+    ]);
   }
 
   async renameContentNodeFolder(
@@ -544,10 +557,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
 
     const tx = this.db.transaction(() => {
-      this.run(
-        'DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND id = ?',
-        [workspace, projectId, folder.id]
-      );
+      this.run('DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND id = ?', [
+        workspace,
+        projectId,
+        folder.id
+      ]);
     });
 
     tx();
@@ -555,7 +569,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   }
 
   async deleteEntityContentNodeByPath(workspace: string, entityId: string, path: string) {
-    const row = (await this.listEntityContentNodes(workspace, entityId)).find(n => n.path === path) ?? null;
+    const row =
+      (await this.listEntityContentNodes(workspace, entityId)).find(n => n.path === path) ?? null;
     if (!row) return null;
     this.run('DELETE FROM content_node WHERE workspace = ? AND entity_id = ? AND path = ?', [
       workspace,
@@ -635,10 +650,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
 
     const tx = this.db.transaction(() => {
-      this.run(
-        'DELETE FROM content_node WHERE workspace = ? AND entity_id = ? AND id = ?',
-        [workspace, entityId, folder.id]
-      );
+      this.run('DELETE FROM content_node WHERE workspace = ? AND entity_id = ? AND id = ?', [
+        workspace,
+        entityId,
+        folder.id
+      ]);
     });
 
     tx();
@@ -646,7 +662,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   }
 
   async deleteWorkspaceContentNodeByPath(workspace: string, path: string) {
-    const row = (await this.listWorkspaceContentNodes(workspace)).find(n => n.path === path) ?? null;
+    const row =
+      (await this.listWorkspaceContentNodes(workspace)).find(n => n.path === path) ?? null;
     if (!row) return null;
     this.run(
       'DELETE FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ?',
@@ -687,13 +704,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
          SET path = ? || substr(path, ?),
              updated_at = ?
          WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path LIKE ?`,
-        [
-          newPathPrefix,
-          oldPathLength + 2,
-          updated_at.toISOString(),
-          workspace,
-          `${oldPathPrefix}%`
-        ]
+        [newPathPrefix, oldPathLength + 2, updated_at.toISOString(), workspace, `${oldPathPrefix}%`]
       );
     });
 
@@ -888,7 +899,12 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return (await this.getAssessment(input.workspace, input.project_id, input.id))!;
   }
 
-  async updateAssessment(workspace: string, projectId: string, id: string, input: AssessmentDbUpdate) {
+  async updateAssessment(
+    workspace: string,
+    projectId: string,
+    id: string,
+    input: AssessmentDbUpdate
+  ) {
     this.run(
       `UPDATE assessment
        SET name = ?, description = ?, status = ?, scope = ?, scope_conditions = ?, fields = ?, updated_at = ?
@@ -962,7 +978,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         input.updated_by
       ]
     );
-    return (await this.getAssessmentResponse(input.workspace, input.assessment_id, input.entity_id))!;
+    return (await this.getAssessmentResponse(
+      input.workspace,
+      input.assessment_id,
+      input.entity_id
+    ))!;
   }
 
   async countAssessmentResponses(workspace: string, assessmentId: string) {

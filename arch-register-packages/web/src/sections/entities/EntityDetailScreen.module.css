@@ -36,7 +36,10 @@
   border: 1px solid transparent;
   border-radius: var(--r);
   cursor: pointer;
-  transition: background 80ms, border-color 80ms, color 80ms;
+  transition:
+    background 80ms,
+    border-color 80ms,
+    color 80ms;
 }
 
 .watchBtn:hover:not(:disabled) {
@@ -231,7 +234,7 @@
 }
 
 .etlLegItem::before {
-  content: '';
+  content: "";
   display: inline-block;
   width: 7px;
   height: 7px;

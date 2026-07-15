@@ -15,7 +15,7 @@ import {
   AR_COLOR_BLUE,
   AR_COLOR_RED,
   AR_COLOR_YELLOW,
-  AR_COLOR_GREY,
+  AR_COLOR_GREY
 } from '@arch-register/api-types/colors';
 
 /**
@@ -25,37 +25,40 @@ export const ROLE_ACTIONS: Record<EntityRole, EntityAction[]> = {
   viewer: ['view_entity'],
   editor: ['view_entity', 'edit_entity'],
   contributor: ['view_entity', 'edit_entity', 'create_child'],
-  entity_admin: ['view_entity', 'edit_entity', 'create_child', 'admin_entity'],
+  entity_admin: ['view_entity', 'edit_entity', 'create_child', 'admin_entity']
 };
 
-export const TEAM_ROLE_PERMISSIONS: Record<TeamRole, {
-  directEntityActions: EntityAction[];
-  descendantEntityActions: EntityAction[];
-  projectActions: ProjectAction[];
-  canCreateProjects: boolean;
-  canCreateEntities: boolean;
-}> = {
+export const TEAM_ROLE_PERMISSIONS: Record<
+  TeamRole,
+  {
+    directEntityActions: EntityAction[];
+    descendantEntityActions: EntityAction[];
+    projectActions: ProjectAction[];
+    canCreateProjects: boolean;
+    canCreateEntities: boolean;
+  }
+> = {
   team_admin: {
     directEntityActions: ROLE_ACTIONS['entity_admin'],
     descendantEntityActions: ROLE_ACTIONS['contributor'],
     projectActions: ['edit_project', 'delete_project', 'manage_files'],
     canCreateProjects: true,
-    canCreateEntities: true,
+    canCreateEntities: true
   },
   team_editor: {
     directEntityActions: ROLE_ACTIONS['contributor'],
     descendantEntityActions: ROLE_ACTIONS['editor'],
     projectActions: ['edit_project', 'manage_files'],
     canCreateProjects: true,
-    canCreateEntities: true,
+    canCreateEntities: true
   },
   team_reviewer: {
     directEntityActions: ROLE_ACTIONS['viewer'],
     descendantEntityActions: ROLE_ACTIONS['viewer'],
     projectActions: [],
     canCreateProjects: false,
-    canCreateEntities: false,
-  },
+    canCreateEntities: false
+  }
 };
 
 /**
@@ -63,15 +66,8 @@ export const TEAM_ROLE_PERMISSIONS: Record<TeamRole, {
  * global_admin gets everything; workspace_admin can create workspaces and manage roles.
  */
 export const GLOBAL_ROLE_PERMISSIONS: Record<GlobalRole, GlobalPermission[]> = {
-  global_admin: [
-    'admin_platform',
-    'create_workspaces',
-    'manage_workspace_roles',
-  ],
-  workspace_admin: [
-    'create_workspaces',
-    'manage_workspace_roles',
-  ],
+  global_admin: ['admin_platform', 'create_workspaces', 'manage_workspace_roles'],
+  workspace_admin: ['create_workspaces', 'manage_workspace_roles']
 };
 
 export const GLOBAL_ROLES: Array<{
@@ -84,14 +80,14 @@ export const GLOBAL_ROLES: Array<{
     id: 'global_admin',
     name: 'Global admin',
     description: 'Full platform access, including user administration and all global settings.',
-    tone: AR_COLOR_RED,
+    tone: AR_COLOR_RED
   },
   {
     id: 'workspace_admin',
     name: 'Workspace admin',
     description: 'Can create workspaces and manage global workspace-role assignments.',
-    tone: AR_COLOR_BLUE,
-  },
+    tone: AR_COLOR_BLUE
+  }
 ];
 
 /**
@@ -99,29 +95,62 @@ export const GLOBAL_ROLES: Array<{
  */
 export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, WorkspaceCapability[]> = {
   owner: [
-    'ws.view', 'ws.settings', 'ws.delete', 'ws.audit', 'ws.manage_views',
-    'people.invite', 'people.role', 'people.remove', 'people.teams',
-    'proj.create', 'proj.edit', 'proj.delete', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
-    'schema.edit', 'schema.publish',
+    'ws.view',
+    'ws.settings',
+    'ws.delete',
+    'ws.audit',
+    'ws.manage_views',
+    'people.invite',
+    'people.role',
+    'people.remove',
+    'people.teams',
+    'proj.create',
+    'proj.edit',
+    'proj.delete',
+    'content.view',
+    'content.edit',
+    'ent.edit',
+    'ent.propose',
+    'comments',
+    'export',
+    'schema.edit',
+    'schema.publish'
   ],
   admin: [
-    'ws.view', 'ws.settings', 'ws.audit', 'ws.manage_views',
-    'people.invite', 'people.role', 'people.remove', 'people.teams',
-    'proj.create', 'proj.edit', 'proj.delete', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
-    'schema.edit', 'schema.publish',
+    'ws.view',
+    'ws.settings',
+    'ws.audit',
+    'ws.manage_views',
+    'people.invite',
+    'people.role',
+    'people.remove',
+    'people.teams',
+    'proj.create',
+    'proj.edit',
+    'proj.delete',
+    'content.view',
+    'content.edit',
+    'ent.edit',
+    'ent.propose',
+    'comments',
+    'export',
+    'schema.edit',
+    'schema.publish'
   ],
   editor: [
-    'ws.view', 'ws.manage_views',
-    'proj.create', 'proj.edit', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
+    'ws.view',
+    'ws.manage_views',
+    'proj.create',
+    'proj.edit',
+    'content.view',
+    'content.edit',
+    'ent.edit',
+    'ent.propose',
+    'comments',
+    'export'
   ],
-  reviewer: [
-    'ws.view', 'content.view',
-    'ent.propose', 'comments', 'export',
-  ],
-  viewer: [
-    'ws.view', 'content.view',
-    'export',
-  ],
+  reviewer: ['ws.view', 'content.view', 'ent.propose', 'comments', 'export'],
+  viewer: ['ws.view', 'content.view', 'export']
 };
 
 /**
@@ -134,7 +163,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     description: 'Full access to everything, including billing and workspace deletion.',
     tone: AR_COLOR_YELLOW,
     builtin: true,
-    capabilities: WORKSPACE_ROLE_CAPABILITIES['owner'],
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['owner']
   },
   {
     id: 'admin',
@@ -142,7 +171,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     description: 'Manage members, teams, integrations and the data model.',
     tone: AR_COLOR_BLUE,
     builtin: true,
-    capabilities: WORKSPACE_ROLE_CAPABILITIES['admin'],
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['admin']
   },
   {
     id: 'editor',
@@ -150,7 +179,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     description: 'Create and edit diagrams, entities and projects.',
     tone: AR_COLOR_GREEN,
     builtin: true,
-    capabilities: WORKSPACE_ROLE_CAPABILITIES['editor'],
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['editor']
   },
   {
     id: 'reviewer',
@@ -158,7 +187,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     description: 'Comment on diagrams and propose changes — read-only otherwise.',
     tone: AR_COLOR_BLUE,
     builtin: true,
-    capabilities: WORKSPACE_ROLE_CAPABILITIES['reviewer'],
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['reviewer']
   },
   {
     id: 'viewer',
@@ -166,8 +195,8 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     description: 'Read-only access to all content in the workspace.',
     tone: AR_COLOR_GREY,
     builtin: true,
-    capabilities: WORKSPACE_ROLE_CAPABILITIES['viewer'],
-  },
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['viewer']
+  }
 ];
 
 export const WORKSPACE_ROLES = BUILTIN_WORKSPACE_ROLES;
@@ -188,8 +217,8 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
       { id: 'ws.view', name: 'View workspace' },
       { id: 'ws.settings', name: 'Edit workspace settings' },
       { id: 'ws.delete', name: 'Delete or transfer workspace' },
-      { id: 'ws.audit', name: 'View audit log' },
-    ],
+      { id: 'ws.audit', name: 'View audit log' }
+    ]
   },
   {
     label: 'People',
@@ -197,8 +226,8 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
       { id: 'people.invite', name: 'Invite members' },
       { id: 'people.role', name: 'Change member roles' },
       { id: 'people.remove', name: 'Remove members' },
-      { id: 'people.teams', name: 'Create & edit teams' },
-    ],
+      { id: 'people.teams', name: 'Create & edit teams' }
+    ]
   },
   {
     label: 'Content',
@@ -212,22 +241,24 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
       { id: 'ws.manage_views', name: 'Manage views' },
       { id: 'ent.propose', name: 'Propose entity changes' },
       { id: 'comments', name: 'Comment & discuss' },
-      { id: 'export', name: 'Export schema / CSV' },
-    ],
+      { id: 'export', name: 'Export schema / CSV' }
+    ]
   },
   {
     label: 'Schema',
     caps: [
       { id: 'schema.edit', name: 'Edit data model' },
-      { id: 'schema.publish', name: 'Publish breaking changes' },
-    ],
-  },
+      { id: 'schema.publish', name: 'Publish breaking changes' }
+    ]
+  }
 ];
 
 /**
  * Extracts global permissions from a set of global roles
  */
-export const getGlobalPermissionsForRoles = (roles: Iterable<GlobalRole>): Set<GlobalPermission> => {
+export const getGlobalPermissionsForRoles = (
+  roles: Iterable<GlobalRole>
+): Set<GlobalPermission> => {
   const permissions = new Set<GlobalPermission>();
   for (const role of roles) {
     for (const permission of GLOBAL_ROLE_PERMISSIONS[role]) {
@@ -237,9 +268,7 @@ export const getGlobalPermissionsForRoles = (roles: Iterable<GlobalRole>): Set<G
   return permissions;
 };
 
-export const getBuiltinWorkspaceRole = (
-  roleId: WorkspaceRole
-): WorkspaceRoleDefinition | null =>
+export const getBuiltinWorkspaceRole = (roleId: WorkspaceRole): WorkspaceRoleDefinition | null =>
   BUILTIN_WORKSPACE_ROLES.find(role => role.id === roleId) ?? null;
 
 export const resolveWorkspaceRoleDefinitions = (
@@ -252,7 +281,7 @@ export const resolveWorkspaceRoleDefinitions = (
     if (reservedIds.has(role.id)) continue;
     roles.push({
       ...role,
-      builtin: false,
+      builtin: false
     });
   }
 
@@ -267,4 +296,6 @@ export const workspaceRoleHasCapability = (
   capability: WorkspaceCapability,
   roles: Iterable<WorkspaceRoleDefinition> = BUILTIN_WORKSPACE_ROLES
 ): boolean =>
-  Array.from(roles).find(roleDefinition => roleDefinition.id === role)?.capabilities.includes(capability) ?? false;
+  Array.from(roles)
+    .find(roleDefinition => roleDefinition.id === role)
+    ?.capabilities.includes(capability) ?? false;

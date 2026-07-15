@@ -17,7 +17,7 @@ export const AppErrorState = (props: {
         <p className={styles.message}>{props.message}</p>
       </div>
       {props.details ? <pre className={styles.details}>{props.details}</pre> : null}
-      {(props.primaryAction || props.secondaryAction) ? (
+      {props.primaryAction || props.secondaryAction ? (
         <div className={styles.actions}>
           {props.primaryAction ? (
             <Button variant="primary" onClick={props.primaryAction.onClick}>
@@ -25,9 +25,7 @@ export const AppErrorState = (props: {
             </Button>
           ) : null}
           {props.secondaryAction ? (
-            <Button onClick={props.secondaryAction.onClick}>
-              {props.secondaryAction.label}
-            </Button>
+            <Button onClick={props.secondaryAction.onClick}>{props.secondaryAction.label}</Button>
           ) : null}
         </div>
       ) : null}

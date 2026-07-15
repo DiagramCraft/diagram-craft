@@ -9,12 +9,13 @@ import { createAssistantWorkspaceRoutes } from './assistantWorkspaceRoutes';
 
 export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
-) => [
-  ...createHomeWorkspaceRoute(workspaceRoute),
-  ...createContentWorkspaceRoutes(workspaceRoute),
-  ...createProjectWorkspaceRoutes(workspaceRoute),
-  ...createEntityWorkspaceRoutes(workspaceRoute),
-  ...createSearchWorkspaceRoute(workspaceRoute),
-  ...createSettingsWorkspaceRoutes(workspaceRoute),
-  ...createAssistantWorkspaceRoutes(workspaceRoute)
-] as const;
+) =>
+  [
+    ...createHomeWorkspaceRoute(workspaceRoute),
+    ...createContentWorkspaceRoutes(workspaceRoute),
+    ...createProjectWorkspaceRoutes(workspaceRoute),
+    ...createEntityWorkspaceRoutes(workspaceRoute),
+    ...createSearchWorkspaceRoute(workspaceRoute),
+    ...createSettingsWorkspaceRoutes(workspaceRoute),
+    ...createAssistantWorkspaceRoutes(workspaceRoute)
+  ] as const;

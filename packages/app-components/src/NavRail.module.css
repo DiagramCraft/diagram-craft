@@ -18,7 +18,7 @@
     border-right: 1px solid var(--panel-border);
 
     .eItem:has([aria-pressed="true"])::before {
-      content: '';
+      content: "";
       position: absolute;
       left: 0;
       top: 8px;
@@ -33,7 +33,7 @@
     border-left: 1px solid var(--panel-border);
 
     .eItem:has([aria-pressed="true"])::before {
-      content: '';
+      content: "";
       position: absolute;
       right: 0;
       top: 8px;

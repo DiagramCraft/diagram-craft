@@ -169,11 +169,4 @@ export const markdownToPlainText = (markdown: string): string => {
 export { HTMLToMarkdownConverter, htmlToMarkdown, htmlStringToMarkdown };
 export type { HTMLToMarkdownOptions };
 export { InlineParser, Parser };
-export type {
-  ASTNode,
-  ASTNodeOfType,
-  BlockParser,
-  ParserConfiguration,
-  ParserState,
-  ParserType,
-};
+export type { ASTNode, ASTNodeOfType, BlockParser, ParserConfiguration, ParserState, ParserType };

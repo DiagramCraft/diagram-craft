@@ -28,10 +28,25 @@ export const MarkdownEditorPane = (props: {
   workspaceId: string;
   nodeId: string;
 }) => {
-  const { screenMode, paneMode, body, onChange, toc, updatedLabel, readTime, attachments, workspaceId, nodeId } =
-    props;
+  const {
+    screenMode,
+    paneMode,
+    body,
+    onChange,
+    toc,
+    updatedLabel,
+    readTime,
+    attachments,
+    workspaceId,
+    nodeId
+  } = props;
 
-  const { data: discussionPosts = [] } = useDiscussions(workspaceId, 'content_node', nodeId, screenMode !== 'edit');
+  const { data: discussionPosts = [] } = useDiscussions(
+    workspaceId,
+    'content_node',
+    nodeId,
+    screenMode !== 'edit'
+  );
 
   const showPlateEditor = screenMode === 'edit' && paneMode === 'edit';
   const showRawEditor = screenMode === 'edit' && paneMode === 'raw';

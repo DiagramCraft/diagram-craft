@@ -10,10 +10,9 @@ describe('queryModel', () => {
     });
     layer.addEdge({ id: 'edge-1', startNodeId: 'node-1' });
 
-    const result = parseAndQuery(
-      '.elements[] | select(.type == "node") | .id',
-      [QueryLayer.fromLayer(diagram.activeLayer)]
-    );
+    const result = parseAndQuery('.elements[] | select(.type == "node") | .id', [
+      QueryLayer.fromLayer(diagram.activeLayer)
+    ]);
 
     expect(result).toEqual(['node-1']);
   });

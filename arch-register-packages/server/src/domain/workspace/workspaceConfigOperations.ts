@@ -123,7 +123,13 @@ export const listTeams = async (
 export const replaceTeams = async (
   db: DatabaseAdapter,
   workspace: string,
-  teams: Array<{ id?: string; name: string; sort_order?: number; color?: string | null; description?: string }>,
+  teams: Array<{
+    id?: string;
+    name: string;
+    sort_order?: number;
+    color?: string | null;
+    description?: string;
+  }>,
   event: AuthenticatedEvent
 ): Promise<OwnerDbResult[]> => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
@@ -183,10 +189,9 @@ export const replaceTeamAssignments = async (
     httpAssert.true(typeof a.user_id === 'string' && users.has(a.user_id), {
       message: 'user_id must reference an existing user'
     });
-    httpAssert.true(
-      typeof a.role === 'string' && VALID_TEAM_ROLES.includes(a.role as TeamRole),
-      { message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}` }
-    );
+    httpAssert.true(typeof a.role === 'string' && VALID_TEAM_ROLES.includes(a.role as TeamRole), {
+      message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}`
+    });
     return {
       workspace,
       team_id: a.team_id,
@@ -218,10 +223,9 @@ const parseRoleInput = (input: {
   capabilities: string[];
 }) => {
   const capabilities = input.capabilities.map(cap => {
-    httpAssert.true(
-      VALID_WORKSPACE_CAPABILITIES.includes(cap as WorkspaceCapability),
-      { message: 'capabilities contains invalid values' }
-    );
+    httpAssert.true(VALID_WORKSPACE_CAPABILITIES.includes(cap as WorkspaceCapability), {
+      message: 'capabilities contains invalid values'
+    });
     return cap as WorkspaceCapability;
   });
 

@@ -93,7 +93,11 @@ export const NodeActionPropertiesPanelForm = ({ actions }: { actions: ActionsPro
                 }
                 style={{ flex: 1 }}
               />
-              <Button variant={'icon-only'} onClick={() => removeAction(id)} title={'Remove action'}>
+              <Button
+                variant={'icon-only'}
+                onClick={() => removeAction(id)}
+                title={'Remove action'}
+              >
                 <TbTrash />
               </Button>
             </div>
@@ -190,7 +194,6 @@ export const NodeActionPropertiesPanelForm = ({ actions }: { actions: ActionsPro
           )}
         </React.Fragment>
       ))}
-
     </KeyValueTable.Root>
   );
 };

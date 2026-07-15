@@ -27,10 +27,7 @@ const detectActiveVariant = (
 };
 
 /** Returns true when at least one style ID from any variant is present in the document. */
-const isPackageUsedInDocument = (
-  pkg: StencilPackage,
-  documentStyles: DiagramStyles
-): boolean => {
+const isPackageUsedInDocument = (pkg: StencilPackage, documentStyles: DiagramStyles): boolean => {
   if (!pkg.styleVariants || pkg.styleVariants.length === 0) return false;
   return pkg.styleVariants.some(v => v.styles.some(s => documentStyles.get(s.id) !== undefined));
 };
@@ -94,9 +91,7 @@ export const StyleVariantsTab = () => {
     <ToolWindow.TabContent>
       <div className={styles.icStyleVariantsTab}>
         {activePackages.length === 0 ? (
-          <div className={styles.eEmpty}>
-            No style variants are used in this document.
-          </div>
+          <div className={styles.eEmpty}>No style variants are used in this document.</div>
         ) : (
           <div className={styles.eList}>
             {activePackages.map(pkg => (

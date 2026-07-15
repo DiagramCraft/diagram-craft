@@ -34,9 +34,9 @@ const getNumberProp = (
 ) => {
   const property = definition
     .getCustomPropertyDefinitions(node)
-    .entries.find(
-      entry => entry.type === 'number' && 'label' in entry && entry.label === label
-    ) as NumberCustomPropertyType | undefined;
+    .entries.find(entry => entry.type === 'number' && 'label' in entry && entry.label === label) as
+    | NumberCustomPropertyType
+    | undefined;
 
   expect(property).toBeDefined();
   return property!;

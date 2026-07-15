@@ -99,7 +99,14 @@ export const useMarkdownCloseFlow = (params: {
 
     await refreshDiagramPreviewCaches(touchedDiagramIds);
     finalizeClose();
-  }, [createdDiagramsRef, deleteAttachment, finalizeClose, refreshDiagramPreviewCaches, savedBody, sessionId]);
+  }, [
+    createdDiagramsRef,
+    deleteAttachment,
+    finalizeClose,
+    refreshDiagramPreviewCaches,
+    savedBody,
+    sessionId
+  ]);
 
   const handleRevertEligibleDiagramChanges = useCallback(
     async (diagramIds: string[]) => {

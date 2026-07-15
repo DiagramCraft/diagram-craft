@@ -176,9 +176,7 @@ export const StencilPackageDialog = ({
           }}
         >
           {grouped.size === 0 ? (
-            <div className={styles.eEmpty}>
-              No packages match &ldquo;{query.trim()}&rdquo;
-            </div>
+            <div className={styles.eEmpty}>No packages match &ldquo;{query.trim()}&rdquo;</div>
           ) : (
             <div className={styles.ePackageList}>
               {Array.from(grouped.entries()).map(([groupName, pkgs]) => (
@@ -223,9 +221,7 @@ const PackageRow = ({ pkg, isOn, IconComp, onToggle }: PackageRowProps) => {
       </span>
       <span className={styles.eText}>
         <span className={styles.eName}>{pkg.name}</span>
-        {pkg.description && (
-          <span className={styles.eDesc}>{pkg.description}</span>
-        )}
+        {pkg.description && <span className={styles.eDesc}>{pkg.description}</span>}
       </span>
     </label>
   );

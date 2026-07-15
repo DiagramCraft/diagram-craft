@@ -27,7 +27,11 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
-import { useAssessments, useCreateAssessment, useUpdateAssessmentStatus } from '../../hooks/useAssessments';
+import {
+  useAssessments,
+  useCreateAssessment,
+  useUpdateAssessmentStatus
+} from '../../hooks/useAssessments';
 import { useEntitiesBySchema, useEntityCountsBySchema } from '../../hooks/useEntities';
 import { AssessmentScopeFilterBuilder } from './components/AssessmentScopeFilterBuilder';
 import { EmptyState } from '../../components/EmptyState';
@@ -43,7 +47,10 @@ const STATUS_LABEL: Record<Assessment['status'], string> = {
   archived: 'Archived'
 };
 
-const FIELD_TYPE_META: Record<AssessmentField['type'], { icon: typeof TbStar; hint: string | null }> = {
+const FIELD_TYPE_META: Record<
+  AssessmentField['type'],
+  { icon: typeof TbStar; hint: string | null }
+> = {
   rating: { icon: TbStar, hint: '1 – 5' },
   enum: { icon: TbDatabase, hint: null },
   text: { icon: TbAlignLeft, hint: 'free text' }
@@ -75,7 +82,9 @@ export const ProjectAssessments = ({
 
   const schemaColorMap = useMemo(() => {
     const m = new Map<string, { color: string; icon: string | null }>();
-    schemas.forEach((s, i) => m.set(s.id, { color: resolveSchemaColor(s, i), icon: s.icon ?? null }));
+    schemas.forEach((s, i) =>
+      m.set(s.id, { color: resolveSchemaColor(s, i), icon: s.icon ?? null })
+    );
     return m;
   }, [schemas]);
 
@@ -104,7 +113,10 @@ export const ProjectAssessments = ({
     <>
       <ProjectScreenLayout
         breadcrumbs={[
-          { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+          {
+            label: 'Home',
+            onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+          },
           { label: 'Projects', onClick: onNavigateHome },
           { label: project.name, onClick: onNavigateProject }
         ]}
@@ -156,7 +168,11 @@ export const ProjectAssessments = ({
               action={
                 project.canEdit &&
                 statusFilter !== 'archived' && (
-                  <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setCreating(true)}>
+                  <Button
+                    variant="primary"
+                    icon={<TbPlus size={12} />}
+                    onClick={() => setCreating(true)}
+                  >
                     New assessment
                   </Button>
                 )
@@ -231,7 +247,8 @@ const AssessmentCard = ({
     assessment.scope_conditions
   );
   const inScopeCount = scopeQueries.reduce((sum, q) => sum + (q.data?.length ?? 0), 0);
-  const pct = inScopeCount > 0 ? Math.round((assessment.completed_entity_count / inScopeCount) * 100) : 0;
+  const pct =
+    inScopeCount > 0 ? Math.round((assessment.completed_entity_count / inScopeCount) * 100) : 0;
 
   return (
     <button
@@ -242,7 +259,9 @@ const AssessmentCard = ({
       <div className={styles.cardBody}>
         <div className={styles.cardHead}>
           <div className={styles.cardName}>{assessment.name}</div>
-          <span className={`${styles.status} ${badgeClass}`}>{STATUS_LABEL[assessment.status]}</span>
+          <span className={`${styles.status} ${badgeClass}`}>
+            {STATUS_LABEL[assessment.status]}
+          </span>
         </div>
         {assessment.description && <div className={styles.cardDesc}>{assessment.description}</div>}
         <div className={styles.cardMeta}>
@@ -305,7 +324,9 @@ export const AssessmentEditorDialog = ({
   const [scopeConditions, setScopeConditions] = useState<FilterCondition[]>(
     assessment?.scope_conditions.map(condition => ({ ...condition })) ?? []
   );
-  const [fields, setFields] = useState<AssessmentField[]>(assessment?.fields.map(f => ({ ...f })) ?? []);
+  const [fields, setFields] = useState<AssessmentField[]>(
+    assessment?.fields.map(f => ({ ...f })) ?? []
+  );
   const [status, setStatus] = useState<Assessment['status']>(assessment?.status ?? 'draft');
 
   const toggleScope = (id: string) =>
@@ -322,7 +343,9 @@ export const AssessmentEditorDialog = ({
   }, [schemas, scope]);
 
   useEffect(() => {
-    setScopeConditions(prev => prev.filter(condition => allowedScopeConditionFields.has(condition.fieldId)));
+    setScopeConditions(prev =>
+      prev.filter(condition => allowedScopeConditionFields.has(condition.fieldId))
+    );
   }, [allowedScopeConditionFields]);
 
   const scopeCountQueries = useEntityCountsBySchema(workspaceSlug, scope, scopeConditions);
@@ -377,7 +400,12 @@ export const AssessmentEditorDialog = ({
     >
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Basic info</div>
-        <TextInput value={name} onChange={v => setName(v ?? '')} placeholder="e.g. Security Readiness" style={{ width: '100%' }} />
+        <TextInput
+          value={name}
+          onChange={v => setName(v ?? '')}
+          placeholder="e.g. Security Readiness"
+          style={{ width: '100%' }}
+        />
         <TextInput
           value={description}
           onChange={v => setDescription(v ?? '')}
@@ -438,14 +466,17 @@ export const AssessmentEditorDialog = ({
         </div>
         {showScopeWarning && (
           <div className={styles.scopeWarning}>
-            Changing scope may add or remove entities from this assessment. Existing responses are kept.
+            Changing scope may add or remove entities from this assessment. Existing responses are
+            kept.
           </div>
         )}
       </div>
 
       <div className={styles.section}>
         <div className={styles.sectionRow}>
-          <div className={styles.sectionLabel}>Fields{fields.length > 0 ? ` (${fields.length})` : ''}</div>
+          <div className={styles.sectionLabel}>
+            Fields{fields.length > 0 ? ` (${fields.length})` : ''}
+          </div>
           <div className={styles.fieldAddButtons}>
             {FIELD_TYPE_OPTIONS.map(([type, label]) => (
               <Button key={type} icon={<TbPlus size={11} />} onClick={() => addField(type)}>
@@ -455,11 +486,18 @@ export const AssessmentEditorDialog = ({
           </div>
         </div>
         {fields.length === 0 ? (
-          <div className={styles.fieldsEmpty}>No fields yet — add a Rating, Select, or Notes field above.</div>
+          <div className={styles.fieldsEmpty}>
+            No fields yet — add a Rating, Select, or Notes field above.
+          </div>
         ) : (
           <div className={styles.fieldsList}>
             {fields.map(field => (
-              <FieldRow key={field.id} field={field} onUpdate={changes => updateField(field.id, changes)} onRemove={() => removeField(field.id)} />
+              <FieldRow
+                key={field.id}
+                field={field}
+                onUpdate={changes => updateField(field.id, changes)}
+                onRemove={() => removeField(field.id)}
+              />
             ))}
           </div>
         )}
@@ -522,13 +560,20 @@ const FieldRow = ({
       <div className={styles.fieldRequirement}>
         <Select.Root
           value={field.requirementLevel}
-          onChange={v => onUpdate({ requirementLevel: (v ?? 'required') as 'required' | 'optional' })}
+          onChange={v =>
+            onUpdate({ requirementLevel: (v ?? 'required') as 'required' | 'optional' })
+          }
         >
           <Select.Item value="required">Required</Select.Item>
           <Select.Item value="optional">Optional</Select.Item>
         </Select.Root>
       </div>
-      <Button variant="ghost" icon={<TbTrash size={13} />} onClick={onRemove} title="Remove field" />
+      <Button
+        variant="ghost"
+        icon={<TbTrash size={13} />}
+        onClick={onRemove}
+        title="Remove field"
+      />
     </div>
   );
 };

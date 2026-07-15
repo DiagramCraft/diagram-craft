@@ -107,4 +107,9 @@ export type AiDatabase = {
   listMessages(conversationId: string): Promise<AiMessageDbResult[]>;
   createMessage(input: AiMessageDbCreate): Promise<AiMessageDbResult>;
 };
-import { databaseBoolean, databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
+import {
+  databaseBoolean,
+  databaseDate,
+  parseDatabaseJson,
+  type DatabaseRow
+} from '../../../db/rowMappers';

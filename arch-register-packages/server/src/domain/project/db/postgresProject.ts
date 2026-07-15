@@ -586,7 +586,10 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${String(folder['id'])}
       `;
 
-      return [projectMappers.contentNode(folder), ...mapDatabaseRows(descendants, projectMappers.contentNode)];
+      return [
+        projectMappers.contentNode(folder),
+        ...mapDatabaseRows(descendants, projectMappers.contentNode)
+      ];
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -657,7 +660,10 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         WHERE workspace = ${workspace} AND entity_id = ${entityId} AND id = ${String(folder['id'])}
       `;
 
-      return [projectMappers.contentNode(folder), ...mapDatabaseRows(descendants, projectMappers.contentNode)];
+      return [
+        projectMappers.contentNode(folder),
+        ...mapDatabaseRows(descendants, projectMappers.contentNode)
+      ];
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -728,7 +734,10 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL AND id = ${String(folder['id'])}
       `;
 
-      return [projectMappers.contentNode(folder), ...mapDatabaseRows(descendants, projectMappers.contentNode)];
+      return [
+        projectMappers.contentNode(folder),
+        ...mapDatabaseRows(descendants, projectMappers.contentNode)
+      ];
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -888,7 +897,12 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async updateAssessment(workspace: string, projectId: string, id: string, input: AssessmentDbUpdate) {
+  async updateAssessment(
+    workspace: string,
+    projectId: string,
+    id: string,
+    input: AssessmentDbUpdate
+  ) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         UPDATE assessment
@@ -943,7 +957,11 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         ON CONFLICT (workspace, assessment_id, entity_id)
         DO UPDATE SET "values" = ${this.json(input.values)}, updated_at = now(), updated_by = ${input.updated_by}
       `;
-      return (await this.getAssessmentResponse(input.workspace, input.assessment_id, input.entity_id))!;
+      return (await this.getAssessmentResponse(
+        input.workspace,
+        input.assessment_id,
+        input.entity_id
+      ))!;
     } catch (error) {
       return normalizePostgresError(error);
     }

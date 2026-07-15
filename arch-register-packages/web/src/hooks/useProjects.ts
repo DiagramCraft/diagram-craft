@@ -1,9 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  projectKeys,
-  projectEntityKeys,
-  invalidateDeletedProject
-} from '../queries/projects';
+import { projectKeys, projectEntityKeys, invalidateDeletedProject } from '../queries/projects';
 import { invalidateAuditQueries } from '../queries/audit';
 import { invalidateEntityQueries } from '../queries/entities';
 import { Project, ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
@@ -74,7 +70,8 @@ export const useUpdateProject = (workspaceId: string) => {
         target_date?: string | null;
         pinned?: boolean;
       };
-    }) => orpcClient.projects.update({ params: { workspace: workspaceId, id: projectId }, body: data }),
+    }) =>
+      orpcClient.projects.update({ params: { workspace: workspaceId, id: projectId }, body: data }),
     onSuccess: async (updatedProject, variables) => {
       // Update the project list cache
       queryClient.setQueryData(projectKeys.list(workspaceId), (old: Project[] | undefined) => {

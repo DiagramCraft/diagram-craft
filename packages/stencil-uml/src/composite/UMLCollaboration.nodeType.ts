@@ -148,15 +148,21 @@ export class UMLCollaborationComponent extends BaseNodeComponent<UMLCollaboratio
       );
     }
 
-    builder.text(this, '1', node.getText(), nodeProps.text, { ...bounds, h: titleSize }, (size: Extent) =>
-      UnitOfWork.execute(node.diagram, uow => {
-        uow.metadata.nonDirty = true;
-        node.updateCustomProps('umlCollaboration', p => (p.size = size.h), uow);
-        const parent = node.parent;
-        if (isNode(parent)) {
-          parent.getDefinition().onChildChanged(parent, uow);
-        }
-      })
+    builder.text(
+      this,
+      '1',
+      node.getText(),
+      nodeProps.text,
+      { ...bounds, h: titleSize },
+      (size: Extent) =>
+        UnitOfWork.execute(node.diagram, uow => {
+          uow.metadata.nonDirty = true;
+          node.updateCustomProps('umlCollaboration', p => (p.size = size.h), uow);
+          const parent = node.parent;
+          if (isNode(parent)) {
+            parent.getDefinition().onChildChanged(parent, uow);
+          }
+        })
     );
 
     if (this.def.shouldRenderChildren(node)) {

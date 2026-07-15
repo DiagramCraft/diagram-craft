@@ -3,7 +3,7 @@ import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { baseName, buildContentFolderTree, movePath, parentPath, renamePath } from './contentPath';
 
 const file = (path: string, type: ProjectFile['type']): ProjectFile =>
-  ({ path, type } as ProjectFile);
+  ({ path, type }) as ProjectFile;
 
 describe('content path helpers', () => {
   it('finds parent paths and basenames', () => {

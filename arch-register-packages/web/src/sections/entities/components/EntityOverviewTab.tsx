@@ -7,11 +7,19 @@ import { DiagramMetadataPopover } from '../../../components/DiagramMetadataPopov
 import { asProjectPublicId, projectDiagramHref } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
 import { slugifyEntityName, relationIds } from '../../../lib/entityEditState';
-import type { EntityRecord, EntitySnapshot, EntitySummary } from '@arch-register/api-types/entityContract';
+import type {
+  EntityRecord,
+  EntitySnapshot,
+  EntitySummary
+} from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import type { Project, ProjectEntity, DiagramEntityFile } from '@arch-register/api-types/projectContract';
+import type {
+  Project,
+  ProjectEntity,
+  DiagramEntityFile
+} from '@arch-register/api-types/projectContract';
 import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityOverviewTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
@@ -205,7 +213,9 @@ export const EntityOverviewTab = ({
                 className={styles.inputInline}
                 value={l.type ?? ''}
                 onChange={e =>
-                  setEditLinks(ls => ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))
+                  setEditLinks(ls =>
+                    ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x))
+                  )
                 }
                 placeholder="Type"
                 style={{ width: 70, flex: 'none' }}
@@ -214,7 +224,9 @@ export const EntityOverviewTab = ({
                 className={styles.inputInline}
                 value={l.title}
                 onChange={e =>
-                  setEditLinks(ls => ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))
+                  setEditLinks(ls =>
+                    ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x))
+                  )
                 }
                 placeholder="Title"
               />
@@ -222,7 +234,9 @@ export const EntityOverviewTab = ({
                 className={styles.inputInline}
                 value={l.url}
                 onChange={e =>
-                  setEditLinks(ls => ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))
+                  setEditLinks(ls =>
+                    ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x))
+                  )
                 }
                 placeholder="URL"
               />
@@ -278,7 +292,11 @@ export const EntityOverviewTab = ({
           <div key={project.id} className={styles.metaPropRow}>
             <span className={styles.metaPropLabel}>{project.name}</span>
             <span className={styles.metaPropValue}>
-              {entity_type ? entity_type.name : <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>}
+              {entity_type ? (
+                entity_type.name
+              ) : (
+                <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
+              )}
             </span>
           </div>
         ))
@@ -331,7 +349,11 @@ export const EntityOverviewTab = ({
             >
               <a
                 className={styles.miniDiagramRow}
-                href={projectDiagramHref(workspaceSlug, asProjectPublicId(project.public_id), file.id)}
+                href={projectDiagramHref(
+                  workspaceSlug,
+                  asProjectPublicId(project.public_id),
+                  file.id
+                )}
               >
                 <div className={styles.miniDiagramThumb}>
                   <div className={styles.miniDiagramThumbGrid} />
@@ -341,7 +363,11 @@ export const EntityOverviewTab = ({
                       dangerouslySetInnerHTML={{ __html: file.preview_svg }}
                     />
                   ) : (
-                    <svg className={styles.miniDiagramThumbSvg} viewBox="0 0 60 30" preserveAspectRatio="none">
+                    <svg
+                      className={styles.miniDiagramThumbSvg}
+                      viewBox="0 0 60 30"
+                      preserveAspectRatio="none"
+                    >
                       <rect
                         x="3"
                         y="7"
@@ -392,7 +418,9 @@ export const EntityOverviewTab = ({
                   )}
                 </div>
                 <div className={styles.miniDiagramBody}>
-                  <div className={styles.miniDiagramName}>{file.content_metadata?.title ?? file.name}</div>
+                  <div className={styles.miniDiagramName}>
+                    {file.content_metadata?.title ?? file.name}
+                  </div>
                   <div className={styles.miniDiagramSub}>{project.name}</div>
                 </div>
               </a>
@@ -438,9 +466,17 @@ const MetaPropRow = ({
             ))}
           </select>
         ) : type === 'date' ? (
-          <DateInput value={editValue ?? ''} onChange={v => onChange(v ?? '')} style={{ width: '100%' }} />
+          <DateInput
+            value={editValue ?? ''}
+            onChange={v => onChange(v ?? '')}
+            style={{ width: '100%' }}
+          />
         ) : (
-          <input className={styles.inputInline} value={editValue ?? ''} onChange={e => onChange(e.target.value)} />
+          <input
+            className={styles.inputInline}
+            value={editValue ?? ''}
+            onChange={e => onChange(e.target.value)}
+          />
         )
       ) : (
         value
@@ -528,7 +564,9 @@ const PropertyRow = ({
       );
     }
     if (field.type === 'boolean') {
-      return <input type="checkbox" checked={!!editValue} onChange={e => onChange(e.target.checked)} />;
+      return (
+        <input type="checkbox" checked={!!editValue} onChange={e => onChange(e.target.checked)} />
+      );
     }
     if (field.type === 'date') {
       return (
@@ -549,7 +587,9 @@ const PropertyRow = ({
           min={field.min}
           max={field.max}
           value={editValue === undefined || editValue === null ? '' : (editValue as number)}
-          onChange={e => onChange(e.target.value === '' ? undefined : Math.trunc(e.target.valueAsNumber))}
+          onChange={e =>
+            onChange(e.target.value === '' ? undefined : Math.trunc(e.target.valueAsNumber))
+          }
         />
       );
     }
@@ -601,7 +641,9 @@ const PropertyRow = ({
         {field.name}
         <span className={styles.propType}>{typeLabel}</span>
         {field.requirementLevel === 'required' && <span className={styles.propReq}>Required</span>}
-        {field.requirementLevel === 'expected' && <span className={styles.propExpected}>Expected</span>}
+        {field.requirementLevel === 'expected' && (
+          <span className={styles.propExpected}>Expected</span>
+        )}
       </div>
       <div
         className={styles.propValue}

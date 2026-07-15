@@ -8,17 +8,16 @@ import type { TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import {
-  entityMenuItems,
-  projectEntityMenuItems
-} from './entityBrowserViewShared';
-import type {
-  ProjectBrowserContext,
-  ProjectLinkState
-} from './entityBrowserState';
+import { entityMenuItems, projectEntityMenuItems } from './entityBrowserViewShared';
+import type { ProjectBrowserContext, ProjectLinkState } from './entityBrowserState';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import styles from '../EntityBrowserScreen.module.css';
-import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
+import {
+  findEntityDisplayField,
+  formatEntityDisplayValue,
+  getDisplayFieldIds,
+  type EntityDisplayField
+} from './entityDisplayFields';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
 
@@ -43,7 +42,10 @@ export type TreeViewProps = {
   responsesByEntity?: Map<string, Record<string, string | number>>;
 };
 
-type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState; _assessment?: Record<string, string | number> | null }) & {
+type TreeItem = (TreeNode & {
+  _projectLink?: ProjectLinkState;
+  _assessment?: Record<string, string | number> | null;
+}) & {
   children: TreeItem[];
 };
 
@@ -61,7 +63,9 @@ export const TreeView = ({
   onClone,
   lifecycleStates,
   projectContext,
-  readOnly, config, displayFields,
+  readOnly,
+  config,
+  displayFields,
   joinAssessmentId,
   responsesByEntity
 }: TreeViewProps) => {
@@ -104,7 +108,9 @@ export const TreeView = ({
       .filter(node => !childIds.has(node._uid))
       .sort((a, b) => (a._name || a._slug).localeCompare(b._name || b._slug));
   }, [nodes, edges, responsesByEntity]);
-  const columns = getDisplayFieldIds('tree', config).map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
+  const columns = getDisplayFieldIds('tree', config).map(
+    id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
+  );
 
   if (nodes.length === 0) {
     return (
@@ -157,7 +163,9 @@ const TreeNodeRow = ({
   onClone,
   lifecycleStates,
   projectContext,
-  readOnly, columns, displayFields
+  readOnly,
+  columns,
+  displayFields
 }: {
   item: TreeItem;
   depth: number;

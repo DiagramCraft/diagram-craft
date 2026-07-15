@@ -61,7 +61,12 @@ export const EntityChangelogEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={<><TbHistory size={16} /><span>Configure entity changelog…</span></>}
+      placeholder={
+        <>
+          <TbHistory size={16} />
+          <span>Configure entity changelog…</span>
+        </>
+      }
       content={
         <EntityChangelog
           id={entityId || undefined}

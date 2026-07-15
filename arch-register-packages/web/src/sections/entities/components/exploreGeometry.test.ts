@@ -1,7 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { connectorDistance, cubicPoint, pointToSegmentDistance, type ExploreConnectorLine } from './exploreGeometry';
+import {
+  connectorDistance,
+  cubicPoint,
+  pointToSegmentDistance,
+  type ExploreConnectorLine
+} from './exploreGeometry';
 
-const line = { fromColumn: 0, fromEntityId: 'a', fromEntityName: 'A', toColumn: 1, toEntityId: 'b', toEntityName: 'B', fieldName: 'uses', fieldLabel: 'Uses', kind: 'reference', x1: 0, y1: 0, x2: 100, y2: 100 } as ExploreConnectorLine;
+const line = {
+  fromColumn: 0,
+  fromEntityId: 'a',
+  fromEntityName: 'A',
+  toColumn: 1,
+  toEntityId: 'b',
+  toEntityName: 'B',
+  fieldName: 'uses',
+  fieldLabel: 'Uses',
+  kind: 'reference',
+  x1: 0,
+  y1: 0,
+  x2: 100,
+  y2: 100
+} as ExploreConnectorLine;
 
 describe('explore connector geometry', () => {
   it('handles points and degenerate segments', () => {

@@ -44,9 +44,10 @@
   border: 1px solid var(--cmp-border);
   border-radius: 8px;
   font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
-  0 24px 60px -10px rgba(0, 0, 0, 0.55),
-  0 8px 24px -8px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 24px 60px -10px rgba(0, 0, 0, 0.55),
+    0 8px 24px -8px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -93,7 +94,6 @@
     color: var(--base-fg-dim);
     line-height: 1.45;
   }
-
 
   .eBody {
     --cmp-bg: var(--gray-1);
@@ -146,7 +146,10 @@
         border: 1px solid var(--cmp-border);
         background-color: var(--cmp-bg);
         color: var(--cmp-fg);
-        transition: background 80ms, border-color 80ms, color 80ms;
+        transition:
+          background 80ms,
+          border-color 80ms,
+          color 80ms;
 
         &[data-variant="primary"] {
           background-color: color-mix(in oklab, var(--accent-chroma) 22%, var(--cmp-bg));

@@ -178,8 +178,11 @@ const db = {
   catalog: {
     listSchemas: async () => schemas,
     listEntities: async () => entities,
-    listEntitiesPaginated: async (_ws: string, _filters: unknown, { limit, offset }: { limit: number; offset: number }) =>
-      entities.slice(offset, offset + limit),
+    listEntitiesPaginated: async (
+      _ws: string,
+      _filters: unknown,
+      { limit, offset }: { limit: number; offset: number }
+    ) => entities.slice(offset, offset + limit),
     getSchema: async (_ws: string, schemaId: string) =>
       schemas.find(schema => schema.id === schemaId) ?? null,
     getEntity: async (_ws: string, entityId: string) =>
@@ -390,7 +393,14 @@ describe('createAiChatTools', () => {
       ['entity-app-2', 'entity-cap-1'].sort()
     );
     expect(result).toMatchObject({
-      edges: [{ sourceId: 'entity-app-2', targetId: 'entity-cap-1', fieldId: 'dependsOn', kind: 'reference' }]
+      edges: [
+        {
+          sourceId: 'entity-app-2',
+          targetId: 'entity-cap-1',
+          fieldId: 'dependsOn',
+          kind: 'reference'
+        }
+      ]
     });
   });
 
@@ -408,7 +418,14 @@ describe('createAiChatTools', () => {
       ['entity-app-2', 'entity-cap-1'].sort()
     );
     expect(result).toMatchObject({
-      edges: [{ sourceId: 'entity-app-2', targetId: 'entity-cap-1', fieldId: 'dependsOn', kind: 'reference' }]
+      edges: [
+        {
+          sourceId: 'entity-app-2',
+          targetId: 'entity-cap-1',
+          fieldId: 'dependsOn',
+          kind: 'reference'
+        }
+      ]
     });
   });
 

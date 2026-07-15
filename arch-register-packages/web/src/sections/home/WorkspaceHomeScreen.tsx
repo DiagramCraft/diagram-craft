@@ -48,14 +48,15 @@ export const WorkspaceHomeScreen = () => {
     openAddProjectDialog,
     openAddEntityDialog
   } = useWorkspaceContext();
-  const { canViewAudit, canViewSchemas, canCreateProjects, canCreateEntities } =
-    permissions;
+  const { canViewAudit, canViewSchemas, canCreateProjects, canCreateEntities } = permissions;
   const collapsedProjectCount = 6;
   const [showAllProjects, setShowAllProjects] = useState(false);
 
   const totalEntities = schemas.reduce((sum, s) => sum + s.entity_count, 0);
   const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
-  const nonArchivedProjects = projects.filter(p => p.status !== 'complete' && p.status !== 'cancelled');
+  const nonArchivedProjects = projects.filter(
+    p => p.status !== 'complete' && p.status !== 'cancelled'
+  );
   const hasMoreProjects = nonArchivedProjects.length > collapsedProjectCount;
   const visibleProjects = showAllProjects
     ? projects
@@ -75,7 +76,8 @@ export const WorkspaceHomeScreen = () => {
   const handleActivityClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        if (entry.public_id) navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
+        if (entry.public_id)
+          navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
         break;
       case 'project':
         if (entry.public_id) {
@@ -264,7 +266,6 @@ export const WorkspaceHomeScreen = () => {
                       <TbChevronRight size={12} />
                     </button>
                   ))}
-
                 </div>
               </Panel>
             )}

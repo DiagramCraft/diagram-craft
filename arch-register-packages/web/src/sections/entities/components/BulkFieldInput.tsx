@@ -32,7 +32,10 @@ export const BulkFieldInput = ({
 }: BulkFieldInputProps) => {
   const referenceSchemaId =
     field.kind === 'schema' && field.field.type === 'reference' ? field.field.schemaId : undefined;
-  const referenceQueries = useEntitiesBySchema(workspaceId, referenceSchemaId ? [referenceSchemaId] : []);
+  const referenceQueries = useEntitiesBySchema(
+    workspaceId,
+    referenceSchemaId ? [referenceSchemaId] : []
+  );
   const referenceCandidates = referenceQueries[0]?.data ?? [];
 
   if (clearing) {

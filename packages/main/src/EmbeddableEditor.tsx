@@ -8,7 +8,10 @@ import { useEventListener } from './react-app/hooks/useEventListener';
 import { useRedraw } from './react-app/hooks/useRedraw';
 import { DocumentTabs } from './react-app/DocumentTabs';
 import { Ruler } from './react-app/Ruler';
-import { ConfigurationContext, type ConfigurationContextType } from './react-app/context/ConfigurationContext';
+import {
+  ConfigurationContext,
+  type ConfigurationContextType
+} from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
 import { LayerIndicator } from './react-app/LayerIndicator';
 import {

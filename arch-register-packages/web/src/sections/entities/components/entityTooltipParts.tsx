@@ -30,7 +30,13 @@ export const TooltipChips = ({ children }: { children: ReactNode }) => (
   <div className={styles.tooltipChips}>{children}</div>
 );
 
-export const TooltipChip = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
+export const TooltipChip = ({
+  children,
+  style
+}: {
+  children: ReactNode;
+  style?: CSSProperties;
+}) => (
   <span className={styles.tooltipChip} style={style}>
     {children}
   </span>

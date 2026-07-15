@@ -503,9 +503,9 @@ describe('EdgeEndpointMoveDrag', () => {
     const createdEdge = layer.elements.find(
       element => element !== drag.edge && 'start' in element && 'end' in element
     ) as DiagramEdge | undefined;
-    const createdNode = layer.elements.find(
-      element => element !== node && 'nodeType' in element
-    ) as DiagramNode | undefined;
+    const createdNode = layer.elements.find(element => element !== node && 'nodeType' in element) as
+      | DiagramNode
+      | undefined;
 
     expect(createdEdge?.start).toBeInstanceOf(AnchorEndpoint);
     expect(createdNode?.bounds.y).toBeLessThan(node.bounds.y);
@@ -548,9 +548,9 @@ describe('EdgeEndpointMoveDrag', () => {
     const createdEdge = layer.elements.find(
       element => element !== drag.edge && 'start' in element && 'end' in element
     ) as DiagramEdge | undefined;
-    const createdNode = layer.elements.find(
-      element => element !== node && 'nodeType' in element
-    ) as DiagramNode | undefined;
+    const createdNode = layer.elements.find(element => element !== node && 'nodeType' in element) as
+      | DiagramNode
+      | undefined;
 
     expect(createdEdge?.start).toBeInstanceOf(PointInNodeEndpoint);
     expect(createdNode?.bounds.y).toBeLessThan(node.bounds.y);

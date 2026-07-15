@@ -1,10 +1,4 @@
-import {
-  defineHandler,
-  EventHandlerRequest,
-  H3,
-  H3Event,
-  HTTPError
-} from 'h3';
+import { defineHandler, EventHandlerRequest, H3, H3Event, HTTPError } from 'h3';
 import type { AIGenerateRequest, AIServer } from '../aiServer';
 
 // Constants
@@ -75,7 +69,9 @@ export function createAIRoutes(aiServer: AIServer) {
       validateRequest(event);
 
       try {
-        const body = (await event.req.json().catch(() => undefined)) as AIGenerateRequest | undefined;
+        const body = (await event.req.json().catch(() => undefined)) as
+          | AIGenerateRequest
+          | undefined;
 
         // Validate request body
         if (!body || typeof body !== 'object') {

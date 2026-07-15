@@ -48,7 +48,11 @@ const schema: SchemaDbResult = {
 
 const makeDb = (entities: EntityDbResult[]) => {
   const listEntitiesPaginated = vi.fn(
-    async (_workspace: string, _filters?: unknown, pagination?: { limit?: number; offset?: number }) =>
+    async (
+      _workspace: string,
+      _filters?: unknown,
+      pagination?: { limit?: number; offset?: number }
+    ) =>
       entities.slice(
         pagination?.offset ?? 0,
         (pagination?.offset ?? 0) + (pagination?.limit ?? entities.length)
@@ -83,26 +87,36 @@ describe('listEntities', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?._uid).toBe('entity-200');
-    expect(db.catalog.listEntitiesPaginated).toHaveBeenNthCalledWith(1, 'ws-1', {
-      schemaId: null,
-      owner: null,
-      lifecycle: null,
-      q: '',
-      conditions: []
-    }, {
-      limit: 200,
-      offset: 0
-    });
-    expect(db.catalog.listEntitiesPaginated).toHaveBeenNthCalledWith(2, 'ws-1', {
-      schemaId: null,
-      owner: null,
-      lifecycle: null,
-      q: '',
-      conditions: []
-    }, {
-      limit: 200,
-      offset: 200
-    });
+    expect(db.catalog.listEntitiesPaginated).toHaveBeenNthCalledWith(
+      1,
+      'ws-1',
+      {
+        schemaId: null,
+        owner: null,
+        lifecycle: null,
+        q: '',
+        conditions: []
+      },
+      {
+        limit: 200,
+        offset: 0
+      }
+    );
+    expect(db.catalog.listEntitiesPaginated).toHaveBeenNthCalledWith(
+      2,
+      'ws-1',
+      {
+        schemaId: null,
+        owner: null,
+        lifecycle: null,
+        q: '',
+        conditions: []
+      },
+      {
+        limit: 200,
+        offset: 200
+      }
+    );
   });
 
   it('continues paging until the final partial page is exhausted', async () => {
@@ -115,26 +129,36 @@ describe('listEntities', () => {
 
     expect(result).toHaveLength(250);
     expect(db.catalog.listEntitiesPaginated).toHaveBeenCalledTimes(2);
-    expect(db.catalog.listEntitiesPaginated).toHaveBeenNthCalledWith(1, 'ws-1', {
-      schemaId: null,
-      owner: null,
-      lifecycle: null,
-      q: '',
-      conditions: []
-    }, {
-      limit: 200,
-      offset: 0
-    });
-    expect(db.catalog.listEntitiesPaginated).toHaveBeenNthCalledWith(2, 'ws-1', {
-      schemaId: null,
-      owner: null,
-      lifecycle: null,
-      q: '',
-      conditions: []
-    }, {
-      limit: 200,
-      offset: 200
-    });
+    expect(db.catalog.listEntitiesPaginated).toHaveBeenNthCalledWith(
+      1,
+      'ws-1',
+      {
+        schemaId: null,
+        owner: null,
+        lifecycle: null,
+        q: '',
+        conditions: []
+      },
+      {
+        limit: 200,
+        offset: 0
+      }
+    );
+    expect(db.catalog.listEntitiesPaginated).toHaveBeenNthCalledWith(
+      2,
+      'ws-1',
+      {
+        schemaId: null,
+        owner: null,
+        lifecycle: null,
+        q: '',
+        conditions: []
+      },
+      {
+        limit: 200,
+        offset: 200
+      }
+    );
   });
 });
 
@@ -143,8 +167,7 @@ describe('countEntities', () => {
     const entities = Array.from({ length: 47 }, (_, index) => makeEntity(index));
     const db = makeDb(entities);
 
-    const total = await countEntities(db, 'ws-1', null, {
-    });
+    const total = await countEntities(db, 'ws-1', null, {});
 
     expect(total).toBe(47);
   });
@@ -185,29 +208,30 @@ describe('listEntities with asOf', () => {
     }>,
     projectLinks: Array<{ entity_id: string; created_at: Date }> = []
   ) => {
-    const listSnapshotsAsOf = vi.fn(
-      async (_workspace: string, asOf: Date, entityIds?: string[]) =>
-        snapshots
-          .filter(s => (entityIds ? entityIds.includes(s.entity_id) : true))
-          .filter(s =>
-            s.status === 'future_update'
-              ? s.target_date != null && new Date(s.target_date) <= asOf && s.created_at <= asOf
-              : s.created_at <= asOf
-          )
-          .map((s, i) => ({
-            id: `snap-${i}`,
-            workspace: 'ws-1',
-            project_id: null,
-            commit_message: null,
-            created_by: 'user-1',
-            created_by_name: 'User',
-            target_date: s.target_date ?? null,
-            proposed_state: s.proposed_state ?? null,
-            ...s
-          }))
-          .sort(
-            (a, b) => a.entity_id.localeCompare(b.entity_id) || a.created_at.getTime() - b.created_at.getTime()
-          )
+    const listSnapshotsAsOf = vi.fn(async (_workspace: string, asOf: Date, entityIds?: string[]) =>
+      snapshots
+        .filter(s => (entityIds ? entityIds.includes(s.entity_id) : true))
+        .filter(s =>
+          s.status === 'future_update'
+            ? s.target_date != null && new Date(s.target_date) <= asOf && s.created_at <= asOf
+            : s.created_at <= asOf
+        )
+        .map((s, i) => ({
+          id: `snap-${i}`,
+          workspace: 'ws-1',
+          project_id: null,
+          commit_message: null,
+          created_by: 'user-1',
+          created_by_name: 'User',
+          target_date: s.target_date ?? null,
+          proposed_state: s.proposed_state ?? null,
+          ...s
+        }))
+        .sort(
+          (a, b) =>
+            a.entity_id.localeCompare(b.entity_id) ||
+            a.created_at.getTime() - b.created_at.getTime()
+        )
     );
 
     return {
@@ -303,7 +327,11 @@ describe('listEntities / countEntities with joined assessment', () => {
   ) => {
     const listAssessmentResponses = vi.fn(async () => responses);
     const listEntitiesPaginated = vi.fn(
-      async (_workspace: string, _filters?: unknown, pagination?: { limit?: number; offset?: number }) =>
+      async (
+        _workspace: string,
+        _filters?: unknown,
+        pagination?: { limit?: number; offset?: number }
+      ) =>
         entities.slice(
           pagination?.offset ?? 0,
           (pagination?.offset ?? 0) + (pagination?.limit ?? entities.length)
@@ -317,7 +345,9 @@ describe('listEntities / countEntities with joined assessment', () => {
       },
       project: {
         listProjectEntities: vi.fn(async () => []),
-        getAssessmentById: vi.fn(async () => (options.assessment === undefined ? assessment : options.assessment)),
+        getAssessmentById: vi.fn(async () =>
+          options.assessment === undefined ? assessment : options.assessment
+        ),
         getProject: vi.fn(async () => ({ id: 'proj-1', workspace: 'ws-1', owner: 'team-1' })),
         listAssessmentResponses
       }
@@ -326,7 +356,19 @@ describe('listEntities / countEntities with joined assessment', () => {
 
   it('never narrows the entity list when joined without assessment conditions', async () => {
     const entities = [makeEntity(1), makeEntity(2)];
-    const db = makeAssessmentDb(entities, [{ id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null }]);
+    const db = makeAssessmentDb(entities, [
+      {
+        id: 'r1',
+        workspace: 'ws-1',
+        assessment_id: 'assessment-1',
+        entity_id: 'entity-1',
+        values: { rating1: 5 },
+        created_at: now,
+        updated_at: now,
+        updated_by: null,
+        updated_by_name: null
+      }
+    ]);
 
     const result = await listEntities(db, 'ws-1', null, { assessmentId: 'assessment-1' });
 
@@ -337,7 +379,17 @@ describe('listEntities / countEntities with joined assessment', () => {
   it('matches presence has/has-not conditions', async () => {
     const entities = [makeEntity(1), makeEntity(2)];
     const responses: AssessmentResponseDbResult[] = [
-      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null }
+      {
+        id: 'r1',
+        workspace: 'ws-1',
+        assessment_id: 'assessment-1',
+        entity_id: 'entity-1',
+        values: { rating1: 5 },
+        created_at: now,
+        updated_at: now,
+        updated_by: null,
+        updated_by_name: null
+      }
     ];
     const db = makeAssessmentDb(entities, responses);
 
@@ -359,8 +411,28 @@ describe('listEntities / countEntities with joined assessment', () => {
   it('matches rating conditions with inclusive gte/lte bounds and fails entities without a response', async () => {
     const entities = [makeEntity(1), makeEntity(2), makeEntity(3)];
     const responses: AssessmentResponseDbResult[] = [
-      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 3 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null },
-      { id: 'r2', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-2', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null }
+      {
+        id: 'r1',
+        workspace: 'ws-1',
+        assessment_id: 'assessment-1',
+        entity_id: 'entity-1',
+        values: { rating1: 3 },
+        created_at: now,
+        updated_at: now,
+        updated_by: null,
+        updated_by_name: null
+      },
+      {
+        id: 'r2',
+        workspace: 'ws-1',
+        assessment_id: 'assessment-1',
+        entity_id: 'entity-2',
+        values: { rating1: 5 },
+        created_at: now,
+        updated_at: now,
+        updated_by: null,
+        updated_by_name: null
+      }
     ];
     const db = makeAssessmentDb(entities, responses);
 
@@ -387,15 +459,22 @@ describe('listEntities / countEntities with joined assessment', () => {
         values: { rating1: 5 },
         created_at: now,
         updated_at: now,
-        updated_by: null, updated_by_name: null
+        updated_by: null,
+        updated_by_name: null
       }));
     const conditions = [{ fieldId: '_assessment', op: 'not_empty' as const, value: undefined }];
 
     const listDb = makeAssessmentDb(entities, responses);
-    const list = await listEntities(listDb, 'ws-1', null, { assessmentId: 'assessment-1', conditions });
+    const list = await listEntities(listDb, 'ws-1', null, {
+      assessmentId: 'assessment-1',
+      conditions
+    });
 
     const countDb = makeAssessmentDb(entities, responses);
-    const total = await countEntities(countDb, 'ws-1', null, { assessmentId: 'assessment-1', conditions });
+    const total = await countEntities(countDb, 'ws-1', null, {
+      assessmentId: 'assessment-1',
+      conditions
+    });
 
     expect(list).toHaveLength(5);
     expect(total).toBe(5);
@@ -435,7 +514,17 @@ describe('listEntities / countEntities with joined assessment', () => {
   it('allows the join when the caller can access the assessment project', async () => {
     const entities = [makeEntity(1)];
     const responses: AssessmentResponseDbResult[] = [
-      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null }
+      {
+        id: 'r1',
+        workspace: 'ws-1',
+        assessment_id: 'assessment-1',
+        entity_id: 'entity-1',
+        values: { rating1: 5 },
+        created_at: now,
+        updated_at: now,
+        updated_by: null,
+        updated_by_name: null
+      }
     ];
     const db = makeAssessmentDb(entities, responses);
     const result = await listEntities(db, 'ws-1', permissiveAuthCtx, {

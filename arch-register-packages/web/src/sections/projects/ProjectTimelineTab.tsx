@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react';
 import { TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import type { ProjectDetail as ProjectDetailData, ProjectEntity } from '@arch-register/api-types/projectContract';
+import type {
+  ProjectDetail as ProjectDetailData,
+  ProjectEntity
+} from '@arch-register/api-types/projectContract';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -61,8 +64,14 @@ export const ProjectTimelineTab = ({
   );
 
   // Only dated snapshots go on the timeline; undated shown below
-  const datedSnapshots = useMemo(() => projectSnapshots.filter(s => s.target_date), [projectSnapshots]);
-  const undatedSnapshots = useMemo(() => projectSnapshots.filter(s => !s.target_date), [projectSnapshots]);
+  const datedSnapshots = useMemo(
+    () => projectSnapshots.filter(s => s.target_date),
+    [projectSnapshots]
+  );
+  const undatedSnapshots = useMemo(
+    () => projectSnapshots.filter(s => !s.target_date),
+    [projectSnapshots]
+  );
 
   // Snapshots per entity
   const snapsByEntity = useMemo(() => {
@@ -152,7 +161,8 @@ export const ProjectTimelineTab = ({
         </div>
         <div className={styles.ptlSep} />
         <span className={styles.ptlConfigMeta}>
-          {totalEntities} entities · {plannedSnapshots.length} planned · {appliedSnapshots.length} applied
+          {totalEntities} entities · {plannedSnapshots.length} planned · {appliedSnapshots.length}{' '}
+          applied
         </span>
         <div style={{ flex: 1 }} />
         <div className={styles.ptlSegmented}>
@@ -235,7 +245,9 @@ export const ProjectTimelineTab = ({
                         className={`${styles.ptlRow} ${isRowActive ? styles.ptlRowActive : ''}`}
                       >
                         <div className={styles.ptlLabel}>
-                          {schema && <TypeBadge color={schema.color} icon={schema.icon} size={14} />}
+                          {schema && (
+                            <TypeBadge color={schema.color} icon={schema.icon} size={14} />
+                          )}
                           <span className={styles.ptlName}>{entity.entity_name}</span>
                         </div>
                         <div className={styles.ptlTrack} style={{ width: totalWidth }}>
@@ -298,28 +310,31 @@ export const ProjectTimelineTab = ({
         </TimelineScaffold>
 
         {/* Detail panel */}
-        {selectedSnap && (() => {
-          const pe = entityMap.get(selectedSnap.entity_id);
-          const schemaInfo = pe?.entity_schema ? schemaMap.get(pe.entity_schema.id) : undefined;
-          // Find the full EntitySchema for field resolution (use proposed_state.schema_id or entity schema id)
-          const schemaId = (selectedSnap.proposed_state as Record<string, unknown> | null)?.['schema_id'] as string | undefined
-            ?? pe?.entity_schema?.id;
-          const entitySchema = schemaId ? schemas.find(s => s.id === schemaId) ?? null : null;
-          return (
-            <SnapDetail
-              snapshot={selectedSnap}
-              entityName={pe?.entity_name ?? selectedSnap.entity_id}
-              schemaInfo={schemaInfo}
-              entitySchema={entitySchema}
-              markerColor={selectedSnap.status === 'applied' ? 'var(--green)' : markerColor}
-              lifecycleStates={lifecycleStates}
-              teams={teams}
-              canEdit={canEdit}
-              onApplySnapshot={onApplySnapshot}
-              onClose={() => setSelectedSnap(null)}
-            />
-          );
-        })()}
+        {selectedSnap &&
+          (() => {
+            const pe = entityMap.get(selectedSnap.entity_id);
+            const schemaInfo = pe?.entity_schema ? schemaMap.get(pe.entity_schema.id) : undefined;
+            // Find the full EntitySchema for field resolution (use proposed_state.schema_id or entity schema id)
+            const schemaId =
+              ((selectedSnap.proposed_state as Record<string, unknown> | null)?.['schema_id'] as
+                | string
+                | undefined) ?? pe?.entity_schema?.id;
+            const entitySchema = schemaId ? (schemas.find(s => s.id === schemaId) ?? null) : null;
+            return (
+              <SnapDetail
+                snapshot={selectedSnap}
+                entityName={pe?.entity_name ?? selectedSnap.entity_id}
+                schemaInfo={schemaInfo}
+                entitySchema={entitySchema}
+                markerColor={selectedSnap.status === 'applied' ? 'var(--green)' : markerColor}
+                lifecycleStates={lifecycleStates}
+                teams={teams}
+                canEdit={canEdit}
+                onApplySnapshot={onApplySnapshot}
+                onClose={() => setSelectedSnap(null)}
+              />
+            );
+          })()}
       </div>
     </div>
   );
@@ -383,9 +398,7 @@ const SnapDetail = ({
             {statusLabel}
           </span>
           {snapshot.target_date && (
-            <span className={styles.ptlDetailSub}>
-              Target: {snapshot.target_date}
-            </span>
+            <span className={styles.ptlDetailSub}>Target: {snapshot.target_date}</span>
           )}
         </div>
 
@@ -408,7 +421,9 @@ const SnapDetail = ({
         )}
 
         <div className={styles.ptlDetailMeta}>
-          <span>{formatTimelineDate(snapshot.created_at, { month: 'short', year: 'numeric' })}</span>
+          <span>
+            {formatTimelineDate(snapshot.created_at, { month: 'short', year: 'numeric' })}
+          </span>
         </div>
 
         {canApply && (

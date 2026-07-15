@@ -68,7 +68,11 @@ const seededPersonaUserIds = {
   string
 >;
 
-const makePersona = async (baseUrl: string, auth: string, userId: string): Promise<PersonaFixture> => ({
+const makePersona = async (
+  baseUrl: string,
+  auth: string,
+  userId: string
+): Promise<PersonaFixture> => ({
   auth,
   orpc: createTestORPCClient(baseUrl, auth),
   userId
@@ -112,18 +116,22 @@ export const createPermissionApiTest = () =>
         last_login_at: null
       });
 
-      await server.db.catalog.replaceEntityGrants(seedIds.workspace.default, seededEntities.default.customerPortal.id, [
-        {
-          id: randomUUID(),
-          workspace: seedIds.workspace.default,
-          entity_id: seededEntities.default.customerPortal.id,
-          principal_type: 'user',
-          principal_id: EXPLICIT_GRANT_USER_ID,
-          role: 'viewer',
-          applies_to: 'subtree',
-          created_at: now
-        }
-      ]);
+      await server.db.catalog.replaceEntityGrants(
+        seedIds.workspace.default,
+        seededEntities.default.customerPortal.id,
+        [
+          {
+            id: randomUUID(),
+            workspace: seedIds.workspace.default,
+            entity_id: seededEntities.default.customerPortal.id,
+            principal_type: 'user',
+            principal_id: EXPLICIT_GRANT_USER_ID,
+            role: 'viewer',
+            applies_to: 'subtree',
+            created_at: now
+          }
+        ]
+      );
     }
   }).extend<{
     personas: PersonasFixture;

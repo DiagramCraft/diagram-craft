@@ -19,7 +19,8 @@ export type MappedCRDTOrderedMapMapType<T extends Record<string, CRDTCompatibleO
 export class MappedCRDTOrderedMap<
   T,
   C extends Record<string, CRDTCompatibleObject> = Record<string, string>
-> implements Releasable {
+> implements Releasable
+{
   #entries: Array<[string, T]> = [];
   #current: CRDTMap<MappedCRDTOrderedMapMapType<C>>;
   readonly #remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']>;

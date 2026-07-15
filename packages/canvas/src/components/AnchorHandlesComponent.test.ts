@@ -36,11 +36,17 @@ describe('getPrimaryAnchorHandleVisuals', () => {
       }
     ]);
 
-    const visuals = _test.getPrimaryAnchorHandleVisuals(node.anchors[0]!, node, false, new Zoom(1), 4);
-
-    expect(visuals.transformedChildren.some(child => child.type === 's' && child.tag === 'circle')).toBe(
-      true
+    const visuals = _test.getPrimaryAnchorHandleVisuals(
+      node.anchors[0]!,
+      node,
+      false,
+      new Zoom(1),
+      4
     );
+
+    expect(
+      visuals.transformedChildren.some(child => child.type === 's' && child.tag === 'circle')
+    ).toBe(true);
   });
 
   test('renders edge anchors as spans without circular point handles', () => {
@@ -56,16 +62,22 @@ describe('getPrimaryAnchorHandleVisuals', () => {
       }
     ]);
 
-    const visuals = _test.getPrimaryAnchorHandleVisuals(node.anchors[0]!, node, false, new Zoom(1), 4);
+    const visuals = _test.getPrimaryAnchorHandleVisuals(
+      node.anchors[0]!,
+      node,
+      false,
+      new Zoom(1),
+      4
+    );
 
     const lineNodes = visuals.transformedChildren.filter(
       child => child.type === 's' && child.tag === 'line'
     );
 
     expect(lineNodes.length).toBe(2);
-    expect(visuals.transformedChildren.some(child => child.type === 's' && child.tag === 'circle')).toBe(
-      false
-    );
+    expect(
+      visuals.transformedChildren.some(child => child.type === 's' && child.tag === 'circle')
+    ).toBe(false);
     expect(lineNodes[0]?.data).toMatchObject({
       x1: 10,
       y1: 20,

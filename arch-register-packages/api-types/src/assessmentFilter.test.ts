@@ -18,8 +18,16 @@ const fields: AssessmentField[] = [
 
 describe('isAssessmentCondition / splitAssessmentConditions', () => {
   it('identifies presence and field-prefixed conditions', () => {
-    expect(isAssessmentCondition({ fieldId: ASSESSMENT_PRESENCE_FIELD_ID, op: 'not_empty', value: undefined })).toBe(true);
-    expect(isAssessmentCondition({ fieldId: '_assessment:rating1', op: 'gte', value: 3 })).toBe(true);
+    expect(
+      isAssessmentCondition({
+        fieldId: ASSESSMENT_PRESENCE_FIELD_ID,
+        op: 'not_empty',
+        value: undefined
+      })
+    ).toBe(true);
+    expect(isAssessmentCondition({ fieldId: '_assessment:rating1', op: 'gte', value: 3 })).toBe(
+      true
+    );
     expect(isAssessmentCondition({ fieldId: '_schemaId', op: 'equals', value: 'x' })).toBe(false);
   });
 
@@ -38,10 +46,18 @@ describe('isAssessmentCondition / splitAssessmentConditions', () => {
 describe('matchesAssessmentConditions', () => {
   it('treats undefined values as no response for presence checks', () => {
     expect(
-      matchesAssessmentConditions(undefined, [{ fieldId: ASSESSMENT_PRESENCE_FIELD_ID, op: 'not_empty', value: undefined }], fields)
+      matchesAssessmentConditions(
+        undefined,
+        [{ fieldId: ASSESSMENT_PRESENCE_FIELD_ID, op: 'not_empty', value: undefined }],
+        fields
+      )
     ).toBe(false);
     expect(
-      matchesAssessmentConditions(undefined, [{ fieldId: ASSESSMENT_PRESENCE_FIELD_ID, op: 'empty', value: undefined }], fields)
+      matchesAssessmentConditions(
+        undefined,
+        [{ fieldId: ASSESSMENT_PRESENCE_FIELD_ID, op: 'empty', value: undefined }],
+        fields
+      )
     ).toBe(true);
   });
 
@@ -59,28 +75,56 @@ describe('matchesAssessmentConditions', () => {
 
   it('matches enum equals/not_equals/empty', () => {
     expect(
-      matchesAssessmentConditions({ enum1: 'a' }, [{ fieldId: '_assessment:enum1', op: 'equals', value: 'a' }], fields)
+      matchesAssessmentConditions(
+        { enum1: 'a' },
+        [{ fieldId: '_assessment:enum1', op: 'equals', value: 'a' }],
+        fields
+      )
     ).toBe(true);
     expect(
-      matchesAssessmentConditions({ enum1: 'a' }, [{ fieldId: '_assessment:enum1', op: 'not_equals', value: 'b' }], fields)
+      matchesAssessmentConditions(
+        { enum1: 'a' },
+        [{ fieldId: '_assessment:enum1', op: 'not_equals', value: 'b' }],
+        fields
+      )
     ).toBe(true);
     expect(
-      matchesAssessmentConditions(undefined, [{ fieldId: '_assessment:enum1', op: 'empty', value: undefined }], fields)
+      matchesAssessmentConditions(
+        undefined,
+        [{ fieldId: '_assessment:enum1', op: 'empty', value: undefined }],
+        fields
+      )
     ).toBe(true);
     expect(
-      matchesAssessmentConditions(undefined, [{ fieldId: '_assessment:enum1', op: 'equals', value: 'a' }], fields)
+      matchesAssessmentConditions(
+        undefined,
+        [{ fieldId: '_assessment:enum1', op: 'equals', value: 'a' }],
+        fields
+      )
     ).toBe(false);
   });
 
   it('matches text contains/empty/not_empty', () => {
     expect(
-      matchesAssessmentConditions({ text1: 'Hello World' }, [{ fieldId: '_assessment:text1', op: 'contains', value: 'world' }], fields)
+      matchesAssessmentConditions(
+        { text1: 'Hello World' },
+        [{ fieldId: '_assessment:text1', op: 'contains', value: 'world' }],
+        fields
+      )
     ).toBe(true);
     expect(
-      matchesAssessmentConditions(undefined, [{ fieldId: '_assessment:text1', op: 'empty', value: undefined }], fields)
+      matchesAssessmentConditions(
+        undefined,
+        [{ fieldId: '_assessment:text1', op: 'empty', value: undefined }],
+        fields
+      )
     ).toBe(true);
     expect(
-      matchesAssessmentConditions({ text1: 'x' }, [{ fieldId: '_assessment:text1', op: 'not_empty', value: undefined }], fields)
+      matchesAssessmentConditions(
+        { text1: 'x' },
+        [{ fieldId: '_assessment:text1', op: 'not_empty', value: undefined }],
+        fields
+      )
     ).toBe(true);
   });
 });
@@ -103,7 +147,9 @@ describe('resolveAssessmentValue', () => {
   });
 
   it('returns null when the field has no response', () => {
-    expect(resolveAssessmentValue({ _assessment: { enum1: 'a' } }, '_assessment:rating1')).toBeNull();
+    expect(
+      resolveAssessmentValue({ _assessment: { enum1: 'a' } }, '_assessment:rating1')
+    ).toBeNull();
   });
 
   it('returns the raw response value when present', () => {
