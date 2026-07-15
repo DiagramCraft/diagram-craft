@@ -160,6 +160,7 @@ export const updateWorkspaceSchema = async (
         key_prefix: next.key_prefix,
         description: next.description,
         fields: next.fields,
+        templates: next.templates,
         color: next.color,
         icon: next.icon,
         default_owner: next.defaultOwner,

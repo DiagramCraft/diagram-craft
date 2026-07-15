@@ -1,0 +1,2 @@
+ALTER TABLE entity_schema
+  ADD COLUMN IF NOT EXISTS templates JSONB NOT NULL DEFAULT '[]';

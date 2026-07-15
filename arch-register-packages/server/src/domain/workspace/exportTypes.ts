@@ -63,6 +63,7 @@ export type ExportSchema = {
   id: string;
   name: string;
   fields: unknown[];
+  templates?: import('@arch-register/api-types/schemaContract').EntityTemplate[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;

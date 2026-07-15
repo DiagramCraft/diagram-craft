@@ -3,7 +3,10 @@ import { FilterBuilder } from './FilterBuilder';
 import { useState } from 'react';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { WorkspaceLifecycleState, WorkspaceOwnerOption } from '@arch-register/api-types/workspaceContract';
+import type {
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption
+} from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
 const mockSchemas: EntitySchema[] = [
@@ -23,7 +26,8 @@ const mockSchemas: EntitySchema[] = [
       { id: 'environment', name: 'Environment', type: 'select', enumId: 'env', options: [] },
       { id: 'deployDate', name: 'Deploy Date', type: 'date' },
       { id: 'active', name: 'Active', type: 'boolean' }
-    ]
+    ],
+    templates: []
   },
   {
     id: 'database',
@@ -39,7 +43,8 @@ const mockSchemas: EntitySchema[] = [
     fields: [
       { id: 'engine', name: 'Engine', type: 'select', enumId: 'dbEngine', options: [] },
       { id: 'size', name: 'Size (GB)', type: 'text' }
-    ]
+    ],
+    templates: []
   }
 ];
 
@@ -109,9 +114,7 @@ export const Empty: Story = {
 
 export const SingleTextFilter: Story = {
   args: {
-    conditions: [
-      { fieldId: '_name', op: 'contains', value: 'api' }
-    ],
+    conditions: [{ fieldId: '_name', op: 'contains', value: 'api' }],
     onChange: () => {},
     schemas: mockSchemas,
     lifecycleStates: mockLifecycleStates,
@@ -186,10 +189,17 @@ export const Interactive = {
       { fieldId: '_name', op: 'contains', value: '' }
     ]);
     const [selectedSchema, setSelectedSchema] = useState<string | null>(null);
-    
+
     return (
       <div style={{ width: '400px' }}>
-        <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#f9fafb', borderRadius: '4px' }}>
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.5rem',
+            background: '#f9fafb',
+            borderRadius: '4px'
+          }}
+        >
           <div style={{ fontSize: '12px', fontWeight: 500, marginBottom: '0.5rem' }}>
             Schema Filter
           </div>
@@ -202,15 +212,22 @@ export const Interactive = {
                 setConditions([{ fieldId: '_schemaId', op: 'equals', value: val }]);
               }
             }}
-            style={{ width: '100%', padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+            style={{
+              width: '100%',
+              padding: '4px 8px',
+              border: '1px solid #e5e7eb',
+              borderRadius: '4px'
+            }}
           >
             <option value="">All Types</option>
             {mockSchemas.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
             ))}
           </select>
         </div>
-        
+
         <FilterBuilder
           conditions={conditions}
           onChange={setConditions}
@@ -220,12 +237,21 @@ export const Interactive = {
           enums={mockEnums}
           selectedSchemaId={selectedSchema}
         />
-        
-        <div style={{ marginTop: '1rem', padding: '0.5rem', background: '#f9fafb', borderRadius: '4px' }}>
+
+        <div
+          style={{
+            marginTop: '1rem',
+            padding: '0.5rem',
+            background: '#f9fafb',
+            borderRadius: '4px'
+          }}
+        >
           <div style={{ fontSize: '12px', fontWeight: 500, marginBottom: '0.5rem' }}>
             Current Filters ({conditions.length})
           </div>
-          <pre style={{ fontSize: '10px', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+          <pre
+            style={{ fontSize: '10px', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}
+          >
             {JSON.stringify(conditions, null, 2)}
           </pre>
         </div>
@@ -259,19 +285,25 @@ export const WithCloseHandler = {
       { fieldId: '_name', op: 'contains', value: 'test' }
     ]);
     const [isOpen, setIsOpen] = useState(true);
-    
+
     return (
       <div style={{ width: '400px' }}>
         {!isOpen && (
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            style={{ padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: '4px', background: 'white', cursor: 'pointer' }}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #e5e7eb',
+              borderRadius: '4px',
+              background: 'white',
+              cursor: 'pointer'
+            }}
           >
             Open Filter Builder
           </button>
         )}
-        
+
         {isOpen && (
           <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px' }}>
             <FilterBuilder
@@ -285,7 +317,7 @@ export const WithCloseHandler = {
             />
           </div>
         )}
-        
+
         {isOpen && (
           <div style={{ marginTop: '0.5rem', fontSize: '11px', color: '#666' }}>
             Press Enter or click "Clear all" to close
@@ -318,7 +350,7 @@ export const AllOperatorTypes = {
           enums={mockEnums}
         />
       </div>
-      
+
       <div>
         <h3 style={{ fontSize: '14px', marginBottom: '0.5rem' }}>Date Operators</h3>
         <FilterBuilder
@@ -335,7 +367,7 @@ export const AllOperatorTypes = {
           selectedSchemaId="service"
         />
       </div>
-      
+
       <div>
         <h3 style={{ fontSize: '14px', marginBottom: '0.5rem' }}>Select Operators</h3>
         <FilterBuilder
