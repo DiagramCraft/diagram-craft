@@ -65,7 +65,7 @@ export const documentTemplateSchema = z.object({
   project_id: z.string().nullable(),
   name: z.string(),
   body: z.string(),
-  document_type_id: z.string().nullable(),
+  document_type_id: z.string(),
   metadata_defaults: documentMetadataSchema,
   archived: z.boolean(),
   created_at: z.string(),
@@ -81,7 +81,7 @@ const documentTypeWriteSchema = z.object({
 const documentTemplateWriteSchema = z.object({
   name: z.string().min(1),
   body: z.string(),
-  document_type_id: z.string().nullable().optional(),
+  document_type_id: z.string().min(1),
   metadata_defaults: documentMetadataSchema.default({}),
   project_id: z.string().nullable().optional()
 });

@@ -42,7 +42,7 @@ CREATE TABLE document_template (
   project_id        UUID,
   name              TEXT NOT NULL,
   body              TEXT NOT NULL,
-  document_type_id  UUID,
+  document_type_id  UUID NOT NULL,
   metadata_defaults JSONB NOT NULL DEFAULT '{}',
   archived          BOOLEAN NOT NULL DEFAULT FALSE,
   created_at        TIMESTAMPTZ NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE document_template (
   UNIQUE (workspace, project_id, name),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE,
   FOREIGN KEY (workspace, project_id) REFERENCES project(workspace, id) ON DELETE CASCADE,
-  FOREIGN KEY (workspace, document_type_id) REFERENCES document_type(workspace, id) ON DELETE SET NULL
+  FOREIGN KEY (workspace, document_type_id) REFERENCES document_type(workspace, id) ON DELETE RESTRICT
 );
 
 CREATE INDEX document_template_workspace_idx ON document_template(workspace, project_id, archived, name);

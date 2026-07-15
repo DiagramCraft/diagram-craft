@@ -18,6 +18,7 @@ import { aiContract } from '@arch-register/api-types/aiContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { jobsContract } from '@arch-register/api-types/jobsContract';
 import { webhookContract } from '@arch-register/api-types/webhookContract';
+import { documentContract } from '@arch-register/api-types/documentContract';
 
 const makeFetch =
   (auth?: string) =>
@@ -37,6 +38,7 @@ const makeClient = <T extends AnyContractRouter>(contract: T, baseUrl: string, a
 
 export const createTestORPCClient = (baseUrl: string, auth?: string) => {
   const make = <T extends AnyContractRouter>(contract: T) => makeClient(contract, baseUrl, auth);
+  const documents = make(documentContract);
 
   return {
     projects: make(projectContract).projects,
@@ -55,7 +57,8 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     ai: make(aiContract).ai,
     diagramCraft: make(diagramCraftContract).diagramCraft,
     jobs: make(jobsContract).jobs,
-    webhooks: make(webhookContract).webhooks
+    webhooks: make(webhookContract).webhooks,
+    documents
   };
 };
 

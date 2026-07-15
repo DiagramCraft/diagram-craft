@@ -3,6 +3,7 @@ import { TbChevronLeft, TbChevronRight, TbRestore, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useMarkdownRevision } from '../../hooks/useMarkdownContent';
 import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectContract';
+import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
 import { MdxPreview } from './preview/MdxPreview';
 import { renderMarkdownPreview } from './preview/mdxRenderNode';
 import { diffMarkdown } from './diff/markdownDiff';
@@ -78,17 +79,24 @@ const DiffRowView = ({ row }: { row: DiffRow }) => {
   );
 };
 
+const metadataValue = (value: DocumentMetadata[string] | undefined) =>
+  value == null ? '—' : Array.isArray(value) ? value.join(', ') : String(value);
+
+const metadataEqual = (left: DocumentMetadata[string] | undefined, right: DocumentMetadata[string] | undefined) =>
+  JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+
 // ── CompareView ───────────────────────────────────────────────────────────────
 
 const CompareView = (props: {
   workspaceSlug: string;
   nodeId: string;
   currentBody: string;
+  currentMetadata: DocumentMetadata;
   revisions: MarkdownRevisionSummary[];
   selectedRevisionId: string;
   compareMode: 'to-current' | 'changes-in-version';
 }) => {
-  const { workspaceSlug, nodeId, currentBody, revisions, selectedRevisionId, compareMode } = props;
+  const { workspaceSlug, nodeId, currentBody, currentMetadata, revisions, selectedRevisionId, compareMode } = props;
 
   const selectedIndex = revisions.findIndex(r => r.id === selectedRevisionId);
   const previousRevision = revisions[selectedIndex + 1] ?? null;
@@ -109,11 +117,22 @@ const CompareView = (props: {
 
   const baseBody = baseRevision?.body ?? null;
   const targetBody = compareMode === 'to-current' ? currentBody : (targetRevision?.body ?? null);
+  const baseMetadata = baseRevision?.metadata ?? null;
+  const targetMetadata = compareMode === 'to-current' ? currentMetadata : (targetRevision?.metadata ?? null);
 
   const rows = useMemo(() => {
     if (baseBody === null) return null;
     return diffMarkdown(baseBody, targetBody ?? '');
   }, [baseBody, targetBody]);
+
+  const metadataChanges = useMemo(() => {
+    if (baseMetadata === null || targetMetadata === null) return null;
+    const keys = new Set([...Object.keys(baseMetadata), ...Object.keys(targetMetadata)]);
+    return [...keys]
+      .sort()
+      .filter(key => !metadataEqual(baseMetadata[key], targetMetadata[key]))
+      .map(key => ({ key, previous: baseMetadata[key], next: targetMetadata[key] }));
+  }, [baseMetadata, targetMetadata]);
 
   const isLoading = baseLoading || (compareMode === 'changes-in-version' && targetLoading);
   const noPreviousVersion = compareMode === 'changes-in-version' && !previousRevision;
@@ -127,10 +146,26 @@ const CompareView = (props: {
           </div>
         ) : isLoading || rows === null ? (
           <div className={styles.previewEmpty}>Loading…</div>
-        ) : rows.length === 0 ? (
+        ) : rows.length === 0 && metadataChanges?.length === 0 ? (
           <div className={styles.previewEmpty}>These versions are identical.</div>
         ) : (
-          rows.map((row, i) => <DiffRowView key={i} row={row} />)
+          <>
+            {metadataChanges && metadataChanges.length > 0 && (
+              <section style={{ padding: '12px 16px', borderBottom: '1px solid var(--panel-border)' }}>
+                <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 6 }}>Metadata changes</div>
+                <div style={{ display: 'grid', gap: 4, fontSize: 11 }}>
+                  {metadataChanges.map(change => (
+                    <div key={change.key} style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) 1fr 1fr', gap: 8 }}>
+                      <code>{change.key}</code>
+                      <span style={{ color: 'var(--error-fg)' }}>− {metadataValue(change.previous)}</span>
+                      <span style={{ color: 'var(--success-fg)' }}>+ {metadataValue(change.next)}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+            {rows.map((row, i) => <DiffRowView key={i} row={row} />)}
+          </>
         )}
       </div>
     </div>
@@ -143,6 +178,7 @@ type MarkdownHistoryPanelProps = {
   workspaceSlug: string;
   nodeId: string;
   currentBody: string;
+  currentMetadata: DocumentMetadata;
   revisions: MarkdownRevisionSummary[];
   revisionsLoading: boolean;
   selectedRevisionId: string | undefined;
@@ -160,6 +196,7 @@ export const MarkdownHistoryPanel = ({
   workspaceSlug,
   nodeId,
   currentBody,
+  currentMetadata,
   revisions,
   revisionsLoading,
   selectedRevisionId,
@@ -270,6 +307,7 @@ export const MarkdownHistoryPanel = ({
               workspaceSlug={workspaceSlug}
               nodeId={nodeId}
               currentBody={currentBody}
+              currentMetadata={currentMetadata}
               revisions={revisions}
               selectedRevisionId={selectedRevisionId}
               compareMode={compareMode}

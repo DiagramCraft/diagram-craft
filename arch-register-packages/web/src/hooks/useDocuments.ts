@@ -8,38 +8,38 @@ import type {
 import { orpcClient } from '../lib/orpcClient';
 
 export const documentKeys = {
-  types: (workspaceId: string) => ['document-types', workspaceId] as const,
-  templates: (workspaceId: string, projectId?: string | null) =>
-    ['document-templates', workspaceId, projectId ?? 'workspace'] as const,
+  types: (workspaceId: string, includeArchived = false) => ['document-types', workspaceId, includeArchived] as const,
+  templates: (workspaceId: string, projectId?: string | null, includeArchived = false) =>
+    ['document-templates', workspaceId, projectId ?? 'workspace', includeArchived] as const,
   related: (workspaceId: string, entityId: string) => ['related-content', workspaceId, entityId] as const
 };
 
-export const documentTypesQuery = (workspaceId: string) =>
+export const documentTypesQuery = (workspaceId: string, includeArchived = false) =>
   queryOptions({
-    queryKey: documentKeys.types(workspaceId),
+    queryKey: documentKeys.types(workspaceId, includeArchived),
     queryFn: () =>
       orpcClient.documentTypes.list({
         params: { workspace: workspaceId },
-        query: { include_archived: false }
+        query: { include_archived: includeArchived }
       }),
     enabled: !!workspaceId
   });
 
-export const documentTemplatesQuery = (workspaceId: string, projectId?: string | null) =>
+export const documentTemplatesQuery = (workspaceId: string, projectId?: string | null, includeArchived = false) =>
   queryOptions({
-    queryKey: documentKeys.templates(workspaceId, projectId),
+    queryKey: documentKeys.templates(workspaceId, projectId, includeArchived),
     queryFn: () =>
       orpcClient.documentTemplates.list({
         params: { workspace: workspaceId },
-        query: { project_id: projectId, include_archived: false }
+        query: { project_id: projectId, include_archived: includeArchived }
       }),
     enabled: !!workspaceId
   });
 
-export const useDocumentTypes = (workspaceId: string) => useQuery(documentTypesQuery(workspaceId));
+export const useDocumentTypes = (workspaceId: string, includeArchived = false) => useQuery(documentTypesQuery(workspaceId, includeArchived));
 
-export const useDocumentTemplates = (workspaceId: string, projectId?: string | null) =>
-  useQuery(documentTemplatesQuery(workspaceId, projectId));
+export const useDocumentTemplates = (workspaceId: string, projectId?: string | null, includeArchived = false) =>
+  useQuery(documentTemplatesQuery(workspaceId, projectId, includeArchived));
 
 export const useRelatedDocumentContent = (workspaceId: string, entityId: string) =>
   useQuery({
@@ -80,8 +80,8 @@ export const useCreateDocumentTemplate = (workspaceId: string) => {
   return useMutation({
     mutationFn: (body: DocumentTemplateWrite) =>
       orpcClient.documentTemplates.create({ params: { workspace: workspaceId }, body }),
-    onSuccess: (_, body) => {
-      void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId, body.project_id) });
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId, variables.project_id) });
       void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId) });
     }
   });
@@ -94,6 +94,18 @@ export const useArchiveDocumentTemplate = (workspaceId: string) => {
       orpcClient.documentTemplates.archive({ params: { workspace: workspaceId, id }, body: { archived } }),
     onSuccess: template => {
       void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId, template.project_id) });
+      void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId) });
+    }
+  });
+};
+
+export const useUpdateDocumentTemplate = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: DocumentTemplateWrite }) =>
+      orpcClient.documentTemplates.update({ params: { workspace: workspaceId, id }, body }),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId, variables.body.project_id) });
       void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId) });
     }
   });

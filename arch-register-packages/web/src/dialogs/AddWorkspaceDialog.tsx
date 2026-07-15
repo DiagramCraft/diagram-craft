@@ -88,6 +88,7 @@ const TEMPLATES = [
 
 const COPY_PARTS = [
   { id: 'schemas', label: 'Data model', default: true },
+  { id: 'entities', label: 'Entities', default: false },
   { id: 'projects', label: 'Projects & diagrams', default: false },
   { id: 'members', label: 'Members & roles', default: false },
   { id: 'settings', label: 'Settings', default: true }

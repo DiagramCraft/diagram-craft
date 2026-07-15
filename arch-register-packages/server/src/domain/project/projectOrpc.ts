@@ -52,6 +52,7 @@ import {
   saveNewMarkdownContent,
   getMarkdownContent,
   saveMarkdownContent,
+  migrateMarkdownContent,
   listMarkdownRevisions,
   listRelatedContent,
   getMarkdownRevision,
@@ -588,6 +589,22 @@ const markdownHandlers = {
     async ({ input, context }) => {
       if (!context.storage) throw new Error('Storage adapter not available');
       return await saveMarkdownContent(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.params.nodeId,
+        input.body.body,
+        input.body.name,
+        input.body.document_type_id,
+        input.body.metadata,
+        context.event
+      );
+    }
+  ),
+  migrateMarkdownContent: projectRouter.projects.migrateMarkdownContent.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await migrateMarkdownContent(
         context.db,
         context.storage,
         input.params.workspace,

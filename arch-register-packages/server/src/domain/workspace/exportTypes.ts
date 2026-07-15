@@ -142,7 +142,7 @@ export type ExportDocumentData = {
     project_id: string | null;
     name: string;
     body: string;
-    document_type_id: string | null;
+    document_type_id: string;
     metadata_defaults: DocumentMetadata;
     archived: boolean;
     created_at: string;

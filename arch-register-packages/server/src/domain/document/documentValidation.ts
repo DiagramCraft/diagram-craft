@@ -53,10 +53,17 @@ const valueTypeMatches = (field: DocumentField, value: unknown) => {
 export const validateDocumentMetadata = (
   fields: DocumentField[],
   metadata: DocumentMetadata,
-  allowMissingRequired = false
+  allowMissingRequired = false,
+  rejectUnknownFields = false
 ) => {
   const errors: string[] = [];
   const warnings: string[] = [];
+  if (rejectUnknownFields) {
+    const fieldIds = new Set(fields.map(field => field.id));
+    for (const fieldId of Object.keys(metadata)) {
+      if (!fieldIds.has(fieldId)) errors.push(`Metadata field '${fieldId}' is not part of this document type`);
+    }
+  }
   for (const field of fields) {
     if (field.retired) continue;
     const value = metadata[field.id];
@@ -72,8 +79,8 @@ export const validateDocumentMetadata = (
   return { errors, warnings };
 };
 
-export const assertDocumentMetadataValid = (fields: DocumentField[], metadata: DocumentMetadata) => {
-  const result = validateDocumentMetadata(fields, metadata);
+export const assertDocumentMetadataValid = (fields: DocumentField[], metadata: DocumentMetadata, rejectUnknownFields = false) => {
+  const result = validateDocumentMetadata(fields, metadata, false, rejectUnknownFields);
   httpAssert.true(result.errors.length === 0, { status: 400, message: result.errors.join('; ') });
   return result;
 };

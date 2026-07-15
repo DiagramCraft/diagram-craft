@@ -28438,6 +28438,353 @@
         }
       }
     },
+    "/{workspace}/markdown/{nodeId}/migrate": {
+      "post": {
+        "operationId": "projects.migrateMarkdownContent",
+        "summary": "Migrate markdown document type",
+        "description": "Explicitly changes or removes the document type of a markdown document and saves the reviewed metadata.",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Markdown node identifier"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "description": "Markdown content"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Optional new name for the document"
+                  },
+                  "document_type_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "New document type identifier, or null to remove the type"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Reviewed structured metadata values"
+                  }
+                },
+                "required": [
+                  "body",
+                  "document_type_id",
+                  "metadata"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique file identifier"
+                    },
+                    "project_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent project identifier (null for entity/workspace files)"
+                    },
+                    "project_public_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Public project identifier"
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "File path within the project/entity/workspace"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "File name"
+                    },
+                    "role": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "attachment-container"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Special file role"
+                    },
+                    "size_bytes": {
+                      "type": "number",
+                      "description": "File size in bytes"
+                    },
+                    "comment_count": {
+                      "type": "number",
+                      "description": "Number of comments on the file"
+                    },
+                    "unresolved_comment_count": {
+                      "type": "number",
+                      "description": "Number of unresolved comments"
+                    },
+                    "is_template": {
+                      "type": "boolean",
+                      "description": "Whether the file is a project template"
+                    },
+                    "is_workspace_template": {
+                      "type": "boolean",
+                      "description": "Whether the file is a workspace-level template"
+                    },
+                    "preview_svg": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "SVG preview of the file (for diagrams)"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "type": {
+                      "enum": [
+                        "diagram",
+                        "folder",
+                        "markdown",
+                        "file"
+                      ],
+                      "type": "string",
+                      "description": "File type"
+                    },
+                    "created_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User who created the file"
+                    },
+                    "updated_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User who last updated the file"
+                    },
+                    "mime_type": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "MIME type for generic files"
+                    },
+                    "original_filename": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Original filename for uploaded files"
+                    },
+                    "read_only": {
+                      "type": "boolean",
+                      "description": "Whether this content is managed by an external mount"
+                    },
+                    "mount_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "External content mount identifier"
+                    },
+                    "content_metadata": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Content title"
+                            },
+                            "description": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Content description"
+                            },
+                            "company": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Company name"
+                            },
+                            "category": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Content category"
+                            },
+                            "keywords": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "Content keywords"
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "description",
+                            "company",
+                            "category",
+                            "keywords"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Content metadata (for diagrams)"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "project_id",
+                    "path",
+                    "name",
+                    "size_bytes",
+                    "created_at",
+                    "updated_at",
+                    "type",
+                    "content_metadata"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/markdown": {
       "post": {
         "operationId": "projects.saveNewMarkdownContent",
@@ -39405,14 +39752,7 @@
                         "type": "string"
                       },
                       "document_type_id": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
+                        "type": "string"
                       },
                       "metadata_defaults": {
                         "type": "object",
@@ -39503,14 +39843,8 @@
                     "type": "string"
                   },
                   "document_type_id": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": "string",
+                    "minLength": 1
                   },
                   "metadata_defaults": {
                     "type": "object",
@@ -39554,7 +39888,8 @@
                 },
                 "required": [
                   "name",
-                  "body"
+                  "body",
+                  "document_type_id"
                 ]
               }
             }
@@ -39591,14 +39926,7 @@
                       "type": "string"
                     },
                     "document_type_id": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": "string"
                     },
                     "metadata_defaults": {
                       "type": "object",
@@ -39698,14 +40026,8 @@
                     "type": "string"
                   },
                   "document_type_id": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": "string",
+                    "minLength": 1
                   },
                   "metadata_defaults": {
                     "type": "object",
@@ -39749,7 +40071,8 @@
                 },
                 "required": [
                   "name",
-                  "body"
+                  "body",
+                  "document_type_id"
                 ]
               }
             }
@@ -39786,14 +40109,7 @@
                       "type": "string"
                     },
                     "document_type_id": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": "string"
                     },
                     "metadata_defaults": {
                       "type": "object",
@@ -39973,14 +40289,7 @@
                       "type": "string"
                     },
                     "document_type_id": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": "string"
                     },
                     "metadata_defaults": {
                       "type": "object",

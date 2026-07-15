@@ -11,6 +11,8 @@ import {
   type ContentStorageChange
 } from '../project/contentWriteCoordinator';
 import type { AuthorizationContext, WorkspaceCapability } from '@arch-register/permissions';
+import { formatPublicId } from '../../utils/publicIds';
+import { httpAssert } from '../../utils/httpAssert';
 import { PermissionChecker } from '@arch-register/permissions';
 import type {
   ExportManifest,
@@ -172,7 +174,19 @@ export const parseImport = async (
       summary.documents = { count: data.documents.types.length, templates: data.documents.templates.length, revisions: data.documents.revisions.length };
       const entityIds = new Set((data.entities ?? []).map(entity => entity.id));
       const nodeIds = new Set((data.content_nodes ?? []).map(node => node.id));
+      const projectIds = new Set((data.projects ?? []).map(project => project.id));
+      for (const template of data.documents.templates) {
+        if (template.project_id == null || projectIds.has(template.project_id)) continue;
+        const message = `Document template '${template.id}' belongs to project '${template.project_id}', which is not included in the import archive and will be skipped`;
+        diagnostics.push({ code: 'missing_reference', item_type: 'documents', item_id: template.id, message });
+        warnings.push(message);
+      }
       for (const metadata of data.documents.metadata) {
+        if (!nodeIds.has(metadata.node_id)) {
+          const message = `Document metadata for '${metadata.node_id}' has no matching content node in the import archive and will be skipped`;
+          diagnostics.push({ code: 'missing_reference', item_type: 'documents', item_id: metadata.node_id, message });
+          warnings.push(message);
+        }
         for (const link of metadata.links) {
           const available = link.target_type === 'entity' ? entityIds.has(link.target_id) : nodeIds.has(link.target_id);
           if (available) continue;
@@ -180,6 +194,12 @@ export const parseImport = async (
           diagnostics.push({ code: 'missing_reference', item_type: 'documents', item_id: metadata.node_id, message });
           warnings.push(message);
         }
+      }
+      for (const revision of data.documents.revisions) {
+        if (nodeIds.has(revision.node_id)) continue;
+        const message = `Document revision '${revision.id}' has no matching content node in the import archive and will be skipped`;
+        diagnostics.push({ code: 'missing_reference', item_type: 'documents', item_id: revision.id, message });
+        warnings.push(message);
       }
     }
   }
@@ -1125,6 +1145,11 @@ const importEntities = async (
   const existingEntities = new Map(
     (await db.catalog.listEntities(workspace)).map(entity => [entity.id, entity])
   );
+  const usedPublicIds = new Set(
+    [...existingEntities.values()]
+      .map(entity => entity.public_id)
+      .filter((publicId): publicId is string => publicId != null)
+  );
   const mappedEntities = entities.flatMap(entity => {
     if (hasSkipResolution(resolutions, entity.id) || resolutions[entity.id]?.action === 'merge')
       return [];
@@ -1139,11 +1164,27 @@ const importEntities = async (
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
+    const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
+    const schema = await db.catalog.getSchema(workspace, schemaId);
+    let publicId = preserveIds ? entity.public_id ?? nextId : null;
+    if (!publicId || usedPublicIds.has(publicId)) {
+      httpAssert.present(schema, {
+        status: 409,
+        message: `Schema '${schemaId}' is unavailable while importing entity '${entity.id}'`
+      });
+      do {
+        publicId = formatPublicId(
+          schema.key_prefix,
+          await db.workspace.allocatePublicId(schema.key_prefix, now)
+        );
+      } while (usedPublicIds.has(publicId));
+    }
+    usedPublicIds.add(publicId);
     const input: EntityDbCreate = {
       id: nextId,
       workspace,
-      public_id: entity.public_id ?? nextId,
-      schema_id: resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id,
+      public_id: publicId,
+      schema_id: schemaId,
       name: entity.name,
       slug: entity.slug,
       namespace: entity.namespace,
@@ -1196,6 +1237,8 @@ const importProjects = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
+  const workspaceRow = await db.workspace.getWorkspace(workspace);
+  httpAssert.present(workspaceRow, { status: 404, message: `Workspace '${workspace}' not found` });
   const existingProjects = new Map(
     (await db.project.listProjects(workspace)).map(project => [project.id, project])
   );
@@ -1232,7 +1275,10 @@ const importProjects = async (
       await db.project.createProject({
         id: nextId,
         workspace,
-        public_id: nextId,
+        public_id: formatPublicId(
+          workspaceRow.short_code,
+          await db.workspace.allocatePublicId(workspaceRow.short_code, now)
+        ),
         name: project.name,
         description: project.description,
         owner,
@@ -1399,16 +1445,34 @@ const importDocuments = async (
   }
   let templates = 0;
   for (const template of documents.templates) {
+    if (template.project_id != null && !idMapping.projects.has(template.project_id)) continue;
     const projectId = template.project_id == null ? null : idMapping.projects.get(template.project_id) ?? null;
-    await db.document.createDocumentTemplate({ id: preserveIds ? template.id : randomUUID(), workspace, project_id: projectId, name: template.name, body: template.body, document_type_id: template.document_type_id ? typeMapping.get(template.document_type_id) ?? null : null, metadata_defaults: template.metadata_defaults, created_at: new Date(template.created_at), updated_at: new Date() });
+    const documentTypeId = typeMapping.get(template.document_type_id);
+    if (!documentTypeId) continue;
+    const importedTemplate = await db.document.createDocumentTemplate({ id: preserveIds ? template.id : randomUUID(), workspace, project_id: projectId, name: template.name, body: template.body, document_type_id: documentTypeId, metadata_defaults: template.metadata_defaults, created_at: new Date(template.created_at), updated_at: new Date() });
+    if (template.archived) await db.document.archiveDocumentTemplate(workspace, importedTemplate.id, true, new Date());
     templates++;
   }
   let metadataCount = 0;
+  const remapMetadataValues = (documentTypeId: string | null, sourceValues: ExportDocumentData['metadata'][number]['values']) => {
+    const sourceType = documentTypeId ? documents.types.find(type => type.id === documentTypeId) : null;
+    const values = { ...sourceValues };
+    for (const field of sourceType?.fields ?? []) {
+      if (field.type !== 'entity_link' && field.type !== 'document_link') continue;
+      const raw = values[field.id];
+      const sourceIds = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
+      const mapped = sourceIds
+        .map(targetId => field.type === 'entity_link' ? idMapping.entities.get(targetId) : idMapping.content_nodes.get(targetId))
+        .filter((targetId): targetId is string => !!targetId);
+      values[field.id] = Array.isArray(raw) ? mapped : mapped[0] ?? null;
+    }
+    return values;
+  };
   for (const item of documents.metadata) {
     const nodeId = idMapping.content_nodes.get(item.node_id);
     if (!nodeId) continue;
     const documentTypeId = item.document_type_id ? typeMapping.get(item.document_type_id) ?? null : null;
-    await db.document.upsertDocumentMetadata({ workspace, node_id: nodeId, document_type_id: documentTypeId, values: item.values, updated_at: new Date() });
+    await db.document.upsertDocumentMetadata({ workspace, node_id: nodeId, document_type_id: documentTypeId, values: remapMetadataValues(item.document_type_id, item.values), updated_at: new Date() });
     const links = item.links.flatMap(link => {
       const targetId = link.target_type === 'entity'
         ? idMapping.entities.get(link.target_id)
@@ -1428,7 +1492,10 @@ const importDocuments = async (
     if (!nodeId) continue;
     const id = preserveIds ? revision.id : randomUUID();
     revisionMapping.set(revision.id, id);
-    await db.project.createMarkdownRevision({ id, workspace, node_id: nodeId, revision_number: revision.revision_number, title: revision.title, body: revision.body, created_at: new Date(revision.created_at), created_by: null, restored_from_revision_id: revision.restored_from_revision_id ? revisionMapping.get(revision.restored_from_revision_id) ?? null : null, document_type_id: revision.document_type_id ? typeMapping.get(revision.document_type_id) ?? null : null, metadata: revision.metadata });
+    const createdBy = revision.created_by && await db.auth.getUser(revision.created_by)
+      ? revision.created_by
+      : null;
+    await db.project.createMarkdownRevision({ id, workspace, node_id: nodeId, revision_number: revision.revision_number, title: revision.title, body: revision.body, created_at: new Date(revision.created_at), created_by: createdBy, restored_from_revision_id: revision.restored_from_revision_id ? revisionMapping.get(revision.restored_from_revision_id) ?? null : null, document_type_id: revision.document_type_id ? typeMapping.get(revision.document_type_id) ?? null : null, metadata: remapMetadataValues(revision.document_type_id, revision.metadata) });
     revisions++;
   }
   return { created, templates, metadata: metadataCount, revisions };

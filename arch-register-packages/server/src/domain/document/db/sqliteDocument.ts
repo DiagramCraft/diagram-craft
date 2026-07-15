@@ -22,18 +22,21 @@ const typeMapper = (row: DatabaseRow): DocumentTypeDbResult => ({
   updated_at: databaseDate(row['updated_at'])
 });
 
-const templateMapper = (row: DatabaseRow): DocumentTemplateDbResult => ({
-  id: String(row['id']),
-  workspace: String(row['workspace']),
-  project_id: row['project_id'] == null ? null : String(row['project_id']),
-  name: String(row['name']),
-  body: String(row['body']),
-  document_type_id: row['document_type_id'] == null ? null : String(row['document_type_id']),
-  metadata_defaults: parseDatabaseJson(row['metadata_defaults'], {}, 'document_template.metadata_defaults'),
-  archived: databaseBoolean(row['archived']),
-  created_at: databaseDate(row['created_at']),
-  updated_at: databaseDate(row['updated_at'])
-});
+const templateMapper = (row: DatabaseRow): DocumentTemplateDbResult => {
+  if (row['document_type_id'] == null) throw new Error('Document template is missing a document type');
+  return {
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    project_id: row['project_id'] == null ? null : String(row['project_id']),
+    name: String(row['name']),
+    body: String(row['body']),
+    document_type_id: String(row['document_type_id']),
+    metadata_defaults: parseDatabaseJson(row['metadata_defaults'], {}, 'document_template.metadata_defaults'),
+    archived: databaseBoolean(row['archived']),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  };
+};
 
 const metadataMapper = (row: DatabaseRow) => ({
   workspace: String(row['workspace']),
@@ -125,7 +128,7 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
   async createDocumentTemplate(input: DocumentTemplateDbCreate) {
     this.run(
       'INSERT INTO document_template (id, workspace, project_id, name, body, document_type_id, metadata_defaults, archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
-      [input.id, input.workspace, input.project_id ?? null, input.name, input.body, input.document_type_id ?? null, JSON.stringify(input.metadata_defaults), input.created_at.toISOString(), input.updated_at.toISOString()]
+      [input.id, input.workspace, input.project_id ?? null, input.name, input.body, input.document_type_id, JSON.stringify(input.metadata_defaults), input.created_at.toISOString(), input.updated_at.toISOString()]
     );
     return (await this.getDocumentTemplate(input.workspace, input.id))!;
   }
@@ -133,7 +136,7 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
   async updateDocumentTemplate(workspace: string, id: string, input: DocumentTemplateWrite & { updated_at: Date }) {
     this.run(
       'UPDATE document_template SET project_id = ?, name = ?, body = ?, document_type_id = ?, metadata_defaults = ?, updated_at = ? WHERE workspace = ? AND id = ?',
-      [input.project_id ?? null, input.name, input.body, input.document_type_id ?? null, JSON.stringify(input.metadata_defaults), input.updated_at.toISOString(), workspace, id]
+      [input.project_id ?? null, input.name, input.body, input.document_type_id, JSON.stringify(input.metadata_defaults), input.updated_at.toISOString(), workspace, id]
     );
     return await this.getDocumentTemplate(workspace, id);
   }

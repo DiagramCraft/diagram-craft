@@ -988,6 +988,28 @@ export const projectContract = oc.tag('Projects').router({
         })
       )
       .output(projectFileSchema),
+    migrateMarkdownContent: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/markdown/{nodeId}/migrate',
+        inputStructure: 'detailed',
+        summary: 'Migrate markdown document type',
+        description:
+          'Explicitly changes or removes the document type of a markdown document and saves the reviewed metadata.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: ws.extend({ nodeId: z.string().describe('Markdown node identifier') }),
+          body: z.object({
+            body: z.string().describe('Markdown content'),
+            name: z.string().optional().describe('Optional new name for the document'),
+            document_type_id: z.string().nullable().describe('New document type identifier, or null to remove the type'),
+            metadata: documentMetadataSchema.describe('Reviewed structured metadata values')
+          })
+        })
+      )
+      .output(projectFileSchema),
     saveNewMarkdownContent: oc
       .route({
         method: 'POST',

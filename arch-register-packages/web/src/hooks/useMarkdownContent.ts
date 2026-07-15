@@ -55,6 +55,19 @@ export const useSaveMarkdownContent = (scope: ContentScope, nodeId: string) => {
   });
 };
 
+export const useMigrateMarkdownContent = (scope: ContentScope, nodeId: string) => {
+  const queryClient = useQueryClient();
+  const { workspaceId } = scope;
+  return useMutation({
+    mutationFn: (input: { body: string; name?: string; document_type_id: string | null; metadata: DocumentMetadata }) =>
+      orpcClient.projects.migrateMarkdownContent({
+        params: { workspace: workspaceId, nodeId },
+        body: input
+      }),
+    onSuccess: () => invalidateMarkdownNode(queryClient, scope, nodeId)
+  });
+};
+
 export const useSaveNewMarkdownContent = (scope: ContentScope) => {
   const queryClient = useQueryClient();
   const { workspaceId } = scope;

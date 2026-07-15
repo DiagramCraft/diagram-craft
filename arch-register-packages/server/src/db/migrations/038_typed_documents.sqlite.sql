@@ -42,7 +42,7 @@ CREATE TABLE document_template (
   project_id        TEXT,
   name              TEXT NOT NULL,
   body              TEXT NOT NULL,
-  document_type_id  TEXT,
+  document_type_id  TEXT NOT NULL,
   metadata_defaults TEXT NOT NULL DEFAULT '{}',
   archived          INTEGER NOT NULL DEFAULT 0,
   created_at        TEXT NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE document_template (
   UNIQUE (workspace, project_id, name),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE,
   FOREIGN KEY (workspace, project_id) REFERENCES project(workspace, id) ON DELETE CASCADE,
-  FOREIGN KEY (workspace, document_type_id) REFERENCES document_type(workspace, id) ON DELETE SET NULL
+  FOREIGN KEY (workspace, document_type_id) REFERENCES document_type(workspace, id) ON DELETE RESTRICT
 );
 
 CREATE INDEX document_template_workspace_idx ON document_template(workspace, project_id, archived, name);

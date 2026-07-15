@@ -11,7 +11,7 @@ type MarkdownPropertiesPanelProps = {
   metadata: DocumentMetadata;
   readOnly: boolean;
   onTypeChange: (id: string | null) => void;
-  onValueChange: (fieldId: string, value: string | number | boolean | string[] | null) => void;
+  onValueChange: (fieldId: string, value: string | number | boolean | string[] | null | undefined) => void;
 };
 
 const fieldValue = (metadata: DocumentMetadata, field: DocumentField) => metadata[field.id];
@@ -30,6 +30,8 @@ export const MarkdownPropertiesPanel = ({
 }: MarkdownPropertiesPanelProps) => {
   const activeFields = fields.filter(field => !field.retired);
   const retiredFields = fields.filter(field => field.retired && metadata[field.id] !== undefined);
+  const knownFieldIds = new Set(fields.map(field => field.id));
+  const unreviewedMetadata = Object.entries(metadata).filter(([fieldId]) => !knownFieldIds.has(fieldId));
 
   return (
     <details open style={{ borderBottom: '1px solid var(--panel-border)', background: 'var(--panel-bg)', padding: '10px 18px' }}>
@@ -79,6 +81,18 @@ export const MarkdownPropertiesPanel = ({
         </div>
       )}
       {retiredFields.length > 0 && <div className="dim" style={{ marginTop: 10, fontSize: 10 }}>Retired fields are preserved for history: {retiredFields.map(field => field.name).join(', ')}.</div>}
+      {unreviewedMetadata.length > 0 && (
+        <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 600 }}>Metadata requiring review</div>
+          <div className="dim" style={{ fontSize: 10 }}>These values are not defined by the selected document type. Remove them before completing this migration.</div>
+          {unreviewedMetadata.map(([fieldId, value]) => (
+            <div key={fieldId} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+              <code style={{ flex: 1 }}>{fieldId} = {displayValue(value) || '—'}</code>
+              {!readOnly && <button type="button" onClick={() => onValueChange(fieldId, undefined)}>Remove</button>}
+            </div>
+          ))}
+        </div>
+      )}
     </details>
   );
 };

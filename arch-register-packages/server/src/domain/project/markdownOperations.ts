@@ -355,6 +355,12 @@ export const saveNewMarkdownContent = async (
   const parentId = input.folder ? (nodes.find(node => node.path === input.folder && node.type === 'folder')?.id ?? null) : null;
   const documentType = input.document_type_id ? await db.document.getDocumentType(ws, input.document_type_id) : null;
   if (input.document_type_id) httpAssert.present(documentType, { status: 400, message: `Document type '${input.document_type_id}' not found` });
+  if (documentType) {
+    httpAssert.true(!documentType.archived, {
+      status: 409,
+      message: `Archived document type '${documentType.id}' cannot be selected for a new document`
+    });
+  }
   if (documentType) assertDocumentMetadataValid(documentType.fields, input.metadata);
   const nodeId = randomUUID();
   const timestamp = new Date();
@@ -734,7 +740,8 @@ export const saveMarkdownContent = async (
   name: string | undefined,
   documentTypeId: string | null | undefined,
   metadata: DocumentMetadata | undefined,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  allowTypeMigration = false
 ): Promise<ProjectFile> => {
   return defineOperation(
     db,
@@ -758,9 +765,24 @@ export const saveMarkdownContent = async (
       const nextDocumentType = nextDocumentTypeId
         ? await db.document.getDocumentType(ws, nextDocumentTypeId)
         : null;
+      const typeChanged = currentDocument.documentTypeId !== (nextDocumentTypeId ?? null);
+      httpAssert.true(!typeChanged || allowTypeMigration, {
+        status: 409,
+        message: 'Changing or removing a document type requires an explicit migration'
+      });
+      if (allowTypeMigration && typeChanged && nextDocumentTypeId === null) {
+        httpAssert.true(Object.keys(nextMetadata).length === 0, {
+          status: 409,
+          message: 'Remove all metadata before removing the document type'
+        });
+      }
       if (nextDocumentTypeId) {
         httpAssert.present(nextDocumentType, { status: 400, message: `Document type '${nextDocumentTypeId}' not found` });
-        assertDocumentMetadataValid(nextDocumentType.fields, nextMetadata);
+        httpAssert.true(!nextDocumentType.archived || currentDocument.documentTypeId === nextDocumentTypeId, {
+          status: 409,
+          message: `Archived document type '${nextDocumentTypeId}' cannot be selected for a new document`
+        });
+        assertDocumentMetadataValid(nextDocumentType.fields, nextMetadata, allowTypeMigration && typeChanged);
       }
       const content = Buffer.from(JSON.stringify({ body }), 'utf8');
       const timestamp = new Date();
@@ -833,6 +855,29 @@ export const saveMarkdownContent = async (
     }
   );
 };
+
+export const migrateMarkdownContent = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  nodeId: string,
+  body: string,
+  name: string | undefined,
+  documentTypeId: string | null,
+  metadata: DocumentMetadata,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => saveMarkdownContent(
+  db,
+  storage,
+  workspace,
+  nodeId,
+  body,
+  name,
+  documentTypeId,
+  metadata,
+  event,
+  true
+);
 
 export const listMarkdownRevisions = async (
   db: DatabaseAdapter,

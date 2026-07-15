@@ -45,7 +45,7 @@ export const workspaceManagementORPCRouter = wsRouter.router({
       return await listWorkspaces(context.db, context.event);
     }),
     create: wsRouter.workspaces.create.handler(async ({ input, context }) => {
-      return await createWorkspace(context.db, input.body, context.event);
+      return await createWorkspace(context.db, input.body, context.event, context.storage);
     }),
     update: wsRouter.workspaces.update.handler(async ({ input, context }) => {
       return await updateWorkspace(context.db, input.params.workspace, input.body, context.event);

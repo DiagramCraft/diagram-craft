@@ -315,14 +315,15 @@ const exportContentNodes = async (
     };
 
     // Add content file references and read actual content if requested
-    if (includeContent && node.type !== 'folder' && storage && node.project_id) {
+    if (includeContent && node.type !== 'folder' && storage) {
       try {
         const fileExt = node.type === 'diagram' ? 'json' : node.type === 'markdown' ? 'md' : 'bin';
         const contentPath = `content/${node.type}s/${node.id}.${fileExt}`;
         exportNode.content_file = contentPath;
 
         // Read actual file content from storage
-        const content = await storage.read(workspace, node.project_id, node.id);
+        const storageScope = node.project_id ?? node.entity_id ?? workspace;
+        const content = await storage.read(workspace, storageScope, node.id);
         contentFiles.set(contentPath, content);
 
         // Handle preview SVG if available
@@ -363,7 +364,9 @@ const exportDocuments = async (
   }
   return {
     types: (await db.document.listDocumentTypes(workspace, true)).map(type => ({ ...type, created_at: type.created_at.toISOString(), updated_at: type.updated_at.toISOString() })),
-    templates: (await db.document.listDocumentTemplates(workspace, undefined, true)).map(template => ({ ...template, created_at: template.created_at.toISOString(), updated_at: template.updated_at.toISOString() })),
+    templates: (await db.document.listDocumentTemplates(workspace, undefined, true))
+      .filter(template => !projectIds?.length || template.project_id == null || projectIds.includes(template.project_id))
+      .map(template => ({ ...template, created_at: template.created_at.toISOString(), updated_at: template.updated_at.toISOString() })),
     metadata,
     revisions
   };

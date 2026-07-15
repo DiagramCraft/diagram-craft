@@ -72,7 +72,7 @@ export const MarkdownDraftScreen = () => {
   };
 
   const saveProjectTemplate = async () => {
-    if (!projectId || !templateName.trim()) return;
+    if (!projectId || !templateName.trim() || !documentTypeId) return;
     setError(null);
     try {
       await createProjectTemplate.mutateAsync({
@@ -107,10 +107,17 @@ export const MarkdownDraftScreen = () => {
           metadata={metadata}
           readOnly={false}
           onTypeChange={id => setDocumentTypeId(id)}
-          onValueChange={(fieldId, value) => setMetadata(current => ({ ...current, [fieldId]: value }))}
+          onValueChange={(fieldId, value) => setMetadata(current => {
+            if (value === undefined) {
+              const next = { ...current };
+              delete next[fieldId];
+              return next;
+            }
+            return { ...current, [fieldId]: value };
+          })}
         />
         <textarea value={body} onChange={event => setBody(event.target.value)} placeholder="Start writing in Markdown…" rows={22} style={{ width: '100%', resize: 'vertical' }} />
-        {projectId && <div style={{ display: 'flex', gap: 8 }}><input value={templateName} onChange={event => setTemplateName(event.target.value)} placeholder="Project template name (optional)" style={{ flex: 1 }} /><Button variant="secondary" disabled={!templateName.trim() || createProjectTemplate.isPending} onClick={() => void saveProjectTemplate()}>Save as project template</Button></div>}
+        {projectId && <div style={{ display: 'flex', gap: 8 }}><input value={templateName} onChange={event => setTemplateName(event.target.value)} placeholder="Project template name (optional)" style={{ flex: 1 }} /><Button variant="secondary" disabled={!templateName.trim() || !documentTypeId || createProjectTemplate.isPending} onClick={() => void saveProjectTemplate()}>Save as project template</Button></div>}
         {error && <div role="alert" style={{ color: 'var(--error-fg)' }}>{error}</div>}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <Button variant="secondary" onClick={closeDraft}>Discard</Button>
