@@ -19,6 +19,7 @@ import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContr
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import { jobsContract } from '@arch-register/api-types/jobsContract';
 import { externalContentContract } from '@arch-register/api-types/externalContentContract';
+import { webhookContract } from '@arch-register/api-types/webhookContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
@@ -39,7 +40,8 @@ export const allContracts = {
   ...diagramCraftContract,
   ...workspaceAnalyticsContract,
   ...jobsContract,
-  ...externalContentContract
+  ...externalContentContract,
+  ...webhookContract
 };
 
 let generatedUnifiedSpec: Promise<object> | null = null;

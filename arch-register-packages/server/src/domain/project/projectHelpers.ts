@@ -1,6 +1,7 @@
 import type { ProjectDbResult, ProjectEntityDbResult } from './db/projectDatabase';
 import type { ContentNodeDbResult as InternalProjectFile } from './db/projectDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
+import { fileNameFromPath, isMarkdownPath, stripMarkdownExtension } from './contentFileHelpers';
 import {
   ContentMetadata,
   FileTree,
@@ -90,7 +91,10 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   project_id: file.project_id,
   project_public_id: file.project_public_id ?? null,
   path: file.path,
-  name: file.name,
+  name:
+    file.mount_id && file.type === 'file' && isMarkdownPath(file.path)
+      ? stripMarkdownExtension(fileNameFromPath(file.path))
+      : file.name,
   role: file.role ?? null,
   size_bytes: file.size_bytes,
   comment_count: file.comment_count,
@@ -100,11 +104,14 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   preview_svg: file.preview_svg,
   created_at: file.created_at.toISOString(),
   updated_at: file.updated_at.toISOString(),
-  type: file.type,
+  type: file.mount_id && file.type === 'file' && isMarkdownPath(file.path) ? 'markdown' : file.type,
   created_by: file.created_by ?? null,
   updated_by: file.updated_by ?? null,
   mime_type: file.mime_type ?? null,
-  original_filename: file.original_filename ?? null,
+  original_filename:
+    file.mount_id && file.type === 'file' && isMarkdownPath(file.path)
+      ? null
+      : (file.original_filename ?? null),
   content_metadata: toApiContentMetadata(file),
   ...(file.mount_id ? { read_only: true, mount_id: file.mount_id } : {})
 });

@@ -307,7 +307,7 @@ export const DiagramScreen = () => {
 
         // Connect to collaboration backend and sync CRDT state
         const config = AppConfig.get();
-        const userState =
+        const awarenessState =
           userId && userDisplayName
             ? {
                 name: userDisplayName,
@@ -330,7 +330,7 @@ export const DiagramScreen = () => {
           awareness
         } = await loadDocument({
           url: roomName,
-          userState,
+          awareness: awarenessState,
           documentFactory,
           diagramFactory,
           // roomName is a CRDT identifier, not a fetchable file URL — always create the

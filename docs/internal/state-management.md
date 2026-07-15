@@ -50,6 +50,7 @@ Before adding state, answer these questions in order:
 
 ## Follow-up inventory
 
-The embedded DiagramCraft editor has its own persisted preference and document-session model and
-should be audited separately. Remaining Arch Register candidates include project content view
-controls and settings selectors that are not yet represented in route search parameters.
+DiagramCraft collaboration awareness is runtime state owned by the individual `Application`. It
+is passed explicitly into document loading and collaboration comments, updates the collaboration
+backend when changed, and is not persisted with `UserState`. The remaining preference, recent-file,
+recovery, and reactive-subscription split is tracked in follow-up issue #2135.

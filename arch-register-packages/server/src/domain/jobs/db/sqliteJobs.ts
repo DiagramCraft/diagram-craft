@@ -2,11 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import { dueJobOccurrences } from '../jobRecurrence';
 import { nextJobOccurrence } from '../jobRecurrence';
+import { retryDelayMs } from '../jobRetry';
 import type {
   JobDatabase,
   JobRunClaim,
   JobRunCompletion,
   JobRunFailure,
+  JobRunRetry,
+  OneOffJobRunDbCreate,
   JobServerDbRegistration,
   JobScheduleDbCreate,
   JobScheduleDbUpdate,
@@ -263,20 +266,63 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
     );
   }
 
+  async enqueueOneOffRun(input: OneOffJobRunDbCreate) {
+    this.run(
+      `INSERT INTO job_run (
+        id, schedule_id, workspace, job_type, system_identity, payload, priority,
+        occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at,
+        status, max_attempts
+      ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'queued', ?)`,
+      [
+        input.id,
+        input.workspace,
+        input.job_type,
+        input.system_identity,
+        JSON.stringify(input.payload),
+        input.priority,
+        iso(input.created_at),
+        iso(input.created_at),
+        iso(input.planned_at),
+        iso(input.created_at),
+        input.max_attempts
+      ]
+    );
+    return this.get('SELECT * FROM job_run WHERE id = ?', [input.id], jobMappers.run)!;
+  }
+
   async recoverExpiredRuns(now: Date) {
     const transaction = this.db.transaction(() => {
-      const stale = this.all<{ id: string; lease_token: string }>(
-        `SELECT r.id, r.lease_token
+      const stale = this.all<{
+        id: string;
+        lease_token: string;
+        attempt_count: number;
+        max_attempts: number;
+      }>(
+        `SELECT r.id, r.lease_token, r.attempt_count, r.max_attempts
          FROM job_run r JOIN job_workspace_lease l ON l.run_id = r.id
          WHERE r.status = 'running' AND l.expires_at <= ?`,
         [iso(now)]
       );
       for (const run of stale) {
+        const retry = run.attempt_count < run.max_attempts;
+        const retryAt = new Date(now.getTime() + retryDelayMs(run.attempt_count));
         this.run(
           `UPDATE job_run
-           SET status = 'failed', completed_at = ?, lease_token = NULL, error = ?
+           SET status = ?, completed_at = ?, planned_at = ?,
+               started_at = CASE WHEN ? THEN NULL ELSE started_at END,
+               worker_id = CASE WHEN ? THEN NULL ELSE worker_id END,
+               lease_token = NULL, error = ?
            WHERE id = ? AND status = 'running' AND lease_token = ?`,
-          [iso(now), 'Worker lease expired', run.id, run.lease_token]
+          [
+            retry ? 'queued' : 'failed',
+            retry ? null : iso(now),
+            retry ? iso(retryAt) : iso(now),
+            retry ? 1 : 0,
+            retry ? 1 : 0,
+            'Worker lease expired',
+            run.id,
+            run.lease_token
+          ]
         );
         this.run('DELETE FROM job_workspace_lease WHERE run_id = ? AND lease_token = ?', [
           run.id,
@@ -332,7 +378,8 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
 
         const updated = this.run(
           `UPDATE job_run
-           SET status = 'running', started_at = ?, worker_id = ?, lease_token = ?
+           SET status = 'running', started_at = ?, worker_id = ?, lease_token = ?,
+               attempt_count = attempt_count + 1
            WHERE id = ? AND status = 'queued'`,
           [iso(now), workerId, token, current.id]
         );
@@ -430,6 +477,40 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
           input.workerId,
           input.leaseToken,
           input.completedAt.toISOString()
+        ]
+      );
+      if (result.changes === 0) return false;
+      this.run(
+        'DELETE FROM job_workspace_lease WHERE run_id = ? AND worker_id = ? AND lease_token = ?',
+        [input.runId, input.workerId, input.leaseToken]
+      );
+      return true;
+    });
+    return transaction();
+  }
+
+  async retryRun(input: JobRunRetry) {
+    const transaction = this.db.transaction(() => {
+      const result = this.run(
+        `UPDATE job_run
+         SET status = 'queued', planned_at = ?, started_at = NULL, completed_at = NULL,
+             worker_id = NULL, lease_token = NULL, error = ?
+         WHERE id = ? AND status = 'running' AND worker_id = ? AND lease_token = ?
+           AND attempt_count < max_attempts
+           AND EXISTS (
+             SELECT 1 FROM job_workspace_lease l
+             WHERE l.run_id = job_run.id AND l.worker_id = ? AND l.lease_token = ?
+               AND l.expires_at > ?
+           )`,
+        [
+          input.retryAt.toISOString(),
+          input.error,
+          input.runId,
+          input.workerId,
+          input.leaseToken,
+          input.workerId,
+          input.leaseToken,
+          iso(input.attemptedAt)
         ]
       );
       if (result.changes === 0) return false;

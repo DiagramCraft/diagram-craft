@@ -49,7 +49,7 @@ export const updateApplicationModel = (
   callback: ProgressCallback,
   onReady?: (app: Application) => void
 ) => {
-  app.model.setActiveDocument(doc, app.userState.awarenessState, callback);
+  app.model.setActiveDocument(doc, app.awareness.state, callback);
   const savedDiagramId = app.userState.getDocumentTab(
     getDocumentTabKey(doc.url, doc.diagrams[0]?.id)
   );

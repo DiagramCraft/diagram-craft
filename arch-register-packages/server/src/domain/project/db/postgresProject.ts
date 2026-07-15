@@ -385,13 +385,14 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             name = EXCLUDED.name,
             parent_id = COALESCE(EXCLUDED.parent_id, content_node.parent_id),
             role = EXCLUDED.role,
+            type = CASE WHEN EXCLUDED.mount_id IS NOT NULL THEN EXCLUDED.type ELSE content_node.type END,
             size_bytes = EXCLUDED.size_bytes,
             comment_count = EXCLUDED.comment_count,
             unresolved_comment_count = EXCLUDED.unresolved_comment_count,
             updated_at = EXCLUDED.updated_at,
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
-            original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename),
+            original_filename = CASE WHEN EXCLUDED.mount_id IS NOT NULL THEN EXCLUDED.original_filename ELSE content_node.original_filename END,
             mount_id = EXCLUDED.mount_id
           WHERE content_node.mount_id IS NOT DISTINCT FROM EXCLUDED.mount_id
           RETURNING id
@@ -406,13 +407,14 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             name = EXCLUDED.name,
             parent_id = COALESCE(EXCLUDED.parent_id, content_node.parent_id),
             role = EXCLUDED.role,
+            type = CASE WHEN EXCLUDED.mount_id IS NOT NULL THEN EXCLUDED.type ELSE content_node.type END,
             size_bytes = EXCLUDED.size_bytes,
             comment_count = EXCLUDED.comment_count,
             unresolved_comment_count = EXCLUDED.unresolved_comment_count,
             updated_at = EXCLUDED.updated_at,
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
-            original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename),
+            original_filename = CASE WHEN EXCLUDED.mount_id IS NOT NULL THEN EXCLUDED.original_filename ELSE content_node.original_filename END,
             mount_id = EXCLUDED.mount_id
           WHERE content_node.mount_id IS NOT DISTINCT FROM EXCLUDED.mount_id
           RETURNING id
@@ -427,13 +429,14 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             name = EXCLUDED.name,
             parent_id = COALESCE(EXCLUDED.parent_id, content_node.parent_id),
             role = EXCLUDED.role,
+            type = CASE WHEN EXCLUDED.mount_id IS NOT NULL THEN EXCLUDED.type ELSE content_node.type END,
             size_bytes = EXCLUDED.size_bytes,
             comment_count = EXCLUDED.comment_count,
             unresolved_comment_count = EXCLUDED.unresolved_comment_count,
             updated_at = EXCLUDED.updated_at,
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
-            original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename),
+            original_filename = CASE WHEN EXCLUDED.mount_id IS NOT NULL THEN EXCLUDED.original_filename ELSE content_node.original_filename END,
             mount_id = EXCLUDED.mount_id
           WHERE content_node.mount_id IS NOT DISTINCT FROM EXCLUDED.mount_id
           RETURNING id

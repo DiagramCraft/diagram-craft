@@ -16,6 +16,7 @@ import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
 import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
 import { RoutePendingComponent } from '../../routes/RoutePendingComponent';
 import { JobMonitoringSubSection } from './sub-sections/JobMonitoringSubSection';
+import { WebhooksSubSection } from './sub-sections/WebhooksSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -68,6 +69,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'jobs': {
     title: 'Job monitoring',
     sub: 'Monitor system-owned scheduled work and cancel queued runs.'
+  },
+  'webhooks': {
+    title: 'Webhooks',
+    sub: 'Notify external systems when catalog entities change.'
   },
   'danger': {
     title: 'Danger zone',
@@ -213,6 +218,9 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
+      {section === 'webhooks' && (
+        <WebhooksSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+      )}
       {section === 'danger' && <DangerZoneSubSection workspace={workspace} />}
     </div>
   );

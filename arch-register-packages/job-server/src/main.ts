@@ -6,6 +6,7 @@ import { createLogger } from '@arch-register/server/utils/logger';
 import { createJobServer, type JobHandler } from './worker';
 import { createStorage } from '@arch-register/server/storage/storage';
 import { createExternalContentJobHandler } from '@arch-register/server/domain/external-content/externalContentJobs';
+import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webhook/webhookDelivery';
 
 const logger = createLogger('job-server');
 
@@ -37,6 +38,7 @@ const main = async () => {
   const handlers = new Map<string, JobHandler>();
   const storage = createStorage();
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
+  handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
   const server = createJobServer({
     db,
     handlers,

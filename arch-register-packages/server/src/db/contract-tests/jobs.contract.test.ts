@@ -95,6 +95,81 @@ runContractSuiteAgainstBothDrivers('JobDatabase', getDb => {
     });
   });
 
+  it('requeues a retryable one-off run and preserves its delivery id', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const id = randomUUID();
+    await db.jobs.enqueueOneOffRun({
+      id,
+      workspace,
+      job_type: 'webhook.delivery',
+      system_identity: 'webhooks',
+      payload: { value: 1 },
+      priority: 5,
+      planned_at: now,
+      created_at: now,
+      max_attempts: 5
+    });
+    const first = await db.jobs.claimNextRun('worker-1', 60_000, now);
+    expect(first?.run).toMatchObject({ id, schedule_id: null, attempt_count: 1, max_attempts: 5 });
+    const retryAt = new Date('2026-01-01T00:01:00.000Z');
+    expect(
+      await db.jobs.retryRun({
+        runId: id,
+        workerId: 'worker-1',
+        leaseToken: first!.leaseToken,
+        attemptedAt: now,
+        retryAt,
+        error: 'temporary failure'
+      })
+    ).toBe(true);
+    expect(await db.jobs.claimNextRun('worker-2', 60_000, now)).toBeNull();
+    const second = await db.jobs.claimNextRun('worker-2', 60_000, retryAt);
+    expect(second?.run).toMatchObject({ id, attempt_count: 2, error: 'temporary failure' });
+
+    const leaseExpiredAt = new Date('2026-01-01T00:02:00.001Z');
+    expect(await db.jobs.recoverExpiredRuns(leaseExpiredAt)).toBe(1);
+    expect(await db.jobs.getRun(id)).toMatchObject({
+      id,
+      status: 'queued',
+      attempt_count: 2,
+      planned_at: new Date('2026-01-01T00:07:00.001Z'),
+      error: 'Worker lease expired'
+    });
+  });
+
+  it('rejects a retry after the worker lease expires', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const id = randomUUID();
+    await db.jobs.enqueueOneOffRun({
+      id,
+      workspace,
+      job_type: 'webhook.delivery',
+      system_identity: 'webhooks',
+      payload: {},
+      priority: 5,
+      planned_at: now,
+      created_at: now,
+      max_attempts: 2
+    });
+    const claim = await db.jobs.claimNextRun('worker-1', 60_000, now);
+
+    expect(
+      await db.jobs.retryRun({
+        runId: id,
+        workerId: 'worker-1',
+        leaseToken: claim!.leaseToken,
+        attemptedAt: new Date('2026-01-01T00:01:00.001Z'),
+        retryAt: new Date('2026-01-01T00:02:00.000Z'),
+        error: 'temporary failure'
+      })
+    ).toBe(false);
+    expect((await db.jobs.getRun(id))!.status).toBe('running');
+  });
+
   it('materializes due occurrences and coalesces them idempotently', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
@@ -177,7 +252,11 @@ runContractSuiteAgainstBothDrivers('JobDatabase', getDb => {
     const claim = await db.jobs.claimNextRun('worker-1', 10_000, startedAt);
 
     expect(await db.jobs.recoverExpiredRuns(new Date('2026-01-01T00:00:11.000Z'))).toBe(1);
-    expect((await db.jobs.getRun(claim!.run.id))!.status).toBe('failed');
+    expect(await db.jobs.getRun(claim!.run.id)).toMatchObject({
+      status: 'failed',
+      started_at: startedAt,
+      worker_id: 'worker-1'
+    });
     expect(
       await db.jobs.completeRun({
         runId: claim!.run.id,

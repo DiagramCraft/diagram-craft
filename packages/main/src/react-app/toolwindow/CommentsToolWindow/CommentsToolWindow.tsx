@@ -19,7 +19,6 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ToolWindow } from '../ToolWindow';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
-import { UserState } from '../../../UserState';
 
 export const CommentsToolWindow = () => {
   const application = useApplication();
@@ -34,6 +33,7 @@ export const CommentsToolWindow = () => {
   useEventListener(diagram.commentManager, 'commentRemoved', redraw);
   useEventListener(diagram.selection, 'add', redraw);
   useEventListener(diagram.selection, 'remove', redraw);
+  useEventListener(application.awareness, 'change', redraw);
 
   const handleResolveComment = useCallback(
     (comment: Comment) => {
@@ -105,7 +105,7 @@ export const CommentsToolWindow = () => {
         : groupThreadsByAuthor(commentThreads);
 
   // Get current user name for "My Threads" tab
-  const currentUserName = UserState.get().awarenessState.name;
+  const currentUserName = application.awareness.state.name;
 
   // Filter threads for "My Threads" tab
   const myThreads = filterThreadsByUserParticipation(commentThreads, currentUserName);

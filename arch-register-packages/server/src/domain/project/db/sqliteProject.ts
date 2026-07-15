@@ -373,17 +373,20 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
           throw new Error('Content node ownership conflict');
         }
         this.run(
-          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), role = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = COALESCE(?, original_filename), mount_id = COALESCE(?, mount_id) WHERE id = ?',
+          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), role = ?, type = CASE WHEN ? IS NOT NULL THEN ? ELSE type END, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = CASE WHEN ? IS NOT NULL THEN ? ELSE original_filename END, mount_id = COALESCE(?, mount_id) WHERE id = ?',
           [
             input.name,
             input.parent_id ?? null,
             input.role ?? null,
+            input.mount_id ?? null,
+            input.type ?? null,
             input.size_bytes,
             input.comment_count,
             input.unresolved_comment_count,
             input.updated_at.toISOString(),
             input.updated_by ?? null,
             input.mime_type ?? null,
+            input.mount_id ?? null,
             input.original_filename ?? null,
             input.mount_id ?? null,
             existing.id

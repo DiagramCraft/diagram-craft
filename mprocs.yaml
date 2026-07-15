@@ -38,6 +38,14 @@ procs:
     log:
       file: ar-job-server.log
 
+  "Webhook test :3020":
+    shell: |
+      PORT=3020 pnpm --filter @arch-register/webhook-test-server dev
+    autostart: false
+    stop: SIGTERM
+    log:
+      file: webhook-test.log
+
   "Storybook :6006":
     cwd: "packages/main"
     shell: |

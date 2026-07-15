@@ -23,6 +23,7 @@ describe('unified OpenAPI spec', () => {
       '/{workspace}/jobs/schedules': expect.any(Object),
       '/{workspace}/jobs/runs': expect.any(Object),
       '/{workspace}/jobs/runs/{id}/cancel': expect.any(Object),
+      '/{workspace}/webhooks': expect.any(Object),
       '/{workspace}/watching': expect.any(Object),
       '/{workspace}/search': expect.any(Object)
     });
