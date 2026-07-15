@@ -1,8 +1,9 @@
 import { useApplication, useDiagram } from '../../../application';
+import { useEventListener } from '../../hooks/useEventListener';
+import { useRedraw } from '../../hooks/useRedraw';
 import { Comment } from '@diagram-craft/model/comment';
 import { useCallback, useRef, useState } from 'react';
 import { TbCheck, TbDots, TbEdit, TbLink, TbSend, TbTrash } from 'react-icons/tb';
-import { UserState } from '../../../UserState';
 import styles from './CommentItem.module.css';
 import { newid } from '@diagram-craft/utils/id';
 import { getElementNameFromComment, type CommentThread } from './utils';
@@ -48,12 +49,15 @@ const MoreButton = ({ className }: { className?: string }) => (
 export const CommentItem = ({ thread, onResolve, formatDate }: CommentItemProps) => {
   const application = useApplication();
   const diagram = useDiagram();
+  const redraw = useRedraw();
   const [replyText, setReplyText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const { root } = thread;
   const isResolved = root.state === 'resolved';
   const { replies: flatReplies } = thread;
-  const userState = UserState.get().awarenessState;
+  const userState = application.awareness.state;
+
+  useEventListener(application.awareness, 'change', redraw);
 
   const formatTime = (date: Date) =>
     date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

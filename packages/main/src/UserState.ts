@@ -1,6 +1,4 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { AppConfig } from './appConfig';
-import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 type UserStateEvents = {
@@ -37,8 +35,6 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #mediaQueryList: MediaQueryList | undefined;
   #documentTabs: Array<{ documentKey: string; tabId: string }> = [];
   #persistedState: string;
-
-  private awarenessStateCache: AwarenessUserState | undefined;
 
   private static instance: UserState | undefined;
 
@@ -89,22 +85,6 @@ export class UserState extends EventEmitter<UserStateEvents> {
       0,
       MAX_RECENT_FILES
     );
-  }
-
-  get awarenessState() {
-    const config = AppConfig.get();
-    if (!this.awarenessStateCache) {
-      this.awarenessStateCache = {
-        name: config.awareness.name(),
-        color: config.awareness.color()
-      };
-    }
-    return this.awarenessStateCache;
-  }
-
-  set awarenessState(state: AwarenessUserState) {
-    this.awarenessStateCache = state;
-    CollaborationConfig.Backend.awareness?.updateUser(state);
   }
 
   set recentFiles(recentFiles: Array<string>) {

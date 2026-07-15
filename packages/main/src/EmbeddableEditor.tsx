@@ -48,6 +48,7 @@ import { RightSidebar } from './react-app/RightSidebar';
 import { LeftSidebar } from './react-app/LeftSidebar';
 import { Application, ApplicationContext, ApplicationUIActions } from './application';
 import { UserState } from './UserState';
+import { CollaborationAwareness } from './CollaborationAwareness';
 import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
 import { CanvasOutline } from './react-app/CanvasOutline';
@@ -168,9 +169,11 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
   } = props;
 
   const userState = useRef(UserState.get());
+  const awareness = useRef<CollaborationAwareness | null>(null);
   const internalApplication = useRef<Application | null>(null);
   if (!internalApplication.current && !props.application) {
-    internalApplication.current = new Application(userState.current);
+    awareness.current ??= new CollaborationAwareness();
+    internalApplication.current = new Application(userState.current, awareness.current);
   }
   const application = props.application ?? internalApplication.current!;
 
