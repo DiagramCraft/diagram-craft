@@ -2,6 +2,7 @@ import type { AuditEntityType, AuditOperation } from './auditDatabase';
 import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
 import { Entity } from '../../catalog/db/catalogDatabase';
+import { enqueueWebhookDeliveries } from '../../webhook/webhookDelivery';
 
 const logger = createLogger('audit');
 
@@ -68,6 +69,21 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
     changes,
     metadata
   });
+
+  // Some focused unit tests use partial database doubles without the webhook
+  // adapter. Real server adapters always provide it; skip enqueueing quietly
+  // for those doubles rather than treating the missing stub as an error.
+  const webhookAdapter = (db as unknown as { webhook?: { listWebhooks?: unknown } }).webhook;
+  if (entityType === 'entity' && typeof webhookAdapter?.listWebhooks === 'function') {
+    try {
+      await enqueueWebhookDeliveries(db, auditLog);
+    } catch (error) {
+      logger.error(
+        'Failed to enqueue webhook deliveries',
+        error instanceof Error ? error : new Error(String(error))
+      );
+    }
+  }
 
   if (entityType === 'entity') {
     await db.watch.createNotificationsFromAudit({

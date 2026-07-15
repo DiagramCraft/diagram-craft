@@ -78,6 +78,46 @@ if [ -f "${WORKTREE_ROOT}/mprocs.local.yaml" ]; then
 
   REGISTRY="${MAIN_TREE}/.worktrees/registry.json"
   if [ -f "${REGISTRY}" ]; then
+    EXISTING_INDEX="$(python3 -c "
+import json
+reg = json.load(open('${REGISTRY}'))
+entry = next((e for e in reg.get('worktrees', []) if e['path'] == '${WORKTREE_ROOT}'), None)
+print(entry['index'] if entry else '')
+" 2>/dev/null || true)"
+    if [ -n "${EXISTING_INDEX}" ]; then
+      EXISTING_WEBHOOK_PORT=$((7000 + EXISTING_INDEX * 10 + 8))
+      python3 - <<PYEOF
+import json
+
+registry_path = '${REGISTRY}'
+reg = json.load(open(registry_path))
+for entry in reg.get('worktrees', []):
+    if entry['path'] == '${WORKTREE_ROOT}':
+        entry.setdefault('ports', {})['webhook_test'] = ${EXISTING_WEBHOOK_PORT}
+with open(registry_path, 'w') as f:
+    json.dump(reg, f, indent=2)
+    f.write('\n')
+PYEOF
+      if ! grep -q 'Webhook test :' "${WORKTREE_ROOT}/mprocs.local.yaml"; then
+        python3 - <<PYEOF
+from pathlib import Path
+
+path = Path('${WORKTREE_ROOT}/mprocs.local.yaml')
+text = path.read_text()
+process = '''  "Webhook test :${EXISTING_WEBHOOK_PORT}":
+    shell: |
+      PORT=${EXISTING_WEBHOOK_PORT} pnpm --filter @arch-register/webhook-test-server dev
+    autostart: false
+    stop: SIGTERM
+    log:
+      file: webhook-test.log
+
+'''
+path.write_text(text.replace('proc_log:\n', process + 'proc_log:\n', 1))
+PYEOF
+        echo "  Added webhook test server on port ${EXISTING_WEBHOOK_PORT}."
+      fi
+    fi
     ENTRY="$(python3 -c "
 import json, sys
 reg = json.load(open('${REGISTRY}'))
@@ -87,7 +127,7 @@ for e in reg.get('worktrees', []):
         print('  Index             :', e['index'])
         print('  Created           :', e['created'])
         p = e['ports']
-        print('  Ports             : dc_web={dc_web}  dc_server={dc_server}  ar_web={ar_web}  ar_server={ar_server}'.format(**p))
+        print('  Ports             : dc_web={dc_web}  dc_server={dc_server}  ar_web={ar_web}  ar_server={ar_server}  webhook_test={webhook_test}'.format(**p))
         break
 " 2>/dev/null || true)"
     [ -n "${ENTRY}" ] && echo "${ENTRY}"
@@ -173,6 +213,7 @@ PORT_AR_SERVER=$((BASE + 4))
 PORT_SB_DC=$((BASE + 5))
 PORT_SB_AR=$((BASE + 6))
 PORT_DOCS=$((BASE + 7))
+PORT_WEBHOOK_TEST=$((BASE + 8))
 
 # ---------------------------------------------------------------------------
 # 10. Append entry to registry
@@ -197,7 +238,8 @@ entry = {
         "ar_server":    ${PORT_AR_SERVER},
         "storybook_dc": ${PORT_SB_DC},
         "storybook_ar": ${PORT_SB_AR},
-        "docs":         ${PORT_DOCS}
+        "docs":         ${PORT_DOCS},
+        "webhook_test": ${PORT_WEBHOOK_TEST}
     },
     "database": "sqlite://./data/arch-register.sqlite"
 }
@@ -260,6 +302,14 @@ procs:
     stop: SIGTERM
     log:
       file: ar-job-server.log
+
+  "Webhook test :${PORT_WEBHOOK_TEST}":
+    shell: |
+      PORT=${PORT_WEBHOOK_TEST} pnpm --filter @arch-register/webhook-test-server dev
+    autostart: false
+    stop: SIGTERM
+    log:
+      file: webhook-test.log
 
   "Storybook :${PORT_SB_DC}":
     cwd: "packages/main"
@@ -354,6 +404,7 @@ printf "  AR job server    local SQLite worker\n"
 printf "  Storybook DC     %s\n" "${PORT_SB_DC}"
 printf "  Storybook AR     %s\n" "${PORT_SB_AR}"
 printf "  Docs             %s\n" "${PORT_DOCS}"
+printf "  Webhook test     %s\n" "${PORT_WEBHOOK_TEST}"
 echo ""
 echo "  Database    : SQLite (./data/arch-register.sqlite)"
 echo "  Registry    : ${REGISTRY}"

@@ -34642,7 +34642,14 @@
                             "type": "string"
                           },
                           "schedule_id": {
-                            "type": "string"
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "workspace": {
                             "type": "string"
@@ -34762,6 +34769,17 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "attempt_count": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "max_attempts": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
                           }
                         },
                         "required": [
@@ -34783,7 +34801,9 @@
                           "duration_ms",
                           "worker_id",
                           "result",
-                          "error"
+                          "error",
+                          "attempt_count",
+                          "max_attempts"
                         ]
                       }
                     },
@@ -34857,7 +34877,14 @@
                       "type": "string"
                     },
                     "schedule_id": {
-                      "type": "string"
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "workspace": {
                       "type": "string"
@@ -34977,6 +35004,17 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "attempt_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "max_attempts": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "exclusiveMinimum": 0
                     }
                   },
                   "required": [
@@ -34998,7 +35036,9 @@
                     "duration_ms",
                     "worker_id",
                     "result",
-                    "error"
+                    "error",
+                    "attempt_count",
+                    "max_attempts"
                   ]
                 }
               }
@@ -36044,6 +36084,546 @@
                   "required": [
                     "success",
                     "run_id"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/webhooks": {
+      "get": {
+        "operationId": "webhooks.list",
+        "tags": [
+          "Webhooks",
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "workspace": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "event_filter": {
+                        "type": "object",
+                        "properties": {
+                          "operations": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "enum": [
+                                "create",
+                                "update",
+                                "delete"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "schema_ids": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "operations",
+                          "schema_ids"
+                        ]
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "url",
+                      "event_filter",
+                      "enabled",
+                      "created_at",
+                      "updated_at"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "webhooks.create",
+        "tags": [
+          "Webhooks",
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "event_filter": {
+                    "type": "object",
+                    "properties": {
+                      "operations": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "enum": [
+                            "create",
+                            "update",
+                            "delete"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "schema_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "operations",
+                      "schema_ids"
+                    ]
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                },
+                "required": [
+                  "url",
+                  "event_filter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "webhook": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "workspace": {
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "event_filter": {
+                          "type": "object",
+                          "properties": {
+                            "operations": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "enum": [
+                                  "create",
+                                  "update",
+                                  "delete"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "schema_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "operations",
+                            "schema_ids"
+                          ]
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "updated_at": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "workspace",
+                        "url",
+                        "event_filter",
+                        "enabled",
+                        "created_at",
+                        "updated_at"
+                      ]
+                    },
+                    "secret": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "webhook",
+                    "secret"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/webhooks/{id}": {
+      "put": {
+        "operationId": "webhooks.update",
+        "tags": [
+          "Webhooks",
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "event_filter": {
+                    "type": "object",
+                    "properties": {
+                      "operations": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "enum": [
+                            "create",
+                            "update",
+                            "delete"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "schema_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "operations",
+                      "schema_ids"
+                    ]
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                },
+                "required": [
+                  "url",
+                  "event_filter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "workspace": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "event_filter": {
+                      "type": "object",
+                      "properties": {
+                        "operations": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "schema_ids": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "operations",
+                        "schema_ids"
+                      ]
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "url",
+                    "event_filter",
+                    "enabled",
+                    "created_at",
+                    "updated_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "webhooks.remove",
+        "tags": [
+          "Webhooks",
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/webhooks/{id}/rotate-secret": {
+      "post": {
+        "operationId": "webhooks.rotateSecret",
+        "tags": [
+          "Webhooks",
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "webhook": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "workspace": {
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "event_filter": {
+                          "type": "object",
+                          "properties": {
+                            "operations": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "enum": [
+                                  "create",
+                                  "update",
+                                  "delete"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "schema_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "operations",
+                            "schema_ids"
+                          ]
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "updated_at": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "workspace",
+                        "url",
+                        "event_filter",
+                        "enabled",
+                        "created_at",
+                        "updated_at"
+                      ]
+                    },
+                    "secret": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "webhook",
+                    "secret"
                   ]
                 }
               }

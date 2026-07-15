@@ -325,7 +325,9 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                     <Table.Row key={run.id}>
                       <Table.Cell>
                         <div>{run.job_type}</div>
-                        <div className={styles.muted}>Priority {run.priority}</div>
+                        <div className={styles.muted}>
+                          Priority {run.priority} · attempt {run.attempt_count}/{run.max_attempts}
+                        </div>
                       </Table.Cell>
                       <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
                       <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>

@@ -4,10 +4,11 @@ import type {
   JobRunClaim,
   JobRunDbResult
 } from '@arch-register/server/db/database';
+import { RetryableJobError, retryDelayMs } from '@arch-register/server/domain/jobs/jobRetry';
 
 export type JobExecutionContext = {
   jobId: string;
-  scheduleId: string;
+  scheduleId: string | null;
   workspace: string;
   jobType: string;
   systemIdentity: string;
@@ -95,6 +96,19 @@ const executeClaim = async (
   } catch (error) {
     const failure = error instanceof Error ? error : new Error(String(error));
     logger.error(`Job ${claim.run.id} (${claim.run.job_type}) failed`, failure);
+    if (failure instanceof RetryableJobError && claim.run.attempt_count < claim.run.max_attempts) {
+      const retried = await db.jobs.retryRun({
+        runId: claim.run.id,
+        workerId,
+        leaseToken: claim.leaseToken,
+        retryAt: new Date(
+          now().getTime() + retryDelayMs(claim.run.attempt_count, failure.retryAfterMs)
+        ),
+        error: formatError(failure)
+      });
+      if (!retried) logger.warn(`Retry update rejected for job ${claim.run.id}`);
+      return;
+    }
     const failed = await db.jobs.failRun({
       runId: claim.run.id,
       workerId,
@@ -157,7 +171,7 @@ export const createJobServer = (options: JobServerOptions) => {
       const timestamp = now();
       const recovered = await options.db.jobs.recoverExpiredRuns(timestamp);
       if (recovered > 0) {
-        logger.warn(`Marked ${recovered} expired job lease(s) as failed`);
+        logger.warn(`Recovered ${recovered} expired job lease(s)`);
       }
       const materialized = await options.db.jobs.materializeDueSchedules(timestamp);
       if (materialized > 0) {

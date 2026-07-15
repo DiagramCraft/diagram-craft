@@ -8,6 +8,7 @@ import type { DiscussionDatabase } from '../domain/discussion/db/discussionDatab
 import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase';
 import type { JobDatabase } from '../domain/jobs/jobsDatabase';
 import type { ExternalContentDatabase } from '../domain/external-content/db/externalContentDatabase';
+import type { WebhookDatabase } from '../domain/webhook/db/webhookDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -34,6 +35,7 @@ export type DatabaseAdapter = {
   discussion: DiscussionDatabase;
   jobs: JobDatabase;
   externalContent: ExternalContentDatabase;
+  webhook: WebhookDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -85,6 +87,7 @@ export type {
   JobRunDbResult,
   JobRunFailure,
   JobRunListOptions,
+  JobRunRetry,
   JobRunPage,
   JobRunStatus,
   JobServerDbRegistration,
@@ -93,7 +96,8 @@ export type {
   JobScheduleDbCreate,
   JobScheduleDbResult,
   JobScheduleDbUpdate,
-  JobScheduleRecurrence
+  JobScheduleRecurrence,
+  OneOffJobRunDbCreate
 } from '../domain/jobs/jobsDatabase';
 export type {
   ExternalContentDatabase,
@@ -104,6 +108,12 @@ export type {
   ExternalContentStatus,
   GitSourceConfig
 } from '../domain/external-content/db/externalContentDatabase';
+export type {
+  WebhookDatabase,
+  WorkspaceWebhookDbCreate,
+  WorkspaceWebhookDbResult,
+  WorkspaceWebhookDbUpdate
+} from '../domain/webhook/db/webhookDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

@@ -33,6 +33,7 @@ import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc
 import { createWorkspaceAnalyticsORPCHandler } from './domain/analytics/workspaceAnalyticsOrpc';
 import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
 import { createExternalContentORPCHandler } from './domain/external-content/externalContentOrpc';
+import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -126,6 +127,7 @@ export const createApp = (
   app.use(createWorkspaceAnalyticsORPCHandler(db));
   app.use(createJobsORPCHandler(db));
   app.use(createExternalContentORPCHandler(db, storage));
+  app.use(createWebhookORPCHandler(db));
   app.use(createProjectFileRoutesHandler(db, storage));
   app.use(createProjectORPCHandler(db, storage));
   app.use(createAssessmentORPCHandler(db));

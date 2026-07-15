@@ -123,6 +123,40 @@ export const setJobScheduleEnabled = async (
 export const enqueueJobRun = async (db: DatabaseAdapter, scheduleId: string, now = new Date()) =>
   db.jobs.enqueueRun(scheduleId, now);
 
+export const enqueueOneOffJobRun = async (
+  db: DatabaseAdapter,
+  input: {
+    id?: string;
+    workspace: string;
+    jobType: string;
+    systemIdentity: string;
+    payload: Record<string, unknown>;
+    priority?: number;
+    maxAttempts?: number;
+  },
+  now = new Date()
+) => {
+  const priority = input.priority ?? 5;
+  const maxAttempts = input.maxAttempts ?? 1;
+  assertScheduleText(input.jobType, 'jobType');
+  assertScheduleText(input.systemIdentity, 'systemIdentity');
+  assertPriority(priority);
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
+    throw new Error('maxAttempts must be a positive integer');
+  }
+  return db.jobs.enqueueOneOffRun({
+    id: input.id ?? randomUUID(),
+    workspace: input.workspace,
+    job_type: input.jobType,
+    system_identity: input.systemIdentity,
+    payload: input.payload,
+    priority,
+    planned_at: now,
+    created_at: now,
+    max_attempts: maxAttempts
+  });
+};
+
 const parseOptionalDate = (value: string | undefined, name: string): Date | undefined => {
   if (value === undefined) return undefined;
   const date = new Date(value);
@@ -193,7 +227,9 @@ export const toApiJobRun = (run: JobRunDbResult, now = new Date()) => {
         : Math.max(0, durationEnd.getTime() - run.started_at.getTime()),
     worker_id: run.worker_id,
     result: run.result,
-    error: run.error
+    error: run.error,
+    attempt_count: run.attempt_count,
+    max_attempts: run.max_attempts
   };
 };
 

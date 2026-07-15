@@ -64,7 +64,7 @@ export type JobScheduleDbUpdate = {
 
 export type JobRunDbResult = {
   id: string;
-  schedule_id: string;
+  schedule_id: string | null;
   workspace: string;
   job_type: string;
   system_identity: string;
@@ -82,6 +82,20 @@ export type JobRunDbResult = {
   lease_token: string | null;
   result: Record<string, unknown> | null;
   error: string | null;
+  attempt_count: number;
+  max_attempts: number;
+};
+
+export type OneOffJobRunDbCreate = {
+  id: string;
+  workspace: string;
+  job_type: string;
+  system_identity: string;
+  payload: Record<string, unknown>;
+  priority: number;
+  planned_at: Date;
+  created_at: Date;
+  max_attempts: number;
 };
 
 export type JobRunClaim = {
@@ -103,6 +117,10 @@ export type JobRunFailure = {
   leaseToken: string;
   completedAt: Date;
   error: string;
+};
+
+export type JobRunRetry = Omit<JobRunFailure, 'completedAt'> & {
+  retryAt: Date;
 };
 
 export type JobRunListOptions = {
@@ -136,6 +154,7 @@ export type JobDatabase = {
 
   materializeDueSchedules(now: Date): Promise<number>;
   enqueueRun(scheduleId: string, now: Date): Promise<JobRunDbResult | null>;
+  enqueueOneOffRun(input: OneOffJobRunDbCreate): Promise<JobRunDbResult>;
   recoverExpiredRuns(now: Date): Promise<number>;
   claimNextRun(workerId: string, leaseDurationMs: number, now: Date): Promise<JobRunClaim | null>;
   heartbeatRun(
@@ -147,6 +166,7 @@ export type JobDatabase = {
   ): Promise<boolean>;
   completeRun(input: JobRunCompletion): Promise<boolean>;
   failRun(input: JobRunFailure): Promise<boolean>;
+  retryRun(input: JobRunRetry): Promise<boolean>;
 };
 
 export const jobMappers = {
@@ -181,7 +201,7 @@ export const jobMappers = {
   }),
   run: (row: DatabaseRow): JobRunDbResult => ({
     id: String(row['id']),
-    schedule_id: String(row['schedule_id']),
+    schedule_id: row['schedule_id'] == null ? null : String(row['schedule_id']),
     workspace: String(row['workspace']),
     job_type: String(row['job_type']),
     system_identity: String(row['system_identity']),
@@ -198,6 +218,8 @@ export const jobMappers = {
     worker_id: row['worker_id'] == null ? null : String(row['worker_id']),
     lease_token: row['lease_token'] == null ? null : String(row['lease_token']),
     result: row['result'] == null ? null : parseDatabaseJson(row['result'], {}, 'job_run.result'),
-    error: row['error'] == null ? null : String(row['error'])
+    error: row['error'] == null ? null : String(row['error']),
+    attempt_count: Number(row['attempt_count'] ?? 0),
+    max_attempts: Number(row['max_attempts'] ?? 1)
   })
 };

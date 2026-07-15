@@ -107,7 +107,7 @@ export const WorkspaceLayout = () => {
       ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
       ...(canManageWorkspaces ? ['ai'] : []),
-      ...(canManageJobs ? ['jobs'] : []),
+      ...(canManageJobs ? ['webhooks', 'jobs'] : []),
       ...(canViewAudit ? ['analytics', 'audit'] : [])
     ],
     [
