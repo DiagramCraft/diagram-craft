@@ -452,14 +452,12 @@ export const buildEntityDependents = (
     for (const field of relationFields(schema.fields)) {
       for (const refId of decodeRefs(entity.data[field.id])) {
         if (!incomingIndex.has(refId)) incomingIndex.set(refId, []);
-        incomingIndex
-          .get(refId)!
-          .push({
-            entity,
-            fieldName: field.name,
-            fieldPredicate: field.predicate,
-            kind: field.type
-          });
+        incomingIndex.get(refId)!.push({
+          entity,
+          fieldName: field.name,
+          fieldPredicate: field.predicate,
+          kind: field.type
+        });
       }
     }
   }
