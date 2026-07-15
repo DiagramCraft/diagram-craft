@@ -93,7 +93,10 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
     }
   };
 
-  if (db.core.isTransaction) {
+  // Some focused unit tests provide only the domain adapters they exercise.
+  // Real database adapters always expose core.transaction, while these
+  // partial doubles should retain the direct-write behavior.
+  if (!db.core?.transaction || db.core.isTransaction) {
     await writeInTransaction(db);
   } else {
     await db.core.transaction(writeInTransaction);
