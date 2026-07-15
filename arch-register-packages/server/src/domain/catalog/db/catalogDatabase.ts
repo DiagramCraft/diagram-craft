@@ -8,13 +8,9 @@ import {
   RadarViewConfig,
   TimelineViewConfig
 } from '@arch-register/api-types/viewContract';
-import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
-import {
-  databaseDate,
-  parseDatabaseJson,
-  type DatabaseRow
-} from '../../../db/rowMappers';
+import { databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
 import { ENTITY_DEFAULTS } from '../../../constants';
 
 export const ENTITY_SELECT_SQL = `
@@ -69,6 +65,7 @@ export type SchemaDbResult = {
   name: string;
   description: string;
   fields: SchemaField[];
+  templates?: EntityTemplate[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
@@ -165,12 +162,7 @@ export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'public_id' | 'cr
 
 // -- Entity Snapshot
 
-export type SnapshotStatus =
-  | 'autosave'
-  | 'saved_version'
-  | 'future_update'
-  | 'applied'
-  | 'deleted';
+export type SnapshotStatus = 'autosave' | 'saved_version' | 'future_update' | 'applied' | 'deleted';
 
 export type EntitySnapshotDbResult = {
   id: string;
@@ -257,21 +249,36 @@ export const catalogMappers = {
     created_at: databaseDate(row['created_at'])
   }),
   schema: (row: DatabaseRow): SchemaDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), name: String(row['name']),
-    description: String(row['description'] ?? ''), fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
-    color: row['color'] == null ? null : String(row['color']), icon: row['icon'] == null ? null : String(row['icon']),
-    default_owner: row['default_owner'] == null ? null : String(row['default_owner']), key_prefix: String(row['key_prefix']),
-    created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    description: String(row['description'] ?? ''),
+    fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
+    templates: parseDatabaseJson(row['templates'], [], 'entity_schema.templates'),
+    color: row['color'] == null ? null : String(row['color']),
+    icon: row['icon'] == null ? null : String(row['icon']),
+    default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
+    key_prefix: String(row['key_prefix']),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
   }),
   workspaceEnum: (row: DatabaseRow): WorkspaceEnumDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), name: String(row['name']),
-    options: parseDatabaseJson(row['options'], [], 'workspace_enum.options'), sort_order: Number(row['sort_order'] ?? 0),
-    created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    options: parseDatabaseJson(row['options'], [], 'workspace_enum.options'),
+    sort_order: Number(row['sort_order'] ?? 0),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
   }),
   entityGrant: (row: DatabaseRow): EntityGrantDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), entity_id: String(row['entity_id']),
-    principal_type: String(row['principal_type']) as EntityGrantDbResult['principal_type'], principal_id: String(row['principal_id']),
-    role: String(row['role']) as EntityGrantDbResult['role'], applies_to: String(row['applies_to']) as EntityGrantDbResult['applies_to'],
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    principal_type: String(row['principal_type']) as EntityGrantDbResult['principal_type'],
+    principal_id: String(row['principal_id']),
+    role: String(row['role']) as EntityGrantDbResult['role'],
+    applies_to: String(row['applies_to']) as EntityGrantDbResult['applies_to'],
     created_at: databaseDate(row['created_at'])
   }),
   collection: (row: DatabaseRow): CollectionDbResult => ({
@@ -293,12 +300,20 @@ export const catalogMappers = {
     created_at: databaseDate(row['created_at'])
   }),
   savedView: (row: DatabaseRow): SavedViewDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), project_id: row['project_id'] == null ? null : String(row['project_id']),
-    project_scope: row['project_scope'] == null ? null : (String(row['project_scope']) as 'project' | 'all'),
-    name: String(row['name']), description: row['description'] == null ? null : String(row['description']),
-    is_admin_view: row['is_admin_view'] === true || row['is_admin_view'] === 1 || row['is_admin_view'] === '1',
-    view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'], filters: parseDatabaseJson(row['filters'], {}, 'saved_view.filters'),
-    config: parseDatabaseJson(row['config'], null, 'saved_view.config'), created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    project_id: row['project_id'] == null ? null : String(row['project_id']),
+    project_scope:
+      row['project_scope'] == null ? null : (String(row['project_scope']) as 'project' | 'all'),
+    name: String(row['name']),
+    description: row['description'] == null ? null : String(row['description']),
+    is_admin_view:
+      row['is_admin_view'] === true || row['is_admin_view'] === 1 || row['is_admin_view'] === '1',
+    view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'],
+    filters: parseDatabaseJson(row['filters'], {}, 'saved_view.filters'),
+    config: parseDatabaseJson(row['config'], null, 'saved_view.config'),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
   })
 };
 

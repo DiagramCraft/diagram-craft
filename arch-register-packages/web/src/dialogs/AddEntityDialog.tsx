@@ -14,8 +14,10 @@ import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
-import { EntitySummary } from '@arch-register/api-types/entityContract';
+import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import { EntityFieldInput } from './EntityFieldInput';
+import { applyEntityTemplate, createEntityFormDefaults } from '../lib/entityTemplates';
 
 type EntityApiResponse = {
   _uid: string;
@@ -49,6 +51,8 @@ export const AddEntityDialog = ({
 }: AddEntityDialogProps) => {
   const { canCreateTopLevelEntity } = usePermissions();
   const [schemaId, setSchemaId] = useState('');
+  const [templateId, setTemplateId] = useState('');
+  const [templateWarnings, setTemplateWarnings] = useState<string[]>([]);
   const [entityName, setEntityName] = useState('');
   const [fields, setFields] = useState<Record<string, unknown>>({});
   const [meta, setMeta] = useState({
@@ -72,14 +76,13 @@ export const AddEntityDialog = ({
       const initial = preselectedSchemaId ?? schemas[0]?.id ?? '';
       setSchemaId(initial);
       setEntityName('');
-      setFields({});
-      setMeta({
-        description: '',
-        owner: canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? ''),
-        lifecycle: '',
-        namespace: 'default',
-        tags: ''
-      });
+      const baseline = createEntityFormDefaults(
+        canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? '')
+      );
+      setTemplateId('');
+      setTemplateWarnings([]);
+      setFields(baseline.fields);
+      setMeta(baseline.meta);
       setError('');
       setTimeout(() => nameRef.current?.focus(), 0);
     }
@@ -114,6 +117,81 @@ export const AddEntityDialog = ({
     });
     return nextOptions;
   }, [open, targetSchemaIds, entitiesQueries]);
+
+  useEffect(() => {
+    if (!templateId || !selectedSchema || entitiesQueries.some(query => query.isPending)) return;
+    const relationshipFields = selectedSchema.fields.filter(
+      (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
+        field.type === 'reference' || field.type === 'containment'
+    );
+    const template = selectedSchema.templates.find(item => item.id === templateId);
+    const removedLabels = relationshipFields.flatMap(field => {
+      const value = template?.values.fields[field.id];
+      if (!Array.isArray(value)) return [];
+      const available = new Set(
+        (derivedReferenceOptions[field.schemaId] ?? []).map(entity => entity._uid)
+      );
+      return value.some(id => !available.has(id))
+        ? [`${field.name} contains unavailable entities`]
+        : [];
+    });
+    setFields(current => {
+      let changed = false;
+      const next = { ...current };
+      for (const field of relationshipFields) {
+        const value = current[field.id];
+        if (!Array.isArray(value)) continue;
+        const available = new Set(
+          (derivedReferenceOptions[field.schemaId] ?? []).map(entity => entity._uid)
+        );
+        const valid = value.filter(
+          (id): id is string => typeof id === 'string' && available.has(id)
+        );
+        if (valid.length === value.length) continue;
+        changed = true;
+        if (valid.length > 0) next[field.id] = valid;
+        else delete next[field.id];
+      }
+      return changed ? next : current;
+    });
+    if (removedLabels.length > 0) {
+      setTemplateWarnings(current => {
+        const next = [...new Set([...current, ...removedLabels])];
+        return next.length === current.length ? current : next;
+      });
+    }
+  }, [templateId, selectedSchema, entitiesQueries, derivedReferenceOptions]);
+
+  const resetAndApplyTemplate = (nextTemplateId: string, schema = selectedSchema) => {
+    const baseline = createEntityFormDefaults(
+      canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? '')
+    );
+    setTemplateId(nextTemplateId);
+    setTemplateWarnings([]);
+    if (!schema || !nextTemplateId) {
+      setFields(baseline.fields);
+      setMeta(baseline.meta);
+      return;
+    }
+    const template = schema.templates.find(item => item.id === nextTemplateId);
+    if (!template) return;
+    const applied = applyEntityTemplate({
+      baseline,
+      schema,
+      template,
+      allowedOwnerIds: new Set(creatableTeams.map(team => team.id)),
+      lifecycleIds: new Set(lifecycleStates.map(state => state.id)),
+      referenceOptions: Object.fromEntries(
+        Object.entries(derivedReferenceOptions).map(([targetSchemaId, entities]) => [
+          targetSchemaId,
+          new Set(entities.map(entity => entity._uid))
+        ])
+      )
+    });
+    setFields(applied.fields);
+    setMeta(applied.meta);
+    setTemplateWarnings(applied.warnings);
+  };
 
   const setField = (id: string, value: unknown) => setFields(f => ({ ...f, [id]: value }));
   const setMetaField = (key: string, value: string) => setMeta(m => ({ ...m, [key]: value }));
@@ -209,21 +287,50 @@ export const AddEntityDialog = ({
         }}
       >
         <button type="submit" hidden />
-        {/* Schema picker */}
-        <FormElement label="Type" required hint={selectedSchema?.description}>
-          <Select.Root
-            value={schemaId || undefined}
-            onChange={value => setSchemaId(value ?? '')}
-            placeholder="Select a type"
-            style={{ width: '100%' }}
-          >
-            {schemas.map(s => (
-              <Select.Item key={s.id} value={s.id}>
-                {s.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </FormElement>
+        <div className={styles.schemaPickers}>
+          {/* Schema picker */}
+          <div data-testid="new-entity-type">
+            <FormElement label="Type" required hint={selectedSchema?.description}>
+              <Select.Root
+                value={schemaId || undefined}
+                onChange={value => {
+                  const nextSchemaId = value ?? '';
+                  setSchemaId(nextSchemaId);
+                  resetAndApplyTemplate(
+                    '',
+                    schemas.find(schema => schema.id === nextSchemaId)
+                  );
+                }}
+                placeholder="Select a type"
+                style={{ width: '100%' }}
+              >
+                {schemas.map(s => (
+                  <Select.Item key={s.id} value={s.id}>
+                    {s.name}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </FormElement>
+          </div>
+
+          <div data-testid="new-entity-template">
+            <FormElement label="Template">
+              <Select.Root
+                value={templateId || '__none__'}
+                onChange={value => resetAndApplyTemplate(value === '__none__' ? '' : (value ?? ''))}
+                placeholder="No template"
+                style={{ width: '100%' }}
+              >
+                <Select.Item value="__none__">No template</Select.Item>
+                {(selectedSchema?.templates ?? []).map(template => (
+                  <Select.Item key={template.id} value={template.id}>
+                    {template.name}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </FormElement>
+          </div>
+        </div>
 
         {/* Name field */}
         <FormElement label="Name" required>
@@ -244,7 +351,7 @@ export const AddEntityDialog = ({
                 {selectedSchema.fields
                   .filter(f => f.id !== 'name')
                   .map(f => (
-                    <FieldInput
+                    <EntityFieldInput
                       key={f.id}
                       field={f}
                       value={
@@ -323,151 +430,12 @@ export const AddEntityDialog = ({
         </div>
 
         {error && <Banner variant="error">{error}</Banner>}
+        {templateWarnings.length > 0 && (
+          <Banner variant="warning">
+            Some template defaults were unavailable and were cleared: {templateWarnings.join('; ')}.
+          </Banner>
+        )}
       </form>
     </Dialog>
-  );
-};
-
-const FieldInput = ({
-  field,
-  value,
-  onChange,
-  nameRef,
-  referenceOptions
-}: {
-  field: EntitySchema['fields'][number];
-  value: string | string[];
-  onChange: (v: string | string[]) => void;
-  nameRef?: React.RefObject<HTMLInputElement | null>;
-  referenceOptions?: Record<string, EntitySummary[]>;
-}) => {
-  if (field.type === 'reference') {
-    const candidates = referenceOptions?.[field.schemaId] ?? [];
-    return (
-      <FormElement label={field.name}>
-        <select
-          multiple
-          value={Array.isArray(value) ? value : []}
-          onChange={event =>
-            onChange(Array.from(event.currentTarget.selectedOptions, option => option.value))
-          }
-          style={{ width: '100%', minHeight: 120 }}
-        >
-          {candidates.map(entity => (
-            <option key={entity._uid} value={entity._uid}>
-              {entity._name || entity._slug}
-            </option>
-          ))}
-        </select>
-      </FormElement>
-    );
-  }
-
-  if (field.type === 'containment') {
-    const candidates = referenceOptions?.[field.schemaId] ?? [];
-    const selected = Array.isArray(value) ? value[0] ?? '' : '';
-    return (
-      <FormElement label={field.name}>
-        <Select.Root
-          value={selected || undefined}
-          onChange={nextValue => onChange(nextValue ? [nextValue] : [])}
-          placeholder="—"
-          style={{ width: '100%' }}
-        >
-          {candidates.map(entity => (
-            <Select.Item key={entity._uid} value={entity._uid}>
-              {entity._name || entity._slug}
-            </Select.Item>
-          ))}
-        </Select.Root>
-      </FormElement>
-    );
-  }
-
-  if (field.type === 'select') {
-    return (
-      <FormElement label={field.name}>
-        <Select.Root
-          value={typeof value === 'string' ? value || undefined : undefined}
-          onChange={nextValue => onChange(nextValue ?? '')}
-          placeholder="—"
-          style={{ width: '100%' }}
-        >
-          {field.options.map(o => (
-            <Select.Item key={o.value} value={o.value}>
-              {o.label}
-            </Select.Item>
-          ))}
-        </Select.Root>
-      </FormElement>
-    );
-  }
-
-  if (field.type === 'longtext') {
-    return (
-      <FormElement label={field.name}>
-        <TextArea
-          value={typeof value === 'string' ? value : ''}
-          onChange={nextValue => onChange(nextValue ?? '')}
-          rows={3}
-          style={{ width: '100%' }}
-        />
-      </FormElement>
-    );
-  }
-
-  if (field.type === 'boolean') {
-    return (
-      <div className={styles.field}>
-        <label>
-          <input
-            type="checkbox"
-            checked={value === 'true'}
-            onChange={e => onChange(e.target.checked ? 'true' : 'false')}
-          />
-          {field.name}
-        </label>
-      </div>
-    );
-  }
-
-  if (field.type === 'date') {
-    return (
-      <FormElement label={field.name}>
-        <input
-          type="date"
-          value={typeof value === 'string' ? value : ''}
-          onChange={e => onChange(e.target.value)}
-          style={{ width: '100%' }}
-        />
-      </FormElement>
-    );
-  }
-
-  if (field.type === 'number') {
-    return (
-      <FormElement label={field.name}>
-        <input
-          type="number"
-          step="1"
-          min={field.min}
-          max={field.max}
-          value={typeof value === 'string' ? value : ''}
-          onChange={e => onChange(e.target.value)}
-          style={{ width: '100%' }}
-        />
-      </FormElement>
-    );
-  }
-
-  return (
-    <FormElement label={field.name}>
-      <TextInput
-        ref={field.id === 'name' ? nameRef : undefined}
-        value={typeof value === 'string' ? value : ''}
-        onChange={nextValue => onChange(nextValue ?? '')}
-        style={{ width: '100%' }}
-      />
-    </FormElement>
   );
 };

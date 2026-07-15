@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCreateSchemaInput,
   findIncompatibleFieldChanges,
+  normalizeEntityTemplates,
   toApiEnum,
   toApiSchema
 } from './schemaHelpers';
@@ -56,6 +57,7 @@ describe('toApiSchema', () => {
       { id: 'go_live', name: 'Go Live', type: 'date' },
       { id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }
     ],
+    templates: [],
     color: null,
     icon: null,
     default_owner: null,
@@ -120,7 +122,9 @@ describe('buildCreateSchemaInput', () => {
       new Set(),
       now
     );
-    expect(result.fields).toEqual([{ id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }]);
+    expect(result.fields).toEqual([
+      { id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }
+    ]);
   });
 
   it('rejects a number field with min > max', () => {
@@ -138,10 +142,70 @@ describe('buildCreateSchemaInput', () => {
   });
 });
 
+describe('normalizeEntityTemplates', () => {
+  const fields: SchemaField[] = [
+    { id: 'enabled', name: 'Enabled', type: 'boolean' },
+    { id: 'score', name: 'Score', type: 'number', min: 0, max: 10 },
+    {
+      id: 'parent',
+      name: 'Parent',
+      type: 'containment',
+      schemaId: 'parent-schema',
+      minCount: 0,
+      maxCount: 1
+    }
+  ];
+
+  it('normalizes partial values while retaining false and relation ids', () => {
+    expect(
+      normalizeEntityTemplates(
+        [
+          {
+            id: 'default',
+            name: ' Default ',
+            values: {
+              owner: 'team-1',
+              tags: [' vendor ', 'vendor'],
+              fields: { enabled: false, score: 4, parent: ['entity-1'], removed: 'ignored' }
+            }
+          }
+        ],
+        fields
+      )
+    ).toEqual([
+      {
+        id: 'default',
+        name: 'Default',
+        values: {
+          owner: 'team-1',
+          tags: ['vendor'],
+          fields: { enabled: false, score: 4, parent: ['entity-1'] }
+        }
+      }
+    ]);
+  });
+
+  it('rejects duplicate names case-insensitively', () => {
+    expect(() =>
+      normalizeEntityTemplates(
+        [
+          { id: 'one', name: 'Vendor', values: { fields: {} } },
+          { id: 'two', name: 'vendor', values: { fields: {} } }
+        ],
+        fields
+      )
+    ).toThrow("Duplicate template name 'vendor'");
+  });
+});
+
 // ── findIncompatibleFieldChanges ────────────────────────────────
 
 describe('findIncompatibleFieldChanges', () => {
-  const text = (id: string, name: string, requirementLevel?: SchemaField['requirementLevel']): SchemaField => ({
+  const text = (
+    id: string,
+    name: string,
+    requirementLevel?: SchemaField['requirementLevel']
+  ): SchemaField => ({
     id,
     name,
     type: 'text',

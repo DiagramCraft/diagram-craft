@@ -62,8 +62,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchema(input: SchemaDbCreate) {
     try {
       const rows = (await this.sql`
-        INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, key_prefix, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -80,6 +80,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         SET name = ${input.name},
             description = ${input.description},
             fields = ${this.json(input.fields)},
+            templates = ${this.json(input.templates ?? [])},
             color = ${input.color},
             icon = ${input.icon},
             default_owner = ${input.default_owner},
@@ -419,7 +420,6 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     );
     return rows[0] ? catalogMappers.entitySnapshot(rows[0]) : null;
   }
-
 
   async listSnapshots(workspace: string, entityId: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(

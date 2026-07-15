@@ -998,6 +998,88 @@
                         },
                         "description": "Schema field definitions"
                       },
+                      "templates": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable template identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Template display name"
+                            },
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "description": {
+                                  "type": "string",
+                                  "description": "Default entity description"
+                                },
+                                "owner": {
+                                  "type": "string",
+                                  "description": "Default owner team identifier"
+                                },
+                                "lifecycle": {
+                                  "type": "string",
+                                  "description": "Default lifecycle state identifier"
+                                },
+                                "namespace": {
+                                  "type": "string",
+                                  "description": "Default entity namespace"
+                                },
+                                "tags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Default entity tags"
+                                },
+                                "fields": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "description": "Schema field defaults"
+                                }
+                              },
+                              "required": [
+                                "fields"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "values"
+                          ],
+                          "description": "Named defaults for creating an entity of this schema"
+                        },
+                        "description": "Named entity creation templates"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -1042,6 +1124,7 @@
                       "description",
                       "key_prefix",
                       "fields",
+                      "templates",
                       "color",
                       "icon",
                       "entity_count",
@@ -1481,6 +1564,88 @@
                       "description": "Schema field definition"
                     },
                     "description": "Initial field definitions"
+                  },
+                  "templates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Stable template identifier"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Template display name"
+                        },
+                        "values": {
+                          "type": "object",
+                          "properties": {
+                            "description": {
+                              "type": "string",
+                              "description": "Default entity description"
+                            },
+                            "owner": {
+                              "type": "string",
+                              "description": "Default owner team identifier"
+                            },
+                            "lifecycle": {
+                              "type": "string",
+                              "description": "Default lifecycle state identifier"
+                            },
+                            "namespace": {
+                              "type": "string",
+                              "description": "Default entity namespace"
+                            },
+                            "tags": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "Default entity tags"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                ]
+                              },
+                              "description": "Schema field defaults"
+                            }
+                          },
+                          "required": [
+                            "fields"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "values"
+                      ],
+                      "description": "Named defaults for creating an entity of this schema"
+                    },
+                    "description": "Named entity creation templates"
                   },
                   "color": {
                     "anyOf": [
@@ -1963,6 +2128,88 @@
                       },
                       "description": "Schema field definitions"
                     },
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable template identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Template display name"
+                          },
+                          "values": {
+                            "type": "object",
+                            "properties": {
+                              "description": {
+                                "type": "string",
+                                "description": "Default entity description"
+                              },
+                              "owner": {
+                                "type": "string",
+                                "description": "Default owner team identifier"
+                              },
+                              "lifecycle": {
+                                "type": "string",
+                                "description": "Default lifecycle state identifier"
+                              },
+                              "namespace": {
+                                "type": "string",
+                                "description": "Default entity namespace"
+                              },
+                              "tags": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Default entity tags"
+                              },
+                              "fields": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    },
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Schema field defaults"
+                              }
+                            },
+                            "required": [
+                              "fields"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "values"
+                        ],
+                        "description": "Named defaults for creating an entity of this schema"
+                      },
+                      "description": "Named entity creation templates"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -2007,6 +2254,7 @@
                     "description",
                     "key_prefix",
                     "fields",
+                    "templates",
                     "color",
                     "icon",
                     "entity_count",
@@ -2488,6 +2736,88 @@
                       },
                       "description": "Schema field definitions"
                     },
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable template identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Template display name"
+                          },
+                          "values": {
+                            "type": "object",
+                            "properties": {
+                              "description": {
+                                "type": "string",
+                                "description": "Default entity description"
+                              },
+                              "owner": {
+                                "type": "string",
+                                "description": "Default owner team identifier"
+                              },
+                              "lifecycle": {
+                                "type": "string",
+                                "description": "Default lifecycle state identifier"
+                              },
+                              "namespace": {
+                                "type": "string",
+                                "description": "Default entity namespace"
+                              },
+                              "tags": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Default entity tags"
+                              },
+                              "fields": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    },
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Schema field defaults"
+                              }
+                            },
+                            "required": [
+                              "fields"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "values"
+                        ],
+                        "description": "Named defaults for creating an entity of this schema"
+                      },
+                      "description": "Named entity creation templates"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -2532,6 +2862,7 @@
                     "description",
                     "key_prefix",
                     "fields",
+                    "templates",
                     "color",
                     "icon",
                     "entity_count",
@@ -2979,6 +3310,88 @@
                       "description": "Schema field definition"
                     },
                     "description": "Initial field definitions"
+                  },
+                  "templates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Stable template identifier"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Template display name"
+                        },
+                        "values": {
+                          "type": "object",
+                          "properties": {
+                            "description": {
+                              "type": "string",
+                              "description": "Default entity description"
+                            },
+                            "owner": {
+                              "type": "string",
+                              "description": "Default owner team identifier"
+                            },
+                            "lifecycle": {
+                              "type": "string",
+                              "description": "Default lifecycle state identifier"
+                            },
+                            "namespace": {
+                              "type": "string",
+                              "description": "Default entity namespace"
+                            },
+                            "tags": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "Default entity tags"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                ]
+                              },
+                              "description": "Schema field defaults"
+                            }
+                          },
+                          "required": [
+                            "fields"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "values"
+                      ],
+                      "description": "Named defaults for creating an entity of this schema"
+                    },
+                    "description": "Named entity creation templates"
                   },
                   "color": {
                     "anyOf": [
@@ -3461,6 +3874,88 @@
                       },
                       "description": "Schema field definitions"
                     },
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable template identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Template display name"
+                          },
+                          "values": {
+                            "type": "object",
+                            "properties": {
+                              "description": {
+                                "type": "string",
+                                "description": "Default entity description"
+                              },
+                              "owner": {
+                                "type": "string",
+                                "description": "Default owner team identifier"
+                              },
+                              "lifecycle": {
+                                "type": "string",
+                                "description": "Default lifecycle state identifier"
+                              },
+                              "namespace": {
+                                "type": "string",
+                                "description": "Default entity namespace"
+                              },
+                              "tags": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Default entity tags"
+                              },
+                              "fields": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    },
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Schema field defaults"
+                              }
+                            },
+                            "required": [
+                              "fields"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "values"
+                        ],
+                        "description": "Named defaults for creating an entity of this schema"
+                      },
+                      "description": "Named entity creation templates"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -3505,6 +4000,7 @@
                     "description",
                     "key_prefix",
                     "fields",
+                    "templates",
                     "color",
                     "icon",
                     "entity_count",

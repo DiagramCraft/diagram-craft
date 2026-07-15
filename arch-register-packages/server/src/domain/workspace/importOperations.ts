@@ -1,7 +1,15 @@
 import { createHash, randomUUID } from 'node:crypto';
-import type { DatabaseAdapter, ContentNodeDbUpsert, EntityDbCreate, SchemaDbCreate } from '../../db/database';
+import type {
+  DatabaseAdapter,
+  ContentNodeDbUpsert,
+  EntityDbCreate,
+  SchemaDbCreate
+} from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
-import { coordinateContentWrite, type ContentStorageChange } from '../project/contentWriteCoordinator';
+import {
+  coordinateContentWrite,
+  type ContentStorageChange
+} from '../project/contentWriteCoordinator';
 import type { AuthorizationContext, WorkspaceCapability } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import type {
@@ -292,9 +300,7 @@ const validateSchemas = async (
   const existingSchemas = await db.catalog.listSchemas(workspace);
 
   for (const schema of schemas) {
-    const existing = existingSchemas.find(
-      s => s.name.toLowerCase() === schema.name.toLowerCase()
-    );
+    const existing = existingSchemas.find(s => s.name.toLowerCase() === schema.name.toLowerCase());
     if (existing) {
       conflicts.push({
         type: 'schemas',
@@ -339,9 +345,10 @@ const validateEntities = async (
         type: 'entities',
         item_id: entity.id,
         item_name: entity.name,
-        conflict_reason: existing.slug.toLowerCase() === entity.slug.toLowerCase()
-          ? 'duplicate_slug'
-          : 'duplicate_name',
+        conflict_reason:
+          existing.slug.toLowerCase() === entity.slug.toLowerCase()
+            ? 'duplicate_slug'
+            : 'duplicate_name',
         existing_item: { id: existing.id, name: existing.name, slug: existing.slug },
         import_item: entity,
         suggested_resolution: 'merge'
@@ -407,10 +414,11 @@ const validateContentNodes = async (
   const sourceEntities = new Set(entities?.map(entity => entity.id) ?? []);
 
   for (const node of contentNodes) {
-    const scopeMatches = (candidate: typeof existing[number]) =>
+    const scopeMatches = (candidate: (typeof existing)[number]) =>
       candidate.project_id === node.project_id && candidate.entity_id === node.entity_id;
-    const match = existing.find(candidate =>
-      candidate.id === node.id || (scopeMatches(candidate) && candidate.path === node.path)
+    const match = existing.find(
+      candidate =>
+        candidate.id === node.id || (scopeMatches(candidate) && candidate.path === node.path)
     );
     if (match) {
       conflicts.push({
@@ -423,14 +431,47 @@ const validateContentNodes = async (
         suggested_resolution: 'merge'
       });
     }
-    if (node.parent_id && !sourceIds.has(node.parent_id) && !existing.some(item => item.id === node.parent_id)) {
-      conflicts.push({ type: 'content_nodes', item_id: node.id, item_name: node.path, conflict_reason: 'missing_dependency', import_item: node, suggested_resolution: 'skip' });
+    if (
+      node.parent_id &&
+      !sourceIds.has(node.parent_id) &&
+      !existing.some(item => item.id === node.parent_id)
+    ) {
+      conflicts.push({
+        type: 'content_nodes',
+        item_id: node.id,
+        item_name: node.path,
+        conflict_reason: 'missing_dependency',
+        import_item: node,
+        suggested_resolution: 'skip'
+      });
     }
-    if (node.project_id && !sourceProjects.has(node.project_id) && !existing.some(item => item.project_id === node.project_id)) {
-      conflicts.push({ type: 'content_nodes', item_id: node.id, item_name: node.path, conflict_reason: 'missing_dependency', import_item: node, suggested_resolution: 'skip' });
+    if (
+      node.project_id &&
+      !sourceProjects.has(node.project_id) &&
+      !existing.some(item => item.project_id === node.project_id)
+    ) {
+      conflicts.push({
+        type: 'content_nodes',
+        item_id: node.id,
+        item_name: node.path,
+        conflict_reason: 'missing_dependency',
+        import_item: node,
+        suggested_resolution: 'skip'
+      });
     }
-    if (node.entity_id && !sourceEntities.has(node.entity_id) && !existing.some(item => item.entity_id === node.entity_id)) {
-      conflicts.push({ type: 'content_nodes', item_id: node.id, item_name: node.path, conflict_reason: 'missing_dependency', import_item: node, suggested_resolution: 'skip' });
+    if (
+      node.entity_id &&
+      !sourceEntities.has(node.entity_id) &&
+      !existing.some(item => item.entity_id === node.entity_id)
+    ) {
+      conflicts.push({
+        type: 'content_nodes',
+        item_id: node.id,
+        item_name: node.path,
+        conflict_reason: 'missing_dependency',
+        import_item: node,
+        suggested_resolution: 'skip'
+      });
     }
   }
 
@@ -470,32 +511,76 @@ const buildImportPlan = async (
   contentFiles?: Map<string, Buffer>
 ): Promise<{ plan: WorkspaceImportPlan; mapping: IdMapping }> => {
   const mapping = createIdMapping();
-  const parsed = await parseImport(db, authCtx, workspace, {
-    version: '1.0', format: 'zip-multi-file', exported_at: '', exported_by: '', source_workspace: { id: '', name: '', url_slug: '' }, export_options: options.include, files: {}, statistics: { entity_count: 0, project_count: 0, schema_count: 0, content_node_count: 0, total_content_size_bytes: 0 }, checksums: {}
-  }, data);
+  const parsed = await parseImport(
+    db,
+    authCtx,
+    workspace,
+    {
+      version: '1.0',
+      format: 'zip-multi-file',
+      exported_at: '',
+      exported_by: '',
+      source_workspace: { id: '', name: '', url_slug: '' },
+      export_options: options.include,
+      files: {},
+      statistics: {
+        entity_count: 0,
+        project_count: 0,
+        schema_count: 0,
+        content_node_count: 0,
+        total_content_size_bytes: 0
+      },
+      checksums: {}
+    },
+    data
+  );
   const diagnostics: ImportDiagnostic[] = [...(parsed.diagnostics ?? [])];
   const conflictById = new Map(parsed.conflicts.map(conflict => [conflict.item_id, conflict]));
 
   for (const conflict of parsed.conflicts) {
     const resolution = options.conflict_resolutions[conflict.item_id];
     if (!resolution) {
-      diagnostics.push({ code: 'unresolved_conflict', item_type: conflict.type, item_id: conflict.item_id, message: `Conflict for ${conflict.item_name} requires an explicit resolution` });
+      diagnostics.push({
+        code: 'unresolved_conflict',
+        item_type: conflict.type,
+        item_id: conflict.item_id,
+        message: `Conflict for ${conflict.item_name} requires an explicit resolution`
+      });
       continue;
     }
     if (resolution.action === 'rename' && !resolution.new_name?.trim()) {
-      diagnostics.push({ code: 'unresolved_conflict', item_type: conflict.type, item_id: conflict.item_id, message: `A new name is required to rename ${conflict.item_name}` });
+      diagnostics.push({
+        code: 'unresolved_conflict',
+        item_type: conflict.type,
+        item_id: conflict.item_id,
+        message: `A new name is required to rename ${conflict.item_name}`
+      });
     }
     if (conflict.conflict_reason === 'missing_dependency' && resolution.action !== 'skip') {
-      diagnostics.push({ code: 'missing_reference', item_type: conflict.type, item_id: conflict.item_id, message: `${conflict.item_name} has a missing dependency and can only be skipped` });
+      diagnostics.push({
+        code: 'missing_reference',
+        item_type: conflict.type,
+        item_id: conflict.item_id,
+        message: `${conflict.item_name} has a missing dependency and can only be skipped`
+      });
     }
   }
 
-  const existingId = (id: string) => conflictById.get(id)?.existing_item?.['id'] as string | undefined;
+  const existingId = (id: string) =>
+    conflictById.get(id)?.existing_item?.['id'] as string | undefined;
   const assign = (items: Array<{ id: string }>, bucket: Map<string, string>) => {
     for (const item of items) {
       const resolution = options.conflict_resolutions[item.id];
       if (resolution?.action === 'skip') continue;
-      bucket.set(item.id, (resolution?.action === 'merge' || resolution?.action === 'overwrite') && existingId(item.id) ? existingId(item.id)! : options.preserve_ids ? item.id : randomUUID());
+      bucket.set(
+        item.id,
+        (resolution?.action === 'merge' || resolution?.action === 'overwrite') &&
+          existingId(item.id)
+          ? existingId(item.id)!
+          : options.preserve_ids
+            ? item.id
+            : randomUUID()
+      );
     }
   };
   if (options.include.includes('config') && data.config) {
@@ -503,45 +588,102 @@ const buildImportPlan = async (
     assign(data.config.lifecycle_states, mapping.lifecycle_states);
   }
   if (options.include.includes('schemas') && data.schemas) assign(data.schemas, mapping.schemas);
-  if (options.include.includes('entities') && data.entities) assign(data.entities, mapping.entities);
-  if (options.include.includes('projects') && data.projects) assign(data.projects, mapping.projects);
-  if (options.include.includes('content_nodes') && data.content_nodes) assign(data.content_nodes, mapping.content_nodes);
+  if (options.include.includes('entities') && data.entities)
+    assign(data.entities, mapping.entities);
+  if (options.include.includes('projects') && data.projects)
+    assign(data.projects, mapping.projects);
+  if (options.include.includes('content_nodes') && data.content_nodes)
+    assign(data.content_nodes, mapping.content_nodes);
 
   const storage_writes: WorkspaceImportPlan['storage_writes'] = [];
   for (const node of data.content_nodes ?? []) {
-    if (!options.include.includes('content_nodes') || !node.content_file || !mapping.content_nodes.has(node.id)) continue;
+    if (
+      !options.include.includes('content_nodes') ||
+      !node.content_file ||
+      !mapping.content_nodes.has(node.id)
+    )
+      continue;
     if (!contentFiles?.has(node.content_file)) {
-      diagnostics.push({ code: 'missing_content_file', item_type: 'content_nodes', item_id: node.id, message: `Content file is missing for ${node.path}` });
+      diagnostics.push({
+        code: 'missing_content_file',
+        item_type: 'content_nodes',
+        item_id: node.id,
+        message: `Content file is missing for ${node.path}`
+      });
       continue;
     }
     const projectId = resolveMappedId(mapping.projects, node.project_id);
     const entityId = resolveMappedId(mapping.entities, node.entity_id);
-    storage_writes.push({ workspace, storage_id: storageScope(workspace, { project_id: projectId, entity_id: entityId }), node_id: mapping.content_nodes.get(node.id)!, source_path: node.content_file });
+    storage_writes.push({
+      workspace,
+      storage_id: storageScope(workspace, { project_id: projectId, entity_id: entityId }),
+      node_id: mapping.content_nodes.get(node.id)!,
+      source_path: node.content_file
+    });
   }
-  return { plan: { include: options.include, id_mapping: toSerializableMapping(mapping), storage_writes, conflicts: parsed.conflicts, diagnostics }, mapping };
+  return {
+    plan: {
+      include: options.include,
+      id_mapping: toSerializableMapping(mapping),
+      storage_writes,
+      conflicts: parsed.conflicts,
+      diagnostics
+    },
+    mapping
+  };
 };
 
-const resolvedName = (id: string, fallback: string, resolutions: Record<string, ImportResolution>) =>
+const resolvedName = (
+  id: string,
+  fallback: string,
+  resolutions: Record<string, ImportResolution>
+) =>
   resolutions[id]?.action === 'rename' ? resolutions[id]?.new_name?.trim() || fallback : fallback;
 
-const applyConflictRenames = <T extends {
-  config?: ExportConfig;
-  schemas?: ExportSchema[];
-  entities?: ExportEntity[];
-  projects?: ExportProject[];
-  content_nodes?: ExportContentNode[];
-}>(data: T, resolutions: Record<string, ImportResolution>): T => ({
+const applyConflictRenames = <
+  T extends {
+    config?: ExportConfig;
+    schemas?: ExportSchema[];
+    entities?: ExportEntity[];
+    projects?: ExportProject[];
+    content_nodes?: ExportContentNode[];
+  }
+>(
+  data: T,
+  resolutions: Record<string, ImportResolution>
+): T => ({
   ...data,
   config: data.config && {
     ...data.config,
-    lifecycle_states: data.config.lifecycle_states.map(item => ({ ...item, label: resolvedName(item.id, item.label, resolutions) })),
-    teams: data.config.teams.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) })),
-    roles: data.config.roles.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) }))
+    lifecycle_states: data.config.lifecycle_states.map(item => ({
+      ...item,
+      label: resolvedName(item.id, item.label, resolutions)
+    })),
+    teams: data.config.teams.map(item => ({
+      ...item,
+      name: resolvedName(item.id, item.name, resolutions)
+    })),
+    roles: data.config.roles.map(item => ({
+      ...item,
+      name: resolvedName(item.id, item.name, resolutions)
+    }))
   },
-  schemas: data.schemas?.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) })),
-  entities: data.entities?.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) })),
-  projects: data.projects?.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) })),
-  content_nodes: data.content_nodes?.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) }))
+  schemas: data.schemas?.map(item => ({
+    ...item,
+    name: resolvedName(item.id, item.name, resolutions)
+  })),
+  entities: data.entities?.map(item => ({
+    ...item,
+    name: resolvedName(item.id, item.name, resolutions)
+  })),
+  projects: data.projects?.map(item => ({
+    ...item,
+    name: resolvedName(item.id, item.name, resolutions)
+  })),
+  content_nodes: data.content_nodes?.map(item => ({
+    ...item,
+    name: resolvedName(item.id, item.name, resolutions)
+  }))
 });
 
 export const executeImport = async (
@@ -567,15 +709,33 @@ export const executeImport = async (
   };
 
   try {
-    const { plan, mapping: idMapping } = await buildImportPlan(db, authCtx, workspace, options, data, contentFiles);
+    const { plan, mapping: idMapping } = await buildImportPlan(
+      db,
+      authCtx,
+      workspace,
+      options,
+      data,
+      contentFiles
+    );
     if (plan.diagnostics.length > 0) {
       result.success = false;
       result.errors = plan.diagnostics.map(diagnostic => diagnostic.message);
-      result.failure = { stage: 'planning', message: 'Import plan validation failed', affected_items: plan.diagnostics.flatMap(diagnostic => diagnostic.item_id ? [diagnostic.item_id] : []), compensation: 'not_required', recovery: 'reupload_archive' };
+      result.failure = {
+        stage: 'planning',
+        message: 'Import plan validation failed',
+        affected_items: plan.diagnostics.flatMap(diagnostic =>
+          diagnostic.item_id ? [diagnostic.item_id] : []
+        ),
+        compensation: 'not_required',
+        recovery: 'reupload_archive'
+      };
       return result;
     }
     const storageChanges: ContentStorageChange[] = plan.storage_writes.map(write => ({
-      type: 'write', workspace: write.workspace, storageId: write.storage_id, nodeId: write.node_id,
+      type: 'write',
+      workspace: write.workspace,
+      storageId: write.storage_id,
+      nodeId: write.node_id,
       content: contentFiles!.get(write.source_path)!
     }));
     const resolvedData = applyConflictRenames(data, options.conflict_resolutions);
@@ -587,11 +747,55 @@ export const executeImport = async (
       nodeIds: plan.storage_writes.map(write => write.node_id),
       storageChanges,
       writeDatabase: async transactionDb => {
-        if (options.include.includes('config') && resolvedData.config) result.imported.config = await importConfig(transactionDb, workspace, resolvedData.config, options.preserve_ids ?? false, options.conflict_resolutions, idMapping);
-        if (options.include.includes('schemas') && resolvedData.schemas) result.imported.schemas = await importSchemas(transactionDb, workspace, resolvedData.schemas, options.preserve_ids ?? false, options.conflict_resolutions, idMapping);
-        if (options.include.includes('entities') && resolvedData.entities) result.imported.entities = await importEntities(transactionDb, authCtx, workspace, resolvedData.entities, options.preserve_ids ?? false, options.conflict_resolutions, idMapping);
-        if (options.include.includes('projects') && resolvedData.projects) result.imported.projects = await importProjects(transactionDb, workspace, resolvedData.projects, options.preserve_ids ?? false, options.conflict_resolutions, idMapping);
-        if (options.include.includes('content_nodes') && resolvedData.content_nodes) result.imported.content_nodes = await importContentNodes(transactionDb, undefined, authCtx, workspace, resolvedData.content_nodes, options.preserve_ids ?? false, options.conflict_resolutions, idMapping, contentFiles);
+        if (options.include.includes('config') && resolvedData.config)
+          result.imported.config = await importConfig(
+            transactionDb,
+            workspace,
+            resolvedData.config,
+            options.preserve_ids ?? false,
+            options.conflict_resolutions,
+            idMapping
+          );
+        if (options.include.includes('schemas') && resolvedData.schemas)
+          result.imported.schemas = await importSchemas(
+            transactionDb,
+            workspace,
+            resolvedData.schemas,
+            options.preserve_ids ?? false,
+            options.conflict_resolutions,
+            idMapping
+          );
+        if (options.include.includes('entities') && resolvedData.entities)
+          result.imported.entities = await importEntities(
+            transactionDb,
+            authCtx,
+            workspace,
+            resolvedData.entities,
+            options.preserve_ids ?? false,
+            options.conflict_resolutions,
+            idMapping
+          );
+        if (options.include.includes('projects') && resolvedData.projects)
+          result.imported.projects = await importProjects(
+            transactionDb,
+            workspace,
+            resolvedData.projects,
+            options.preserve_ids ?? false,
+            options.conflict_resolutions,
+            idMapping
+          );
+        if (options.include.includes('content_nodes') && resolvedData.content_nodes)
+          result.imported.content_nodes = await importContentNodes(
+            transactionDb,
+            undefined,
+            authCtx,
+            workspace,
+            resolvedData.content_nodes,
+            options.preserve_ids ?? false,
+            options.conflict_resolutions,
+            idMapping,
+            contentFiles
+          );
       }
     });
   } catch (error) {
@@ -616,10 +820,8 @@ const resolveMappedId = (mapping: Map<string, string>, id: string | null | undef
   return mapping.get(id) ?? id;
 };
 
-const hasSkipResolution = (
-  resolutions: Record<string, ImportResolution>,
-  id: string
-) => resolutions[id]?.action === 'skip';
+const hasSkipResolution = (resolutions: Record<string, ImportResolution>, id: string) =>
+  resolutions[id]?.action === 'skip';
 
 const generateSchemaKeyPrefix = (seed: string) => {
   const bytes = createHash('sha1').update(seed).digest();
@@ -642,8 +844,10 @@ const importConfig = async (
 ): Promise<{ lifecycle_states: number; teams: number; roles: number }> => {
   const now = new Date();
   const lifecycleStates = config.lifecycle_states.flatMap(state => {
-    if (hasSkipResolution(resolutions, state.id) || resolutions[state.id]?.action === 'merge') return [];
-    const nextId = idMapping.lifecycle_states.get(state.id) ?? (preserveIds ? state.id : randomUUID());
+    if (hasSkipResolution(resolutions, state.id) || resolutions[state.id]?.action === 'merge')
+      return [];
+    const nextId =
+      idMapping.lifecycle_states.get(state.id) ?? (preserveIds ? state.id : randomUUID());
     idMapping.lifecycle_states.set(state.id, nextId);
     return [
       {
@@ -658,7 +862,8 @@ const importConfig = async (
   });
 
   const teams = config.teams.flatMap(team => {
-    if (hasSkipResolution(resolutions, team.id) || resolutions[team.id]?.action === 'merge') return [];
+    if (hasSkipResolution(resolutions, team.id) || resolutions[team.id]?.action === 'merge')
+      return [];
     const nextId = idMapping.teams.get(team.id) ?? (preserveIds ? team.id : randomUUID());
     idMapping.teams.set(team.id, nextId);
     return [
@@ -741,8 +946,9 @@ const importSchemas = async (
     if (resolutions[schema.id]?.action === 'merge') continue;
     if (idMapping.schemas.has(schema.id)) continue;
     const existing = preserveIds
-      ? existingSchemasById.get(schema.id) ?? existingSchemasByName.get(schema.name.toLowerCase())
-      : existingSchemasByName.get(schema.name.toLowerCase()) ?? existingSchemasById.get(schema.id);
+      ? (existingSchemasById.get(schema.id) ?? existingSchemasByName.get(schema.name.toLowerCase()))
+      : (existingSchemasByName.get(schema.name.toLowerCase()) ??
+        existingSchemasById.get(schema.id));
     const nextId = existing?.id ?? (preserveIds ? schema.id : randomUUID());
     idMapping.schemas.set(schema.id, nextId);
   }
@@ -757,7 +963,8 @@ const importSchemas = async (
   let updated = 0;
 
   for (const { schema, nextId } of mappedSchemas) {
-    const existing = existingSchemasById.get(nextId) ?? existingSchemasByName.get(schema.name.toLowerCase());
+    const existing =
+      existingSchemasById.get(nextId) ?? existingSchemasByName.get(schema.name.toLowerCase());
     const fields = schema.fields.map(field => {
       if (
         field != null &&
@@ -774,6 +981,29 @@ const importSchemas = async (
       }
       return field;
     }) as SchemaDbCreate['fields'];
+    const fieldById = new Map(fields.map(field => [field.id, field]));
+    const templates = (schema.templates ?? []).map(template => {
+      const templateFields: typeof template.values.fields = {};
+      for (const [fieldId, value] of Object.entries(template.values.fields)) {
+        const field = fieldById.get(fieldId);
+        if (field?.type === 'reference' || field?.type === 'containment') {
+          const remapped = Array.isArray(value)
+            ? value.flatMap(id => idMapping.entities.get(id) ?? [])
+            : [];
+          if (remapped.length > 0) templateFields[fieldId] = remapped;
+        } else {
+          templateFields[fieldId] = value;
+        }
+      }
+      const owner = template.values.owner ? idMapping.teams.get(template.values.owner) : undefined;
+      const lifecycle = template.values.lifecycle
+        ? idMapping.lifecycle_states.get(template.values.lifecycle)
+        : undefined;
+      return {
+        ...template,
+        values: { ...template.values, fields: templateFields, owner, lifecycle }
+      };
+    });
 
     const input: SchemaDbCreate = {
       id: nextId,
@@ -781,6 +1011,7 @@ const importSchemas = async (
       name: schema.name,
       description: existing?.description ?? '',
       fields,
+      templates,
       color: schema.color,
       icon: schema.icon,
       default_owner: resolveMappedId(idMapping.teams, schema.default_owner),
@@ -795,6 +1026,7 @@ const importSchemas = async (
         name: input.name,
         description: input.description,
         fields: input.fields,
+        templates: input.templates,
         color: input.color,
         icon: input.icon,
         default_owner: input.default_owner,
@@ -803,7 +1035,13 @@ const importSchemas = async (
       });
       if (row?.key_prefix && row.key_prefix !== previousKeyPrefix) {
         if (previousKeyPrefix) {
-          await db.workspace.updatePublicIdPrefix(previousKeyPrefix, row.key_prefix, 'schema', row.id, now);
+          await db.workspace.updatePublicIdPrefix(
+            previousKeyPrefix,
+            row.key_prefix,
+            'schema',
+            row.id,
+            now
+          );
         } else {
           await db.workspace.registerPublicIdPrefix(row.key_prefix, 'schema', row.id, now);
         }
@@ -833,9 +1071,12 @@ const importEntities = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number; skipped: number }> => {
   const now = new Date();
-  const existingEntities = new Map((await db.catalog.listEntities(workspace)).map(entity => [entity.id, entity]));
+  const existingEntities = new Map(
+    (await db.catalog.listEntities(workspace)).map(entity => [entity.id, entity])
+  );
   const mappedEntities = entities.flatMap(entity => {
-    if (hasSkipResolution(resolutions, entity.id) || resolutions[entity.id]?.action === 'merge') return [];
+    if (hasSkipResolution(resolutions, entity.id) || resolutions[entity.id]?.action === 'merge')
+      return [];
     const nextId = idMapping.entities.get(entity.id) ?? (preserveIds ? entity.id : randomUUID());
     idMapping.entities.set(entity.id, nextId);
     return [{ entity, nextId }];
@@ -843,7 +1084,7 @@ const importEntities = async (
 
   let created = 0;
   let updated = 0;
-    const skipped = 0;
+  const skipped = 0;
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
@@ -904,9 +1145,12 @@ const importProjects = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
-  const existingProjects = new Map((await db.project.listProjects(workspace)).map(project => [project.id, project]));
+  const existingProjects = new Map(
+    (await db.project.listProjects(workspace)).map(project => [project.id, project])
+  );
   const mappedProjects = projects.flatMap(project => {
-    if (hasSkipResolution(resolutions, project.id) || resolutions[project.id]?.action === 'merge') return [];
+    if (hasSkipResolution(resolutions, project.id) || resolutions[project.id]?.action === 'merge')
+      return [];
     const nextId = idMapping.projects.get(project.id) ?? (preserveIds ? project.id : randomUUID());
     idMapping.projects.set(project.id, nextId);
     return [{ project, nextId }];
@@ -972,9 +1216,12 @@ const importContentNodes = async (
   contentFiles?: Map<string, Buffer>
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
-  const existingNodes = new Map((await db.project.listAllContentNodes(workspace)).map(node => [node.id, node]));
+  const existingNodes = new Map(
+    (await db.project.listAllContentNodes(workspace)).map(node => [node.id, node])
+  );
   const mappedNodes = contentNodes.flatMap(node => {
-    if (hasSkipResolution(resolutions, node.id) || resolutions[node.id]?.action === 'merge') return [];
+    if (hasSkipResolution(resolutions, node.id) || resolutions[node.id]?.action === 'merge')
+      return [];
     const nextId = idMapping.content_nodes.get(node.id) ?? (preserveIds ? node.id : randomUUID());
     idMapping.content_nodes.set(node.id, nextId);
     return [{ node, nextId }];
@@ -994,7 +1241,10 @@ const importContentNodes = async (
     const projectId = resolveMappedId(idMapping.projects, node.project_id);
     const entityId = resolveMappedId(idMapping.entities, node.entity_id);
     const parentId = resolveMappedId(idMapping.content_nodes, node.parent_id);
-    const storageProjectId = storageScope(workspace, { project_id: projectId, entity_id: entityId });
+    const storageProjectId = storageScope(workspace, {
+      project_id: projectId,
+      entity_id: entityId
+    });
 
     const row = await db.project.upsertContentNode({
       id: nextId,
@@ -1015,7 +1265,12 @@ const importContentNodes = async (
     } satisfies ContentNodeDbUpsert);
 
     if (node.content_file && contentFiles?.has(node.content_file) && storage) {
-      await storage.write(workspace, storageProjectId, row.id, contentFiles.get(node.content_file)!);
+      await storage.write(
+        workspace,
+        storageProjectId,
+        row.id,
+        contentFiles.get(node.content_file)!
+      );
     }
 
     if (node.type !== 'folder') {

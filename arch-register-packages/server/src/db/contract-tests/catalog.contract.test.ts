@@ -24,6 +24,13 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         name: 'renamed schema',
         description: 'updated',
         fields: [],
+        templates: [
+          {
+            id: 'vendor',
+            name: 'Vendor',
+            values: { tags: ['third-party'], fields: {} }
+          }
+        ],
         color: '#ff0000',
         icon: null,
         default_owner: null,
@@ -31,6 +38,13 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         updated_at: new Date()
       });
       expect(updated!.name).toBe('renamed schema');
+      expect(updated!.templates).toEqual([
+        {
+          id: 'vendor',
+          name: 'Vendor',
+          values: { tags: ['third-party'], fields: {} }
+        }
+      ]);
 
       const byPrefix = await db.catalog.getSchemaByKeyPrefix(fetched!.key_prefix);
       expect(byPrefix!.id).toBe(id);
@@ -220,99 +234,98 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     });
   });
 
-    it('should ignore prototype property names in filter conditions', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Test Entity' });
+  it('should ignore prototype property names in filter conditions', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createFixtureSchema(db, workspace);
+    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Test Entity' });
 
-      // Test various prototype properties - should not cause SQL errors
-      const prototypeProps = ['toString', 'constructor', '__proto__', 'hasOwnProperty', 'valueOf'];
+    // Test various prototype properties - should not cause SQL errors
+    const prototypeProps = ['toString', 'constructor', '__proto__', 'hasOwnProperty', 'valueOf'];
 
-      for (const prop of prototypeProps) {
-        const result = await db.catalog.listEntitiesPaginated(
-          workspace,
-          { conditions: [{ fieldId: prop, op: 'equals', value: 'test' }] },
-          { limit: 10, offset: 0 }
-        );
-        // Should return all entities (condition ignored) without SQL error
-        expect(result).toHaveLength(1);
-      }
-    });
-
-    it('should handle mixed valid and prototype property filters', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Match' });
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'NoMatch' });
-
-      // Mix valid filter with prototype property - should only apply valid filter
+    for (const prop of prototypeProps) {
       const result = await db.catalog.listEntitiesPaginated(
         workspace,
-        {
-          conditions: [
-            { fieldId: '_name', op: 'equals', value: 'Match' },
-            { fieldId: 'toString', op: 'equals', value: 'ignored' }
-          ]
-        },
+        { conditions: [{ fieldId: prop, op: 'equals', value: 'test' }] },
         { limit: 10, offset: 0 }
       );
-
+      // Should return all entities (condition ignored) without SQL error
       expect(result).toHaveLength(1);
-      expect(result[0]?.name).toBe('Match');
+    }
+  });
+
+  it('should handle mixed valid and prototype property filters', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createFixtureSchema(db, workspace);
+    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Match' });
+    await createFixtureCatalogEntity(db, workspace, schema, { name: 'NoMatch' });
+
+    // Mix valid filter with prototype property - should only apply valid filter
+    const result = await db.catalog.listEntitiesPaginated(
+      workspace,
+      {
+        conditions: [
+          { fieldId: '_name', op: 'equals', value: 'Match' },
+          { fieldId: 'toString', op: 'equals', value: 'ignored' }
+        ]
+      },
+      { limit: 10, offset: 0 }
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.name).toBe('Match');
+  });
+
+  it('filters entities by _tags conditions', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createFixtureSchema(db, workspace);
+    await createFixtureCatalogEntity(db, workspace, schema, {
+      name: 'React entity',
+      tags: ['react', 'frontend']
     });
-
-    it('filters entities by _tags conditions', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      await createFixtureCatalogEntity(db, workspace, schema, {
-        name: 'React entity',
-        tags: ['react', 'frontend']
-      });
-      await createFixtureCatalogEntity(db, workspace, schema, {
-        name: 'Vue entity',
-        tags: ['vue', 'frontend']
-      });
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Untagged entity', tags: [] });
-
-      const equalsResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'equals', value: 'react' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(equalsResult.map(e => e.name)).toEqual(['React entity']);
-
-      const notEqualsResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'not_equals', value: 'react' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(notEqualsResult.map(e => e.name).sort()).toEqual(['Untagged entity', 'Vue entity']);
-
-      const containsResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'contains', value: 'ont' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(containsResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
-
-      const emptyResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'empty', value: '' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(emptyResult.map(e => e.name)).toEqual(['Untagged entity']);
-
-      const notEmptyResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'not_empty', value: '' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(notEmptyResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
+    await createFixtureCatalogEntity(db, workspace, schema, {
+      name: 'Vue entity',
+      tags: ['vue', 'frontend']
     });
+    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Untagged entity', tags: [] });
 
+    const equalsResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'equals', value: 'react' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(equalsResult.map(e => e.name)).toEqual(['React entity']);
+
+    const notEqualsResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'not_equals', value: 'react' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(notEqualsResult.map(e => e.name).sort()).toEqual(['Untagged entity', 'Vue entity']);
+
+    const containsResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'contains', value: 'ont' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(containsResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
+
+    const emptyResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'empty', value: '' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(emptyResult.map(e => e.name)).toEqual(['Untagged entity']);
+
+    const notEmptyResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'not_empty', value: '' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(notEmptyResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
+  });
 
   describe('entity grants', () => {
     it('replaces entity grants atomically', async () => {
@@ -700,7 +713,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       ]);
 
       expect(await db.view.listCollections(secondUser.id, workspace)).toEqual([]);
-      expect(await db.view.removeCollectionEntity(firstUser.id, workspace, first.id, entity.id)).toMatchObject({
+      expect(
+        await db.view.removeCollectionEntity(firstUser.id, workspace, first.id, entity.id)
+      ).toMatchObject({
         collection_id: first.id,
         entity_id: entity.id
       });

@@ -150,6 +150,48 @@
   margin-top: 18px;
 }
 
+.templateList {
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.templateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.templateRow:last-child {
+  border-bottom: 0;
+}
+
+.templateName {
+  color: var(--base-fg);
+  font-size: 13px;
+}
+
+.templateSummary,
+.templateEmpty {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.templateEmpty {
+  padding: 16px;
+  text-align: center;
+}
+
+.templateActions {
+  display: flex;
+  gap: 4px;
+}
+
 .colorSwatches {
   display: flex;
   gap: 4px;
@@ -214,7 +256,7 @@
 }
 
 .checkbox:checked::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 4px;
   top: 1px;

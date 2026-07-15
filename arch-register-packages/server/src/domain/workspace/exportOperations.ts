@@ -34,10 +34,10 @@ export const exportWorkspace = async (
   contentFiles?: Map<string, Buffer>;
 }> => {
   // Check export permission
-  httpAssert.true(
-    checker.hasWorkspaceCapability(authCtx, 'ws.settings'),
-    { status: 403, message: 'You do not have permission to export this workspace' }
-  );
+  httpAssert.true(checker.hasWorkspaceCapability(authCtx, 'ws.settings'), {
+    status: 403,
+    message: 'You do not have permission to export this workspace'
+  });
 
   const workspaceData = await db.workspace.getWorkspace(workspace);
   httpAssert.present(workspaceData, { status: 404, message: 'Workspace not found' });
@@ -174,6 +174,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     id: schema.id,
     name: schema.name,
     fields: schema.fields,
+    templates: schema.templates ?? [],
     color: schema.color,
     icon: schema.icon,
     default_owner: schema.default_owner,

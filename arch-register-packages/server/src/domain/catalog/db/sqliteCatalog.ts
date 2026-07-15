@@ -64,13 +64,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchema(input: SchemaDbCreate) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, key_prefix, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.name,
         input.description,
         JSON.stringify(input.fields),
+        JSON.stringify(input.templates ?? []),
         input.color,
         input.icon,
         input.default_owner,
@@ -84,11 +85,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
-      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
         JSON.stringify(input.fields),
+        JSON.stringify(input.templates ?? []),
         input.color,
         input.icon,
         input.default_owner,
@@ -405,7 +407,6 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     ))!;
   }
 
-
   async getSnapshot(workspace: string, snapshotId: string) {
     return await this.get(
       `${ENTITY_SNAPSHOT_SELECT_SQL}
@@ -568,10 +569,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     if (setClauses.length === 0) return existing;
 
     params.push(snapshotId);
-    this.run(
-      `UPDATE entity_snapshot SET ${setClauses.join(', ')} WHERE id = ?`,
-      params
-    );
+    this.run(`UPDATE entity_snapshot SET ${setClauses.join(', ')} WHERE id = ?`, params);
     return await this.get(
       'SELECT * FROM entity_snapshot WHERE id = ?',
       [snapshotId],
@@ -587,10 +585,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
     if (existing?.status !== 'future_update') return null;
 
-    this.run(
-      `UPDATE entity_snapshot SET status = 'applied' WHERE id = ?`,
-      [snapshotId]
-    );
+    this.run(`UPDATE entity_snapshot SET status = 'applied' WHERE id = ?`, [snapshotId]);
     return await this.get(
       'SELECT * FROM entity_snapshot WHERE id = ?',
       [snapshotId],
