@@ -10,7 +10,7 @@ import {
   extractEntityFields,
   computeChanges
 } from '../audit/db/auditLogging';
-import { fileNameFromPath } from './contentFileHelpers';
+import { fileNameFromPath, isMarkdownPath } from './contentFileHelpers';
 import {
   ATTACHMENT_CONTAINER_NAME,
   CONTENT_NODE_ROLE_ATTACHMENT_CONTAINER,
@@ -173,6 +173,12 @@ const requireMarkdownNodeAccess = async (
 // ── Markdown document operations ──────────────────────────────
 
 const EMPTY_MARKDOWN_BODY = JSON.stringify({ body: '' });
+
+const isMarkdownNode = (
+  node: Pick<ContentNodeDbResult, 'type' | 'path' | 'mount_id'>
+) =>
+  node.type === 'markdown' ||
+  (node.type === 'file' && node.mount_id != null && isMarkdownPath(node.path));
 
 const readMarkdownBody = (content: Buffer) => {
   const rawContent = content.toString('utf8');
@@ -347,7 +353,7 @@ export const getMarkdownContent = async (
     async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-      httpAssert.true(node.type === 'markdown', {
+      httpAssert.true(isMarkdownNode(node), {
         status: 400,
         message: 'Node is not a markdown document'
       });
@@ -386,7 +392,7 @@ export const uploadMarkdownAttachment = async (
         status: 404,
         message: `Markdown document '${nodeId}' not found`
       });
-      httpAssert.true(markdownNode.type === 'markdown', {
+      httpAssert.true(isMarkdownNode(markdownNode), {
         status: 400,
         message: 'Node is not a markdown document'
       });
@@ -502,7 +508,7 @@ export const createMarkdownDiagramAttachment = async (
         status: 404,
         message: `Markdown document '${nodeId}' not found`
       });
-      httpAssert.true(markdownNode.type === 'markdown', {
+      httpAssert.true(isMarkdownNode(markdownNode), {
         status: 400,
         message: 'Node is not a markdown document'
       });
@@ -617,7 +623,7 @@ export const saveMarkdownContent = async (
     async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-      httpAssert.true(node.type === 'markdown', {
+      httpAssert.true(isMarkdownNode(node), {
         status: 400,
         message: 'Node is not a markdown document'
       });
@@ -719,7 +725,7 @@ export const listMarkdownRevisions = async (
     async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-      httpAssert.true(node.type === 'markdown', {
+      httpAssert.true(isMarkdownNode(node), {
         status: 400,
         message: 'Node is not a markdown document'
       });
@@ -748,7 +754,7 @@ export const getMarkdownRevision = async (
     async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-      httpAssert.true(node.type === 'markdown', {
+      httpAssert.true(isMarkdownNode(node), {
         status: 400,
         message: 'Node is not a markdown document'
       });
@@ -779,7 +785,7 @@ export const restoreMarkdownRevision = async (
     async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-      httpAssert.true(node.type === 'markdown', {
+      httpAssert.true(isMarkdownNode(node), {
         status: 400,
         message: 'Node is not a markdown document'
       });
