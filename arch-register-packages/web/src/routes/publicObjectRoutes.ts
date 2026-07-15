@@ -57,7 +57,7 @@ export const projectMarkdownRoute = <TSearch = undefined>(
 export const projectMarkdownDraftRoute = (
   workspaceSlug: string,
   projectId: ProjectPublicId,
-  search?: { draftName?: string; draftFolder?: string }
+  search?: { draftName?: string; draftFolder?: string; draftType?: string; draftTemplate?: string }
 ) => withSearch({
   to: '/$workspaceSlug/projects/$projectId/wiki/new' as const,
   params: { workspaceSlug, projectId }
@@ -92,7 +92,7 @@ export const workspaceMarkdownRoute = <TSearch = undefined>(
 
 export const workspaceMarkdownDraftRoute = (
   workspaceSlug: string,
-  search?: { draftName?: string; draftFolder?: string }
+  search?: { draftName?: string; draftFolder?: string; draftType?: string; draftTemplate?: string }
 ) => withSearch({
   to: '/$workspaceSlug/content/wiki/new' as const,
   params: { workspaceSlug }
@@ -128,7 +128,7 @@ export const entityMarkdownRoute = <TSearch = undefined>(
 export const entityMarkdownDraftRoute = (
   workspaceSlug: string,
   entityId: EntityPublicId,
-  search?: { draftName?: string; draftFolder?: string }
+  search?: { draftName?: string; draftFolder?: string; draftType?: string; draftTemplate?: string }
 ) => withSearch({
   to: '/$workspaceSlug/entities/$entityId/wiki/new' as const,
   params: { workspaceSlug, entityId }

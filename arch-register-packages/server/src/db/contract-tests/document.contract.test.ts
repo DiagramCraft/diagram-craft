@@ -35,6 +35,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
           retired: false
         }
       ],
+      color: 'oklch(0.62 0.14 295)',
+      icon: 'clipboard',
       created_at: now,
       updated_at: now
     });
@@ -61,6 +63,17 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       updated_at: now
     });
     expect(template.project_id).toBe(project.id);
+    expect(type.color).toBe('oklch(0.62 0.14 295)');
+    expect(type.icon).toBe('clipboard');
+    const updatedType = await db.document.updateDocumentType(workspace, type.id, {
+      name: type.name,
+      description: type.description,
+      fields: type.fields,
+      color: 'oklch(0.66 0.16 258)',
+      icon: 'api',
+      updated_at: new Date()
+    });
+    expect(updatedType).toMatchObject({ color: 'oklch(0.66 0.16 258)', icon: 'api' });
     expect((await db.document.listDocumentTemplates(workspace, project.id))[0]?.id).toBe(template.id);
 
     const nodeId = randomUUID();

@@ -132,6 +132,8 @@ export type ExportDocumentData = {
     name: string;
     description: string;
     fields: DocumentField[];
+    color: string | null;
+    icon: string | null;
     archived: boolean;
     created_at: string;
     updated_at: string;

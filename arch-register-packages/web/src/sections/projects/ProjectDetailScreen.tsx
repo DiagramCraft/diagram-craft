@@ -722,8 +722,15 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             setAddMarkdownOpen(false);
             setAddMarkdownFolder(null);
           }}
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
         onCreated={file => handleNavigateMarkdown(file.id, 'edit')}
-        onOpenDraft={name => navigate(projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), { draftName: name, draftFolder: addMarkdownFolder ?? undefined }))}
+        onOpenDraft={draft => navigate(projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), {
+          draftName: draft.name,
+          draftFolder: addMarkdownFolder ?? undefined,
+          draftType: draft.documentTypeId ?? undefined,
+          draftTemplate: draft.templateId ?? undefined
+        }))}
         onCreate={name =>
             contentOperations.createMarkdown.mutateAsync({ name, folder: addMarkdownFolder })
           }

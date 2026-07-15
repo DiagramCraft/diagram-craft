@@ -1439,7 +1439,7 @@ const importDocuments = async (
   for (const type of documents.types) {
     const nextId = preserveIds ? type.id : randomUUID();
     typeMapping.set(type.id, nextId);
-    await db.document.createDocumentType({ id: nextId, workspace, name: type.name, description: type.description, fields: type.fields, created_at: new Date(type.created_at), updated_at: new Date() });
+    await db.document.createDocumentType({ id: nextId, workspace, name: type.name, description: type.description, fields: type.fields, color: type.color, icon: type.icon, created_at: new Date(type.created_at), updated_at: new Date() });
     if (type.archived) await db.document.archiveDocumentType(workspace, nextId, true, new Date());
     created++;
   }

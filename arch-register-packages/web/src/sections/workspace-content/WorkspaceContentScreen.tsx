@@ -221,11 +221,17 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
       <AddMarkdownDialog
         open={addMarkdownOpen}
         onClose={() => setAddMarkdownOpen(false)}
+        workspaceSlug={workspaceSlug}
         onCreated={file => {
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
         }}
-        onOpenDraft={name => navigate(workspaceMarkdownDraftRoute(workspaceSlug, { draftName: name, draftFolder: folder || undefined }))}
+        onOpenDraft={draft => navigate(workspaceMarkdownDraftRoute(workspaceSlug, {
+          draftName: draft.name,
+          draftFolder: folder || undefined,
+          draftType: draft.documentTypeId ?? undefined,
+          draftTemplate: draft.templateId ?? undefined
+        }))}
         onCreate={name =>
           contentOperations.createMarkdown.mutateAsync({ name, folder: folder || null })
         }

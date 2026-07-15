@@ -232,6 +232,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
       <AddMarkdownDialog
         open={markdownFolder !== undefined}
         onClose={() => setMarkdownFolder(undefined)}
+        workspaceSlug={workspaceSlug}
         onCreated={file => {
           setMarkdownFolder(undefined);
           navigate({
@@ -240,7 +241,12 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             search: { mode: 'edit' }
           });
         }}
-        onOpenDraft={name => navigate(workspaceMarkdownDraftRoute(workspaceSlug, { draftName: name, draftFolder: markdownFolder ?? undefined }))}
+        onOpenDraft={draft => navigate(workspaceMarkdownDraftRoute(workspaceSlug, {
+          draftName: draft.name,
+          draftFolder: markdownFolder ?? undefined,
+          draftType: draft.documentTypeId ?? undefined,
+          draftTemplate: draft.templateId ?? undefined
+        }))}
         onCreate={name =>
           operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
         }

@@ -54,6 +54,8 @@ export const documentTypeSchema = z.object({
   name: z.string(),
   description: z.string(),
   fields: z.array(documentFieldSchema),
+  color: z.string().nullable(),
+  icon: z.string().nullable(),
   archived: z.boolean(),
   created_at: z.string(),
   updated_at: z.string()
@@ -75,7 +77,9 @@ export const documentTemplateSchema = z.object({
 const documentTypeWriteSchema = z.object({
   name: z.string().min(1),
   description: z.string().default(''),
-  fields: z.array(documentFieldSchema)
+  fields: z.array(documentFieldSchema),
+  color: z.string().nullable().optional(),
+  icon: z.string().nullable().optional()
 });
 
 const documentTemplateWriteSchema = z.object({

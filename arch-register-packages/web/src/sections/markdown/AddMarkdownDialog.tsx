@@ -5,13 +5,20 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../../lib/http';
 import styles from '../../dialogs/AddEntityDialog.module.css';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
 
 type AddMarkdownDialogProps = {
   open: boolean;
   onClose: () => void;
   onCreated: (file: ProjectFile) => void;
   onCreate: (name: string) => Promise<ProjectFile>;
-  onOpenDraft?: (name: string) => void;
+  onOpenDraft?: (draft: {
+    name: string;
+    documentTypeId: string | null;
+    templateId: string | null;
+  }) => void;
+  workspaceSlug: string;
+  projectId?: string;
   isPending: boolean;
 };
 
@@ -21,15 +28,29 @@ export const AddMarkdownDialog = ({
   onCreated,
   onCreate,
   onOpenDraft,
+  workspaceSlug,
+  projectId,
   isPending
 }: AddMarkdownDialogProps) => {
   const [name, setName] = useState('');
+  const [documentTypeId, setDocumentTypeId] = useState('');
+  const [templateId, setTemplateId] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
+  const { data: documentTypes = [], isLoading: documentTypesLoading } = useDocumentTypes(workspaceSlug);
+  const { data: documentTemplates = [], isLoading: documentTemplatesLoading } = useDocumentTemplates(
+    workspaceSlug,
+    projectId ?? null
+  );
+
+  const availableTypes = documentTypes.filter(type => !type.archived);
+  const availableTemplates = documentTemplates.filter(template => !template.archived);
 
   useEffect(() => {
     if (open) {
       setName('');
+      setDocumentTypeId('');
+      setTemplateId('');
       setError('');
       setTimeout(() => nameRef.current?.focus(), 0);
     }
@@ -43,7 +64,11 @@ export const AddMarkdownDialog = ({
     }
     setError('');
     if (onOpenDraft) {
-      onOpenDraft(trimmed);
+      onOpenDraft({
+        name: trimmed,
+        documentTypeId: documentTypeId || null,
+        templateId: templateId || null
+      });
       onClose();
       return;
     }
@@ -58,6 +83,19 @@ export const AddMarkdownDialog = ({
         setError('Something went wrong');
       }
     }
+  };
+
+  const handleDocumentTypeChange = (nextTypeId: string) => {
+    setDocumentTypeId(nextTypeId);
+    if (templateId && availableTemplates.find(template => template.id === templateId)?.document_type_id !== nextTypeId) {
+      setTemplateId('');
+    }
+  };
+
+  const handleTemplateChange = (nextTemplateId: string) => {
+    setTemplateId(nextTemplateId);
+    const template = availableTemplates.find(item => item.id === nextTemplateId);
+    if (template) setDocumentTypeId(template.document_type_id);
   };
 
   return (
@@ -79,6 +117,28 @@ export const AddMarkdownDialog = ({
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             placeholder="e.g. Architecture overview"
           />
+        </FormElement>
+        <FormElement label="Document type">
+          <select
+            value={documentTypeId}
+            onChange={event => handleDocumentTypeChange(event.target.value)}
+            disabled={documentTypesLoading || isPending}
+            style={{ width: '100%' }}
+          >
+            <option value="">Untyped Markdown</option>
+            {availableTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
+          </select>
+        </FormElement>
+        <FormElement label="Template">
+          <select
+            value={templateId}
+            onChange={event => handleTemplateChange(event.target.value)}
+            disabled={documentTemplatesLoading || isPending}
+            style={{ width: '100%' }}
+          >
+            <option value="">Blank document</option>
+            {availableTemplates.map(template => <option key={template.id} value={template.id}>{template.name}</option>)}
+          </select>
         </FormElement>
       </div>
     </Dialog>

@@ -388,11 +388,18 @@ export const ProjectContentSidebar = ({
         <AddMarkdownDialog
           open={markdownFolder !== undefined}
           onClose={() => setMarkdownFolder(undefined)}
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
           onCreated={file => {
             setMarkdownFolder(undefined);
             openFile(file);
           }}
-          onOpenDraft={name => navigate(projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), { draftName: name, draftFolder: markdownFolder ?? undefined }))}
+          onOpenDraft={draft => navigate(projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), {
+            draftName: draft.name,
+            draftFolder: markdownFolder ?? undefined,
+            draftType: draft.documentTypeId ?? undefined,
+            draftTemplate: draft.templateId ?? undefined
+          }))}
           onCreate={name =>
             operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
           }

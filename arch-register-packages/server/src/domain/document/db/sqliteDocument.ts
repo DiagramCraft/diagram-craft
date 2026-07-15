@@ -17,6 +17,8 @@ const typeMapper = (row: DatabaseRow): DocumentTypeDbResult => ({
   name: String(row['name']),
   description: String(row['description'] ?? ''),
   fields: parseDatabaseJson(row['fields'], [], 'document_type.fields'),
+  color: row['color'] == null ? null : String(row['color']),
+  icon: row['icon'] == null ? null : String(row['icon']),
   archived: databaseBoolean(row['archived']),
   created_at: databaseDate(row['created_at']),
   updated_at: databaseDate(row['updated_at'])
@@ -86,8 +88,8 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
 
   async createDocumentType(input: DocumentTypeDbCreate) {
     this.run(
-      'INSERT INTO document_type (id, workspace, name, description, fields, archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?)',
-      [input.id, input.workspace, input.name, input.description, JSON.stringify(input.fields), input.created_at.toISOString(), input.updated_at.toISOString()]
+      'INSERT INTO document_type (id, workspace, name, description, fields, color, icon, archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
+      [input.id, input.workspace, input.name, input.description, JSON.stringify(input.fields), input.color ?? null, input.icon ?? null, input.created_at.toISOString(), input.updated_at.toISOString()]
     );
     this.syncDocumentFields(input.workspace, input.id, input.fields, input.updated_at);
     return (await this.getDocumentType(input.workspace, input.id))!;
@@ -95,8 +97,8 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
 
   async updateDocumentType(workspace: string, id: string, input: DocumentTypeWrite & { updated_at: Date }) {
     this.run(
-      'UPDATE document_type SET name = ?, description = ?, fields = ?, updated_at = ? WHERE workspace = ? AND id = ?',
-      [input.name, input.description, JSON.stringify(input.fields), input.updated_at.toISOString(), workspace, id]
+      'UPDATE document_type SET name = ?, description = ?, fields = ?, color = ?, icon = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      [input.name, input.description, JSON.stringify(input.fields), input.color ?? null, input.icon ?? null, input.updated_at.toISOString(), workspace, id]
     );
     this.syncDocumentFields(workspace, id, input.fields, input.updated_at);
     return await this.getDocumentType(workspace, id);

@@ -193,6 +193,7 @@ export const EntityContentSidebar = ({
       <AddMarkdownDialog
         open={markdownFolder !== undefined}
         onClose={() => setMarkdownFolder(undefined)}
+        workspaceSlug={workspaceSlug}
         onCreated={file => {
           setMarkdownFolder(undefined);
           navigate(
@@ -201,7 +202,12 @@ export const EntityContentSidebar = ({
             })
           );
         }}
-        onOpenDraft={name => navigate(entityMarkdownDraftRoute(workspaceSlug, asEntityPublicId(entityId), { draftName: name, draftFolder: markdownFolder ?? undefined }))}
+        onOpenDraft={draft => navigate(entityMarkdownDraftRoute(workspaceSlug, asEntityPublicId(entityId), {
+          draftName: draft.name,
+          draftFolder: markdownFolder ?? undefined,
+          draftType: draft.documentTypeId ?? undefined,
+          draftTemplate: draft.templateId ?? undefined
+        }))}
         onCreate={name =>
           operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
         }

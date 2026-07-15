@@ -27855,6 +27855,26 @@
                                 ]
                               }
                             },
+                            "color": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "icon": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
                             "archived": {
                               "type": "boolean"
                             },
@@ -27871,6 +27891,8 @@
                             "name",
                             "description",
                             "fields",
+                            "color",
+                            "icon",
                             "archived",
                             "created_at",
                             "updated_at"
@@ -30372,6 +30394,26 @@
                           }
                         ]
                       },
+                      "document_type_color": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "document_type_icon": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "field_id": {
                         "type": "string"
                       },
@@ -30384,6 +30426,8 @@
                       "scope",
                       "document_type_id",
                       "document_type_name",
+                      "document_type_color",
+                      "document_type_icon",
                       "field_id",
                       "field_name"
                     ]
@@ -38794,6 +38838,26 @@
                           ]
                         }
                       },
+                      "color": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "icon": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "archived": {
                         "type": "boolean"
                       },
@@ -38810,6 +38874,8 @@
                       "name",
                       "description",
                       "fields",
+                      "color",
+                      "icon",
                       "archived",
                       "created_at",
                       "updated_at"
@@ -38929,6 +38995,26 @@
                         "requirement"
                       ]
                     }
+                  },
+                  "color": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "icon": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -39036,6 +39122,26 @@
                         ]
                       }
                     },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "archived": {
                       "type": "boolean"
                     },
@@ -39052,6 +39158,8 @@
                     "name",
                     "description",
                     "fields",
+                    "color",
+                    "icon",
                     "archived",
                     "created_at",
                     "updated_at"
@@ -39186,6 +39294,26 @@
                         ]
                       }
                     },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "archived": {
                       "type": "boolean"
                     },
@@ -39202,6 +39330,8 @@
                     "name",
                     "description",
                     "fields",
+                    "color",
+                    "icon",
                     "archived",
                     "created_at",
                     "updated_at"
@@ -39328,6 +39458,26 @@
                         "requirement"
                       ]
                     }
+                  },
+                  "color": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "icon": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -39435,6 +39585,26 @@
                         ]
                       }
                     },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "archived": {
                       "type": "boolean"
                     },
@@ -39451,6 +39621,8 @@
                     "name",
                     "description",
                     "fields",
+                    "color",
+                    "icon",
                     "archived",
                     "created_at",
                     "updated_at"
@@ -39649,6 +39821,26 @@
                         ]
                       }
                     },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "archived": {
                       "type": "boolean"
                     },
@@ -39665,6 +39857,8 @@
                     "name",
                     "description",
                     "fields",
+                    "color",
+                    "icon",
                     "archived",
                     "created_at",
                     "updated_at"

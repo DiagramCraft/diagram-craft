@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { DocumentTemplateDbCreate, DocumentTypeDbCreate } from './db/documentDatabase';
+import { AR_COLOR_PURPLE } from '@arch-register/api-types/colors';
 
 export const ADR_DOCUMENT_TYPE_NAME = 'Architecture Decision Record';
 export const ADR_DOCUMENT_TEMPLATE_NAME = 'Architecture Decision Record';
@@ -11,6 +12,8 @@ export const buildDefaultAdrDocuments = (workspace: string, now: Date) => {
     workspace,
     name: ADR_DOCUMENT_TYPE_NAME,
     description: 'A structured record of an architecture decision.',
+    color: AR_COLOR_PURPLE,
+    icon: 'clipboard',
     fields: [
       { id: 'status', name: 'Status', type: 'enum', requirement: 'required', enumOptions: [{ value: 'Proposed', label: 'Proposed' }, { value: 'Accepted', label: 'Accepted' }, { value: 'Superseded', label: 'Superseded' }, { value: 'Deprecated', label: 'Deprecated' }], retired: false },
       { id: 'decision_date', name: 'Decision date', type: 'date', requirement: 'expected', retired: false },

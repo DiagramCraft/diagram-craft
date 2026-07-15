@@ -55,7 +55,9 @@ test('workspace copy preserves typed documents, links, templates, and entity con
           maxCardinality: 1,
           retired: false
         }
-      ]
+      ],
+      color: 'oklch(0.62 0.14 295)',
+      icon: 'clipboard'
     }
   });
   const sourceProject = await orpc.projects.create({
@@ -136,7 +138,7 @@ test('workspace copy preserves typed documents, links, templates, and entity con
     query: { include_archived: false }
   });
   const copiedType = copiedTypes.find(type => type.name === documentType.name);
-  expect(copiedType).toEqual(expect.objectContaining({ name: documentType.name }));
+  expect(copiedType).toEqual(expect.objectContaining({ name: documentType.name, color: documentType.color, icon: documentType.icon }));
   expect(copiedType?.id).not.toBe(documentType.id);
 
   const copiedTemplates = await orpc.documents.documentTemplates.list({
@@ -248,7 +250,7 @@ test('workspace copy preserves typed documents, links, templates, and entity con
     params: { workspace: importTarget.url_slug },
     query: { include_archived: false }
   });
-  expect(importedTypes).toEqual(expect.arrayContaining([expect.objectContaining({ name: documentType.name })]));
+  expect(importedTypes).toEqual(expect.arrayContaining([expect.objectContaining({ name: documentType.name, color: documentType.color, icon: documentType.icon })]));
   const importedWorkspaceFiles = await orpc.projects.listWorkspaceFiles({
     params: { workspace: importTarget.url_slug }
   });

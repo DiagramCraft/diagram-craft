@@ -917,7 +917,7 @@ export const listRelatedContent = async (
   httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
   requireEntityAction(authCtx, entity, 'view_entity', 'You do not have access to view this entity');
   const links = await db.document.listDocumentsLinkingEntity(ws, entity.id);
-  const result: Array<{ file: ProjectFile; scope: 'project' | 'entity' | 'workspace'; document_type_id: string | null; document_type_name: string | null; field_id: string; field_name: string }> = [];
+  const result: Array<{ file: ProjectFile; scope: 'project' | 'entity' | 'workspace'; document_type_id: string | null; document_type_name: string | null; document_type_color: string | null; document_type_icon: string | null; field_id: string; field_name: string }> = [];
   const seen = new Set<string>();
   for (const link of links) {
     const node = await db.project.getAnyContentNodeById(ws, link.node_id);
@@ -932,7 +932,7 @@ export const listRelatedContent = async (
     const key = `${node.id}:${link.field_id}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    result.push({ file: toApiProjectFile(node), scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace', document_type_id: state.documentTypeId, document_type_name: state.documentType?.name ?? null, field_id: link.field_id, field_name: field?.name ?? link.field_id });
+    result.push({ file: toApiProjectFile(node), scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace', document_type_id: state.documentTypeId, document_type_name: state.documentType?.name ?? null, document_type_color: state.documentType?.color ?? null, document_type_icon: state.documentType?.icon ?? null, field_id: link.field_id, field_name: field?.name ?? link.field_id });
   }
   return result;
 });

@@ -27,6 +27,7 @@ export const MarkdownEditorPane = (props: {
   attachments: MarkdownEditorPaneAttachments;
   workspaceId: string;
   nodeId: string;
+  showDiscussion?: boolean;
 }) => {
   const {
     screenMode,
@@ -38,7 +39,8 @@ export const MarkdownEditorPane = (props: {
     readTime,
     attachments,
     workspaceId,
-    nodeId
+    nodeId,
+    showDiscussion = true
   } = props;
 
   const { data: discussionPosts = [] } = useDiscussions(
@@ -109,21 +111,23 @@ export const MarkdownEditorPane = (props: {
               {updatedLabel && <>Last edited {updatedLabel} · </>}
               {readTime} min read
             </div>
-            <section className={styles.discussionSection}>
-              <div className={styles.discussionHead}>
-                <TbMessage size={14} />
-                <span className={styles.discussionTitle}>Discussion</span>
-                {discussionPosts.length > 0 && (
-                  <span className={styles.discussionCount}>{discussionPosts.length}</span>
-                )}
-              </div>
-              <DiscussionThread
-                workspaceId={workspaceId}
-                objectType="content_node"
-                objectId={nodeId}
-                showEmptyState={false}
-              />
-            </section>
+            {showDiscussion && (
+              <section className={styles.discussionSection}>
+                <div className={styles.discussionHead}>
+                  <TbMessage size={14} />
+                  <span className={styles.discussionTitle}>Discussion</span>
+                  {discussionPosts.length > 0 && (
+                    <span className={styles.discussionCount}>{discussionPosts.length}</span>
+                  )}
+                </div>
+                <DiscussionThread
+                  workspaceId={workspaceId}
+                  objectType="content_node"
+                  objectId={nodeId}
+                  showEmptyState={false}
+                />
+              </section>
+            )}
           </>
         ) : (
           <div className={styles.previewEmpty}>Preview will appear here as you type.</div>

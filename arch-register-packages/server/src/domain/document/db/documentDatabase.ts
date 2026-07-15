@@ -11,6 +11,8 @@ export type DocumentTypeDbResult = {
   name: string;
   description: string;
   fields: DocumentField[];
+  color: string | null;
+  icon: string | null;
   archived: boolean;
   created_at: Date;
   updated_at: Date;

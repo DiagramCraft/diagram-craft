@@ -2,6 +2,7 @@ import { createRoute, useNavigate, useSearch, type AnyRoute } from '@tanstack/re
 import { useEffect } from 'react';
 import { WorkspaceSettingsSidebar } from '../../sections/workspace-settings/WorkspaceSettingsSidebar';
 import { SchemaSettingsSidebar } from '../../sections/workspace-settings/SchemaSettingsSidebar';
+import { DocumentSettingsSidebar } from '../../sections/workspace-settings/DocumentSettingsSidebar';
 import { GlobalSettingsSidebar } from '../../sections/global-settings/GlobalSettingsSidebar';
 import { AccountSettingsSidebar } from '../../sections/account-settings/AccountSettingsSidebar';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -10,13 +11,15 @@ import {
   validateModelOverviewSearch,
   validateSettingsSearch,
   validateLegacySettingsSearch,
-  validateSchemaSettingsSearch
+  validateSchemaSettingsSearch,
+  validateDocumentSettingsSearch
 } from '../searchParams';
 import { buildSettingsBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 import { settingsSectionTarget } from '../settingsNavigation';
 import {
   LazyAccountSettingsScreen,
+  LazyDocumentSettingsScreen,
   LazyGlobalSettingsScreen,
   LazySchemaGraphView,
   LazySchemaSettingsScreen,
@@ -172,6 +175,33 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
+  const documentSettingsRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'settings/documents',
+      validateSearch: validateDocumentSettingsSearch,
+      component: LazyDocumentSettingsScreen
+    }),
+    ctx => ({
+      variant: 'detail',
+      activeRailItem: null,
+      breadcrumbs: buildSettingsBreadcrumbs(ctx, 'Settings', '/$workspaceSlug/settings'),
+      navigationLabel: 'Settings',
+      renderNavigation: controls => (
+        <WorkspaceSettingsSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          workspace={ctx.workspace}
+          schemas={ctx.schemas}
+          projects={ctx.projects}
+          availableSections={ctx.availableSettingsSections}
+          onCollapse={controls.expanded ? controls.collapse : undefined}
+          onExpand={controls.expanded ? undefined : controls.expand}
+        />
+      ),
+      secondarySidebar: <DocumentSettingsSidebar workspaceSlug={ctx.workspaceSlug} />
+    })
+  );
+
   const modelOverviewRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -227,6 +257,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     settingsRoute,
     settingsSectionRoute,
     schemaSettingsRoute,
+    documentSettingsRoute,
     modelOverviewRoute,
     globalSettingsRoute,
     accountSettingsRoute,

@@ -147,6 +147,8 @@ const relatedDocumentSchema = z.object({
   scope: z.enum(['project', 'entity', 'workspace']),
   document_type_id: z.string().nullable(),
   document_type_name: z.string().nullable(),
+  document_type_color: z.string().nullable(),
+  document_type_icon: z.string().nullable(),
   field_id: z.string(),
   field_name: z.string()
 });
