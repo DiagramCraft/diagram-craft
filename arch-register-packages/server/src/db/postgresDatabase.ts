@@ -62,6 +62,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       ...adapter,
       core: {
         driver: 'postgres',
+        isTransaction: true,
         close: async () => {},
         reset: async () => {
           throw new Error('Cannot reset a transaction-bound database adapter');

@@ -60,3 +60,7 @@ CREATE INDEX job_run_queue_idx ON job_run(status, priority, planned_at, created_
 CREATE INDEX job_run_workspace_status_idx ON job_run(workspace, status, planned_at);
 CREATE INDEX job_run_schedule_idx ON job_run(schedule_id, occurrence_at);
 CREATE INDEX job_workspace_lease_expiry_idx ON job_workspace_lease(expires_at);
+CREATE INDEX job_run_workspace_planned_idx
+  ON job_run(workspace, planned_at DESC, created_at DESC, id DESC);
+CREATE INDEX job_run_workspace_schedule_planned_idx
+  ON job_run(workspace, schedule_id, planned_at DESC, created_at DESC, id DESC);

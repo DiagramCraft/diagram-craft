@@ -308,15 +308,17 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
         const retryAt = new Date(now.getTime() + retryDelayMs(run.attempt_count));
         this.run(
           `UPDATE job_run
-           SET status = ?, completed_at = ?, planned_at = ?, started_at = ?, worker_id = ?,
+           SET status = ?, completed_at = ?, planned_at = ?,
+               started_at = CASE WHEN ? THEN NULL ELSE started_at END,
+               worker_id = CASE WHEN ? THEN NULL ELSE worker_id END,
                lease_token = NULL, error = ?
            WHERE id = ? AND status = 'running' AND lease_token = ?`,
           [
             retry ? 'queued' : 'failed',
             retry ? null : iso(now),
             retry ? iso(retryAt) : iso(now),
-            null,
-            null,
+            retry ? 1 : 0,
+            retry ? 1 : 0,
             'Worker lease expired',
             run.id,
             run.lease_token
@@ -498,6 +500,7 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
            AND EXISTS (
              SELECT 1 FROM job_workspace_lease l
              WHERE l.run_id = job_run.id AND l.worker_id = ? AND l.lease_token = ?
+               AND l.expires_at > ?
            )`,
         [
           input.retryAt.toISOString(),
@@ -506,7 +509,8 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
           input.workerId,
           input.leaseToken,
           input.workerId,
-          input.leaseToken
+          input.leaseToken,
+          iso(input.attemptedAt)
         ]
       );
       if (result.changes === 0) return false;

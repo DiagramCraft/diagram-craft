@@ -120,6 +120,7 @@ export type JobRunFailure = {
 };
 
 export type JobRunRetry = Omit<JobRunFailure, 'completedAt'> & {
+  attemptedAt: Date;
   retryAt: Date;
 };
 

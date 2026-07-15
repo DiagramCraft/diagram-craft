@@ -17,6 +17,7 @@ export type DbDriver = 'postgres' | 'sqlite';
 
 export type CoreDatabase = {
   driver: DbDriver;
+  isTransaction?: boolean;
   close(): Promise<void>;
   reset(): Promise<void>;
   transaction<T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T>;

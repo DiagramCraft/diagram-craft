@@ -101,6 +101,7 @@ const executeClaim = async (
         runId: claim.run.id,
         workerId,
         leaseToken: claim.leaseToken,
+        attemptedAt: now(),
         retryAt: new Date(
           now().getTime() + retryDelayMs(claim.run.attempt_count, failure.retryAfterMs)
         ),

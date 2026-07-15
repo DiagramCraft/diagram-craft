@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { computeChanges, flattenEntityAuditFields } from './auditLogging';
+import type { DatabaseAdapter } from '../../../db/database';
+import { computeChanges, flattenEntityAuditFields, logAudit } from './auditLogging';
 import { EntityDbCreate } from '../../catalog/db/catalogDatabase';
 
 const now = new Date('2026-06-08T10:00:00.000Z');
@@ -27,6 +28,111 @@ const makeEntity = (overrides: Partial<EntityDbCreate> = {}): EntityDbCreate => 
   created_at: now,
   updated_at: now,
   ...overrides
+});
+
+const makeTransactionalDatabase = (events: string[], enqueueError?: Error) => {
+  const auditLog = {
+    id: 'audit-1',
+    workspace: 'ws-1',
+    timestamp: now,
+    user_id: 'user-1',
+    user_display_name: 'User 1',
+    operation: 'create' as const,
+    entity_type: 'entity' as const,
+    entity_id: 'entity-1',
+    entity_name: 'Entity 1',
+    entity_slug: 'entity-1',
+    schema_id: 'schema-1',
+    changes: { new: { _name: 'Entity 1' } },
+    metadata: {}
+  };
+  const audit = {
+    createAuditLog: async () => {
+      events.push('audit');
+      return auditLog;
+    }
+  };
+  const webhook = {
+    listWebhooks: async () => [
+      {
+        id: 'webhook-1',
+        workspace: 'ws-1',
+        url: 'https://example.com/webhook',
+        event_filter: { operations: ['create' as const], schema_ids: [] },
+        hmac_secret: 'whsec_test',
+        enabled: true,
+        created_at: now,
+        updated_at: now
+      }
+    ]
+  };
+  const jobs = {
+    enqueueOneOffRun: async () => {
+      events.push('job');
+      if (enqueueError) throw enqueueError;
+      return {};
+    }
+  };
+  const watch = {
+    createNotificationsFromAudit: async () => {
+      events.push('notification');
+    }
+  };
+  const tx = {
+    core: { driver: 'sqlite' as const, isTransaction: true },
+    audit,
+    webhook,
+    jobs,
+    watch
+  } as unknown as DatabaseAdapter;
+  const db = {
+    ...tx,
+    core: {
+      driver: 'sqlite' as const,
+      transaction: async (callback: (db: DatabaseAdapter) => Promise<void>) => {
+        events.push('begin');
+        try {
+          await callback(tx);
+          events.push('commit');
+        } catch (error) {
+          events.push('rollback');
+          throw error;
+        }
+      }
+    }
+  } as unknown as DatabaseAdapter;
+  return db;
+};
+
+const entityAudit = {
+  workspace: 'ws-1',
+  userId: 'user-1',
+  operation: 'create' as const,
+  entityType: 'entity' as const,
+  entityId: 'entity-1',
+  entityName: 'Entity 1',
+  entitySlug: 'entity-1',
+  schemaId: 'schema-1',
+  changes: { new: { _name: 'Entity 1' } }
+};
+
+describe('entity audit delivery', () => {
+  it('inserts the audit row, webhook jobs, and notifications in one transaction', async () => {
+    const events: string[] = [];
+
+    await logAudit(makeTransactionalDatabase(events), entityAudit);
+
+    expect(events).toEqual(['begin', 'audit', 'job', 'notification', 'commit']);
+  });
+
+  it('surfaces webhook enqueue failures instead of committing a silent audit-only change', async () => {
+    const events: string[] = [];
+
+    await expect(
+      logAudit(makeTransactionalDatabase(events, new Error('queue unavailable')), entityAudit)
+    ).rejects.toThrow('queue unavailable');
+    expect(events).toEqual(['begin', 'audit', 'job', 'rollback']);
+  });
 });
 
 describe('flattenEntityAuditFields', () => {

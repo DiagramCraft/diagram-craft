@@ -323,7 +323,9 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
             SET status = ${retry ? 'queued' : 'failed'},
                 completed_at = ${retry ? null : now},
                 planned_at = ${retry ? retryAt : now},
-                started_at = NULL, worker_id = NULL, lease_token = NULL,
+                started_at = CASE WHEN ${retry} THEN NULL ELSE started_at END,
+                worker_id = CASE WHEN ${retry} THEN NULL ELSE worker_id END,
+                lease_token = NULL,
                 error = 'Worker lease expired'
             WHERE id = ${run.id} AND status = 'running' AND lease_token = ${run.lease_token}
           `;
@@ -515,6 +517,7 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
               SELECT 1 FROM job_workspace_lease l
               WHERE l.run_id = r.id AND l.worker_id = ${input.workerId}
                 AND l.lease_token = ${input.leaseToken}
+                AND l.expires_at > ${input.attemptedAt}
             )
           RETURNING r.*
         `;

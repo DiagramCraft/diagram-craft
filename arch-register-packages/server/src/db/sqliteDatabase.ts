@@ -82,7 +82,7 @@ export class SqliteDatabase implements DatabaseAdapter {
         try {
           this.db.exec('BEGIN IMMEDIATE');
           try {
-            const result = await callback(this);
+            const result = await callback(this.transactionAdapter());
             this.db.exec('COMMIT');
             return result;
           } catch (error) {
@@ -93,6 +93,34 @@ export class SqliteDatabase implements DatabaseAdapter {
           release();
         }
       }
+    };
+  }
+
+  private transactionAdapter(): DatabaseAdapter {
+    return {
+      core: {
+        driver: 'sqlite',
+        isTransaction: true,
+        close: async () => {
+          throw new Error('Cannot close a transaction-bound database adapter');
+        },
+        reset: async () => {
+          throw new Error('Cannot reset a transaction-bound database adapter');
+        },
+        transaction: async callback => callback(this.transactionAdapter())
+      },
+      workspace: this.workspace,
+      catalog: this.catalog,
+      view: this.view,
+      project: this.project,
+      audit: this.audit,
+      watch: this.watch,
+      auth: this.auth,
+      ai: this.ai,
+      discussion: this.discussion,
+      jobs: this.jobs,
+      externalContent: this.externalContent,
+      webhook: this.webhook
     };
   }
 
