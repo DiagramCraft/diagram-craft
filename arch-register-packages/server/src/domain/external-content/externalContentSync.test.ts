@@ -21,6 +21,7 @@ const createRepository = async () => {
   await git('config', 'user.name', 'Test User');
   await mkdir(join(repository, 'docs'));
   await writeFile(join(repository, 'docs', 'readme.md'), '# Readme\n');
+  await writeFile(join(repository, 'docs', 'guide.mdx'), '# Guide\n\nMDX content\n');
   await writeFile(join(repository, 'data.json'), '{"hello":"world"}\n');
   await git('add', '.');
   await git('commit', '-q', '-m', 'Initial revision');
@@ -160,6 +161,58 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
       await syncExternalContentSource(db, new FilesystemStorage(storageRoot), workspace, source.id);
 
       expect((await db.project.listWorkspaceContentNodes(workspace)).find(node => node.path === 'repo/data.json')?.type).toBe('file');
+    } finally {
+      delete process.env['EXTERNAL_CONTENT_CACHE_DIR'];
+      await Promise.all([
+        rm(repository, { recursive: true, force: true }),
+        rm(cache, { recursive: true, force: true }),
+        rm(storageRoot, { recursive: true, force: true })
+      ]);
+    }
+  });
+
+  it('updates legacy MDX file nodes to read-only markdown with an extensionless display name', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const repository = await createRepository();
+    const cache = await mkdtemp(join(tmpdir(), 'external-content-mdx-cache-'));
+    const storageRoot = await mkdtemp(join(tmpdir(), 'external-content-mdx-storage-'));
+    process.env['EXTERNAL_CONTENT_CACHE_DIR'] = cache;
+    try {
+      const { source, mount } = await createSourceAndMount(db, workspace, repository, 'repo', '');
+      const storage = new FilesystemStorage(storageRoot);
+      const now = new Date();
+      await db.project.upsertContentNode({
+        id: randomUUID(),
+        workspace,
+        path: 'repo/docs/guide.mdx',
+        name: 'guide.mdx',
+        type: 'file',
+        size_bytes: 0,
+        comment_count: 0,
+        unresolved_comment_count: 0,
+        created_atIfNew: now,
+        updated_at: now,
+        original_filename: 'guide.mdx',
+        mount_id: mount.id
+      });
+
+      await syncExternalContentSource(db, storage, workspace, source.id);
+
+      const node = (await db.project.listWorkspaceContentNodes(workspace)).find(
+        contentNode => contentNode.path === 'repo/docs/guide.mdx'
+      );
+      expect(node).toMatchObject({
+        path: 'repo/docs/guide.mdx',
+        name: 'guide',
+        type: 'markdown',
+        original_filename: null,
+        mount_id: mount.id
+      });
+      const stored = JSON.parse(
+        (await storage.read(workspace, workspace, node!.id)).toString('utf8')
+      ) as { body: string };
+      expect(stored.body).toBe('# Guide\n\nMDX content\n');
     } finally {
       delete process.env['EXTERNAL_CONTENT_CACHE_DIR'];
       await Promise.all([

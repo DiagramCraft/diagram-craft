@@ -4,6 +4,10 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import { syncDiagramContentMetadata } from '../project/projectOperationHelpers';
+import {
+  isMarkdownPath,
+  stripMarkdownExtension
+} from '../project/contentFileHelpers';
 import type { ExternalContentMountDbResult } from './db/externalContentDatabase';
 import {
   prepareGitRepository,
@@ -32,7 +36,7 @@ const mimeTypes: Record<string, string> = {
 };
 
 const fileType = (path: string): 'diagram' | 'markdown' | 'file' =>
-  path.toLowerCase().endsWith('.md')
+  isMarkdownPath(path)
     ? 'markdown'
     : path.toLowerCase().endsWith('.json')
       ? 'diagram'
@@ -59,7 +63,7 @@ const contentFileType = (path: string, content: Buffer): 'diagram' | 'markdown' 
 
 const nodeName = (path: string, type: 'diagram' | 'markdown' | 'file') => {
   const name = basename(path);
-  if (type === 'markdown' && name.toLowerCase().endsWith('.md')) return name.slice(0, -3);
+  if (type === 'markdown') return stripMarkdownExtension(name);
   if (type === 'diagram' && name.toLowerCase().endsWith('.json')) return name.slice(0, -5);
   return name;
 };
