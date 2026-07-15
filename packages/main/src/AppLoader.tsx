@@ -3,7 +3,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { App, DiagramRef } from './App';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
-import { UserState } from './UserState';
+import type { CollaborationAwareness } from './CollaborationAwareness';
 import { getDefaultStencilPackages, type StencilRegistryConfig } from './appConfig';
 import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
 import { loadDocument } from './embed/loadDocument';
@@ -24,7 +24,7 @@ export const AppLoader = (props: Props) => {
     (ref?: DiagramRef) => {
       loadDocument({
         url: ref?.url,
-        userState: UserState.get().awarenessState,
+        awareness: props.awareness.state,
         documentFactory: props.documentFactory,
         diagramFactory: props.diagramFactory,
         progress: progressCallback
@@ -33,7 +33,7 @@ export const AppLoader = (props: Props) => {
         if (url) setUrl(url);
       });
     },
-    [progressCallback, props.diagramFactory, props.documentFactory]
+    [progressCallback, props.awareness, props.diagramFactory, props.documentFactory]
   );
 
   useEffect(() => {
@@ -109,6 +109,7 @@ export const AppLoader = (props: Props) => {
           url={url}
           documentFactory={props.documentFactory}
           diagramFactory={props.diagramFactory}
+          awareness={props.awareness}
         />
       )}
     </div>
@@ -122,4 +123,5 @@ type Props = {
   documentFactory: DocumentFactory;
 
   nodeRegistry: NodeDefinitionRegistry;
+  awareness: CollaborationAwareness;
 };

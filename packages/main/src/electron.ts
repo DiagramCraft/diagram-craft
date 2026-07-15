@@ -9,7 +9,7 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import { mainMenuStructure } from './react-app/mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
-import { UserState } from './UserState';
+import type { CollaborationAwareness } from './CollaborationAwareness';
 import { $t, $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
@@ -103,7 +103,7 @@ export const ElectronIntegration = {
       updateState(e, app, true);
     }
   },
-  init: () => {
+  init: (awareness: CollaborationAwareness) => {
     if (!window.electronAPI) return;
 
     FileSystem.loadFromUrl = async (url: string) => {
@@ -114,7 +114,7 @@ export const ElectronIntegration = {
 
     window.electronAPI.getUsername().then(r => {
       if (!r) return;
-      UserState.get().awarenessState = { name: r, color: '#000000' };
+      awareness.state = { name: r, color: '#000000' };
     });
   }
 };

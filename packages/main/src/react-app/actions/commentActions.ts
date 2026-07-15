@@ -4,7 +4,6 @@ import { CommentDialog } from '../components/CommentDialog';
 import { Comment } from '@diagram-craft/model/comment';
 import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
-import { UserState } from '../../UserState';
 import {
   AbstractSelectionAction,
   ElementType,
@@ -50,7 +49,7 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
           selectedElement
         },
         data => {
-          const userState = UserState.get().awarenessState;
+          const userState = this.context.awareness.state;
           const comment = new Comment(
             diagram,
             selectedElement ? 'element' : 'diagram',
