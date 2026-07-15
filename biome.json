@@ -37,12 +37,8 @@
       "!packages/main/public",
       "!**/*.png",
       "!**/eslintrc.cjs",
-      "!**/*.js",
       "!**/.storybook",
       "!.*",
-      "!**/*.html",
-      "!**/vite.config.ts",
-      "!**/vitest.config.ts",
       "!arch-register-packages/server/openapi.json"
     ]
   },
@@ -112,7 +108,15 @@
         "noBarrelFile": "error"
       }
     },
-    "includes": ["**", "!**/*.test.ts", "!**/*.stories.tsx"]
+    "includes": [
+      "**",
+      "!**/*.test.ts",
+      "!**/*.stories.tsx",
+      "!**/*.js",
+      "!**/*.html",
+      "!**/vite.config.ts",
+      "!**/vitest.config.ts"
+    ]
   },
   "assist": {
     "enabled": false
