@@ -6,6 +6,7 @@ import {
 } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 import { invalidateContentScope, type ContentScope } from './useContentScope';
+import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
 
 export const markdownContentKeys = {
   detail: (workspaceId: string, nodeId: string) =>
@@ -45,12 +46,30 @@ export const useSaveMarkdownContent = (scope: ContentScope, nodeId: string) => {
   const queryClient = useQueryClient();
   const { workspaceId } = scope;
   return useMutation({
-    mutationFn: ({ body, name }: { body: string; name?: string }) =>
+    mutationFn: ({ body, name, document_type_id, metadata }: { body: string; name?: string; document_type_id?: string | null; metadata?: DocumentMetadata }) =>
       orpcClient.projects.saveMarkdownContent({
         params: { workspace: workspaceId, nodeId },
-        body: { body, name }
+        body: { body, name, document_type_id, metadata }
       }),
     onSuccess: () => invalidateMarkdownNode(queryClient, scope, nodeId)
+  });
+};
+
+export const useSaveNewMarkdownContent = (scope: ContentScope) => {
+  const queryClient = useQueryClient();
+  const { workspaceId } = scope;
+  return useMutation({
+    mutationFn: (input: { name: string; folder?: string; body: string; document_type_id?: string | null; metadata: DocumentMetadata }) =>
+      orpcClient.projects.saveNewMarkdownContent({
+        params: { workspace: workspaceId },
+        body: {
+          ...input,
+          scope: scope.kind,
+          ...(scope.kind === 'project' ? { project_id: scope.projectId } : {}),
+          ...(scope.kind === 'entity' ? { entity_id: scope.entityId } : {})
+        }
+      }),
+    onSuccess: () => invalidateContentScope(queryClient, scope)
   });
 };
 

@@ -36,6 +36,11 @@ const RevisionListItem = (props: {
       <div className={styles.revisionMeta}>
         {revision.created_by_name ?? 'Unknown author'} · {formatRelativeTime(revision.created_at)}
       </div>
+      {Object.keys(revision.metadata).length > 0 && (
+        <div className={styles.revisionMeta}>
+          Metadata: {Object.entries(revision.metadata).map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(',') : String(value)}`).join(' · ')}
+        </div>
+      )}
     </button>
   );
 };
@@ -279,6 +284,11 @@ export const MarkdownHistoryPanel = ({
                   <div className={styles.articleFooter}>
                     Saved {formatDateTime(selectedRevision.created_at)}
                   </div>
+                  {Object.keys(selectedRevision.metadata).length > 0 && (
+                    <div className={styles.articleFooter}>
+                      Metadata: {Object.entries(selectedRevision.metadata).map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(', ') : String(value)}`).join(' · ')}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className={styles.previewEmpty}>This revision is empty.</div>

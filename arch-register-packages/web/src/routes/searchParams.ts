@@ -82,6 +82,7 @@ export type EntityDetailSearchParams = {
     | 'topology'
     | 'graph'
     | 'relations'
+    | 'related-content'
     | 'dependents'
     | 'assessments'
     | 'discussions'
@@ -119,6 +120,7 @@ export const validateEntityDetailSearch = (
     raw.tab === 'topology' ||
     raw.tab === 'graph' ||
     raw.tab === 'relations' ||
+    raw.tab === 'related-content' ||
     raw.tab === 'dependents' ||
     raw.tab === 'assessments' ||
     raw.tab === 'discussions' ||
@@ -129,6 +131,8 @@ export const validateEntityDetailSearch = (
 });
 
 export type MarkdownSearchParams = {
+  draftName?: string;
+  draftFolder?: string;
   mode?: 'edit' | 'preview';
   panel?: 'preview' | 'history';
   revisionId?: string;
@@ -138,6 +142,8 @@ export type MarkdownSearchParams = {
 };
 
 export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams => ({
+  draftName: typeof raw.draftName === 'string' ? raw.draftName : undefined,
+  draftFolder: typeof raw.draftFolder === 'string' ? raw.draftFolder : undefined,
   mode: raw.mode === 'edit' || raw.mode === 'preview' ? raw.mode : undefined,
   panel: raw.panel === 'preview' || raw.panel === 'history' ? raw.panel : undefined,
   revisionId: typeof raw.revisionId === 'string' ? raw.revisionId : undefined,

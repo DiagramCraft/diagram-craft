@@ -22,13 +22,15 @@ import {
   seedWorkspaceMembers,
   seedWorkspaces
 } from './seedData';
-import { seededTestPassword } from './seedFixtures';
+import { seededTestPassword, seededWorkspaces } from './seedFixtures';
 import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
 import { UserDbCreate } from './database';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
 import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
 import type { StorageAdapter } from '../storage/storage.types';
+import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
+import { randomUUID } from 'node:crypto';
 
 type Database = Awaited<ReturnType<typeof createDatabase>>;
 
@@ -319,6 +321,46 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
       );
     }
   }
+
+  const adr = buildDefaultAdrDocuments(seededWorkspaces.default.id, syncTimestamp);
+  await db.document.createDocumentType(adr.documentType);
+  await db.document.createDocumentTemplate(adr.template);
+  const exampleNodeId = randomUUID();
+  const exampleBody = '# Initial architecture decision\n\n## Context\n\nThis is a typed ADR seeded for development.\n\n## Decision drivers\n\n## Considered options\n\n## Decision\n\n## Consequences\n';
+  await db.project.upsertContentNode({
+    id: exampleNodeId,
+    workspace: seededWorkspaces.default.id,
+    project_id: null,
+    entity_id: null,
+    parent_id: null,
+    path: 'adr/initial-architecture-decision.md',
+    name: 'Initial architecture decision',
+    type: 'markdown',
+    size_bytes: Buffer.byteLength(JSON.stringify({ body: exampleBody }), 'utf8'),
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    created_atIfNew: syncTimestamp,
+    updated_at: syncTimestamp
+  });
+  await db.document.upsertDocumentMetadata({
+    workspace: seededWorkspaces.default.id,
+    node_id: exampleNodeId,
+    document_type_id: adr.documentType.id,
+    values: { status: 'Proposed' },
+    updated_at: syncTimestamp
+  });
+  await db.project.createMarkdownRevision({
+    workspace: seededWorkspaces.default.id,
+    node_id: exampleNodeId,
+    revision_number: 1,
+    title: 'Initial architecture decision',
+    body: exampleBody,
+    created_at: syncTimestamp,
+    created_by: null,
+    document_type_id: adr.documentType.id,
+    metadata: { status: 'Proposed' }
+  });
+  await storage.write(seededWorkspaces.default.id, seededWorkspaces.default.id, exampleNodeId, Buffer.from(JSON.stringify({ body: exampleBody }), 'utf8'));
 
   await seedBootstrapUsers(db);
   await seedBootstrapCollections(db);

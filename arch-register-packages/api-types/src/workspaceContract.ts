@@ -31,7 +31,7 @@ const workspaceTemplateSchema = z.object({
 // ── Export/Import schemas ─────────────────────────────────────
 
 const exportDataTypeSchema = z
-  .enum(['config', 'schemas', 'entities', 'projects', 'content_nodes'])
+  .enum(['config', 'schemas', 'entities', 'projects', 'content_nodes', 'documents'])
   .describe('Type of data to export/import');
 
 const exportRequestSchema = z.object({
@@ -109,7 +109,11 @@ const importParseResponseSchema = z.object({
           conflicts: z.number().int().describe('Number of conflicting content nodes')
         })
         .optional()
-        .describe('Content node summary')
+        .describe('Content node summary'),
+      documents: z
+        .object({ count: z.number().int(), templates: z.number().int(), revisions: z.number().int() })
+        .optional()
+        .describe('Typed document summary')
     })
     .describe('Summary of import data'),
   conflicts: z
@@ -212,7 +216,16 @@ const importExecuteResponseSchema = z.object({
           updated: z.number().int().describe('Number of content nodes updated')
         })
         .optional()
-        .describe('Content node import results')
+        .describe('Content node import results'),
+      documents: z
+        .object({
+          created: z.number().int(),
+          templates: z.number().int(),
+          metadata: z.number().int(),
+          revisions: z.number().int()
+        })
+        .optional()
+        .describe('Typed document import results')
     })
     .describe('Summary of imported items'),
   errors: z.array(z.string()).describe('Import execution errors'),

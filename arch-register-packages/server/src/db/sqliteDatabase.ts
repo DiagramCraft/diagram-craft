@@ -16,6 +16,7 @@ import { SqliteDiscussionDatabase } from '../domain/discussion/db/sqliteDiscussi
 import { SqliteJobDatabase } from '../domain/jobs/db/sqliteJobs';
 import { SqliteExternalContentDatabase } from '../domain/external-content/db/sqliteExternalContent';
 import { SqliteWebhookDatabase } from '../domain/webhook/db/sqliteWebhook';
+import { SqliteDocumentDatabase } from '../domain/document/db/sqliteDocument';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -34,6 +35,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly jobs;
   readonly externalContent;
   readonly webhook;
+  readonly document;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -54,6 +56,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.jobs = new SqliteJobDatabase(() => this.db);
     this.externalContent = new SqliteExternalContentDatabase(() => this.db);
     this.webhook = new SqliteWebhookDatabase(() => this.db);
+    this.document = new SqliteDocumentDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -120,7 +123,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       discussion: this.discussion,
       jobs: this.jobs,
       externalContent: this.externalContent,
-      webhook: this.webhook
+      webhook: this.webhook,
+      document: this.document
     };
   }
 

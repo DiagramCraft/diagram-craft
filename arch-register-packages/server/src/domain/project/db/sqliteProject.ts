@@ -185,8 +185,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     const id = input.id ?? newid();
     this.run(
       `INSERT INTO content_node_revision
-         (id, workspace, node_id, revision_number, title, body, created_at, created_by, restored_from_revision_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, workspace, node_id, revision_number, title, body, created_at, created_by, restored_from_revision_id, document_type_id, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.workspace,
@@ -196,7 +196,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         input.body,
         input.created_at.toISOString(),
         input.created_by,
-        input.restored_from_revision_id ?? null
+        input.restored_from_revision_id ?? null,
+        input.document_type_id ?? null,
+        JSON.stringify(input.metadata ?? {})
       ]
     );
     return (await this.getMarkdownRevision(input.workspace, input.node_id, id))!;

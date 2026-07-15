@@ -43,7 +43,8 @@ import {
   projectContentFolderRoute,
   projectDetailRoute,
   projectDiagramRoute,
-  projectMarkdownRoute
+  projectMarkdownRoute,
+  projectMarkdownDraftRoute
 } from '../../routes/publicObjectRoutes';
 import type { ProjectSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
@@ -391,6 +392,7 @@ export const ProjectContentSidebar = ({
             setMarkdownFolder(undefined);
             openFile(file);
           }}
+          onOpenDraft={name => navigate(projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), { draftName: name, draftFolder: markdownFolder ?? undefined }))}
           onCreate={name =>
             operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
           }

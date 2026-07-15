@@ -11,6 +11,7 @@ type AddMarkdownDialogProps = {
   onClose: () => void;
   onCreated: (file: ProjectFile) => void;
   onCreate: (name: string) => Promise<ProjectFile>;
+  onOpenDraft?: (name: string) => void;
   isPending: boolean;
 };
 
@@ -19,6 +20,7 @@ export const AddMarkdownDialog = ({
   onClose,
   onCreated,
   onCreate,
+  onOpenDraft,
   isPending
 }: AddMarkdownDialogProps) => {
   const [name, setName] = useState('');
@@ -40,6 +42,11 @@ export const AddMarkdownDialog = ({
       return;
     }
     setError('');
+    if (onOpenDraft) {
+      onOpenDraft(trimmed);
+      onClose();
+      return;
+    }
     try {
       const file = await onCreate(trimmed);
       onCreated(file);

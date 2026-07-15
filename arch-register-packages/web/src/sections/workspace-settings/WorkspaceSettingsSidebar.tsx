@@ -14,7 +14,8 @@ import {
   TbLayoutSidebarLeftExpand,
   TbFileExport,
   TbActivity,
-  TbWebhook
+  TbWebhook,
+  TbFileDescription
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -54,6 +55,7 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     icon: <TbFileExport size={12} />,
     group: 'Workspace'
   },
+  { id: 'documents', label: 'Documents', icon: <TbFileDescription size={12} />, group: 'Workspace' },
   { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
   { id: 'webhooks', label: 'Webhooks', icon: <TbWebhook size={12} />, group: 'Workspace' },

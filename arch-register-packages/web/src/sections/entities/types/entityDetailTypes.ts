@@ -5,6 +5,7 @@ export type TabId =
   | 'topology'
   | 'graph'
   | 'relations'
+  | 'related-content'
   | 'dependents'
   | 'assessments'
   | 'discussions'

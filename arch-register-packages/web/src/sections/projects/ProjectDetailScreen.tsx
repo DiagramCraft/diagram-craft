@@ -23,7 +23,8 @@ import {
   projectContentFolderRoute,
   projectDetailRoute,
   projectDiagramRoute,
-  projectMarkdownRoute
+  projectMarkdownRoute,
+  projectMarkdownDraftRoute
 } from '../../routes/publicObjectRoutes';
 import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
@@ -721,8 +722,9 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             setAddMarkdownOpen(false);
             setAddMarkdownFolder(null);
           }}
-          onCreated={file => handleNavigateMarkdown(file.id, 'edit')}
-          onCreate={name =>
+        onCreated={file => handleNavigateMarkdown(file.id, 'edit')}
+        onOpenDraft={name => navigate(projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), { draftName: name, draftFolder: addMarkdownFolder ?? undefined }))}
+        onCreate={name =>
             contentOperations.createMarkdown.mutateAsync({ name, folder: addMarkdownFolder })
           }
           isPending={contentOperations.createMarkdown.isPending}

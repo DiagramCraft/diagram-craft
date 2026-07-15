@@ -13,6 +13,7 @@ import { instantiateTemplate } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { validatePublicIdPrefix } from '../../utils/publicIds';
+import { buildDefaultAdrDocuments } from '../document/documentDefaults';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -293,6 +294,17 @@ export const createWorkspace = async (
             }
           }
         }
+        if (includeSet.has('documents') || includeSet.has('settings')) {
+          const sourceTypes = await db.document.listDocumentTypes(replicate_from, true);
+          const typeMap = new Map(sourceTypes.map(type => [type.id, randomUUID()]));
+          for (const type of sourceTypes) {
+            await db.document.createDocumentType({ ...type, id: typeMap.get(type.id)!, workspace: row.id, created_at: timestamp, updated_at: timestamp });
+            if (type.archived) await db.document.archiveDocumentType(row.id, typeMap.get(type.id)!, true, timestamp);
+          }
+          for (const template of await db.document.listDocumentTemplates(replicate_from, null, true)) {
+            await db.document.createDocumentTemplate({ ...template, id: randomUUID(), workspace: row.id, project_id: null, document_type_id: template.document_type_id ? typeMap.get(template.document_type_id) ?? null : null, created_at: timestamp, updated_at: timestamp });
+          }
+        }
       } else {
         await db.workspace.replaceLifecycleStates(
           row.id,
@@ -317,6 +329,9 @@ export const createWorkspace = async (
               );
             }
           }
+          const adr = buildDefaultAdrDocuments(row.id, timestamp);
+          await db.document.createDocumentType(adr.documentType);
+          await db.document.createDocumentTemplate(adr.template);
         }
       }
 

@@ -19,6 +19,7 @@ import {
   entityContentFolderRoute,
   entityDiagramRoute,
   entityMarkdownRoute,
+  entityMarkdownDraftRoute,
   projectDiagramRoute
 } from '../../routes/publicObjectRoutes';
 import {
@@ -217,6 +218,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
         }}
+        onOpenDraft={name => navigate(entityMarkdownDraftRoute(workspaceSlug, asEntityPublicId(entityId), { draftName: name, draftFolder: folder }))}
         onCreate={name => contentOperations.createMarkdown.mutateAsync({ name, folder })}
         isPending={contentOperations.createMarkdown.isPending}
       />

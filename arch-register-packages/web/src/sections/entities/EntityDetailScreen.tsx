@@ -63,6 +63,7 @@ import type { TabId, Relation } from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
 import { CollectionPickerDialog } from './components/CollectionPickerDialog';
+import { EntityRelatedContentTab } from './components/EntityRelatedContentTab';
 
 export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigate = useNavigate();
@@ -374,6 +375,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
               <Tabs.Trigger value="relations">
                 Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
               </Tabs.Trigger>
+              <Tabs.Trigger value="related-content">Related content</Tabs.Trigger>
               <Tabs.Trigger value="dependents">
                 Dependents{incoming.length > 0 ? ` (${incoming.length})` : ''}
               </Tabs.Trigger>
@@ -449,6 +451,10 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
       {/* Relationships */}
       {!contentFolder && tab === 'relations' && (
         <EntityRelationsTab outgoing={outgoing} incoming={incoming} schemas={schemas} />
+      )}
+
+      {!contentFolder && tab === 'related-content' && (
+        <EntityRelatedContentTab workspaceId={workspaceId} entityId={entityId} />
       )}
 
       {/* Dependents (impact analysis) */}

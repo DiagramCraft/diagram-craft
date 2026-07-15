@@ -9,6 +9,7 @@ import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDe
 import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
 import {
   LazyDiagramScreen,
+  LazyMarkdownDraftScreen,
   LazyMarkdownEditorScreen,
   LazyWorkspaceContentFolderRoute,
   LazyWorkspaceContentRoute
@@ -64,5 +65,15 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     buildShell
   );
 
-  return [contentRoute, contentFolderRoute, contentDiagramRoute, contentMarkdownRoute] as const;
+  const contentMarkdownDraftRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'content/wiki/new',
+      validateSearch: validateMarkdownSearch,
+      component: LazyMarkdownDraftScreen
+    }),
+    buildShell
+  );
+
+  return [contentRoute, contentFolderRoute, contentDiagramRoute, contentMarkdownRoute, contentMarkdownDraftRoute] as const;
 };

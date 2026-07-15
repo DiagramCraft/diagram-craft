@@ -1,5 +1,6 @@
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
 import {
   databaseBoolean,
   databaseDate,
@@ -172,6 +173,8 @@ export type MarkdownRevisionDbResult = {
   created_by: string | null;
   created_by_name: string | null;
   restored_from_revision_id: string | null;
+  document_type_id: string | null;
+  metadata: DocumentMetadata;
 };
 
 export type MarkdownRevisionDbCreate = {
@@ -184,6 +187,8 @@ export type MarkdownRevisionDbCreate = {
   created_at: Date;
   created_by: string | null;
   restored_from_revision_id?: string | null;
+  document_type_id?: string | null;
+  metadata?: DocumentMetadata;
 };
 
 // -- Project
@@ -374,7 +379,9 @@ export const projectMappers = {
     created_by: row['created_by'] == null ? null : String(row['created_by']),
     created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
     restored_from_revision_id:
-      row['restored_from_revision_id'] == null ? null : String(row['restored_from_revision_id'])
+      row['restored_from_revision_id'] == null ? null : String(row['restored_from_revision_id']),
+    document_type_id: row['document_type_id'] == null ? null : String(row['document_type_id']),
+    metadata: parseDatabaseJson(row['metadata'], {}, 'content_node_revision.metadata')
   }),
   projectEntity: (row: DatabaseRow): ProjectEntityDbResult => ({
     workspace: String(row['workspace']),

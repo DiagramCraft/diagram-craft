@@ -121,7 +121,12 @@ describe('entity/workspace content authorization', () => {
 
     await expect(getMarkdownContent(db, storage, 'ws-1', node.id, event)).resolves.toEqual({
       body: '# Synced document\n',
-      attachments: []
+      attachments: [],
+      document_type: null,
+      document_type_id: null,
+      metadata: {},
+      available_fields: [],
+      retired_fields: []
     });
   });
 });

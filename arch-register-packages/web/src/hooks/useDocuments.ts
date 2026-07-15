@@ -1,0 +1,107 @@
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type {
+  DocumentMetadata,
+  DocumentTemplateWrite,
+  DocumentType,
+  DocumentTypeWrite
+} from '@arch-register/api-types/documentContract';
+import { orpcClient } from '../lib/orpcClient';
+
+export const documentKeys = {
+  types: (workspaceId: string) => ['document-types', workspaceId] as const,
+  templates: (workspaceId: string, projectId?: string | null) =>
+    ['document-templates', workspaceId, projectId ?? 'workspace'] as const,
+  related: (workspaceId: string, entityId: string) => ['related-content', workspaceId, entityId] as const
+};
+
+export const documentTypesQuery = (workspaceId: string) =>
+  queryOptions({
+    queryKey: documentKeys.types(workspaceId),
+    queryFn: () =>
+      orpcClient.documentTypes.list({
+        params: { workspace: workspaceId },
+        query: { include_archived: false }
+      }),
+    enabled: !!workspaceId
+  });
+
+export const documentTemplatesQuery = (workspaceId: string, projectId?: string | null) =>
+  queryOptions({
+    queryKey: documentKeys.templates(workspaceId, projectId),
+    queryFn: () =>
+      orpcClient.documentTemplates.list({
+        params: { workspace: workspaceId },
+        query: { project_id: projectId, include_archived: false }
+      }),
+    enabled: !!workspaceId
+  });
+
+export const useDocumentTypes = (workspaceId: string) => useQuery(documentTypesQuery(workspaceId));
+
+export const useDocumentTemplates = (workspaceId: string, projectId?: string | null) =>
+  useQuery(documentTemplatesQuery(workspaceId, projectId));
+
+export const useRelatedDocumentContent = (workspaceId: string, entityId: string) =>
+  useQuery({
+    queryKey: documentKeys.related(workspaceId, entityId),
+    queryFn: () => orpcClient.projects.listRelatedContent({ params: { workspace: workspaceId, entityId } }),
+    enabled: !!workspaceId && !!entityId
+  });
+
+export const useCreateDocumentType = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: DocumentTypeWrite) =>
+      orpcClient.documentTypes.create({ params: { workspace: workspaceId }, body }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentKeys.types(workspaceId) })
+  });
+};
+
+export const useUpdateDocumentType = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: DocumentTypeWrite }) =>
+      orpcClient.documentTypes.update({ params: { workspace: workspaceId, id }, body }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentKeys.types(workspaceId) })
+  });
+};
+
+export const useArchiveDocumentType = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, archived }: { id: string; archived: boolean }) =>
+      orpcClient.documentTypes.archive({ params: { workspace: workspaceId, id }, body: { archived } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentKeys.types(workspaceId) })
+  });
+};
+
+export const useCreateDocumentTemplate = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: DocumentTemplateWrite) =>
+      orpcClient.documentTemplates.create({ params: { workspace: workspaceId }, body }),
+    onSuccess: (_, body) => {
+      void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId, body.project_id) });
+      void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId) });
+    }
+  });
+};
+
+export const useArchiveDocumentTemplate = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, archived }: { id: string; archived: boolean }) =>
+      orpcClient.documentTemplates.archive({ params: { workspace: workspaceId, id }, body: { archived } }),
+    onSuccess: template => {
+      void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId, template.project_id) });
+      void queryClient.invalidateQueries({ queryKey: documentKeys.templates(workspaceId) });
+    }
+  });
+};
+
+export type MarkdownDocumentFields = Pick<DocumentType, 'fields'> & {
+  document_type_id: string | null;
+  metadata: DocumentMetadata;
+  available_fields: DocumentType['fields'];
+  retired_fields: DocumentType['fields'];
+};

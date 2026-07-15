@@ -47,6 +47,8 @@ import { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
 import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
 import type { ContentScope } from '../../hooks/useContentScope';
 import { downloadUrl } from '../../lib/browserDownload';
+import { useDocumentTypes } from '../../hooks/useDocuments';
+import { MarkdownPropertiesPanel } from './MarkdownPropertiesPanel';
 
 const extractToc = (markdown: string): string[] =>
   markdown.match(/^## .+$/gm)?.map(l => l.slice(3).trim()) ?? [];
@@ -88,6 +90,7 @@ export const MarkdownEditorScreen = () => {
       : { kind: 'workspace', workspaceId: workspaceSlug };
 
   const { data, isLoading, isError } = useMarkdownContent(workspaceSlug, nodeId);
+  const { data: documentTypes = [] } = useDocumentTypes(workspaceSlug);
   const { data: revisions = [], isLoading: revisionsLoading } = useMarkdownRevisions(
     workspaceSlug,
     nodeId
@@ -104,6 +107,8 @@ export const MarkdownEditorScreen = () => {
   });
 
   const [body, setBody] = useState('');
+  const [documentTypeId, setDocumentTypeId] = useState<string | null>(null);
+  const [metadata, setMetadata] = useState<NonNullable<typeof data>['metadata']>({});
   const [paneMode, setPaneMode] = useState<MarkdownPaneMode>(
     requestedMode === 'edit' ? 'edit' : 'preview'
   );
@@ -272,14 +277,21 @@ export const MarkdownEditorScreen = () => {
     if (!data) return;
     if (!initializedRef.current) {
       setBody(data.body);
+      setDocumentTypeId(data.document_type_id);
+      setMetadata(data.metadata);
       initializedRef.current = true;
       setDirty(false);
       return;
     }
     if (!dirty) {
       setBody(data.body);
+      setDocumentTypeId(data.document_type_id);
+      setMetadata(data.metadata);
     }
   }, [data, dirty]);
+
+  const selectedDocumentType = documentTypes.find(type => type.id === documentTypeId) ?? data?.document_type ?? null;
+  const documentFields = selectedDocumentType?.fields ?? data?.available_fields ?? [];
 
   useEffect(() => {
     if (screenState.viewPanel !== 'history' || revisions.length === 0) return;
@@ -299,6 +311,16 @@ export const MarkdownEditorScreen = () => {
     setDirty(true);
   }, []);
 
+  const handleDocumentTypeChange = useCallback((id: string | null) => {
+    setDocumentTypeId(id);
+    setDirty(true);
+  }, []);
+
+  const handleMetadataChange = useCallback((fieldId: string, value: string | number | boolean | string[] | null) => {
+    setMetadata(current => ({ ...current, [fieldId]: value }));
+    setDirty(true);
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (isReadOnly) return;
     if (!dirty) {
@@ -309,7 +331,7 @@ export const MarkdownEditorScreen = () => {
       return;
     }
     if (saveMutation.isPending) return;
-    await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
+    await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined, document_type_id: documentTypeId, metadata });
     setDirty(false);
     rotateDiagramSession();
     clearCloseSummary();
@@ -321,7 +343,9 @@ export const MarkdownEditorScreen = () => {
     saveMutation,
     rotateDiagramSession,
     clearCloseSummary,
-    isReadOnly
+    isReadOnly,
+    documentTypeId,
+    metadata
   ]);
 
   const handleSaveAndClose = useCallback(async () => {
@@ -333,7 +357,7 @@ export const MarkdownEditorScreen = () => {
     }
     if (dirty) {
       if (saveMutation.isPending) return;
-      await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
+      await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined, document_type_id: documentTypeId, metadata });
       setDirty(false);
     }
     clearDiagramSessionState();
@@ -347,7 +371,9 @@ export const MarkdownEditorScreen = () => {
     clearDiagramSessionState,
     clearCloseSummary,
     exitMarkdownEditor,
-    isReadOnly
+    isReadOnly,
+    documentTypeId,
+    metadata
   ]);
 
   const handleEnterEdit = useCallback(() => {
@@ -572,6 +598,18 @@ export const MarkdownEditorScreen = () => {
               onSave={handleSave}
               onSaveAndClose={handleSaveAndClose}
               onClose={handleClose}
+            />
+          )}
+
+          {screenState.viewPanel !== 'history' && (
+            <MarkdownPropertiesPanel
+              documentTypeId={documentTypeId}
+              documentTypes={documentTypes}
+              fields={documentFields}
+              metadata={metadata}
+              readOnly={isReadOnly || screenState.screenMode !== 'edit'}
+              onTypeChange={handleDocumentTypeChange}
+              onValueChange={handleMetadataChange}
             />
           )}
 

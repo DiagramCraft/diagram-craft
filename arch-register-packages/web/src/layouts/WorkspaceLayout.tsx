@@ -102,7 +102,7 @@ export const WorkspaceLayout = () => {
 
   const availableSettingsSections = useMemo(
     () => [
-      ...(canManageWorkspaces ? ['general', 'danger', 'export-import'] : []),
+      ...(canManageWorkspaces ? ['general', 'danger', 'export-import', 'documents'] : []),
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
       ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),

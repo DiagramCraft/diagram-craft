@@ -17,6 +17,7 @@ import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
 import { RoutePendingComponent } from '../../routes/RoutePendingComponent';
 import { JobMonitoringSubSection } from './sub-sections/JobMonitoringSubSection';
 import { WebhooksSubSection } from './sub-sections/WebhooksSubSection';
+import { DocumentSettingsSubSection } from './sub-sections/DocumentSettingsSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -57,6 +58,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'export-import': {
     title: 'Export & Import',
     sub: 'Export workspace data to ZIP archive or import data from another workspace.'
+  },
+  'documents': {
+    title: 'Documents',
+    sub: 'Manage typed Markdown document fields and reusable workspace templates.'
   },
   'analytics': {
     title: 'Analytics',
@@ -199,6 +204,7 @@ export const WorkspaceSettingsScreen = () => {
       )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
       {section === 'export-import' && <ExportImportSubSection />}
+      {section === 'documents' && <DocumentSettingsSubSection workspaceSlug={workspaceSlug} />}
       {section === 'analytics' && (
         <Suspense fallback={<RoutePendingComponent />}>
           <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />

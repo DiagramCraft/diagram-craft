@@ -26,7 +26,8 @@ import type {
   ImportExecuteResult,
   IdMapping,
   ImportDiagnostic,
-  WorkspaceImportPlan
+  WorkspaceImportPlan,
+  ExportDocumentData
 } from './exportTypes';
 
 const checker = new PermissionChecker();
@@ -54,6 +55,7 @@ export const parseImport = async (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   }
 ): Promise<ImportParseResult> => {
   // Check import permissions
@@ -164,6 +166,24 @@ export const parseImport = async (
     }
   }
 
+  if (data.documents) {
+    if (!hasConfigPermission) errors.push('You do not have permission to import typed documents');
+    else {
+      summary.documents = { count: data.documents.types.length, templates: data.documents.templates.length, revisions: data.documents.revisions.length };
+      const entityIds = new Set((data.entities ?? []).map(entity => entity.id));
+      const nodeIds = new Set((data.content_nodes ?? []).map(node => node.id));
+      for (const metadata of data.documents.metadata) {
+        for (const link of metadata.links) {
+          const available = link.target_type === 'entity' ? entityIds.has(link.target_id) : nodeIds.has(link.target_id);
+          if (available) continue;
+          const message = `Document link target '${link.target_id}' is not included in the import archive and will be skipped`;
+          diagnostics.push({ code: 'missing_reference', item_type: 'documents', item_id: metadata.node_id, message });
+          warnings.push(message);
+        }
+      }
+    }
+  }
+
   return {
     valid: errors.length === 0,
     version: manifest.version,
@@ -185,6 +205,7 @@ const validateArchiveData = (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   }
 ): ImportDiagnostic[] => {
   const diagnostics: ImportDiagnostic[] = [];
@@ -217,6 +238,28 @@ const validateArchiveData = (
         item_type: type,
         message: `Archive contains ${type} data not declared in its manifest`
       });
+    }
+  }
+
+  if (data.documents && !available.has('documents')) {
+    diagnostics.push({
+      code: 'invalid_manifest',
+      item_type: 'documents',
+      message: 'Archive contains documents data not declared in its manifest'
+    });
+  }
+  if (data.documents) {
+    const typeIds = new Set<string>();
+    for (const type of data.documents.types) {
+      if (typeIds.has(type.id)) {
+        diagnostics.push({
+          code: 'duplicate_import_item',
+          item_type: 'documents',
+          item_id: type.id,
+          message: `Duplicate document type ID in import archive: ${type.id}`
+        });
+      }
+      typeIds.add(type.id);
     }
   }
   return diagnostics;
@@ -507,9 +550,10 @@ const buildImportPlan = async (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   },
   contentFiles?: Map<string, Buffer>
-): Promise<{ plan: WorkspaceImportPlan; mapping: IdMapping }> => {
+): Promise<{ plan: WorkspaceImportPlan; mapping: IdMapping; warnings: string[] }> => {
   const mapping = createIdMapping();
   const parsed = await parseImport(
     db,
@@ -534,7 +578,9 @@ const buildImportPlan = async (
     },
     data
   );
-  const diagnostics: ImportDiagnostic[] = [...(parsed.diagnostics ?? [])];
+  const diagnostics: ImportDiagnostic[] = (parsed.diagnostics ?? []).filter(diagnostic =>
+    !(diagnostic.code === 'missing_reference' && diagnostic.item_type === 'documents')
+  );
   const conflictById = new Map(parsed.conflicts.map(conflict => [conflict.item_id, conflict]));
 
   for (const conflict of parsed.conflicts) {
@@ -622,6 +668,7 @@ const buildImportPlan = async (
     });
   }
   return {
+    warnings: parsed.warnings,
     plan: {
       include: options.include,
       id_mapping: toSerializableMapping(mapping),
@@ -698,6 +745,7 @@ export const executeImport = async (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   },
   contentFiles?: Map<string, Buffer>
 ): Promise<ImportExecuteResult> => {
@@ -709,7 +757,7 @@ export const executeImport = async (
   };
 
   try {
-    const { plan, mapping: idMapping } = await buildImportPlan(
+    const { plan, mapping: idMapping, warnings: planWarnings } = await buildImportPlan(
       db,
       authCtx,
       workspace,
@@ -717,6 +765,7 @@ export const executeImport = async (
       data,
       contentFiles
     );
+    result.warnings.push(...planWarnings);
     if (plan.diagnostics.length > 0) {
       result.success = false;
       result.errors = plan.diagnostics.map(diagnostic => diagnostic.message);
@@ -796,6 +845,8 @@ export const executeImport = async (
             idMapping,
             contentFiles
           );
+        if (options.include.includes('documents') && resolvedData.documents)
+          result.imported.documents = await importDocuments(transactionDb, workspace, resolvedData.documents, options.preserve_ids ?? false, idMapping);
       }
     });
   } catch (error) {
@@ -1328,4 +1379,57 @@ const importContentNodes = async (
   }
 
   return { created, updated };
+};
+
+const importDocuments = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  documents: ExportDocumentData,
+  preserveIds: boolean,
+  idMapping: IdMapping
+): Promise<{ created: number; templates: number; metadata: number; revisions: number }> => {
+  const typeMapping = new Map<string, string>();
+  let created = 0;
+  for (const type of documents.types) {
+    const nextId = preserveIds ? type.id : randomUUID();
+    typeMapping.set(type.id, nextId);
+    await db.document.createDocumentType({ id: nextId, workspace, name: type.name, description: type.description, fields: type.fields, created_at: new Date(type.created_at), updated_at: new Date() });
+    if (type.archived) await db.document.archiveDocumentType(workspace, nextId, true, new Date());
+    created++;
+  }
+  let templates = 0;
+  for (const template of documents.templates) {
+    const projectId = template.project_id == null ? null : idMapping.projects.get(template.project_id) ?? null;
+    await db.document.createDocumentTemplate({ id: preserveIds ? template.id : randomUUID(), workspace, project_id: projectId, name: template.name, body: template.body, document_type_id: template.document_type_id ? typeMapping.get(template.document_type_id) ?? null : null, metadata_defaults: template.metadata_defaults, created_at: new Date(template.created_at), updated_at: new Date() });
+    templates++;
+  }
+  let metadataCount = 0;
+  for (const item of documents.metadata) {
+    const nodeId = idMapping.content_nodes.get(item.node_id);
+    if (!nodeId) continue;
+    const documentTypeId = item.document_type_id ? typeMapping.get(item.document_type_id) ?? null : null;
+    await db.document.upsertDocumentMetadata({ workspace, node_id: nodeId, document_type_id: documentTypeId, values: item.values, updated_at: new Date() });
+    const links = item.links.flatMap(link => {
+      const targetId = link.target_type === 'entity'
+        ? idMapping.entities.get(link.target_id)
+        : idMapping.content_nodes.get(link.target_id);
+      return targetId == null ? [] : [{ ...link, target_id: targetId }];
+    });
+    await db.document.replaceDocumentLinks(workspace, nodeId, links);
+    metadataCount++;
+  }
+  const revisionMapping = new Map<string, string>();
+  let revisions = 0;
+  const orderedRevisions = [...documents.revisions].sort((left, right) =>
+    left.node_id.localeCompare(right.node_id) || left.revision_number - right.revision_number
+  );
+  for (const revision of orderedRevisions) {
+    const nodeId = idMapping.content_nodes.get(revision.node_id);
+    if (!nodeId) continue;
+    const id = preserveIds ? revision.id : randomUUID();
+    revisionMapping.set(revision.id, id);
+    await db.project.createMarkdownRevision({ id, workspace, node_id: nodeId, revision_number: revision.revision_number, title: revision.title, body: revision.body, created_at: new Date(revision.created_at), created_by: null, restored_from_revision_id: revision.restored_from_revision_id ? revisionMapping.get(revision.restored_from_revision_id) ?? null : null, document_type_id: revision.document_type_id ? typeMapping.get(revision.document_type_id) ?? null : null, metadata: revision.metadata });
+    revisions++;
+  }
+  return { created, templates, metadata: metadataCount, revisions };
 };

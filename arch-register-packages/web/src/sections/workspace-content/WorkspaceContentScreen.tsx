@@ -21,7 +21,7 @@ import {
   DiagramBrowserView
 } from '../../components/diagram-browser/DiagramBrowserView';
 import type { WorkspaceContentSearchParams } from '../../routes/searchParams';
-import { workspaceContentFolderRoute } from '../../routes/publicObjectRoutes';
+import { workspaceContentFolderRoute, workspaceMarkdownDraftRoute } from '../../routes/publicObjectRoutes';
 import { downloadUrl } from '../../lib/browserDownload';
 
 type WorkspaceContentScreenProps = {
@@ -225,6 +225,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
         }}
+        onOpenDraft={name => navigate(workspaceMarkdownDraftRoute(workspaceSlug, { draftName: name, draftFolder: folder || undefined }))}
         onCreate={name =>
           contentOperations.createMarkdown.mutateAsync({ name, folder: folder || null })
         }

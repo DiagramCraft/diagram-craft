@@ -10,6 +10,7 @@ import { buildProjectBreadcrumbs, getAllParams } from '../../layouts/workspaceSh
 import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
 import {
   LazyDiagramScreen,
+  LazyMarkdownDraftScreen,
   LazyMarkdownEditorScreen,
   LazyProjectDetailScreen,
   LazyProjectsScreen
@@ -99,11 +100,22 @@ export const createProjectWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     buildDetailShell
   );
 
+  const markdownDraftRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'projects/$projectId/wiki/new',
+      validateSearch: validateMarkdownSearch,
+      component: LazyMarkdownDraftScreen
+    }),
+    buildDetailShell
+  );
+
   return [
     projectsRoute,
     projectDetailRoute,
     projectContentFolderRoute,
     diagramRoute,
-    markdownRoute
+    markdownRoute,
+    markdownDraftRoute
   ] as const;
 };

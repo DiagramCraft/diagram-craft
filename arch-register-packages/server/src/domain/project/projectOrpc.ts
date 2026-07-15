@@ -49,9 +49,11 @@ import {
   createProjectMarkdownDoc,
   createEntityMarkdownDoc,
   createWorkspaceMarkdownDoc,
+  saveNewMarkdownContent,
   getMarkdownContent,
   saveMarkdownContent,
   listMarkdownRevisions,
+  listRelatedContent,
   getMarkdownRevision,
   restoreMarkdownRevision,
   createMarkdownDiagramAttachment
@@ -277,6 +279,9 @@ const entityContentHandlers = {
         context.event
       );
     }
+  ),
+  listRelatedContent: projectRouter.projects.listRelatedContent.handler(
+    async ({ input, context }) => listRelatedContent(context.db, input.params.workspace, input.params.entityId, context.event)
   ),
   listEntityFiles: projectRouter.projects.listEntityFiles.handler(async ({ input, context }) => {
     return await listEntityContentNodes(
@@ -589,6 +594,20 @@ const markdownHandlers = {
         input.params.nodeId,
         input.body.body,
         input.body.name,
+        input.body.document_type_id,
+        input.body.metadata,
+        context.event
+      );
+    }
+  ),
+  saveNewMarkdownContent: projectRouter.projects.saveNewMarkdownContent.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await saveNewMarkdownContent(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.body,
         context.event
       );
     }
