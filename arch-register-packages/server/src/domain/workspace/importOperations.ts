@@ -186,9 +186,20 @@ export const parseImport = async (
           entity.public_id ? [entity.id, entity.public_id] : [entity.id]
         )
       );
+      const documentTypeIds = new Set(data.documents.types.map(type => type.id));
       const nodeIds = new Set((data.content_nodes ?? []).map(node => node.id));
       const projectIds = new Set((data.projects ?? []).map(project => project.id));
       for (const template of data.documents.templates) {
+        if (!documentTypeIds.has(template.document_type_id)) {
+          const message = `Document template '${template.id}' references document type '${template.document_type_id}', which is not included in the import archive and will be skipped`;
+          diagnostics.push({
+            code: 'missing_reference',
+            item_type: 'documents',
+            item_id: template.id,
+            message
+          });
+          warnings.push(message);
+        }
         if (template.project_id == null || projectIds.has(template.project_id)) continue;
         const message = `Document template '${template.id}' belongs to project '${template.project_id}', which is not included in the import archive and will be skipped`;
         diagnostics.push({

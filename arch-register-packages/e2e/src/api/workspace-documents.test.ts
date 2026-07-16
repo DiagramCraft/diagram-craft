@@ -13,6 +13,103 @@ const suggestedResolutions = (parseResult: {
     ])
   );
 
+test('workspace replication does not copy typed documents unless explicitly included', async ({
+  orpc
+}) => {
+  const suffix = Date.now().toString();
+  const source = await orpc.workspaces.create({
+    body: { name: `Documents opt-in source ${suffix}`, badge: 'DO' }
+  });
+  await orpc.documents.documentTypes.create({
+    params: { workspace: source.url_slug },
+    body: {
+      name: `Opt-in document type ${suffix}`,
+      description: '',
+      fields: []
+    }
+  });
+
+  const copied = await orpc.workspaces.create({
+    body: {
+      name: `Documents opt-in copy ${suffix}`,
+      badge: 'DC',
+      replicate_from: source.id
+    }
+  });
+  const copiedTypes = await orpc.documents.documentTypes.list({
+    params: { workspace: copied.url_slug },
+    query: { include_archived: true }
+  });
+
+  expect(copiedTypes).toEqual([]);
+});
+
+test('workspace replication strips owner and lifecycle references without settings', async ({
+  orpc,
+  server
+}) => {
+  const suffix = Date.now().toString();
+  const source = await orpc.workspaces.create({
+    body: { name: `Settings opt-out source ${suffix}`, badge: 'SO' }
+  });
+  const teams = await orpc.config.teams.list({ params: { workspace: source.url_slug } });
+  const lifecycleStates = await orpc.config.lifecycleStates.list({
+    params: { workspace: source.url_slug }
+  });
+  const schema = await orpc.schemas.create({
+    params: { workspace: source.url_slug },
+    body: {
+      name: `Settings opt-out schema ${suffix}`,
+      key_prefix: 'SOT',
+      default_owner: teams[0]!.id,
+      templates: [
+        {
+          id: `settings-template-${suffix}`,
+          name: 'Owned template',
+          values: {
+            owner: teams[0]!.id,
+            lifecycle: lifecycleStates[0]!.id,
+            fields: {}
+          }
+        }
+      ]
+    }
+  });
+  await orpc.projects.create({
+    params: { workspace: source.url_slug },
+    body: { name: `Settings opt-out project ${suffix}`, owner: teams[0]!.id }
+  });
+
+  const copied = await orpc.workspaces.create({
+    body: {
+      name: `Settings opt-out copy ${suffix}`,
+      badge: 'SC',
+      replicate_from: source.id,
+      include: ['schemas', 'projects']
+    }
+  });
+  const copiedSchema = (await server.db.catalog.listSchemas(copied.id)).find(
+    item => item.name === schema.name
+  );
+  expect(copiedSchema).toEqual(
+    expect.objectContaining({
+      default_owner: null,
+      templates: [
+        expect.objectContaining({
+          values: expect.not.objectContaining({
+            owner: expect.anything(),
+            lifecycle: expect.anything()
+          })
+        })
+      ]
+    })
+  );
+  const copiedProject = (await server.db.project.listProjects(copied.id)).find(
+    item => item.name === `Settings opt-out project ${suffix}`
+  );
+  expect(copiedProject).toEqual(expect.objectContaining({ owner: null }));
+});
+
 test('workspace copy preserves typed documents, links, templates, and entity content', async ({
   orpc
 }) => {

@@ -77,6 +77,10 @@ const makeDb = () =>
         ...input
       }))
     },
+    document: {
+      listDocumentTypes: vi.fn(async () => []),
+      listDocumentTemplates: vi.fn(async () => [])
+    },
     project: {
       listProjects: vi.fn(async () => []),
       listAllContentNodes: vi.fn(async () => []),
@@ -176,6 +180,66 @@ describe('workspace export/import guards', () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('You do not have permission to import content nodes');
+  });
+
+  it('diagnoses document templates that reference an unavailable type', async () => {
+    hasWorkspaceCapability.mockReturnValue(true);
+    const result = await parseImport(
+      makeDb(),
+      makeAuthCtx(),
+      'workspace-1',
+      {
+        version: '1.0',
+        format: 'zip-multi-file',
+        exported_at: '2026-01-01T00:00:00.000Z',
+        exported_by: 'User',
+        source_workspace: { id: 'source', name: 'Source', url_slug: 'source' },
+        export_options: ['documents'],
+        files: {},
+        statistics: {
+          entity_count: 0,
+          project_count: 0,
+          schema_count: 0,
+          content_node_count: 0,
+          total_content_size_bytes: 0
+        },
+        checksums: {}
+      },
+      {
+        documents: {
+          types: [],
+          templates: [
+            {
+              id: 'template-1',
+              workspace: 'source',
+              project_id: null,
+              name: 'Missing type template',
+              body: '# Template',
+              document_type_id: 'missing-type',
+              metadata_defaults: {},
+              archived: false,
+              created_at: '2026-01-01T00:00:00.000Z',
+              updated_at: '2026-01-01T00:00:00.000Z'
+            }
+          ],
+          metadata: [],
+          revisions: []
+        }
+      }
+    );
+
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'missing_reference',
+          item_id: 'template-1',
+          message: expect.stringContaining("references document type 'missing-type'")
+        })
+      ])
+    );
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("references document type 'missing-type'")])
+    );
   });
 
   it('persists imported projects and content files during executeImport', async () => {

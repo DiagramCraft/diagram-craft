@@ -113,9 +113,15 @@ export const validateDocumentMetadata = (
 export const assertDocumentMetadataValid = (
   fields: DocumentField[],
   metadata: DocumentMetadata,
-  rejectUnknownFields = false
+  rejectUnknownFields = false,
+  allowMissingRequired = false
 ) => {
-  const result = validateDocumentMetadata(fields, metadata, false, rejectUnknownFields);
+  const result = validateDocumentMetadata(
+    fields,
+    metadata,
+    allowMissingRequired,
+    rejectUnknownFields
+  );
   httpAssert.true(result.errors.length === 0, { status: 400, message: result.errors.join('; ') });
   return result;
 };

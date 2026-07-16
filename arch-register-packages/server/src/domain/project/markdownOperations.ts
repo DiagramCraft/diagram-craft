@@ -276,9 +276,6 @@ const readMarkdownBody = (content: Buffer) => {
   return rawContent;
 };
 
-const metadataFingerprint = (metadata: DocumentMetadata) =>
-  JSON.stringify(Object.entries(metadata).sort(([left], [right]) => left.localeCompare(right)));
-
 const createScopedMarkdownDoc = async (
   scope: ContentScopeResolver,
   db: DatabaseAdapter,
@@ -424,7 +421,7 @@ export const saveNewMarkdownContent = async (
       const resolvedMetadata = documentType
         ? await resolveDocumentMetadata(db, ws, documentType.fields, input.metadata)
         : { values: input.metadata, links: [] };
-      if (documentType) assertDocumentMetadataValid(documentType.fields, resolvedMetadata.values);
+      assertDocumentMetadataValid(documentType?.fields ?? [], resolvedMetadata.values, true);
       const nodeId = randomUUID();
       const timestamp = new Date();
       const content = Buffer.from(JSON.stringify({ body: input.body }), 'utf8');
@@ -911,19 +908,16 @@ export const saveMarkdownContent = async (
         assertDocumentMetadataValid(
           nextDocumentType.fields,
           nextMetadata,
+          true,
           allowTypeMigration && typeChanged
         );
+      } else if (!allowTypeMigration || !typeChanged) {
+        assertDocumentMetadataValid([], nextMetadata, true);
       }
       const content = Buffer.from(JSON.stringify({ body }), 'utf8');
       const timestamp = new Date();
       const nextName = name?.trim() ? name.trim() : node.name;
       const previousContent = await storage.read(ws, storageScope(ws, node), node.id);
-      const stateChanged =
-        readMarkdownBody(previousContent) !== body ||
-        node.name !== nextName ||
-        currentDocument.documentTypeId !== (nextDocumentTypeId ?? null) ||
-        metadataFingerprint(currentDocument.metadata) !== metadataFingerprint(nextMetadata);
-      if (!stateChanged) return toApiProjectFile(node);
       let row!: ContentNodeDbResult;
       let revision: MarkdownRevisionDbResult | undefined;
       await coordinateContentWrite({

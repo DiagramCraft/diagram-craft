@@ -299,9 +299,11 @@ export const MarkdownEditorScreen = () => {
       return documentTypes;
     return [...documentTypes, data.document_type];
   }, [data?.document_type, documentTypes]);
-  const selectedDocumentType =
-    availableDocumentTypes.find(type => type.id === documentTypeId) ?? data?.document_type ?? null;
-  const documentFields = selectedDocumentType?.fields ?? data?.available_fields ?? [];
+  const selectedDocumentType = documentTypeId
+    ? (availableDocumentTypes.find(type => type.id === documentTypeId) ?? null)
+    : null;
+  const documentFields =
+    documentTypeId == null ? [] : (selectedDocumentType?.fields ?? data?.available_fields ?? []);
 
   useEffect(() => {
     if (screenState.viewPanel !== 'history' || revisions.length === 0) return;

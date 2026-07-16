@@ -454,21 +454,6 @@ export const createWorkspace = async (
           await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
         }
 
-        if (lifecycleMap.size === 0) {
-          const targetLifecycle = await db.workspace.listLifecycleStates(row.id);
-          for (const sourceState of srcLifecycle) {
-            const targetState = targetLifecycle.find(state => state.label === sourceState.label);
-            if (targetState) lifecycleMap.set(sourceState.id, targetState.id);
-          }
-        }
-        if (teamMap.size === 0) {
-          const targetTeams = await db.workspace.listTeams(row.id);
-          for (const sourceTeam of srcTeams) {
-            const targetTeam = targetTeams.find(team => team.name === sourceTeam.name);
-            if (targetTeam) teamMap.set(sourceTeam.id, targetTeam.id);
-          }
-        }
-
         const schemaMap = new Map<string, string>();
         if (includeSet.has('schemas')) {
           for (const schema of srcSchemas) schemaMap.set(schema.id, randomUUID());
@@ -531,20 +516,11 @@ export const createWorkspace = async (
             }
           }
         }
-        if (includeSet.has('documents') || includeSet.has('settings')) {
-          const sourceTypes = await db.document.listDocumentTypes(replicate_from, true);
-          const typeMap = new Map(sourceTypes.map(type => [type.id, randomUUID()]));
-          for (const type of sourceTypes) {
-            await db.document.createDocumentType({
-              ...type,
-              id: typeMap.get(type.id)!,
-              workspace: row.id,
-              created_at: timestamp,
-              updated_at: timestamp
-            });
-            if (type.archived)
-              await db.document.archiveDocumentType(row.id, typeMap.get(type.id)!, true, timestamp);
-          }
+        if (
+          includeSet.has('projects') ||
+          includeSet.has('entities') ||
+          includeSet.has('documents')
+        ) {
           const projectMap = new Map<string, string>();
           if (includeSet.has('projects')) {
             for (const project of await db.project.listProjects(replicate_from)) {
@@ -616,46 +592,72 @@ export const createWorkspace = async (
               });
             }
           }
-          const { nodeMap, sourceEntityIdByIdentifier } = await copyTypedWorkspaceDocuments(
-            db,
-            storage,
-            replicate_from,
-            row.id,
-            typeMap,
-            projectMap,
-            entityMap,
-            timestamp
-          );
-          for (const template of await db.document.listDocumentTemplates(
-            replicate_from,
-            undefined,
-            true
-          )) {
-            const projectId =
-              template.project_id == null ? null : projectMap.get(template.project_id);
-            if (template.project_id != null && !projectId) continue;
-            const documentTypeId = typeMap.get(template.document_type_id);
-            const sourceType = sourceTypes.find(type => type.id === template.document_type_id);
-            if (!documentTypeId) continue;
-            const copiedTemplate = await db.document.createDocumentTemplate({
-              ...template,
-              id: randomUUID(),
-              workspace: row.id,
-              project_id: projectId ?? null,
-              document_type_id: documentTypeId,
-              metadata_defaults: sourceType
-                ? remapDocumentMetadataValues(
-                    sourceType.fields,
-                    template.metadata_defaults,
-                    id => entityMap.get(sourceEntityIdByIdentifier.get(id) ?? id),
-                    id => nodeMap.get(id)
-                  )
-                : template.metadata_defaults,
-              created_at: timestamp,
-              updated_at: timestamp
-            });
-            if (template.archived)
-              await db.document.archiveDocumentTemplate(row.id, copiedTemplate.id, true, timestamp);
+
+          if (includeSet.has('documents')) {
+            const sourceTypes = await db.document.listDocumentTypes(replicate_from, true);
+            const typeMap = new Map(sourceTypes.map(type => [type.id, randomUUID()]));
+            for (const type of sourceTypes) {
+              await db.document.createDocumentType({
+                ...type,
+                id: typeMap.get(type.id)!,
+                workspace: row.id,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+              if (type.archived)
+                await db.document.archiveDocumentType(
+                  row.id,
+                  typeMap.get(type.id)!,
+                  true,
+                  timestamp
+                );
+            }
+            const { nodeMap, sourceEntityIdByIdentifier } = await copyTypedWorkspaceDocuments(
+              db,
+              storage,
+              replicate_from,
+              row.id,
+              typeMap,
+              projectMap,
+              entityMap,
+              timestamp
+            );
+            for (const template of await db.document.listDocumentTemplates(
+              replicate_from,
+              undefined,
+              true
+            )) {
+              const projectId =
+                template.project_id == null ? null : projectMap.get(template.project_id);
+              if (template.project_id != null && !projectId) continue;
+              const documentTypeId = typeMap.get(template.document_type_id);
+              const sourceType = sourceTypes.find(type => type.id === template.document_type_id);
+              if (!documentTypeId) continue;
+              const copiedTemplate = await db.document.createDocumentTemplate({
+                ...template,
+                id: randomUUID(),
+                workspace: row.id,
+                project_id: projectId ?? null,
+                document_type_id: documentTypeId,
+                metadata_defaults: sourceType
+                  ? remapDocumentMetadataValues(
+                      sourceType.fields,
+                      template.metadata_defaults,
+                      id => entityMap.get(sourceEntityIdByIdentifier.get(id) ?? id),
+                      id => nodeMap.get(id)
+                    )
+                  : template.metadata_defaults,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+              if (template.archived)
+                await db.document.archiveDocumentTemplate(
+                  row.id,
+                  copiedTemplate.id,
+                  true,
+                  timestamp
+                );
+            }
           }
         }
       } else {

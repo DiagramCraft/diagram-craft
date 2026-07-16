@@ -495,6 +495,68 @@ test.describe('project routes', () => {
     });
   });
 
+  test('rejects orphaned metadata and records unchanged saves as revisions', async ({ orpc }) => {
+    const suffix = Date.now().toString();
+    const type = await orpc.documents.documentTypes.create({
+      params: { workspace: 'default' },
+      body: {
+        name: `Metadata validation ${suffix}`,
+        description: '',
+        fields: [
+          { id: 'status', name: 'Status', type: 'text', requirement: 'optional', retired: false }
+        ]
+      }
+    });
+    const project = await createProject(orpc, { name: `Metadata validation ${suffix}` });
+
+    await expect(
+      orpc.projects.saveNewMarkdownContent({
+        params: { workspace: 'default' },
+        body: {
+          scope: 'project',
+          project_id: project.id,
+          name: 'Invalid untyped document',
+          body: '# Invalid',
+          document_type_id: null,
+          metadata: { orphaned: 'value' }
+        }
+      })
+    ).rejects.toThrow("Metadata field 'orphaned' is not part of this document type");
+
+    const document = await orpc.projects.createProjectMarkdown({
+      params: { workspace: 'default', id: project.public_id },
+      body: { name: 'Metadata validation document' }
+    });
+    await orpc.projects.migrateMarkdownContent({
+      params: { workspace: 'default', nodeId: document.id },
+      body: {
+        body: '# Draft',
+        document_type_id: type.id,
+        metadata: { status: 'draft' }
+      }
+    });
+
+    await expect(
+      orpc.projects.saveMarkdownContent({
+        params: { workspace: 'default', nodeId: document.id },
+        body: {
+          body: '# Draft',
+          document_type_id: type.id,
+          metadata: { status: 'draft', orphaned: 'value' }
+        }
+      })
+    ).rejects.toThrow("Metadata field 'orphaned' is not part of this document type");
+
+    await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: document.id },
+      body: { body: '# Draft', document_type_id: type.id, metadata: { status: 'draft' } }
+    });
+    const revisions = await orpc.projects.listMarkdownRevisions({
+      params: { workspace: 'default', nodeId: document.id }
+    });
+    expect(revisions).toHaveLength(2);
+  });
+
   test('blocks restoring a revision that fails the current type requirements', async ({ orpc }) => {
     const suffix = Date.now().toString();
     const type = await orpc.documents.documentTypes.create({
