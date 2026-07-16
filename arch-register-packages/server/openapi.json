@@ -14661,12 +14661,18 @@
                               "type": "integer",
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
+                            },
+                            "conflicts": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
                             }
                           },
                           "required": [
                             "count",
                             "templates",
-                            "revisions"
+                            "revisions",
+                            "conflicts"
                           ],
                           "description": "Typed document summary"
                         }
