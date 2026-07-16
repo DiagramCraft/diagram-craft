@@ -201,9 +201,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       const id = input.id ?? randomUUID();
       const [row] = await this.sql<MarkdownRevisionDbResult[]>`
         INSERT INTO content_node_revision
-          (id, workspace, node_id, revision_number, title, body, created_at, created_by, restored_from_revision_id)
+          (id, workspace, node_id, revision_number, title, body, created_at, created_by, restored_from_revision_id, document_type_id, metadata)
         VALUES
-          (${id}, ${input.workspace}, ${input.node_id}, ${input.revision_number}, ${input.title}, ${input.body}, ${input.created_at}, ${input.created_by}, ${input.restored_from_revision_id ?? null})
+          (${id}, ${input.workspace}, ${input.node_id}, ${input.revision_number}, ${input.title}, ${input.body}, ${input.created_at}, ${input.created_by}, ${input.restored_from_revision_id ?? null}, ${input.document_type_id ?? null}, ${this.json(input.metadata ?? {})})
         RETURNING *
       `;
       if (!row) {

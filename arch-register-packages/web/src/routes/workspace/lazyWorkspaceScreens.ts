@@ -16,6 +16,10 @@ export const LazyMarkdownEditorScreen = lazyRouteComponent(
   () => import('../../sections/markdown/MarkdownEditorScreen'),
   'MarkdownEditorScreen'
 );
+export const LazyMarkdownDraftScreen = lazyRouteComponent(
+  () => import('../../sections/markdown/MarkdownDraftScreen'),
+  'MarkdownDraftScreen'
+);
 export const LazyWorkspaceContentRoute = lazyRouteComponent(
   () => import('./WorkspaceContentRoute'),
   'WorkspaceContentRoute'
@@ -59,6 +63,10 @@ export const LazySchemaSettingsScreen = lazyRouteComponent(
 export const LazySchemaGraphView = lazyRouteComponent(
   () => import('../../sections/workspace-settings/SchemaGraphView'),
   'SchemaGraphView'
+);
+export const LazyDocumentSettingsScreen = lazyRouteComponent(
+  () => import('../../sections/workspace-settings/DocumentSettingsScreen'),
+  'DocumentSettingsScreen'
 );
 export const LazyGlobalSettingsScreen = lazyRouteComponent(
   () => import('../../sections/global-settings/GlobalSettingsScreen'),

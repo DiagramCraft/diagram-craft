@@ -1,0 +1,217 @@
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  margin: 0 0 18px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.header:hover {
+  background: var(--cmp-bg);
+}
+
+.staticHeader {
+  cursor: default;
+}
+
+.chevron {
+  color: var(--cmp-fg-disabled);
+  flex-shrink: 0;
+  transition: transform 80ms;
+}
+
+.title {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.errorPill {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--error-fg, #e05252);
+  background: color-mix(in oklch, var(--error-fg, #e05252) 14%, transparent);
+  border: 1px solid color-mix(in oklch, var(--error-fg, #e05252) 35%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.body {
+  border-top: 1px solid var(--panel-border);
+  padding: 4px 12px 4px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.rowError .value {
+  color: var(--error-fg, #e05252);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--base-fg-dim);
+}
+
+.requiredDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--error-fg, #e05252);
+  flex-shrink: 0;
+}
+
+.value {
+  font-size: 12px;
+  min-width: 0;
+}
+
+.readValue {
+  font-size: 12px;
+}
+
+.documentLink {
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+
+.documentLink:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: var(--error-fg, #e05252);
+  font-size: 10.5px;
+  margin-top: 3px;
+}
+
+.warning {
+  color: var(--cmp-fg-disabled);
+  font-size: 10.5px;
+  margin-top: 3px;
+}
+
+.reflist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.diffValues {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.diffValue {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  padding: 2px 5px;
+  border-radius: var(--r-sm);
+  font-size: 11px;
+}
+
+.diffRemoved {
+  background: color-mix(in srgb, #ef4444 10%, transparent);
+  color: var(--error-fg, #b91c1c);
+}
+
+.diffAdded {
+  background: color-mix(in srgb, #22c55e 10%, transparent);
+  color: var(--success-fg, #15803d);
+}
+
+.diffMarker {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.diffContent {
+  min-width: 0;
+}
+
+.diffContent :global(a),
+.diffContent :global(a:hover) {
+  text-decoration: none;
+}
+
+.linkEdit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.linkEdit :global(a),
+.linkEdit :global(a:hover) {
+  text-decoration: none;
+}
+
+.chipRemove {
+  color: var(--cmp-fg-disabled);
+  display: inline-flex;
+  align-items: center;
+}
+
+.chipRemove:hover {
+  color: var(--error-fg, #e05252);
+}
+
+.linkAdd {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--cmp-fg-disabled);
+}
+
+.linkAdd:hover {
+  color: var(--base-fg-dim);
+  background: var(--cmp-bg);
+}
+
+.saveBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: color-mix(in oklch, var(--error-fg, #e05252) 10%, var(--panel-bg));
+  border-top: 1px solid color-mix(in oklch, var(--error-fg, #e05252) 30%, var(--panel-border));
+  color: var(--base-fg-dim);
+  padding: 8px 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.saveBanner svg {
+  color: var(--error-fg, #e05252);
+  flex-shrink: 0;
+  margin-top: 1px;
+}

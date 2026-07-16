@@ -196,6 +196,7 @@ export class ZipExtractor {
     entities?: unknown;
     projects?: unknown;
     content_nodes?: unknown;
+    documents?: unknown;
     contentFiles?: Map<string, Buffer>;
     jsonFiles: Map<string, string>;
   }> {
@@ -208,7 +209,8 @@ export class ZipExtractor {
       'schemas.json',
       'entities.json',
       'projects.json',
-      'content-nodes.json'
+      'content-nodes.json',
+      'documents.json'
     ]);
 
     const manifestStr = files.get('manifest.json');
@@ -223,6 +225,7 @@ export class ZipExtractor {
       entities?: unknown;
       projects?: unknown;
       content_nodes?: unknown;
+      documents?: unknown;
       contentFiles?: Map<string, Buffer>;
       jsonFiles: Map<string, string>;
     } = {
@@ -244,6 +247,9 @@ export class ZipExtractor {
 
     const contentNodesStr = files.get('content-nodes.json');
     if (contentNodesStr) result.content_nodes = JSON.parse(contentNodesStr);
+
+    const documentsStr = files.get('documents.json');
+    if (documentsStr) result.documents = JSON.parse(documentsStr);
 
     // Extract content files from content/ directory
     const contentFiles = new Map<string, Buffer>();

@@ -82,6 +82,7 @@ export type EntityDetailSearchParams = {
     | 'topology'
     | 'graph'
     | 'relations'
+    | 'related-content'
     | 'dependents'
     | 'assessments'
     | 'discussions'
@@ -119,6 +120,7 @@ export const validateEntityDetailSearch = (
     raw.tab === 'topology' ||
     raw.tab === 'graph' ||
     raw.tab === 'relations' ||
+    raw.tab === 'related-content' ||
     raw.tab === 'dependents' ||
     raw.tab === 'assessments' ||
     raw.tab === 'discussions' ||
@@ -129,6 +131,10 @@ export const validateEntityDetailSearch = (
 });
 
 export type MarkdownSearchParams = {
+  draftName?: string;
+  draftFolder?: string;
+  draftType?: string;
+  draftTemplate?: string;
   mode?: 'edit' | 'preview';
   panel?: 'preview' | 'history';
   revisionId?: string;
@@ -138,6 +144,10 @@ export type MarkdownSearchParams = {
 };
 
 export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams => ({
+  draftName: typeof raw.draftName === 'string' ? raw.draftName : undefined,
+  draftFolder: typeof raw.draftFolder === 'string' ? raw.draftFolder : undefined,
+  draftType: typeof raw.draftType === 'string' ? raw.draftType : undefined,
+  draftTemplate: typeof raw.draftTemplate === 'string' ? raw.draftTemplate : undefined,
   mode: raw.mode === 'edit' || raw.mode === 'preview' ? raw.mode : undefined,
   panel: raw.panel === 'preview' || raw.panel === 'history' ? raw.panel : undefined,
   revisionId: typeof raw.revisionId === 'string' ? raw.revisionId : undefined,
@@ -276,6 +286,21 @@ export const validateSchemaSettingsSearch = (
   tab: raw.tab === 'types' || raw.tab === 'enums' ? raw.tab : undefined,
   schema: typeof raw.schema === 'string' ? raw.schema : undefined,
   enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined
+});
+
+// Document settings params (for settings/documents route)
+export type DocumentSettingsSearchParams = {
+  tab?: 'types' | 'templates';
+  type?: string;
+  template?: string;
+};
+
+export const validateDocumentSettingsSearch = (
+  raw: Record<string, unknown>
+): DocumentSettingsSearchParams => ({
+  tab: raw.tab === 'types' || raw.tab === 'templates' ? raw.tab : undefined,
+  type: typeof raw.type === 'string' ? raw.type : undefined,
+  template: typeof raw.template === 'string' ? raw.template : undefined
 });
 
 export type ModelOverviewSearchParams = {

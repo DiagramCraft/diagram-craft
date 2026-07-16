@@ -24,6 +24,7 @@ import {
   entityDetailRoute,
   entityDiagramRoute,
   entityMarkdownRoute,
+  entityMarkdownDraftRoute,
   projectDiagramRoute,
   projectMarkdownRoute
 } from '../../routes/publicObjectRoutes';
@@ -192,6 +193,7 @@ export const EntityContentSidebar = ({
       <AddMarkdownDialog
         open={markdownFolder !== undefined}
         onClose={() => setMarkdownFolder(undefined)}
+        workspaceSlug={workspaceSlug}
         onCreated={file => {
           setMarkdownFolder(undefined);
           navigate(
@@ -200,6 +202,16 @@ export const EntityContentSidebar = ({
             })
           );
         }}
+        onOpenDraft={draft =>
+          navigate(
+            entityMarkdownDraftRoute(workspaceSlug, asEntityPublicId(entityId), {
+              draftName: draft.name,
+              draftFolder: markdownFolder ?? undefined,
+              draftType: draft.documentTypeId ?? undefined,
+              draftTemplate: draft.templateId ?? undefined
+            })
+          )
+        }
         onCreate={name =>
           operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
         }

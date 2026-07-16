@@ -78,6 +78,16 @@ describe('toApiProjectFile', () => {
     expect(result.content_metadata?.title).toBe('System overview');
     expect(result.content_metadata?.keywords).toEqual(['system', 'overview']);
   });
+
+  it('maps the assigned document type icon', () => {
+    const result = toApiProjectFile({
+      ...baseProjectFile,
+      type: 'markdown',
+      document_type_icon: 'api'
+    });
+
+    expect(result.document_type_icon).toBe('api');
+  });
 });
 
 // ── toApiProjectDetail ────────────────────────────────────────

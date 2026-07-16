@@ -25,7 +25,8 @@ import type {
   ExportSchema,
   ExportEntity,
   ExportProject,
-  ExportContentNode
+  ExportContentNode,
+  ExportDocumentData
 } from './exportTypes';
 
 type ORPCContext = {
@@ -44,7 +45,7 @@ export const workspaceManagementORPCRouter = wsRouter.router({
       return await listWorkspaces(context.db, context.event);
     }),
     create: wsRouter.workspaces.create.handler(async ({ input, context }) => {
-      return await createWorkspace(context.db, input.body, context.event);
+      return await createWorkspace(context.db, input.body, context.event, context.storage);
     }),
     update: wsRouter.workspaces.update.handler(async ({ input, context }) => {
       return await updateWorkspace(context.db, input.params.workspace, input.body, context.event);
@@ -123,6 +124,12 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         }
       }
 
+      if (data.documents) {
+        const content = JSON.stringify(data.documents, null, 2);
+        zipBuilder.addText('documents.json', content);
+        checksums['documents.json'] = calculateChecksum(content);
+      }
+
       // Update manifest with checksums
       manifest.checksums = checksums;
       zipBuilder.addJson('manifest.json', manifest);
@@ -195,7 +202,8 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         schemas: extracted.schemas as ExportSchema[] | undefined,
         entities: extracted.entities as ExportEntity[] | undefined,
         projects: extracted.projects as ExportProject[] | undefined,
-        content_nodes: extracted.content_nodes as ExportContentNode[] | undefined
+        content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
+        documents: extracted.documents as ExportDocumentData | undefined
       });
 
       if (!result.valid) return result;
@@ -211,7 +219,8 @@ export const workspaceManagementORPCRouter = wsRouter.router({
           schemas: extracted.schemas as ExportSchema[] | undefined,
           entities: extracted.entities as ExportEntity[] | undefined,
           projects: extracted.projects as ExportProject[] | undefined,
-          content_nodes: extracted.content_nodes as ExportContentNode[] | undefined
+          content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
+          documents: extracted.documents as ExportDocumentData | undefined
         },
         extracted.contentFiles
       );

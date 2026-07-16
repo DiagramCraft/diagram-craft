@@ -14,7 +14,8 @@ import {
   TbLayoutSidebarLeftExpand,
   TbFileExport,
   TbActivity,
-  TbWebhook
+  TbWebhook,
+  TbFileDescription
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -37,7 +38,13 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
   { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Workspace' },
   { id: 'model-overview', label: 'Model Overview', icon: <TbCode size={12} />, group: 'Model' },
-  { id: 'schemas', label: 'Schemas', icon: <TbCode size={12} />, group: 'Model' },
+  { id: 'schemas', label: 'Entity Types', icon: <TbCode size={12} />, group: 'Model' },
+  {
+    id: 'documents',
+    label: 'Document Types & Templates',
+    icon: <TbFileDescription size={12} />,
+    group: 'Model'
+  },
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },

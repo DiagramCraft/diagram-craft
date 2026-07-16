@@ -89,6 +89,7 @@ const toApiContentMetadata = (file: InternalProjectFile): ContentMetadata | null
 export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   id: file.id,
   project_id: file.project_id,
+  entity_id: file.entity_id ?? null,
   project_public_id: file.project_public_id ?? null,
   path: file.path,
   name:
@@ -113,6 +114,7 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
       ? null
       : (file.original_filename ?? null),
   content_metadata: toApiContentMetadata(file),
+  document_type_icon: file.document_type_icon ?? null,
   ...(file.mount_id ? { read_only: true, mount_id: file.mount_id } : {})
 });
 

@@ -34,6 +34,7 @@ import { createWorkspaceAnalyticsORPCHandler } from './domain/analytics/workspac
 import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
 import { createExternalContentORPCHandler } from './domain/external-content/externalContentOrpc';
 import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
+import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -128,6 +129,7 @@ export const createApp = (
   app.use(createJobsORPCHandler(db));
   app.use(createExternalContentORPCHandler(db, storage));
   app.use(createWebhookORPCHandler(db));
+  app.use(createDocumentORPCHandler(db));
   app.use(createProjectFileRoutesHandler(db, storage));
   app.use(createProjectORPCHandler(db, storage));
   app.use(createAssessmentORPCHandler(db));

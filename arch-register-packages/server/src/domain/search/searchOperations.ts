@@ -139,6 +139,7 @@ export const searchWorkspace = async (
     entityPublicId: string | null;
     entityName: string | null;
     fileId: string;
+    type: 'diagram' | 'folder' | 'markdown' | 'file';
     path: string;
     name: string;
     comment_count: number;
@@ -179,6 +180,7 @@ export const searchWorkspace = async (
           entityPublicId: null,
           entityName: null,
           fileId: file.id,
+          type: file.type,
           path: file.path,
           name: file.name,
           comment_count: file.comment_count,
@@ -213,6 +215,7 @@ export const searchWorkspace = async (
           entityPublicId: entity.public_id ?? null,
           entityName: entity.name,
           fileId: file.id,
+          type: file.type,
           path: file.path,
           name: file.name,
           comment_count: file.comment_count,
@@ -246,6 +249,7 @@ export const searchWorkspace = async (
         entityPublicId: null,
         entityName: null,
         fileId: file.id,
+        type: file.type,
         path: file.path,
         name: file.name,
         comment_count: file.comment_count,

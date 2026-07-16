@@ -52,3 +52,12 @@ export const findContentFilePath = (
     ? ([...rootFiles, ...folders.flatMap(folder => folder.files)].find(file => file.id === fileId)
         ?.path ?? null)
     : null;
+
+export const findContentFile = (
+  rootFiles: ProjectFile[],
+  folders: ContentFolder[],
+  fileId: string | null
+): ProjectFile | undefined =>
+  fileId
+    ? [...rootFiles, ...folders.flatMap(folder => folder.files)].find(file => file.id === fileId)
+    : undefined;

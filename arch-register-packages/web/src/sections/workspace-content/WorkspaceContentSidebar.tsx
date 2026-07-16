@@ -34,7 +34,10 @@ import {
   useExternalContentOperations
 } from '../../hooks/useExternalContent';
 import type { ExternalContentMount } from '@arch-register/api-types/externalContentContract';
-import { workspaceContentFolderRoute } from '../../routes/publicObjectRoutes';
+import {
+  workspaceContentFolderRoute,
+  workspaceMarkdownDraftRoute
+} from '../../routes/publicObjectRoutes';
 import type { WorkspaceContentSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
@@ -232,6 +235,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
       <AddMarkdownDialog
         open={markdownFolder !== undefined}
         onClose={() => setMarkdownFolder(undefined)}
+        workspaceSlug={workspaceSlug}
         onCreated={file => {
           setMarkdownFolder(undefined);
           navigate({
@@ -240,6 +244,16 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             search: { mode: 'edit' }
           });
         }}
+        onOpenDraft={draft =>
+          navigate(
+            workspaceMarkdownDraftRoute(workspaceSlug, {
+              draftName: draft.name,
+              draftFolder: markdownFolder ?? undefined,
+              draftType: draft.documentTypeId ?? undefined,
+              draftTemplate: draft.templateId ?? undefined
+            })
+          )
+        }
         onCreate={name =>
           operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
         }

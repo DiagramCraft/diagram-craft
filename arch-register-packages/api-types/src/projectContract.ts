@@ -1,6 +1,11 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
+import {
+  documentFieldSchema,
+  documentMetadataSchema,
+  documentTypeSchema
+} from '@arch-register/api-types/documentContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -55,6 +60,11 @@ export const projectFileSchema = z.object({
     .string()
     .nullable()
     .describe('Parent project identifier (null for entity/workspace files)'),
+  entity_id: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Parent entity identifier (null for project/workspace files)'),
   project_public_id: z.string().nullable().optional().describe('Public project identifier'),
   path: z.string().describe('File path within the project/entity/workspace'),
   name: z.string().describe('File name'),
@@ -79,6 +89,11 @@ export const projectFileSchema = z.object({
     .nullable()
     .optional()
     .describe('Original filename for uploaded files'),
+  document_type_icon: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Assigned document type icon for markdown files'),
   read_only: z
     .boolean()
     .optional()
@@ -94,7 +109,9 @@ const markdownRevisionSummarySchema = z.object({
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   created_by: z.string().nullable().describe('User who created the revision'),
   created_by_name: z.string().nullable().describe('Display name of creator'),
-  restored_from_revision_id: z.string().nullable().describe('Source revision if this is a restore')
+  restored_from_revision_id: z.string().nullable().describe('Source revision if this is a restore'),
+  document_type_id: z.string().nullable().describe('Document type assigned to this revision'),
+  metadata: documentMetadataSchema.describe('Structured document metadata at this revision')
 });
 
 const markdownRevisionDetailSchema = markdownRevisionSummarySchema.extend({
@@ -103,7 +120,12 @@ const markdownRevisionDetailSchema = markdownRevisionSummarySchema.extend({
 
 const markdownContentSchema = z.object({
   body: z.string().describe('Markdown content'),
-  attachments: z.array(projectFileSchema).describe('Attached files (diagrams, etc.)')
+  attachments: z.array(projectFileSchema).describe('Attached files (diagrams, etc.)'),
+  document_type: documentTypeSchema.nullable().describe('Assigned typed document definition'),
+  document_type_id: z.string().nullable().describe('Assigned document type identifier'),
+  metadata: documentMetadataSchema.describe('Structured document metadata'),
+  available_fields: z.array(documentFieldSchema).describe('Current fields available for editing'),
+  retired_fields: z.array(documentFieldSchema).describe('Retired fields retained for history')
 });
 
 const fileFolderSchema = z.object({
@@ -132,6 +154,17 @@ const diagramEntityFileSchema = z.object({
       name: z.string().describe('Project name')
     })
     .describe('Parent project information')
+});
+
+const relatedDocumentSchema = z.object({
+  file: projectFileSchema,
+  scope: z.enum(['project', 'entity', 'workspace']),
+  document_type_id: z.string().nullable(),
+  document_type_name: z.string().nullable(),
+  document_type_color: z.string().nullable(),
+  document_type_icon: z.string().nullable(),
+  field_id: z.string(),
+  field_name: z.string()
 });
 
 // ── Request schemas ───────────────────────────────────────────
@@ -964,7 +997,59 @@ export const projectContract = oc.tag('Projects').router({
           params: ws.extend({ nodeId: z.string().describe('Markdown node identifier') }),
           body: z.object({
             body: z.string().describe('Markdown content'),
-            name: z.string().optional().describe('Optional new name for the document')
+            name: z.string().optional().describe('Optional new name for the document'),
+            document_type_id: z.string().nullable().optional().describe('Document type identifier'),
+            metadata: documentMetadataSchema.optional().describe('Structured metadata values')
+          })
+        })
+      )
+      .output(projectFileSchema),
+    migrateMarkdownContent: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/markdown/{nodeId}/migrate',
+        inputStructure: 'detailed',
+        summary: 'Migrate markdown document type',
+        description:
+          'Explicitly changes or removes the document type of a markdown document and saves the reviewed metadata.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: ws.extend({ nodeId: z.string().describe('Markdown node identifier') }),
+          body: z.object({
+            body: z.string().describe('Markdown content'),
+            name: z.string().optional().describe('Optional new name for the document'),
+            document_type_id: z
+              .string()
+              .nullable()
+              .describe('New document type identifier, or null to remove the type'),
+            metadata: documentMetadataSchema.describe('Reviewed structured metadata values')
+          })
+        })
+      )
+      .output(projectFileSchema),
+    saveNewMarkdownContent: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/markdown',
+        inputStructure: 'detailed',
+        summary: 'Save a new markdown document',
+        description: 'Atomically creates a markdown node, body, metadata, and first revision.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({
+            scope: z.enum(['project', 'entity', 'workspace']),
+            project_id: z.string().optional(),
+            entity_id: z.string().optional(),
+            name: z.string().min(1),
+            folder: z.string().optional(),
+            body: z.string(),
+            document_type_id: z.string().nullable().optional(),
+            metadata: documentMetadataSchema.default({})
           })
         })
       )
@@ -1039,7 +1124,18 @@ export const projectContract = oc.tag('Projects').router({
           })
         })
       )
-      .output(projectFileSchema)
+      .output(projectFileSchema),
+    listRelatedContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entities/{entityId}/related-content',
+        inputStructure: 'detailed',
+        summary: 'List related typed documents',
+        description: 'Lists accessible markdown documents that link to an entity in metadata.',
+        tags: ['Projects']
+      })
+      .input(z.object({ params: ws.extend({ entityId: z.string() }) }))
+      .output(z.array(relatedDocumentSchema))
   }
 });
 

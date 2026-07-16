@@ -126,7 +126,12 @@ test('opens an external MDX file through the Markdown API as read-only content',
     });
     expect(content).toEqual({
       body,
-      attachments: []
+      attachments: [],
+      document_type: null,
+      document_type_id: null,
+      metadata: {},
+      available_fields: [],
+      retired_fields: []
     });
 
     await expect(

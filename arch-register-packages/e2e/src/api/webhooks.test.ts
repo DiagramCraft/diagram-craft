@@ -1,6 +1,7 @@
 import { createApiTest, expect } from '../helpers/fixtures';
 import { logAudit } from '@arch-register/server/domain/audit/db/auditLogging';
 import { seedIds, TEST_ADMIN } from '../helpers/seedHelper';
+import { AUDIT_ENTITY_1_ID } from '../helpers/testIds';
 
 const test = createApiTest();
 
@@ -61,7 +62,7 @@ test.describe('workspace webhooks', () => {
       userDisplayName: TEST_ADMIN.display_name,
       operation: 'create',
       entityType: 'entity',
-      entityId: 'entity-webhook-test',
+      entityId: AUDIT_ENTITY_1_ID,
       entityName: 'Webhook test entity',
       schemaId: null,
       changes: { new: { _name: 'Webhook test entity' } }

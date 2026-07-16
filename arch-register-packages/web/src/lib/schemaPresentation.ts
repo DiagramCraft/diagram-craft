@@ -1,4 +1,5 @@
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
+import type { DocumentType } from '@arch-register/api-types/documentContract';
 import type { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 
 export type FieldType = SchemaField['type'];
@@ -18,6 +19,9 @@ export const schemaColor = (index: number): string => SCHEMA_COLORS[index % SCHE
 
 export const resolveSchemaColor = (schema: EntitySchema, index: number): string =>
   schema.color ?? schemaColor(index);
+
+export const resolveDocumentTypeColor = (documentType: DocumentType, index: number): string =>
+  documentType.color ?? schemaColor(index);
 
 export const SCHEMA_ICONS = [
   'box',

@@ -11,7 +11,10 @@ import {
   type ContentStorageChange
 } from '../project/contentWriteCoordinator';
 import type { AuthorizationContext, WorkspaceCapability } from '@arch-register/permissions';
+import { formatPublicId } from '../../utils/publicIds';
+import { httpAssert } from '../../utils/httpAssert';
 import { PermissionChecker } from '@arch-register/permissions';
+import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import type {
   ExportManifest,
   ExportConfig,
@@ -26,7 +29,8 @@ import type {
   ImportExecuteResult,
   IdMapping,
   ImportDiagnostic,
-  WorkspaceImportPlan
+  WorkspaceImportPlan,
+  ExportDocumentData
 } from './exportTypes';
 
 const checker = new PermissionChecker();
@@ -54,6 +58,7 @@ export const parseImport = async (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   }
 ): Promise<ImportParseResult> => {
   // Check import permissions
@@ -164,6 +169,88 @@ export const parseImport = async (
     }
   }
 
+  if (data.documents) {
+    if (!hasConfigPermission) errors.push('You do not have permission to import typed documents');
+    else {
+      const documentResult = await validateDocuments(db, workspace, data.documents, data.projects);
+      summary.documents = {
+        count: data.documents.types.length,
+        templates: data.documents.templates.length,
+        revisions: data.documents.revisions.length,
+        conflicts: documentResult.conflicts.length
+      };
+      conflicts.push(...documentResult.conflicts);
+      warnings.push(...documentResult.warnings);
+      const entityIds = new Set(
+        (data.entities ?? []).flatMap(entity =>
+          entity.public_id ? [entity.id, entity.public_id] : [entity.id]
+        )
+      );
+      const documentTypeIds = new Set(data.documents.types.map(type => type.id));
+      const nodeIds = new Set((data.content_nodes ?? []).map(node => node.id));
+      const projectIds = new Set((data.projects ?? []).map(project => project.id));
+      for (const template of data.documents.templates) {
+        if (!documentTypeIds.has(template.document_type_id)) {
+          const message = `Document template '${template.id}' references document type '${template.document_type_id}', which is not included in the import archive and will be skipped`;
+          diagnostics.push({
+            code: 'missing_reference',
+            item_type: 'documents',
+            item_id: template.id,
+            message
+          });
+          warnings.push(message);
+        }
+        if (template.project_id == null || projectIds.has(template.project_id)) continue;
+        const message = `Document template '${template.id}' belongs to project '${template.project_id}', which is not included in the import archive and will be skipped`;
+        diagnostics.push({
+          code: 'missing_reference',
+          item_type: 'documents',
+          item_id: template.id,
+          message
+        });
+        warnings.push(message);
+      }
+      for (const metadata of data.documents.metadata) {
+        if (!nodeIds.has(metadata.node_id)) {
+          const message = `Document metadata for '${metadata.node_id}' has no matching content node in the import archive and will be skipped`;
+          diagnostics.push({
+            code: 'missing_reference',
+            item_type: 'documents',
+            item_id: metadata.node_id,
+            message
+          });
+          warnings.push(message);
+        }
+        for (const link of metadata.links) {
+          const available =
+            link.target_type === 'entity'
+              ? entityIds.has(link.target_id)
+              : nodeIds.has(link.target_id);
+          if (available) continue;
+          const message = `Document link target '${link.target_id}' is not included in the import archive and will be skipped`;
+          diagnostics.push({
+            code: 'missing_reference',
+            item_type: 'documents',
+            item_id: metadata.node_id,
+            message
+          });
+          warnings.push(message);
+        }
+      }
+      for (const revision of data.documents.revisions) {
+        if (nodeIds.has(revision.node_id)) continue;
+        const message = `Document revision '${revision.id}' has no matching content node in the import archive and will be skipped`;
+        diagnostics.push({
+          code: 'missing_reference',
+          item_type: 'documents',
+          item_id: revision.id,
+          message
+        });
+        warnings.push(message);
+      }
+    }
+  }
+
   return {
     valid: errors.length === 0,
     version: manifest.version,
@@ -185,6 +272,7 @@ const validateArchiveData = (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   }
 ): ImportDiagnostic[] => {
   const diagnostics: ImportDiagnostic[] = [];
@@ -217,6 +305,28 @@ const validateArchiveData = (
         item_type: type,
         message: `Archive contains ${type} data not declared in its manifest`
       });
+    }
+  }
+
+  if (data.documents && !available.has('documents')) {
+    diagnostics.push({
+      code: 'invalid_manifest',
+      item_type: 'documents',
+      message: 'Archive contains documents data not declared in its manifest'
+    });
+  }
+  if (data.documents) {
+    const typeIds = new Set<string>();
+    for (const type of data.documents.types) {
+      if (typeIds.has(type.id)) {
+        diagnostics.push({
+          code: 'duplicate_import_item',
+          item_type: 'documents',
+          item_id: type.id,
+          message: `Duplicate document type ID in import archive: ${type.id}`
+        });
+      }
+      typeIds.add(type.id);
     }
   }
   return diagnostics;
@@ -478,6 +588,68 @@ const validateContentNodes = async (
   return { conflicts, warnings };
 };
 
+const validateDocuments = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  documents: ExportDocumentData,
+  projects?: ExportProject[]
+): Promise<{ conflicts: ImportConflict[]; warnings: string[] }> => {
+  const conflicts: ImportConflict[] = [];
+  const warnings: string[] = [];
+  const [existingTypes, existingTemplates, existingProjects] = await Promise.all([
+    db.document.listDocumentTypes(workspace, true),
+    db.document.listDocumentTemplates(workspace, undefined, true),
+    db.project.listProjects(workspace)
+  ]);
+
+  for (const type of documents.types) {
+    const existing = existingTypes.find(
+      candidate =>
+        candidate.id === type.id || candidate.name.toLowerCase() === type.name.toLowerCase()
+    );
+    if (!existing) continue;
+    conflicts.push({
+      type: 'documents',
+      item_id: type.id,
+      item_name: type.name,
+      conflict_reason: 'duplicate_name',
+      existing_item: { id: existing.id, name: existing.name },
+      import_item: type,
+      suggested_resolution: 'merge'
+    });
+  }
+
+  const sourceProjects = new Map((projects ?? []).map(project => [project.id, project]));
+  for (const template of documents.templates) {
+    if (template.project_id != null && !sourceProjects.has(template.project_id)) continue;
+    const sourceProject = template.project_id ? sourceProjects.get(template.project_id) : null;
+    const targetProjectId = sourceProject
+      ? existingProjects.find(
+          project =>
+            project.id === sourceProject.id ||
+            project.name.toLowerCase() === sourceProject.name.toLowerCase()
+        )?.id
+      : null;
+    const existing = existingTemplates.find(
+      candidate =>
+        candidate.project_id === targetProjectId &&
+        candidate.name.toLowerCase() === template.name.toLowerCase()
+    );
+    if (!existing) continue;
+    conflicts.push({
+      type: 'documents',
+      item_id: template.id,
+      item_name: template.name,
+      conflict_reason: 'duplicate_name',
+      existing_item: { id: existing.id, name: existing.name, project_id: existing.project_id },
+      import_item: template,
+      suggested_resolution: 'merge'
+    });
+  }
+
+  return { conflicts, warnings };
+};
+
 const createIdMapping = (): IdMapping => ({
   schemas: new Map(),
   entities: new Map(),
@@ -507,9 +679,10 @@ const buildImportPlan = async (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   },
   contentFiles?: Map<string, Buffer>
-): Promise<{ plan: WorkspaceImportPlan; mapping: IdMapping }> => {
+): Promise<{ plan: WorkspaceImportPlan; mapping: IdMapping; warnings: string[] }> => {
   const mapping = createIdMapping();
   const parsed = await parseImport(
     db,
@@ -534,7 +707,9 @@ const buildImportPlan = async (
     },
     data
   );
-  const diagnostics: ImportDiagnostic[] = [...(parsed.diagnostics ?? [])];
+  const diagnostics: ImportDiagnostic[] = (parsed.diagnostics ?? []).filter(
+    diagnostic => !(diagnostic.code === 'missing_reference' && diagnostic.item_type === 'documents')
+  );
   const conflictById = new Map(parsed.conflicts.map(conflict => [conflict.item_id, conflict]));
 
   for (const conflict of parsed.conflicts) {
@@ -622,6 +797,7 @@ const buildImportPlan = async (
     });
   }
   return {
+    warnings: parsed.warnings,
     plan: {
       include: options.include,
       id_mapping: toSerializableMapping(mapping),
@@ -647,6 +823,7 @@ const applyConflictRenames = <
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   }
 >(
   data: T,
@@ -683,7 +860,18 @@ const applyConflictRenames = <
   content_nodes: data.content_nodes?.map(item => ({
     ...item,
     name: resolvedName(item.id, item.name, resolutions)
-  }))
+  })),
+  documents: data.documents && {
+    ...data.documents,
+    types: data.documents.types.map(item => ({
+      ...item,
+      name: resolvedName(item.id, item.name, resolutions)
+    })),
+    templates: data.documents.templates.map(item => ({
+      ...item,
+      name: resolvedName(item.id, item.name, resolutions)
+    }))
+  }
 });
 
 export const executeImport = async (
@@ -698,6 +886,7 @@ export const executeImport = async (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   },
   contentFiles?: Map<string, Buffer>
 ): Promise<ImportExecuteResult> => {
@@ -709,14 +898,12 @@ export const executeImport = async (
   };
 
   try {
-    const { plan, mapping: idMapping } = await buildImportPlan(
-      db,
-      authCtx,
-      workspace,
-      options,
-      data,
-      contentFiles
-    );
+    const {
+      plan,
+      mapping: idMapping,
+      warnings: planWarnings
+    } = await buildImportPlan(db, authCtx, workspace, options, data, contentFiles);
+    result.warnings.push(...planWarnings);
     if (plan.diagnostics.length > 0) {
       result.success = false;
       result.errors = plan.diagnostics.map(diagnostic => diagnostic.message);
@@ -795,6 +982,16 @@ export const executeImport = async (
             options.conflict_resolutions,
             idMapping,
             contentFiles
+          );
+        if (options.include.includes('documents') && resolvedData.documents)
+          result.imported.documents = await importDocuments(
+            transactionDb,
+            workspace,
+            resolvedData.documents,
+            options.preserve_ids ?? false,
+            options.conflict_resolutions,
+            idMapping,
+            resolvedData.entities
           );
       }
     });
@@ -1074,6 +1271,11 @@ const importEntities = async (
   const existingEntities = new Map(
     (await db.catalog.listEntities(workspace)).map(entity => [entity.id, entity])
   );
+  const usedPublicIds = new Set(
+    [...existingEntities.values()]
+      .map(entity => entity.public_id)
+      .filter((publicId): publicId is string => publicId != null)
+  );
   const mappedEntities = entities.flatMap(entity => {
     if (hasSkipResolution(resolutions, entity.id) || resolutions[entity.id]?.action === 'merge')
       return [];
@@ -1088,11 +1290,27 @@ const importEntities = async (
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
+    const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
+    const schema = await db.catalog.getSchema(workspace, schemaId);
+    let publicId = preserveIds ? (entity.public_id ?? nextId) : null;
+    if (!publicId || usedPublicIds.has(publicId)) {
+      httpAssert.present(schema, {
+        status: 409,
+        message: `Schema '${schemaId}' is unavailable while importing entity '${entity.id}'`
+      });
+      do {
+        publicId = formatPublicId(
+          schema.key_prefix,
+          await db.workspace.allocatePublicId(schema.key_prefix, now)
+        );
+      } while (usedPublicIds.has(publicId));
+    }
+    usedPublicIds.add(publicId);
     const input: EntityDbCreate = {
       id: nextId,
       workspace,
-      public_id: entity.public_id ?? nextId,
-      schema_id: resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id,
+      public_id: publicId,
+      schema_id: schemaId,
       name: entity.name,
       slug: entity.slug,
       namespace: entity.namespace,
@@ -1145,6 +1363,8 @@ const importProjects = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
+  const workspaceRow = await db.workspace.getWorkspace(workspace);
+  httpAssert.present(workspaceRow, { status: 404, message: `Workspace '${workspace}' not found` });
   const existingProjects = new Map(
     (await db.project.listProjects(workspace)).map(project => [project.id, project])
   );
@@ -1181,7 +1401,10 @@ const importProjects = async (
       await db.project.createProject({
         id: nextId,
         workspace,
-        public_id: nextId,
+        public_id: formatPublicId(
+          workspaceRow.short_code,
+          await db.workspace.allocatePublicId(workspaceRow.short_code, now)
+        ),
         name: project.name,
         description: project.description,
         owner,
@@ -1328,4 +1551,220 @@ const importContentNodes = async (
   }
 
   return { created, updated };
+};
+
+const remapDocumentMetadataValues = (
+  fields: DocumentField[],
+  sourceValues: DocumentMetadata,
+  resolveEntity: (id: string) => string | undefined,
+  resolveDocument: (id: string) => string | undefined
+) => {
+  const values = { ...sourceValues };
+  for (const field of fields) {
+    if (field.type !== 'entity_link' && field.type !== 'document_link') continue;
+    const raw = values[field.id];
+    if (raw === undefined) continue;
+    const sourceIds = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
+    const mapped = sourceIds
+      .map(id => (field.type === 'entity_link' ? resolveEntity(id) : resolveDocument(id)))
+      .filter((id): id is string => !!id);
+    values[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
+  }
+  return values;
+};
+
+const importDocuments = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  documents: ExportDocumentData,
+  preserveIds: boolean,
+  resolutions: Record<string, ImportResolution>,
+  idMapping: IdMapping,
+  sourceEntities?: ExportEntity[]
+): Promise<{ created: number; templates: number; metadata: number; revisions: number }> => {
+  const typeMapping = new Map<string, string>();
+  const sourceEntityIdByIdentifier = new Map<string, string>();
+  for (const entity of sourceEntities ?? []) {
+    sourceEntityIdByIdentifier.set(entity.id, entity.id);
+    if (entity.public_id) sourceEntityIdByIdentifier.set(entity.public_id, entity.id);
+  }
+  const existingTypes = await db.document.listDocumentTypes(workspace, true);
+  let created = 0;
+  for (const type of documents.types) {
+    if (hasSkipResolution(resolutions, type.id)) continue;
+    const resolution = resolutions[type.id];
+    const existing = existingTypes.find(
+      candidate =>
+        candidate.id === type.id || candidate.name.toLowerCase() === type.name.toLowerCase()
+    );
+    const reuseExisting = existing != null && resolution?.action !== 'rename';
+    const nextId = reuseExisting ? existing.id : preserveIds && !existing ? type.id : randomUUID();
+    typeMapping.set(type.id, nextId);
+    const now = new Date();
+    const input = {
+      name: type.name,
+      description: type.description,
+      fields: type.fields,
+      color: type.color,
+      icon: type.icon,
+      updated_at: now
+    };
+    if (reuseExisting) {
+      await db.document.updateDocumentType(workspace, nextId, input);
+      await db.document.archiveDocumentType(workspace, nextId, type.archived, now);
+    } else {
+      await db.document.createDocumentType({
+        id: nextId,
+        workspace,
+        ...input,
+        created_at: new Date(type.created_at)
+      });
+      if (type.archived) await db.document.archiveDocumentType(workspace, nextId, true, now);
+      created++;
+    }
+  }
+  const existingTemplates = await db.document.listDocumentTemplates(workspace, undefined, true);
+  let templates = 0;
+  for (const template of documents.templates) {
+    if (hasSkipResolution(resolutions, template.id)) continue;
+    if (template.project_id != null && !idMapping.projects.has(template.project_id)) continue;
+    const projectId =
+      template.project_id == null ? null : (idMapping.projects.get(template.project_id) ?? null);
+    const documentTypeId = typeMapping.get(template.document_type_id);
+    if (!documentTypeId) continue;
+    const resolution = resolutions[template.id];
+    const existing = existingTemplates.find(
+      candidate =>
+        candidate.id === template.id ||
+        (candidate.project_id === projectId &&
+          candidate.name.toLowerCase() === template.name.toLowerCase())
+    );
+    const reuseExisting = existing != null && resolution?.action !== 'rename';
+    const templateId = reuseExisting
+      ? existing.id
+      : preserveIds && !existing
+        ? template.id
+        : randomUUID();
+    const sourceType = documents.types.find(type => type.id === template.document_type_id);
+    const metadataDefaults = sourceType
+      ? remapDocumentMetadataValues(
+          sourceType.fields,
+          template.metadata_defaults,
+          id => idMapping.entities.get(sourceEntityIdByIdentifier.get(id) ?? id),
+          id => idMapping.content_nodes.get(id)
+        )
+      : template.metadata_defaults;
+    const input = {
+      workspace,
+      project_id: projectId,
+      name: template.name,
+      body: template.body,
+      document_type_id: documentTypeId,
+      metadata_defaults: metadataDefaults,
+      updated_at: new Date()
+    };
+    if (reuseExisting) {
+      await db.document.updateDocumentTemplate(workspace, templateId, input);
+      await db.document.archiveDocumentTemplate(
+        workspace,
+        templateId,
+        template.archived,
+        new Date()
+      );
+    } else {
+      await db.document.createDocumentTemplate({
+        id: templateId,
+        ...input,
+        created_at: new Date(template.created_at)
+      });
+      if (template.archived)
+        await db.document.archiveDocumentTemplate(workspace, templateId, true, new Date());
+      templates++;
+    }
+  }
+  let metadataCount = 0;
+  for (const item of documents.metadata) {
+    const nodeId = idMapping.content_nodes.get(item.node_id);
+    if (!nodeId) continue;
+    const documentTypeId = item.document_type_id
+      ? (typeMapping.get(item.document_type_id) ?? null)
+      : null;
+    if (item.document_type_id && !documentTypeId) continue;
+    const sourceType = item.document_type_id
+      ? documents.types.find(type => type.id === item.document_type_id)
+      : null;
+    const values = sourceType
+      ? remapDocumentMetadataValues(
+          sourceType.fields,
+          item.values,
+          id => idMapping.entities.get(sourceEntityIdByIdentifier.get(id) ?? id),
+          id => idMapping.content_nodes.get(id)
+        )
+      : item.values;
+    await db.document.upsertDocumentMetadata({
+      workspace,
+      node_id: nodeId,
+      document_type_id: documentTypeId,
+      values,
+      updated_at: new Date()
+    });
+    const links = item.links.flatMap(link => {
+      const targetId =
+        link.target_type === 'entity'
+          ? idMapping.entities.get(sourceEntityIdByIdentifier.get(link.target_id) ?? link.target_id)
+          : idMapping.content_nodes.get(link.target_id);
+      return targetId == null ? [] : [{ ...link, target_id: targetId }];
+    });
+    await db.document.replaceDocumentLinks(workspace, nodeId, links);
+    metadataCount++;
+  }
+  const revisionMapping = new Map<string, string>();
+  let revisions = 0;
+  const orderedRevisions = [...documents.revisions].sort(
+    (left, right) =>
+      left.node_id.localeCompare(right.node_id) || left.revision_number - right.revision_number
+  );
+  for (const revision of orderedRevisions) {
+    const nodeId = idMapping.content_nodes.get(revision.node_id);
+    if (!nodeId) continue;
+    const id = preserveIds ? revision.id : randomUUID();
+    const createdBy =
+      revision.created_by && (await db.auth.getUser(revision.created_by))
+        ? revision.created_by
+        : null;
+    const documentTypeId = revision.document_type_id
+      ? (typeMapping.get(revision.document_type_id) ?? null)
+      : null;
+    if (revision.document_type_id && !documentTypeId) continue;
+    revisionMapping.set(revision.id, id);
+    await db.project.createMarkdownRevision({
+      id,
+      workspace,
+      node_id: nodeId,
+      revision_number: revision.revision_number,
+      title: revision.title,
+      body: revision.body,
+      created_at: new Date(revision.created_at),
+      created_by: createdBy,
+      restored_from_revision_id: revision.restored_from_revision_id
+        ? (revisionMapping.get(revision.restored_from_revision_id) ?? null)
+        : null,
+      document_type_id: documentTypeId,
+      metadata: (() => {
+        const sourceType = revision.document_type_id
+          ? documents.types.find(type => type.id === revision.document_type_id)
+          : null;
+        return sourceType
+          ? remapDocumentMetadataValues(
+              sourceType.fields,
+              revision.metadata,
+              id => idMapping.entities.get(sourceEntityIdByIdentifier.get(id) ?? id),
+              id => idMapping.content_nodes.get(id)
+            )
+          : revision.metadata;
+      })()
+    });
+    revisions++;
+  }
+  return { created, templates, metadata: metadataCount, revisions };
 };

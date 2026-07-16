@@ -34,6 +34,8 @@ import {
 } from '../lib/contentNode';
 import { TreeRow } from './TreeRow';
 import { RenameDialog } from './RenameDialog';
+import { ICON_MAP } from './TypeBadge';
+import type { SchemaIconId } from '../lib/schemaPresentation';
 
 type Operations = ReturnType<typeof useContentScopeOperations>;
 
@@ -248,29 +250,42 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
     );
   };
 
-  const fileRow = (file: ProjectFile, depth?: number) => (
-    <TreeRow
-      key={file.id}
-      depth={depth}
-      icon={getFileNodeIcon(file.type)}
-      label={file.original_filename ?? file.name}
-      active={file.id === activeFileId}
-      onClick={() => (file.type === 'file' ? onDownload(file) : onFileClick(file))}
-      onContextMenu={
-        file.read_only
-          ? undefined
-          : event => {
-              event.preventDefault();
-              event.stopPropagation();
-              setMenu({
-                x: event.clientX,
-                y: event.clientY,
-                target: { type: fileMenuTargetType(file.type), file }
-              });
-            }
-      }
-    />
-  );
+  const fileRow = (file: ProjectFile, depth?: number) => {
+    const documentTypeIcon = file.document_type_icon;
+    const DocumentTypeIcon = documentTypeIcon
+      ? ICON_MAP[documentTypeIcon as SchemaIconId]
+      : undefined;
+
+    return (
+      <TreeRow
+        key={file.id}
+        depth={depth}
+        icon={
+          file.type === 'markdown' && DocumentTypeIcon ? (
+            <DocumentTypeIcon size={13} />
+          ) : (
+            getFileNodeIcon(file.type)
+          )
+        }
+        label={file.original_filename ?? file.name}
+        active={file.id === activeFileId}
+        onClick={() => (file.type === 'file' ? onDownload(file) : onFileClick(file))}
+        onContextMenu={
+          file.read_only
+            ? undefined
+            : event => {
+                event.preventDefault();
+                event.stopPropagation();
+                setMenu({
+                  x: event.clientX,
+                  y: event.clientY,
+                  target: { type: fileMenuTargetType(file.type), file }
+                });
+              }
+        }
+      />
+    );
+  };
 
   const folderNode = (node: ContentFolderNode, depth = 0): ReactNode => {
     const open = isExpanded(node.path);

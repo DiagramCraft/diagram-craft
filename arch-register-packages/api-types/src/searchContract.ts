@@ -24,6 +24,7 @@ const fileSearchResultSchema = z.object({
   entityPublicId: z.string().nullable().describe('Public entity identifier (if scope is entity)'),
   entityName: z.string().nullable().describe('Entity name (if scope is entity)'),
   fileId: z.string().describe('File identifier'),
+  type: z.enum(['diagram', 'folder', 'markdown', 'file']).describe('File type'),
   path: z.string().describe('File path'),
   name: z.string().describe('File name'),
   comment_count: z.number().describe('Total number of comments on the file'),

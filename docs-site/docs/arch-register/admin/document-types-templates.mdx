@@ -1,0 +1,100 @@
+# Document Types And Templates
+
+Document types add structured metadata to Markdown documents. They let a workspace standardize recurring
+documentation without giving up the flexibility of Markdown for the document body.
+
+A typed document has:
+
+- a Markdown body
+- one document type
+- values for the fields defined by that type
+- optional links to entities and other documents
+
+## Where To Manage Them
+
+Open **Workspace Settings → Document Types & Templates**. The screen has two tabs:
+
+- **Types** defines the fields and validation rules for typed documents.
+- **Templates** defines reusable Markdown bodies and metadata defaults for workspace-wide documents.
+
+Project owners can also manage project-specific Markdown templates from **Edit project → Project Markdown
+templates**. Workspace templates are available throughout the workspace; project templates are available when
+creating documents inside their project.
+
+## Define A Document Type
+
+Create a type with a name, description, color, and icon. Add fields to describe the information that should be
+captured alongside the Markdown body.
+
+| Field type | Use it for |
+| --- | --- |
+| Text | Short single-line values |
+| Long text | Longer free-form values |
+| Boolean | True/false values |
+| Date | Calendar dates |
+| Number | Numeric values |
+| Enum | One value from a defined set of options |
+| Entity link | Links to one or more entities |
+| Document link | Links to one or more documents |
+
+Each field has a stable field ID, a display name, and a requirement:
+
+- **Required** blocks saving until a value is supplied.
+- **Expected** shows a warning when the value is missing but does not block saving.
+- **Optional** does not require a value.
+
+Link fields can also define minimum and maximum cardinality. Enum fields must define their allowed options.
+Values are checked against the field type when a document is saved.
+
+### Evolving A Type
+
+Document types are designed to evolve without invalidating document history:
+
+- A field already used by documents keeps its ID and value type.
+- Removing a field that is already used retires it, preserving the field for existing documents and revisions.
+- A type used by documents, revisions, or templates cannot be permanently deleted; archive it instead.
+- Archived types remain visible on existing documents and in history, but are not offered for new documents.
+
+When changing the type of an existing document, use the migration flow. The document must be brought into
+compliance with the new type, including removing metadata that is not defined by that type.
+
+## Create A Document Template
+
+A document template belongs to one document type and contains:
+
+- a template name
+- a Markdown body
+- optional structured metadata defaults
+
+Use `{{title}}` in the body where the new document name should be inserted. When someone creates a document from
+the template, that token is replaced with the document name.
+
+Metadata defaults use the field IDs from the selected document type. They must use valid values for those fields;
+enum defaults must be one of the configured options, and links must contain valid entity or document IDs.
+
+Workspace templates are created in the **Templates** tab of Workspace Settings. Project templates are created in
+the project settings dialog and are restricted to that project. Archived templates remain available for existing
+documents and history, but are not offered when creating new documents.
+
+## Create A Typed Document
+
+From workspace, project, or entity content:
+
+1. Choose **New wiki page**.
+2. Enter the document name.
+3. Select a **Document type**, or choose **Untyped Markdown** for a legacy-style document.
+4. Optionally select a **Template**.
+5. Complete the document body and any required properties, then save.
+
+Selecting a template also selects its document type and fills the body and metadata defaults. Without a template,
+the document starts with a blank Markdown body and the selected type's fields.
+
+While editing, the **Properties** panel shows the fields for the selected type. Entity and document link fields
+provide link pickers, and required or expected fields show their validation state. Read-only documents display the
+same metadata without editing controls.
+
+## Related Pages
+
+- [Content](../use/content)
+- [Workspace Settings](./workspace-settings)
+- [Projects](../use/projects)

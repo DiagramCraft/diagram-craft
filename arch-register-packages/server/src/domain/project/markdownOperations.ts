@@ -3,7 +3,12 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { defineOperation } from '../operation';
-import { buildApiAuthCtx, requireProjectAccess, requireProjectAction } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  requireEntityAction,
+  requireProjectAccess,
+  requireProjectAction
+} from '../auth/authorization';
 import {
   logAudit,
   writeAudit,
@@ -29,6 +34,12 @@ import type {
   MarkdownRevisionSummary,
   ProjectFile
 } from '@arch-register/api-types/projectContract';
+import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
+import {
+  assertDocumentMetadataValid,
+  documentLinksFromMetadata,
+  validateDocumentMetadata
+} from '../document/documentValidation';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import {
   listSiblingNodes,
@@ -48,7 +59,9 @@ const toApiMarkdownRevisionSummary = (
   created_at: revision.created_at.toISOString(),
   created_by: revision.created_by,
   created_by_name: revision.created_by_name,
-  restored_from_revision_id: revision.restored_from_revision_id
+  restored_from_revision_id: revision.restored_from_revision_id,
+  document_type_id: revision.document_type_id,
+  metadata: revision.metadata
 });
 
 const toApiMarkdownRevisionDetail = (
@@ -66,10 +79,13 @@ const createContentNodeRevision = async (
   title: string | null,
   createdBy: string | null,
   createdAt: Date,
-  restoredFromRevisionId?: string | null
+  restoredFromRevisionId?: string | null,
+  documentTypeId?: string | null,
+  metadata?: DocumentMetadata,
+  revisionDb: DatabaseAdapter = db
 ) => {
-  const revisionNumber = await db.project.getNextMarkdownRevisionNumber(ws, nodeId);
-  return await db.project.createMarkdownRevision({
+  const revisionNumber = await revisionDb.project.getNextMarkdownRevisionNumber(ws, nodeId);
+  return await revisionDb.project.createMarkdownRevision({
     workspace: ws,
     node_id: nodeId,
     revision_number: revisionNumber,
@@ -77,8 +93,74 @@ const createContentNodeRevision = async (
     body,
     created_at: createdAt,
     created_by: createdBy,
-    restored_from_revision_id: restoredFromRevisionId ?? null
+    restored_from_revision_id: restoredFromRevisionId ?? null,
+    document_type_id: documentTypeId ?? null,
+    metadata: metadata ?? {}
   });
+};
+
+const getDocumentState = async (db: DatabaseAdapter, ws: string, node: ContentNodeDbResult) => {
+  if (!db.document) {
+    return {
+      documentType: null,
+      documentTypeId: null,
+      metadata: {},
+      availableFields: [],
+      retiredFields: []
+    };
+  }
+  const metadata = await db.document.getDocumentMetadata(ws, node.id);
+  const documentType = metadata?.document_type_id
+    ? await db.document.getDocumentType(ws, metadata.document_type_id)
+    : null;
+  const fields = documentType?.fields ?? [];
+  return {
+    documentType,
+    documentTypeId: metadata?.document_type_id ?? null,
+    metadata: metadata?.values ?? {},
+    availableFields: fields.filter(field => !field.retired),
+    retiredFields: fields.filter(field => field.retired)
+  };
+};
+
+const resolveDocumentMetadata = async (
+  db: DatabaseAdapter,
+  ws: string,
+  fields: Parameters<typeof documentLinksFromMetadata>[0],
+  metadata: DocumentMetadata,
+  status: 400 | 409 = 400
+) => {
+  const values = { ...metadata };
+  for (const field of fields) {
+    if (field.type !== 'entity_link' && field.type !== 'document_link') continue;
+    const raw = metadata[field.id];
+    const targetIds = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
+    const resolvedIds = await Promise.all(
+      targetIds.map(async targetId => {
+        if (field.type === 'entity_link') {
+          const entity = await db.catalog.getEntity(ws, targetId);
+          httpAssert.present(entity, {
+            status,
+            message: `Linked entity '${targetId}' was not found`
+          });
+          return entity.id;
+        }
+        const target = await db.project.getAnyContentNodeById(ws, targetId);
+        httpAssert.present(target, {
+          status,
+          message: `Linked document '${targetId}' was not found`
+        });
+        httpAssert.true(isMarkdownNode(target), {
+          status,
+          message: `Linked document '${targetId}' is not Markdown`
+        });
+        return target.id;
+      })
+    );
+    if (Array.isArray(raw)) values[field.id] = resolvedIds;
+    else if (typeof raw === 'string') values[field.id] = resolvedIds[0] ?? null;
+  }
+  return { values, links: documentLinksFromMetadata(fields, values) };
 };
 
 const getAttachmentContainerPath = (markdownPath: string) =>
@@ -271,6 +353,151 @@ const createScopedMarkdownDoc = async (
   return toApiProjectFile(row);
 };
 
+export const saveNewMarkdownContent = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  input: {
+    scope: 'project' | 'entity' | 'workspace';
+    project_id?: string;
+    entity_id?: string;
+    name: string;
+    folder?: string;
+    body: string;
+    document_type_id?: string | null;
+    metadata: DocumentMetadata;
+  },
+  event: AuthenticatedEvent
+): Promise<ProjectFile> =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to create markdown document', dbErrorMessages: projectDbErrorMessages },
+    async ({ ws, authCtx }) => {
+      const scope =
+        input.scope === 'project'
+          ? PROJECT_SCOPE
+          : input.scope === 'entity'
+            ? ENTITY_SCOPE
+            : WORKSPACE_SCOPE;
+      const identifier =
+        input.scope === 'project'
+          ? input.project_id
+          : input.scope === 'entity'
+            ? input.entity_id
+            : undefined;
+      if (input.scope === 'project')
+        httpAssert.present(input.project_id, {
+          status: 400,
+          message: 'Project identifier is required'
+        });
+      if (input.scope === 'entity')
+        httpAssert.present(input.entity_id, {
+          status: 400,
+          message: 'Entity identifier is required'
+        });
+      const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
+      const nodes = await resolved.listNodes(db, ws);
+      const filePath = input.folder ? `${input.folder}/${input.name}.md` : `${input.name}.md`;
+      assertContentPathWritable(nodes, filePath);
+      const parentId = input.folder
+        ? (nodes.find(node => node.path === input.folder && node.type === 'folder')?.id ?? null)
+        : null;
+      const documentType = input.document_type_id
+        ? await db.document.getDocumentType(ws, input.document_type_id)
+        : null;
+      if (input.document_type_id)
+        httpAssert.present(documentType, {
+          status: 400,
+          message: `Document type '${input.document_type_id}' not found`
+        });
+      if (documentType) {
+        httpAssert.true(!documentType.archived, {
+          status: 409,
+          message: `Archived document type '${documentType.id}' cannot be selected for a new document`
+        });
+      }
+      const resolvedMetadata = documentType
+        ? await resolveDocumentMetadata(db, ws, documentType.fields, input.metadata)
+        : { values: input.metadata, links: [] };
+      assertDocumentMetadataValid(documentType?.fields ?? [], resolvedMetadata.values, true);
+      const nodeId = randomUUID();
+      const timestamp = new Date();
+      const content = Buffer.from(JSON.stringify({ body: input.body }), 'utf8');
+      let row!: ContentNodeDbResult;
+      await coordinateContentWrite({
+        db,
+        storage,
+        operation: 'create-markdown-document',
+        scope: resolved.kind,
+        nodeIds: [nodeId],
+        storageChanges: [
+          { type: 'write', workspace: ws, storageId: resolved.storageId, nodeId, content }
+        ],
+        writeDatabase: async tx => {
+          row = await tx.project.upsertContentNode({
+            id: nodeId,
+            workspace: ws,
+            project_id: resolved.projectId,
+            entity_id: resolved.entityId,
+            parent_id: parentId,
+            path: filePath,
+            name: input.name,
+            type: 'markdown',
+            size_bytes: content.length,
+            comment_count: 0,
+            unresolved_comment_count: 0,
+            created_atIfNew: timestamp,
+            updated_at: timestamp,
+            created_byIfNew: authCtx.userId,
+            updated_by: authCtx.userId
+          });
+          if (input.document_type_id || Object.keys(input.metadata).length > 0) {
+            await tx.document.upsertDocumentMetadata({
+              workspace: ws,
+              node_id: nodeId,
+              document_type_id: input.document_type_id ?? null,
+              values: resolvedMetadata.values,
+              updated_at: timestamp
+            });
+            await tx.document.replaceDocumentLinks(ws, nodeId, resolvedMetadata.links);
+          }
+          await createContentNodeRevision(
+            tx,
+            ws,
+            nodeId,
+            input.body,
+            input.name,
+            authCtx.userId,
+            timestamp,
+            null,
+            input.document_type_id,
+            resolvedMetadata.values,
+            tx
+          );
+        },
+        afterCommit: [
+          {
+            name: 'audit',
+            run: () =>
+              writeAudit(db, {
+                userId: authCtx.userId,
+                workspace: ws,
+                operation: 'create',
+                entityType: 'content_node',
+                entityId: row.id,
+                entityName: row.name,
+                changes: { new: extractEntityFields(row) },
+                metadata: { ...resolved.auditMetadata, path: filePath }
+              })
+          }
+        ]
+      });
+      return toApiProjectFile(row);
+    }
+  );
+
 export const createProjectMarkdownDoc = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -359,7 +586,22 @@ export const getMarkdownContent = async (
       const siblingNodes = await listSiblingNodes(db, ws, node);
       const attachments = getMarkdownAttachmentNodes(siblingNodes, node.id).map(toApiProjectFile);
       const content = await storage.read(ws, storageScope(ws, node), node.id);
-      return { body: readMarkdownBody(content), attachments };
+      const document = await getDocumentState(db, ws, node);
+      return {
+        body: readMarkdownBody(content),
+        attachments,
+        document_type: document.documentType
+          ? {
+              ...document.documentType,
+              created_at: document.documentType.created_at.toISOString(),
+              updated_at: document.documentType.updated_at.toISOString()
+            }
+          : null,
+        document_type_id: document.documentTypeId,
+        metadata: document.metadata,
+        available_fields: document.availableFields,
+        retired_fields: document.retiredFields
+      };
     }
   );
 };
@@ -608,7 +850,10 @@ export const saveMarkdownContent = async (
   nodeId: string,
   body: string,
   name: string | undefined,
-  event: AuthenticatedEvent
+  documentTypeId: string | null | undefined,
+  metadata: DocumentMetadata | undefined,
+  event: AuthenticatedEvent,
+  allowTypeMigration = false
 ): Promise<ProjectFile> => {
   return defineOperation(
     db,
@@ -626,9 +871,53 @@ export const saveMarkdownContent = async (
         message: 'Node is not a markdown document'
       });
       await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
+      const currentDocument = await getDocumentState(db, ws, node);
+      const nextDocumentTypeId =
+        documentTypeId === undefined ? currentDocument.documentTypeId : documentTypeId;
+      const rawNextMetadata = metadata ?? currentDocument.metadata;
+      const nextDocumentType = nextDocumentTypeId
+        ? await db.document.getDocumentType(ws, nextDocumentTypeId)
+        : null;
+      const resolvedMetadata = nextDocumentType
+        ? await resolveDocumentMetadata(db, ws, nextDocumentType.fields, rawNextMetadata)
+        : { values: rawNextMetadata, links: [] };
+      const nextMetadata = resolvedMetadata.values;
+      const typeChanged = currentDocument.documentTypeId !== (nextDocumentTypeId ?? null);
+      httpAssert.true(!typeChanged || allowTypeMigration, {
+        status: 409,
+        message: 'Changing or removing a document type requires an explicit migration'
+      });
+      if (allowTypeMigration && typeChanged && nextDocumentTypeId === null) {
+        httpAssert.true(Object.keys(nextMetadata).length === 0, {
+          status: 409,
+          message: 'Remove all metadata before removing the document type'
+        });
+      }
+      if (nextDocumentTypeId) {
+        httpAssert.present(nextDocumentType, {
+          status: 400,
+          message: `Document type '${nextDocumentTypeId}' not found`
+        });
+        httpAssert.true(
+          !nextDocumentType.archived || currentDocument.documentTypeId === nextDocumentTypeId,
+          {
+            status: 409,
+            message: `Archived document type '${nextDocumentTypeId}' cannot be selected for a new document`
+          }
+        );
+        assertDocumentMetadataValid(
+          nextDocumentType.fields,
+          nextMetadata,
+          true,
+          allowTypeMigration && typeChanged
+        );
+      } else if (!allowTypeMigration || !typeChanged) {
+        assertDocumentMetadataValid([], nextMetadata, true);
+      }
       const content = Buffer.from(JSON.stringify({ body }), 'utf8');
       const timestamp = new Date();
       const nextName = name?.trim() ? name.trim() : node.name;
+      const previousContent = await storage.read(ws, storageScope(ws, node), node.id);
       let row!: ContentNodeDbResult;
       let revision: MarkdownRevisionDbResult | undefined;
       await coordinateContentWrite({
@@ -637,15 +926,18 @@ export const saveMarkdownContent = async (
         operation: 'update-markdown',
         scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
         nodeIds: [node.id],
-        storageChanges: [
-          {
-            type: 'write',
-            workspace: ws,
-            storageId: storageScope(ws, node),
-            nodeId: node.id,
-            content
-          }
-        ],
+        storageChanges:
+          readMarkdownBody(previousContent) === body
+            ? []
+            : [
+                {
+                  type: 'write',
+                  workspace: ws,
+                  storageId: storageScope(ws, node),
+                  nodeId: node.id,
+                  content
+                }
+              ],
         writeDatabase: async tx => {
           row = await tx.project.upsertContentNode({
             id: node.id,
@@ -664,22 +956,33 @@ export const saveMarkdownContent = async (
             created_byIfNew: node.created_by,
             updated_by: authCtx.userId
           });
+          if (nextDocumentTypeId !== null || Object.keys(nextMetadata).length > 0) {
+            await tx.document.upsertDocumentMetadata({
+              workspace: ws,
+              node_id: node.id,
+              document_type_id: nextDocumentTypeId ?? null,
+              values: nextMetadata,
+              updated_at: timestamp
+            });
+            await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
+          } else {
+            await tx.document.deleteDocumentMetadata(ws, node.id);
+          }
+          revision = await createContentNodeRevision(
+            tx,
+            ws,
+            node.id,
+            body,
+            nextName,
+            authCtx.userId,
+            timestamp,
+            null,
+            nextDocumentTypeId,
+            nextMetadata,
+            tx
+          );
         },
         afterCommit: [
-          {
-            name: 'revision',
-            run: async () => {
-              revision = await createContentNodeRevision(
-                db,
-                ws,
-                node.id,
-                body,
-                nextName,
-                authCtx.userId,
-                timestamp
-              );
-            }
-          },
           {
             name: 'audit',
             run: () =>
@@ -705,6 +1008,30 @@ export const saveMarkdownContent = async (
     }
   );
 };
+
+export const migrateMarkdownContent = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  nodeId: string,
+  body: string,
+  name: string | undefined,
+  documentTypeId: string | null,
+  metadata: DocumentMetadata,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> =>
+  saveMarkdownContent(
+    db,
+    storage,
+    workspace,
+    nodeId,
+    body,
+    name,
+    documentTypeId,
+    metadata,
+    event,
+    true
+  );
 
 export const listMarkdownRevisions = async (
   db: DatabaseAdapter,
@@ -733,6 +1060,66 @@ export const listMarkdownRevisions = async (
     }
   );
 };
+
+export const listRelatedContent = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  event: AuthenticatedEvent
+) =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to retrieve related content', dbErrorMessages: projectDbErrorMessages },
+    async ({ ws, authCtx }) => {
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to view this entity'
+      );
+      const links = await db.document.listDocumentsLinkingEntity(ws, entity.id);
+      const result: Array<{
+        file: ProjectFile;
+        scope: 'project' | 'entity' | 'workspace';
+        document_type_id: string | null;
+        document_type_name: string | null;
+        document_type_color: string | null;
+        document_type_icon: string | null;
+        field_id: string;
+        field_name: string;
+      }> = [];
+      const seen = new Set<string>();
+      for (const link of links) {
+        const node = await db.project.getAnyContentNodeById(ws, link.node_id);
+        if (!node || !isMarkdownNode(node)) continue;
+        try {
+          await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+        } catch {
+          continue;
+        }
+        const state = await getDocumentState(db, ws, node);
+        const field = state.documentType?.fields.find(item => item.id === link.field_id);
+        const key = `${node.id}:${link.field_id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        result.push({
+          file: toApiProjectFile(node),
+          scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
+          document_type_id: state.documentTypeId,
+          document_type_name: state.documentType?.name ?? null,
+          document_type_color: state.documentType?.color ?? null,
+          document_type_icon: state.documentType?.icon ?? null,
+          field_id: link.field_id,
+          field_name: field?.name ?? link.field_id
+        });
+      }
+      return result;
+    }
+  );
 
 export const getMarkdownRevision = async (
   db: DatabaseAdapter,
@@ -790,7 +1177,23 @@ export const restoreMarkdownRevision = async (
       await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
       const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
       httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
-
+      const restoredType = revision.document_type_id
+        ? await db.document.getDocumentType(ws, revision.document_type_id)
+        : null;
+      const resolvedMetadata = restoredType
+        ? await resolveDocumentMetadata(db, ws, restoredType.fields, revision.metadata, 409)
+        : { values: revision.metadata, links: [] };
+      if (revision.document_type_id) {
+        httpAssert.present(restoredType, {
+          status: 409,
+          message: 'This revision references an unavailable document type'
+        });
+        const validation = validateDocumentMetadata(restoredType.fields, resolvedMetadata.values);
+        httpAssert.true(validation.errors.length === 0, {
+          status: 409,
+          message: `Revision requires metadata review: ${validation.errors.join('; ')}`
+        });
+      }
       const content = Buffer.from(JSON.stringify({ body: revision.body }), 'utf8');
       const timestamp = new Date();
       const nextName = revision.title?.trim() ? revision.title.trim() : node.name;
@@ -829,23 +1232,33 @@ export const restoreMarkdownRevision = async (
             created_byIfNew: node.created_by,
             updated_by: authCtx.userId
           });
+          if (revision.document_type_id || Object.keys(revision.metadata).length > 0) {
+            await tx.document.upsertDocumentMetadata({
+              workspace: ws,
+              node_id: node.id,
+              document_type_id: revision.document_type_id,
+              values: resolvedMetadata.values,
+              updated_at: timestamp
+            });
+            await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
+          } else {
+            await tx.document.deleteDocumentMetadata(ws, node.id);
+          }
+          restoredRevision = await createContentNodeRevision(
+            tx,
+            ws,
+            node.id,
+            revision.body,
+            nextName,
+            authCtx.userId,
+            timestamp,
+            revision.id,
+            revision.document_type_id,
+            resolvedMetadata.values,
+            tx
+          );
         },
         afterCommit: [
-          {
-            name: 'revision',
-            run: async () => {
-              restoredRevision = await createContentNodeRevision(
-                db,
-                ws,
-                node.id,
-                revision.body,
-                nextName,
-                authCtx.userId,
-                timestamp,
-                revision.id
-              );
-            }
-          },
           {
             name: 'audit',
             run: () =>

@@ -73,7 +73,12 @@ test.describe('markdown editor', () => {
       route.fulfill({
         json: {
           body: '# Architecture\n\nThis document comes from MDX.',
-          attachments: []
+          attachments: [],
+          document_type: null,
+          document_type_id: null,
+          metadata: {},
+          available_fields: [],
+          retired_fields: []
         }
       })
     );

@@ -34,6 +34,19 @@ Diagrams are part of the content model. They can live at workspace, project, or 
   }}
 />
 
+## Typed Markdown Documents
+
+Markdown documents can optionally use a [document type](../admin/document-types-templates). A document type adds
+structured properties such as workflow status (using an enum field), dates, numbers, and links to entities or other
+documents. Required properties are validated when the document is saved, while expected properties produce a warning.
+
+When creating a wiki page, select a document type and optionally a template. Templates can pre-fill the Markdown body
+and structured metadata, including the `{{title}}` placeholder for the new document name. Workspace templates are
+available across the workspace; project templates are available within their project.
+
+Untyped Markdown remains available for documents that do not need structured properties. Existing typed documents
+keep their metadata and type history when a document type is archived.
+
 ## Wiki Pages And Files
 
 Use wiki pages for lightweight documentation close to the thing it describes. Use uploaded files when the source
@@ -50,5 +63,6 @@ Use:
 ## Related Pages
 
 - [Projects](projects)
+- [Document Types And Templates](../admin/document-types-templates)
 - [Scope Matrix](../reference/scope-matrix)
 - [Project and Content Screen Reference](../reference/project-content-screen-reference)

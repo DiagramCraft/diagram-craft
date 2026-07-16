@@ -6,7 +6,8 @@ import {
   useMarkdownContent,
   useMarkdownRevisions,
   useRestoreMarkdownRevision,
-  useSaveMarkdownContent
+  useSaveMarkdownContent,
+  useMigrateMarkdownContent
 } from '../../hooks/useMarkdownContent';
 import {
   useUploadMarkdownAttachment,
@@ -47,6 +48,8 @@ import { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
 import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
 import type { ContentScope } from '../../hooks/useContentScope';
 import { downloadUrl } from '../../lib/browserDownload';
+import { useDocumentTypes } from '../../hooks/useDocuments';
+import { MarkdownPropertiesPanel, validateDocMetadata } from './MarkdownPropertiesPanel';
 
 const extractToc = (markdown: string): string[] =>
   markdown.match(/^## .+$/gm)?.map(l => l.slice(3).trim()) ?? [];
@@ -88,11 +91,13 @@ export const MarkdownEditorScreen = () => {
       : { kind: 'workspace', workspaceId: workspaceSlug };
 
   const { data, isLoading, isError } = useMarkdownContent(workspaceSlug, nodeId);
+  const { data: documentTypes = [] } = useDocumentTypes(workspaceSlug);
   const { data: revisions = [], isLoading: revisionsLoading } = useMarkdownRevisions(
     workspaceSlug,
     nodeId
   );
   const saveMutation = useSaveMarkdownContent(contentScope, nodeId);
+  const migrateMutation = useMigrateMarkdownContent(contentScope, nodeId);
   const restoreMutation = useRestoreMarkdownRevision(contentScope, nodeId);
   const uploadAttachmentMutation = useUploadMarkdownAttachment(contentScope, nodeId);
   const deleteAttachmentMutation = useDeleteMarkdownAttachment(contentScope, nodeId);
@@ -104,6 +109,8 @@ export const MarkdownEditorScreen = () => {
   });
 
   const [body, setBody] = useState('');
+  const [documentTypeId, setDocumentTypeId] = useState<string | null>(null);
+  const [metadata, setMetadata] = useState<NonNullable<typeof data>['metadata']>({});
   const [paneMode, setPaneMode] = useState<MarkdownPaneMode>(
     requestedMode === 'edit' ? 'edit' : 'preview'
   );
@@ -112,6 +119,7 @@ export const MarkdownEditorScreen = () => {
     [paneMode, requestedMode, requestedPanel]
   );
   const [dirty, setDirty] = useState(false);
+  const [attemptedSave, setAttemptedSave] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [attachmentDeleteTarget, setAttachmentDeleteTarget] = useState<ProjectFile | null>(null);
@@ -254,6 +262,7 @@ export const MarkdownEditorScreen = () => {
     initializedRef.current = false;
     setBody('');
     setDirty(false);
+    setAttemptedSave(false);
     handleCancelClose();
     clearCloseSummary();
   }, [nodeId, resetForNewDocument, handleCancelClose, clearCloseSummary]);
@@ -272,14 +281,29 @@ export const MarkdownEditorScreen = () => {
     if (!data) return;
     if (!initializedRef.current) {
       setBody(data.body);
+      setDocumentTypeId(data.document_type_id);
+      setMetadata(data.metadata);
       initializedRef.current = true;
       setDirty(false);
       return;
     }
     if (!dirty) {
       setBody(data.body);
+      setDocumentTypeId(data.document_type_id);
+      setMetadata(data.metadata);
     }
   }, [data, dirty]);
+
+  const availableDocumentTypes = useMemo(() => {
+    if (!data?.document_type || documentTypes.some(type => type.id === data.document_type?.id))
+      return documentTypes;
+    return [...documentTypes, data.document_type];
+  }, [data?.document_type, documentTypes]);
+  const selectedDocumentType = documentTypeId
+    ? (availableDocumentTypes.find(type => type.id === documentTypeId) ?? null)
+    : null;
+  const documentFields =
+    documentTypeId == null ? [] : (selectedDocumentType?.fields ?? data?.available_fields ?? []);
 
   useEffect(() => {
     if (screenState.viewPanel !== 'history' || revisions.length === 0) return;
@@ -299,6 +323,49 @@ export const MarkdownEditorScreen = () => {
     setDirty(true);
   }, []);
 
+  const handleDocumentTypeChange = useCallback((id: string | null) => {
+    setDocumentTypeId(id);
+    setDirty(true);
+  }, []);
+
+  const handleMetadataChange = useCallback(
+    (fieldId: string, value: string | number | boolean | string[] | null | undefined) => {
+      setMetadata(current => {
+        if (value === undefined) {
+          const next = { ...current };
+          delete next[fieldId];
+          return next;
+        }
+        return { ...current, [fieldId]: value };
+      });
+      setDirty(true);
+    },
+    []
+  );
+
+  const saveDocument = useCallback(async () => {
+    const currentDocumentTypeId = data?.document_type_id ?? null;
+    const input = {
+      body,
+      name: headingTitle ?? undefined,
+      document_type_id: documentTypeId,
+      metadata
+    };
+    if (documentTypeId !== currentDocumentTypeId) {
+      await migrateMutation.mutateAsync(input);
+    } else {
+      await saveMutation.mutateAsync(input);
+    }
+  }, [
+    body,
+    data?.document_type_id,
+    documentTypeId,
+    headingTitle,
+    metadata,
+    migrateMutation,
+    saveMutation
+  ]);
+
   const handleSave = useCallback(async () => {
     if (isReadOnly) return;
     if (!dirty) {
@@ -308,20 +375,27 @@ export const MarkdownEditorScreen = () => {
       }
       return;
     }
-    if (saveMutation.isPending) return;
-    await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
+    if (Object.keys(validateDocMetadata(documentFields, metadata).errors).length > 0) {
+      setAttemptedSave(true);
+      return;
+    }
+    if (saveMutation.isPending || migrateMutation.isPending) return;
+    await saveDocument();
     setDirty(false);
+    setAttemptedSave(false);
     rotateDiagramSession();
     clearCloseSummary();
   }, [
-    body,
     dirty,
     hasPendingDiagramChanges,
-    headingTitle,
     saveMutation,
+    migrateMutation,
+    saveDocument,
     rotateDiagramSession,
     clearCloseSummary,
-    isReadOnly
+    isReadOnly,
+    documentFields,
+    metadata
   ]);
 
   const handleSaveAndClose = useCallback(async () => {
@@ -332,22 +406,29 @@ export const MarkdownEditorScreen = () => {
       return;
     }
     if (dirty) {
-      if (saveMutation.isPending) return;
-      await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
+      if (Object.keys(validateDocMetadata(documentFields, metadata).errors).length > 0) {
+        setAttemptedSave(true);
+        return;
+      }
+      if (saveMutation.isPending || migrateMutation.isPending) return;
+      await saveDocument();
       setDirty(false);
+      setAttemptedSave(false);
     }
     clearDiagramSessionState();
     clearCloseSummary();
     exitMarkdownEditor();
   }, [
-    body,
     dirty,
-    headingTitle,
     saveMutation,
+    migrateMutation,
+    saveDocument,
     clearDiagramSessionState,
     clearCloseSummary,
     exitMarkdownEditor,
-    isReadOnly
+    isReadOnly,
+    documentFields,
+    metadata
   ]);
 
   const handleEnterEdit = useCallback(() => {
@@ -581,6 +662,8 @@ export const MarkdownEditorScreen = () => {
               workspaceSlug={workspaceSlug}
               nodeId={nodeId}
               currentBody={body}
+              currentMetadata={metadata}
+              currentDocumentTypeId={documentTypeId}
               revisions={revisions}
               revisionsLoading={revisionsLoading}
               selectedRevisionId={selectedRevisionId}
@@ -610,6 +693,18 @@ export const MarkdownEditorScreen = () => {
                 onDeleteRequest: setAttachmentDeleteTarget,
                 isDeleting: deleteAttachmentMutation.isPending
               }}
+              propertiesPanel={
+                <MarkdownPropertiesPanel
+                  documentTypeId={documentTypeId}
+                  documentTypes={availableDocumentTypes}
+                  fields={documentFields}
+                  metadata={metadata}
+                  readOnly={isReadOnly || screenState.screenMode !== 'edit'}
+                  attemptedSave={attemptedSave}
+                  onTypeChange={handleDocumentTypeChange}
+                  onValueChange={handleMetadataChange}
+                />
+              }
             />
           )}
 

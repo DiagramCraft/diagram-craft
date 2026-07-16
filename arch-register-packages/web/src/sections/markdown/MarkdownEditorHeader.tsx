@@ -21,6 +21,7 @@ export const MarkdownEditorHeader = (props: {
   resolvedTitle: string;
   description: string;
   isViewMode: boolean;
+  isDraft?: boolean;
   isUploadingAttachment: boolean;
   attachDisabled: boolean;
   onNavigateBack: () => void;
@@ -34,6 +35,7 @@ export const MarkdownEditorHeader = (props: {
     resolvedTitle,
     description,
     isViewMode,
+    isDraft = false,
     isUploadingAttachment,
     attachDisabled,
     onNavigateBack,
@@ -83,29 +85,37 @@ export const MarkdownEditorHeader = (props: {
 
   const titleButtons = (
     <>
-      <Button
-        icon={<TbUpload size={13} />}
-        onClick={actions.onAttachClick}
-        disabled={isUploadingAttachment || attachDisabled}
-      >
-        {isUploadingAttachment ? 'Uploading…' : 'Attach file'}
-      </Button>
-      <Button icon={<TbPencil size={13} />} onClick={actions.onEnterEdit} disabled={!isViewMode}>
-        Edit
-      </Button>
-      <DropdownMenu
-        trigger={<Button icon={<TbDots size={13} />} disabled={!isViewMode} />}
-        items={[
-          { label: 'Versions', icon: <TbHistory size={13} />, onClick: actions.onOpenHistory },
-          { label: 'Rename', icon: <TbPencil size={13} />, onClick: actions.onRenameRequest },
-          {
-            label: 'Delete',
-            icon: <TbTrash size={13} />,
-            danger: true,
-            onClick: actions.onDeleteRequest
-          }
-        ]}
-      />
+      {!isDraft && (
+        <>
+          <Button
+            icon={<TbUpload size={13} />}
+            onClick={actions.onAttachClick}
+            disabled={isUploadingAttachment || attachDisabled}
+          >
+            {isUploadingAttachment ? 'Uploading…' : 'Attach file'}
+          </Button>
+          <Button
+            icon={<TbPencil size={13} />}
+            onClick={actions.onEnterEdit}
+            disabled={!isViewMode}
+          >
+            Edit
+          </Button>
+          <DropdownMenu
+            trigger={<Button icon={<TbDots size={13} />} disabled={!isViewMode} />}
+            items={[
+              { label: 'Versions', icon: <TbHistory size={13} />, onClick: actions.onOpenHistory },
+              { label: 'Rename', icon: <TbPencil size={13} />, onClick: actions.onRenameRequest },
+              {
+                label: 'Delete',
+                icon: <TbTrash size={13} />,
+                danger: true,
+                onClick: actions.onDeleteRequest
+              }
+            ]}
+          />
+        </>
+      )}
     </>
   );
 
