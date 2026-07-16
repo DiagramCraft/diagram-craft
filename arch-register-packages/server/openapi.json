@@ -28464,6 +28464,10 @@
                                       ]
                                     }
                                   },
+                                  "inverseName": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
                                   "retired": {
                                     "type": "boolean",
                                     "default": false
@@ -28630,6 +28634,10 @@
                               ]
                             }
                           },
+                          "inverseName": {
+                            "type": "string",
+                            "minLength": 1
+                          },
                           "retired": {
                             "type": "boolean",
                             "default": false
@@ -28707,6 +28715,10 @@
                                 "label"
                               ]
                             }
+                          },
+                          "inverseName": {
+                            "type": "string",
+                            "minLength": 1
                           },
                           "retired": {
                             "type": "boolean",
@@ -31173,6 +31185,16 @@
                       },
                       "field_name": {
                         "type": "string"
+                      },
+                      "field_inverse_name": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -31183,7 +31205,394 @@
                       "document_type_color",
                       "document_type_icon",
                       "field_id",
-                      "field_name"
+                      "field_name",
+                      "field_inverse_name"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/documents/{nodeId}/backlinks": {
+      "get": {
+        "operationId": "projects.listDocumentBacklinks",
+        "summary": "List document backlinks",
+        "description": "Lists accessible markdown documents whose metadata links to this document, via entity_link or document_link fields.",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique file identifier"
+                          },
+                          "project_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent project identifier (null for entity/workspace files)"
+                          },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
+                          "project_public_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Public project identifier"
+                          },
+                          "path": {
+                            "type": "string",
+                            "description": "File path within the project/entity/workspace"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "File name"
+                          },
+                          "role": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "attachment-container"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Special file role"
+                          },
+                          "size_bytes": {
+                            "type": "number",
+                            "description": "File size in bytes"
+                          },
+                          "comment_count": {
+                            "type": "number",
+                            "description": "Number of comments on the file"
+                          },
+                          "unresolved_comment_count": {
+                            "type": "number",
+                            "description": "Number of unresolved comments"
+                          },
+                          "is_template": {
+                            "type": "boolean",
+                            "description": "Whether the file is a project template"
+                          },
+                          "is_workspace_template": {
+                            "type": "boolean",
+                            "description": "Whether the file is a workspace-level template"
+                          },
+                          "preview_svg": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "SVG preview of the file (for diagrams)"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "description": "ISO 8601 last update timestamp"
+                          },
+                          "type": {
+                            "enum": [
+                              "diagram",
+                              "folder",
+                              "markdown",
+                              "file"
+                            ],
+                            "type": "string",
+                            "description": "File type"
+                          },
+                          "created_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "User who created the file"
+                          },
+                          "updated_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "User who last updated the file"
+                          },
+                          "mime_type": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "MIME type for generic files"
+                          },
+                          "original_filename": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
+                          },
+                          "read_only": {
+                            "type": "boolean",
+                            "description": "Whether this content is managed by an external mount"
+                          },
+                          "mount_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "External content mount identifier"
+                          },
+                          "content_metadata": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "title": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Content title"
+                                  },
+                                  "description": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Content description"
+                                  },
+                                  "company": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Company name"
+                                  },
+                                  "category": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Content category"
+                                  },
+                                  "keywords": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Content keywords"
+                                  }
+                                },
+                                "required": [
+                                  "title",
+                                  "description",
+                                  "company",
+                                  "category",
+                                  "keywords"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Content metadata (for diagrams)"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "project_id",
+                          "path",
+                          "name",
+                          "size_bytes",
+                          "created_at",
+                          "updated_at",
+                          "type",
+                          "content_metadata"
+                        ]
+                      },
+                      "scope": {
+                        "enum": [
+                          "project",
+                          "entity",
+                          "workspace"
+                        ],
+                        "type": "string"
+                      },
+                      "document_type_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "document_type_name": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "document_type_color": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "document_type_icon": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "field_id": {
+                        "type": "string"
+                      },
+                      "field_name": {
+                        "type": "string"
+                      },
+                      "field_inverse_name": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "file",
+                      "scope",
+                      "document_type_id",
+                      "document_type_name",
+                      "document_type_color",
+                      "document_type_icon",
+                      "field_id",
+                      "field_name",
+                      "field_inverse_name"
                     ]
                   }
                 }
@@ -40250,6 +40659,10 @@
                                 ]
                               }
                             },
+                            "inverseName": {
+                              "type": "string",
+                              "minLength": 1
+                            },
                             "retired": {
                               "type": "boolean",
                               "default": false
@@ -40408,6 +40821,10 @@
                             ]
                           }
                         },
+                        "inverseName": {
+                          "type": "string",
+                          "minLength": 1
+                        },
                         "retired": {
                           "type": "boolean",
                           "default": false
@@ -40533,6 +40950,10 @@
                                 "label"
                               ]
                             }
+                          },
+                          "inverseName": {
+                            "type": "string",
+                            "minLength": 1
                           },
                           "retired": {
                             "type": "boolean",
@@ -40706,6 +41127,10 @@
                               ]
                             }
                           },
+                          "inverseName": {
+                            "type": "string",
+                            "minLength": 1
+                          },
                           "retired": {
                             "type": "boolean",
                             "default": false
@@ -40871,6 +41296,10 @@
                             ]
                           }
                         },
+                        "inverseName": {
+                          "type": "string",
+                          "minLength": 1
+                        },
                         "retired": {
                           "type": "boolean",
                           "default": false
@@ -40996,6 +41425,10 @@
                                 "label"
                               ]
                             }
+                          },
+                          "inverseName": {
+                            "type": "string",
+                            "minLength": 1
                           },
                           "retired": {
                             "type": "boolean",
@@ -41232,6 +41665,10 @@
                                 "label"
                               ]
                             }
+                          },
+                          "inverseName": {
+                            "type": "string",
+                            "minLength": 1
                           },
                           "retired": {
                             "type": "boolean",

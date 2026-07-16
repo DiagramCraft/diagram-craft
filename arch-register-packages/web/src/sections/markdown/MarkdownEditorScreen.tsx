@@ -821,6 +821,7 @@ export const MarkdownEditorScreen = () => {
               }}
               propertiesPanel={
                 <MarkdownPropertiesPanel
+                  key={nodeId}
                   documentTypeId={documentTypeId}
                   documentTypes={availableDocumentTypes}
                   fields={documentFields}
