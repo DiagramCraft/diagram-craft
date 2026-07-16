@@ -31193,6 +31193,534 @@
         }
       }
     },
+    "/{workspace}/documents": {
+      "get": {
+        "operationId": "projects.listDocuments",
+        "summary": "List Markdown documents across scopes",
+        "description": "Lists accessible Markdown documents (typed and untyped) across workspace, project, and entity scopes, with filtering.",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Search query string, matched against document title"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "workspace",
+                "project",
+                "entity"
+              ],
+              "type": "string",
+              "description": "Filter by scope"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Filter to documents within this project"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Filter to documents within this entity"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "document_type_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Filter by document type identifier, or 'none' for untyped documents"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "conditions",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions on metadata fields"
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Sort field: 'title', 'updated_at', or a metadata field identifier"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "sort_dir",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "description": "Sort direction"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 100,
+              "exclusiveMinimum": 0,
+              "description": "Maximum number of results (default and max 100)"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique file identifier"
+                          },
+                          "project_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent project identifier (null for entity/workspace files)"
+                          },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
+                          "project_public_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Public project identifier"
+                          },
+                          "path": {
+                            "type": "string",
+                            "description": "File path within the project/entity/workspace"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "File name"
+                          },
+                          "role": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "attachment-container"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Special file role"
+                          },
+                          "size_bytes": {
+                            "type": "number",
+                            "description": "File size in bytes"
+                          },
+                          "comment_count": {
+                            "type": "number",
+                            "description": "Number of comments on the file"
+                          },
+                          "unresolved_comment_count": {
+                            "type": "number",
+                            "description": "Number of unresolved comments"
+                          },
+                          "is_template": {
+                            "type": "boolean",
+                            "description": "Whether the file is a project template"
+                          },
+                          "is_workspace_template": {
+                            "type": "boolean",
+                            "description": "Whether the file is a workspace-level template"
+                          },
+                          "preview_svg": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "SVG preview of the file (for diagrams)"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "description": "ISO 8601 last update timestamp"
+                          },
+                          "type": {
+                            "enum": [
+                              "diagram",
+                              "folder",
+                              "markdown",
+                              "file"
+                            ],
+                            "type": "string",
+                            "description": "File type"
+                          },
+                          "created_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "User who created the file"
+                          },
+                          "updated_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "User who last updated the file"
+                          },
+                          "mime_type": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "MIME type for generic files"
+                          },
+                          "original_filename": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
+                          },
+                          "read_only": {
+                            "type": "boolean",
+                            "description": "Whether this content is managed by an external mount"
+                          },
+                          "mount_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "External content mount identifier"
+                          },
+                          "content_metadata": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "title": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Content title"
+                                  },
+                                  "description": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Content description"
+                                  },
+                                  "company": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Company name"
+                                  },
+                                  "category": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Content category"
+                                  },
+                                  "keywords": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Content keywords"
+                                  }
+                                },
+                                "required": [
+                                  "title",
+                                  "description",
+                                  "company",
+                                  "category",
+                                  "keywords"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Content metadata (for diagrams)"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "project_id",
+                          "path",
+                          "name",
+                          "size_bytes",
+                          "created_at",
+                          "updated_at",
+                          "type",
+                          "content_metadata"
+                        ]
+                      },
+                      "scope": {
+                        "enum": [
+                          "workspace",
+                          "project",
+                          "entity"
+                        ],
+                        "type": "string"
+                      },
+                      "document_type_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "document_type_name": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "document_type_color": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "document_type_icon": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "file",
+                      "scope",
+                      "document_type_id",
+                      "document_type_name",
+                      "document_type_color",
+                      "document_type_icon",
+                      "metadata"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/audit": {
       "get": {
         "operationId": "audit.list",
