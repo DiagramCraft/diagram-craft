@@ -74,12 +74,19 @@ const makeDb = (
     string,
     { id: string; name: string; color: string | null; icon: string | null; fields: unknown[] }
   >,
-  projectsById: Record<string, { owner: string }> = {}
+  projectsById: Record<string, { owner: string; id?: string }> = {},
+  entitiesById: Record<string, { id: string }> = {}
 ) =>
   ({
     project: {
       listAllContentNodes: vi.fn(async () => nodes),
-      getProject: vi.fn(async (_ws: string, id: string) => projectsById[id] ?? null)
+      getProject: vi.fn(async (_ws: string, id: string) => {
+        const project = projectsById[id];
+        return project ? { ...project, id: project.id ?? id } : null;
+      })
+    },
+    catalog: {
+      getEntity: vi.fn(async (_ws: string, id: string) => entitiesById[id] ?? null)
     },
     document: {
       getDocumentMetadata: vi.fn(async (_ws: string, nodeId: string) => {
@@ -184,6 +191,34 @@ describe('listDocuments', () => {
     expect(
       (await listDocuments(db, 'ws-1', { projectId: 'proj-2' }, event)).map(r => r.file.id)
     ).toEqual(['proj-b']);
+  });
+
+  it('resolves public project and entity identifiers before filtering', async () => {
+    const nodes = [
+      makeNode({ id: 'project-doc', project_id: 'project-internal' }),
+      makeNode({ id: 'entity-doc', entity_id: 'entity-internal' })
+    ];
+    const db = makeDb(
+      nodes,
+      {},
+      {},
+      {
+        'project-public': { id: 'project-internal', owner: 'team-1' },
+        'project-internal': { id: 'project-internal', owner: 'team-1' }
+      },
+      { 'entity-public': { id: 'entity-internal' } }
+    );
+
+    expect(
+      (await listDocuments(db, 'ws-1', { projectId: 'project-public' }, event)).map(
+        result => result.file.id
+      )
+    ).toEqual(['project-doc']);
+    expect(
+      (await listDocuments(db, 'ws-1', { entityId: 'entity-public' }, event)).map(
+        result => result.file.id
+      )
+    ).toEqual(['entity-doc']);
   });
 
   it('filters by metadata field conditions', async () => {

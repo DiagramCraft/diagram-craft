@@ -1,0 +1,100 @@
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.controlRow > :first-child {
+  flex: 1;
+  min-width: 220px;
+}
+
+.location {
+  color: var(--base-fg-dim);
+  font-size: 12px;
+}
+
+.filterBuilder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filterRow select,
+.filterRow input {
+  min-width: 0;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  color: var(--base-fg);
+}
+
+.filterRow select:first-child {
+  width: 180px;
+}
+
+.filterRow select:nth-child(2) {
+  width: 130px;
+}
+
+.filterRow input,
+.filterRow select:nth-child(3) {
+  flex: 1;
+}
+
+.removeFilter,
+.addFilter {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+}
+
+.removeFilter:hover,
+.addFilter:hover {
+  color: var(--base-fg);
+}
+
+.addFilter:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.muted {
+  color: var(--base-fg-dim);
+  font-size: 12px;
+}
+
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.columnOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.preview {
+  max-height: 60vh;
+  overflow: auto;
+}

@@ -18,6 +18,8 @@ import { ENTITY_VIEW_EMBED_TYPE } from './blocks/entity-view-embed/EntityViewEmb
 import { entityViewEmbedSpec } from './blocks/entity-view-embed/EntityViewEmbedRegistration';
 import { ENTITY_GRAPH_TYPE } from './blocks/entity-graph/EntityGraphEditable';
 import { entityGraphSpec } from './blocks/entity-graph/EntityGraphRegistration';
+import { DOCUMENT_BROWSER_EMBED_TYPE } from './blocks/document-browser-embed/DocumentBrowserEmbedEditable';
+import { documentBrowserEmbedSpec } from './blocks/document-browser-embed/DocumentBrowserEmbedRegistration';
 import { ENTITY_FIELD_TYPE } from './inlines/entity-field/EntityFieldEditable';
 import { entityFieldSpec } from './inlines/entity-field/EntityFieldRegistration';
 import { ENTITY_MENTION_TYPE } from './inlines/entity-mention/EntityMentionEditable';
@@ -40,6 +42,7 @@ export const MDX_COMPONENTS = {
   [ENTITY_TABLE_TYPE]: entityTableSpec,
   [ENTITY_VIEW_EMBED_TYPE]: entityViewEmbedSpec,
   [ENTITY_GRAPH_TYPE]: entityGraphSpec,
+  [DOCUMENT_BROWSER_EMBED_TYPE]: documentBrowserEmbedSpec,
   [ENTITY_FIELD_TYPE]: entityFieldSpec,
   [ENTITY_MENTION_TYPE]: entityMentionSpec,
   [ENTITY_LINK_TYPE]: entityLinkSpec,

@@ -1150,6 +1150,18 @@ export const listDocuments = async (
     event,
     { fallback: 'Failed to list documents', dbErrorMessages: projectDbErrorMessages },
     async ({ ws, authCtx }) => {
+      const resolvedProject = options.projectId
+        ? await db.project.getProject(ws, options.projectId)
+        : null;
+      if (options.projectId && !resolvedProject) return [];
+
+      const resolvedEntity = options.entityId
+        ? await db.catalog.getEntity(ws, options.entityId)
+        : null;
+      if (options.entityId && !resolvedEntity) return [];
+
+      const projectId = resolvedProject?.id ?? options.projectId;
+      const entityId = resolvedEntity?.id ?? options.entityId;
       const nodes = await db.project.listAllContentNodes(ws);
       const candidates: Array<{
         node: ContentNodeDbResult;
@@ -1168,8 +1180,8 @@ export const listDocuments = async (
             ? 'entity'
             : 'workspace';
         if (options.scope && options.scope !== scope) continue;
-        if (options.projectId && node.project_id !== options.projectId) continue;
-        if (options.entityId && node.entity_id !== options.entityId) continue;
+        if (projectId && node.project_id !== projectId) continue;
+        if (entityId && node.entity_id !== entityId) continue;
 
         try {
           await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
