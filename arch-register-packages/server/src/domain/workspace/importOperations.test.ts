@@ -42,6 +42,7 @@ const makeDb = () =>
       listLifecycleStates: vi.fn(async () => []),
       listTeams: vi.fn(async () => []),
       listCustomWorkspaceRoles: vi.fn(async () => []),
+      allocatePublicId: vi.fn(async () => 1),
       replaceLifecycleStates: vi.fn(async rows => rows),
       replaceTeams: vi.fn(async rows => rows),
       updateCustomWorkspaceRole: vi.fn(async (_ws, _id, input) => ({

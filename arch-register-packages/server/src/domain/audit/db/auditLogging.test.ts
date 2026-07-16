@@ -1,7 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from './auditLogging';
 import { EntityDbCreate } from '../../catalog/db/catalogDatabase';
+
+const { loggerError } = vi.hoisted(() => ({ loggerError: vi.fn() }));
+
+vi.mock('../../../utils/logger', () => ({
+  createLogger: () => ({ error: loggerError })
+}));
 
 const now = new Date('2026-06-08T10:00:00.000Z');
 
@@ -132,6 +138,7 @@ describe('entity audit delivery', () => {
       logAudit(makeTransactionalDatabase(events, new Error('queue unavailable')), entityAudit)
     ).rejects.toThrow('queue unavailable');
     expect(events).toEqual(['begin', 'audit', 'job', 'rollback']);
+    expect(loggerError).toHaveBeenCalledOnce();
   });
 });
 

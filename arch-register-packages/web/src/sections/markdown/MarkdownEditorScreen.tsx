@@ -384,17 +384,14 @@ export const MarkdownEditorScreen = () => {
     rotateDiagramSession();
     clearCloseSummary();
   }, [
-    body,
     dirty,
     hasPendingDiagramChanges,
-    headingTitle,
     saveMutation,
     migrateMutation,
     saveDocument,
     rotateDiagramSession,
     clearCloseSummary,
     isReadOnly,
-    documentTypeId,
     documentFields,
     metadata
   ]);
@@ -420,9 +417,7 @@ export const MarkdownEditorScreen = () => {
     clearCloseSummary();
     exitMarkdownEditor();
   }, [
-    body,
     dirty,
-    headingTitle,
     saveMutation,
     migrateMutation,
     saveDocument,
@@ -430,7 +425,6 @@ export const MarkdownEditorScreen = () => {
     clearCloseSummary,
     exitMarkdownEditor,
     isReadOnly,
-    documentTypeId,
     documentFields,
     metadata
   ]);
