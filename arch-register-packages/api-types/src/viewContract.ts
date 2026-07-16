@@ -31,6 +31,18 @@ export const filterConditionSchema = z.object({
   value: z.unknown().describe('Filter value (type depends on field and operation)')
 });
 
+export const conditionsQuerySchema = z.preprocess(value => {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return undefined;
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}, z.array(filterConditionSchema).optional());
+
 export const entityFiltersSchema = z.object({
   schemaId: z.string().nullable().optional().describe('Filter by schema identifier'),
   status: z.string().nullable().optional().describe('Filter by lifecycle status'),

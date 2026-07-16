@@ -35,11 +35,18 @@ import type {
   ProjectFile
 } from '@arch-register/api-types/projectContract';
 import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
+import type { DocumentListItem } from '@arch-register/api-types/projectContract';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
   assertDocumentMetadataValid,
   documentLinksFromMetadata,
   validateDocumentMetadata
 } from '../document/documentValidation';
+import {
+  compareDocuments,
+  matchesDocumentCondition,
+  type DocumentListCandidate
+} from '../document/documentFilterHelpers';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import {
   listSiblingNodes,
@@ -1118,6 +1125,100 @@ export const listRelatedContent = async (
         });
       }
       return result;
+    }
+  );
+
+export const listDocuments = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  options: {
+    q?: string;
+    scope?: 'workspace' | 'project' | 'entity';
+    projectId?: string;
+    entityId?: string;
+    documentTypeId?: string;
+    conditions?: FilterCondition[];
+    sort?: string;
+    sortDir?: 'asc' | 'desc';
+    limit?: number;
+  },
+  event: AuthenticatedEvent
+): Promise<DocumentListItem[]> =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to list documents', dbErrorMessages: projectDbErrorMessages },
+    async ({ ws, authCtx }) => {
+      const nodes = await db.project.listAllContentNodes(ws);
+      const candidates: Array<{
+        node: ContentNodeDbResult;
+        scope: 'workspace' | 'project' | 'entity';
+        state: Awaited<ReturnType<typeof getDocumentState>>;
+        candidate: DocumentListCandidate;
+      }> = [];
+
+      const q = options.q?.trim().toLowerCase();
+
+      for (const node of nodes) {
+        if (!isMarkdownNode(node)) continue;
+        const scope: 'workspace' | 'project' | 'entity' = node.project_id
+          ? 'project'
+          : node.entity_id
+            ? 'entity'
+            : 'workspace';
+        if (options.scope && options.scope !== scope) continue;
+        if (options.projectId && node.project_id !== options.projectId) continue;
+        if (options.entityId && node.entity_id !== options.entityId) continue;
+
+        try {
+          await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+        } catch {
+          continue;
+        }
+
+        const state = await getDocumentState(db, ws, node);
+        if (options.documentTypeId === 'none' && state.documentTypeId !== null) continue;
+        if (
+          options.documentTypeId &&
+          options.documentTypeId !== 'none' &&
+          state.documentTypeId !== options.documentTypeId
+        ) {
+          continue;
+        }
+
+        if (q && !node.name.toLowerCase().includes(q)) continue;
+
+        const candidate: DocumentListCandidate = {
+          title: node.name,
+          updatedAt: node.updated_at,
+          documentTypeId: state.documentTypeId,
+          metadata: state.metadata
+        };
+
+        if (
+          options.conditions?.length &&
+          !options.conditions.every(condition => matchesDocumentCondition(candidate, condition))
+        ) {
+          continue;
+        }
+
+        candidates.push({ node, scope, state, candidate });
+      }
+
+      candidates.sort((a, b) =>
+        compareDocuments(a.candidate, b.candidate, options.sort, options.sortDir ?? 'asc')
+      );
+
+      return candidates.slice(0, options.limit ?? 100).map(({ node, scope, state }) => ({
+        file: toApiProjectFile(node),
+        scope,
+        document_type_id: state.documentTypeId,
+        document_type_name: state.documentType?.name ?? null,
+        document_type_color: state.documentType?.color ?? null,
+        document_type_icon: state.documentType?.icon ?? null,
+        metadata: state.metadata
+      }));
     }
   );
 

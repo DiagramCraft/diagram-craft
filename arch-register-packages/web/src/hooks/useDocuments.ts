@@ -5,7 +5,20 @@ import type {
   DocumentType,
   DocumentTypeWrite
 } from '@arch-register/api-types/documentContract';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { orpcClient } from '../lib/orpcClient';
+
+export type DocumentListOptions = {
+  q?: string;
+  scope?: 'workspace' | 'project' | 'entity';
+  projectId?: string;
+  entityId?: string;
+  documentTypeId?: string;
+  conditions?: FilterCondition[];
+  sort?: string;
+  sortDir?: 'asc' | 'desc';
+  limit?: number;
+};
 
 export const documentKeys = {
   typesRoot: (workspaceId: string) => ['document-types', workspaceId] as const,
@@ -15,7 +28,9 @@ export const documentKeys = {
   templates: (workspaceId: string, projectId?: string | null, includeArchived = false) =>
     ['document-templates', workspaceId, projectId ?? 'workspace', includeArchived] as const,
   related: (workspaceId: string, entityId: string) =>
-    ['related-content', workspaceId, entityId] as const
+    ['related-content', workspaceId, entityId] as const,
+  list: (workspaceId: string, options: DocumentListOptions = {}) =>
+    ['documents', workspaceId, options] as const
 };
 
 export const documentTypesQuery = (workspaceId: string, includeArchived = false) =>
@@ -59,6 +74,31 @@ export const useRelatedDocumentContent = (workspaceId: string, entityId: string)
     queryFn: () =>
       orpcClient.projects.listRelatedContent({ params: { workspace: workspaceId, entityId } }),
     enabled: !!workspaceId && !!entityId
+  });
+
+export const useDocumentList = (
+  workspaceId: string,
+  options: DocumentListOptions = {},
+  queryOptions?: { enabled?: boolean }
+) =>
+  useQuery({
+    queryKey: documentKeys.list(workspaceId, options),
+    queryFn: () =>
+      orpcClient.projects.listDocuments({
+        params: { workspace: workspaceId },
+        query: {
+          q: options.q,
+          scope: options.scope,
+          project_id: options.projectId,
+          entity_id: options.entityId,
+          document_type_id: options.documentTypeId,
+          conditions: options.conditions,
+          sort: options.sort,
+          sort_dir: options.sortDir,
+          limit: options.limit
+        }
+      }),
+    enabled: queryOptions?.enabled ?? !!workspaceId
   });
 
 export const useCreateDocumentType = (workspaceId: string) => {

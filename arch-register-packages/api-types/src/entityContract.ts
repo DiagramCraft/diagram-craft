@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema, UUID_REGEX } from '@arch-register/api-types/common';
-import { filterConditionSchema } from '@arch-register/api-types/viewContract';
+import { conditionsQuerySchema } from '@arch-register/api-types/viewContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -94,18 +94,6 @@ const entityMutationBodySchema = z
   .describe('Entity mutation data with schema-specific fields');
 
 // ── Query / filter input ──────────────────────────────────────
-
-const conditionsQuerySchema = z.preprocess(value => {
-  if (Array.isArray(value)) return value;
-  if (typeof value !== 'string') return undefined;
-
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : undefined;
-  } catch {
-    return undefined;
-  }
-}, z.array(filterConditionSchema).optional());
 
 const booleanQuerySchema = z.preprocess(value => {
   if (typeof value === 'boolean') return value;
