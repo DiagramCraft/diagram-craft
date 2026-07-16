@@ -36,6 +36,8 @@ type CustomAnchorsEditorProps = {
   diagram: ReturnType<typeof useDiagram>;
 };
 
+const staticCanvasFactory = () => new StaticCanvasComponent();
+
 const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDiagram> }) => {
   const application = useApplication();
 
@@ -135,7 +137,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
         onClick={() => {}}
         diagram={previewDiagram}
         viewbox={previewDiagram.viewBox.svgViewboxString}
-        canvasFactory={() => new StaticCanvasComponent()}
+        canvasFactory={staticCanvasFactory}
       />
 
       {/* Anchor points overlay */}
