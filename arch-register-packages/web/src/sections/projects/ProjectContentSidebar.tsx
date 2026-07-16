@@ -394,12 +394,16 @@ export const ProjectContentSidebar = ({
             setMarkdownFolder(undefined);
             openFile(file);
           }}
-          onOpenDraft={draft => navigate(projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), {
-            draftName: draft.name,
-            draftFolder: markdownFolder ?? undefined,
-            draftType: draft.documentTypeId ?? undefined,
-            draftTemplate: draft.templateId ?? undefined
-          }))}
+          onOpenDraft={draft =>
+            navigate(
+              projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), {
+                draftName: draft.name,
+                draftFolder: markdownFolder ?? undefined,
+                draftType: draft.documentTypeId ?? undefined,
+                draftTemplate: draft.templateId ?? undefined
+              })
+            )
+          }
           onCreate={name =>
             operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
           }

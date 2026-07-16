@@ -20,7 +20,9 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const { data: types = [] } = useDocumentTypes(workspaceSlug, true);
   const { data: templates = [] } = useDocumentTemplates(workspaceSlug, null, true);
 
-  const typeColor = new Map<string, string>(types.map((type, index) => [type.id, resolveDocumentTypeColor(type, index)]));
+  const typeColor = new Map<string, string>(
+    types.map((type, index) => [type.id, resolveDocumentTypeColor(type, index)])
+  );
 
   const activateTab = (tab: 'types' | 'templates') => {
     navigate({
@@ -52,7 +54,10 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   return (
     <>
       <SidebarHeader>
-        <Tabs.Root value={activeTab} onValueChange={value => activateTab(value as 'types' | 'templates')}>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={value => activateTab(value as 'types' | 'templates')}
+        >
           <Tabs.List>
             <Tabs.Trigger value="types">Types</Tabs.Trigger>
             <Tabs.Trigger value="templates">Templates</Tabs.Trigger>
@@ -62,17 +67,30 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
       {activeTab === 'types' ? (
         <div className={styles.scroll}>
           <SidebarGroupLabel>Document types</SidebarGroupLabel>
-          {activeTypes.length === 0 && <div className={`${styles.emptyState} dim`}>No document types defined.</div>}
+          {activeTypes.length === 0 && (
+            <div className={`${styles.emptyState} dim`}>No document types defined.</div>
+          )}
           {activeTypes.map(type => (
             <TreeRow
               key={type.id}
               testId={`document-type-${type.name}`}
-              icon={<TypeBadge color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'} name={type.name} icon={type.icon} size={14} />}
+              icon={
+                <TypeBadge
+                  color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
+                  name={type.name}
+                  icon={type.icon}
+                  size={14}
+                />
+              }
               label={type.name}
               active={typeId === type.id}
               onClick={() => selectType(type.id)}
               tagColor={typeColor.get(type.id)}
-              trailing={<span className="dim mono">{type.fields.filter(field => !field.retired).length}</span>}
+              trailing={
+                <span className="dim mono">
+                  {type.fields.filter(field => !field.retired).length}
+                </span>
+              }
             />
           ))}
           {archivedTypes.length > 0 && (
@@ -81,7 +99,14 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
               {archivedTypes.map(type => (
                 <TreeRow
                   key={type.id}
-                  icon={<TypeBadge color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'} name={type.name} icon={type.icon} size={14} />}
+                  icon={
+                    <TypeBadge
+                      color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
+                      name={type.name}
+                      icon={type.icon}
+                      size={14}
+                    />
+                  }
                   label={type.name}
                   active={typeId === type.id}
                   onClick={() => selectType(type.id)}
@@ -94,7 +119,9 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
       ) : (
         <div className={styles.scroll}>
           <SidebarGroupLabel>Templates</SidebarGroupLabel>
-          {activeTemplates.length === 0 && <div className={`${styles.emptyState} dim`}>No templates defined.</div>}
+          {activeTemplates.length === 0 && (
+            <div className={`${styles.emptyState} dim`}>No templates defined.</div>
+          )}
           {activeTemplates.map(template => (
             <TreeRow
               key={template.id}
@@ -104,9 +131,20 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
               tagColor={typeColor.get(template.document_type_id)}
               icon={(() => {
                 const type = types.find(item => item.id === template.document_type_id);
-                return type ? <TypeBadge color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'} name={type.name} icon={type.icon} size={14} /> : undefined;
+                return type ? (
+                  <TypeBadge
+                    color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
+                    name={type.name}
+                    icon={type.icon}
+                    size={14}
+                  />
+                ) : undefined;
               })()}
-              trailing={<span className="dim">{types.find(type => type.id === template.document_type_id)?.name ?? 'Unknown'}</span>}
+              trailing={
+                <span className="dim">
+                  {types.find(type => type.id === template.document_type_id)?.name ?? 'Unknown'}
+                </span>
+              }
             />
           ))}
           {archivedTemplates.length > 0 && (
@@ -121,7 +159,16 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
                     active={templateId === template.id}
                     onClick={() => selectTemplate(template.id)}
                     tagColor={type ? typeColor.get(type.id) : undefined}
-                    icon={type ? <TypeBadge color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'} name={type.name} icon={type.icon} size={14} /> : undefined}
+                    icon={
+                      type ? (
+                        <TypeBadge
+                          color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
+                          name={type.name}
+                          icon={type.icon}
+                          size={14}
+                        />
+                      ) : undefined
+                    }
                     trailing={<span className="dim">{type?.name ?? 'Unknown'}</span>}
                   />
                 );

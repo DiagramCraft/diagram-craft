@@ -168,12 +168,20 @@ const copyTypedWorkspaceDocuments = async (
   entityMap: Map<string, string>,
   timestamp: Date
 ) => {
-  const sourceNodes = (await db.project.listAllContentNodes(sourceWorkspace)).filter(node =>
-    ((node.project_id == null || projectMap.has(node.project_id)) && (node.entity_id == null || entityMap.has(node.entity_id)))
+  const sourceNodes = (await db.project.listAllContentNodes(sourceWorkspace)).filter(
+    node =>
+      (node.project_id == null || projectMap.has(node.project_id)) &&
+      (node.entity_id == null || entityMap.has(node.entity_id))
   );
   const sourceNodeById = new Map(sourceNodes.map(node => [node.id, node]));
-  const sourceStates = new Map<string, Awaited<ReturnType<DatabaseAdapter['document']['getDocumentMetadata']>>>();
-  const sourceRevisions = new Map<string, Awaited<ReturnType<DatabaseAdapter['project']['listMarkdownRevisions']>>>();
+  const sourceStates = new Map<
+    string,
+    Awaited<ReturnType<DatabaseAdapter['document']['getDocumentMetadata']>>
+  >();
+  const sourceRevisions = new Map<
+    string,
+    Awaited<ReturnType<DatabaseAdapter['project']['listMarkdownRevisions']>>
+  >();
   const typedNodeIds = new Set<string>();
 
   for (const node of sourceNodes.filter(item => item.type === 'markdown')) {
@@ -181,7 +189,8 @@ const copyTypedWorkspaceDocuments = async (
     const revisions = await db.project.listMarkdownRevisions(sourceWorkspace, node.id);
     sourceStates.set(node.id, state);
     sourceRevisions.set(node.id, revisions);
-    if (state?.document_type_id || revisions.some(revision => revision.document_type_id)) typedNodeIds.add(node.id);
+    if (state?.document_type_id || revisions.some(revision => revision.document_type_id))
+      typedNodeIds.add(node.id);
   }
 
   const nodesToCopy = new Set<string>();
@@ -204,20 +213,22 @@ const copyTypedWorkspaceDocuments = async (
     if (!nodeId) continue;
     const sourceStorageScope = sourceNode.project_id ?? sourceNode.entity_id ?? sourceWorkspace;
     const targetStorageScope = sourceNode.project_id
-      ? projectMap.get(sourceNode.project_id) ?? targetWorkspace
+      ? (projectMap.get(sourceNode.project_id) ?? targetWorkspace)
       : sourceNode.entity_id
-        ? entityMap.get(sourceNode.entity_id) ?? targetWorkspace
+        ? (entityMap.get(sourceNode.entity_id) ?? targetWorkspace)
         : targetWorkspace;
-    const content = sourceNode.type === 'folder' || !storage
-      ? null
-      : await storage.read(sourceWorkspace, sourceStorageScope, sourceNode.id);
-    if (content && storage) await storage.write(targetWorkspace, targetStorageScope, nodeId, content);
+    const content =
+      sourceNode.type === 'folder' || !storage
+        ? null
+        : await storage.read(sourceWorkspace, sourceStorageScope, sourceNode.id);
+    if (content && storage)
+      await storage.write(targetWorkspace, targetStorageScope, nodeId, content);
     await db.project.upsertContentNode({
       id: nodeId,
       workspace: targetWorkspace,
-      project_id: sourceNode.project_id ? projectMap.get(sourceNode.project_id) ?? null : null,
-      entity_id: sourceNode.entity_id ? entityMap.get(sourceNode.entity_id) ?? null : null,
-      parent_id: sourceNode.parent_id ? nodeMap.get(sourceNode.parent_id) ?? null : null,
+      project_id: sourceNode.project_id ? (projectMap.get(sourceNode.project_id) ?? null) : null,
+      entity_id: sourceNode.entity_id ? (entityMap.get(sourceNode.entity_id) ?? null) : null,
+      parent_id: sourceNode.parent_id ? (nodeMap.get(sourceNode.parent_id) ?? null) : null,
       path: sourceNode.path,
       name: sourceNode.name,
       role: sourceNode.role,
@@ -240,7 +251,7 @@ const copyTypedWorkspaceDocuments = async (
     if (!targetNodeId) continue;
     const state = sourceStates.get(nodeId);
     const sourceTypeId = state?.document_type_id ?? null;
-    const targetTypeId = sourceTypeId ? typeMap.get(sourceTypeId) ?? null : null;
+    const targetTypeId = sourceTypeId ? (typeMap.get(sourceTypeId) ?? null) : null;
     if (sourceTypeId && !targetTypeId) continue;
     if (state) {
       const sourceType = sourceTypeId
@@ -253,9 +264,9 @@ const copyTypedWorkspaceDocuments = async (
           const raw = values[field.id];
           const linked = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
           const mapped = linked
-            .map(id => field.type === 'document_link' ? nodeMap.get(id) : entityMap.get(id))
+            .map(id => (field.type === 'document_link' ? nodeMap.get(id) : entityMap.get(id)))
             .filter((id): id is string => !!id);
-          values[field.id] = Array.isArray(raw) ? mapped : mapped[0] ?? null;
+          values[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
         }
       }
       await db.document.upsertDocumentMetadata({
@@ -266,14 +277,19 @@ const copyTypedWorkspaceDocuments = async (
         updated_at: timestamp
       });
       const links = (await db.document.listDocumentLinks(sourceWorkspace, nodeId)).flatMap(link => {
-        const targetId = link.target_type === 'entity' ? entityMap.get(link.target_id) : nodeMap.get(link.target_id);
+        const targetId =
+          link.target_type === 'entity'
+            ? entityMap.get(link.target_id)
+            : nodeMap.get(link.target_id);
         return targetId ? [{ ...link, target_id: targetId }] : [];
       });
       await db.document.replaceDocumentLinks(targetWorkspace, targetNodeId, links);
     }
 
     const revisionMap = new Map<string, string>();
-    for (const revision of [...(sourceRevisions.get(nodeId) ?? [])].sort((a, b) => a.revision_number - b.revision_number)) {
+    for (const revision of [...(sourceRevisions.get(nodeId) ?? [])].sort(
+      (a, b) => a.revision_number - b.revision_number
+    )) {
       const revisionId = randomUUID();
       revisionMap.set(revision.id, revisionId);
       const revisionValues = { ...revision.metadata };
@@ -285,9 +301,9 @@ const copyTypedWorkspaceDocuments = async (
         const raw = revisionValues[field.id];
         const linked = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
         const mapped = linked
-          .map(id => field.type === 'document_link' ? nodeMap.get(id) : entityMap.get(id))
+          .map(id => (field.type === 'document_link' ? nodeMap.get(id) : entityMap.get(id)))
           .filter((id): id is string => !!id);
-        revisionValues[field.id] = Array.isArray(raw) ? mapped : mapped[0] ?? null;
+        revisionValues[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
       }
       await db.project.createMarkdownRevision({
         id: revisionId,
@@ -298,8 +314,12 @@ const copyTypedWorkspaceDocuments = async (
         body: revision.body,
         created_at: revision.created_at,
         created_by: revision.created_by,
-        restored_from_revision_id: revision.restored_from_revision_id ? revisionMap.get(revision.restored_from_revision_id) ?? null : null,
-        document_type_id: revision.document_type_id ? typeMap.get(revision.document_type_id) ?? null : null,
+        restored_from_revision_id: revision.restored_from_revision_id
+          ? (revisionMap.get(revision.restored_from_revision_id) ?? null)
+          : null,
+        document_type_id: revision.document_type_id
+          ? (typeMap.get(revision.document_type_id) ?? null)
+          : null,
         metadata: revisionValues
       });
     }
@@ -452,10 +472,10 @@ export const createWorkspace = async (
                   ...template.values,
                   fields: templateFields,
                   owner: template.values.owner
-                    ? teamMap.get(template.values.owner) ?? undefined
+                    ? (teamMap.get(template.values.owner) ?? undefined)
                     : undefined,
                   lifecycle: template.values.lifecycle
-                    ? lifecycleMap.get(template.values.lifecycle) ?? undefined
+                    ? (lifecycleMap.get(template.values.lifecycle) ?? undefined)
                     : undefined
                 }
               };
@@ -472,7 +492,7 @@ export const createWorkspace = async (
               fields: remappedFields,
               templates,
               default_owner: schema.default_owner
-                ? teamMap.get(schema.default_owner) ?? null
+                ? (teamMap.get(schema.default_owner) ?? null)
                 : null,
               created_at: timestamp,
               updated_at: timestamp
@@ -491,8 +511,15 @@ export const createWorkspace = async (
           const sourceTypes = await db.document.listDocumentTypes(replicate_from, true);
           const typeMap = new Map(sourceTypes.map(type => [type.id, randomUUID()]));
           for (const type of sourceTypes) {
-            await db.document.createDocumentType({ ...type, id: typeMap.get(type.id)!, workspace: row.id, created_at: timestamp, updated_at: timestamp });
-            if (type.archived) await db.document.archiveDocumentType(row.id, typeMap.get(type.id)!, true, timestamp);
+            await db.document.createDocumentType({
+              ...type,
+              id: typeMap.get(type.id)!,
+              workspace: row.id,
+              created_at: timestamp,
+              updated_at: timestamp
+            });
+            if (type.archived)
+              await db.document.archiveDocumentType(row.id, typeMap.get(type.id)!, true, timestamp);
           }
           const projectMap = new Map<string, string>();
           if (includeSet.has('projects')) {
@@ -509,7 +536,7 @@ export const createWorkspace = async (
                 public_id: publicId,
                 name: project.name,
                 description: project.description,
-                owner: project.owner ? teamMap.get(project.owner) ?? null : null,
+                owner: project.owner ? (teamMap.get(project.owner) ?? null) : null,
                 status: project.status,
                 color: project.color,
                 target_date: project.target_date,
@@ -542,7 +569,7 @@ export const createWorkspace = async (
                 const mapped = linked
                   .map(targetId => entityMap.get(targetId))
                   .filter((targetId): targetId is string => !!targetId);
-                data[field.id] = Array.isArray(raw) ? mapped : mapped[0] ?? null;
+                data[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
               }
               await db.catalog.createEntity({
                 ...entity,
@@ -554,10 +581,10 @@ export const createWorkspace = async (
                 ),
                 slug: `${entity.slug}-${id.slice(0, 8)}`,
                 schema_id: schemaId,
-                owner: entity.owner ? teamMap.get(entity.owner) ?? null : null,
-                lifecycle: entity.lifecycle ? lifecycleMap.get(entity.lifecycle) ?? null : null,
+                owner: entity.owner ? (teamMap.get(entity.owner) ?? null) : null,
+                lifecycle: entity.lifecycle ? (lifecycleMap.get(entity.lifecycle) ?? null) : null,
                 target_lifecycle: entity.target_lifecycle
-                  ? lifecycleMap.get(entity.target_lifecycle) ?? null
+                  ? (lifecycleMap.get(entity.target_lifecycle) ?? null)
                   : null,
                 data,
                 created_at: timestamp,
@@ -565,15 +592,38 @@ export const createWorkspace = async (
               });
             }
           }
-          for (const template of await db.document.listDocumentTemplates(replicate_from, undefined, true)) {
-            const projectId = template.project_id == null ? null : projectMap.get(template.project_id);
+          for (const template of await db.document.listDocumentTemplates(
+            replicate_from,
+            undefined,
+            true
+          )) {
+            const projectId =
+              template.project_id == null ? null : projectMap.get(template.project_id);
             if (template.project_id != null && !projectId) continue;
             const documentTypeId = typeMap.get(template.document_type_id);
             if (!documentTypeId) continue;
-            const copiedTemplate = await db.document.createDocumentTemplate({ ...template, id: randomUUID(), workspace: row.id, project_id: projectId ?? null, document_type_id: documentTypeId, created_at: timestamp, updated_at: timestamp });
-            if (template.archived) await db.document.archiveDocumentTemplate(row.id, copiedTemplate.id, true, timestamp);
+            const copiedTemplate = await db.document.createDocumentTemplate({
+              ...template,
+              id: randomUUID(),
+              workspace: row.id,
+              project_id: projectId ?? null,
+              document_type_id: documentTypeId,
+              created_at: timestamp,
+              updated_at: timestamp
+            });
+            if (template.archived)
+              await db.document.archiveDocumentTemplate(row.id, copiedTemplate.id, true, timestamp);
           }
-          await copyTypedWorkspaceDocuments(db, storage, replicate_from, row.id, typeMap, projectMap, entityMap, timestamp);
+          await copyTypedWorkspaceDocuments(
+            db,
+            storage,
+            replicate_from,
+            row.id,
+            typeMap,
+            projectMap,
+            entityMap,
+            timestamp
+          );
         }
       } else {
         await db.workspace.replaceLifecycleStates(

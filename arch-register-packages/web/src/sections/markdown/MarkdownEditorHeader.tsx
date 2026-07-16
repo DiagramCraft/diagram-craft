@@ -94,7 +94,11 @@ export const MarkdownEditorHeader = (props: {
           >
             {isUploadingAttachment ? 'Uploading…' : 'Attach file'}
           </Button>
-          <Button icon={<TbPencil size={13} />} onClick={actions.onEnterEdit} disabled={!isViewMode}>
+          <Button
+            icon={<TbPencil size={13} />}
+            onClick={actions.onEnterEdit}
+            disabled={!isViewMode}
+          >
             Edit
           </Button>
           <DropdownMenu

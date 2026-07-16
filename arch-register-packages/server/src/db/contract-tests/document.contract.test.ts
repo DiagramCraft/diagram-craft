@@ -74,7 +74,9 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       updated_at: new Date()
     });
     expect(updatedType).toMatchObject({ color: 'oklch(0.66 0.16 258)', icon: 'api' });
-    expect((await db.document.listDocumentTemplates(workspace, project.id))[0]?.id).toBe(template.id);
+    expect((await db.document.listDocumentTemplates(workspace, project.id))[0]?.id).toBe(
+      template.id
+    );
 
     const nodeId = randomUUID();
     await db.project.upsertContentNode({
@@ -114,7 +116,11 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       values: { status: 'proposed', affected_entities: [entity.id] }
     });
     expect(await db.document.listDocumentsLinkingEntity(workspace, entity.id)).toEqual([
-      expect.objectContaining({ node_id: nodeId, field_id: 'affected_entities', target_id: entity.id })
+      expect.objectContaining({
+        node_id: nodeId,
+        field_id: 'affected_entities',
+        target_id: entity.id
+      })
     ]);
 
     const revision = await db.project.createMarkdownRevision({

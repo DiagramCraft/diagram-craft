@@ -46,7 +46,17 @@ export const useSaveMarkdownContent = (scope: ContentScope, nodeId: string) => {
   const queryClient = useQueryClient();
   const { workspaceId } = scope;
   return useMutation({
-    mutationFn: ({ body, name, document_type_id, metadata }: { body: string; name?: string; document_type_id?: string | null; metadata?: DocumentMetadata }) =>
+    mutationFn: ({
+      body,
+      name,
+      document_type_id,
+      metadata
+    }: {
+      body: string;
+      name?: string;
+      document_type_id?: string | null;
+      metadata?: DocumentMetadata;
+    }) =>
       orpcClient.projects.saveMarkdownContent({
         params: { workspace: workspaceId, nodeId },
         body: { body, name, document_type_id, metadata }
@@ -59,7 +69,12 @@ export const useMigrateMarkdownContent = (scope: ContentScope, nodeId: string) =
   const queryClient = useQueryClient();
   const { workspaceId } = scope;
   return useMutation({
-    mutationFn: (input: { body: string; name?: string; document_type_id: string | null; metadata: DocumentMetadata }) =>
+    mutationFn: (input: {
+      body: string;
+      name?: string;
+      document_type_id: string | null;
+      metadata: DocumentMetadata;
+    }) =>
       orpcClient.projects.migrateMarkdownContent({
         params: { workspace: workspaceId, nodeId },
         body: input
@@ -72,7 +87,13 @@ export const useSaveNewMarkdownContent = (scope: ContentScope) => {
   const queryClient = useQueryClient();
   const { workspaceId } = scope;
   return useMutation({
-    mutationFn: (input: { name: string; folder?: string; body: string; document_type_id?: string | null; metadata: DocumentMetadata }) =>
+    mutationFn: (input: {
+      name: string;
+      folder?: string;
+      body: string;
+      document_type_id?: string | null;
+      metadata: DocumentMetadata;
+    }) =>
       orpcClient.projects.saveNewMarkdownContent({
         params: { workspace: workspaceId },
         body: {

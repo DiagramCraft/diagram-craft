@@ -38,11 +38,10 @@ export const AddMarkdownDialog = ({
   const [templateId, setTemplateId] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
-  const { data: documentTypes = [], isLoading: documentTypesLoading } = useDocumentTypes(workspaceSlug);
-  const { data: documentTemplates = [], isLoading: documentTemplatesLoading } = useDocumentTemplates(
-    workspaceSlug,
-    projectId ?? null
-  );
+  const { data: documentTypes = [], isLoading: documentTypesLoading } =
+    useDocumentTypes(workspaceSlug);
+  const { data: documentTemplates = [], isLoading: documentTemplatesLoading } =
+    useDocumentTemplates(workspaceSlug, projectId ?? null);
 
   const availableTypes = documentTypes.filter(type => !type.archived);
   const availableTemplates = documentTemplates.filter(template => !template.archived);
@@ -88,7 +87,11 @@ export const AddMarkdownDialog = ({
 
   const handleDocumentTypeChange = (nextTypeId: string) => {
     setDocumentTypeId(nextTypeId);
-    if (templateId && availableTemplates.find(template => template.id === templateId)?.document_type_id !== nextTypeId) {
+    if (
+      templateId &&
+      availableTemplates.find(template => template.id === templateId)?.document_type_id !==
+        nextTypeId
+    ) {
       setTemplateId('');
     }
   };
@@ -122,12 +125,18 @@ export const AddMarkdownDialog = ({
         <FormElement label="Document type">
           <Select.Root
             value={documentTypeId || '__untyped__'}
-            onChange={value => handleDocumentTypeChange(value === '__untyped__' ? '' : (value ?? ''))}
+            onChange={value =>
+              handleDocumentTypeChange(value === '__untyped__' ? '' : (value ?? ''))
+            }
             disabled={documentTypesLoading || isPending}
             style={{ width: '100%' }}
           >
             <Select.Item value="__untyped__">Untyped Markdown</Select.Item>
-            {availableTypes.map(type => <Select.Item key={type.id} value={type.id}>{type.name}</Select.Item>)}
+            {availableTypes.map(type => (
+              <Select.Item key={type.id} value={type.id}>
+                {type.name}
+              </Select.Item>
+            ))}
           </Select.Root>
         </FormElement>
         <FormElement label="Template">
@@ -138,7 +147,11 @@ export const AddMarkdownDialog = ({
             style={{ width: '100%' }}
           >
             <Select.Item value="__blank__">Blank document</Select.Item>
-            {availableTemplates.map(template => <Select.Item key={template.id} value={template.id}>{template.name}</Select.Item>)}
+            {availableTemplates.map(template => (
+              <Select.Item key={template.id} value={template.id}>
+                {template.name}
+              </Select.Item>
+            ))}
           </Select.Root>
         </FormElement>
       </div>

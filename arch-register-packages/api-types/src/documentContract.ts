@@ -165,7 +165,10 @@ export const documentContract = oc.tag('Typed Documents').router({
       .input(
         z.object({
           params: ws,
-          query: z.object({ project_id: z.string().nullable().optional(), include_archived: booleanQuerySchema })
+          query: z.object({
+            project_id: z.string().nullable().optional(),
+            include_archived: booleanQuerySchema
+          })
         })
       )
       .output(z.array(documentTemplateSchema)),

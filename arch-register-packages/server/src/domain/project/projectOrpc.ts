@@ -282,7 +282,8 @@ const entityContentHandlers = {
     }
   ),
   listRelatedContent: projectRouter.projects.listRelatedContent.handler(
-    async ({ input, context }) => listRelatedContent(context.db, input.params.workspace, input.params.entityId, context.event)
+    async ({ input, context }) =>
+      listRelatedContent(context.db, input.params.workspace, input.params.entityId, context.event)
   ),
   listEntityFiles: projectRouter.projects.listEntityFiles.handler(async ({ input, context }) => {
     return await listEntityContentNodes(

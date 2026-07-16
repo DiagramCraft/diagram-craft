@@ -108,5 +108,8 @@ export type DocumentDatabase = {
     nodeId: string,
     links: Omit<DocumentLinkIndexDbResult, 'workspace' | 'node_id'>[]
   ): Promise<void>;
-  listDocumentsLinkingEntity(workspace: string, entityId: string): Promise<DocumentLinkIndexDbResult[]>;
+  listDocumentsLinkingEntity(
+    workspace: string,
+    entityId: string
+  ): Promise<DocumentLinkIndexDbResult[]>;
 };

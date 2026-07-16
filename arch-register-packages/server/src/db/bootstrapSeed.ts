@@ -326,7 +326,8 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
   await db.document.createDocumentType(adr.documentType);
   await db.document.createDocumentTemplate(adr.template);
   const exampleNodeId = randomUUID();
-  const exampleBody = '# Initial architecture decision\n\n## Context\n\nThis is a typed ADR seeded for development.\n\n## Decision drivers\n\n## Considered options\n\n## Decision\n\n## Consequences\n';
+  const exampleBody =
+    '# Initial architecture decision\n\n## Context\n\nThis is a typed ADR seeded for development.\n\n## Decision drivers\n\n## Considered options\n\n## Decision\n\n## Consequences\n';
   await db.project.upsertContentNode({
     id: exampleNodeId,
     workspace: seededWorkspaces.default.id,
@@ -360,7 +361,12 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
     document_type_id: adr.documentType.id,
     metadata: { status: 'Proposed' }
   });
-  await storage.write(seededWorkspaces.default.id, seededWorkspaces.default.id, exampleNodeId, Buffer.from(JSON.stringify({ body: exampleBody }), 'utf8'));
+  await storage.write(
+    seededWorkspaces.default.id,
+    seededWorkspaces.default.id,
+    exampleNodeId,
+    Buffer.from(JSON.stringify({ body: exampleBody }), 'utf8')
+  );
 
   await seedBootstrapUsers(db);
   await seedBootstrapCollections(db);

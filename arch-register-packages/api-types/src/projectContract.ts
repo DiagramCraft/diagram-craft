@@ -1,7 +1,11 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
-import { documentFieldSchema, documentMetadataSchema, documentTypeSchema } from '@arch-register/api-types/documentContract';
+import {
+  documentFieldSchema,
+  documentMetadataSchema,
+  documentTypeSchema
+} from '@arch-register/api-types/documentContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -1016,7 +1020,10 @@ export const projectContract = oc.tag('Projects').router({
           body: z.object({
             body: z.string().describe('Markdown content'),
             name: z.string().optional().describe('Optional new name for the document'),
-            document_type_id: z.string().nullable().describe('New document type identifier, or null to remove the type'),
+            document_type_id: z
+              .string()
+              .nullable()
+              .describe('New document type identifier, or null to remove the type'),
             metadata: documentMetadataSchema.describe('Reviewed structured metadata values')
           })
         })

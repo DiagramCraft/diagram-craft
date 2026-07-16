@@ -75,5 +75,11 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     buildShell
   );
 
-  return [contentRoute, contentFolderRoute, contentDiagramRoute, contentMarkdownRoute, contentMarkdownDraftRoute] as const;
+  return [
+    contentRoute,
+    contentFolderRoute,
+    contentDiagramRoute,
+    contentMarkdownRoute,
+    contentMarkdownDraftRoute
+  ] as const;
 };

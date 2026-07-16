@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import { TbPlus, TbTrash, TbArchive, TbEye, TbGripVertical, TbInfoCircle, TbFileText } from 'react-icons/tb';
+import {
+  TbPlus,
+  TbTrash,
+  TbArchive,
+  TbEye,
+  TbGripVertical,
+  TbInfoCircle,
+  TbFileText
+} from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -91,7 +99,11 @@ export const DocumentSettingsScreen = () => {
   const activeTab = search.tab === 'templates' ? 'templates' : 'types';
 
   const { data: types = [], isLoading: typesLoading } = useDocumentTypes(workspaceSlug, true);
-  const { data: templates = [], isLoading: templatesLoading } = useDocumentTemplates(workspaceSlug, null, true);
+  const { data: templates = [], isLoading: templatesLoading } = useDocumentTemplates(
+    workspaceSlug,
+    null,
+    true
+  );
 
   const typeColor = useMemo(() => {
     const colors = new Map<string, string>();
@@ -99,7 +111,8 @@ export const DocumentSettingsScreen = () => {
     return colors;
   }, [types]);
 
-  if (typesLoading || templatesLoading) return <LoadingState text="Loading document definitions…" size="sm" />;
+  if (typesLoading || templatesLoading)
+    return <LoadingState text="Loading document definitions…" size="sm" />;
 
   return (
     <div className={styles.screen}>
@@ -109,7 +122,13 @@ export const DocumentSettingsScreen = () => {
           types={types}
           typeColor={typeColor}
           selectedId={search.type ?? null}
-          onSelect={id => navigate({ to: '/$workspaceSlug/settings/documents', params: { workspaceSlug }, search: { tab: 'types', type: id } })}
+          onSelect={id =>
+            navigate({
+              to: '/$workspaceSlug/settings/documents',
+              params: { workspaceSlug },
+              search: { tab: 'types', type: id }
+            })
+          }
         />
       ) : (
         <DocumentTemplateEditor
@@ -117,7 +136,13 @@ export const DocumentSettingsScreen = () => {
           templates={templates}
           types={types}
           selectedId={search.template ?? null}
-          onSelect={id => navigate({ to: '/$workspaceSlug/settings/documents', params: { workspaceSlug }, search: { tab: 'templates', template: id } })}
+          onSelect={id =>
+            navigate({
+              to: '/$workspaceSlug/settings/documents',
+              params: { workspaceSlug },
+              search: { tab: 'templates', template: id }
+            })
+          }
         />
       )}
     </div>
@@ -180,7 +205,10 @@ const DocumentTypeEditor = ({
     }
   }, [isNew, selected]);
 
-  const originalFieldIds = useMemo(() => new Set((selected?.fields ?? []).map(field => field.id)), [selected]);
+  const originalFieldIds = useMemo(
+    () => new Set((selected?.fields ?? []).map(field => field.id)),
+    [selected]
+  );
 
   const updateField = (fieldId: string, patch: Partial<DocumentField>) => {
     if (patch.id !== undefined && patch.id !== fieldId) {
@@ -190,7 +218,11 @@ const DocumentTypeEditor = ({
         fieldKeysRef.current.set(patch.id, stableKey);
       }
     }
-    setFields(current => current.map(field => (field.id === fieldId ? ({ ...field, ...patch } as DocumentField) : field)));
+    setFields(current =>
+      current.map(field =>
+        field.id === fieldId ? ({ ...field, ...patch } as DocumentField) : field
+      )
+    );
     setDirty(true);
   };
 
@@ -234,7 +266,11 @@ const DocumentTypeEditor = ({
     setConfirmDelete(false);
     try {
       await deleteType.mutateAsync(selected.id);
-      navigate({ to: '/$workspaceSlug/settings/documents', params: { workspaceSlug }, search: { tab: 'types' } });
+      navigate({
+        to: '/$workspaceSlug/settings/documents',
+        params: { workspaceSlug },
+        search: { tab: 'types' }
+      });
     } catch (cause) {
       setErrorMessage(cause instanceof Error ? cause.message : 'Failed to delete document type');
     }
@@ -247,10 +283,24 @@ const DocumentTypeEditor = ({
           <div className={styles.editorHead}>
             <Title
               breadcrumb={[
-                { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+                {
+                  label: 'Home',
+                  onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+                },
                 { label: 'Settings' }
               ]}
-              icon={<TypeBadge color={color ?? (selected ? typeColor.get(selected.id) : undefined) ?? 'var(--base-fg-dim)'} name={name || 'New document type'} icon={icon} size={26} />}
+              icon={
+                <TypeBadge
+                  color={
+                    color ??
+                    (selected ? typeColor.get(selected.id) : undefined) ??
+                    'var(--base-fg-dim)'
+                  }
+                  name={name || 'New document type'}
+                  icon={icon}
+                  size={26}
+                />
+              }
               title={name || 'New document type'}
               description={description || `${fields.filter(field => !field.retired).length} fields`}
             />
@@ -259,18 +309,33 @@ const DocumentTypeEditor = ({
             {selected?.archived && (
               <div className={styles.banner}>
                 <TbInfoCircle size={12} />
-                Archived — visible on existing documents for history, but not offered when creating new ones.
+                Archived — visible on existing documents for history, but not offered when creating
+                new ones.
               </div>
             )}
 
             <div className={styles.formRow}>
               <div>
                 <div className={styles.formLabel}>Name</div>
-                <TextInput value={name} onChange={value => { setName(value ?? ''); setDirty(true); }} style={{ width: '100%' }} />
+                <TextInput
+                  value={name}
+                  onChange={value => {
+                    setName(value ?? '');
+                    setDirty(true);
+                  }}
+                  style={{ width: '100%' }}
+                />
               </div>
               <div style={{ flex: 2 }}>
                 <div className={styles.formLabel}>Description</div>
-                <TextInput value={description} onChange={value => { setDescription(value ?? ''); setDirty(true); }} style={{ width: '100%' }} />
+                <TextInput
+                  value={description}
+                  onChange={value => {
+                    setDescription(value ?? '');
+                    setDirty(true);
+                  }}
+                  style={{ width: '100%' }}
+                />
               </div>
             </div>
 
@@ -285,7 +350,10 @@ const DocumentTypeEditor = ({
                       className={`${styles.swatch} ${color === preset ? styles.swatchActive : ''}`}
                       style={{ background: preset }}
                       title={preset}
-                      onClick={() => { setColor(preset); setDirty(true); }}
+                      onClick={() => {
+                        setColor(preset);
+                        setDirty(true);
+                      }}
                     />
                   ))}
                 </div>
@@ -301,7 +369,10 @@ const DocumentTypeEditor = ({
                         key={id}
                         className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
                         title={id}
-                        onClick={() => { setIcon(id); setDirty(true); }}
+                        onClick={() => {
+                          setIcon(id);
+                          setDirty(true);
+                        }}
                       >
                         <Icon size={14} />
                       </button>
@@ -313,7 +384,9 @@ const DocumentTypeEditor = ({
 
             <div className={styles.fieldsHead}>
               <div className={styles.sectionLabel}>Fields</div>
-              <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>Add field</Button>
+              <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
+                Add field
+              </Button>
             </div>
 
             {fields.length > 0 ? (
@@ -328,17 +401,25 @@ const DocumentTypeEditor = ({
                   <span />
                 </div>
                 {fields.map(field => (
-                  <DocumentFieldRow key={fieldKeysRef.current.get(field.id) ?? field.id} field={field} onUpdate={patch => updateField(field.id, patch)} onRemove={() => removeField(field)} />
+                  <DocumentFieldRow
+                    key={fieldKeysRef.current.get(field.id) ?? field.id}
+                    field={field}
+                    onUpdate={patch => updateField(field.id, patch)}
+                    onRemove={() => removeField(field)}
+                  />
                 ))}
               </div>
             ) : (
               <div className={styles.fieldsTable}>
-                <div className={styles.fieldEmpty}>No fields defined yet. Click &quot;Add field&quot; to get started.</div>
+                <div className={styles.fieldEmpty}>
+                  No fields defined yet. Click &quot;Add field&quot; to get started.
+                </div>
               </div>
             )}
             <div className={styles.fieldsHint}>
               <TbInfoCircle size={11} />
-              Fields already used by documents keep their ID and value type. Removing a used field retires it instead of deleting it.
+              Fields already used by documents keep their ID and value type. Removing a used field
+              retires it instead of deleting it.
             </div>
 
             <div className={styles.bottomActions}>
@@ -347,11 +428,20 @@ const DocumentTypeEditor = ({
                   <Button
                     variant="secondary"
                     icon={selected.archived ? <TbEye size={13} /> : <TbArchive size={13} />}
-                    onClick={() => void archiveType.mutateAsync({ id: selected.id, archived: !selected.archived })}
+                    onClick={() =>
+                      void archiveType.mutateAsync({
+                        id: selected.id,
+                        archived: !selected.archived
+                      })
+                    }
                   >
                     {selected.archived ? 'Unarchive' : 'Archive'}
                   </Button>
-                  <Button variant="danger" icon={<TbTrash size={13} />} onClick={() => setConfirmDelete(true)}>
+                  <Button
+                    variant="danger"
+                    icon={<TbTrash size={13} />}
+                    onClick={() => setConfirmDelete(true)}
+                  >
                     Delete
                   </Button>
                 </div>
@@ -370,20 +460,41 @@ const DocumentTypeEditor = ({
         <EmptyState
           title="No document type selected"
           subtitle="Select a document type from the sidebar, or create one."
-          action={<Button variant="primary" icon={<TbPlus size={12} />} onClick={() => onSelect(NEW_DOCUMENT_TYPE_ID)}>New document type</Button>}
+          action={
+            <Button
+              variant="primary"
+              icon={<TbPlus size={12} />}
+              onClick={() => onSelect(NEW_DOCUMENT_TYPE_ID)}
+            >
+              New document type
+            </Button>
+          }
         />
       )}
 
       <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete document type?"
-        message={selected ? <>The document type <b>{selected.name}</b> will be permanently deleted.</> : ''}
+        message={
+          selected ? (
+            <>
+              The document type <b>{selected.name}</b> will be permanently deleted.
+            </>
+          ) : (
+            ''
+          )
+        }
         detail="Types used by existing documents can't be deleted — archive them instead."
         confirmLabel="Delete type"
         onConfirm={() => void doDelete()}
         onCancel={() => setConfirmDelete(false)}
       />
-      <ErrorDialog open={errorMessage !== null} title="Something went wrong" message={errorMessage} onClose={() => setErrorMessage(null)} />
+      <ErrorDialog
+        open={errorMessage !== null}
+        title="Something went wrong"
+        message={errorMessage}
+        onClose={() => setErrorMessage(null)}
+      />
     </>
   );
 };
@@ -402,13 +513,22 @@ const DocumentFieldRow = ({
   if (field.retired) {
     return (
       <div className={`${styles.fieldRow} ${styles.fieldRowRetired}`}>
-        <span className={styles.fieldHandle}><TbGripVertical size={14} /></span>
+        <span className={styles.fieldHandle}>
+          <TbGripVertical size={14} />
+        </span>
         <span className={styles.fieldId}>{field.id}</span>
         <span>{field.name}</span>
         <span className="dim">{field.type}</span>
         <span className="dim">—</span>
-        <span><Chip tone="ghost">Retired</Chip></span>
-        <button type="button" className={styles.iconBtn} title="Restore field" onClick={() => onUpdate({ retired: false })}>
+        <span>
+          <Chip tone="ghost">Retired</Chip>
+        </span>
+        <button
+          type="button"
+          className={styles.iconBtn}
+          title="Restore field"
+          onClick={() => onUpdate({ retired: false })}
+        >
           <TbEye size={13} />
         </button>
       </div>
@@ -417,10 +537,15 @@ const DocumentFieldRow = ({
 
   return (
     <div className={styles.fieldRow}>
-      <span className={styles.fieldHandle}><TbGripVertical size={14} /></span>
+      <span className={styles.fieldHandle}>
+        <TbGripVertical size={14} />
+      </span>
       <TextInput
         value={field.id}
-        onChange={value => { setIdUserEdited(true); onUpdate({ id: value ?? field.id }); }}
+        onChange={value => {
+          setIdUserEdited(true);
+          onUpdate({ id: value ?? field.id });
+        }}
         style={{ width: '100%', fontFamily: 'var(--font-mono)' }}
       />
       <TextInput
@@ -438,13 +563,17 @@ const DocumentFieldRow = ({
         style={{ width: '100%' }}
       >
         {FIELD_TYPE_OPTIONS.map(option => (
-          <Select.Item key={option.value} value={option.value}>{option.label}</Select.Item>
+          <Select.Item key={option.value} value={option.value}>
+            {option.label}
+          </Select.Item>
         ))}
       </Select.Root>
       <span className={styles.fieldOptions}>
         {field.type === 'enum' ? (
           <TextInput
-            value={(field.enumOptions ?? []).map(option => `${option.value}:${option.label}`).join(', ')}
+            value={(field.enumOptions ?? [])
+              .map(option => `${option.value}:${option.label}`)
+              .join(', ')}
             placeholder="proposed:Proposed, accepted:Accepted"
             onChange={value =>
               onUpdate({
@@ -454,7 +583,10 @@ const DocumentFieldRow = ({
                   .filter(Boolean)
                   .map(option => {
                     const [enumValue, ...label] = option.split(':');
-                    return { value: enumValue!.trim(), label: label.join(':').trim() || enumValue!.trim() };
+                    return {
+                      value: enumValue!.trim(),
+                      label: label.join(':').trim() || enumValue!.trim()
+                    };
                   })
               })
             }
@@ -465,14 +597,22 @@ const DocumentFieldRow = ({
             <TextInput
               value={field.minCardinality === undefined ? '' : String(field.minCardinality)}
               placeholder="Min"
-              onChange={value => onUpdate({ minCardinality: value === '' || value === undefined ? undefined : Number(value) })}
+              onChange={value =>
+                onUpdate({
+                  minCardinality: value === '' || value === undefined ? undefined : Number(value)
+                })
+              }
               style={{ width: 56 }}
             />
             <span className="dim">–</span>
             <TextInput
               value={field.maxCardinality === undefined ? '' : String(field.maxCardinality)}
               placeholder="Max"
-              onChange={value => onUpdate({ maxCardinality: value === '' || value === undefined ? undefined : Number(value) })}
+              onChange={value =>
+                onUpdate({
+                  maxCardinality: value === '' || value === undefined ? undefined : Number(value)
+                })
+              }
               style={{ width: 56 }}
             />
           </span>
@@ -486,7 +626,9 @@ const DocumentFieldRow = ({
         style={{ width: '100%' }}
       >
         {REQUIREMENT_OPTIONS.map(option => (
-          <Select.Item key={option.value} value={option.value}>{option.label}</Select.Item>
+          <Select.Item key={option.value} value={option.value}>
+            {option.label}
+          </Select.Item>
         ))}
       </Select.Root>
       <button type="button" className={styles.iconBtn} onClick={onRemove}>
@@ -563,7 +705,13 @@ const DocumentTemplateEditor = ({
   const handleSave = async () => {
     if (!dirty || !documentTypeId) return;
     try {
-      const templateBody = { name, body, document_type_id: documentTypeId, metadata_defaults: defaults, project_id: null };
+      const templateBody = {
+        name,
+        body,
+        document_type_id: documentTypeId,
+        metadata_defaults: defaults,
+        project_id: null
+      };
       if (isNew) {
         const created = await createTemplate.mutateAsync(templateBody);
         onSelect(created.id);
@@ -581,7 +729,11 @@ const DocumentTemplateEditor = ({
     setConfirmDelete(false);
     try {
       await deleteTemplate.mutateAsync(selected.id);
-      navigate({ to: '/$workspaceSlug/settings/documents', params: { workspaceSlug }, search: { tab: 'templates' } });
+      navigate({
+        to: '/$workspaceSlug/settings/documents',
+        params: { workspaceSlug },
+        search: { tab: 'templates' }
+      });
     } catch (cause) {
       setErrorMessage(cause instanceof Error ? cause.message : 'Failed to delete template');
     }
@@ -594,10 +746,24 @@ const DocumentTemplateEditor = ({
           <div className={styles.editorHead}>
             <Title
               breadcrumb={[
-                { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+                {
+                  label: 'Home',
+                  onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+                },
                 { label: 'Settings' }
               ]}
-              icon={<TypeBadge color={selectedType ? resolveDocumentTypeColor(selectedType, types.indexOf(selectedType)) : 'var(--base-fg-dim)'} name={selectedType?.name} icon={selectedType?.icon} size={26} />}
+              icon={
+                <TypeBadge
+                  color={
+                    selectedType
+                      ? resolveDocumentTypeColor(selectedType, types.indexOf(selectedType))
+                      : 'var(--base-fg-dim)'
+                  }
+                  name={selectedType?.name}
+                  icon={selectedType?.icon}
+                  size={26}
+                />
+              }
               title={name || 'New template'}
               description={`For ${selectedType ? selectedType.name : 'an unknown type'}${selectedType?.archived ? ' · archived type' : ''}`}
             />
@@ -606,20 +772,48 @@ const DocumentTemplateEditor = ({
             <div className={styles.formRow}>
               <div>
                 <div className={styles.formLabel}>Name</div>
-                <TextInput value={name} onChange={value => { setName(value ?? ''); setDirty(true); }} style={{ width: '100%' }} />
+                <TextInput
+                  value={name}
+                  onChange={value => {
+                    setName(value ?? '');
+                    setDirty(true);
+                  }}
+                  style={{ width: '100%' }}
+                />
               </div>
               <div>
                 <div className={styles.formLabel}>Document type</div>
-                <Select.Root value={documentTypeId} onChange={value => { setDocumentTypeId(value ?? ''); setDirty(true); }} style={{ width: '100%' }}>
-                  {types.filter(type => !type.archived || type.id === documentTypeId).map(type => (
-                    <Select.Item key={type.id} value={type.id}>{type.name}{type.archived ? ' (archived)' : ''}</Select.Item>
-                  ))}
+                <Select.Root
+                  value={documentTypeId}
+                  onChange={value => {
+                    setDocumentTypeId(value ?? '');
+                    setDirty(true);
+                  }}
+                  style={{ width: '100%' }}
+                >
+                  {types
+                    .filter(type => !type.archived || type.id === documentTypeId)
+                    .map(type => (
+                      <Select.Item key={type.id} value={type.id}>
+                        {type.name}
+                        {type.archived ? ' (archived)' : ''}
+                      </Select.Item>
+                    ))}
                 </Select.Root>
               </div>
             </div>
 
             <div className={styles.sectionLabel}>Markdown body</div>
-            <TextArea value={body} onChange={value => { setBody(value ?? ''); setDirty(true); }} rows={10} allowMaximize={false} style={{ width: '100%' }} />
+            <TextArea
+              value={body}
+              onChange={value => {
+                setBody(value ?? '');
+                setDirty(true);
+              }}
+              rows={10}
+              allowMaximize={false}
+              style={{ width: '100%' }}
+            />
 
             <div className={styles.sectionLabel}>Structured metadata defaults</div>
             {selectedType ? (
@@ -627,15 +821,23 @@ const DocumentTemplateEditor = ({
                 {selectedType.fields.filter(field => !field.retired).length === 0 ? (
                   <div className={styles.fieldEmpty}>This document type has no fields.</div>
                 ) : (
-                  selectedType.fields.filter(field => !field.retired).map(field => (
-                    <div key={field.id} className={styles.defaultRow}>
-                      <div className={styles.defaultLabel}>
-                        <span>{field.name}</span>
-                        {field.requirement === 'required' && <span className={styles.requiredDot} title="Required field" />}
+                  selectedType.fields
+                    .filter(field => !field.retired)
+                    .map(field => (
+                      <div key={field.id} className={styles.defaultRow}>
+                        <div className={styles.defaultLabel}>
+                          <span>{field.name}</span>
+                          {field.requirement === 'required' && (
+                            <span className={styles.requiredDot} title="Required field" />
+                          )}
+                        </div>
+                        <TemplateDefaultInput
+                          field={field}
+                          value={defaults[field.id]}
+                          onChange={value => patchDefault(field.id, value)}
+                        />
                       </div>
-                      <TemplateDefaultInput field={field} value={defaults[field.id]} onChange={value => patchDefault(field.id, value)} />
-                    </div>
-                  ))
+                    ))
                 )}
               </div>
             ) : (
@@ -648,11 +850,20 @@ const DocumentTemplateEditor = ({
                   <Button
                     variant="secondary"
                     icon={selected.archived ? <TbEye size={13} /> : <TbArchive size={13} />}
-                    onClick={() => void archiveTemplate.mutateAsync({ id: selected.id, archived: !selected.archived })}
+                    onClick={() =>
+                      void archiveTemplate.mutateAsync({
+                        id: selected.id,
+                        archived: !selected.archived
+                      })
+                    }
                   >
                     {selected.archived ? 'Unarchive' : 'Archive'}
                   </Button>
-                  <Button variant="danger" icon={<TbTrash size={13} />} onClick={() => setConfirmDelete(true)}>
+                  <Button
+                    variant="danger"
+                    icon={<TbTrash size={13} />}
+                    onClick={() => setConfirmDelete(true)}
+                  >
                     Delete
                   </Button>
                 </div>
@@ -660,7 +871,13 @@ const DocumentTemplateEditor = ({
               <Button
                 variant="primary"
                 onClick={() => void handleSave()}
-                disabled={!dirty || !name.trim() || !documentTypeId || createTemplate.isPending || updateTemplate.isPending}
+                disabled={
+                  !dirty ||
+                  !name.trim() ||
+                  !documentTypeId ||
+                  createTemplate.isPending ||
+                  updateTemplate.isPending
+                }
               >
                 {createTemplate.isPending || updateTemplate.isPending ? 'Saving…' : 'Save'}
               </Button>
@@ -672,20 +889,41 @@ const DocumentTemplateEditor = ({
           icon={<TbFileText size={22} />}
           title="No template selected"
           subtitle="Select a template from the sidebar, or create one."
-          action={<Button variant="primary" icon={<TbPlus size={12} />} onClick={() => onSelect(NEW_DOCUMENT_TEMPLATE_ID)}>New template</Button>}
+          action={
+            <Button
+              variant="primary"
+              icon={<TbPlus size={12} />}
+              onClick={() => onSelect(NEW_DOCUMENT_TEMPLATE_ID)}
+            >
+              New template
+            </Button>
+          }
         />
       )}
 
       <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete template?"
-        message={selected ? <>The template <b>{selected.name}</b> will be permanently deleted.</> : ''}
+        message={
+          selected ? (
+            <>
+              The template <b>{selected.name}</b> will be permanently deleted.
+            </>
+          ) : (
+            ''
+          )
+        }
         detail="Templates used to create documents can't be deleted — archive them instead."
         confirmLabel="Delete template"
         onConfirm={() => void doDelete()}
         onCancel={() => setConfirmDelete(false)}
       />
-      <ErrorDialog open={errorMessage !== null} title="Something went wrong" message={errorMessage} onClose={() => setErrorMessage(null)} />
+      <ErrorDialog
+        open={errorMessage !== null}
+        title="Something went wrong"
+        message={errorMessage}
+        onClose={() => setErrorMessage(null)}
+      />
     </>
   );
 };
@@ -701,9 +939,16 @@ const TemplateDefaultInput = ({
 }) => {
   if (field.type === 'enum') {
     return (
-      <Select.Root value={typeof value === 'string' ? value : ''} onChange={v => onChange(v ?? undefined)} placeholder="— none —" style={{ width: '100%' }}>
+      <Select.Root
+        value={typeof value === 'string' ? value : ''}
+        onChange={v => onChange(v ?? undefined)}
+        placeholder="— none —"
+        style={{ width: '100%' }}
+      >
         {(field.enumOptions ?? []).map(option => (
-          <Select.Item key={option.value} value={option.value}>{option.label}</Select.Item>
+          <Select.Item key={option.value} value={option.value}>
+            {option.label}
+          </Select.Item>
         ))}
       </Select.Root>
     );
@@ -722,7 +967,13 @@ const TemplateDefaultInput = ({
     );
   }
   if (field.type === 'date') {
-    return <input type="date" value={typeof value === 'string' ? value : ''} onChange={event => onChange(event.target.value || undefined)} />;
+    return (
+      <input
+        type="date"
+        value={typeof value === 'string' ? value : ''}
+        onChange={event => onChange(event.target.value || undefined)}
+      />
+    );
   }
   if (field.type === 'number') {
     return (
@@ -739,7 +990,14 @@ const TemplateDefaultInput = ({
       <TextInput
         value={links.join(', ')}
         placeholder="IDs separated by commas"
-        onChange={v => onChange((v ?? '').split(',').map(item => item.trim()).filter(Boolean))}
+        onChange={v =>
+          onChange(
+            (v ?? '')
+              .split(',')
+              .map(item => item.trim())
+              .filter(Boolean)
+          )
+        }
         style={{ width: '100%' }}
       />
     );

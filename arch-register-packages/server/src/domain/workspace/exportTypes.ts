@@ -2,7 +2,13 @@
 
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 
-export type ExportDataType = 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes' | 'documents';
+export type ExportDataType =
+  | 'config'
+  | 'schemas'
+  | 'entities'
+  | 'projects'
+  | 'content_nodes'
+  | 'documents';
 
 export type ExportManifest = {
   version: string;
@@ -154,7 +160,12 @@ export type ExportDocumentData = {
     node_id: string;
     document_type_id: string | null;
     values: DocumentMetadata;
-    links: Array<{ field_id: string; target_type: 'entity' | 'document'; target_id: string; position: number }>;
+    links: Array<{
+      field_id: string;
+      target_type: 'entity' | 'document';
+      target_id: string;
+      position: number;
+    }>;
   }>;
   revisions: Array<{
     id: string;

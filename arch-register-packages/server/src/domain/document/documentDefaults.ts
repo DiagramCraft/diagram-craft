@@ -15,10 +15,42 @@ export const buildDefaultAdrDocuments = (workspace: string, now: Date) => {
     color: AR_COLOR_PURPLE,
     icon: 'clipboard',
     fields: [
-      { id: 'status', name: 'Status', type: 'enum', requirement: 'required', enumOptions: [{ value: 'Proposed', label: 'Proposed' }, { value: 'Accepted', label: 'Accepted' }, { value: 'Superseded', label: 'Superseded' }, { value: 'Deprecated', label: 'Deprecated' }], retired: false },
-      { id: 'decision_date', name: 'Decision date', type: 'date', requirement: 'expected', retired: false },
-      { id: 'affected_entities', name: 'Affected entities', type: 'entity_link', requirement: 'optional', minCardinality: 0, retired: false },
-      { id: 'supersedes', name: 'Supersedes', type: 'document_link', requirement: 'optional', minCardinality: 0, retired: false }
+      {
+        id: 'status',
+        name: 'Status',
+        type: 'enum',
+        requirement: 'required',
+        enumOptions: [
+          { value: 'Proposed', label: 'Proposed' },
+          { value: 'Accepted', label: 'Accepted' },
+          { value: 'Superseded', label: 'Superseded' },
+          { value: 'Deprecated', label: 'Deprecated' }
+        ],
+        retired: false
+      },
+      {
+        id: 'decision_date',
+        name: 'Decision date',
+        type: 'date',
+        requirement: 'expected',
+        retired: false
+      },
+      {
+        id: 'affected_entities',
+        name: 'Affected entities',
+        type: 'entity_link',
+        requirement: 'optional',
+        minCardinality: 0,
+        retired: false
+      },
+      {
+        id: 'supersedes',
+        name: 'Supersedes',
+        type: 'document_link',
+        requirement: 'optional',
+        minCardinality: 0,
+        retired: false
+      }
     ],
     created_at: now,
     updated_at: now

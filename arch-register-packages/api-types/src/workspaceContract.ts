@@ -111,7 +111,11 @@ const importParseResponseSchema = z.object({
         .optional()
         .describe('Content node summary'),
       documents: z
-        .object({ count: z.number().int(), templates: z.number().int(), revisions: z.number().int() })
+        .object({
+          count: z.number().int(),
+          templates: z.number().int(),
+          revisions: z.number().int()
+        })
         .optional()
         .describe('Typed document summary')
     })

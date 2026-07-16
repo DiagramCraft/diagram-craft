@@ -357,16 +357,51 @@ const exportDocuments = async (
   const revisions = [] as ExportDocumentData['revisions'];
   for (const node of includedNodes.filter(item => item.type === 'markdown')) {
     const state = await db.document.getDocumentMetadata(workspace, node.id);
-    if (state) metadata.push({ node_id: node.id, document_type_id: state.document_type_id, values: state.values, links: (await db.document.listDocumentLinks(workspace, node.id)).map(link => ({ field_id: link.field_id, target_type: link.target_type, target_id: link.target_id, position: link.position })) });
+    if (state)
+      metadata.push({
+        node_id: node.id,
+        document_type_id: state.document_type_id,
+        values: state.values,
+        links: (await db.document.listDocumentLinks(workspace, node.id)).map(link => ({
+          field_id: link.field_id,
+          target_type: link.target_type,
+          target_id: link.target_id,
+          position: link.position
+        }))
+      });
     for (const revision of await db.project.listMarkdownRevisions(workspace, node.id)) {
-      revisions.push({ id: revision.id, node_id: revision.node_id, revision_number: revision.revision_number, title: revision.title, body: revision.body, created_at: revision.created_at.toISOString(), created_by: revision.created_by, restored_from_revision_id: revision.restored_from_revision_id, document_type_id: revision.document_type_id, metadata: revision.metadata });
+      revisions.push({
+        id: revision.id,
+        node_id: revision.node_id,
+        revision_number: revision.revision_number,
+        title: revision.title,
+        body: revision.body,
+        created_at: revision.created_at.toISOString(),
+        created_by: revision.created_by,
+        restored_from_revision_id: revision.restored_from_revision_id,
+        document_type_id: revision.document_type_id,
+        metadata: revision.metadata
+      });
     }
   }
   return {
-    types: (await db.document.listDocumentTypes(workspace, true)).map(type => ({ ...type, created_at: type.created_at.toISOString(), updated_at: type.updated_at.toISOString() })),
+    types: (await db.document.listDocumentTypes(workspace, true)).map(type => ({
+      ...type,
+      created_at: type.created_at.toISOString(),
+      updated_at: type.updated_at.toISOString()
+    })),
     templates: (await db.document.listDocumentTemplates(workspace, undefined, true))
-      .filter(template => !projectIds?.length || template.project_id == null || projectIds.includes(template.project_id))
-      .map(template => ({ ...template, created_at: template.created_at.toISOString(), updated_at: template.updated_at.toISOString() })),
+      .filter(
+        template =>
+          !projectIds?.length ||
+          template.project_id == null ||
+          projectIds.includes(template.project_id)
+      )
+      .map(template => ({
+        ...template,
+        created_at: template.created_at.toISOString(),
+        updated_at: template.updated_at.toISOString()
+      })),
     metadata,
     revisions
   };
