@@ -231,6 +231,8 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
   }
   async deleteDocumentMetadata(workspace: string, nodeId: string) {
     await this
+      .sql`DELETE FROM document_link_index WHERE workspace = ${workspace} AND node_id = ${nodeId}`;
+    await this
       .sql`DELETE FROM content_node_document WHERE workspace = ${workspace} AND node_id = ${nodeId}`;
   }
   async listDocumentLinks(workspace: string, nodeId: string) {

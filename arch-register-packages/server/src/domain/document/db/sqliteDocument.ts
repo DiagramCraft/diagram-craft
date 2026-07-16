@@ -288,6 +288,10 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
   }
 
   async deleteDocumentMetadata(workspace: string, nodeId: string) {
+    this.run('DELETE FROM document_link_index WHERE workspace = ? AND node_id = ?', [
+      workspace,
+      nodeId
+    ]);
     this.run('DELETE FROM content_node_document WHERE workspace = ? AND node_id = ?', [
       workspace,
       nodeId

@@ -20,7 +20,7 @@ test.describe('settings section', () => {
     await homePage.expectLoaded(defaultWorkspace.name);
     await homePage.workspaceShell.topBar.hamburgerButton().click();
     await page.getByRole('menuitem', { name: 'Workspace settings', exact: true }).click();
-    await page.getByText('Schemas', { exact: true }).click();
+    await page.getByText('Entity Types', { exact: true }).click();
     await dataModelPage.expectLoaded();
   });
 });

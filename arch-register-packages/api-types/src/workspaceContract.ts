@@ -114,7 +114,8 @@ const importParseResponseSchema = z.object({
         .object({
           count: z.number().int(),
           templates: z.number().int(),
-          revisions: z.number().int()
+          revisions: z.number().int(),
+          conflicts: z.number().int()
         })
         .optional()
         .describe('Typed document summary')

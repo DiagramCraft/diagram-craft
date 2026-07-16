@@ -123,36 +123,44 @@ const getDocumentState = async (db: DatabaseAdapter, ws: string, node: ContentNo
   };
 };
 
-const resolveDocumentLinks = async (
+const resolveDocumentMetadata = async (
   db: DatabaseAdapter,
   ws: string,
   fields: Parameters<typeof documentLinksFromMetadata>[0],
   metadata: DocumentMetadata,
   status: 400 | 409 = 400
 ) => {
-  const links = documentLinksFromMetadata(fields, metadata);
-  return Promise.all(
-    links.map(async link => {
-      if (link.target_type === 'entity') {
-        const entity = await db.catalog.getEntity(ws, link.target_id);
-        httpAssert.present(entity, {
+  const values = { ...metadata };
+  for (const field of fields) {
+    if (field.type !== 'entity_link' && field.type !== 'document_link') continue;
+    const raw = metadata[field.id];
+    const targetIds = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
+    const resolvedIds = await Promise.all(
+      targetIds.map(async targetId => {
+        if (field.type === 'entity_link') {
+          const entity = await db.catalog.getEntity(ws, targetId);
+          httpAssert.present(entity, {
+            status,
+            message: `Linked entity '${targetId}' was not found`
+          });
+          return entity.id;
+        }
+        const target = await db.project.getAnyContentNodeById(ws, targetId);
+        httpAssert.present(target, {
           status,
-          message: `Linked entity '${link.target_id}' was not found`
+          message: `Linked document '${targetId}' was not found`
         });
-        return { ...link, target_id: entity.id };
-      }
-      const target = await db.project.getAnyContentNodeById(ws, link.target_id);
-      httpAssert.present(target, {
-        status,
-        message: `Linked document '${link.target_id}' was not found`
-      });
-      httpAssert.true(isMarkdownNode(target), {
-        status,
-        message: `Linked document '${link.target_id}' is not Markdown`
-      });
-      return link;
-    })
-  );
+        httpAssert.true(isMarkdownNode(target), {
+          status,
+          message: `Linked document '${targetId}' is not Markdown`
+        });
+        return target.id;
+      })
+    );
+    if (Array.isArray(raw)) values[field.id] = resolvedIds;
+    else if (typeof raw === 'string') values[field.id] = resolvedIds[0] ?? null;
+  }
+  return { values, links: documentLinksFromMetadata(fields, values) };
 };
 
 const getAttachmentContainerPath = (markdownPath: string) =>
@@ -413,7 +421,10 @@ export const saveNewMarkdownContent = async (
           message: `Archived document type '${documentType.id}' cannot be selected for a new document`
         });
       }
-      if (documentType) assertDocumentMetadataValid(documentType.fields, input.metadata);
+      const resolvedMetadata = documentType
+        ? await resolveDocumentMetadata(db, ws, documentType.fields, input.metadata)
+        : { values: input.metadata, links: [] };
+      if (documentType) assertDocumentMetadataValid(documentType.fields, resolvedMetadata.values);
       const nodeId = randomUUID();
       const timestamp = new Date();
       const content = Buffer.from(JSON.stringify({ body: input.body }), 'utf8');
@@ -450,16 +461,10 @@ export const saveNewMarkdownContent = async (
               workspace: ws,
               node_id: nodeId,
               document_type_id: input.document_type_id ?? null,
-              values: input.metadata,
+              values: resolvedMetadata.values,
               updated_at: timestamp
             });
-            await tx.document.replaceDocumentLinks(
-              ws,
-              nodeId,
-              documentType
-                ? await resolveDocumentLinks(tx, ws, documentType.fields, input.metadata)
-                : []
-            );
+            await tx.document.replaceDocumentLinks(ws, nodeId, resolvedMetadata.links);
           }
           await createContentNodeRevision(
             tx,
@@ -471,7 +476,7 @@ export const saveNewMarkdownContent = async (
             timestamp,
             null,
             input.document_type_id,
-            input.metadata,
+            resolvedMetadata.values,
             tx
           );
         },
@@ -872,10 +877,14 @@ export const saveMarkdownContent = async (
       const currentDocument = await getDocumentState(db, ws, node);
       const nextDocumentTypeId =
         documentTypeId === undefined ? currentDocument.documentTypeId : documentTypeId;
-      const nextMetadata = metadata ?? currentDocument.metadata;
+      const rawNextMetadata = metadata ?? currentDocument.metadata;
       const nextDocumentType = nextDocumentTypeId
         ? await db.document.getDocumentType(ws, nextDocumentTypeId)
         : null;
+      const resolvedMetadata = nextDocumentType
+        ? await resolveDocumentMetadata(db, ws, nextDocumentType.fields, rawNextMetadata)
+        : { values: rawNextMetadata, links: [] };
+      const nextMetadata = resolvedMetadata.values;
       const typeChanged = currentDocument.documentTypeId !== (nextDocumentTypeId ?? null);
       httpAssert.true(!typeChanged || allowTypeMigration, {
         status: 409,
@@ -961,13 +970,7 @@ export const saveMarkdownContent = async (
               values: nextMetadata,
               updated_at: timestamp
             });
-            await tx.document.replaceDocumentLinks(
-              ws,
-              node.id,
-              nextDocumentType
-                ? await resolveDocumentLinks(tx, ws, nextDocumentType.fields, nextMetadata)
-                : []
-            );
+            await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
           } else {
             await tx.document.deleteDocumentMetadata(ws, node.id);
           }
@@ -1183,19 +1186,20 @@ export const restoreMarkdownRevision = async (
       const restoredType = revision.document_type_id
         ? await db.document.getDocumentType(ws, revision.document_type_id)
         : null;
+      const resolvedMetadata = restoredType
+        ? await resolveDocumentMetadata(db, ws, restoredType.fields, revision.metadata, 409)
+        : { values: revision.metadata, links: [] };
       if (revision.document_type_id) {
         httpAssert.present(restoredType, {
           status: 409,
           message: 'This revision references an unavailable document type'
         });
-        const validation = validateDocumentMetadata(restoredType.fields, revision.metadata);
+        const validation = validateDocumentMetadata(restoredType.fields, resolvedMetadata.values);
         httpAssert.true(validation.errors.length === 0, {
           status: 409,
           message: `Revision requires metadata review: ${validation.errors.join('; ')}`
         });
       }
-      const restoredFields = restoredType?.fields ?? [];
-
       const content = Buffer.from(JSON.stringify({ body: revision.body }), 'utf8');
       const timestamp = new Date();
       const nextName = revision.title?.trim() ? revision.title.trim() : node.name;
@@ -1239,14 +1243,10 @@ export const restoreMarkdownRevision = async (
               workspace: ws,
               node_id: node.id,
               document_type_id: revision.document_type_id,
-              values: revision.metadata,
+              values: resolvedMetadata.values,
               updated_at: timestamp
             });
-            await tx.document.replaceDocumentLinks(
-              ws,
-              node.id,
-              await resolveDocumentLinks(tx, ws, restoredFields, revision.metadata, 409)
-            );
+            await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
           } else {
             await tx.document.deleteDocumentMetadata(ws, node.id);
           }
@@ -1260,7 +1260,7 @@ export const restoreMarkdownRevision = async (
             timestamp,
             revision.id,
             revision.document_type_id,
-            revision.metadata,
+            resolvedMetadata.values,
             tx
           );
         },

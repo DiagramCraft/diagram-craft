@@ -38,7 +38,8 @@
       "!**/*.png",
       "!**/eslintrc.cjs",
       "!**/.storybook",
-      "!arch-register-packages/e2e/test-results/**",
+      "!arch-register-packages/e2e/test-results",
+      "!arch-register-packages/e2e/.auth",
       "!.*",
       "!arch-register-packages/server/openapi.json"
     ]

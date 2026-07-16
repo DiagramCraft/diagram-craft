@@ -413,6 +413,11 @@ export const MarkdownPropertiesPanel = ({
   const [collapsed, setCollapsed] = useState(false);
   const activeFields = fields.filter(field => !field.retired);
   const retiredFields = fields.filter(field => field.retired && metadata[field.id] !== undefined);
+  const hasMetadata = Object.keys(metadata).length > 0;
+  const fieldsToRender =
+    documentTypeId == null
+      ? fields.filter(field => metadata[field.id] !== undefined)
+      : activeFields;
   const knownFieldIds = new Set(fields.map(field => field.id));
   const unreviewedMetadata = Object.entries(metadata).filter(
     ([fieldId]) => !knownFieldIds.has(fieldId)
@@ -482,16 +487,18 @@ export const MarkdownPropertiesPanel = ({
             </div>
           </div>
 
-          {documentTypeId == null ? (
+          {documentTypeId == null && !hasMetadata ? (
             <div className="dim" style={{ fontSize: 11, padding: '6px 0' }}>
               This is a legacy untyped Markdown document.
             </div>
-          ) : activeFields.length === 0 ? (
+          ) : fieldsToRender.length === 0 ? (
             <div className="dim" style={{ fontSize: 11, padding: '6px 0' }}>
-              This document type has no editable fields.
+              {documentTypeId == null
+                ? 'Remove the remaining metadata values before removing the document type.'
+                : 'This document type has no editable fields.'}
             </div>
           ) : (
-            activeFields.map(field => {
+            fieldsToRender.map(field => {
               const value = fieldValue(metadata, field);
               const required = field.requirement === 'required';
               const error = showErrors ? errors[field.id] : undefined;
@@ -518,6 +525,12 @@ export const MarkdownPropertiesPanel = ({
                 </div>
               );
             })
+          )}
+
+          {documentTypeId == null && hasMetadata && (
+            <div className="dim" style={{ fontSize: 11, padding: '6px 0' }}>
+              Remove these metadata values before removing the document type.
+            </div>
           )}
 
           {retiredFields.length > 0 && (

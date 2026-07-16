@@ -261,6 +261,7 @@ export type ImportParseResult = {
       count: number;
       templates: number;
       revisions: number;
+      conflicts: number;
     };
   };
   conflicts: ImportConflict[];

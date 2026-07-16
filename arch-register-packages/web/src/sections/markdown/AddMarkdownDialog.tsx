@@ -40,8 +40,16 @@ export const AddMarkdownDialog = ({
   const nameRef = useRef<HTMLInputElement>(null);
   const { data: documentTypes = [], isLoading: documentTypesLoading } =
     useDocumentTypes(workspaceSlug);
-  const { data: documentTemplates = [], isLoading: documentTemplatesLoading } =
-    useDocumentTemplates(workspaceSlug, projectId ?? null);
+  const { data: workspaceTemplates = [], isLoading: workspaceTemplatesLoading } =
+    useDocumentTemplates(workspaceSlug, null);
+  const { data: projectTemplates = [], isLoading: projectTemplatesLoading } = useDocumentTemplates(
+    workspaceSlug,
+    projectId ?? null
+  );
+  const documentTemplates = projectId
+    ? [...workspaceTemplates, ...projectTemplates]
+    : workspaceTemplates;
+  const documentTemplatesLoading = workspaceTemplatesLoading || projectTemplatesLoading;
 
   const availableTypes = documentTypes.filter(type => !type.archived);
   const availableTemplates = documentTemplates.filter(template => !template.archived);

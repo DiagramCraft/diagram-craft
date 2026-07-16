@@ -123,6 +123,9 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       })
     ]);
 
+    await db.document.deleteDocumentMetadata(workspace, nodeId);
+    expect(await db.document.listDocumentsLinkingEntity(workspace, entity.id)).toEqual([]);
+
     const revision = await db.project.createMarkdownRevision({
       id: randomUUID(),
       workspace,

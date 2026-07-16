@@ -43,6 +43,7 @@ const sidebars: SidebarsConfig = {
         'admin/overview',
         'admin/workspace-settings',
         'admin/schemas-model-overview',
+        'admin/document-types-templates',
         'admin/teams-members',
         'admin/roles-permissions',
         'admin/ai-configuration',
