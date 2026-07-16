@@ -37,7 +37,8 @@ export const EntityRelatedContentTab = ({
     >();
     for (const item of data) {
       const typeName = item.document_type_name ?? 'Untyped Markdown';
-      const key = `${typeName} · ${item.field_name}`;
+      const fieldName = item.field_inverse_name ?? item.field_name;
+      const key = `${typeName} · ${fieldName}`;
       const existing = grouped.get(key);
       if (existing) existing.items.push(item);
       else
@@ -45,7 +46,7 @@ export const EntityRelatedContentTab = ({
           typeName,
           typeColor: item.document_type_color,
           typeIcon: item.document_type_icon,
-          fieldName: item.field_name,
+          fieldName,
           items: [item]
         });
     }

@@ -319,6 +319,24 @@ test('workspace copy preserves typed documents, links, templates, and entity con
     ])
   );
 
+  const copiedEntityDocument = copiedEntityFiles.rootFiles.find(
+    file => file.name === entityDocument.name
+  );
+  expect(copiedEntityDocument).toBeDefined();
+  const backlinks = await orpc.projects.listDocumentBacklinks({
+    params: { workspace: copiedWorkspace.url_slug, nodeId: copiedEntityDocument!.id }
+  });
+  expect(backlinks).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        document_type_id: copiedType?.id,
+        document_type_name: copiedType?.name,
+        field_id: 'related_document',
+        file: expect.objectContaining({ id: copiedProjectDocument!.id })
+      })
+    ])
+  );
+
   const exportResponse = await orpc.workspaces.export({
     params: { workspace: source.url_slug },
     body: {

@@ -165,8 +165,11 @@ const relatedDocumentSchema = z.object({
   document_type_color: z.string().nullable(),
   document_type_icon: z.string().nullable(),
   field_id: z.string(),
-  field_name: z.string()
+  field_name: z.string(),
+  field_inverse_name: z.string().nullable()
 });
+
+const documentBacklinkSchema = relatedDocumentSchema;
 
 const documentListItemSchema = z.object({
   file: projectFileSchema,
@@ -1170,6 +1173,18 @@ export const projectContract = oc.tag('Projects').router({
       })
       .input(z.object({ params: ws.extend({ entityId: z.string() }) }))
       .output(z.array(relatedDocumentSchema)),
+    listDocumentBacklinks: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/documents/{nodeId}/backlinks',
+        inputStructure: 'detailed',
+        summary: 'List document backlinks',
+        description:
+          'Lists accessible markdown documents whose metadata links to this document, via entity_link or document_link fields.',
+        tags: ['Projects']
+      })
+      .input(z.object({ params: ws.extend({ nodeId: z.string() }) }))
+      .output(z.array(documentBacklinkSchema)),
     listDocuments: oc
       .route({
         method: 'GET',
@@ -1197,3 +1212,5 @@ export type ProjectEntity = z.infer<typeof projectEntitySchema>;
 export type EntityProject = z.infer<typeof entityProjectSchema>;
 export type DiagramEntityFile = z.infer<typeof diagramEntityFileSchema>;
 export type DocumentListItem = z.infer<typeof documentListItemSchema>;
+export type RelatedDocument = z.infer<typeof relatedDocumentSchema>;
+export type DocumentBacklink = z.infer<typeof documentBacklinkSchema>;

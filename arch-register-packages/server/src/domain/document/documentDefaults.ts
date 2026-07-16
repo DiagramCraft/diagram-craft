@@ -49,6 +49,7 @@ export const buildDefaultAdrDocuments = (workspace: string, now: Date) => {
         type: 'document_link',
         requirement: 'optional',
         minCardinality: 0,
+        inverseName: 'Superseded by',
         retired: false
       }
     ],

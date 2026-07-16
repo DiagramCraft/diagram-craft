@@ -812,6 +812,7 @@ export const MarkdownEditorScreen = () => {
               workspaceId={workspaceSlug}
               nodeId={nodeId}
               showDiscussion={!isDraft}
+              showBacklinks={!isDraft}
               attachments={{
                 items: attachments,
                 onOpen: handleOpenAttachment,

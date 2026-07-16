@@ -1098,6 +1098,7 @@ export const listRelatedContent = async (
         document_type_icon: string | null;
         field_id: string;
         field_name: string;
+        field_inverse_name: string | null;
       }> = [];
       const seen = new Set<string>();
       for (const link of links) {
@@ -1121,7 +1122,77 @@ export const listRelatedContent = async (
           document_type_color: state.documentType?.color ?? null,
           document_type_icon: state.documentType?.icon ?? null,
           field_id: link.field_id,
-          field_name: field?.name ?? link.field_id
+          field_name: field?.name ?? link.field_id,
+          field_inverse_name: field?.inverseName ?? null
+        });
+      }
+      return result;
+    }
+  );
+
+// Documents whose entity_link/document_link metadata points at this document.
+// Mirrors listRelatedContent's entity-reverse-lookup, but for a document target;
+// see #2109. Silently drops any source document the current user cannot read,
+// so an inaccessible document can never be revealed via a backlink, count, or label.
+export const listDocumentBacklinks = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  nodeId: string,
+  event: AuthenticatedEvent
+) =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to retrieve document backlinks', dbErrorMessages: projectDbErrorMessages },
+    async ({ ws, authCtx }) => {
+      const targetNode = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(targetNode, {
+        status: 404,
+        message: `Markdown document '${nodeId}' not found`
+      });
+      httpAssert.true(isMarkdownNode(targetNode), {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, targetNode, 'read');
+
+      const links = await db.document.listDocumentsLinkingDocument(ws, targetNode.id);
+      const result: Array<{
+        file: ProjectFile;
+        scope: 'project' | 'entity' | 'workspace';
+        document_type_id: string | null;
+        document_type_name: string | null;
+        document_type_color: string | null;
+        document_type_icon: string | null;
+        field_id: string;
+        field_name: string;
+        field_inverse_name: string | null;
+      }> = [];
+      const seen = new Set<string>();
+      for (const link of links) {
+        const node = await db.project.getAnyContentNodeById(ws, link.node_id);
+        if (!node || !isMarkdownNode(node)) continue;
+        try {
+          await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+        } catch {
+          continue;
+        }
+        const state = await getDocumentState(db, ws, node);
+        const field = state.documentType?.fields.find(item => item.id === link.field_id);
+        const key = `${node.id}:${link.field_id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        result.push({
+          file: toApiProjectFile(node),
+          scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
+          document_type_id: state.documentTypeId,
+          document_type_name: state.documentType?.name ?? null,
+          document_type_color: state.documentType?.color ?? null,
+          document_type_icon: state.documentType?.icon ?? null,
+          field_id: link.field_id,
+          field_name: field?.name ?? link.field_id,
+          field_inverse_name: field?.inverseName ?? null
         });
       }
       return result;

@@ -29,6 +29,8 @@ export const documentKeys = {
     ['document-templates', workspaceId, projectId ?? 'workspace', includeArchived] as const,
   related: (workspaceId: string, entityId: string) =>
     ['related-content', workspaceId, entityId] as const,
+  backlinks: (workspaceId: string, nodeId: string) =>
+    ['document-backlinks', workspaceId, nodeId] as const,
   list: (workspaceId: string, options: DocumentListOptions = {}) =>
     ['documents', workspaceId, options] as const
 };
@@ -74,6 +76,14 @@ export const useRelatedDocumentContent = (workspaceId: string, entityId: string)
     queryFn: () =>
       orpcClient.projects.listRelatedContent({ params: { workspace: workspaceId, entityId } }),
     enabled: !!workspaceId && !!entityId
+  });
+
+export const useDocumentBacklinks = (workspaceId: string, nodeId: string) =>
+  useQuery({
+    queryKey: documentKeys.backlinks(workspaceId, nodeId),
+    queryFn: () =>
+      orpcClient.projects.listDocumentBacklinks({ params: { workspace: workspaceId, nodeId } }),
+    enabled: !!workspaceId && !!nodeId
   });
 
 export const useDocumentList = (
