@@ -80,11 +80,7 @@ const DocumentLink = ({ documentId }: { documentId: string }) => {
       : workspaceMarkdownRoute(workspaceSlug, document.id, { mode: 'preview' });
 
   return (
-    <Link
-      {...route}
-      className={styles.documentLink}
-      onClick={event => event.stopPropagation()}
-    >
+    <Link {...route} className={styles.documentLink} onClick={event => event.stopPropagation()}>
       {document.name}
     </Link>
   );
@@ -449,7 +445,11 @@ export const MarkdownPropertiesPanel = ({
           />
         )}
         <span className={styles.title}>Properties</span>
-        {documentType && <span className="dim" style={{ fontSize: 11 }}>{documentType.name}</span>}
+        {documentType && (
+          <span className="dim" style={{ fontSize: 11, marginTop: '2px' }}>
+            {documentType.name}
+          </span>
+        )}
         <div style={{ flex: 1 }} />
         {showErrors && errorCount > 0 && (
           <span className={styles.errorPill}>
