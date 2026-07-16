@@ -62,11 +62,10 @@ export const MarkdownDraftScreen = () => {
     projectId,
     entityId
   });
-  const { data: documentTypes = [], isLoading: documentTypesLoading } = useDocumentTypes(workspaceSlug);
-  const { data: workspaceTemplates = [], isLoading: workspaceTemplatesLoading } = useDocumentTemplates(
-    workspaceSlug,
-    null
-  );
+  const { data: documentTypes = [], isLoading: documentTypesLoading } =
+    useDocumentTypes(workspaceSlug);
+  const { data: workspaceTemplates = [], isLoading: workspaceTemplatesLoading } =
+    useDocumentTemplates(workspaceSlug, null);
   const { data: projectTemplates = [], isLoading: projectTemplatesLoading } = useDocumentTemplates(
     workspaceSlug,
     projectId ?? null
@@ -125,16 +124,25 @@ export const MarkdownDraftScreen = () => {
         if (closeAfterSave) {
           navigateBack();
         } else if (projectId) {
-          navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id, { mode: 'edit' }));
+          navigate(
+            projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id, {
+              mode: 'edit'
+            })
+          );
         } else if (entityId) {
-          navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), file.id, { mode: 'edit' }));
+          navigate(
+            entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), file.id, {
+              mode: 'edit'
+            })
+          );
         } else {
           navigate(workspaceMarkdownRoute(workspaceSlug, file.id, { mode: 'edit' }));
         }
       } catch (cause) {
         setError(cause instanceof ApiError ? cause.message : 'Unable to save document');
       }
-    }, [
+    },
+    [
       body,
       documentTypeId,
       draftFolder,
@@ -205,16 +213,6 @@ export const MarkdownDraftScreen = () => {
             onClose={navigateBack}
           />
 
-          <MarkdownPropertiesPanel
-            documentTypeId={documentTypeId}
-            documentTypes={documentTypes}
-            fields={documentType?.fields ?? []}
-            metadata={metadata}
-            readOnly={false}
-            onTypeChange={handleTypeChange}
-            onValueChange={handleMetadataChange}
-          />
-
           <MarkdownEditorPane
             screenMode="edit"
             paneMode={paneMode}
@@ -235,9 +233,24 @@ export const MarkdownDraftScreen = () => {
               onDeleteRequest: () => {},
               isDeleting: false
             }}
+            propertiesPanel={
+              <MarkdownPropertiesPanel
+                documentTypeId={documentTypeId}
+                documentTypes={documentTypes}
+                fields={documentType?.fields ?? []}
+                metadata={metadata}
+                readOnly={false}
+                onTypeChange={handleTypeChange}
+                onValueChange={handleMetadataChange}
+              />
+            }
           />
 
-          {error && <div role="alert" className={styles.loading}>{error}</div>}
+          {error && (
+            <div role="alert" className={styles.loading}>
+              {error}
+            </div>
+          )}
         </div>
       </MarkdownDiagramSessionContext.Provider>
     </MdxContext.Provider>

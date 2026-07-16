@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { TbMessage } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
@@ -28,6 +29,7 @@ export const MarkdownEditorPane = (props: {
   workspaceId: string;
   nodeId: string;
   showDiscussion?: boolean;
+  propertiesPanel?: ReactNode;
 }) => {
   const {
     screenMode,
@@ -40,7 +42,8 @@ export const MarkdownEditorPane = (props: {
     attachments,
     workspaceId,
     nodeId,
-    showDiscussion = true
+    showDiscussion = true,
+    propertiesPanel
   } = props;
 
   const { data: discussionPosts = [] } = useDiscussions(
@@ -54,12 +57,18 @@ export const MarkdownEditorPane = (props: {
   const showRawEditor = screenMode === 'edit' && paneMode === 'raw';
 
   if (showPlateEditor) {
-    return <PlateMarkdownEditor value={body} onChange={onChange} />;
+    return (
+      <div className={styles.editPane}>
+        {propertiesPanel && <div className={styles.paneProperties}>{propertiesPanel}</div>}
+        <PlateMarkdownEditor value={body} onChange={onChange} />
+      </div>
+    );
   }
 
   if (showRawEditor) {
     return (
       <div className={styles.editPane}>
+        {propertiesPanel && <div className={styles.paneProperties}>{propertiesPanel}</div>}
         <textarea
           className={styles.textarea}
           value={body}
@@ -75,6 +84,7 @@ export const MarkdownEditorPane = (props: {
     return (
       <div className={styles.bodyGrid}>
         <article className={styles.article}>
+          {propertiesPanel}
           {body.trim() ? (
             <MdxPreview body={body} withoutFirstHeading />
           ) : (
@@ -98,6 +108,7 @@ export const MarkdownEditorPane = (props: {
   return (
     <div className={styles.bodyGrid}>
       <article className={styles.article}>
+        {propertiesPanel}
         {body.trim() ? (
           <>
             <MdxPreview body={body} withoutFirstHeading />

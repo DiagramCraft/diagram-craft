@@ -56,6 +56,11 @@ export const projectFileSchema = z.object({
     .string()
     .nullable()
     .describe('Parent project identifier (null for entity/workspace files)'),
+  entity_id: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Parent entity identifier (null for project/workspace files)'),
   project_public_id: z.string().nullable().optional().describe('Public project identifier'),
   path: z.string().describe('File path within the project/entity/workspace'),
   name: z.string().describe('File name'),
@@ -80,6 +85,11 @@ export const projectFileSchema = z.object({
     .nullable()
     .optional()
     .describe('Original filename for uploaded files'),
+  document_type_icon: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Assigned document type icon for markdown files'),
   read_only: z
     .boolean()
     .optional()

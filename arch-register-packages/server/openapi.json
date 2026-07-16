@@ -17701,6 +17701,17 @@
                                       ],
                                       "description": "Parent project identifier (null for entity/workspace files)"
                                     },
+                                    "entity_id": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Parent entity identifier (null for project/workspace files)"
+                                    },
                                     "project_public_id": {
                                       "anyOf": [
                                         {
@@ -17826,6 +17837,17 @@
                                         }
                                       ],
                                       "description": "Original filename for uploaded files"
+                                    },
+                                    "document_type_icon": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Assigned document type icon for markdown files"
                                     },
                                     "read_only": {
                                       "type": "boolean",
@@ -17972,6 +17994,17 @@
                                 ],
                                 "description": "Parent project identifier (null for entity/workspace files)"
                               },
+                              "entity_id": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Parent entity identifier (null for project/workspace files)"
+                              },
                               "project_public_id": {
                                 "anyOf": [
                                   {
@@ -18097,6 +18130,17 @@
                                   }
                                 ],
                                 "description": "Original filename for uploaded files"
+                              },
+                              "document_type_icon": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Assigned document type icon for markdown files"
                               },
                               "read_only": {
                                 "type": "boolean",
@@ -18586,6 +18630,17 @@
                                   ],
                                   "description": "Parent project identifier (null for entity/workspace files)"
                                 },
+                                "entity_id": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Parent entity identifier (null for project/workspace files)"
+                                },
                                 "project_public_id": {
                                   "anyOf": [
                                     {
@@ -18711,6 +18766,17 @@
                                     }
                                   ],
                                   "description": "Original filename for uploaded files"
+                                },
+                                "document_type_icon": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Assigned document type icon for markdown files"
                                 },
                                 "read_only": {
                                   "type": "boolean",
@@ -18857,6 +18923,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -18982,6 +19059,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -19170,6 +19258,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -19295,6 +19394,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -19542,6 +19652,17 @@
                               ],
                               "description": "Parent project identifier (null for entity/workspace files)"
                             },
+                            "entity_id": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Parent entity identifier (null for project/workspace files)"
+                            },
                             "project_public_id": {
                               "anyOf": [
                                 {
@@ -19667,6 +19788,17 @@
                                 }
                               ],
                               "description": "Original filename for uploaded files"
+                            },
+                            "document_type_icon": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Assigned document type icon for markdown files"
                             },
                             "read_only": {
                               "type": "boolean",
@@ -20051,6 +20183,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -20176,6 +20319,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -20362,6 +20516,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -20487,6 +20652,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -20678,6 +20854,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -20803,6 +20990,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -21648,6 +21846,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -21773,6 +21982,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -21979,6 +22199,17 @@
                                   ],
                                   "description": "Parent project identifier (null for entity/workspace files)"
                                 },
+                                "entity_id": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Parent entity identifier (null for project/workspace files)"
+                                },
                                 "project_public_id": {
                                   "anyOf": [
                                     {
@@ -22104,6 +22335,17 @@
                                     }
                                   ],
                                   "description": "Original filename for uploaded files"
+                                },
+                                "document_type_icon": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Assigned document type icon for markdown files"
                                 },
                                 "read_only": {
                                   "type": "boolean",
@@ -22250,6 +22492,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -22375,6 +22628,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -22572,6 +22836,17 @@
                               ],
                               "description": "Parent project identifier (null for entity/workspace files)"
                             },
+                            "entity_id": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Parent entity identifier (null for project/workspace files)"
+                            },
                             "project_public_id": {
                               "anyOf": [
                                 {
@@ -22697,6 +22972,17 @@
                                 }
                               ],
                               "description": "Original filename for uploaded files"
+                            },
+                            "document_type_icon": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Assigned document type icon for markdown files"
                             },
                             "read_only": {
                               "type": "boolean",
@@ -22958,6 +23244,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -23083,6 +23380,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -23309,6 +23617,17 @@
                                   ],
                                   "description": "Parent project identifier (null for entity/workspace files)"
                                 },
+                                "entity_id": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Parent entity identifier (null for project/workspace files)"
+                                },
                                 "project_public_id": {
                                   "anyOf": [
                                     {
@@ -23434,6 +23753,17 @@
                                     }
                                   ],
                                   "description": "Original filename for uploaded files"
+                                },
+                                "document_type_icon": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Assigned document type icon for markdown files"
                                 },
                                 "read_only": {
                                   "type": "boolean",
@@ -23580,6 +23910,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -23705,6 +24046,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -23966,6 +24318,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -24091,6 +24454,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -24278,6 +24652,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -24403,6 +24788,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -24628,6 +25024,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -24753,6 +25160,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -24925,6 +25343,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -25050,6 +25479,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -25286,6 +25726,17 @@
                               ],
                               "description": "Parent project identifier (null for entity/workspace files)"
                             },
+                            "entity_id": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Parent entity identifier (null for project/workspace files)"
+                            },
                             "project_public_id": {
                               "anyOf": [
                                 {
@@ -25411,6 +25862,17 @@
                                 }
                               ],
                               "description": "Original filename for uploaded files"
+                            },
+                            "document_type_icon": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Assigned document type icon for markdown files"
                             },
                             "read_only": {
                               "type": "boolean",
@@ -25659,6 +26121,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -25784,6 +26257,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -25962,6 +26446,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -26087,6 +26582,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -26314,6 +26820,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -26439,6 +26956,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -26619,6 +27147,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -26744,6 +27283,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -26915,6 +27465,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -27040,6 +27601,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -27197,6 +27769,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -27322,6 +27905,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -27534,6 +28128,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -27659,6 +28264,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -28229,6 +28845,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -28354,6 +28981,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -28576,6 +29214,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -28701,6 +29350,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -28929,6 +29589,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -29054,6 +29725,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -29545,6 +30227,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -29670,6 +30363,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -29855,6 +30559,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -29980,6 +30695,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -30141,6 +30867,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -30266,6 +31003,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -31487,6 +32235,16 @@
                             "type": "string",
                             "description": "File identifier"
                           },
+                          "type": {
+                            "enum": [
+                              "diagram",
+                              "folder",
+                              "markdown",
+                              "file"
+                            ],
+                            "type": "string",
+                            "description": "File type"
+                          },
                           "path": {
                             "type": "string",
                             "description": "File path"
@@ -31584,6 +32342,7 @@
                           "entityPublicId",
                           "entityName",
                           "fileId",
+                          "type",
                           "path",
                           "name",
                           "comment_count",
@@ -31832,6 +32591,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -31957,6 +32727,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -32084,6 +32865,17 @@
                               ],
                               "description": "Parent project identifier (null for entity/workspace files)"
                             },
+                            "entity_id": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Parent entity identifier (null for project/workspace files)"
+                            },
                             "project_public_id": {
                               "anyOf": [
                                 {
@@ -32209,6 +33001,17 @@
                                 }
                               ],
                               "description": "Original filename for uploaded files"
+                            },
+                            "document_type_icon": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Assigned document type icon for markdown files"
                             },
                             "read_only": {
                               "type": "boolean",
@@ -32379,6 +33182,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -32504,6 +33318,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -32626,6 +33451,17 @@
                             ],
                             "description": "Parent project identifier (null for entity/workspace files)"
                           },
+                          "entity_id": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent entity identifier (null for project/workspace files)"
+                          },
                           "project_public_id": {
                             "anyOf": [
                               {
@@ -32751,6 +33587,17 @@
                               }
                             ],
                             "description": "Original filename for uploaded files"
+                          },
+                          "document_type_icon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Assigned document type icon for markdown files"
                           },
                           "read_only": {
                             "type": "boolean",
@@ -32950,6 +33797,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -33075,6 +33933,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",
@@ -33271,6 +34140,17 @@
                       ],
                       "description": "Parent project identifier (null for entity/workspace files)"
                     },
+                    "entity_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent entity identifier (null for project/workspace files)"
+                    },
                     "project_public_id": {
                       "anyOf": [
                         {
@@ -33396,6 +34276,17 @@
                         }
                       ],
                       "description": "Original filename for uploaded files"
+                    },
+                    "document_type_icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Assigned document type icon for markdown files"
                     },
                     "read_only": {
                       "type": "boolean",

@@ -23,9 +23,12 @@ export const CONTENT_NODE_SELECT_SQL = `
     cm.description AS metadata_description,
     cm.company AS metadata_company,
     cm.category AS metadata_category,
-    cm.keywords AS metadata_keywords
+    cm.keywords AS metadata_keywords,
+    dt.icon AS document_type_icon
   FROM content_node cn
   LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
+  LEFT JOIN content_node_document cnd ON cnd.workspace = cn.workspace AND cnd.node_id = cn.id
+  LEFT JOIN document_type dt ON dt.workspace = cnd.workspace AND dt.id = cnd.document_type_id
 `;
 
 export const PROJECT_ENTITY_SELECT_SQL = `
@@ -116,6 +119,7 @@ export type ContentNodeDbResult = {
   metadata_company?: string | null;
   metadata_category?: string | null;
   metadata_keywords?: string[];
+  document_type_icon?: string | null;
 };
 
 export type ContentMetadataDbResult = {
@@ -366,7 +370,8 @@ export const projectMappers = {
       row['metadata_keywords'],
       [],
       'content_node.metadata_keywords'
-    )
+    ),
+    document_type_icon: row['document_type_icon'] == null ? null : String(row['document_type_icon'])
   }),
   markdownRevision: (row: DatabaseRow): MarkdownRevisionDbResult => ({
     id: String(row['id']),

@@ -3,13 +3,15 @@ import { TbChevronLeft, TbChevronRight, TbRestore, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useMarkdownRevision } from '../../hooks/useMarkdownContent';
 import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectContract';
-import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
+import type { DocumentMetadata, DocumentType } from '@arch-register/api-types/documentContract';
+import { useDocumentTypes } from '../../hooks/useDocuments';
 import { MdxPreview } from './preview/MdxPreview';
 import { renderMarkdownPreview } from './preview/mdxRenderNode';
 import { diffMarkdown } from './diff/markdownDiff';
 import type { DiffRow } from './diff/markdownDiff';
 import styles from './MarkdownEditorScreen.module.css';
 import { formatDateTime, formatRelativeTime } from '../../utils/dateFormat';
+import { MarkdownPropertiesDiffPanel, MarkdownPropertiesPanel } from './MarkdownPropertiesPanel';
 
 // ── RevisionListItem ──────────────────────────────────────────────────────────
 
@@ -39,7 +41,8 @@ const RevisionListItem = (props: {
       </div>
       {Object.keys(revision.metadata).length > 0 && (
         <div className={styles.revisionMeta}>
-          Metadata: {Object.entries(revision.metadata).map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(',') : String(value)}`).join(' · ')}
+          Metadata · {Object.keys(revision.metadata).length}{' '}
+          {Object.keys(revision.metadata).length === 1 ? 'field' : 'fields'}
         </div>
       )}
     </button>
@@ -79,11 +82,34 @@ const DiffRowView = ({ row }: { row: DiffRow }) => {
   );
 };
 
-const metadataValue = (value: DocumentMetadata[string] | undefined) =>
-  value == null ? '—' : Array.isArray(value) ? value.join(', ') : String(value);
+const metadataEqual = (
+  left: DocumentMetadata[string] | undefined,
+  right: DocumentMetadata[string] | undefined
+) => JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
 
-const metadataEqual = (left: DocumentMetadata[string] | undefined, right: DocumentMetadata[string] | undefined) =>
-  JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+const RevisionPropertiesPanel = ({
+  documentTypes,
+  documentTypeId,
+  metadata
+}: {
+  documentTypes: DocumentType[];
+  documentTypeId: string | null;
+  metadata: DocumentMetadata;
+}) => {
+  const documentType = documentTypes.find(type => type.id === documentTypeId);
+
+  return (
+    <MarkdownPropertiesPanel
+      documentTypeId={documentTypeId}
+      documentTypes={documentTypes}
+      fields={documentType?.fields ?? []}
+      metadata={metadata}
+      readOnly
+      onTypeChange={() => {}}
+      onValueChange={() => {}}
+    />
+  );
+};
 
 // ── CompareView ───────────────────────────────────────────────────────────────
 
@@ -92,11 +118,23 @@ const CompareView = (props: {
   nodeId: string;
   currentBody: string;
   currentMetadata: DocumentMetadata;
+  currentDocumentTypeId: string | null;
+  documentTypes: DocumentType[];
   revisions: MarkdownRevisionSummary[];
   selectedRevisionId: string;
   compareMode: 'to-current' | 'changes-in-version';
 }) => {
-  const { workspaceSlug, nodeId, currentBody, currentMetadata, revisions, selectedRevisionId, compareMode } = props;
+  const {
+    workspaceSlug,
+    nodeId,
+    currentBody,
+    currentMetadata,
+    currentDocumentTypeId,
+    documentTypes,
+    revisions,
+    selectedRevisionId,
+    compareMode
+  } = props;
 
   const selectedIndex = revisions.findIndex(r => r.id === selectedRevisionId);
   const previousRevision = revisions[selectedIndex + 1] ?? null;
@@ -118,7 +156,13 @@ const CompareView = (props: {
   const baseBody = baseRevision?.body ?? null;
   const targetBody = compareMode === 'to-current' ? currentBody : (targetRevision?.body ?? null);
   const baseMetadata = baseRevision?.metadata ?? null;
-  const targetMetadata = compareMode === 'to-current' ? currentMetadata : (targetRevision?.metadata ?? null);
+  const targetMetadata =
+    compareMode === 'to-current' ? currentMetadata : (targetRevision?.metadata ?? null);
+  const baseDocumentTypeId = baseRevision?.document_type_id ?? null;
+  const targetDocumentTypeId =
+    compareMode === 'to-current'
+      ? currentDocumentTypeId
+      : (targetRevision?.document_type_id ?? null);
 
   const rows = useMemo(() => {
     if (baseBody === null) return null;
@@ -146,25 +190,26 @@ const CompareView = (props: {
           </div>
         ) : isLoading || rows === null ? (
           <div className={styles.previewEmpty}>Loading…</div>
-        ) : rows.length === 0 && metadataChanges?.length === 0 ? (
+        ) : rows.length === 0 &&
+          metadataChanges?.length === 0 &&
+          baseDocumentTypeId === targetDocumentTypeId ? (
           <div className={styles.previewEmpty}>These versions are identical.</div>
         ) : (
           <>
-            {metadataChanges && metadataChanges.length > 0 && (
-              <section style={{ padding: '12px 16px', borderBottom: '1px solid var(--panel-border)' }}>
-                <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 6 }}>Metadata changes</div>
-                <div style={{ display: 'grid', gap: 4, fontSize: 11 }}>
-                  {metadataChanges.map(change => (
-                    <div key={change.key} style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) 1fr 1fr', gap: 8 }}>
-                      <code>{change.key}</code>
-                      <span style={{ color: 'var(--error-fg)' }}>− {metadataValue(change.previous)}</span>
-                      <span style={{ color: 'var(--success-fg)' }}>+ {metadataValue(change.next)}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-            {rows.map((row, i) => <DiffRowView key={i} row={row} />)}
+            {metadataChanges &&
+              (metadataChanges.length > 0 || baseDocumentTypeId !== targetDocumentTypeId) && (
+                <MarkdownPropertiesDiffPanel
+                  documentTypes={documentTypes}
+                  previousDocumentTypeId={baseDocumentTypeId}
+                  previousMetadata={baseMetadata ?? {}}
+                  nextDocumentTypeId={targetDocumentTypeId}
+                  nextMetadata={targetMetadata ?? {}}
+                  changes={metadataChanges}
+                />
+              )}
+            {rows.map((row, i) => (
+              <DiffRowView key={i} row={row} />
+            ))}
           </>
         )}
       </div>
@@ -179,6 +224,7 @@ type MarkdownHistoryPanelProps = {
   nodeId: string;
   currentBody: string;
   currentMetadata: DocumentMetadata;
+  currentDocumentTypeId: string | null;
   revisions: MarkdownRevisionSummary[];
   revisionsLoading: boolean;
   selectedRevisionId: string | undefined;
@@ -197,6 +243,7 @@ export const MarkdownHistoryPanel = ({
   nodeId,
   currentBody,
   currentMetadata,
+  currentDocumentTypeId,
   revisions,
   revisionsLoading,
   selectedRevisionId,
@@ -209,6 +256,7 @@ export const MarkdownHistoryPanel = ({
   onRestore,
   onClose
 }: MarkdownHistoryPanelProps) => {
+  const { data: documentTypes = [] } = useDocumentTypes(workspaceSlug, true);
   const selectedRevisionSummary = useMemo(
     () => revisions.find(r => r.id === selectedRevisionId) ?? null,
     [revisions, selectedRevisionId]
@@ -308,6 +356,8 @@ export const MarkdownHistoryPanel = ({
               nodeId={nodeId}
               currentBody={currentBody}
               currentMetadata={currentMetadata}
+              currentDocumentTypeId={currentDocumentTypeId}
+              documentTypes={documentTypes}
               revisions={revisions}
               selectedRevisionId={selectedRevisionId}
               compareMode={compareMode}
@@ -316,17 +366,17 @@ export const MarkdownHistoryPanel = ({
             <div className={styles.previewEmpty}>Loading selected version…</div>
           ) : selectedRevision ? (
             <article className={styles.article}>
+              <RevisionPropertiesPanel
+                documentTypes={documentTypes}
+                documentTypeId={selectedRevision.document_type_id}
+                metadata={selectedRevision.metadata}
+              />
               {(selectedRevision.body ?? '').trim() ? (
                 <>
                   <MdxPreview body={selectedRevision.body ?? ''} withoutFirstHeading />
                   <div className={styles.articleFooter}>
                     Saved {formatDateTime(selectedRevision.created_at)}
                   </div>
-                  {Object.keys(selectedRevision.metadata).length > 0 && (
-                    <div className={styles.articleFooter}>
-                      Metadata: {Object.entries(selectedRevision.metadata).map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(', ') : String(value)}`).join(' · ')}
-                    </div>
-                  )}
                 </>
               ) : (
                 <div className={styles.previewEmpty}>This revision is empty.</div>

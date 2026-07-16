@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../../lib/http';
 import styles from '../../dialogs/AddEntityDialog.module.css';
@@ -108,7 +109,7 @@ export const AddMarkdownDialog = ({
         { label: 'Create', onClick: handleSubmit, type: 'default', disabled: isPending }
       ]}
     >
-      <div className={styles.content}>
+      <div className={styles.form}>
         <FormElement label="Name" error={error}>
           <TextInput
             ref={nameRef}
@@ -119,26 +120,26 @@ export const AddMarkdownDialog = ({
           />
         </FormElement>
         <FormElement label="Document type">
-          <select
-            value={documentTypeId}
-            onChange={event => handleDocumentTypeChange(event.target.value)}
+          <Select.Root
+            value={documentTypeId || '__untyped__'}
+            onChange={value => handleDocumentTypeChange(value === '__untyped__' ? '' : (value ?? ''))}
             disabled={documentTypesLoading || isPending}
             style={{ width: '100%' }}
           >
-            <option value="">Untyped Markdown</option>
-            {availableTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
-          </select>
+            <Select.Item value="__untyped__">Untyped Markdown</Select.Item>
+            {availableTypes.map(type => <Select.Item key={type.id} value={type.id}>{type.name}</Select.Item>)}
+          </Select.Root>
         </FormElement>
         <FormElement label="Template">
-          <select
-            value={templateId}
-            onChange={event => handleTemplateChange(event.target.value)}
+          <Select.Root
+            value={templateId || '__blank__'}
+            onChange={value => handleTemplateChange(value === '__blank__' ? '' : (value ?? ''))}
             disabled={documentTemplatesLoading || isPending}
             style={{ width: '100%' }}
           >
-            <option value="">Blank document</option>
-            {availableTemplates.map(template => <option key={template.id} value={template.id}>{template.name}</option>)}
-          </select>
+            <Select.Item value="__blank__">Blank document</Select.Item>
+            {availableTemplates.map(template => <Select.Item key={template.id} value={template.id}>{template.name}</Select.Item>)}
+          </Select.Root>
         </FormElement>
       </div>
     </Dialog>
