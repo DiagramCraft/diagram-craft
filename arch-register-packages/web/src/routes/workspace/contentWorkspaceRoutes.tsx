@@ -9,7 +9,6 @@ import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDe
 import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
 import {
   LazyDiagramScreen,
-  LazyMarkdownDraftScreen,
   LazyMarkdownEditorScreen,
   LazyWorkspaceContentFolderRoute,
   LazyWorkspaceContentRoute
@@ -70,7 +69,7 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: 'content/wiki/new',
       validateSearch: validateMarkdownSearch,
-      component: LazyMarkdownDraftScreen
+      component: LazyMarkdownEditorScreen
     }),
     buildShell
   );

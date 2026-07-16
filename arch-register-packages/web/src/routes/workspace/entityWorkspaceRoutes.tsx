@@ -14,7 +14,6 @@ import {
   LazyEntityBrowserScreen,
   LazyEntityDetailScreen,
   LazyImportScreen,
-  LazyMarkdownDraftScreen,
   LazyMarkdownEditorScreen
 } from './lazyWorkspaceScreens';
 
@@ -135,7 +134,7 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: 'entities/$entityId/wiki/new',
       validateSearch: validateMarkdownSearch,
-      component: LazyMarkdownDraftScreen
+      component: LazyMarkdownEditorScreen
     }),
     buildDetailShell
   );

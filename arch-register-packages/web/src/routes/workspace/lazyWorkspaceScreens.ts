@@ -16,10 +16,6 @@ export const LazyMarkdownEditorScreen = lazyRouteComponent(
   () => import('../../sections/markdown/MarkdownEditorScreen'),
   'MarkdownEditorScreen'
 );
-export const LazyMarkdownDraftScreen = lazyRouteComponent(
-  () => import('../../sections/markdown/MarkdownDraftScreen'),
-  'MarkdownDraftScreen'
-);
 export const LazyWorkspaceContentRoute = lazyRouteComponent(
   () => import('./WorkspaceContentRoute'),
   'WorkspaceContentRoute'

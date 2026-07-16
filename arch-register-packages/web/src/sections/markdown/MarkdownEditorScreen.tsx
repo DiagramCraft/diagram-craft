@@ -7,6 +7,7 @@ import {
   useMarkdownRevisions,
   useRestoreMarkdownRevision,
   useSaveMarkdownContent,
+  useSaveNewMarkdownContent,
   useMigrateMarkdownContent
 } from '../../hooks/useMarkdownContent';
 import {
@@ -32,14 +33,14 @@ import {
   projectDiagramRoute,
   entityDiagramRoute,
   projectMarkdownRoute,
-  entityMarkdownRoute
+  entityMarkdownRoute,
+  workspaceMarkdownRoute
 } from '../../routes/publicObjectRoutes';
 import {
   deriveMarkdownEditorTitleView,
   getInitialMarkdownEditorScreenState,
   type MarkdownPaneMode,
-  type MarkdownScreenMode,
-  type MarkdownViewPanel
+  type MarkdownEditorScreenState
 } from './MarkdownEditorScreen.state';
 import { MarkdownDiagramSessionContext } from './MarkdownDiagramSessionContext';
 import { MarkdownCloseDialog } from './MarkdownCloseDialog';
@@ -48,8 +49,9 @@ import { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
 import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
 import type { ContentScope } from '../../hooks/useContentScope';
 import { downloadUrl } from '../../lib/browserDownload';
-import { useDocumentTypes } from '../../hooks/useDocuments';
+import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
 import { MarkdownPropertiesPanel, validateDocMetadata } from './MarkdownPropertiesPanel';
+import { ApiError } from '../../lib/http';
 
 const extractToc = (markdown: string): string[] =>
   markdown.match(/^## .+$/gm)?.map(l => l.slice(3).trim()) ?? [];
@@ -74,16 +76,23 @@ const relativeDate = (iso: string): string => {
 export const MarkdownEditorScreen = () => {
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false });
-  // workspaceSlug/nodeId are always present: this screen only mounts under
-  // the entity/project/content wiki routes, all of which define both params.
+  // workspaceSlug is always present: this screen only mounts under the entity/project/content
+  // wiki routes, all of which define it. nodeId is only present on the "existing document"
+  // routes (.../wiki/$nodeId) -- the "new document" routes (.../wiki/new) omit it, which is
+  // the signal we use to distinguish draft (new, unsaved) mode from editing an existing doc.
   const workspaceSlug = params.workspaceSlug!;
-  const nodeId = params.nodeId!;
+  const nodeId = params.nodeId ?? '';
+  const isDraft = !params.nodeId;
   const { projectId, entityId } = params;
   const navigate = useNavigate();
   const requestedMode = search.mode;
   const requestedPanel = search.panel;
   const historyMode = search.historyMode === 'compare' ? 'compare' : 'preview';
   const compareMode = search.compareMode ?? 'to-current';
+  const draftName = search.draftName ?? 'Untitled document';
+  const draftFolder = search.draftFolder;
+  const draftType = search.draftType ?? null;
+  const draftTemplate = search.draftTemplate ?? null;
   const contentScope: ContentScope = projectId
     ? { kind: 'project', workspaceId: workspaceSlug, projectId }
     : entityId
@@ -91,13 +100,25 @@ export const MarkdownEditorScreen = () => {
       : { kind: 'workspace', workspaceId: workspaceSlug };
 
   const { data, isLoading, isError } = useMarkdownContent(workspaceSlug, nodeId);
-  const { data: documentTypes = [] } = useDocumentTypes(workspaceSlug);
+  const { data: documentTypes = [], isLoading: documentTypesLoading } =
+    useDocumentTypes(workspaceSlug);
+  const { data: workspaceTemplates = [], isLoading: workspaceTemplatesLoading } =
+    useDocumentTemplates(workspaceSlug, null);
+  const { data: projectTemplates = [], isLoading: projectTemplatesLoading } = useDocumentTemplates(
+    workspaceSlug,
+    projectId ?? null
+  );
+  const draftTemplates = projectId
+    ? [...workspaceTemplates, ...projectTemplates]
+    : workspaceTemplates;
+  const draftTemplatesLoading = workspaceTemplatesLoading || projectTemplatesLoading;
   const { data: revisions = [], isLoading: revisionsLoading } = useMarkdownRevisions(
     workspaceSlug,
     nodeId
   );
   const saveMutation = useSaveMarkdownContent(contentScope, nodeId);
   const migrateMutation = useMigrateMarkdownContent(contentScope, nodeId);
+  const saveNewMutation = useSaveNewMarkdownContent(contentScope);
   const restoreMutation = useRestoreMarkdownRevision(contentScope, nodeId);
   const uploadAttachmentMutation = useUploadMarkdownAttachment(contentScope, nodeId);
   const deleteAttachmentMutation = useDeleteMarkdownAttachment(contentScope, nodeId);
@@ -109,17 +130,21 @@ export const MarkdownEditorScreen = () => {
   });
 
   const [body, setBody] = useState('');
-  const [documentTypeId, setDocumentTypeId] = useState<string | null>(null);
+  const [documentTypeId, setDocumentTypeId] = useState<string | null>(isDraft ? draftType : null);
   const [metadata, setMetadata] = useState<NonNullable<typeof data>['metadata']>({});
   const [paneMode, setPaneMode] = useState<MarkdownPaneMode>(
-    requestedMode === 'edit' ? 'edit' : 'preview'
+    isDraft || requestedMode === 'edit' ? 'edit' : 'preview'
   );
-  const screenState = useMemo(
-    () => ({ ...getInitialMarkdownEditorScreenState(requestedMode, requestedPanel), paneMode }),
-    [paneMode, requestedMode, requestedPanel]
+  const screenState = useMemo<MarkdownEditorScreenState>(
+    () =>
+      isDraft
+        ? { screenMode: 'edit', paneMode, viewPanel: 'preview' }
+        : { ...getInitialMarkdownEditorScreenState(requestedMode, requestedPanel), paneMode },
+    [isDraft, paneMode, requestedMode, requestedPanel]
   );
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(isDraft);
   const [attemptedSave, setAttemptedSave] = useState(false);
+  const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [attachmentDeleteTarget, setAttachmentDeleteTarget] = useState<ProjectFile | null>(null);
@@ -129,7 +154,7 @@ export const MarkdownEditorScreen = () => {
 
   const selectedRevisionId = search.revisionId;
 
-  const documentTitle = file?.name ?? 'Markdown document';
+  const documentTitle = isDraft ? draftName : (file?.name ?? 'Markdown document');
   const isReadOnly = !!file?.read_only;
   const attachments = data?.attachments ?? [];
   const headingTitle = useMemo(() => extractFirstHeadingTitle(body), [body]);
@@ -137,6 +162,16 @@ export const MarkdownEditorScreen = () => {
   const toc = useMemo(() => extractToc(body), [body]);
   const readTime = useMemo(() => calcReadTime(body), [body]);
   const updatedLabel = file?.updated_at ? relativeDate(file.updated_at) : null;
+  const availableDocumentTypes = useMemo(() => {
+    if (!data?.document_type || documentTypes.some(type => type.id === data.document_type?.id))
+      return documentTypes;
+    return [...documentTypes, data.document_type];
+  }, [data?.document_type, documentTypes]);
+  const selectedDocumentType = documentTypeId
+    ? (availableDocumentTypes.find(type => type.id === documentTypeId) ?? null)
+    : null;
+  const documentFields =
+    documentTypeId == null ? [] : (selectedDocumentType?.fields ?? data?.available_fields ?? []);
   const titleView = useMemo(
     () =>
       deriveMarkdownEditorTitleView(screenState, {
@@ -151,8 +186,8 @@ export const MarkdownEditorScreen = () => {
   const updateSearch = useCallback(
     (
       next: Partial<{
-        mode: MarkdownScreenMode | undefined;
-        panel: MarkdownViewPanel | undefined;
+        mode: MarkdownEditorScreenState['screenMode'] | undefined;
+        panel: MarkdownEditorScreenState['viewPanel'] | undefined;
         revisionId: string | undefined;
         historyMode: 'preview' | 'compare' | undefined;
         compareMode: 'to-current' | 'changes-in-version' | undefined;
@@ -180,6 +215,13 @@ export const MarkdownEditorScreen = () => {
     updateSearch({ mode: 'preview', panel: 'preview' }, true);
   }, [isReadOnly, requestedMode, updateSearch]);
 
+  useEffect(() => {
+    // Draft mode manages paneMode purely locally via the toolbar; it never round-trips
+    // through `mode` search params the way the existing-document editor does.
+    if (isDraft) return;
+    setPaneMode(requestedMode === 'edit' ? 'edit' : 'preview');
+  }, [isDraft, requestedMode]);
+
   const {
     sessionId,
     createdDiagramsRef,
@@ -200,6 +242,16 @@ export const MarkdownEditorScreen = () => {
   });
 
   const hasUnsavedChanges = dirty || hasPendingDiagramChanges;
+
+  const handleNavigateBack = useCallback(() => {
+    if (projectId) {
+      navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)));
+    } else if (entityId) {
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
+    } else {
+      navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } });
+    }
+  }, [navigate, workspaceSlug, projectId, entityId]);
 
   const exitMarkdownEditor = useCallback(() => {
     updateSearch({
@@ -245,15 +297,12 @@ export const MarkdownEditorScreen = () => {
     onExit: handleCloseFlowExit
   });
 
-  const handleNavigateBack = useCallback(() => {
-    if (projectId) {
-      navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)));
-    } else if (entityId) {
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
-    } else {
-      navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } });
-    }
-  }, [navigate, workspaceSlug, projectId, entityId]);
+  // Discarding a fresh, never-saved draft is a plain exit -- there's no saved state to protect
+  // and no confirmation dialog today, unlike closing an existing (already-saved) document.
+  const handleDraftClose = useCallback(() => {
+    clearDiagramSessionState();
+    handleNavigateBack();
+  }, [clearDiagramSessionState, handleNavigateBack]);
 
   useEffect(() => {
     if (previousNodeIdRef.current === nodeId) return;
@@ -268,17 +317,13 @@ export const MarkdownEditorScreen = () => {
   }, [nodeId, resetForNewDocument, handleCancelClose, clearCloseSummary]);
 
   useEffect(() => {
-    setPaneMode(requestedMode === 'edit' ? 'edit' : 'preview');
-  }, [requestedMode]);
-
-  useEffect(() => {
     if (requestedMode !== 'edit') return;
     if (search.diagramSessionId === sessionId) return;
     updateSearch({ diagramSessionId: sessionId }, true);
   }, [requestedMode, search.diagramSessionId, sessionId, updateSearch]);
 
   useEffect(() => {
-    if (!data) return;
+    if (isDraft || !data) return;
     if (!initializedRef.current) {
       setBody(data.body);
       setDocumentTypeId(data.document_type_id);
@@ -292,18 +337,26 @@ export const MarkdownEditorScreen = () => {
       setDocumentTypeId(data.document_type_id);
       setMetadata(data.metadata);
     }
-  }, [data, dirty]);
+  }, [isDraft, data, dirty]);
 
-  const availableDocumentTypes = useMemo(() => {
-    if (!data?.document_type || documentTypes.some(type => type.id === data.document_type?.id))
-      return documentTypes;
-    return [...documentTypes, data.document_type];
-  }, [data?.document_type, documentTypes]);
-  const selectedDocumentType = documentTypeId
-    ? (availableDocumentTypes.find(type => type.id === documentTypeId) ?? null)
-    : null;
-  const documentFields =
-    documentTypeId == null ? [] : (selectedDocumentType?.fields ?? data?.available_fields ?? []);
+  useEffect(() => {
+    if (!isDraft) return;
+    if (initializedRef.current || documentTypesLoading || draftTemplatesLoading) return;
+    const template = draftTemplates.find(item => item.id === draftTemplate);
+    setBody(template ? template.body.split('{{title}}').join(draftName) : '');
+    setDocumentTypeId(template?.document_type_id ?? draftType);
+    setMetadata(template?.metadata_defaults ?? {});
+    setDirty(true);
+    initializedRef.current = true;
+  }, [
+    isDraft,
+    documentTypesLoading,
+    draftTemplatesLoading,
+    draftTemplates,
+    draftTemplate,
+    draftType,
+    draftName
+  ]);
 
   useEffect(() => {
     if (screenState.viewPanel !== 'history' || revisions.length === 0) return;
@@ -343,7 +396,7 @@ export const MarkdownEditorScreen = () => {
     []
   );
 
-  const saveDocument = useCallback(async () => {
+  const saveExistingDocument = useCallback(async () => {
     const currentDocumentTypeId = data?.document_type_id ?? null;
     const input = {
       body,
@@ -366,7 +419,54 @@ export const MarkdownEditorScreen = () => {
     saveMutation
   ]);
 
+  const saveDraftDocument = useCallback(async () => {
+    const title = resolvedTitle.trim();
+    if (!title) return null;
+    setDraftSaveError(null);
+    try {
+      return await saveNewMutation.mutateAsync({
+        name: title,
+        folder: draftFolder,
+        body,
+        document_type_id: documentTypeId,
+        metadata
+      });
+    } catch (cause) {
+      setDraftSaveError(cause instanceof ApiError ? cause.message : 'Unable to save document');
+      return null;
+    }
+  }, [resolvedTitle, draftFolder, body, documentTypeId, metadata, saveNewMutation]);
+
+  const navigateToSavedDraft = useCallback(
+    (savedFile: ProjectFile) => {
+      if (projectId) {
+        navigate(
+          projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), savedFile.id, {
+            mode: 'edit'
+          })
+        );
+      } else if (entityId) {
+        navigate(
+          entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), savedFile.id, {
+            mode: 'edit'
+          })
+        );
+      } else {
+        navigate(workspaceMarkdownRoute(workspaceSlug, savedFile.id, { mode: 'edit' }));
+      }
+    },
+    [entityId, navigate, projectId, workspaceSlug]
+  );
+
   const handleSave = useCallback(async () => {
+    if (isDraft) {
+      if (saveNewMutation.isPending) return;
+      const savedFile = await saveDraftDocument();
+      if (!savedFile) return;
+      setDirty(false);
+      navigateToSavedDraft(savedFile);
+      return;
+    }
     if (isReadOnly) return;
     if (!dirty) {
       if (hasPendingDiagramChanges) {
@@ -380,17 +480,21 @@ export const MarkdownEditorScreen = () => {
       return;
     }
     if (saveMutation.isPending || migrateMutation.isPending) return;
-    await saveDocument();
+    await saveExistingDocument();
     setDirty(false);
     setAttemptedSave(false);
     rotateDiagramSession();
     clearCloseSummary();
   }, [
+    isDraft,
+    saveNewMutation.isPending,
+    saveDraftDocument,
+    navigateToSavedDraft,
     dirty,
     hasPendingDiagramChanges,
     saveMutation,
     migrateMutation,
-    saveDocument,
+    saveExistingDocument,
     rotateDiagramSession,
     clearCloseSummary,
     isReadOnly,
@@ -399,6 +503,15 @@ export const MarkdownEditorScreen = () => {
   ]);
 
   const handleSaveAndClose = useCallback(async () => {
+    if (isDraft) {
+      if (saveNewMutation.isPending) return;
+      const savedFile = await saveDraftDocument();
+      if (!savedFile) return;
+      setDirty(false);
+      clearDiagramSessionState();
+      handleNavigateBack();
+      return;
+    }
     if (isReadOnly) {
       clearDiagramSessionState();
       clearCloseSummary();
@@ -411,7 +524,7 @@ export const MarkdownEditorScreen = () => {
         return;
       }
       if (saveMutation.isPending || migrateMutation.isPending) return;
-      await saveDocument();
+      await saveExistingDocument();
       setDirty(false);
       setAttemptedSave(false);
     }
@@ -419,11 +532,15 @@ export const MarkdownEditorScreen = () => {
     clearCloseSummary();
     exitMarkdownEditor();
   }, [
+    isDraft,
+    saveNewMutation.isPending,
+    saveDraftDocument,
+    clearDiagramSessionState,
+    handleNavigateBack,
     dirty,
     saveMutation,
     migrateMutation,
-    saveDocument,
-    clearDiagramSessionState,
+    saveExistingDocument,
     clearCloseSummary,
     exitMarkdownEditor,
     isReadOnly,
@@ -466,8 +583,8 @@ export const MarkdownEditorScreen = () => {
     });
   }, [revisions, updateSearch]);
 
-  const handleSelectPane = useCallback((paneMode: MarkdownPaneMode) => {
-    setPaneMode(paneMode);
+  const handleSelectPane = useCallback((mode: MarkdownPaneMode) => {
+    setPaneMode(mode);
   }, []);
 
   const handleRenameConfirm = useCallback(
@@ -595,7 +712,7 @@ export const MarkdownEditorScreen = () => {
     [uploadAttachmentMutation]
   );
 
-  if (isLoading) {
+  if (!isDraft && isLoading) {
     return (
       <div className={styles.screen}>
         <LoadingState text="Loading…" />
@@ -603,7 +720,7 @@ export const MarkdownEditorScreen = () => {
     );
   }
 
-  if (isError) {
+  if (!isDraft && isError) {
     return (
       <div className={styles.screen}>
         <div className={styles.loading}>Failed to load document.</div>
@@ -612,7 +729,9 @@ export const MarkdownEditorScreen = () => {
   }
 
   return (
-    <MdxContext.Provider value={{ workspaceSlug, projectId, entityId, nodeId }}>
+    <MdxContext.Provider
+      value={{ workspaceSlug, projectId, entityId, nodeId: isDraft ? undefined : nodeId }}
+    >
       <MarkdownDiagramSessionContext.Provider value={{ sessionId, trackCreatedDiagram }}>
         <div className={styles.screen}>
           <input
@@ -629,8 +748,13 @@ export const MarkdownEditorScreen = () => {
             entityId={entityId}
             parentLabel={parentLabel}
             resolvedTitle={resolvedTitle}
-            description={titleView.description}
+            description={
+              isDraft
+                ? (selectedDocumentType?.name ?? 'New markdown document')
+                : titleView.description
+            }
             isViewMode={titleView.isViewMode && !isReadOnly}
+            isDraft={isDraft}
             attachDisabled={titleView.attachDisabled || isReadOnly}
             isUploadingAttachment={uploadAttachmentMutation.isPending}
             onNavigateBack={handleNavigateBack}
@@ -645,19 +769,19 @@ export const MarkdownEditorScreen = () => {
             }}
           />
 
-          {!isReadOnly && screenState.screenMode === 'edit' && (
+          {(isDraft || (!isReadOnly && screenState.screenMode === 'edit')) && (
             <MarkdownEditorToolbar
               paneMode={screenState.paneMode}
               hasUnsavedChanges={hasUnsavedChanges}
               onSelectPane={handleSelectPane}
               onSave={handleSave}
               onSaveAndClose={handleSaveAndClose}
-              onClose={handleClose}
+              onClose={isDraft ? handleDraftClose : handleClose}
             />
           )}
 
-          {/* viewPanel is only ever 'history' while screenMode is 'preview' (see MarkdownEditorScreen.state.ts) */}
-          {screenState.viewPanel === 'history' ? (
+          {/* viewPanel is only ever 'history' while screenMode is 'preview' (see MarkdownEditorScreen.state.ts); never true in draft mode */}
+          {!isDraft && screenState.viewPanel === 'history' ? (
             <MarkdownHistoryPanel
               workspaceSlug={workspaceSlug}
               nodeId={nodeId}
@@ -687,6 +811,7 @@ export const MarkdownEditorScreen = () => {
               readTime={readTime}
               workspaceId={workspaceSlug}
               nodeId={nodeId}
+              showDiscussion={!isDraft}
               attachments={{
                 items: attachments,
                 onOpen: handleOpenAttachment,
@@ -706,6 +831,12 @@ export const MarkdownEditorScreen = () => {
                 />
               }
             />
+          )}
+
+          {draftSaveError && (
+            <div role="alert" className={styles.loading}>
+              {draftSaveError}
+            </div>
           )}
 
           <RenameDialog
