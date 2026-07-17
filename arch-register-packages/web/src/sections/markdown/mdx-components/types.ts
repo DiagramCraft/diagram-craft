@@ -49,6 +49,12 @@ export type MdxComponentSpec = {
    * capped at 1 — a wrapper cannot be nested inside another wrapper.
    */
   acceptsChildren?: boolean;
+  /**
+   * Marks a block-level component as accepting arbitrary rich markdown content
+   * (paragraphs, lists, etc.) between its open/close tags, e.g. Callout.
+   * Distinct from `acceptsChildren`'s single-MDX-component wrapper semantics.
+   */
+  acceptsRichContent?: boolean;
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: EditorSpec;
 };
