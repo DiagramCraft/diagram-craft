@@ -14,7 +14,7 @@ import {
   type JoinedAssessmentContext
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
-import { TooltipChip, TooltipChips, TooltipRow } from './entityTooltipParts';
+import { TooltipChip, TooltipChips, TooltipRow } from '../../../components/HoverCardParts';
 import {
   BUBBLE_COLORS,
   MARGIN_LEFT,

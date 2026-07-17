@@ -73,10 +73,15 @@ const makeComponentNode = (
 };
 
 /**
- * Handles wrapper components (e.g. Caption) that accept exactly one other
- * block-level, non-wrapper MDX component as their child, using an open/close
- * tag pair rather than a self-closing tag. Registered ahead of
- * MdxComponentBlockHandler so it gets first refusal on non-self-closing tags.
+ * Handles block-level MDX components that use an open/close tag pair rather
+ * than a self-closing tag, since they carry markdown content between the
+ * tags. Registered ahead of MdxComponentBlockHandler so it gets first refusal
+ * on non-self-closing tags. Covers two distinct shapes:
+ *
+ * - `acceptsChildren` wrappers (e.g. Caption): accept exactly one other
+ *   block-level, non-wrapper MDX component as their child.
+ * - `acceptsRichContent` containers (e.g. Callout): accept arbitrary parsed
+ *   markdown content (paragraphs, lists, nested components, etc.) as-is.
  */
 class MdxComponentWrapperBlockHandler implements BlockParser {
   parse(parser: Parser, stream: Parameters<BlockParser['parse']>[1], ast: ASTNode[]): boolean {
@@ -87,7 +92,7 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     const name = match[1];
     if (!name || !isKnownComponent(name)) return false;
     const spec = getMdxSpec(name);
-    if (spec.mode !== 'block' || !spec.acceptsChildren) return false;
+    if (spec.mode !== 'block' || (!spec.acceptsChildren && !spec.acceptsRichContent)) return false;
 
     stream.consume();
 
@@ -110,6 +115,15 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     stream.consume(); // consume the closing tag line
 
     const innerAst = parseMarkdownWithComponents(innerLines.join('\n'));
+
+    if (spec.acceptsRichContent) {
+      const children = innerAst.filter(n => !(n.type === 'literal' && n.value.trim() === ''));
+      ast.push(
+        makeComponentNode(parser, 'block', name, match[2], parser.unescape(openLine), children)
+      );
+      return true;
+    }
+
     const isComponentNode = (n: ASTNode): n is ASTNodeOfType<'component'> => n.type === 'component';
     const componentChildren = innerAst.filter(isComponentNode);
     const otherContent = innerAst.filter(

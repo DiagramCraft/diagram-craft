@@ -11,6 +11,8 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
+import { HoverCard } from '../../components/HoverCard';
+import { DocumentHoverCardBody } from '../../components/DocumentHoverCardBody';
 import { useContentFile } from '../../hooks/useContentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveDocumentTypeColor } from '../../lib/schemaPresentation';
@@ -80,9 +82,20 @@ const DocumentLink = ({ documentId }: { documentId: string }) => {
       : workspaceMarkdownRoute(workspaceSlug, document.id, { mode: 'preview' });
 
   return (
-    <Link {...route} className={styles.documentLink} onClick={event => event.stopPropagation()}>
-      {document.name}
-    </Link>
+    <HoverCard
+      content={
+        <DocumentHoverCardBody
+          name={document.name}
+          path={document.path}
+          commentCount={document.comment_count}
+          unresolvedCommentCount={document.unresolved_comment_count}
+        />
+      }
+    >
+      <Link {...route} className={styles.documentLink} onClick={event => event.stopPropagation()}>
+        {document.name}
+      </Link>
+    </HoverCard>
   );
 };
 

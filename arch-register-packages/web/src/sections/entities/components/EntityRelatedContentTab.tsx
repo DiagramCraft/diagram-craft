@@ -7,6 +7,9 @@ import { LoadingState } from '../../../components/LoadingState';
 import { Chip } from '../../../components/Chip';
 import { TreeRow } from '../../../components/TreeRow';
 import { TypeBadge } from '../../../components/TypeBadge';
+import { HoverCard } from '../../../components/HoverCard';
+import hoverCardStyles from '../../../components/HoverCard.module.css';
+import { DocumentHoverCardBody } from '../../../components/DocumentHoverCardBody';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -86,35 +89,49 @@ export const EntityRelatedContentTab = ({
           </h3>
           <div style={{ display: 'grid', gap: 2 }}>
             {group.items.map(item => (
-              <TreeRow
+              <HoverCard
                 key={`${item.file.id}:${item.field_id}`}
-                icon={<TbFileText size={14} />}
-                label={item.file.name}
-                trailing={
-                  <span className="dim" style={{ fontSize: 10 }}>
-                    {item.file.path}
-                  </span>
+                anchorClassName={hoverCardStyles.blockAnchor}
+                content={
+                  <DocumentHoverCardBody
+                    name={item.file.name}
+                    path={item.file.path}
+                    documentTypeName={item.document_type_name}
+                    documentTypeColor={item.document_type_color}
+                    commentCount={item.file.comment_count}
+                    unresolvedCommentCount={item.file.unresolved_comment_count}
+                  />
                 }
-                onClick={() =>
-                  navigate(
-                    item.scope === 'project'
-                      ? projectMarkdownRoute(
-                          workspaceId,
-                          asProjectPublicId(item.file.project_public_id ?? item.file.project_id!),
-                          item.file.id,
-                          { mode: 'preview' }
-                        )
-                      : item.scope === 'entity'
-                        ? entityMarkdownRoute(
+              >
+                <TreeRow
+                  icon={<TbFileText size={14} />}
+                  label={item.file.name}
+                  trailing={
+                    <span className="dim" style={{ fontSize: 10 }}>
+                      {item.file.path}
+                    </span>
+                  }
+                  onClick={() =>
+                    navigate(
+                      item.scope === 'project'
+                        ? projectMarkdownRoute(
                             workspaceId,
-                            asEntityPublicId(entityId),
+                            asProjectPublicId(item.file.project_public_id ?? item.file.project_id!),
                             item.file.id,
                             { mode: 'preview' }
                           )
-                        : workspaceMarkdownRoute(workspaceId, item.file.id, { mode: 'preview' })
-                  )
-                }
-              />
+                        : item.scope === 'entity'
+                          ? entityMarkdownRoute(
+                              workspaceId,
+                              asEntityPublicId(entityId),
+                              item.file.id,
+                              { mode: 'preview' }
+                            )
+                          : workspaceMarkdownRoute(workspaceId, item.file.id, { mode: 'preview' })
+                    )
+                  }
+                />
+              </HoverCard>
             ))}
           </div>
         </section>
