@@ -13,6 +13,9 @@ import {
   seedProjectFiles,
   seedAdrDocuments,
   seedProjects,
+  seedMilestones,
+  seedEntitySnapshots,
+  seedProjectEntities,
   seedSavedViews,
   seedEnums,
   seedNotificationEvents,
@@ -278,6 +281,12 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
   for (const assessment of seedAssessments) {
     await db.project.createAssessment(assessment);
   }
+  for (const milestone of seedMilestones) {
+    await db.project.createMilestone(milestone);
+  }
+  for (const link of seedProjectEntities) {
+    await db.project.addProjectEntity(link);
+  }
 
   const maxByPrefix = new Map<string, number>();
   for (const item of [...seedProjects, ...seedEntities]) {
@@ -314,9 +323,10 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
 
     const body = seedWikiPageBodies[file.id];
     if (body !== undefined) {
+      const storageId = file.project_id ?? file.entity_id ?? file.workspace;
       await storage.write(
         file.workspace,
-        file.workspace,
+        storageId,
         file.id,
         Buffer.from(JSON.stringify({ body }), 'utf8')
       );
@@ -399,6 +409,11 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
   }
 
   await seedBootstrapUsers(db);
+
+  for (const snapshot of seedEntitySnapshots) {
+    await db.catalog.createSnapshot(snapshot);
+  }
+
   await seedBootstrapCollections(db);
   await seedBootstrapWatchesAndNotifications(db);
 };

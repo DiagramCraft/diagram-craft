@@ -22,12 +22,15 @@ import {
   CollectionEntityDbResult,
   SchemaDbResult,
   SavedViewDbResult,
-  WorkspaceEnumDbResult
+  WorkspaceEnumDbResult,
+  EntitySnapshotDbCreate
 } from '../domain/catalog/db/catalogDatabase';
 import {
   ProjectDbCreate,
   ContentNodeDbResult,
-  AssessmentDbCreate
+  AssessmentDbCreate,
+  ProjectMilestoneDbCreate,
+  ProjectEntityDbCreate
 } from '../domain/project/db/projectDatabase';
 import { AuditOperation } from '../domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
@@ -63,7 +66,8 @@ const TEAM_IDS = {
   platform: '90000000-0000-0000-0000-000000000021',
   design: '90000000-0000-0000-0000-000000000022',
   security: '90000000-0000-0000-0000-000000000023',
-  data: '90000000-0000-0000-0000-000000000024'
+  data: '90000000-0000-0000-0000-000000000024',
+  payments: '90000000-0000-0000-0000-000000000027'
 } as const;
 
 const TEAM2_IDS = {
@@ -252,6 +256,13 @@ export const seedProjectEntityTypes: ProjectEntityTypeDbResult[] = [
   }
 ];
 
+const PROJECT_ENTITY_TYPE_IDS = {
+  introduced: '90000000-0000-0000-0000-000000000201',
+  decommissioned: '90000000-0000-0000-0000-000000000202',
+  modified: '90000000-0000-0000-0000-000000000203',
+  used: '90000000-0000-0000-0000-000000000204'
+} as const;
+
 export const seedOwners: OwnerDbResult[] = [
   {
     id: TEAM_IDS.platform,
@@ -287,6 +298,15 @@ export const seedOwners: OwnerDbResult[] = [
     sort_order: 3,
     color: AR_COLOR_PURPLE,
     description: 'Manages data infrastructure and analytics pipelines',
+    created_at: now
+  },
+  {
+    id: TEAM_IDS.payments,
+    workspace: WORKSPACE_ID,
+    name: 'Payments Engineering',
+    sort_order: 4,
+    color: AR_COLOR_ORANGE,
+    description: 'Builds and operates payment processing, billing and ledger systems',
     created_at: now
   },
   // Second workspace teams
@@ -949,6 +969,668 @@ export const seedEntities: Entity[] = [
     created_at: now,
     updated_at: now
   },
+  // Payments domain
+  {
+    id: '00000000-0000-0000-0001-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'DOM-2',
+    slug: 'payments',
+    namespace: 'default',
+    name: 'Payments',
+    description: 'Payment processing, billing and ledger systems for the checkout experience.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['core', 'revenue'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000001',
+    data: {},
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0001-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'DOM-3',
+    slug: 'data-and-analytics',
+    namespace: 'default',
+    name: 'Data & Analytics',
+    description: 'Ingestion, warehousing and reporting for company-wide analytics.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['core', 'internal'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000001',
+    data: {},
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  // Additional systems
+  {
+    id: '00000000-0000-0000-0002-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'SYS-3',
+    slug: 'payments-platform',
+    namespace: 'default',
+    name: 'Payments Platform',
+    description: 'Handles payment authorization, capture, refunds and ledger reconciliation.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['tier-0', 'revenue'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000002',
+    data: { domain: ['00000000-0000-0000-0001-000000000002'] },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0002-000000000004',
+    workspace: WORKSPACE_ID,
+    public_id: 'SYS-4',
+    slug: 'analytics-platform',
+    namespace: 'default',
+    name: 'Analytics Platform',
+    description: 'Ingests events from product systems and powers internal reporting.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['tier-1', 'internal'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000002',
+    data: { domain: ['00000000-0000-0000-0001-000000000003'] },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0002-000000000005',
+    workspace: WORKSPACE_ID,
+    public_id: 'SYS-5',
+    slug: 'notification-hub',
+    namespace: 'default',
+    name: 'Notification Hub',
+    description: 'Centralised outbound messaging: push, email and webhooks.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['tier-1', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000002',
+    data: { domain: ['00000000-0000-0000-0001-000000000001'] },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0002-000000000006',
+    workspace: WORKSPACE_ID,
+    public_id: 'SYS-6',
+    slug: 'search-platform',
+    namespace: 'default',
+    name: 'Search Platform',
+    description: 'Full-text search and recommendations across the product catalog.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle_date: '2026-06-01',
+    tags: ['tier-1', 'search'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000002',
+    data: { domain: ['00000000-0000-0000-0001-000000000001'] },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  // Additional APIs
+  {
+    id: '00000000-0000-0000-0004-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'API-3',
+    slug: 'payments-api',
+    namespace: 'default',
+    name: 'Payments API',
+    description: 'REST API for authorizing and capturing payments.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['rest', 'internal'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000004',
+    data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000003'] },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0004-000000000004',
+    workspace: WORKSPACE_ID,
+    public_id: 'API-4',
+    slug: 'analytics-api',
+    namespace: 'default',
+    name: 'Analytics API',
+    description: 'GraphQL API exposing aggregated analytics data to internal dashboards.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['graphql', 'internal'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000004',
+    data: { api_type: 'graphql', system: ['00000000-0000-0000-0002-000000000004'] },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0004-000000000005',
+    workspace: WORKSPACE_ID,
+    public_id: 'API-5',
+    slug: 'notifications-api',
+    namespace: 'default',
+    name: 'Notifications API',
+    description: 'AsyncAPI event contract for push, email and webhook delivery.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['asyncapi', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000004',
+    data: { api_type: 'asyncapi', system: ['00000000-0000-0000-0002-000000000005'] },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0004-000000000006',
+    workspace: WORKSPACE_ID,
+    public_id: 'API-6',
+    slug: 'search-api',
+    namespace: 'default',
+    name: 'Search API',
+    description: 'REST API for full-text search and typeahead suggestions.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['rest', 'search'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000004',
+    data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000006'] },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  // Additional components
+  {
+    id: '00000000-0000-0000-0003-000000000004',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-4',
+    slug: 'payment-service',
+    namespace: 'default',
+    name: 'Payment Service',
+    description: 'Orchestrates payment authorization and capture against external providers.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['go', 'revenue'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Go',
+      system: ['00000000-0000-0000-0002-000000000003'],
+      provides_apis: ['00000000-0000-0000-0004-000000000003'],
+      consumes_apis: ['00000000-0000-0000-0004-000000000002'],
+      depends_on: ['00000000-0000-0000-0003-000000000005']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-000000000005',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-5',
+    slug: 'ledger-service',
+    namespace: 'default',
+    name: 'Ledger Service',
+    description: 'Double-entry ledger recording all payment and refund transactions.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['java', 'revenue'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Java',
+      system: ['00000000-0000-0000-0002-000000000003']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-000000000006',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-6',
+    slug: 'fraud-detection-service',
+    namespace: 'default',
+    name: 'Fraud Detection Service',
+    description: 'Scores transactions for fraud risk before payment capture.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle_date: '2026-07-01',
+    tags: ['python', 'security'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Python',
+      system: ['00000000-0000-0000-0002-000000000003'],
+      consumes_apis: ['00000000-0000-0000-0004-000000000003'],
+      depends_on: ['00000000-0000-0000-0003-000000000005']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-000000000007',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-7',
+    slug: 'analytics-ingestion-worker',
+    namespace: 'default',
+    name: 'Analytics Ingestion Worker',
+    description: 'Consumes product and payment events and lands them in the data warehouse.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['python', 'internal'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Python',
+      system: ['00000000-0000-0000-0002-000000000004'],
+      consumes_apis: [
+        '00000000-0000-0000-0004-000000000001',
+        '00000000-0000-0000-0004-000000000003'
+      ]
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-000000000008',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-8',
+    slug: 'reporting-dashboard',
+    namespace: 'default',
+    name: 'Reporting Dashboard',
+    description: 'Internal dashboard surfacing revenue and product analytics.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['react', 'internal'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'React',
+      system: ['00000000-0000-0000-0002-000000000004'],
+      consumes_apis: ['00000000-0000-0000-0004-000000000004'],
+      depends_on: ['00000000-0000-0000-0003-000000000007']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-000000000009',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-9',
+    slug: 'notification-dispatcher',
+    namespace: 'default',
+    name: 'Notification Dispatcher',
+    description: 'Fans out outbound notification events to channel-specific senders.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['nodejs', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Node',
+      system: ['00000000-0000-0000-0002-000000000005'],
+      provides_apis: ['00000000-0000-0000-0004-000000000005']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-00000000000a',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-10',
+    slug: 'webhook-relay',
+    namespace: 'default',
+    name: 'Webhook Relay',
+    description: 'Delivers outbound webhooks with retries and signature verification.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['go', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Go',
+      system: ['00000000-0000-0000-0002-000000000005'],
+      consumes_apis: ['00000000-0000-0000-0004-000000000005'],
+      depends_on: ['00000000-0000-0000-0003-000000000009']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-00000000000b',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-11',
+    slug: 'search-service',
+    namespace: 'default',
+    name: 'Search Service',
+    description: 'Serves full-text search queries backed by the Elasticsearch cluster.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle_date: '2026-06-01',
+    tags: ['rust', 'search'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Rust',
+      system: ['00000000-0000-0000-0002-000000000006'],
+      provides_apis: ['00000000-0000-0000-0004-000000000006']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-00000000000c',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-12',
+    slug: 'recommendation-engine',
+    namespace: 'default',
+    name: 'Recommendation Engine',
+    description: 'Generates personalised recommendations from search and behavioural signals.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.proposed,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['python', 'search'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Python',
+      system: ['00000000-0000-0000-0002-000000000006'],
+      consumes_apis: ['00000000-0000-0000-0004-000000000006'],
+      depends_on: ['00000000-0000-0000-0003-00000000000b']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-00000000000d',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-13',
+    slug: 'email-service',
+    namespace: 'default',
+    name: 'Email Service',
+    description: 'Renders and sends transactional email via the notification hub.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['nodejs', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Node',
+      system: ['00000000-0000-0000-0002-000000000005'],
+      consumes_apis: ['00000000-0000-0000-0004-000000000005'],
+      depends_on: ['00000000-0000-0000-0003-000000000009']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-00000000000e',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-14',
+    slug: 'feature-flag-service',
+    namespace: 'default',
+    name: 'Feature Flag Service',
+    description: 'Serves feature flag evaluations to the portal frontend and gateway.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['go', 'tier-1'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Go',
+      system: ['00000000-0000-0000-0002-000000000001']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0003-00000000000f',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-15',
+    slug: 'rate-limiter',
+    namespace: 'default',
+    name: 'Rate Limiter',
+    description: 'Sidecar enforcing per-client rate limits at the edge.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['rust', 'tier-1'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology: 'Rust',
+      system: ['00000000-0000-0000-0002-000000000001'],
+      depends_on: ['00000000-0000-0000-0003-00000000000e']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  // Additional resources
+  {
+    id: '00000000-0000-0000-0005-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'RES-2',
+    slug: 'redis-cache',
+    namespace: 'default',
+    name: 'Redis Cache',
+    description: 'Session and response cache for the customer portal.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['redis', 'managed'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000005',
+    data: {
+      resource_type: 'cache',
+      system: ['00000000-0000-0000-0002-000000000001']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0005-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'RES-3',
+    slug: 'kafka-event-bus',
+    namespace: 'default',
+    name: 'Kafka Event Bus',
+    description: 'Event backbone for notification and analytics event streams.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['kafka', 'managed'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000005',
+    data: {
+      resource_type: 'message-queue',
+      system: ['00000000-0000-0000-0002-000000000005']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0005-000000000004',
+    workspace: WORKSPACE_ID,
+    public_id: 'RES-4',
+    slug: 's3-data-lake',
+    namespace: 'default',
+    name: 'S3 Data Lake',
+    description: 'Raw event storage feeding the analytics warehouse.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['s3', 'managed'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000005',
+    data: {
+      resource_type: 'object-storage',
+      system: ['00000000-0000-0000-0002-000000000004']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0005-000000000005',
+    workspace: WORKSPACE_ID,
+    public_id: 'RES-5',
+    slug: 'payments-postgres',
+    namespace: 'default',
+    name: 'Payments Postgres',
+    description: 'Dedicated PostgreSQL cluster storing ledger and transaction state.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['postgres', 'managed'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000005',
+    data: {
+      resource_type: 'database',
+      system: ['00000000-0000-0000-0002-000000000003']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0005-000000000006',
+    workspace: WORKSPACE_ID,
+    public_id: 'RES-6',
+    slug: 'elasticsearch-cluster',
+    namespace: 'default',
+    name: 'Elasticsearch Cluster',
+    description: 'Search index backing the Search Service.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['elasticsearch', 'managed'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000005',
+    data: {
+      resource_type: 'search-index',
+      system: ['00000000-0000-0000-0002-000000000006']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0005-000000000007',
+    workspace: WORKSPACE_ID,
+    public_id: 'RES-7',
+    slug: 'analytics-warehouse',
+    namespace: 'default',
+    name: 'Analytics Warehouse',
+    description: 'Columnar data warehouse powering internal reporting.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['warehouse', 'managed'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000005',
+    data: {
+      resource_type: 'data-warehouse',
+      system: ['00000000-0000-0000-0002-000000000004']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0005-000000000008',
+    workspace: WORKSPACE_ID,
+    public_id: 'RES-8',
+    slug: 'cdn',
+    namespace: 'default',
+    name: 'CDN',
+    description: 'Edge content delivery network fronting the customer portal.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['cdn', 'managed'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000005',
+    data: {
+      resource_type: 'cdn',
+      system: ['00000000-0000-0000-0002-000000000001']
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
   // Second workspace entities
   {
     id: '00000000-0000-0000-0011-000000000001',
@@ -1009,6 +1691,126 @@ export const seedEntities: Entity[] = [
     visibility_mode: null,
     created_at: now,
     updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0011-000000000002',
+    workspace: WORKSPACE2_ID,
+    public_id: 'APP-2',
+    slug: 'admin-app',
+    namespace: 'default',
+    name: 'Admin App',
+    description: 'Internal web application for support and operations staff.',
+    owner: TEAM2_IDS.mobile,
+    lifecycle: LIFECYCLE2_IDS.beta,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['internal', 'web'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000011',
+    data: { platform: 'web' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0011-000000000003',
+    workspace: WORKSPACE2_ID,
+    public_id: 'APP-3',
+    slug: 'partner-portal',
+    namespace: 'default',
+    name: 'Partner Portal',
+    description: 'Web application used by external delivery partners.',
+    owner: TEAM2_IDS.mobile,
+    lifecycle: LIFECYCLE2_IDS.active,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['partner-facing', 'web'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000011',
+    data: { platform: 'web' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0012-000000000003',
+    workspace: WORKSPACE2_ID,
+    public_id: 'SVC-3',
+    slug: 'auth-service',
+    namespace: 'default',
+    name: 'Auth Service',
+    description: 'Issues and validates session tokens for mobile and web clients.',
+    owner: TEAM2_IDS.backend,
+    lifecycle: LIFECYCLE2_IDS.stable,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['go', 'security'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    data: { technology: 'Go' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0012-000000000004',
+    workspace: WORKSPACE2_ID,
+    public_id: 'SVC-4',
+    slug: 'payments-service',
+    namespace: 'default',
+    name: 'Payments Service',
+    description: 'Handles in-app purchases and subscription billing.',
+    owner: TEAM2_IDS.backend,
+    lifecycle: LIFECYCLE2_IDS.stable,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['java', 'revenue'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    data: { technology: 'Java' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0012-000000000005',
+    workspace: WORKSPACE2_ID,
+    public_id: 'SVC-5',
+    slug: 'search-service',
+    namespace: 'default',
+    name: 'Search Service',
+    description: 'Provides in-app search across catalog and content.',
+    owner: TEAM2_IDS.backend,
+    lifecycle: LIFECYCLE2_IDS.beta,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['rust', 'search'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    data: { technology: 'Rust' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0012-000000000006',
+    workspace: WORKSPACE2_ID,
+    public_id: 'SVC-6',
+    slug: 'analytics-service',
+    namespace: 'default',
+    name: 'Analytics Service',
+    description: 'Collects client usage events for product analytics.',
+    owner: TEAM2_IDS.backend,
+    lifecycle: LIFECYCLE2_IDS.active,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['python', 'internal'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    data: { technology: 'Python' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
   }
 ];
 
@@ -1054,6 +1856,594 @@ export const seedProjects: ProjectDbCreate[] = [
     pinned: false,
     created_at: now,
     updated_at: now
+  },
+  {
+    id: seededProjects.searchAnalytics.id,
+    workspace: WORKSPACE_ID,
+    public_id: seededProjects.searchAnalytics.publicId,
+    name: seededProjects.searchAnalytics.name,
+    description: 'Rollout of full-text search and a rebuilt analytics warehouse.',
+    owner: TEAM_IDS.data,
+    status: 'active',
+    color: AR_COLOR_PURPLE,
+    target_date: null,
+    pinned: false,
+    created_at: now,
+    updated_at: now
+  }
+];
+
+const MILESTONE_IDS = {
+  portalRedesign: {
+    designFinalized: '00000000-0000-0000-0040-000000000001',
+    frontendRollout: '00000000-0000-0000-0040-000000000002',
+    legacyPortalDecommission: '00000000-0000-0000-0040-000000000003'
+  },
+  authMigration: {
+    identityCutover: '00000000-0000-0000-0040-000000000004',
+    legacyAuthDecommission: '00000000-0000-0000-0040-000000000005'
+  },
+  checkoutRevamp: {
+    paymentGatewayIntegration: '00000000-0000-0000-0040-000000000006',
+    fraudDetectionRollout: '00000000-0000-0000-0040-000000000007'
+  },
+  searchAnalytics: {
+    searchPlatformGa: '00000000-0000-0000-0040-000000000008',
+    analyticsWarehouseMigration: '00000000-0000-0000-0040-000000000009'
+  }
+} as const;
+
+export const seedMilestones: ProjectMilestoneDbCreate[] = [
+  {
+    id: MILESTONE_IDS.portalRedesign.designFinalized,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    name: 'Design finalized',
+    target_date: '2026-02-15',
+    status: 'complete',
+    sort_order: 0,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: MILESTONE_IDS.portalRedesign.frontendRollout,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    name: 'Frontend rollout',
+    target_date: '2026-04-30',
+    status: 'active',
+    sort_order: 1,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: MILESTONE_IDS.portalRedesign.legacyPortalDecommission,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    name: 'Legacy portal decommission',
+    target_date: '2026-08-31',
+    status: 'planned',
+    sort_order: 2,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: MILESTONE_IDS.authMigration.identityCutover,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    name: 'Identity platform cutover',
+    target_date: '2026-03-31',
+    status: 'active',
+    sort_order: 0,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: MILESTONE_IDS.authMigration.legacyAuthDecommission,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    name: 'Legacy auth decommission',
+    target_date: '2026-09-30',
+    status: 'planned',
+    sort_order: 1,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: MILESTONE_IDS.checkoutRevamp.paymentGatewayIntegration,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    name: 'Payment gateway integration',
+    target_date: '2026-05-15',
+    status: 'planned',
+    sort_order: 0,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: MILESTONE_IDS.checkoutRevamp.fraudDetectionRollout,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    name: 'Fraud detection rollout',
+    target_date: '2026-07-01',
+    status: 'planned',
+    sort_order: 1,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: MILESTONE_IDS.searchAnalytics.searchPlatformGa,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    name: 'Search platform GA',
+    target_date: '2026-06-01',
+    status: 'planned',
+    sort_order: 0,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: MILESTONE_IDS.searchAnalytics.analyticsWarehouseMigration,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    name: 'Analytics warehouse migration',
+    target_date: '2026-10-01',
+    status: 'planned',
+    sort_order: 1,
+    created_at: now,
+    updated_at: now
+  }
+];
+
+export const seedEntitySnapshots: EntitySnapshotDbCreate[] = [
+  {
+    id: '00000000-0000-0000-0041-000000000001',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0002-000000000001', // Customer Portal
+    status: 'future_update',
+    project_id: seededProjects.portalRedesign.id,
+    target_date: null,
+    milestone_id: MILESTONE_IDS.portalRedesign.frontendRollout,
+    commit_message: 'Modernized navigation and IA',
+    created_at: new Date('2026-01-10T09:00:00.000Z'),
+    created_by: USER_IDS.designteamadmin,
+    created_by_name: seededUsers.designTeamAdmin.displayName,
+    base_state: {
+      description: 'Public-facing portal for customer self-service.'
+    },
+    proposed_state: {
+      description:
+        'Public-facing portal for customer self-service with a modernized reactive frontend and consolidated navigation.'
+    }
+  },
+  {
+    id: '00000000-0000-0000-0041-000000000002',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-000000000002', // Frontend App
+    status: 'future_update',
+    project_id: seededProjects.portalRedesign.id,
+    target_date: null,
+    milestone_id: MILESTONE_IDS.portalRedesign.frontendRollout,
+    commit_message: 'Upgrade to React 19 as part of the redesign',
+    created_at: new Date('2026-01-10T09:05:00.000Z'),
+    created_by: USER_IDS.designteamadmin,
+    created_by_name: seededUsers.designTeamAdmin.displayName,
+    base_state: { technology: 'React', tags: ['react', 'frontend'] },
+    proposed_state: { technology: 'React 19', tags: ['react', 'frontend', 'modernized'] }
+  },
+  {
+    id: '00000000-0000-0000-0041-000000000003',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-000000000001', // API Gateway
+    status: 'future_update',
+    project_id: seededProjects.portalRedesign.id,
+    target_date: '2026-03-15',
+    milestone_id: null,
+    commit_message: 'Runtime upgrade ahead of frontend rollout',
+    created_at: new Date('2026-01-10T09:10:00.000Z'),
+    created_by: USER_IDS.platformteamadmin,
+    created_by_name: seededUsers.platformTeamAdmin.displayName,
+    base_state: { technology: 'Node' },
+    proposed_state: { technology: 'Node 22' }
+  },
+  {
+    id: '00000000-0000-0000-0041-000000000004',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0002-000000000002', // Identity Platform
+    status: 'future_update',
+    project_id: seededProjects.authMigration.id,
+    target_date: null,
+    milestone_id: MILESTONE_IDS.authMigration.identityCutover,
+    commit_message: 'Cutover complete, legacy auth fully retired',
+    created_at: new Date('2026-01-11T10:00:00.000Z'),
+    created_by: USER_IDS.securityteamadmin,
+    created_by_name: seededUsers.securityTeamAdmin.displayName,
+    base_state: { description: 'Centralised authentication and authorisation service.' },
+    proposed_state: {
+      description:
+        'Centralised authentication and authorisation service, now the sole identity provider.'
+    }
+  },
+  {
+    id: '00000000-0000-0000-0041-000000000005',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-000000000003', // Auth Service
+    status: 'future_update',
+    project_id: seededProjects.authMigration.id,
+    target_date: null,
+    milestone_id: MILESTONE_IDS.authMigration.identityCutover,
+    commit_message: 'Promote to production once cutover completes',
+    created_at: new Date('2026-01-11T10:05:00.000Z'),
+    created_by: USER_IDS.securityteamadmin,
+    created_by_name: seededUsers.securityTeamAdmin.displayName,
+    base_state: { tags: ['go', 'security'] },
+    proposed_state: { tags: ['go', 'security', 'primary-idp'] }
+  },
+  {
+    id: '00000000-0000-0000-0041-000000000006',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0004-000000000002', // Auth API
+    status: 'future_update',
+    project_id: seededProjects.authMigration.id,
+    target_date: '2026-08-01',
+    milestone_id: null,
+    commit_message: 'Add refresh-token rotation ahead of legacy decommission',
+    created_at: new Date('2026-01-11T10:10:00.000Z'),
+    created_by: USER_IDS.securityteamadmin,
+    created_by_name: seededUsers.securityTeamAdmin.displayName,
+    base_state: { description: 'gRPC API for token issuance and validation.' },
+    proposed_state: {
+      description: 'gRPC API for token issuance and validation, with refresh-token rotation.'
+    }
+  },
+  {
+    id: '00000000-0000-0000-0041-000000000007',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-000000000004', // Payment Service
+    status: 'future_update',
+    project_id: seededProjects.checkoutRevamp.id,
+    target_date: null,
+    milestone_id: MILESTONE_IDS.checkoutRevamp.paymentGatewayIntegration,
+    commit_message: 'Integrate new gateway provider',
+    created_at: new Date('2026-01-12T11:00:00.000Z'),
+    created_by: USER_IDS.workspaceowner,
+    created_by_name: seededUsers.workspaceOwner.displayName,
+    base_state: {
+      description: 'Orchestrates payment authorization and capture against external providers.'
+    },
+    proposed_state: {
+      description:
+        'Orchestrates payment authorization and capture against the new gateway provider.'
+    }
+  },
+  {
+    id: '00000000-0000-0000-0041-000000000008',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-000000000006', // Fraud Detection Service
+    status: 'future_update',
+    project_id: seededProjects.checkoutRevamp.id,
+    target_date: null,
+    milestone_id: MILESTONE_IDS.checkoutRevamp.fraudDetectionRollout,
+    commit_message: 'Promote to production with new ML risk model',
+    created_at: new Date('2026-01-12T11:05:00.000Z'),
+    created_by: USER_IDS.workspaceowner,
+    created_by_name: seededUsers.workspaceOwner.displayName,
+    base_state: {
+      description: 'Scores transactions for fraud risk before payment capture.'
+    },
+    proposed_state: {
+      description:
+        'Scores transactions for fraud risk before payment capture, using the new ML risk model.'
+    }
+  },
+  {
+    id: '00000000-0000-0000-0041-000000000009',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-000000000005', // Ledger Service
+    status: 'future_update',
+    project_id: seededProjects.checkoutRevamp.id,
+    target_date: '2026-05-01',
+    milestone_id: null,
+    commit_message: 'Runtime upgrade ahead of gateway integration',
+    created_at: new Date('2026-01-12T11:10:00.000Z'),
+    created_by: USER_IDS.workspaceeditor,
+    created_by_name: seededUsers.workspaceEditor.displayName,
+    base_state: { technology: 'Java' },
+    proposed_state: { technology: 'Java 21' }
+  },
+  {
+    id: '00000000-0000-0000-0041-00000000000a',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-00000000000b', // Search Service
+    status: 'future_update',
+    project_id: seededProjects.searchAnalytics.id,
+    target_date: null,
+    milestone_id: MILESTONE_IDS.searchAnalytics.searchPlatformGa,
+    commit_message: 'GA readiness: typo-tolerant search',
+    created_at: new Date('2026-01-13T12:00:00.000Z'),
+    created_by: USER_IDS.workspaceeditor,
+    created_by_name: seededUsers.workspaceEditor.displayName,
+    base_state: {
+      description: 'Serves full-text search queries backed by the Elasticsearch cluster.'
+    },
+    proposed_state: {
+      description:
+        'Serves full-text search queries backed by the Elasticsearch cluster, now with typo-tolerant matching.'
+    }
+  },
+  {
+    id: '00000000-0000-0000-0041-00000000000b',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-000000000007', // Analytics Ingestion Worker
+    status: 'future_update',
+    project_id: seededProjects.searchAnalytics.id,
+    target_date: null,
+    milestone_id: MILESTONE_IDS.searchAnalytics.analyticsWarehouseMigration,
+    commit_message: 'Runtime upgrade for warehouse migration',
+    created_at: new Date('2026-01-13T12:05:00.000Z'),
+    created_by: USER_IDS.workspaceeditor,
+    created_by_name: seededUsers.workspaceEditor.displayName,
+    base_state: { technology: 'Python' },
+    proposed_state: { technology: 'Python 3.13' }
+  },
+  {
+    id: '00000000-0000-0000-0041-00000000000c',
+    workspace: WORKSPACE_ID,
+    entity_id: '00000000-0000-0000-0003-000000000008', // Reporting Dashboard
+    status: 'future_update',
+    project_id: seededProjects.searchAnalytics.id,
+    target_date: '2026-09-15',
+    milestone_id: null,
+    commit_message: 'Rebuild on the new analytics warehouse',
+    created_at: new Date('2026-01-13T12:10:00.000Z'),
+    created_by: USER_IDS.workspaceeditor,
+    created_by_name: seededUsers.workspaceEditor.displayName,
+    base_state: {
+      description: 'Internal dashboard surfacing revenue and product analytics.'
+    },
+    proposed_state: {
+      description:
+        'Internal dashboard surfacing revenue and product analytics, rebuilt on the new analytics warehouse.'
+    }
+  }
+];
+
+export const seedProjectEntities: ProjectEntityDbCreate[] = [
+  // Portal Redesign
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    entity_id: '00000000-0000-0000-0002-000000000001', // Customer Portal
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.modified,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    entity_id: '00000000-0000-0000-0003-000000000002', // Frontend App
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.modified,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    entity_id: '00000000-0000-0000-0003-000000000001', // API Gateway
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.used,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    entity_id: '00000000-0000-0000-0004-000000000001', // Customer API
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.used,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    entity_id: '00000000-0000-0000-0005-000000000002', // Redis Cache
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: true,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    entity_id: '00000000-0000-0000-0005-000000000008', // CDN
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: true,
+    created_at: now
+  },
+  // Auth Migration
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    entity_id: '00000000-0000-0000-0002-000000000002', // Identity Platform
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.modified,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    entity_id: '00000000-0000-0000-0003-000000000003', // Auth Service
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: true,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    entity_id: '00000000-0000-0000-0004-000000000002', // Auth API
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.modified,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    entity_id: '00000000-0000-0000-0002-000000000001', // Customer Portal
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.used,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    entity_id: '00000000-0000-0000-0003-000000000002', // Frontend App
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.used,
+    is_done: false,
+    created_at: now
+  },
+  // Checkout Revamp
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: '00000000-0000-0000-0002-000000000003', // Payments Platform
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: true,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: '00000000-0000-0000-0003-000000000004', // Payment Service
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: '00000000-0000-0000-0003-000000000005', // Ledger Service
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: true,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: '00000000-0000-0000-0003-000000000006', // Fraud Detection Service
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: '00000000-0000-0000-0004-000000000003', // Payments API
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: true,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: '00000000-0000-0000-0005-000000000005', // Payments Postgres
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: true,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: '00000000-0000-0000-0004-000000000002', // Auth API
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.used,
+    is_done: false,
+    created_at: now
+  },
+  // Search & Analytics Modernization
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0002-000000000006', // Search Platform
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0003-00000000000b', // Search Service
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0003-00000000000c', // Recommendation Engine
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0004-000000000006', // Search API
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0005-000000000006', // Elasticsearch Cluster
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: true,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0002-000000000004', // Analytics Platform
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.modified,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0003-000000000007', // Analytics Ingestion Worker
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.modified,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0003-000000000008', // Reporting Dashboard
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.modified,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0004-000000000004', // Analytics API
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.used,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0005-000000000007', // Analytics Warehouse
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.introduced,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.searchAnalytics.id,
+    entity_id: '00000000-0000-0000-0005-000000000004', // S3 Data Lake
+    entity_type_id: PROJECT_ENTITY_TYPE_IDS.used,
+    is_done: false,
+    created_at: now
   }
 ];
 
@@ -1404,7 +2794,11 @@ const CONTENT_IDS = {
   wsAdrAsyncMessaging: '00000000-0000-0000-0031-000000000012',
   wsAdrAuthentication: '00000000-0000-0000-0031-000000000013',
   wsAdrObservability: '00000000-0000-0000-0031-000000000014',
-  wsAdrDataOwnership: '00000000-0000-0000-0031-000000000015'
+  wsAdrDataOwnership: '00000000-0000-0000-0031-000000000015',
+  // Checkout Revamp project content nodes
+  checkoutRevampPlanningFolder: '00000000-0000-0000-0032-000000000001',
+  checkoutRevampProjectBrief: '00000000-0000-0000-0032-000000000002',
+  checkoutRevampRolloutPlan: '00000000-0000-0000-0032-000000000003'
 } as const;
 
 const encodeEntityBrowserEmbedConfig = (config: {
@@ -1658,6 +3052,60 @@ Other domains consume that boundary instead of writing directly to the tables.
 
 Ownership is clearer and schema changes are safer, although some cross-domain operations require
 explicit coordination.
+`,
+  [CONTENT_IDS.checkoutRevampProjectBrief]: `# Checkout Revamp — Project Brief
+
+## Goal
+
+Modernize checkout orchestration and integrate a new payment gateway provider to reduce
+transaction latency and support additional payment methods.
+
+## Scope
+
+- <EntityLink id="00000000-0000-0000-0002-000000000003" /> — new dedicated system for payment
+  authorization, capture, refunds and ledger reconciliation
+- <EntityLink id="00000000-0000-0000-0003-000000000004" /> — orchestrates authorization and
+  capture against the new gateway provider
+- <EntityLink id="00000000-0000-0000-0003-000000000005" /> — double-entry ledger for all payment
+  and refund transactions
+- <EntityLink id="00000000-0000-0000-0003-000000000006" /> — real-time fraud scoring ahead of
+  capture
+
+## Non-goals
+
+- Migrating existing subscription billing (tracked separately)
+- Multi-currency support (candidate for a follow-up project)
+
+## Stakeholders
+
+<EntityCard id="00000000-0000-0000-0003-000000000004" fields="owner,lifecycle,tags" />
+
+See the [Rollout Plan](../planning/rollout-plan) for milestones and sequencing.
+`,
+  [CONTENT_IDS.checkoutRevampRolloutPlan]: `# Rollout Plan
+
+## Milestones
+
+| Milestone | Target date | Status |
+| --- | --- | --- |
+| Payment gateway integration | 2026-05-15 | Planned |
+| Fraud detection rollout | 2026-07-01 | Planned |
+
+## Sequencing
+
+1. Stand up <EntityMention id="00000000-0000-0000-0002-000000000003" /> and the supporting
+   ledger and Postgres resources.
+2. Integrate <EntityMention id="00000000-0000-0000-0003-000000000004" /> with the new gateway
+   provider behind a feature flag.
+3. Enable <EntityMention id="00000000-0000-0000-0003-000000000006" /> in shadow mode, then
+   promote to blocking once precision/recall targets are met.
+4. Cut over checkout traffic and decommission the legacy payment path.
+
+## Risks
+
+- Gateway provider sandbox availability may slip the integration milestone.
+- Fraud model precision needs validation against production traffic before it can block
+  transactions.
 `
 };
 
@@ -2050,7 +3498,80 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     updated_by: null,
     mime_type: null,
     original_filename: null
-  }))
+  })),
+  // Checkout Revamp project-scoped wiki
+  {
+    id: CONTENT_IDS.checkoutRevampPlanningFolder,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: null,
+    parent_id: null,
+    path: 'planning',
+    name: 'Planning',
+    type: 'folder',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  },
+  {
+    id: CONTENT_IDS.checkoutRevampProjectBrief,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: null,
+    parent_id: CONTENT_IDS.checkoutRevampPlanningFolder,
+    path: 'planning/project-brief',
+    name: 'Project Brief',
+    type: 'markdown',
+    size_bytes: Buffer.byteLength(
+      JSON.stringify({ body: seedWikiPageBodies[CONTENT_IDS.checkoutRevampProjectBrief] }),
+      'utf8'
+    ),
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  },
+  {
+    id: CONTENT_IDS.checkoutRevampRolloutPlan,
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: null,
+    parent_id: CONTENT_IDS.checkoutRevampPlanningFolder,
+    path: 'planning/rollout-plan',
+    name: 'Rollout Plan',
+    type: 'markdown',
+    size_bytes: Buffer.byteLength(
+      JSON.stringify({ body: seedWikiPageBodies[CONTENT_IDS.checkoutRevampRolloutPlan] }),
+      'utf8'
+    ),
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  }
 ];
 
 export const seedAiConfig: AiConfigInputDbUpsert = {
