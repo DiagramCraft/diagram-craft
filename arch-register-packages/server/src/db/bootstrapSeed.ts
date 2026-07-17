@@ -11,6 +11,7 @@ import {
   seedLocalUsers,
   seedOwners,
   seedProjectFiles,
+  seedAdrDocuments,
   seedProjects,
   seedSavedViews,
   seedEnums,
@@ -367,6 +368,35 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
     exampleNodeId,
     Buffer.from(JSON.stringify({ body: exampleBody }), 'utf8')
   );
+
+  for (const seededAdr of seedAdrDocuments) {
+    const file = seedProjectFiles.find(item => item.id === seededAdr.id);
+    const body = file ? seedWikiPageBodies[file.id] : undefined;
+    if (!file || body === undefined) continue;
+
+    const metadata = {
+      status: seededAdr.status,
+      decision_date: seededAdr.decision_date
+    };
+    await db.document.upsertDocumentMetadata({
+      workspace: seededWorkspaces.default.id,
+      node_id: file.id,
+      document_type_id: adr.documentType.id,
+      values: metadata,
+      updated_at: syncTimestamp
+    });
+    await db.project.createMarkdownRevision({
+      workspace: seededWorkspaces.default.id,
+      node_id: file.id,
+      revision_number: 1,
+      title: file.name,
+      body,
+      created_at: syncTimestamp,
+      created_by: null,
+      document_type_id: adr.documentType.id,
+      metadata
+    });
+  }
 
   await seedBootstrapUsers(db);
   await seedBootstrapCollections(db);
