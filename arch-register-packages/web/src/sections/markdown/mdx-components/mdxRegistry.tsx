@@ -32,6 +32,8 @@ import { CAPTION_TYPE } from './blocks/caption/CaptionEditable';
 import { captionSpec } from './blocks/caption/CaptionRegistration';
 import { CALLOUT_TYPE } from './blocks/callout/CalloutEditable';
 import { calloutSpec } from './blocks/callout/CalloutRegistration';
+import { FOLDABLE_SECTION_TYPE } from './blocks/foldable-section/FoldableSectionEditable';
+import { foldableSectionSpec } from './blocks/foldable-section/FoldableSectionRegistration';
 import type { MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
 
@@ -52,7 +54,8 @@ export const MDX_COMPONENTS = {
   [ENTITY_LINK_TYPE]: entityLinkSpec,
   [LABEL_TYPE]: labelSpec,
   [CAPTION_TYPE]: captionSpec,
-  [CALLOUT_TYPE]: calloutSpec
+  [CALLOUT_TYPE]: calloutSpec,
+  [FOLDABLE_SECTION_TYPE]: foldableSectionSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;

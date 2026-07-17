@@ -135,6 +135,18 @@ describe('parseMarkdownWithComponents', () => {
     expect(node.children?.map(child => child.type)).toEqual(['paragraph', 'list']);
   });
 
+  it('parses headings inside a Callout even when the serializer indents them', () => {
+    // The real Plate markdown serializer indents a JSX flow element's children
+    // by two spaces (e.g. `  ## Heading`); without dedenting, an indented ATX
+    // heading is misread as literal paragraph text instead of a heading node.
+    const ast = parseMarkdownWithComponents(
+      '<Callout variant="warning">\n  ## Heading\n\n  Some text\n</Callout>'
+    );
+    expect(ast).toHaveLength(1);
+    const node = ast[0] as { type: string; children?: ASTNode[] };
+    expect(node.children?.map(child => child.type)).toEqual(['heading', 'paragraph']);
+  });
+
   it('parses an empty Callout with no children rather than degrading to literal', () => {
     const ast = parseMarkdownWithComponents('<Callout variant="info">\n</Callout>');
     expect(ast).toHaveLength(1);

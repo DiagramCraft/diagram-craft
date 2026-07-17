@@ -19,6 +19,23 @@ const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,()%\s]*$/;
 
 const isKnownComponent = (name: string): name is MdxComponentName => name in MDX_COMPONENTS;
 
+/**
+ * Strips the common leading whitespace the markdown serializer adds to a JSX
+ * flow element's children (e.g. `  ## Heading`) before re-parsing them as a
+ * nested document. Without this, indented ATX headings and other
+ * indent-sensitive constructs are misread as literal/paragraph text instead
+ * of their real block type.
+ */
+const dedent = (lines: string[]): string[] => {
+  const indents = lines
+    .filter(line => line.trim() !== '')
+    .map(line => line.match(/^ */)?.[0].length ?? 0);
+  if (indents.length === 0) return lines;
+  const minIndent = Math.min(...indents);
+  if (minIndent === 0) return lines;
+  return lines.map(line => (line.trim() === '' ? line : line.slice(minIndent)));
+};
+
 const validateProps = (
   name: MdxComponentName,
   props: Record<string, string>
@@ -115,7 +132,7 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     }
     stream.consume(); // consume the closing tag line
 
-    const innerAst = parseMarkdownWithComponents(innerLines.join('\n'));
+    const innerAst = parseMarkdownWithComponents(dedent(innerLines).join('\n'));
 
     if (spec.acceptsRichContent) {
       const children = innerAst.filter(n => !(n.type === 'literal' && n.value.trim() === ''));
