@@ -4,6 +4,7 @@ import type { DocumentMetadata } from '@arch-register/api-types/documentContract
 import {
   databaseBoolean,
   databaseDate,
+  databaseDateOnly,
   parseDatabaseJson,
   type DatabaseRow
 } from '../../../db/rowMappers';
@@ -322,6 +323,27 @@ export type AssessmentResponseDbUpsert = Omit<
   'id' | 'created_at' | 'updated_at' | 'updated_by_name'
 >;
 
+// -- Project Milestone
+
+export type ProjectMilestoneDbResult = {
+  id: string;
+  workspace: string;
+  project_id: string;
+  name: string;
+  target_date: string;
+  status: 'planned' | 'active' | 'complete' | 'cancelled';
+  sort_order: number;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type ProjectMilestoneDbCreate = ProjectMilestoneDbResult;
+
+export type ProjectMilestoneDbUpdate = Omit<
+  ProjectMilestoneDbResult,
+  'id' | 'workspace' | 'project_id' | 'created_at'
+>;
+
 export const projectMappers = {
   project: (row: DatabaseRow): ProjectDbResult => ({
     id: String(row['id']),
@@ -446,6 +468,17 @@ export const projectMappers = {
     scope: parseDatabaseJson(row['scope'], [], 'assessment.scope'),
     scope_conditions: parseDatabaseJson(row['scope_conditions'], [], 'assessment.scope_conditions'),
     fields: parseDatabaseJson(row['fields'], [], 'assessment.fields'),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
+  projectMilestone: (row: DatabaseRow): ProjectMilestoneDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    project_id: String(row['project_id']),
+    name: String(row['name']),
+    target_date: databaseDateOnly(row['target_date']),
+    status: row['status'] as ProjectMilestoneDbResult['status'],
+    sort_order: Number(row['sort_order'] ?? 0),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
@@ -611,6 +644,22 @@ export type ProjectDatabase = {
     input: AssessmentDbUpdate
   ): Promise<AssessmentDbResult | null>;
   deleteAssessment(ws: string, projectId: string, id: string): Promise<AssessmentDbResult | null>;
+
+  listMilestones(ws: string, projectId: string): Promise<ProjectMilestoneDbResult[]>;
+  getMilestone(ws: string, projectId: string, id: string): Promise<ProjectMilestoneDbResult | null>;
+  createMilestone(input: ProjectMilestoneDbCreate): Promise<ProjectMilestoneDbResult>;
+  updateMilestone(
+    ws: string,
+    projectId: string,
+    id: string,
+    input: ProjectMilestoneDbUpdate
+  ): Promise<ProjectMilestoneDbResult | null>;
+  deleteMilestone(
+    ws: string,
+    projectId: string,
+    id: string
+  ): Promise<ProjectMilestoneDbResult | null>;
+  isEntityLinkedToProject(ws: string, projectId: string, entityId: string): Promise<boolean>;
 
   listAssessmentResponses(ws: string, assessmentId: string): Promise<AssessmentResponseDbResult[]>;
   getAssessmentResponse(

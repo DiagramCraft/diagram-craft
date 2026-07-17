@@ -10,7 +10,12 @@ import {
 } from '@arch-register/api-types/viewContract';
 import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
-import { databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
+import {
+  databaseDate,
+  databaseDateOnly,
+  parseDatabaseJson,
+  type DatabaseRow
+} from '../../../db/rowMappers';
 import { ENTITY_DEFAULTS } from '../../../constants';
 
 export const ENTITY_SELECT_SQL = `
@@ -171,6 +176,7 @@ export type EntitySnapshotDbResult = {
   status: SnapshotStatus;
   project_id: string | null;
   target_date: string | null;
+  milestone_id: string | null;
   commit_message: string | null;
   created_at: Date;
   created_by: string;
@@ -223,7 +229,8 @@ export const catalogMappers = {
     entity_id: String(row['entity_id']),
     status: String(row['status']) as EntitySnapshotDbResult['status'],
     project_id: row['project_id'] == null ? null : String(row['project_id']),
-    target_date: row['target_date'] == null ? null : String(row['target_date']),
+    target_date: row['target_date'] == null ? null : databaseDateOnly(row['target_date']),
+    milestone_id: row['milestone_id'] == null ? null : String(row['milestone_id']),
     commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
     created_at: databaseDate(row['created_at']),
     created_by: String(row['created_by']),
@@ -392,10 +399,16 @@ export type CatalogDatabase = {
     updates: {
       proposed_state?: Record<string, unknown>;
       target_date?: string | null;
+      milestone_id?: string | null;
       commit_message?: string | null;
     }
   ): Promise<EntitySnapshotDbResult | null>;
   applySnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
+  reassignSnapshotsFromMilestone(
+    ws: string,
+    milestoneId: string,
+    backfillTargetDate: string | null
+  ): Promise<void>;
 };
 
 // -- Saved View

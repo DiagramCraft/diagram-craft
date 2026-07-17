@@ -40,6 +40,7 @@ export const useCreateFutureUpdate = (workspaceId: string, entityId: string) => 
     mutationFn: (params: {
       projectId: string;
       targetDate?: string | null;
+      milestoneId?: string | null;
       commitMessage?: string | null;
       proposedState: Record<string, unknown>;
     }) =>
@@ -62,6 +63,7 @@ export const useUpdateSnapshot = (workspaceId: string, entityId: string) => {
       projectId?: string | null;
       proposedState?: Record<string, unknown>;
       targetDate?: string | null;
+      milestoneId?: string | null;
       commitMessage?: string | null;
     }) =>
       orpcClient.entities.snapshots.update({
@@ -69,6 +71,7 @@ export const useUpdateSnapshot = (workspaceId: string, entityId: string) => {
         body: {
           proposedState: params.proposedState,
           targetDate: params.targetDate,
+          milestoneId: params.milestoneId,
           commitMessage: params.commitMessage
         }
       }),

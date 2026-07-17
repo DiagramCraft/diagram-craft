@@ -10,6 +10,7 @@ type TimelineScaffoldProps = {
   todayScrollAlign?: number;
   header?: ReactNode;
   todayLine?: ReactNode;
+  overlayLines?: ReactNode;
   children: ReactNode;
   innerStyle?: CSSProperties;
 };
@@ -23,6 +24,7 @@ export const TimelineScaffold = ({
   todayScrollAlign = 0.4,
   header,
   todayLine,
+  overlayLines,
   children,
   innerStyle
 }: TimelineScaffoldProps) => {
@@ -42,6 +44,7 @@ export const TimelineScaffold = ({
       >
         {header}
         {todayLine}
+        {overlayLines}
         {children}
       </div>
     </div>

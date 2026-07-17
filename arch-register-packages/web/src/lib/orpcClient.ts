@@ -11,6 +11,7 @@ import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContr
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
+import { milestoneContract } from '@arch-register/api-types/milestoneContract';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
@@ -64,6 +65,7 @@ const webContracts = {
   ...workspaceManagementContract,
   ...workspaceConfigContract,
   ...projectContract,
+  ...milestoneContract,
   ...assessmentContract,
   ...assessmentResponseContract,
   ...auditContract,

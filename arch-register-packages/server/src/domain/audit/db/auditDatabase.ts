@@ -30,7 +30,8 @@ export type AuditEntityType =
   | 'project'
   | 'content_node'
   | 'assessment'
-  | 'assessment_response';
+  | 'assessment_response'
+  | 'project_milestone';
 
 export const AUDIT_LOG_SELECT_SQL = `
   SELECT audit_log.*, users.display_name as user_display_name

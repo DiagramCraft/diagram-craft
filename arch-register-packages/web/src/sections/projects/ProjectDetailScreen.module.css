@@ -1027,6 +1027,33 @@
   padding-top: 2px;
 }
 
+.ptlMilestoneLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed var(--warn, orange);
+  opacity: 0.7;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.ptlMilestoneLabel {
+  position: absolute;
+  top: 36px;
+  left: 4px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--warn, orange);
+  background: var(--panel-bg);
+  padding: 1px 5px;
+  border-radius: var(--r);
+  border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  pointer-events: none;
+  z-index: 4;
+}
+
 /* Role group header */
 .ptlGrpRow {
   display: flex;

@@ -23,7 +23,8 @@ const auditLogEntrySchema = z.object({
       'project',
       'content_node',
       'assessment',
-      'assessment_response'
+      'assessment_response',
+      'project_milestone'
     ])
     .describe('Type of entity affected'),
   entity_id: z.string().describe('Identifier of the affected entity'),

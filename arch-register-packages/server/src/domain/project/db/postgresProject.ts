@@ -10,7 +10,9 @@ import type {
   MarkdownRevisionDbResult,
   AssessmentDbCreate,
   AssessmentDbUpdate,
-  AssessmentResponseDbUpsert
+  AssessmentResponseDbUpsert,
+  ProjectMilestoneDbCreate,
+  ProjectMilestoneDbUpdate
 } from './projectDatabase';
 import {
   PROJECT_SELECT_SQL,
@@ -937,6 +939,75 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       DELETE FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
     `;
     return row;
+  }
+
+  async listMilestones(workspace: string, projectId: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM project_milestone WHERE workspace = ${workspace} AND project_id = ${projectId} ORDER BY sort_order, name
+    `;
+    return mapDatabaseRows(rows, projectMappers.projectMilestone);
+  }
+
+  async getMilestone(workspace: string, projectId: string, id: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM project_milestone WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+    `;
+    return row ? projectMappers.projectMilestone(row) : null;
+  }
+
+  async createMilestone(input: ProjectMilestoneDbCreate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO project_milestone (id, workspace, project_id, name, target_date, status, sort_order, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.target_date}, ${input.status}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
+        RETURNING *
+      `;
+      return projectMappers.projectMilestone(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateMilestone(
+    workspace: string,
+    projectId: string,
+    id: string,
+    input: ProjectMilestoneDbUpdate
+  ) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        UPDATE project_milestone
+        SET name = ${input.name},
+            target_date = ${input.target_date},
+            status = ${input.status},
+            sort_order = ${input.sort_order},
+            updated_at = ${input.updated_at}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+        RETURNING *
+      `;
+      return row ? projectMappers.projectMilestone(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteMilestone(workspace: string, projectId: string, id: string) {
+    const row = await this.getMilestone(workspace, projectId, id);
+    if (!row) return null;
+    await this.sql`
+      DELETE FROM project_milestone WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+    `;
+    return row;
+  }
+
+  async isEntityLinkedToProject(workspace: string, projectId: string, entityId: string) {
+    const [row] = await this.sql<{ exists: boolean }[]>`
+      SELECT EXISTS(
+        SELECT 1 FROM project_entity
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND entity_id = ${entityId}
+      ) AS exists
+    `;
+    return Boolean(row?.exists);
   }
 
   async listAssessmentResponses(workspace: string, assessmentId: string) {

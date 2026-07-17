@@ -14,6 +14,7 @@ import {
   TbClipboardList,
   TbColumns3,
   TbFileText,
+  TbFlag,
   TbFolderOpen,
   TbHome,
   TbLayoutGrid,
@@ -30,6 +31,7 @@ import { RenameDialog } from '../../components/RenameDialog';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { useAssessments } from '../../hooks/useAssessments';
+import { useMilestones } from '../../hooks/useMilestones';
 import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import {
   contentDownloadUrl,
@@ -53,7 +55,7 @@ import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
 
-type ProjectSection = 'home' | 'entities' | 'assessments';
+type ProjectSection = 'home' | 'entities' | 'assessments' | 'milestones';
 type SidebarTab = 'content' | 'views';
 
 export const ProjectContentSidebar = ({
@@ -69,6 +71,7 @@ export const ProjectContentSidebar = ({
   const { data: project } = useProject(workspaceSlug, projectId);
   const { data: projectEntities = [] } = useProjectEntities(workspaceSlug, projectId);
   const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
+  const { data: milestones = [] } = useMilestones(workspaceSlug, projectId);
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, { projectId });
   const projectViews = savedViews.filter(view => view.scope === 'project');
   const deleteView = useDeleteSavedView(workspaceSlug);
@@ -88,7 +91,11 @@ export const ProjectContentSidebar = ({
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as ProjectSearchParams;
   const section: ProjectSection =
-    search.section === 'entities' || search.section === 'assessments' ? search.section : 'home';
+    search.section === 'entities' ||
+    search.section === 'assessments' ||
+    search.section === 'milestones'
+      ? search.section
+      : 'home';
   const contentFolder = section === 'home' ? (params._splat ?? null) : null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
 
@@ -201,6 +208,13 @@ export const ProjectContentSidebar = ({
         icon={<TbClipboardList size={13} />}
         active={section === 'assessments'}
         onClick={() => navigateProject({ section: 'assessments' })}
+      />
+      <TreeRow
+        testId="project-secondary-milestones"
+        label={`Milestones (${milestones.length})`}
+        icon={<TbFlag size={13} />}
+        active={section === 'milestones'}
+        onClick={() => navigateProject({ section: 'milestones' })}
       />
     </>
   );

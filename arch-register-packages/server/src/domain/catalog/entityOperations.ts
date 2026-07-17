@@ -1186,6 +1186,7 @@ export const deleteEntity = async (
       status: 'deleted',
       project_id: null,
       target_date: null,
+      milestone_id: null,
       commit_message: null,
       created_at: new Date(),
       created_by: actor.id,
