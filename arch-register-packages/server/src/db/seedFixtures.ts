@@ -121,6 +121,12 @@ export const seededProjects = {
     publicId: 'DW-3',
     workspaceId: seededWorkspaces.default.id,
     name: 'Checkout Revamp'
+  },
+  searchAnalytics: {
+    id: '00000000-0000-0000-0010-000000000004',
+    publicId: 'DW-4',
+    workspaceId: seededWorkspaces.default.id,
+    name: 'Search & Analytics Modernization'
   }
 } as const;
 

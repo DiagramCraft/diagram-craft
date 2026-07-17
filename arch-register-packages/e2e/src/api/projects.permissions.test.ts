@@ -70,22 +70,6 @@ test.describe('project permission routes', () => {
     designOnlyAuth,
     resources
   }) => {
-    const createdAt = new Date('2026-02-04T00:00:00.000Z');
-    await server.db.project.addProjectEntity({
-      workspace: resources.workspaceId,
-      project_id: resources.projectIds.portalRedesign,
-      entity_id: resources.entityIds.customerPortal,
-      entity_type_id: null,
-      created_at: createdAt
-    });
-    await server.db.project.addProjectEntity({
-      workspace: resources.workspaceId,
-      project_id: resources.projectIds.authMigration,
-      entity_id: resources.entityIds.customerPortal,
-      entity_type_id: null,
-      created_at: createdAt
-    });
-
     const designOnlyOrpc = createTestORPCClient(server.baseUrl, designOnlyAuth);
     const projects = await designOnlyOrpc.projects.listEntityProjects({
       params: { workspace: 'default', entityId: resources.entityIds.customerPortal }

@@ -1,4 +1,6 @@
+import { seedEntities } from '@arch-register/server/db/seedData';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
+import { seedIds } from '../helpers/seedHelper';
 
 const test = createPermissionApiTest();
 
@@ -27,16 +29,10 @@ test.describe('diagram craft permission routes', () => {
 
     expect(dataRes.status).toBe(200);
     const body = (await dataRes.json()) as Array<{ _name: string }>;
-    expect(body.map(entity => entity._name)).toEqual([
-      'API Gateway',
-      'Auth API',
-      'Auth Service',
-      'Customer API',
-      'Customer Portal',
-      'Engineering',
-      'Frontend App',
-      'Identity Platform',
-      'Postgres Main'
-    ]);
+    const expectedNames = seedEntities
+      .filter(entity => entity.workspace === seedIds.workspace.default)
+      .map(entity => entity.name)
+      .sort();
+    expect(body.map(entity => entity._name).sort()).toEqual(expectedNames);
   });
 });

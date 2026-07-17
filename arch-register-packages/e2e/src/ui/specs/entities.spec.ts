@@ -1,7 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { EntitiesPage } from '../pages/EntitiesPage';
-import { authApiEntity, customerApiEntity, frontendAppEntity } from '../support/entities';
+import {
+  authApiEntity,
+  customerApiEntity,
+  frontendAppEntity,
+  seededApiEntityCount
+} from '../support/entities';
 import { apiSchema } from '../support/schemas';
 import { defaultWorkspace } from '../support/workspaces';
 
@@ -19,7 +24,7 @@ test.describe('entities section', () => {
     await entitiesPage.goto();
     await entitiesPage.expectLoaded();
     await entitiesPage.filterByType(apiSchema.name);
-    await entitiesPage.expectFilteredResultCount(2);
+    await entitiesPage.expectFilteredResultCount(seededApiEntityCount);
   });
 
   test('opens an entity detail from the browser @quick', async ({ page }) => {
@@ -92,7 +97,7 @@ test.describe('entities section', () => {
     await entitiesPage.goto();
     await entitiesPage.filterByType(apiSchema.name);
     await page.reload();
-    await entitiesPage.expectFilteredResultCount(2);
+    await entitiesPage.expectFilteredResultCount(seededApiEntityCount);
 
     await page.goBack();
     await expect(entitiesPage.browserTitle()).toHaveText('All entities');
