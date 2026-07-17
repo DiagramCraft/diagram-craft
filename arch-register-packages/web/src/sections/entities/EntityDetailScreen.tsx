@@ -457,7 +457,14 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           tab={tab}
           setTab={setTab}
           assessmentsProps={{ workspaceId, entity, schema }}
-          timelineProps={{ allSnapshots, entityProjects, schema, lifecycleStates, teams }}
+          timelineProps={{
+            workspaceId,
+            allSnapshots,
+            entityProjects,
+            schema,
+            lifecycleStates,
+            teams
+          }}
         />
       )}
 

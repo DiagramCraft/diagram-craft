@@ -3,8 +3,10 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Select } from '@diagram-craft/app-components/Select';
 import { useEntity } from '../../../hooks/useEntities';
 import { useCreateFutureUpdate } from '../../../hooks/useSnapshots';
+import { useMilestones } from '../../../hooks/useMilestones';
 import { createEntityEditState, type EntityEditState } from '../../../lib/entityEditState';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -38,16 +40,29 @@ export const PlanFutureChangeDialog = ({
 }: Props) => {
   const { data: entity } = useEntity(workspaceId, entityId);
   const createFutureUpdate = useCreateFutureUpdate(workspaceId, entityId);
+  const { data: milestones = [] } = useMilestones(workspaceId, projectId, open);
 
   const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
 
   const [targetDate, setTargetDate] = useState('');
+  const [milestoneId, setMilestoneId] = useState('');
   const [commitMessage, setCommitMessage] = useState('');
   const [planState, setPlanState] = useState<EntityEditState>({});
+
+  const handleTargetDateChange = (value: string) => {
+    setTargetDate(value);
+    if (value) setMilestoneId('');
+  };
+
+  const handleMilestoneChange = (value: string) => {
+    setMilestoneId(value);
+    if (value) setTargetDate('');
+  };
 
   useEffect(() => {
     if (!open) return;
     setTargetDate('');
+    setMilestoneId('');
     setCommitMessage('');
     if (!entity || !schema) {
       setPlanState({});
@@ -83,13 +98,16 @@ export const PlanFutureChangeDialog = ({
     createFutureUpdate.mutate(
       {
         projectId,
-        targetDate: targetDate || null,
+        targetDate: milestoneId ? null : targetDate || null,
+        milestoneId: milestoneId || null,
         commitMessage: commitMessage || null,
         proposedState
       },
       { onSuccess: onClose }
     );
   };
+
+  const canSave = !!entity;
 
   return (
     <Dialog
@@ -101,7 +119,7 @@ export const PlanFutureChangeDialog = ({
         {
           label: createFutureUpdate.isPending ? 'Saving...' : 'Save plan',
           type: 'default',
-          disabled: createFutureUpdate.isPending || !entity,
+          disabled: createFutureUpdate.isPending || !canSave,
           onClick: handleSave
         }
       ]}
@@ -110,13 +128,32 @@ export const PlanFutureChangeDialog = ({
         <LoadingState text="Loading..." size="sm" />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <FormElement label="Target date">
-            <DateInput
-              value={targetDate}
-              onChange={v => setTargetDate(v ?? '')}
-              style={{ width: '100%' }}
-            />
-          </FormElement>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <FormElement label="Target date" style={{ flex: 1 }}>
+              <DateInput
+                value={targetDate}
+                onChange={v => handleTargetDateChange(v ?? '')}
+                style={{ width: '100%' }}
+              />
+            </FormElement>
+            <div className={styles.dateMilestoneOr}>or</div>
+            <FormElement label="Milestone" style={{ flex: 1 }}>
+              <Select.Root
+                value={milestoneId}
+                placeholder="Select milestone…"
+                onChange={v => handleMilestoneChange(v ?? '')}
+              >
+                {milestones.map(m => (
+                  <Select.Item key={m.id} value={m.id}>
+                    {m.name} ({m.target_date})
+                  </Select.Item>
+                ))}
+              </Select.Root>
+              {milestones.length === 0 && (
+                <div className={styles.hint}>This project has no milestones yet.</div>
+              )}
+            </FormElement>
+          </div>
           <FormElement label="Note" hint="Describe what is planned to change">
             <TextInput
               value={commitMessage}

@@ -7,6 +7,7 @@ import type {
 } from '@arch-register/api-types/projectContract';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { TimelineScaffold } from '../../components/timeline/TimelineScaffold';
@@ -20,6 +21,10 @@ import {
 } from '../../components/timeline/timelineUtils';
 import { TypeBadge } from '../../components/TypeBadge';
 import { diffSnapshotState } from '../entities/components/entityTimelineHelpers';
+import {
+  getSnapshotDateLabel,
+  getSnapshotEffectiveDate
+} from '../entities/components/snapshotDisplay';
 import styles from './ProjectDetailScreen.module.css';
 
 type SchemaInfo = { color: string; icon: string | null };
@@ -37,6 +42,7 @@ export const ProjectTimelineTab = ({
   schemas,
   lifecycleStates,
   teams,
+  milestonesById,
   canEdit,
   onApplySnapshot
 }: {
@@ -48,6 +54,7 @@ export const ProjectTimelineTab = ({
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  milestonesById: Map<string, Milestone>;
   canEdit: boolean;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
 }) => {
@@ -63,14 +70,15 @@ export const ProjectTimelineTab = ({
     [projectSnapshots]
   );
 
-  // Only dated snapshots go on the timeline; undated shown below
+  // Only dated snapshots go on the timeline; undated shown below. A milestone-backed snapshot
+  // has no target_date of its own — its effective date comes from the milestone it targets.
   const datedSnapshots = useMemo(
-    () => projectSnapshots.filter(s => s.target_date),
-    [projectSnapshots]
+    () => projectSnapshots.filter(s => getSnapshotEffectiveDate(s, milestonesById)),
+    [projectSnapshots, milestonesById]
   );
   const undatedSnapshots = useMemo(
-    () => projectSnapshots.filter(s => !s.target_date),
-    [projectSnapshots]
+    () => projectSnapshots.filter(s => !getSnapshotEffectiveDate(s, milestonesById)),
+    [projectSnapshots, milestonesById]
   );
 
   // Snapshots per entity
@@ -112,7 +120,8 @@ export const ProjectTimelineTab = ({
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
     const dates: Date[] = [];
     for (const s of datedSnapshots) {
-      if (s.target_date) dates.push(new Date(`${s.target_date}T00:00:00`));
+      const effectiveDate = getSnapshotEffectiveDate(s, milestonesById);
+      if (effectiveDate) dates.push(new Date(`${effectiveDate}T00:00:00`));
     }
     return buildTimelineRange({
       dates,
@@ -120,12 +129,21 @@ export const ProjectTimelineTab = ({
       columnWidths: COL_W,
       today: TODAY
     });
-  }, [datedSnapshots, zoom, TODAY]);
+  }, [datedSnapshots, milestonesById, zoom, TODAY]);
 
   const todayPx = useMemo(
     () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
     [TODAY, rangeStart, rangeEnd, totalWidth]
   );
+
+  const milestoneMarkers = useMemo(() => {
+    return [...milestonesById.values()]
+      .map(milestone => ({
+        milestone,
+        px: stringDateToTimelinePx(milestone.target_date, rangeStart, rangeEnd, totalWidth)
+      }))
+      .filter((m): m is { milestone: Milestone; px: number } => m.px !== null);
+  }, [milestonesById, rangeStart, rangeEnd, totalWidth]);
 
   const handleSelect = (snap: EntitySnapshot | null) => {
     setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));
@@ -214,6 +232,20 @@ export const ProjectTimelineTab = ({
               </div>
             )
           }
+          overlayLines={
+            datedSnapshots.length === 0
+              ? null
+              : milestoneMarkers.map(({ milestone, px }) => (
+                  <div
+                    key={milestone.id}
+                    className={styles.ptlMilestoneLine}
+                    style={{ left: LABEL_W + px }}
+                    title={`${milestone.name} (${milestone.target_date})`}
+                  >
+                    <span className={styles.ptlMilestoneLabel}>{milestone.name}</span>
+                  </div>
+                ))
+          }
         >
           {datedSnapshots.length > 0 &&
             [...entityGroups.entries()].map(([typeId, entities]) => {
@@ -236,7 +268,9 @@ export const ProjectTimelineTab = ({
                       ? schemaMap.get(entity.entity_schema.id)
                       : undefined;
                     const entitySnaps = snapsByEntity.get(entity.entity_id) ?? [];
-                    const datedEntitySnaps = entitySnaps.filter(s => s.target_date);
+                    const datedEntitySnaps = entitySnaps.filter(s =>
+                      getSnapshotEffectiveDate(s, milestonesById)
+                    );
                     const isRowActive = datedEntitySnaps.some(s => s.id === selectedSnap?.id);
 
                     return (
@@ -252,8 +286,9 @@ export const ProjectTimelineTab = ({
                         </div>
                         <div className={styles.ptlTrack} style={{ width: totalWidth }}>
                           {datedEntitySnaps.map(snap => {
+                            const effectiveDate = getSnapshotEffectiveDate(snap, milestonesById);
                             const px = stringDateToTimelinePx(
-                              snap.target_date,
+                              effectiveDate,
                               rangeStart,
                               rangeEnd,
                               totalWidth
@@ -262,13 +297,18 @@ export const ProjectTimelineTab = ({
                             const isSelected = selectedSnap?.id === snap.id;
                             const snapColor =
                               snap.status === 'applied' ? 'var(--green)' : markerColor;
+                            const dateLabel = getSnapshotDateLabel(snap, milestonesById);
                             return (
                               <div
                                 key={snap.id}
                                 className={`${styles.ptlMarker} ${isSelected ? styles.ptlMarkerSelected : ''}`}
                                 style={{ left: px }}
                                 onClick={() => handleSelect(isSelected ? null : snap)}
-                                title={snap.commit_message ?? snap.status}
+                                title={
+                                  snap.commit_message
+                                    ? `${snap.commit_message} (${dateLabel})`
+                                    : (dateLabel ?? snap.status)
+                                }
                               >
                                 <span
                                   className={
@@ -327,6 +367,7 @@ export const ProjectTimelineTab = ({
                 schemaInfo={schemaInfo}
                 entitySchema={entitySchema}
                 markerColor={selectedSnap.status === 'applied' ? 'var(--green)' : markerColor}
+                milestonesById={milestonesById}
                 lifecycleStates={lifecycleStates}
                 teams={teams}
                 canEdit={canEdit}
@@ -347,6 +388,7 @@ const SnapDetail = ({
   schemaInfo,
   entitySchema,
   markerColor,
+  milestonesById,
   lifecycleStates,
   teams,
   canEdit,
@@ -358,6 +400,7 @@ const SnapDetail = ({
   schemaInfo: SchemaInfo | undefined;
   entitySchema: EntitySchema | null;
   markerColor: string;
+  milestonesById: Map<string, Milestone>;
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   canEdit: boolean;
@@ -397,8 +440,11 @@ const SnapDetail = ({
           >
             {statusLabel}
           </span>
-          {snapshot.target_date && (
-            <span className={styles.ptlDetailSub}>Target: {snapshot.target_date}</span>
+          {getSnapshotDateLabel(snapshot, milestonesById) && (
+            <span className={styles.ptlDetailSub}>
+              {snapshot.milestone_id ? 'Milestone' : 'Target'}:{' '}
+              {getSnapshotDateLabel(snapshot, milestonesById)}
+            </span>
           )}
         </div>
 

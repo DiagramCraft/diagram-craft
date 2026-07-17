@@ -18,9 +18,20 @@ const parseDate = (value: unknown, fallback: Date): Date => {
   return fallback;
 };
 
-const compareFutureUpdates = (a: EntitySnapshotDbResult, b: EntitySnapshotDbResult): number => {
-  const aDate = a.target_date ?? '';
-  const bDate = b.target_date ?? '';
+const effectiveTargetDate = (
+  snapshot: EntitySnapshotDbResult,
+  milestoneTargetDates: Map<string, string>
+): string =>
+  snapshot.target_date ??
+  (snapshot.milestone_id != null ? (milestoneTargetDates.get(snapshot.milestone_id) ?? '') : '');
+
+const compareFutureUpdates = (
+  a: EntitySnapshotDbResult,
+  b: EntitySnapshotDbResult,
+  milestoneTargetDates: Map<string, string>
+): number => {
+  const aDate = effectiveTargetDate(a, milestoneTargetDates);
+  const bDate = effectiveTargetDate(b, milestoneTargetDates);
   if (aDate !== bDate) return aDate < bDate ? -1 : 1;
   return a.created_at.getTime() - b.created_at.getTime();
 };
@@ -99,6 +110,27 @@ export const reconstructEntitiesAsOf = async (
         ).filter((id): id is string => id != null)
   );
 
+  // future_update snapshots targeting a milestone have a null target_date — their effective
+  // date is the milestone's target_date, resolved here so sorting/merging can treat them
+  // the same as raw-date snapshots.
+  const milestoneIds = [
+    ...new Set(
+      snapshots
+        .filter(s => s.status === 'future_update' && s.milestone_id != null)
+        .map(s => s.milestone_id as string)
+    )
+  ];
+  const milestoneTargetDates = new Map(
+    (
+      await Promise.all(
+        futureUpdateProjectIds.map(projectId => db.project.listMilestones(workspace, projectId))
+      )
+    )
+      .flat()
+      .filter(m => milestoneIds.includes(m.id))
+      .map(m => [m.id, m.target_date] as const)
+  );
+
   // `listSnapshotsAsOf` returns rows ordered by (entity_id, created_at ASC), so the last
   // autosave/saved_version/deleted row seen per entity is its latest baseline at or before `asOf`.
   const baselineByEntity = new Map<string, EntitySnapshotDbResult>();
@@ -167,7 +199,9 @@ export const reconstructEntitiesAsOf = async (
     // base_state alone is already the resulting state.
     let state = mergeState(baseline.base_state, baseline.proposed_state);
 
-    const futureUpdates = (futureUpdatesByEntity.get(entityId) ?? []).sort(compareFutureUpdates);
+    const futureUpdates = (futureUpdatesByEntity.get(entityId) ?? []).sort((a, b) =>
+      compareFutureUpdates(a, b, milestoneTargetDates)
+    );
     for (const update of futureUpdates) {
       state = mergeState(state, update.proposed_state);
     }
@@ -210,7 +244,9 @@ export const reconstructEntitiesAsOf = async (
     if (live.created_at > asOf) continue;
 
     let state = entityToState(live);
-    const futureUpdates = (futureUpdatesByEntity.get(live.id) ?? []).sort(compareFutureUpdates);
+    const futureUpdates = (futureUpdatesByEntity.get(live.id) ?? []).sort((a, b) =>
+      compareFutureUpdates(a, b, milestoneTargetDates)
+    );
     for (const update of futureUpdates) {
       state = mergeState(state, update.proposed_state);
     }

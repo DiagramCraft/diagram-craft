@@ -17,6 +17,13 @@ import {
 import styles from '../EntityDetailScreen.module.css';
 import { detectConflicts, diffSnapshotState, type SnapshotState } from './entityTimelineHelpers';
 import { EmptyState } from '../../../components/EmptyState';
+import { useMilestonesForProjects } from '../../../hooks/useMilestones';
+import type { Milestone } from '@arch-register/api-types/milestoneContract';
+import {
+  getSnapshotDateLabel,
+  getSnapshotEffectiveDate,
+  toMilestonesById
+} from './snapshotDisplay';
 
 type EntityProject = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -25,12 +32,14 @@ const COL_W: TimelineColumnWidths = { month: 72, quarter: 100, year: 136 };
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export const EntityTimelineTab = ({
+  workspaceId,
   allSnapshots,
   entityProjects,
   schema,
   lifecycleStates,
   teams
 }: {
+  workspaceId: string;
   allSnapshots: EntitySnapshot[];
   entityProjects: EntityProject[];
   schema: EntitySchema | null;
@@ -40,6 +49,12 @@ export const EntityTimelineTab = ({
   const [zoom, setZoom] = useState<TimelineZoom>('quarter');
   const [selectedSnap, setSelectedSnap] = useState<EntitySnapshot | null>(null);
   const TODAY = useMemo(() => new Date(), []);
+  const projectIds = useMemo(() => entityProjects.map(ep => ep.project.id), [entityProjects]);
+  const milestoneQueries = useMilestonesForProjects(workspaceId, projectIds);
+  const milestonesById = useMemo(
+    () => toMilestonesById(milestoneQueries.flatMap(q => q.data ?? [])),
+    [milestoneQueries]
+  );
 
   const ownSnaps = useMemo(
     () =>
@@ -77,7 +92,8 @@ export const EntityTimelineTab = ({
     for (const { snaps } of projectLanes) {
       for (const s of snaps) {
         if (s.created_at) dates.push(new Date(s.created_at));
-        if (s.target_date) dates.push(new Date(`${s.target_date}T00:00:00`));
+        const effectiveDate = getSnapshotEffectiveDate(s, milestonesById);
+        if (effectiveDate) dates.push(new Date(`${effectiveDate}T00:00:00`));
       }
     }
     return buildTimelineRange({
@@ -86,12 +102,21 @@ export const EntityTimelineTab = ({
       columnWidths: COL_W,
       today: TODAY
     });
-  }, [ownSnaps, projectLanes, zoom, TODAY]);
+  }, [ownSnaps, projectLanes, milestonesById, zoom, TODAY]);
 
   const todayPx = useMemo(
     () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
     [TODAY, rangeStart, rangeEnd, totalWidth]
   );
+
+  const milestoneMarkers = useMemo(() => {
+    return [...milestonesById.values()]
+      .map(milestone => ({
+        milestone,
+        px: stringDateToTimelinePx(milestone.target_date, rangeStart, rangeEnd, totalWidth)
+      }))
+      .filter((m): m is { milestone: Milestone; px: number } => m.px !== null);
+  }, [milestonesById, rangeStart, rangeEnd, totalWidth]);
 
   const handleSelect = (snap: EntitySnapshot | null) => {
     setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));
@@ -174,6 +199,16 @@ export const EntityTimelineTab = ({
               </div>
             )
           }
+          overlayLines={milestoneMarkers.map(({ milestone, px }) => (
+            <div
+              key={milestone.id}
+              className={styles.etlMilestoneLine}
+              style={{ left: LABEL_W + px }}
+              title={`${milestone.name} (${milestone.target_date})`}
+            >
+              <span className={styles.etlMilestoneLabel}>{milestone.name}</span>
+            </div>
+          ))}
         >
           {ownSnaps.length > 0 && (
             <OwnHistoryLane
@@ -193,6 +228,7 @@ export const EntityTimelineTab = ({
               snaps={snaps}
               isConflicted={conflictedProjectIds.has(projectId)}
               conflictedSnapIds={conflictedSnapIds}
+              milestonesById={milestonesById}
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
               totalWidth={totalWidth}
@@ -206,6 +242,7 @@ export const EntityTimelineTab = ({
           <SnapDetail
             snapshot={selectedSnap}
             project={projectMap.get(selectedSnap.project_id ?? '') ?? null}
+            milestonesById={milestonesById}
             schema={schema}
             lifecycleStates={lifecycleStates}
             teams={teams}
@@ -275,6 +312,7 @@ const ProjectLane = ({
   snaps,
   isConflicted,
   conflictedSnapIds,
+  milestonesById,
   rangeStart,
   rangeEnd,
   totalWidth,
@@ -285,6 +323,7 @@ const ProjectLane = ({
   snaps: EntitySnapshot[];
   isConflicted: boolean;
   conflictedSnapIds: Set<string>;
+  milestonesById: Map<string, Milestone>;
   rangeStart: Date;
   rangeEnd: Date;
   totalWidth: number;
@@ -327,7 +366,7 @@ const ProjectLane = ({
           {snaps.map(snap => {
             const dateStr =
               snap.status === 'future_update' || snap.status === 'applied'
-                ? (snap.target_date ?? snap.created_at)
+                ? (getSnapshotEffectiveDate(snap, milestonesById) ?? snap.created_at)
                 : snap.created_at;
             const px = stringDateToTimelinePx(dateStr, rangeStart, rangeEnd, totalWidth);
             if (px === null) return null;
@@ -335,13 +374,18 @@ const ProjectLane = ({
             const isSnapConflict = conflictedSnapIds.has(snap.id);
             const dotClass =
               snap.status === 'applied' ? styles.etlDotApplied : styles.etlDotFutureUpdate;
+            const dateLabel = getSnapshotDateLabel(snap, milestonesById);
             return (
               <div
                 key={snap.id}
                 className={`${styles.etlDot} ${dotClass} ${isSelected ? styles.etlDotSelected : ''} ${isSnapConflict ? styles.etlDotConflict : ''}`}
                 style={{ left: px }}
                 onClick={() => onSelect(isSelected ? null : snap)}
-                title={snap.commit_message ?? snap.status}
+                title={
+                  snap.commit_message
+                    ? `${snap.commit_message} (${dateLabel})`
+                    : (dateLabel ?? snap.status)
+                }
               >
                 <div
                   className={styles.etlDotInner}
@@ -364,6 +408,7 @@ const ProjectLane = ({
 const SnapDetail = ({
   snapshot,
   project,
+  milestonesById,
   schema,
   lifecycleStates,
   teams,
@@ -371,6 +416,7 @@ const SnapDetail = ({
 }: {
   snapshot: EntitySnapshot;
   project: Project | null;
+  milestonesById: Map<string, Milestone>;
   schema: EntitySchema | null;
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
@@ -431,8 +477,11 @@ const SnapDetail = ({
           >
             {statusLabel[snapshot.status] ?? snapshot.status}
           </span>
-          {snapshot.target_date && (
-            <span className={styles.etlDetailSub}>Target: {snapshot.target_date}</span>
+          {getSnapshotDateLabel(snapshot, milestonesById) && (
+            <span className={styles.etlDetailSub}>
+              {snapshot.milestone_id ? 'Milestone' : 'Target'}:{' '}
+              {getSnapshotDateLabel(snapshot, milestonesById)}
+            </span>
           )}
         </div>
 

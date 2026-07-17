@@ -4,11 +4,7 @@ import type { EntitySnapshotDbResult } from './db/catalogDatabase';
 export const serializeEntitySnapshot = (snapshot: EntitySnapshotDbResult) => ({
   ...snapshot,
   created_at: snapshot.created_at.toISOString(),
-  created_by_name: snapshot.created_by_name,
-  target_date:
-    (snapshot.target_date as unknown) instanceof Date
-      ? (snapshot.target_date as unknown as Date).toISOString().slice(0, 10)
-      : snapshot.target_date
+  created_by_name: snapshot.created_by_name
 });
 
 export const assertSnapshotCanBeRestored = (snapshot: EntitySnapshotDbResult, entityId: string) => {

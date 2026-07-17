@@ -15,3 +15,17 @@
 .inlineSelect:focus {
   border-color: var(--accent-fg);
 }
+
+.hint {
+  font-size: 11px;
+  color: var(--cmp-fg-dim);
+  margin-top: 4px;
+}
+
+.dateMilestoneOr {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 18px;
+  font-size: 11px;
+  color: var(--cmp-fg-dim);
+}

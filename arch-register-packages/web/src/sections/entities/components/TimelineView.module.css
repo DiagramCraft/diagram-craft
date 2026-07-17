@@ -310,6 +310,34 @@
   line-height: 1;
 }
 
+/* Milestone line */
+.milestoneLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed var(--warn, orange);
+  opacity: 0.7;
+  z-index: 4;
+  pointer-events: auto;
+}
+
+.milestoneLabel {
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--warn, orange);
+  background: var(--base-bg);
+  padding: 1px 5px;
+  border-radius: var(--r);
+  border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* Detail panel */
 .detail {
   position: absolute;

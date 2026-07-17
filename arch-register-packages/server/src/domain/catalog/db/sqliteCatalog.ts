@@ -383,7 +383,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSnapshot(input: EntitySnapshotDbCreate) {
     this.run(
-      'INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, created_by_name, base_state, proposed_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, milestone_id, commit_message, created_at, created_by, created_by_name, base_state, proposed_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -391,6 +391,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.status,
         input.project_id,
         input.target_date,
+        input.milestone_id,
         input.commit_message,
         input.created_at.toISOString(),
         input.created_by,
@@ -446,11 +447,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const entityFilter =
       entityIds != null ? `AND s.entity_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
-      `${ENTITY_SNAPSHOT_SELECT_SQL}
+      `SELECT s.*, u.display_name as created_by_name
+       FROM entity_snapshot s
+       LEFT JOIN users u ON u.id = s.created_by
+       LEFT JOIN project_milestone m ON m.id = s.milestone_id
        WHERE s.workspace = ?
          AND (
            (s.status IN ('autosave', 'saved_version', 'deleted') AND s.created_at <= ?)
-           OR (s.status = 'future_update' AND s.target_date <= ? AND s.created_at <= ?)
+           OR (s.status = 'future_update' AND COALESCE(s.target_date, m.target_date) <= ? AND s.created_at <= ?)
          )
          ${entityFilter}
        ORDER BY s.entity_id, s.created_at ASC`,
@@ -540,6 +544,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     updates: {
       proposed_state?: Record<string, unknown>;
       target_date?: string | null;
+      milestone_id?: string | null;
       commit_message?: string | null;
     }
   ) {
@@ -561,6 +566,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       setClauses.push('target_date = ?');
       params.push(updates.target_date);
     }
+    if (updates.milestone_id !== undefined) {
+      setClauses.push('milestone_id = ?');
+      params.push(updates.milestone_id);
+    }
     if (updates.commit_message !== undefined) {
       setClauses.push('commit_message = ?');
       params.push(updates.commit_message);
@@ -574,6 +583,17 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       'SELECT * FROM entity_snapshot WHERE id = ?',
       [snapshotId],
       catalogMappers.entitySnapshot
+    );
+  }
+
+  async reassignSnapshotsFromMilestone(
+    workspace: string,
+    milestoneId: string,
+    backfillTargetDate: string | null
+  ) {
+    this.run(
+      'UPDATE entity_snapshot SET milestone_id = NULL, target_date = ? WHERE workspace = ? AND milestone_id = ?',
+      [backfillTargetDate, workspace, milestoneId]
     );
   }
 
