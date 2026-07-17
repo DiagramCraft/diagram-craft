@@ -360,9 +360,9 @@ export const DocumentBrowserEmbedDialog = ({
   const [conditions, setConditions] = useState<FilterCondition[]>([]);
   const [sort, setSort] = useState('updated_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [visibleBaseColumnIds, setVisibleBaseColumnIds] = useState<
-    DocumentBrowserBaseColumnId[]
-  >([...DOCUMENT_BROWSER_BASE_COLUMN_IDS]);
+  const [visibleBaseColumnIds, setVisibleBaseColumnIds] = useState<DocumentBrowserBaseColumnId[]>([
+    ...DOCUMENT_BROWSER_BASE_COLUMN_IDS
+  ]);
   const [visibleFieldIds, setVisibleFieldIds] = useState<string[]>([]);
 
   const selectedFields = useMemo(

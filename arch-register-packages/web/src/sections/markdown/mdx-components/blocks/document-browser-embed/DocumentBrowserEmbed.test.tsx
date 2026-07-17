@@ -104,6 +104,7 @@ describe('DocumentBrowserEmbed', () => {
       conditions: [],
       sort: 'updated_at',
       sortDir: 'desc',
+      visibleBaseColumnIds: ['document_type', 'location', 'updated_at'],
       visibleFieldIds: []
     });
 
@@ -127,5 +128,29 @@ describe('DocumentBrowserEmbed', () => {
     );
     expect(markup).toContain('Architecture');
     expect(markup).toContain('Project One');
+  });
+
+  it('respects visibility settings for fixed table columns', () => {
+    useDocumentListMock.mockReturnValue({ data: [documentItem], isLoading: false, isError: false });
+    const config = encodeDocumentBrowserEmbedConfig({
+      q: '',
+      conditions: [],
+      sort: 'updated_at',
+      sortDir: 'desc',
+      visibleBaseColumnIds: ['document_type'],
+      visibleFieldIds: []
+    });
+
+    const markup = renderToStaticMarkup(
+      <WorkspaceContext.Provider value={workspaceContext}>
+        <MdxContext.Provider value={{ workspaceSlug: 'demo' }}>
+          <DocumentBrowserEmbed config={config} />
+        </MdxContext.Provider>
+      </WorkspaceContext.Provider>
+    );
+
+    expect(markup).toContain('Document type');
+    expect(markup).not.toContain('Location');
+    expect(markup).not.toContain('Updated');
   });
 });

@@ -16,6 +16,7 @@ const fullConfig: DocumentBrowserEmbedConfig = {
   ],
   sort: 'decisionDate',
   sortDir: 'asc',
+  visibleBaseColumnIds: ['document_type', 'location'],
   visibleFieldIds: ['status', 'decisionDate']
 };
 
@@ -34,6 +35,7 @@ describe('DocumentBrowserEmbedCodec', () => {
       conditions: [],
       sort: 'updated_at',
       sortDir: 'desc',
+      visibleBaseColumnIds: ['document_type', 'location', 'updated_at'],
       visibleFieldIds: []
     });
   });
