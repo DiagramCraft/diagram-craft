@@ -10425,9 +10425,9 @@
                           "radar",
                           "timeline",
                           "matrix",
-                          "hierarchy",
                           "explore",
-                          "bubble"
+                          "bubble",
+                          "map"
                         ],
                         "type": "string",
                         "description": "View display mode"
@@ -10738,79 +10738,6 @@
                                 ],
                                 "description": "Configuration for matrix view"
                               },
-                              "hierarchy": {
-                                "type": "object",
-                                "properties": {
-                                  "fieldIds": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "description": "Ordered fields displayed for each entity"
-                                  },
-                                  "levels": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 3,
-                                    "default": 2,
-                                    "description": "Number of hierarchy levels (1-3)"
-                                  },
-                                  "level1SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "default": null,
-                                    "description": "Schema identifier for level 1"
-                                  },
-                                  "level1Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "default": 3,
-                                    "description": "Number of columns for level 1 (1-4)"
-                                  },
-                                  "level2SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "description": "Schema identifier for level 2"
-                                  },
-                                  "level2Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "description": "Number of columns for level 2 (1-4)"
-                                  },
-                                  "level3SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "description": "Schema identifier for level 3"
-                                  },
-                                  "level3Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "description": "Number of columns for level 3 (1-4)"
-                                  }
-                                },
-                                "description": "Configuration for hierarchy view"
-                              },
                               "explore": {
                                 "type": "object",
                                 "properties": {
@@ -10887,6 +10814,88 @@
                                   "colorFieldId"
                                 ],
                                 "description": "Configuration for bubble view"
+                              },
+                              "map": {
+                                "type": "object",
+                                "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  },
+                                  "levels": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 3,
+                                    "default": 2,
+                                    "description": "Number of map levels (1-3)"
+                                  },
+                                  "level1SchemaId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "default": null,
+                                    "description": "Schema identifier for level 1"
+                                  },
+                                  "level1Columns": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4,
+                                    "default": 3,
+                                    "description": "Number of columns for level 1 (1-4)"
+                                  },
+                                  "level2SchemaId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Schema identifier for level 2"
+                                  },
+                                  "level2Columns": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4,
+                                    "description": "Number of columns for level 2 (1-4)"
+                                  },
+                                  "level3SchemaId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Schema identifier for level 3"
+                                  },
+                                  "level3Columns": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4,
+                                    "description": "Number of columns for level 3 (1-4)"
+                                  },
+                                  "metricConfig": {
+                                    "anyOf": [
+                                      {},
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Metric roll-up configuration applied to box coloring"
+                                  }
+                                },
+                                "description": "Configuration for map view"
                               }
                             }
                           },
@@ -11013,9 +11022,9 @@
                       "radar",
                       "timeline",
                       "matrix",
-                      "hierarchy",
                       "explore",
-                      "bubble"
+                      "bubble",
+                      "map"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -11326,79 +11335,6 @@
                             ],
                             "description": "Configuration for matrix view"
                           },
-                          "hierarchy": {
-                            "type": "object",
-                            "properties": {
-                              "fieldIds": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "description": "Ordered fields displayed for each entity"
-                              },
-                              "levels": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 3,
-                                "default": 2,
-                                "description": "Number of hierarchy levels (1-3)"
-                              },
-                              "level1SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "default": null,
-                                "description": "Schema identifier for level 1"
-                              },
-                              "level1Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "default": 3,
-                                "description": "Number of columns for level 1 (1-4)"
-                              },
-                              "level2SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 2"
-                              },
-                              "level2Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 2 (1-4)"
-                              },
-                              "level3SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 3"
-                              },
-                              "level3Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 3 (1-4)"
-                              }
-                            },
-                            "description": "Configuration for hierarchy view"
-                          },
                           "explore": {
                             "type": "object",
                             "properties": {
@@ -11475,6 +11411,88 @@
                               "colorFieldId"
                             ],
                             "description": "Configuration for bubble view"
+                          },
+                          "map": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
+                              "levels": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 3,
+                                "default": 2,
+                                "description": "Number of map levels (1-3)"
+                              },
+                              "level1SchemaId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "default": null,
+                                "description": "Schema identifier for level 1"
+                              },
+                              "level1Columns": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4,
+                                "default": 3,
+                                "description": "Number of columns for level 1 (1-4)"
+                              },
+                              "level2SchemaId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Schema identifier for level 2"
+                              },
+                              "level2Columns": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4,
+                                "description": "Number of columns for level 2 (1-4)"
+                              },
+                              "level3SchemaId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Schema identifier for level 3"
+                              },
+                              "level3Columns": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4,
+                                "description": "Number of columns for level 3 (1-4)"
+                              },
+                              "metricConfig": {
+                                "anyOf": [
+                                  {},
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Metric roll-up configuration applied to box coloring"
+                              }
+                            },
+                            "description": "Configuration for map view"
                           }
                         }
                       },
@@ -11571,9 +11589,9 @@
                         "radar",
                         "timeline",
                         "matrix",
-                        "hierarchy",
                         "explore",
-                        "bubble"
+                        "bubble",
+                        "map"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -11884,79 +11902,6 @@
                               ],
                               "description": "Configuration for matrix view"
                             },
-                            "hierarchy": {
-                              "type": "object",
-                              "properties": {
-                                "fieldIds": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "description": "Ordered fields displayed for each entity"
-                                },
-                                "levels": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 3,
-                                  "default": 2,
-                                  "description": "Number of hierarchy levels (1-3)"
-                                },
-                                "level1SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "default": null,
-                                  "description": "Schema identifier for level 1"
-                                },
-                                "level1Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "default": 3,
-                                  "description": "Number of columns for level 1 (1-4)"
-                                },
-                                "level2SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 2"
-                                },
-                                "level2Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 2 (1-4)"
-                                },
-                                "level3SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 3"
-                                },
-                                "level3Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 3 (1-4)"
-                                }
-                              },
-                              "description": "Configuration for hierarchy view"
-                            },
                             "explore": {
                               "type": "object",
                               "properties": {
@@ -12033,6 +11978,88 @@
                                 "colorFieldId"
                               ],
                               "description": "Configuration for bubble view"
+                            },
+                            "map": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
+                                "levels": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 3,
+                                  "default": 2,
+                                  "description": "Number of map levels (1-3)"
+                                },
+                                "level1SchemaId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "default": null,
+                                  "description": "Schema identifier for level 1"
+                                },
+                                "level1Columns": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4,
+                                  "default": 3,
+                                  "description": "Number of columns for level 1 (1-4)"
+                                },
+                                "level2SchemaId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Schema identifier for level 2"
+                                },
+                                "level2Columns": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4,
+                                  "description": "Number of columns for level 2 (1-4)"
+                                },
+                                "level3SchemaId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Schema identifier for level 3"
+                                },
+                                "level3Columns": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4,
+                                  "description": "Number of columns for level 3 (1-4)"
+                                },
+                                "metricConfig": {
+                                  "anyOf": [
+                                    {},
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Metric roll-up configuration applied to box coloring"
+                                }
+                              },
+                              "description": "Configuration for map view"
                             }
                           }
                         },
@@ -12150,9 +12177,9 @@
                       "radar",
                       "timeline",
                       "matrix",
-                      "hierarchy",
                       "explore",
-                      "bubble"
+                      "bubble",
+                      "map"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -12463,79 +12490,6 @@
                             ],
                             "description": "Configuration for matrix view"
                           },
-                          "hierarchy": {
-                            "type": "object",
-                            "properties": {
-                              "fieldIds": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "description": "Ordered fields displayed for each entity"
-                              },
-                              "levels": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 3,
-                                "default": 2,
-                                "description": "Number of hierarchy levels (1-3)"
-                              },
-                              "level1SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "default": null,
-                                "description": "Schema identifier for level 1"
-                              },
-                              "level1Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "default": 3,
-                                "description": "Number of columns for level 1 (1-4)"
-                              },
-                              "level2SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 2"
-                              },
-                              "level2Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 2 (1-4)"
-                              },
-                              "level3SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 3"
-                              },
-                              "level3Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 3 (1-4)"
-                              }
-                            },
-                            "description": "Configuration for hierarchy view"
-                          },
                           "explore": {
                             "type": "object",
                             "properties": {
@@ -12612,6 +12566,88 @@
                               "colorFieldId"
                             ],
                             "description": "Configuration for bubble view"
+                          },
+                          "map": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
+                              "levels": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 3,
+                                "default": 2,
+                                "description": "Number of map levels (1-3)"
+                              },
+                              "level1SchemaId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "default": null,
+                                "description": "Schema identifier for level 1"
+                              },
+                              "level1Columns": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4,
+                                "default": 3,
+                                "description": "Number of columns for level 1 (1-4)"
+                              },
+                              "level2SchemaId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Schema identifier for level 2"
+                              },
+                              "level2Columns": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4,
+                                "description": "Number of columns for level 2 (1-4)"
+                              },
+                              "level3SchemaId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Schema identifier for level 3"
+                              },
+                              "level3Columns": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4,
+                                "description": "Number of columns for level 3 (1-4)"
+                              },
+                              "metricConfig": {
+                                "anyOf": [
+                                  {},
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Metric roll-up configuration applied to box coloring"
+                              }
+                            },
+                            "description": "Configuration for map view"
                           }
                         }
                       },
@@ -12703,9 +12739,9 @@
                         "radar",
                         "timeline",
                         "matrix",
-                        "hierarchy",
                         "explore",
-                        "bubble"
+                        "bubble",
+                        "map"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -13016,79 +13052,6 @@
                               ],
                               "description": "Configuration for matrix view"
                             },
-                            "hierarchy": {
-                              "type": "object",
-                              "properties": {
-                                "fieldIds": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "description": "Ordered fields displayed for each entity"
-                                },
-                                "levels": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 3,
-                                  "default": 2,
-                                  "description": "Number of hierarchy levels (1-3)"
-                                },
-                                "level1SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "default": null,
-                                  "description": "Schema identifier for level 1"
-                                },
-                                "level1Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "default": 3,
-                                  "description": "Number of columns for level 1 (1-4)"
-                                },
-                                "level2SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 2"
-                                },
-                                "level2Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 2 (1-4)"
-                                },
-                                "level3SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 3"
-                                },
-                                "level3Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 3 (1-4)"
-                                }
-                              },
-                              "description": "Configuration for hierarchy view"
-                            },
                             "explore": {
                               "type": "object",
                               "properties": {
@@ -13165,6 +13128,88 @@
                                 "colorFieldId"
                               ],
                               "description": "Configuration for bubble view"
+                            },
+                            "map": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
+                                "levels": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 3,
+                                  "default": 2,
+                                  "description": "Number of map levels (1-3)"
+                                },
+                                "level1SchemaId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "default": null,
+                                  "description": "Schema identifier for level 1"
+                                },
+                                "level1Columns": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4,
+                                  "default": 3,
+                                  "description": "Number of columns for level 1 (1-4)"
+                                },
+                                "level2SchemaId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Schema identifier for level 2"
+                                },
+                                "level2Columns": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4,
+                                  "description": "Number of columns for level 2 (1-4)"
+                                },
+                                "level3SchemaId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Schema identifier for level 3"
+                                },
+                                "level3Columns": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4,
+                                  "description": "Number of columns for level 3 (1-4)"
+                                },
+                                "metricConfig": {
+                                  "anyOf": [
+                                    {},
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Metric roll-up configuration applied to box coloring"
+                                }
+                              },
+                              "description": "Configuration for map view"
                             }
                           }
                         },
@@ -38243,6 +38288,453 @@
                     "schemaUtilization",
                     "activityTrends",
                     "stale"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/metrics/rollup": {
+      "post": {
+        "operationId": "metrics.rollup",
+        "summary": "Compute a metric roll-up over box descendants",
+        "description": "Computes an aggregated metric value for each given box entity, over its containment descendants, permission- and filter-scoped consistently with the entity browser.",
+        "tags": [
+          "Metrics",
+          "Metrics"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "boxEntityIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Entity identifiers to compute the metric for"
+                  },
+                  "metric": {
+                    "type": "object",
+                    "properties": {
+                      "sourceSchemaId": {
+                        "type": "string",
+                        "description": "Schema identifier that descendant source entities must match"
+                      },
+                      "source": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "field",
+                                "description": "A numeric field on the source schema"
+                              },
+                              "fieldId": {
+                                "type": "string",
+                                "description": "Numeric entity field identifier"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "fieldId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "assessmentRating",
+                                "description": "A rating field on the currently joined assessment"
+                              },
+                              "fieldId": {
+                                "type": "string",
+                                "description": "Assessment rating field identifier"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "fieldId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "lifecycle",
+                                "description": "The entity lifecycle state, ranked by its sort order"
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "enum",
+                                "description": "A select field on the source schema"
+                              },
+                              "fieldId": {
+                                "type": "string",
+                                "description": "Select field identifier"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "fieldId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "assessmentEnum",
+                                "description": "An enum field on the currently joined assessment"
+                              },
+                              "fieldId": {
+                                "type": "string",
+                                "description": "Assessment enum field identifier"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "fieldId"
+                            ]
+                          }
+                        ],
+                        "description": "Value source for the metric"
+                      },
+                      "aggregation": {
+                        "enum": [
+                          "count",
+                          "sum",
+                          "average",
+                          "minimum",
+                          "maximum",
+                          "worst"
+                        ],
+                        "type": "string",
+                        "description": "Aggregation function applied across matching descendant entities"
+                      },
+                      "worstDirection": {
+                        "enum": [
+                          "low",
+                          "high"
+                        ],
+                        "type": "string",
+                        "description": "Direction used for \"worst\" aggregation - \"low\" means lower values are worse, \"high\" means higher values are worse. Required when aggregation is \"worst\"."
+                      }
+                    },
+                    "required": [
+                      "sourceSchemaId",
+                      "source",
+                      "aggregation"
+                    ],
+                    "description": "Metric configuration to evaluate"
+                  },
+                  "schemaId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Filter by schema identifier"
+                  },
+                  "owner": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Filter by owner identifier"
+                  },
+                  "lifecycle": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Filter by lifecycle state"
+                  },
+                  "q": {
+                    "type": "string",
+                    "description": "Search query string"
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldId": {
+                          "type": "string",
+                          "description": "Field identifier to filter on"
+                        },
+                        "op": {
+                          "enum": [
+                            "equals",
+                            "not_equals",
+                            "contains",
+                            "starts_with",
+                            "ends_with",
+                            "empty",
+                            "not_empty",
+                            "before",
+                            "after",
+                            "on",
+                            "gt",
+                            "lt",
+                            "gte",
+                            "lte"
+                          ],
+                          "type": "string",
+                          "description": "Filter operation"
+                        },
+                        "value": {
+                          "description": "Filter value (type depends on field and operation)"
+                        }
+                      },
+                      "required": [
+                        "fieldId",
+                        "op"
+                      ]
+                    },
+                    "description": "Additional filter conditions"
+                  },
+                  "assessmentId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Joined assessment identifier — required for assessment-sourced metrics"
+                  },
+                  "projectId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Filter by project identifier"
+                  },
+                  "projectScope": {
+                    "enum": [
+                      "project",
+                      "all"
+                    ],
+                    "type": "string",
+                    "description": "Project scope filter"
+                  }
+                },
+                "required": [
+                  "boxEntityIds",
+                  "metric"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "boxEntityId": {
+                            "type": "string",
+                            "description": "Entity identifier the result applies to"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Aggregated value; null when there is no matching, populated data"
+                          },
+                          "lifecycleId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "The descendant lifecycle id that produced the result, for lifecycle-sourced min/max/worst aggregations; null otherwise"
+                          },
+                          "dominantValue": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "The most common option value among populated descendants, for enum/assessmentEnum sources; ties break toward the option listed first in the enum. Null for non-enum sources or when there is no populated data."
+                          },
+                          "dominantLabel": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Display label for dominantValue"
+                          },
+                          "distribution": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "description": "Option value"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "description": "Option display label"
+                                },
+                                "count": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Number of matching descendants with this option"
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "label",
+                                "count"
+                              ]
+                            },
+                            "description": "Full option distribution among populated descendants, for enum/assessmentEnum sources; empty for non-enum sources"
+                          },
+                          "sourceCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Number of descendants matching the source schema (and current filters)"
+                          },
+                          "populatedCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Number of matching descendants that had a non-missing value"
+                          }
+                        },
+                        "required": [
+                          "boxEntityId",
+                          "value",
+                          "lifecycleId",
+                          "dominantValue",
+                          "dominantLabel",
+                          "distribution",
+                          "sourceCount",
+                          "populatedCount"
+                        ]
+                      },
+                      "description": "Per-box metric results"
+                    },
+                    "legend": {
+                      "type": "object",
+                      "properties": {
+                        "min": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Lowest aggregated value across all requested boxes"
+                        },
+                        "max": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Highest aggregated value across all requested boxes"
+                        },
+                        "categories": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "value": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "value",
+                              "label"
+                            ]
+                          },
+                          "description": "Full option list for the resolved enum, for enum/assessmentEnum sources - including options with zero matches, so the legend can show them as present-but-empty"
+                        }
+                      },
+                      "required": [
+                        "min",
+                        "max"
+                      ],
+                      "description": "Legend metadata derived from the returned results"
+                    }
+                  },
+                  "required": [
+                    "results",
+                    "legend"
                   ]
                 }
               }
