@@ -16,9 +16,8 @@
   min-width: 220px;
 }
 
-.location {
-  color: var(--base-fg-dim);
-  font-size: 12px;
+.sortControls {
+  flex-wrap: nowrap;
 }
 
 .filterBuilder {

@@ -7,9 +7,7 @@ import type { DocumentField, DocumentType } from '@arch-register/api-types/docum
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { SearchInput } from '../../../../../components/SearchInput';
 import { useDocumentTypes } from '../../../../../hooks/useDocuments';
-import { useEntity } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { useMdxContext } from '../../../MdxContext';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
 import {
@@ -84,20 +82,6 @@ const fieldsForType = (documentTypes: DocumentType[], documentTypeId?: string) =
 const sanitizeConditions = (conditions: FilterCondition[], fields: DocumentField[]) => {
   const available = new Set(fields.map(field => field.id));
   return conditions.filter(condition => available.has(condition.fieldId));
-};
-
-const displayLocation = (
-  projectId?: string,
-  entityId?: string,
-  projects?: { id: string; public_id: string; name: string }[],
-  entityName?: string
-) => {
-  if (projectId) {
-    const project = projects?.find(item => item.id === projectId || item.public_id === projectId);
-    return `Project: ${project?.name ?? projectId}`;
-  }
-  if (entityId) return `Entity: ${entityName ?? entityId}`;
-  return 'Workspace';
 };
 
 const MetadataFilterBuilder = ({
@@ -239,10 +223,8 @@ export const DocumentBrowserEmbedDialog = ({
   isNew: boolean;
 }) => {
   const editor = useEditorRef();
-  const { workspaceSlug, projects } = useWorkspaceContext();
-  const { projectId, entityId } = useMdxContext();
+  const { workspaceSlug } = useWorkspaceContext();
   const { data: documentTypes = [] } = useDocumentTypes(workspaceSlug);
-  const { data: entity } = useEntity(workspaceSlug, entityId ?? '');
   const initialConfig = useMemo(
     () => decodeDocumentBrowserEmbedConfig((element as DocumentBrowserEmbedSlateElement).config),
     [element]
@@ -359,9 +341,6 @@ export const DocumentBrowserEmbedDialog = ({
                 ))}
             </Select.Root>
           </div>
-          <div className={styles.location}>
-            {displayLocation(projectId, entityId, projects, entity?._name)}
-          </div>
           <DialogSection label="Metadata filters">
             <MetadataFilterBuilder
               fields={selectedFields}
@@ -369,22 +348,24 @@ export const DocumentBrowserEmbedDialog = ({
               onChange={setConditions}
             />
           </DialogSection>
-          <div className={styles.controlRow}>
-            <Select.Root value={sort} onChange={value => setSort(value ?? 'updated_at')}>
-              {sortOptions.map(option => (
-                <Select.Item key={option.value} value={option.value}>
-                  Sort: {option.label}
-                </Select.Item>
-              ))}
-            </Select.Root>
-            <Select.Root
-              value={sortDir}
-              onChange={value => setSortDir(value === 'asc' ? 'asc' : 'desc')}
-            >
-              <Select.Item value="desc">Descending</Select.Item>
-              <Select.Item value="asc">Ascending</Select.Item>
-            </Select.Root>
-          </div>
+          <DialogSection label="Sort">
+            <div className={`${styles.controlRow} ${styles.sortControls}`}>
+              <Select.Root value={sort} onChange={value => setSort(value ?? 'updated_at')}>
+                {sortOptions.map(option => (
+                  <Select.Item key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+              <Select.Root
+                value={sortDir}
+                onChange={value => setSortDir(value === 'asc' ? 'asc' : 'desc')}
+              >
+                <Select.Item value="desc">Descending</Select.Item>
+                <Select.Item value="asc">Ascending</Select.Item>
+              </Select.Root>
+            </div>
+          </DialogSection>
           <DialogSection label="Visible metadata columns">
             {selectedFields.length === 0 ? (
               <div className={styles.muted}>Select a document type to choose metadata columns.</div>

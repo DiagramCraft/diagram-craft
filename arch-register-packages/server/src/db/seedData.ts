@@ -1398,7 +1398,13 @@ const CONTENT_IDS = {
   wsWikiHome: '00000000-0000-0000-0031-000000000006',
   wsWikiMarkdownCheatsheet: '00000000-0000-0000-0031-000000000007',
   wsWikiEntityWidgets: '00000000-0000-0000-0031-000000000008',
-  wsWikiDiagramsAndViews: '00000000-0000-0000-0031-000000000009'
+  wsWikiDiagramsAndViews: '00000000-0000-0000-0031-000000000009',
+  wsAdrFolder: '00000000-0000-0000-0031-000000000010',
+  wsAdrApiVersioning: '00000000-0000-0000-0031-000000000011',
+  wsAdrAsyncMessaging: '00000000-0000-0000-0031-000000000012',
+  wsAdrAuthentication: '00000000-0000-0000-0031-000000000013',
+  wsAdrObservability: '00000000-0000-0000-0031-000000000014',
+  wsAdrDataOwnership: '00000000-0000-0000-0031-000000000015'
 } as const;
 
 const encodeEntityBrowserEmbedConfig = (config: {
@@ -1573,8 +1579,95 @@ Diagrams and saved catalog views can be embedded directly in a wiki page.
 ## Saved view embed
 
 <EntityViewEmbed viewId="00000000-0000-0000-0020-000000000001" />
+`,
+  [CONTENT_IDS.wsAdrApiVersioning]: `# Use URL versioning for public APIs
+
+## Context
+
+Several clients consume the platform API independently and need a predictable way to adopt
+breaking changes.
+
+## Decision
+
+Public APIs will use a major version in the URL when a breaking change is introduced. Additive
+changes remain compatible within the current version.
+
+## Consequences
+
+Clients can migrate deliberately, and old versions can be retired with a clear communication plan.
+`,
+  [CONTENT_IDS.wsAdrAsyncMessaging]: `# Use asynchronous messaging for long-running workflows
+
+## Context
+
+Some workflows take longer than a normal request and should not keep an HTTP connection open.
+
+## Decision
+
+Long-running workflows will be submitted through the API and completed through asynchronous
+messages and status updates.
+
+## Consequences
+
+The user interface must show progress and failure states, but workers can retry without blocking
+request handlers.
+`,
+  [CONTENT_IDS.wsAdrAuthentication]: `# Store authentication secrets outside application data
+
+## Context
+
+Authentication tokens and other secrets require stronger controls than ordinary catalog data.
+
+## Decision
+
+Secrets will be stored through the configured secret-management integration. Application records
+may keep references and metadata, but not the secret values themselves.
+
+## Consequences
+
+Secret rotation is centralized, while local development needs a documented fallback configuration.
+`,
+  [CONTENT_IDS.wsAdrObservability]: `# Standardize on structured logs and traces
+
+## Context
+
+Production incidents are difficult to investigate when logs use inconsistent fields and formats.
+
+## Decision
+
+Services will emit structured logs with correlation identifiers and produce distributed traces for
+requests that cross service boundaries.
+
+## Consequences
+
+Operational dashboards become easier to share, and new services need to adopt the common fields
+before they are considered production-ready.
+`,
+  [CONTENT_IDS.wsAdrDataOwnership]: `# Keep data ownership with the domain that changes it
+
+## Context
+
+Shared tables make it easy for unrelated features to modify the same data without clear ownership.
+
+## Decision
+
+Each domain owns its persistence model and exposes changes through a documented service boundary.
+Other domains consume that boundary instead of writing directly to the tables.
+
+## Consequences
+
+Ownership is clearer and schema changes are safer, although some cross-domain operations require
+explicit coordination.
 `
 };
+
+export const seedAdrDocuments = [
+  { id: CONTENT_IDS.wsAdrApiVersioning, status: 'Accepted', decision_date: '2025-09-15' },
+  { id: CONTENT_IDS.wsAdrAsyncMessaging, status: 'Accepted', decision_date: '2025-10-03' },
+  { id: CONTENT_IDS.wsAdrAuthentication, status: 'Accepted', decision_date: '2025-11-12' },
+  { id: CONTENT_IDS.wsAdrObservability, status: 'Proposed', decision_date: '2025-12-01' },
+  { id: CONTENT_IDS.wsAdrDataOwnership, status: 'Accepted', decision_date: '2026-01-05' }
+] as const;
 
 export const seedProjectFiles: ContentNodeDbResult[] = [
   {
@@ -1897,7 +1990,67 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     updated_by: null,
     mime_type: null,
     original_filename: null
-  }
+  },
+  {
+    id: CONTENT_IDS.wsAdrFolder,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: null,
+    parent_id: CONTENT_IDS.wsWikiFolder,
+    path: 'wiki/adr',
+    name: 'Architecture Decision Records',
+    type: 'folder',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  },
+  ...(
+    [
+      [CONTENT_IDS.wsAdrApiVersioning, 'wiki/adr/api-versioning', 'API versioning'],
+      [CONTENT_IDS.wsAdrAsyncMessaging, 'wiki/adr/async-messaging', 'Asynchronous messaging'],
+      [
+        CONTENT_IDS.wsAdrAuthentication,
+        'wiki/adr/authentication-secrets',
+        'Authentication secrets'
+      ],
+      [
+        CONTENT_IDS.wsAdrObservability,
+        'wiki/adr/structured-observability',
+        'Structured observability'
+      ],
+      [CONTENT_IDS.wsAdrDataOwnership, 'wiki/adr/domain-data-ownership', 'Domain data ownership']
+    ] as const
+  ).map(([id, path, name]) => ({
+    id,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: null,
+    parent_id: CONTENT_IDS.wsAdrFolder,
+    path,
+    name,
+    type: 'markdown' as const,
+    size_bytes: Buffer.byteLength(JSON.stringify({ body: seedWikiPageBodies[id] }), 'utf8'),
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  }))
 ];
 
 export const seedAiConfig: AiConfigInputDbUpsert = {
