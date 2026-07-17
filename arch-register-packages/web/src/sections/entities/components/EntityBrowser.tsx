@@ -311,7 +311,7 @@ export const EntityBrowser = ({
     [displayFieldSchemas, projectContext, joinedAssessmentContext]
   );
   const displayView = DISPLAY_FIELD_VIEWS.has(view)
-    ? (view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore')
+    ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
     : null;
   const selectedDisplayFieldIds = displayView
     ? getDisplayFieldIds(displayView, activeViewConfig)

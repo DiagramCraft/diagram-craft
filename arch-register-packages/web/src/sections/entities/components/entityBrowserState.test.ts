@@ -19,6 +19,25 @@ describe('entity browser view field persistence', () => {
     expect(parseViewConfigs(serializeViewConfigs(configs))).toEqual(configs);
   });
 
+  it('saves a map configuration, including levels/columns and metricConfig', () => {
+    const mapConfig = {
+      levels: 3,
+      level1SchemaId: 's-domain',
+      level1Columns: 3,
+      level2SchemaId: 's-capability',
+      level2Columns: 2,
+      level3SchemaId: 's-service',
+      level3Columns: 4,
+      metricConfig: {
+        sourceSchemaId: 's-service',
+        source: { kind: 'field', fieldId: 'score' },
+        aggregation: 'average'
+      }
+    };
+    expect(toSavedViewConfig('map', { map: mapConfig })).toEqual({ map: mapConfig });
+    expect(parseViewConfigs(serializeViewConfigs({ map: mapConfig }))).toEqual({ map: mapConfig });
+  });
+
   it('rejects malformed and non-object view-config payloads', () => {
     expect(parseViewConfigs('{')).toEqual({});
     expect(parseViewConfigs('[]')).toEqual({});
@@ -79,6 +98,48 @@ describe('pruneAssessmentReferences', () => {
 
   it('leaves configs without assessment references untouched', () => {
     const configs = { table: { fieldIds: ['_owner', 'technology'] } };
+    const { viewConfigs } = pruneAssessmentReferences([], configs);
+    expect(viewConfigs).toEqual(configs);
+  });
+
+  it('clears an assessment-sourced map metricConfig entirely', () => {
+    const { viewConfigs } = pruneAssessmentReferences([], {
+      map: {
+        levels: 2,
+        level1SchemaId: 's1',
+        level1Columns: 3,
+        level2SchemaId: null,
+        level2Columns: 3,
+        level3SchemaId: null,
+        level3Columns: 3,
+        metricConfig: {
+          sourceSchemaId: 's1',
+          source: { kind: 'assessmentRating', fieldId: 'rating1' },
+          aggregation: 'average'
+        }
+      }
+    });
+    expect(viewConfigs.map).toMatchObject({ level1SchemaId: 's1', metricConfig: null });
+  });
+
+  it('leaves a non-assessment-sourced map metricConfig untouched', () => {
+    const configs = {
+      map: {
+        levels: 2,
+        level1SchemaId: 's1',
+        level1Columns: 3,
+        level2SchemaId: null,
+        level2Columns: 3,
+        level3SchemaId: null,
+        level3Columns: 3,
+        metricConfig: {
+          sourceSchemaId: 's1',
+          source: { kind: 'lifecycle' },
+          aggregation: 'worst',
+          worstDirection: 'high'
+        }
+      }
+    };
     const { viewConfigs } = pruneAssessmentReferences([], configs);
     expect(viewConfigs).toEqual(configs);
   });

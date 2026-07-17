@@ -32,6 +32,7 @@ import {
 import { createAiORPCHandler } from './domain/ai/aiOrpc';
 import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
 import { createWorkspaceAnalyticsORPCHandler } from './domain/analytics/workspaceAnalyticsOrpc';
+import { createWorkspaceMetricORPCHandler } from './domain/metrics/metricOrpc';
 import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
 import { createExternalContentORPCHandler } from './domain/external-content/externalContentOrpc';
 import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
@@ -127,6 +128,7 @@ export const createApp = (
   app.use(createWorkspaceCollectionORPCHandler(db));
   app.use(createWorkspaceConfigORPCHandler(db));
   app.use(createWorkspaceAnalyticsORPCHandler(db));
+  app.use(createWorkspaceMetricORPCHandler(db));
   app.use(createJobsORPCHandler(db));
   app.use(createExternalContentORPCHandler(db, storage));
   app.use(createWebhookORPCHandler(db));

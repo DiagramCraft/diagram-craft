@@ -1,0 +1,50 @@
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--base-fg-more-dim);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--base-fg);
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.gradient {
+  width: 90px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.rangeLabel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  font-variant-numeric: tabular-nums;
+}

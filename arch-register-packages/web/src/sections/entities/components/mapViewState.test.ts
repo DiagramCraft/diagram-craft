@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 import {
-  buildHierarchyTreeIndex,
+  buildContainmentTreeIndex,
   getChildSchemas,
-  getHierarchyChildren,
-  sortHierarchyNodes
-} from './hierarchyViewState';
+  getContainmentChildren,
+  sortContainmentNodes
+} from './mapViewState';
 
 const schema = (id: string, parentSchemaId?: string) =>
   ({
@@ -26,7 +26,7 @@ const node = (id: string, schemaId: string, name: string, isMatch = true) =>
     _isMatch: isMatch
   }) as unknown as TreeNode;
 
-describe('hierarchy view state', () => {
+describe('map view state', () => {
   it('finds schemas whose containment points to the selected parent', () => {
     expect(
       getChildSchemas(
@@ -50,8 +50,8 @@ describe('hierarchy view state', () => {
       { parentId: 'root', childId: 'hidden' },
       { parentId: 'root', childId: 'other' }
     ] as unknown as TreeEdge[];
-    const index = buildHierarchyTreeIndex(nodes, edges);
-    expect(sortHierarchyNodes(nodes, 'app').map(item => item._uid)).toEqual(['a', 'b']);
-    expect(getHierarchyChildren('root', 'app', index).map(item => item._uid)).toEqual(['a', 'b']);
+    const index = buildContainmentTreeIndex(nodes, edges);
+    expect(sortContainmentNodes(nodes, 'app').map(item => item._uid)).toEqual(['a', 'b']);
+    expect(getContainmentChildren('root', 'app', index).map(item => item._uid)).toEqual(['a', 'b']);
   });
 });

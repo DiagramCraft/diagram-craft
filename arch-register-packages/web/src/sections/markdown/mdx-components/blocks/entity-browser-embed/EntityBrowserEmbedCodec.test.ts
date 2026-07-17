@@ -18,7 +18,21 @@ const fullConfig: EntityBrowserEmbedConfig = {
   viewConfigs: {
     radar: { xAxis: 'impact', yAxis: 'effort' },
     explore: { relationFields: ['dependsOn', 'ownedBy'] },
-    bubble: { xFieldId: 'cost', yFieldId: 'headcount', sizeFieldId: null, colorFieldId: 'status' }
+    bubble: { xFieldId: 'cost', yFieldId: 'headcount', sizeFieldId: null, colorFieldId: 'status' },
+    map: {
+      levels: 3,
+      level1SchemaId: 'schema-domain',
+      level1Columns: 3,
+      level2SchemaId: 'schema-capability',
+      level2Columns: 2,
+      level3SchemaId: 'schema-service',
+      level3Columns: 4,
+      metricConfig: {
+        sourceSchemaId: 'schema-service',
+        source: { kind: 'field', fieldId: 'score' },
+        aggregation: 'average'
+      }
+    }
   },
   projectScope: 'project'
 };
