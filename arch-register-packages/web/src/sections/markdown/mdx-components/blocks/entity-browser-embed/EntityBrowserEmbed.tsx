@@ -6,6 +6,7 @@ import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publi
 import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
 import {
   getFilterValue,
+  isTreeBasedView,
   type BrowserEntityRecord
 } from '../../../../entities/components/entityBrowserState';
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
@@ -25,7 +26,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
 
   const config = useMemo(() => decodeEntityBrowserEmbedConfig(rawConfig), [rawConfig]);
 
-  const isTreeBased = config?.view === 'tree' || config?.view === 'hierarchy';
+  const isTreeBased = !!config && isTreeBasedView(config.view);
 
   const typeFilter = config ? getFilterValue(config.conditions, '_schemaId') : null;
   const ownerFilter = config ? getFilterValue(config.conditions, '_owner') : null;

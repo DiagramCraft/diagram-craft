@@ -5,48 +5,16 @@ import { useSavedViews } from '../../../../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';
-import { TableView } from '../../../../entities/components/TableView';
-import { CardsView } from '../../../../entities/components/CardsView';
-import { TreeView } from '../../../../entities/components/TreeView';
-import { RadarView } from '../../../../entities/components/RadarView';
-import { TimelineView } from '../../../../entities/components/TimelineView';
-import { MatrixView } from '../../../../entities/components/MatrixView';
-import { HierarchyView } from '../../../../entities/components/HierarchyView';
-import { ExploreView } from '../../../../entities/components/ExploreView';
-import type { BrowserEntityRecord } from '../../../../entities/components/entityBrowserState';
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
+import {
+  getSavedViewConfig,
+  isTreeBasedView,
+  type BrowserEntityRecord
+} from '../../../../entities/components/entityBrowserState';
 import styles from './EntityViewEmbed.module.css';
 import { Banner } from '../../../../../components/Banner';
 import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
-
-const noop = () => {};
-const emptySet = new Set<string>();
-
-const getViewConfig = (savedView: {
-  viewMode: string;
-  config: {
-    table?: unknown;
-    cards?: unknown;
-    tree?: unknown;
-    radar?: unknown;
-    timeline?: unknown;
-    matrix?: unknown;
-    hierarchy?: unknown;
-    explore?: unknown;
-  } | null;
-}): unknown => {
-  if (!savedView.config) return null;
-  if (savedView.viewMode === 'radar') return savedView.config.radar ?? null;
-  if (savedView.viewMode === 'timeline') return savedView.config.timeline ?? null;
-  if (savedView.viewMode === 'matrix') return savedView.config.matrix ?? null;
-  if (savedView.viewMode === 'hierarchy') return savedView.config.hierarchy ?? null;
-  if (savedView.viewMode === 'explore') return savedView.config.explore ?? null;
-  if (savedView.viewMode === 'table') return savedView.config.table ?? null;
-  if (savedView.viewMode === 'cards') return savedView.config.cards ?? null;
-  if (savedView.viewMode === 'tree') return savedView.config.tree ?? null;
-  return null;
-};
 
 type Props = {
   viewId?: string;
@@ -64,7 +32,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
 
   const savedView = viewId ? savedViews.find(v => v.id === viewId) : undefined;
 
-  const isTreeBased = savedView?.viewMode === 'tree' || savedView?.viewMode === 'hierarchy';
+  const isTreeBased = !!savedView && isTreeBasedView(savedView.viewMode);
 
   const filters = savedView?.filters;
   const { data: entities = [], isLoading: entitiesLoading } = useEntities(
@@ -120,7 +88,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   }
 
   const rows = entities as BrowserEntityRecord[];
-  const viewConfig = getViewConfig(savedView);
+  const viewConfig = getSavedViewConfig(savedView);
   const typeFilter = savedView.filters.schemaId ?? null;
   const ownerFilter = savedView.filters.owner ?? null;
   const statusFilter = savedView.filters.status ?? null;
@@ -132,118 +100,29 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
     !!resolvedProjectId
   );
 
-  switch (savedView.viewMode) {
-    case 'table':
-      return (
-        <TableView
-          rows={rows}
-          schemaMap={schemaMap}
-          onEntityClick={onEntityClick}
-          onDelete={noop as (entity: EntityRecord) => void}
-          onClone={noop as (entity: EntityRecord) => void}
-          lifecycleStates={lifecycleStates}
-          selectedIds={emptySet}
-          onSelectAll={noop}
-          onSelectRow={noop}
-          config={viewConfig}
-          displayFields={displayFields}
-        />
-      );
-    case 'cards':
-      return (
-        <CardsView
-          rows={rows}
-          schemaMap={schemaMap}
-          onEntityClick={onEntityClick}
-          onDelete={noop as (entity: EntityRecord) => void}
-          onClone={noop as (entity: EntityRecord) => void}
-          lifecycleStates={lifecycleStates}
-          config={viewConfig}
-          displayFields={displayFields}
-        />
-      );
-    case 'tree':
-      return (
-        <TreeView
-          workspaceId={workspaceSlug}
-          projectId={resolvedProjectId ?? undefined}
-          projectScope={projectScope}
-          q={q}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          statusFilter={statusFilter}
-          schemaMap={schemaMap}
-          onEntityClick={onEntityClick}
-          onDelete={noop as (entity: EntityRecord) => void}
-          onClone={noop as (entity: EntityRecord) => void}
-          lifecycleStates={lifecycleStates}
-          config={viewConfig}
-          displayFields={displayFields}
-        />
-      );
-    case 'radar':
-      return (
-        <RadarView
-          rows={entities}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-        />
-      );
-    case 'timeline':
-      return (
-        <TimelineView
-          rows={entities}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          workspaceId={workspaceSlug}
-          projects={projects}
-        />
-      );
-    case 'matrix':
-      return (
-        <MatrixView
-          rows={entities}
-          schemaMap={schemaMap}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-        />
-      );
-    case 'hierarchy':
-      return (
-        <HierarchyView
-          workspaceId={workspaceSlug}
-          projectId={resolvedProjectId ?? undefined}
-          projectScope={projectScope}
-          q={q}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          statusFilter={statusFilter}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          displayFields={displayFields}
-        />
-      );
-    case 'explore':
-      return (
-        <ExploreView
-          rows={entities}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          displayFields={displayFields}
-        />
-      );
-    default:
-      return (
+  return (
+    <EntityBrowserView
+      view={savedView.viewMode}
+      rows={rows}
+      schemaMap={schemaMap}
+      schemas={schemas}
+      lifecycleStates={lifecycleStates}
+      projects={projects}
+      workspaceId={workspaceSlug}
+      projectId={resolvedProjectId ?? undefined}
+      projectScope={projectScope}
+      q={q}
+      typeFilter={typeFilter}
+      ownerFilter={ownerFilter}
+      statusFilter={statusFilter}
+      activeViewConfig={viewConfig}
+      displayFields={displayFields}
+      mode={{ kind: 'published', onEntityClick }}
+      unsupportedView={
         <div className={styles.container}>
           <EmptyState compact title="Unsupported view mode." />
         </div>
-      );
-  }
+      }
+    />
+  );
 };
