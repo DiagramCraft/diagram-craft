@@ -67,6 +67,9 @@ test.describe('entities section', () => {
 
     await entitiesPage.goto();
     await entitiesPage.openEntity(authApiEntity.name);
+    // The "Topology" tab lives inside the "Context" sidebar section — its tab
+    // bar (and the Topology trigger) only renders once that section is active.
+    await page.getByText('Context', { exact: true }).click();
     await page.getByRole('tab', { name: 'Topology' }).click();
     await expect(page).toHaveURL(/tab=topology/);
 
