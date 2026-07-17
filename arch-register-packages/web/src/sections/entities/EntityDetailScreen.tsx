@@ -1,5 +1,4 @@
 import { useMemo, useCallback, useState } from 'react';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -44,26 +43,27 @@ import {
   entityDetailRoute
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { EntityGraphView } from './components/EntityGraphView';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
-import { EntityOverviewTab } from './components/EntityOverviewTab';
-import { EntityTopologyTab } from './components/EntityTopologyTab';
-import { EntityRelationsTab } from './components/EntityRelationsTab';
-import { EntityTimelineTab } from './components/EntityTimelineTab';
-import { EntityChangeHistoryTab } from './components/EntityChangeHistoryTab';
+import { EntityOverviewSection } from './components/EntityOverviewSection';
+import { EntityContextSection } from './components/EntityContextSection';
+import { EntityCollaborationSection } from './components/EntityCollaborationSection';
+import { EntityPlanningReviewSection } from './components/EntityPlanningReviewSection';
 import { Title } from '../../components/Title';
-import { EntityDependentsTab } from './components/EntityDependentsTab';
-import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
-import { DiscussionThread } from '../discussions/DiscussionThread';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
-import type { TabId, Relation } from './types/entityDetailTypes';
+import {
+  HOME_TAB_IDS,
+  CONTEXT_TAB_IDS,
+  COLLABORATION_TAB_IDS,
+  PLANNING_TAB_IDS,
+  type TabId,
+  type Relation
+} from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
 import { CollectionPickerDialog } from './components/CollectionPickerDialog';
-import { EntityRelatedContentTab } from './components/EntityRelatedContentTab';
 
 export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigate = useNavigate();
@@ -364,30 +364,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         </div>
       )}
 
-      {/* Tabs */}
-      {!contentFolder && (
-        <div className={styles.tabBar}>
-          <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
-            <Tabs.List overflow>
-              <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-              <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
-              <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
-              <Tabs.Trigger value="relations">
-                Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
-              </Tabs.Trigger>
-              <Tabs.Trigger value="related-content">Related content</Tabs.Trigger>
-              <Tabs.Trigger value="dependents">
-                Dependents{incoming.length > 0 ? ` (${incoming.length})` : ''}
-              </Tabs.Trigger>
-              <Tabs.Trigger value="assessments">Assessments</Tabs.Trigger>
-              <Tabs.Trigger value="discussions">Discussions</Tabs.Trigger>
-              {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
-              <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
-            </Tabs.List>
-          </Tabs.Root>
-        </div>
-      )}
-
       {/* Content folder view */}
       {contentFolder && (
         <EntityContentView
@@ -397,110 +373,91 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Overview */}
-      {!contentFolder && tab === 'overview' && (
-        <EntityOverviewTab
-          workspaceSlug={workspaceSlug}
-          entity={entity}
-          schema={schema}
-          editing={editing}
-          editState={editState}
-          setEditState={setEditState}
-          editLinks={editLinks}
-          setEditLinks={setEditLinks}
-          validationErrors={validationErrors}
-          setValidationErrors={setValidationErrors}
-          refLookup={refLookup}
-          referenceOptions={referenceOptions}
-          teams={teams}
-          lifecycleStates={lifecycleStates}
-          entityProjects={entityProjects}
-          futureSnapshots={futureSnapshots}
-          entityDiagramFiles={entityDiagramFiles}
-        />
-      )}
-
-      {/* Topology */}
-      {!contentFolder && tab === 'topology' && (
-        <EntityTopologyTab
-          entity={entity}
-          schema={schema}
-          color={color}
-          outgoing={outgoing}
-          incoming={incoming}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          onEntityClick={navigateToEntity}
-        />
-      )}
-
-      {/* Graph */}
-      {!contentFolder && tab === 'graph' && entity && (
-        <div className={styles.graphPanel}>
-          <EntityGraphView
-            workspaceId={workspaceId}
-            rootEntityId={entity._uid}
-            rootEntityName={entity._name || entity._slug}
-            rootEntitySchemaId={entity._schema.id}
-            schemas={schemas}
-            onEntityClick={navigateToEntity}
-          />
-        </div>
-      )}
-
-      {/* Relationships */}
-      {!contentFolder && tab === 'relations' && (
-        <EntityRelationsTab outgoing={outgoing} incoming={incoming} schemas={schemas} />
-      )}
-
-      {!contentFolder && tab === 'related-content' && (
-        <EntityRelatedContentTab workspaceId={workspaceId} entityId={entityId} />
-      )}
-
-      {/* Dependents (impact analysis) */}
-      {!contentFolder && tab === 'dependents' && (
-        <EntityDependentsTab
-          workspaceId={workspaceId}
-          entityId={entityId}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-        />
-      )}
-
-      {/* Assessments */}
-      {!contentFolder && tab === 'assessments' && (
-        <EntityAssessmentsTab workspaceId={workspaceId} entity={entity} schema={schema} />
-      )}
-
-      {/* Discussions */}
-      {!contentFolder && tab === 'discussions' && (
-        <div className={styles.tabPane}>
-          <DiscussionThread workspaceId={workspaceId} objectType="entity" objectId={entity._uid} />
-        </div>
-      )}
-
-      {/* Change history */}
-      {!contentFolder && tab === 'changes' && (
-        <EntityChangeHistoryTab
-          workspaceId={workspaceId}
-          entityId={entityId}
-          entity={entity}
-          schema={schema}
-          snapshots={allSnapshots}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
+      {/* Overview / Relationships / Change history */}
+      {!contentFolder && HOME_TAB_IDS.includes(tab) && (
+        <EntityOverviewSection
+          tab={tab}
+          setTab={setTab}
+          relationCount={relationCount}
           canViewAudit={canViewAudit}
+          overviewProps={{
+            workspaceSlug,
+            entity,
+            schema,
+            editing,
+            editState,
+            setEditState,
+            editLinks,
+            setEditLinks,
+            validationErrors,
+            setValidationErrors,
+            refLookup,
+            referenceOptions,
+            teams,
+            lifecycleStates,
+            entityProjects,
+            futureSnapshots,
+            entityDiagramFiles
+          }}
+          relationsProps={{ outgoing, incoming, schemas }}
+          changeHistoryProps={{
+            workspaceId,
+            entityId,
+            entity,
+            schema,
+            snapshots: allSnapshots,
+            lifecycleStates,
+            teams,
+            canViewAudit
+          }}
         />
       )}
 
-      {/* Timeline */}
-      {!contentFolder && tab === 'timeline' && (
-        <EntityTimelineTab
-          allSnapshots={allSnapshots}
-          entityProjects={entityProjects}
-          schema={schema}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
+      {/* Context: Topology / Graph / Dependents / Related content */}
+      {!contentFolder && CONTEXT_TAB_IDS.includes(tab) && (
+        <EntityContextSection
+          tab={tab}
+          setTab={setTab}
+          dependentsCount={incoming.length}
+          topologyProps={{
+            entity,
+            schema,
+            color,
+            outgoing,
+            incoming,
+            schemas,
+            lifecycleStates,
+            onEntityClick: navigateToEntity
+          }}
+          graphProps={{
+            workspaceId,
+            rootEntityId: entity._uid,
+            rootEntityName: entity._name || entity._slug,
+            rootEntitySchemaId: entity._schema.id,
+            schemas,
+            onEntityClick: navigateToEntity
+          }}
+          dependentsProps={{ workspaceId, entityId, schemas, lifecycleStates }}
+          relatedContentProps={{ workspaceId, entityId }}
+        />
+      )}
+
+      {/* Collaboration: Discussion */}
+      {!contentFolder && COLLABORATION_TAB_IDS.includes(tab) && (
+        <EntityCollaborationSection
+          tab={tab}
+          setTab={setTab}
+          discussionProps={{ workspaceId, objectType: 'entity', objectId: entity._uid }}
+        />
+      )}
+
+      {/* Planning & review: Assessments / Timeline */}
+      {!contentFolder && PLANNING_TAB_IDS.includes(tab) && (
+        <EntityPlanningReviewSection
+          tab={tab}
+          setTab={setTab}
+          assessmentsProps={{ workspaceId, entity, schema }}
+          timelineProps={{ allSnapshots, entityProjects, schema, lifecycleStates, teams }}
         />
       )}
 

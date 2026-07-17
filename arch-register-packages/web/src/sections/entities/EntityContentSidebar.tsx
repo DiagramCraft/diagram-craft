@@ -3,12 +3,28 @@ import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { TbFileText, TbFolderOpen, TbHome, TbPlus, TbUpload } from 'react-icons/tb';
+import {
+  TbClipboardList,
+  TbCompass,
+  TbFileText,
+  TbFolderOpen,
+  TbHome,
+  TbMessageCircle,
+  TbPlus,
+  TbUpload
+} from 'react-icons/tb';
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
 import { ContentTree, type ContentTreeHandle } from '../../components/ContentTree';
+import { SidebarGroupLabel } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import { useEntity } from '../../hooks/useEntities';
+import {
+  HOME_TAB_IDS,
+  CONTEXT_TAB_IDS,
+  COLLABORATION_TAB_IDS,
+  PLANNING_TAB_IDS
+} from './types/entityDetailTypes';
 import {
   contentDownloadUrl,
   useContentScopeOperations,
@@ -62,6 +78,17 @@ export const EntityContentSidebar = ({
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const contentFolder = params._splat ?? null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
+  const tab = search.tab ?? 'overview';
+
+  const navigateTab = (nextTab: EntityDetailSearchParams['tab']) => {
+    navigate(
+      entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {
+        contentQuery: search.contentQuery,
+        contentView: search.contentView,
+        tab: nextTab === 'overview' ? undefined : nextTab
+      })
+    );
+  };
 
   const navigateHome = (folder?: string) => {
     const nextSearch = {
@@ -146,6 +173,32 @@ export const EntityContentSidebar = ({
         </div>
       </div>
       <div className={styles.scroll}>
+        <SidebarGroupLabel>Entity</SidebarGroupLabel>
+        <TreeRow
+          label="Overview"
+          icon={<TbHome size={13} />}
+          active={!contentFolder && HOME_TAB_IDS.includes(tab)}
+          onClick={() => navigateTab('overview')}
+        />
+        <TreeRow
+          label="Context"
+          icon={<TbCompass size={13} />}
+          active={!contentFolder && CONTEXT_TAB_IDS.includes(tab)}
+          onClick={() => navigateTab('topology')}
+        />
+        <TreeRow
+          label="Collaboration"
+          icon={<TbMessageCircle size={13} />}
+          active={!contentFolder && COLLABORATION_TAB_IDS.includes(tab)}
+          onClick={() => navigateTab('discussions')}
+        />
+        <TreeRow
+          label="Planning & review"
+          icon={<TbClipboardList size={13} />}
+          active={!contentFolder && PLANNING_TAB_IDS.includes(tab)}
+          onClick={() => navigateTab('assessments')}
+        />
+        <SidebarGroupLabel>Files</SidebarGroupLabel>
         <ContentTree
           ref={treeRef}
           rootFiles={data?.rootFiles ?? []}
@@ -153,14 +206,6 @@ export const EntityContentSidebar = ({
           activeFileId={activeFileId}
           activeFolder={contentFolder}
           operations={operations}
-          beforeTree={
-            <TreeRow
-              label="Home"
-              icon={<TbHome size={13} />}
-              active={!contentFolder && !activeFileId}
-              onClick={() => navigateHome()}
-            />
-          }
           onFolderClick={navigateHome}
           onFileClick={openFile}
           onDownload={download}
