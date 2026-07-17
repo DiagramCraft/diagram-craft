@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbFileText, TbLink } from 'react-icons/tb';
+import { TbChevronDown, TbChevronRight, TbFileText, TbLink } from 'react-icons/tb';
 import { useDocumentBacklinks } from '../../hooks/useDocuments';
 import { LoadingState } from '../../components/LoadingState';
 import { EmptyState } from '../../components/EmptyState';
@@ -28,6 +28,7 @@ export const DocumentBacklinksSection = ({
 }) => {
   const navigate = useNavigate();
   const { data = [], isLoading } = useDocumentBacklinks(workspaceId, nodeId);
+  const [open, setOpen] = useState(false);
 
   const groups = useMemo(() => {
     const grouped = new Map<
@@ -62,93 +63,109 @@ export const DocumentBacklinksSection = ({
 
   return (
     <section className={styles.discussionSection}>
-      <div className={styles.discussionHead}>
+      <button
+        type="button"
+        className={styles.discussionHead}
+        onClick={() => setOpen(o => !o)}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          width: '100%',
+          cursor: 'pointer',
+          textAlign: 'left'
+        }}
+      >
+        {open ? <TbChevronDown size={14} /> : <TbChevronRight size={14} />}
         <TbLink size={14} />
-        <span className={styles.discussionTitle}>Backlinks</span>
-        {data.length > 0 && <span className={styles.discussionCount}>{data.length}</span>}
-      </div>
-      {groups.length === 0 ? (
-        <EmptyState
-          title="Nothing links here yet"
-          subtitle="Documents that link to this one will appear here."
-        />
-      ) : (
-        <div style={{ display: 'grid', gap: 18 }}>
-          {groups.map(([key, group]) => (
-            <div key={key}>
-              <h3
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 12,
-                  margin: '0 0 8px'
-                }}
-              >
-                <TypeBadge
-                  color={group.typeColor ?? 'var(--base-fg-dim)'}
-                  name={group.typeName}
-                  icon={group.typeIcon}
-                  size={18}
-                />
-                <Chip tone="ghost">{group.typeName}</Chip>
-                <span className="dim">{group.fieldName}</span>
-              </h3>
-              <div style={{ display: 'grid', gap: 2 }}>
-                {group.items.map(item => (
-                  <HoverCard
-                    key={`${item.file.id}:${item.field_id}`}
-                    anchorClassName={hoverCardStyles.blockAnchor}
-                    content={
-                      <DocumentHoverCardBody
-                        name={item.file.name}
-                        path={item.file.path}
-                        documentTypeName={item.document_type_name}
-                        documentTypeColor={item.document_type_color}
-                        commentCount={item.file.comment_count}
-                        unresolvedCommentCount={item.file.unresolved_comment_count}
-                      />
-                    }
-                  >
-                    <TreeRow
-                      icon={<TbFileText size={14} />}
-                      label={item.file.name}
-                      trailing={
-                        <span className="dim" style={{ fontSize: 10 }}>
-                          {item.file.path}
-                        </span>
+        <span className={styles.discussionTitle}>
+          Backlinks{!open && data.length > 0 ? ` (${data.length})` : ''}
+        </span>
+        {open && data.length > 0 && <span className={styles.discussionCount}>{data.length}</span>}
+      </button>
+      {open &&
+        (groups.length === 0 ? (
+          <EmptyState
+            title="Nothing links here yet"
+            subtitle="Documents that link to this one will appear here."
+          />
+        ) : (
+          <div style={{ display: 'grid', gap: 18 }}>
+            {groups.map(([key, group]) => (
+              <div key={key}>
+                <h3
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: 12,
+                    margin: '0 0 8px'
+                  }}
+                >
+                  <TypeBadge
+                    color={group.typeColor ?? 'var(--base-fg-dim)'}
+                    name={group.typeName}
+                    icon={group.typeIcon}
+                    size={18}
+                  />
+                  <Chip tone="ghost">{group.typeName}</Chip>
+                  <span className="dim">{group.fieldName}</span>
+                </h3>
+                <div style={{ display: 'grid', gap: 2 }}>
+                  {group.items.map(item => (
+                    <HoverCard
+                      key={`${item.file.id}:${item.field_id}`}
+                      anchorClassName={hoverCardStyles.blockAnchor}
+                      content={
+                        <DocumentHoverCardBody
+                          name={item.file.name}
+                          path={item.file.path}
+                          documentTypeName={item.document_type_name}
+                          documentTypeColor={item.document_type_color}
+                          commentCount={item.file.comment_count}
+                          unresolvedCommentCount={item.file.unresolved_comment_count}
+                        />
                       }
-                      onClick={() =>
-                        navigate(
-                          item.scope === 'project'
-                            ? projectMarkdownRoute(
-                                workspaceId,
-                                asProjectPublicId(
-                                  item.file.project_public_id ?? item.file.project_id!
-                                ),
-                                item.file.id,
-                                { mode: 'preview' }
-                              )
-                            : item.scope === 'entity'
-                              ? entityMarkdownRoute(
+                    >
+                      <TreeRow
+                        icon={<TbFileText size={14} />}
+                        label={item.file.name}
+                        trailing={
+                          <span className="dim" style={{ fontSize: 10 }}>
+                            {item.file.path}
+                          </span>
+                        }
+                        onClick={() =>
+                          navigate(
+                            item.scope === 'project'
+                              ? projectMarkdownRoute(
                                   workspaceId,
-                                  asEntityPublicId(item.file.entity_id!),
+                                  asProjectPublicId(
+                                    item.file.project_public_id ?? item.file.project_id!
+                                  ),
                                   item.file.id,
                                   { mode: 'preview' }
                                 )
-                              : workspaceMarkdownRoute(workspaceId, item.file.id, {
-                                  mode: 'preview'
-                                })
-                        )
-                      }
-                    />
-                  </HoverCard>
-                ))}
+                              : item.scope === 'entity'
+                                ? entityMarkdownRoute(
+                                    workspaceId,
+                                    asEntityPublicId(item.file.entity_id!),
+                                    item.file.id,
+                                    { mode: 'preview' }
+                                  )
+                                : workspaceMarkdownRoute(workspaceId, item.file.id, {
+                                    mode: 'preview'
+                                  })
+                          )
+                        }
+                      />
+                    </HoverCard>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ))}
     </section>
   );
 };
