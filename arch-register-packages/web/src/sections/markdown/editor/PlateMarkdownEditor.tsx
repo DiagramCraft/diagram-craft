@@ -38,6 +38,7 @@ import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
 import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
+import { ColumnsNormalizePlugin } from '../mdx-components/blocks/columns/ColumnsEditable';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -882,6 +883,7 @@ const editorPlugins = [
   createPlatePlugin({ key: 'th', node: { isElement: true } }).withComponent(TableHeaderCellElement),
   ...mdxElementPlugins,
   CaptionNormalizePlugin,
+  ColumnsNormalizePlugin,
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),
   createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(InlineCodeLeaf),

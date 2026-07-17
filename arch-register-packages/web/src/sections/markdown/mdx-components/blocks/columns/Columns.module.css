@@ -1,0 +1,62 @@
+.grid {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 var(--article-block-gap) 0;
+}
+
+.twoCol {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.threeCol {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editorContainer {
+  border-radius: var(--r-md);
+}
+
+/* Editor-only: a vertical rule between columns so the grid boundaries are
+   visible while editing, since the preview's whitespace gap alone isn't
+   enough of a cue once each column has its own content and toolbar. */
+.editorGrid {
+  align-items: stretch;
+}
+
+.editorGrid > * + * {
+  border-left: 1px dashed var(--cmp-border);
+  margin-left: -8px;
+  padding-left: 8px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.presetButton {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cmp-fg);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r-sm);
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.presetButton:hover {
+  border-color: var(--cmp-border-focus);
+}
+
+.presetButtonActive {
+  color: var(--accent-fg);
+  border-color: var(--cmp-border-focus);
+}
