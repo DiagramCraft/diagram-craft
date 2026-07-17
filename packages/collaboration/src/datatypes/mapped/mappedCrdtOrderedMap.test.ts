@@ -1,8 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import type { CRDTFactory, CRDTMap } from '../../crdt';
 import type { CRDTMapper } from './types';
-import { MappedCRDTOrderedMap, type MappedCRDTOrderedMapMapType } from './mappedCrdtOrderedMap';
+import {
+  MappedCRDTOrderedMap,
+  type MappedCRDTOrderedMapEntry,
+  type MappedCRDTOrderedMapMapType
+} from './mappedCrdtOrderedMap';
 import { Backends } from '../../test-support/collaborationTestUtils';
 
 class TestClass {
@@ -44,8 +48,10 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
   it('should correctly initialize entries from the fromCRDT function', () => {
     const [doc1, doc2] = backend.syncedDocs();
 
-    const list1 = watch(doc1.getMap<any>('list'));
-    const list2 = doc2 ? watch(doc2.getMap<any>('list')) : undefined;
+    const list1 = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const list2 = doc2
+      ? watch(doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'))
+      : undefined;
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
     const mapped2 = list2
@@ -59,8 +65,10 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
   it('should remove items correctly', () => {
     const [doc1, doc2] = backend.syncedDocs();
 
-    const list1 = watch(doc1.getMap<any>('list'));
-    const list2 = doc2 ? watch(doc2.getMap<any>('list')) : undefined;
+    const list1 = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const list2 = doc2
+      ? watch(doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'))
+      : undefined;
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
     const mapped2 = list2
@@ -83,8 +91,10 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
   it('should add items correctly', () => {
     const [doc1, doc2] = backend.syncedDocs();
 
-    const list1 = watch(doc1.getMap<any>('list'));
-    const list2 = doc2 ? watch(doc2.getMap<any>('list')) : undefined;
+    const list1 = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const list2 = doc2
+      ? watch(doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'))
+      : undefined;
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
     const mapped2 = list2
@@ -100,8 +110,10 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
   it('should update items correctly', () => {
     const [doc1, doc2] = backend.syncedDocs();
 
-    const list1 = watch(doc1.getMap<any>('list'));
-    const list2 = doc2 ? watch(doc2.getMap<any>('list')) : undefined;
+    const list1 = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const list2 = doc2
+      ? watch(doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'))
+      : undefined;
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
     const mapped2 = list2
@@ -146,7 +158,7 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
   it('should correctly serialize to JSON', () => {
     const [doc1] = backend.syncedDocs();
 
-    const mockList = watch(doc1.getMap<any>('test'));
+    const mockList = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('test'));
     const mappedList = new MappedCRDTOrderedMap<number, CRDTType>(
       mockList,
       makeMapper(doc1.factory)
@@ -164,8 +176,10 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
   it('should insert items at the correct position', () => {
     const [doc1, doc2] = backend.syncedDocs();
 
-    const list1 = watch(doc1.getMap<any>('list'));
-    const list2 = doc2 ? watch(doc2.getMap<any>('list')) : undefined;
+    const list1 = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const list2 = doc2
+      ? watch(doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'))
+      : undefined;
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
     const mapped2 = list2
@@ -234,8 +248,10 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
   it('should behave identically to add when inserting at the end', () => {
     const [doc1, doc2] = backend.syncedDocs();
 
-    const list1 = watch(doc1.getMap<any>('list1'));
-    const list2 = doc2 ? watch(doc2.getMap<any>('list2')) : undefined;
+    const list1 = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list1'));
+    const list2 = doc2
+      ? watch(doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list2'))
+      : undefined;
 
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
     const mapped2 = list2
@@ -263,7 +279,7 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
 
   it('should insert correctly when using array size', () => {
     const [doc1] = backend.syncedDocs();
-    const list1 = watch(doc1.getMap<any>('list1'));
+    const list1 = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list1'));
     const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
 
     mapped1.insert('a1', 1, mapped1.size);
@@ -279,5 +295,99 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
       ['b', 2],
       ['c', 3]
     ]);
+  });
+
+  it('should preserve remote callback payloads and ordered update identity', () => {
+    const [doc1, doc2] = backend.syncedDocs();
+    if (!doc2) return;
+
+    const list1 = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const list2 = watch(doc2.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const onAdd = vi.fn();
+    const onChange = vi.fn();
+    const onRemove = vi.fn();
+    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
+    const mapped2 = new MappedCRDTOrderedMap<number, CRDTType>(list2, makeMapper(doc2.factory), {
+      onRemoteAdd: onAdd,
+      onRemoteChange: onChange,
+      onRemoteRemove: onRemove
+    });
+
+    mapped1.add('k', 4);
+    expect(onAdd).toHaveBeenCalledWith(4);
+
+    mapped1.update('k', 6);
+    expect(onChange).toHaveBeenCalledWith(4);
+    expect(mapped2.get('k')).toBe(6);
+
+    mapped1.remove('k');
+    expect(onRemove).toHaveBeenCalledWith(6);
+    expect(mapped2.get('k')).toBeUndefined();
+  });
+
+  it('should preserve mapped object identity across ordered root replacement', () => {
+    const [doc1] = backend.syncedDocs();
+    const initial = doc1.factory.makeMap<MappedCRDTOrderedMapMapType<CRDTType>>();
+    const firstValue = TestClass.fromValue(4, doc1.factory);
+    const initialEntry = doc1.factory.makeMap<MappedCRDTOrderedMapEntry<CRDTType>>({
+      index: 0,
+      value: firstValue.crdt
+    });
+    initial.set('k', initialEntry);
+
+    const replacement = doc1.factory.makeMap<MappedCRDTOrderedMapMapType<CRDTType>>();
+    const replacementEntry = doc1.factory.makeMap<MappedCRDTOrderedMapEntry<CRDTType>>({
+      index: 0,
+      value: doc1.factory.makeMap<CRDTType>({ value: 6 })
+    });
+    replacement.set('k', replacementEntry);
+
+    const root = watch(initial);
+    const mapped = new MappedCRDTOrderedMap<TestClass, CRDTType>(root, testClassMapper);
+    const existing = mapped.get('k');
+
+    root.set(replacement);
+
+    expect(mapped.get('k')).toBe(existing);
+    expect(mapped.get('k')?.value).toBe(4);
+  });
+
+  it('should replace the root and release listeners without duplication', () => {
+    const [doc1] = backend.syncedDocs();
+    const initial = doc1.factory.makeMap<MappedCRDTOrderedMapMapType<CRDTType>>();
+    const replacement = doc1.factory.makeMap<MappedCRDTOrderedMapMapType<CRDTType>>();
+    replacement.set(
+      'replacement',
+      doc1.factory.makeMap<MappedCRDTOrderedMapEntry<CRDTType>>({
+        index: 0,
+        value: doc1.factory.makeMap<CRDTType>({ value: 4 })
+      })
+    );
+    const root = watch(initial);
+    const onInit = vi.fn();
+    const mapped = new MappedCRDTOrderedMap<number, CRDTType>(root, makeMapper(doc1.factory), {
+      onInit
+    });
+
+    root.set(replacement);
+    expect(onInit).not.toHaveBeenCalled();
+    expect(mapped.toJSON()).toEqual({ replacement: 8 });
+
+    mapped.release();
+    mapped.release();
+    root.set(initial);
+    expect(onInit).not.toHaveBeenCalled();
+  });
+
+  it('should retain ordered value and index wrappers in the CRDT wire representation', () => {
+    const [doc1] = backend.syncedDocs();
+    const list = watch(doc1.getMap<MappedCRDTOrderedMapMapType<CRDTType>>('list'));
+    const mapped = new MappedCRDTOrderedMap<number, CRDTType>(list, makeMapper(doc1.factory));
+
+    mapped.add('k', 4);
+
+    const entry = list.get().get('k')!;
+    expect(entry.get('index')).toBe(1);
+    expect(entry.get('value')?.get('value')).toBe(2);
   });
 });
