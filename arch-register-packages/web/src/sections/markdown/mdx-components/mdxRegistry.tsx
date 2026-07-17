@@ -38,6 +38,10 @@ import { COLUMNS_TYPE } from './blocks/columns/ColumnsEditable';
 import { columnsSpec } from './blocks/columns/ColumnsRegistration';
 import { COLUMN_TYPE } from './blocks/columns/ColumnEditable';
 import { columnSpec } from './blocks/columns/ColumnRegistration';
+import { TABS_TYPE } from './blocks/tabs/TabsEditable';
+import { tabsSpec } from './blocks/tabs/TabsRegistration';
+import { TAB_TYPE } from './blocks/tabs/TabEditable';
+import { tabSpec } from './blocks/tabs/TabRegistration';
 import type { MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
 
@@ -61,7 +65,9 @@ export const MDX_COMPONENTS = {
   [CALLOUT_TYPE]: calloutSpec,
   [FOLDABLE_SECTION_TYPE]: foldableSectionSpec,
   [COLUMNS_TYPE]: columnsSpec,
-  [COLUMN_TYPE]: columnSpec
+  [COLUMN_TYPE]: columnSpec,
+  [TABS_TYPE]: tabsSpec,
+  [TAB_TYPE]: tabSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;
