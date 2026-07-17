@@ -1,24 +1,42 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
+import { TbColumns3, TbFilter, TbPlus, TbX } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { Popover } from '@diagram-craft/app-components/Popover';
 import { Select } from '@diagram-craft/app-components/Select';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { DocumentField, DocumentType } from '@arch-register/api-types/documentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { EmptyState } from '../../../../../components/EmptyState';
+import { FilterDropdown } from '../../../../../components/FilterDropdown';
+import filterStyles from '../../../../../components/FilterBuilder.module.css';
 import { SearchInput } from '../../../../../components/SearchInput';
 import { useDocumentTypes } from '../../../../../hooks/useDocuments';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
+import { DialogContent } from '../../../editor/BlockDialog';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
 import {
   decodeDocumentBrowserEmbedConfig,
   encodeDocumentBrowserEmbedConfig
 } from './DocumentBrowserEmbedCodec';
-import type { DocumentBrowserEmbedConfig, DocumentBrowserEmbedSlateElement } from './types';
+import {
+  DOCUMENT_BROWSER_BASE_COLUMN_IDS,
+  type DocumentBrowserBaseColumnId,
+  type DocumentBrowserEmbedConfig,
+  type DocumentBrowserEmbedSlateElement
+} from './types';
 import styles from './DocumentBrowserEmbedDialog.module.css';
 
 const ALL_TYPES = '__all__';
 const UNTYPED = 'none';
+const BASE_COLUMN_OPTIONS: Array<{ id: DocumentBrowserBaseColumnId; label: string }> = [
+  { id: 'document_type', label: 'Document type' },
+  { id: 'location', label: 'Location' },
+  { id: 'updated_at', label: 'Updated' }
+];
 
 const TEXT_OPERATORS = [
   ['contains', 'Contains'],
@@ -101,115 +119,223 @@ const MetadataFilterBuilder = ({
 
   const updateCondition = (index: number, update: Partial<FilterCondition>) => {
     const next = [...conditions];
-    next[index] = { ...next[index]!, ...update };
+    const updated = { ...next[index]!, ...update };
+
+    if (update.fieldId) {
+      const field = fields.find(item => item.id === update.fieldId);
+      if (field) {
+        updated.op = defaultOperator(field);
+        updated.value = '';
+      }
+    }
+
+    next[index] = updated;
     onChange(next);
   };
 
-  return (
-    <div className={styles.filterBuilder}>
-      {conditions.length === 0 && <div className={styles.muted}>No metadata filters applied.</div>}
-      {conditions.map((condition, index) => {
-        const field = fields.find(item => item.id === condition.fieldId) ?? fields[0];
-        if (!field) return null;
-        const kind = fieldKind(field);
-        const operators = operatorsFor(field);
-        const showValue = condition.op !== 'empty' && condition.op !== 'not_empty';
+  const clearAll = () => onChange([]);
 
-        return (
-          <div className={styles.filterRow} key={`${condition.fieldId}-${index}`}>
-            <select
-              value={condition.fieldId}
-              onChange={event => {
-                const nextField = fields.find(item => item.id === event.target.value) ?? field;
-                updateCondition(index, {
-                  fieldId: nextField.id,
-                  op: defaultOperator(nextField),
-                  value: ''
-                });
-              }}
-            >
-              {fields.map(item => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={condition.op}
-              onChange={event =>
-                updateCondition(index, {
-                  op: event.target.value as FilterCondition['op'],
-                  value:
-                    event.target.value === 'empty' || event.target.value === 'not_empty'
-                      ? ''
-                      : condition.value
-                })
-              }
-            >
-              {operators.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            {showValue &&
-              (kind === 'select' ? (
-                <select
-                  value={String(condition.value ?? '')}
-                  onChange={event => updateCondition(index, { value: event.target.value })}
-                >
-                  <option value="">Select…</option>
-                  {field.type === 'boolean'
-                    ? [
-                        ['true', 'True'],
-                        ['false', 'False']
-                      ].map(([value, label]) => (
-                        <option key={value} value={value}>
+  return (
+    <div className={filterStyles.container}>
+      <div className={filterStyles.header}>
+        <span className={filterStyles.headerTitle}>Filters</span>
+        {conditions.length > 0 && (
+          <button type="button" className={filterStyles.clearAll} onClick={clearAll}>
+            Clear all
+          </button>
+        )}
+      </div>
+      <div className={filterStyles.rows}>
+        {conditions.length === 0 && <EmptyState compact title="No filters applied." />}
+        {conditions.map((condition, index) => {
+          const field = fields.find(item => item.id === condition.fieldId) ?? fields[0];
+          if (!field) return null;
+          const kind = fieldKind(field);
+          const operators = operatorsFor(field);
+          const showValue = condition.op !== 'empty' && condition.op !== 'not_empty';
+          const selectOptions: Array<[string, string]> =
+            field.type === 'boolean'
+              ? [
+                  ['true', 'True'],
+                  ['false', 'False']
+                ]
+              : (field.enumOptions ?? []).map(option => [option.value, option.label]);
+
+          return (
+            <div className={filterStyles.row} key={`${condition.fieldId}-${index}`}>
+              <div className={filterStyles.rowHead}>
+                <div className={filterStyles.tokField}>
+                  <Select.Root
+                    value={condition.fieldId}
+                    onChange={value => updateCondition(index, { fieldId: value })}
+                  >
+                    {fields.map(item => (
+                      <Select.Item key={item.id} value={item.id}>
+                        {item.name}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </div>
+                <div className={filterStyles.tokOp}>
+                  <Select.Root
+                    value={condition.op}
+                    onChange={value =>
+                      updateCondition(index, {
+                        op: value as FilterCondition['op'],
+                        value: value === 'empty' || value === 'not_empty' ? '' : condition.value
+                      })
+                    }
+                  >
+                    {operators.map(([value, label]) => (
+                      <Select.Item key={value} value={value}>
+                        {label}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </div>
+              </div>
+              {showValue && (
+                <div className={filterStyles.rowBody}>
+                  {kind === 'select' ? (
+                    <Select.Root
+                      value={String(condition.value ?? '')}
+                      onChange={value => updateCondition(index, { value: value ?? '' })}
+                    >
+                      <Select.Item value="">Select…</Select.Item>
+                      {selectOptions.map(([value, label]) => (
+                        <Select.Item key={value} value={value}>
                           {label}
-                        </option>
-                      ))
-                    : (field.enumOptions ?? []).map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
+                        </Select.Item>
                       ))}
-                </select>
-              ) : (
-                <input
-                  type={kind === 'date' ? 'date' : kind === 'number' ? 'number' : 'text'}
-                  value={String(condition.value ?? '')}
-                  onChange={event =>
-                    updateCondition(index, {
-                      value:
-                        kind === 'number' && event.target.value
-                          ? Number(event.target.value)
-                          : event.target.value
-                    })
-                  }
-                />
-              ))}
-            <button
-              type="button"
-              className={styles.removeFilter}
-              onClick={() => onChange(conditions.filter((_, itemIndex) => itemIndex !== index))}
-              aria-label="Remove metadata filter"
-            >
-              ×
-            </button>
-          </div>
-        );
-      })}
-      <button
-        type="button"
-        className={styles.addFilter}
-        onClick={addCondition}
-        disabled={fields.length === 0}
-      >
-        + Add metadata filter
-      </button>
+                    </Select.Root>
+                  ) : kind === 'date' ? (
+                    <DateInput
+                      value={String(condition.value ?? '')}
+                      onChange={value => updateCondition(index, { value: value ?? '' })}
+                    />
+                  ) : (
+                    <TextInput
+                      type={kind === 'number' ? 'number' : 'text'}
+                      value={String(condition.value ?? '')}
+                      onChange={value =>
+                        updateCondition(index, {
+                          value: kind === 'number' && value ? Number(value) : (value ?? '')
+                        })
+                      }
+                    />
+                  )}
+                </div>
+              )}
+              <button
+                type="button"
+                className={filterStyles.removeBtn}
+                onClick={() => onChange(conditions.filter((_, itemIndex) => itemIndex !== index))}
+                aria-label="Remove filter"
+                title="Remove filter"
+              >
+                <TbX size={11} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <div className={filterStyles.footer}>
+        <button
+          type="button"
+          className={filterStyles.addFilter}
+          onClick={addCondition}
+          disabled={fields.length === 0}
+        >
+          <TbPlus size={11} />
+          Add filter
+        </button>
+      </div>
     </div>
   );
 };
+
+const DocumentFieldsPopover = ({
+  visibleBaseColumnIds,
+  onBaseColumnChange,
+  fields,
+  visibleFieldIds,
+  onChange
+}: {
+  visibleBaseColumnIds: DocumentBrowserBaseColumnId[];
+  onBaseColumnChange: (columnIds: DocumentBrowserBaseColumnId[]) => void;
+  fields: DocumentField[];
+  visibleFieldIds: string[];
+  onChange: (fieldIds: string[]) => void;
+}) => (
+  <Popover.Root>
+    <Popover.Trigger
+      element={
+        <Button
+          size="sm"
+          variant="secondary"
+          icon={<TbColumns3 size={12} />}
+          aria-label="Visible metadata columns"
+          title="Visible metadata columns"
+        />
+      }
+    />
+    <Popover.Content
+      sideOffset={4}
+      align="end"
+      arrow={false}
+      closeButton={false}
+      className={styles.columnsPopover}
+    >
+      <div className={styles.columnsPopoverTitle}>Columns</div>
+      <div className={styles.columnsGroup}>
+        <div className={styles.columnsGroupLabel}>Document details</div>
+        <div className={styles.columns}>
+          {BASE_COLUMN_OPTIONS.map(column => (
+            <label key={column.id} className={styles.columnOption}>
+              <input
+                type="checkbox"
+                checked={visibleBaseColumnIds.includes(column.id)}
+                onChange={() =>
+                  onBaseColumnChange(
+                    visibleBaseColumnIds.includes(column.id)
+                      ? visibleBaseColumnIds.filter(id => id !== column.id)
+                      : [...visibleBaseColumnIds, column.id]
+                  )
+                }
+              />
+              {column.label}
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className={styles.columnsGroup}>
+        <div className={styles.columnsGroupLabel}>Metadata</div>
+        {fields.length === 0 ? (
+          <div className={styles.muted}>Select a document type to choose metadata columns.</div>
+        ) : (
+          <div className={styles.columns}>
+            {fields.map(field => (
+              <label key={field.id} className={styles.columnOption}>
+                <input
+                  type="checkbox"
+                  checked={visibleFieldIds.includes(field.id)}
+                  onChange={() =>
+                    onChange(
+                      visibleFieldIds.includes(field.id)
+                        ? visibleFieldIds.filter(id => id !== field.id)
+                        : [...visibleFieldIds, field.id]
+                    )
+                  }
+                />
+                {field.name}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+    </Popover.Content>
+  </Popover.Root>
+);
 
 export const DocumentBrowserEmbedDialog = ({
   element,
@@ -234,6 +360,9 @@ export const DocumentBrowserEmbedDialog = ({
   const [conditions, setConditions] = useState<FilterCondition[]>([]);
   const [sort, setSort] = useState('updated_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [visibleBaseColumnIds, setVisibleBaseColumnIds] = useState<
+    DocumentBrowserBaseColumnId[]
+  >([...DOCUMENT_BROWSER_BASE_COLUMN_IDS]);
   const [visibleFieldIds, setVisibleFieldIds] = useState<string[]>([]);
 
   const selectedFields = useMemo(
@@ -241,8 +370,16 @@ export const DocumentBrowserEmbedDialog = ({
     [documentTypeId, documentTypes]
   );
   const previewConfig: DocumentBrowserEmbedConfig = useMemo(
-    () => ({ q, documentTypeId, conditions, sort, sortDir, visibleFieldIds }),
-    [conditions, documentTypeId, q, sort, sortDir, visibleFieldIds]
+    () => ({
+      q,
+      documentTypeId,
+      conditions,
+      sort,
+      sortDir,
+      visibleBaseColumnIds,
+      visibleFieldIds
+    }),
+    [conditions, documentTypeId, q, sort, sortDir, visibleBaseColumnIds, visibleFieldIds]
   );
   const sortOptions = useMemo(
     () => [
@@ -260,6 +397,9 @@ export const DocumentBrowserEmbedDialog = ({
     setConditions(initialConfig?.conditions ?? []);
     setSort(initialConfig?.sort ?? 'updated_at');
     setSortDir(initialConfig?.sortDir ?? 'desc');
+    setVisibleBaseColumnIds(
+      initialConfig?.visibleBaseColumnIds ?? [...DOCUMENT_BROWSER_BASE_COLUMN_IDS]
+    );
     setVisibleFieldIds(initialConfig?.visibleFieldIds ?? []);
   }, [initialConfig, open]);
 
@@ -288,6 +428,7 @@ export const DocumentBrowserEmbedDialog = ({
       conditions: sanitizeConditions(conditions, selectedFields),
       sort,
       sortDir,
+      visibleBaseColumnIds,
       visibleFieldIds: visibleFieldIds.filter(id => selectedFields.some(field => field.id === id))
     };
     editor.tf.setNodes({ config: encodeDocumentBrowserEmbedConfig(snapshot) }, { at: path });
@@ -316,80 +457,65 @@ export const DocumentBrowserEmbedDialog = ({
       ]}
     >
       <DialogContent>
-        <div className={styles.controls}>
-          <div className={styles.controlRow}>
-            <SearchInput
-              size="sm"
-              value={q}
-              onChange={setQ}
-              onClear={() => setQ('')}
-              placeholder="Search document titles…"
+        <div className={styles.toolbar}>
+          <SearchInput
+            size="sm"
+            className={styles.searchInline}
+            value={q}
+            onChange={setQ}
+            onClear={() => setQ('')}
+            placeholder="Search document titles…"
+          />
+          <Select.Root
+            value={selectValue}
+            onChange={value => handleTypeChange(value)}
+            style={{ width: 190, minWidth: 190, flex: '0 0 190px' }}
+          >
+            <Select.Item value={ALL_TYPES}>All document types</Select.Item>
+            <Select.Item value={UNTYPED}>Untyped Markdown</Select.Item>
+            {documentTypes
+              .filter(type => !type.archived)
+              .map(type => (
+                <Select.Item key={type.id} value={type.id}>
+                  {type.name}
+                </Select.Item>
+              ))}
+          </Select.Root>
+          <Popover.Root>
+            <Popover.Trigger
+              element={
+                <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
+                  <TbFilter size={12} style={{ marginRight: 4 }} />
+                  Filter
+                  {conditions.length > 0 && (
+                    <span className={styles.filterCount}>{conditions.length}</span>
+                  )}
+                </Button>
+              }
             />
-            <Select.Root
-              value={selectValue}
-              onChange={value => handleTypeChange(value)}
-              style={{ minWidth: 190 }}
+            <Popover.Content
+              sideOffset={4}
+              align="start"
+              arrow={false}
+              closeButton={false}
+              className={styles.filterPopover}
             >
-              <Select.Item value={ALL_TYPES}>All document types</Select.Item>
-              <Select.Item value={UNTYPED}>Untyped Markdown</Select.Item>
-              {documentTypes
-                .filter(type => !type.archived)
-                .map(type => (
-                  <Select.Item key={type.id} value={type.id}>
-                    {type.name}
-                  </Select.Item>
-                ))}
-            </Select.Root>
-          </div>
-          <DialogSection label="Metadata filters">
-            <MetadataFilterBuilder
-              fields={selectedFields}
-              conditions={conditions}
-              onChange={setConditions}
-            />
-          </DialogSection>
-          <DialogSection label="Sort">
-            <div className={`${styles.controlRow} ${styles.sortControls}`}>
-              <Select.Root value={sort} onChange={value => setSort(value ?? 'updated_at')}>
-                {sortOptions.map(option => (
-                  <Select.Item key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-              <Select.Root
-                value={sortDir}
-                onChange={value => setSortDir(value === 'asc' ? 'asc' : 'desc')}
-              >
-                <Select.Item value="desc">Descending</Select.Item>
-                <Select.Item value="asc">Ascending</Select.Item>
-              </Select.Root>
-            </div>
-          </DialogSection>
-          <DialogSection label="Visible metadata columns">
-            {selectedFields.length === 0 ? (
-              <div className={styles.muted}>Select a document type to choose metadata columns.</div>
-            ) : (
-              <div className={styles.columns}>
-                {selectedFields.map(field => (
-                  <label key={field.id} className={styles.columnOption}>
-                    <input
-                      type="checkbox"
-                      checked={visibleFieldIds.includes(field.id)}
-                      onChange={() =>
-                        setVisibleFieldIds(current =>
-                          current.includes(field.id)
-                            ? current.filter(id => id !== field.id)
-                            : [...current, field.id]
-                        )
-                      }
-                    />
-                    {field.name}
-                  </label>
-                ))}
-              </div>
-            )}
-          </DialogSection>
+              <MetadataFilterBuilder
+                fields={selectedFields}
+                conditions={conditions}
+                onChange={setConditions}
+              />
+            </Popover.Content>
+          </Popover.Root>
+          <div className={styles.toolbarSpacer} />
+          <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
+          <DocumentFieldsPopover
+            visibleBaseColumnIds={visibleBaseColumnIds}
+            onBaseColumnChange={setVisibleBaseColumnIds}
+            fields={selectedFields}
+            visibleFieldIds={visibleFieldIds}
+            onChange={setVisibleFieldIds}
+          />
         </div>
         <div className={styles.preview}>
           <DocumentBrowserEmbed config={encodeDocumentBrowserEmbedConfig(previewConfig)} />

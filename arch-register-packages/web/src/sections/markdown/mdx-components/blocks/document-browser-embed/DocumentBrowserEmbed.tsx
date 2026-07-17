@@ -18,7 +18,7 @@ import {
   workspaceMarkdownRoute
 } from '../../../../../routes/publicObjectRoutes';
 import { decodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
-import type { DocumentBrowserScope } from './types';
+import { DOCUMENT_BROWSER_BASE_COLUMN_IDS, type DocumentBrowserScope } from './types';
 import styles from './DocumentBrowserEmbed.module.css';
 
 type Props = {
@@ -119,6 +119,9 @@ export const DocumentBrowserEmbed = ({ config: rawConfig }: Props) => {
         .filter((field): field is DocumentField => !!field),
     [config?.visibleFieldIds, fieldMap]
   );
+  const visibleBaseColumnIds = new Set(
+    config?.visibleBaseColumnIds ?? DOCUMENT_BROWSER_BASE_COLUMN_IDS
+  );
 
   const onDocumentClick = useCallback(
     (document: DocumentListItem) => {
@@ -171,13 +174,15 @@ export const DocumentBrowserEmbed = ({ config: rawConfig }: Props) => {
 
   return (
     <div className={styles.tableWrapper}>
-      <Table.Root bordered={false} className={styles.tableSurface}>
+      <Table.Root className={styles.tableSurface}>
         <Table.Head>
           <Table.Row>
             <Table.HeaderCell>Title</Table.HeaderCell>
-            <Table.HeaderCell>Document type</Table.HeaderCell>
-            <Table.HeaderCell>Location</Table.HeaderCell>
-            <Table.HeaderCell>Updated</Table.HeaderCell>
+            {visibleBaseColumnIds.has('document_type') && (
+              <Table.HeaderCell>Document type</Table.HeaderCell>
+            )}
+            {visibleBaseColumnIds.has('location') && <Table.HeaderCell>Location</Table.HeaderCell>}
+            {visibleBaseColumnIds.has('updated_at') && <Table.HeaderCell>Updated</Table.HeaderCell>}
             {visibleFields.map(field => (
               <Table.HeaderCell key={field.id}>{field.name}</Table.HeaderCell>
             ))}
@@ -198,23 +203,27 @@ export const DocumentBrowserEmbed = ({ config: rawConfig }: Props) => {
                 title={document.file.name}
                 subtitle={document.file.path}
               />
-              <Table.Cell>
-                {document.document_type_name ? (
-                  <span className={styles.typeCell}>
-                    <TypeBadge
-                      color={document.document_type_color ?? 'var(--base-fg-dim)'}
-                      name={document.document_type_name}
-                      icon={document.document_type_icon}
-                      size={18}
-                    />
-                    {document.document_type_name}
-                  </span>
-                ) : (
-                  'Untyped Markdown'
-                )}
-              </Table.Cell>
-              <Table.Cell>{locationLabel}</Table.Cell>
-              <Table.Cell>{formatDate(document.file.updated_at)}</Table.Cell>
+              {visibleBaseColumnIds.has('document_type') && (
+                <Table.Cell>
+                  {document.document_type_name ? (
+                    <span className={styles.typeCell}>
+                      <TypeBadge
+                        color={document.document_type_color ?? 'var(--base-fg-dim)'}
+                        name={document.document_type_name}
+                        icon={document.document_type_icon}
+                        size={18}
+                      />
+                      {document.document_type_name}
+                    </span>
+                  ) : (
+                    'Untyped Markdown'
+                  )}
+                </Table.Cell>
+              )}
+              {visibleBaseColumnIds.has('location') && <Table.Cell>{locationLabel}</Table.Cell>}
+              {visibleBaseColumnIds.has('updated_at') && (
+                <Table.Cell>{formatDate(document.file.updated_at)}</Table.Cell>
+              )}
               {visibleFields.map(field => (
                 <Table.Cell key={field.id}>{displayValue(document.metadata[field.id])}</Table.Cell>
               ))}

@@ -1,11 +1,16 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import type { DocumentBrowserEmbedConfig } from './types';
+import {
+  DOCUMENT_BROWSER_BASE_COLUMN_IDS,
+  type DocumentBrowserBaseColumnId,
+  type DocumentBrowserEmbedConfig
+} from './types';
 
 const DEFAULT_CONFIG: DocumentBrowserEmbedConfig = {
   q: '',
   conditions: [],
   sort: 'updated_at',
   sortDir: 'desc',
+  visibleBaseColumnIds: [...DOCUMENT_BROWSER_BASE_COLUMN_IDS],
   visibleFieldIds: []
 };
 
@@ -34,6 +39,7 @@ export const encodeDocumentBrowserEmbedConfig = (config: DocumentBrowserEmbedCon
       conditions: config.conditions,
       sort: config.sort,
       sortDir: config.sortDir,
+      visibleBaseColumnIds: config.visibleBaseColumnIds,
       visibleFieldIds: config.visibleFieldIds
     })
   );
@@ -53,6 +59,13 @@ export const decodeDocumentBrowserEmbedConfig = (
     const visibleFieldIds = Array.isArray(parsed.visibleFieldIds)
       ? parsed.visibleFieldIds.filter((value): value is string => typeof value === 'string')
       : [];
+    const visibleBaseColumnIds = Array.isArray(parsed.visibleBaseColumnIds)
+      ? parsed.visibleBaseColumnIds.filter(
+          (value): value is DocumentBrowserBaseColumnId =>
+            typeof value === 'string' &&
+            (DOCUMENT_BROWSER_BASE_COLUMN_IDS as readonly string[]).includes(value)
+        )
+      : [...DOCUMENT_BROWSER_BASE_COLUMN_IDS];
 
     return {
       ...DEFAULT_CONFIG,
@@ -64,6 +77,7 @@ export const decodeDocumentBrowserEmbedConfig = (
       conditions,
       sort: typeof parsed.sort === 'string' && parsed.sort !== '' ? parsed.sort : 'updated_at',
       sortDir: parsed.sortDir === 'asc' ? 'asc' : 'desc',
+      visibleBaseColumnIds,
       visibleFieldIds
     };
   } catch {
