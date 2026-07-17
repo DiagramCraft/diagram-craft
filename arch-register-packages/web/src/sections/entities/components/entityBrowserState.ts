@@ -92,6 +92,20 @@ const isAssessmentFieldId = (value: unknown): value is string =>
   typeof value === 'string' && value.startsWith(ASSESSMENT_FIELD_PREFIX);
 
 /**
+ * Map's `metricConfig` isn't a scalar `xFieldId`-style key referencing an `_assessment*` id -
+ * it's a nested `{ source: { kind, fieldId? } }` object, and "assessment-ness" is carried by
+ * `source.kind` rather than a field-id prefix. An assessment-sourced metric can't function
+ * without the join, so the whole `metricConfig` is cleared rather than just its field id.
+ */
+const isAssessmentSourcedMetricConfig = (value: unknown): boolean => {
+  if (value == null || typeof value !== 'object') return false;
+  const source = (value as { source?: unknown }).source;
+  if (source == null || typeof source !== 'object') return false;
+  const kind = (source as { kind?: unknown }).kind;
+  return kind === 'assessmentRating' || kind === 'assessmentEnum';
+};
+
+/**
  * Strips references to the joined assessment's fields from filter conditions and view
  * configs. Called whenever the join is cleared or switched to a different assessment, so
  * stale `_assessment*` field ids never linger in the URL or a saved view.
@@ -119,6 +133,7 @@ export const pruneAssessmentReferences = (
     if (isAssessmentFieldId(next.yFieldId)) next.yFieldId = '';
     if (isAssessmentFieldId(next.sizeFieldId)) next.sizeFieldId = null;
     if (isAssessmentFieldId(next.colorFieldId)) next.colorFieldId = null;
+    if (isAssessmentSourcedMetricConfig(next.metricConfig)) next.metricConfig = null;
     prunedViewConfigs[view as BrowserView] = next;
   }
 
@@ -130,9 +145,9 @@ const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.viewMode === 'radar') return view.config.radar ?? null;
   if (view.viewMode === 'timeline') return view.config.timeline ?? null;
   if (view.viewMode === 'matrix') return view.config.matrix ?? null;
-  if (view.viewMode === 'hierarchy') return view.config.hierarchy ?? null;
   if (view.viewMode === 'explore') return view.config.explore ?? null;
   if (view.viewMode === 'bubble') return view.config.bubble ?? null;
+  if (view.viewMode === 'map') return view.config.map ?? null;
   if (view.viewMode === 'table') return view.config.table ?? null;
   if (view.viewMode === 'cards') return view.config.cards ?? null;
   if (view.viewMode === 'tree') return view.config.tree ?? null;
@@ -167,9 +182,9 @@ export const toSavedViewConfig = (
   if (view === 'radar') return { radar: config as never };
   if (view === 'timeline') return { timeline: config as never };
   if (view === 'matrix') return { matrix: config as never };
-  if (view === 'hierarchy') return { hierarchy: config as never };
   if (view === 'explore') return { explore: config as never };
   if (view === 'bubble') return { bubble: config as never };
+  if (view === 'map') return { map: config as never };
   if (view === 'table') return { table: config as never };
   if (view === 'cards') return { cards: config as never };
   if (view === 'tree') return { tree: config as never };

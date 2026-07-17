@@ -17,6 +17,7 @@ import { authProtectedContract, authPublicContract } from '@arch-register/api-ty
 import { aiContract } from '@arch-register/api-types/aiContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
+import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
 import { jobsContract } from '@arch-register/api-types/jobsContract';
 import { externalContentContract } from '@arch-register/api-types/externalContentContract';
 import { webhookContract } from '@arch-register/api-types/webhookContract';
@@ -40,6 +41,7 @@ export const allContracts = {
   ...aiContract,
   ...diagramCraftContract,
   ...workspaceAnalyticsContract,
+  ...workspaceMetricContract,
   ...jobsContract,
   ...externalContentContract,
   ...webhookContract,

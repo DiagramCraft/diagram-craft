@@ -15,8 +15,8 @@ import {
   TbChartRadar,
   TbCalendarWeek,
   TbTable,
-  TbLayoutBoard,
   TbColumns3,
+  TbMap,
   TbPinned,
   TbBookmark,
   TbLayoutSidebarLeftCollapse,
@@ -225,10 +225,10 @@ export const EntitiesSidebar = ({
         return <TbChartRadar size={12} />;
       case 'timeline':
         return <TbCalendarWeek size={12} />;
-      case 'hierarchy':
-        return <TbLayoutBoard size={12} />;
       case 'explore':
         return <TbColumns3 size={12} />;
+      case 'map':
+        return <TbMap size={12} />;
       default:
         return <TbTable size={12} />;
     }

@@ -3,7 +3,7 @@ import {
   EntityFilters,
   ExploreViewConfig,
   FilterCondition,
-  HierarchyViewConfig,
+  MapViewConfig,
   MatrixViewConfig,
   RadarViewConfig,
   TimelineViewConfig
@@ -414,8 +414,8 @@ export type SavedViewDbResult = {
     radar?: RadarViewConfig;
     timeline?: TimelineViewConfig;
     matrix?: MatrixViewConfig;
-    hierarchy?: HierarchyViewConfig;
     explore?: ExploreViewConfig;
+    map?: MapViewConfig;
   } | null;
   created_at: Date;
   updated_at: Date;

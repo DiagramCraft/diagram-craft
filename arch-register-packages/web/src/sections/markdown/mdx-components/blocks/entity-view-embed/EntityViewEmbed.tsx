@@ -11,7 +11,7 @@ import { TreeView } from '../../../../entities/components/TreeView';
 import { RadarView } from '../../../../entities/components/RadarView';
 import { TimelineView } from '../../../../entities/components/TimelineView';
 import { MatrixView } from '../../../../entities/components/MatrixView';
-import { HierarchyView } from '../../../../entities/components/HierarchyView';
+import { MapView } from '../../../../entities/components/MapView';
 import { ExploreView } from '../../../../entities/components/ExploreView';
 import type { BrowserEntityRecord } from '../../../../entities/components/entityBrowserState';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
@@ -32,19 +32,19 @@ const getViewConfig = (savedView: {
     radar?: unknown;
     timeline?: unknown;
     matrix?: unknown;
-    hierarchy?: unknown;
     explore?: unknown;
+    map?: unknown;
   } | null;
 }): unknown => {
   if (!savedView.config) return null;
   if (savedView.viewMode === 'radar') return savedView.config.radar ?? null;
   if (savedView.viewMode === 'timeline') return savedView.config.timeline ?? null;
   if (savedView.viewMode === 'matrix') return savedView.config.matrix ?? null;
-  if (savedView.viewMode === 'hierarchy') return savedView.config.hierarchy ?? null;
   if (savedView.viewMode === 'explore') return savedView.config.explore ?? null;
   if (savedView.viewMode === 'table') return savedView.config.table ?? null;
   if (savedView.viewMode === 'cards') return savedView.config.cards ?? null;
   if (savedView.viewMode === 'tree') return savedView.config.tree ?? null;
+  if (savedView.viewMode === 'map') return savedView.config.map ?? null;
   return null;
 };
 
@@ -64,7 +64,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
 
   const savedView = viewId ? savedViews.find(v => v.id === viewId) : undefined;
 
-  const isTreeBased = savedView?.viewMode === 'tree' || savedView?.viewMode === 'hierarchy';
+  const isTreeBased = savedView?.viewMode === 'tree' || savedView?.viewMode === 'map';
 
   const filters = savedView?.filters;
   const { data: entities = [], isLoading: entitiesLoading } = useEntities(
@@ -213,9 +213,19 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
           onConfigChange={noop}
         />
       );
-    case 'hierarchy':
+    case 'explore':
       return (
-        <HierarchyView
+        <ExploreView
+          rows={entities}
+          onEntityClick={onEntityClick}
+          config={viewConfig}
+          onConfigChange={noop}
+          displayFields={displayFields}
+        />
+      );
+    case 'map':
+      return (
+        <MapView
           workspaceId={workspaceSlug}
           projectId={resolvedProjectId ?? undefined}
           projectScope={projectScope}
@@ -227,16 +237,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
           config={viewConfig}
           onConfigChange={noop}
           displayFields={displayFields}
-        />
-      );
-    case 'explore':
-      return (
-        <ExploreView
-          rows={entities}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          displayFields={displayFields}
+          lifecycleStates={lifecycleStates}
         />
       );
     default:

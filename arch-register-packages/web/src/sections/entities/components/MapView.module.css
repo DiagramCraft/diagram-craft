@@ -125,6 +125,23 @@
   min-height: 28px;
 }
 
+/* Applied alongside level1Box/level2Box/level3Box - a box is always focusable via click,
+   so this affordance is unconditional rather than a variant. Uses an outline rather than a
+   background change so it never fights the metric-driven inline fill color. */
+.focusable {
+  cursor: pointer;
+}
+
+.focusable:hover {
+  outline: 2px solid var(--accent-fg);
+  outline-offset: -2px;
+}
+
+.focusable:focus-visible {
+  outline: 2px solid var(--accent-fg);
+  outline-offset: -2px;
+}
+
 /* ── Level headers ───────────────────────────────────────────── */
 
 .levelHeader {

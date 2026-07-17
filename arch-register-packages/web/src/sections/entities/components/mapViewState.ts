@@ -1,7 +1,7 @@
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 
-export type HierarchyTreeIndex = {
+export type ContainmentTreeIndex = {
   nodeMap: Map<string, TreeNode>;
   childrenOf: Map<string, string[]>;
 };
@@ -16,10 +16,10 @@ export const getChildSchemas = (
   );
 };
 
-export const buildHierarchyTreeIndex = (
+export const buildContainmentTreeIndex = (
   nodes: TreeNode[],
   edges: TreeEdge[]
-): HierarchyTreeIndex => {
+): ContainmentTreeIndex => {
   const nodeMap = new Map<string, TreeNode>();
   for (const node of nodes) nodeMap.set(node._uid, node);
 
@@ -34,18 +34,18 @@ export const buildHierarchyTreeIndex = (
 
 const nodeName = (node: TreeNode) => node._name || node._slug;
 
-export const sortHierarchyNodes = (nodes: TreeNode[], schemaId: string | null): TreeNode[] =>
+export const sortContainmentNodes = (nodes: TreeNode[], schemaId: string | null): TreeNode[] =>
   nodes
     .filter(node => node._schema.id === schemaId && node._isMatch)
     .sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
 
-export const getHierarchyChildren = (
+export const getContainmentChildren = (
   parentUid: string,
   schemaId: string | null,
-  index: HierarchyTreeIndex
+  index: ContainmentTreeIndex
 ): TreeNode[] => {
   if (!schemaId) return [];
-  return sortHierarchyNodes(
+  return sortContainmentNodes(
     (index.childrenOf.get(parentUid) ?? [])
       .map(id => index.nodeMap.get(id))
       .filter((node): node is TreeNode => !!node),

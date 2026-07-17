@@ -21,6 +21,7 @@ import { discussionContract } from '@arch-register/api-types/discussionContract'
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
+import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
 import { jobsContract } from '@arch-register/api-types/jobsContract';
 import { externalContentContract } from '@arch-register/api-types/externalContentContract';
 import { webhookContract } from '@arch-register/api-types/webhookContract';
@@ -49,6 +50,7 @@ const webContracts = {
   ...authPublicContract,
   ...authProtectedContract,
   ...workspaceAnalyticsContract,
+  ...workspaceMetricContract,
   ...jobsContract,
   ...externalContentContract,
   ...webhookContract,
