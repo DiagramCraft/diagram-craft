@@ -1612,7 +1612,7 @@ messages and status updates.
 The user interface must show progress and failure states, but workers can retry without blocking
 request handlers.
 `,
-  [CONTENT_IDS.wsAdrAuthentication]: `# Store authentication secrets outside application data
+  [CONTENT_IDS.wsAdrAuthentication]: `# Keep credentials outside application data
 
 ## Context
 
@@ -2019,8 +2019,8 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
       [CONTENT_IDS.wsAdrAsyncMessaging, 'wiki/adr/async-messaging', 'Asynchronous messaging'],
       [
         CONTENT_IDS.wsAdrAuthentication,
-        'wiki/adr/authentication-secrets',
-        'Authentication secrets'
+        'wiki/adr/credential-storage-policy',
+        'Credential storage policy'
       ],
       [
         CONTENT_IDS.wsAdrObservability,
