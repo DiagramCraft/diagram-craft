@@ -14,7 +14,8 @@ const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
 const JSX_OPEN_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?>\s*$/;
 const jsxCloseRe = (name: string) => new RegExp(`^\\s*</${name}>\\s*$`);
 const SAFE_PROP_NAME = /^[a-zA-Z0-9_-]+$/;
-const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,\s]*$/;
+// Allows parens so CSS color functions (e.g. `oklch(0.62 0.13 145)`) survive as prop values.
+const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,()%\s]*$/;
 
 const isKnownComponent = (name: string): name is MdxComponentName => name in MDX_COMPONENTS;
 
