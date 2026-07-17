@@ -52,9 +52,6 @@ describe('map view state', () => {
     ] as unknown as TreeEdge[];
     const index = buildContainmentTreeIndex(nodes, edges);
     expect(sortContainmentNodes(nodes, 'app').map(item => item._uid)).toEqual(['a', 'b']);
-    expect(getContainmentChildren('root', 'app', index).map(item => item._uid)).toEqual([
-      'a',
-      'b'
-    ]);
+    expect(getContainmentChildren('root', 'app', index).map(item => item._uid)).toEqual(['a', 'b']);
   });
 });

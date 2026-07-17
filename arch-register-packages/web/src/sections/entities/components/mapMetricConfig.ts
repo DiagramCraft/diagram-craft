@@ -1,5 +1,9 @@
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { MetricAggregation, MetricConfig, MetricSource } from '@arch-register/api-types/metricContract';
+import type {
+  MetricAggregation,
+  MetricConfig,
+  MetricSource
+} from '@arch-register/api-types/metricContract';
 import type { JoinedAssessmentContext } from './entityFieldSources';
 
 // `MapConfig.metricConfig` is stored as `unknown` in the saved-view config schema (the web app

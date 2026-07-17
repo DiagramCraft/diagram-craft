@@ -15,7 +15,9 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
-const metricRouter = implement(workspaceMetricContract).$context<ORPCContext>().use(orpcErrorMiddleware);
+const metricRouter = implement(workspaceMetricContract)
+  .$context<ORPCContext>()
+  .use(orpcErrorMiddleware);
 
 export const workspaceMetricORPCRouter = metricRouter.router({
   metrics: {

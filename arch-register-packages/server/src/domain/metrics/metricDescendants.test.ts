@@ -103,10 +103,7 @@ describe('buildContainmentChildrenIndex / collectDescendantIds', () => {
 
   it('does not hang or duplicate when containment data forms a cycle', () => {
     // Malformed data: c1's parent is c2, and c2's parent is c1.
-    const entities = [
-      makeEntity('c1', 'capability', 'c2'),
-      makeEntity('c2', 'capability', 'c1')
-    ];
+    const entities = [makeEntity('c1', 'capability', 'c2'), makeEntity('c2', 'capability', 'c1')];
     const index = buildContainmentChildrenIndex(schemas, entities);
     const descendants = collectDescendantIds('c1', index);
     expect(new Set(descendants).size).toBe(descendants.length);

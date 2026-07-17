@@ -32,19 +32,20 @@ describe('parseMetricConfig', () => {
     expect(config?.worstDirection).toBe('low');
   });
 
-  it.each([undefined, null, 'not an object', 42, []])(
-    'returns null for non-object input: %s',
-    raw => {
-      expect(parseMetricConfig(raw)).toBeNull();
-    }
-  );
+  it.each([
+    undefined,
+    null,
+    'not an object',
+    42,
+    []
+  ])('returns null for non-object input: %s', raw => {
+    expect(parseMetricConfig(raw)).toBeNull();
+  });
 
   it('returns null when sourceSchemaId, source, or aggregation is missing', () => {
     expect(parseMetricConfig({ source: { kind: 'lifecycle' }, aggregation: 'count' })).toBeNull();
     expect(parseMetricConfig({ sourceSchemaId: 's1', aggregation: 'count' })).toBeNull();
-    expect(
-      parseMetricConfig({ sourceSchemaId: 's1', source: { kind: 'lifecycle' } })
-    ).toBeNull();
+    expect(parseMetricConfig({ sourceSchemaId: 's1', source: { kind: 'lifecycle' } })).toBeNull();
   });
 
   it('returns null for an unknown aggregation or source kind', () => {
@@ -101,7 +102,11 @@ describe('getMetricSourceOptions', () => {
 
   it('offers lifecycle plus the schema numeric and select fields, excluding other field types', () => {
     const options = getMetricSourceOptions(schema);
-    expect(options.map(o => sourceKey(o.source))).toEqual(['lifecycle', 'field:score', 'enum:tier']);
+    expect(options.map(o => sourceKey(o.source))).toEqual([
+      'lifecycle',
+      'field:score',
+      'enum:tier'
+    ]);
   });
 
   it('adds joined assessment rating/enum fields, keyed distinctly from schema fields', () => {
@@ -109,7 +114,13 @@ describe('getMetricSourceOptions', () => {
       assessment: {
         fields: [
           { id: 'rating1', label: 'Risk rating', type: 'rating', requirementLevel: 'optional' },
-          { id: 'enum1', label: 'Risk level', type: 'enum', enumId: 'e2', requirementLevel: 'optional' },
+          {
+            id: 'enum1',
+            label: 'Risk level',
+            type: 'enum',
+            enumId: 'e2',
+            requirementLevel: 'optional'
+          },
           { id: 'notes1', label: 'Notes', type: 'text', requirementLevel: 'optional' }
         ]
       },

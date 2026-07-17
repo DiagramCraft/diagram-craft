@@ -24,9 +24,7 @@ export const metricSourceSchema = z.discriminatedUnion('kind', [
     fieldId: z.string().describe('Select field identifier')
   }),
   z.object({
-    kind: z
-      .literal('assessmentEnum')
-      .describe('An enum field on the currently joined assessment'),
+    kind: z.literal('assessmentEnum').describe('An enum field on the currently joined assessment'),
     fieldId: z.string().describe('Assessment enum field identifier')
   })
 ]);

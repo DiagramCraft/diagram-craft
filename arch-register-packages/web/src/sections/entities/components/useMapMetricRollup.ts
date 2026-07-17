@@ -41,7 +41,18 @@ export const useMapMetricRollup = ({
       projectId: projectId ?? undefined,
       projectScope: projectScope ?? undefined
     }),
-    [sortedIds, metric, schemaId, owner, lifecycle, q, conditions, assessmentId, projectId, projectScope]
+    [
+      sortedIds,
+      metric,
+      schemaId,
+      owner,
+      lifecycle,
+      q,
+      conditions,
+      assessmentId,
+      projectId,
+      projectScope
+    ]
   );
 
   const { data, isLoading } = useQuery({

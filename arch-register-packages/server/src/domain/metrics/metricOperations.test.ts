@@ -58,9 +58,30 @@ const tierEnumOptions = [
 ];
 
 const lifecycleStates: LifecycleStateDbResult[] = [
-  { id: 'proposed', workspace: 'ws-1', label: 'Proposed', color: '#aaa', sort_order: 0, created_at: now },
-  { id: 'production', workspace: 'ws-1', label: 'Production', color: '#0f0', sort_order: 1, created_at: now },
-  { id: 'deprecated', workspace: 'ws-1', label: 'Deprecated', color: '#f00', sort_order: 2, created_at: now }
+  {
+    id: 'proposed',
+    workspace: 'ws-1',
+    label: 'Proposed',
+    color: '#aaa',
+    sort_order: 0,
+    created_at: now
+  },
+  {
+    id: 'production',
+    workspace: 'ws-1',
+    label: 'Production',
+    color: '#0f0',
+    sort_order: 1,
+    created_at: now
+  },
+  {
+    id: 'deprecated',
+    workspace: 'ws-1',
+    label: 'Deprecated',
+    color: '#f00',
+    sort_order: 2,
+    created_at: now
+  }
 ];
 
 const makeService = (
@@ -314,11 +335,7 @@ describe('computeBoxMetrics', () => {
   });
 
   it('assessment-rating source reads from the responses map and ignores unpopulated entities', () => {
-    const entities = [
-      makeDomain('d1'),
-      makeService('s1', 'd1'),
-      makeService('s2', 'd1')
-    ];
+    const entities = [makeDomain('d1'), makeService('s1', 'd1'), makeService('s2', 'd1')];
     const responsesByEntity = new Map<string, Record<string, string | number>>([
       ['s1', { rating1: 4 }]
     ]);

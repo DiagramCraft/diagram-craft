@@ -23,7 +23,10 @@ import {
 } from './entityDisplayFields';
 import { normalizeViewConfig } from './entityViewConfig';
 import { HoverCard } from '../../../components/HoverCard';
-import { EntityHoverCardBody, type EntityHoverCardRow } from '../../../components/EntityHoverCardBody';
+import {
+  EntityHoverCardBody,
+  type EntityHoverCardRow
+} from '../../../components/EntityHoverCardBody';
 import {
   buildContainmentTreeIndex,
   getChildSchemas,
@@ -38,7 +41,12 @@ import {
   parseMetricConfig,
   sourceKey
 } from './mapMetricConfig';
-import { categoricalColor, NEUTRAL_MISSING_COLOR, numericColor, textColorForFill } from './mapColorScales';
+import {
+  categoricalColor,
+  NEUTRAL_MISSING_COLOR,
+  numericColor,
+  textColorForFill
+} from './mapColorScales';
 import { useMapMetricRollup } from './useMapMetricRollup';
 import { MapLegend } from './MapLegend';
 import { MapBreadcrumb, type MapFocusEntry } from './MapBreadcrumb';
@@ -118,7 +126,8 @@ const resolveBoxColor = (
   if (metric.source.kind === 'lifecycle' && result.lifecycleId != null) {
     return lifecycleStates.find(s => s.id === result.lifecycleId)?.color ?? NEUTRAL_MISSING_COLOR;
   }
-  if (result.value == null || legend.min == null || legend.max == null) return NEUTRAL_MISSING_COLOR;
+  if (result.value == null || legend.min == null || legend.max == null)
+    return NEUTRAL_MISSING_COLOR;
   return numericColor(result.value, legend.min, legend.max);
 };
 
@@ -144,7 +153,8 @@ const buildMetricRows = (
       });
     }
   } else if (metric.source.kind === 'lifecycle' && result.lifecycleId != null) {
-    const label = lifecycleStates.find(s => s.id === result.lifecycleId)?.label ?? result.lifecycleId;
+    const label =
+      lifecycleStates.find(s => s.id === result.lifecycleId)?.label ?? result.lifecycleId;
     rows.push({ label: metricLabel, value: label });
   } else {
     rows.push({
@@ -371,7 +381,9 @@ export const MapView = ({
   // ── Metric configuration ─────────────────────────────────────────────────
 
   const metricConfig = useMemo(() => parseMetricConfig(cfg.metricConfig), [cfg.metricConfig]);
-  const metricSourceSchema = metricConfig ? schemaMap.get(metricConfig.sourceSchemaId)?.schema : undefined;
+  const metricSourceSchema = metricConfig
+    ? schemaMap.get(metricConfig.sourceSchemaId)?.schema
+    : undefined;
   const metricSourceOptions = useMemo(
     () => getMetricSourceOptions(metricSourceSchema, joinedAssessment),
     [metricSourceSchema, joinedAssessment]
@@ -545,7 +557,11 @@ export const MapView = ({
                   const schemaId = e.target.value || null;
                   setMetricConfig(
                     schemaId
-                      ? { sourceSchemaId: schemaId, source: { kind: 'lifecycle' }, aggregation: 'count' }
+                      ? {
+                          sourceSchemaId: schemaId,
+                          source: { kind: 'lifecycle' },
+                          aggregation: 'count'
+                        }
                       : null
                   );
                 }}
@@ -569,7 +585,9 @@ export const MapView = ({
                   className={styles.select}
                   value={sourceKey(metricConfig.source)}
                   onChange={e => {
-                    const option = metricSourceOptions.find(o => sourceKey(o.source) === e.target.value);
+                    const option = metricSourceOptions.find(
+                      o => sourceKey(o.source) === e.target.value
+                    );
                     if (!option) return;
                     const nextIsEnum = isEnumSource(option.source);
                     setMetricConfig({
@@ -599,7 +617,10 @@ export const MapView = ({
                     setMetricConfig({
                       ...metricConfig,
                       aggregation,
-                      worstDirection: aggregation === 'worst' ? (metricConfig.worstDirection ?? 'high') : undefined
+                      worstDirection:
+                        aggregation === 'worst'
+                          ? (metricConfig.worstDirection ?? 'high')
+                          : undefined
                     });
                   }}
                 >
