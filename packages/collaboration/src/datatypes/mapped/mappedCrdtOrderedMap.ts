@@ -1,95 +1,94 @@
 import { assert } from '@diagram-craft/utils/assert';
-import { type CRDTMapper } from './types';
-import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
-import type { EventReceiver } from '@diagram-craft/utils/event';
-import type { Releasable } from '@diagram-craft/utils/releasable';
+import type { CRDTCompatibleObject, CRDTMap } from '../../crdt';
+import {
+  createMappedCRDTMapLifecycle,
+  type MappedCRDTMapLifecycle
+} from './mappedCrdtMapLifecycle';
+import type { CRDTMapper } from './types';
 
-// biome-ignore lint/suspicious/noExplicitAny: false positive
-type WrapperType<T extends Record<string, CRDTCompatibleObject> = any> = {
+export type MappedCRDTOrderedMapEntry<T extends Record<string, CRDTCompatibleObject>> = {
   value: CRDTMap<T>;
   index: number;
 };
 
 export type MappedCRDTOrderedMapMapType<T extends Record<string, CRDTCompatibleObject>> = Record<
   string,
-  CRDTMap<WrapperType<T>>
+  CRDTMap<MappedCRDTOrderedMapEntry<T>>
 >;
+
+type WrapperType<C extends Record<string, CRDTCompatibleObject>> = MappedCRDTOrderedMapEntry<C>;
+
+type Props<T> = {
+  onRemoteAdd?: (value: T) => void;
+  onRemoteRemove?: (value: T) => void;
+  onRemoteChange?: (value: T) => void;
+  onInit?: (value: T) => void;
+};
 
 export class MappedCRDTOrderedMap<
   T,
   C extends Record<string, CRDTCompatibleObject> = Record<string, string>
-> implements Releasable
-{
+> {
   #entries: Array<[string, T]> = [];
-  #current: CRDTMap<MappedCRDTOrderedMapMapType<C>>;
-  readonly #remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']>;
-  readonly #remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']>;
-  readonly #remoteInsert: EventReceiver<CRDTMapEvents['remoteInsert']>;
-  readonly #unsubscribeChange: () => void;
+  readonly #lifecycle: MappedCRDTMapLifecycle<CRDTMap<WrapperType<C>>>;
 
   constructor(
     crdt: WatchableValue<CRDTMap<MappedCRDTOrderedMapMapType<C>>>,
     private readonly mapper: CRDTMapper<T, CRDTMap<C>>,
-    props?: {
-      onRemoteAdd?: (e: T) => void;
-      onRemoteRemove?: (e: T) => void;
-      onRemoteChange?: (e: T) => void;
-      onInit?: (e: T) => void;
-    }
+    props?: Props<T>
   ) {
-    this.#current = crdt.get();
+    const populateFromCRDT = (
+      current: CRDTMap<MappedCRDTOrderedMapMapType<C>>,
+      event?: { key: string; value: CRDTMap<WrapperType<C>> }
+    ) => {
+      const existing = Object.fromEntries(this.#entries);
 
-    this.#remoteUpdate = e => {
-      const idx = this.#entries.findIndex(entry => entry[0] === e.key);
-      if (idx >= 0) {
-        props?.onRemoteChange?.(this.#entries[idx]![1]);
-      }
-
-      this.populateFromCRDT(e);
+      this.#entries = Array.from(current.entries())
+        .toSorted(([, first], [, second]) => first.get('index')! - second.get('index')!)
+        .map(([key, value]) => {
+          if (event && event.key === key) {
+            return [key, this.mapper.fromCRDT(value.get('value')!)] as [string, T];
+          }
+          return [key, existing[key] ?? this.mapper.fromCRDT(value.get('value')!)] as [string, T];
+        });
     };
 
-    this.#remoteDelete = e => {
-      const idx = this.#entries.findIndex(entry => entry[0] === e.key);
-      if (idx >= 0) {
-        props?.onRemoteRemove?.(this.#entries[idx]![1]);
-        this.#entries.splice(idx, 1);
+    this.#lifecycle = createMappedCRDTMapLifecycle({
+      crdt,
+      initialize: current => {
+        populateFromCRDT(current);
+        for (const [, value] of this.#entries) {
+          props?.onInit?.(value);
+        }
+      },
+      replace: current => populateFromCRDT(current),
+      onRemoteUpdate: (event, current) => {
+        const index = this.#entries.findIndex(([key]) => key === event.key);
+        if (index >= 0) {
+          props?.onRemoteChange?.(this.#entries[index]![1]);
+        }
+        populateFromCRDT(current, event);
+      },
+      onRemoteDelete: event => {
+        const index = this.#entries.findIndex(([key]) => key === event.key);
+        if (index >= 0) {
+          props?.onRemoteRemove?.(this.#entries[index]![1]);
+          this.#entries.splice(index, 1);
+        }
+      },
+      onRemoteInsert: (event, current) => {
+        populateFromCRDT(current, event);
+        const index = this.#entries.findIndex(([key]) => key === event.key);
+        if (index >= 0) {
+          props?.onRemoteAdd?.(this.#entries[index]![1]);
+        }
       }
-    };
-
-    this.#remoteInsert = e => {
-      this.populateFromCRDT(e);
-      const idx = this.#entries.findIndex(entry => entry[0] === e.key);
-      if (idx >= 0) {
-        props?.onRemoteAdd?.(this.#entries[idx]![1]);
-      }
-    };
-
-    this.#current.on('remoteUpdate', this.#remoteUpdate);
-    this.#current.on('remoteDelete', this.#remoteDelete);
-    this.#current.on('remoteInsert', this.#remoteInsert);
-
-    this.#unsubscribeChange = crdt.on('change', () => {
-      this.#current.off('remoteUpdate', this.#remoteUpdate);
-      this.#current.off('remoteDelete', this.#remoteDelete);
-      this.#current.off('remoteInsert', this.#remoteInsert);
-
-      this.#current = crdt.get();
-      this.#current.on('remoteUpdate', this.#remoteUpdate);
-      this.#current.on('remoteDelete', this.#remoteDelete);
-      this.#current.on('remoteInsert', this.#remoteInsert);
-
-      this.populateFromCRDT();
     });
-
-    this.populateFromCRDT();
-    for (const e of this.#entries) {
-      props?.onInit?.(e[1]);
-    }
   }
 
   get keys() {
-    return this.#entries.map(e => e[0]);
+    return this.#entries.map(([key]) => key);
   }
 
   get entries() {
@@ -97,7 +96,7 @@ export class MappedCRDTOrderedMap<
   }
 
   get values() {
-    return this.#entries.map(e => e[1]);
+    return this.#entries.map(([, value]) => value);
   }
 
   get size() {
@@ -105,20 +104,20 @@ export class MappedCRDTOrderedMap<
   }
 
   clear() {
-    this.#current.clear();
+    this.#lifecycle.current.clear();
     this.#entries = [];
   }
 
   get(key: string) {
-    return this.#entries.find(e => e[0] === key)?.[1];
+    return this.#entries.find(([entryKey]) => entryKey === key)?.[1];
   }
 
   has(key: string) {
-    return this.#current.has(key);
+    return this.#lifecycle.current.has(key);
   }
 
   set(elements: Array<[string, T]>) {
-    this.#current.clear();
+    this.#lifecycle.current.clear();
     this.#entries = [];
     for (const [key, value] of elements) {
       this.add(key, value);
@@ -126,67 +125,65 @@ export class MappedCRDTOrderedMap<
   }
 
   getIndex(key: string) {
-    return this.#entries.findIndex(e => e[0] === key);
+    return this.#entries.findIndex(([entryKey]) => entryKey === key);
   }
 
-  add(key: string, t: T) {
-    assert.false(this.#current.has(key));
+  add(key: string, value: T) {
+    assert.false(this.#lifecycle.current.has(key));
 
-    this.#entries.push([key, t]);
+    this.#entries.push([key, value]);
 
-    const entry = this.#current.factory.makeMap<WrapperType>();
+    const entry = this.#lifecycle.current.factory.makeMap<WrapperType<C>>();
     entry.set('index', this.#entries.length);
-    entry.set('value', this.mapper.toCRDT(t));
-    this.#current.set(key, entry);
+    entry.set('value', this.mapper.toCRDT(value));
+    this.#lifecycle.current.set(key, entry);
   }
 
-  insert(key: string, t: T, position: number) {
-    assert.false(this.#current.has(key));
+  insert(key: string, value: T, position: number) {
+    assert.false(this.#lifecycle.current.has(key));
     assert.true(
       position >= 0 && position <= this.#entries.length,
       `Invalid position ${position} for insert, length ${this.#entries.length}`
     );
 
-    this.#entries.splice(position, 0, [key, t]);
+    this.#entries.splice(position, 0, [key, value]);
 
-    this.#current.transact(() => {
-      // Create and insert the new entry
-      const entry = this.#current.factory.makeMap<WrapperType>();
+    this.#lifecycle.current.transact(() => {
+      const entry = this.#lifecycle.current.factory.makeMap<WrapperType<C>>();
       entry.set('index', position);
-      entry.set('value', this.mapper.toCRDT(t));
-      this.#current.set(key, entry);
+      entry.set('value', this.mapper.toCRDT(value));
+      this.#lifecycle.current.set(key, entry);
 
-      for (const [k, v] of this.#current.entries()) {
-        const pos = this.#entries.findIndex(e => e[0] === k);
-        if (v.get('index') !== pos) v.set('index', pos);
+      for (const [entryKey, entryValue] of this.#lifecycle.current.entries()) {
+        const index = this.#entries.findIndex(([key]) => key === entryKey);
+        if (entryValue.get('index') !== index) entryValue.set('index', index);
       }
     });
   }
 
-  update(key: string, t: T) {
-    // TODO: Was this ever needed
-    //    this.#current.delete(key);
-
-    const entry = this.#current.factory.makeMap<WrapperType>();
+  update(key: string, value: T) {
+    const entry = this.#lifecycle.current.factory.makeMap<WrapperType<C>>();
     entry.set('index', this.#entries.length);
-    entry.set('value', this.mapper.toCRDT(t));
-    this.#current.set(key, entry);
+    entry.set('value', this.mapper.toCRDT(value));
+    this.#lifecycle.current.set(key, entry);
 
-    if (this.#entries.find(e => e[0] === key)) {
-      this.#entries = this.#entries.map(e => (e[0] === key ? [key, t] : e));
+    if (this.#entries.find(([entryKey]) => entryKey === key)) {
+      this.#entries = this.#entries.map(
+        entry => (entry[0] === key ? [key, value] : entry) as [string, T]
+      );
     } else {
-      this.#entries.push([key, t]);
+      this.#entries.push([key, value]);
     }
   }
 
   remove(key: string) {
-    const idx = this.#entries.findIndex(e => e[0] === key);
-    if (idx >= 0) {
-      this.#entries.splice(idx, 1);
-      this.#current.delete(key);
+    const index = this.#entries.findIndex(([entryKey]) => entryKey === key);
+    if (index >= 0) {
+      this.#entries.splice(index, 1);
+      this.#lifecycle.current.delete(key);
       return true;
     }
-    this.#current.delete(key);
+    this.#lifecycle.current.delete(key);
     return false;
   }
 
@@ -194,42 +191,23 @@ export class MappedCRDTOrderedMap<
     return Object.fromEntries(this.#entries);
   }
 
-  // TODO: We could optimize the update events if we have a postTransaction
-  //       listener - in that case we can set the entries at the end of
-  //       the transaction, instead of doing for each element
   setOrder(keys: string[]) {
-    this.#current.transact(() => {
-      for (const [k, v] of this.#current.entries()) {
-        const idx = keys.indexOf(k);
-        if (idx >= 0) {
-          if (v.get('index') !== idx) v.set('index', idx);
-        }
+    this.#lifecycle.current.transact(() => {
+      for (const [key, value] of this.#lifecycle.current.entries()) {
+        const index = keys.indexOf(key);
+        if (index >= 0 && value.get('index') !== index) value.set('index', index);
       }
     });
 
-    this.#entries = Array.from(this.#current.entries())
-      .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
-      .map(([k, v]) => {
-        const existing = this.#entries.find(e => e[0] === k);
-        return [k, existing?.[1] ?? this.mapper.fromCRDT(v.get('value')!)];
-      });
-  }
-
-  private populateFromCRDT(e?: { key: string; value: CRDTMap<WrapperType<C>> }) {
-    const entryMap = Object.fromEntries(this.#entries);
-
-    this.#entries = Array.from(this.#current.entries())
-      .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
-      .map(([k, v]) => {
-        if (e && e.key === k) return [k, this.mapper.fromCRDT(v.get('value')!)];
-        else return [k, entryMap[k] ?? this.mapper.fromCRDT(v.get('value')!)];
+    this.#entries = Array.from(this.#lifecycle.current.entries())
+      .toSorted(([, first], [, second]) => first.get('index')! - second.get('index')!)
+      .map(([key, value]) => {
+        const existing = this.#entries.find(([entryKey]) => entryKey === key);
+        return [key, existing?.[1] ?? this.mapper.fromCRDT(value.get('value')!)] as [string, T];
       });
   }
 
   release() {
-    this.#unsubscribeChange();
-    this.#current.off('remoteUpdate', this.#remoteUpdate);
-    this.#current.off('remoteDelete', this.#remoteDelete);
-    this.#current.off('remoteInsert', this.#remoteInsert);
+    this.#lifecycle.release();
   }
 }
