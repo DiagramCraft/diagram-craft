@@ -163,7 +163,7 @@ export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSe
 // Project detail params
 export type ProjectSearchParams = {
   tab?: 'projects' | 'archive';
-  section?: 'home' | 'entities' | 'assessments';
+  section?: 'home' | 'entities' | 'assessments' | 'milestones';
   assessmentId?: string;
   assessmentTab?: 'details' | 'summary' | 'discussion';
   dialog?: 'add-entity';
@@ -175,7 +175,10 @@ export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSear
   ...validateSharedContentBrowserSearch(raw),
   tab: raw.tab === 'projects' || raw.tab === 'archive' ? raw.tab : undefined,
   section:
-    raw.section === 'home' || raw.section === 'entities' || raw.section === 'assessments'
+    raw.section === 'home' ||
+    raw.section === 'entities' ||
+    raw.section === 'assessments' ||
+    raw.section === 'milestones'
       ? raw.section
       : undefined,
   assessmentId: typeof raw.assessmentId === 'string' ? raw.assessmentId : undefined,

@@ -11,6 +11,7 @@ import {
   dateToTimelinePx,
   formatTimelineDate,
   getTodayTimelinePx,
+  stringDateToTimelinePx,
   type TimelineColumnWidths
 } from '../../../components/timeline/timelineUtils';
 import {
@@ -28,6 +29,13 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { Project } from '@arch-register/api-types/projectContract';
 import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { useEntitySnapshots } from '../../../hooks/useSnapshots';
+import { useMilestonesForProjects } from '../../../hooks/useMilestones';
+import type { Milestone } from '@arch-register/api-types/milestoneContract';
+import {
+  getSnapshotDateLabel,
+  getSnapshotEffectiveDate,
+  toMilestonesById
+} from './snapshotDisplay';
 import { EmptyState } from '../../../components/EmptyState';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import { normalizeViewConfig } from './entityViewConfig';
@@ -96,6 +104,7 @@ type SnapBlockProps = {
   isLinked: boolean;
   workspaceId: string;
   projects: Project[];
+  milestonesById: Map<string, Milestone>;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   rangeStart: Date;
   rangeEnd: Date;
@@ -115,6 +124,7 @@ const SnapBlock = ({
   isLinked,
   workspaceId,
   projects,
+  milestonesById,
   schemaMap,
   rangeStart,
   rangeEnd,
@@ -252,11 +262,13 @@ const SnapBlock = ({
             <div className={`${styles.barCell} ${styles.snapTrack}`} style={{ width: totalWidth }}>
               <div className={styles.snapBaseline} />
               {laneSnaps.map(snap => {
-                if (!snap.target_date) return null;
-                const px = toPx(new Date(`${snap.target_date}T00:00:00`));
+                const effectiveDate = getSnapshotEffectiveDate(snap, milestonesById);
+                if (!effectiveDate) return null;
+                const px = toPx(new Date(`${effectiveDate}T00:00:00`));
                 const isSel = selectedSnapId === snap.id;
                 const dotClass =
                   snap.status === 'applied' ? styles.snapDotApplied : styles.snapDotFutureUpdate;
+                const dateLabel = getSnapshotDateLabel(snap, milestonesById);
                 return (
                   <div
                     key={snap.id}
@@ -266,7 +278,11 @@ const SnapBlock = ({
                       ev.stopPropagation();
                       onSnapSelect(isSel ? null : snap, entity);
                     }}
-                    title={snap.commit_message ?? snap.status}
+                    title={
+                      snap.commit_message
+                        ? `${snap.commit_message} (${dateLabel})`
+                        : (dateLabel ?? snap.status)
+                    }
                   />
                 );
               })}
@@ -284,6 +300,7 @@ const SnapDetailPanel = ({
   detail,
   isLinked,
   projects,
+  milestonesById,
   schemaMap,
   lifecycleStates,
   onEntityClick,
@@ -292,6 +309,7 @@ const SnapDetailPanel = ({
   detail: { snap: EntitySnapshot; entity: EntityRecord } | null;
   isLinked: boolean;
   projects: Project[];
+  milestonesById: Map<string, Milestone>;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   lifecycleStates: WorkspaceLifecycleState[];
   onEntityClick: (id: string) => void;
@@ -356,10 +374,12 @@ const SnapDetailPanel = ({
 
             <div className={styles.detailField}>
               <div className={styles.detailFieldLabel}>
-                {snap.project_id ? 'Target date' : 'Captured'}
+                {snap.project_id ? (snap.milestone_id ? 'Milestone' : 'Target date') : 'Captured'}
               </div>
               <div className={styles.detailFieldValue}>
-                {snap.project_id ? (snap.target_date ?? '—') : formatTimelineDate(snap.created_at)}
+                {snap.project_id
+                  ? (getSnapshotDateLabel(snap, milestonesById) ?? '—')
+                  : formatTimelineDate(snap.created_at)}
               </div>
             </div>
 
@@ -575,6 +595,12 @@ export const TimelineView = ({
 }: TimelineViewProps) => {
   const dateFields = useDateFieldOptions(schemas);
   const TODAY = useMemo(() => new Date(), []);
+  const projectIds = useMemo(() => projects.map(p => p.id), [projects]);
+  const milestoneQueries = useMilestonesForProjects(workspaceId, projectIds);
+  const milestonesById = useMemo(
+    () => toMilestonesById(milestoneQueries.flatMap(q => q.data ?? [])),
+    [milestoneQueries]
+  );
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
   const cfg: TimelineConfig = useMemo(() => {
     const defaults: TimelineConfig = {
@@ -659,6 +685,16 @@ export const TimelineView = ({
     () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
     [TODAY, rangeStart, rangeEnd, totalWidth]
   );
+
+  const milestoneMarkers = useMemo(() => {
+    if (cfg.groupBy !== 'snapshot') return [];
+    return [...milestonesById.values()]
+      .map(milestone => ({
+        milestone,
+        px: stringDateToTimelinePx(milestone.target_date, rangeStart, rangeEnd, totalWidth)
+      }))
+      .filter((m): m is { milestone: Milestone; px: number } => m.px !== null);
+  }, [cfg.groupBy, milestonesById, rangeStart, rangeEnd, totalWidth]);
 
   const activeEntity = useMemo(
     () =>
@@ -752,6 +788,16 @@ export const TimelineView = ({
               </div>
             )
           }
+          overlayLines={milestoneMarkers.map(({ milestone, px }) => (
+            <div
+              key={milestone.id}
+              className={styles.milestoneLine}
+              style={{ left: TL_LABEL_W + px }}
+              title={`${milestone.name} (${milestone.target_date})`}
+            >
+              <span className={styles.milestoneLabel}>{milestone.name}</span>
+            </div>
+          ))}
         >
           {/* Standard groups (owner / type) */}
           {!isSnapshotMode &&
@@ -868,6 +914,7 @@ export const TimelineView = ({
                 entity={entity}
                 workspaceId={workspaceId}
                 projects={projects}
+                milestonesById={milestonesById}
                 schemaMap={schemaMap}
                 rangeStart={rangeStart}
                 rangeEnd={rangeEnd}
@@ -912,6 +959,7 @@ export const TimelineView = ({
           linkedEntityIdSet.has(snapDetail.entity._uid)
         }
         projects={projects}
+        milestonesById={milestonesById}
         schemaMap={schemaMap}
         lifecycleStates={lifecycleStates}
         onEntityClick={onEntityClick}

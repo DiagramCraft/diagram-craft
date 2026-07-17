@@ -47,7 +47,8 @@ const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   entity_schema: 'schema',
   workspace: 'workspace',
   assessment: 'assessment',
-  assessment_response: 'assessment response'
+  assessment_response: 'assessment response',
+  project_milestone: 'milestone'
 };
 
 const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
@@ -57,7 +58,8 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   project: styles.typeProject ?? '',
   content_node: styles.typeFile ?? '',
   assessment: styles.typeAssessment ?? '',
-  assessment_response: styles.typeAssessment ?? ''
+  assessment_response: styles.typeAssessment ?? '',
+  project_milestone: styles.typeAssessment ?? ''
 };
 
 const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];

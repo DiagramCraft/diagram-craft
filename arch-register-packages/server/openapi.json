@@ -9116,6 +9116,17 @@
                         ],
                         "description": "Target date for future update (ISO 8601)"
                       },
+                      "milestone_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Associated milestone identifier"
+                      },
                       "commit_message": {
                         "anyOf": [
                           {
@@ -9177,6 +9188,7 @@
                       "status",
                       "project_id",
                       "target_date",
+                      "milestone_id",
                       "commit_message",
                       "created_at",
                       "created_by",
@@ -9238,6 +9250,17 @@
                       }
                     ],
                     "description": "Target date for future update (ISO 8601)"
+                  },
+                  "milestoneId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Milestone identifier (alternative to targetDate)"
                   },
                   "commitMessage": {
                     "anyOf": [
@@ -9320,6 +9343,17 @@
                       ],
                       "description": "Target date for future update (ISO 8601)"
                     },
+                    "milestone_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Associated milestone identifier"
+                    },
                     "commit_message": {
                       "anyOf": [
                         {
@@ -9381,6 +9415,7 @@
                     "status",
                     "project_id",
                     "target_date",
+                    "milestone_id",
                     "commit_message",
                     "created_at",
                     "created_by",
@@ -9477,6 +9512,17 @@
                         ],
                         "description": "Target date for future update (ISO 8601)"
                       },
+                      "milestone_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Associated milestone identifier"
+                      },
                       "commit_message": {
                         "anyOf": [
                           {
@@ -9538,6 +9584,7 @@
                       "status",
                       "project_id",
                       "target_date",
+                      "milestone_id",
                       "commit_message",
                       "created_at",
                       "created_by",
@@ -9616,6 +9663,17 @@
                     ],
                     "description": "Updated target date (ISO 8601)"
                   },
+                  "milestoneId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Updated milestone identifier (alternative to targetDate)"
+                  },
                   "commitMessage": {
                     "anyOf": [
                       {
@@ -9685,6 +9743,17 @@
                       ],
                       "description": "Target date for future update (ISO 8601)"
                     },
+                    "milestone_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Associated milestone identifier"
+                    },
                     "commit_message": {
                       "anyOf": [
                         {
@@ -9746,6 +9815,7 @@
                     "status",
                     "project_id",
                     "target_date",
+                    "milestone_id",
                     "commit_message",
                     "created_at",
                     "created_by",
@@ -9865,6 +9935,17 @@
                       ],
                       "description": "Target date for future update (ISO 8601)"
                     },
+                    "milestone_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Associated milestone identifier"
+                    },
                     "commit_message": {
                       "anyOf": [
                         {
@@ -9926,6 +10007,7 @@
                     "status",
                     "project_id",
                     "target_date",
+                    "milestone_id",
                     "commit_message",
                     "created_at",
                     "created_by",
@@ -10052,6 +10134,17 @@
                       ],
                       "description": "Target date for future update (ISO 8601)"
                     },
+                    "milestone_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Associated milestone identifier"
+                    },
                     "commit_message": {
                       "anyOf": [
                         {
@@ -10113,6 +10206,7 @@
                     "status",
                     "project_id",
                     "target_date",
+                    "milestone_id",
                     "commit_message",
                     "created_at",
                     "created_by",
@@ -10232,6 +10326,17 @@
                       ],
                       "description": "Target date for future update (ISO 8601)"
                     },
+                    "milestone_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Associated milestone identifier"
+                    },
                     "commit_message": {
                       "anyOf": [
                         {
@@ -10293,6 +10398,7 @@
                     "status",
                     "project_id",
                     "target_date",
+                    "milestone_id",
                     "commit_message",
                     "created_at",
                     "created_by",
@@ -32315,7 +32421,8 @@
                           "project",
                           "content_node",
                           "assessment",
-                          "assessment_response"
+                          "assessment_response",
+                          "project_milestone"
                         ],
                         "type": "string",
                         "description": "Type of entity affected"

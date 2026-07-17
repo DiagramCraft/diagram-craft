@@ -40,6 +40,13 @@ import {
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 import type { AsOfMarker } from '../../components/timeline/TimelineStrip';
 import { formatDate } from '../../utils/dateFormat';
+import { useMilestones } from '../../hooks/useMilestones';
+import {
+  getSnapshotDateLabel,
+  getSnapshotEffectiveDate,
+  toMilestonesById
+} from '../entities/components/snapshotDisplay';
+import type { Milestone } from '@arch-register/api-types/milestoneContract';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
@@ -88,6 +95,8 @@ export const ProjectEntities = ({
   const pendingCount = futureSnapshots.length;
   const navigate = routeApi.useNavigate();
   const { workspaceSlug, permissions } = useWorkspaceContext();
+  const { data: milestones = [] } = useMilestones(workspaceSlug, project.id);
+  const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
   const search = routeApi.useSearch();
   const asOf = search.asOf;
   const readOnly = !!asOf;
@@ -99,16 +108,17 @@ export const ProjectEntities = ({
   const timelineMarkers = useMemo<AsOfMarker[]>(() => {
     const counts = new Map<string, number>();
     for (const snapshot of projectSnapshots) {
-      if (!snapshot.target_date) continue;
       if (snapshot.status !== 'future_update' && snapshot.status !== 'applied') continue;
-      const key = `${snapshot.target_date}|${snapshot.status}`;
+      const effectiveDate = getSnapshotEffectiveDate(snapshot, milestonesById);
+      if (!effectiveDate) continue;
+      const key = `${effectiveDate}|${snapshot.status}`;
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
     return [...counts.entries()].map(([key, count]) => {
       const [date, type] = key.split('|') as [string, 'future_update' | 'applied'];
       return { date, type, count };
     });
-  }, [projectSnapshots]);
+  }, [projectSnapshots, milestonesById]);
   const { data: savedViews = [], isFetched: savedViewsFetched } = useSavedViews(workspaceSlug, {
     projectId: project.id
   });
@@ -389,6 +399,7 @@ export const ProjectEntities = ({
           projectEntities={projectEntities}
           schemaMap={schemaMap}
           groupBy={groupBy}
+          milestonesById={milestonesById}
           onApplySnapshot={onApplySnapshot}
         />
       ) : (
@@ -402,6 +413,7 @@ export const ProjectEntities = ({
             schemas={schemas}
             lifecycleStates={lifecycleStates}
             teams={teams}
+            milestonesById={milestonesById}
             canEdit={project.canEdit}
             onApplySnapshot={onApplySnapshot}
           />
@@ -548,6 +560,7 @@ const FutureChangesTab = ({
   projectEntities,
   schemaMap,
   groupBy,
+  milestonesById,
   onApplySnapshot
 }: {
   project: ProjectDetailData;
@@ -555,6 +568,7 @@ const FutureChangesTab = ({
   projectEntities: ProjectEntity[];
   schemaMap: Map<string, { color: string; icon: string | null }>;
   groupBy: GroupBy;
+  milestonesById: Map<string, Milestone>;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
 }) => {
   if (futureSnapshots.length === 0) {
@@ -599,6 +613,7 @@ const FutureChangesTab = ({
                     key={snap.id}
                     snap={snap}
                     showEntity={false}
+                    milestonesById={milestonesById}
                     canEdit={project.canEdit}
                     onApply={onApplySnapshot}
                   />
@@ -611,10 +626,12 @@ const FutureChangesTab = ({
     );
   }
 
-  // Group by date
+  // Group by (effective) date — a milestone-backed snapshot has no target_date of its own, so
+  // fall back to the milestone's target_date, grouping it alongside any raw-dated snapshots
+  // targeting the same day.
   const groups = new Map<string, EntitySnapshot[]>();
   for (const snap of futureSnapshots) {
-    const key = snap.target_date ?? '__no-date__';
+    const key = getSnapshotEffectiveDate(snap, milestonesById) ?? '__no-date__';
     const list = groups.get(key);
     if (list) list.push(snap);
     else groups.set(key, [snap]);
@@ -649,6 +666,7 @@ const FutureChangesTab = ({
                       ? schemaMap.get(entityMap.get(snap.entity_id)!.entity_schema!.id)
                       : undefined
                   }
+                  milestonesById={milestonesById}
                   canEdit={project.canEdit}
                   onApply={onApplySnapshot}
                 />
@@ -666,6 +684,7 @@ const FutureSnapshotRow = ({
   showEntity,
   entityName,
   entitySchema,
+  milestonesById,
   canEdit,
   onApply
 }: {
@@ -673,30 +692,39 @@ const FutureSnapshotRow = ({
   showEntity: boolean;
   entityName?: string;
   entitySchema?: { color: string; icon: string | null };
+  milestonesById: Map<string, Milestone>;
   canEdit: boolean;
   onApply: (snapshot: EntitySnapshot) => void;
-}) => (
-  <div className={styles.futureRow}>
-    {showEntity && (
-      <div className={styles.futureRowEntity}>
-        {entitySchema && (
-          <TypeBadge color={entitySchema.color} icon={entitySchema.icon} size={14} />
-        )}
-        <span>{entityName ?? snap.entity_id}</span>
-      </div>
-    )}
-    <div className={styles.futureRowBody}>
-      <div className={styles.futureRowMeta}>
-        {snap.target_date && (
-          <span className={styles.futureRowDate}>{formatDate(snap.target_date)}</span>
-        )}
-        {snap.commit_message && <span className={styles.futureRowNote}>{snap.commit_message}</span>}
-      </div>
-      {canEdit && (
-        <button type="button" className={styles.futureRowApply} onClick={() => onApply(snap)}>
-          Apply
-        </button>
+}) => {
+  const dateLabel = snap.milestone_id
+    ? getSnapshotDateLabel(snap, milestonesById)
+    : snap.target_date
+      ? formatDate(snap.target_date)
+      : null;
+
+  return (
+    <div className={styles.futureRow}>
+      {showEntity && (
+        <div className={styles.futureRowEntity}>
+          {entitySchema && (
+            <TypeBadge color={entitySchema.color} icon={entitySchema.icon} size={14} />
+          )}
+          <span>{entityName ?? snap.entity_id}</span>
+        </div>
       )}
+      <div className={styles.futureRowBody}>
+        <div className={styles.futureRowMeta}>
+          {dateLabel && <span className={styles.futureRowDate}>{dateLabel}</span>}
+          {snap.commit_message && (
+            <span className={styles.futureRowNote}>{snap.commit_message}</span>
+          )}
+        </div>
+        {canEdit && (
+          <button type="button" className={styles.futureRowApply} onClick={() => onApply(snap)}>
+            Apply
+          </button>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};

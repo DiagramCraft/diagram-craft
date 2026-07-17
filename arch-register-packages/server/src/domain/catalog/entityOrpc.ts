@@ -370,13 +370,34 @@ const snapshotHandlers = {
     const project = await context.db.project.getProject(workspace, input.body.projectId);
     orpcAssert.present(project, { code: 'NOT_FOUND', message: 'Project not found' });
 
+    let milestoneId: string | null = null;
+    if (input.body.milestoneId != null) {
+      const milestone = await context.db.project.getMilestone(
+        workspace,
+        project.id,
+        input.body.milestoneId
+      );
+      orpcAssert.present(milestone, { code: 'NOT_FOUND', message: 'Milestone not found' });
+      const isLinked = await context.db.project.isEntityLinkedToProject(
+        workspace,
+        project.id,
+        entity.id
+      );
+      orpcAssert.true(isLinked, {
+        code: 'BAD_REQUEST',
+        message: 'Entity must be linked to this project before assigning a milestone'
+      });
+      milestoneId = milestone.id;
+    }
+
     const snapshot = await context.db.catalog.createSnapshot({
       id: crypto.randomUUID(),
       workspace,
       entity_id: entity.id,
       status: 'future_update',
       project_id: project.id,
-      target_date: input.body.targetDate ?? null,
+      target_date: milestoneId != null ? null : (input.body.targetDate ?? null),
+      milestone_id: milestoneId,
       commit_message: input.body.commitMessage ?? null,
       created_at: new Date(),
       created_by: context.event.context.user.id,
@@ -417,9 +438,37 @@ const snapshotHandlers = {
       'edit_entity',
       'You do not have permission to edit this entity'
     );
+
+    let milestoneId: string | null | undefined = input.body.milestoneId;
+    if (input.body.milestoneId != null) {
+      const existing = await context.db.catalog.getSnapshot(workspace, input.params.snapshotId);
+      orpcAssert.present(existing, { code: 'NOT_FOUND', message: 'Snapshot not found' });
+      orpcAssert.present(existing.project_id, {
+        code: 'BAD_REQUEST',
+        message: 'Snapshot has no associated project to resolve the milestone against'
+      });
+      const milestone = await context.db.project.getMilestone(
+        workspace,
+        existing.project_id,
+        input.body.milestoneId
+      );
+      orpcAssert.present(milestone, { code: 'NOT_FOUND', message: 'Milestone not found' });
+      const isLinked = await context.db.project.isEntityLinkedToProject(
+        workspace,
+        existing.project_id,
+        entity.id
+      );
+      orpcAssert.true(isLinked, {
+        code: 'BAD_REQUEST',
+        message: 'Entity must be linked to this project before assigning a milestone'
+      });
+      milestoneId = milestone.id;
+    }
+
     const snapshot = await context.db.catalog.updateSnapshot(workspace, input.params.snapshotId, {
       proposed_state: input.body.proposedState,
-      target_date: input.body.targetDate,
+      target_date: milestoneId != null ? null : input.body.targetDate,
+      milestone_id: milestoneId,
       commit_message: input.body.commitMessage
     });
     orpcAssert.present(snapshot, {

@@ -403,8 +403,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSnapshot(input: EntitySnapshotDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, created_by_name, base_state, proposed_state)
-        VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.status}, ${input.project_id}, ${input.target_date}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${input.created_by_name}, ${this.json(input.base_state)}, ${input.proposed_state != null ? this.json(input.proposed_state) : null})
+        INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, milestone_id, commit_message, created_at, created_by, created_by_name, base_state, proposed_state)
+        VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.status}, ${input.project_id}, ${input.target_date}, ${input.milestone_id}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${input.created_by_name}, ${this.json(input.base_state)}, ${input.proposed_state != null ? this.json(input.proposed_state) : null})
         RETURNING *
       `;
       return catalogMappers.entitySnapshot(row!);
@@ -449,10 +449,11 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       SELECT s.*, u.display_name as created_by_name
       FROM entity_snapshot s
       LEFT JOIN users u ON u.id = s.created_by
+      LEFT JOIN project_milestone m ON m.id = s.milestone_id
       WHERE s.workspace = ${workspace}
         AND (
           (s.status IN ('autosave', 'saved_version', 'deleted') AND s.created_at <= ${asOf})
-          OR (s.status = 'future_update' AND s.target_date <= ${asOf} AND s.created_at <= ${asOf})
+          OR (s.status = 'future_update' AND COALESCE(s.target_date, m.target_date) <= ${asOf} AND s.created_at <= ${asOf})
         )
         ${entityIds != null ? this.sql`AND s.entity_id = ANY(${entityIds})` : this.sql``}
       ORDER BY s.entity_id, s.created_at ASC
@@ -528,6 +529,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     updates: {
       proposed_state?: Record<string, unknown>;
       target_date?: string | null;
+      milestone_id?: string | null;
       commit_message?: string | null;
     }
   ) {
@@ -541,11 +543,24 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       SET
         proposed_state = ${updates.proposed_state !== undefined ? this.json(updates.proposed_state) : this.sql`proposed_state`},
         target_date = ${updates.target_date !== undefined ? updates.target_date : this.sql`target_date`},
+        milestone_id = ${updates.milestone_id !== undefined ? updates.milestone_id : this.sql`milestone_id`},
         commit_message = ${updates.commit_message !== undefined ? updates.commit_message : this.sql`commit_message`}
       WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
       RETURNING *
     `;
     return row ? catalogMappers.entitySnapshot(row) : null;
+  }
+
+  async reassignSnapshotsFromMilestone(
+    workspace: string,
+    milestoneId: string,
+    backfillTargetDate: string | null
+  ) {
+    await this.sql`
+      UPDATE entity_snapshot
+      SET milestone_id = NULL, target_date = ${backfillTargetDate}
+      WHERE workspace = ${workspace} AND milestone_id = ${milestoneId}
+    `;
   }
 
   async applySnapshot(workspace: string, snapshotId: string) {

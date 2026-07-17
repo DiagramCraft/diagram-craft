@@ -275,6 +275,7 @@ const entitySnapshotSchema = z.object({
     .describe('Snapshot status'),
   project_id: z.string().nullable().describe('Associated project identifier'),
   target_date: z.string().nullable().describe('Target date for future update (ISO 8601)'),
+  milestone_id: z.string().nullable().describe('Associated milestone identifier'),
   commit_message: z.string().nullable().describe('Commit message describing the changes'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   created_by: z.string().describe('User who created the snapshot'),
@@ -735,16 +736,25 @@ export const workspaceEntityContract = oc.tag('Entities').router({
         .input(
           z.object({
             params: wsAndId,
-            body: z.object({
-              projectId: z.string().describe('Associated project identifier'),
-              targetDate: z
-                .string()
-                .nullable()
-                .optional()
-                .describe('Target date for future update (ISO 8601)'),
-              commitMessage: z.string().nullable().optional().describe('Commit message'),
-              proposedState: z.record(z.string(), z.unknown()).describe('Proposed entity state')
-            })
+            body: z
+              .object({
+                projectId: z.string().describe('Associated project identifier'),
+                targetDate: z
+                  .string()
+                  .nullable()
+                  .optional()
+                  .describe('Target date for future update (ISO 8601)'),
+                milestoneId: z
+                  .string()
+                  .nullable()
+                  .optional()
+                  .describe('Milestone identifier (alternative to targetDate)'),
+                commitMessage: z.string().nullable().optional().describe('Commit message'),
+                proposedState: z.record(z.string(), z.unknown()).describe('Proposed entity state')
+              })
+              .refine(body => !(body.targetDate && body.milestoneId), {
+                message: 'Provide either targetDate or milestoneId, not both'
+              })
           })
         )
         .output(entitySnapshotSchema),
@@ -764,18 +774,27 @@ export const workspaceEntityContract = oc.tag('Entities').router({
               id: z.string().regex(UUID_REGEX),
               snapshotId: z.string().regex(UUID_REGEX)
             }),
-            body: z.object({
-              proposedState: z
-                .record(z.string(), z.unknown())
-                .optional()
-                .describe('Updated proposed state'),
-              targetDate: z
-                .string()
-                .nullable()
-                .optional()
-                .describe('Updated target date (ISO 8601)'),
-              commitMessage: z.string().nullable().optional().describe('Updated commit message')
-            })
+            body: z
+              .object({
+                proposedState: z
+                  .record(z.string(), z.unknown())
+                  .optional()
+                  .describe('Updated proposed state'),
+                targetDate: z
+                  .string()
+                  .nullable()
+                  .optional()
+                  .describe('Updated target date (ISO 8601)'),
+                milestoneId: z
+                  .string()
+                  .nullable()
+                  .optional()
+                  .describe('Updated milestone identifier (alternative to targetDate)'),
+                commitMessage: z.string().nullable().optional().describe('Updated commit message')
+              })
+              .refine(body => !(body.targetDate && body.milestoneId), {
+                message: 'Provide either targetDate or milestoneId, not both'
+              })
           })
         )
         .output(entitySnapshotSchema),

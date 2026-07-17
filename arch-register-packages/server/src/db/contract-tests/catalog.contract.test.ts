@@ -400,6 +400,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         status: 'autosave',
         project_id: null,
         target_date: null,
+        milestone_id: null,
         commit_message: null,
         created_at: new Date(),
         created_by: user.id,
@@ -431,6 +432,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
           status: 'autosave',
           project_id: null,
           target_date: null,
+          milestone_id: null,
           commit_message: null,
           created_at: new Date(Date.now() + i * 1000),
           created_by: user.id,
@@ -462,6 +464,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         status: 'autosave',
         project_id: null,
         target_date: null,
+        milestone_id: null,
         commit_message: null,
         created_at: new Date(),
         created_by: user.id,
@@ -492,6 +495,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         status: 'future_update',
         project_id: project.id,
         target_date: '2030-01-01',
+        milestone_id: null,
         commit_message: null,
         created_at: new Date(),
         created_by: user.id,
@@ -528,6 +532,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         status: 'autosave',
         project_id: null,
         target_date: null,
+        milestone_id: null,
         commit_message: null,
         created_at: new Date(),
         created_by: user.id,
@@ -542,6 +547,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         status: 'future_update',
         project_id: null,
         target_date: '2030-01-01',
+        milestone_id: null,
         commit_message: null,
         created_at: new Date(),
         created_by: user.id,
@@ -571,6 +577,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         status: 'future_update',
         project_id: null,
         target_date: '2030-06-15',
+        milestone_id: null,
         commit_message: null,
         created_at: new Date(),
         created_by: user.id,
@@ -584,6 +591,135 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(markers[0]!.type).toBe('future_update');
       expect(markers[0]!.count).toBe(1);
       expect(markers[0]!.date).toContain('2030-06-15');
+    });
+
+    it('creates a future_update snapshot targeting a milestone instead of a raw target_date', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+      const now = new Date();
+
+      const milestone = await db.project.createMilestone({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: 'Q3 migration',
+        target_date: '2030-09-01',
+        status: 'planned',
+        sort_order: 0,
+        created_at: now,
+        updated_at: now
+      });
+
+      const snapshot = await db.catalog.createSnapshot({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        status: 'future_update',
+        project_id: project.id,
+        target_date: null,
+        milestone_id: milestone.id,
+        commit_message: null,
+        created_at: now,
+        created_by: user.id,
+        created_by_name: user.display_name,
+        base_state: {},
+        proposed_state: { name: 'future name' }
+      });
+
+      expect(snapshot.milestone_id).toBe(milestone.id);
+      expect(snapshot.target_date).toBeNull();
+    });
+
+    it('rejects a snapshot with both target_date and milestone_id set', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+      const now = new Date();
+
+      const milestone = await db.project.createMilestone({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: 'Q4 migration',
+        target_date: '2030-10-01',
+        status: 'planned',
+        sort_order: 0,
+        created_at: now,
+        updated_at: now
+      });
+
+      await expect(
+        db.catalog.createSnapshot({
+          id: randomUUID(),
+          workspace,
+          entity_id: entity.id,
+          status: 'future_update',
+          project_id: project.id,
+          target_date: '2030-10-01',
+          milestone_id: milestone.id,
+          commit_message: null,
+          created_at: now,
+          created_by: user.id,
+          created_by_name: user.display_name,
+          base_state: {},
+          proposed_state: {}
+        })
+      ).rejects.toBeDefined();
+    });
+
+    it('reassigns snapshots off a milestone, backfilling target_date', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+      const now = new Date();
+
+      const milestone = await db.project.createMilestone({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: 'Q1 migration',
+        target_date: '2031-01-01',
+        status: 'planned',
+        sort_order: 0,
+        created_at: now,
+        updated_at: now
+      });
+
+      const snapshot = await db.catalog.createSnapshot({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        status: 'future_update',
+        project_id: project.id,
+        target_date: null,
+        milestone_id: milestone.id,
+        commit_message: null,
+        created_at: now,
+        created_by: user.id,
+        created_by_name: user.display_name,
+        base_state: {},
+        proposed_state: {}
+      });
+
+      await db.catalog.reassignSnapshotsFromMilestone(
+        workspace,
+        milestone.id,
+        milestone.target_date
+      );
+
+      const reloaded = await db.catalog.getSnapshot(workspace, snapshot.id);
+      expect(reloaded!.milestone_id).toBeNull();
+      expect(reloaded!.target_date).toBe('2031-01-01');
     });
   });
 

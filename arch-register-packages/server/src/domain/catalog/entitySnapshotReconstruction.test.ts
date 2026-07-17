@@ -66,6 +66,7 @@ const baseSnapshot = (overrides: Partial<EntitySnapshotDbResult>): EntitySnapsho
   status: 'autosave',
   project_id: null,
   target_date: null,
+  milestone_id: null,
   commit_message: null,
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   created_by: 'user-1',
@@ -129,7 +130,8 @@ const makeDb = (
     project: {
       getProject: vi.fn(
         async (_workspace: string, id: string) => projects.find(p => p.id === id) ?? null
-      )
+      ),
+      listMilestones: vi.fn(async () => [])
     },
     workspace: {
       listTeams: vi.fn(async () => [{ id: 'owner-1', name: 'Team A' }]),
