@@ -6,6 +6,7 @@ import { MdxPreview } from './preview/MdxPreview';
 import { MarkdownAttachmentManager } from './MarkdownAttachmentManager';
 import { DiscussionThread } from '../discussions/DiscussionThread';
 import { useDiscussions } from '../../hooks/useDiscussions';
+import { DocumentBacklinksSection } from './DocumentBacklinksSection';
 import type { MarkdownPaneMode, MarkdownScreenMode } from './MarkdownEditorScreen.state';
 import styles from './MarkdownEditorScreen.module.css';
 
@@ -29,6 +30,7 @@ export const MarkdownEditorPane = (props: {
   workspaceId: string;
   nodeId: string;
   showDiscussion?: boolean;
+  showBacklinks?: boolean;
   propertiesPanel?: ReactNode;
 }) => {
   const {
@@ -43,6 +45,7 @@ export const MarkdownEditorPane = (props: {
     workspaceId,
     nodeId,
     showDiscussion = true,
+    showBacklinks = true,
     propertiesPanel
   } = props;
 
@@ -122,6 +125,9 @@ export const MarkdownEditorPane = (props: {
               {updatedLabel && <>Last edited {updatedLabel} · </>}
               {readTime} min read
             </div>
+            {showBacklinks && (
+              <DocumentBacklinksSection workspaceId={workspaceId} nodeId={nodeId} />
+            )}
             {showDiscussion && (
               <section className={styles.discussionSection}>
                 <div className={styles.discussionHead}>

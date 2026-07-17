@@ -81,9 +81,9 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
     const remaining = new Set(existing.map(row => row.id));
     for (const field of fields) {
       await this.sql`
-        INSERT INTO document_field (id, workspace, document_type_id, name, type, requirement, min_cardinality, max_cardinality, enum_options, retired, created_at, updated_at)
-        VALUES (${field.id}, ${workspace}, ${documentTypeId}, ${field.name}, ${field.type}, ${field.requirement}, ${field.minCardinality ?? null}, ${field.maxCardinality ?? null}, ${this.json(field.enumOptions ?? [])}, ${field.retired ?? false}, ${timestamp}, ${timestamp})
-        ON CONFLICT (workspace, document_type_id, id) DO UPDATE SET name = EXCLUDED.name, type = EXCLUDED.type, requirement = EXCLUDED.requirement, min_cardinality = EXCLUDED.min_cardinality, max_cardinality = EXCLUDED.max_cardinality, enum_options = EXCLUDED.enum_options, retired = EXCLUDED.retired, updated_at = EXCLUDED.updated_at`;
+        INSERT INTO document_field (id, workspace, document_type_id, name, type, requirement, min_cardinality, max_cardinality, enum_options, inverse_name, retired, created_at, updated_at)
+        VALUES (${field.id}, ${workspace}, ${documentTypeId}, ${field.name}, ${field.type}, ${field.requirement}, ${field.minCardinality ?? null}, ${field.maxCardinality ?? null}, ${this.json(field.enumOptions ?? [])}, ${field.inverseName ?? null}, ${field.retired ?? false}, ${timestamp}, ${timestamp})
+        ON CONFLICT (workspace, document_type_id, id) DO UPDATE SET name = EXCLUDED.name, type = EXCLUDED.type, requirement = EXCLUDED.requirement, min_cardinality = EXCLUDED.min_cardinality, max_cardinality = EXCLUDED.max_cardinality, enum_options = EXCLUDED.enum_options, inverse_name = EXCLUDED.inverse_name, retired = EXCLUDED.retired, updated_at = EXCLUDED.updated_at`;
       remaining.delete(field.id);
     }
     for (const fieldId of remaining) {
@@ -262,6 +262,13 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
     const rows = await this.sql.unsafe<DatabaseRow[]>(
       'SELECT * FROM document_link_index WHERE workspace = $1 AND target_type = $2 AND target_id = $3 ORDER BY node_id, field_id, position',
       [workspace, 'entity', entityId]
+    );
+    return mapDatabaseRows(rows, linkMapper);
+  }
+  async listDocumentsLinkingDocument(workspace: string, documentId: string) {
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      'SELECT * FROM document_link_index WHERE workspace = $1 AND target_type = $2 AND target_id = $3 ORDER BY node_id, field_id, position',
+      [workspace, 'document', documentId]
     );
     return mapDatabaseRows(rows, linkMapper);
   }

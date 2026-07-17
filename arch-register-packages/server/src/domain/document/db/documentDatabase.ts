@@ -112,4 +112,8 @@ export type DocumentDatabase = {
     workspace: string,
     entityId: string
   ): Promise<DocumentLinkIndexDbResult[]>;
+  listDocumentsLinkingDocument(
+    workspace: string,
+    documentId: string
+  ): Promise<DocumentLinkIndexDbResult[]>;
 };

@@ -152,4 +152,81 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
     expect((await db.document.listDocumentTypes(workspace, true))[0]?.archived).toBe(true);
     expect((await db.document.getDocumentType(workspace, type.id))?.archived).toBe(true);
   });
+
+  it('round-trips an inverse field label and resolves document-to-document backlinks', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const now = new Date();
+
+    const type = await db.document.createDocumentType({
+      id: randomUUID(),
+      workspace,
+      name: 'Architecture Decision Record',
+      description: 'A decision record',
+      fields: [
+        {
+          id: 'supersedes',
+          name: 'Supersedes',
+          type: 'document_link',
+          requirement: 'optional',
+          minCardinality: 0,
+          inverseName: 'Superseded by',
+          retired: false
+        }
+      ],
+      color: null,
+      icon: null,
+      created_at: now,
+      updated_at: now
+    });
+    expect(type.fields[0]?.inverseName).toBe('Superseded by');
+
+    const reread = await db.document.getDocumentType(workspace, type.id);
+    expect(reread?.fields[0]?.inverseName).toBe('Superseded by');
+
+    const olderNodeId = randomUUID();
+    const newerNodeId = randomUUID();
+    for (const [nodeId, name] of [
+      [olderNodeId, 'ADR-1'],
+      [newerNodeId, 'ADR-2']
+    ] as const) {
+      await db.project.upsertContentNode({
+        id: nodeId,
+        workspace,
+        project_id: project.id,
+        entity_id: null,
+        parent_id: null,
+        path: `adr/${nodeId}.md`,
+        name,
+        type: 'markdown',
+        size_bytes: 12,
+        comment_count: 0,
+        unresolved_comment_count: 0,
+        created_atIfNew: now,
+        updated_at: now
+      });
+    }
+
+    await db.document.upsertDocumentMetadata({
+      workspace,
+      node_id: newerNodeId,
+      document_type_id: type.id,
+      values: { supersedes: [olderNodeId] },
+      updated_at: now
+    });
+    await db.document.replaceDocumentLinks(workspace, newerNodeId, [
+      { field_id: 'supersedes', target_type: 'document', target_id: olderNodeId, position: 0 }
+    ]);
+
+    expect(await db.document.listDocumentsLinkingDocument(workspace, olderNodeId)).toEqual([
+      expect.objectContaining({
+        node_id: newerNodeId,
+        field_id: 'supersedes',
+        target_type: 'document',
+        target_id: olderNodeId
+      })
+    ]);
+    expect(await db.document.listDocumentsLinkingDocument(workspace, newerNodeId)).toEqual([]);
+  });
 });

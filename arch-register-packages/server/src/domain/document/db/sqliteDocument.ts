@@ -80,9 +80,9 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
     );
     for (const field of fields) {
       this.run(
-        `INSERT INTO document_field (id, workspace, document_type_id, name, type, requirement, min_cardinality, max_cardinality, enum_options, retired, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(workspace, document_type_id, id) DO UPDATE SET name = excluded.name, type = excluded.type, requirement = excluded.requirement, min_cardinality = excluded.min_cardinality, max_cardinality = excluded.max_cardinality, enum_options = excluded.enum_options, retired = excluded.retired, updated_at = excluded.updated_at`,
+        `INSERT INTO document_field (id, workspace, document_type_id, name, type, requirement, min_cardinality, max_cardinality, enum_options, inverse_name, retired, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(workspace, document_type_id, id) DO UPDATE SET name = excluded.name, type = excluded.type, requirement = excluded.requirement, min_cardinality = excluded.min_cardinality, max_cardinality = excluded.max_cardinality, enum_options = excluded.enum_options, inverse_name = excluded.inverse_name, retired = excluded.retired, updated_at = excluded.updated_at`,
         [
           field.id,
           workspace,
@@ -93,6 +93,7 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
           field.minCardinality ?? null,
           field.maxCardinality ?? null,
           JSON.stringify(field.enumOptions ?? []),
+          field.inverseName ?? null,
           field.retired ? 1 : 0,
           timestamp.toISOString(),
           timestamp.toISOString()
@@ -335,6 +336,14 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
     return this.all(
       'SELECT * FROM document_link_index WHERE workspace = ? AND target_type = ? AND target_id = ? ORDER BY node_id, field_id, position',
       [workspace, 'entity', entityId],
+      linkMapper
+    );
+  }
+
+  async listDocumentsLinkingDocument(workspace: string, documentId: string) {
+    return this.all(
+      'SELECT * FROM document_link_index WHERE workspace = ? AND target_type = ? AND target_id = ? ORDER BY node_id, field_id, position',
+      [workspace, 'document', documentId],
       linkMapper
     );
   }

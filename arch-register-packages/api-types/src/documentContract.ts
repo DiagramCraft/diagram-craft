@@ -45,6 +45,10 @@ export const documentFieldSchema = z.object({
   minCardinality: z.number().int().nonnegative().optional(),
   maxCardinality: z.number().int().nonnegative().optional(),
   enumOptions: z.array(documentEnumOptionSchema).optional(),
+  // Display label used when presenting the reverse of this link on the target
+  // (e.g. a "Supersedes" document_link field with inverseName "Superseded by").
+  // Only meaningful for entity_link / document_link fields.
+  inverseName: z.string().min(1).optional(),
   retired: z.boolean().default(false)
 });
 

@@ -812,6 +812,7 @@ export const MarkdownEditorScreen = () => {
               workspaceId={workspaceSlug}
               nodeId={nodeId}
               showDiscussion={!isDraft}
+              showBacklinks={!isDraft}
               attachments={{
                 items: attachments,
                 onOpen: handleOpenAttachment,
@@ -820,6 +821,7 @@ export const MarkdownEditorScreen = () => {
               }}
               propertiesPanel={
                 <MarkdownPropertiesPanel
+                  key={nodeId}
                   documentTypeId={documentTypeId}
                   documentTypes={availableDocumentTypes}
                   fields={documentFields}

@@ -55,6 +55,7 @@ import {
   migrateMarkdownContent,
   listMarkdownRevisions,
   listRelatedContent,
+  listDocumentBacklinks,
   listDocuments,
   getMarkdownRevision,
   restoreMarkdownRevision,
@@ -285,6 +286,10 @@ const entityContentHandlers = {
   listRelatedContent: projectRouter.projects.listRelatedContent.handler(
     async ({ input, context }) =>
       listRelatedContent(context.db, input.params.workspace, input.params.entityId, context.event)
+  ),
+  listDocumentBacklinks: projectRouter.projects.listDocumentBacklinks.handler(
+    async ({ input, context }) =>
+      listDocumentBacklinks(context.db, input.params.workspace, input.params.nodeId, context.event)
   ),
   listDocuments: projectRouter.projects.listDocuments.handler(async ({ input, context }) =>
     listDocuments(

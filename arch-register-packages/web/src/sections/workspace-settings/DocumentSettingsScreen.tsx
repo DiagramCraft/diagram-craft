@@ -593,27 +593,37 @@ const DocumentFieldRow = ({
             style={{ width: '100%' }}
           />
         ) : isLinkType(field.type) ? (
-          <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <TextInput
+                value={field.minCardinality === undefined ? '' : String(field.minCardinality)}
+                placeholder="Min"
+                onChange={value =>
+                  onUpdate({
+                    minCardinality: value === '' || value === undefined ? undefined : Number(value)
+                  })
+                }
+                style={{ width: 56 }}
+              />
+              <span className="dim">–</span>
+              <TextInput
+                value={field.maxCardinality === undefined ? '' : String(field.maxCardinality)}
+                placeholder="Max"
+                onChange={value =>
+                  onUpdate({
+                    maxCardinality: value === '' || value === undefined ? undefined : Number(value)
+                  })
+                }
+                style={{ width: 56 }}
+              />
+            </span>
             <TextInput
-              value={field.minCardinality === undefined ? '' : String(field.minCardinality)}
-              placeholder="Min"
+              value={field.inverseName ?? ''}
+              placeholder="Inverse label (optional)"
               onChange={value =>
-                onUpdate({
-                  minCardinality: value === '' || value === undefined ? undefined : Number(value)
-                })
+                onUpdate({ inverseName: value?.trim() ? value.trim() : undefined })
               }
-              style={{ width: 56 }}
-            />
-            <span className="dim">–</span>
-            <TextInput
-              value={field.maxCardinality === undefined ? '' : String(field.maxCardinality)}
-              placeholder="Max"
-              onChange={value =>
-                onUpdate({
-                  maxCardinality: value === '' || value === undefined ? undefined : Number(value)
-                })
-              }
-              style={{ width: 56 }}
+              style={{ width: '100%' }}
             />
           </span>
         ) : (

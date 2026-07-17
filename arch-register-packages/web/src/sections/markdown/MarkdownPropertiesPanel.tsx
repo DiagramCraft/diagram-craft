@@ -410,7 +410,7 @@ export const MarkdownPropertiesPanel = ({
   onTypeChange,
   onValueChange
 }: MarkdownPropertiesPanelProps) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(documentTypeId == null);
   const activeFields = fields.filter(field => !field.retired);
   const retiredFields = fields.filter(field => field.retired && metadata[field.id] !== undefined);
   const hasMetadata = Object.keys(metadata).length > 0;

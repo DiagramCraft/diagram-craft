@@ -160,6 +160,11 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async getContentNodeById(workspace: string, projectId: string, id: string) {
+    // Externally mounted content can surface synthetic, non-UUID node ids (see
+    // isUuidLike usage in getProject above); id/node_id columns are UUID-typed,
+    // so treat a non-UUID id as "not found" rather than letting Postgres reject
+    // the query outright.
+    if (!isUuidLike(id)) return null;
     const [row] = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1 AND cn.project_id = $2 AND cn.id = $3`,
@@ -169,6 +174,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async getAnyContentNodeById(workspace: string, id: string) {
+    if (!isUuidLike(id)) return null;
     const [row] = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1 AND cn.id = $2`,
@@ -178,6 +184,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async listMarkdownRevisions(workspace: string, nodeId: string) {
+    if (!isUuidLike(nodeId)) return [];
     const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${MARKDOWN_REVISION_SELECT_SQL}
        WHERE mr.workspace = $1 AND mr.node_id = $2
@@ -188,6 +195,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async getMarkdownRevision(workspace: string, nodeId: string, revisionId: string) {
+    if (!isUuidLike(nodeId) || !isUuidLike(revisionId)) return null;
     const [row] = await this.sql.unsafe<DatabaseRow[]>(
       `${MARKDOWN_REVISION_SELECT_SQL}
        WHERE mr.workspace = $1 AND mr.node_id = $2 AND mr.id = $3`,
