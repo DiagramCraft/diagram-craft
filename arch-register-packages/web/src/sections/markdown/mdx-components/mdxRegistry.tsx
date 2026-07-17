@@ -26,6 +26,8 @@ import { ENTITY_MENTION_TYPE } from './inlines/entity-mention/EntityMentionEdita
 import { entityMentionSpec } from './inlines/entity-mention/EntityMentionRegistration';
 import { ENTITY_LINK_TYPE } from './inlines/entity-link/EntityLinkEditable';
 import { entityLinkSpec } from './inlines/entity-link/EntityLinkRegistration';
+import { LABEL_TYPE } from './inlines/label/LabelEditable';
+import { labelSpec } from './inlines/label/LabelRegistration';
 import { CAPTION_TYPE } from './blocks/caption/CaptionEditable';
 import { captionSpec } from './blocks/caption/CaptionRegistration';
 import type { MdxComponentSpec } from './types';
@@ -46,6 +48,7 @@ export const MDX_COMPONENTS = {
   [ENTITY_FIELD_TYPE]: entityFieldSpec,
   [ENTITY_MENTION_TYPE]: entityMentionSpec,
   [ENTITY_LINK_TYPE]: entityLinkSpec,
+  [LABEL_TYPE]: labelSpec,
   [CAPTION_TYPE]: captionSpec
 } satisfies Record<string, MdxComponentSpec>;
 

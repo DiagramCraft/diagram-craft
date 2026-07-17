@@ -40,7 +40,10 @@ export type SlashCommandDef<E extends TElement = TElement> = {
   keywords?: string[];
   onSelect: (
     editor: ReturnType<typeof useEditorRef>,
-    helpers: { insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: E) => void }
+    helpers: {
+      insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: E) => void;
+      insertOrReplaceInline: (editor: ReturnType<typeof useEditorRef>, node: E) => void;
+    }
   ) => void;
 };
 

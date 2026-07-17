@@ -12,6 +12,7 @@ export type SlashCommandDef = {
     editor: ReturnType<typeof useEditorRef>,
     helpers: {
       insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: TElement) => void;
+      insertOrReplaceInline: (editor: ReturnType<typeof useEditorRef>, node: TElement) => void;
     }
   ) => void;
 };
