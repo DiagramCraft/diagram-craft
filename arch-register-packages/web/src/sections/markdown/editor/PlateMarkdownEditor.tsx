@@ -318,6 +318,18 @@ const insertOrReplaceBlock = (editor: ReturnType<typeof useEditorRef>, node: TEl
   }
 };
 
+// Inline void elements (mentions, links, labels, ...) leave the selection
+// inside the inserted node's own (non-editable) text child unless we move it
+// out explicitly — otherwise further typing silently goes nowhere.
+const insertOrReplaceInline = (editor: ReturnType<typeof useEditorRef>, node: TElement) => {
+  editor.tf.insertNodes(node);
+  const path = editor.api.findPath(node);
+  if (!path) return;
+  const parentPath = path.slice(0, -1);
+  const index = path[path.length - 1] as number;
+  editor.tf.select({ path: [...parentPath, index + 1], offset: 0 });
+};
+
 type SlashCommandItem = {
   key: string;
   label: string;
@@ -495,7 +507,7 @@ const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONENTS).fl
         icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
         keywords: cmd.keywords,
         onSelect: (editor: ReturnType<typeof useEditorRef>) =>
-          cmd.onSelect(editor, { insertOrReplaceBlock })
+          cmd.onSelect(editor, { insertOrReplaceBlock, insertOrReplaceInline })
       }
     ];
   }

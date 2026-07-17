@@ -18,8 +18,8 @@ export const entityLinkSpec = defineMdxComponent<EntityLinkSlateElement, { id: s
       description: 'Simple link to an entity',
       icon: <TbLink size={14} />,
       keywords: ['link', 'entity', 'reference', 'href'],
-      onSelect: editor => {
-        editor.tf.insertNodes({
+      onSelect: (editor, { insertOrReplaceInline }) => {
+        insertOrReplaceInline(editor, {
           type: ENTITY_LINK_TYPE,
           entityId: '',
           children: [{ text: '' }]

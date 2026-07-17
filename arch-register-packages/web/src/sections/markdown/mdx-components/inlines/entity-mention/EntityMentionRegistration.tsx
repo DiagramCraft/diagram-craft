@@ -26,8 +26,8 @@ export const entityMentionSpec = defineMdxComponent<
       description: 'Mention an entity with live name and status',
       icon: <TbAt size={14} />,
       keywords: ['mention', 'entity', '@', 'reference', 'link'],
-      onSelect: editor => {
-        editor.tf.insertNodes({
+      onSelect: (editor, { insertOrReplaceInline }) => {
+        insertOrReplaceInline(editor, {
           type: ENTITY_MENTION_TYPE,
           entityId: '',
           children: [{ text: '' }]
