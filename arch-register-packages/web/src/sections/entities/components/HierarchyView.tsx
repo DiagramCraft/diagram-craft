@@ -1,7 +1,6 @@
-import { useMemo, useCallback, useRef } from 'react';
+import { useMemo, useCallback } from 'react';
 import styles from './HierarchyView.module.css';
 import { TbChevronDown } from 'react-icons/tb';
-import { Popover } from '@diagram-craft/app-components/Popover';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord, TreeNode } from '@arch-register/api-types/entityContract';
@@ -16,14 +15,14 @@ import {
   type EntityDisplayField
 } from './entityDisplayFields';
 import { normalizeViewConfig } from './entityViewConfig';
-import { TooltipRow } from './entityTooltipParts';
+import { HoverCard } from '../../../components/HoverCard';
+import { EntityHoverCardBody } from '../../../components/EntityHoverCardBody';
 import {
   buildHierarchyTreeIndex,
   getChildSchemas,
   getHierarchyChildren,
   sortHierarchyNodes
 } from './hierarchyViewState';
-import { useDelayedDisclosure } from '../../../hooks/useDelayedDisclosure';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -69,9 +68,6 @@ const DEFAULT_CONFIG: HierarchyConfig = {
   fieldIds: undefined
 };
 
-const OPEN_DELAY_MS = 250;
-const CLOSE_DELAY_MS = 120;
-
 const nodeName = (n: TreeNode) => n._name || n._slug;
 
 // ── EntityTooltip ─────────────────────────────────────────────────────────────
@@ -93,88 +89,33 @@ const EntityTooltip = ({
   displayFields: EntityDisplayField[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
 }) => {
-  const anchorRef = useRef<HTMLSpanElement | null>(null);
-  const { open, setOpen, scheduleOpen, scheduleClose } = useDelayedDisclosure(
-    OPEN_DELAY_MS,
-    CLOSE_DELAY_MS
-  );
+  const rows = displayFields
+    .filter(f => f.id !== '_description' && f.id !== '_tags')
+    .map(option => {
+      const field = findEntityDisplayField(option.id, node, schemaMap, displayFields);
+      const value = field ? formatEntityDisplayValue(node as EntityRecord, field) : null;
+      return value == null ? null : { label: field!.label, value };
+    })
+    .filter((row): row is { label: string; value: string } => row !== null);
 
   return (
-    <>
-      <span
-        ref={anchorRef}
-        className={styles.tooltipAnchor}
-        onMouseEnter={scheduleOpen}
-        onMouseLeave={scheduleClose}
-        onFocus={scheduleOpen}
-        onBlur={scheduleClose}
-      >
-        {children}
-      </span>
-      <Popover.Root open={open} onOpenChange={setOpen}>
-        <Popover.Content
-          anchor={anchorRef}
-          side="top"
-          align="start"
-          sideOffset={6}
-          arrow={false}
-          focus={false}
-          closeButton={false}
-          className={styles.tooltipPanel}
-          collisionAvoidance={{ side: 'flip', align: 'shift', fallbackAxisSide: 'none' }}
-        >
-          <div
-            className={styles.tooltipBody}
-            onMouseEnter={scheduleOpen}
-            onMouseLeave={scheduleClose}
-          >
-            <h4
-              className={styles.tooltipTitle}
-              style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
-            >
-              {nodeName(node)}
-            </h4>
-
-            {displayFields.some(f => f.id === '_description') && node._description && (
-              <p className={styles.tooltipDesc}>{node._description}</p>
-            )}
-
-            <div className={styles.tooltipRows}>
-              <TooltipRow
-                label="Type"
-                value={
-                  <>
-                    <span className={styles.tooltipDot} style={{ background: color }} />
-                    {schemaName}
-                  </>
-                }
-              />
-              {displayFields
-                .filter(f => f.id !== '_description' && f.id !== '_tags')
-                .map(option => {
-                  const field = findEntityDisplayField(option.id, node, schemaMap, displayFields);
-                  const value = field
-                    ? formatEntityDisplayValue(node as EntityRecord, field)
-                    : null;
-                  return value == null ? null : (
-                    <TooltipRow key={option.id} label={field!.label} value={value} />
-                  );
-                })}
-            </div>
-
-            {displayFields.some(f => f.id === '_tags') && node._tags.length > 0 && (
-              <div className={styles.tooltipTags}>
-                {node._tags.map(tag => (
-                  <span key={tag} className={styles.tooltipTag}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </Popover.Content>
-      </Popover.Root>
-    </>
+    <HoverCard
+      anchorClassName={styles.tooltipAnchor}
+      sideOffset={6}
+      content={
+        <EntityHoverCardBody
+          name={nodeName(node)}
+          description={displayFields.some(f => f.id === '_description') ? node._description : null}
+          schemaName={schemaName}
+          schemaColor={color}
+          tags={displayFields.some(f => f.id === '_tags') ? node._tags : undefined}
+          rows={rows}
+          titleStyle={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+        />
+      }
+    >
+      {children}
+    </HoverCard>
   );
 };
 
