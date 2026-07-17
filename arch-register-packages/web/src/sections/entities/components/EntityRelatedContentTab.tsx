@@ -116,9 +116,7 @@ export const EntityRelatedContentTab = ({
                       item.scope === 'project'
                         ? projectMarkdownRoute(
                             workspaceId,
-                            asProjectPublicId(
-                              item.file.project_public_id ?? item.file.project_id!
-                            ),
+                            asProjectPublicId(item.file.project_public_id ?? item.file.project_id!),
                             item.file.id,
                             { mode: 'preview' }
                           )

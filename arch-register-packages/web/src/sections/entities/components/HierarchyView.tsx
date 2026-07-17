@@ -105,9 +105,7 @@ const EntityTooltip = ({
       content={
         <EntityHoverCardBody
           name={nodeName(node)}
-          description={
-            displayFields.some(f => f.id === '_description') ? node._description : null
-          }
+          description={displayFields.some(f => f.id === '_description') ? node._description : null}
           schemaName={schemaName}
           schemaColor={color}
           tags={displayFields.some(f => f.id === '_tags') ? node._tags : undefined}

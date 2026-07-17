@@ -7,7 +7,13 @@ import styles from './HoverCardParts.module.css';
  * diagram, and any hover/pin tooltip that needs the same leaf-level markup).
  */
 
-export const HoverCardTitle = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
+export const HoverCardTitle = ({
+  children,
+  style
+}: {
+  children: ReactNode;
+  style?: CSSProperties;
+}) => (
   <h4 className={styles.title} style={style}>
     {children}
   </h4>

@@ -52,7 +52,9 @@ export const EntityHoverCardBody = ({
             }
           />
         ) : null}
-        {rows?.map((row, i) => <TooltipRow key={i} label={row.label} value={row.value} />)}
+        {rows?.map((row, i) => (
+          <TooltipRow key={i} label={row.label} value={row.value} />
+        ))}
       </HoverCardRows>
     ) : null}
 
