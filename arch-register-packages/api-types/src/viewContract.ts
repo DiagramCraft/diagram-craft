@@ -5,7 +5,7 @@ import { ws, wsAndUUID } from '@arch-register/api-types/common';
 // ── Shared sub-schemas ────────────────────────────────────────
 
 export const browserViewSchema = z
-  .enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix', 'hierarchy', 'explore', 'bubble'])
+  .enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix', 'explore', 'bubble', 'map'])
   .describe('Available view modes for displaying entities');
 
 export const filterConditionSchema = z.object({
@@ -106,9 +106,9 @@ export const tableViewConfigSchema = z.object(fieldDisplayConfigShape);
 export const cardsViewConfigSchema = z.object(fieldDisplayConfigShape);
 export const treeViewConfigSchema = z.object(fieldDisplayConfigShape);
 
-export const hierarchyViewConfigSchema = z.object({
+export const mapViewConfigSchema = z.object({
   ...fieldDisplayConfigShape,
-  levels: z.number().int().min(1).max(3).default(2).describe('Number of hierarchy levels (1-3)'),
+  levels: z.number().int().min(1).max(3).default(2).describe('Number of map levels (1-3)'),
   level1SchemaId: z.string().nullable().default(null).describe('Schema identifier for level 1'),
   level1Columns: z
     .number()
@@ -132,7 +132,12 @@ export const hierarchyViewConfigSchema = z.object({
     .min(1)
     .max(4)
     .optional()
-    .describe('Number of columns for level 3 (1-4)')
+    .describe('Number of columns for level 3 (1-4)'),
+  metricConfig: z
+    .unknown()
+    .nullable()
+    .optional()
+    .describe('Metric roll-up configuration applied to box coloring')
 });
 
 export const exploreViewConfigSchema = z.object({
@@ -163,9 +168,9 @@ const viewConfigSchema = z
     radar: radarViewConfigSchema.optional().describe('Configuration for radar view'),
     timeline: timelineViewConfigSchema.optional().describe('Configuration for timeline view'),
     matrix: matrixViewConfigSchema.optional().describe('Configuration for matrix view'),
-    hierarchy: hierarchyViewConfigSchema.optional().describe('Configuration for hierarchy view'),
     explore: exploreViewConfigSchema.optional().describe('Configuration for explore view'),
-    bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view')
+    bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view'),
+    map: mapViewConfigSchema.optional().describe('Configuration for map view')
   })
   .nullable()
   .describe('View-specific configuration (only one view type should be configured)');
@@ -405,11 +410,11 @@ export type TableViewConfig = z.infer<typeof tableViewConfigSchema>;
 export type CardsViewConfig = z.infer<typeof cardsViewConfigSchema>;
 export type TreeViewConfig = z.infer<typeof treeViewConfigSchema>;
 
-export type HierarchyViewConfig = z.infer<typeof hierarchyViewConfigSchema>;
-
 export type ExploreViewConfig = z.infer<typeof exploreViewConfigSchema>;
 
 export type BubbleViewConfig = z.infer<typeof bubbleViewConfigSchema>;
+
+export type MapViewConfig = z.infer<typeof mapViewConfigSchema>;
 
 export type SavedView = z.infer<typeof savedViewSchema>;
 

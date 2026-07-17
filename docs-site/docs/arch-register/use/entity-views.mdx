@@ -109,6 +109,16 @@ Use explore when you need to navigate from one entity set into related records w
   }}
 />
 
+## Map
+
+Use map when you want a three-level containment map of your entities, with each box colored by a single configurable
+metric. Pick a schema for each of up to three levels along containment relationships, then choose a metric — a
+numeric field, lifecycle state, or a joined assessment's rating/enum fields — and an aggregation (count, sum,
+average, minimum, maximum, or worst) to roll up over each box's descendants. Numeric metrics render as a colour
+gradient normalized across the visible boxes; lifecycle metrics use the workspace's lifecycle colours; enum-based
+metrics use the dominant option among descendants, with the full distribution available in the tooltip. Click a box
+to focus the map on that entity and drill into its descendants; use the breadcrumb to navigate back up.
+
 ## Related Pages
 
 - [Entities](entities)

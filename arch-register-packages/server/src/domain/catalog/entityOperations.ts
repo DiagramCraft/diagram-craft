@@ -87,7 +87,7 @@ const attachProjectLink = (
  * Resolves the joined assessment's bulk response map when the query includes assessment
  * conditions. Exactly one `listAssessmentResponses` call per request — never per-entity.
  */
-const resolveJoinedAssessment = async (
+export const resolveJoinedAssessment = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,

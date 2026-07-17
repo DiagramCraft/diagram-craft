@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { BubbleView } from './BubbleView';
 import { CardsView } from './CardsView';
 import { ExploreView } from './ExploreView';
-import { HierarchyView } from './HierarchyView';
+import { MapView } from './MapView';
 import { MatrixView } from './MatrixView';
 import { RadarView } from './RadarView';
 import { TableView, type TableViewProps } from './TableView';
@@ -112,9 +112,9 @@ export const EntityBrowserView = ({
   const onSelectAll = mode.kind === 'interactive' ? mode.onSelectAll : undefined;
   const onSelectRow = mode.kind === 'interactive' ? mode.onSelectRow : undefined;
   switch (view) {
-    case 'hierarchy':
+    case 'map':
       return (
-        <HierarchyView
+        <MapView
           workspaceId={workspaceId}
           projectId={projectId}
           projectScope={projectScope}
@@ -128,6 +128,9 @@ export const EntityBrowserView = ({
           linkedEntityIds={linkedEntityIds}
           hideToolbar={hideToolbar}
           displayFields={displayFields}
+          lifecycleStates={lifecycleStates}
+          joinAssessmentId={joinAssessmentId}
+          joinedAssessment={joinedAssessment}
         />
       );
     case 'explore':

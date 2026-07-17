@@ -25,7 +25,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
 
   const config = useMemo(() => decodeEntityBrowserEmbedConfig(rawConfig), [rawConfig]);
 
-  const isTreeBased = config?.view === 'tree' || config?.view === 'hierarchy';
+  const isTreeBased = config?.view === 'tree' || config?.view === 'map';
 
   const typeFilter = config ? getFilterValue(config.conditions, '_schemaId') : null;
   const ownerFilter = config ? getFilterValue(config.conditions, '_owner') : null;

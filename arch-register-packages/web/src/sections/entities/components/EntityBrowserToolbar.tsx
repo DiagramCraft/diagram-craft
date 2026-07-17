@@ -161,8 +161,8 @@ export const EntityBrowserToolbar = ({
             { value: 'bubble', label: 'Bubble' },
             { value: 'timeline', label: 'Timeline' },
             { value: 'matrix', label: 'Matrix' },
-            { value: 'hierarchy', label: 'Hierarchy' },
-            { value: 'explore', label: 'Explore' }
+            { value: 'explore', label: 'Explore' },
+            { value: 'map', label: 'Map' }
           ]
         }
       />
