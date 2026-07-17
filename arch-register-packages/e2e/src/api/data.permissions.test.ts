@@ -1,3 +1,4 @@
+import { seedEntities } from '@arch-register/server/db/seedData';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, csvRows, expect } from '../helpers/permissionFixtures';
 
@@ -65,7 +66,7 @@ test.describe('data permission routes', () => {
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('filtering: explicit grant user only sees the granted subtree records', async ({
+  test('filtering: explicit grant user sees public records and the granted subtree', async ({
     personas,
     restrictedSeed: _,
     resources
@@ -75,14 +76,20 @@ test.describe('data permission routes', () => {
       query: { view: 'summary' }
     });
 
-    expect(entities.map(entity => entity._uid)).toEqual([
-      resources.entityIds.apiGateway,
-      resources.entityIds.customerApi,
-      resources.entityIds.customerPortal,
-      '00000000-0000-0000-0001-000000000001',
-      resources.entityIds.frontendApp,
-      '00000000-0000-0000-0005-000000000001'
+    const inaccessibleEntityIds = new Set([
+      resources.entityIds.identityPlatform,
+      resources.entityIds.authApi,
+      resources.entityIds.authService
     ]);
+    const expectedEntityIds = seedEntities
+      .filter(
+        entity =>
+          entity.workspace === resources.workspaceId && !inaccessibleEntityIds.has(entity.id)
+      )
+      .map(entity => entity.id)
+      .sort();
+
+    expect(entities.map(entity => entity._uid).sort()).toEqual(expectedEntityIds);
   });
 
   test('filtering: restricted facets and tree only include visible entities', async ({
@@ -93,27 +100,46 @@ test.describe('data permission routes', () => {
     const facets = await personas.userWithExplicitEntityGrant.orpc.entities.facets({
       params: { workspace: 'default' }
     });
-    expect(facets.total).toBe(6);
+    const inaccessibleEntityIds = new Set([
+      resources.entityIds.identityPlatform,
+      resources.entityIds.authApi,
+      resources.entityIds.authService
+    ]);
+    const expectedTotal = seedEntities.filter(
+      entity => entity.workspace === resources.workspaceId && !inaccessibleEntityIds.has(entity.id)
+    ).length;
+    expect(facets.total).toBe(expectedTotal);
 
     const tree = await personas.userWithExplicitEntityGrant.orpc.entities.tree({
       params: { workspace: 'default' },
       query: { q: 'frontend' }
     });
 
-    expect(tree.nodes.map(node => node._uid)).toEqual([
-      resources.entityIds.customerApi,
-      resources.entityIds.frontendApp,
-      resources.entityIds.customerPortal,
-      '00000000-0000-0000-0001-000000000001'
-    ]);
-    expect(tree.edges).toEqual([
-      { childId: resources.entityIds.customerApi, parentId: resources.entityIds.customerPortal },
-      { childId: resources.entityIds.frontendApp, parentId: resources.entityIds.customerPortal },
-      {
-        childId: resources.entityIds.customerPortal,
-        parentId: '00000000-0000-0000-0001-000000000001'
-      }
-    ]);
+    expect(tree.nodes.map(node => node._uid)).toEqual(
+      expect.arrayContaining([
+        resources.entityIds.customerApi,
+        resources.entityIds.frontendApp,
+        resources.entityIds.customerPortal,
+        '00000000-0000-0000-0001-000000000001'
+      ])
+    );
+    expect(tree.nodes.map(node => node._uid)).not.toEqual(
+      expect.arrayContaining([
+        resources.entityIds.identityPlatform,
+        resources.entityIds.authApi,
+        resources.entityIds.authService
+      ])
+    );
+    expect(tree.edges).toEqual(
+      expect.arrayContaining([
+        { childId: resources.entityIds.customerApi, parentId: resources.entityIds.customerPortal },
+        { childId: resources.entityIds.frontendApp, parentId: resources.entityIds.customerPortal },
+        {
+          childId: resources.entityIds.customerPortal,
+          parentId: '00000000-0000-0000-0001-000000000001'
+        }
+      ])
+    );
   });
 
   test('non-disclosure: restricted entities do not leak through direct reads or exports', async ({

@@ -1,4 +1,20 @@
-import { seededEntities } from '@arch-register/server/db/seedFixtures';
+import { seedEntities } from '@arch-register/server/db/seedData';
+import {
+  seededEntities,
+  seededSchemas,
+  seededWorkspaces
+} from '@arch-register/server/db/seedFixtures';
+
+export const seededApiEntityCount = seedEntities.filter(
+  entity =>
+    entity.workspace === seededWorkspaces.default.id &&
+    entity.schema_id === seededSchemas.default.api.id
+).length;
+
+export const seededApiSearchResultCount = seedEntities.filter(
+  entity =>
+    entity.workspace === seededWorkspaces.default.id && entity.name.toLowerCase().includes('api')
+).length;
 
 export const customerApiEntity = {
   id: seededEntities.default.customerApi.id,

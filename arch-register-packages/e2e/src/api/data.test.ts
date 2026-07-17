@@ -679,8 +679,16 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { _schemaId: componentSchemaId, conditions }
     });
-    expect(body).toHaveLength(1);
-    expect(body[0]).toMatchObject({ _name: 'Auth Service' });
+    const expectedNames = seedEntities
+      .filter(
+        entity =>
+          entity.workspace === seedIds.workspace.default &&
+          entity.schema_id === componentSchemaId &&
+          entity.lifecycle === seedIds.lifecycle.experimental
+      )
+      .map(entity => entity.name)
+      .sort();
+    expect(body.map(entity => entity._name).sort()).toEqual(expectedNames);
   });
 
   test('GET /api/:workspace/data filters by conditions _lifecycle empty', async ({

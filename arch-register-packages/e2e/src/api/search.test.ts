@@ -230,6 +230,13 @@ test.describe('search routes', () => {
         _name: 'Frontend App',
         matchedFields: ['technology'],
         matchedMetadata: expect.arrayContaining(['description', 'tags'])
+      }),
+      expect.objectContaining({
+        entityId: '00000000-0000-0000-0003-000000000008',
+        schemaName: 'Component',
+        _name: 'Reporting Dashboard',
+        matchedFields: ['technology'],
+        matchedMetadata: ['tags']
       })
     ]);
   });
