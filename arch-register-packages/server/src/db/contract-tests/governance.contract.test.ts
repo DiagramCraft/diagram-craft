@@ -231,13 +231,14 @@ runContractSuiteAgainstBothDrivers('GovernanceDatabase', getDb => {
       });
 
       await db.governance.completeAssignmentIfOpen(decided.id, new Date());
-      await db.governance.supersedeOpenSiblingAssignments(
+      const supersededIds = await db.governance.supersedeOpenSiblingAssignments(
         caseRow.id,
         'approve',
         decided.id,
         new Date()
       );
 
+      expect(supersededIds).toEqual([sibling.id]);
       expect((await db.governance.getAssignment(sibling.id))?.status).toBe('superseded');
       expect((await db.governance.getAssignment(unrelatedAction.id))?.status).toBe('open');
     });
@@ -272,8 +273,12 @@ runContractSuiteAgainstBothDrivers('GovernanceDatabase', getDb => {
         created_at: new Date()
       });
 
-      await db.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, new Date());
+      const supersededIds = await db.governance.supersedeAllOpenAssignmentsForCase(
+        caseRow.id,
+        new Date()
+      );
 
+      expect(supersededIds.sort()).toEqual([approve.id, acknowledge.id].sort());
       expect((await db.governance.getAssignment(approve.id))?.status).toBe('superseded');
       expect((await db.governance.getAssignment(acknowledge.id))?.status).toBe('superseded');
     });

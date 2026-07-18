@@ -20,8 +20,7 @@ import {
   TbUser,
   TbBell,
   TbMessageCircle,
-  TbX,
-  TbClipboardCheck
+  TbX
 } from 'react-icons/tb';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '../auth/AuthContext';
@@ -37,7 +36,6 @@ import {
   useNotifications,
   useWatchedEntities
 } from '../hooks/useNotifications';
-import { useGovernanceTaskCount } from '../hooks/useGovernance';
 import { useDiscussionSummary } from '../hooks/useDiscussions';
 import { formatRelativeTime } from '../utils/dateFormat';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
@@ -159,7 +157,6 @@ export const TopBar = ({
       </div>
       <div className={styles.right}>
         <DiscussionsMenu workspaceSlug={workspaceSlug} />
-        <GovernanceMenu workspaceSlug={workspaceSlug} />
         <NotificationMenu workspaceSlug={workspaceSlug} />
         <AccountMenu />
       </div>
@@ -584,66 +581,60 @@ const NotificationList = ({
 
   return (
     <div className={styles.notificationList}>
-      {notifications.map(item => (
-        <button
-          key={item.id}
-          type="button"
-          className={`${styles.notificationRow} ${item.read_at == null ? styles.notificationRowUnread : ''}`}
-          aria-label={`Notification: ${item.entity_name}`}
-          onClick={() => {
-            if (item.category === 'action' || item.case_id) {
-              onClear(item.id);
-              onOpenGovernance();
-            } else if (item.operation !== 'delete') onOpenEntity(item.entity_public_id);
-          }}
-        >
-          <div className={styles.notifDot} />
-          <div className={styles.notificationRowMain}>
-            <div className={styles.notificationEntity}>{item.title ?? item.entity_name}</div>
-            <div className={styles.notificationMeta}>
-              <span>{item.message ?? item.changed_by_display_name}</span>
-              <span className={styles.notificationSep}>·</span>
-              <span className={styles.notificationOp}>{item.event_type ?? item.operation}</span>
-            </div>
-          </div>
-          <div className={styles.notificationWhen}>{formatRelativeTime(item.timestamp)}</div>
-          <button
-            type="button"
-            className={styles.notificationClear}
-            aria-label={`Clear notification for ${item.entity_name}`}
-            title={`Clear notification for ${item.entity_name}`}
-            onClick={event => {
-              event.stopPropagation();
-              onClear(item.id);
+      {notifications.map(item => {
+        const openNotification = () => {
+          if (item.category === 'action' || item.case_id) {
+            onClear(item.id);
+            onOpenGovernance();
+          } else if (item.operation !== 'delete') onOpenEntity(item.entity_public_id);
+        };
+        return (
+          // biome-ignore lint/a11y/useSemanticElements: row wraps an interactive clear button; a nested <button> would be invalid HTML
+          <div
+            key={item.id}
+            role="button"
+            tabIndex={0}
+            className={`${styles.notificationRow} ${item.read_at == null ? styles.notificationRowUnread : ''}`}
+            aria-label={`Notification: ${item.entity_name}`}
+            onClick={openNotification}
+            onKeyDown={event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openNotification();
+              }
             }}
           >
-            <TbX size={12} />
-            <span className={styles.srOnly}>
-              {isClearing && clearingId === item.id ? 'Clearing' : 'Clear notification'}
-            </span>
-          </button>
-        </button>
-      ))}
+            <div
+              className={`${styles.notifDot} ${item.read_at != null ? styles.notifDotRead : ''}`}
+            />
+            <div className={styles.notificationRowMain}>
+              <div className={styles.notificationEntity}>{item.title ?? item.entity_name}</div>
+              <div className={styles.notificationMeta}>
+                <span>{item.message ?? item.changed_by_display_name}</span>
+                <span className={styles.notificationSep}>·</span>
+                <span className={styles.notificationOp}>{item.event_type ?? item.operation}</span>
+              </div>
+            </div>
+            <div className={styles.notificationWhen}>{formatRelativeTime(item.timestamp)}</div>
+            <button
+              type="button"
+              className={styles.notificationClear}
+              aria-label={`Clear notification for ${item.entity_name}`}
+              title={`Clear notification for ${item.entity_name}`}
+              onClick={event => {
+                event.stopPropagation();
+                onClear(item.id);
+              }}
+            >
+              <TbX size={12} />
+              <span className={styles.srOnly}>
+                {isClearing && clearingId === item.id ? 'Clearing' : 'Clear notification'}
+              </span>
+            </button>
+          </div>
+        );
+      })}
     </div>
-  );
-};
-
-const GovernanceMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
-  const navigate = useNavigate();
-  const { data } = useGovernanceTaskCount(workspaceSlug, !!workspaceSlug);
-  const count = data?.count ?? 0;
-
-  return (
-    <button
-      type="button"
-      className={styles.notificationTrigger}
-      aria-label="My work"
-      title="My work"
-      onClick={() => navigate({ to: '/$workspaceSlug/governance', params: { workspaceSlug } })}
-    >
-      <TbClipboardCheck size={15} />
-      {count > 0 && <span className={styles.notificationBadge}>{count > 9 ? '9+' : count}</span>}
-    </button>
   );
 };
 
@@ -672,12 +663,20 @@ const WatchingList = ({
   return (
     <div className={styles.notificationList}>
       {watched.map(item => (
-        <button
+        // biome-ignore lint/a11y/useSemanticElements: row wraps an interactive unwatch button; a nested <button> would be invalid HTML
+        <div
           key={item.entity_id}
-          type="button"
+          role="button"
+          tabIndex={0}
           className={styles.notificationRow}
           aria-label={`Watching: ${item.entity_name}`}
           onClick={() => onOpenEntity(item.entity_public_id)}
+          onKeyDown={event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onOpenEntity(item.entity_public_id);
+            }
+          }}
         >
           <div className={styles.notificationRowMain}>
             <div className={styles.notificationEntity}>{item.entity_name}</div>
@@ -699,7 +698,7 @@ const WatchingList = ({
           >
             <TbBell size={12} />
           </button>
-        </button>
+        </div>
       ))}
     </div>
   );

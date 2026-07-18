@@ -15,6 +15,7 @@ import { useEnums } from '../hooks/useEnums';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
 import { useAiConfig } from '../hooks/useAiConfig';
+import { useGovernanceTaskCount } from '../hooks/useGovernance';
 import { useWorkspacePermissions } from '../auth/useWorkspacePermissions';
 import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
@@ -168,12 +169,22 @@ export const WorkspaceLayout = () => {
     });
   }, [navigate, workspaceSlug]);
 
+  const { data: governanceTaskCount } = useGovernanceTaskCount(workspaceSlug, !!workspaceSlug);
+
   const visibleRailItems = useMemo(() => {
     const aiEnabled = aiConfig?.enabled === true;
+    const count = governanceTaskCount?.count ?? 0;
     return ALL_RAIL_ITEMS.filter(
       item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract')
+    ).map(item =>
+      item.id === 'governance' && count > 0
+        ? {
+            ...item,
+            extra: <span className={styles.railBadge}>{count > 9 ? '9+' : count}</span>
+          }
+        : item
     );
-  }, [aiConfig?.enabled]);
+  }, [aiConfig?.enabled, governanceTaskCount?.count]);
 
   const contextValue = useMemo(
     () => ({

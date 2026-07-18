@@ -125,8 +125,23 @@ const makeGovernanceDouble = (
       assignments.set(id, updated);
       return updated;
     }),
-    supersedeOpenSiblingAssignments: vi.fn(async () => {}),
-    supersedeAllOpenAssignmentsForCase: vi.fn(async () => {}),
+    supersedeOpenSiblingAssignments: vi.fn(
+      async (caseId: string, action: string, decidedAssignmentId: string) =>
+        [...assignments.values()]
+          .filter(
+            a =>
+              a.case_id === caseId &&
+              a.action === action &&
+              a.id !== decidedAssignmentId &&
+              a.status === 'open'
+          )
+          .map(a => a.id)
+    ),
+    supersedeAllOpenAssignmentsForCase: vi.fn(async (caseId: string) =>
+      [...assignments.values()]
+        .filter(a => a.case_id === caseId && a.status === 'open')
+        .map(a => a.id)
+    ),
     completeCaseIfOpen: vi.fn(async (id: string, outcome: string | null, completedAt: Date) => {
       const existing = cases.get(id);
       if (!existing || existing.status !== 'open') return null;
@@ -178,6 +193,10 @@ const makeDb = (governance: ReturnType<typeof makeGovernanceDouble>): DatabaseAd
   ({
     catalog: {},
     governance,
+    notification: {
+      markReadByAssignmentIds: vi.fn(async () => 0),
+      markReadByCaseIds: vi.fn(async () => 0)
+    },
     core: {
       driver: 'sqlite' as const,
       transaction: async (callback: (db: DatabaseAdapter) => Promise<unknown>) => {

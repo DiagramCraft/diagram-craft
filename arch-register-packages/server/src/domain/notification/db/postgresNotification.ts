@@ -51,6 +51,34 @@ export class PostgresNotificationDatabase
     }
   }
 
+  async markReadByAssignmentIds(assignmentIds: string[], readAt: Date) {
+    if (assignmentIds.length === 0) return 0;
+    try {
+      const rows = await this.sql<{ id: string }[]>`
+        UPDATE user_inbox_notification SET read_at = ${readAt}
+        WHERE assignment_id = ANY(${assignmentIds}) AND read_at IS NULL
+        RETURNING id
+      `;
+      return rows.length;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async markReadByCaseIds(caseIds: string[], readAt: Date) {
+    if (caseIds.length === 0) return 0;
+    try {
+      const rows = await this.sql<{ id: string }[]>`
+        UPDATE user_inbox_notification SET read_at = ${readAt}
+        WHERE case_id = ANY(${caseIds}) AND read_at IS NULL
+        RETURNING id
+      `;
+      return rows.length;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async createNotification(input: InboxNotificationDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`

@@ -187,6 +187,34 @@ export const recordGovernanceEvent = async (
 };
 
 /**
+ * Marks any unread notifications tied to the given (now resolved) assignments as read, so a
+ * user's notification clears the moment their action item is decided or superseded, rather than
+ * only when they happen to open the bell and click it themselves.
+ */
+export const resolveAssignmentNotifications = async (
+  tx: DatabaseAdapter,
+  assignmentIds: string[],
+  resolvedAt: Date
+): Promise<void> => {
+  if (assignmentIds.length === 0) return;
+  await tx.notification.markReadByAssignmentIds(assignmentIds, resolvedAt);
+};
+
+/**
+ * Marks any unread notifications tied to the given (now completed or cancelled) governance case
+ * as read. Informational notifications (assigned, approved, rejected, etc.) carry a case_id but
+ * no assignment_id, so `resolveAssignmentNotifications` never reaches them — without this, they
+ * pile up unread for the life of the case even after every assignment is decided.
+ */
+export const resolveCaseNotifications = async (
+  tx: DatabaseAdapter,
+  caseId: string,
+  resolvedAt: Date
+): Promise<void> => {
+  await tx.notification.markReadByCaseIds([caseId], resolvedAt);
+};
+
+/**
  * A case is visible if the current user opened it, is eligible for one of its assignments, or
  * the owning case kind explicitly says the subject is visible to them. Defaults to invisible so
  * a case never leaks the existence of a subject the user otherwise cannot see.
@@ -533,7 +561,9 @@ export const cancelGovernanceCase = async (
       statusText: 'Conflict',
       message: 'Only open cases can be cancelled'
     });
-    await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+    const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+    await resolveAssignmentNotifications(tx, supersededIds, now);
+    await resolveCaseNotifications(tx, updated.id, now);
     await recordGovernanceEvent(tx, updated, {
       eventType: 'cancelled',
       actorUserId: userId,
@@ -623,7 +653,12 @@ export const decideGovernanceAssignment = async (
           statusText: 'Conflict',
           message: 'This governance case is no longer open'
         });
-        await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+        const staleSupersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+          caseRow.id,
+          now
+        );
+        await resolveAssignmentNotifications(tx, staleSupersededIds, now);
+        await resolveCaseNotifications(tx, cancelledCase.id, now);
         const staleEvent = await recordGovernanceEvent(tx, cancelledCase, {
           eventType: 'proposal_stale',
           actorUserId: userId,
@@ -649,15 +684,18 @@ export const decideGovernanceAssignment = async (
       message: 'This assignment has already been decided'
     });
 
+    await resolveAssignmentNotifications(tx, [completedAssignment.id], now);
+
     const isIndependentAssignment =
       config?.independentAssignmentActions?.has(assignment.action) ?? false;
     if (!isIndependentAssignment) {
-      await tx.governance.supersedeOpenSiblingAssignments(
+      const siblingSupersededIds = await tx.governance.supersedeOpenSiblingAssignments(
         caseRow.id,
         assignment.action,
         assignment.id,
         now
       );
+      await resolveAssignmentNotifications(tx, siblingSupersededIds, now);
     }
 
     let resultingCase = caseRow;
@@ -668,7 +706,12 @@ export const decideGovernanceAssignment = async (
         statusText: 'Conflict',
         message: 'This case has already been completed or cancelled'
       });
-      await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+      const caseSupersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+        caseRow.id,
+        now
+      );
+      await resolveAssignmentNotifications(tx, caseSupersededIds, now);
+      await resolveCaseNotifications(tx, completedCase.id, now);
       resultingCase = completedCase;
     }
 

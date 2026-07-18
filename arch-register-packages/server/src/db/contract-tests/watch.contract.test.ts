@@ -93,14 +93,14 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
         changedByDisplayName: actor.display_name
       });
 
-      const notificationsA = await db.watch.listNotifications(watcherA.id, workspace);
-      const notificationsB = await db.watch.listNotifications(watcherB.id, workspace);
-      const notificationsActor = await db.watch.listNotifications(actor.id, workspace);
+      const notificationsA = await db.notification.listNotifications(watcherA.id, workspace);
+      const notificationsB = await db.notification.listNotifications(watcherB.id, workspace);
+      const notificationsActor = await db.notification.listNotifications(actor.id, workspace);
 
       expect(notificationsA).toHaveLength(1);
       expect(notificationsB).toHaveLength(1);
       expect(notificationsActor).toHaveLength(0);
-      expect(notificationsA[0]!.entity_slug).toBe(entity.slug);
+      expect(notificationsA[0]!.presentation_metadata['entitySlug']).toBe(entity.slug);
     });
 
     it('falls back to entity_id for entity_slug when the audit log has no slug', async () => {
@@ -137,9 +137,9 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
         changedByDisplayName: actor.display_name
       });
 
-      const notifications = await db.watch.listNotifications(watcher.id, workspace);
+      const notifications = await db.notification.listNotifications(watcher.id, workspace);
       expect(notifications).toHaveLength(1);
-      expect(notifications[0]!.entity_slug).toBe(entity.id);
+      expect(notifications[0]!.presentation_metadata['entitySlug']).toBe(entity.id);
     });
 
     it('clears all notifications for a user', async () => {
@@ -175,9 +175,9 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
         changedByDisplayName: actor.display_name
       });
 
-      const cleared = await db.watch.clearNotifications(watcher.id, workspace);
+      const cleared = await db.notification.markAllRead(watcher.id, workspace, new Date());
       expect(cleared).toBe(1);
-      expect(await db.watch.listNotifications(watcher.id, workspace)).toHaveLength(0);
+      expect(await db.notification.countUnread(watcher.id, workspace)).toBe(0);
     });
   });
 });
