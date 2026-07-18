@@ -5,6 +5,7 @@ import type { CatalogDatabase, ViewDatabase } from '../domain/catalog/db/catalog
 import type { ProjectDatabase } from '../domain/project/db/projectDatabase';
 import type { WatchDatabase } from '../domain/watch/db/watchDatabase';
 import type { DiscussionDatabase } from '../domain/discussion/db/discussionDatabase';
+import type { WikiCommentDatabase } from '../domain/wikiComments/db/wikiCommentDatabase';
 import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase';
 import type { JobDatabase } from '../domain/jobs/jobsDatabase';
 import type { ExternalContentDatabase } from '../domain/external-content/db/externalContentDatabase';
@@ -35,6 +36,7 @@ export type DatabaseAdapter = {
   auth: AuthDatabase;
   ai: AiDatabase;
   discussion: DiscussionDatabase;
+  wikiComment: WikiCommentDatabase;
   jobs: JobDatabase;
   externalContent: ExternalContentDatabase;
   webhook: WebhookDatabase;
@@ -57,6 +59,11 @@ export type {
   DiscussionPostDbCreate,
   DiscussionPostDbResult
 } from '../domain/discussion/db/discussionDatabase';
+export type {
+  WikiCommentDatabase,
+  WikiCommentDbCreate,
+  WikiCommentDbResult
+} from '../domain/wikiComments/db/wikiCommentDatabase';
 export type {
   CatalogDatabase,
   ViewDatabase,

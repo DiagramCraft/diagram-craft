@@ -214,3 +214,19 @@
   border-top: 1px solid var(--panel-border);
   margin: 1.5em 0;
 }
+
+.articleTypography :global(mark[data-comment-id]) {
+  background: color-mix(in srgb, var(--accent-fg) 22%, transparent);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: pointer;
+}
+
+.articleTypography :global(mark.wiki-comment-mark-active) {
+  background: color-mix(in srgb, var(--accent-fg) 45%, transparent);
+}
+
+.articleTypography :global(mark.wiki-comment-mark-resolved) {
+  background: color-mix(in srgb, var(--cmp-fg-disabled) 25%, transparent);
+}

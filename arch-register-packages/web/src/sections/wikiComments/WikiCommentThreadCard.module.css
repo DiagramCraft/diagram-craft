@@ -1,0 +1,146 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--cmp-border);
+  background: var(--panel-bg);
+  font-size: 12px;
+  transition:
+    box-shadow 100ms,
+    border-color 100ms,
+    opacity 100ms;
+}
+
+.rootActive {
+  border-color: var(--accent-fg);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-fg) 20%, transparent);
+}
+
+.rootResolved {
+  opacity: 0.55;
+}
+
+.rootResolved:hover {
+  opacity: 0.85;
+}
+
+.quote {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--cmp-fg-disabled);
+  border-left: 2px solid var(--accent-fg);
+  padding-left: 8px;
+  cursor: pointer;
+}
+
+.quoteStale {
+  border-left-color: var(--danger, #c23b3b);
+}
+
+.staleBadge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--danger, #c23b3b);
+}
+
+.resolvedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--cmp-fg-disabled);
+}
+
+.post,
+.postReply {
+  display: flex;
+  gap: 8px;
+}
+
+.post + .post,
+.postReply + .postReply {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--cmp-border);
+}
+
+.postBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.postHead {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.postAuthor {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.postWhen,
+.postEdited {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+}
+
+.postText {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--cmp-fg);
+  white-space: pre-wrap;
+}
+
+.postActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 1px;
+}
+
+.textBtn,
+.textBtnDanger {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  cursor: pointer;
+}
+
+.textBtn:hover,
+.textBtnActive {
+  color: var(--accent-fg);
+}
+
+.textBtnDanger:hover {
+  color: var(--danger, #c23b3b);
+}
+
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 24px;
+  padding-left: 10px;
+  border-left: 1px solid var(--cmp-border);
+}
