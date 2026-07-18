@@ -5,11 +5,11 @@ import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   AttachEdgeContext,
-  CustomPropertyDefinition,
   NodeDefinition,
   NodeFlag,
   NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+} from '@diagram-craft/model/nodeDefinition';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';

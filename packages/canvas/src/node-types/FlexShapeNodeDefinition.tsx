@@ -1,6 +1,6 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
-import { NodeFlag, NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlag, NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';

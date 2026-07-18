@@ -37,7 +37,7 @@ import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { unique } from '@diagram-craft/utils/array';
 import type { ModificationLayer } from './diagramLayerModification';
 import { getAdjustments } from './diagramLayerUtils';
-import type { NodeDefinition } from './elementDefinitionRegistry';
+import type { NodeDefinition } from './nodeDefinition';
 import type { PropertyInfo } from './property';
 import {
   resolveEditProps,

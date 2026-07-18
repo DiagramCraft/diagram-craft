@@ -1,9 +1,6 @@
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  CustomPropertyDefinition,
-  NodeDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeDefinition, NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionMap } from '@diagram-craft/canvas/action';
 import {

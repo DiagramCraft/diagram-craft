@@ -6,11 +6,9 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import {
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry,
-  type Registry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { EdgeDefinitionRegistry } from '@diagram-craft/model/edgeDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
+import type { Registry } from '@diagram-craft/model/registry';
 import { AbstractEdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';

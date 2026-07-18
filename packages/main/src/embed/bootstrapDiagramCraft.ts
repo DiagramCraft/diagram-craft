@@ -6,10 +6,8 @@ import {
   makeDefaultDocumentFactory
 } from '@diagram-craft/model/diagramDocumentFactory';
 import type { DocumentFactory, DiagramFactory } from '@diagram-craft/model/diagramDocumentFactory';
-import type {
-  NodeDefinitionRegistry,
-  Registry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import type { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
+import type { Registry } from '@diagram-craft/model/registry';
 import { stencilLoaderRegistry } from '@diagram-craft/model/stencilRegistry';
 import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { AppConfig } from '../appConfig';

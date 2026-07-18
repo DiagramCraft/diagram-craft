@@ -8,10 +8,7 @@ import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomProperty, CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Box } from '@diagram-craft/geometry/box';
 

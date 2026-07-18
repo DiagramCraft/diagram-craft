@@ -1,4 +1,4 @@
-import type { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
 import { type ShapeParser, shapeParsers } from './drawioShapeParserRegistry';
 import { registerAzureShapes } from './shapes/azure';
 import {

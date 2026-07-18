@@ -15,7 +15,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
-import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { StencilUtils } from '@diagram-craft/model/stencilUtils';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { deepClone, deepMerge, isNonNullObj } from '@diagram-craft/utils/object';

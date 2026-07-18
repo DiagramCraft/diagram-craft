@@ -6,10 +6,7 @@ import { RawSegment } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefinition';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomProperty, CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
 import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';

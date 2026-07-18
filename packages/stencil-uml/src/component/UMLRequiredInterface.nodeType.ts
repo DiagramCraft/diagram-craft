@@ -11,10 +11,8 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 type RequiredInterfaceDirection = 'e' | 'se' | 's' | 'sw' | 'w' | 'nw' | 'n' | 'ne';

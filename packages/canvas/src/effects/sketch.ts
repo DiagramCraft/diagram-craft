@@ -17,7 +17,7 @@ import { round } from '@diagram-craft/utils/math';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { parseSvgPath } from '@diagram-craft/geometry/svgPathUtils';
 import type { ArrowShape } from '../arrowShapes';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 export class SketchPathRenderer implements PathRenderer {
   render(el: DiagramElement, path: StyledPath): RenderedStyledPath[] {

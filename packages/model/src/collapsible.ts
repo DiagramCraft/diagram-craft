@@ -4,7 +4,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
 import type { UnitOfWork } from './unitOfWork';
 import { EffectsRegistry } from './effect';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type CollapsibleProps = { collapsible?: boolean; mode?: string; bounds?: string };

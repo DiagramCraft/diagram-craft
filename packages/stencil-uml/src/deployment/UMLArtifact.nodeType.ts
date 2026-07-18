@@ -8,10 +8,8 @@ import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { _p } from '@diagram-craft/geometry/point';
-import {
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';

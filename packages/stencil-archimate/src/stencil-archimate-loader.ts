@@ -1,4 +1,4 @@
-import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';
 import archimateApplicationStencils from './archimate-application-stencils.yaml';

@@ -43,7 +43,7 @@ import {
   type Modification,
   ModificationLayer
 } from '@diagram-craft/model/diagramLayerModification';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import styles from './StructureTree.module.css';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';

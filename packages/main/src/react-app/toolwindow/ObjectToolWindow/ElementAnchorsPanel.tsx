@@ -23,7 +23,7 @@ import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import type { Property } from '@diagram-craft/model/property';
 import { assert } from '@diagram-craft/utils/assert';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type CustomAnchorsEditorProps = {

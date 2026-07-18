@@ -3,7 +3,7 @@ import type { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import type { DiagramElement, ElementPropsForRendering } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import {
   EdgeStylesheet,

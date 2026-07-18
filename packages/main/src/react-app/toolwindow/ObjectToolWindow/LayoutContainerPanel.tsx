@@ -8,7 +8,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TbArrowsHorizontal, TbArrowsVertical } from 'react-icons/tb';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const LayoutContainerPanel = (props: Props) => {

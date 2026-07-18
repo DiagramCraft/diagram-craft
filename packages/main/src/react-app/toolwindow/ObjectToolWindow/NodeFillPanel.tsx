@@ -5,7 +5,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../../application';
 import { FillPanelForm } from './FillPanel';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { range, unique } from '@diagram-craft/utils/array';
 import { makePropertyFromArray } from '@diagram-craft/model/property';
