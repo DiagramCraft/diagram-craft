@@ -6,6 +6,7 @@ import styles from './AiActionResultPanel.module.css';
 export const AiActionResultPanel = ({
   open,
   result,
+  streamingText,
   loading,
   errorMessage,
   onClose,
@@ -13,11 +14,14 @@ export const AiActionResultPanel = ({
 }: {
   open: boolean;
   result: RunAiActionResponse | null;
+  streamingText: string;
   loading: boolean;
   errorMessage: string | null;
   onClose: () => void;
   onContinueInConversation: (result: RunAiActionResponse) => void;
 }) => {
+  const displayText = result?.answer ?? streamingText;
+
   return (
     <Dialog
       open={open}
@@ -35,11 +39,11 @@ export const AiActionResultPanel = ({
       ]}
     >
       <div className={styles.body}>
-        {loading && <div className={styles.status}>Running…</div>}
+        {loading && displayText.length === 0 && <div className={styles.status}>Running…</div>}
         {!loading && errorMessage && <div className={styles.error}>{errorMessage}</div>}
-        {!loading && !errorMessage && result && (
+        {displayText.length > 0 && (
           <div className={styles.answer}>
-            <SafeMarkdown text={result.answer} />
+            <SafeMarkdown text={displayText} />
           </div>
         )}
       </div>

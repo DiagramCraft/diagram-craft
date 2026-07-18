@@ -57,7 +57,8 @@ import { downloadUrl } from '../../lib/browserDownload';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
 import { MarkdownPropertiesPanel, validateDocMetadata } from './MarkdownPropertiesPanel';
 import { ApiError } from '../../lib/http';
-import { useRunDocumentAiAction } from '../../hooks/useDocumentAiActions';
+import { runDocumentAiAction } from '../../hooks/useDocumentAiActions';
+import { useAiStatus } from '../../hooks/useAiConfig';
 import { useCreateConversation } from '../../hooks/useAiConversations';
 import { AiActionResultPanel } from './AiActionResultPanel';
 import { writeAiActionSeed } from '../../lib/aiActionSeed';
@@ -133,8 +134,8 @@ export const MarkdownEditorScreen = () => {
   const restoreMutation = useRestoreMarkdownRevision(contentScope, nodeId);
   const uploadAttachmentMutation = useUploadMarkdownAttachment(contentScope, nodeId);
   const deleteAttachmentMutation = useDeleteMarkdownAttachment(contentScope, nodeId);
-  const runAiActionMutation = useRunDocumentAiAction(workspaceSlug);
   const createConversationMutation = useCreateConversation(workspaceSlug);
+  const { data: aiStatus } = useAiStatus(workspaceSlug, !isDraft);
   const { file, parentLabel, renameFile, deleteFile } = useMarkdownDocumentScope({
     workspaceSlug,
     nodeId,
@@ -171,6 +172,7 @@ export const MarkdownEditorScreen = () => {
   const [attachmentDeleteTarget, setAttachmentDeleteTarget] = useState<ProjectFile | null>(null);
   const [runningAiActionId, setRunningAiActionId] = useState<string | null>(null);
   const [aiActionResult, setAiActionResult] = useState<RunAiActionResponse | null>(null);
+  const [aiActionStreamingText, setAiActionStreamingText] = useState('');
   const [aiActionError, setAiActionError] = useState<string | null>(null);
   const [aiActionPanelOpen, setAiActionPanelOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -639,9 +641,12 @@ export const MarkdownEditorScreen = () => {
       setRunningAiActionId(action.id);
       setAiActionError(null);
       setAiActionResult(null);
+      setAiActionStreamingText('');
       setAiActionPanelOpen(true);
       try {
-        const result = await runAiActionMutation.mutateAsync({ nodeId, actionId: action.id });
+        const result = await runDocumentAiAction(workspaceSlug, nodeId, action.id, delta =>
+          setAiActionStreamingText(current => current + delta)
+        );
         setAiActionResult(result);
       } catch (cause) {
         setAiActionError(cause instanceof Error ? cause.message : 'Failed to run AI action');
@@ -649,7 +654,7 @@ export const MarkdownEditorScreen = () => {
         setRunningAiActionId(null);
       }
     },
-    [nodeId, runAiActionMutation]
+    [nodeId, workspaceSlug]
   );
 
   const handleContinueInConversation = useCallback(
@@ -885,7 +890,9 @@ export const MarkdownEditorScreen = () => {
               showDiscussion={!isDraft}
               showBacklinks={!isDraft}
               commentsMode={commentsMode}
-              aiActions={!isDraft ? selectedDocumentType?.aiActions : undefined}
+              aiActions={
+                !isDraft && aiStatus?.configured ? selectedDocumentType?.aiActions : undefined
+              }
               runningAiActionId={runningAiActionId}
               onRunAiAction={handleRunAiAction}
               attachments={{
@@ -919,6 +926,7 @@ export const MarkdownEditorScreen = () => {
           <AiActionResultPanel
             open={aiActionPanelOpen}
             result={aiActionResult}
+            streamingText={aiActionStreamingText}
             loading={runningAiActionId !== null}
             errorMessage={aiActionError}
             onClose={() => setAiActionPanelOpen(false)}

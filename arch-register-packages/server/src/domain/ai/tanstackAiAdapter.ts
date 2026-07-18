@@ -22,6 +22,7 @@ export const resolveAiConfig = async (
   workspaceId: string
 ): Promise<EffectiveAiConfig | null> => {
   const wsConfig = await db.ai.getAiConfig(workspaceId);
+  if (wsConfig?.enabled === false) return null;
   const provider = (wsConfig?.provider ?? 'openrouter') as AiProvider;
 
   const apiKey = wsConfig?.api_key_enc

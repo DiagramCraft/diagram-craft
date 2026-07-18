@@ -1,4 +1,4 @@
-import { oc } from '@orpc/contract';
+import { oc, eventIterator } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
 import {
@@ -189,6 +189,13 @@ const runAiActionResponseSchema = z.object({
   documentTitle: z.string().describe('Title of the document the action was run against'),
   nodeId: z.string().describe('Markdown node identifier the action was run against')
 });
+
+const runAiActionEventSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('delta'), delta: z.string().describe('Incremental answer text') }),
+  runAiActionResponseSchema.extend({
+    type: z.literal('done').describe('Signals the run is complete with the full answer')
+  })
+]);
 
 const documentListQuerySchema = z.object({
   q: z.string().optional().describe('Search query string, matched against document title'),
@@ -1201,7 +1208,7 @@ export const projectContract = oc.tag('Projects').router({
         inputStructure: 'detailed',
         summary: 'Run an interactive AI action for a document',
         description:
-          'Runs a document type-defined interactive AI action against the current document body, metadata, document type, and location context, using read-only tools. Does not modify the document, its metadata, or any entities.',
+          'Runs a document type-defined interactive AI action against the current document body, metadata, document type, and location context, using read-only tools, and streams the answer as it is generated. Does not modify the document, its metadata, or any entities.',
         tags: ['Projects']
       })
       .input(
@@ -1212,7 +1219,7 @@ export const projectContract = oc.tag('Projects').router({
           })
         })
       )
-      .output(runAiActionResponseSchema),
+      .output(eventIterator(runAiActionEventSchema)),
     listDocuments: oc
       .route({
         method: 'GET',
@@ -1233,6 +1240,7 @@ export type ProjectFile = z.infer<typeof projectFileSchema>;
 export type ContentMetadata = z.infer<typeof contentMetadataSchema>;
 export type MarkdownContent = z.infer<typeof markdownContentSchema>;
 export type RunAiActionResponse = z.infer<typeof runAiActionResponseSchema>;
+export type RunAiActionEvent = z.infer<typeof runAiActionEventSchema>;
 export type MarkdownRevisionSummary = z.infer<typeof markdownRevisionSummarySchema>;
 export type MarkdownRevisionDetail = z.infer<typeof markdownRevisionDetailSchema>;
 export type FileTree = z.infer<typeof fileTreeSchema>;

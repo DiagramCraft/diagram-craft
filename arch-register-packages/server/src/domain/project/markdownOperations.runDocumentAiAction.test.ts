@@ -18,7 +18,10 @@ const { createAiChatTools } = vi.hoisted(() => ({
 }));
 
 const { chat } = vi.hoisted(() => ({
-  chat: vi.fn(async () => 'The answer.')
+  chat: vi.fn(async function* () {
+    yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'The ' };
+    yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'answer.' };
+  })
 }));
 
 vi.mock('../auth/authorization', () => ({
@@ -124,23 +127,30 @@ describe('runDocumentAiAction', () => {
     requireProjectAccess.mockReset().mockImplementation(() => undefined);
     resolveAiConfig.mockReset().mockResolvedValue({ temperature: 0.3 });
     createAiChatTools.mockClear();
-    chat.mockClear().mockResolvedValue('The answer.');
+    chat.mockClear();
   });
 
-  it('runs the action with read-only tools and returns the answer', async () => {
+  it('streams deltas followed by a done event with the full answer', async () => {
     const db = makeDb();
     const storage = makeStorage();
 
-    const result = await runDocumentAiAction(db, storage, 'ws-1', 'node-1', 'summarize', event);
+    const generator = await runDocumentAiAction(db, storage, 'ws-1', 'node-1', 'summarize', event);
+    const events = [];
+    for await (const event of generator) events.push(event);
 
-    expect(result).toEqual({
-      actionId: 'summarize',
-      actionName: 'Summarize',
-      prompt: 'Summarize.',
-      answer: 'The answer.',
-      documentTitle: 'Decision',
-      nodeId: 'node-1'
-    });
+    expect(events).toEqual([
+      { type: 'delta', delta: 'The ' },
+      { type: 'delta', delta: 'answer.' },
+      {
+        type: 'done',
+        actionId: 'summarize',
+        actionName: 'Summarize',
+        prompt: 'Summarize.',
+        answer: 'The answer.',
+        documentTitle: 'Decision',
+        nodeId: 'node-1'
+      }
+    ]);
     expect(createAiChatTools).toHaveBeenCalledWith(
       db,
       'ws-1',
@@ -149,7 +159,7 @@ describe('runDocumentAiAction', () => {
       { readOnly: true }
     );
     expect(chat).toHaveBeenCalledWith(
-      expect.objectContaining({ tools: ['read-only-tool'], stream: false })
+      expect.objectContaining({ tools: ['read-only-tool'], stream: true })
     );
   });
 

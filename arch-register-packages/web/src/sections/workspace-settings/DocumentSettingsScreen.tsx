@@ -40,6 +40,7 @@ import {
   useUpdateDocumentTemplate,
   useUpdateDocumentType
 } from '../../hooks/useDocuments';
+import { useAiStatus } from '../../hooks/useAiConfig';
 import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
 import { ICON_MAP } from '../../components/TypeBadge';
@@ -189,6 +190,7 @@ const DocumentTypeEditor = ({
   const updateType = useUpdateDocumentType(workspaceSlug);
   const archiveType = useArchiveDocumentType(workspaceSlug);
   const deleteType = useDeleteDocumentType(workspaceSlug);
+  const { data: aiStatus } = useAiStatus(workspaceSlug);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -483,37 +485,41 @@ const DocumentTypeEditor = ({
                 field will ask you to choose how to migrate its data before saving.
               </div>
 
-              <div className={styles.fieldsHead}>
-                <div className={styles.sectionLabel}>AI Actions</div>
-                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addAiAction}>
-                  Add AI action
-                </Button>
-              </div>
-
-              {aiActions.length > 0 ? (
-                <div className={styles.fieldsTable}>
-                  {aiActions.map(action => (
-                    <DocumentAiActionRow
-                      key={action.id}
-                      action={action}
-                      onUpdate={patch => updateAiAction(action.id, patch)}
-                      onRemove={() => removeAiAction(action.id)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.fieldsTable}>
-                  <div className={styles.fieldEmpty}>
-                    No AI actions defined yet. Click &quot;Add AI action&quot; to get started.
+              {aiStatus?.configured && (
+                <>
+                  <div className={styles.fieldsHead}>
+                    <div className={styles.sectionLabel}>AI Actions</div>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addAiAction}>
+                      Add AI action
+                    </Button>
                   </div>
-                </div>
+
+                  {aiActions.length > 0 ? (
+                    <div className={styles.fieldsTable}>
+                      {aiActions.map(action => (
+                        <DocumentAiActionRow
+                          key={action.id}
+                          action={action}
+                          onUpdate={patch => updateAiAction(action.id, patch)}
+                          onRemove={() => removeAiAction(action.id)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.fieldsTable}>
+                      <div className={styles.fieldEmpty}>
+                        No AI actions defined yet. Click &quot;Add AI action&quot; to get started.
+                      </div>
+                    </div>
+                  )}
+                  <div className={styles.fieldsHint}>
+                    <TbInfoCircle size={11} />
+                    Interactive AI actions run a predefined prompt against the document body,
+                    metadata, and location using read-only tools, and show the result in the
+                    document sidebar. They cannot modify entities, documents, or metadata.
+                  </div>
+                </>
               )}
-              <div className={styles.fieldsHint}>
-                <TbInfoCircle size={11} />
-                Interactive AI actions run a predefined prompt against the document body, metadata,
-                and location using read-only tools, and show the result in the document sidebar.
-                They cannot modify entities, documents, or metadata.
-              </div>
 
               <div className={styles.bottomActions}>
                 {selected && (

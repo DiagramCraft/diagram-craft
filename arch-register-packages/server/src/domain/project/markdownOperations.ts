@@ -33,7 +33,7 @@ import type {
   MarkdownRevisionDetail,
   MarkdownRevisionSummary,
   ProjectFile,
-  RunAiActionResponse
+  RunAiActionEvent
 } from '@arch-register/api-types/projectContract';
 import { chat } from '@tanstack/ai';
 import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';
@@ -626,7 +626,7 @@ export const runDocumentAiAction = async (
   nodeId: string,
   actionId: string,
   event: AuthenticatedEvent
-): Promise<RunAiActionResponse> => {
+): Promise<AsyncGenerator<RunAiActionEvent>> => {
   return defineOperation(
     db,
     workspace,
@@ -685,22 +685,37 @@ export const runDocumentAiAction = async (
         { readOnly: true }
       );
 
-      const answer = await chat({
+      const stream = chat({
         adapter,
         messages: [{ role: 'user', content: prompt }],
         tools,
         temperature: aiConfig.temperature,
-        stream: false
+        stream: true
       });
 
-      return {
-        actionId: action.id,
-        actionName: action.name,
-        prompt: action.prompt,
-        answer,
-        documentTitle: node.name,
-        nodeId: node.id
-      };
+      return (async function* runAndStreamAnswer(): AsyncGenerator<RunAiActionEvent> {
+        const capturedContent: string[] = [];
+        // biome-ignore lint/suspicious/noExplicitAny: Stream chunk type varies by AI provider implementation
+        for await (const chunk of stream as AsyncIterable<any>) {
+          if (
+            (chunk.type === 'TEXT_MESSAGE_CONTENT' || chunk.type === 'REASONING_MESSAGE_CONTENT') &&
+            chunk.delta
+          ) {
+            capturedContent.push(chunk.delta);
+            yield { type: 'delta', delta: chunk.delta };
+          }
+        }
+
+        yield {
+          type: 'done',
+          actionId: action.id,
+          actionName: action.name,
+          prompt: action.prompt,
+          answer: capturedContent.join(''),
+          documentTitle: node.name,
+          nodeId: node.id
+        };
+      })();
     }
   );
 };
