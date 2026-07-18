@@ -3,7 +3,10 @@ import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseN
 import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { AttachEdgeContext, NodeFlags } from '@diagram-craft/model/nodeDefinition';
-import { CustomPropertyDefinition, CustomPropertyDefinitionEntry } from '@diagram-craft/model/customProperty';
+import {
+  CustomPropertyDefinition,
+  CustomPropertyDefinitionEntry
+} from '@diagram-craft/model/customProperty';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { renderChildren } from '../components/renderElement';
