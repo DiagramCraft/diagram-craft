@@ -29,7 +29,6 @@ describe('textToDiagram', () => {
       UnitOfWork.execute(diagram, uow => labelNode.setText('Original', uow));
 
       UnitOfWork.execute(diagram, uow => edge.addChild(labelNode, uow));
-      edge.labelNodes.push(labelNode.asLabelNode());
 
       const result = UnitOfWork.execute(diagram, uow =>
         updateOrCreateLabelNode(edge, 'Updated', uow, layer)
@@ -61,8 +60,6 @@ describe('textToDiagram', () => {
 
       UnitOfWork.execute(diagram, uow => edge.addChild(label1, uow));
       UnitOfWork.execute(diagram, uow => edge.addChild(label2, uow));
-      edge.labelNodes.push(label1.asLabelNode());
-      edge.labelNodes.push(label2.asLabelNode());
 
       const result = UnitOfWork.execute(diagram, uow =>
         updateOrCreateLabelNode(edge, 'Single Label', uow, layer)
@@ -309,7 +306,6 @@ describe('textToDiagram', () => {
       const label = layer.createNode({ id: 'label1', type: 'text' });
       UnitOfWork.execute(diagram, uow => label.setText('Original', uow));
       UnitOfWork.execute(diagram, uow => edge.addChild(label, uow));
-      edge.labelNodes.push(label.asLabelNode());
 
       const elements: ParsedElement[] = [
         { id: 'e1', type: 'edge', label: 'Updated Label', line: 0 }
