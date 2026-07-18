@@ -20,7 +20,7 @@ export const toORPCError = (error: unknown): never => {
       case 404:
         throw new ORPCError('NOT_FOUND', { message: error.message });
       case 409:
-        throw new ORPCError('CONFLICT', { message: error.message });
+        throw new ORPCError('CONFLICT', { message: error.message, data: error.data });
       case 413:
         throw new ORPCError('PAYLOAD_TOO_LARGE', { message: error.message });
       case 415:

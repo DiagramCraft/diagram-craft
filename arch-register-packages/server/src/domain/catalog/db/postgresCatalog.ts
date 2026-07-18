@@ -9,6 +9,7 @@ import type {
   WorkspaceEnumDbUpdate,
   SchemaDbCreate,
   SchemaDbUpdate,
+  SchemaVersionDbCreate,
   PinnedEntityDbCreate,
   EntitySnapshotDbCreate,
   TimelineMarkerDbResult
@@ -85,6 +86,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             icon = ${input.icon},
             default_owner = ${input.default_owner},
             key_prefix = ${input.key_prefix},
+            version = COALESCE(${input.version ?? null}::integer, version),
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
@@ -107,6 +109,52 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async listSchemaVersions(workspace: string, schemaId: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM entity_schema_version
+      WHERE workspace = ${workspace} AND schema_id = ${schemaId}
+      ORDER BY version DESC
+    `;
+    return mapDatabaseRows(rows, catalogMappers.schemaVersion);
+  }
+
+  async createSchemaVersion(input: SchemaVersionDbCreate) {
+    const [row] = (await this.sql`
+      INSERT INTO entity_schema_version
+        (id, workspace, schema_id, version, name, description, fields, templates, color, icon, change_summary, created_by, created_at)
+      VALUES
+        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates)}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
+      RETURNING *
+    `) as DatabaseRow[];
+    return catalogMappers.schemaVersion(row!);
+  }
+
+  async renameEntityDataField(
+    workspace: string,
+    schemaId: string,
+    oldFieldId: string,
+    newFieldId: string
+  ) {
+    const rows = (await this.sql`
+      UPDATE entity
+      SET data = (data - ${oldFieldId}::text)
+        || jsonb_build_object(${newFieldId}::text, data -> ${oldFieldId}::text)
+      WHERE workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${oldFieldId}::text
+      RETURNING id
+    `) as DatabaseRow[];
+    return rows.length;
+  }
+
+  async removeEntityDataField(workspace: string, schemaId: string, fieldId: string) {
+    const rows = (await this.sql`
+      UPDATE entity
+      SET data = data - ${fieldId}::text
+      WHERE workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${fieldId}::text
+      RETURNING id
+    `) as DatabaseRow[];
+    return rows.length;
   }
 
   async listEnums(workspace: string) {

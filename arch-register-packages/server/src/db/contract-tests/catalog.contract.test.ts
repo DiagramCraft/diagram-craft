@@ -78,6 +78,139 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     });
   });
 
+  describe('schema versioning and field migrations', () => {
+    it('bumps version on update and leaves it unchanged when omitted', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const id = await createFixtureSchema(db, workspace);
+      const created = (await db.catalog.getSchema(workspace, id))!;
+      expect(created.version).toBe(1);
+
+      const updatedNoVersion = await db.catalog.updateSchema(workspace, id, {
+        name: created.name,
+        description: created.description,
+        fields: [],
+        templates: [],
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: created.key_prefix,
+        updated_at: new Date()
+      });
+      expect(updatedNoVersion!.version).toBe(1);
+
+      const updatedWithVersion = await db.catalog.updateSchema(workspace, id, {
+        name: created.name,
+        description: created.description,
+        fields: [],
+        templates: [],
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: created.key_prefix,
+        version: 2,
+        updated_at: new Date()
+      });
+      expect(updatedWithVersion!.version).toBe(2);
+    });
+
+    it('creates and lists schema versions newest first', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const id = await createFixtureSchema(db, workspace);
+      const user = await createFixtureUser(db);
+
+      await db.catalog.createSchemaVersion({
+        id: randomUUID(),
+        workspace,
+        schema_id: id,
+        version: 1,
+        name: 'Component',
+        description: '',
+        fields: [],
+        templates: [],
+        color: null,
+        icon: null,
+        change_summary: { added: ['name'] },
+        created_by: user.id,
+        created_at: new Date('2026-01-01T00:00:00.000Z')
+      });
+      await db.catalog.createSchemaVersion({
+        id: randomUUID(),
+        workspace,
+        schema_id: id,
+        version: 2,
+        name: 'Component',
+        description: '',
+        fields: [{ id: 'owner', name: 'Owner', type: 'text' }],
+        templates: [],
+        color: null,
+        icon: null,
+        change_summary: { added: ['owner'] },
+        created_by: user.id,
+        created_at: new Date('2026-01-02T00:00:00.000Z')
+      });
+
+      const versions = await db.catalog.listSchemaVersions(workspace, id);
+      expect(versions.map(v => v.version)).toEqual([2, 1]);
+      expect(versions[0]!.change_summary).toEqual({ added: ['owner'] });
+      expect(versions[0]!.created_by).toBe(user.id);
+    });
+
+    it('renames a field across all entities for the schema atomically', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schemaId = await createFixtureSchema(db, workspace);
+      const otherSchemaId = await createFixtureSchema(db, workspace);
+
+      const entity1 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+        data: { old_field: 'a', other: 1 }
+      });
+      const entity2 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+        data: { other: 2 }
+      });
+      const entityOtherSchema = await createFixtureCatalogEntity(db, workspace, otherSchemaId, {
+        data: { old_field: 'should-not-change' }
+      });
+
+      const affected = await db.catalog.renameEntityDataField(
+        workspace,
+        schemaId,
+        'old_field',
+        'new_field'
+      );
+      expect(affected).toBe(1);
+
+      const updated1 = await db.catalog.getEntity(workspace, entity1.id);
+      expect(updated1!.data).toEqual({ new_field: 'a', other: 1 });
+
+      const updated2 = await db.catalog.getEntity(workspace, entity2.id);
+      expect(updated2!.data).toEqual({ other: 2 });
+
+      const untouched = await db.catalog.getEntity(workspace, entityOtherSchema.id);
+      expect(untouched!.data).toEqual({ old_field: 'should-not-change' });
+    });
+
+    it('removes a field from every entity data blob for the schema', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schemaId = await createFixtureSchema(db, workspace);
+
+      const entity1 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+        data: { doomed: 'x', keep: 1 }
+      });
+      const entity2 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+        data: { keep: 2 }
+      });
+
+      const affected = await db.catalog.removeEntityDataField(workspace, schemaId, 'doomed');
+      expect(affected).toBe(1);
+
+      expect((await db.catalog.getEntity(workspace, entity1.id))!.data).toEqual({ keep: 1 });
+      expect((await db.catalog.getEntity(workspace, entity2.id))!.data).toEqual({ keep: 2 });
+    });
+  });
+
   describe('enums', () => {
     it('creates, updates and deletes an enum with JSON options round-tripped', async () => {
       const db = getDb();

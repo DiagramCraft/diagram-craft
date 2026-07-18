@@ -9,6 +9,7 @@ import type {
   EntityDbUpdate,
   WorkspaceEnumDbUpdate,
   SchemaDbUpdate,
+  SchemaVersionDbCreate,
   PinnedEntityDbCreate,
   EntitySnapshotDbCreate,
   TimelineMarkerDbResult
@@ -85,7 +86,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
-      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
@@ -95,6 +96,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.icon,
         input.default_owner,
         input.key_prefix,
+        input.version ?? null,
         input.updated_at.toISOString(),
         workspace,
         id
@@ -108,6 +110,65 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     if (!row) return null;
     this.run('DELETE FROM entity_schema WHERE workspace = ? AND id = ?', [workspace, id]);
     return row;
+  }
+
+  async listSchemaVersions(workspace: string, schemaId: string) {
+    return this.all(
+      'SELECT * FROM entity_schema_version WHERE workspace = ? AND schema_id = ? ORDER BY version DESC',
+      [workspace, schemaId],
+      catalogMappers.schemaVersion
+    );
+  }
+
+  async createSchemaVersion(input: SchemaVersionDbCreate) {
+    this.run(
+      'INSERT INTO entity_schema_version (id, workspace, schema_id, version, name, description, fields, templates, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.schema_id,
+        input.version,
+        input.name,
+        input.description,
+        JSON.stringify(input.fields),
+        JSON.stringify(input.templates),
+        input.color,
+        input.icon,
+        JSON.stringify(input.change_summary),
+        input.created_by,
+        input.created_at.toISOString()
+      ]
+    );
+    return (await this.get(
+      'SELECT * FROM entity_schema_version WHERE workspace = ? AND schema_id = ? AND version = ?',
+      [input.workspace, input.schema_id, input.version],
+      catalogMappers.schemaVersion
+    ))!;
+  }
+
+  async renameEntityDataField(
+    workspace: string,
+    schemaId: string,
+    oldFieldId: string,
+    newFieldId: string
+  ) {
+    const result = this.run(
+      `UPDATE entity
+       SET data = json_set(json_remove(data, '$."' || ? || '"'), '$."' || ? || '"', json_extract(data, '$."' || ? || '"'))
+       WHERE workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
+      [oldFieldId, newFieldId, oldFieldId, workspace, schemaId, oldFieldId]
+    );
+    return result.changes;
+  }
+
+  async removeEntityDataField(workspace: string, schemaId: string, fieldId: string) {
+    const result = this.run(
+      `UPDATE entity
+       SET data = json_remove(data, '$."' || ? || '"')
+       WHERE workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
+      [fieldId, workspace, schemaId, fieldId]
+    );
+    return result.changes;
   }
 
   async listEnums(workspace: string) {

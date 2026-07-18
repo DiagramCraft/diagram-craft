@@ -6,16 +6,18 @@ export type ApiErrorKind = 'http' | 'network' | 'unknown';
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
   readonly code?: string;
+  readonly data?: unknown;
 
   constructor(
     public readonly status: number | undefined,
     message: string,
-    options?: { kind?: ApiErrorKind; code?: string; cause?: unknown }
+    options?: { kind?: ApiErrorKind; code?: string; cause?: unknown; data?: unknown }
   ) {
     super(message, { cause: options?.cause });
     this.name = 'ApiError';
     this.kind = options?.kind ?? (status === undefined ? 'unknown' : 'http');
     this.code = options?.code;
+    this.data = options?.data;
   }
 }
 
@@ -26,7 +28,8 @@ export const normalizeApiError = (error: unknown): ApiError => {
     return new ApiError(error.status, error.message, {
       kind: 'http',
       code: error.code,
-      cause: error
+      cause: error,
+      data: error.data
     });
   }
 

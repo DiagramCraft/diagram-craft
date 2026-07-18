@@ -75,6 +75,8 @@ export type SchemaDbResult = {
   icon: string | null;
   default_owner: string | null;
   key_prefix: string;
+  /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
+  version?: number;
   created_at: Date;
   updated_at: Date;
 };
@@ -82,6 +84,26 @@ export type SchemaDbResult = {
 export type SchemaDbCreate = SchemaDbResult;
 
 export type SchemaDbUpdate = Omit<SchemaDbResult, 'id' | 'workspace' | 'created_at'>;
+
+// -- Entity Schema Version
+
+export type SchemaVersionDbResult = {
+  id: string;
+  workspace: string;
+  schema_id: string;
+  version: number;
+  name: string;
+  description: string;
+  fields: SchemaField[];
+  templates: EntityTemplate[];
+  color: string | null;
+  icon: string | null;
+  change_summary: Record<string, unknown>;
+  created_by: string | null;
+  created_at: Date;
+};
+
+export type SchemaVersionDbCreate = SchemaVersionDbResult;
 
 // -- Workspace Enum
 
@@ -266,8 +288,28 @@ export const catalogMappers = {
     icon: row['icon'] == null ? null : String(row['icon']),
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
     key_prefix: String(row['key_prefix']),
+    version: Number(row['version'] ?? 1),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
+  }),
+  schemaVersion: (row: DatabaseRow): SchemaVersionDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    schema_id: String(row['schema_id']),
+    version: Number(row['version']),
+    name: String(row['name']),
+    description: String(row['description'] ?? ''),
+    fields: parseDatabaseJson(row['fields'], [], 'entity_schema_version.fields'),
+    templates: parseDatabaseJson(row['templates'], [], 'entity_schema_version.templates'),
+    color: row['color'] == null ? null : String(row['color']),
+    icon: row['icon'] == null ? null : String(row['icon']),
+    change_summary: parseDatabaseJson(
+      row['change_summary'],
+      {},
+      'entity_schema_version.change_summary'
+    ),
+    created_by: row['created_by'] == null ? null : String(row['created_by']),
+    created_at: databaseDate(row['created_at'])
   }),
   workspaceEnum: (row: DatabaseRow): WorkspaceEnumDbResult => ({
     id: String(row['id']),
@@ -333,6 +375,17 @@ export type CatalogDatabase = {
   createSchema(input: SchemaDbCreate): Promise<SchemaDbResult>;
   updateSchema(ws: string, id: string, input: SchemaDbUpdate): Promise<SchemaDbResult | null>;
   deleteSchema(ws: string, id: string): Promise<SchemaDbResult | null>;
+
+  listSchemaVersions(ws: string, schemaId: string): Promise<SchemaVersionDbResult[]>;
+  createSchemaVersion(input: SchemaVersionDbCreate): Promise<SchemaVersionDbResult>;
+
+  renameEntityDataField(
+    ws: string,
+    schemaId: string,
+    oldFieldId: string,
+    newFieldId: string
+  ): Promise<number>;
+  removeEntityDataField(ws: string, schemaId: string, fieldId: string): Promise<number>;
 
   listEnums(ws: string): Promise<WorkspaceEnumDbResult[]>;
   getEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;

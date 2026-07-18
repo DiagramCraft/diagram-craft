@@ -12,7 +12,11 @@ const baseFieldSchema = z.object({
   name: z.string().describe('Field name'),
   requirementLevel: requirementLevelSchema.describe(
     'Whether the field is required, expected, or optional'
-  )
+  ),
+  archived: z
+    .boolean()
+    .optional()
+    .describe('Whether the field is archived (hidden, but data is retained)')
 });
 
 const textFieldSchema = baseFieldSchema.extend({
@@ -138,8 +142,31 @@ const entitySchemaSchema = z.object({
   color: z.string().nullable().describe('Schema color (hex format)'),
   icon: z.string().nullable().describe('Schema icon identifier'),
   entity_count: z.number().int().min(0).describe('Number of entities using this schema'),
+  version: z.number().int().min(1).describe('Current schema version number'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
+});
+
+const fieldMigrationActionSchema = z
+  .object({
+    action: z.enum(['rename', 'remove', 'archive']).describe('Migration action for this field'),
+    renameTo: z.string().optional().describe('New field id when action is "rename"')
+  })
+  .describe('How to migrate a changed/removed field');
+
+const schemaVersionSchema = z.object({
+  version: z.number().int().min(1).describe('Version number'),
+  name: z.string().describe('Schema name at this version'),
+  description: z.string().describe('Schema description at this version'),
+  fields: z.array(schemaFieldResponseSchema).describe('Field definitions at this version'),
+  templates: z.array(entityTemplateSchema).describe('Templates at this version'),
+  color: z.string().nullable().describe('Schema color at this version'),
+  icon: z.string().nullable().describe('Schema icon at this version'),
+  changeSummary: z
+    .record(z.string(), z.unknown())
+    .describe('Summary of what changed relative to the previous version'),
+  createdBy: z.string().nullable().describe('User id who made this change'),
+  createdAt: z.string().describe('ISO 8601 timestamp of this version')
 });
 
 const createSchemaBodySchema = z.object({
@@ -171,7 +198,14 @@ const createSchemaBodySchema = z.object({
   default_owner: z.string().nullable().optional().describe('Default owner for new entities')
 });
 
-const updateSchemaBodySchema = createSchemaBodySchema;
+const updateSchemaBodySchema = createSchemaBodySchema.extend({
+  fieldMigrations: z
+    .record(z.string(), fieldMigrationActionSchema)
+    .optional()
+    .describe(
+      'Resolutions for fields being renamed/removed/archived while entities exist, keyed by the old field id'
+    )
+});
 
 const deleteSchemaResponseSchema = z.object({
   success: z.boolean().describe('Whether the deletion was successful'),
@@ -256,7 +290,23 @@ export const workspaceSchemaContract = oc.tag('Schemas').router({
           params: wsAndUUID
         })
       )
-      .output(deleteSchemaResponseSchema)
+      .output(deleteSchemaResponseSchema),
+    listVersions: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/schemas/{id}/versions',
+        inputStructure: 'detailed',
+        summary: 'List schema version history',
+        description:
+          'Retrieves the version history for a schema, newest first, including who changed what and when.',
+        tags: ['Schemas']
+      })
+      .input(
+        z.object({
+          params: wsAndUUID
+        })
+      )
+      .output(z.array(schemaVersionSchema))
   }
 });
 
@@ -272,5 +322,24 @@ export type ContainmentField = Extract<SchemaField, { type: 'containment' }>;
 export type EntitySchema = z.infer<typeof entitySchemaSchema>;
 export type EntityTemplate = z.infer<typeof entityTemplateSchema>;
 export type EntityTemplateValues = EntityTemplate['values'];
+
+// ── Schema Versioning & Field Migrations ─────────────────────
+
+export type FieldMigrationAction = z.infer<typeof fieldMigrationActionSchema>;
+export type FieldMigrations = Record<string, FieldMigrationAction>;
+export type SchemaVersion = z.infer<typeof schemaVersionSchema>;
+
+export type PendingFieldChange = {
+  fieldId: string;
+  fieldName: string;
+  kind: 'removed' | 'renamed';
+  renamedToId?: string;
+  entityCount: number;
+};
+
+export type SchemaMigrationRequiredError = {
+  code: 'SCHEMA_MIGRATION_REQUIRED';
+  pendingChanges: PendingFieldChange[];
+};
 
 // ── Workspace Enum ────────────────────────────────────────────
