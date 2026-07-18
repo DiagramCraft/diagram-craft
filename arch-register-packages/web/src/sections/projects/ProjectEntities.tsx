@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import {
   TbCalendarEvent,
   TbPlus,
@@ -9,7 +10,9 @@ import {
   TbCheck,
   TbDots,
   TbCopy,
-  TbTrash
+  TbPencil,
+  TbTrash,
+  TbFlag
 } from 'react-icons/tb';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type {
@@ -23,13 +26,13 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { TypeBadge } from '../../components/TypeBadge';
-import { Table } from '../../components/table/Table';
 import { EmptyState } from '../../components/EmptyState';
 import styles from './ProjectDetailScreen.module.css';
-import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
+import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
+import { useDeleteSnapshot } from '../../hooks/useSnapshots';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
@@ -41,16 +44,13 @@ import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObject
 import type { AsOfMarker } from '../../components/timeline/TimelineStrip';
 import { formatDate } from '../../utils/dateFormat';
 import { useMilestones } from '../../hooks/useMilestones';
-import {
-  getSnapshotDateLabel,
-  getSnapshotEffectiveDate,
-  toMilestonesById
-} from '../entities/components/snapshotDisplay';
+import { getSnapshotEffectiveDate, toMilestonesById } from '../entities/components/snapshotDisplay';
+import { diffSnapshotState } from '../entities/components/entityTimelineHelpers';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
-type ViewTab = 'entities' | 'project-entities' | 'future-changes' | 'timeline';
+type ViewTab = 'entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
 
 export const ProjectEntities = ({
@@ -69,7 +69,8 @@ export const ProjectEntities = ({
   onToggleDone,
   onRemoveEntity,
   onPlanFutureChange,
-  onApplySnapshot
+  onApplySnapshot,
+  onEditSnapshot
 }: {
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
@@ -87,19 +88,32 @@ export const ProjectEntities = ({
   onRemoveEntity: (entityId: string) => void;
   onPlanFutureChange: (entityId: string) => void;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
+  onEditSnapshot: (snapshot: EntitySnapshot) => void;
 }) => {
   const [activeTab, setActiveTab] = useState<ViewTab>('entities');
   const [groupBy, setGroupBy] = useState<GroupBy>('entity');
   const [isSavingView, setIsSavingView] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<EntitySnapshot | null>(null);
 
   const pendingCount = futureSnapshots.length;
   const navigate = routeApi.useNavigate();
   const { workspaceSlug, permissions } = useWorkspaceContext();
+  const deleteSnapshotMutation = useDeleteSnapshot(workspaceSlug);
   const { data: milestones = [] } = useMilestones(workspaceSlug, project.id);
   const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
   const search = routeApi.useSearch();
   const asOf = search.asOf;
   const readOnly = !!asOf;
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteSnapshotMutation.mutateAsync({
+      entityId: deleteTarget.entity_id,
+      snapshotId: deleteTarget.id,
+      projectId: project.id
+    });
+    setDeleteTarget(null);
+  };
 
   useEffect(() => {
     if (readOnly && activeTab !== 'entities') setActiveTab('entities');
@@ -297,16 +311,6 @@ export const ProjectEntities = ({
           />
         ) : undefined
       }
-      meta={
-        <>
-          <ProjectMetaItem
-            label="Number of entities"
-            value={<span className="mono tabular">{projectEntities.length}</span>}
-          />
-          <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
-          <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
-        </>
-      }
       toolbar={
         <div className={styles.tabBar}>
           <div className={styles.entityTabNav}>
@@ -317,15 +321,6 @@ export const ProjectEntities = ({
             >
               Entities
             </button>
-            {!readOnly && (
-              <button
-                type="button"
-                className={`${styles.entityTabBtn} ${activeTab === 'project-entities' ? styles.entityTabBtnActive : ''}`}
-                onClick={() => setActiveTab('project-entities')}
-              >
-                Project entities ({projectEntities.length})
-              </button>
-            )}
             {!readOnly && (
               <button
                 type="button"
@@ -382,25 +377,20 @@ export const ProjectEntities = ({
             timelineMarkers={timelineMarkers}
           />
         </div>
-      ) : activeTab === 'project-entities' ? (
-        <ProjectEntitiesTab
-          project={project}
-          projectEntities={projectEntities}
-          schemaMap={schemaMap}
-          entityTypeColorMap={entityTypeColorMap}
-          onToggleDone={onToggleDone}
-          onRemoveEntity={onRemoveEntity}
-          onPlanFutureChange={onPlanFutureChange}
-        />
       ) : activeTab === 'future-changes' ? (
         <FutureChangesTab
           project={project}
           futureSnapshots={futureSnapshots}
           projectEntities={projectEntities}
           schemaMap={schemaMap}
+          schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
           groupBy={groupBy}
           milestonesById={milestonesById}
           onApplySnapshot={onApplySnapshot}
+          onEditSnapshot={onEditSnapshot}
+          onDeleteSnapshot={setDeleteTarget}
         />
       ) : (
         <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
@@ -416,6 +406,8 @@ export const ProjectEntities = ({
             milestonesById={milestonesById}
             canEdit={project.canEdit}
             onApplySnapshot={onApplySnapshot}
+            onEditSnapshot={onEditSnapshot}
+            onDeleteSnapshot={setDeleteTarget}
           />
         </div>
       )}
@@ -426,131 +418,16 @@ export const ProjectEntities = ({
         defaultScope="project"
         showAdminOption={permissions.canManageAdminViews}
       />
+      <DeleteConfirmationDialog
+        open={!!deleteTarget}
+        title="Delete future change"
+        message={deleteTarget ? 'Delete this planned future change?' : ''}
+        detail="This removes the planned change without modifying the current entity."
+        confirmLabel={deleteSnapshotMutation.isPending ? 'Deleting...' : 'Delete change'}
+        onConfirm={() => void handleConfirmDelete()}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </ProjectScreenLayout>
-  );
-};
-
-const ProjectEntitiesTab = ({
-  project,
-  projectEntities,
-  schemaMap,
-  entityTypeColorMap,
-  onToggleDone,
-  onRemoveEntity,
-  onPlanFutureChange
-}: {
-  project: ProjectDetailData;
-  projectEntities: ProjectEntity[];
-  schemaMap: Map<string, { color: string; icon: string | null }>;
-  entityTypeColorMap: Map<string, string>;
-  onToggleDone: (entityId: string, isDone: boolean) => void;
-  onRemoveEntity: (entityId: string) => void;
-  onPlanFutureChange: (entityId: string) => void;
-}) => {
-  const groupedByRole = useMemo(() => {
-    const groups = new Map<string, ProjectEntity[]>();
-    for (const entity of projectEntities) {
-      const key = entity.entity_type?.name ?? 'No role';
-      const list = groups.get(key);
-      if (list) list.push(entity);
-      else groups.set(key, [entity]);
-    }
-    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [projectEntities]);
-
-  const entityMenuItems = (entity: ProjectEntity): MenuItem[] => {
-    if (!project.canEdit) return [];
-    return [
-      {
-        label: entity.is_done ? 'Mark not done' : 'Mark done',
-        icon: <TbCheck size={14} />,
-        onClick: () => onToggleDone(entity.entity_id, entity.is_done)
-      },
-      {
-        label: 'Plan future change',
-        icon: <TbCalendar size={14} />,
-        onClick: () => onPlanFutureChange(entity.entity_id)
-      },
-      {
-        label: 'Remove from project',
-        icon: <TbTrash size={14} />,
-        danger: true,
-        onClick: () => onRemoveEntity(entity.entity_id)
-      }
-    ];
-  };
-
-  if (projectEntities.length === 0) {
-    return (
-      <div className={styles.entityTab}>
-        <EmptyState
-          framed
-          title="No entities in project"
-          subtitle="Add entities from the Entities tab to see them here."
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.entityTab}>
-      <Table.Root>
-        <Table.Head>
-          <Table.Row>
-            <Table.HeaderCell style={{ minWidth: 220 }}>Name</Table.HeaderCell>
-            <Table.HeaderCell>Role</Table.HeaderCell>
-            <Table.HeaderCell width={100}>Done</Table.HeaderCell>
-            <Table.HeaderCell width={36} />
-          </Table.Row>
-        </Table.Head>
-        <Table.Body>
-          {groupedByRole.flatMap(([role, entities]) =>
-            entities.map(entity => (
-              <Table.Row key={entity.entity_id}>
-                <Table.NameCell
-                  icon={
-                    entity.entity_schema &&
-                    schemaMap.get(entity.entity_schema.id) && (
-                      <TypeBadge
-                        color={schemaMap.get(entity.entity_schema.id)!.color}
-                        icon={schemaMap.get(entity.entity_schema.id)!.icon}
-                        name={entity.entity_schema.name}
-                        size={18}
-                      />
-                    )
-                  }
-                  title={entity.entity_name}
-                  subtitle={entity.entity_description}
-                />
-                <Table.Cell>
-                  {entity.entity_type?.name ? (
-                    <Chip
-                      tone="ghost"
-                      dot={entityTypeColorMap.get(entity.entity_type.id) ?? undefined}
-                    >
-                      {role}
-                    </Chip>
-                  ) : (
-                    <span className="dim">No role</span>
-                  )}
-                </Table.Cell>
-                <Table.Cell>
-                  <Chip tone="ghost">{entity.is_done ? 'Done' : 'Open'}</Chip>
-                </Table.Cell>
-                <Table.ActionsCell>
-                  {project.canEdit && (
-                    <DropdownMenu
-                      trigger={<Table.DotsButton aria-label="Entity actions" />}
-                      items={entityMenuItems(entity)}
-                    />
-                  )}
-                </Table.ActionsCell>
-              </Table.Row>
-            ))
-          )}
-        </Table.Body>
-      </Table.Root>
-    </div>
   );
 };
 
@@ -559,17 +436,27 @@ const FutureChangesTab = ({
   futureSnapshots,
   projectEntities,
   schemaMap,
+  schemas,
+  lifecycleStates,
+  teams,
   groupBy,
   milestonesById,
-  onApplySnapshot
+  onApplySnapshot,
+  onEditSnapshot,
+  onDeleteSnapshot
 }: {
   project: ProjectDetailData;
   futureSnapshots: EntitySnapshot[];
   projectEntities: ProjectEntity[];
   schemaMap: Map<string, { color: string; icon: string | null }>;
+  schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  teams: WorkspaceTeam[];
   groupBy: GroupBy;
   milestonesById: Map<string, Milestone>;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
+  onEditSnapshot: (snapshot: EntitySnapshot) => void;
+  onDeleteSnapshot: (snapshot: EntitySnapshot) => void;
 }) => {
   if (futureSnapshots.length === 0) {
     return (
@@ -585,6 +472,12 @@ const FutureChangesTab = ({
   }
 
   const entityMap = new Map(projectEntities.map(e => [e.entity_id, e]));
+  const getEntitySchema = (entity: ProjectEntity | undefined) =>
+    entity?.entity_schema
+      ? (schemas.find(schema => schema.id === entity.entity_schema!.id) ?? null)
+      : null;
+  const getEntitySchemaInfo = (entity: ProjectEntity | undefined) =>
+    entity?.entity_schema ? schemaMap.get(entity.entity_schema.id) : undefined;
 
   if (groupBy === 'entity') {
     // Group by entity_id
@@ -613,9 +506,16 @@ const FutureChangesTab = ({
                     key={snap.id}
                     snap={snap}
                     showEntity={false}
+                    showMilestone
+                    entitySchema={getEntitySchema(pe)}
+                    entitySchemaInfo={getEntitySchemaInfo(pe)}
                     milestonesById={milestonesById}
+                    lifecycleStates={lifecycleStates}
+                    teams={teams}
                     canEdit={project.canEdit}
                     onApply={onApplySnapshot}
+                    onEdit={onEditSnapshot}
+                    onDelete={onDeleteSnapshot}
                   />
                 ))}
               </div>
@@ -650,25 +550,47 @@ const FutureChangesTab = ({
         {sortedKeys.map(key => {
           const snaps = groups.get(key)!;
           const label = key === '__no-date__' ? 'No target date' : formatDate(key, key);
+          const groupMilestones = [
+            ...new Map(
+              snaps
+                .filter(
+                  (snap): snap is EntitySnapshot & { milestone_id: string } =>
+                    snap.milestone_id != null
+                )
+                .map(snap => [snap.milestone_id, milestonesById.get(snap.milestone_id)])
+                .filter((entry): entry is [string, Milestone] => entry[1] != null)
+            ).values()
+          ];
           return (
             <div key={key} className={styles.futureGroup}>
               <div className={styles.futureGroupHead}>
                 <span className={styles.futureGroupName}>{label}</span>
+                {groupMilestones.map(milestone => (
+                  <Chip
+                    key={milestone.id}
+                    tone="accent"
+                    icon={<TbFlag size={12} style={{ color: 'var(--accent-fg)' }} />}
+                  >
+                    {milestone.name}
+                  </Chip>
+                ))}
               </div>
               {snaps.map(snap => (
                 <FutureSnapshotRow
                   key={snap.id}
                   snap={snap}
                   showEntity={true}
+                  showMilestone={false}
                   entityName={entityMap.get(snap.entity_id)?.entity_name}
-                  entitySchema={
-                    entityMap.get(snap.entity_id)?.entity_schema
-                      ? schemaMap.get(entityMap.get(snap.entity_id)!.entity_schema!.id)
-                      : undefined
-                  }
+                  entitySchema={getEntitySchema(entityMap.get(snap.entity_id))}
+                  entitySchemaInfo={getEntitySchemaInfo(entityMap.get(snap.entity_id))}
                   milestonesById={milestonesById}
+                  lifecycleStates={lifecycleStates}
+                  teams={teams}
                   canEdit={project.canEdit}
                   onApply={onApplySnapshot}
+                  onEdit={onEditSnapshot}
+                  onDelete={onDeleteSnapshot}
                 />
               ))}
             </div>
@@ -682,32 +604,49 @@ const FutureChangesTab = ({
 const FutureSnapshotRow = ({
   snap,
   showEntity,
+  showMilestone,
   entityName,
   entitySchema,
+  entitySchemaInfo,
   milestonesById,
+  lifecycleStates,
+  teams,
   canEdit,
-  onApply
+  onApply,
+  onEdit,
+  onDelete
 }: {
   snap: EntitySnapshot;
   showEntity: boolean;
+  showMilestone: boolean;
   entityName?: string;
-  entitySchema?: { color: string; icon: string | null };
+  entitySchema: EntitySchema | null;
+  entitySchemaInfo?: { color: string; icon: string | null };
   milestonesById: Map<string, Milestone>;
+  lifecycleStates: WorkspaceLifecycleState[];
+  teams: WorkspaceTeam[];
   canEdit: boolean;
   onApply: (snapshot: EntitySnapshot) => void;
+  onEdit: (snapshot: EntitySnapshot) => void;
+  onDelete: (snapshot: EntitySnapshot) => void;
 }) => {
-  const dateLabel = snap.milestone_id
-    ? getSnapshotDateLabel(snap, milestonesById)
-    : snap.target_date
-      ? formatDate(snap.target_date)
-      : null;
+  const milestone = snap.milestone_id ? milestonesById.get(snap.milestone_id) : undefined;
+  const date = snap.target_date ?? milestone?.target_date ?? null;
+  const dateLabel = date ? formatDate(date) : null;
+  const changes = diffSnapshotState(
+    snap.base_state,
+    snap.proposed_state,
+    entitySchema,
+    lifecycleStates,
+    teams
+  );
 
   return (
     <div className={styles.futureRow}>
       {showEntity && (
         <div className={styles.futureRowEntity}>
-          {entitySchema && (
-            <TypeBadge color={entitySchema.color} icon={entitySchema.icon} size={14} />
+          {entitySchemaInfo && (
+            <TypeBadge color={entitySchemaInfo.color} icon={entitySchemaInfo.icon} size={14} />
           )}
           <span>{entityName ?? snap.entity_id}</span>
         </div>
@@ -715,14 +654,62 @@ const FutureSnapshotRow = ({
       <div className={styles.futureRowBody}>
         <div className={styles.futureRowMeta}>
           {dateLabel && <span className={styles.futureRowDate}>{dateLabel}</span>}
+          {showMilestone && milestone && (
+            <Chip tone="accent" icon={<TbFlag size={12} style={{ color: 'var(--accent-fg)' }} />}>
+              {milestone.name}
+            </Chip>
+          )}
           {snap.commit_message && (
             <span className={styles.futureRowNote}>{snap.commit_message}</span>
           )}
         </div>
         {canEdit && (
-          <button type="button" className={styles.futureRowApply} onClick={() => onApply(snap)}>
-            Apply
-          </button>
+          <div className={styles.futureRowActions}>
+            <DropdownMenu
+              trigger={
+                <Button
+                  size="sm"
+                  variant="icon-only"
+                  aria-label="Future change actions"
+                  title="Future change actions"
+                  icon={<TbDots size={14} />}
+                />
+              }
+              items={[
+                {
+                  label: 'Apply',
+                  icon: <TbCheck size={14} />,
+                  onClick: () => onApply(snap)
+                },
+                {
+                  label: 'Edit',
+                  icon: <TbPencil size={14} />,
+                  onClick: () => onEdit(snap)
+                },
+                {
+                  label: 'Remove',
+                  icon: <TbTrash size={14} />,
+                  danger: true,
+                  onClick: () => onDelete(snap)
+                }
+              ]}
+            />
+          </div>
+        )}
+      </div>
+      <div className={styles.futureRowChanges}>
+        <div className={styles.futureRowChangesTitle}>Changes</div>
+        {changes.length > 0 ? (
+          changes.map(change => (
+            <div key={change.label} className={styles.futureRowChange}>
+              <span className={styles.futureRowChangeField}>{change.label}</span>
+              <span className={styles.futureRowChangeFrom}>{change.from}</span>
+              <span className={styles.futureRowChangeArrow}>→</span>
+              <span className={styles.futureRowChangeTo}>{change.to}</span>
+            </div>
+          ))
+        ) : (
+          <span className={styles.futureRowNoChanges}>No field changes</span>
         )}
       </div>
     </div>

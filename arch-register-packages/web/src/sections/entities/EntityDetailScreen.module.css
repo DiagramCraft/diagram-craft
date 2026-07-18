@@ -404,9 +404,35 @@
   padding-top: 2px;
 }
 
+.etlMilestoneLane {
+  display: flex;
+  height: 30px;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.etlMilestoneLaneCorner {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+}
+
+.etlMilestoneLaneTrack {
+  flex-shrink: 0;
+}
+
 .etlMilestoneLine {
   position: absolute;
-  top: 0;
+  top: 34px;
   bottom: 0;
   width: 1px;
   border-left: 1px dashed var(--warn, orange);
@@ -417,7 +443,7 @@
 
 .etlMilestoneLabel {
   position: absolute;
-  top: 36px;
+  top: 7px;
   left: 4px;
   white-space: nowrap;
   font-size: 10px;

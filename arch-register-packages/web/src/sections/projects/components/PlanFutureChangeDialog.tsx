@@ -4,8 +4,9 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
+import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import { useEntity } from '../../../hooks/useEntities';
-import { useCreateFutureUpdate } from '../../../hooks/useSnapshots';
+import { useCreateFutureUpdate, useUpdateSnapshot } from '../../../hooks/useSnapshots';
 import { useMilestones } from '../../../hooks/useMilestones';
 import { createEntityEditState, type EntityEditState } from '../../../lib/entityEditState';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -16,6 +17,7 @@ import { LoadingState } from '../../../components/LoadingState';
 
 type Props = {
   open: boolean;
+  snapshot?: EntitySnapshot;
   workspaceId: string;
   projectId: string;
   entityId: string;
@@ -30,6 +32,7 @@ const isReference = (f: EntitySchema['fields'][number]) =>
 
 export const PlanFutureChangeDialog = ({
   open,
+  snapshot,
   workspaceId,
   projectId,
   entityId,
@@ -40,9 +43,11 @@ export const PlanFutureChangeDialog = ({
 }: Props) => {
   const { data: entity } = useEntity(workspaceId, entityId);
   const createFutureUpdate = useCreateFutureUpdate(workspaceId, entityId);
+  const updateSnapshot = useUpdateSnapshot(workspaceId, entityId);
   const { data: milestones = [] } = useMilestones(workspaceId, projectId, open);
 
   const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
+  const isEditing = snapshot != null;
 
   const [targetDate, setTargetDate] = useState('');
   const [milestoneId, setMilestoneId] = useState('');
@@ -61,15 +66,32 @@ export const PlanFutureChangeDialog = ({
 
   useEffect(() => {
     if (!open) return;
-    setTargetDate('');
-    setMilestoneId('');
-    setCommitMessage('');
+    setTargetDate(snapshot?.target_date ?? '');
+    setMilestoneId(snapshot?.milestone_id ?? '');
+    setCommitMessage(snapshot?.commit_message ?? '');
     if (!entity || !schema) {
       setPlanState({});
       return;
     }
-    setPlanState(createEntityEditState(entity, schema));
-  }, [open, entity, schema]);
+    const state = createEntityEditState(entity, schema);
+    if (snapshot) {
+      const proposed = snapshot.proposed_state as Record<string, unknown> | null;
+      const proposedData = (proposed?.data as Record<string, unknown> | undefined) ?? {};
+      state._name = proposed?.name ?? state._name;
+      state._slug = proposed?.slug ?? state._slug;
+      state._namespace = proposed?.namespace ?? state._namespace;
+      state._description = proposed?.description ?? state._description;
+      state._owner = proposed?.owner ?? '';
+      state._lifecycle = proposed?.lifecycle ?? '';
+      state._targetLifecycle = proposed?.target_lifecycle ?? '';
+      state._targetLifecycleDate = proposed?.target_lifecycle_date ?? '';
+      state._tags = Array.isArray(proposed?.tags) ? proposed.tags.join(', ') : state._tags;
+      for (const field of schema.fields) {
+        state[field.id] = proposedData[field.id] ?? state[field.id];
+      }
+    }
+    setPlanState(state);
+  }, [open, entity, schema, snapshot]);
 
   const handleSave = () => {
     if (!entity || !schema) return;
@@ -79,47 +101,63 @@ export const PlanFutureChangeDialog = ({
       customData[f.id] = planState[f.id] ?? '';
     }
 
+    const existingProposed = snapshot?.proposed_state as Record<string, unknown> | null;
     const proposedState: Record<string, unknown> = {
       name: (planState['_name'] as string) ?? entity._name,
-      slug: entity._slug,
-      namespace: entity._namespace,
+      slug: existingProposed?.slug ?? entity._slug,
+      namespace: existingProposed?.namespace ?? entity._namespace,
       description: (planState['_description'] as string) ?? entity._description,
       owner: (planState['_owner'] as string) || null,
       lifecycle: (planState['_lifecycle'] as string) || null,
       target_lifecycle: (planState['_targetLifecycle'] as string) || null,
       target_lifecycle_date: (planState['_targetLifecycleDate'] as string) || null,
-      tags: entity._tags,
-      links: entity._links,
-      schema_id: entity._schema.id,
+      tags: existingProposed?.tags ?? entity._tags,
+      links: existingProposed?.links ?? entity._links,
+      schema_id: existingProposed?.schema_id ?? entity._schema.id,
       data: customData,
-      visibility_mode: entity._visibilityMode ?? null
+      visibility_mode: existingProposed?.visibility_mode ?? entity._visibilityMode ?? null
     };
 
-    createFutureUpdate.mutate(
-      {
-        projectId,
-        targetDate: milestoneId ? null : targetDate || null,
-        milestoneId: milestoneId || null,
-        commitMessage: commitMessage || null,
-        proposedState
-      },
-      { onSuccess: onClose }
-    );
+    if (snapshot) {
+      updateSnapshot.mutate(
+        {
+          snapshotId: snapshot.id,
+          projectId,
+          targetDate: milestoneId ? null : targetDate || null,
+          milestoneId: milestoneId || null,
+          commitMessage: commitMessage || null,
+          proposedState
+        },
+        { onSuccess: onClose }
+      );
+    } else {
+      createFutureUpdate.mutate(
+        {
+          projectId,
+          targetDate: milestoneId ? null : targetDate || null,
+          milestoneId: milestoneId || null,
+          commitMessage: commitMessage || null,
+          proposedState
+        },
+        { onSuccess: onClose }
+      );
+    }
   };
 
   const canSave = !!entity;
+  const isSaving = createFutureUpdate.isPending || updateSnapshot.isPending;
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Plan future change"
+      title={isEditing ? 'Edit future change' : 'Plan future change'}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
-          label: createFutureUpdate.isPending ? 'Saving...' : 'Save plan',
+          label: isSaving ? 'Saving...' : isEditing ? 'Save changes' : 'Save plan',
           type: 'default',
-          disabled: createFutureUpdate.isPending || !canSave,
+          disabled: isSaving || !canSave,
           onClick: handleSave
         }
       ]}

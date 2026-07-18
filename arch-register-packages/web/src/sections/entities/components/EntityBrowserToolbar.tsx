@@ -99,9 +99,13 @@ export const EntityBrowserToolbar = ({
       <Popover.Root actionsRef={filterPopoverRef}>
         <Popover.Trigger
           element={
-            <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
-              <TbFilter size={12} style={{ marginRight: 4 }} />
-              Filter
+            <Button
+              size="sm"
+              variant={conditions.length > 0 ? 'primary' : 'secondary'}
+              icon={<TbFilter size={12} />}
+              aria-label="Filter"
+              title="Filter"
+            >
               {conditions.length > 0 && (
                 <span className={styles.filterCount}>{conditions.length}</span>
               )}
@@ -141,7 +145,7 @@ export const EntityBrowserToolbar = ({
           value={projectScope}
           onChange={v => setProjectScope((v as 'project' | 'all') ?? 'project')}
           options={[
-            { value: 'project', label: 'Project entities only' },
+            { value: 'project', label: 'Project entities' },
             { value: 'all', label: 'All entities' }
           ]}
         />

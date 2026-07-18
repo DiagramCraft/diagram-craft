@@ -73,7 +73,7 @@ export const radarViewConfigSchema = z.object({
 export const timelineViewConfigSchema = z.object({
   startFieldId: z.string().nullable().describe('Field identifier for timeline start date'),
   endFieldId: z.string().nullable().describe('Field identifier for timeline end date'),
-  groupBy: z.enum(['owner', 'type', 'snapshot']).describe('Timeline grouping mode'),
+  groupBy: z.enum(['owner', 'type', 'snapshot', 'project']).describe('Timeline grouping mode'),
   zoom: z.enum(['month', 'quarter', 'year']).describe('Timeline zoom level')
 });
 

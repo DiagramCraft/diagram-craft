@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { TbX } from 'react-icons/tb';
+import { TbPencil, TbTrash, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import type {
   ProjectDetail as ProjectDetailData,
@@ -44,7 +44,9 @@ export const ProjectTimelineTab = ({
   teams,
   milestonesById,
   canEdit,
-  onApplySnapshot
+  onApplySnapshot,
+  onEditSnapshot,
+  onDeleteSnapshot
 }: {
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
@@ -57,8 +59,11 @@ export const ProjectTimelineTab = ({
   milestonesById: Map<string, Milestone>;
   canEdit: boolean;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
+  onEditSnapshot: (snapshot: EntitySnapshot) => void;
+  onDeleteSnapshot: (snapshot: EntitySnapshot) => void;
 }) => {
   const [zoom, setZoom] = useState<TimelineZoom>('quarter');
+  const [groupByRole, setGroupByRole] = useState(false);
   const [selectedSnap, setSelectedSnap] = useState<EntitySnapshot | null>(null);
   const TODAY = useMemo(() => new Date(), []);
   const plannedSnapshots = useMemo(
@@ -98,18 +103,23 @@ export const ProjectTimelineTab = ({
     [datedSnapshots]
   );
 
+  // Entities on the timeline, preserving project order for the ungrouped view.
+  const timelineEntities = useMemo(
+    () => projectEntities.filter(entity => datedEntityIds.has(entity.entity_id)),
+    [projectEntities, datedEntityIds]
+  );
+
   // Group entities by entity_type, only those with dated snapshots
   const entityGroups = useMemo(() => {
     const groups = new Map<string, ProjectEntity[]>();
-    for (const pe of projectEntities) {
-      if (!datedEntityIds.has(pe.entity_id)) continue;
+    for (const pe of timelineEntities) {
       const key = pe.entity_type?.id ?? '__none__';
       const list = groups.get(key);
       if (list) list.push(pe);
       else groups.set(key, [pe]);
     }
     return groups;
-  }, [projectEntities, datedEntityIds]);
+  }, [timelineEntities]);
 
   // Entity map for undated section
   const entityMap = useMemo(
@@ -152,6 +162,55 @@ export const ProjectTimelineTab = ({
   const totalEntities = projectEntities.length;
   const markerColor = project.color ?? 'var(--accent-fg)';
 
+  const renderEntityRow = (entity: ProjectEntity) => {
+    const schema = entity.entity_schema ? schemaMap.get(entity.entity_schema.id) : undefined;
+    const entitySnaps = snapsByEntity.get(entity.entity_id) ?? [];
+    const datedEntitySnaps = entitySnaps.filter(s => getSnapshotEffectiveDate(s, milestonesById));
+    const isRowActive = datedEntitySnaps.some(s => s.id === selectedSnap?.id);
+
+    return (
+      <div
+        key={entity.entity_id}
+        className={`${styles.ptlRow} ${isRowActive ? styles.ptlRowActive : ''}`}
+      >
+        <div className={styles.ptlLabel}>
+          {schema && <TypeBadge color={schema.color} icon={schema.icon} size={14} />}
+          <span className={styles.ptlName}>{entity.entity_name}</span>
+        </div>
+        <div className={styles.ptlTrack} style={{ width: totalWidth }}>
+          {datedEntitySnaps.map(snap => {
+            const effectiveDate = getSnapshotEffectiveDate(snap, milestonesById);
+            const px = stringDateToTimelinePx(effectiveDate, rangeStart, rangeEnd, totalWidth);
+            if (px === null) return null;
+            const isSelected = selectedSnap?.id === snap.id;
+            const snapColor = snap.status === 'applied' ? 'var(--green)' : markerColor;
+            const dateLabel = getSnapshotDateLabel(snap, milestonesById);
+            return (
+              <div
+                key={snap.id}
+                className={`${styles.ptlMarker} ${isSelected ? styles.ptlMarkerSelected : ''}`}
+                style={{ left: px }}
+                onClick={() => handleSelect(isSelected ? null : snap)}
+                title={
+                  snap.commit_message
+                    ? `${snap.commit_message} (${dateLabel})`
+                    : (dateLabel ?? snap.status)
+                }
+              >
+                <span
+                  className={
+                    snap.status === 'applied' ? styles.ptlMarkerDot : styles.ptlMarkerDiamond
+                  }
+                  style={{ background: snapColor }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   if (projectSnapshots.length === 0) {
     return (
       <div className={styles.ptEmpty}>
@@ -183,6 +242,26 @@ export const ProjectTimelineTab = ({
           applied
         </span>
         <div style={{ flex: 1 }} />
+        <div className={styles.ptlGrouping} role="toolbar" aria-label="Timeline grouping">
+          <div className={styles.ptlSegmented}>
+            <button
+              type="button"
+              className={groupByRole ? styles.ptlSegActive : undefined}
+              aria-pressed={groupByRole}
+              onClick={() => setGroupByRole(true)}
+            >
+              Role
+            </button>
+            <button
+              type="button"
+              className={!groupByRole ? styles.ptlSegActive : undefined}
+              aria-pressed={!groupByRole}
+              onClick={() => setGroupByRole(false)}
+            >
+              Entities
+            </button>
+          </div>
+        </div>
         <div className={styles.ptlSegmented}>
           {(['month', 'quarter', 'year'] as const).map((z, i) => (
             <button
@@ -238,96 +317,51 @@ export const ProjectTimelineTab = ({
               : milestoneMarkers.map(({ milestone, px }) => (
                   <div
                     key={milestone.id}
+                    role="img"
                     className={styles.ptlMilestoneLine}
                     style={{ left: LABEL_W + px }}
                     title={`${milestone.name} (${milestone.target_date})`}
+                    aria-label={`Milestone: ${milestone.name} (${milestone.target_date})`}
                   >
-                    <span className={styles.ptlMilestoneLabel}>{milestone.name}</span>
+                    <span
+                      className={styles.ptlMilestoneLabel}
+                      title={`${milestone.name} (${milestone.target_date})`}
+                    >
+                      {milestone.name}
+                    </span>
                   </div>
                 ))
           }
         >
+          {datedSnapshots.length > 0 && (
+            <div className={styles.ptlMilestoneLane}>
+              <div className={styles.ptlMilestoneLaneCorner}>Milestones</div>
+              <div className={styles.ptlMilestoneLaneTrack} style={{ width: totalWidth }} />
+            </div>
+          )}
+
           {datedSnapshots.length > 0 &&
-            [...entityGroups.entries()].map(([typeId, entities]) => {
-              const roleName = entities[0]?.entity_type?.name;
-              const roleColor = typeId !== '__none__' ? entityTypeColorMap.get(typeId) : undefined;
-              return (
-                <div key={typeId}>
-                  <div className={styles.ptlGrpRow}>
-                    <div className={styles.ptlGrpLabel}>
-                      {roleColor && (
-                        <span className={styles.ptlGrpDot} style={{ background: roleColor }} />
-                      )}
-                      <span>{roleName ?? 'Other'}</span>
-                      <span className={styles.ptlGrpCount}>({entities.length})</span>
-                    </div>
-                  </div>
-
-                  {entities.map(entity => {
-                    const schema = entity.entity_schema
-                      ? schemaMap.get(entity.entity_schema.id)
-                      : undefined;
-                    const entitySnaps = snapsByEntity.get(entity.entity_id) ?? [];
-                    const datedEntitySnaps = entitySnaps.filter(s =>
-                      getSnapshotEffectiveDate(s, milestonesById)
-                    );
-                    const isRowActive = datedEntitySnaps.some(s => s.id === selectedSnap?.id);
-
-                    return (
-                      <div
-                        key={entity.entity_id}
-                        className={`${styles.ptlRow} ${isRowActive ? styles.ptlRowActive : ''}`}
-                      >
-                        <div className={styles.ptlLabel}>
-                          {schema && (
-                            <TypeBadge color={schema.color} icon={schema.icon} size={14} />
+            (groupByRole
+              ? [...entityGroups.entries()].map(([typeId, entities]) => {
+                  const roleName = entities[0]?.entity_type?.name;
+                  const roleColor =
+                    typeId !== '__none__' ? entityTypeColorMap.get(typeId) : undefined;
+                  return (
+                    <div key={typeId}>
+                      <div className={styles.ptlGrpRow}>
+                        <div className={styles.ptlGrpLabel}>
+                          {roleColor && (
+                            <span className={styles.ptlGrpDot} style={{ background: roleColor }} />
                           )}
-                          <span className={styles.ptlName}>{entity.entity_name}</span>
-                        </div>
-                        <div className={styles.ptlTrack} style={{ width: totalWidth }}>
-                          {datedEntitySnaps.map(snap => {
-                            const effectiveDate = getSnapshotEffectiveDate(snap, milestonesById);
-                            const px = stringDateToTimelinePx(
-                              effectiveDate,
-                              rangeStart,
-                              rangeEnd,
-                              totalWidth
-                            );
-                            if (px === null) return null;
-                            const isSelected = selectedSnap?.id === snap.id;
-                            const snapColor =
-                              snap.status === 'applied' ? 'var(--green)' : markerColor;
-                            const dateLabel = getSnapshotDateLabel(snap, milestonesById);
-                            return (
-                              <div
-                                key={snap.id}
-                                className={`${styles.ptlMarker} ${isSelected ? styles.ptlMarkerSelected : ''}`}
-                                style={{ left: px }}
-                                onClick={() => handleSelect(isSelected ? null : snap)}
-                                title={
-                                  snap.commit_message
-                                    ? `${snap.commit_message} (${dateLabel})`
-                                    : (dateLabel ?? snap.status)
-                                }
-                              >
-                                <span
-                                  className={
-                                    snap.status === 'applied'
-                                      ? styles.ptlMarkerDot
-                                      : styles.ptlMarkerDiamond
-                                  }
-                                  style={{ background: snapColor }}
-                                />
-                              </div>
-                            );
-                          })}
+                          <span>{roleName ?? 'Other'}</span>
+                          <span className={styles.ptlGrpCount}>({entities.length})</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+                      {entities.map(renderEntityRow)}
+                    </div>
+                  );
+                })
+              : timelineEntities.map(renderEntityRow))}
 
           {undatedSnapshots.length > 0 && (
             <div className={styles.ptlUndated}>
@@ -372,6 +406,8 @@ export const ProjectTimelineTab = ({
                 teams={teams}
                 canEdit={canEdit}
                 onApplySnapshot={onApplySnapshot}
+                onEditSnapshot={onEditSnapshot}
+                onDeleteSnapshot={onDeleteSnapshot}
                 onClose={() => setSelectedSnap(null)}
               />
             );
@@ -393,6 +429,8 @@ const SnapDetail = ({
   teams,
   canEdit,
   onApplySnapshot,
+  onEditSnapshot,
+  onDeleteSnapshot,
   onClose
 }: {
   snapshot: EntitySnapshot;
@@ -405,10 +443,12 @@ const SnapDetail = ({
   teams: WorkspaceTeam[];
   canEdit: boolean;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
+  onEditSnapshot: (snapshot: EntitySnapshot) => void;
+  onDeleteSnapshot: (snapshot: EntitySnapshot) => void;
   onClose: () => void;
 }) => {
   const statusLabel = snapshot.status === 'applied' ? 'Applied' : 'Planned';
-  const canApply = canEdit && snapshot.status === 'future_update';
+  const canManage = canEdit && snapshot.status === 'future_update';
 
   const changes = diffSnapshotState(
     snapshot.base_state as Record<string, unknown> | undefined,
@@ -472,9 +512,19 @@ const SnapDetail = ({
           </span>
         </div>
 
-        {canApply && (
+        {canManage && (
           <div className={styles.ptlDetailActions}>
             <Button onClick={() => onApplySnapshot(snapshot)}>Apply</Button>
+            <Button icon={<TbPencil size={12} />} onClick={() => onEditSnapshot(snapshot)}>
+              Edit
+            </Button>
+            <Button
+              variant="danger"
+              icon={<TbTrash size={12} />}
+              onClick={() => onDeleteSnapshot(snapshot)}
+            >
+              Remove
+            </Button>
           </div>
         )}
       </div>

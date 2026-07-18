@@ -647,6 +647,18 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
+  async deleteSnapshot(workspace: string, snapshotId: string) {
+    const existing = await this.get(
+      'SELECT * FROM entity_snapshot WHERE workspace = ? AND id = ?',
+      [workspace, snapshotId],
+      catalogMappers.entitySnapshot
+    );
+    if (existing?.status !== 'future_update') return null;
+
+    this.run('DELETE FROM entity_snapshot WHERE workspace = ? AND id = ?', [workspace, snapshotId]);
+    return existing;
+  }
+
   async reassignSnapshotsFromMilestone(
     workspace: string,
     milestoneId: string,

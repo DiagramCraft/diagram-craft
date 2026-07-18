@@ -18,6 +18,12 @@
   color: var(--base-fg-more-dim);
 }
 
+.accent {
+  background: color-mix(in oklch, var(--accent-fg) 12%, var(--cmp-bg));
+  border-color: color-mix(in oklch, var(--accent-fg) 45%, var(--cmp-border));
+  color: var(--base-fg);
+}
+
 .dot {
   width: 6px;
   height: 6px;

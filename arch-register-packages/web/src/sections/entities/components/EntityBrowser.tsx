@@ -22,7 +22,7 @@ import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
 import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
-import { useJoinedAssessment } from './useJoinedAssessment';
+import { resolveJoinAssessmentId, useJoinedAssessment } from './useJoinedAssessment';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
 import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityBrowser.module.css';
@@ -188,8 +188,26 @@ export const EntityBrowser = ({
   const {
     options: joinOptions,
     joined,
-    responsesByEntity
-  } = useJoinedAssessment(workspaceId, joinAssessmentId);
+    responsesByEntity,
+    isReady: assessmentsReady
+  } = useJoinedAssessment(workspaceId, joinAssessmentId, projectId);
+  const effectiveJoinAssessmentId = resolveJoinAssessmentId(
+    joinAssessmentId,
+    joinOptions,
+    projectId
+  );
+
+  useEffect(() => {
+    if (projectId && assessmentsReady && joinAssessmentId && !effectiveJoinAssessmentId) {
+      setJoinAssessmentId(null);
+    }
+  }, [
+    assessmentsReady,
+    effectiveJoinAssessmentId,
+    joinAssessmentId,
+    projectId,
+    setJoinAssessmentId
+  ]);
   const readOnly = !!asOf && !collectionId;
   const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
   const [collectionTarget, setCollectionTarget] = useState<BrowserEntityRecord | null>(null);
@@ -223,7 +241,7 @@ export const EntityBrowser = ({
     schemas,
     q,
     conditions,
-    joinAssessmentId,
+    joinAssessmentId: effectiveJoinAssessmentId,
     typeFilter,
     ownerFilter,
     statusFilter,
@@ -366,7 +384,7 @@ export const EntityBrowser = ({
             : undefined
         }
         joinOptions={joinOptions}
-        joinAssessmentId={joinAssessmentId}
+        joinAssessmentId={effectiveJoinAssessmentId}
         onJoinAssessmentChange={setJoinAssessmentId}
         joinedAssessment={joined?.assessment}
       />
@@ -424,7 +442,7 @@ export const EntityBrowser = ({
             projectContext={projectContext}
             linkedEntityIds={linkedEntityIds}
             activeDateField={dateBrowserEnabled ? activeDateField : null}
-            joinAssessmentId={joinAssessmentId}
+            joinAssessmentId={effectiveJoinAssessmentId}
             joinedAssessment={joinedAssessmentContext}
             responsesByEntity={responsesByEntity}
             mode={

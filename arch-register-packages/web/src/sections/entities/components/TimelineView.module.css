@@ -106,8 +106,8 @@
   flex-shrink: 0;
   position: sticky;
   left: 0;
-  z-index: 2;
-  background: inherit;
+  z-index: 6;
+  background: var(--base-bg);
   border-right: 1px solid var(--panel-border);
   padding: 0 10px;
   display: flex;
@@ -119,6 +119,7 @@
 
 .labelColHeader {
   height: 28px;
+  background: var(--base-bg);
   font-size: 10px;
   font-family: var(--font-mono);
   color: var(--base-fg-more-dim);
@@ -161,6 +162,8 @@
 }
 
 .groupLabelCol {
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
   font-size: 11px;
   font-weight: 600;
   color: var(--base-fg-dim);
@@ -209,6 +212,10 @@
 
 .entityRowActive:hover {
   background: color-mix(in oklch, var(--accent-fg) 10%, var(--base-bg));
+}
+
+.entityRow > .labelCol {
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .entityName {
@@ -310,21 +317,98 @@
   line-height: 1;
 }
 
-/* Milestone line */
-.milestoneLine {
+.milestoneLane {
+  display: flex;
+  height: 30px;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.milestoneLaneCorner {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  width: 252px;
+  min-width: 252px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  color: var(--base-fg-more-dim);
+  font-size: 10px;
+}
+
+.milestoneLaneTrack {
+  flex-shrink: 0;
+}
+
+.projectGroup {
+  position: relative;
+}
+
+.projectMilestoneLine {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 1px;
   border-left: 1px dashed var(--warn, orange);
   opacity: 0.7;
-  z-index: 4;
+  z-index: 1;
   pointer-events: auto;
+}
+
+.projectMilestoneLine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 11px;
+}
+
+.projectMilestoneLabel {
+  position: absolute;
+  top: 7px;
+  left: 4px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--warn, orange);
+  background: var(--panel-bg);
+  padding: 1px 5px;
+  border-radius: var(--r);
+  border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  pointer-events: auto;
+  z-index: 5;
+}
+
+/* Milestone line */
+.milestoneLine {
+  position: absolute;
+  top: 28px;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed var(--warn, orange);
+  opacity: 0.7;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.milestoneLine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 11px;
 }
 
 .milestoneLabel {
   position: absolute;
-  top: 1px;
+  top: 7px;
   left: 4px;
   white-space: nowrap;
   font-size: 10px;
@@ -334,7 +418,7 @@
   padding: 1px 5px;
   border-radius: var(--r);
   border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
-  pointer-events: none;
+  pointer-events: auto;
   z-index: 5;
 }
 
@@ -464,6 +548,10 @@
 
 .snapHeader:hover {
   background: var(--cmp-bg);
+}
+
+.snapHeader > .labelCol {
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .snapLane {

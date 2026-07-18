@@ -456,6 +456,7 @@ export type CatalogDatabase = {
       commit_message?: string | null;
     }
   ): Promise<EntitySnapshotDbResult | null>;
+  deleteSnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
   applySnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
   reassignSnapshotsFromMilestone(
     ws: string,

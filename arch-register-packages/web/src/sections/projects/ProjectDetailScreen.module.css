@@ -825,22 +825,64 @@
   white-space: nowrap;
 }
 
-.futureRowApply {
+.futureRowActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: var(--r);
-  border: 1px solid var(--cmp-border);
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-  font-size: 11.5px;
-  cursor: pointer;
 }
 
-.futureRowApply:hover {
-  background: var(--accent-fg);
-  border-color: var(--accent-fg);
-  color: var(--accent-bg);
+.futureRowChanges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.futureRowChangesTitle {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.futureRowChange {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.futureRowChangeField {
+  color: var(--base-fg-dim);
+}
+
+.futureRowChangeFrom,
+.futureRowChangeTo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.futureRowChangeFrom {
+  color: var(--base-fg-more-dim);
+}
+
+.futureRowChangeArrow {
+  color: var(--base-fg-more-dim);
+}
+
+.futureRowChangeTo {
+  color: var(--base-fg);
+}
+
+.futureRowNoChanges {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
 }
 
 /* ── Project Timeline (ptl) ────────────────────────────────── */
@@ -904,6 +946,12 @@
 .ptlConfigMeta {
   font-size: 11px;
   color: var(--cmp-fg-disabled);
+}
+
+.ptlGrouping {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .ptlSegmented {
@@ -1027,9 +1075,35 @@
   padding-top: 2px;
 }
 
+.ptlMilestoneLane {
+  display: flex;
+  height: 30px;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.ptlMilestoneLaneCorner {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 248px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+}
+
+.ptlMilestoneLaneTrack {
+  flex-shrink: 0;
+}
+
 .ptlMilestoneLine {
   position: absolute;
-  top: 0;
+  top: 34px;
   bottom: 0;
   width: 1px;
   border-left: 1px dashed var(--warn, orange);
@@ -1038,9 +1112,18 @@
   pointer-events: auto;
 }
 
+.ptlMilestoneLine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 11px;
+}
+
 .ptlMilestoneLabel {
   position: absolute;
-  top: 36px;
+  top: 7px;
   left: 4px;
   white-space: nowrap;
   font-size: 10px;
@@ -1050,7 +1133,7 @@
   padding: 1px 5px;
   border-radius: var(--r);
   border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
-  pointer-events: none;
+  pointer-events: auto;
   z-index: 4;
 }
 
@@ -1382,6 +1465,8 @@
 
 .ptlDetailActions {
   display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
   justify-content: flex-start;
   padding-top: 6px;
 }

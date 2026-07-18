@@ -478,6 +478,36 @@ const snapshotHandlers = {
     return serializeEntitySnapshot(snapshot);
   }),
 
+  remove: entityRouter.entities.snapshots.remove.handler(async ({ input, context }) => {
+    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+    httpAssert.present(entity, {
+      status: 404,
+      message: `Data record '${input.params.id}' not found`
+    });
+    requireEntityAction(
+      authCtx,
+      entity,
+      'edit_entity',
+      'You do not have permission to edit this entity'
+    );
+
+    const snapshot = await context.db.catalog.getSnapshot(workspace, input.params.snapshotId);
+    orpcAssert.present(snapshot, { code: 'NOT_FOUND', message: 'Snapshot not found' });
+    orpcAssert.true(snapshot.entity_id === entity.id, {
+      code: 'BAD_REQUEST',
+      message: 'Snapshot does not belong to this entity'
+    });
+
+    const deleted = await context.db.catalog.deleteSnapshot(workspace, input.params.snapshotId);
+    orpcAssert.present(deleted, {
+      code: 'NOT_FOUND',
+      message: 'Snapshot not found or is not a future_update snapshot'
+    });
+    return { success: true, message: 'Future change deleted' };
+  }),
+
   promote: entityRouter.entities.snapshots.promote.handler(async ({ input, context }) => {
     const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
     const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);

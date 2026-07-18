@@ -76,6 +76,13 @@ export const EntityTimelineTab = ({
     return [...byP.entries()].map(([projectId, snaps]) => ({ projectId, snaps }));
   }, [allSnapshots]);
 
+  const timelineMilestonesById = useMemo(() => {
+    const timelineProjectIds = new Set(projectLanes.map(({ projectId }) => projectId));
+    return new Map(
+      [...milestonesById].filter(([, milestone]) => timelineProjectIds.has(milestone.project_id))
+    );
+  }, [milestonesById, projectLanes]);
+
   const { conflictedProjectIds, conflictedSnapIds } = useMemo(
     () => detectConflicts(allSnapshots),
     [allSnapshots]
@@ -92,7 +99,7 @@ export const EntityTimelineTab = ({
     for (const { snaps } of projectLanes) {
       for (const s of snaps) {
         if (s.created_at) dates.push(new Date(s.created_at));
-        const effectiveDate = getSnapshotEffectiveDate(s, milestonesById);
+        const effectiveDate = getSnapshotEffectiveDate(s, timelineMilestonesById);
         if (effectiveDate) dates.push(new Date(`${effectiveDate}T00:00:00`));
       }
     }
@@ -102,7 +109,7 @@ export const EntityTimelineTab = ({
       columnWidths: COL_W,
       today: TODAY
     });
-  }, [ownSnaps, projectLanes, milestonesById, zoom, TODAY]);
+  }, [ownSnaps, projectLanes, timelineMilestonesById, zoom, TODAY]);
 
   const todayPx = useMemo(
     () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
@@ -110,13 +117,13 @@ export const EntityTimelineTab = ({
   );
 
   const milestoneMarkers = useMemo(() => {
-    return [...milestonesById.values()]
+    return [...timelineMilestonesById.values()]
       .map(milestone => ({
         milestone,
         px: stringDateToTimelinePx(milestone.target_date, rangeStart, rangeEnd, totalWidth)
       }))
       .filter((m): m is { milestone: Milestone; px: number } => m.px !== null);
-  }, [milestonesById, rangeStart, rangeEnd, totalWidth]);
+  }, [timelineMilestonesById, rangeStart, rangeEnd, totalWidth]);
 
   const handleSelect = (snap: EntitySnapshot | null) => {
     setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));
@@ -206,10 +213,22 @@ export const EntityTimelineTab = ({
               style={{ left: LABEL_W + px }}
               title={`${milestone.name} (${milestone.target_date})`}
             >
-              <span className={styles.etlMilestoneLabel}>{milestone.name}</span>
+              <span
+                className={styles.etlMilestoneLabel}
+                title={`${milestone.name} (${milestone.target_date})`}
+              >
+                {milestone.name}
+              </span>
             </div>
           ))}
         >
+          {milestoneMarkers.length > 0 && (
+            <div className={styles.etlMilestoneLane}>
+              <div className={styles.etlMilestoneLaneCorner}>Milestones</div>
+              <div className={styles.etlMilestoneLaneTrack} style={{ width: totalWidth }} />
+            </div>
+          )}
+
           {ownSnaps.length > 0 && (
             <OwnHistoryLane
               snaps={ownSnaps}
@@ -228,7 +247,7 @@ export const EntityTimelineTab = ({
               snaps={snaps}
               isConflicted={conflictedProjectIds.has(projectId)}
               conflictedSnapIds={conflictedSnapIds}
-              milestonesById={milestonesById}
+              milestonesById={timelineMilestonesById}
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
               totalWidth={totalWidth}
@@ -242,7 +261,7 @@ export const EntityTimelineTab = ({
           <SnapDetail
             snapshot={selectedSnap}
             project={projectMap.get(selectedSnap.project_id ?? '') ?? null}
-            milestonesById={milestonesById}
+            milestonesById={timelineMilestonesById}
             schema={schema}
             lifecycleStates={lifecycleStates}
             teams={teams}

@@ -10721,6 +10721,69 @@
             }
           }
         }
+      },
+      "delete": {
+        "operationId": "entities.snapshots.remove",
+        "summary": "Delete future entity snapshot",
+        "description": "Deletes a planned future update snapshot.",
+        "tags": [
+          "Entities",
+          "Entities"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          },
+          {
+            "name": "snapshotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the deletion was successful"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Status message or error details"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/{workspace}/data/{id}/snapshots/{snapshotId}/promote": {
@@ -11651,7 +11714,8 @@
                                     "enum": [
                                       "owner",
                                       "type",
-                                      "snapshot"
+                                      "snapshot",
+                                      "project"
                                     ],
                                     "type": "string",
                                     "description": "Timeline grouping mode"
@@ -12248,7 +12312,8 @@
                                 "enum": [
                                   "owner",
                                   "type",
-                                  "snapshot"
+                                  "snapshot",
+                                  "project"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -12815,7 +12880,8 @@
                                   "enum": [
                                     "owner",
                                     "type",
-                                    "snapshot"
+                                    "snapshot",
+                                    "project"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
@@ -13403,7 +13469,8 @@
                                 "enum": [
                                   "owner",
                                   "type",
-                                  "snapshot"
+                                  "snapshot",
+                                  "project"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -13965,7 +14032,8 @@
                                   "enum": [
                                     "owner",
                                     "type",
-                                    "snapshot"
+                                    "snapshot",
+                                    "project"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
