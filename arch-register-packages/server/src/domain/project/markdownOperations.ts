@@ -600,6 +600,7 @@ export const getMarkdownContent = async (
         document_type: document.documentType
           ? {
               ...document.documentType,
+              version: document.documentType.version ?? 1,
               created_at: document.documentType.created_at.toISOString(),
               updated_at: document.documentType.updated_at.toISOString()
             }

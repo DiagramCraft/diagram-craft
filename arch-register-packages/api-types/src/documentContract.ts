@@ -61,8 +61,30 @@ export const documentTypeSchema = z.object({
   color: z.string().nullable(),
   icon: z.string().nullable(),
   archived: z.boolean(),
+  version: z.number().int().min(1).describe('Current document type version number'),
   created_at: z.string(),
   updated_at: z.string()
+});
+
+const fieldMigrationActionSchema = z
+  .object({
+    action: z.enum(['rename', 'remove', 'archive']).describe('Migration action for this field'),
+    renameTo: z.string().optional().describe('New field id when action is "rename"')
+  })
+  .describe('How to migrate a changed/removed field');
+
+const documentTypeVersionSchema = z.object({
+  version: z.number().int().min(1).describe('Version number'),
+  name: z.string().describe('Document type name at this version'),
+  description: z.string().describe('Document type description at this version'),
+  fields: z.array(documentFieldSchema).describe('Field definitions at this version'),
+  color: z.string().nullable().describe('Document type color at this version'),
+  icon: z.string().nullable().describe('Document type icon at this version'),
+  changeSummary: z
+    .record(z.string(), z.unknown())
+    .describe('Summary of what changed relative to the previous version'),
+  createdBy: z.string().nullable().describe('User id who made this change'),
+  createdAt: z.string().describe('ISO 8601 timestamp of this version')
 });
 
 export const documentTemplateSchema = z.object({
@@ -83,7 +105,13 @@ const documentTypeWriteSchema = z.object({
   description: z.string().default(''),
   fields: z.array(documentFieldSchema),
   color: z.string().nullable().optional(),
-  icon: z.string().nullable().optional()
+  icon: z.string().nullable().optional(),
+  fieldMigrations: z
+    .record(z.string(), fieldMigrationActionSchema)
+    .optional()
+    .describe(
+      'Resolutions for fields being renamed/removed/archived while data exists, keyed by the old field id'
+    )
 });
 
 const documentTemplateWriteSchema = z.object({
@@ -155,7 +183,19 @@ export const documentContract = oc.tag('Typed Documents').router({
         tags: ['Typed Documents']
       })
       .input(z.object({ params: wsAndId }))
-      .output(z.object({ deleted: z.boolean() }))
+      .output(z.object({ deleted: z.boolean() })),
+    listVersions: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/document-types/{id}/versions',
+        inputStructure: 'detailed',
+        summary: 'List document type version history',
+        description:
+          'Retrieves the version history for a document type, newest first, including who changed what and when.',
+        tags: ['Typed Documents']
+      })
+      .input(z.object({ params: wsAndId }))
+      .output(z.array(documentTypeVersionSchema))
   },
   documentTemplates: {
     list: oc
@@ -227,3 +267,22 @@ export type DocumentType = z.infer<typeof documentTypeSchema>;
 export type DocumentTemplate = z.infer<typeof documentTemplateSchema>;
 export type DocumentTypeWrite = z.infer<typeof documentTypeWriteSchema>;
 export type DocumentTemplateWrite = z.infer<typeof documentTemplateWriteSchema>;
+
+// ── Document Type Versioning & Field Migrations ──────────────
+
+export type FieldMigrationAction = z.infer<typeof fieldMigrationActionSchema>;
+export type FieldMigrations = Record<string, FieldMigrationAction>;
+export type DocumentTypeVersion = z.infer<typeof documentTypeVersionSchema>;
+
+export type PendingFieldChange = {
+  fieldId: string;
+  fieldName: string;
+  kind: 'removed' | 'renamed';
+  renamedToId?: string;
+  entityCount: number;
+};
+
+export type DocumentTypeMigrationRequiredError = {
+  code: 'DOCUMENT_TYPE_MIGRATION_REQUIRED';
+  pendingChanges: PendingFieldChange[];
+};

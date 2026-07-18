@@ -1,24 +1,36 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
-import type {
-  FieldMigrationAction,
-  PendingFieldChange
-} from '@arch-register/api-types/schemaContract';
 
-export type FieldMigrationChoices = Record<string, FieldMigrationAction['action']>;
+type FieldMigrationActionValue = 'rename' | 'remove' | 'archive';
 
-const defaultChoice = (change: PendingFieldChange): FieldMigrationAction['action'] =>
+type PendingFieldChangeLike = {
+  fieldId: string;
+  fieldName: string;
+  kind: 'removed' | 'renamed';
+  renamedToId?: string;
+  entityCount: number;
+};
+
+export type FieldMigrationChoices = Record<string, FieldMigrationActionValue>;
+
+const defaultChoice = (change: PendingFieldChangeLike): FieldMigrationActionValue =>
   change.kind === 'renamed' ? 'rename' : 'remove';
 
 export const FieldMigrationDialog = ({
   open,
   pendingChanges,
+  subjectLabel = 'schema',
+  itemNoun = 'entity',
   onCancel,
   onConfirm
 }: {
   open: boolean;
-  pendingChanges: PendingFieldChange[];
+  pendingChanges: PendingFieldChangeLike[];
+  /** What the field belonged to, used in the "removed from the ___" copy (e.g. "schema", "document type"). */
+  subjectLabel?: string;
+  /** Singular noun for what `entityCount` counts (e.g. "entity", "document"). */
+  itemNoun?: string;
   onCancel: () => void;
   onConfirm: (choices: FieldMigrationChoices) => void;
 }) => {
@@ -45,7 +57,7 @@ export const FieldMigrationDialog = ({
     >
       <div style={{ display: 'grid', gap: 16 }}>
         <p style={{ margin: 0, fontSize: 13 }}>
-          These fields already have entity data. Choose how to handle each one before saving.
+          These fields already have {itemNoun} data. Choose how to handle each one before saving.
         </p>
         {pendingChanges.map(change => (
           <div
@@ -59,16 +71,19 @@ export const FieldMigrationDialog = ({
           >
             <div style={{ fontWeight: 600, fontSize: 13 }}>{change.fieldName}</div>
             <div className="dim" style={{ fontSize: 12 }}>
-              {change.kind === 'renamed' ? 'Detected as a rename' : 'Field removed from the schema'}{' '}
+              {change.kind === 'renamed'
+                ? 'Detected as a rename'
+                : `Field removed from the ${subjectLabel}`}{' '}
               &middot; {change.entityCount}{' '}
-              {change.entityCount === 1 ? 'entity has' : 'entities have'} data in this field
+              {change.entityCount === 1 ? `${itemNoun} has` : `${itemNoun}s have`} data in this
+              field
             </div>
             <Select.Root
               value={choices[change.fieldId] ?? defaultChoice(change)}
               onChange={value =>
                 setChoices(prev => ({
                   ...prev,
-                  [change.fieldId]: (value ?? 'remove') as FieldMigrationAction['action']
+                  [change.fieldId]: (value ?? 'remove') as FieldMigrationActionValue
                 }))
               }
               style={{ width: 240 }}

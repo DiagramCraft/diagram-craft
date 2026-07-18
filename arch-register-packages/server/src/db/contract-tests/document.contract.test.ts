@@ -7,15 +7,20 @@ import {
   createFixtureSchema,
   createFixtureWorkspace
 } from './projectFixtures';
+import { createFixtureUser } from './authFixtures';
 import type { DatabaseAdapter } from '../database';
 
 runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
-  const createType = async (db: DatabaseAdapter, workspace: string) => {
+  const createType = async (
+    db: DatabaseAdapter,
+    workspace: string,
+    name = 'Architecture Decision Record'
+  ) => {
     const now = new Date();
     return db.document.createDocumentType({
       id: randomUUID(),
       workspace,
-      name: 'Architecture Decision Record',
+      name,
       description: 'A decision record',
       fields: [
         {
@@ -228,5 +233,190 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       })
     ]);
     expect(await db.document.listDocumentsLinkingDocument(workspace, newerNodeId)).toEqual([]);
+  });
+
+  it('bumps document type version on update and leaves it unchanged when omitted', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const type = await createType(db, workspace);
+    expect(type.version).toBe(1);
+
+    const updatedNoVersion = await db.document.updateDocumentType(workspace, type.id, {
+      name: type.name,
+      description: type.description,
+      fields: type.fields,
+      color: type.color,
+      icon: type.icon,
+      updated_at: new Date()
+    });
+    expect(updatedNoVersion!.version).toBe(1);
+
+    const updatedWithVersion = await db.document.updateDocumentType(workspace, type.id, {
+      name: type.name,
+      description: type.description,
+      fields: type.fields,
+      color: type.color,
+      icon: type.icon,
+      version: 2,
+      updated_at: new Date()
+    });
+    expect(updatedWithVersion!.version).toBe(2);
+  });
+
+  it('creates and lists document type versions newest first', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const type = await createType(db, workspace);
+    const user = await createFixtureUser(db);
+
+    await db.document.createDocumentTypeVersion({
+      id: randomUUID(),
+      workspace,
+      document_type_id: type.id,
+      version: 1,
+      name: type.name,
+      description: type.description,
+      fields: type.fields,
+      color: type.color,
+      icon: type.icon,
+      change_summary: { added: ['status', 'affected_entities'] },
+      created_by: user.id,
+      created_at: new Date('2026-01-01T00:00:00.000Z')
+    });
+    await db.document.createDocumentTypeVersion({
+      id: randomUUID(),
+      workspace,
+      document_type_id: type.id,
+      version: 2,
+      name: type.name,
+      description: type.description,
+      fields: [
+        ...type.fields,
+        { id: 'owner', name: 'Owner', type: 'text', requirement: 'optional', retired: false }
+      ],
+      color: type.color,
+      icon: type.icon,
+      change_summary: { added: ['owner'] },
+      created_by: user.id,
+      created_at: new Date('2026-01-02T00:00:00.000Z')
+    });
+
+    const versions = await db.document.listDocumentTypeVersions(workspace, type.id);
+    expect(versions.map(v => v.version)).toEqual([2, 1]);
+    expect(versions[0]!.change_summary).toEqual({ added: ['owner'] });
+    expect(versions[0]!.created_by).toBe(user.id);
+  });
+
+  it('renames a field across content_node_document values for the document type atomically', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const type = await createType(db, workspace);
+    const otherType = await createType(db, workspace, 'Other type');
+    const now = new Date();
+
+    const makeNode = async (path: string) => {
+      const nodeId = randomUUID();
+      await db.project.upsertContentNode({
+        id: nodeId,
+        workspace,
+        project_id: project.id,
+        entity_id: null,
+        parent_id: null,
+        path,
+        name: path,
+        type: 'markdown',
+        size_bytes: 12,
+        comment_count: 0,
+        unresolved_comment_count: 0,
+        created_atIfNew: now,
+        updated_at: now
+      });
+      return nodeId;
+    };
+
+    const node1 = await makeNode('a.md');
+    const node2 = await makeNode('b.md');
+    const nodeOtherType = await makeNode('c.md');
+
+    await db.document.upsertDocumentMetadata({
+      workspace,
+      node_id: node1,
+      document_type_id: type.id,
+      values: { status: 'proposed', affected_entities: [] },
+      updated_at: now
+    });
+    await db.document.upsertDocumentMetadata({
+      workspace,
+      node_id: node2,
+      document_type_id: type.id,
+      values: { affected_entities: [] },
+      updated_at: now
+    });
+    await db.document.upsertDocumentMetadata({
+      workspace,
+      node_id: nodeOtherType,
+      document_type_id: otherType.id,
+      values: { status: 'should-not-change' },
+      updated_at: now
+    });
+
+    const affected = await db.document.renameDocumentMetadataField(
+      workspace,
+      type.id,
+      'status',
+      'decision_status'
+    );
+    expect(affected).toBe(1);
+
+    expect((await db.document.getDocumentMetadata(workspace, node1))!.values).toEqual({
+      decision_status: 'proposed',
+      affected_entities: []
+    });
+    expect((await db.document.getDocumentMetadata(workspace, node2))!.values).toEqual({
+      affected_entities: []
+    });
+    expect((await db.document.getDocumentMetadata(workspace, nodeOtherType))!.values).toEqual({
+      status: 'should-not-change'
+    });
+  });
+
+  it('removes a field from every content_node_document values blob for the document type', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const type = await createType(db, workspace);
+    const now = new Date();
+
+    const nodeId = randomUUID();
+    await db.project.upsertContentNode({
+      id: nodeId,
+      workspace,
+      project_id: project.id,
+      entity_id: null,
+      parent_id: null,
+      path: 'a.md',
+      name: 'a.md',
+      type: 'markdown',
+      size_bytes: 12,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: now,
+      updated_at: now
+    });
+    await db.document.upsertDocumentMetadata({
+      workspace,
+      node_id: nodeId,
+      document_type_id: type.id,
+      values: { status: 'proposed', affected_entities: ['keep'] },
+      updated_at: now
+    });
+
+    const affected = await db.document.removeDocumentMetadataField(workspace, type.id, 'status');
+    expect(affected).toBe(1);
+
+    expect((await db.document.getDocumentMetadata(workspace, nodeId))!.values).toEqual({
+      affected_entities: ['keep']
+    });
   });
 });

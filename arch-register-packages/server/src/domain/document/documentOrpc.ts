@@ -15,6 +15,7 @@ import {
   getDocumentType,
   listDocumentTemplates,
   listDocumentTypes,
+  listDocumentTypeVersions,
   updateDocumentTemplate,
   updateDocumentType
 } from './documentOperations';
@@ -58,6 +59,9 @@ export const documentORPCRouter = router.router({
     ),
     remove: router.documentTypes.remove.handler(({ input, context }) =>
       deleteDocumentType(context.db, input.params.workspace, input.params.id, context.event)
+    ),
+    listVersions: router.documentTypes.listVersions.handler(({ input, context }) =>
+      listDocumentTypeVersions(context.db, input.params.workspace, input.params.id, context.event)
     )
   },
   documentTemplates: {

@@ -21,9 +21,12 @@ import type {
   DocumentMetadata,
   DocumentRequirement,
   DocumentTemplate,
-  DocumentType
+  DocumentType,
+  FieldMigrations,
+  PendingFieldChange
 } from '@arch-register/api-types/documentContract';
 import {
+  getDocumentTypeMigrationRequired,
   useArchiveDocumentTemplate,
   useArchiveDocumentType,
   useCreateDocumentTemplate,
@@ -44,6 +47,8 @@ import { Title } from '../../components/Title';
 import { resolveDocumentTypeColor, SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
+import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
 import styles from './DocumentSettingsScreen.module.css';
 
 const FIELD_TYPE_OPTIONS: { value: DocumentFieldType; label: string }[] = [
@@ -183,6 +188,8 @@ const DocumentTypeEditor = ({
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
   const fieldKeysRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -195,6 +202,8 @@ const DocumentTypeEditor = ({
       setColor(selected.color);
       setIcon(selected.icon);
       setDirty(false);
+      setShowHistory(false);
+      setPendingFieldChanges(null);
     } else if (isNew) {
       setName('');
       setDescription('');
@@ -204,11 +213,6 @@ const DocumentTypeEditor = ({
       setDirty(true);
     }
   }, [isNew, selected]);
-
-  const originalFieldIds = useMemo(
-    () => new Set((selected?.fields ?? []).map(field => field.id)),
-    [selected]
-  );
 
   const updateField = (fieldId: string, patch: Partial<DocumentField>) => {
     if (patch.id !== undefined && patch.id !== fieldId) {
@@ -227,13 +231,9 @@ const DocumentTypeEditor = ({
   };
 
   const removeField = (field: DocumentField) => {
-    if (originalFieldIds.has(field.id)) {
-      updateField(field.id, { retired: true });
-    } else {
-      fieldKeysRef.current.delete(field.id);
-      setFields(current => current.filter(item => item.id !== field.id));
-      setDirty(true);
-    }
+    fieldKeysRef.current.delete(field.id);
+    setFields(current => current.filter(item => item.id !== field.id));
+    setDirty(true);
   };
 
   const addField = () => {
@@ -243,22 +243,39 @@ const DocumentTypeEditor = ({
     setDirty(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (fieldMigrations?: FieldMigrations) => {
     if (!dirty) return;
     try {
-      const body = { name, description, fields, color, icon };
+      const body = { name, description, fields, color, icon, fieldMigrations };
       if (isNew) {
         const created = await createType.mutateAsync(body);
         onSelect(created.id);
       } else if (selected) {
         await updateType.mutateAsync({ id: selected.id, body });
         setDirty(false);
+        setPendingFieldChanges(null);
       } else {
         return;
       }
     } catch (cause) {
+      const migrationRequired = getDocumentTypeMigrationRequired(cause);
+      if (migrationRequired) {
+        setPendingFieldChanges(migrationRequired.pendingChanges);
+        return;
+      }
       setErrorMessage(cause instanceof Error ? cause.message : 'Failed to save document type');
     }
+  };
+
+  const confirmFieldMigrations = (choices: FieldMigrationChoices) => {
+    if (!pendingFieldChanges) return;
+    const fieldMigrations: FieldMigrations = {};
+    for (const change of pendingFieldChanges) {
+      const action = choices[change.fieldId] ?? 'remove';
+      fieldMigrations[change.fieldId] =
+        action === 'rename' ? { action, renameTo: change.renamedToId } : { action };
+    }
+    void handleSave(fieldMigrations);
   };
 
   const doDelete = async () => {
@@ -302,159 +319,174 @@ const DocumentTypeEditor = ({
                 />
               }
               title={name || 'New document type'}
-              description={description || `${fields.filter(field => !field.retired).length} fields`}
+              description={
+                description ||
+                `${fields.filter(field => !field.retired).length} fields${selected ? ` · version ${selected.version}` : ''}`
+              }
             />
-          </div>
-          <div className={styles.editor}>
-            {selected?.archived && (
-              <div className={styles.banner}>
-                <TbInfoCircle size={12} />
-                Archived — visible on existing documents for history, but not offered when creating
-                new ones.
-              </div>
+            {selected && (
+              <Button variant="ghost" onClick={() => setShowHistory(v => !v)}>
+                {showHistory ? 'Back to fields' : 'View history'}
+              </Button>
             )}
+          </div>
+          {showHistory && selected ? (
+            <DocumentTypeVersionHistorySubSection
+              workspaceId={workspaceSlug}
+              documentTypeId={selected.id}
+            />
+          ) : (
+            <div className={styles.editor}>
+              {selected?.archived && (
+                <div className={styles.banner}>
+                  <TbInfoCircle size={12} />
+                  Archived — visible on existing documents for history, but not offered when
+                  creating new ones.
+                </div>
+              )}
 
-            <div className={styles.formRow}>
-              <div>
-                <div className={styles.formLabel}>Name</div>
-                <TextInput
-                  value={name}
-                  onChange={value => {
-                    setName(value ?? '');
-                    setDirty(true);
-                  }}
-                  style={{ width: '100%' }}
-                />
+              <div className={styles.formRow}>
+                <div>
+                  <div className={styles.formLabel}>Name</div>
+                  <TextInput
+                    value={name}
+                    onChange={value => {
+                      setName(value ?? '');
+                      setDirty(true);
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <div style={{ flex: 2 }}>
+                  <div className={styles.formLabel}>Description</div>
+                  <TextInput
+                    value={description}
+                    onChange={value => {
+                      setDescription(value ?? '');
+                      setDirty(true);
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                </div>
               </div>
-              <div style={{ flex: 2 }}>
-                <div className={styles.formLabel}>Description</div>
-                <TextInput
-                  value={description}
-                  onChange={value => {
-                    setDescription(value ?? '');
-                    setDirty(true);
-                  }}
-                  style={{ width: '100%' }}
-                />
-              </div>
-            </div>
 
-            <div className={styles.appearanceRow}>
-              <div>
-                <div className={styles.formLabel}>Color</div>
-                <div className={styles.colorSwatches}>
-                  {SCHEMA_COLORS.map(preset => (
-                    <button
-                      type="button"
-                      key={preset}
-                      className={`${styles.swatch} ${color === preset ? styles.swatchActive : ''}`}
-                      style={{ background: preset }}
-                      title={preset}
-                      onClick={() => {
-                        setColor(preset);
-                        setDirty(true);
-                      }}
+              <div className={styles.appearanceRow}>
+                <div>
+                  <div className={styles.formLabel}>Color</div>
+                  <div className={styles.colorSwatches}>
+                    {SCHEMA_COLORS.map(preset => (
+                      <button
+                        type="button"
+                        key={preset}
+                        className={`${styles.swatch} ${color === preset ? styles.swatchActive : ''}`}
+                        style={{ background: preset }}
+                        title={preset}
+                        onClick={() => {
+                          setColor(preset);
+                          setDirty(true);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.formLabel}>Icon</div>
+                  <div className={styles.iconPicker}>
+                    {SCHEMA_ICONS.map(id => {
+                      const Icon = ICON_MAP[id];
+                      return (
+                        <button
+                          type="button"
+                          key={id}
+                          className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
+                          title={id}
+                          onClick={() => {
+                            setIcon(id);
+                            setDirty(true);
+                          }}
+                        >
+                          <Icon size={14} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.fieldsHead}>
+                <div className={styles.sectionLabel}>Fields</div>
+                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
+                  Add field
+                </Button>
+              </div>
+
+              {fields.length > 0 ? (
+                <div className={styles.fieldsTable}>
+                  <div className={styles.fieldsTh}>
+                    <span />
+                    <span>Field ID</span>
+                    <span>Name</span>
+                    <span>Type</span>
+                    <span>Options / Cardinality</span>
+                    <span>Requirement</span>
+                    <span />
+                  </div>
+                  {fields.map(field => (
+                    <DocumentFieldRow
+                      key={fieldKeysRef.current.get(field.id) ?? field.id}
+                      field={field}
+                      onUpdate={patch => updateField(field.id, patch)}
+                      onRemove={() => removeField(field)}
                     />
                   ))}
                 </div>
-              </div>
-              <div>
-                <div className={styles.formLabel}>Icon</div>
-                <div className={styles.iconPicker}>
-                  {SCHEMA_ICONS.map(id => {
-                    const Icon = ICON_MAP[id];
-                    return (
-                      <button
-                        type="button"
-                        key={id}
-                        className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
-                        title={id}
-                        onClick={() => {
-                          setIcon(id);
-                          setDirty(true);
-                        }}
-                      >
-                        <Icon size={14} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.fieldsHead}>
-              <div className={styles.sectionLabel}>Fields</div>
-              <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
-                Add field
-              </Button>
-            </div>
-
-            {fields.length > 0 ? (
-              <div className={styles.fieldsTable}>
-                <div className={styles.fieldsTh}>
-                  <span />
-                  <span>Field ID</span>
-                  <span>Name</span>
-                  <span>Type</span>
-                  <span>Options / Cardinality</span>
-                  <span>Requirement</span>
-                  <span />
-                </div>
-                {fields.map(field => (
-                  <DocumentFieldRow
-                    key={fieldKeysRef.current.get(field.id) ?? field.id}
-                    field={field}
-                    onUpdate={patch => updateField(field.id, patch)}
-                    onRemove={() => removeField(field)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className={styles.fieldsTable}>
-                <div className={styles.fieldEmpty}>
-                  No fields defined yet. Click &quot;Add field&quot; to get started.
-                </div>
-              </div>
-            )}
-            <div className={styles.fieldsHint}>
-              <TbInfoCircle size={11} />
-              Fields already used by documents keep their ID and value type. Removing a used field
-              retires it instead of deleting it.
-            </div>
-
-            <div className={styles.bottomActions}>
-              {selected && (
-                <div className={styles.bottomActionGroup}>
-                  <Button
-                    variant="secondary"
-                    icon={selected.archived ? <TbEye size={13} /> : <TbArchive size={13} />}
-                    onClick={() =>
-                      void archiveType.mutateAsync({
-                        id: selected.id,
-                        archived: !selected.archived
-                      })
-                    }
-                  >
-                    {selected.archived ? 'Unarchive' : 'Archive'}
-                  </Button>
-                  <Button
-                    variant="danger"
-                    icon={<TbTrash size={13} />}
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    Delete
-                  </Button>
+              ) : (
+                <div className={styles.fieldsTable}>
+                  <div className={styles.fieldEmpty}>
+                    No fields defined yet. Click &quot;Add field&quot; to get started.
+                  </div>
                 </div>
               )}
-              <Button
-                variant="primary"
-                onClick={() => void handleSave()}
-                disabled={!dirty || !name.trim() || createType.isPending || updateType.isPending}
-              >
-                {createType.isPending || updateType.isPending ? 'Saving…' : 'Save'}
-              </Button>
+              <div className={styles.fieldsHint}>
+                <TbInfoCircle size={11} />
+                Fields already used by documents keep their value type. Renaming or removing a used
+                field will ask you to choose how to migrate its data before saving.
+              </div>
+
+              <div className={styles.bottomActions}>
+                {selected && (
+                  <div className={styles.bottomActionGroup}>
+                    <Button
+                      variant="secondary"
+                      icon={selected.archived ? <TbEye size={13} /> : <TbArchive size={13} />}
+                      onClick={() =>
+                        void archiveType.mutateAsync({
+                          id: selected.id,
+                          archived: !selected.archived
+                        })
+                      }
+                    >
+                      {selected.archived ? 'Unarchive' : 'Archive'}
+                    </Button>
+                    <Button
+                      variant="danger"
+                      icon={<TbTrash size={13} />}
+                      onClick={() => setConfirmDelete(true)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
+                <Button
+                  variant="primary"
+                  onClick={() => void handleSave()}
+                  disabled={!dirty || !name.trim() || createType.isPending || updateType.isPending}
+                >
+                  {createType.isPending || updateType.isPending ? 'Saving…' : 'Save'}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       ) : (
         <EmptyState
@@ -494,6 +526,14 @@ const DocumentTypeEditor = ({
         title="Something went wrong"
         message={errorMessage}
         onClose={() => setErrorMessage(null)}
+      />
+      <FieldMigrationDialog
+        open={pendingFieldChanges !== null}
+        pendingChanges={pendingFieldChanges ?? []}
+        subjectLabel="document type"
+        itemNoun="document"
+        onCancel={() => setPendingFieldChanges(null)}
+        onConfirm={confirmFieldMigrations}
       />
     </>
   );

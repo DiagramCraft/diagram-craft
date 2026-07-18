@@ -3,10 +3,24 @@ import type {
   DocumentMetadata,
   DocumentTemplateWrite,
   DocumentType,
-  DocumentTypeWrite
+  DocumentTypeMigrationRequiredError,
+  DocumentTypeWrite,
+  FieldMigrations
 } from '@arch-register/api-types/documentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { orpcClient } from '../lib/orpcClient';
+import { normalizeApiError } from '../lib/http';
+
+/** Extracts the structured "migration required" payload from a failed document type update, if present. */
+export const getDocumentTypeMigrationRequired = (
+  error: unknown
+): DocumentTypeMigrationRequiredError | null => {
+  const apiError = normalizeApiError(error);
+  const data = apiError.data as { code?: string } | undefined;
+  return data?.code === 'DOCUMENT_TYPE_MIGRATION_REQUIRED'
+    ? (data as DocumentTypeMigrationRequiredError)
+    : null;
+};
 
 export type DocumentListOptions = {
   q?: string;
@@ -24,6 +38,8 @@ export const documentKeys = {
   typesRoot: (workspaceId: string) => ['document-types', workspaceId] as const,
   types: (workspaceId: string, includeArchived = false) =>
     ['document-types', workspaceId, includeArchived] as const,
+  versions: (workspaceId: string, documentTypeId: string) =>
+    ['document-types', workspaceId, documentTypeId, 'versions'] as const,
   templatesRoot: (workspaceId: string) => ['document-templates', workspaceId] as const,
   templates: (workspaceId: string, projectId?: string | null, includeArchived = false) =>
     ['document-templates', workspaceId, projectId ?? 'workspace', includeArchived] as const,
@@ -63,6 +79,16 @@ export const documentTemplatesQuery = (
 
 export const useDocumentTypes = (workspaceId: string, includeArchived = false) =>
   useQuery(documentTypesQuery(workspaceId, includeArchived));
+
+export const useDocumentTypeVersions = (workspaceId: string, documentTypeId: string | null) =>
+  useQuery({
+    queryKey: documentKeys.versions(workspaceId, documentTypeId ?? ''),
+    queryFn: () =>
+      orpcClient.documentTypes.listVersions({
+        params: { workspace: workspaceId, id: documentTypeId! }
+      }),
+    enabled: !!workspaceId && !!documentTypeId
+  });
 
 export const useDocumentTemplates = (
   workspaceId: string,
@@ -124,10 +150,19 @@ export const useCreateDocumentType = (workspaceId: string) => {
 export const useUpdateDocumentType = (workspaceId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: DocumentTypeWrite }) =>
-      orpcClient.documentTypes.update({ params: { workspace: workspaceId, id }, body }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: documentKeys.typesRoot(workspaceId) })
+    mutationFn: ({
+      id,
+      body
+    }: {
+      id: string;
+      body: DocumentTypeWrite & { fieldMigrations?: FieldMigrations };
+    }) => orpcClient.documentTypes.update({ params: { workspace: workspaceId, id }, body }),
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: documentKeys.typesRoot(workspaceId) });
+      await queryClient.invalidateQueries({
+        queryKey: documentKeys.versions(workspaceId, variables.id)
+      });
+    }
   });
 };
 

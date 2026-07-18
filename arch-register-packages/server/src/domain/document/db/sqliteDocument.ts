@@ -7,7 +7,9 @@ import type {
   DocumentTemplateDbCreate,
   DocumentTemplateDbResult,
   DocumentTypeDbCreate,
-  DocumentTypeDbResult
+  DocumentTypeDbResult,
+  DocumentTypeVersionDbCreate,
+  DocumentTypeVersionDbResult
 } from './documentDatabase';
 import type {
   DocumentTemplateWrite,
@@ -23,8 +25,28 @@ const typeMapper = (row: DatabaseRow): DocumentTypeDbResult => ({
   color: row['color'] == null ? null : String(row['color']),
   icon: row['icon'] == null ? null : String(row['icon']),
   archived: databaseBoolean(row['archived']),
+  version: Number(row['version'] ?? 1),
   created_at: databaseDate(row['created_at']),
   updated_at: databaseDate(row['updated_at'])
+});
+
+const typeVersionMapper = (row: DatabaseRow): DocumentTypeVersionDbResult => ({
+  id: String(row['id']),
+  workspace: String(row['workspace']),
+  document_type_id: String(row['document_type_id']),
+  version: Number(row['version']),
+  name: String(row['name']),
+  description: String(row['description'] ?? ''),
+  fields: parseDatabaseJson(row['fields'], [], 'document_type_version.fields'),
+  color: row['color'] == null ? null : String(row['color']),
+  icon: row['icon'] == null ? null : String(row['icon']),
+  change_summary: parseDatabaseJson(
+    row['change_summary'],
+    {},
+    'document_type_version.change_summary'
+  ),
+  created_by: row['created_by'] == null ? null : String(row['created_by']),
+  created_at: databaseDate(row['created_at'])
 });
 
 const templateMapper = (row: DatabaseRow): DocumentTemplateDbResult => {
@@ -147,16 +169,17 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
   async updateDocumentType(
     workspace: string,
     id: string,
-    input: DocumentTypeWrite & { updated_at: Date }
+    input: DocumentTypeWrite & { updated_at: Date; version?: number }
   ) {
     this.run(
-      'UPDATE document_type SET name = ?, description = ?, fields = ?, color = ?, icon = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE document_type SET name = ?, description = ?, fields = ?, color = ?, icon = ?, version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
         JSON.stringify(input.fields),
         input.color ?? null,
         input.icon ?? null,
+        input.version ?? null,
         input.updated_at.toISOString(),
         workspace,
         id
@@ -176,6 +199,64 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
 
   async deleteDocumentType(workspace: string, id: string) {
     this.run('DELETE FROM document_type WHERE workspace = ? AND id = ?', [workspace, id]);
+  }
+
+  async listDocumentTypeVersions(workspace: string, documentTypeId: string) {
+    return this.all(
+      'SELECT * FROM document_type_version WHERE workspace = ? AND document_type_id = ? ORDER BY version DESC',
+      [workspace, documentTypeId],
+      typeVersionMapper
+    );
+  }
+
+  async createDocumentTypeVersion(input: DocumentTypeVersionDbCreate) {
+    this.run(
+      'INSERT INTO document_type_version (id, workspace, document_type_id, version, name, description, fields, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.document_type_id,
+        input.version,
+        input.name,
+        input.description,
+        JSON.stringify(input.fields),
+        input.color,
+        input.icon,
+        JSON.stringify(input.change_summary),
+        input.created_by,
+        input.created_at.toISOString()
+      ]
+    );
+    return (await this.get(
+      'SELECT * FROM document_type_version WHERE workspace = ? AND document_type_id = ? AND version = ?',
+      [input.workspace, input.document_type_id, input.version],
+      typeVersionMapper
+    ))!;
+  }
+
+  async renameDocumentMetadataField(
+    workspace: string,
+    documentTypeId: string,
+    oldFieldId: string,
+    newFieldId: string
+  ) {
+    const result = this.run(
+      `UPDATE content_node_document
+       SET "values" = json_set(json_remove("values", '$."' || ? || '"'), '$."' || ? || '"', json_extract("values", '$."' || ? || '"'))
+       WHERE workspace = ? AND document_type_id = ? AND json_extract("values", '$."' || ? || '"') IS NOT NULL`,
+      [oldFieldId, newFieldId, oldFieldId, workspace, documentTypeId, oldFieldId]
+    );
+    return result.changes;
+  }
+
+  async removeDocumentMetadataField(workspace: string, documentTypeId: string, fieldId: string) {
+    const result = this.run(
+      `UPDATE content_node_document
+       SET "values" = json_remove("values", '$."' || ? || '"')
+       WHERE workspace = ? AND document_type_id = ? AND json_extract("values", '$."' || ? || '"') IS NOT NULL`,
+      [fieldId, workspace, documentTypeId, fieldId]
+    );
+    return result.changes;
   }
 
   async listDocumentTemplates(
