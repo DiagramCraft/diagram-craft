@@ -30,6 +30,26 @@ export const useSubmitEntityChangeProposal = (workspace: string, entityId: strin
   });
 };
 
+export const useWithdrawEntityChangeProposal = (workspace: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { entityId: string; proposalId: string; reason?: string }) =>
+      orpcClient.entityChanges.withdraw({
+        params: { workspace, id: input.entityId, proposalId: input.proposalId },
+        body: { reason: input.reason }
+      }),
+    onSuccess: async (_data, input) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: entityChangeKeys.current(workspace, input.entityId)
+        }),
+        queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, input.entityId) }),
+        queryClient.invalidateQueries({ queryKey: ['governance'] })
+      ]);
+    }
+  });
+};
+
 export const useBypassEntityApproval = (workspace: string, entityId: string) => {
   const queryClient = useQueryClient();
   return useMutation({

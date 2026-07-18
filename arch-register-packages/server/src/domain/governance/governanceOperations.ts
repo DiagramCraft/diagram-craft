@@ -26,7 +26,9 @@ import type {
   GovernanceCase,
   GovernanceDecisionAction,
   GovernanceEvent,
+  GovernanceSubmission,
   GovernanceTask,
+  ListGovernanceSubmissionsQuery,
   ListGovernanceTasksQuery,
   ListGovernanceCasesQuery
 } from '@arch-register/api-types/governanceContract';
@@ -339,6 +341,45 @@ export const listGovernanceCases = async (
   );
 
   return visible.filter((row): row is GovernanceCaseDbResult => row != null).map(toApiCase);
+};
+
+/**
+ * Lists governance cases the current user initiated, along with each case's still-open
+ * assignments — i.e. what the case is currently waiting on. Unlike `listGovernanceCases`,
+ * this is scoped to the initiator regardless of `selfApprovalAllowed`, so a requestor can
+ * always find their own submissions without needing approval rights.
+ */
+export const listMySubmittedGovernanceCases = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent,
+  query: ListGovernanceSubmissionsQuery
+): Promise<GovernanceSubmission[]> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  requireWorkspaceCapability(authCtx, 'ws.view');
+
+  const userId = event.context.user.id;
+  const filter: GovernanceCaseListFilter = {
+    caseKind: query.caseKind,
+    status: query.status,
+    initiatorUserId: userId
+  };
+  const cases = await db.governance.listCases(ws, filter);
+
+  const submissions = await Promise.all(
+    cases.map(async caseRow => {
+      const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
+      return {
+        case: toApiCase(caseRow),
+        openAssignments: assignments
+          .filter(assignment => assignment.status === 'open')
+          .map(toApiAssignment)
+      };
+    })
+  );
+
+  return submissions;
 };
 
 export const listGovernanceCaseEvents = async (
