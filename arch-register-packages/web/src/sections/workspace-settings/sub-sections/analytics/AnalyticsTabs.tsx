@@ -1,30 +1,18 @@
-import styles from './WorkspaceAnalyticsScreen.module.css';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
+
+type AnalyticsView = 'overview' | 'stale';
 
 export const AnalyticsTabs = ({
   active,
   onSelect
 }: {
-  active: 'overview' | 'stale';
-  onSelect: (view: 'overview' | 'stale') => void;
+  active: AnalyticsView;
+  onSelect: (view: AnalyticsView) => void;
 }) => (
-  <div className={styles.tabs} role="tablist" aria-label="Analytics views">
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active === 'overview'}
-      className={active === 'overview' ? styles.tabActive : styles.tab}
-      onClick={() => onSelect('overview')}
-    >
-      Overview
-    </button>
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active === 'stale'}
-      className={active === 'stale' ? styles.tabActive : styles.tab}
-      onClick={() => onSelect('stale')}
-    >
-      Stale entities
-    </button>
-  </div>
+  <Tabs.Root value={active} onValueChange={value => onSelect(value as AnalyticsView)}>
+    <Tabs.List>
+      <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+      <Tabs.Trigger value="stale">Stale entities</Tabs.Trigger>
+    </Tabs.List>
+  </Tabs.Root>
 );
