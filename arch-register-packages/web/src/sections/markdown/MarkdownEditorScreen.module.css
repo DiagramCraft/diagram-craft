@@ -188,6 +188,41 @@
   padding: 21px 20px 6px;
 }
 
+.wikiCommentsSection {
+  margin-top: 36px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 21px 20px;
+}
+
+.wikiCommentsHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1;
+  margin-bottom: 14px;
+  color: var(--cmp-fg-dimmed);
+}
+
+.wikiCommentsTitle {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--base-fg);
+}
+
+.previewContainer {
+  position: relative;
+}
+
+.addCommentButton {
+  position: fixed;
+  z-index: 20;
+  transform: translate(-50%, -100%);
+  box-shadow: var(--shadow-md, 0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
 .discussionHead {
   display: flex;
   align-items: center;

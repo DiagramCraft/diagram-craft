@@ -13,6 +13,7 @@ import { SqliteAiDatabase } from '../domain/ai/db/sqliteAi';
 import { SqliteViewDatabase } from '../domain/catalog/db/sqliteView';
 import { SqliteWatchDatabase } from '../domain/watch/db/sqliteWatch';
 import { SqliteDiscussionDatabase } from '../domain/discussion/db/sqliteDiscussion';
+import { SqliteWikiCommentDatabase } from '../domain/wikiComments/db/sqliteWikiComment';
 import { SqliteJobDatabase } from '../domain/jobs/db/sqliteJobs';
 import { SqliteExternalContentDatabase } from '../domain/external-content/db/sqliteExternalContent';
 import { SqliteWebhookDatabase } from '../domain/webhook/db/sqliteWebhook';
@@ -32,6 +33,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly auth;
   readonly ai;
   readonly discussion;
+  readonly wikiComment;
   readonly jobs;
   readonly externalContent;
   readonly webhook;
@@ -53,6 +55,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.auth = new SqliteAuthDatabase(() => this.db);
     this.ai = new SqliteAiDatabase(() => this.db);
     this.discussion = new SqliteDiscussionDatabase(() => this.db);
+    this.wikiComment = new SqliteWikiCommentDatabase(() => this.db);
     this.jobs = new SqliteJobDatabase(() => this.db);
     this.externalContent = new SqliteExternalContentDatabase(() => this.db);
     this.webhook = new SqliteWebhookDatabase(() => this.db);
@@ -121,6 +124,7 @@ export class SqliteDatabase implements DatabaseAdapter {
       auth: this.auth,
       ai: this.ai,
       discussion: this.discussion,
+      wikiComment: this.wikiComment,
       jobs: this.jobs,
       externalContent: this.externalContent,
       webhook: this.webhook,
