@@ -919,6 +919,7 @@ export const TimelineView = ({
                   return (
                     <div
                       key={milestone.id}
+                      role="img"
                       className={styles.milestoneLine}
                       style={{ left: TL_LABEL_W + px }}
                       title={milestoneTitle}
@@ -1058,6 +1059,7 @@ export const TimelineView = ({
                       return (
                         <div
                           key={milestone.id}
+                          role="img"
                           className={styles.projectMilestoneLine}
                           style={{ left: TL_LABEL_W + px }}
                           title={milestoneTitle}

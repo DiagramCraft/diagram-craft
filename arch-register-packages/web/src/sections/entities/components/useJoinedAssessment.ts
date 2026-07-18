@@ -14,10 +14,8 @@ export type AssessmentJoinOption = {
 export const isJoinableAssessment = (assessment: Pick<Assessment, 'status'>) =>
   assessment.status === 'open' || assessment.status === 'closed';
 
-export const getAssessmentProjectIds = (
-  projects: Pick<Project, 'id'>[],
-  projectId?: string
-) => (projectId ? [projectId] : projects.map(project => project.id));
+export const getAssessmentProjectIds = (projects: Pick<Project, 'id'>[], projectId?: string) =>
+  projectId ? [projectId] : projects.map(project => project.id);
 
 export const resolveJoinAssessmentId = (
   joinAssessmentId: string | null | undefined,
@@ -26,7 +24,7 @@ export const resolveJoinAssessmentId = (
 ) => {
   if (!projectId) return joinAssessmentId ?? null;
   return options.some(option => option.assessment.id === joinAssessmentId)
-    ? joinAssessmentId ?? null
+    ? (joinAssessmentId ?? null)
     : null;
 };
 

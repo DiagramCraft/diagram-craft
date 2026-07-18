@@ -242,7 +242,7 @@ export const ProjectTimelineTab = ({
           applied
         </span>
         <div style={{ flex: 1 }} />
-        <div className={styles.ptlGrouping} aria-label="Timeline grouping">
+        <div className={styles.ptlGrouping} role="toolbar" aria-label="Timeline grouping">
           <div className={styles.ptlSegmented}>
             <button
               type="button"
@@ -317,6 +317,7 @@ export const ProjectTimelineTab = ({
               : milestoneMarkers.map(({ milestone, px }) => (
                   <div
                     key={milestone.id}
+                    role="img"
                     className={styles.ptlMilestoneLine}
                     style={{ left: LABEL_W + px }}
                     title={`${milestone.name} (${milestone.target_date})`}
