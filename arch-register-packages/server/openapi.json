@@ -39856,7 +39856,7 @@
                           "high"
                         ],
                         "type": "string",
-                        "description": "Direction used for \"worst\" aggregation - \"low\" means lower values are worse, \"high\" means higher values are worse. Required when aggregation is \"worst\"."
+                        "description": "Direction used for \"worst\" aggregation. For numeric/lifecycle sources, \"low\" means lower values are worse and \"high\" means higher values are worse. For enum sources, \"low\" means the first option in the enum's configured order is worse and \"high\" means the last option is worse. Required when aggregation is \"worst\"."
                       }
                     },
                     "required": [
