@@ -161,7 +161,7 @@ export const SaveDiagramFromGraphDialog = ({
       ]}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <FormElement label="Save to">
+        <FormElement label="Save to" required>
           <Select.Root
             value={destType}
             onChange={v => {
@@ -185,7 +185,7 @@ export const SaveDiagramFromGraphDialog = ({
         </FormElement>
 
         {showEntityPicker && (
-          <FormElement label="Entity">
+          <FormElement label="Entity" required>
             <Select.Root
               value={selectedEntityId}
               onChange={v => {
@@ -204,7 +204,7 @@ export const SaveDiagramFromGraphDialog = ({
         )}
 
         {showProjectPicker && (
-          <FormElement label="Project">
+          <FormElement label="Project" required>
             <Select.Root
               value={selectedProjectId}
               onChange={v => {
@@ -223,7 +223,7 @@ export const SaveDiagramFromGraphDialog = ({
         )}
 
         {folderPickerEnabled && (
-          <FormElement label="Folder">
+          <FormElement label="Folder" required={false}>
             <FolderPickerTree
               folders={activeFolders}
               selected={selectedFolder}
@@ -234,6 +234,7 @@ export const SaveDiagramFromGraphDialog = ({
 
         <FormElement
           label="Diagram name"
+          required={false}
           hint={selectedFolder ? `Will be created in ${selectedFolder}` : undefined}
           error={error}
         >

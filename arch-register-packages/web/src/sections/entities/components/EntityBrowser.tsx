@@ -98,7 +98,7 @@ export const SaveViewDialog = ({
       ]}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <FormElement label="Name">
+        <FormElement label="Name" required>
           <TextInput
             value={name}
             onChange={v => setName(v ?? '')}
@@ -106,7 +106,7 @@ export const SaveViewDialog = ({
             autoFocus
           />
         </FormElement>
-        <FormElement label="Description (optional)">
+        <FormElement label="Description" required={false}>
           <TextArea
             value={description}
             onChange={v => setDescription(v ?? '')}
@@ -114,7 +114,7 @@ export const SaveViewDialog = ({
           />
         </FormElement>
         {scopeOptions != null && scopeOptions.length > 1 && (
-          <FormElement label="Save to">
+          <FormElement label="Save to" required>
             <Select.Root
               value={scope}
               onChange={value =>

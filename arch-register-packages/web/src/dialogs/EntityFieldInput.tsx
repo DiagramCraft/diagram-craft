@@ -19,7 +19,7 @@ export const EntityFieldInput = ({
   if (field.type === 'reference') {
     const candidates = referenceOptions?.[field.schemaId] ?? [];
     return (
-      <FormElement label={field.name}>
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <select
           multiple
           value={Array.isArray(value) ? value : []}
@@ -42,7 +42,7 @@ export const EntityFieldInput = ({
     const candidates = referenceOptions?.[field.schemaId] ?? [];
     const selected = Array.isArray(value) ? (value[0] ?? '') : '';
     return (
-      <FormElement label={field.name}>
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
           value={selected || undefined}
           onChange={next => onChange(next ? [next] : [])}
@@ -61,7 +61,7 @@ export const EntityFieldInput = ({
 
   if (field.type === 'select') {
     return (
-      <FormElement label={field.name}>
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
           value={typeof value === 'string' ? value || undefined : undefined}
           onChange={next => onChange(next ?? '')}
@@ -80,7 +80,7 @@ export const EntityFieldInput = ({
 
   if (field.type === 'longtext') {
     return (
-      <FormElement label={field.name}>
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <TextArea
           value={typeof value === 'string' ? value : ''}
           onChange={next => onChange(next ?? '')}
@@ -93,7 +93,7 @@ export const EntityFieldInput = ({
 
   if (field.type === 'boolean') {
     return (
-      <FormElement label={field.name}>
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
           value={typeof value === 'string' ? value || undefined : undefined}
           onChange={next => onChange(next ?? '')}
@@ -109,7 +109,7 @@ export const EntityFieldInput = ({
 
   if (field.type === 'date') {
     return (
-      <FormElement label={field.name}>
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <input
           type="date"
           value={typeof value === 'string' ? value : ''}
@@ -122,7 +122,7 @@ export const EntityFieldInput = ({
 
   if (field.type === 'number') {
     return (
-      <FormElement label={field.name}>
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <input
           type="number"
           step="1"
@@ -137,7 +137,7 @@ export const EntityFieldInput = ({
   }
 
   return (
-    <FormElement label={field.name}>
+    <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
       <TextInput
         value={typeof value === 'string' ? value : ''}
         onChange={next => onChange(next ?? '')}

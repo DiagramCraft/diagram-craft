@@ -86,7 +86,7 @@ export const ContentFolderDialog = ({
         }}
       >
         <button type="submit" hidden />
-        <FormElement label="Folder name">
+        <FormElement label="Folder name" required>
           <TextInput
             ref={nameRef}
             value={name}

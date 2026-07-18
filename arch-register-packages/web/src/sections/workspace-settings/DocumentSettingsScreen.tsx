@@ -659,7 +659,7 @@ const DocumentFieldRow = ({
             </span>
             <TextInput
               value={field.inverseName ?? ''}
-              placeholder="Inverse label (optional)"
+              placeholder="Inverse label"
               onChange={value =>
                 onUpdate({ inverseName: value?.trim() ? value.trim() : undefined })
               }
@@ -877,8 +877,8 @@ const DocumentTemplateEditor = ({
                       <div key={field.id} className={styles.defaultRow}>
                         <div className={styles.defaultLabel}>
                           <span>{field.name}</span>
-                          {field.requirement === 'required' && (
-                            <span className={styles.requiredDot} title="Required field" />
+                          {field.requirement === 'optional' && (
+                            <span className={styles.optionalLabel}>(optional)</span>
                           )}
                         </div>
                         <TemplateDefaultInput

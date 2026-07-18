@@ -42,15 +42,6 @@
   flex-wrap: wrap;
 }
 
-.propReq {
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: color-mix(in oklch, var(--error-fg) 12%, transparent);
-  color: var(--error-fg);
-  font-weight: 500;
-}
-
 .propExpected {
   font-size: 10px;
   padding: 1px 5px;
@@ -58,6 +49,12 @@
   background: var(--base-bg);
   border: 1px solid var(--panel-border);
   color: var(--cmp-fg-disabled);
+}
+
+.propOptional {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+  font-weight: 400;
 }
 
 .propRowError .propLabel {

@@ -30,7 +30,7 @@ export const CreateCollectionDialog = ({
         { label: 'Create collection', type: 'default', onClick: create, disabled: !name.trim() }
       ]}
     >
-      <FormElement label="Name">
+      <FormElement label="Name" required>
         <TextInput
           value={name}
           onChange={value => setName(value ?? '')}

@@ -148,10 +148,6 @@
   max-width: 220px;
 }
 
-.req {
-  color: var(--danger, red);
-}
-
 .statusDot {
   display: inline-block;
   width: 7px;

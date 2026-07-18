@@ -161,7 +161,9 @@ const AssessmentFillCard = ({
             <div key={field.id} className={styles.row}>
               <div className={styles.label}>
                 {field.label}
-                {field.requirementLevel === 'required' && <span className={styles.req}> *</span>}
+                {field.requirementLevel === 'optional' && (
+                  <span className={styles.optionalLabel}> (optional)</span>
+                )}
               </div>
               <div className={styles.value}>
                 <AssessmentFieldCell

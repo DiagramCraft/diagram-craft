@@ -158,7 +158,7 @@ export const EntityTemplateDialog = ({
             </div>
           </FormGroup>
           <FormGroup label="Metadata" icon={<TbInfoCircle size={11} />}>
-            <FormElement label="Description">
+            <FormElement label="Description" required={false}>
               <TextArea
                 value={meta.description}
                 onChange={value => setMeta(current => ({ ...current, description: value ?? '' }))}
@@ -167,7 +167,7 @@ export const EntityTemplateDialog = ({
               />
             </FormElement>
             <div className={styles.row}>
-              <FormElement label="Owner">
+              <FormElement label="Owner" required={false}>
                 <Select.Root
                   value={meta.owner || undefined}
                   onChange={value => setMeta(current => ({ ...current, owner: value ?? '' }))}
@@ -181,7 +181,7 @@ export const EntityTemplateDialog = ({
                   ))}
                 </Select.Root>
               </FormElement>
-              <FormElement label="Lifecycle">
+              <FormElement label="Lifecycle" required={false}>
                 <Select.Root
                   value={meta.lifecycle || undefined}
                   onChange={value => setMeta(current => ({ ...current, lifecycle: value ?? '' }))}
@@ -197,7 +197,7 @@ export const EntityTemplateDialog = ({
               </FormElement>
             </div>
             <div className={styles.row}>
-              <FormElement label="Namespace">
+              <FormElement label="Namespace" required={false}>
                 <TextInput
                   value={meta.namespace}
                   onChange={value => setMeta(current => ({ ...current, namespace: value ?? '' }))}
@@ -205,7 +205,7 @@ export const EntityTemplateDialog = ({
                   style={{ width: '100%' }}
                 />
               </FormElement>
-              <FormElement label="Tags">
+              <FormElement label="Tags" required={false}>
                 <TextInput
                   value={meta.tags}
                   onChange={value => setMeta(current => ({ ...current, tags: value ?? '' }))}

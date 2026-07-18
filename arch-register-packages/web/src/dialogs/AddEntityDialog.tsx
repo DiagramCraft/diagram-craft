@@ -314,7 +314,7 @@ export const AddEntityDialog = ({
           </div>
 
           <div data-testid="new-entity-template">
-            <FormElement label="Template">
+            <FormElement label="Template" required={false}>
               <Select.Root
                 value={templateId || '__none__'}
                 onChange={value => resetAndApplyTemplate(value === '__none__' ? '' : (value ?? ''))}
@@ -369,7 +369,7 @@ export const AddEntityDialog = ({
 
           {/* Metadata */}
           <FormGroup label="Metadata" icon={<TbInfoCircle size={11} />}>
-            <FormElement label="Description">
+            <FormElement label="Description" required={false}>
               <TextArea
                 value={meta.description}
                 onChange={value => setMetaField('description', value ?? '')}
@@ -379,7 +379,7 @@ export const AddEntityDialog = ({
               />
             </FormElement>
             <div className={styles.row}>
-              <FormElement label="Owner">
+              <FormElement label="Owner" required={false}>
                 <Select.Root
                   value={meta.owner || undefined}
                   onChange={value => setMetaField('owner', value ?? '')}
@@ -393,7 +393,7 @@ export const AddEntityDialog = ({
                   ))}
                 </Select.Root>
               </FormElement>
-              <FormElement label="Lifecycle">
+              <FormElement label="Lifecycle" required={false}>
                 <Select.Root
                   value={meta.lifecycle || undefined}
                   onChange={value => setMetaField('lifecycle', value ?? '')}
@@ -409,7 +409,7 @@ export const AddEntityDialog = ({
               </FormElement>
             </div>
             <div className={styles.row}>
-              <FormElement label="Namespace">
+              <FormElement label="Namespace" required={false}>
                 <TextInput
                   value={meta.namespace}
                   onChange={value => setMetaField('namespace', value ?? '')}
@@ -417,7 +417,7 @@ export const AddEntityDialog = ({
                   style={{ width: '100%' }}
                 />
               </FormElement>
-              <FormElement label="Tags">
+              <FormElement label="Tags" required={false}>
                 <TextInput
                   value={meta.tags}
                   onChange={value => setMetaField('tags', value ?? '')}

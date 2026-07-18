@@ -167,7 +167,7 @@ export const PlanFutureChangeDialog = ({
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <FormElement label="Target date" style={{ flex: 1 }}>
+            <FormElement label="Target date" required style={{ flex: 1 }}>
               <DateInput
                 value={targetDate}
                 onChange={v => handleTargetDateChange(v ?? '')}
@@ -175,7 +175,7 @@ export const PlanFutureChangeDialog = ({
               />
             </FormElement>
             <div className={styles.dateMilestoneOr}>or</div>
-            <FormElement label="Milestone" style={{ flex: 1 }}>
+            <FormElement label="Milestone" required style={{ flex: 1 }}>
               <Select.Root
                 value={milestoneId}
                 placeholder="Select milestone…"
@@ -192,30 +192,30 @@ export const PlanFutureChangeDialog = ({
               )}
             </FormElement>
           </div>
-          <FormElement label="Note" hint="Describe what is planned to change">
+          <FormElement label="Note" required={false} hint="Describe what is planned to change">
             <TextInput
               value={commitMessage}
               onChange={v => setCommitMessage(v ?? '')}
-              placeholder="e.g. Decommission after migration (optional)"
+              placeholder="e.g. Decommission after migration"
               style={{ width: '100%' }}
             />
           </FormElement>
 
-          <FormElement label="Name">
+          <FormElement label="Name" required={false}>
             <TextInput
               value={(planState['_name'] as string) ?? ''}
               onChange={v => setPlanState(s => ({ ...s, _name: v ?? '' }))}
               style={{ width: '100%' }}
             />
           </FormElement>
-          <FormElement label="Description">
+          <FormElement label="Description" required={false}>
             <TextInput
               value={(planState['_description'] as string) ?? ''}
               onChange={v => setPlanState(s => ({ ...s, _description: v ?? '' }))}
               style={{ width: '100%' }}
             />
           </FormElement>
-          <FormElement label="Owner">
+          <FormElement label="Owner" required={false}>
             <select
               className={styles.inlineSelect}
               value={(planState['_owner'] as string) ?? ''}
@@ -230,7 +230,7 @@ export const PlanFutureChangeDialog = ({
               ))}
             </select>
           </FormElement>
-          <FormElement label="Lifecycle">
+          <FormElement label="Lifecycle" required={false}>
             <select
               className={styles.inlineSelect}
               value={(planState['_lifecycle'] as string) ?? ''}
@@ -249,7 +249,11 @@ export const PlanFutureChangeDialog = ({
           {schema?.fields
             .filter(f => !isReference(f))
             .map(f => (
-              <FormElement key={f.id} label={f.name}>
+              <FormElement
+                key={f.id}
+                label={f.name}
+                required={f.requirementLevel !== 'optional'}
+              >
                 {f.type === 'boolean' ? (
                   <input
                     type="checkbox"

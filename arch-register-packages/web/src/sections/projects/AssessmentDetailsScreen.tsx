@@ -393,9 +393,6 @@ export const AssessmentDetailsScreen = ({
                           onSort={toggleSort}
                         >
                           {f.label}
-                          {f.requirementLevel === 'required' && (
-                            <span className={styles.req}> *</span>
-                          )}
                         </Table.SortableHeaderCell>
                       ))}
                       <Table.SortableHeaderCell

@@ -98,7 +98,7 @@ export const ApplySnapshotDialog = ({
       ) : (
         <>
           <div className={styles.applySnapshotDateField}>
-            <FormElement label="Effective date">
+            <FormElement label="Effective date" required>
               <DateInput value={targetDate} onChange={value => setTargetDate(value ?? '')} />
             </FormElement>
           </div>

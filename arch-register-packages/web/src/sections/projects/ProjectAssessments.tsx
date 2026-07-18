@@ -4,6 +4,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import {
   TbPlus,
   TbTrash,
@@ -400,18 +401,22 @@ export const AssessmentEditorDialog = ({
     >
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Basic info</div>
-        <TextInput
-          value={name}
-          onChange={v => setName(v ?? '')}
-          placeholder="e.g. Security Readiness"
-          style={{ width: '100%' }}
-        />
-        <TextInput
-          value={description}
-          onChange={v => setDescription(v ?? '')}
-          placeholder="Optional — explain the purpose of this assessment"
-          style={{ width: '100%' }}
-        />
+        <FormElement label="Name" required>
+          <TextInput
+            value={name}
+            onChange={v => setName(v ?? '')}
+            placeholder="e.g. Security Readiness"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+        <FormElement label="Description" required={false}>
+          <TextInput
+            value={description}
+            onChange={v => setDescription(v ?? '')}
+            placeholder="Explain the purpose of this assessment"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
       </div>
 
       <div className={styles.section}>
