@@ -24,6 +24,7 @@ import { createMilestoneORPCHandler } from './domain/project/projectMilestoneOrp
 import { createAuditORPCHandler } from './domain/audit/auditOrpc';
 import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
+import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
 import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
 import {
@@ -142,6 +143,7 @@ export const createApp = (
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
   app.use(createDiscussionORPCHandler(db));
+  app.use(createGovernanceORPCHandler(db));
   app.use(createWikiCommentORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));

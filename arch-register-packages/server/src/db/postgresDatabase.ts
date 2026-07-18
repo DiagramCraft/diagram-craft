@@ -20,6 +20,7 @@ import { PostgresJobDatabase } from '../domain/jobs/db/postgresJobs';
 import { PostgresExternalContentDatabase } from '../domain/external-content/db/postgresExternalContent';
 import { PostgresWebhookDatabase } from '../domain/webhook/db/postgresWebhook';
 import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument';
+import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
 import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -44,6 +45,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly externalContent: PostgresExternalContentDatabase;
   readonly webhook: PostgresWebhookDatabase;
   readonly document: PostgresDocumentDatabase;
+  readonly governance: PostgresGovernanceDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -61,7 +63,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       jobs: new PostgresJobDatabase(sql),
       externalContent: new PostgresExternalContentDatabase(sql),
       webhook: new PostgresWebhookDatabase(sql),
-      document: new PostgresDocumentDatabase(sql)
+      document: new PostgresDocumentDatabase(sql),
+      governance: new PostgresGovernanceDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -112,6 +115,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.externalContent = new PostgresExternalContentDatabase(this.sql);
     this.webhook = new PostgresWebhookDatabase(this.sql);
     this.document = new PostgresDocumentDatabase(this.sql);
+    this.governance = new PostgresGovernanceDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,
