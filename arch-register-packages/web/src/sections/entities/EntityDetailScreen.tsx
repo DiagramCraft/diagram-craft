@@ -804,11 +804,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         ]}
       >
         <FormElement
-          label={
-            approvalRequired && canOverrideEntityApproval
-              ? 'Note / bypass reason'
-              : 'Note'
-          }
+          label={approvalRequired && canOverrideEntityApproval ? 'Note / bypass reason' : 'Note'}
           required={approvalRequired && canOverrideEntityApproval}
         >
           <TextInput

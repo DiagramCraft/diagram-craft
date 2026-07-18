@@ -249,11 +249,7 @@ export const PlanFutureChangeDialog = ({
           {schema?.fields
             .filter(f => !isReference(f))
             .map(f => (
-              <FormElement
-                key={f.id}
-                label={f.name}
-                required={f.requirementLevel !== 'optional'}
-              >
+              <FormElement key={f.id} label={f.name} required={f.requirementLevel !== 'optional'}>
                 {f.type === 'boolean' ? (
                   <input
                     type="checkbox"
