@@ -51,6 +51,8 @@ export const toApiEntity = (
   _tags: entity.tags,
   _links: entity.links,
   _updatedAt: entity.updated_at.toISOString(),
+  _version: entity.version ?? 1,
+  _approvalPolicyOverride: entity.approval_policy_override ?? null,
   _visibilityMode: entity.visibility_mode,
   _completeness: completeness,
   ...getEntityCapabilities(authCtx, entity),
@@ -83,6 +85,8 @@ export const toApiEntitySummary = (
   _tags: entity.tags,
   _links: entity.links,
   _updatedAt: entity.updated_at.toISOString(),
+  _version: entity.version ?? 1,
+  _approvalPolicyOverride: entity.approval_policy_override ?? null,
   _visibilityMode: entity.visibility_mode,
   _completeness: completeness,
   ...getEntityCapabilities(authCtx, entity)

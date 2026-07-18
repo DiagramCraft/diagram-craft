@@ -17,6 +17,7 @@ export type GovernanceCaseKindConfig = {
   subjectVisible?: (
     db: DatabaseAdapter,
     authCtx: AuthorizationContext,
+    workspace: string,
     subjectId: string
   ) => Promise<boolean>;
   /**
@@ -28,6 +29,24 @@ export type GovernanceCaseKindConfig = {
     tx: DatabaseAdapter,
     context: { case: GovernanceCaseDbResult; event: GovernanceEventDbResult }
   ) => Promise<void>;
+  /** Handles domain state transitions for decisions that do not apply the approved effect. */
+  handleDecision?: (
+    tx: DatabaseAdapter,
+    context: {
+      case: GovernanceCaseDbResult;
+      event: GovernanceEventDbResult;
+      decision: 'approve' | 'reject' | 'request_changes' | 'acknowledge';
+    }
+  ) => Promise<void>;
+  beforeDecision?: (
+    tx: DatabaseAdapter,
+    context: {
+      case: GovernanceCaseDbResult;
+      assignmentId: string;
+      actorUserId: string;
+      decision: 'approve' | 'reject' | 'request_changes' | 'acknowledge';
+    }
+  ) => Promise<'proceed' | 'stale'>;
 };
 
 export type GovernanceRegistry = Map<string, GovernanceCaseKindConfig>;

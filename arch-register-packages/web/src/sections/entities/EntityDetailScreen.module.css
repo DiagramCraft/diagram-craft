@@ -25,6 +25,119 @@
   padding: 20px 24px 12px;
 }
 
+.proposalPanel {
+  margin: 0 24px 16px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--accent-fg) 30%, var(--panel-border));
+  border-radius: var(--r-md);
+  background: color-mix(in oklch, var(--accent-fg) 4%, var(--panel-bg));
+}
+
+.proposalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid color-mix(in oklch, var(--accent-fg) 18%, var(--panel-border));
+}
+
+.proposalEyebrow {
+  margin-bottom: 3px;
+  color: var(--accent-fg);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.proposalTitle {
+  margin: 0;
+  color: var(--base-fg);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.proposalMeta {
+  margin-top: 4px;
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+}
+
+.proposalStatus {
+  padding: 4px 9px;
+  border: 1px solid color-mix(in oklch, var(--accent-fg) 35%, var(--panel-border));
+  border-radius: 999px;
+  color: var(--accent-fg);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.proposalActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.proposalMessage {
+  margin: 0;
+  padding: 10px 16px 0;
+  color: var(--base-fg-dim);
+  font-size: 12px;
+}
+
+.proposalDiff {
+  padding: 12px 16px 16px;
+}
+
+.proposalDiffHeader,
+.proposalDiffRow {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.proposalDiffHeader {
+  padding: 0 10px 7px;
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.proposalDiffRow {
+  padding: 10px;
+  border-top: 1px solid var(--panel-border);
+  font-size: 12px;
+}
+
+.proposalField {
+  color: var(--base-fg-dim);
+  font-weight: 600;
+}
+
+.proposalBefore,
+.proposalAfter {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.proposalBefore {
+  color: var(--base-fg-more-dim);
+}
+
+.proposalAfter {
+  color: var(--base-fg);
+  font-weight: 500;
+}
+
 .watchBtn {
   width: 28px;
   height: 28px;

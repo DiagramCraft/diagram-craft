@@ -20,6 +20,7 @@ import {
   normalizeEntityRelationFields
 } from './dataHelpers';
 import { listAllCatalogEntities } from './entityLoader';
+import { entityRequiresApproval } from './entityChangeOperations';
 
 const checker = new PermissionChecker();
 
@@ -224,6 +225,16 @@ export const importCommit = async (
 
   const createdIds: string[] = [];
   const updatedIds: string[] = [];
+
+  for (const entityData of entityList) {
+    const existingId = entityData._existingId as string | undefined;
+    const existingEntity = existingId ? entitiesById.get(existingId) : undefined;
+    if (existingEntity && entityRequiresApproval(schema, existingEntity)) {
+      throw new Error(
+        `Entity ${existingEntity.id} requires an approved change proposal before it can be imported`
+      );
+    }
+  }
 
   for (const entityData of entityList) {
     const existingId = entityData._existingId as string | undefined;

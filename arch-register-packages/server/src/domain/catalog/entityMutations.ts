@@ -45,6 +45,10 @@ type UpdateEntityWithAuditParams = {
   auditMetadata?: Record<string, unknown>;
 };
 
+type ConditionalUpdateEntityWithAuditParams = UpdateEntityWithAuditParams & {
+  expectedVersion: number;
+};
+
 export const createEntityWithAudit = async (
   db: DatabaseAdapter,
   params: CreateEntityWithAuditParams
@@ -91,6 +95,56 @@ export const updateEntityWithAudit = async (
   params: UpdateEntityWithAuditParams
 ) => {
   const row = await db.catalog.updateEntity(params.workspace, params.entityId, params.next);
+
+  if (row == null) return null;
+
+  await logAudit(db, {
+    workspace: params.workspace,
+    userId: params.actor.id,
+    userDisplayName: params.actor.displayName,
+    operation: 'update',
+    entityType: 'entity',
+    entityId: params.entityId,
+    entityName: row.name,
+    entitySlug: row.slug,
+    schemaId: row.schema_id,
+    changes: computeChanges(
+      flattenEntityAuditFields(params.previous),
+      flattenEntityAuditFields(row)
+    ),
+    metadata: params.auditMetadata
+  });
+
+  await db.catalog.createSnapshot({
+    id: crypto.randomUUID(),
+    workspace: params.workspace,
+    entity_id: params.entityId,
+    status: 'autosave',
+    project_id: null,
+    target_date: null,
+    milestone_id: null,
+    commit_message: null,
+    created_at: new Date(),
+    created_by: params.actor.id,
+    created_by_name: params.actor.displayName,
+    base_state: entityToBaseState(params.previous),
+    proposed_state: entityToBaseState(row)
+  });
+  await db.catalog.pruneAutosaveSnapshots(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
+
+  return row;
+};
+
+export const updateEntityWithAuditIfVersion = async (
+  db: DatabaseAdapter,
+  params: ConditionalUpdateEntityWithAuditParams
+) => {
+  const row = await db.catalog.updateEntityIfVersion(
+    params.workspace,
+    params.entityId,
+    params.next,
+    params.expectedVersion
+  );
 
   if (row == null) return null;
 

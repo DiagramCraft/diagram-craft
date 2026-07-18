@@ -3,13 +3,17 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 
 const hasWorkspaceCapability = vi.fn();
 
-vi.mock('@arch-register/permissions', () => ({
-  PermissionChecker: class {
-    hasWorkspaceCapability(...args: Parameters<typeof hasWorkspaceCapability>) {
-      return hasWorkspaceCapability(...args);
+vi.mock('@arch-register/permissions', async importOriginal => {
+  const actual = await importOriginal<typeof import('@arch-register/permissions')>();
+  return {
+    ...actual,
+    PermissionChecker: class {
+      hasWorkspaceCapability(...args: Parameters<typeof hasWorkspaceCapability>) {
+        return hasWorkspaceCapability(...args);
+      }
     }
-  }
-}));
+  };
+});
 
 vi.mock('../../utils/logger', () => ({
   createLogger: () => ({

@@ -143,6 +143,10 @@ const entitySchemaSchema = z.object({
   icon: z.string().nullable().describe('Schema icon identifier'),
   entity_count: z.number().int().min(0).describe('Number of entities using this schema'),
   version: z.number().int().min(1).describe('Current schema version number'),
+  entity_approval_policy: z
+    .enum(['required', 'disabled'])
+    .optional()
+    .describe('Default approval policy for existing entity changes'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });
@@ -195,7 +199,11 @@ const createSchemaBodySchema = z.object({
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
     z.string().nullable().optional().describe('Schema icon identifier')
   ),
-  default_owner: z.string().nullable().optional().describe('Default owner for new entities')
+  default_owner: z.string().nullable().optional().describe('Default owner for new entities'),
+  entity_approval_policy: z
+    .enum(['required', 'disabled'])
+    .optional()
+    .describe('Default approval policy for existing entity changes')
 });
 
 const updateSchemaBodySchema = createSchemaBodySchema.extend({

@@ -65,6 +65,9 @@ export const SchemaSettingsScreen = () => {
   const [templates, setTemplates] = useState<EntityTemplate[]>([]);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
+  const [entityApprovalPolicy, setEntityApprovalPolicy] = useState<'required' | 'disabled'>(
+    'disabled'
+  );
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -101,6 +104,7 @@ export const SchemaSettingsScreen = () => {
       setTemplates(selected.templates);
       setColor(selected.color);
       setIcon(selected.icon);
+      setEntityApprovalPolicy(selected.entity_approval_policy ?? 'disabled');
       setDirty(false);
       setTemplateDialogOpen(false);
       setShowHistory(false);
@@ -123,6 +127,7 @@ export const SchemaSettingsScreen = () => {
             templates,
             color,
             icon,
+            entity_approval_policy: entityApprovalPolicy,
             fieldMigrations
           }
         });
@@ -147,7 +152,8 @@ export const SchemaSettingsScreen = () => {
       color,
       icon,
       dirty,
-      updateSchemaMutation
+      updateSchemaMutation,
+      entityApprovalPolicy
     ]
   );
 
@@ -382,6 +388,26 @@ export const SchemaSettingsScreen = () => {
                     rows={4}
                     style={{ width: '100%' }}
                   />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div>
+                  <div className={styles.formLabel}>Entity change approval</div>
+                  <Select.Root
+                    value={entityApprovalPolicy}
+                    disabled={!canEdit}
+                    onChange={value => {
+                      if (value === 'required' || value === 'disabled') {
+                        setEntityApprovalPolicy(value);
+                        setDirty(true);
+                      }
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    <Select.Item value="disabled">Disabled</Select.Item>
+                    <Select.Item value="required">Required for entity edits</Select.Item>
+                  </Select.Root>
                 </div>
               </div>
 

@@ -20,6 +20,7 @@ import { SqliteWebhookDatabase } from '../domain/webhook/db/sqliteWebhook';
 import { SqliteDocumentDatabase } from '../domain/document/db/sqliteDocument';
 import { SqliteGovernanceDatabase } from '../domain/governance/db/sqliteGovernance';
 import { SqliteNotificationDatabase } from '../domain/notification/db/sqliteNotification';
+import { SqliteEntityChangeDatabase } from '../domain/catalog/db/sqliteEntityChange';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -42,6 +43,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly document;
   readonly governance;
   readonly notification;
+  readonly entityChange;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -66,6 +68,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.document = new SqliteDocumentDatabase(() => this.db);
     this.governance = new SqliteGovernanceDatabase(() => this.db);
     this.notification = new SqliteNotificationDatabase(() => this.db);
+    this.entityChange = new SqliteEntityChangeDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -136,7 +139,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       webhook: this.webhook,
       document: this.document,
       governance: this.governance,
-      notification: this.notification
+      notification: this.notification,
+      entityChange: this.entityChange
     };
   }
 

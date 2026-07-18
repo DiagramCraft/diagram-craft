@@ -11,6 +11,7 @@ import { createSecurityHeadersMiddleware } from './middleware/securityHeaders';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
 import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
+import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
 import { createWorkspaceCollectionORPCHandler } from './domain/catalog/collectionOrpc';
@@ -39,6 +40,7 @@ import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
 import { createExternalContentORPCHandler } from './domain/external-content/externalContentOrpc';
 import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
+import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -125,6 +127,7 @@ export const createApp = (
   app.use(createWorkspaceEnumORPCHandler(db));
   app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
+  app.use(createEntityChangeORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
   app.use(createWorkspaceCollectionORPCHandler(db));
@@ -143,7 +146,7 @@ export const createApp = (
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
   app.use(createDiscussionORPCHandler(db));
-  app.use(createGovernanceORPCHandler(db));
+  app.use(createGovernanceORPCHandler(db, createEntityGovernanceRegistry()));
   app.use(createWikiCommentORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));

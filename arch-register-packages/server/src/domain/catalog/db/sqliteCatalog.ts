@@ -65,7 +65,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchema(input: SchemaDbCreate) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, entity_approval_policy, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -77,6 +77,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.icon,
         input.default_owner,
         input.key_prefix,
+        input.entity_approval_policy ?? 'disabled',
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -86,7 +87,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
-      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, entity_approval_policy = COALESCE(?, entity_approval_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
@@ -96,6 +97,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.icon,
         input.default_owner,
         input.key_prefix,
+        input.entity_approval_policy ?? 'disabled',
         input.version ?? null,
         input.updated_at.toISOString(),
         workspace,
@@ -301,7 +303,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createEntity(input: EntityDbCreate) {
     this.run(
-      'INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, version, approval_policy_override, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -319,6 +321,8 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.schema_id,
         JSON.stringify(input.data),
         input.visibility_mode,
+        input.version ?? 1,
+        input.approval_policy_override ?? null,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -328,7 +332,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateEntity(workspace: string, id: string, input: EntityDbUpdate) {
     this.run(
-      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, visibility_mode = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, visibility_mode = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.slug,
         input.namespace,
@@ -343,12 +347,57 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.schema_id,
         JSON.stringify(input.data),
         input.visibility_mode,
+        input.approval_policy_override ?? null,
         input.updated_at.toISOString(),
         workspace,
         id
       ]
     );
     return await this.getEntity(workspace, id);
+  }
+
+  async updateEntityIfVersion(
+    workspace: string,
+    id: string,
+    input: EntityDbUpdate,
+    expectedVersion: number
+  ) {
+    const result = this.run(
+      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, visibility_mode = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), updated_at = ? WHERE workspace = ? AND id = ? AND version = ?',
+      [
+        input.slug,
+        input.namespace,
+        input.name,
+        input.description,
+        input.owner,
+        input.lifecycle,
+        input.target_lifecycle,
+        input.target_lifecycle_date,
+        JSON.stringify(input.tags),
+        JSON.stringify(input.links),
+        input.schema_id,
+        JSON.stringify(input.data),
+        input.visibility_mode,
+        input.approval_policy_override ?? null,
+        input.updated_at.toISOString(),
+        workspace,
+        id,
+        expectedVersion
+      ]
+    );
+    return result.changes === 0 ? null : await this.getEntity(workspace, id);
+  }
+
+  async setEntityApprovalPolicyOverride(
+    workspace: string,
+    id: string,
+    override: 'required' | 'disabled' | null
+  ) {
+    const result = this.run(
+      'UPDATE entity SET approval_policy_override = ?, version = version + 1, updated_at = ? WHERE workspace = ? AND id = ?',
+      [override, new Date().toISOString(), workspace, id]
+    );
+    return result.changes === 0 ? null : await this.getEntity(workspace, id);
   }
 
   async deleteEntity(workspace: string, id: string) {

@@ -22,6 +22,7 @@ import { PostgresWebhookDatabase } from '../domain/webhook/db/postgresWebhook';
 import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument';
 import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
 import { PostgresNotificationDatabase } from '../domain/notification/db/postgresNotification';
+import { PostgresEntityChangeDatabase } from '../domain/catalog/db/postgresEntityChange';
 import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -48,6 +49,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly document: PostgresDocumentDatabase;
   readonly governance: PostgresGovernanceDatabase;
   readonly notification: PostgresNotificationDatabase;
+  readonly entityChange: PostgresEntityChangeDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -67,7 +69,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       webhook: new PostgresWebhookDatabase(sql),
       document: new PostgresDocumentDatabase(sql),
       governance: new PostgresGovernanceDatabase(sql),
-      notification: new PostgresNotificationDatabase(sql)
+      notification: new PostgresNotificationDatabase(sql),
+      entityChange: new PostgresEntityChangeDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -120,6 +123,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.document = new PostgresDocumentDatabase(this.sql);
     this.governance = new PostgresGovernanceDatabase(this.sql);
     this.notification = new PostgresNotificationDatabase(this.sql);
+    this.entityChange = new PostgresEntityChangeDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

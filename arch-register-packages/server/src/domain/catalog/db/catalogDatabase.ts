@@ -77,6 +77,7 @@ export type SchemaDbResult = {
   key_prefix: string;
   /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
   version?: number;
+  entity_approval_policy?: 'required' | 'disabled';
   created_at: Date;
   updated_at: Date;
 };
@@ -172,6 +173,8 @@ export type Entity = {
   visibility_mode: VisibilityMode | null;
   created_at: Date;
   updated_at: Date;
+  version?: number;
+  approval_policy_override?: 'required' | 'disabled' | null;
 };
 
 // Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
@@ -183,9 +186,17 @@ export type EntityDbResult = Entity & {
   schema_name: string;
 };
 
-export type EntityDbCreate = Entity;
+export type EntityDbCreate = Omit<Entity, 'version' | 'approval_policy_override'> & {
+  version?: number;
+  approval_policy_override?: 'required' | 'disabled' | null;
+};
 
-export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'public_id' | 'created_at'>;
+export type EntityDbUpdate = Omit<
+  Entity,
+  'id' | 'workspace' | 'public_id' | 'created_at' | 'version'
+> & {
+  version?: number;
+};
 
 // -- Entity Snapshot
 
@@ -243,7 +254,12 @@ export const catalogMappers = {
     lifecycle_label: row['lifecycle_label'] == null ? null : String(row['lifecycle_label']),
     target_lifecycle_label:
       row['target_lifecycle_label'] == null ? null : String(row['target_lifecycle_label']),
-    schema_name: String(row['schema_name'])
+    schema_name: String(row['schema_name']),
+    version: Number(row['version'] ?? 1),
+    approval_policy_override:
+      row['approval_policy_override'] == null
+        ? null
+        : (String(row['approval_policy_override']) as Entity['approval_policy_override'])
   }),
   entitySnapshot: (row: DatabaseRow): EntitySnapshotDbResult => ({
     id: String(row['id']),
@@ -289,6 +305,9 @@ export const catalogMappers = {
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
     key_prefix: String(row['key_prefix']),
     version: Number(row['version'] ?? 1),
+    entity_approval_policy: String(
+      row['entity_approval_policy'] ?? 'disabled'
+    ) as SchemaDbResult['entity_approval_policy'],
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
@@ -406,6 +425,17 @@ export type CatalogDatabase = {
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
   updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;
+  updateEntityIfVersion(
+    ws: string,
+    id: string,
+    input: EntityDbUpdate,
+    expectedVersion: number
+  ): Promise<EntityDbResult | null>;
+  setEntityApprovalPolicyOverride(
+    ws: string,
+    id: string,
+    override: 'required' | 'disabled' | null
+  ): Promise<EntityDbResult | null>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
 
   listEntityGrants(ws: string): Promise<EntityGrantDbResult[]>;

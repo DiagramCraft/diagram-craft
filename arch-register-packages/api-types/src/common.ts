@@ -44,6 +44,7 @@ export const workspaceCapabilitySchema = z.enum([
   'ent.edit',
   'ent.propose',
   'ent.approve',
+  'ent.override',
   'comments',
   'export',
   'schema.edit',

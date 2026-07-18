@@ -60,6 +60,7 @@ describe('schema route helpers', () => {
       color: null,
       icon: 'server',
       default_owner: null,
+      entity_approval_policy: 'disabled',
       created_at: now,
       updated_at: now
     });
@@ -84,6 +85,7 @@ describe('schema route helpers', () => {
       color: '#123456',
       icon: 'box',
       defaultOwner: 'Platform Engineering',
+      entityApprovalPolicy: 'disabled',
       updated_at: now
     });
   });
@@ -112,6 +114,7 @@ describe('schema route helpers', () => {
       color: null,
       icon: null,
       defaultOwner: 'Design Systems',
+      entityApprovalPolicy: 'disabled',
       updated_at: now
     });
   });
