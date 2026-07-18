@@ -1,4 +1,5 @@
-import { DiagramEdge, Intersection } from './diagramEdge';
+import { DiagramEdge } from './diagramEdge';
+import { Intersection } from './edgeIntersections';
 import { AnchorEndpoint, NodeConnectedEndpoint } from './endpoint';
 import {
   LengthOffsetOnPath,

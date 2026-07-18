@@ -2,7 +2,7 @@ import type { DiagramNode, DuplicationContext } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
-import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
+import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
 import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
 import {
@@ -17,7 +17,6 @@ import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import {
   AnchorEndpoint,
   NodeConnectedEndpoint,
-  EdgeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
   isConnectedEndpoint,
@@ -27,21 +26,13 @@ import {
 import { getCollapsedAncestor } from './collapsible';
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
-import {
-  isHorizontal,
-  isParallel,
-  isPerpendicular,
-  isReadable,
-  isVertical,
-  type LabelNode
-} from './labelNode';
+import { type LabelNode } from './labelNode';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
-import { isDifferent, isSame } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { assert, is, mustExist } from '@diagram-craft/utils/assert';
+import { assert, is } from '@diagram-craft/utils/assert';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
@@ -59,17 +50,9 @@ import {
 } from './propertyResolver';
 import type { EdgeDefinition } from './edgeDefinition';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
-import {
-  MappedCRDTOrderedMap,
-  type MappedCRDTOrderedMapMapType
-} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
-import {
-  MappedCRDTMap,
-  type MappedCRDTMapMapType
-} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
-import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
+import type { MappedCRDTOrderedMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { MappedCRDTMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
-import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import {
   ensureCustomProp,
@@ -84,12 +67,16 @@ import {
   DiagramElementChildUOWAdapter,
   DiagramElementUOWAdapter
 } from '@diagram-craft/model/diagramElement.uow';
+import {
+  intersectionListIsSame,
+  recalculateIntersections,
+  type Intersection
+} from './edgeIntersections';
+import { EdgeEndpoints, type AttachedEdgeCRDTEntry } from './edgeEndpoints';
+import { EdgeLabels, type LabelNodeCRDTEntry } from './edgeLabels';
 
 const isNodeConnectedEndpoint = (endpoint: Endpoint): endpoint is NodeConnectedEndpoint =>
   endpoint instanceof NodeConnectedEndpoint;
-
-const isEdgeConnectedEndpoint = (endpoint: Endpoint): endpoint is EdgeConnectedEndpoint =>
-  endpoint instanceof EdgeConnectedEndpoint;
 
 export type Waypoint = Readonly<{
   point: Point;
@@ -105,20 +92,6 @@ export type ResolvedLabelNode = LabelNode & {
   node: () => DiagramNode;
 };
 
-export type Intersection = {
-  point: Point;
-  type: 'above' | 'below';
-};
-
-const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (!Point.isEqual(a[i]!.point, b[i]!.point)) return false;
-    if (a[i]!.type !== b[i]!.type) return false;
-  }
-  return true;
-};
-
 export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
 export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
 
@@ -130,9 +103,6 @@ declare global {
   }
 }
 
-type LabelNodeCRDTEntry = { node: LabelNode & { nodeId: string } };
-type AttachedEdgeCRDTEntry = { edges: Array<string> };
-
 export type DiagramEdgeCRDT = DiagramElementCRDT & {
   start: SerializedEndpoint;
   end: SerializedEndpoint;
@@ -141,49 +111,6 @@ export type DiagramEdgeCRDT = DiagramElementCRDT & {
   labelNodes: CRDTMap<MappedCRDTOrderedMapMapType<LabelNodeCRDTEntry>>;
   waypoints: ReadonlyArray<Waypoint>;
 };
-
-const makeLabelNodeMapper = (
-  edge: DiagramEdge
-): CRDTMapper<ResolvedLabelNode, CRDTMap<LabelNodeCRDTEntry>> => {
-  return {
-    fromCRDT(e: CRDTMap<LabelNodeCRDTEntry>): ResolvedLabelNode {
-      const node = e.get('node')!;
-      return {
-        ...node,
-        node: () => mustExist(edge.diagram.nodeLookup.get(node.nodeId))
-      };
-    },
-
-    toCRDT(e: ResolvedLabelNode): CRDTMap<LabelNodeCRDTEntry> {
-      const m = edge.crdt.get().factory.makeMap<LabelNodeCRDTEntry>();
-      m.set('node', {
-        id: e.id,
-        nodeId: e.node().id,
-        offset: e.offset,
-        offsetType: e.offsetType,
-        type: e.type,
-        timeOffset: e.timeOffset
-      });
-      return m;
-    }
-  };
-};
-
-const makeEndpointMapper = (edge: DiagramEdge): CRDTMapper<Endpoint, SerializedEndpoint> => ({
-  fromCRDT: (e: SerializedEndpoint) =>
-    Endpoint.deserialize(e, edge.diagram.nodeLookup, edge.diagram.edgeLookup, true),
-  toCRDT: (e: Endpoint) => e.serialize()
-});
-
-const makeAttachedEdgesMapper = (
-  edge: DiagramEdge
-): CRDTMapper<string[], CRDTMap<AttachedEdgeCRDTEntry>> => ({
-  fromCRDT: (e: CRDTMap<AttachedEdgeCRDTEntry>) => e.get('edges')!,
-  toCRDT: (e: string[]) =>
-    edge.crdt.get().factory.makeMap<AttachedEdgeCRDTEntry>({
-      edges: e
-    })
-});
 
 export interface DiagramEdge extends DiagramElement {
   getDefinition(): EdgeDefinition;
@@ -240,10 +167,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
 
   // Shared properties
   readonly #waypoints: CRDTProp<DiagramEdgeCRDT, 'waypoints'>;
-  readonly #labelNodes: MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>;
-  readonly #attachedEdges: MappedCRDTMap<string[], AttachedEdgeCRDTEntry>;
-  readonly #start: MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>;
-  readonly #end: MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>;
+  readonly #labels: EdgeLabels;
+  readonly #endpoints: EdgeEndpoints;
   readonly #props: CRDTObject<EdgeProps>;
 
   protected constructor(
@@ -261,50 +186,15 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     });
     this._releasables.add(this.#waypoints);
 
-    const labelNodesMap = WatchableValue.from(
-      ([m]) => m.get().get('labelNodes', () => layer.diagram.document.root.factory.makeMap())!,
-      [edgeCrdt]
-    );
+    this.#labels = new EdgeLabels(this, edgeCrdt);
+    for (const releasable of this.#labels.releasables) {
+      this._releasables.add(releasable);
+    }
 
-    this.#labelNodes = new MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>(
-      labelNodesMap,
-      makeLabelNodeMapper(this)
-    );
-    this._releasables.add(this.#labelNodes);
-    this._releasables.add(labelNodesMap);
-
-    const attachedEdgesMap = WatchableValue.from(
-      ([m]) => m.get().get('attachedEdges', () => layer.diagram.document.root.factory.makeMap())!,
-      [edgeCrdt]
-    );
-
-    this.#attachedEdges = new MappedCRDTMap(attachedEdgesMap, makeAttachedEdgesMapper(this), {
-      onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
-      onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
-      onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
-    });
-    this._releasables.add(this.#attachedEdges);
-    this._releasables.add(attachedEdgesMap);
-
-    this.#start = new MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>(
-      edgeCrdt,
-      'start',
-      makeEndpointMapper(this),
-      {
-        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
-      }
-    );
-    this._releasables.add(this.#start);
-
-    this.#end = new MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>(
-      edgeCrdt,
-      'end',
-      makeEndpointMapper(this),
-      {
-        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
-      }
-    );
-    this._releasables.add(this.#end);
+    this.#endpoints = new EdgeEndpoints(this, edgeCrdt);
+    for (const releasable of this.#endpoints.releasables) {
+      this._releasables.add(releasable);
+    }
 
     const propsMap = WatchableValue.from(
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
@@ -340,8 +230,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   ) {
     const edge = new SimpleDiagramEdge(id, layer);
 
-    edge.#start.set(start);
-    edge.#end.set(end);
+    edge.#endpoints._setStart(start);
+    edge.#endpoints._setEnd(end);
     edge.#props.set(props as EdgeProps);
     if (midpoints.length > 0) edge.#waypoints.set(midpoints);
 
@@ -349,22 +239,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     edge._metadata.set(metadata);
 
     UnitOfWork.executeSilently(layer.diagram, uow => {
-      if (isNodeConnectedEndpoint(start)) {
-        start.node._addEdge(
-          start instanceof AnchorEndpoint ? start.anchorId : undefined,
-          edge,
-          uow
-        );
-      }
-      if (isEdgeConnectedEndpoint(start)) {
-        start.edge._addAttachedEdge(edge, uow);
-      }
-      if (isNodeConnectedEndpoint(end)) {
-        end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, edge, uow);
-      }
-      if (isEdgeConnectedEndpoint(end)) {
-        end.edge._addAttachedEdge(edge, uow);
-      }
+      EdgeEndpoints.connectInitial(edge, start, end, uow);
     });
 
     return edge;
@@ -525,8 +400,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
 
   get name() {
     // First we use any label nodes
-    if (is.arrayNotEmpty(this.#labelNodes.values)) {
-      return this.#labelNodes.values[0].node().name;
+    if (is.arrayNotEmpty(this.#labels.labelNodes)) {
+      return this.#labels.labelNodes[0].node().name;
     }
 
     if (!isEmptyString(this.metadata.name)) {
@@ -559,7 +434,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   //       Maybe we should include the extent of labels as well as the curve itself - i.e
   //       all points
   get bounds() {
-    return Box.fromCorners(this.#start.getNonNull().position, this.#end.getNonNull().position);
+    return Box.fromCorners(this.#endpoints.start.position, this.#endpoints.end.position);
   }
 
   setBounds(b: Box, uow: UnitOfWork) {
@@ -568,10 +443,10 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
 
       if (delta.x !== 0 || delta.y !== 0) {
         if (!isConnectedEndpoint(this.start)) {
-          this.#start.set(new FreeEndpoint(Point.add(this.start.position, delta)));
+          this.#endpoints._setStart(new FreeEndpoint(Point.add(this.start.position, delta)));
         }
         if (!isConnectedEndpoint(this.end)) {
-          this.#end.set(new FreeEndpoint(Point.add(this.end.position, delta)));
+          this.#endpoints._setEnd(new FreeEndpoint(Point.add(this.end.position, delta)));
         }
       }
     });
@@ -580,117 +455,45 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   /* Endpoints ********************************************************************************************** */
 
   setStart(start: Endpoint, uow: UnitOfWork) {
-    uow.executeUpdate(this, () => {
-      // Prevent edge-to-edge attachments from introducing dependency cycles.
-      assert.true(!isEdgeConnectedEndpoint(start) || !start.edge?.isTransitivelyAttachedTo(this));
-
-      if (isNodeConnectedEndpoint(this.start)) {
-        this.start.node._removeEdge(
-          this.start instanceof AnchorEndpoint ? this.start.anchorId : undefined,
-          this,
-          uow
-        );
-      }
-      if (isEdgeConnectedEndpoint(this.start) && this.start.edge?._isAttached) {
-        this.start.edge._removeAttachedEdge(this, uow);
-      }
-
-      if (isNodeConnectedEndpoint(start)) {
-        start.node._addEdge(
-          start instanceof AnchorEndpoint ? start.anchorId : undefined,
-          this,
-          uow
-        );
-      }
-      if (isEdgeConnectedEndpoint(start) && start.edge?._isAttached) {
-        start.edge._addAttachedEdge(this, uow);
-      }
-
-      this.#start.set(start);
-    });
+    this.#endpoints.setStart(start, uow);
   }
 
   get start() {
-    return this.#start.getNonNull();
+    return this.#endpoints.start;
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork) {
-    uow.executeUpdate(this, () => {
-      // Prevent edge-to-edge attachments from introducing dependency cycles.
-      assert.true(!isEdgeConnectedEndpoint(end) || !end.edge?.isTransitivelyAttachedTo(this));
-
-      if (isNodeConnectedEndpoint(this.end)) {
-        this.end.node._removeEdge(
-          this.end instanceof AnchorEndpoint ? this.end.anchorId : undefined,
-          this,
-          uow
-        );
-      }
-      if (isEdgeConnectedEndpoint(this.end) && this.end.edge?._isAttached) {
-        this.end.edge._removeAttachedEdge(this, uow);
-      }
-
-      if (isNodeConnectedEndpoint(end)) {
-        end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this, uow);
-      }
-      if (isEdgeConnectedEndpoint(end) && end.edge?._isAttached) {
-        end.edge._addAttachedEdge(this, uow);
-      }
-
-      this.#end.set(end);
-    });
+    this.#endpoints.setEnd(end, uow);
   }
 
   get end() {
-    return this.#end.getNonNull();
+    return this.#endpoints.end;
   }
 
   isConnected() {
-    return isConnectedEndpoint(this.start) || isConnectedEndpoint(this.end);
+    return this.#endpoints.isConnected();
   }
 
   get attachedEdges(): ReadonlyArray<DiagramEdge> {
-    return Array.from(this.#attachedEdges.values)
-      .flat()
-      .map(id => this.diagram.edgeLookup.get(id)!)
-      .filter((edge): edge is DiagramEdge => edge !== undefined);
+    return this.#endpoints.attachedEdges;
   }
 
   _addAttachedEdge(edge: DiagramEdge, uow: UnitOfWork) {
-    uow.executeUpdate(this, () => {
-      const current = this.#attachedEdges.get('') ?? [];
-      if (!current.includes(edge.id)) {
-        this.#attachedEdges.set('', [...current, edge.id]);
-      }
-    });
+    this.#endpoints._addAttachedEdge(edge, uow);
   }
 
   _removeAttachedEdge(edge: DiagramEdge, uow: UnitOfWork) {
-    uow.executeUpdate(this, () => {
-      this.#attachedEdges.set(
-        '',
-        (this.#attachedEdges.get('') ?? []).filter(id => id !== edge.id)
-      );
-    });
+    this.#endpoints._removeAttachedEdge(edge, uow);
   }
 
   isTransitivelyAttachedTo(edge: DiagramEdge, seen = new Set<string>()) {
-    if (this === edge) return true;
-    if (seen.has(this.id)) return false;
-    seen.add(this.id);
-
-    for (const endpoint of [this.start, this.end]) {
-      if (!isEdgeConnectedEndpoint(endpoint)) continue;
-      if (endpoint.edge === edge || endpoint.edge.isTransitivelyAttachedTo(edge, seen)) return true;
-    }
-
-    return false;
+    return this.#endpoints.isTransitivelyAttachedTo(edge, seen);
   }
 
   /* Label Nodes ******************************************************************************************** */
 
   get labelNodes() {
-    return this.#labelNodes.values;
+    return this.#labels.labelNodes;
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
@@ -721,7 +524,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   private syncLabelNodesBasedOnChildren(uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
       // Find all children with corresponding label node
-      const existingLabelNodes = this.#labelNodes.values.filter(ln =>
+      const existingLabelNodes = this.#labels.labelNodes.filter(ln =>
         this.children.find(c => c.id === ln.node().id)
       );
 
@@ -744,15 +547,15 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         }
       }
 
-      this.#labelNodes.set([...existingLabelNodes, ...newLabelNodes].map(n => [n.id, n]));
+      this.#labels.set([...existingLabelNodes, ...newLabelNodes]);
     });
 
-    this.labelNodeConsistencyInvariant();
+    this.#labels.consistencyInvariant(this.children);
   }
 
   private syncChildrenBasedOnLabelNodes(uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      this.#labelNodes.values.forEach(ln => {
+      this.#labels.labelNodes.forEach(ln => {
         const node = ln.node();
         const layer = node.layer;
         if (layer.type === 'regular') {
@@ -775,17 +578,17 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       });
 
       for (const c of this.children) {
-        if (!this.#labelNodes.values.find(ln => ln.node() === c)) {
+        if (!this.#labels.labelNodes.find(ln => ln.node() === c)) {
           this.removeChild(c, uow);
         }
       }
     });
 
-    this.labelNodeConsistencyInvariant();
+    this.#labels.consistencyInvariant(this.children);
   }
 
   setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
-    this.#labelNodes.set(labelNodes?.map(n => [n.id, n]) ?? []);
+    this.#labels.set(labelNodes);
     this.syncChildrenBasedOnLabelNodes(uow);
   }
 
@@ -800,40 +603,6 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       this.labelNodes.filter(ln => ln.id !== labelNode.id),
       uow
     );
-  }
-
-  private labelNodeConsistencyInvariant() {
-    DEBUG: {
-      // Check that labelNodes and children have the same length
-      assert.true(
-        this.#labelNodes.size === this.children.length,
-        `Label nodes don't match children - different length; ${this.children.length} != ${this.#labelNodes.size}`
-      );
-
-      // Check that labelNodes and children have the same nodes
-      for (const ln of this.#labelNodes.values) {
-        assert.true(
-          !!this.children.find(c => c.id === ln.node().id),
-          `Label node doesn't match children - different ids; ${this.children.map(c => c.id).join(', ')} != ${this.#labelNodes.values.map(ln => ln.node().id).join(', ')}`
-        );
-      }
-
-      // Check that no children are elements of the layer
-      for (const c of this.children) {
-        assert.false(
-          c.layer.type === 'regular' && !!c.layer.elements.find(e => e === c),
-          "Label node doesn't match children - element"
-        );
-      }
-
-      // Check that all children are part of the element mapping of the diagram
-      for (const c of this.children) {
-        assert.true(
-          c.diagram.nodeLookup.has(c.id) || c.diagram.edgeLookup.has(c.id),
-          "Label node doesn't match children - diagram"
-        );
-      }
-    }
   }
 
   /* Waypoints ********************************************************************************************** */
@@ -947,14 +716,11 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     );
     this.#waypoints.set((snapshot.waypoints ?? []) as Array<Waypoint>);
 
-    this.#labelNodes.set(
-      snapshot.labelNodes?.map(ln => [
-        ln.id,
-        {
-          ...ln,
-          node: () => this.diagram.nodeLookup.get(ln.id)!
-        }
-      ]) ?? []
+    this.#labels.set(
+      snapshot.labelNodes?.map(ln => ({
+        ...ln,
+        node: () => this.diagram.nodeLookup.get(ln.id)!
+      })) ?? []
     );
 
     this.syncChildrenBasedOnLabelNodes(uow);
@@ -1121,14 +887,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 
   flip(uow: UnitOfWork) {
-    const start = this.#start.getNonNull();
-    const end = this.#end.getNonNull();
-
-    // Need to "zero" the end so that the setters logic should work correctly
-    this.#end.set(new FreeEndpoint(Point.ORIGIN));
-
-    this.setStart(end, uow);
-    this.setEnd(start, uow);
+    this.#endpoints.flip(uow);
   }
 
   /**
@@ -1146,7 +905,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     if (uow.metadata.invalidated.has(this)) return;
     uow.metadata.invalidated.add(this);
 
-    this.adjustLabelNodePosition(uow);
+    this.#labels.adjustPositions(this.path(), uow);
     for (const edge of this.attachedEdges) {
       if (!edge._isAttached) continue;
       uow.updateElement(edge, edge.snapshot());
@@ -1164,15 +923,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     // that have a PointOnEdgeEndpoint referencing this edge and register them as
     // attached. This handles the undo case where a referencing edge was restored
     // before this one.
-    for (const edge of this.diagram.edgeLookup.values()) {
-      if (edge === this) continue;
-      if (isEdgeConnectedEndpoint(edge.start) && edge.start.edge === this) {
-        this._addAttachedEdge(edge, uow);
-      }
-      if (isEdgeConnectedEndpoint(edge.end) && edge.end.edge === this) {
-        this._addAttachedEdge(edge, uow);
-      }
-    }
+    this.#endpoints.reattach(uow);
   }
 
   _onDetach(uow: UnitOfWork) {
@@ -1181,160 +932,22 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       l.node()._onDetach(uow);
     }
 
-    if (isNodeConnectedEndpoint(this.start)) {
-      this.start.node._removeEdge(
-        this.start instanceof AnchorEndpoint ? this.start.anchorId : undefined,
-        this,
-        uow
-      );
-    }
-    if (isEdgeConnectedEndpoint(this.start) && this.start.edge?._isAttached) {
-      this.start.edge._removeAttachedEdge(this, uow);
-    }
-    if (isNodeConnectedEndpoint(this.end)) {
-      this.end.node._removeEdge(
-        this.end instanceof AnchorEndpoint ? this.end.anchorId : undefined,
-        this,
-        uow
-      );
-    }
-    if (isEdgeConnectedEndpoint(this.end) && this.end.edge?._isAttached) {
-      this.end.edge._removeAttachedEdge(this, uow);
-    }
+    this.#endpoints.detach(uow);
   }
 
   _recalculateIntersections(uow: UnitOfWork, propagate = false) {
     if (!this.diagram.hasEdgesWithLineHops) return;
 
-    let currentEdgeHasBeenSeen = false;
-    const path = this.path();
-    const intersections: Intersection[] = [];
-    for (const edge of this.diagram.visibleElements()) {
-      if (!isEdge(edge)) continue;
-
-      if (edge === this) {
-        currentEdgeHasBeenSeen = true;
-        continue;
-      }
-
-      // TODO: There's opportunity to optimize this by using the bounding box, but
-      //       this requires the bounds() method to be more accurate
-
-      const otherPath = edge.path();
-      const intersectionsWithOther = path.intersections(otherPath);
-      intersections.push(
-        ...intersectionsWithOther.map(e => ({
-          point: e.point,
-          type: currentEdgeHasBeenSeen ? ('below' as const) : ('above' as const)
-        }))
-      );
-      if (propagate) {
-        edge._recalculateIntersections(uow, false);
-      }
-    }
-
-    if (!intersectionListIsSame(intersections, this.#intersections)) {
-      this.#intersections = intersections;
+    const next = recalculateIntersections(this, this.diagram);
+    if (!intersectionListIsSame(next, this.#intersections)) {
+      this.#intersections = next;
       uow.updateElement(this);
     }
-  }
 
-  private adjustLabelNodePosition(uow: UnitOfWork) {
-    if (this.labelNodes.length === 0) return;
-
-    const path = this.path();
-
-    for (const labelNode of this.labelNodes) {
-      const pathD = TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset }, path);
-      const attachmentPoint = path.pointAt(pathD);
-      const labelNodeNode = labelNode.node();
-
-      let hAlign = labelNodeNode.renderProps.text.align;
-      let vAlign = labelNodeNode.renderProps.text.valign;
-
-      let newReferencePoint = Point.add(attachmentPoint, labelNode.offset);
-      if (labelNode.offsetType === 'relative') {
-        const directionAtAttachmentPoint = Vector.normalize(path.tangentAt(pathD));
-        const cross = Vector.tangentToNormal(directionAtAttachmentPoint);
-
-        const absoluteOffset = Point.add(
-          Vector.scale(directionAtAttachmentPoint, labelNode.offset.x),
-          Vector.scale(cross, labelNode.offset.y)
-        );
-        newReferencePoint = Point.add(attachmentPoint, absoluteOffset);
-
-        if (!isParallel(labelNode.type) && !isPerpendicular(labelNode.type)) {
-          if (isSame(absoluteOffset.x, 0, 1)) hAlign = 'center';
-          else if (absoluteOffset.x < 0) hAlign = 'right';
-          else if (absoluteOffset.x > 0) hAlign = 'left';
-
-          if (isSame(absoluteOffset.y, 0, 1)) vAlign = 'middle';
-          else if (absoluteOffset.y < 0) vAlign = 'bottom';
-          else if (absoluteOffset.y > 0) vAlign = 'top';
-        }
-      }
-
-      let newRotation = labelNodeNode.bounds.r;
-      if (isParallel(labelNode.type) || isPerpendicular(labelNode.type)) {
-        const tangent = path.tangentAt(pathD);
-
-        if (isParallel(labelNode.type)) {
-          newRotation = Vector.angle(tangent);
-        } else {
-          newRotation = Vector.angle(tangent) + Math.PI / 2;
-        }
-
-        if (isReadable(labelNode.type)) {
-          if (newRotation > Math.PI / 2) newRotation -= Math.PI;
-          if (newRotation < -Math.PI / 2) newRotation += Math.PI;
-        }
-
-        newReferencePoint = Point.add(
-          attachmentPoint,
-          Point.rotate({ x: -labelNode.offset.x, y: 0 }, Vector.angle(tangent) + Math.PI / 2)
-        );
-      } else if (isHorizontal(labelNode.type)) {
-        newRotation = 0;
-      } else if (isVertical(labelNode.type)) {
-        newRotation = Math.PI / 2;
-      }
-
-      const referenceOffsetFromMidpoint = Point.of(0, 0);
-      if (hAlign === 'left') {
-        referenceOffsetFromMidpoint.x = labelNodeNode.bounds.w / 2;
-      } else if (hAlign === 'right') {
-        referenceOffsetFromMidpoint.x = -labelNodeNode.bounds.w / 2;
-      }
-
-      if (vAlign === 'top') {
-        referenceOffsetFromMidpoint.y =
-          labelNodeNode.bounds.h / 2 + (labelNode.offsetType === 'relative' ? 0 : 6);
-      } else if (vAlign === 'bottom') {
-        referenceOffsetFromMidpoint.y =
-          -labelNodeNode.bounds.h / 2 - (labelNode.offsetType === 'relative' ? 0 : 1);
-      }
-
-      // Note, using rounding here to avoid infinite recursion
-      newReferencePoint = Point.add(newReferencePoint, referenceOffsetFromMidpoint);
-      const currentReferencePoint = Point.add(
-        Box.center(labelNodeNode.bounds),
-        referenceOffsetFromMidpoint
-      );
-      const hasChanged =
-        isDifferent(newReferencePoint.x, currentReferencePoint.x) ||
-        isDifferent(newReferencePoint.y, currentReferencePoint.y) ||
-        isDifferent(newRotation, labelNodeNode.bounds.r);
-
-      if (hasChanged) {
-        labelNodeNode.setBounds(
-          {
-            ...labelNodeNode.bounds,
-            r: newRotation,
-            x: newReferencePoint.x - labelNodeNode.bounds.w / 2,
-            y: newReferencePoint.y - labelNodeNode.bounds.h / 2
-          },
-          uow
-        );
+    if (propagate) {
+      for (const edge of this.diagram.visibleElements()) {
+        if (!isEdge(edge) || edge === this) continue;
+        edge._recalculateIntersections(uow, false);
       }
     }
   }
