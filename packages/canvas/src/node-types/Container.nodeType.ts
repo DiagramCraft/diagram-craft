@@ -2,16 +2,12 @@ import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNod
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import {
-  AttachEdgeContext,
-  CustomPropertyDefinition,
-  CustomPropertyDefinitionEntry,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { AttachEdgeContext, NodeFlags } from '@diagram-craft/model/nodeDefinition';
+import { CustomPropertyDefinition, CustomPropertyDefinitionEntry } from '@diagram-craft/model/customProperty';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { renderChildren } from '../components/renderElement';
-import { type PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import type { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';

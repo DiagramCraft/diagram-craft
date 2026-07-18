@@ -22,7 +22,7 @@ import { makeIsometricTransform } from '../effects/isometric';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 export type NodeComponentProps = {
   element: DiagramNode;

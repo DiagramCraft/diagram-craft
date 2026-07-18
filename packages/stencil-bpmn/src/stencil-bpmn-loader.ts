@@ -1,8 +1,6 @@
-import {
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry,
-  Registry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { EdgeDefinitionRegistry } from '@diagram-craft/model/edgeDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
 import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
 import { BPMNDataStoreNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNDataStore.nodeType';

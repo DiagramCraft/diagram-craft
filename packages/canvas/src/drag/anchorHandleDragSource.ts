@@ -6,7 +6,7 @@ import type { LengthOffsetOnPath, TimeOffsetOnSegment } from '@diagram-craft/geo
 import { Vector } from '@diagram-craft/geometry/vector';
 import { getAnchorPosition } from '@diagram-craft/model/anchor';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import type { Modifiers } from '../dragDropManager';
 
 const MAX_EDGE_ANCHOR_PROJECTION_DISTANCE = 10;

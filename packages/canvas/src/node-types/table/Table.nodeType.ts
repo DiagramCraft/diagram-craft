@@ -14,10 +14,8 @@ import { Rotation, Transform, Translation } from '@diagram-craft/geometry/transf
 import { Box } from '@diagram-craft/geometry/box';
 import { ShapeNodeDefinition } from '../../shape/shapeNodeDefinition';
 import * as svg from '../../component/vdom-svg';
-import {
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../../highlight';
 import { renderChildren } from '../../components/renderElement';

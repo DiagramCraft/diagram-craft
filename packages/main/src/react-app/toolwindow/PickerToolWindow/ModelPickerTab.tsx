@@ -27,7 +27,7 @@ import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
-import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';

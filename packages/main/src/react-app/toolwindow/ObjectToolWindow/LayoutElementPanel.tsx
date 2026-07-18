@@ -6,7 +6,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const LayoutElementPanel = (props: Props) => {

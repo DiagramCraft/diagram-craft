@@ -18,7 +18,7 @@ import {
   renderIcon,
   renderMarkers
 } from '@diagram-craft/stencil-bpmn/utils';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { ICON_SIZE, MARKER_SIZE } from '@diagram-craft/stencil-bpmn/spacing';

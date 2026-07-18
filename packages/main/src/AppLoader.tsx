@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { App, DiagramRef } from './App';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import type { CollaborationAwareness } from './CollaborationAwareness';
 import { getDefaultStencilPackages, type StencilRegistryConfig } from './appConfig';

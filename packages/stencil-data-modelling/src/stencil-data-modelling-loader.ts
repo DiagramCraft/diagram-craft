@@ -1,8 +1,6 @@
-import {
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry,
-  Registry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { EdgeDefinitionRegistry } from '@diagram-craft/model/edgeDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import chenStencils from './chen/chen-stencils.yaml';
 import ieStencils from './ie/ie-stencils.yaml';
 import barkerStencils from './barker/barker-stencils.yaml';

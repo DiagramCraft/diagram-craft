@@ -4,11 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import {
-  AttachEdgeContext,
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { AttachEdgeContext, NodeFlags } from '@diagram-craft/model/nodeDefinition';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { _p, Point } from '@diagram-craft/geometry/point';

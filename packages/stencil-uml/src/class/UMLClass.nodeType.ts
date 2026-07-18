@@ -1,9 +1,7 @@
 import { CollapsibleOverlayComponent } from '@diagram-craft/canvas/shape/collapsible';
 import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/layoutCapableShapeNodeDefinition';
-import {
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {

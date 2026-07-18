@@ -15,7 +15,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 type State = 'background' | 'node' | 'handle';
 

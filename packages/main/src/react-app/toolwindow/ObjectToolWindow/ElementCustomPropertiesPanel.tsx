@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import {
-  asProperty,
-  CustomPropertyDefinition,
-  CustomPropertyType,
-  NodeDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { asProperty, CustomPropertyDefinition, CustomPropertyType } from '@diagram-craft/model/customProperty';
+import { NodeDefinition } from '@diagram-craft/model/nodeDefinition';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';

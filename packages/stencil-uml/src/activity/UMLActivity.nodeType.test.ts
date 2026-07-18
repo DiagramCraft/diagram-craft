@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { UMLActivityNodeDefinition } from '@diagram-craft/stencil-uml/activity/UMLActivity.nodeType';
 import { registerUMLNodes } from '@diagram-craft/stencil-uml/stencil-uml-loader';
 

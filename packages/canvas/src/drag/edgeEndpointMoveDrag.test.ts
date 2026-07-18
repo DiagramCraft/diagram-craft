@@ -14,7 +14,7 @@ import {
   type Endpoint
 } from '@diagram-craft/model/endpoint';
 import { RectNodeDefinition } from '../node-types/Rect.nodeType';
-import type { AttachEdgeContext } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { AttachEdgeContext } from '@diagram-craft/model/nodeDefinition';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';

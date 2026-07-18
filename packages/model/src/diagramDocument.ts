@@ -3,7 +3,7 @@ import { DiagramStyles } from './diagramStyles';
 import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { Registry } from './elementDefinitionRegistry';
+import { Registry } from './registry';
 import { getRemoteUnitOfWork, UnitOfWork, type UOWTrackable, UOWRegistry } from './unitOfWork';
 import { DiagramDocumentUOWAdapter, DocumentDiagramChildAdapter } from './diagramDocument.uow';
 import { DataProviderRegistry } from './dataProvider';

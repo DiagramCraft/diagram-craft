@@ -7,10 +7,8 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Point } from '@diagram-craft/geometry/point';
-import {
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 export class UMLDestroyNodeDefinition extends ShapeNodeDefinition {
   constructor() {

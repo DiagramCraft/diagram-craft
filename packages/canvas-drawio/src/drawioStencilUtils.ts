@@ -3,7 +3,7 @@ import { assertDrawioShapeNodeDefinition } from './node-types/DrawioShape.nodeTy
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DrawioStencil } from './drawioStencilLoader';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { StencilUtils } from '@diagram-craft/model/stencilUtils';
 
 export const toRegularStencil = (drawio: DrawioStencil): Stencil => {

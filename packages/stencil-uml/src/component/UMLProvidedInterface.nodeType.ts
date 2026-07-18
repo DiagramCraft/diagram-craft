@@ -10,7 +10,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 export class UMLProvidedInterfaceNodeDefinition extends ShapeNodeDefinition {
   constructor() {

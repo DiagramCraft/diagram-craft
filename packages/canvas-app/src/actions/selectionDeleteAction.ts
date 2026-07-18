@@ -4,7 +4,7 @@ import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { deleteElements } from '@diagram-craft/model/diagramElementUtils';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 declare global {
   namespace DiagramCraft {

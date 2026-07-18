@@ -7,11 +7,8 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Point, _p } from '@diagram-craft/geometry/point';
-import {
-  CustomProperty,
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomProperty, CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
