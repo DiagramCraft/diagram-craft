@@ -13,7 +13,9 @@ import type {
   DocumentTemplateDbCreate,
   DocumentTemplateDbResult,
   DocumentTypeDbCreate,
-  DocumentTypeDbResult
+  DocumentTypeDbResult,
+  DocumentTypeVersionDbCreate,
+  DocumentTypeVersionDbResult
 } from './documentDatabase';
 import type {
   DocumentTemplateWrite,
@@ -29,8 +31,27 @@ const typeMapper = (row: DatabaseRow): DocumentTypeDbResult => ({
   color: row['color'] == null ? null : String(row['color']),
   icon: row['icon'] == null ? null : String(row['icon']),
   archived: databaseBoolean(row['archived']),
+  version: Number(row['version'] ?? 1),
   created_at: databaseDate(row['created_at']),
   updated_at: databaseDate(row['updated_at'])
+});
+const typeVersionMapper = (row: DatabaseRow): DocumentTypeVersionDbResult => ({
+  id: String(row['id']),
+  workspace: String(row['workspace']),
+  document_type_id: String(row['document_type_id']),
+  version: Number(row['version']),
+  name: String(row['name']),
+  description: String(row['description'] ?? ''),
+  fields: parseDatabaseJson(row['fields'], [], 'document_type_version.fields'),
+  color: row['color'] == null ? null : String(row['color']),
+  icon: row['icon'] == null ? null : String(row['icon']),
+  change_summary: parseDatabaseJson(
+    row['change_summary'],
+    {},
+    'document_type_version.change_summary'
+  ),
+  created_by: row['created_by'] == null ? null : String(row['created_by']),
+  created_at: databaseDate(row['created_at'])
 });
 const templateMapper = (row: DatabaseRow): DocumentTemplateDbResult => {
   if (row['document_type_id'] == null)
@@ -119,11 +140,11 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
   async updateDocumentType(
     workspace: string,
     id: string,
-    input: DocumentTypeWrite & { updated_at: Date }
+    input: DocumentTypeWrite & { updated_at: Date; version?: number }
   ) {
     try {
       await this
-        .sql`UPDATE document_type SET name = ${input.name}, description = ${input.description}, fields = ${this.json(input.fields)}, color = ${input.color ?? null}, icon = ${input.icon ?? null}, updated_at = ${input.updated_at} WHERE workspace = ${workspace} AND id = ${id}`;
+        .sql`UPDATE document_type SET name = ${input.name}, description = ${input.description}, fields = ${this.json(input.fields)}, color = ${input.color ?? null}, icon = ${input.icon ?? null}, version = COALESCE(${input.version ?? null}::integer, version), updated_at = ${input.updated_at} WHERE workspace = ${workspace} AND id = ${id}`;
       await this.syncDocumentFields(workspace, id, input.fields, input.updated_at);
       return await this.getDocumentType(workspace, id);
     } catch (error) {
@@ -145,6 +166,48 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+  async listDocumentTypeVersions(workspace: string, documentTypeId: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM document_type_version
+      WHERE workspace = ${workspace} AND document_type_id = ${documentTypeId}
+      ORDER BY version DESC
+    `;
+    return mapDatabaseRows(rows, typeVersionMapper);
+  }
+  async createDocumentTypeVersion(input: DocumentTypeVersionDbCreate) {
+    const [row] = (await this.sql`
+      INSERT INTO document_type_version
+        (id, workspace, document_type_id, version, name, description, fields, color, icon, change_summary, created_by, created_at)
+      VALUES
+        (${input.id}, ${input.workspace}, ${input.document_type_id}, ${input.version}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
+      RETURNING *
+    `) as DatabaseRow[];
+    return typeVersionMapper(row!);
+  }
+  async renameDocumentMetadataField(
+    workspace: string,
+    documentTypeId: string,
+    oldFieldId: string,
+    newFieldId: string
+  ) {
+    const rows = (await this.sql`
+      UPDATE content_node_document
+      SET "values" = ("values" - ${oldFieldId}::text)
+        || jsonb_build_object(${newFieldId}::text, "values" -> ${oldFieldId}::text)
+      WHERE workspace = ${workspace} AND document_type_id = ${documentTypeId} AND "values" ? ${oldFieldId}::text
+      RETURNING node_id
+    `) as DatabaseRow[];
+    return rows.length;
+  }
+  async removeDocumentMetadataField(workspace: string, documentTypeId: string, fieldId: string) {
+    const rows = (await this.sql`
+      UPDATE content_node_document
+      SET "values" = "values" - ${fieldId}::text
+      WHERE workspace = ${workspace} AND document_type_id = ${documentTypeId} AND "values" ? ${fieldId}::text
+      RETURNING node_id
+    `) as DatabaseRow[];
+    return rows.length;
   }
   async listDocumentTemplates(
     workspace: string,

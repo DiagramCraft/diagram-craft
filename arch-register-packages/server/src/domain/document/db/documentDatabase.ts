@@ -14,6 +14,8 @@ export type DocumentTypeDbResult = {
   color: string | null;
   icon: string | null;
   archived: boolean;
+  /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
+  version?: number;
   created_at: Date;
   updated_at: Date;
 };
@@ -24,6 +26,25 @@ export type DocumentTypeDbCreate = DocumentTypeWrite & {
   created_at: Date;
   updated_at: Date;
 };
+
+// -- Document Type Version
+
+export type DocumentTypeVersionDbResult = {
+  id: string;
+  workspace: string;
+  document_type_id: string;
+  version: number;
+  name: string;
+  description: string;
+  fields: DocumentField[];
+  color: string | null;
+  icon: string | null;
+  change_summary: Record<string, unknown>;
+  created_by: string | null;
+  created_at: Date;
+};
+
+export type DocumentTypeVersionDbCreate = DocumentTypeVersionDbResult;
 
 export type DocumentTemplateDbResult = {
   id: string;
@@ -71,7 +92,7 @@ export type DocumentDatabase = {
   updateDocumentType(
     workspace: string,
     id: string,
-    input: DocumentTypeWrite & { updated_at: Date }
+    input: DocumentTypeWrite & { updated_at: Date; version?: number }
   ): Promise<DocumentTypeDbResult | null>;
   archiveDocumentType(
     workspace: string,
@@ -80,6 +101,26 @@ export type DocumentDatabase = {
     updated_at: Date
   ): Promise<DocumentTypeDbResult | null>;
   deleteDocumentType(workspace: string, id: string): Promise<void>;
+
+  listDocumentTypeVersions(
+    workspace: string,
+    documentTypeId: string
+  ): Promise<DocumentTypeVersionDbResult[]>;
+  createDocumentTypeVersion(
+    input: DocumentTypeVersionDbCreate
+  ): Promise<DocumentTypeVersionDbResult>;
+
+  renameDocumentMetadataField(
+    workspace: string,
+    documentTypeId: string,
+    oldFieldId: string,
+    newFieldId: string
+  ): Promise<number>;
+  removeDocumentMetadataField(
+    workspace: string,
+    documentTypeId: string,
+    fieldId: string
+  ): Promise<number>;
   listDocumentTemplates(
     workspace: string,
     projectId?: string | null,

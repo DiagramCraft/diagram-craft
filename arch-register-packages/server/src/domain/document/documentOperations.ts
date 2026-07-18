@@ -12,10 +12,21 @@ import type {
   DocumentTemplate,
   DocumentTemplateWrite,
   DocumentType,
-  DocumentTypeWrite
+  DocumentTypeVersion,
+  DocumentTypeWrite,
+  FieldMigrations,
+  PendingFieldChange
 } from '@arch-register/api-types/documentContract';
-import type { DocumentTypeDbResult } from './db/documentDatabase';
+import type { DocumentTypeDbResult, DocumentTypeVersionDbResult } from './db/documentDatabase';
 import { validateDocumentMetadata, validateDocumentTypeWrite } from './documentValidation';
+import {
+  buildSchemaChangeSummary,
+  classifyFieldChanges,
+  describeHardBlockedChange,
+  findUnresolvedFieldMigrations,
+  hardBlockedFieldChanges,
+  migratableFieldChanges
+} from './documentSchemaHelpers';
 
 const dbErrorMessages = {
   unique: 'A document type or template with that name already exists',
@@ -24,8 +35,21 @@ const dbErrorMessages = {
 
 const toApiType = (row: DocumentTypeDbResult): DocumentType => ({
   ...row,
+  version: row.version ?? 1,
   created_at: row.created_at.toISOString(),
   updated_at: row.updated_at.toISOString()
+});
+
+const toApiTypeVersion = (row: DocumentTypeVersionDbResult): DocumentTypeVersion => ({
+  version: row.version,
+  name: row.name,
+  description: row.description,
+  fields: row.fields,
+  color: row.color,
+  icon: row.icon,
+  changeSummary: row.change_summary,
+  createdBy: row.created_by,
+  createdAt: row.created_at.toISOString()
 });
 const toApiTemplate = (
   row: Awaited<ReturnType<DatabaseAdapter['document']['getDocumentTemplate']>>
@@ -135,15 +159,29 @@ export const createDocumentType = async (
       requireWorkspaceCapability(authCtx, 'ws.settings');
       validateDocumentTypeWrite(input);
       const now = new Date();
-      return toApiType(
-        await db.document.createDocumentType({
-          ...input,
-          id: randomUUID(),
-          workspace: ws,
-          created_at: now,
-          updated_at: now
-        })
-      );
+      const id = randomUUID();
+      const row = await db.document.createDocumentType({
+        ...input,
+        id,
+        workspace: ws,
+        created_at: now,
+        updated_at: now
+      });
+      await db.document.createDocumentTypeVersion({
+        id: randomUUID(),
+        workspace: ws,
+        document_type_id: row.id,
+        version: row.version ?? 1,
+        name: row.name,
+        description: row.description,
+        fields: row.fields,
+        color: row.color,
+        icon: row.icon,
+        change_summary: buildSchemaChangeSummary(null, row.fields),
+        created_by: authCtx.userId,
+        created_at: now
+      });
+      return toApiType(row);
     }
   );
 
@@ -164,46 +202,179 @@ export const updateDocumentType = async (
       validateDocumentTypeWrite(input);
       const current = await db.document.getDocumentType(ws, id);
       httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
-      const used = new Set<string>();
+
+      const fieldMigrations = input.fieldMigrations as FieldMigrations | undefined;
+      const templatesForType = (
+        await db.document.listDocumentTemplates(ws, undefined, true)
+      ).filter(template => template.document_type_id === id);
+
+      const usedFieldIds = new Set<string>();
+      const currentFieldDataCounts = new Map<string, number>();
       for (const node of await db.project.listAllContentNodes(ws)) {
         const metadata = await db.document.getDocumentMetadata(ws, node.id);
         if (metadata?.document_type_id === id) {
-          for (const field of current.fields)
-            if (metadata.values[field.id] !== undefined) used.add(field.id);
+          for (const field of current.fields) {
+            if (metadata.values[field.id] !== undefined) {
+              usedFieldIds.add(field.id);
+              currentFieldDataCounts.set(field.id, (currentFieldDataCounts.get(field.id) ?? 0) + 1);
+            }
+          }
         }
         for (const revision of await db.project.listMarkdownRevisions(ws, node.id)) {
           if (revision.document_type_id !== id) continue;
           for (const field of current.fields)
-            if (revision.metadata[field.id] !== undefined) used.add(field.id);
+            if (revision.metadata[field.id] !== undefined) usedFieldIds.add(field.id);
         }
       }
-      for (const template of await db.document.listDocumentTemplates(ws, undefined, true)) {
-        if (template.document_type_id !== id) continue;
+      for (const template of templatesForType) {
         for (const field of current.fields)
-          if (template.metadata_defaults[field.id] !== undefined) used.add(field.id);
+          if (template.metadata_defaults[field.id] !== undefined) usedFieldIds.add(field.id);
       }
-      const incoming = new Map(input.fields.map(field => [field.id, field]));
-      const fields = input.fields.slice();
-      for (const oldField of current.fields) {
-        const next = incoming.get(oldField.id);
-        if (next) {
-          if (used.has(oldField.id))
-            httpAssert.true(next.type === oldField.type, {
-              status: 409,
-              message: `Field '${oldField.id}' is in use and cannot change type`
-            });
-          continue;
-        }
-        if (used.has(oldField.id)) fields.push({ ...oldField, retired: true });
-      }
-      const now = new Date();
-      const row = await db.document.updateDocumentType(ws, id, {
-        ...input,
-        fields,
-        updated_at: now
+
+      const fieldChanges = classifyFieldChanges(current.fields, input.fields);
+
+      // Unlike entity schemas, document types don't block making a field required while
+      // documents of that type exist: metadata is validated (and can block) at the point a
+      // document is actually saved or a revision restored, not at the type-definition level.
+      const blocked = hardBlockedFieldChanges(fieldChanges).filter(
+        change => change.kind === 'type-changed' && usedFieldIds.has(change.fieldId)
+      );
+      httpAssert.true(blocked.length === 0, {
+        status: 409,
+        message: `Cannot update document type: ${blocked.map(describeHardBlockedChange).join('; ')}`
       });
-      httpAssert.present(row, { status: 404, message: `Document type '${id}' not found` });
+
+      const migratable = migratableFieldChanges(fieldChanges).filter(change =>
+        usedFieldIds.has(change.fieldId)
+      );
+      const unresolved = findUnresolvedFieldMigrations(migratable, fieldMigrations);
+      if (unresolved.length > 0) {
+        const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
+          fieldId: change.fieldId,
+          fieldName: change.fieldName,
+          kind: change.kind as 'removed' | 'renamed',
+          renamedToId: change.renamedToId,
+          entityCount: currentFieldDataCounts.get(change.fieldId) ?? 0
+        }));
+        httpAssert.true(false, {
+          status: 409,
+          message: `Cannot update document type: field changes require a migration decision (${pendingChanges.map(c => c.fieldName).join(', ')})`,
+          data: { code: 'DOCUMENT_TYPE_MIGRATION_REQUIRED', pendingChanges }
+        });
+      }
+
+      const oldFieldsById = new Map(current.fields.map(field => [field.id, field]));
+      const finalFields = [...input.fields];
+      const dataMigrations: Array<{
+        action: 'rename' | 'remove';
+        oldFieldId: string;
+        newFieldId?: string;
+      }> = [];
+      for (const change of migratable) {
+        const migration = fieldMigrations?.[change.fieldId];
+        httpAssert.present(migration, {
+          message: `Missing migration decision for field "${change.fieldName}"`
+        });
+        if (migration.action === 'archive') {
+          const oldField = oldFieldsById.get(change.fieldId);
+          if (oldField && !finalFields.some(field => field.id === oldField.id)) {
+            finalFields.push({ ...oldField, retired: true });
+          }
+        } else if (migration.action === 'rename') {
+          const targetId = migration.renameTo ?? change.renamedToId;
+          httpAssert.string(targetId, {
+            message: `renameTo is required to rename field "${change.fieldName}"`
+          });
+          dataMigrations.push({
+            action: 'rename',
+            oldFieldId: change.fieldId,
+            newFieldId: targetId
+          });
+        } else {
+          dataMigrations.push({ action: 'remove', oldFieldId: change.fieldId });
+        }
+      }
+
+      const changeSummary = buildSchemaChangeSummary(current.fields, finalFields, fieldMigrations);
+      const now = new Date();
+
+      const row = await db.core.transaction(async tx => {
+        for (const migration of dataMigrations) {
+          if (migration.action === 'rename') {
+            await tx.document.renameDocumentMetadataField(
+              ws,
+              id,
+              migration.oldFieldId,
+              migration.newFieldId!
+            );
+          } else {
+            await tx.document.removeDocumentMetadataField(ws, id, migration.oldFieldId);
+          }
+          for (const template of templatesForType) {
+            if (template.metadata_defaults[migration.oldFieldId] === undefined) continue;
+            const nextDefaults = { ...template.metadata_defaults };
+            if (migration.action === 'rename') {
+              nextDefaults[migration.newFieldId!] = nextDefaults[migration.oldFieldId]!;
+            }
+            delete nextDefaults[migration.oldFieldId];
+            await tx.document.updateDocumentTemplate(ws, template.id, {
+              name: template.name,
+              body: template.body,
+              document_type_id: template.document_type_id,
+              metadata_defaults: nextDefaults,
+              project_id: template.project_id,
+              updated_at: now
+            });
+          }
+        }
+
+        const updated = await tx.document.updateDocumentType(ws, id, {
+          ...input,
+          fields: finalFields,
+          version: (current.version ?? 1) + 1,
+          updated_at: now
+        });
+        httpAssert.present(updated, { status: 404, message: `Document type '${id}' not found` });
+
+        await tx.document.createDocumentTypeVersion({
+          id: randomUUID(),
+          workspace: ws,
+          document_type_id: id,
+          version: updated.version ?? 1,
+          name: updated.name,
+          description: updated.description,
+          fields: updated.fields,
+          color: updated.color,
+          icon: updated.icon,
+          change_summary: changeSummary,
+          created_by: authCtx.userId,
+          created_at: now
+        });
+
+        return updated;
+      });
+
       return toApiType(row);
+    }
+  );
+
+export const listDocumentTypeVersions = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  event: AuthenticatedEvent
+): Promise<DocumentTypeVersion[]> =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to retrieve document type version history', dbErrorMessages },
+    async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const documentType = await db.document.getDocumentType(ws, id);
+      httpAssert.present(documentType, { status: 404, message: `Document type '${id}' not found` });
+      const versions = await db.document.listDocumentTypeVersions(ws, id);
+      return versions.map(toApiTypeVersion);
     }
   );
 
