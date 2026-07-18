@@ -194,19 +194,32 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
     decidedAssignmentId: string,
     resolvedAt: Date
   ) {
+    const superseded = this.all<{ id: string }>(
+      `SELECT id FROM governance_assignment
+       WHERE case_id = ? AND action = ? AND id != ? AND status = 'open'`,
+      [caseId, action, decidedAssignmentId],
+      row => ({ id: String(row['id']) })
+    );
     this.run(
       `UPDATE governance_assignment SET status = 'superseded', resolved_at = ?
        WHERE case_id = ? AND action = ? AND id != ? AND status = 'open'`,
       [resolvedAt.toISOString(), caseId, action, decidedAssignmentId]
     );
+    return superseded.map(row => row.id);
   }
 
   async supersedeAllOpenAssignmentsForCase(caseId: string, resolvedAt: Date) {
+    const superseded = this.all<{ id: string }>(
+      `SELECT id FROM governance_assignment WHERE case_id = ? AND status = 'open'`,
+      [caseId],
+      row => ({ id: String(row['id']) })
+    );
     this.run(
       `UPDATE governance_assignment SET status = 'superseded', resolved_at = ?
        WHERE case_id = ? AND status = 'open'`,
       [resolvedAt.toISOString(), caseId]
     );
+    return superseded.map(row => row.id);
   }
 
   async appendEvent(input: GovernanceEventDbCreate) {

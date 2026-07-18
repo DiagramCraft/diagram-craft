@@ -220,15 +220,23 @@ export type GovernanceDatabase = {
     id: string,
     resolvedAt: Date
   ): Promise<GovernanceAssignmentDbResult | null>;
-  /** Marks sibling open assignments for the same case+action superseded once one is decided. */
+  /**
+   * Marks sibling open assignments for the same case+action superseded once one is decided.
+   * Returns the ids of the assignments that were superseded, so callers can also resolve any
+   * notifications tied to them.
+   */
   supersedeOpenSiblingAssignments(
     caseId: string,
     action: GovernanceAssignmentAction,
     decidedAssignmentId: string,
     resolvedAt: Date
-  ): Promise<void>;
-  /** Marks every open assignment for a case superseded, e.g. on cancellation. */
-  supersedeAllOpenAssignmentsForCase(caseId: string, resolvedAt: Date): Promise<void>;
+  ): Promise<string[]>;
+  /**
+   * Marks every open assignment for a case superseded, e.g. on cancellation. Returns the ids of
+   * the assignments that were superseded, so callers can also resolve any notifications tied to
+   * them.
+   */
+  supersedeAllOpenAssignmentsForCase(caseId: string, resolvedAt: Date): Promise<string[]>;
 
   appendEvent(input: GovernanceEventDbCreate): Promise<GovernanceEventDbResult>;
   listEvents(caseId: string): Promise<GovernanceEventDbResult[]>;
