@@ -18,6 +18,7 @@ import { workspaceTemplateContract } from '@arch-register/api-types/templateCont
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
+import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
 import { discussionContract } from '@arch-register/api-types/discussionContract';
 import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
@@ -77,6 +78,7 @@ const webContracts = {
   ...assessmentResponseContract,
   ...auditContract,
   ...watchContract,
+  ...notificationPreferencesContract,
   ...discussionContract,
   ...wikiCommentContract,
   ...searchContract,

@@ -11,6 +11,7 @@ import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfi
 import { projectContract } from '@arch-register/api-types/projectContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
+import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
@@ -34,6 +35,7 @@ export const allContracts = {
   ...projectContract,
   ...auditContract,
   ...watchContract,
+  ...notificationPreferencesContract,
   ...searchContract,
   ...workspaceTemplateContract,
   ...authPublicContract,

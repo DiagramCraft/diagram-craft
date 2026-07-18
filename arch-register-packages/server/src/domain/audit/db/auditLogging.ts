@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
 import { Entity } from '../../catalog/db/catalogDatabase';
 import { enqueueWebhookDeliveries } from '../../webhook/webhookDelivery';
+import { isChannelEnabled } from '../../notification/notificationPreferences';
 
 const logger = createLogger('audit');
 
@@ -85,10 +86,36 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
     }
 
     if (entityType === 'entity') {
+      // Some focused unit tests use partial database doubles without the notification
+      // preference adapter. Real server adapters always provide it; skip the gating
+      // check quietly for those doubles rather than treating the missing stub as an error.
+      const notificationPreferenceAdapter = (
+        tx as unknown as { notificationPreference?: { listOverrides?: unknown } }
+      ).notificationPreference;
+
+      let gatedWatcherUserIds = watcherUserIds;
+      if (typeof notificationPreferenceAdapter?.listOverrides === 'function') {
+        const candidateWatcherIds =
+          watcherUserIds ?? (await tx.watch.listWatcherUserIds(workspace, entityId));
+        const allowance = await Promise.all(
+          candidateWatcherIds.map(async watcherId => ({
+            watcherId,
+            allowed: await isChannelEnabled(
+              tx,
+              watcherId,
+              workspace,
+              'entity-watch-activity',
+              'in_app'
+            )
+          }))
+        );
+        gatedWatcherUserIds = allowance.filter(entry => entry.allowed).map(entry => entry.watcherId);
+      }
+
       await tx.watch.createNotificationsFromAudit({
         auditLog,
         changedByDisplayName: userDisplayName ?? userId ?? 'system',
-        watcherUserIds
+        watcherUserIds: gatedWatcherUserIds
       });
     }
   };

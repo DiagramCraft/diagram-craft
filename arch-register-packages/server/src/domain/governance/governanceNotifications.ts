@@ -8,6 +8,8 @@ import {
 import type { DatabaseAdapter } from '../../db/database';
 import type { GovernanceEventType } from './db/governanceDatabase';
 import { RetryableJobError } from '../jobs/jobRetry';
+import { notificationTypeForGovernanceEvent } from '../notification/notificationPreferenceCatalog';
+import { isChannelEnabled } from '../notification/notificationPreferences';
 
 const checker = new PermissionChecker();
 
@@ -148,6 +150,16 @@ const createGovernanceNotification = async (
     occurredAt: Date;
   }
 ) => {
+  const notificationType = notificationTypeForGovernanceEvent(input.eventType);
+  const inAppEnabled = await isChannelEnabled(
+    db,
+    input.recipientUserId,
+    input.workspace,
+    notificationType,
+    'in_app'
+  );
+  if (!inAppEnabled) return;
+
   const presentation = getPresentation(input.eventType, input.caseKind);
   await db.notification.createNotification({
     id: randomUUID(),

@@ -200,6 +200,12 @@
           notifications read. A governance action-item notification is cleared automatically once its underlying
           task is resolved, superseded, or cancelled, without requiring the user to open the notification.
 
+            - @id:ar.collaboration.notifications.delivery-preferences Users can choose, per notification type and
+              per delivery channel, whether they receive that notification. In-app delivery is on by default for
+              normal notification types and off by default for reminder types; email, Slack, and SMS are modeled
+              as channels but not yet deliverable. Preferences are scoped per user per workspace and only affect
+              future notifications, not existing Inbox items.
+
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,
           filter work by task and due-date attributes, and navigate to governed cases.
 

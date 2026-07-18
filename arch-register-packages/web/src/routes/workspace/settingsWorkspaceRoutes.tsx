@@ -64,7 +64,9 @@ const AccountSettingsRedirect = () => {
         ? 'api-tokens'
         : search.section === 'appearance'
           ? 'appearance'
-          : 'profile';
+          : search.section === 'notifications'
+            ? 'notifications'
+            : 'profile';
     navigate({
       to: '/$workspaceSlug/account/$section',
       params: { workspaceSlug: ctx.workspaceSlug, section: target },
