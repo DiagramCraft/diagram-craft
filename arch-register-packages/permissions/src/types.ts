@@ -41,6 +41,7 @@ export type WorkspaceCapability =
   | 'content.edit'
   | 'ent.edit'
   | 'ent.propose'
+  | 'ent.approve'
   | 'comments'
   | 'export'
   | 'schema.edit'

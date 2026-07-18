@@ -11,6 +11,7 @@ import type { JobDatabase } from '../domain/jobs/jobsDatabase';
 import type { ExternalContentDatabase } from '../domain/external-content/db/externalContentDatabase';
 import type { WebhookDatabase } from '../domain/webhook/db/webhookDatabase';
 import type { DocumentDatabase } from '../domain/document/db/documentDatabase';
+import type { GovernanceDatabase } from '../domain/governance/db/governanceDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -41,6 +42,7 @@ export type DatabaseAdapter = {
   externalContent: ExternalContentDatabase;
   webhook: WebhookDatabase;
   document: DocumentDatabase;
+  governance: GovernanceDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -125,6 +127,12 @@ export type {
   WorkspaceWebhookDbUpdate
 } from '../domain/webhook/db/webhookDatabase';
 export type { DocumentDatabase } from '../domain/document/db/documentDatabase';
+export type {
+  GovernanceDatabase,
+  GovernanceAssignmentDbCreate,
+  GovernanceCaseDbCreate,
+  GovernanceEventDbCreate
+} from '../domain/governance/db/governanceDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

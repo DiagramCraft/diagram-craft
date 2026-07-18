@@ -18,6 +18,7 @@ import { SqliteJobDatabase } from '../domain/jobs/db/sqliteJobs';
 import { SqliteExternalContentDatabase } from '../domain/external-content/db/sqliteExternalContent';
 import { SqliteWebhookDatabase } from '../domain/webhook/db/sqliteWebhook';
 import { SqliteDocumentDatabase } from '../domain/document/db/sqliteDocument';
+import { SqliteGovernanceDatabase } from '../domain/governance/db/sqliteGovernance';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -38,6 +39,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly externalContent;
   readonly webhook;
   readonly document;
+  readonly governance;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -60,6 +62,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.externalContent = new SqliteExternalContentDatabase(() => this.db);
     this.webhook = new SqliteWebhookDatabase(() => this.db);
     this.document = new SqliteDocumentDatabase(() => this.db);
+    this.governance = new SqliteGovernanceDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -128,7 +131,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       jobs: this.jobs,
       externalContent: this.externalContent,
       webhook: this.webhook,
-      document: this.document
+      document: this.document,
+      governance: this.governance
     };
   }
 

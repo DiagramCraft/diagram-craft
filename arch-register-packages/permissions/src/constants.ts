@@ -111,6 +111,7 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'content.edit',
     'ent.edit',
     'ent.propose',
+    'ent.approve',
     'comments',
     'export',
     'schema.edit',
@@ -132,6 +133,7 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'content.edit',
     'ent.edit',
     'ent.propose',
+    'ent.approve',
     'comments',
     'export',
     'schema.edit',
@@ -240,6 +242,7 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
       { id: 'ent.edit', name: 'Edit entities' },
       { id: 'ws.manage_views', name: 'Manage views' },
       { id: 'ent.propose', name: 'Propose entity changes' },
+      { id: 'ent.approve', name: 'Approve entity changes' },
       { id: 'comments', name: 'Comment & discuss' },
       { id: 'export', name: 'Export schema / CSV' }
     ]
