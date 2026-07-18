@@ -19,6 +19,7 @@ const mockSchemas: EntitySchema[] = [
     icon: 'server',
     color: '#3b82f6',
     entity_count: 0,
+    version: 1,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     fields: [
@@ -38,6 +39,7 @@ const mockSchemas: EntitySchema[] = [
     icon: 'database',
     color: '#8b5cf6',
     entity_count: 0,
+    version: 1,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     fields: [

@@ -3,9 +3,22 @@ import { invalidateDeletedSchema, schemaKeys } from '../queries/schemas';
 import { invalidateEntityQueries } from '../queries/entities';
 import { invalidateAuditQueries } from '../queries/audit';
 import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
-import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
+import {
+  EntityTemplate,
+  FieldMigrations,
+  SchemaField,
+  SchemaMigrationRequiredError
+} from '@arch-register/api-types/schemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
+import { normalizeApiError } from '../lib/http';
+
+/** Extracts the structured "migration required" payload from a failed schema update, if present. */
+export const getSchemaMigrationRequired = (error: unknown): SchemaMigrationRequiredError | null => {
+  const apiError = normalizeApiError(error);
+  const data = apiError.data as { code?: string } | undefined;
+  return data?.code === 'SCHEMA_MIGRATION_REQUIRED' ? (data as SchemaMigrationRequiredError) : null;
+};
 
 // Hook for fetching schemas
 export const useSchemas = (workspaceSlug: string, enabled = true) => {
@@ -53,6 +66,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         templates?: EntityTemplate[];
         color?: string | null;
         icon?: string | null;
+        fieldMigrations?: FieldMigrations;
       };
     }) =>
       orpcClient.schemas.update({ params: { workspace: workspaceId, id: schemaId }, body: data }),
@@ -93,6 +107,9 @@ export const useUpdateSchema = (workspaceId: string) => {
       await queryClient.invalidateQueries({
         queryKey: schemaKeys.detail(workspaceId, variables.schemaId)
       });
+      await queryClient.invalidateQueries({
+        queryKey: schemaKeys.versions(workspaceId, variables.schemaId)
+      });
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
       // Completeness scores and entity type icons/colours are derived from the schema
       await invalidateEntityQueries(queryClient, workspaceId);
@@ -100,6 +117,16 @@ export const useUpdateSchema = (workspaceId: string) => {
         queryKey: workspaceAnalyticsKeys.workspace(workspaceId)
       });
     }
+  });
+};
+
+// Hook for fetching a schema's version history
+export const useSchemaVersions = (workspaceId: string, schemaId: string | null) => {
+  return useQuery({
+    queryKey: schemaKeys.versions(workspaceId, schemaId ?? ''),
+    queryFn: async () =>
+      orpcClient.schemas.listVersions({ params: { workspace: workspaceId, id: schemaId! } }),
+    enabled: !!workspaceId && !!schemaId
   });
 };
 

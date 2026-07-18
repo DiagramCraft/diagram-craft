@@ -2,7 +2,13 @@ import { randomUUID } from 'node:crypto';
 import type { WorkspaceEnumDbResult as InternalWorkspaceEnum } from './db/catalogDatabase';
 import { SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 import { httpAssert } from '../../utils/httpAssert';
-import { EntitySchema, EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
+import {
+  EntitySchema,
+  EntityTemplate,
+  FieldMigrations,
+  SchemaField,
+  SchemaVersion
+} from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 
@@ -245,20 +251,34 @@ export const isSchemaReferencedByEntities = (
 
 const isRequired = (field: SchemaField) => field.requirementLevel === 'required';
 
+export type FieldChangeKind = 'removed' | 'renamed' | 'type-changed' | 'newly-required';
+
+export type FieldChange = {
+  fieldId: string;
+  fieldName: string;
+  kind: FieldChangeKind;
+  renamedToId?: string;
+};
+
 /**
- * Detects schema field changes that would be incompatible with entity data that
- * already exists for the schema (e.g. silently orphaning data stored under an old
- * field id, or invalidating data for a field newly marked as required).
+ * Detects schema field changes that affect entity data already stored for the
+ * schema: a field's id disappearing (removed, or renamed if a same-named field
+ * with a different id took its place), a field's type changing, or a field newly
+ * becoming required.
  *
  * Fields are matched primarily by id. An old field whose id disappears and a new
  * field with the same name are treated as the same field having its id changed,
  * since that's how the schema editor represents an in-place id edit.
+ *
+ * 'removed'/'renamed' changes can be resolved via an explicit migration action
+ * (see `fieldMigrations` on the update payload); 'type-changed' and
+ * 'newly-required' have no safe migration and always block the save.
  */
-export const findIncompatibleFieldChanges = (
+export const classifyFieldChanges = (
   oldFields: SchemaField[],
   newFields: SchemaField[]
-): string[] => {
-  const messages: string[] = [];
+): FieldChange[] => {
+  const changes: FieldChange[] = [];
   const newById = new Map(newFields.map(field => [field.id, field]));
 
   const unmatchedOld: SchemaField[] = [];
@@ -269,12 +289,10 @@ export const findIncompatibleFieldChanges = (
       continue;
     }
     if (oldField.type !== newField.type) {
-      messages.push(
-        `Field "${oldField.name}" cannot change type (${oldField.type} → ${newField.type})`
-      );
+      changes.push({ fieldId: oldField.id, fieldName: oldField.name, kind: 'type-changed' });
     }
     if (!isRequired(oldField) && isRequired(newField)) {
-      messages.push(`Field "${oldField.name}" cannot be made required while entities exist`);
+      changes.push({ fieldId: oldField.id, fieldName: oldField.name, kind: 'newly-required' });
     }
   }
 
@@ -288,21 +306,48 @@ export const findIncompatibleFieldChanges = (
     );
     if (renamedTo) {
       renamedIds.add(renamedTo.id);
-      messages.push(
-        `Field "${oldField.name}" cannot have its id changed (${oldField.id} → ${renamedTo.id})`
-      );
+      changes.push({
+        fieldId: oldField.id,
+        fieldName: oldField.name,
+        kind: 'renamed',
+        renamedToId: renamedTo.id
+      });
+    } else {
+      changes.push({ fieldId: oldField.id, fieldName: oldField.name, kind: 'removed' });
     }
   }
 
   for (const newField of unmatchedNew) {
     if (renamedIds.has(newField.id)) continue;
     if (isRequired(newField)) {
-      messages.push(`New field "${newField.name}" cannot be required while entities exist`);
+      changes.push({ fieldId: newField.id, fieldName: newField.name, kind: 'newly-required' });
     }
   }
 
-  return messages;
+  return changes;
 };
+
+/** Changes with no safe migration path — these always block the save. */
+export const hardBlockedFieldChanges = (changes: FieldChange[]): FieldChange[] =>
+  changes.filter(change => change.kind === 'type-changed' || change.kind === 'newly-required');
+
+/** Changes that can be resolved via an explicit rename/remove/archive migration. */
+export const migratableFieldChanges = (changes: FieldChange[]): FieldChange[] =>
+  changes.filter(change => change.kind === 'removed' || change.kind === 'renamed');
+
+export const describeHardBlockedChange = (change: FieldChange): string => {
+  if (change.kind === 'type-changed') {
+    return `Field "${change.fieldName}" cannot change type while entities exist`;
+  }
+  return `Field "${change.fieldName}" cannot be made required while entities exist`;
+};
+
+/** Validates that every migratable change has a corresponding resolution. */
+export const findUnresolvedFieldMigrations = (
+  changes: FieldChange[],
+  fieldMigrations: FieldMigrations | undefined
+): FieldChange[] =>
+  migratableFieldChanges(changes).filter(change => !fieldMigrations?.[change.fieldId]);
 
 export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   id: e.id,
@@ -314,13 +359,12 @@ export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   updated_at: e.updated_at.toISOString()
 });
 
-export const toApiSchema = (
-  schema: InternalEntitySchema,
-  entityCount: number,
+export const resolveSelectFieldOptions = (
+  fields: SchemaField[],
   enums: InternalWorkspaceEnum[]
-): EntitySchema => {
+) => {
   const enumMap = new Map(enums.map(e => [e.id, e]));
-  const fields = schema.fields.map(field => {
+  return fields.map(field => {
     if (field.type === 'select') {
       const enumDef = enumMap.get(field.enumId);
       return {
@@ -330,6 +374,14 @@ export const toApiSchema = (
     }
     return field;
   });
+};
+
+export const toApiSchema = (
+  schema: InternalEntitySchema,
+  entityCount: number,
+  enums: InternalWorkspaceEnum[]
+): EntitySchema => {
+  const fields = resolveSelectFieldOptions(schema.fields, enums);
   return {
     id: schema.id,
     workspace: schema.workspace,
@@ -341,7 +393,79 @@ export const toApiSchema = (
     color: schema.color,
     icon: schema.icon,
     entity_count: entityCount,
+    version: schema.version ?? 1,
     created_at: schema.created_at.toISOString(),
     updated_at: schema.updated_at.toISOString()
   };
 };
+
+/** Summarizes field-level changes between two field lists for schema version history. */
+export const buildSchemaChangeSummary = (
+  oldFields: SchemaField[] | null,
+  newFields: SchemaField[],
+  fieldMigrations?: FieldMigrations
+): Record<string, unknown> => {
+  if (!oldFields) return { added: newFields.map(field => field.name) };
+
+  const oldById = new Map(oldFields.map(field => [field.id, field]));
+  const newById = new Map(newFields.map(field => [field.id, field]));
+
+  const added: string[] = [];
+  const removed: string[] = [];
+  const renamed: Array<{ from: string; to: string }> = [];
+  const archived: string[] = [];
+
+  for (const field of newFields) {
+    if (!oldById.has(field.id)) added.push(field.name);
+  }
+
+  for (const field of oldFields) {
+    if (newById.has(field.id)) continue;
+    const migration = fieldMigrations?.[field.id];
+    if (migration?.action === 'rename' && migration.renameTo) {
+      const target = newById.get(migration.renameTo);
+      renamed.push({ from: field.name, to: target?.name ?? migration.renameTo });
+    } else {
+      removed.push(field.name);
+    }
+  }
+
+  for (const field of newFields) {
+    const previous = oldById.get(field.id);
+    if (previous && !previous.archived && field.archived) archived.push(field.name);
+  }
+
+  const summary: Record<string, unknown> = {};
+  if (added.length) summary.added = added;
+  if (removed.length) summary.removed = removed;
+  if (renamed.length) summary.renamed = renamed;
+  if (archived.length) summary.archived = archived;
+  return summary;
+};
+
+export const toApiSchemaVersion = (
+  row: {
+    version: number;
+    name: string;
+    description: string;
+    fields: SchemaField[];
+    templates: EntityTemplate[];
+    color: string | null;
+    icon: string | null;
+    change_summary: Record<string, unknown>;
+    created_by: string | null;
+    created_at: Date;
+  },
+  enums: InternalWorkspaceEnum[]
+): SchemaVersion => ({
+  version: row.version,
+  name: row.name,
+  description: row.description,
+  fields: resolveSelectFieldOptions(row.fields, enums),
+  templates: row.templates,
+  color: row.color,
+  icon: row.icon,
+  changeSummary: row.change_summary,
+  createdBy: row.created_by,
+  createdAt: row.created_at.toISOString()
+});

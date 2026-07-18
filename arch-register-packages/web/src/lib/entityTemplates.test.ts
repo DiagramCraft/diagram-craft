@@ -35,6 +35,7 @@ const schema: EntitySchema = {
   color: null,
   icon: null,
   entity_count: 0,
+  version: 1,
   created_at: '',
   updated_at: ''
 };
