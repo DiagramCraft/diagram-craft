@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  DocumentAiAction,
   DocumentField,
   DocumentMetadata,
   DocumentTypeWrite
@@ -20,10 +21,23 @@ const makeField = (overrides: Partial<DocumentField> = {}): DocumentField => ({
   ...overrides
 });
 
-const makeTypeWrite = (fields: DocumentField[]): DocumentTypeWrite => ({
+const makeTypeWrite = (
+  fields: DocumentField[],
+  aiActions: DocumentAiAction[] = []
+): DocumentTypeWrite => ({
   name: 'Document',
   description: '',
-  fields
+  fields,
+  aiActions
+});
+
+const makeAiAction = (overrides: Partial<DocumentAiAction> = {}): DocumentAiAction => ({
+  id: 'summarize',
+  name: 'Summarize',
+  kind: 'interactive',
+  prompt: 'Summarize this document.',
+  enabled: true,
+  ...overrides
 });
 
 describe('validateDocumentTypeWrite', () => {
@@ -72,6 +86,26 @@ describe('validateDocumentTypeWrite', () => {
     ]
   ])('rejects %s', (_case, fields, message) => {
     expect(() => validateDocumentTypeWrite(makeTypeWrite(fields))).toThrow(message);
+  });
+
+  it('accepts unique, well-formed AI actions', () => {
+    expect(() =>
+      validateDocumentTypeWrite(
+        makeTypeWrite([], [makeAiAction({ id: 'summarize' }), makeAiAction({ id: 'risks' })])
+      )
+    ).not.toThrow();
+  });
+
+  it.each([
+    [
+      'duplicate action id',
+      [makeAiAction({ id: 'same' }), makeAiAction({ id: 'same' })],
+      "Duplicate AI action id 'same'"
+    ],
+    ['empty name', [makeAiAction({ name: '  ' })], "AI action 'summarize' must have a name"],
+    ['empty prompt', [makeAiAction({ prompt: '  ' })], "AI action 'summarize' must have a prompt"]
+  ])('rejects %s', (_case, aiActions, message) => {
+    expect(() => validateDocumentTypeWrite(makeTypeWrite([], aiActions))).toThrow(message);
   });
 });
 

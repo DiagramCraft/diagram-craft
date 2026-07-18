@@ -1,4 +1,5 @@
 import type {
+  DocumentAiAction,
   DocumentField,
   DocumentMetadata,
   DocumentTemplateWrite,
@@ -16,6 +17,7 @@ export type DocumentTypeDbResult = {
   archived: boolean;
   /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
   version?: number;
+  aiActions: DocumentAiAction[];
   created_at: Date;
   updated_at: Date;
 };

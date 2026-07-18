@@ -101,6 +101,7 @@ describe('document response schemas', () => {
       icon: null,
       archived: false,
       version: 1,
+      aiActions: [],
       created_at: '2026-07-16T12:00:00.000Z',
       updated_at: '2026-07-16T12:00:00.000Z'
     };

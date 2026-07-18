@@ -30,7 +30,7 @@
               relationships, and schema-specific behavior.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates,
-              fields, versions, and validation rules for structured content.
+              fields, versions, validation rules, and interactive AI actions for structured content.
 
         - @id:ar.workspace.lifecycle Workspaces can define lifecycle states, designate one as the deprecated state,
           and use them as part of entity and project review workflows.
@@ -270,5 +270,10 @@
 
         - @id:ar.ai.entity-extraction @status:experimental Users can submit supported content to an AI extraction
           workflow, review parsed entities, and accept selected results.
+
+        - @id:ar.ai.document-actions @status:experimental Users who can view a document can launch document
+          type-defined interactive AI actions from the document sidebar, running a predefined prompt read-only
+          against the document's body, metadata, type, and location, and can continue the temporary result in an
+          AI conversation.
 
         - @id:ar.ai.configuration Administrators can configure the AI provider and workspace-level AI settings.

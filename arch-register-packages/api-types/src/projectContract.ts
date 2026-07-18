@@ -181,6 +181,15 @@ const documentListItemSchema = z.object({
   metadata: documentMetadataSchema
 });
 
+const runAiActionResponseSchema = z.object({
+  actionId: z.string().describe('Identifier of the AI action that was run'),
+  actionName: z.string().describe('Display name of the AI action'),
+  prompt: z.string().describe('Predefined prompt of the AI action'),
+  answer: z.string().describe('The AI-generated answer'),
+  documentTitle: z.string().describe('Title of the document the action was run against'),
+  nodeId: z.string().describe('Markdown node identifier the action was run against')
+});
+
 const documentListQuerySchema = z.object({
   q: z.string().optional().describe('Search query string, matched against document title'),
   scope: z.enum(['workspace', 'project', 'entity']).optional().describe('Filter by scope'),
@@ -1185,6 +1194,25 @@ export const projectContract = oc.tag('Projects').router({
       })
       .input(z.object({ params: ws.extend({ nodeId: z.string() }) }))
       .output(z.array(documentBacklinkSchema)),
+    runDocumentAiAction: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/documents/{nodeId}/ai-actions/{actionId}/run',
+        inputStructure: 'detailed',
+        summary: 'Run an interactive AI action for a document',
+        description:
+          'Runs a document type-defined interactive AI action against the current document body, metadata, document type, and location context, using read-only tools. Does not modify the document, its metadata, or any entities.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: ws.extend({
+            nodeId: z.string().describe('Markdown node identifier'),
+            actionId: z.string().describe('AI action identifier')
+          })
+        })
+      )
+      .output(runAiActionResponseSchema),
     listDocuments: oc
       .route({
         method: 'GET',
@@ -1204,6 +1232,7 @@ export type Project = z.infer<typeof projectSchema>;
 export type ProjectFile = z.infer<typeof projectFileSchema>;
 export type ContentMetadata = z.infer<typeof contentMetadataSchema>;
 export type MarkdownContent = z.infer<typeof markdownContentSchema>;
+export type RunAiActionResponse = z.infer<typeof runAiActionResponseSchema>;
 export type MarkdownRevisionSummary = z.infer<typeof markdownRevisionSummarySchema>;
 export type MarkdownRevisionDetail = z.infer<typeof markdownRevisionDetailSchema>;
 export type FileTree = z.infer<typeof fileTreeSchema>;

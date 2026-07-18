@@ -436,6 +436,33 @@
   border-left-color: var(--accent-fg);
 }
 
+/* ── AI actions sidebar ── */
+
+.aiActionsSection {
+  margin-top: 20px;
+}
+
+.aiActionsLabel {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--cmp-fg-disabled);
+  margin-bottom: 8px;
+}
+
+.aiActionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aiActionButton {
+  justify-content: flex-start;
+  width: 100%;
+  text-align: left;
+}
+
 /* ── toolbar ── */
 
 .toolbar {

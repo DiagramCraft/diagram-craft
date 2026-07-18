@@ -374,7 +374,8 @@ export const createAiChatTools = (
   db: DatabaseAdapter,
   workspaceId: string,
   authCtx: AuthorizationContext | null,
-  actor: EntityMutationActor
+  actor: EntityMutationActor,
+  options: { readOnly?: boolean } = {}
 ) => {
   const queryEntities = queryEntitiesTool.server(async rawArgs => {
     const args = rawArgs as QueryEntitiesArgs;
@@ -774,5 +775,6 @@ export const createAiChatTools = (
     };
   });
 
+  if (options.readOnly) return [queryEntities, getEntityDetails, traverseRelations];
   return [queryEntities, getEntityDetails, createEntity, updateEntity, traverseRelations];
 };
