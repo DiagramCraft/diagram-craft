@@ -15,6 +15,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { buildEntityGrantInputs } from './dataHelpers';
 import { updateEntityWithAudit } from './entityMutations';
+import { logAudit } from '../audit/db/auditLogging';
 import { importParse, importCommit } from './importOperations';
 import {
   listEntities,
@@ -37,6 +38,7 @@ import { workspaceEntityContract } from '@arch-register/api-types/entityContract
 import { parseEntityQuery } from './entityQuery';
 import { downloadEntityImportTemplate, exportEntitiesCsv } from './entityCsvOperations';
 import { assertSnapshotCanBeRestored, serializeEntitySnapshot } from './entitySnapshotOperations';
+import { entityRequiresApproval } from './entityChangeOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -245,6 +247,7 @@ const entityHandlers = {
     return {
       owner: entity.owner,
       visibility_mode: entity.visibility_mode,
+      approval_policy_override: entity.approval_policy_override ?? null,
       grants: grants.map(g => ({ ...g, created_at: g.created_at.toISOString() }))
     };
   }),
@@ -265,9 +268,39 @@ const entityHandlers = {
     );
     const rows = buildEntityGrantInputs(workspace, entity.id, input.body.grants, new Date());
     const grants = await context.db.catalog.replaceEntityGrants(workspace, entity.id, rows);
+    let current = entity;
+    if (input.body.approval_policy_override !== undefined) {
+      const updated = await context.db.catalog.setEntityApprovalPolicyOverride(
+        workspace,
+        entity.id,
+        input.body.approval_policy_override
+      );
+      httpAssert.present(updated, {
+        status: 409,
+        message: 'Entity changed while access was updated'
+      });
+      await logAudit(context.db, {
+        workspace,
+        userId: context.event.context.user.id,
+        userDisplayName: context.event.context.user.display_name,
+        operation: 'update',
+        entityType: 'entity',
+        entityId: entity.id,
+        entityName: entity.name,
+        entitySlug: entity.slug,
+        schemaId: entity.schema_id,
+        changes: {
+          old: { approval_policy_override: entity.approval_policy_override ?? null },
+          new: { approval_policy_override: updated.approval_policy_override ?? null }
+        },
+        metadata: { approvalPolicyOverrideChanged: true }
+      });
+      current = updated;
+    }
     return {
-      owner: entity.owner,
-      visibility_mode: entity.visibility_mode,
+      owner: current.owner,
+      visibility_mode: current.visibility_mode,
+      approval_policy_override: current.approval_policy_override ?? null,
       grants: grants.map(g => ({ ...g, created_at: g.created_at.toISOString() }))
     };
   })
@@ -590,6 +623,13 @@ const snapshotHandlers = {
         'You do not have permission to restore this entity'
       );
     }
+    const schema = await context.db.catalog.getSchema(workspace, entity.schema_id);
+    httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
+    httpAssert.true(!entityRequiresApproval(schema, entity), {
+      status: 409,
+      statusText: 'Conflict',
+      message: 'This entity requires an approved change proposal before it can be restored'
+    });
 
     const snapshot = await context.db.catalog.getSnapshot(workspace, input.params.snapshotId);
     orpcAssert.present(snapshot, { code: 'NOT_FOUND', message: 'Snapshot not found' });

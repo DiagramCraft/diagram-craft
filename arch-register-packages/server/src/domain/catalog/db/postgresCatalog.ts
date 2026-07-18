@@ -63,8 +63,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchema(input: SchemaDbCreate) {
     try {
       const rows = (await this.sql`
-        INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, entity_approval_policy, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.entity_approval_policy ?? 'disabled'}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -86,6 +86,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             icon = ${input.icon},
             default_owner = ${input.default_owner},
             key_prefix = ${input.key_prefix},
+            entity_approval_policy = COALESCE(${input.entity_approval_policy ?? null}, entity_approval_policy),
             version = COALESCE(${input.version ?? null}::integer, version),
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
@@ -298,7 +299,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEntity(input: EntityDbCreate) {
     try {
       await this.sql`
-        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at)
+        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, version, approval_policy_override, created_at, updated_at)
         VALUES (
           ${input.id},
           ${input.workspace},
@@ -316,6 +317,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
           ${input.schema_id},
           ${this.json(input.data)},
           ${input.visibility_mode},
+          ${input.version ?? 1},
+          ${input.approval_policy_override ?? null},
           ${input.created_at},
           ${input.updated_at}
         )
@@ -343,11 +346,64 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             schema_id = ${input.schema_id},
             data = ${this.json(input.data)},
             visibility_mode = ${input.visibility_mode},
+            version = version + 1,
+            approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
       `;
       if (result.count === 0) return null;
       return await this.getEntity(workspace, id);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateEntityIfVersion(
+    workspace: string,
+    id: string,
+    input: EntityDbUpdate,
+    expectedVersion: number
+  ) {
+    try {
+      const result = await this.sql`
+        UPDATE entity
+        SET slug = ${input.slug},
+            namespace = ${input.namespace},
+            name = ${input.name},
+            description = ${input.description},
+            owner = ${input.owner},
+            lifecycle = ${input.lifecycle},
+            target_lifecycle = ${input.target_lifecycle},
+            target_lifecycle_date = ${input.target_lifecycle_date},
+            tags = ${this.json(input.tags)},
+            links = ${this.json(input.links)},
+            schema_id = ${input.schema_id},
+            data = ${this.json(input.data)},
+            visibility_mode = ${input.visibility_mode},
+            version = version + 1,
+            approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
+            updated_at = ${input.updated_at}
+        WHERE workspace = ${workspace} AND id = ${id} AND version = ${expectedVersion}
+      `;
+      if (result.count === 0) return null;
+      return await this.getEntity(workspace, id);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async setEntityApprovalPolicyOverride(
+    workspace: string,
+    id: string,
+    override: 'required' | 'disabled' | null
+  ) {
+    try {
+      const result = await this.sql`
+        UPDATE entity
+        SET approval_policy_override = ${override}, version = version + 1, updated_at = NOW()
+        WHERE workspace = ${workspace} AND id = ${id}
+      `;
+      return result.count === 0 ? null : await this.getEntity(workspace, id);
     } catch (error) {
       return normalizePostgresError(error);
     }

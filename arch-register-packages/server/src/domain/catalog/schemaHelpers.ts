@@ -21,6 +21,7 @@ type SchemaMutationPayload = {
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
+  entityApprovalPolicy: 'required' | 'disabled';
 };
 
 export const resolveSchemaDefaultOwner = (
@@ -186,7 +187,8 @@ export const buildCreateSchemaInput = (
     templates = [],
     color,
     icon,
-    default_owner
+    default_owner,
+    entity_approval_policy
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedFields = normalizeSchemaFields(fields);
@@ -205,6 +207,9 @@ export const buildCreateSchemaInput = (
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
+    entity_approval_policy: (entity_approval_policy === 'required' ? 'required' : 'disabled') as
+      | 'required'
+      | 'disabled',
     created_at: timestamp,
     updated_at: timestamp
   };
@@ -216,7 +221,17 @@ export const buildUpdateSchemaInput = (
   teamIds: Set<string>,
   timestamp: Date
 ): SchemaMutationPayload & { updated_at: Date } => {
-  const { name, key_prefix, description, fields, templates, color, icon, default_owner } = body;
+  const {
+    name,
+    key_prefix,
+    description,
+    fields,
+    templates,
+    color,
+    icon,
+    default_owner,
+    entity_approval_policy
+  } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedFields = fields !== undefined ? normalizeSchemaFields(fields) : current.fields;
 
@@ -240,6 +255,12 @@ export const buildUpdateSchemaInput = (
       default_owner !== undefined
         ? resolveSchemaDefaultOwner(default_owner, teamIds, null)
         : current.default_owner,
+    entityApprovalPolicy:
+      entity_approval_policy === undefined
+        ? (current.entity_approval_policy ?? 'disabled')
+        : entity_approval_policy === 'required'
+          ? 'required'
+          : 'disabled',
     updated_at: timestamp
   };
 };
@@ -394,6 +415,7 @@ export const toApiSchema = (
     icon: schema.icon,
     entity_count: entityCount,
     version: schema.version ?? 1,
+    entity_approval_policy: schema.entity_approval_policy ?? 'disabled',
     created_at: schema.created_at.toISOString(),
     updated_at: schema.updated_at.toISOString()
   };

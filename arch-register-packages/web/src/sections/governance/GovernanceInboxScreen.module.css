@@ -90,6 +90,30 @@
   font-size: 11px;
 }
 
+.taskProposalMeta {
+  margin-top: 7px;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.taskNote {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskNoteLabel {
+  flex-shrink: 0;
+  color: var(--cmp-fg-disabled);
+  font-weight: 600;
+}
+
 .taskAction {
   flex-shrink: 0;
 }

@@ -48,6 +48,12 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
     .string()
     .optional()
     .describe("ISO 8601 timestamp of the entity's most recent update"),
+  _version: z.number().int().min(1).optional().describe('Optimistic concurrency version'),
+  _approvalPolicyOverride: z
+    .enum(['required', 'disabled'])
+    .nullable()
+    .optional()
+    .describe('Entity-specific approval policy override'),
   _visibilityMode: visibilityModeSchema.nullable().describe('Entity visibility mode'),
   _completeness: z.number().nullable().describe('Field completeness percentage (0-100)'),
   _projectLink: projectLinkSchema.optional().describe('Project linkage information')
@@ -261,6 +267,11 @@ const entityGrantInputSchema = z.object({
 const entityAccessSchema = z.object({
   owner: z.string().nullable().describe('Entity owner identifier'),
   visibility_mode: z.enum(['public', 'restricted']).nullable().describe('Entity visibility mode'),
+  approval_policy_override: z
+    .enum(['required', 'disabled'])
+    .nullable()
+    .optional()
+    .describe('Entity-specific approval policy override'),
   grants: z.array(entityGrantSchema).describe('Permission grants for this entity')
 });
 
@@ -604,7 +615,12 @@ export const workspaceEntityContract = oc.tag('Entities').router({
         z.object({
           params: wsAndId,
           body: z.object({
-            grants: z.array(entityGrantInputSchema).describe('Complete list of permission grants')
+            grants: z.array(entityGrantInputSchema).describe('Complete list of permission grants'),
+            approval_policy_override: z
+              .enum(['required', 'disabled'])
+              .nullable()
+              .optional()
+              .describe('Entity-specific approval policy override')
           })
         })
       )

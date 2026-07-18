@@ -47,6 +47,7 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 import type { Entity, EntityDbCreate, EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import { entityRequiresApproval } from './entityChangeOperations';
 
 const checker = new PermissionChecker();
 
@@ -1043,6 +1044,11 @@ export const updateEntity = async (
     httpAssert.present(schema, {
       status: 404,
       message: `Schema '${payload.schemaId}' not found`
+    });
+    httpAssert.true(!entityRequiresApproval(schema, oldRow), {
+      status: 409,
+      statusText: 'Conflict',
+      message: 'This entity requires an approved change proposal before it can be edited'
     });
     if (authCtx)
       requireEntityAction(

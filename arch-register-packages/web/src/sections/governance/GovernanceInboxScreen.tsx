@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { TbClipboardCheck, TbClock, TbExternalLink } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -6,6 +7,15 @@ import { Title } from '../../components/Title';
 import { useDecideGovernanceAssignment, useGovernanceTasks } from '../../hooks/useGovernance';
 import type { GovernanceTask } from '@arch-register/api-types/governanceContract';
 import styles from './GovernanceInboxScreen.module.css';
+import { orpcClient } from '../../lib/orpcClient';
+import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
+import { entityKeys } from '../../queries/entities';
+import { entityChangeKeys } from '../../hooks/useEntityChanges';
+
+const humanize = (value: string) =>
+  value.replace(/[._-]+/g, ' ').replace(/\b\w/g, character => character.toUpperCase());
+
+const previewNote = (note: string) => (note.length > 180 ? `${note.slice(0, 177)}…` : note);
 
 export const GovernanceInboxScreen = () => {
   const { workspaceSlug } = useParams({ strict: false });
@@ -39,6 +49,40 @@ export const GovernanceInboxScreen = () => {
     !!workspace
   );
   const decide = useDecideGovernanceAssignment(workspace);
+  const entityIds = [
+    ...new Set(
+      tasks.filter(task => task.case.subjectType === 'entity').map(task => task.case.subjectId)
+    )
+  ];
+  const entityQueries = useQueries({
+    queries: entityIds.map(entityId => ({
+      queryKey: entityKeys.detail(workspace, entityId),
+      queryFn: () => orpcClient.entities.get({ params: { workspace, id: entityId } }),
+      enabled: !!workspace
+    }))
+  });
+  const entitiesById = new Map(
+    entityIds.map((entityId, index) => [entityId, entityQueries[index]?.data])
+  );
+  const entityChangeIds = [
+    ...new Set(
+      tasks
+        .filter(
+          task => task.case.caseKind === 'entity.change' && task.case.subjectType === 'entity'
+        )
+        .map(task => task.case.subjectId)
+    )
+  ];
+  const proposalQueries = useQueries({
+    queries: entityChangeIds.map(entityId => ({
+      queryKey: entityChangeKeys.current(workspace, entityId),
+      queryFn: () => orpcClient.entityChanges.get({ params: { workspace, id: entityId } }),
+      enabled: !!workspace
+    }))
+  });
+  const proposalsByEntityId = new Map(
+    entityChangeIds.map((entityId, index) => [entityId, proposalQueries[index]?.data])
+  );
 
   return (
     <div className={styles.screen}>
@@ -108,23 +152,36 @@ export const GovernanceInboxScreen = () => {
       ) : (
         <ul className={styles.list} aria-label="Governance tasks">
           {tasks.map((task: GovernanceTask) => {
-            const actionLabel = task.assignment.action.replace('_', ' ');
+            const actionLabel = humanize(task.assignment.action);
             const decision =
               task.assignment.action === 'approve'
                 ? 'approve'
                 : task.assignment.action === 'acknowledge'
                   ? 'acknowledge'
                   : null;
+            const subjectEntity =
+              task.case.subjectType === 'entity'
+                ? entitiesById.get(task.case.subjectId)
+                : undefined;
+            const subjectLabel = subjectEntity?._name ?? task.case.subjectId;
+            const proposal = proposalsByEntityId.get(task.case.subjectId);
+            const latestRevision = proposal?.revisions.at(-1);
+            const proposalNote = latestRevision?.message;
+            const viewSubject = () => {
+              if (subjectEntity?._publicId) {
+                navigate(entityDetailRoute(workspace, asEntityPublicId(subjectEntity._publicId)));
+              }
+            };
             return (
               <li className={styles.task} key={task.assignment.id}>
                 <div className={styles.taskMain}>
                   <div className={styles.taskTitle}>
-                    {task.case.caseKind.replace(/[._-]+/g, ' ')} · {actionLabel}
+                    {humanize(task.case.caseKind)} · {actionLabel}
                   </div>
                   <div className={styles.taskMeta}>
-                    <span>{task.case.subjectType}</span>
+                    <span>{humanize(task.case.subjectType)}</span>
                     <span>·</span>
-                    <span>{task.case.subjectId}</span>
+                    <span>{subjectLabel}</span>
                     {task.case.dueAt && (
                       <>
                         <span>·</span>
@@ -134,6 +191,18 @@ export const GovernanceInboxScreen = () => {
                       </>
                     )}
                   </div>
+                  {latestRevision && (
+                    <div className={styles.taskProposalMeta}>
+                      Proposed by {latestRevision.createdByName ?? 'Unknown user'} ·{' '}
+                      {new Date(latestRevision.createdAt).toLocaleString()}
+                    </div>
+                  )}
+                  {proposalNote && (
+                    <div className={styles.taskNote} title={proposalNote}>
+                      <span className={styles.taskNoteLabel}>Proposer note</span>
+                      <span>{previewNote(proposalNote)}</span>
+                    </div>
+                  )}
                 </div>
                 <div className={styles.taskAction}>
                   {task.requiresAction && decision && (
@@ -151,14 +220,10 @@ export const GovernanceInboxScreen = () => {
                   <Button
                     variant="ghost"
                     icon={<TbExternalLink size={12} />}
-                    onClick={() =>
-                      navigate({
-                        to: '/$workspaceSlug/governance',
-                        params: { workspaceSlug: workspace }
-                      })
-                    }
+                    onClick={viewSubject}
+                    disabled={!subjectEntity?._publicId}
                   >
-                    View case
+                    {task.case.subjectType === 'entity' ? 'View entity' : 'View case'}
                   </Button>
                 </div>
               </li>

@@ -447,6 +447,7 @@ export type WorkspaceRoleCapability =
   | 'ent.edit'
   | 'ent.propose'
   | 'ent.approve'
+  | 'ent.override'
   | 'comments'
   | 'export'
   | 'schema.edit'

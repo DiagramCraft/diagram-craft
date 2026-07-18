@@ -196,6 +196,11 @@
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,
           filter work by task and due-date attributes, and navigate to governed cases.
 
+        - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity
+          changes, while authorized users can submit immutable revisions, review before/after diffs, resubmit after
+          requested changes, self-approve when they are the sole eligible approver, and record an audited approval
+          bypass.
+
         - @id:ar.collaboration.audit Authorized users can inspect audit activity for workspace and domain changes.
 
     - @id:ar.authorization Administrators can control who can access, modify, review, and administer workspace content.

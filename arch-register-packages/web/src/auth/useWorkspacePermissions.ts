@@ -17,6 +17,7 @@ type WorkspacePermissions = {
   canManageJobs: boolean;
   canManageViews: boolean;
   canManageAdminViews: boolean;
+  canOverrideEntityApproval: boolean;
 };
 
 const checker = new PermissionChecker();
@@ -56,6 +57,8 @@ export const useWorkspacePermissions = (
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.manage_views');
     const canManageAdminViews =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.settings');
+    const canOverrideEntityApproval =
+      hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ent.override');
     const canCreateProjects =
       hasWorkspaceContext &&
       (capabilities.canCreateProject(context, null) ||
@@ -77,7 +80,8 @@ export const useWorkspacePermissions = (
       canManageMembers,
       canManageJobs,
       canManageViews,
-      canManageAdminViews
+      canManageAdminViews,
+      canOverrideEntityApproval
     };
   }, [authorizationData, user, workspaceId]);
 };

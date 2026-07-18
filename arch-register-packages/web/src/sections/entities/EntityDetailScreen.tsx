@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -27,6 +28,7 @@ import {
   useEntitiesBySchema
 } from '../../hooks/useEntities';
 import { useEntitySnapshots } from '../../hooks/useSnapshots';
+import { useBypassEntityApproval, useEntityChangeProposal } from '../../hooks/useEntityChanges';
 import { useEntityEditController } from '../../hooks/useEntityEditController';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import {
@@ -43,6 +45,7 @@ import {
   entityDetailRoute
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useWorkspacePermissions } from '../../auth/useWorkspacePermissions';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
@@ -64,6 +67,247 @@ import {
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
 import { CollectionPickerDialog } from './components/CollectionPickerDialog';
+import type { EntityChangeRevision } from '@arch-register/api-types/entityChangeContract';
+import { useAuth } from '../../auth/AuthContext';
+import { useDecideGovernanceAssignment, useGovernanceTasks } from '../../hooks/useGovernance';
+import { entityChangeKeys } from '../../hooks/useEntityChanges';
+import { entityKeys } from '../../queries/entities';
+
+const proposalFieldLabels: Record<string, string> = {
+  slug: 'Slug',
+  namespace: 'Namespace',
+  name: 'Name',
+  description: 'Description',
+  owner: 'Owner',
+  lifecycle: 'Lifecycle',
+  target_lifecycle: 'Target lifecycle',
+  target_lifecycle_date: 'Target lifecycle date',
+  tags: 'Tags',
+  links: 'Links',
+  schema_id: 'Schema',
+  data: 'Entity fields',
+  visibility_mode: 'Visibility'
+};
+
+const proposalStatusLabels: Record<EntityChangeRevision['status'], string> = {
+  submitted: 'Awaiting approval',
+  changes_requested: 'Changes requested',
+  stale: 'Stale · resubmit required',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn'
+};
+
+const humanizeProposalKey = (key: string) =>
+  key.replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
+
+const formatProposalValue = (value: unknown): string => {
+  if (value == null || value === '') return 'Empty';
+  if (Array.isArray(value)) {
+    if (value.length === 0) return 'Empty';
+    return value.map(formatProposalValue).join(', ');
+  }
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    if (typeof record['name'] === 'string') return record['name'];
+    if (typeof record['label'] === 'string') return record['label'];
+    return Object.entries(record)
+      .map(
+        ([key, nestedValue]) => `${humanizeProposalKey(key)}: ${formatProposalValue(nestedValue)}`
+      )
+      .join(' · ');
+  }
+  return String(value);
+};
+
+const proposalValuesEqual = (left: unknown, right: unknown): boolean => {
+  if (left === right) return true;
+  if (left == null || right == null || typeof left !== typeof right) return false;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+    return left.every((value, index) => proposalValuesEqual(value, right[index]));
+  }
+  if (typeof left === 'object' && typeof right === 'object') {
+    const leftRecord = left as Record<string, unknown>;
+    const rightRecord = right as Record<string, unknown>;
+    const keys = new Set([...Object.keys(leftRecord), ...Object.keys(rightRecord)]);
+    return [...keys].every(key => proposalValuesEqual(leftRecord[key], rightRecord[key]));
+  }
+  return false;
+};
+
+const proposalDiffRows = (revision: EntityChangeRevision) =>
+  Object.entries(revision.diff).flatMap(([key, change]) => {
+    const values = change as { before?: unknown; after?: unknown };
+    if (
+      key === 'data' &&
+      values.before != null &&
+      typeof values.before === 'object' &&
+      !Array.isArray(values.before) &&
+      values.after != null &&
+      typeof values.after === 'object' &&
+      !Array.isArray(values.after)
+    ) {
+      const before = values.before as Record<string, unknown>;
+      const after = values.after as Record<string, unknown>;
+      return [...new Set([...Object.keys(before), ...Object.keys(after)])]
+        .filter(field => !proposalValuesEqual(before[field], after[field]))
+        .map(field => ({
+          field: `Entity field · ${humanizeProposalKey(field)}`,
+          before: before[field],
+          after: after[field]
+        }));
+    }
+    return [
+      {
+        field: proposalFieldLabels[key] ?? humanizeProposalKey(key),
+        before: values.before,
+        after: values.after
+      }
+    ];
+  });
+
+const EntityChangeProposalPanel = ({
+  revision,
+  workspaceId,
+  entityId,
+  canOverrideApproval
+}: {
+  revision: EntityChangeRevision;
+  workspaceId: string;
+  entityId: string;
+  canOverrideApproval: boolean;
+}) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const bypass = useBypassEntityApproval(workspaceId, entityId);
+  const [bypassDialogOpen, setBypassDialogOpen] = useState(false);
+  const [bypassReason, setBypassReason] = useState('');
+  const { data: governanceTasks = [] } = useGovernanceTasks(workspaceId, {
+    caseKind: 'entity.change',
+    state: 'open'
+  });
+  const decide = useDecideGovernanceAssignment(workspaceId);
+  const approvalTask = governanceTasks.find(
+    task =>
+      task.case.id === revision.caseId &&
+      task.assignment.action === 'approve' &&
+      task.requiresAction &&
+      (task.case.initiatorUserId !== user?.id || task.case.selfApprovalAllowed)
+  );
+  const status = proposalStatusLabels[revision.status];
+  const rows = proposalDiffRows(revision);
+  const approve = () => {
+    if (!approvalTask) return;
+    decide.mutate(
+      { assignmentId: approvalTask.assignment.id, decision: 'approve' },
+      {
+        onSuccess: async () => {
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: entityChangeKeys.current(workspaceId, entityId)
+            }),
+            queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) })
+          ]);
+        }
+      }
+    );
+  };
+  const executeBypass = () => {
+    const reason = bypassReason.trim();
+    if (reason === '') return;
+    bypass.mutate(
+      {
+        baseVersion: revision.baseVersion,
+        proposedState: revision.proposedState,
+        reason
+      },
+      {
+        onSuccess: () => {
+          setBypassDialogOpen(false);
+          setBypassReason('');
+        }
+      }
+    );
+  };
+  return (
+    <>
+      <section className={styles.proposalPanel} aria-labelledby="entity-change-proposal-title">
+        <div className={styles.proposalHeader}>
+          <div>
+            <div className={styles.proposalEyebrow}>Entity change proposal</div>
+            <h2 id="entity-change-proposal-title" className={styles.proposalTitle}>
+              Revision {revision.revisionNumber}
+            </h2>
+            <div className={styles.proposalMeta}>
+              Proposed by {revision.createdByName ?? 'Unknown user'} ·{' '}
+              {new Date(revision.createdAt).toLocaleString()}
+            </div>
+          </div>
+          <div className={styles.proposalActions}>
+            <span className={styles.proposalStatus}>{status}</span>
+            {approvalTask && (
+              <Button variant="primary" onClick={approve} disabled={decide.isPending}>
+                {decide.isPending ? 'Approving…' : 'Approve change'}
+              </Button>
+            )}
+            {canOverrideApproval && (
+              <Button
+                variant="danger"
+                onClick={() => setBypassDialogOpen(true)}
+                disabled={bypass.isPending}
+              >
+                Bypass approval
+              </Button>
+            )}
+          </div>
+        </div>
+        {revision.message && <p className={styles.proposalMessage}>{revision.message}</p>}
+        <div className={styles.proposalDiff}>
+          <div className={styles.proposalDiffHeader}>
+            <span>Field</span>
+            <span>Current value</span>
+            <span>Proposed value</span>
+          </div>
+          {rows.map(row => (
+            <div className={styles.proposalDiffRow} key={row.field}>
+              <strong className={styles.proposalField}>{row.field}</strong>
+              <span className={styles.proposalBefore}>{formatProposalValue(row.before)}</span>
+              <span className={styles.proposalAfter}>{formatProposalValue(row.after)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+      <Dialog
+        open={bypassDialogOpen}
+        onClose={() => setBypassDialogOpen(false)}
+        title="Bypass approval?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setBypassDialogOpen(false) },
+          {
+            label: bypass.isPending ? 'Applying…' : 'Bypass approval',
+            type: 'danger',
+            disabled: bypass.isPending || bypassReason.trim() === '',
+            onClick: executeBypass
+          }
+        ]}
+      >
+        <p>
+          This applies the proposed changes immediately and closes the approval case. Enter a reason
+          for the audited override.
+        </p>
+        <FormElement label="Reason (required)">
+          <TextInput
+            value={bypassReason}
+            onChange={value => setBypassReason(value ?? '')}
+            placeholder="Explain why approval is being bypassed"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
+    </>
+  );
+};
 
 export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigate = useNavigate();
@@ -72,6 +316,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
+  const { canOverrideEntityApproval } = useWorkspacePermissions(workspaceId);
   const canViewAudit = permissions.canViewAudit;
   const contentFolder = folder ?? null;
 
@@ -103,6 +348,10 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   );
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
+  const { data: changeProposal, isLoading: changeProposalLoading } = useEntityChangeProposal(
+    workspaceId,
+    entityId
+  );
   const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(
     workspaceId,
     entityId
@@ -137,6 +386,10 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
 
   const schema = schemaEntry?.schema ?? null;
+  const approvalRequired =
+    entity?._approvalPolicyOverride === 'required' ||
+    (entity?._approvalPolicyOverride !== 'disabled' &&
+      (schema?.entity_approval_policy ?? 'disabled') === 'required');
   const color = schemaEntry
     ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index)
     : 'var(--accent-fg)';
@@ -198,6 +451,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     saveConfirmSignificant,
     setSaveConfirmSignificant,
     executeSave,
+    executeBypass,
     confirmDelete,
     setConfirmDelete,
     handleDelete,
@@ -207,6 +461,12 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     entityId,
     entity,
     schema,
+    approvalRequired,
+    canBypassApproval:
+      approvalRequired &&
+      canOverrideEntityApproval &&
+      !changeProposalLoading &&
+      changeProposal == null,
     onDeleted: navigateToEntities
   });
 
@@ -235,6 +495,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   }
 
   const entityName = entity._name || entity._slug;
+  const latestProposalRevision = changeProposal?.revisions.at(-1);
   const menuItems: MenuItem[] = [
     {
       label: 'Collections…',
@@ -266,10 +527,13 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             eyebrow={schema?.name ?? 'Entity'}
             title={entityName}
             chips={
-              entity._lifecycle ? (
+              entity._lifecycle || changeProposal ? (
                 <>
-                  <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+                  {entity._lifecycle && (
+                    <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+                  )}
                   {entity._targetLifecycle &&
+                    entity._lifecycle &&
                     entity._targetLifecycle.id !== entity._lifecycle.id && (
                       <>
                         <span>→</span>
@@ -279,6 +543,13 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                         />
                       </>
                     )}
+                  {changeProposal && (
+                    <span>
+                      {changeProposal.revisions.at(-1)?.status === 'changes_requested'
+                        ? 'Changes requested'
+                        : 'Approval pending'}
+                    </span>
+                  )}
                 </>
               ) : undefined
             }
@@ -343,7 +614,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                     onClick={saveEdit}
                     disabled={isSaving || saveConfirmOpen}
                   >
-                    {isSaving ? 'Saving...' : 'Save'}
+                    {isSaving ? 'Saving...' : approvalRequired ? 'Request approval' : 'Save'}
                   </Button>
                 </>
               )
@@ -365,6 +636,15 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
       )}
 
       {/* Content folder view */}
+      {!contentFolder && latestProposalRevision && (
+        <EntityChangeProposalPanel
+          revision={latestProposalRevision}
+          workspaceId={workspaceId}
+          entityId={entityId}
+          canOverrideApproval={canOverrideEntityApproval}
+        />
+      )}
+
       {contentFolder && (
         <EntityContentView
           workspaceSlug={workspaceSlug}
@@ -475,14 +755,33 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         buttons={[
           { label: 'Cancel', type: 'cancel', onClick: () => setSaveConfirmOpen(false) },
           {
-            label: isSaving ? 'Saving...' : 'Save',
+            label: isSaving ? 'Saving...' : approvalRequired ? 'Request approval' : 'Save',
             type: 'default',
             disabled: isSaving,
             onClick: executeSave
-          }
+          },
+          ...(approvalRequired &&
+          canOverrideEntityApproval &&
+          !changeProposalLoading &&
+          changeProposal == null
+            ? [
+                {
+                  label: isSaving ? 'Bypassing...' : 'Bypass approval',
+                  type: 'danger' as const,
+                  disabled: isSaving || saveConfirmMessage.trim() === '',
+                  onClick: executeBypass
+                }
+              ]
+            : [])
         ]}
       >
-        <FormElement label="Note (optional)">
+        <FormElement
+          label={
+            approvalRequired && canOverrideEntityApproval
+              ? 'Note / bypass reason (required for bypass)'
+              : 'Note (optional)'
+          }
+        >
           <TextInput
             value={saveConfirmMessage}
             onChange={v => setSaveConfirmMessage(v ?? '')}

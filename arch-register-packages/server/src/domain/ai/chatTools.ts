@@ -13,6 +13,7 @@ import { Entity } from '../catalog/db/catalogDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 
 const checker = new PermissionChecker();
 
@@ -598,6 +599,10 @@ export const createAiChatTools = (
     const args = rawArgs as UpdateEntityArgs;
     const current = await db.catalog.getEntity(workspaceId, args.entityId);
     if (!current) throw new Error(`Entity '${args.entityId}' not found`);
+    const schema = await db.catalog.getSchema(workspaceId, current.schema_id);
+    if (schema && entityRequiresApproval(schema, current)) {
+      throw new Error('This entity requires an approved change proposal before it can be edited');
+    }
 
     if (authCtx !== null) {
       requireEntityAction(

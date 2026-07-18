@@ -14,6 +14,7 @@ import type { AuthorizationContext, WorkspaceCapability } from '@arch-register/p
 import { formatPublicId } from '../../utils/publicIds';
 import { httpAssert } from '../../utils/httpAssert';
 import { PermissionChecker } from '@arch-register/permissions';
+import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import type {
   ExportManifest,
@@ -1287,6 +1288,18 @@ const importEntities = async (
   let created = 0;
   let updated = 0;
   const skipped = 0;
+
+  for (const { entity, nextId } of mappedEntities) {
+    const existing = existingEntities.get(nextId);
+    if (!existing) continue;
+    const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
+    const schema = await db.catalog.getSchema(workspace, schemaId);
+    if (schema && entityRequiresApproval(schema, existing)) {
+      throw new Error(
+        `Entity ${existing.id} requires an approved change proposal before it can be imported`
+      );
+    }
+  }
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);

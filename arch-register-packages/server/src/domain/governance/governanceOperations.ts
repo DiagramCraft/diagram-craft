@@ -40,6 +40,7 @@ const NOTIFICATION_SYSTEM_IDENTITY = 'governance';
 const CASE_COMPLETING_DECISIONS = new Set<GovernanceDecisionAction>([
   'approve',
   'reject',
+  'request_changes',
   'acknowledge'
 ]);
 
@@ -147,7 +148,7 @@ const toAssignmentCreate = (
  * (outbox pattern, mirroring `domain/audit/db/auditLogging.ts::writeAudit`). A failed enqueue
  * rolls back the event instead of leaving history that nobody was ever notified about.
  */
-const recordEvent = async (
+export const recordGovernanceEvent = async (
   tx: DatabaseAdapter,
   caseRow: GovernanceCaseDbResult,
   input: {
@@ -201,7 +202,9 @@ export const isGovernanceCaseVisible = async (
     return true;
   }
   const config = registry.get(caseRow.case_kind);
-  if (config?.subjectVisible) return config.subjectVisible(db, authCtx, caseRow.subject_id);
+  if (config?.subjectVisible) {
+    return config.subjectVisible(db, authCtx, caseRow.workspace, caseRow.subject_id);
+  }
   return false;
 };
 
@@ -224,40 +227,57 @@ export const createGovernanceCase = async (
   const now = new Date();
   const caseId = randomUUID();
 
-  const created = await db.core.transaction(async tx => {
-    const createdCase = await tx.governance.createCase({
-      id: caseId,
-      workspace: ws,
-      case_kind: input.caseKind,
-      subject_type: input.subjectType,
-      subject_id: input.subjectId,
-      subject_version: input.subjectVersion ?? null,
-      policy_version: input.policyVersion ?? null,
-      initiator_user_id: userId,
-      parent_case_id: null,
-      self_approval_allowed: input.selfApprovalAllowed ?? false,
-      payload: input.payload ?? {},
-      created_at: now,
-      due_at: input.dueAt ?? null
-    });
-
-    for (const spec of input.assignments) {
-      await tx.governance.createAssignment(toAssignmentCreate(caseId, ws, now, spec));
-    }
-
-    await recordEvent(tx, createdCase, {
-      eventType: 'submitted',
-      actorUserId: userId,
-      previousStatus: null,
-      resultingStatus: 'open',
-      reason: null,
-      metadata: {}
-    });
-
-    return createdCase;
-  });
+  const created = await db.core.transaction(async tx =>
+    createGovernanceCaseInTransaction(tx, ws, userId, input, now, caseId)
+  );
 
   return toApiCase(created);
+};
+
+export const createGovernanceCaseInTransaction = async (
+  tx: DatabaseAdapter,
+  workspace: string,
+  initiatorUserId: string,
+  input: CreateGovernanceCaseInput,
+  now = new Date(),
+  caseId = randomUUID()
+): Promise<GovernanceCaseDbResult> => {
+  httpAssert.true(input.assignments.length > 0, {
+    status: 400,
+    statusText: 'Bad Request',
+    message: 'A governance case requires at least one assignment'
+  });
+
+  const createdCase = await tx.governance.createCase({
+    id: caseId,
+    workspace,
+    case_kind: input.caseKind,
+    subject_type: input.subjectType,
+    subject_id: input.subjectId,
+    subject_version: input.subjectVersion ?? null,
+    policy_version: input.policyVersion ?? null,
+    initiator_user_id: initiatorUserId,
+    parent_case_id: null,
+    self_approval_allowed: input.selfApprovalAllowed ?? false,
+    payload: input.payload ?? {},
+    created_at: now,
+    due_at: input.dueAt ?? null
+  });
+
+  for (const spec of input.assignments) {
+    await tx.governance.createAssignment(toAssignmentCreate(caseId, workspace, now, spec));
+  }
+
+  await recordGovernanceEvent(tx, createdCase, {
+    eventType: 'submitted',
+    actorUserId: initiatorUserId,
+    previousStatus: null,
+    resultingStatus: 'open',
+    reason: null,
+    metadata: {}
+  });
+
+  return createdCase;
 };
 
 export const getGovernanceCase = async (
@@ -389,6 +409,7 @@ export const listMyGovernanceAssignments = async (
             : assignment.status;
       if (query.state && state !== query.state) return null;
       if (!query.state && state !== 'open') return null;
+      if (caseRow.initiator_user_id === userId && !caseRow.self_approval_allowed) return null;
 
       const currentlyEligible = isEligibleForAssignment(authCtx, userId, assignment);
       const caseEvents = state === 'open' ? [] : await db.governance.listEvents(caseRow.id);
@@ -472,7 +493,7 @@ export const cancelGovernanceCase = async (
       message: 'Only open cases can be cancelled'
     });
     await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
-    await recordEvent(tx, updated, {
+    await recordGovernanceEvent(tx, updated, {
       eventType: 'cancelled',
       actorUserId: userId,
       previousStatus: 'open',
@@ -546,6 +567,40 @@ export const decideGovernanceAssignment = async (
       return { case: currentCase, event: existingEvent };
     }
 
+    const config = registry.get(caseRow.case_kind);
+    if (config?.beforeDecision) {
+      const validation = await config.beforeDecision(tx, {
+        case: caseRow,
+        assignmentId: assignment.id,
+        actorUserId: userId,
+        decision: input.decision
+      });
+      if (validation === 'stale') {
+        const cancelledCase = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
+        httpAssert.present(cancelledCase, {
+          status: 409,
+          statusText: 'Conflict',
+          message: 'This governance case is no longer open'
+        });
+        await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+        const staleEvent = await recordGovernanceEvent(tx, cancelledCase, {
+          eventType: 'proposal_stale',
+          actorUserId: userId,
+          previousStatus: 'open',
+          resultingStatus: 'cancelled',
+          reason: input.reason ?? null,
+          metadata: { assignmentId: assignment.id }
+        });
+        await tx.governance.recordDecisionRequest(
+          assignment.id,
+          input.idempotencyKey,
+          staleEvent.id,
+          now
+        );
+        return { case: cancelledCase, event: staleEvent };
+      }
+    }
+
     const completedAssignment = await tx.governance.completeAssignmentIfOpen(assignment.id, now);
     httpAssert.present(completedAssignment, {
       status: 409,
@@ -571,7 +626,7 @@ export const decideGovernanceAssignment = async (
       resultingCase = completedCase;
     }
 
-    const decisionEvent = await recordEvent(tx, resultingCase, {
+    const decisionEvent = await recordGovernanceEvent(tx, resultingCase, {
       eventType: DECISION_EVENT_TYPES[input.decision],
       actorUserId: userId,
       previousStatus: caseRow.status,
@@ -589,8 +644,18 @@ export const decideGovernanceAssignment = async (
 
     // Synchronous domain effects run inside this same transaction: a failure rolls back the
     // whole decision instead of leaving a case marked "approved" whose effect never applied.
-    if (resultingCase.status === 'completed' && input.decision !== 'reject') {
-      const config = registry.get(caseRow.case_kind);
+    if (config?.handleDecision) {
+      await config.handleDecision(tx, {
+        case: resultingCase,
+        event: decisionEvent,
+        decision: input.decision
+      });
+    }
+
+    if (
+      resultingCase.status === 'completed' &&
+      (input.decision === 'approve' || input.decision === 'acknowledge')
+    ) {
       if (config?.applyDomainEffect) {
         await config.applyDomainEffect(tx, { case: resultingCase, event: decisionEvent });
       }
