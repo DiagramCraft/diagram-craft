@@ -14,6 +14,7 @@ import type { DocumentDatabase } from '../domain/document/db/documentDatabase';
 import type { GovernanceDatabase } from '../domain/governance/db/governanceDatabase';
 import type { NotificationDatabase } from '../domain/notification/db/notificationDatabase';
 import type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
+import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -47,6 +48,7 @@ export type DatabaseAdapter = {
   governance: GovernanceDatabase;
   notification: NotificationDatabase;
   entityChange: EntityChangeDatabase;
+  entityDeprecation: EntityDeprecationDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -143,6 +145,7 @@ export type {
   InboxNotificationDbResult
 } from '../domain/notification/db/notificationDatabase';
 export type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
+export type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

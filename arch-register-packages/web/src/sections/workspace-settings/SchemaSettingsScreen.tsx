@@ -68,6 +68,7 @@ export const SchemaSettingsScreen = () => {
   const [entityApprovalPolicy, setEntityApprovalPolicy] = useState<'required' | 'disabled'>(
     'disabled'
   );
+  const [deprecationPolicy, setDeprecationPolicy] = useState<'required' | 'disabled'>('disabled');
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -105,6 +106,7 @@ export const SchemaSettingsScreen = () => {
       setColor(selected.color);
       setIcon(selected.icon);
       setEntityApprovalPolicy(selected.entity_approval_policy ?? 'disabled');
+      setDeprecationPolicy(selected.deprecation_policy ?? 'disabled');
       setDirty(false);
       setTemplateDialogOpen(false);
       setShowHistory(false);
@@ -128,6 +130,7 @@ export const SchemaSettingsScreen = () => {
             color,
             icon,
             entity_approval_policy: entityApprovalPolicy,
+            deprecation_policy: deprecationPolicy,
             fieldMigrations
           }
         });
@@ -153,7 +156,8 @@ export const SchemaSettingsScreen = () => {
       icon,
       dirty,
       updateSchemaMutation,
-      entityApprovalPolicy
+      entityApprovalPolicy,
+      deprecationPolicy
     ]
   );
 
@@ -392,22 +396,44 @@ export const SchemaSettingsScreen = () => {
               </div>
 
               <div className={styles.formRow}>
-                <div>
-                  <div className={styles.formLabel}>Entity change approval</div>
-                  <Select.Root
-                    value={entityApprovalPolicy}
-                    disabled={!canEdit}
-                    onChange={value => {
-                      if (value === 'required' || value === 'disabled') {
-                        setEntityApprovalPolicy(value);
-                        setDirty(true);
-                      }
-                    }}
-                    style={{ width: '100%' }}
-                  >
-                    <Select.Item value="disabled">Disabled</Select.Item>
-                    <Select.Item value="required">Required for entity edits</Select.Item>
-                  </Select.Root>
+                <div style={{ width: '100%' }}>
+                  <div className={styles.formLabel}>Workflows</div>
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <div className={styles.formLabel}>Propose entity change</div>
+                      <Select.Root
+                        value={entityApprovalPolicy}
+                        disabled={!canEdit}
+                        onChange={value => {
+                          if (value === 'required' || value === 'disabled') {
+                            setEntityApprovalPolicy(value);
+                            setDirty(true);
+                          }
+                        }}
+                        style={{ width: '100%' }}
+                      >
+                        <Select.Item value="disabled">Disabled</Select.Item>
+                        <Select.Item value="required">Required for entity edits</Select.Item>
+                      </Select.Root>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className={styles.formLabel}>Entity deprecation</div>
+                      <Select.Root
+                        value={deprecationPolicy}
+                        disabled={!canEdit}
+                        onChange={value => {
+                          if (value === 'required' || value === 'disabled') {
+                            setDeprecationPolicy(value);
+                            setDirty(true);
+                          }
+                        }}
+                        style={{ width: '100%' }}
+                      >
+                        <Select.Item value="disabled">Disabled</Select.Item>
+                        <Select.Item value="required">Enabled for this schema</Select.Item>
+                      </Select.Root>
+                    </div>
+                  </div>
                 </div>
               </div>
 

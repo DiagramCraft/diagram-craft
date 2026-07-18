@@ -78,6 +78,7 @@ export type SchemaDbResult = {
   /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
   version?: number;
   entity_approval_policy?: 'required' | 'disabled';
+  deprecation_policy?: 'required' | 'disabled';
   created_at: Date;
   updated_at: Date;
 };
@@ -308,6 +309,9 @@ export const catalogMappers = {
     entity_approval_policy: String(
       row['entity_approval_policy'] ?? 'disabled'
     ) as SchemaDbResult['entity_approval_policy'],
+    deprecation_policy: String(
+      row['deprecation_policy'] ?? 'disabled'
+    ) as SchemaDbResult['deprecation_policy'],
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),

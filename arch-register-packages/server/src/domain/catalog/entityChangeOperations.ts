@@ -125,7 +125,7 @@ const policyFor = (
 const authorizationEventForUser = (userId: string) =>
   ({ context: { user: { id: userId } } }) as unknown as AuthenticatedEvent;
 
-const listEligibleApproverIds = async (
+export const listEligibleApproverIds = async (
   db: DatabaseAdapter,
   workspace: string,
   ownerTeamId: string | null

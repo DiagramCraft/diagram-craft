@@ -29,6 +29,11 @@ import {
 } from '../../hooks/useEntities';
 import { useEntitySnapshots } from '../../hooks/useSnapshots';
 import { useBypassEntityApproval, useEntityChangeProposal } from '../../hooks/useEntityChanges';
+import { useEntityDeprecation } from '../../hooks/useEntityDeprecation';
+import {
+  EntityDeprecationPanel,
+  ProposeEntityDeprecationDialog
+} from './components/EntityDeprecationPanel';
 import { useEntityEditController } from '../../hooks/useEntityEditController';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import {
@@ -352,6 +357,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     workspaceId,
     entityId
   );
+  const { data: deprecation } = useEntityDeprecation(workspaceId, entityId);
   const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(
     workspaceId,
     entityId
@@ -384,6 +390,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const isWatched = watchedEntities.some(item => item.entity_public_id === entityId);
   const isPinned = pinnedEntities.some(item => item.entity_public_id === entityId);
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+  const [proposeDeprecationOpen, setProposeDeprecationOpen] = useState(false);
 
   const schema = schemaEntry?.schema ?? null;
   const approvalRequired =
@@ -502,6 +509,9 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
       icon: <TbBookmark size={14} />,
       onClick: () => setCollectionPickerOpen(true)
     },
+    ...(entity.canEdit && !deprecation && schema?.deprecation_policy === 'required'
+      ? [{ label: 'Propose deprecation…', onClick: () => setProposeDeprecationOpen(true) }]
+      : []),
     ...(entity.canCreateChild
       ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }]
       : []),
@@ -527,7 +537,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             eyebrow={schema?.name ?? 'Entity'}
             title={entityName}
             chips={
-              entity._lifecycle || changeProposal ? (
+              entity._lifecycle || changeProposal || deprecation ? (
                 <>
                   {entity._lifecycle && (
                     <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
@@ -548,6 +558,15 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                       {changeProposal.revisions.at(-1)?.status === 'changes_requested'
                         ? 'Changes requested'
                         : 'Approval pending'}
+                    </span>
+                  )}
+                  {deprecation && (
+                    <span>
+                      {deprecation.overdue
+                        ? `Deprecation overdue (${deprecation.targetDate})`
+                        : deprecation.phase === 'scheduled'
+                          ? `Scheduled for deprecation (${deprecation.targetDate})`
+                          : 'Deprecation proposed'}
                     </span>
                   )}
                 </>
@@ -642,6 +661,15 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           workspaceId={workspaceId}
           entityId={entityId}
           canOverrideApproval={canOverrideEntityApproval}
+        />
+      )}
+
+      {!contentFolder && deprecation && (
+        <EntityDeprecationPanel
+          deprecation={deprecation}
+          workspaceId={workspaceId}
+          entityId={entityId}
+          teams={teams}
         />
       )}
 
@@ -823,6 +851,13 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onClose={() => setCollectionPickerOpen(false)}
         />
       )}
+      <ProposeEntityDeprecationDialog
+        open={proposeDeprecationOpen}
+        onClose={() => setProposeDeprecationOpen(false)}
+        workspaceId={workspaceId}
+        entityId={entityId}
+        baseVersion={entity._version ?? 1}
+      />
     </div>
   );
 };

@@ -419,6 +419,8 @@ export type WorkspaceLifecycleState = {
   label: string;
   color: string;
   sort_order: number;
+  /** Whether this is the workspace's configured "deprecated" lifecycle state (#1718). */
+  is_deprecated_state?: boolean;
 };
 
 export type WorkspaceOwnerOption = {

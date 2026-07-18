@@ -1154,6 +1154,14 @@
                         "type": "string",
                         "description": "Default approval policy for existing entity changes"
                       },
+                      "deprecation_policy": {
+                        "enum": [
+                          "required",
+                          "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Whether entities of this schema can go through the deprecation workflow"
+                      },
                       "created_at": {
                         "type": "string",
                         "description": "ISO 8601 creation timestamp"
@@ -1766,6 +1774,14 @@
                     ],
                     "type": "string",
                     "description": "Default approval policy for existing entity changes"
+                  },
+                  "deprecation_policy": {
+                    "enum": [
+                      "required",
+                      "disabled"
+                    ],
+                    "type": "string",
+                    "description": "Whether entities of this schema can go through the deprecation workflow"
                   }
                 },
                 "required": [
@@ -2370,6 +2386,14 @@
                       ],
                       "type": "string",
                       "description": "Default approval policy for existing entity changes"
+                    },
+                    "deprecation_policy": {
+                      "enum": [
+                        "required",
+                        "disabled"
+                      ],
+                      "type": "string",
+                      "description": "Whether entities of this schema can go through the deprecation workflow"
                     },
                     "created_at": {
                       "type": "string",
@@ -3026,6 +3050,14 @@
                       "type": "string",
                       "description": "Default approval policy for existing entity changes"
                     },
+                    "deprecation_policy": {
+                      "enum": [
+                        "required",
+                        "disabled"
+                      ],
+                      "type": "string",
+                      "description": "Whether entities of this schema can go through the deprecation workflow"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -3646,6 +3678,14 @@
                     ],
                     "type": "string",
                     "description": "Default approval policy for existing entity changes"
+                  },
+                  "deprecation_policy": {
+                    "enum": [
+                      "required",
+                      "disabled"
+                    ],
+                    "type": "string",
+                    "description": "Whether entities of this schema can go through the deprecation workflow"
                   },
                   "fieldMigrations": {
                     "type": "object",
@@ -4279,6 +4319,14 @@
                       ],
                       "type": "string",
                       "description": "Default approval policy for existing entity changes"
+                    },
+                    "deprecation_policy": {
+                      "enum": [
+                        "required",
+                        "disabled"
+                      ],
+                      "type": "string",
+                      "description": "Whether entities of this schema can go through the deprecation workflow"
                     },
                     "created_at": {
                       "type": "string",
@@ -16573,6 +16621,11 @@
                       },
                       "created_at": {
                         "description": "ISO 8601 creation timestamp"
+                      },
+                      "is_deprecated_state": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether this is the workspace configured \"deprecated\" lifecycle state (#1718)"
                       }
                     },
                     "required": [
@@ -16636,6 +16689,10 @@
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991,
                           "description": "Display order (defaults to end of list)"
+                        },
+                        "is_deprecated_state": {
+                          "type": "boolean",
+                          "description": "Mark this as the workspace's \"deprecated\" lifecycle state (at most one allowed)"
                         }
                       },
                       "required": [
@@ -16687,6 +16744,11 @@
                       },
                       "created_at": {
                         "description": "ISO 8601 creation timestamp"
+                      },
+                      "is_deprecated_state": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether this is the workspace configured \"deprecated\" lifecycle state (#1718)"
                       }
                     },
                     "required": [

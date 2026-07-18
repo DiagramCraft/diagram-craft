@@ -1,6 +1,10 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthorizationContext } from '@arch-register/permissions';
-import type { GovernanceCaseDbResult, GovernanceEventDbResult } from './db/governanceDatabase';
+import type {
+  GovernanceAssignmentAction,
+  GovernanceCaseDbResult,
+  GovernanceEventDbResult
+} from './db/governanceDatabase';
 
 /**
  * Per-case-kind hooks, registered by the domain that owns the case kind (e.g. entity-change
@@ -47,6 +51,15 @@ export type GovernanceCaseKindConfig = {
       decision: 'approve' | 'reject' | 'request_changes' | 'acknowledge';
     }
   ) => Promise<'proceed' | 'stale'>;
+  /**
+   * Actions whose assignments are independent: deciding one does not supersede sibling open
+   * assignments of the same action, and does not complete the case, even though the action is
+   * otherwise in `CASE_COMPLETING_DECISIONS`. Used for group acknowledgement (#1718), where each
+   * affected owner team gets its own ack assignment and the case stays open until an explicit
+   * domain-specific finalize action closes it. Absent/empty for existing case kinds (#1739),
+   * which keeps their single-decision-closes-the-case behavior unchanged.
+   */
+  independentAssignmentActions?: Set<GovernanceAssignmentAction>;
 };
 
 export type GovernanceRegistry = Map<string, GovernanceCaseKindConfig>;

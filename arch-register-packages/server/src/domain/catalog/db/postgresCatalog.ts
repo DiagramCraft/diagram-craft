@@ -63,8 +63,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchema(input: SchemaDbCreate) {
     try {
       const rows = (await this.sql`
-        INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, entity_approval_policy, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.entity_approval_policy ?? 'disabled'}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, entity_approval_policy, deprecation_policy, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.entity_approval_policy ?? 'disabled'}, ${input.deprecation_policy ?? 'disabled'}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -87,6 +87,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             default_owner = ${input.default_owner},
             key_prefix = ${input.key_prefix},
             entity_approval_policy = COALESCE(${input.entity_approval_policy ?? null}, entity_approval_policy),
+            deprecation_policy = COALESCE(${input.deprecation_policy ?? null}, deprecation_policy),
             version = COALESCE(${input.version ?? null}::integer, version),
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}

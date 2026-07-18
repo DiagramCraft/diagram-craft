@@ -607,15 +607,20 @@ export const decideGovernanceAssignment = async (
       statusText: 'Conflict',
       message: 'This assignment has already been decided'
     });
-    await tx.governance.supersedeOpenSiblingAssignments(
-      caseRow.id,
-      assignment.action,
-      assignment.id,
-      now
-    );
+
+    const isIndependentAssignment =
+      config?.independentAssignmentActions?.has(assignment.action) ?? false;
+    if (!isIndependentAssignment) {
+      await tx.governance.supersedeOpenSiblingAssignments(
+        caseRow.id,
+        assignment.action,
+        assignment.id,
+        now
+      );
+    }
 
     let resultingCase = caseRow;
-    if (CASE_COMPLETING_DECISIONS.has(input.decision)) {
+    if (CASE_COMPLETING_DECISIONS.has(input.decision) && !isIndependentAssignment) {
       const completedCase = await tx.governance.completeCaseIfOpen(caseRow.id, input.decision, now);
       httpAssert.present(completedCase, {
         status: 409,

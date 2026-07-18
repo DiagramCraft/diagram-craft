@@ -160,7 +160,8 @@ export const seedLifecycleStates: LifecycleStateDbResult[] = [
     label: 'Deprecated',
     color: AR_COLOR_YELLOW,
     sort_order: 3,
-    created_at: now
+    created_at: now,
+    is_deprecated_state: true
   },
   // Second workspace lifecycle states
   {
@@ -193,7 +194,8 @@ export const seedLifecycleStates: LifecycleStateDbResult[] = [
     label: 'Retired',
     color: AR_COLOR_RED,
     sort_order: 3,
-    created_at: now
+    created_at: now,
+    is_deprecated_state: true
   }
 ];
 

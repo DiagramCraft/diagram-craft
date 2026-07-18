@@ -47,7 +47,13 @@ export const listLifecycleStates = async (
 export const replaceLifecycleStates = async (
   db: DatabaseAdapter,
   workspace: string,
-  states: Array<{ id?: string; label: string; color: string; sort_order?: number }>,
+  states: Array<{
+    id?: string;
+    label: string;
+    color: string;
+    sort_order?: number;
+    is_deprecated_state?: boolean;
+  }>,
   event: AuthenticatedEvent
 ): Promise<LifecycleStateDbResult[]> => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
@@ -60,6 +66,10 @@ export const replaceLifecycleStates = async (
   }));
   const ids = normalized.map(s => s.id);
   httpAssert.true(new Set(ids).size === ids.length, { message: 'Duplicate lifecycle state ids' });
+  httpAssert.true(normalized.filter(s => s.is_deprecated_state).length <= 1, {
+    status: 400,
+    message: 'Only one lifecycle state can be marked as the deprecated state'
+  });
 
   return await db.workspace.replaceLifecycleStates(
     workspace,
@@ -69,7 +79,8 @@ export const replaceLifecycleStates = async (
       label: s.label,
       color: s.color,
       sort_order: i,
-      created_at: now
+      created_at: now,
+      is_deprecated_state: s.is_deprecated_state ?? false
     }))
   );
 };

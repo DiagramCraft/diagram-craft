@@ -30,14 +30,22 @@ const lifecycleStateSchema = z.object({
   label: z.string().describe('Display label for the lifecycle state'),
   color: z.string().describe('Color code (hex format)'),
   sort_order: z.number().int().describe('Display order (0-based)'),
-  created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp')
+  created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp'),
+  is_deprecated_state: z
+    .boolean()
+    .default(false)
+    .describe('Whether this is the workspace configured "deprecated" lifecycle state (#1718)')
 });
 
 const lifecycleStateInputSchema = z.object({
   id: z.string().optional().describe('Optional ID for updating existing state'),
   label: z.string().describe('Display label for the lifecycle state'),
   color: z.string().describe('Color code (hex format)'),
-  sort_order: z.number().int().optional().describe('Display order (defaults to end of list)')
+  sort_order: z.number().int().optional().describe('Display order (defaults to end of list)'),
+  is_deprecated_state: z
+    .boolean()
+    .optional()
+    .describe('Mark this as the workspace\'s "deprecated" lifecycle state (at most one allowed)')
 });
 
 const teamSchema = z.object({

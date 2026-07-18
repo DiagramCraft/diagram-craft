@@ -32,8 +32,8 @@
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates,
               fields, versions, and validation rules for structured content.
 
-        - @id:ar.workspace.lifecycle Workspaces can define lifecycle states and use them as part of entity and project
-          review workflows.
+        - @id:ar.workspace.lifecycle Workspaces can define lifecycle states, designate one as the deprecated state,
+          and use them as part of entity and project review workflows.
 
         - @id:ar.workspace.analytics Administrators can inspect workspace-wide analytics and completeness-oriented
           views.
@@ -205,6 +205,12 @@
           changes, while authorized users can submit immutable revisions, review before/after diffs, resubmit after
           requested changes, self-approve when they are the sole eligible approver, and record an audited approval
           bypass.
+
+        - @id:ar.collaboration.entity-deprecation Workspace administrators can require deprecation proposals for
+          entities on schemas that opt in, while authorized users can propose a deprecation with a target date,
+          reason, successor entity, and related project, route it through approval, notify affected owner teams for
+          acknowledgement, postpone or finalize on schedule, and cancel an in-flight deprecation; finalizing moves the
+          entity to the workspace's designated deprecated lifecycle state.
 
         - @id:ar.collaboration.audit Authorized users can inspect audit activity for workspace and domain changes.
 

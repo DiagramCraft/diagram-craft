@@ -22,6 +22,7 @@ type SchemaMutationPayload = {
   icon: string | null;
   defaultOwner: string | null;
   entityApprovalPolicy: 'required' | 'disabled';
+  deprecationPolicy: 'required' | 'disabled';
 };
 
 export const resolveSchemaDefaultOwner = (
@@ -188,7 +189,8 @@ export const buildCreateSchemaInput = (
     color,
     icon,
     default_owner,
-    entity_approval_policy
+    entity_approval_policy,
+    deprecation_policy
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedFields = normalizeSchemaFields(fields);
@@ -208,6 +210,9 @@ export const buildCreateSchemaInput = (
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
     entity_approval_policy: (entity_approval_policy === 'required' ? 'required' : 'disabled') as
+      | 'required'
+      | 'disabled',
+    deprecation_policy: (deprecation_policy === 'required' ? 'required' : 'disabled') as
       | 'required'
       | 'disabled',
     created_at: timestamp,
@@ -230,7 +235,8 @@ export const buildUpdateSchemaInput = (
     color,
     icon,
     default_owner,
-    entity_approval_policy
+    entity_approval_policy,
+    deprecation_policy
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedFields = fields !== undefined ? normalizeSchemaFields(fields) : current.fields;
@@ -259,6 +265,12 @@ export const buildUpdateSchemaInput = (
       entity_approval_policy === undefined
         ? (current.entity_approval_policy ?? 'disabled')
         : entity_approval_policy === 'required'
+          ? 'required'
+          : 'disabled',
+    deprecationPolicy:
+      deprecation_policy === undefined
+        ? (current.deprecation_policy ?? 'disabled')
+        : deprecation_policy === 'required'
           ? 'required'
           : 'disabled',
     updated_at: timestamp
@@ -416,6 +428,7 @@ export const toApiSchema = (
     entity_count: entityCount,
     version: schema.version ?? 1,
     entity_approval_policy: schema.entity_approval_policy ?? 'disabled',
+    deprecation_policy: schema.deprecation_policy ?? 'disabled',
     created_at: schema.created_at.toISOString(),
     updated_at: schema.updated_at.toISOString()
   };

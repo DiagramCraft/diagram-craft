@@ -23,6 +23,7 @@ import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument
 import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
 import { PostgresNotificationDatabase } from '../domain/notification/db/postgresNotification';
 import { PostgresEntityChangeDatabase } from '../domain/catalog/db/postgresEntityChange';
+import { PostgresEntityDeprecationDatabase } from '../domain/catalog/db/postgresEntityDeprecation';
 import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -50,6 +51,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly governance: PostgresGovernanceDatabase;
   readonly notification: PostgresNotificationDatabase;
   readonly entityChange: PostgresEntityChangeDatabase;
+  readonly entityDeprecation: PostgresEntityDeprecationDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -70,7 +72,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       document: new PostgresDocumentDatabase(sql),
       governance: new PostgresGovernanceDatabase(sql),
       notification: new PostgresNotificationDatabase(sql),
-      entityChange: new PostgresEntityChangeDatabase(sql)
+      entityChange: new PostgresEntityChangeDatabase(sql),
+      entityDeprecation: new PostgresEntityDeprecationDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -124,6 +127,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.governance = new PostgresGovernanceDatabase(this.sql);
     this.notification = new PostgresNotificationDatabase(this.sql);
     this.entityChange = new PostgresEntityChangeDatabase(this.sql);
+    this.entityDeprecation = new PostgresEntityDeprecationDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,
