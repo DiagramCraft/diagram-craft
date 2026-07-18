@@ -11,6 +11,7 @@ import {
   listGovernanceCaseEvents,
   listGovernanceCases,
   listMyGovernanceAssignments,
+  listMySubmittedGovernanceCases,
   countMyGovernanceAssignments
 } from './governanceOperations';
 import { createGovernanceRegistry, type GovernanceRegistry } from './governanceRegistry';
@@ -95,6 +96,16 @@ export const createGovernanceORPCRouter = (registry: GovernanceRegistry) =>
             );
           }
         )
+      },
+      submissions: {
+        mine: governanceRouter.governance.submissions.mine.handler(async ({ input, context }) => {
+          return await listMySubmittedGovernanceCases(
+            context.db,
+            input.params.workspace,
+            context.event,
+            input.query
+          );
+        })
       }
     }
   });

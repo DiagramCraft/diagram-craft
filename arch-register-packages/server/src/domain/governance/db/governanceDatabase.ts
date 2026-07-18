@@ -134,6 +134,7 @@ export type GovernanceCaseListFilter = {
   status?: GovernanceCaseStatus;
   subjectType?: string;
   subjectId?: string;
+  initiatorUserId?: string;
 };
 
 export const governanceMappers = {

@@ -154,6 +154,18 @@ const listGovernanceTasksQuerySchema = z.object({
   dueAfter: z.string().optional()
 });
 
+const governanceSubmissionSchema = z.object({
+  case: governanceCaseSchema,
+  openAssignments: z
+    .array(governanceAssignmentSchema)
+    .describe('Assignments still open on this case, i.e. what the case is currently waiting on')
+});
+
+const listGovernanceSubmissionsQuerySchema = z.object({
+  caseKind: z.string().optional().describe('Filter by case kind'),
+  status: governanceCaseStatusSchema.optional().describe('Filter by case status')
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const governanceContract = oc.tag('Governance').router({
@@ -253,6 +265,20 @@ export const governanceContract = oc.tag('Governance').router({
           })
         )
         .output(decideGovernanceAssignmentResponseSchema)
+    },
+    submissions: {
+      mine: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/governance/submissions/mine',
+          inputStructure: 'detailed',
+          summary: 'List governance cases the current user initiated',
+          description:
+            "Lists governance cases the current user initiated, along with each case's currently open assignments.",
+          tags: ['Governance']
+        })
+        .input(z.object({ params: ws, query: listGovernanceSubmissionsQuerySchema }))
+        .output(z.array(governanceSubmissionSchema))
     }
   }
 });
@@ -265,3 +291,5 @@ export type ListGovernanceCasesQuery = z.infer<typeof listGovernanceCasesQuerySc
 export type DecideGovernanceAssignmentBody = z.infer<typeof decideGovernanceAssignmentBodySchema>;
 export type GovernanceTask = z.infer<typeof governanceTaskSchema>;
 export type ListGovernanceTasksQuery = z.infer<typeof listGovernanceTasksQuerySchema>;
+export type GovernanceSubmission = z.infer<typeof governanceSubmissionSchema>;
+export type ListGovernanceSubmissionsQuery = z.infer<typeof listGovernanceSubmissionsQuerySchema>;

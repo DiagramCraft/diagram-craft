@@ -48,6 +48,7 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
         AND (${filter.status ?? null}::text IS NULL OR status = ${filter.status ?? null})
         AND (${filter.subjectType ?? null}::text IS NULL OR subject_type = ${filter.subjectType ?? null})
         AND (${filter.subjectId ?? null}::text IS NULL OR subject_id = ${filter.subjectId ?? null})
+        AND (${filter.initiatorUserId ?? null}::text IS NULL OR initiator_user_id = ${filter.initiatorUserId ?? null})
       ORDER BY created_at DESC
     `;
     return mapDatabaseRows(rows, governanceMappers.case);

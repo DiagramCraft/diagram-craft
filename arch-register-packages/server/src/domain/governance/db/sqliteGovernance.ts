@@ -64,6 +64,10 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
       clauses.push('subject_id = ?');
       params.push(filter.subjectId);
     }
+    if (filter.initiatorUserId) {
+      clauses.push('initiator_user_id = ?');
+      params.push(filter.initiatorUserId);
+    }
     return this.all(
       `SELECT * FROM governance_case WHERE ${clauses.join(' AND ')} ORDER BY created_at DESC`,
       params,

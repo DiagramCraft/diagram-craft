@@ -6,7 +6,8 @@ import type {
   GovernanceCaseDbResult,
   GovernanceEventDbResult
 } from './db/governanceDatabase';
-import { decideGovernanceAssignment } from './governanceOperations';
+import type { GovernanceCaseListFilter } from './db/governanceDatabase';
+import { decideGovernanceAssignment, listMySubmittedGovernanceCases } from './governanceOperations';
 import type { GovernanceRegistry } from './governanceRegistry';
 
 const authCtxMock = {
@@ -92,15 +93,27 @@ type GovernanceSnapshot = {
 const makeGovernanceDouble = (
   caseRow: GovernanceCaseDbResult,
   assignment: GovernanceAssignmentDbResult,
-  extraAssignments: GovernanceAssignmentDbResult[] = []
+  extraAssignments: GovernanceAssignmentDbResult[] = [],
+  extraCases: GovernanceCaseDbResult[] = []
 ) => {
-  const cases = new Map([[caseRow.id, caseRow]]);
+  const cases = new Map([caseRow, ...extraCases].map(c => [c.id, c] as const));
   const assignments = new Map([assignment, ...extraAssignments].map(a => [a.id, a] as const));
   const events: GovernanceEventDbResult[] = [];
   const decisionRequests = new Map<string, string>();
 
   return {
     getCase: vi.fn(async (_ws: string, id: string) => cases.get(id) ?? null),
+    listCases: vi.fn(async (workspace: string, filter: GovernanceCaseListFilter = {}) =>
+      [...cases.values()].filter(
+        c =>
+          c.workspace === workspace &&
+          (!filter.caseKind || c.case_kind === filter.caseKind) &&
+          (!filter.status || c.status === filter.status) &&
+          (!filter.subjectType || c.subject_type === filter.subjectType) &&
+          (!filter.subjectId || c.subject_id === filter.subjectId) &&
+          (!filter.initiatorUserId || c.initiator_user_id === filter.initiatorUserId)
+      )
+    ),
     listAssignmentsForCase: vi.fn(async (caseId: string) =>
       [...assignments.values()].filter(a => a.case_id === caseId)
     ),
@@ -368,5 +381,73 @@ describe('decideGovernanceAssignment', () => {
 
       expect(second.case.status).toBe('open');
     });
+  });
+});
+
+describe('listMySubmittedGovernanceCases', () => {
+  it('only returns cases initiated by the current user', async () => {
+    const own = makeCase({ id: 'case-own', initiator_user_id: 'user-1' });
+    const other = makeCase({ id: 'case-other', initiator_user_id: 'user-2' });
+    const assignment = makeAssignment({ case_id: 'case-own' });
+    const db = makeDb(makeGovernanceDouble(own, assignment, [], [other]));
+
+    const result = await listMySubmittedGovernanceCases(db, 'ws-1', event, {});
+
+    expect(result.map(s => s.case.id)).toEqual(['case-own']);
+  });
+
+  it('includes only still-open assignments as the waiting state', async () => {
+    const caseRow = makeCase({ initiator_user_id: 'user-1' });
+    const openAssignment = makeAssignment({ id: 'assignment-open', status: 'open' });
+    const resolvedAssignment = makeAssignment({
+      id: 'assignment-resolved',
+      status: 'completed',
+      resolved_at: now
+    });
+    const db = makeDb(makeGovernanceDouble(caseRow, openAssignment, [resolvedAssignment]));
+
+    const [submission] = await listMySubmittedGovernanceCases(db, 'ws-1', event, {});
+
+    expect(submission?.openAssignments.map(a => a.id)).toEqual(['assignment-open']);
+  });
+
+  it('filters by caseKind and status', async () => {
+    const matching = makeCase({
+      id: 'case-match',
+      initiator_user_id: 'user-1',
+      case_kind: 'entity.change',
+      status: 'open'
+    });
+    const wrongKind = makeCase({
+      id: 'case-wrong-kind',
+      initiator_user_id: 'user-1',
+      case_kind: 'test.echo',
+      status: 'open'
+    });
+    const wrongStatus = makeCase({
+      id: 'case-wrong-status',
+      initiator_user_id: 'user-1',
+      case_kind: 'entity.change',
+      status: 'completed'
+    });
+    const assignment = makeAssignment({ case_id: 'case-match' });
+    const db = makeDb(makeGovernanceDouble(matching, assignment, [], [wrongKind, wrongStatus]));
+
+    const result = await listMySubmittedGovernanceCases(db, 'ws-1', event, {
+      caseKind: 'entity.change',
+      status: 'open'
+    });
+
+    expect(result.map(s => s.case.id)).toEqual(['case-match']);
+  });
+
+  it('returns cases the user initiated even when self-approval is not allowed', async () => {
+    const caseRow = makeCase({ initiator_user_id: 'user-1', self_approval_allowed: false });
+    const assignment = makeAssignment({ target_user_id: 'someone-else' });
+    const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+
+    const result = await listMySubmittedGovernanceCases(db, 'ws-1', event, {});
+
+    expect(result).toHaveLength(1);
   });
 });
