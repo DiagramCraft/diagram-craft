@@ -109,7 +109,9 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
             )
           }))
         );
-        gatedWatcherUserIds = allowance.filter(entry => entry.allowed).map(entry => entry.watcherId);
+        gatedWatcherUserIds = allowance
+          .filter(entry => entry.allowed)
+          .map(entry => entry.watcherId);
       }
 
       await tx.watch.createNotificationsFromAudit({

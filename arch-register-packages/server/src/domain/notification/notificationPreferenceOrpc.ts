@@ -4,7 +4,10 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { getNotificationPreferences, updateNotificationPreferences } from './notificationPreferenceOperations';
+import {
+  getNotificationPreferences,
+  updateNotificationPreferences
+} from './notificationPreferenceOperations';
 import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
 
 type ORPCContext = {

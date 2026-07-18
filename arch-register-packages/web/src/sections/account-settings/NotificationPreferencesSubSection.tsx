@@ -66,15 +66,13 @@ export const NotificationPreferencesSubSection = () => {
   };
 
   if (error) return <div>Failed to load notification preferences: {error.message}</div>;
-  if (isLoading || !data) return <LoadingState text="Loading notification preferences…" size="sm" />;
+  if (isLoading || !data)
+    return <LoadingState text="Loading notification preferences…" size="sm" />;
 
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
-        <Button
-          onClick={() => setInAppByType(savedInAppByType)}
-          disabled={!hasChanges || isSaving}
-        >
+        <Button onClick={() => setInAppByType(savedInAppByType)} disabled={!hasChanges || isSaving}>
           Reset
         </Button>
         <Button variant="primary" onClick={handleSave} disabled={!hasChanges || isSaving}>
