@@ -11714,7 +11714,8 @@
                                     "enum": [
                                       "owner",
                                       "type",
-                                      "snapshot"
+                                      "snapshot",
+                                      "project"
                                     ],
                                     "type": "string",
                                     "description": "Timeline grouping mode"
@@ -12311,7 +12312,8 @@
                                 "enum": [
                                   "owner",
                                   "type",
-                                  "snapshot"
+                                  "snapshot",
+                                  "project"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -12878,7 +12880,8 @@
                                   "enum": [
                                     "owner",
                                     "type",
-                                    "snapshot"
+                                    "snapshot",
+                                    "project"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
@@ -13466,7 +13469,8 @@
                                 "enum": [
                                   "owner",
                                   "type",
-                                  "snapshot"
+                                  "snapshot",
+                                  "project"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -14028,7 +14032,8 @@
                                   "enum": [
                                     "owner",
                                     "type",
-                                    "snapshot"
+                                    "snapshot",
+                                    "project"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
