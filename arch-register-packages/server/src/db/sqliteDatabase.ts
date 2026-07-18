@@ -21,6 +21,7 @@ import { SqliteDocumentDatabase } from '../domain/document/db/sqliteDocument';
 import { SqliteGovernanceDatabase } from '../domain/governance/db/sqliteGovernance';
 import { SqliteNotificationDatabase } from '../domain/notification/db/sqliteNotification';
 import { SqliteEntityChangeDatabase } from '../domain/catalog/db/sqliteEntityChange';
+import { SqliteEntityDeprecationDatabase } from '../domain/catalog/db/sqliteEntityDeprecation';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -44,6 +45,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly governance;
   readonly notification;
   readonly entityChange;
+  readonly entityDeprecation;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -69,6 +71,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.governance = new SqliteGovernanceDatabase(() => this.db);
     this.notification = new SqliteNotificationDatabase(() => this.db);
     this.entityChange = new SqliteEntityChangeDatabase(() => this.db);
+    this.entityDeprecation = new SqliteEntityDeprecationDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -140,7 +143,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       document: this.document,
       governance: this.governance,
       notification: this.notification,
-      entityChange: this.entityChange
+      entityChange: this.entityChange,
+      entityDeprecation: this.entityDeprecation
     };
   }
 

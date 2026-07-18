@@ -147,6 +147,10 @@ const entitySchemaSchema = z.object({
     .enum(['required', 'disabled'])
     .optional()
     .describe('Default approval policy for existing entity changes'),
+  deprecation_policy: z
+    .enum(['required', 'disabled'])
+    .optional()
+    .describe('Whether entities of this schema can go through the deprecation workflow'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });
@@ -203,7 +207,11 @@ const createSchemaBodySchema = z.object({
   entity_approval_policy: z
     .enum(['required', 'disabled'])
     .optional()
-    .describe('Default approval policy for existing entity changes')
+    .describe('Default approval policy for existing entity changes'),
+  deprecation_policy: z
+    .enum(['required', 'disabled'])
+    .optional()
+    .describe('Whether entities of this schema can go through the deprecation workflow')
 });
 
 const updateSchemaBodySchema = createSchemaBodySchema.extend({

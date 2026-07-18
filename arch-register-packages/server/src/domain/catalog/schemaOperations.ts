@@ -268,6 +268,7 @@ export const updateWorkspaceSchema = async (
           icon: next.icon,
           default_owner: next.defaultOwner,
           entity_approval_policy: next.entityApprovalPolicy,
+          deprecation_policy: next.deprecationPolicy,
           version: (oldRow.version ?? 1) + 1,
           updated_at: next.updated_at
         });

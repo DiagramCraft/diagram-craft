@@ -41,6 +41,8 @@ import { createExternalContentORPCHandler } from './domain/external-content/exte
 import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
+import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
+import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -128,6 +130,7 @@ export const createApp = (
   app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
   app.use(createEntityChangeORPCHandler(db));
+  app.use(createEntityDeprecationORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
   app.use(createWorkspaceCollectionORPCHandler(db));
@@ -146,7 +149,12 @@ export const createApp = (
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
   app.use(createDiscussionORPCHandler(db));
-  app.use(createGovernanceORPCHandler(db, createEntityGovernanceRegistry()));
+  app.use(
+    createGovernanceORPCHandler(
+      db,
+      new Map([...createEntityGovernanceRegistry(), ...createDeprecationGovernanceRegistry()])
+    )
+  );
   app.use(createWikiCommentORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));

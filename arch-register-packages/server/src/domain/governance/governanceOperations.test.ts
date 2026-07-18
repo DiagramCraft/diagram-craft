@@ -91,10 +91,11 @@ type GovernanceSnapshot = {
 
 const makeGovernanceDouble = (
   caseRow: GovernanceCaseDbResult,
-  assignment: GovernanceAssignmentDbResult
+  assignment: GovernanceAssignmentDbResult,
+  extraAssignments: GovernanceAssignmentDbResult[] = []
 ) => {
   const cases = new Map([[caseRow.id, caseRow]]);
-  const assignments = new Map([[assignment.id, assignment]]);
+  const assignments = new Map([assignment, ...extraAssignments].map(a => [a.id, a] as const));
   const events: GovernanceEventDbResult[] = [];
   const decisionRequests = new Map<string, string>();
 
@@ -300,5 +301,72 @@ describe('decideGovernanceAssignment', () => {
       retryRegistry
     );
     expect(retried.case.status).toBe('completed');
+  });
+
+  describe('independent assignments (#1718 group acknowledgement)', () => {
+    const registryWithIndependentAck: GovernanceRegistry = new Map([
+      ['test.echo', { independentAssignmentActions: new Set(['acknowledge']) }]
+    ]);
+
+    it('completes the assignment without completing the case or superseding siblings', async () => {
+      const caseRow = makeCase();
+      const assignmentA = makeAssignment({
+        id: 'assignment-a',
+        action: 'acknowledge',
+        target_user_id: 'user-1'
+      });
+      const governance = makeGovernanceDouble(caseRow, assignmentA);
+      const db = makeDb(governance);
+
+      const result = await decideGovernanceAssignment(
+        db,
+        'ws-1',
+        assignmentA.id,
+        event,
+        { decision: 'acknowledge', idempotencyKey: 'key-1' },
+        registryWithIndependentAck
+      );
+
+      expect(result.case.status).toBe('open');
+      expect((await governance.getAssignment(assignmentA.id))?.status).toBe('completed');
+      expect(governance.supersedeOpenSiblingAssignments).not.toHaveBeenCalled();
+      expect(governance.supersedeAllOpenAssignmentsForCase).not.toHaveBeenCalled();
+    });
+
+    it('leaves a sibling independent assignment open and decidable after another is decided', async () => {
+      const caseRow = makeCase();
+      const assignmentA = makeAssignment({
+        id: 'assignment-a',
+        action: 'acknowledge',
+        target_user_id: 'user-1'
+      });
+      const assignmentB = makeAssignment({
+        id: 'assignment-b',
+        action: 'acknowledge',
+        target_user_id: 'user-3'
+      });
+      const governance = makeGovernanceDouble(caseRow, assignmentA, [assignmentB]);
+      const db = makeDb(governance);
+
+      await decideGovernanceAssignment(
+        db,
+        'ws-1',
+        assignmentA.id,
+        { context: { user: { id: 'user-1' } } } as unknown as AuthenticatedEvent,
+        { decision: 'acknowledge', idempotencyKey: 'key-1' },
+        registryWithIndependentAck
+      );
+
+      const second = await decideGovernanceAssignment(
+        db,
+        'ws-1',
+        assignmentB.id,
+        { context: { user: { id: 'user-3' } } } as unknown as AuthenticatedEvent,
+        { decision: 'acknowledge', idempotencyKey: 'key-2' },
+        registryWithIndependentAck
+      );
+
+      expect(second.case.status).toBe('open');
+    });
   });
 });

@@ -110,7 +110,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async listLifecycleStates(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT id, workspace, label, color, sort_order, created_at
+      SELECT id, workspace, label, color, sort_order, created_at, is_deprecated_state
       FROM workspace_lifecycle_state
       WHERE workspace = ${workspace}
       ORDER BY sort_order, id
@@ -156,12 +156,13 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
         for (const state of states) {
           await tx`
-            INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at)
-            VALUES (${state.id}, ${workspace}, ${state.label}, ${state.color}, ${state.sort_order}, ${state.created_at})
+            INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at, is_deprecated_state)
+            VALUES (${state.id}, ${workspace}, ${state.label}, ${state.color}, ${state.sort_order}, ${state.created_at}, ${state.is_deprecated_state ?? false})
             ON CONFLICT (workspace, id) DO UPDATE SET
               label = EXCLUDED.label,
               color = EXCLUDED.color,
-              sort_order = EXCLUDED.sort_order
+              sort_order = EXCLUDED.sort_order,
+              is_deprecated_state = EXCLUDED.is_deprecated_state
           `;
         }
       });

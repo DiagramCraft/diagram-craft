@@ -92,7 +92,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
   async listLifecycleStates(workspace: string) {
     return this.all(
-      'SELECT id, workspace, label, color, sort_order, created_at FROM workspace_lifecycle_state WHERE workspace = ? ORDER BY sort_order, id',
+      'SELECT id, workspace, label, color, sort_order, created_at, is_deprecated_state FROM workspace_lifecycle_state WHERE workspace = ? ORDER BY sort_order, id',
       [workspace],
       workspaceMappers.lifecycleState
     );
@@ -131,19 +131,21 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
       for (const state of states) {
         this.run(
-          `INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)
+          `INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at, is_deprecated_state)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(workspace, id) DO UPDATE SET
              label = excluded.label,
              color = excluded.color,
-             sort_order = excluded.sort_order`,
+             sort_order = excluded.sort_order,
+             is_deprecated_state = excluded.is_deprecated_state`,
           [
             state.id,
             workspace,
             state.label,
             state.color,
             state.sort_order,
-            state.created_at.toISOString()
+            state.created_at.toISOString(),
+            state.is_deprecated_state ? 1 : 0
           ]
         );
       }

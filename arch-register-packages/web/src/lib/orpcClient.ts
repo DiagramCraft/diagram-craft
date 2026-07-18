@@ -29,6 +29,7 @@ import { externalContentContract } from '@arch-register/api-types/externalConten
 import { webhookContract } from '@arch-register/api-types/webhookContract';
 import { documentContract } from '@arch-register/api-types/documentContract';
 import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
+import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
@@ -60,6 +61,7 @@ const webContracts = {
   ...webhookContract,
   ...documentContract,
   ...entityChangeContract,
+  ...entityDeprecationContract,
   ...governanceContract,
   ...diagramCraftContract,
   ...workspaceEnumContract,

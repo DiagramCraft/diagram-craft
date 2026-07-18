@@ -29,6 +29,8 @@ export type LifecycleStateDbResult = {
   color: string;
   sort_order: number;
   created_at: Date;
+  /** Whether this is the workspace's configured "deprecated" lifecycle state (#1718). */
+  is_deprecated_state?: boolean;
 };
 
 export type LifecycleStateDbCreate = LifecycleStateDbResult;
@@ -107,7 +109,9 @@ export const workspaceMappers = {
     label: String(row['label']),
     color: String(row['color']),
     sort_order: Number(row['sort_order']),
-    created_at: databaseDate(row['created_at'])
+    created_at: databaseDate(row['created_at']),
+    is_deprecated_state:
+      row['is_deprecated_state'] == null ? false : databaseBoolean(row['is_deprecated_state'])
   }),
   projectEntityType: (row: DatabaseRow): ProjectEntityTypeDbResult => ({
     id: String(row['id']),

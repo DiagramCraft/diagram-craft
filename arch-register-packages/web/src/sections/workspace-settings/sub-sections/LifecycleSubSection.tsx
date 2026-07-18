@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import styles from './LifecycleSubSection.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Select } from '@diagram-craft/app-components/Select';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { LIFECYCLE_COLOR_PRESETS } from '@arch-register/api-types/colors';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { useUpdateLifecycleStates } from '../../../hooks/useWorkspaceConfig';
@@ -11,10 +13,16 @@ type EditLifecycleState = {
   id: string;
   label: string;
   color: string;
+  is_deprecated_state: boolean;
 };
 
 const buildLifecycleStateDraft = (lifecycleStates: WorkspaceLifecycleState[]) =>
-  lifecycleStates.map(state => ({ id: state.id, label: state.label, color: state.color }));
+  lifecycleStates.map(state => ({
+    id: state.id,
+    label: state.label,
+    color: state.color,
+    is_deprecated_state: state.is_deprecated_state ?? false
+  }));
 
 const COLOR_PRESETS = LIFECYCLE_COLOR_PRESETS;
 
@@ -51,7 +59,8 @@ export const LifecycleSubSection = ({
             id: s.id.trim() || crypto.randomUUID(),
             label: s.label,
             color: s.color,
-            sort_order: i
+            sort_order: i,
+            is_deprecated_state: s.is_deprecated_state
           }))
         );
       }
@@ -63,12 +72,22 @@ export const LifecycleSubSection = ({
   const updateState = (index: number, patch: Partial<EditLifecycleState>) =>
     setStates(prev => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)));
 
+  const setDeprecatedStateById = (id: string) =>
+    setStates(prev => prev.map(s => ({ ...s, is_deprecated_state: s.id === id })));
+
+  const deprecatedStateId = states.find(s => s.is_deprecated_state)?.id ?? '';
+
   const removeState = (index: number) => setStates(prev => prev.filter((_, i) => i !== index));
 
   const addState = () =>
     setStates(prev => [
       ...prev,
-      { id: crypto.randomUUID(), label: '', color: 'var(--cmp-fg-disabled)' }
+      {
+        id: crypto.randomUUID(),
+        label: '',
+        color: 'var(--cmp-fg-disabled)',
+        is_deprecated_state: false
+      }
     ]);
 
   return (
@@ -133,6 +152,31 @@ export const LifecycleSubSection = ({
           <Button icon={<TbPlus size={12} />} onClick={addState} style={{ marginTop: 8 }}>
             Add state
           </Button>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div className={styles.sectionTitle}>Deprecated state</div>
+          <div className={styles.sectionSub}>
+            Entities move to this lifecycle state when a deprecation is finalized.
+          </div>
+        </div>
+        <div className={styles.sectionBody}>
+          <FormElement label="Deprecated state">
+            <Select.Root
+              value={deprecatedStateId}
+              placeholder="None"
+              onChange={v => setDeprecatedStateById(v ?? '')}
+            >
+              <Select.Item value="">None</Select.Item>
+              {states.map(s => (
+                <Select.Item key={s.id} value={s.id}>
+                  {s.label.trim() || 'Untitled state'}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
         </div>
       </div>
     </div>
