@@ -74,7 +74,8 @@ describe('governance notification delivery', () => {
           is_active: true
         }))
       },
-      notification: { createNotification }
+      notification: { createNotification },
+      notificationPreference: { listOverrides: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
 
     const result = await createGovernanceNotificationJobHandler(db)({
@@ -106,7 +107,8 @@ describe('governance notification delivery', () => {
         listAssignmentsForCase: vi.fn(async () => [first, second])
       },
       auth: { getUser: vi.fn(async (id: string) => ({ id, display_name: id, is_active: true })) },
-      notification: { createNotification }
+      notification: { createNotification },
+      notificationPreference: { listOverrides: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
 
     await createGovernanceNotificationJobHandler(db)({
@@ -118,5 +120,63 @@ describe('governance notification delivery', () => {
     expect(createNotification.mock.calls.map(([input]) => input.assignment_id)).toEqual(
       expect.arrayContaining(['assignment-1', second.id])
     );
+  });
+
+  it('skips in-app delivery for a notification type the recipient opted out of, without affecting other types', async () => {
+    const approvedEvent = { ...makeEvent(), event_type: 'approved' as const };
+    const createNotification = vi.fn(async input => input);
+    const listOverrides = vi.fn(async () => [
+      {
+        user_id: 'approver-1',
+        workspace: 'workspace-1',
+        notification_type: 'governance-case-activity',
+        channel: 'in_app',
+        enabled: false,
+        updated_at: now
+      }
+    ]);
+    const db = {
+      governance: {
+        getCase: vi.fn(async () => makeCase()),
+        listEvents: vi.fn(async () => [approvedEvent]),
+        listAssignmentsForCase: vi.fn(async () => [makeAssignment()])
+      },
+      auth: {
+        getUser: vi.fn(async (id: string) => ({
+          id,
+          display_name: id === 'initiator-1' ? 'Initiator' : 'Approver',
+          is_active: true
+        }))
+      },
+      notification: { createNotification },
+      notificationPreference: { listOverrides }
+    } as unknown as DatabaseAdapter;
+
+    await createGovernanceNotificationJobHandler(db)({
+      workspace: 'workspace-1',
+      payload: { caseId: 'case-1', eventId: 'event-1', eventType: 'approved' }
+    });
+
+    // 'approved' is bucketed as governance-case-activity, which the recipient disabled.
+    expect(createNotification).not.toHaveBeenCalled();
+
+    // A 'submitted' event is a different bucket (governance-task-assigned) and is
+    // unaffected by opting out of governance-case-activity.
+    const submittedEvent = makeEvent();
+    const db2 = {
+      ...db,
+      governance: {
+        getCase: vi.fn(async () => makeCase()),
+        listEvents: vi.fn(async () => [submittedEvent]),
+        listAssignmentsForCase: vi.fn(async () => [makeAssignment()])
+      }
+    } as unknown as DatabaseAdapter;
+
+    await createGovernanceNotificationJobHandler(db2)({
+      workspace: 'workspace-1',
+      payload: { caseId: 'case-1', eventId: 'event-1', eventType: 'submitted' }
+    });
+
+    expect(createNotification).toHaveBeenCalledTimes(1);
   });
 });

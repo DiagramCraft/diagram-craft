@@ -22,6 +22,7 @@ import { PostgresWebhookDatabase } from '../domain/webhook/db/postgresWebhook';
 import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument';
 import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
 import { PostgresNotificationDatabase } from '../domain/notification/db/postgresNotification';
+import { PostgresNotificationPreferenceDatabase } from '../domain/notification/db/postgresNotificationPreference';
 import { PostgresEntityChangeDatabase } from '../domain/catalog/db/postgresEntityChange';
 import { PostgresEntityDeprecationDatabase } from '../domain/catalog/db/postgresEntityDeprecation';
 import { createLogger } from '../utils/logger';
@@ -50,6 +51,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly document: PostgresDocumentDatabase;
   readonly governance: PostgresGovernanceDatabase;
   readonly notification: PostgresNotificationDatabase;
+  readonly notificationPreference: PostgresNotificationPreferenceDatabase;
   readonly entityChange: PostgresEntityChangeDatabase;
   readonly entityDeprecation: PostgresEntityDeprecationDatabase;
   readonly core;
@@ -72,6 +74,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       document: new PostgresDocumentDatabase(sql),
       governance: new PostgresGovernanceDatabase(sql),
       notification: new PostgresNotificationDatabase(sql),
+      notificationPreference: new PostgresNotificationPreferenceDatabase(sql),
       entityChange: new PostgresEntityChangeDatabase(sql),
       entityDeprecation: new PostgresEntityDeprecationDatabase(sql)
     };
@@ -126,6 +129,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.document = new PostgresDocumentDatabase(this.sql);
     this.governance = new PostgresGovernanceDatabase(this.sql);
     this.notification = new PostgresNotificationDatabase(this.sql);
+    this.notificationPreference = new PostgresNotificationPreferenceDatabase(this.sql);
     this.entityChange = new PostgresEntityChangeDatabase(this.sql);
     this.entityDeprecation = new PostgresEntityDeprecationDatabase(this.sql);
 

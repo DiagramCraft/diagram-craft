@@ -34709,6 +34709,351 @@
         }
       }
     },
+    "/{workspace}/notification-preferences": {
+      "get": {
+        "operationId": "notificationPreferences.get",
+        "summary": "Get notification delivery preferences",
+        "description": "Retrieves the notification-type and channel catalog along with the current user's effective delivery preferences for this workspace.",
+        "tags": [
+          "NotificationPreferences",
+          "NotificationPreferences"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notificationTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "notificationType": {
+                            "enum": [
+                              "entity-watch-activity",
+                              "governance-task-assigned",
+                              "governance-case-activity",
+                              "governance-proposal-reminder"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable name of the notification type"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "What triggers this notification type"
+                          },
+                          "category": {
+                            "enum": [
+                              "normal",
+                              "reminder"
+                            ],
+                            "type": "string",
+                            "description": "Whether this is a normal notification type or a reminder"
+                          }
+                        },
+                        "required": [
+                          "notificationType",
+                          "label",
+                          "description",
+                          "category"
+                        ]
+                      }
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "channel": {
+                            "enum": [
+                              "in_app",
+                              "email",
+                              "slack",
+                              "sms"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable name of the delivery channel"
+                          },
+                          "implemented": {
+                            "type": "boolean",
+                            "description": "Whether this channel can currently deliver notifications"
+                          }
+                        },
+                        "required": [
+                          "channel",
+                          "label",
+                          "implemented"
+                        ]
+                      }
+                    },
+                    "preferences": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "notificationType": {
+                            "enum": [
+                              "entity-watch-activity",
+                              "governance-task-assigned",
+                              "governance-case-activity",
+                              "governance-proposal-reminder"
+                            ],
+                            "type": "string"
+                          },
+                          "channel": {
+                            "enum": [
+                              "in_app",
+                              "email",
+                              "slack",
+                              "sms"
+                            ],
+                            "type": "string"
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "description": "Whether this channel is enabled for this notification type"
+                          },
+                          "isDefault": {
+                            "type": "boolean",
+                            "description": "True if this reflects the catalog default rather than an explicit override"
+                          }
+                        },
+                        "required": [
+                          "notificationType",
+                          "channel",
+                          "enabled",
+                          "isDefault"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "notificationTypes",
+                    "channels",
+                    "preferences"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "notificationPreferences.update",
+        "summary": "Update notification delivery preferences",
+        "description": "Sets the current user's delivery preference for one or more notification-type/channel pairs in this workspace. Only affects future notifications.",
+        "tags": [
+          "NotificationPreferences",
+          "NotificationPreferences"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preferences": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "notificationType": {
+                          "enum": [
+                            "entity-watch-activity",
+                            "governance-task-assigned",
+                            "governance-case-activity",
+                            "governance-proposal-reminder"
+                          ],
+                          "type": "string"
+                        },
+                        "channel": {
+                          "enum": [
+                            "in_app",
+                            "email",
+                            "slack",
+                            "sms"
+                          ],
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "notificationType",
+                        "channel",
+                        "enabled"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "preferences"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notificationTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "notificationType": {
+                            "enum": [
+                              "entity-watch-activity",
+                              "governance-task-assigned",
+                              "governance-case-activity",
+                              "governance-proposal-reminder"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable name of the notification type"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "What triggers this notification type"
+                          },
+                          "category": {
+                            "enum": [
+                              "normal",
+                              "reminder"
+                            ],
+                            "type": "string",
+                            "description": "Whether this is a normal notification type or a reminder"
+                          }
+                        },
+                        "required": [
+                          "notificationType",
+                          "label",
+                          "description",
+                          "category"
+                        ]
+                      }
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "channel": {
+                            "enum": [
+                              "in_app",
+                              "email",
+                              "slack",
+                              "sms"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable name of the delivery channel"
+                          },
+                          "implemented": {
+                            "type": "boolean",
+                            "description": "Whether this channel can currently deliver notifications"
+                          }
+                        },
+                        "required": [
+                          "channel",
+                          "label",
+                          "implemented"
+                        ]
+                      }
+                    },
+                    "preferences": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "notificationType": {
+                            "enum": [
+                              "entity-watch-activity",
+                              "governance-task-assigned",
+                              "governance-case-activity",
+                              "governance-proposal-reminder"
+                            ],
+                            "type": "string"
+                          },
+                          "channel": {
+                            "enum": [
+                              "in_app",
+                              "email",
+                              "slack",
+                              "sms"
+                            ],
+                            "type": "string"
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "description": "Whether this channel is enabled for this notification type"
+                          },
+                          "isDefault": {
+                            "type": "boolean",
+                            "description": "True if this reflects the catalog default rather than an explicit override"
+                          }
+                        },
+                        "required": [
+                          "notificationType",
+                          "channel",
+                          "enabled",
+                          "isDefault"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "notificationTypes",
+                    "channels",
+                    "preferences"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/search": {
       "get": {
         "operationId": "search.query",

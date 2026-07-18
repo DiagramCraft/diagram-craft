@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
-import { TbKey, TbPalette, TbUser } from 'react-icons/tb';
+import { TbBell, TbKey, TbPalette, TbUser } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 
@@ -16,6 +16,7 @@ type AccountSettingsNavItem = {
 const ACCOUNT_SETTINGS_SECTIONS: AccountSettingsNavItem[] = [
   { id: 'profile', label: 'Profile', icon: <TbUser size={12} />, group: 'Account' },
   { id: 'appearance', label: 'Appearance', icon: <TbPalette size={12} />, group: 'Account' },
+  { id: 'notifications', label: 'Notifications', icon: <TbBell size={12} />, group: 'Account' },
   { id: 'api-tokens', label: 'API tokens', icon: <TbKey size={12} />, group: 'Account' }
 ];
 

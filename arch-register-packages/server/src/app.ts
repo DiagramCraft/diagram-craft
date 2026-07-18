@@ -24,6 +24,7 @@ import { createAssessmentResponseORPCHandler } from './domain/project/assessment
 import { createMilestoneORPCHandler } from './domain/project/projectMilestoneOrpc';
 import { createAuditORPCHandler } from './domain/audit/auditOrpc';
 import { createWatchORPCHandler } from './domain/watch/watchOrpc';
+import { createNotificationPreferencesORPCHandler } from './domain/notification/notificationPreferenceOrpc';
 import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
 import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
 import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
@@ -148,6 +149,7 @@ export const createApp = (
   app.use(createMilestoneORPCHandler(db));
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
+  app.use(createNotificationPreferencesORPCHandler(db));
   app.use(createDiscussionORPCHandler(db));
   app.use(
     createGovernanceORPCHandler(
