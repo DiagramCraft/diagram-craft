@@ -1,9 +1,3 @@
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
 .root {
   display: flex;
   flex-direction: column;
@@ -11,28 +5,38 @@
   padding: 10px;
   border-radius: var(--r-md);
   border: 1px solid var(--cmp-border);
-  scroll-margin-top: 12px;
+  background: var(--panel-bg);
+  font-size: 12px;
+  transition:
+    box-shadow 100ms,
+    border-color 100ms,
+    opacity 100ms;
 }
 
 .rootActive {
   border-color: var(--accent-fg);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-fg) 20%, transparent);
 }
 
 .rootResolved {
-  opacity: 0.6;
+  opacity: 0.55;
+}
+
+.rootResolved:hover {
+  opacity: 0.85;
 }
 
 .quote {
   font-size: 12px;
   line-height: 1.4;
   color: var(--cmp-fg-disabled);
-  border-left: 2px solid var(--cmp-border);
+  border-left: 2px solid var(--accent-fg);
   padding-left: 8px;
   cursor: pointer;
 }
 
 .quoteStale {
-  border-left-color: var(--danger);
+  border-left-color: var(--danger, #c23b3b);
 }
 
 .staleBadge {
@@ -42,11 +46,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--danger);
+  color: var(--danger, #c23b3b);
 }
 
 .resolvedBadge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   margin-left: 6px;
   font-size: 10px;
   font-weight: 600;
@@ -58,7 +64,14 @@
 .post,
 .postReply {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+}
+
+.post + .post,
+.postReply + .postReply {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--cmp-border);
 }
 
 .postBody {
@@ -66,50 +79,50 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .postHead {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .postAuthor {
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--base-fg);
 }
 
 .postWhen,
 .postEdited {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--cmp-fg-disabled);
 }
 
 .postText {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.45;
   color: var(--cmp-fg);
   white-space: pre-wrap;
 }
 
 .postActions {
   display: flex;
-  gap: 14px;
-  margin-top: 2px;
+  gap: 10px;
+  margin-top: 1px;
 }
 
 .textBtn,
 .textBtnDanger {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   background: none;
   border: none;
   padding: 2px 0;
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: var(--cmp-fg-disabled);
   cursor: pointer;
 }
@@ -120,58 +133,14 @@
 }
 
 .textBtnDanger:hover {
-  color: var(--danger);
+  color: var(--danger, #c23b3b);
 }
 
 .replies {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-left: 34px;
-  padding-left: 12px;
+  gap: 6px;
+  margin-left: 24px;
+  padding-left: 10px;
   border-left: 1px solid var(--cmp-border);
-}
-
-.composer,
-.composerCompact {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.composerInput {
-  width: 100%;
-  resize: vertical;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r-md);
-  padding: 8px 10px;
-  font: inherit;
-  font-size: 13px;
-  color: var(--base-fg);
-}
-
-.composerInput:focus {
-  outline: none;
-  border-color: var(--accent-fg);
-}
-
-.composerRow {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.composerActions {
-  display: flex;
-  gap: 6px;
-}
-
-.draftQuote {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--cmp-fg-disabled);
-  border-left: 2px solid var(--accent-fg);
-  padding-left: 8px;
 }

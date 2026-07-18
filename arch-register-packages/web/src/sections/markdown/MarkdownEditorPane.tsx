@@ -1,20 +1,27 @@
-import { type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { TbMessage, TbMessageCirclePlus } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
-import {
-  createTextAnchor,
-  reanchorText,
-  type TextAnchor
-} from '@arch-register/api-types/textAnchor';
+import { createTextAnchor, reanchorText } from '@arch-register/api-types/textAnchor';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
 import { MdxPreview } from './preview/MdxPreview';
 import { getSelectionBoundingRect, getSelectionPlainTextRange } from './preview/selectionOffsets';
 import { MarkdownAttachmentManager } from './MarkdownAttachmentManager';
 import { DiscussionThread } from '../discussions/DiscussionThread';
 import { useDiscussions } from '../../hooks/useDiscussions';
-import { useWikiComments } from '../../hooks/useWikiComments';
-import { WikiInlineCommentsPanel } from '../wikiComments/WikiInlineCommentsPanel';
+import { useCreateWikiComment, useWikiComments } from '../../hooks/useWikiComments';
+import { WikiInlineCommentsRail } from '../wikiComments/WikiInlineCommentsRail';
+import { WikiInlineCommentsPopup } from '../wikiComments/WikiInlineCommentsPopup';
+import { Composer } from '../wikiComments/WikiCommentComposer';
+import type { CommentsDisplayMode } from '../wikiComments/commentsDisplayMode';
 import { DocumentBacklinksSection } from './DocumentBacklinksSection';
 import type { MarkdownPaneMode, MarkdownScreenMode } from './MarkdownEditorScreen.state';
 import styles from './MarkdownEditorScreen.module.css';
@@ -41,6 +48,7 @@ export const MarkdownEditorPane = (props: {
   showDiscussion?: boolean;
   showBacklinks?: boolean;
   propertiesPanel?: ReactNode;
+  commentsMode: CommentsDisplayMode;
 }) => {
   const {
     screenMode,
@@ -55,7 +63,8 @@ export const MarkdownEditorPane = (props: {
     nodeId,
     showDiscussion = true,
     showBacklinks = true,
-    propertiesPanel
+    propertiesPanel,
+    commentsMode
   } = props;
 
   const { data: discussionPosts = [] } = useDiscussions(
@@ -67,6 +76,7 @@ export const MarkdownEditorPane = (props: {
 
   const isReadMode = screenMode !== 'edit';
   const { data: wikiComments = [] } = useWikiComments(workspaceId, nodeId, isReadMode);
+  const createComment = useCreateWikiComment(workspaceId, nodeId);
 
   const previewRef = useRef<HTMLDivElement>(null);
   const [selectionRange, setSelectionRange] = useState<{
@@ -74,10 +84,19 @@ export const MarkdownEditorPane = (props: {
     end: number;
     rect: DOMRect;
   } | null>(null);
+  const [commentComposerOpen, setCommentComposerOpen] = useState(false);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
-  const [draftAnchor, setDraftAnchor] = useState<TextAnchor | null>(null);
+  const [inlinePopupRect, setInlinePopupRect] = useState<DOMRect | null>(null);
 
   const rootComments = useMemo(() => wikiComments.filter(c => !c.parentPostId), [wikiComments]);
+
+  // Switching display mode invalidates whatever was focused under the previous mode (a rail
+  // scroll target, an open popup) -- drop both rather than let them carry over stale.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only commentsMode should retrigger this
+  useEffect(() => {
+    setActiveCommentId(null);
+    setInlinePopupRect(null);
+  }, [commentsMode]);
 
   // Kept in sync with the rendered preview DOM (not derived from the markdown AST directly),
   // since MdxPreview's DOM text-node content is what selection offsets are measured against.
@@ -88,15 +107,42 @@ export const MarkdownEditorPane = (props: {
   }, [body]);
 
   const highlightRanges = useMemo(() => {
+    if (commentsMode === 'off') return [];
     return rootComments
       .map(comment => {
         const result = reanchorText(plainText, comment.anchor);
         if (result.status === 'orphaned') return null;
-        return { commentId: comment.id, start: result.start, end: result.end };
+        return {
+          commentId: comment.id,
+          start: result.start,
+          end: result.end,
+          resolved: comment.resolvedAt != null
+        };
       })
-      .filter((r): r is { commentId: string; start: number; end: number } => r !== null)
+      .filter(
+        (r): r is { commentId: string; start: number; end: number; resolved: boolean } => r !== null
+      )
       .sort((a, b) => a.start - b.start);
-  }, [rootComments, plainText]);
+  }, [rootComments, plainText, commentsMode]);
+
+  const handleMarkClick = useCallback(
+    (id: string) => {
+      setActiveCommentId(id);
+      if (commentsMode === 'inline') {
+        const markEl = previewRef.current?.querySelector<HTMLElement>(
+          `mark[data-comment-id="${id}"]`
+        );
+        setInlinePopupRect(markEl?.getBoundingClientRect() ?? null);
+      }
+    },
+    [commentsMode]
+  );
+
+  const clearSelection = useCallback(() => {
+    setSelectionRange(null);
+    setCommentComposerOpen(false);
+    window.getSelection()?.removeAllRanges();
+  }, []);
 
   const handleSelectionUp = useCallback(() => {
     const container = previewRef.current;
@@ -105,16 +151,18 @@ export const MarkdownEditorPane = (props: {
     const rect = getSelectionBoundingRect();
     if (!range || !rect) {
       setSelectionRange(null);
+      setCommentComposerOpen(false);
       return;
     }
     setSelectionRange({ ...range, rect });
+    setCommentComposerOpen(false);
   }, []);
 
-  const handleAddCommentClick = () => {
+  const submitSelectionComment = (text: string) => {
     if (!selectionRange) return;
-    setDraftAnchor(createTextAnchor(plainText, selectionRange.start, selectionRange.end));
-    setSelectionRange(null);
-    window.getSelection()?.removeAllRanges();
+    const anchor = createTextAnchor(plainText, selectionRange.start, selectionRange.end);
+    createComment.mutate({ nodeId, body: text, anchor });
+    clearSelection();
   };
 
   const showPlateEditor = screenMode === 'edit' && paneMode === 'edit';
@@ -169,8 +217,17 @@ export const MarkdownEditorPane = (props: {
     );
   }
 
+  const commentsEnabled = isReadMode && commentsMode !== 'off' && body.trim().length > 0;
+  const showCommentsRail = commentsEnabled && commentsMode === 'side' && rootComments.length > 0;
+  const gridClassName = showCommentsRail
+    ? `${styles.bodyGrid} ${styles.bodyGridWithComments}`
+    : styles.bodyGrid;
+  const selectionQuote = selectionRange
+    ? plainText.slice(selectionRange.start, selectionRange.end)
+    : '';
+
   return (
-    <div className={styles.bodyGrid}>
+    <div className={gridClassName}>
       <article className={styles.article}>
         {propertiesPanel}
         {body.trim() ? (
@@ -182,11 +239,11 @@ export const MarkdownEditorPane = (props: {
                 highlightRanges={highlightRanges}
                 highlightHandlers={{
                   activeCommentId,
-                  onMarkClick: id => setActiveCommentId(id)
+                  onMarkClick: handleMarkClick
                 }}
               />
             </div>
-            {selectionRange && (
+            {commentsEnabled && selectionRange && !commentComposerOpen && (
               <Button
                 variant="primary"
                 size="sm"
@@ -195,11 +252,32 @@ export const MarkdownEditorPane = (props: {
                   left: selectionRange.rect.left + selectionRange.rect.width / 2,
                   top: selectionRange.rect.top
                 }}
-                onClick={handleAddCommentClick}
+                onClick={() => setCommentComposerOpen(true)}
               >
                 <TbMessageCirclePlus size={13} />
                 Comment
               </Button>
+            )}
+            {commentsEnabled && selectionRange && commentComposerOpen && (
+              <div
+                className={styles.commentComposerFloat}
+                style={{
+                  top: selectionRange.rect.bottom + 8,
+                  left: Math.max(8, Math.min(selectionRange.rect.left, window.innerWidth - 288))
+                }}
+              >
+                <div className={styles.commentComposerQuote}>
+                  &ldquo;
+                  {selectionQuote.length > 90 ? `${selectionQuote.slice(0, 90)}…` : selectionQuote}
+                  &rdquo;
+                </div>
+                <Composer
+                  autoFocus
+                  placeholder="Add a comment…"
+                  onCancel={clearSelection}
+                  onSubmit={submitSelectionComment}
+                />
+              </div>
             )}
             <MarkdownAttachmentManager
               attachments={attachments.items}
@@ -214,24 +292,6 @@ export const MarkdownEditorPane = (props: {
             {showBacklinks && (
               <DocumentBacklinksSection workspaceId={workspaceId} nodeId={nodeId} />
             )}
-            <section className={styles.wikiCommentsSection}>
-              <div className={styles.wikiCommentsHead}>
-                <TbMessageCirclePlus size={14} />
-                <span className={styles.wikiCommentsTitle}>Inline comments</span>
-                {rootComments.length > 0 && (
-                  <span className={styles.discussionCount}>{rootComments.length}</span>
-                )}
-              </div>
-              <WikiInlineCommentsPanel
-                workspaceId={workspaceId}
-                nodeId={nodeId}
-                plainText={plainText}
-                activeCommentId={activeCommentId}
-                onActiveCommentChange={setActiveCommentId}
-                draftAnchor={draftAnchor}
-                onDraftHandled={() => setDraftAnchor(null)}
-              />
-            </section>
             {showDiscussion && (
               <section className={styles.discussionSection}>
                 <div className={styles.discussionHead}>
@@ -254,6 +314,29 @@ export const MarkdownEditorPane = (props: {
           <div className={styles.previewEmpty}>Preview will appear here as you type.</div>
         )}
       </article>
+      {showCommentsRail && (
+        <WikiInlineCommentsRail
+          workspaceId={workspaceId}
+          nodeId={nodeId}
+          articleRef={previewRef}
+          plainText={plainText}
+          activeCommentId={activeCommentId}
+          onActiveCommentChange={setActiveCommentId}
+        />
+      )}
+      {commentsEnabled && commentsMode === 'inline' && activeCommentId && inlinePopupRect && (
+        <WikiInlineCommentsPopup
+          workspaceId={workspaceId}
+          nodeId={nodeId}
+          commentId={activeCommentId}
+          anchorRect={inlinePopupRect}
+          plainText={plainText}
+          onClose={() => {
+            setActiveCommentId(null);
+            setInlinePopupRect(null);
+          }}
+        />
+      )}
       {toc.length > 0 && (
         <aside className={styles.toc}>
           <div className={styles.tocLabel}>On this page</div>

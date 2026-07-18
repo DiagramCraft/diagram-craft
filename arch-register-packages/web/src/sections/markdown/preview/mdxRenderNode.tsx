@@ -3,7 +3,7 @@ import { type ASTNode } from '@diagram-craft/markdown';
 import { getMdxSpec, type MdxComponentName } from '../mdx-components/mdxRegistry';
 
 /** A highlighted comment anchor, in the same plain-text offset space as `renderText`. Ranges must be sorted and non-overlapping. */
-export type HighlightRange = { commentId: string; start: number; end: number };
+export type HighlightRange = { commentId: string; start: number; end: number; resolved?: boolean };
 
 export type HighlightHandlers = {
   activeCommentId?: string | null;
@@ -12,6 +12,7 @@ export type HighlightHandlers = {
 
 type RenderCtx = {
   ranges: HighlightRange[];
+  resolvedIds: Set<string>;
   cursor: { pos: number };
 } & HighlightHandlers;
 
@@ -75,22 +76,23 @@ const renderLiteral = (value: string, key: string, ctx?: RenderCtx): ReactNode[]
   const segments = splitTextWithRanges(value, startPos, ctx.ranges);
   if (segments.length === 1 && segments[0]!.commentId === undefined) return [value];
 
-  return segments.map((segment, i) =>
-    segment.commentId ? (
+  return segments.map((segment, i) => {
+    if (!segment.commentId) return segment.text;
+    const classes = [
+      segment.commentId === ctx.activeCommentId && 'wiki-comment-mark-active',
+      ctx.resolvedIds.has(segment.commentId) && 'wiki-comment-mark-resolved'
+    ].filter(Boolean);
+    return (
       <mark
         key={`${key}-seg${i}`}
         data-comment-id={segment.commentId}
-        className={
-          segment.commentId === ctx.activeCommentId ? 'wiki-comment-mark-active' : undefined
-        }
+        className={classes.length > 0 ? classes.join(' ') : undefined}
         onClick={() => ctx.onMarkClick?.(segment.commentId!)}
       >
         {segment.text}
       </mark>
-    ) : (
-      segment.text
-    )
-  );
+    );
+  });
 };
 
 const renderNode = (node: ASTNode, key: string, ctx?: RenderCtx): ReactNode[] => {
@@ -258,6 +260,13 @@ export const renderMarkdownPreview = (
   handlers: HighlightHandlers = {}
 ): ReactNode => {
   const ctx: RenderCtx | undefined =
-    ranges.length > 0 ? { ranges, cursor: { pos: 0 }, ...handlers } : undefined;
+    ranges.length > 0
+      ? {
+          ranges,
+          resolvedIds: new Set(ranges.filter(r => r.resolved).map(r => r.commentId)),
+          cursor: { pos: 0 },
+          ...handlers
+        }
+      : undefined;
   return <>{renderNodes(nodes, 'mdx', ctx)}</>;
 };

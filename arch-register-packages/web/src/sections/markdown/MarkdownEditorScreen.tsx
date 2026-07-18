@@ -24,6 +24,11 @@ import { MarkdownEditorHeader } from './MarkdownEditorHeader';
 import { MarkdownEditorToolbar } from './MarkdownEditorToolbar';
 import { MarkdownEditorPane } from './MarkdownEditorPane';
 import { MarkdownHistoryPanel } from './MarkdownHistoryPanel';
+import { useWikiComments } from '../../hooks/useWikiComments';
+import {
+  type CommentsDisplayMode,
+  nextCommentsDisplayMode
+} from '../wikiComments/commentsDisplayMode';
 import { LoadingState } from '../../components/LoadingState';
 import {
   projectDetailRoute,
@@ -128,6 +133,13 @@ export const MarkdownEditorScreen = () => {
     projectId,
     entityId
   });
+  const { data: wikiComments = [] } = useWikiComments(workspaceSlug, nodeId, !isDraft);
+  const rootWikiComments = useMemo(() => wikiComments.filter(c => !c.parentPostId), [wikiComments]);
+  const hasWikiComments = rootWikiComments.length > 0;
+  const openWikiCommentsCount = useMemo(
+    () => rootWikiComments.filter(c => c.resolvedAt == null).length,
+    [rootWikiComments]
+  );
 
   const [body, setBody] = useState('');
   const [documentTypeId, setDocumentTypeId] = useState<string | null>(isDraft ? draftType : null);
@@ -135,6 +147,7 @@ export const MarkdownEditorScreen = () => {
   const [paneMode, setPaneMode] = useState<MarkdownPaneMode>(
     isDraft || requestedMode === 'edit' ? 'edit' : 'preview'
   );
+  const [commentsMode, setCommentsMode] = useState<CommentsDisplayMode>('side');
   const screenState = useMemo<MarkdownEditorScreenState>(
     () =>
       isDraft
@@ -767,6 +780,15 @@ export const MarkdownEditorScreen = () => {
               onRenameRequest: () => setRenameOpen(true),
               onDeleteRequest: () => setDeleteOpen(true)
             }}
+            commentsToggle={
+              hasWikiComments
+                ? {
+                    mode: commentsMode,
+                    openCount: openWikiCommentsCount,
+                    onCycle: () => setCommentsMode(nextCommentsDisplayMode)
+                  }
+                : null
+            }
           />
 
           {(isDraft || (!isReadOnly && screenState.screenMode === 'edit')) && (
@@ -813,6 +835,7 @@ export const MarkdownEditorScreen = () => {
               nodeId={nodeId}
               showDiscussion={!isDraft}
               showBacklinks={!isDraft}
+              commentsMode={commentsMode}
               attachments={{
                 items: attachments,
                 onOpen: handleOpenAttachment,

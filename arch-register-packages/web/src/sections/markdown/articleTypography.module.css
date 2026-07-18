@@ -226,3 +226,7 @@
 .articleTypography :global(mark.wiki-comment-mark-active) {
   background: color-mix(in srgb, var(--accent-fg) 45%, transparent);
 }
+
+.articleTypography :global(mark.wiki-comment-mark-resolved) {
+  background: color-mix(in srgb, var(--cmp-fg-disabled) 25%, transparent);
+}
