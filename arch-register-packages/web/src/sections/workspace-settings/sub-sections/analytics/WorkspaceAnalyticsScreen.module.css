@@ -11,36 +11,6 @@
   gap: 8px;
 }
 
-.tabs {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.tab,
-.tabActive {
-  appearance: none;
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  color: var(--base-fg-more-dim);
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  padding: 8px 10px;
-}
-
-.tab:hover {
-  color: var(--base-fg);
-}
-
-.tabActive {
-  border-bottom-color: var(--accent-fg);
-  color: var(--base-fg);
-  font-weight: 500;
-}
-
 .sideBySide {
   display: grid;
   grid-template-columns: 1fr 1fr;
