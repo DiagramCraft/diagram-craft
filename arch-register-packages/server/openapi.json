@@ -617,6 +617,10 @@
                                   ],
                                   "description": "Whether the field is required, expected, or optional"
                                 },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
                                 "type": {
                                   "const": "text",
                                   "description": "Single-line text field"
@@ -654,6 +658,10 @@
                                     }
                                   ],
                                   "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
                                 "type": {
                                   "const": "longtext",
@@ -693,6 +701,10 @@
                                   ],
                                   "description": "Whether the field is required, expected, or optional"
                                 },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
                                 "type": {
                                   "const": "boolean",
                                   "description": "Boolean (true/false) field"
@@ -731,6 +743,10 @@
                                   ],
                                   "description": "Whether the field is required, expected, or optional"
                                 },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
                                 "type": {
                                   "const": "date",
                                   "description": "Date field"
@@ -768,6 +784,10 @@
                                     }
                                   ],
                                   "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
                                 "type": {
                                   "const": "number",
@@ -818,6 +838,10 @@
                                     }
                                   ],
                                   "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
                                 "type": {
                                   "const": "select",
@@ -883,6 +907,10 @@
                                     }
                                   ],
                                   "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
                                 "type": {
                                   "const": "reference",
@@ -953,6 +981,10 @@
                                     }
                                   ],
                                   "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
                                 "type": {
                                   "const": "containment",
@@ -1108,6 +1140,12 @@
                         "maximum": 9007199254740991,
                         "description": "Number of entities using this schema"
                       },
+                      "version": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "Current schema version number"
+                      },
                       "created_at": {
                         "type": "string",
                         "description": "ISO 8601 creation timestamp"
@@ -1128,6 +1166,7 @@
                       "color",
                       "icon",
                       "entity_count",
+                      "version",
                       "created_at",
                       "updated_at"
                     ]
@@ -1206,6 +1245,10 @@
                               ],
                               "description": "Whether the field is required, expected, or optional"
                             },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
                             "type": {
                               "const": "text",
                               "description": "Single-line text field"
@@ -1243,6 +1286,10 @@
                                 }
                               ],
                               "description": "Whether the field is required, expected, or optional"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
                             },
                             "type": {
                               "const": "longtext",
@@ -1282,6 +1329,10 @@
                               ],
                               "description": "Whether the field is required, expected, or optional"
                             },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
                             "type": {
                               "const": "boolean",
                               "description": "Boolean (true/false) field"
@@ -1320,6 +1371,10 @@
                               ],
                               "description": "Whether the field is required, expected, or optional"
                             },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
                             "type": {
                               "const": "date",
                               "description": "Date field"
@@ -1357,6 +1412,10 @@
                                 }
                               ],
                               "description": "Whether the field is required, expected, or optional"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
                             },
                             "type": {
                               "const": "number",
@@ -1408,6 +1467,10 @@
                               ],
                               "description": "Whether the field is required, expected, or optional"
                             },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
                             "type": {
                               "const": "select",
                               "description": "Single-select dropdown field"
@@ -1450,6 +1513,10 @@
                                 }
                               ],
                               "description": "Whether the field is required, expected, or optional"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
                             },
                             "type": {
                               "const": "reference",
@@ -1520,6 +1587,10 @@
                                 }
                               ],
                               "description": "Whether the field is required, expected, or optional"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
                             },
                             "type": {
                               "const": "containment",
@@ -1747,6 +1818,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Single-line text field"
@@ -1784,6 +1859,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "longtext",
@@ -1823,6 +1902,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "boolean",
                                 "description": "Boolean (true/false) field"
@@ -1861,6 +1944,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
@@ -1898,6 +1985,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "number",
@@ -1948,6 +2039,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "select",
@@ -2013,6 +2108,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "reference",
@@ -2083,6 +2182,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "containment",
@@ -2238,6 +2341,12 @@
                       "maximum": 9007199254740991,
                       "description": "Number of entities using this schema"
                     },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Current schema version number"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -2258,6 +2367,7 @@
                     "color",
                     "icon",
                     "entity_count",
+                    "version",
                     "created_at",
                     "updated_at"
                   ]
@@ -2355,6 +2465,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Single-line text field"
@@ -2392,6 +2506,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "longtext",
@@ -2431,6 +2549,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "boolean",
                                 "description": "Boolean (true/false) field"
@@ -2469,6 +2591,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
@@ -2506,6 +2632,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "number",
@@ -2556,6 +2686,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "select",
@@ -2621,6 +2755,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "reference",
@@ -2691,6 +2829,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "containment",
@@ -2846,6 +2988,12 @@
                       "maximum": 9007199254740991,
                       "description": "Number of entities using this schema"
                     },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Current schema version number"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -2866,6 +3014,7 @@
                     "color",
                     "icon",
                     "entity_count",
+                    "version",
                     "created_at",
                     "updated_at"
                   ]
@@ -2952,6 +3101,10 @@
                               ],
                               "description": "Whether the field is required, expected, or optional"
                             },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
                             "type": {
                               "const": "text",
                               "description": "Single-line text field"
@@ -2989,6 +3142,10 @@
                                 }
                               ],
                               "description": "Whether the field is required, expected, or optional"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
                             },
                             "type": {
                               "const": "longtext",
@@ -3028,6 +3185,10 @@
                               ],
                               "description": "Whether the field is required, expected, or optional"
                             },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
                             "type": {
                               "const": "boolean",
                               "description": "Boolean (true/false) field"
@@ -3066,6 +3227,10 @@
                               ],
                               "description": "Whether the field is required, expected, or optional"
                             },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
                             "type": {
                               "const": "date",
                               "description": "Date field"
@@ -3103,6 +3268,10 @@
                                 }
                               ],
                               "description": "Whether the field is required, expected, or optional"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
                             },
                             "type": {
                               "const": "number",
@@ -3154,6 +3323,10 @@
                               ],
                               "description": "Whether the field is required, expected, or optional"
                             },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
                             "type": {
                               "const": "select",
                               "description": "Single-select dropdown field"
@@ -3196,6 +3369,10 @@
                                 }
                               ],
                               "description": "Whether the field is required, expected, or optional"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
                             },
                             "type": {
                               "const": "reference",
@@ -3266,6 +3443,10 @@
                                 }
                               ],
                               "description": "Whether the field is required, expected, or optional"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
                             },
                             "type": {
                               "const": "containment",
@@ -3425,6 +3606,35 @@
                       }
                     ],
                     "description": "Default owner for new entities"
+                  },
+                  "fieldMigrations": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "enum": [
+                            "rename",
+                            "remove",
+                            "archive"
+                          ],
+                          "type": "string",
+                          "description": "Migration action for this field"
+                        },
+                        "renameTo": {
+                          "type": "string",
+                          "description": "New field id when action is \"rename\""
+                        }
+                      },
+                      "required": [
+                        "action"
+                      ],
+                      "description": "How to migrate a changed/removed field"
+                    },
+                    "description": "Resolutions for fields being renamed/removed/archived while entities exist, keyed by the old field id"
                   }
                 },
                 "required": [
@@ -3493,6 +3703,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Single-line text field"
@@ -3530,6 +3744,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "longtext",
@@ -3569,6 +3787,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "boolean",
                                 "description": "Boolean (true/false) field"
@@ -3607,6 +3829,10 @@
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
                               },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
@@ -3644,6 +3870,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "number",
@@ -3694,6 +3924,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "select",
@@ -3759,6 +3993,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "reference",
@@ -3829,6 +4067,10 @@
                                   }
                                 ],
                                 "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
                               },
                               "type": {
                                 "const": "containment",
@@ -3984,6 +4226,12 @@
                       "maximum": 9007199254740991,
                       "description": "Number of entities using this schema"
                     },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Current schema version number"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -4004,6 +4252,7 @@
                     "color",
                     "icon",
                     "entity_count",
+                    "version",
                     "created_at",
                     "updated_at"
                   ]
@@ -4061,6 +4310,650 @@
                     "success",
                     "message"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/schemas/{id}/versions": {
+      "get": {
+        "operationId": "schemas.listVersions",
+        "summary": "List schema version history",
+        "description": "Retrieves the version history for a schema, newest first, including who changed what and when.",
+        "tags": [
+          "Schemas",
+          "Schemas"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "Version number"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Schema name at this version"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Schema description at this version"
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "type": {
+                                  "const": "text",
+                                  "description": "Single-line text field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "type": {
+                                  "const": "longtext",
+                                  "description": "Multi-line text field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "type": {
+                                  "const": "boolean",
+                                  "description": "Boolean (true/false) field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "type": {
+                                  "const": "date",
+                                  "description": "Date field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "type": {
+                                  "const": "number",
+                                  "description": "Integer number field"
+                                },
+                                "min": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum allowed value"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Maximum allowed value"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "type": {
+                                  "const": "select",
+                                  "description": "Single-select dropdown field"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Enumeration identifier for dropdown options"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Internal option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Display label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Available dropdown options"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "enumId",
+                                "options"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "type": {
+                                  "const": "reference",
+                                  "description": "Reference to other entities"
+                                },
+                                "predicate": {
+                                  "type": "string",
+                                  "maxLength": 100,
+                                  "pattern": "^[a-zA-Z0-9\\s-]+$",
+                                  "description": "Relationship predicate/label"
+                                },
+                                "schemaId": {
+                                  "type": "string",
+                                  "description": "Target schema identifier"
+                                },
+                                "minCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of references required"
+                                },
+                                "maxCount": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of references (-1 for unlimited)"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "schemaId",
+                                "minCount",
+                                "maxCount"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "type": {
+                                  "const": "containment",
+                                  "description": "Containment relationship (parent-child)"
+                                },
+                                "predicate": {
+                                  "type": "string",
+                                  "maxLength": 100,
+                                  "pattern": "^[a-zA-Z0-9\\s-]+$",
+                                  "description": "Relationship predicate/label"
+                                },
+                                "schemaId": {
+                                  "type": "string",
+                                  "description": "Target schema identifier"
+                                },
+                                "minCount": {
+                                  "anyOf": [
+                                    {
+                                      "const": 0
+                                    },
+                                    {
+                                      "const": 1
+                                    }
+                                  ],
+                                  "description": "Minimum count (0 or 1)"
+                                },
+                                "maxCount": {
+                                  "const": 1,
+                                  "description": "Maximum count (always 1 for containment)"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "schemaId",
+                                "minCount",
+                                "maxCount"
+                              ]
+                            }
+                          ],
+                          "description": "Schema field with resolved options"
+                        },
+                        "description": "Field definitions at this version"
+                      },
+                      "templates": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable template identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Template display name"
+                            },
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "description": {
+                                  "type": "string",
+                                  "description": "Default entity description"
+                                },
+                                "owner": {
+                                  "type": "string",
+                                  "description": "Default owner team identifier"
+                                },
+                                "lifecycle": {
+                                  "type": "string",
+                                  "description": "Default lifecycle state identifier"
+                                },
+                                "namespace": {
+                                  "type": "string",
+                                  "description": "Default entity namespace"
+                                },
+                                "tags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Default entity tags"
+                                },
+                                "fields": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "description": "Schema field defaults"
+                                }
+                              },
+                              "required": [
+                                "fields"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "values"
+                          ],
+                          "description": "Named defaults for creating an entity of this schema"
+                        },
+                        "description": "Templates at this version"
+                      },
+                      "color": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Schema color at this version"
+                      },
+                      "icon": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Schema icon at this version"
+                      },
+                      "changeSummary": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {},
+                        "description": "Summary of what changed relative to the previous version"
+                      },
+                      "createdBy": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "User id who made this change"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "description": "ISO 8601 timestamp of this version"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "name",
+                      "description",
+                      "fields",
+                      "templates",
+                      "color",
+                      "icon",
+                      "changeSummary",
+                      "createdBy",
+                      "createdAt"
+                    ]
+                  }
                 }
               }
             }
