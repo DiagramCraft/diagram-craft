@@ -195,8 +195,10 @@
 
         - @id:ar.collaboration.watches Users can watch entities and receive notifications when relevant changes occur.
 
-        - @id:ar.collaboration.notifications Users can inspect unread notifications and clear or remove notification
-          state.
+        - @id:ar.collaboration.notifications Users can inspect a single consolidated in-app notification feed
+          covering entity-watch changes and governance action items, see an unread count badge, and clear or mark
+          notifications read. A governance action-item notification is cleared automatically once its underlying
+          task is resolved, superseded, or cancelled, without requiring the user to open the notification.
 
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,
           filter work by task and due-date attributes, and navigate to governed cases.

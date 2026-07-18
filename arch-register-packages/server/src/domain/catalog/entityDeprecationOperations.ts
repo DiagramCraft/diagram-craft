@@ -31,7 +31,9 @@ import type { EntityDeprecationAckDbResult } from './db/entityDeprecationDatabas
 import {
   createGovernanceCaseInTransaction,
   decideGovernanceAssignment,
-  recordGovernanceEvent
+  recordGovernanceEvent,
+  resolveAssignmentNotifications,
+  resolveCaseNotifications
 } from '../governance/governanceOperations';
 import { isEligibleForAssignment } from '../governance/governanceEligibility';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
@@ -786,7 +788,12 @@ export const finalizeEntityDeprecation = async (
       statusText: 'Conflict',
       message: 'This deprecation case has already been completed or cancelled'
     });
-    await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+    const finalizedSupersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+      caseRow.id,
+      now
+    );
+    await resolveAssignmentNotifications(tx, finalizedSupersededIds, now);
+    await resolveCaseNotifications(tx, completed.id, now);
     await recordGovernanceEvent(tx, completed, {
       eventType: 'finalized',
       actorUserId: userId,
@@ -863,7 +870,12 @@ export const cancelEntityDeprecation = async (
       statusText: 'Conflict',
       message: 'This deprecation case has already been completed or cancelled'
     });
-    await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+    const cancelledSupersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+      caseRow.id,
+      now
+    );
+    await resolveAssignmentNotifications(tx, cancelledSupersededIds, now);
+    await resolveCaseNotifications(tx, cancelled.id, now);
     await recordGovernanceEvent(tx, cancelled, {
       eventType: 'cancelled',
       actorUserId: userId,
