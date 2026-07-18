@@ -16,6 +16,19 @@ const watchedEntitySchema = z.object({
 
 const notificationItemSchema = z.object({
   id: z.string().describe('Unique notification identifier'),
+  category: z
+    .enum(['information', 'action'])
+    .optional()
+    .describe('Whether the notification is informational or requires action'),
+  event_type: z.string().optional().describe('Event that produced the notification'),
+  resource_type: z.string().optional().describe('Type of the linked resource'),
+  resource_id: z.string().optional().describe('Identifier of the linked resource'),
+  case_id: z.string().nullable().optional().describe('Related governance case'),
+  assignment_id: z.string().nullable().optional().describe('Related governance assignment'),
+  title: z.string().optional().describe('Presentation title'),
+  message: z.string().optional().describe('Presentation message'),
+  action_route: z.string().nullable().optional().describe('Optional in-app action route'),
+  read_at: z.string().nullable().optional().describe('ISO 8601 timestamp when read'),
   entity_id: z.string().describe('Entity identifier'),
   entity_public_id: z.string().describe('Public entity identifier'),
   entity_name: z.string().describe('Entity name'),
@@ -110,7 +123,7 @@ export const watchContract = oc.tag('Watch').router({
         inputStructure: 'detailed',
         summary: 'List notifications',
         description:
-          'Retrieves all notifications for the current user, including changes to watched entities and other relevant updates.',
+          'Retrieves notifications for the current user, including watched-entity changes and governance updates. Read governance notifications remain available in history.',
         tags: ['Watch']
       })
       .input(
@@ -141,7 +154,7 @@ export const watchContract = oc.tag('Watch').router({
         inputStructure: 'detailed',
         summary: 'Dismiss notification',
         description:
-          'Marks a specific notification as read and removes it from the notification list.',
+          'Marks a specific notification as read. Reading a governance notification does not complete its task.',
         tags: ['Watch']
       })
       .input(
@@ -157,7 +170,7 @@ export const watchContract = oc.tag('Watch').router({
         inputStructure: 'detailed',
         summary: 'Clear all notifications',
         description:
-          'Marks all notifications as read and clears the notification list for the current user.',
+          'Marks all notifications as read. Reading a governance notification does not complete its task.',
         tags: ['Watch']
       })
       .input(

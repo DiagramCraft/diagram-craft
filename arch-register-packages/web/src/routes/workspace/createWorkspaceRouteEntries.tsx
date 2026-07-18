@@ -6,6 +6,7 @@ import { createEntityWorkspaceRoutes } from './entityWorkspaceRoutes';
 import { createSearchWorkspaceRoute } from './searchWorkspaceRoute';
 import { createSettingsWorkspaceRoutes } from './settingsWorkspaceRoutes';
 import { createAssistantWorkspaceRoutes } from './assistantWorkspaceRoutes';
+import { createGovernanceWorkspaceRoute } from './governanceWorkspaceRoute';
 
 export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -16,6 +17,7 @@ export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
     ...createProjectWorkspaceRoutes(workspaceRoute),
     ...createEntityWorkspaceRoutes(workspaceRoute),
     ...createSearchWorkspaceRoute(workspaceRoute),
+    ...createGovernanceWorkspaceRoute(workspaceRoute),
     ...createSettingsWorkspaceRoutes(workspaceRoute),
     ...createAssistantWorkspaceRoutes(workspaceRoute)
   ] as const;

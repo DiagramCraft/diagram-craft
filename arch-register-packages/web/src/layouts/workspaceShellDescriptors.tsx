@@ -169,6 +169,7 @@ export const navigateFromRailItem = (
     projects: '/$workspaceSlug/projects',
     entities: '/$workspaceSlug/entities',
     search: '/$workspaceSlug/search',
+    governance: '/$workspaceSlug/governance',
     assistant: '/$workspaceSlug/assistant',
     extract: '/$workspaceSlug/extract'
   };

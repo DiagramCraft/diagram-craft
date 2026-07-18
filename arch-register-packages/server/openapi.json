@@ -33868,7 +33868,7 @@
       "get": {
         "operationId": "notifications.list",
         "summary": "List notifications",
-        "description": "Retrieves all notifications for the current user, including changes to watched entities and other relevant updates.",
+        "description": "Retrieves notifications for the current user, including watched-entity changes and governance updates. Read governance notifications remain available in history.",
         "tags": [
           "Watch",
           "Watch"
@@ -33896,6 +33896,78 @@
                       "id": {
                         "type": "string",
                         "description": "Unique notification identifier"
+                      },
+                      "category": {
+                        "enum": [
+                          "information",
+                          "action"
+                        ],
+                        "type": "string",
+                        "description": "Whether the notification is informational or requires action"
+                      },
+                      "event_type": {
+                        "type": "string",
+                        "description": "Event that produced the notification"
+                      },
+                      "resource_type": {
+                        "type": "string",
+                        "description": "Type of the linked resource"
+                      },
+                      "resource_id": {
+                        "type": "string",
+                        "description": "Identifier of the linked resource"
+                      },
+                      "case_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Related governance case"
+                      },
+                      "assignment_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Related governance assignment"
+                      },
+                      "title": {
+                        "type": "string",
+                        "description": "Presentation title"
+                      },
+                      "message": {
+                        "type": "string",
+                        "description": "Presentation message"
+                      },
+                      "action_route": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Optional in-app action route"
+                      },
+                      "read_at": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 timestamp when read"
                       },
                       "entity_id": {
                         "type": "string",
@@ -33978,7 +34050,7 @@
       "delete": {
         "operationId": "notifications.clear",
         "summary": "Clear all notifications",
-        "description": "Marks all notifications as read and clears the notification list for the current user.",
+        "description": "Marks all notifications as read. Reading a governance notification does not complete its task.",
         "tags": [
           "Watch",
           "Watch"
@@ -34072,7 +34144,7 @@
       "delete": {
         "operationId": "notifications.remove",
         "summary": "Dismiss notification",
-        "description": "Marks a specific notification as read and removes it from the notification list.",
+        "description": "Marks a specific notification as read. Reading a governance notification does not complete its task.",
         "tags": [
           "Watch",
           "Watch"

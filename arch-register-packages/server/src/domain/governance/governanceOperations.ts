@@ -26,6 +26,8 @@ import type {
   GovernanceCase,
   GovernanceDecisionAction,
   GovernanceEvent,
+  GovernanceTask,
+  ListGovernanceTasksQuery,
   ListGovernanceCasesQuery
 } from '@arch-register/api-types/governanceContract';
 
@@ -186,7 +188,7 @@ const recordEvent = async (
  * the owning case kind explicitly says the subject is visible to them. Defaults to invisible so
  * a case never leaks the existence of a subject the user otherwise cannot see.
  */
-const isCaseVisible = async (
+export const isGovernanceCaseVisible = async (
   db: DatabaseAdapter,
   authCtx: AuthorizationContext,
   userId: string,
@@ -275,7 +277,14 @@ export const getGovernanceCase = async (
 
   const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
   const userId = event.context.user.id;
-  const visible = await isCaseVisible(db, authCtx, userId, caseRow, assignments, registry);
+  const visible = await isGovernanceCaseVisible(
+    db,
+    authCtx,
+    userId,
+    caseRow,
+    assignments,
+    registry
+  );
   httpAssert.true(visible, notFound);
 
   return toApiCase(caseRow);
@@ -304,7 +313,7 @@ export const listGovernanceCases = async (
   const visible = await Promise.all(
     cases.map(async caseRow => {
       const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
-      const ok = await isCaseVisible(db, authCtx, userId, caseRow, assignments, registry);
+      const ok = await isGovernanceCaseVisible(db, authCtx, userId, caseRow, assignments, registry);
       return ok ? caseRow : null;
     })
   );
@@ -329,7 +338,14 @@ export const listGovernanceCaseEvents = async (
 
   const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
   const userId = event.context.user.id;
-  const visible = await isCaseVisible(db, authCtx, userId, caseRow, assignments, registry);
+  const visible = await isGovernanceCaseVisible(
+    db,
+    authCtx,
+    userId,
+    caseRow,
+    assignments,
+    registry
+  );
   httpAssert.true(visible, notFound);
 
   const events = await db.governance.listEvents(caseRow.id);
@@ -339,17 +355,78 @@ export const listGovernanceCaseEvents = async (
 export const listMyGovernanceAssignments = async (
   db: DatabaseAdapter,
   workspace: string,
-  event: AuthenticatedEvent
-): Promise<GovernanceAssignment[]> => {
+  event: AuthenticatedEvent,
+  query: ListGovernanceTasksQuery = {},
+  registry: GovernanceRegistry = createGovernanceRegistry()
+): Promise<GovernanceTask[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
-  const open = await db.governance.listOpenAssignments(ws);
-  return open
-    .filter(assignment => isEligibleForAssignment(authCtx, userId, assignment))
-    .map(toApiAssignment);
+  const assignments = await db.governance.listAssignments(ws);
+  const dueBefore = query.dueBefore ? Date.parse(query.dueBefore) : null;
+  const dueAfter = query.dueAfter ? Date.parse(query.dueAfter) : null;
+  const tasks = await Promise.all(
+    assignments.map(async assignment => {
+      const caseRow = await db.governance.getCase(ws, assignment.case_id);
+      if (!caseRow) return null;
+      if (query.caseKind && caseRow.case_kind !== query.caseKind) return null;
+      if (query.taskKind && assignment.action !== query.taskKind) return null;
+      if (dueBefore != null && (caseRow.due_at == null || caseRow.due_at.getTime() > dueBefore)) {
+        return null;
+      }
+      if (dueAfter != null && (caseRow.due_at == null || caseRow.due_at.getTime() < dueAfter)) {
+        return null;
+      }
+
+      const state =
+        caseRow.status === 'cancelled'
+          ? 'cancelled'
+          : caseRow.status === 'completed' &&
+              (assignment.status === 'completed' || assignment.status === 'superseded')
+            ? 'completed'
+            : assignment.status;
+      if (query.state && state !== query.state) return null;
+      if (!query.state && state !== 'open') return null;
+
+      const currentlyEligible = isEligibleForAssignment(authCtx, userId, assignment);
+      const caseEvents = state === 'open' ? [] : await db.governance.listEvents(caseRow.id);
+      const actedOnAssignment = caseEvents.some(
+        candidate =>
+          candidate.actor_user_id === userId && candidate.metadata['assignmentId'] === assignment.id
+      );
+      if (!currentlyEligible && !actedOnAssignment) return null;
+
+      const visible = await isGovernanceCaseVisible(
+        db,
+        authCtx,
+        userId,
+        caseRow,
+        [assignment],
+        registry
+      );
+      if (!visible) return null;
+
+      return {
+        assignment: toApiAssignment(assignment),
+        case: toApiCase(caseRow),
+        requiresAction: state === 'open' && currentlyEligible
+      };
+    })
+  );
+  return tasks
+    .filter((task): task is GovernanceTask => task != null)
+    .sort((a, b) => Date.parse(a.case.createdAt) - Date.parse(b.case.createdAt));
+};
+
+export const countMyGovernanceAssignments = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+) => {
+  const tasks = await listMyGovernanceAssignments(db, workspace, event, { state: 'open' });
+  return { count: tasks.length };
 };
 
 export const cancelGovernanceCase = async (
@@ -370,7 +447,14 @@ export const cancelGovernanceCase = async (
 
   const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
   const userId = event.context.user.id;
-  const visible = await isCaseVisible(db, authCtx, userId, caseRow, assignments, registry);
+  const visible = await isGovernanceCaseVisible(
+    db,
+    authCtx,
+    userId,
+    caseRow,
+    assignments,
+    registry
+  );
   httpAssert.true(visible, notFound);
 
   httpAssert.true(caseRow.initiator_user_id === userId, {

@@ -158,6 +158,14 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
     );
   }
 
+  async listAssignments(workspace: string) {
+    return this.all(
+      `SELECT * FROM governance_assignment WHERE workspace = ? ORDER BY created_at ASC`,
+      [workspace],
+      governanceMappers.assignment
+    );
+  }
+
   async listOpenAssignments(workspace: string) {
     return this.all(
       `SELECT * FROM governance_assignment WHERE workspace = ? AND status = 'open' ORDER BY created_at ASC`,

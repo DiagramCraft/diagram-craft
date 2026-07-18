@@ -20,7 +20,8 @@ import {
   TbUser,
   TbBell,
   TbMessageCircle,
-  TbX
+  TbX,
+  TbClipboardCheck
 } from 'react-icons/tb';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '../auth/AuthContext';
@@ -36,6 +37,7 @@ import {
   useNotifications,
   useWatchedEntities
 } from '../hooks/useNotifications';
+import { useGovernanceTaskCount } from '../hooks/useGovernance';
 import { useDiscussionSummary } from '../hooks/useDiscussions';
 import { formatRelativeTime } from '../utils/dateFormat';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
@@ -157,6 +159,7 @@ export const TopBar = ({
       </div>
       <div className={styles.right}>
         <DiscussionsMenu workspaceSlug={workspaceSlug} />
+        <GovernanceMenu workspaceSlug={workspaceSlug} />
         <NotificationMenu workspaceSlug={workspaceSlug} />
         <AccountMenu />
       </div>
@@ -515,7 +518,7 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
                 <Tabs.Trigger value="watching">Watching</Tabs.Trigger>
               </Tabs.List>
             </Tabs.Root>
-            {tab === 'notifications' && notifications.length > 0 && (
+            {tab === 'notifications' && notificationCount > 0 && (
               <button
                 type="button"
                 className={styles.notificationAction}
@@ -531,6 +534,10 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
               <NotificationList
                 notifications={notifications}
                 onOpenEntity={openEntity}
+                onOpenGovernance={() => {
+                  setOpen(false);
+                  navigate({ to: '/$workspaceSlug/governance', params: { workspaceSlug } });
+                }}
                 onClear={notificationId => deleteNotificationMutation.mutate(notificationId)}
                 clearingId={deleteNotificationMutation.variables ?? null}
                 isClearing={deleteNotificationMutation.isPending}
@@ -554,12 +561,14 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
 const NotificationList = ({
   notifications,
   onOpenEntity,
+  onOpenGovernance,
   onClear,
   clearingId,
   isClearing
 }: {
   notifications: NotificationItem[];
   onOpenEntity: (entityId: string) => void;
+  onOpenGovernance: () => void;
   onClear: (notificationId: string) => void;
   clearingId: string | null;
   isClearing: boolean;
@@ -579,19 +588,22 @@ const NotificationList = ({
         <button
           key={item.id}
           type="button"
-          className={`${styles.notificationRow} ${styles.notificationRowUnread}`}
+          className={`${styles.notificationRow} ${item.read_at == null ? styles.notificationRowUnread : ''}`}
           aria-label={`Notification: ${item.entity_name}`}
           onClick={() => {
-            if (item.operation !== 'delete') onOpenEntity(item.entity_public_id);
+            if (item.category === 'action' || item.case_id) {
+              onClear(item.id);
+              onOpenGovernance();
+            } else if (item.operation !== 'delete') onOpenEntity(item.entity_public_id);
           }}
         >
           <div className={styles.notifDot} />
           <div className={styles.notificationRowMain}>
-            <div className={styles.notificationEntity}>{item.entity_name}</div>
+            <div className={styles.notificationEntity}>{item.title ?? item.entity_name}</div>
             <div className={styles.notificationMeta}>
-              <span>{item.changed_by_display_name}</span>
+              <span>{item.message ?? item.changed_by_display_name}</span>
               <span className={styles.notificationSep}>·</span>
-              <span className={styles.notificationOp}>{item.operation}</span>
+              <span className={styles.notificationOp}>{item.event_type ?? item.operation}</span>
             </div>
           </div>
           <div className={styles.notificationWhen}>{formatRelativeTime(item.timestamp)}</div>
@@ -613,6 +625,25 @@ const NotificationList = ({
         </button>
       ))}
     </div>
+  );
+};
+
+const GovernanceMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  const { data } = useGovernanceTaskCount(workspaceSlug, !!workspaceSlug);
+  const count = data?.count ?? 0;
+
+  return (
+    <button
+      type="button"
+      className={styles.notificationTrigger}
+      aria-label="My work"
+      title="My work"
+      onClick={() => navigate({ to: '/$workspaceSlug/governance', params: { workspaceSlug } })}
+    >
+      <TbClipboardCheck size={15} />
+      {count > 0 && <span className={styles.notificationBadge}>{count > 9 ? '9+' : count}</span>}
+    </button>
   );
 };
 

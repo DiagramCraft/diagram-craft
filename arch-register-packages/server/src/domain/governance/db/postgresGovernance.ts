@@ -119,6 +119,13 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
     return mapDatabaseRows(rows, governanceMappers.assignment);
   }
 
+  async listAssignments(workspace: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM governance_assignment WHERE workspace = ${workspace} ORDER BY created_at ASC
+    `;
+    return mapDatabaseRows(rows, governanceMappers.assignment);
+  }
+
   async listOpenAssignments(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM governance_assignment
