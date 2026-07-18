@@ -87,6 +87,8 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
     setAddEntityOpen,
     planEntityId,
     setPlanEntityId,
+    editSnapshot,
+    setEditSnapshot,
     applySnapshot,
     setApplySnapshot,
     menu,
@@ -592,6 +594,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onRemoveEntity={entityId => removeEntityMutation.mutate(entityId)}
           onPlanFutureChange={entityId => setPlanEntityId(entityId)}
           onApplySnapshot={snap => setApplySnapshot(snap)}
+          onEditSnapshot={snap => setEditSnapshot(snap)}
         />
       ) : contentFolderFilter ? (
         <ProjectContent
@@ -797,6 +800,20 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           teams={teams}
           lifecycleStates={lifecycleStates}
           onClose={() => setPlanEntityId(null)}
+        />
+      )}
+
+      {editSnapshot && (
+        <PlanFutureChangeDialog
+          open={!!editSnapshot}
+          snapshot={editSnapshot}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          entityId={editSnapshot.entity_id}
+          schemas={schemas}
+          teams={teams}
+          lifecycleStates={lifecycleStates}
+          onClose={() => setEditSnapshot(null)}
         />
       )}
 

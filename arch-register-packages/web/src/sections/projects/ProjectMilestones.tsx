@@ -4,7 +4,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { TbPlus, TbTrash, TbFlag, TbCalendarWeek } from 'react-icons/tb';
+import { TbPlus, TbTrash, TbFlag, TbCalendarWeek, TbDots, TbPencil } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { Milestone, CreateMilestoneRequest } from '@arch-register/api-types/milestoneContract';
 import { getRouteApi } from '@tanstack/react-router';
@@ -12,6 +12,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectMilestones.module.css';
+import { DropdownMenu } from '../../components/DropdownMenu';
 import {
   useMilestones,
   useCreateMilestone,
@@ -222,19 +223,7 @@ const MilestoneCard = ({
   const isCancelled = milestone.status === 'cancelled';
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: contains a nested delete <button>, which is invalid inside a <button>
-    <div
-      role="button"
-      tabIndex={0}
-      className={`${styles.card} ${isCancelled ? styles.cardCancelled : ''}`}
-      onClick={onEdit}
-      onKeyDown={event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onEdit();
-        }
-      }}
-    >
+    <div className={`${styles.card} ${isCancelled ? styles.cardCancelled : ''}`}>
       <div className={styles.cardBody}>
         <div className={styles.cardHead}>
           <div className={styles.cardName}>{milestone.name}</div>
@@ -251,14 +240,25 @@ const MilestoneCard = ({
       </div>
       {canEdit && (
         <div className={styles.cardActions}>
-          <Button
-            variant="ghost"
-            icon={<TbTrash size={13} />}
-            title="Delete milestone"
-            onClick={event => {
-              event.stopPropagation();
-              onDelete();
-            }}
+          <DropdownMenu
+            trigger={
+              <Button
+                size="sm"
+                variant="icon-only"
+                aria-label="Milestone actions"
+                title="Milestone actions"
+                icon={<TbDots size={14} />}
+              />
+            }
+            items={[
+              { label: 'Edit', icon: <TbPencil size={14} />, onClick: onEdit },
+              {
+                label: 'Remove',
+                icon: <TbTrash size={14} />,
+                danger: true,
+                onClick: onDelete
+              }
+            ]}
           />
         </div>
       )}

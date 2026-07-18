@@ -798,6 +798,25 @@ export const workspaceEntityContract = oc.tag('Entities').router({
           })
         )
         .output(entitySnapshotSchema),
+      remove: oc
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/data/{id}/snapshots/{snapshotId}',
+          inputStructure: 'detailed',
+          summary: 'Delete future entity snapshot',
+          description: 'Deletes a planned future update snapshot.',
+          tags: ['Entities']
+        })
+        .input(
+          z.object({
+            params: z.object({
+              workspace: z.string(),
+              id: z.string().regex(UUID_REGEX),
+              snapshotId: z.string().regex(UUID_REGEX)
+            })
+          })
+        )
+        .output(deleteEntityResponseSchema),
       promote: oc
         .route({
           method: 'POST',

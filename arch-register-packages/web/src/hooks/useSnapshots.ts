@@ -81,6 +81,20 @@ export const useUpdateSnapshot = (workspaceId: string, entityId: string) => {
   });
 };
 
+export const useDeleteSnapshot = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: { entityId: string; snapshotId: string; projectId?: string | null }) =>
+      orpcClient.entities.snapshots.remove({
+        params: { workspace: workspaceId, id: params.entityId, snapshotId: params.snapshotId }
+      }),
+    onSuccess: (_, variables) => {
+      invalidateSnapshotQueries(queryClient, workspaceId, variables.entityId, variables.projectId);
+    }
+  });
+};
+
 export const useRestoreSnapshot = (workspaceId: string, entityId: string) => {
   const queryClient = useQueryClient();
 

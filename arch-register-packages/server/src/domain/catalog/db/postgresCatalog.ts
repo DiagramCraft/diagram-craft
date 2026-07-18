@@ -599,6 +599,15 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return row ? catalogMappers.entitySnapshot(row) : null;
   }
 
+  async deleteSnapshot(workspace: string, snapshotId: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      DELETE FROM entity_snapshot
+      WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
+      RETURNING *
+    `;
+    return row ? catalogMappers.entitySnapshot(row) : null;
+  }
+
   async reassignSnapshotsFromMilestone(
     workspace: string,
     milestoneId: string,

@@ -643,6 +643,28 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(updated!.commit_message).toBe('planned change');
       expect(updated!.proposed_state).toEqual({ name: 'future name' });
 
+      const deletedSnapshot = await db.catalog.createSnapshot({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        status: 'future_update',
+        project_id: project.id,
+        target_date: '2031-01-01',
+        milestone_id: null,
+        commit_message: 'remove this plan',
+        created_at: new Date(),
+        created_by: user.id,
+        created_by_name: user.display_name,
+        base_state: {},
+        proposed_state: { name: 'another future name' }
+      });
+
+      expect((await db.catalog.deleteSnapshot(workspace, deletedSnapshot.id))!.id).toBe(
+        deletedSnapshot.id
+      );
+      expect(await db.catalog.getSnapshot(workspace, deletedSnapshot.id)).toBeNull();
+      expect(await db.catalog.deleteSnapshot(workspace, deletedSnapshot.id)).toBeNull();
+
       const byProject = await db.catalog.listSnapshotsByProject(workspace, project.id);
       expect(byProject.map(s => s.id)).toEqual([snapshot.id]);
 

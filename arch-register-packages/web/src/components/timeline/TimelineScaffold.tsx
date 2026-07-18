@@ -1,8 +1,9 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode, type UIEventHandler } from 'react';
 import { getTimelineMinWidthStyle } from './timelineUtils';
 
 type TimelineScaffoldProps = {
   scrollClassName?: string;
+  onScroll?: UIEventHandler<HTMLDivElement>;
   innerClassName?: string;
   labelWidth: number;
   totalWidth: number;
@@ -17,6 +18,7 @@ type TimelineScaffoldProps = {
 
 export const TimelineScaffold = ({
   scrollClassName,
+  onScroll,
   innerClassName,
   labelWidth,
   totalWidth,
@@ -37,7 +39,7 @@ export const TimelineScaffold = ({
   }, [labelWidth, todayPx, todayScrollAlign]);
 
   return (
-    <div className={scrollClassName ?? ''} ref={scrollRef}>
+    <div className={scrollClassName ?? ''} ref={scrollRef} onScroll={onScroll}>
       <div
         className={innerClassName ?? ''}
         style={getTimelineMinWidthStyle(labelWidth, totalWidth, innerStyle)}

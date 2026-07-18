@@ -47,6 +47,7 @@ export const useProjectDetailController = (folder?: string) => {
   const [pinError, setPinError] = useState('');
   const [addEntityOpen, setAddEntityOpen] = useState(false);
   const [planEntityId, setPlanEntityId] = useState<string | null>(null);
+  const [editSnapshot, setEditSnapshot] = useState<EntitySnapshot | null>(null);
   const [applySnapshot, setApplySnapshot] = useState<EntitySnapshot | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; target: ProjectMenuTarget } | null>(
     null
@@ -146,6 +147,8 @@ export const useProjectDetailController = (folder?: string) => {
     setAddEntityOpen,
     planEntityId,
     setPlanEntityId,
+    editSnapshot,
+    setEditSnapshot,
     applySnapshot,
     setApplySnapshot,
     menu,
