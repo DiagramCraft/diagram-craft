@@ -100,7 +100,7 @@ export const RestoreSnapshotDialog = ({
           </div>
         )}
 
-        <FormElement label="Commit Message (Optional)">
+        <FormElement label="Commit Message" required={false}>
           <TextInput
             value={commitMessage}
             onChange={v => setCommitMessage(v ?? '')}

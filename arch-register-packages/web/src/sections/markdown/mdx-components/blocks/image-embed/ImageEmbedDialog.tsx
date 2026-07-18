@@ -180,7 +180,7 @@ export const ImageEmbedDialog = ({
           </DialogSection>
         )}
 
-        <DialogSection label="Alt text (optional)">
+        <DialogSection label="Alt text" required={false}>
           <input
             className={styles.input}
             type="text"

@@ -301,7 +301,7 @@ const EntityChangeProposalPanel = ({
           This applies the proposed changes immediately and closes the approval case. Enter a reason
           for the audited override.
         </p>
-        <FormElement label="Reason (required)">
+        <FormElement label="Reason" required>
           <TextInput
             value={bypassReason}
             onChange={value => setBypassReason(value ?? '')}
@@ -804,20 +804,17 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         ]}
       >
         <FormElement
-          label={
-            approvalRequired && canOverrideEntityApproval
-              ? 'Note / bypass reason (required for bypass)'
-              : 'Note (optional)'
-          }
+          label={approvalRequired && canOverrideEntityApproval ? 'Note / bypass reason' : 'Note'}
+          required={approvalRequired && canOverrideEntityApproval}
         >
           <TextInput
             value={saveConfirmMessage}
             onChange={v => setSaveConfirmMessage(v ?? '')}
-            placeholder="Describe what changed (optional)"
+            placeholder="Describe what changed"
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="">
+        <FormElement label="" required>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <input
               type="checkbox"

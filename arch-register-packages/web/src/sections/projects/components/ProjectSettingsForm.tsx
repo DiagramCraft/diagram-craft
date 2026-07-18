@@ -168,7 +168,7 @@ export const ProjectSettingsForm = ({
         <input className={styles.formInput} value={name} onChange={e => setName(e.target.value)} />
       </div>
       <div className={styles.formRow}>
-        <label className={styles.formLabel}>Description</label>
+        <label className={styles.formLabel}>Description (optional)</label>
         <textarea
           className={`${styles.formInput} ${styles.formTextarea}`}
           value={description}
@@ -190,7 +190,7 @@ export const ProjectSettingsForm = ({
         </select>
       </div>
       <div className={styles.formRow}>
-        <label className={styles.formLabel}>Owner</label>
+        <label className={styles.formLabel}>Owner (optional)</label>
         <select className={styles.formInput} value={owner} onChange={e => setOwner(e.target.value)}>
           <option value="">No owner</option>
           {teams.map(team => (
@@ -201,11 +201,11 @@ export const ProjectSettingsForm = ({
         </select>
       </div>
       <div className={styles.formRow}>
-        <label className={styles.formLabel}>Color</label>
+        <label className={styles.formLabel}>Color (optional)</label>
         <ColorPicker value={color} onChange={setColor} size="small" />
       </div>
       <div className={styles.formRow}>
-        <label className={styles.formLabel}>Target date</label>
+        <label className={styles.formLabel}>Target date (optional)</label>
         <input
           className={styles.formInput}
           type="date"

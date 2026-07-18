@@ -163,7 +163,7 @@ export const LifecycleSubSection = ({
           </div>
         </div>
         <div className={styles.sectionBody}>
-          <FormElement label="Deprecated state">
+          <FormElement label="Deprecated state" required={false}>
             <Select.Root
               value={deprecatedStateId}
               placeholder="None"

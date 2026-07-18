@@ -129,7 +129,7 @@ export const DiagramEmbedDialog = ({
             <DiagramPicker fileTree={fileTree} selectedId={fileId} onSelect={handleSelectFile} />
           </DialogSection>
         )}
-        <DialogSection label="Caption (optional)">
+        <DialogSection label="Caption" required={false}>
           <input
             className={styles.input}
             type="text"

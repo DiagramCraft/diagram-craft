@@ -24,7 +24,7 @@ export const WithTextInput: Story = {
     const [value, setValue] = useState('');
     return (
       <div style={{ width: '300px' }}>
-        <FormElement label="Email">
+        <FormElement label="Email" required>
           <TextInput
             value={value}
             onChange={v => setValue(v ?? '')}
@@ -41,25 +41,25 @@ export const WithTextInput: Story = {
   }
 };
 
-export const WithRequired: Story = {
+export const WithOptional: Story = {
   render: () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [value, setValue] = useState('');
     return (
       <div style={{ width: '300px' }}>
-        <FormElement label="Name" required>
+        <FormElement label="Description" required={false}>
           <TextInput
             value={value}
             onChange={v => setValue(v ?? '')}
-            placeholder="Enter your name"
+            placeholder="Enter a description"
           />
         </FormElement>
       </div>
     );
   },
   args: {
-    label: 'Name',
-    required: true,
+    label: 'Description',
+    required: false,
     children: null
   }
 };
@@ -120,7 +120,7 @@ export const WithTextArea: Story = {
     const [value, setValue] = useState('');
     return (
       <div style={{ width: '300px' }}>
-        <FormElement label="Description" hint="Provide a brief description">
+        <FormElement label="Description" required={false} hint="Provide a brief description">
           <TextArea
             value={value}
             onChange={v => setValue(v ?? '')}
@@ -195,7 +195,7 @@ export const MultipleFields: Story = {
           </Select.Root>
         </FormElement>
 
-        <FormElement label="Bio">
+        <FormElement label="Bio" required={false}>
           <TextArea
             value={description}
             onChange={v => setDescription(v ?? '')}

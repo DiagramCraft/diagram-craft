@@ -93,7 +93,7 @@ export const ProposeEntityDeprecationDialog = ({
       ]}
     >
       <div className={styles.form}>
-        <FormElement label="Reason (required)">
+        <FormElement label="Reason" required>
           <TextInput
             value={reason}
             onChange={v => setReason(v ?? '')}
@@ -101,10 +101,10 @@ export const ProposeEntityDeprecationDialog = ({
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="Target deprecation date (required)">
+        <FormElement label="Target deprecation date" required>
           <DateInput value={targetDate} onChange={v => setTargetDate(v ?? '')} />
         </FormElement>
-        <FormElement label="Successor entity" hint="Optional replacement entity">
+        <FormElement label="Successor entity" required={false} hint="Replacement entity">
           <EntityPicker
             selectedEntityId={successorEntityId}
             selectedEntity={successorEntity}
@@ -112,7 +112,7 @@ export const ProposeEntityDeprecationDialog = ({
             onClearEntity={() => setSuccessorEntityId('')}
           />
         </FormElement>
-        <FormElement label="Related project" hint="Optional">
+        <FormElement label="Related project" required={false}>
           <Select.Root value={projectId} placeholder="None" onChange={v => setProjectId(v ?? '')}>
             <Select.Item value="">None</Select.Item>
             {projects.map(p => (
@@ -122,7 +122,7 @@ export const ProposeEntityDeprecationDialog = ({
             ))}
           </Select.Root>
         </FormElement>
-        <FormElement label="Notes for dependent owners" hint="Optional">
+        <FormElement label="Notes for dependent owners" required={false}>
           <TextInput value={notes} onChange={v => setNotes(v ?? '')} style={{ width: '100%' }} />
         </FormElement>
       </div>
@@ -364,14 +364,14 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
         ]}
       >
         <div className={styles.form}>
-          <FormElement label="Comment" hint="Optional">
+          <FormElement label="Comment" required={false}>
             <TextInput
               value={ackComment}
               onChange={v => setAckComment(v ?? '')}
               style={{ width: '100%' }}
             />
           </FormElement>
-          <FormElement label="Planned remediation" hint="Optional">
+          <FormElement label="Planned remediation" required={false}>
             <TextInput
               value={ackRemediation}
               onChange={v => setAckRemediation(v ?? '')}
@@ -401,10 +401,10 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
         ]}
       >
         <div className={styles.form}>
-          <FormElement label="New target date">
+          <FormElement label="New target date" required>
             <DateInput value={postponeDate} onChange={v => setPostponeDate(v ?? '')} />
           </FormElement>
-          <FormElement label="Reason (required)">
+          <FormElement label="Reason" required>
             <TextInput
               value={postponeReason}
               onChange={v => setPostponeReason(v ?? '')}
@@ -437,6 +437,7 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
           )}
           <FormElement
             label="Reason"
+            required={outstandingAckCount > 0 || finalizeOverride}
             hint="Required if outstanding acknowledgements or finalizing early"
           >
             <TextInput
@@ -468,7 +469,7 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
         ]}
       >
         <div className={styles.form}>
-          <FormElement label="Reason (required)">
+          <FormElement label="Reason" required>
             <TextInput
               value={cancelReason}
               onChange={v => setCancelReason(v ?? '')}

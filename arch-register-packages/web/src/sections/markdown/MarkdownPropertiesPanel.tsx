@@ -513,14 +513,15 @@ export const MarkdownPropertiesPanel = ({
           ) : (
             fieldsToRender.map(field => {
               const value = fieldValue(metadata, field);
-              const required = field.requirement === 'required';
               const error = showErrors ? errors[field.id] : undefined;
               const warning = warnings[field.id];
               return (
                 <div key={field.id} className={`${styles.row} ${error ? styles.rowError : ''}`}>
                   <div className={styles.label}>
                     <span>{field.name}</span>
-                    {required && <span className={styles.requiredDot} title="Required" />}
+                    {field.requirement === 'optional' && (
+                      <span className={styles.optionalLabel}>(optional)</span>
+                    )}
                   </div>
                   <div className={styles.value}>
                     {readOnly ? (

@@ -653,7 +653,9 @@ const PropertyRow = ({
       <div className={styles.propLabel}>
         {field.name}
         <span className={styles.propType}>{typeLabel}</span>
-        {field.requirementLevel === 'required' && <span className={styles.propReq}>Required</span>}
+        {field.requirementLevel === 'optional' && (
+          <span className={styles.propOptional}>(optional)</span>
+        )}
         {field.requirementLevel === 'expected' && (
           <span className={styles.propExpected}>Expected</span>
         )}

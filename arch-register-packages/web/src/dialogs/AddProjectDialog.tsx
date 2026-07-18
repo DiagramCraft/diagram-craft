@@ -112,7 +112,7 @@ export const AddProjectDialog = ({
         }}
       >
         <button type="submit" hidden />
-        <FormElement label="Name">
+        <FormElement label="Name" required>
           <TextInput
             ref={nameRef}
             value={name}
@@ -121,16 +121,16 @@ export const AddProjectDialog = ({
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="Description">
+        <FormElement label="Description" required={false}>
           <TextArea
             value={description}
             onChange={value => setDescription(value ?? '')}
-            placeholder="Optional — what is this project about?"
+            placeholder="What is this project about?"
             rows={3}
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="Status">
+        <FormElement label="Status" required>
           <Select.Root
             value={status}
             onChange={value =>
@@ -147,7 +147,7 @@ export const AddProjectDialog = ({
             ))}
           </Select.Root>
         </FormElement>
-        <FormElement label="Owner">
+        <FormElement label="Owner" required={false}>
           <Select.Root
             value={owner || undefined}
             onChange={value => setOwner(value ?? '')}
@@ -161,7 +161,7 @@ export const AddProjectDialog = ({
             ))}
           </Select.Root>
         </FormElement>
-        <FormElement label="Color">
+        <FormElement label="Color" required={false}>
           <ColorPicker value={color} onChange={setColor} size="small" />
         </FormElement>
         {error && <div className={styles.error}>{error}</div>}

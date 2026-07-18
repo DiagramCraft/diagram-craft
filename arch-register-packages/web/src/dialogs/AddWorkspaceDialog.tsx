@@ -280,7 +280,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
             </div>
 
             <div className={styles.fields}>
-              <FormElement label="Workspace name">
+              <FormElement label="Workspace name" required>
                 <TextInput
                   ref={nameRef}
                   placeholder="e.g. Acme Payments Platform"
@@ -290,7 +290,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 />
               </FormElement>
 
-              <FormElement label="Color">
+              <FormElement label="Color" required={false}>
                 <ColorPicker
                   value={color}
                   onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)}
@@ -298,7 +298,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 />
               </FormElement>
 
-              <FormElement label="Description">
+              <FormElement label="Description" required={false}>
                 <TextArea
                   placeholder="What lives in this workspace? Who owns it?"
                   value={description}
@@ -361,7 +361,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
           {mode === 'copy' && (
             <div className={styles.copyPanel}>
-              <FormElement label="Copy from">
+              <FormElement label="Copy from" required>
                 <Select.Root
                   value={copyFrom || undefined}
                   onChange={value => setCopyFrom(value ?? '')}
@@ -375,7 +375,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                   ))}
                 </Select.Root>
               </FormElement>
-              <FormElement label="Include">
+              <FormElement label="Include" required={false}>
                 <div className={styles.copyInclude}>
                   {COPY_PARTS.map(p => (
                     <label key={p.id} className={styles.checkbox}>

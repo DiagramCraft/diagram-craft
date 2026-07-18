@@ -121,7 +121,7 @@ export const AddMarkdownDialog = ({
       ]}
     >
       <div className={styles.form}>
-        <FormElement label="Name" error={error}>
+        <FormElement label="Name" required error={error}>
           <TextInput
             ref={nameRef}
             value={name}
@@ -130,7 +130,7 @@ export const AddMarkdownDialog = ({
             placeholder="e.g. Architecture overview"
           />
         </FormElement>
-        <FormElement label="Document type">
+        <FormElement label="Document type" required={false}>
           <Select.Root
             value={documentTypeId || '__untyped__'}
             onChange={value =>
@@ -147,7 +147,7 @@ export const AddMarkdownDialog = ({
             ))}
           </Select.Root>
         </FormElement>
-        <FormElement label="Template">
+        <FormElement label="Template" required={false}>
           <Select.Root
             value={templateId || '__blank__'}
             onChange={value => handleTemplateChange(value === '__blank__' ? '' : (value ?? ''))}

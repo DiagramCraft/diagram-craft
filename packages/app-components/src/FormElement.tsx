@@ -14,7 +14,7 @@ export type FormElementProps = {
 
 export const FormElement = ({
   label,
-  required = false,
+  required = true,
   hint,
   error,
   children,
@@ -29,7 +29,7 @@ export const FormElement = ({
     <div className={`${styles.cFormElement} ${className ?? ''}`} style={style}>
       <label className={styles.eLabel} htmlFor={htmlFor}>
         {label}
-        {required && <span className={styles.eRequired}>*</span>}
+        {!required && <span className={styles.eOptional}>(optional)</span>}
       </label>
       <div>{children}</div>
       {hint && !error && (

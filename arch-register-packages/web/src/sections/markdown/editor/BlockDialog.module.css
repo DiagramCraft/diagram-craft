@@ -17,3 +17,8 @@
   letter-spacing: 0.05em;
   color: var(--cmp-fg-disabled);
 }
+
+.optionalLabel {
+  color: var(--cmp-fg-disabled);
+  font-weight: 400;
+}

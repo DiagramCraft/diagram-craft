@@ -303,6 +303,7 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
       <div className={styles.nameField}>
         <FormElement
           label="Diagram name"
+          required={false}
           hint={folder ? `Will be created in ${folder}` : undefined}
           error={error}
         >

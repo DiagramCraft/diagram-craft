@@ -134,7 +134,11 @@ export const MountExternalContentDialog = ({ workspaceId, open, mount, onClose }
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="Repository path" hint="Leave empty to mount the repository root.">
+        <FormElement
+          label="Repository path"
+          required={false}
+          hint="Leave empty to mount the repository root."
+        >
           <TextInput
             value={sourcePath}
             onChange={value => setSourcePath(value ?? '')}
@@ -144,6 +148,7 @@ export const MountExternalContentDialog = ({ workspaceId, open, mount, onClose }
         </FormElement>
         <FormElement
           label="Refresh interval (hours)"
+          required={false}
           hint="This interval applies to all mounts using the same repository URL."
         >
           <TextInput
