@@ -7,6 +7,10 @@
   overflow-y: auto;
 }
 
+.head {
+  margin-bottom: 20px;
+}
+
 .editor {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);

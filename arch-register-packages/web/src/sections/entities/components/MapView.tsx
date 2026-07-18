@@ -611,7 +611,6 @@ export const MapView = ({
                 <select
                   className={styles.select}
                   value={metricConfig.aggregation}
-                  disabled={isEnumSource(metricConfig.source)}
                   onChange={e => {
                     const aggregation = e.target.value as MetricAggregation;
                     setMetricConfig({
@@ -624,7 +623,10 @@ export const MapView = ({
                     });
                   }}
                 >
-                  {AGGREGATION_OPTIONS.map(o => (
+                  {(isEnumSource(metricConfig.source)
+                    ? AGGREGATION_OPTIONS.filter(o => o.value === 'count' || o.value === 'worst')
+                    : AGGREGATION_OPTIONS
+                  ).map(o => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
@@ -645,8 +647,17 @@ export const MapView = ({
                       })
                     }
                   >
-                    <option value="high">High is worse</option>
-                    <option value="low">Low is worse</option>
+                    {isEnumSource(metricConfig.source) ? (
+                      <>
+                        <option value="high">Last option is worst</option>
+                        <option value="low">First option is worst</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="high">High is worse</option>
+                        <option value="low">Low is worse</option>
+                      </>
+                    )}
                   </select>
                   <TbChevronDown size={11} />
                 </div>
