@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
-import { TbPlus, TbTrash } from 'react-icons/tb';
+import { TbPlus, TbTrash, TbChevronUp, TbChevronDown } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../../hooks/useEnums';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { EmptyState } from '../../components/EmptyState';
+import { Title } from '../../components/Title';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
@@ -92,35 +93,50 @@ export const EnumEditorScreen = () => {
     setDirty(true);
   };
 
+  const moveOption = (index: number, direction: -1 | 1) => {
+    setOptions(prev => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target]!, next[index]!];
+      return next;
+    });
+    setDirty(true);
+  };
+
   return (
     <div className={styles.screen}>
-      <div className={styles.header}>
-        <div>
-          <div className={styles.eyebrow}>Data model</div>
-          <div className={styles.title}>Enums</div>
-          <div className={styles.sub}>
-            Define reusable option sets that select fields can reference.
-          </div>
-        </div>
-        <div className={styles.actions}>
-          {canEdit && (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateEnum}>
-              New enum
-            </Button>
-          )}
-        </div>
+      <div className={styles.head}>
+        <Title
+          breadcrumb={[
+            {
+              label: 'Home',
+              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+            },
+            { label: 'Settings' }
+          ]}
+          eyebrow="Data model"
+          title="Enums"
+          description="Define reusable option sets that select fields can reference."
+          buttons={
+            canEdit && (
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateEnum}>
+                New enum
+              </Button>
+            )
+          }
+        />
       </div>
 
       {selected ? (
         <div>
           <div className={styles.editor}>
             <div className={styles.editorHead}>
-              <div className={styles.editorTitleRow}>
-                <div>
-                  <div className={styles.editorTitle}>{name}</div>
-                  <div className="dim">{selected.options.length} options</div>
-                </div>
-              </div>
+              <Title
+                titleTestId="enum-editor-title"
+                title={name}
+                description={`${selected.options.length} options`}
+              />
             </div>
 
             <div className={styles.formRow}>
@@ -151,7 +167,7 @@ export const EnumEditorScreen = () => {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 28px',
+                    gridTemplateColumns: '52px 1fr 1fr 28px',
                     gap: 10,
                     padding: '8px 10px',
                     fontSize: 11,
@@ -162,6 +178,7 @@ export const EnumEditorScreen = () => {
                     borderBottom: '1px solid var(--panel-border)'
                   }}
                 >
+                  <span />
                   <span>Value</span>
                   <span>Label</span>
                   <span />
@@ -171,14 +188,39 @@ export const EnumEditorScreen = () => {
                     key={i}
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: '1fr 1fr 28px',
+                      gridTemplateColumns: '52px 1fr 1fr 28px',
                       gap: 10,
                       padding: '8px 10px',
                       fontSize: 12,
+                      alignItems: 'center',
                       borderBottom:
                         i < options.length - 1 ? '1px solid var(--panel-border)' : 'none'
                     }}
                   >
+                    {canEdit ? (
+                      <div style={{ display: 'flex', gap: 2 }}>
+                        <button
+                          type="button"
+                          className={styles.iconBtn}
+                          disabled={i === 0}
+                          onClick={() => moveOption(i, -1)}
+                          aria-label="Move option up"
+                        >
+                          <TbChevronUp size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.iconBtn}
+                          disabled={i === options.length - 1}
+                          onClick={() => moveOption(i, 1)}
+                          aria-label="Move option down"
+                        >
+                          <TbChevronDown size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span />
+                    )}
                     <TextInput
                       value={opt.value}
                       readOnly={!canEdit}

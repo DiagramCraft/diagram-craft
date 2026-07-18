@@ -30,9 +30,10 @@ export const metricSourceSchema = z.discriminatedUnion('kind', [
 ]);
 
 // Enum-sourced metrics (schema `select` fields and assessment `enum` fields) aggregate to a
-// dominant option + full distribution rather than a number, so only `count` - which doesn't
-// depend on the value's type - is meaningful for them. `worst` additionally has no defined
-// ranking for enum options in v1 (see issue #2168) regardless of source kind.
+// dominant option + full distribution rather than a number, so `sum`/`average`/`minimum`/
+// `maximum` aren't meaningful for them. `count` and `worst` are supported: `worst` ranks
+// options by their admin-configured top-to-bottom order on the enum (see issue #2168) -
+// `worstDirection` selects which end of that list is worse.
 export const enumSourceKinds = ['enum', 'assessmentEnum'] as const;
 
 export const metricAggregationSchema = z
@@ -49,7 +50,7 @@ export const metricConfigSchema = z.object({
     .enum(['low', 'high'])
     .optional()
     .describe(
-      'Direction used for "worst" aggregation - "low" means lower values are worse, "high" means higher values are worse. Required when aggregation is "worst".'
+      'Direction used for "worst" aggregation. For numeric/lifecycle sources, "low" means lower values are worse and "high" means higher values are worse. For enum sources, "low" means the first option in the enum\'s configured order is worse and "high" means the last option is worse. Required when aggregation is "worst".'
     )
 });
 

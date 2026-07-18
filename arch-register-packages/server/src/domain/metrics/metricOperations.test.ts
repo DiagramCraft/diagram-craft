@@ -548,6 +548,82 @@ describe('computeBoxMetrics - enum sources', () => {
     });
   });
 
+  it('worst picks the first-listed populated option when direction is "low"', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', tier: 'gold' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', tier: 'silver' } }),
+      makeService('s3', 'd1', { data: { parent: 'd1', tier: 'silver' } })
+    ];
+    // tierEnumOptions order is gold, silver, bronze; "low" means the first-listed option
+    // (gold) is worst, even though it's not the most common value.
+    const result = computeBoxMetrics(
+      ['d1'],
+      { ...enumMetric, aggregation: 'worst', worstDirection: 'low' },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      tierEnumOptions
+    );
+    expect(result.results[0]).toMatchObject({ dominantValue: 'gold', dominantLabel: 'Gold' });
+  });
+
+  it('worst picks the last-listed populated option when direction is "high"', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', tier: 'gold' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', tier: 'silver' } })
+    ];
+    // "high" means the last-listed option present (silver) is worst.
+    const result = computeBoxMetrics(
+      ['d1'],
+      { ...enumMetric, aggregation: 'worst', worstDirection: 'high' },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      tierEnumOptions
+    );
+    expect(result.results[0]).toMatchObject({ dominantValue: 'silver', dominantLabel: 'Silver' });
+  });
+
+  it('worst ignores values not present in the enum options', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', tier: 'unknown-tier' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', tier: 'silver' } })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      { ...enumMetric, aggregation: 'worst', worstDirection: 'high' },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      tierEnumOptions
+    );
+    expect(result.results[0]).toMatchObject({ dominantValue: 'silver', dominantLabel: 'Silver' });
+  });
+
+  it('worst returns a null dominant option when there is no populated data', () => {
+    const entities = [makeDomain('d1'), makeService('s1', 'd1', { data: { parent: 'd1' } })];
+    const result = computeBoxMetrics(
+      ['d1'],
+      { ...enumMetric, aggregation: 'worst', worstDirection: 'high' },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      tierEnumOptions
+    );
+    expect(result.results[0]).toMatchObject({ dominantValue: null, dominantLabel: null });
+  });
+
   it('aggregates an assessment-enum source from the joined responses map', () => {
     const entities = [makeDomain('d1'), makeService('s1', 'd1'), makeService('s2', 'd1')];
     const responsesByEntity = new Map<string, Record<string, string | number>>([
@@ -722,20 +798,27 @@ describe('getBoxMetrics', () => {
     expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
   });
 
-  it('rejects a "worst" aggregation for an enum source', async () => {
-    const db = makeDb([makeDomain('d1')], { enums: { 'enum-tier': tierEnumOptions } });
+  it('accepts a "worst" aggregation for an enum source', async () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', tier: 'gold' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', tier: 'silver' } })
+    ];
+    const db = makeDb(entities, { enums: { 'enum-tier': tierEnumOptions } });
     const metric: MetricConfig = {
       sourceSchemaId: 'service',
       source: { kind: 'enum', fieldId: 'tier' },
       aggregation: 'worst',
       worstDirection: 'high'
     };
-    await expect(
-      getBoxMetrics(db, 'ws-1', permissiveAuthCtx, { boxEntityIds: ['d1'], metric })
-    ).rejects.toMatchObject({ status: 400 });
+    const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+      boxEntityIds: ['d1'],
+      metric
+    });
+    expect(result.results[0]).toMatchObject({ dominantValue: 'silver', dominantLabel: 'Silver' });
   });
 
-  it('rejects a non-count aggregation for an enum source', async () => {
+  it('rejects a non-count, non-worst aggregation for an enum source', async () => {
     const db = makeDb([makeDomain('d1')], { enums: { 'enum-tier': tierEnumOptions } });
     const metric: MetricConfig = {
       sourceSchemaId: 'service',

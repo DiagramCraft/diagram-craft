@@ -142,6 +142,39 @@ const computeDistribution = (
 };
 
 /**
+ * Worst-ranked option among `values`, using each option's position in `enumOptions` (its
+ * admin-configured top-to-bottom order, see #2168) as the severity ranking - `worstDirection
+ * 'low'` treats the first option as worst, `'high'` treats the last option as worst. Values
+ * not present in `enumOptions` are ignored, since they have no defined rank.
+ */
+const pickWorstEnumOption = (
+  values: string[],
+  enumOptions: EnumOption[],
+  worstDirection: 'low' | 'high'
+): { dominantValue: string | null; dominantLabel: string | null } => {
+  const optionIndex = new Map(enumOptions.map((o, i) => [o.value, i]));
+  const labelByValue = new Map(enumOptions.map(o => [o.value, o.label]));
+
+  let worstValue: string | null = null;
+  let worstIndex: number | null = null;
+  for (const value of values) {
+    const index = optionIndex.get(value);
+    if (index == null) continue;
+    const isWorse =
+      worstIndex == null || (worstDirection === 'low' ? index < worstIndex : index > worstIndex);
+    if (isWorse) {
+      worstValue = value;
+      worstIndex = index;
+    }
+  }
+
+  return {
+    dominantValue: worstValue,
+    dominantLabel: worstValue == null ? null : (labelByValue.get(worstValue) ?? worstValue)
+  };
+};
+
+/**
  * Pure metric aggregation over an already permission- and project-scope-filtered entity pool.
  * `isFilterMatch` additionally gates which descendants *contribute* to the aggregation (current
  * browser filters/conditions), while `entities` (and the containment index built from it)
@@ -180,10 +213,15 @@ export const computeBoxMetrics = (
       const values = sourceEntities
         .map(entity => extractEnumValue(entity, source, responsesByEntity))
         .filter((v): v is string => v != null);
-      const { dominantValue, dominantLabel, distribution } = computeDistribution(
-        values,
-        enumOptions ?? []
-      );
+      const {
+        dominantValue: modeValue,
+        dominantLabel: modeLabel,
+        distribution
+      } = computeDistribution(values, enumOptions ?? []);
+      const { dominantValue, dominantLabel } =
+        metric.aggregation === 'worst'
+          ? pickWorstEnumOption(values, enumOptions ?? [], worstDirection)
+          : { dominantValue: modeValue, dominantLabel: modeLabel };
       return {
         boxEntityId,
         value: sourceEntities.length,
@@ -319,9 +357,9 @@ export const getBoxMetrics = async (
     });
   }
   if (isEnumSourceKind(metric.source.kind)) {
-    httpAssert.true(metric.aggregation === 'count', {
+    httpAssert.true(metric.aggregation === 'count' || metric.aggregation === 'worst', {
       status: 400,
-      message: 'Enum-sourced metrics only support "count" aggregation'
+      message: 'Enum-sourced metrics only support "count" or "worst" aggregation'
     });
   }
 

@@ -87,6 +87,11 @@
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
           colour in a bubble view.
 
+        - @id:ar.entity-views.map Users can inspect containment hierarchies as a nested capability map, colouring
+          boxes by a configurable metric rolled up from descendant entities (numeric fields, lifecycle state, or
+          assessment fields), using dominant-option or worst aggregation. For enum-sourced metrics, "worst" ranks
+          options by the admin-configured top-to-bottom order of the enum's options.
+
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
