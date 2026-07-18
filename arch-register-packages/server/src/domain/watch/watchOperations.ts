@@ -15,6 +15,9 @@ import {
   NotificationItem,
   WatchedEntity
 } from '@arch-register/api-types/watchContract';
+import { isGovernanceCaseVisible } from '../governance/governanceOperations';
+import { createGovernanceRegistry } from '../governance/governanceRegistry';
+import type { InboxNotificationDbResult } from '../notification/db/notificationDatabase';
 
 const checker = new PermissionChecker();
 
@@ -64,6 +67,16 @@ const toNotificationItem = (
   entityPublicId: string
 ): NotificationItem => ({
   id: notification.id,
+  category: 'information',
+  event_type: `entity.${notification.operation}`,
+  resource_type: 'entity',
+  resource_id: notification.entity_id,
+  case_id: null,
+  assignment_id: null,
+  title: notification.entity_name,
+  message: `${notification.changed_by_display_name} ${notification.operation}d this entity`,
+  action_route: null,
+  read_at: null,
   entity_id: notification.entity_id,
   entity_public_id: entityPublicId,
   entity_name: notification.entity_name,
@@ -76,6 +89,53 @@ const toNotificationItem = (
   created_at: notification.created_at.toISOString(),
   audit_log_id: notification.audit_log_id
 });
+
+const toInboxNotificationItem = (notification: InboxNotificationDbResult): NotificationItem => ({
+  id: notification.id,
+  category: notification.category,
+  event_type: notification.event_type,
+  resource_type: notification.resource_type,
+  resource_id: notification.resource_id,
+  case_id: notification.case_id,
+  assignment_id: notification.assignment_id,
+  title: notification.title,
+  message: notification.message,
+  action_route: notification.action_route,
+  read_at: notification.read_at?.toISOString() ?? null,
+  entity_id: notification.resource_id,
+  entity_public_id: notification.resource_id,
+  entity_name: notification.title,
+  entity_slug: notification.resource_id,
+  schema_id: null,
+  operation: 'update',
+  changed_by_user_id: notification.actor_user_id ?? '',
+  changed_by_display_name: notification.actor_display_name ?? 'System',
+  timestamp: notification.occurred_at.toISOString(),
+  created_at: notification.created_at.toISOString(),
+  audit_log_id: notification.case_id ?? notification.id
+});
+
+const listVisibleInboxNotifications = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext,
+  userId: string
+) => {
+  const notifications = await db.notification.listNotifications(userId, workspace);
+  const registry = createGovernanceRegistry();
+  const visible = await Promise.all(
+    notifications.map(async notification => {
+      if (!notification.case_id) return notification;
+      const caseRow = await db.governance.getCase(workspace, notification.case_id);
+      if (!caseRow) return null;
+      const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
+      return (await isGovernanceCaseVisible(db, authCtx, userId, caseRow, assignments, registry))
+        ? notification
+        : null;
+    })
+  );
+  return visible.filter((item): item is InboxNotificationDbResult => item != null);
+};
 
 export const listWatching = async (
   db: DatabaseAdapter,
@@ -158,18 +218,23 @@ export const listNotifications = async (
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
-  const [notifications, entities] = await Promise.all([
+  const [notifications, inboxNotifications, entities] = await Promise.all([
     db.watch.listNotifications(userId, ws),
+    listVisibleInboxNotifications(db, ws, authCtx, userId),
     listAllCatalogEntities(db, ws)
   ]);
   const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 
-  return notifications
+  const legacyItems = notifications
     .filter(notification => canAccessNotification(authCtx, entityMap, notification))
     .map(notification => {
       const entity = entityMap.get(notification.entity_id);
       return toNotificationItem(notification, entity?.public_id ?? notification.entity_id);
     });
+
+  return [...legacyItems, ...inboxNotifications.map(toInboxNotificationItem)].sort(
+    (a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)
+  );
 };
 
 export const getNotificationCount = async (
@@ -182,16 +247,17 @@ export const getNotificationCount = async (
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
-  const [notifications, entities] = await Promise.all([
+  const [notifications, inboxNotifications, entities] = await Promise.all([
     db.watch.listNotifications(userId, ws),
+    listVisibleInboxNotifications(db, ws, authCtx, userId),
     listAllCatalogEntities(db, ws)
   ]);
   const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 
   return {
-    count: notifications.filter(notification =>
-      canAccessNotification(authCtx, entityMap, notification)
-    ).length
+    count:
+      notifications.filter(notification => canAccessNotification(authCtx, entityMap, notification))
+        .length + inboxNotifications.filter(notification => notification.read_at == null).length
   };
 };
 
@@ -205,13 +271,21 @@ export const deleteNotification = async (
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const deleted = await db.watch.deleteNotification(event.context.user.id, ws, notificationId);
-  httpAssert.present(deleted, {
-    status: 404,
-    message: `Notification '${notificationId}' not found`
-  });
+  const markedRead = await db.notification.markRead(
+    event.context.user.id,
+    ws,
+    notificationId,
+    new Date()
+  );
+  if (!markedRead) {
+    const deleted = await db.watch.deleteNotification(event.context.user.id, ws, notificationId);
+    httpAssert.present(deleted, {
+      status: 404,
+      message: `Notification '${notificationId}' not found`
+    });
+  }
 
-  return { success: true, message: `Notification '${notificationId}' deleted` };
+  return { success: true, message: `Notification '${notificationId}' marked as read` };
 };
 
 export const clearNotifications = async (
@@ -223,6 +297,9 @@ export const clearNotifications = async (
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const deleted = await db.watch.clearNotifications(event.context.user.id, ws);
-  return { success: true, count: deleted, message: 'Notifications cleared' };
+  const [markedRead, deleted] = await Promise.all([
+    db.notification.markAllRead(event.context.user.id, ws, new Date()),
+    db.watch.clearNotifications(event.context.user.id, ws)
+  ]);
+  return { success: true, count: markedRead + deleted, message: 'Notifications marked as read' };
 };

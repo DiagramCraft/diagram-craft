@@ -12,6 +12,7 @@ import type { ExternalContentDatabase } from '../domain/external-content/db/exte
 import type { WebhookDatabase } from '../domain/webhook/db/webhookDatabase';
 import type { DocumentDatabase } from '../domain/document/db/documentDatabase';
 import type { GovernanceDatabase } from '../domain/governance/db/governanceDatabase';
+import type { NotificationDatabase } from '../domain/notification/db/notificationDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -43,6 +44,7 @@ export type DatabaseAdapter = {
   webhook: WebhookDatabase;
   document: DocumentDatabase;
   governance: GovernanceDatabase;
+  notification: NotificationDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -133,6 +135,11 @@ export type {
   GovernanceCaseDbCreate,
   GovernanceEventDbCreate
 } from '../domain/governance/db/governanceDatabase';
+export type {
+  NotificationDatabase,
+  InboxNotificationDbCreate,
+  InboxNotificationDbResult
+} from '../domain/notification/db/notificationDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

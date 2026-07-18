@@ -207,6 +207,7 @@ export type GovernanceDatabase = {
   createAssignment(input: GovernanceAssignmentDbCreate): Promise<GovernanceAssignmentDbResult>;
   getAssignment(id: string): Promise<GovernanceAssignmentDbResult | null>;
   listAssignmentsForCase(caseId: string): Promise<GovernanceAssignmentDbResult[]>;
+  listAssignments(workspace: string): Promise<GovernanceAssignmentDbResult[]>;
   /** All open assignments in a workspace; filtered by eligibility in the operations layer. */
   listOpenAssignments(workspace: string): Promise<GovernanceAssignmentDbResult[]>;
   /** Conditional transition assignment status to 'completed'; returns null if not open. */

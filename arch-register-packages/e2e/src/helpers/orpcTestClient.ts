@@ -14,6 +14,7 @@ import { workspaceCollectionContract } from '@arch-register/api-types/collection
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
+import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { aiContract } from '@arch-register/api-types/aiContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { jobsContract } from '@arch-register/api-types/jobsContract';
@@ -54,6 +55,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     workspaces: make(workspaceManagementContract).workspaces,
     config: make(workspaceConfigContract).config,
     audit: make(auditContract).audit,
+    governance: make(governanceContract).governance,
     ai: make(aiContract).ai,
     diagramCraft: make(diagramCraftContract).diagramCraft,
     jobs: make(jobsContract).jobs,

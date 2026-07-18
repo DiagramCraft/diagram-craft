@@ -136,94 +136,120 @@ const decideGovernanceAssignmentResponseSchema = z.object({
   event: governanceEventSchema
 });
 
+const governanceTaskSchema = z.object({
+  assignment: governanceAssignmentSchema,
+  case: governanceCaseSchema,
+  requiresAction: z.boolean().describe('Whether the task is currently actionable by the user')
+});
+
+const listGovernanceTasksQuerySchema = z.object({
+  caseKind: z.string().optional(),
+  taskKind: governanceAssignmentActionSchema.optional(),
+  state: z.enum(['open', 'completed', 'superseded', 'cancelled']).optional(),
+  dueBefore: z.string().optional(),
+  dueAfter: z.string().optional()
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const governanceContract = oc.tag('Governance').router({
-  cases: {
-    list: oc
-      .route({
-        method: 'GET',
-        path: '/{workspace}/governance/cases',
-        inputStructure: 'detailed',
-        summary: 'List governance cases',
-        description: 'Lists governance cases visible to the current user in this workspace.',
-        tags: ['Governance']
-      })
-      .input(
-        z.object({
-          params: ws,
-          query: listGovernanceCasesQuerySchema
+  governance: {
+    cases: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/governance/cases',
+          inputStructure: 'detailed',
+          summary: 'List governance cases',
+          description: 'Lists governance cases visible to the current user in this workspace.',
+          tags: ['Governance']
         })
-      )
-      .output(z.array(governanceCaseSchema)),
-    get: oc
-      .route({
-        method: 'GET',
-        path: '/{workspace}/governance/cases/{id}',
-        inputStructure: 'detailed',
-        summary: 'Get a governance case',
-        description: 'Retrieves a single governance case, if visible to the current user.',
-        tags: ['Governance']
-      })
-      .input(z.object({ params: wsAndId }))
-      .output(governanceCaseSchema),
-    events: oc
-      .route({
-        method: 'GET',
-        path: '/{workspace}/governance/cases/{id}/events',
-        inputStructure: 'detailed',
-        summary: 'Get a case event history',
-        description: 'Retrieves the append-only event history for a governance case.',
-        tags: ['Governance']
-      })
-      .input(z.object({ params: wsAndId }))
-      .output(z.array(governanceEventSchema)),
-    cancel: oc
-      .route({
-        method: 'POST',
-        path: '/{workspace}/governance/cases/{id}/cancel',
-        inputStructure: 'detailed',
-        summary: 'Cancel or withdraw a governance case',
-        description: 'Cancels an open governance case. Only the case initiator may withdraw it.',
-        tags: ['Governance']
-      })
-      .input(
-        z.object({
-          params: wsAndId,
-          body: cancelGovernanceCaseBodySchema
+        .input(
+          z.object({
+            params: ws,
+            query: listGovernanceCasesQuerySchema
+          })
+        )
+        .output(z.array(governanceCaseSchema)),
+      get: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/governance/cases/{id}',
+          inputStructure: 'detailed',
+          summary: 'Get a governance case',
+          description: 'Retrieves a single governance case, if visible to the current user.',
+          tags: ['Governance']
         })
-      )
-      .output(governanceCaseSchema)
-  },
-  assignments: {
-    mine: oc
-      .route({
-        method: 'GET',
-        path: '/{workspace}/governance/assignments/mine',
-        inputStructure: 'detailed',
-        summary: "List the current user's actionable assignments",
-        description: 'Lists open assignments the current user is eligible to decide.',
-        tags: ['Governance']
-      })
-      .input(z.object({ params: ws }))
-      .output(z.array(governanceAssignmentSchema)),
-    decide: oc
-      .route({
-        method: 'POST',
-        path: '/{workspace}/governance/assignments/{id}/decisions',
-        inputStructure: 'detailed',
-        summary: 'Submit a decision for an assignment',
-        description:
-          'Submits a decision (approve, reject, request changes, or acknowledge) for an assignment. Idempotent for retried requests with the same idempotencyKey.',
-        tags: ['Governance']
-      })
-      .input(
-        z.object({
-          params: wsAndId,
-          body: decideGovernanceAssignmentBodySchema
+        .input(z.object({ params: wsAndId }))
+        .output(governanceCaseSchema),
+      events: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/governance/cases/{id}/events',
+          inputStructure: 'detailed',
+          summary: 'Get a case event history',
+          description: 'Retrieves the append-only event history for a governance case.',
+          tags: ['Governance']
         })
-      )
-      .output(decideGovernanceAssignmentResponseSchema)
+        .input(z.object({ params: wsAndId }))
+        .output(z.array(governanceEventSchema)),
+      cancel: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/governance/cases/{id}/cancel',
+          inputStructure: 'detailed',
+          summary: 'Cancel or withdraw a governance case',
+          description: 'Cancels an open governance case. Only the case initiator may withdraw it.',
+          tags: ['Governance']
+        })
+        .input(
+          z.object({
+            params: wsAndId,
+            body: cancelGovernanceCaseBodySchema
+          })
+        )
+        .output(governanceCaseSchema)
+    },
+    assignments: {
+      mine: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/governance/assignments/mine',
+          inputStructure: 'detailed',
+          summary: "List the current user's actionable assignments",
+          description: 'Lists open assignments the current user is eligible to decide.',
+          tags: ['Governance']
+        })
+        .input(z.object({ params: ws, query: listGovernanceTasksQuerySchema }))
+        .output(z.array(governanceTaskSchema)),
+      count: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/governance/assignments/mine/count',
+          inputStructure: 'detailed',
+          summary: "Count the current user's open governance tasks",
+          tags: ['Governance']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.object({ count: z.number() })),
+      decide: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/governance/assignments/{id}/decisions',
+          inputStructure: 'detailed',
+          summary: 'Submit a decision for an assignment',
+          description:
+            'Submits a decision (approve, reject, request changes, or acknowledge) for an assignment. Idempotent for retried requests with the same idempotencyKey.',
+          tags: ['Governance']
+        })
+        .input(
+          z.object({
+            params: wsAndId,
+            body: decideGovernanceAssignmentBodySchema
+          })
+        )
+        .output(decideGovernanceAssignmentResponseSchema)
+    }
   }
 });
 
@@ -233,3 +259,5 @@ export type GovernanceEvent = z.infer<typeof governanceEventSchema>;
 export type GovernanceDecisionAction = z.infer<typeof governanceDecisionActionSchema>;
 export type ListGovernanceCasesQuery = z.infer<typeof listGovernanceCasesQuerySchema>;
 export type DecideGovernanceAssignmentBody = z.infer<typeof decideGovernanceAssignmentBodySchema>;
+export type GovernanceTask = z.infer<typeof governanceTaskSchema>;
+export type ListGovernanceTasksQuery = z.infer<typeof listGovernanceTasksQuerySchema>;

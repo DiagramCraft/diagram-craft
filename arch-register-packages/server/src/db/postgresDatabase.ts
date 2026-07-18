@@ -21,6 +21,7 @@ import { PostgresExternalContentDatabase } from '../domain/external-content/db/p
 import { PostgresWebhookDatabase } from '../domain/webhook/db/postgresWebhook';
 import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument';
 import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
+import { PostgresNotificationDatabase } from '../domain/notification/db/postgresNotification';
 import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -46,6 +47,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly webhook: PostgresWebhookDatabase;
   readonly document: PostgresDocumentDatabase;
   readonly governance: PostgresGovernanceDatabase;
+  readonly notification: PostgresNotificationDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -64,7 +66,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       externalContent: new PostgresExternalContentDatabase(sql),
       webhook: new PostgresWebhookDatabase(sql),
       document: new PostgresDocumentDatabase(sql),
-      governance: new PostgresGovernanceDatabase(sql)
+      governance: new PostgresGovernanceDatabase(sql),
+      notification: new PostgresNotificationDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -116,6 +119,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.webhook = new PostgresWebhookDatabase(this.sql);
     this.document = new PostgresDocumentDatabase(this.sql);
     this.governance = new PostgresGovernanceDatabase(this.sql);
+    this.notification = new PostgresNotificationDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,
