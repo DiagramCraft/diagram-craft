@@ -32,6 +32,7 @@ const typeMapper = (row: DatabaseRow): DocumentTypeDbResult => ({
   icon: row['icon'] == null ? null : String(row['icon']),
   archived: databaseBoolean(row['archived']),
   version: Number(row['version'] ?? 1),
+  aiActions: parseDatabaseJson(row['ai_actions'], [], 'document_type.ai_actions'),
   created_at: databaseDate(row['created_at']),
   updated_at: databaseDate(row['updated_at'])
 });
@@ -130,7 +131,7 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
   async createDocumentType(input: DocumentTypeDbCreate) {
     try {
       await this
-        .sql`INSERT INTO document_type (id, workspace, name, description, fields, color, icon, archived, created_at, updated_at) VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color ?? null}, ${input.icon ?? null}, FALSE, ${input.created_at}, ${input.updated_at})`;
+        .sql`INSERT INTO document_type (id, workspace, name, description, fields, color, icon, ai_actions, archived, created_at, updated_at) VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color ?? null}, ${input.icon ?? null}, ${this.json(input.aiActions ?? [])}, FALSE, ${input.created_at}, ${input.updated_at})`;
       await this.syncDocumentFields(input.workspace, input.id, input.fields, input.updated_at);
       return (await this.getDocumentType(input.workspace, input.id))!;
     } catch (error) {
@@ -144,7 +145,7 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
   ) {
     try {
       await this
-        .sql`UPDATE document_type SET name = ${input.name}, description = ${input.description}, fields = ${this.json(input.fields)}, color = ${input.color ?? null}, icon = ${input.icon ?? null}, version = COALESCE(${input.version ?? null}::integer, version), updated_at = ${input.updated_at} WHERE workspace = ${workspace} AND id = ${id}`;
+        .sql`UPDATE document_type SET name = ${input.name}, description = ${input.description}, fields = ${this.json(input.fields)}, color = ${input.color ?? null}, icon = ${input.icon ?? null}, ai_actions = ${this.json(input.aiActions ?? [])}, version = COALESCE(${input.version ?? null}::integer, version), updated_at = ${input.updated_at} WHERE workspace = ${workspace} AND id = ${id}`;
       await this.syncDocumentFields(workspace, id, input.fields, input.updated_at);
       return await this.getDocumentType(workspace, id);
     } catch (error) {

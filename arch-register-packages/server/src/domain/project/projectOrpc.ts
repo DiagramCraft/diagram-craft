@@ -59,7 +59,8 @@ import {
   listDocuments,
   getMarkdownRevision,
   restoreMarkdownRevision,
-  createMarkdownDiagramAttachment
+  createMarkdownDiagramAttachment,
+  runDocumentAiAction
 } from './markdownOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -290,6 +291,19 @@ const entityContentHandlers = {
   listDocumentBacklinks: projectRouter.projects.listDocumentBacklinks.handler(
     async ({ input, context }) =>
       listDocumentBacklinks(context.db, input.params.workspace, input.params.nodeId, context.event)
+  ),
+  runDocumentAiAction: projectRouter.projects.runDocumentAiAction.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await runDocumentAiAction(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.params.nodeId,
+        input.params.actionId,
+        context.event
+      );
+    }
   ),
   listDocuments: projectRouter.projects.listDocuments.handler(async ({ input, context }) =>
     listDocuments(

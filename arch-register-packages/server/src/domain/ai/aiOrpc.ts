@@ -176,6 +176,15 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
         return messages.map(toMessageResponse);
       }),
 
+      getStatus: aiRouter.ai.getStatus.handler(async ({ input, context }) => {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        requireWorkspaceCapability(authCtx, 'ws.view');
+
+        const aiConfig = await resolveAi(context.db, workspace);
+        return { configured: aiConfig !== null };
+      }),
+
       getConfig: aiRouter.ai.getConfig.handler(async ({ input, context }) => {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);

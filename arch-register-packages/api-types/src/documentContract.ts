@@ -52,6 +52,14 @@ export const documentFieldSchema = z.object({
   retired: z.boolean().default(false)
 });
 
+export const documentAiActionSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  kind: z.literal('interactive'),
+  prompt: z.string().min(1),
+  enabled: z.boolean().default(true)
+});
+
 export const documentTypeSchema = z.object({
   id: z.string(),
   workspace: z.string(),
@@ -62,6 +70,7 @@ export const documentTypeSchema = z.object({
   icon: z.string().nullable(),
   archived: z.boolean(),
   version: z.number().int().min(1).describe('Current document type version number'),
+  aiActions: z.array(documentAiActionSchema).default([]),
   created_at: z.string(),
   updated_at: z.string()
 });
@@ -106,6 +115,7 @@ const documentTypeWriteSchema = z.object({
   fields: z.array(documentFieldSchema),
   color: z.string().nullable().optional(),
   icon: z.string().nullable().optional(),
+  aiActions: z.array(documentAiActionSchema).optional(),
   fieldMigrations: z
     .record(z.string(), fieldMigrationActionSchema)
     .optional()
@@ -262,6 +272,7 @@ export const documentContract = oc.tag('Typed Documents').router({
 export type DocumentFieldType = z.infer<typeof documentFieldTypeSchema>;
 export type DocumentRequirement = z.infer<typeof documentRequirementSchema>;
 export type DocumentField = z.infer<typeof documentFieldSchema>;
+export type DocumentAiAction = z.infer<typeof documentAiActionSchema>;
 export type DocumentMetadata = z.infer<typeof documentMetadataSchema>;
 export type DocumentType = z.infer<typeof documentTypeSchema>;
 export type DocumentTemplate = z.infer<typeof documentTemplateSchema>;

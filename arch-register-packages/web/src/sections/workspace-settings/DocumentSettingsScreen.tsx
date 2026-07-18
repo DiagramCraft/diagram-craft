@@ -13,9 +13,11 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import type {
+  DocumentAiAction,
   DocumentField,
   DocumentFieldType,
   DocumentMetadata,
@@ -38,6 +40,7 @@ import {
   useUpdateDocumentTemplate,
   useUpdateDocumentType
 } from '../../hooks/useDocuments';
+import { useAiStatus } from '../../hooks/useAiConfig';
 import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
 import { ICON_MAP } from '../../components/TypeBadge';
@@ -90,6 +93,14 @@ const newDocumentField = (existingIds: ReadonlySet<string> = new Set<string>()):
     retired: false
   };
 };
+
+const newAiAction = (): DocumentAiAction => ({
+  id: crypto.randomUUID(),
+  name: 'New AI action',
+  kind: 'interactive',
+  prompt: '',
+  enabled: true
+});
 
 const isLinkType = (type: DocumentFieldType) => type === 'entity_link' || type === 'document_link';
 const NEW_DOCUMENT_TYPE_ID = 'new';
@@ -179,10 +190,12 @@ const DocumentTypeEditor = ({
   const updateType = useUpdateDocumentType(workspaceSlug);
   const archiveType = useArchiveDocumentType(workspaceSlug);
   const deleteType = useDeleteDocumentType(workspaceSlug);
+  const { data: aiStatus } = useAiStatus(workspaceSlug);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<DocumentField[]>([]);
+  const [aiActions, setAiActions] = useState<DocumentAiAction[]>([]);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -199,6 +212,7 @@ const DocumentTypeEditor = ({
       setName(selected.name);
       setDescription(selected.description);
       setFields(selected.fields);
+      setAiActions(selected.aiActions);
       setColor(selected.color);
       setIcon(selected.icon);
       setDirty(false);
@@ -208,6 +222,7 @@ const DocumentTypeEditor = ({
       setName('');
       setDescription('');
       setFields([]);
+      setAiActions([]);
       setColor(null);
       setIcon(null);
       setDirty(true);
@@ -243,10 +258,27 @@ const DocumentTypeEditor = ({
     setDirty(true);
   };
 
+  const updateAiAction = (actionId: string, patch: Partial<DocumentAiAction>) => {
+    setAiActions(current =>
+      current.map(action => (action.id === actionId ? { ...action, ...patch } : action))
+    );
+    setDirty(true);
+  };
+
+  const removeAiAction = (actionId: string) => {
+    setAiActions(current => current.filter(action => action.id !== actionId));
+    setDirty(true);
+  };
+
+  const addAiAction = () => {
+    setAiActions(current => [...current, newAiAction()]);
+    setDirty(true);
+  };
+
   const handleSave = async (fieldMigrations?: FieldMigrations) => {
     if (!dirty) return;
     try {
-      const body = { name, description, fields, color, icon, fieldMigrations };
+      const body = { name, description, fields, aiActions, color, icon, fieldMigrations };
       if (isNew) {
         const created = await createType.mutateAsync(body);
         onSelect(created.id);
@@ -452,6 +484,42 @@ const DocumentTypeEditor = ({
                 Fields already used by documents keep their value type. Renaming or removing a used
                 field will ask you to choose how to migrate its data before saving.
               </div>
+
+              {aiStatus?.configured && (
+                <>
+                  <div className={styles.fieldsHead}>
+                    <div className={styles.sectionLabel}>AI Actions</div>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addAiAction}>
+                      Add AI action
+                    </Button>
+                  </div>
+
+                  {aiActions.length > 0 ? (
+                    <div className={styles.fieldsTable}>
+                      {aiActions.map(action => (
+                        <DocumentAiActionRow
+                          key={action.id}
+                          action={action}
+                          onUpdate={patch => updateAiAction(action.id, patch)}
+                          onRemove={() => removeAiAction(action.id)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.fieldsTable}>
+                      <div className={styles.fieldEmpty}>
+                        No AI actions defined yet. Click &quot;Add AI action&quot; to get started.
+                      </div>
+                    </div>
+                  )}
+                  <div className={styles.fieldsHint}>
+                    <TbInfoCircle size={11} />
+                    Interactive AI actions run a predefined prompt against the document body,
+                    metadata, and location using read-only tools, and show the result in the
+                    document sidebar. They cannot modify entities, documents, or metadata.
+                  </div>
+                </>
+              )}
 
               <div className={styles.bottomActions}>
                 {selected && (
@@ -681,6 +749,40 @@ const DocumentFieldRow = ({
           </Select.Item>
         ))}
       </Select.Root>
+      <button type="button" className={styles.iconBtn} onClick={onRemove}>
+        <TbTrash size={13} />
+      </button>
+    </div>
+  );
+};
+
+const DocumentAiActionRow = ({
+  action,
+  onUpdate,
+  onRemove
+}: {
+  action: DocumentAiAction;
+  onUpdate: (patch: Partial<DocumentAiAction>) => void;
+  onRemove: () => void;
+}) => {
+  return (
+    <div className={styles.aiActionRow}>
+      <TextInput
+        value={action.name}
+        onChange={value => onUpdate({ name: value ?? '' })}
+        style={{ width: '100%' }}
+      />
+      <TextArea
+        value={action.prompt}
+        onChange={value => onUpdate({ prompt: value ?? '' })}
+        rows={2}
+        style={{ width: '100%' }}
+      />
+      <Checkbox
+        value={action.enabled}
+        onChange={value => onUpdate({ enabled: value ?? false })}
+        label="Enabled"
+      />
       <button type="button" className={styles.iconBtn} onClick={onRemove}>
         <TbTrash size={13} />
       </button>

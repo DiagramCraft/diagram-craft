@@ -57,6 +57,13 @@ import { downloadUrl } from '../../lib/browserDownload';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
 import { MarkdownPropertiesPanel, validateDocMetadata } from './MarkdownPropertiesPanel';
 import { ApiError } from '../../lib/http';
+import { runDocumentAiAction } from '../../hooks/useDocumentAiActions';
+import { useAiStatus } from '../../hooks/useAiConfig';
+import { useCreateConversation } from '../../hooks/useAiConversations';
+import { AiActionResultPanel } from './AiActionResultPanel';
+import { writeAiActionSeed } from '../../lib/aiActionSeed';
+import type { DocumentAiAction } from '@arch-register/api-types/documentContract';
+import type { RunAiActionResponse } from '@arch-register/api-types/projectContract';
 
 const extractToc = (markdown: string): string[] =>
   markdown.match(/^## .+$/gm)?.map(l => l.slice(3).trim()) ?? [];
@@ -127,6 +134,8 @@ export const MarkdownEditorScreen = () => {
   const restoreMutation = useRestoreMarkdownRevision(contentScope, nodeId);
   const uploadAttachmentMutation = useUploadMarkdownAttachment(contentScope, nodeId);
   const deleteAttachmentMutation = useDeleteMarkdownAttachment(contentScope, nodeId);
+  const createConversationMutation = useCreateConversation(workspaceSlug);
+  const { data: aiStatus } = useAiStatus(workspaceSlug, !isDraft);
   const { file, parentLabel, renameFile, deleteFile } = useMarkdownDocumentScope({
     workspaceSlug,
     nodeId,
@@ -161,6 +170,11 @@ export const MarkdownEditorScreen = () => {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [attachmentDeleteTarget, setAttachmentDeleteTarget] = useState<ProjectFile | null>(null);
+  const [runningAiActionId, setRunningAiActionId] = useState<string | null>(null);
+  const [aiActionResult, setAiActionResult] = useState<RunAiActionResponse | null>(null);
+  const [aiActionStreamingText, setAiActionStreamingText] = useState('');
+  const [aiActionError, setAiActionError] = useState<string | null>(null);
+  const [aiActionPanelOpen, setAiActionPanelOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initializedRef = useRef(false);
   const previousNodeIdRef = useRef(nodeId);
@@ -622,6 +636,46 @@ export const MarkdownEditorScreen = () => {
     setAttachmentDeleteTarget(null);
   }, [attachmentDeleteTarget, isReadOnly, deleteAttachment]);
 
+  const handleRunAiAction = useCallback(
+    async (action: DocumentAiAction) => {
+      setRunningAiActionId(action.id);
+      setAiActionError(null);
+      setAiActionResult(null);
+      setAiActionStreamingText('');
+      setAiActionPanelOpen(true);
+      try {
+        const result = await runDocumentAiAction(workspaceSlug, nodeId, action.id, delta =>
+          setAiActionStreamingText(current => current + delta)
+        );
+        setAiActionResult(result);
+      } catch (cause) {
+        setAiActionError(cause instanceof Error ? cause.message : 'Failed to run AI action');
+      } finally {
+        setRunningAiActionId(null);
+      }
+    },
+    [nodeId, workspaceSlug]
+  );
+
+  const handleContinueInConversation = useCallback(
+    async (result: RunAiActionResponse) => {
+      writeAiActionSeed({
+        documentTitle: result.documentTitle,
+        documentLink: window.location.href,
+        actionPrompt: result.prompt,
+        answer: result.answer
+      });
+      const conversation = await createConversationMutation.mutateAsync(undefined);
+      setAiActionPanelOpen(false);
+      navigate({
+        to: '/$workspaceSlug/assistant',
+        params: { workspaceSlug },
+        search: { conversation: conversation.id }
+      });
+    },
+    [createConversationMutation, navigate, workspaceSlug]
+  );
+
   const handleSelectRevision = useCallback(
     (revisionId: string) => {
       updateSearch({
@@ -836,6 +890,11 @@ export const MarkdownEditorScreen = () => {
               showDiscussion={!isDraft}
               showBacklinks={!isDraft}
               commentsMode={commentsMode}
+              aiActions={
+                !isDraft && aiStatus?.configured ? selectedDocumentType?.aiActions : undefined
+              }
+              runningAiActionId={runningAiActionId}
+              onRunAiAction={handleRunAiAction}
               attachments={{
                 items: attachments,
                 onOpen: handleOpenAttachment,
@@ -863,6 +922,16 @@ export const MarkdownEditorScreen = () => {
               {draftSaveError}
             </div>
           )}
+
+          <AiActionResultPanel
+            open={aiActionPanelOpen}
+            result={aiActionResult}
+            streamingText={aiActionStreamingText}
+            loading={runningAiActionId !== null}
+            errorMessage={aiActionError}
+            onClose={() => setAiActionPanelOpen(false)}
+            onContinueInConversation={result => void handleContinueInConversation(result)}
+          />
 
           <RenameDialog
             open={renameOpen}

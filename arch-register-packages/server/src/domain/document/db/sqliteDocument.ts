@@ -26,6 +26,7 @@ const typeMapper = (row: DatabaseRow): DocumentTypeDbResult => ({
   icon: row['icon'] == null ? null : String(row['icon']),
   archived: databaseBoolean(row['archived']),
   version: Number(row['version'] ?? 1),
+  aiActions: parseDatabaseJson(row['ai_actions'], [], 'document_type.ai_actions'),
   created_at: databaseDate(row['created_at']),
   updated_at: databaseDate(row['updated_at'])
 });
@@ -149,7 +150,7 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
 
   async createDocumentType(input: DocumentTypeDbCreate) {
     this.run(
-      'INSERT INTO document_type (id, workspace, name, description, fields, color, icon, archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
+      'INSERT INTO document_type (id, workspace, name, description, fields, color, icon, ai_actions, archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -158,6 +159,7 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
         JSON.stringify(input.fields),
         input.color ?? null,
         input.icon ?? null,
+        JSON.stringify(input.aiActions ?? []),
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -172,13 +174,14 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
     input: DocumentTypeWrite & { updated_at: Date; version?: number }
   ) {
     this.run(
-      'UPDATE document_type SET name = ?, description = ?, fields = ?, color = ?, icon = ?, version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE document_type SET name = ?, description = ?, fields = ?, color = ?, icon = ?, ai_actions = ?, version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
         JSON.stringify(input.fields),
         input.color ?? null,
         input.icon ?? null,
+        JSON.stringify(input.aiActions ?? []),
         input.version ?? null,
         input.updated_at.toISOString(),
         workspace,
