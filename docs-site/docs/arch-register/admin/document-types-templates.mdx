@@ -46,6 +46,16 @@ Each field has a stable field ID, a display name, and a requirement:
 Link fields can also define minimum and maximum cardinality. Enum fields must define their allowed options.
 Values are checked against the field type when a document is saved.
 
+### AI Actions
+
+A document type can define interactive AI actions: named, predefined prompts that anyone who can view a typed
+document can run from the document sidebar. An action runs read-only against the document's body, metadata, type,
+and location, and never modifies the document. Add actions with **Add AI action** when editing the type; each action
+has a name and a prompt.
+
+AI actions require workspace [AI configuration](ai-configuration) to be in place. See
+[AI Assistant and Extract](../use/ai-assistant-extract) for the reader-facing workflow.
+
 ### Evolving A Type
 
 Document types are designed to evolve without invalidating document history:

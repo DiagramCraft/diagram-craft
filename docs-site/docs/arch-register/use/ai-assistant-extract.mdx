@@ -2,7 +2,8 @@ import ThemedImage from '@theme/ThemedImage';
 
 # AI Assistant And Extract
 
-Arch Register exposes two AI-facing sections in the workspace shell: **Assistant** and **Extract**.
+Arch Register exposes two AI-facing sections in the workspace shell: **Assistant** and **Extract**. Document types
+can additionally define AI actions that run directly from a document.
 
 ## Assistant
 
@@ -34,6 +35,18 @@ workflow rather than a general chat interface.
     dark: require('/img/arch-register/ai/extract-overview-dark.png').default,
   }}
 />
+
+## Document AI Actions
+
+Document types can define interactive AI actions. When a document's type has actions configured, anyone who can view
+the document can launch them from the document sidebar.
+
+An action runs its predefined prompt read-only against the document's body, structured metadata, type, and location —
+it never modifies the document. The result is temporary; if it is worth keeping or exploring further, continue it as
+an Assistant conversation from the result panel.
+
+Actions are defined per document type in
+[Document Types and Templates](../admin/document-types-templates).
 
 ## Availability
 
