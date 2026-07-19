@@ -93,11 +93,11 @@ export const filterVisibleEntities = <T extends PermissionEntity>(
 
 /**
  * Require project action permission, throw 403 if not allowed.
- * 
+ *
 
-/**
+ /**
  * Require workspace admin role, throw 403 if not allowed.
- * 
+ *
  * Checks if user has workspace admin role or global admin permission.
  */
 export const requireWorkspaceAdmin = (context: AuthorizationContext, message?: string) => {
