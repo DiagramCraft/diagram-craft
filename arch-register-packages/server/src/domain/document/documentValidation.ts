@@ -49,6 +49,16 @@ export const validateDocumentTypeWrite = (input: DocumentTypeWrite) => {
   }
 
   const actionIds = new Set<string>();
+  const generatorOutputFields = new Set<string>();
+  const fieldsById = new Map(input.fields.map(field => [field.id, field]));
+  const generatorFieldTypes = new Set<DocumentField['type']>([
+    'text',
+    'long_text',
+    'boolean',
+    'date',
+    'number',
+    'enum'
+  ]);
   for (const action of input.aiActions ?? []) {
     httpAssert.true(!actionIds.has(action.id), {
       status: 400,
@@ -62,6 +72,27 @@ export const validateDocumentTypeWrite = (input: DocumentTypeWrite) => {
     httpAssert.true(action.prompt.trim().length > 0, {
       status: 400,
       message: `AI action '${action.id}' must have a prompt`
+    });
+    if (action.kind !== 'metadata_generator') continue;
+
+    httpAssert.true(!generatorOutputFields.has(action.outputFieldId), {
+      status: 400,
+      message: `Multiple AI metadata generators target field '${action.outputFieldId}'`
+    });
+    generatorOutputFields.add(action.outputFieldId);
+
+    const outputField = fieldsById.get(action.outputFieldId);
+    httpAssert.present(outputField, {
+      status: 400,
+      message: `AI metadata generator '${action.id}' targets unknown field '${action.outputFieldId}'`
+    });
+    httpAssert.true(!outputField.retired, {
+      status: 400,
+      message: `AI metadata generator '${action.id}' cannot target retired field '${action.outputFieldId}'`
+    });
+    httpAssert.true(generatorFieldTypes.has(outputField.type), {
+      status: 400,
+      message: `AI metadata generator '${action.id}' cannot target ${outputField.type} field '${action.outputFieldId}'`
     });
   }
 };

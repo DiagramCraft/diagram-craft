@@ -31,7 +31,9 @@ const makeTypeWrite = (
   aiActions
 });
 
-const makeAiAction = (overrides: Partial<DocumentAiAction> = {}): DocumentAiAction => ({
+const makeAiAction = (
+  overrides: Partial<Extract<DocumentAiAction, { kind: 'interactive' }>> = {}
+): Extract<DocumentAiAction, { kind: 'interactive' }> => ({
   id: 'summarize',
   name: 'Summarize',
   kind: 'interactive',
@@ -96,6 +98,42 @@ describe('validateDocumentTypeWrite', () => {
     ).not.toThrow();
   });
 
+  it('accepts metadata generators for supported active fields', () => {
+    expect(() =>
+      validateDocumentTypeWrite(
+        makeTypeWrite(
+          [
+            makeField({
+              id: 'status',
+              name: 'Status',
+              type: 'enum',
+              enumOptions: [{ value: 'ok', label: 'OK' }]
+            }),
+            makeField({ id: 'score', name: 'Score', type: 'number' })
+          ],
+          [
+            {
+              id: 'status-generator',
+              name: 'Status generator',
+              kind: 'metadata_generator',
+              prompt: 'Assess the status.',
+              outputFieldId: 'status',
+              enabled: true
+            },
+            {
+              id: 'score-generator',
+              name: 'Score generator',
+              kind: 'metadata_generator',
+              prompt: 'Score the document.',
+              outputFieldId: 'score',
+              enabled: false
+            }
+          ]
+        )
+      )
+    ).not.toThrow();
+  });
+
   it.each([
     [
       'duplicate action id',
@@ -106,6 +144,63 @@ describe('validateDocumentTypeWrite', () => {
     ['empty prompt', [makeAiAction({ prompt: '  ' })], "AI action 'summarize' must have a prompt"]
   ])('rejects %s', (_case, aiActions, message) => {
     expect(() => validateDocumentTypeWrite(makeTypeWrite([], aiActions))).toThrow(message);
+  });
+
+  it.each([
+    [
+      'unknown output field',
+      [makeField({ id: 'status', name: 'Status' })],
+      'unknown',
+      "AI metadata generator 'generator' targets unknown field 'unknown'"
+    ],
+    [
+      'link output field',
+      [makeField({ id: 'related', name: 'Related', type: 'document_link' })],
+      'related',
+      "AI metadata generator 'generator' cannot target document_link field 'related'"
+    ],
+    [
+      'retired output field',
+      [makeField({ id: 'status', name: 'Status', retired: true })],
+      'status',
+      "AI metadata generator 'generator' cannot target retired field 'status'"
+    ]
+  ])('rejects a metadata generator with an invalid %s', (_case, fields, outputFieldId, message) => {
+    const action: DocumentAiAction = {
+      id: 'generator',
+      name: 'Generator',
+      kind: 'metadata_generator',
+      prompt: 'Generate a value.',
+      outputFieldId,
+      enabled: true
+    };
+    expect(() => validateDocumentTypeWrite(makeTypeWrite(fields, [action]))).toThrow(message);
+  });
+
+  it('rejects multiple metadata generators targeting the same field', () => {
+    const actions: DocumentAiAction[] = [
+      {
+        id: 'first',
+        name: 'First',
+        kind: 'metadata_generator',
+        prompt: 'Generate a value.',
+        outputFieldId: 'status',
+        enabled: true
+      },
+      {
+        id: 'second',
+        name: 'Second',
+        kind: 'metadata_generator',
+        prompt: 'Generate another value.',
+        outputFieldId: 'status',
+        enabled: true
+      }
+    ];
+    expect(() =>
+      validateDocumentTypeWrite(
+        makeTypeWrite([makeField({ id: 'status', name: 'Status' })], actions)
+      )
+    ).toThrow("Multiple AI metadata generators target field 'status'");
   });
 });
 

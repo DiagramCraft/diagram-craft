@@ -29963,33 +29963,72 @@
                             "aiActions": {
                               "type": "array",
                               "items": {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string",
-                                    "minLength": 1
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "name": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "prompt": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "enabled": {
+                                        "type": "boolean",
+                                        "default": true
+                                      },
+                                      "kind": {
+                                        "const": "interactive"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "name",
+                                      "prompt",
+                                      "kind"
+                                    ]
                                   },
-                                  "name": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "kind": {
-                                    "const": "interactive"
-                                  },
-                                  "prompt": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "enabled": {
-                                    "type": "boolean",
-                                    "default": true
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "name": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "prompt": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "enabled": {
+                                        "type": "boolean",
+                                        "default": true
+                                      },
+                                      "kind": {
+                                        "const": "metadata_generator"
+                                      },
+                                      "outputFieldId": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "name",
+                                      "prompt",
+                                      "kind",
+                                      "outputFieldId"
+                                    ]
                                   }
-                                },
-                                "required": [
-                                  "id",
-                                  "name",
-                                  "kind",
-                                  "prompt"
                                 ]
                               },
                               "default": []
@@ -30060,6 +30099,87 @@
                         ]
                       },
                       "description": "Structured document metadata"
+                    },
+                    "generated_metadata": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "actionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "fieldId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "status": {
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
+                            "type": "string"
+                          },
+                          "explanation": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "findings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "failureNotice": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "generatedAt": {
+                            "type": "string"
+                          },
+                          "sourceRevision": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "generatorVersion": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "actionId",
+                          "fieldId",
+                          "status",
+                          "explanation",
+                          "findings",
+                          "failureNotice",
+                          "generatedAt",
+                          "sourceRevision",
+                          "generatorVersion"
+                        ]
+                      },
+                      "description": "AI-generated metadata details keyed by output field identifier"
                     },
                     "available_fields": {
                       "type": "array",
@@ -30232,6 +30352,7 @@
                     "document_type",
                     "document_type_id",
                     "metadata",
+                    "generated_metadata",
                     "available_fields",
                     "retired_fields"
                   ]
@@ -43284,33 +43405,72 @@
                       "aiActions": {
                         "type": "array",
                         "items": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                              "minLength": 1
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "prompt": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": true
+                                },
+                                "kind": {
+                                  "const": "interactive"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "prompt",
+                                "kind"
+                              ]
                             },
-                            "name": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "kind": {
-                              "const": "interactive"
-                            },
-                            "prompt": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "enabled": {
-                              "type": "boolean",
-                              "default": true
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "prompt": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": true
+                                },
+                                "kind": {
+                                  "const": "metadata_generator"
+                                },
+                                "outputFieldId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "prompt",
+                                "kind",
+                                "outputFieldId"
+                              ]
                             }
-                          },
-                          "required": [
-                            "id",
-                            "name",
-                            "kind",
-                            "prompt"
                           ]
                         },
                         "default": []
@@ -43478,33 +43638,72 @@
                   "aiActions": {
                     "type": "array",
                     "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "prompt": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "default": true
+                            },
+                            "kind": {
+                              "const": "interactive"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "prompt",
+                            "kind"
+                          ]
                         },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "kind": {
-                          "const": "interactive"
-                        },
-                        "prompt": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "enabled": {
-                          "type": "boolean",
-                          "default": true
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "prompt": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "default": true
+                            },
+                            "kind": {
+                              "const": "metadata_generator"
+                            },
+                            "outputFieldId": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "prompt",
+                            "kind",
+                            "outputFieldId"
+                          ]
                         }
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                        "kind",
-                        "prompt"
                       ]
                     }
                   },
@@ -43679,33 +43878,72 @@
                     "aiActions": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "enabled": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "kind": {
+                                "const": "interactive"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "prompt",
+                              "kind"
+                            ]
                           },
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "kind": {
-                            "const": "interactive"
-                          },
-                          "prompt": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "enabled": {
-                            "type": "boolean",
-                            "default": true
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "enabled": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "kind": {
+                                "const": "metadata_generator"
+                              },
+                              "outputFieldId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "prompt",
+                              "kind",
+                              "outputFieldId"
+                            ]
                           }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "kind",
-                          "prompt"
                         ]
                       },
                       "default": []
@@ -43896,33 +44134,72 @@
                     "aiActions": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "enabled": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "kind": {
+                                "const": "interactive"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "prompt",
+                              "kind"
+                            ]
                           },
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "kind": {
-                            "const": "interactive"
-                          },
-                          "prompt": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "enabled": {
-                            "type": "boolean",
-                            "default": true
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "enabled": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "kind": {
+                                "const": "metadata_generator"
+                              },
+                              "outputFieldId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "prompt",
+                              "kind",
+                              "outputFieldId"
+                            ]
                           }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "kind",
-                          "prompt"
                         ]
                       },
                       "default": []
@@ -44097,33 +44374,72 @@
                   "aiActions": {
                     "type": "array",
                     "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "prompt": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "default": true
+                            },
+                            "kind": {
+                              "const": "interactive"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "prompt",
+                            "kind"
+                          ]
                         },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "kind": {
-                          "const": "interactive"
-                        },
-                        "prompt": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "enabled": {
-                          "type": "boolean",
-                          "default": true
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "prompt": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "default": true
+                            },
+                            "kind": {
+                              "const": "metadata_generator"
+                            },
+                            "outputFieldId": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "prompt",
+                            "kind",
+                            "outputFieldId"
+                          ]
                         }
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                        "kind",
-                        "prompt"
                       ]
                     }
                   },
@@ -44298,33 +44614,72 @@
                     "aiActions": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "enabled": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "kind": {
+                                "const": "interactive"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "prompt",
+                              "kind"
+                            ]
                           },
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "kind": {
-                            "const": "interactive"
-                          },
-                          "prompt": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "enabled": {
-                            "type": "boolean",
-                            "default": true
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "enabled": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "kind": {
+                                "const": "metadata_generator"
+                              },
+                              "outputFieldId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "prompt",
+                              "kind",
+                              "outputFieldId"
+                            ]
                           }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "kind",
-                          "prompt"
                         ]
                       },
                       "default": []
@@ -44579,33 +44934,72 @@
                     "aiActions": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "enabled": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "kind": {
+                                "const": "interactive"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "prompt",
+                              "kind"
+                            ]
                           },
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "kind": {
-                            "const": "interactive"
-                          },
-                          "prompt": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "enabled": {
-                            "type": "boolean",
-                            "default": true
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "enabled": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "kind": {
+                                "const": "metadata_generator"
+                              },
+                              "outputFieldId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "prompt",
+                              "kind",
+                              "outputFieldId"
+                            ]
                           }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "kind",
-                          "prompt"
                         ]
                       },
                       "default": []
@@ -44791,6 +45185,79 @@
                           }
                         ],
                         "description": "Document type icon at this version"
+                      },
+                      "aiActions": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "prompt": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": true
+                                },
+                                "kind": {
+                                  "const": "interactive"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "prompt",
+                                "kind"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "prompt": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": true
+                                },
+                                "kind": {
+                                  "const": "metadata_generator"
+                                },
+                                "outputFieldId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "prompt",
+                                "kind",
+                                "outputFieldId"
+                              ]
+                            }
+                          ]
+                        },
+                        "default": []
                       },
                       "changeSummary": {
                         "type": "object",

@@ -125,6 +125,7 @@ describe('entity/workspace content authorization', () => {
       document_type: null,
       document_type_id: null,
       metadata: {},
+      generated_metadata: {},
       available_fields: [],
       retired_fields: []
     });

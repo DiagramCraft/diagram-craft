@@ -1,6 +1,11 @@
 // Export/Import type definitions for workspace data
 
-import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
+import type {
+  DocumentAiAction,
+  DocumentField,
+  DocumentGeneratedMetadata,
+  DocumentMetadata
+} from '@arch-register/api-types/documentContract';
 
 export type ExportDataType =
   | 'config'
@@ -138,6 +143,7 @@ export type ExportDocumentData = {
     name: string;
     description: string;
     fields: DocumentField[];
+    aiActions?: DocumentAiAction[];
     color: string | null;
     icon: string | null;
     archived: boolean;
@@ -160,6 +166,7 @@ export type ExportDocumentData = {
     node_id: string;
     document_type_id: string | null;
     values: DocumentMetadata;
+    generated_metadata?: DocumentGeneratedMetadata;
     links: Array<{
       field_id: string;
       target_type: 'entity' | 'document';

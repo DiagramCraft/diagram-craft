@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   documentContract,
   documentEnumOptionSchema,
+  documentGeneratedMetadataSchema,
   documentFieldSchema,
   documentFieldTypeSchema,
   documentMetadataSchema,
@@ -78,6 +79,28 @@ describe('document metadata schemas', () => {
   it('rejects unsupported nested metadata values', () => {
     expect(documentMetadataSchema.safeParse({ owner: { id: 'entity-1' } }).success).toBe(false);
   });
+
+  it('accepts generated details separately from typed metadata values', () => {
+    const generated = {
+      status: {
+        actionId: 'status-generator',
+        fieldId: 'status',
+        status: 'outdated' as const,
+        explanation: 'Previous assessment.',
+        findings: ['The document changed.'],
+        failureNotice: null,
+        generatedAt: '2026-07-19T12:00:00.000Z',
+        sourceRevision: 2,
+        generatorVersion: 4
+      }
+    };
+    expect(documentGeneratedMetadataSchema.parse(generated)).toEqual(generated);
+    expect(
+      documentGeneratedMetadataSchema.safeParse({
+        status: { ...generated.status, sourceRevision: 0 }
+      }).success
+    ).toBe(false);
+  });
 });
 
 describe('document response schemas', () => {
@@ -120,6 +143,40 @@ describe('document response schemas', () => {
         updated_at: '2026-07-16T12:00:00.000Z'
       })
     ).toMatchObject({ project_id: null, document_type_id: 'type-1' });
+  });
+
+  it('accepts interactive and metadata-generator action definitions', () => {
+    const type = {
+      id: 'type-1',
+      workspace: 'workspace-1',
+      name: 'ADR',
+      description: '',
+      fields: [field],
+      color: null,
+      icon: null,
+      archived: false,
+      version: 2,
+      aiActions: [
+        {
+          id: 'summarize',
+          name: 'Summarize',
+          kind: 'interactive' as const,
+          prompt: 'Summarize the document.',
+          enabled: true
+        },
+        {
+          id: 'status-generator',
+          name: 'Generate status',
+          kind: 'metadata_generator' as const,
+          prompt: 'Choose a status.',
+          outputFieldId: 'status',
+          enabled: false
+        }
+      ],
+      created_at: '2026-07-16T12:00:00.000Z',
+      updated_at: '2026-07-16T12:00:00.000Z'
+    };
+    expect(documentTypeSchema.parse(type).aiActions).toEqual(type.aiActions);
   });
 });
 

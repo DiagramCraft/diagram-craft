@@ -362,6 +362,7 @@ const exportDocuments = async (
         node_id: node.id,
         document_type_id: state.document_type_id,
         values: state.values,
+        generated_metadata: state.generated_metadata,
         links: (await db.document.listDocumentLinks(workspace, node.id)).map(link => ({
           field_id: link.field_id,
           target_type: link.target_type,
