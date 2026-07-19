@@ -191,9 +191,26 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
   }
   const unownedImpact = deprecation.baselineImpact.filter(entry => !entry.ownerTeamId);
 
-  const approve = (decision: 'approve' | 'reject' | 'request_changes') => {
+  const approve = (decision: 'approve' | 'reject') => {
     if (!approvalTask) return;
     decide.mutate({ assignmentId: approvalTask.assignment.id, decision });
+  };
+
+  const [requestChangesDialogOpen, setRequestChangesDialogOpen] = useState(false);
+  const [requestChangesReason, setRequestChangesReason] = useState('');
+  const submitRequestChanges = () => {
+    if (!approvalTask) return;
+    const reason = requestChangesReason.trim();
+    if (reason === '') return;
+    decide.mutate(
+      { assignmentId: approvalTask.assignment.id, decision: 'request_changes', reason },
+      {
+        onSuccess: () => {
+          setRequestChangesDialogOpen(false);
+          setRequestChangesReason('');
+        }
+      }
+    );
   };
 
   const submitAck = () => {
@@ -270,7 +287,7 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
               >
                 Approve
               </Button>
-              <Button onClick={() => approve('request_changes')} disabled={decide.isPending}>
+              <Button onClick={() => setRequestChangesDialogOpen(true)} disabled={decide.isPending}>
                 Request changes
               </Button>
               <Button
@@ -348,6 +365,30 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
           outstanding.
         </p>
       )}
+
+      <Dialog
+        open={requestChangesDialogOpen}
+        onClose={() => setRequestChangesDialogOpen(false)}
+        title="Request changes?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setRequestChangesDialogOpen(false) },
+          {
+            label: decide.isPending ? 'Submitting…' : 'Request changes',
+            type: 'default',
+            disabled: decide.isPending || requestChangesReason.trim() === '',
+            onClick: submitRequestChanges
+          }
+        ]}
+      >
+        <FormElement label="Reason" required>
+          <TextInput
+            value={requestChangesReason}
+            onChange={v => setRequestChangesReason(v ?? '')}
+            placeholder="Explain what needs to change"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
 
       <Dialog
         open={ackDialogOpen}

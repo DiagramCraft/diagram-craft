@@ -498,16 +498,38 @@ export const listMyGovernanceAssignments = async (
       );
       if (!visible) return null;
 
+      const config = registry.get(caseRow.case_kind);
+      const isIndependentAssignment =
+        config?.independentAssignmentActions?.has(assignment.action) ?? false;
+
       return {
         assignment: toApiAssignment(assignment),
         case: toApiCase(caseRow),
-        requiresAction: state === 'open' && currentlyEligible
+        requiresAction: state === 'open' && currentlyEligible,
+        dedupeKey: isIndependentAssignment
+          ? `assignment:${assignment.id}`
+          : `case:${caseRow.id}:${assignment.action}`
       };
     })
   );
-  return tasks
-    .filter((task): task is GovernanceTask => task != null)
-    .sort((a, b) => Date.parse(a.case.createdAt) - Date.parse(b.case.createdAt));
+
+  // A case can carry multiple non-independent assignments for the same action (e.g. one
+  // targeting the owning team's admins, another targeting a workspace-wide capability) so that
+  // either path can decide it. A user eligible via more than one of those sees the same case
+  // only once here; deciding it still resolves all sibling assignments (see
+  // `supersedeOpenSiblingAssignments` in `decideGovernanceAssignment`).
+  const deduped = new Map<string, GovernanceTask>();
+  for (const task of tasks) {
+    if (task == null) continue;
+    const existing = deduped.get(task.dedupeKey);
+    if (!existing || (task.requiresAction && !existing.requiresAction)) {
+      deduped.set(task.dedupeKey, task);
+    }
+  }
+
+  return [...deduped.values()].sort(
+    (a, b) => Date.parse(a.case.createdAt) - Date.parse(b.case.createdAt)
+  );
 };
 
 export const countMyGovernanceAssignments = async (
@@ -617,6 +639,12 @@ export const decideGovernanceAssignment = async (
     status: 403,
     statusText: 'Forbidden',
     message: 'Self-approval is not allowed for this case'
+  });
+
+  httpAssert.true(input.decision !== 'request_changes' || !!input.reason?.trim(), {
+    status: 400,
+    statusText: 'Bad Request',
+    message: 'A reason is required when requesting changes'
   });
 
   const now = new Date();

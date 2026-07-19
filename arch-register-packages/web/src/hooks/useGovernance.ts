@@ -35,6 +35,18 @@ export const useGovernanceTaskCount = (workspaceId: string, enabled = true) =>
     staleTime: 15 * 1000
   });
 
+export const useGovernanceCaseEvents = (
+  workspaceId: string,
+  caseId: string | null,
+  enabled = true
+) =>
+  useQuery({
+    queryKey: [...governanceKeys.all, 'events', workspaceId, caseId],
+    queryFn: () =>
+      orpcClient.governance.cases.events({ params: { workspace: workspaceId, id: caseId! } }),
+    enabled: enabled && !!workspaceId && !!caseId
+  });
+
 export const useGovernanceSubmissions = (
   workspaceId: string,
   query: ListGovernanceSubmissionsQuery = {},

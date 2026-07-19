@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { TbClipboardCheck, TbClock, TbExternalLink } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Title } from '../../components/Title';
 import {
+  governanceKeys,
   useDecideGovernanceAssignment,
   useGovernanceSubmissions,
   useGovernanceTasks,
@@ -72,25 +76,31 @@ export const GovernanceInboxScreen = () => {
     !!workspace && scope === 'assigned'
   );
   const {
-    data: submissions = [],
+    data: rawSubmissions = [],
     isLoading: submissionsLoading,
     error: submissionsError
   } = useGovernanceSubmissions(
     workspace,
     {
-      status: submittedStatus,
+      // 'open' also needs to surface completed-but-request_changes cases (the proposer still
+      // has to act on those), so it fetches unfiltered and narrows client-side below instead of
+      // asking the server for status: 'open' directly.
+      ...(submittedStatus === 'open' ? {} : { status: submittedStatus }),
       ...(caseKind ? { caseKind } : {})
     },
     !!workspace && scope === 'submitted'
   );
+  const queryClient = useQueryClient();
   const decide = useDecideGovernanceAssignment(workspace);
   const withdrawCase = useWithdrawGovernanceCase(workspace);
+  const [requestChangesTask, setRequestChangesTask] = useState<GovernanceTask | null>(null);
+  const [requestChangesReason, setRequestChangesReason] = useState('');
   const isLoading = scope === 'assigned' ? tasksLoading : submissionsLoading;
   const error = scope === 'assigned' ? tasksError : submissionsError;
   const entityIds = [
     ...new Set([
       ...tasks.filter(task => task.case.subjectType === 'entity').map(task => task.case.subjectId),
-      ...submissions
+      ...rawSubmissions
         .filter(submission => submission.case.subjectType === 'entity')
         .map(submission => submission.case.subjectId)
     ])
@@ -112,7 +122,7 @@ export const GovernanceInboxScreen = () => {
           task => task.case.caseKind === 'entity.change' && task.case.subjectType === 'entity'
         )
         .map(task => task.case.subjectId),
-      ...submissions
+      ...rawSubmissions
         .filter(
           submission =>
             submission.case.caseKind === 'entity.change' && submission.case.subjectType === 'entity'
@@ -131,6 +141,49 @@ export const GovernanceInboxScreen = () => {
     entityChangeIds.map((entityId, index) => [entityId, proposalQueries[index]?.data])
   );
   const withdrawEntityChangeProposal = useWithdrawEntityChangeProposal(workspace);
+  // Withdrawing an entity-change proposal whose case had already completed (e.g. after a
+  // 'request_changes' decision) updates the proposal, not the case — `cancelCaseIfOpen` is a
+  // no-op on a case that's no longer open, so `submission.case.status`/`outcome` alone can't
+  // tell a withdrawn proposal apart from one still awaiting revision. Fall back to the
+  // proposal's own status for entity-change cases.
+  const isEntityChangeProposalWithdrawn = (submission: GovernanceSubmission) =>
+    submission.case.caseKind === 'entity.change' &&
+    proposalsByEntityId.get(submission.case.subjectId)?.status === 'withdrawn';
+  const submissions = rawSubmissions.filter(submission => {
+    if (isEntityChangeProposalWithdrawn(submission)) return submittedStatus === 'cancelled';
+    const needsAttention =
+      submission.case.status === 'open' || submission.case.outcome === 'request_changes';
+    if (submittedStatus === 'open') return needsAttention;
+    if (submittedStatus === 'completed') {
+      return (
+        submission.case.status === 'completed' && submission.case.outcome !== 'request_changes'
+      );
+    }
+    return true;
+  });
+
+  const requestChangesCaseIds = [
+    ...new Set(
+      submissions
+        .filter(submission => submission.case.outcome === 'request_changes')
+        .map(submission => submission.case.id)
+    )
+  ];
+  const caseEventsQueries = useQueries({
+    queries: requestChangesCaseIds.map(caseId => ({
+      queryKey: [...governanceKeys.all, 'events', workspace, caseId],
+      queryFn: () => orpcClient.governance.cases.events({ params: { workspace, id: caseId } }),
+      enabled: !!workspace
+    }))
+  });
+  const requestChangesReasonByCaseId = new Map(
+    requestChangesCaseIds.map((caseId, index) => [
+      caseId,
+      [...(caseEventsQueries[index]?.data ?? [])]
+        .reverse()
+        .find(caseEvent => caseEvent.eventType === 'changes_requested')?.reason
+    ])
+  );
 
   const withdrawSubmission = (submission: GovernanceSubmission) => {
     if (submission.case.caseKind === 'entity.change' && submission.case.subjectType === 'entity') {
@@ -144,6 +197,27 @@ export const GovernanceInboxScreen = () => {
       return;
     }
     withdrawCase.mutate({ caseId: submission.case.id });
+  };
+
+  const submitRequestChanges = () => {
+    if (!requestChangesTask) return;
+    const reason = requestChangesReason.trim();
+    if (reason === '') return;
+    decide.mutate(
+      { assignmentId: requestChangesTask.assignment.id, decision: 'request_changes', reason },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({
+            queryKey: entityChangeKeys.current(workspace, requestChangesTask.case.subjectId)
+          });
+          await queryClient.invalidateQueries({
+            queryKey: entityKeys.detail(workspace, requestChangesTask.case.subjectId)
+          });
+          setRequestChangesTask(null);
+          setRequestChangesReason('');
+        }
+      }
+    );
   };
 
   return (
@@ -196,7 +270,7 @@ export const GovernanceInboxScreen = () => {
               setSubmittedStatus(event.target.value as 'open' | 'completed' | 'cancelled')
             }
           >
-            <option value="open">Awaiting others</option>
+            <option value="open">Needs attention</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Withdrawn / cancelled</option>
           </select>
@@ -260,6 +334,17 @@ export const GovernanceInboxScreen = () => {
                 submission.case.caseKind === 'entity.change'
                   ? withdrawEntityChangeProposal.isPending
                   : withdrawCase.isPending;
+              const requestChangesReason = requestChangesReasonByCaseId.get(submission.case.id);
+              // A case being cancelled requires it to still be open (`cancelGovernanceCase`),
+              // but an entity-change proposal can be withdrawn independent of case status —
+              // its own status stays 'open' until the proposer explicitly withdraws or a
+              // decision is approved/rejected, so a 'changes_requested' case (which is
+              // otherwise 'completed') is still withdrawable through that path.
+              const canWithdraw =
+                !isEntityChangeProposalWithdrawn(submission) &&
+                (submission.case.status === 'open' ||
+                  (submission.case.caseKind === 'entity.change' &&
+                    submission.case.outcome === 'request_changes'));
               return (
                 <li className={styles.task} key={submission.case.id}>
                   <div className={styles.taskMain}>
@@ -272,13 +357,17 @@ export const GovernanceInboxScreen = () => {
                       <span>Submitted {new Date(submission.case.createdAt).toLocaleString()}</span>
                     </div>
                     <div className={styles.taskProposalMeta}>
-                      {submission.case.status === 'open'
-                        ? submission.openAssignments.length > 0
-                          ? submission.openAssignments.map(describeWaitingOn).join(' · ')
-                          : 'Awaiting review'
-                        : `Status: ${humanize(submission.case.status)}${
-                            submission.case.outcome ? ` (${humanize(submission.case.outcome)})` : ''
-                          }`}
+                      {isEntityChangeProposalWithdrawn(submission)
+                        ? 'Status: Withdrawn'
+                        : submission.case.status === 'open'
+                          ? submission.openAssignments.length > 0
+                            ? submission.openAssignments.map(describeWaitingOn).join(' · ')
+                            : 'Awaiting review'
+                          : `Status: ${humanize(submission.case.status)}${
+                              submission.case.outcome
+                                ? ` (${humanize(submission.case.outcome)})`
+                                : ''
+                            }`}
                     </div>
                     {proposalNote && (
                       <div className={styles.taskNote} title={proposalNote}>
@@ -286,9 +375,15 @@ export const GovernanceInboxScreen = () => {
                         <span>{previewNote(proposalNote)}</span>
                       </div>
                     )}
+                    {requestChangesReason && (
+                      <div className={styles.taskNote} title={requestChangesReason}>
+                        <span className={styles.taskNoteLabel}>Reviewer requested changes</span>
+                        <span>{previewNote(requestChangesReason)}</span>
+                      </div>
+                    )}
                   </div>
                   <div className={styles.taskAction}>
-                    {submission.case.status === 'open' && (
+                    {canWithdraw && (
                       <Button
                         variant="secondary"
                         disabled={withdrawPending}
@@ -387,6 +482,20 @@ export const GovernanceInboxScreen = () => {
                       {decision === 'approve' ? 'Approve' : 'Acknowledge'}
                     </Button>
                   )}
+                  {task.requiresAction &&
+                    decision === 'approve' &&
+                    task.case.caseKind === 'entity.change' && (
+                      <Button
+                        disabled={decide.isPending}
+                        onClick={event => {
+                          event.stopPropagation();
+                          setRequestChangesTask(task);
+                          setRequestChangesReason('');
+                        }}
+                      >
+                        Request changes
+                      </Button>
+                    )}
                   <Button
                     variant="ghost"
                     icon={<TbExternalLink size={12} />}
@@ -401,6 +510,30 @@ export const GovernanceInboxScreen = () => {
           })}
         </ul>
       )}
+      <Dialog
+        open={requestChangesTask != null}
+        onClose={() => setRequestChangesTask(null)}
+        title="Request changes?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setRequestChangesTask(null) },
+          {
+            label: decide.isPending ? 'Submitting…' : 'Request changes',
+            type: 'default',
+            disabled: decide.isPending || requestChangesReason.trim() === '',
+            onClick: submitRequestChanges
+          }
+        ]}
+      >
+        <p>The proposer will be notified and can revise and resubmit this proposal.</p>
+        <FormElement label="Reason" required>
+          <TextInput
+            value={requestChangesReason}
+            onChange={value => setRequestChangesReason(value ?? '')}
+            placeholder="Explain what needs to change"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
     </div>
   );
 };
