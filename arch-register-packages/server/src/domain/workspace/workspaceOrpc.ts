@@ -4,7 +4,11 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import {
+  orpcErrorInterceptors,
+  orpcErrorMiddleware,
+  workspaceScoped
+} from '../../utils/orpcErrors';
 import {
   listWorkspaces,
   createWorkspace,
@@ -15,8 +19,6 @@ import { exportWorkspace, calculateChecksum } from './exportOperations';
 import { parseImport, executeImport } from './importOperations';
 import { storeImportCache, getImportCache, deleteImportCache } from './importCache';
 import { ZipBuilder, ZipExtractor } from '../../utils/zipBuilder';
-import { buildApiAuthCtx } from '../auth/authorization';
-import { resolveWorkspace } from './resolveWorkspace';
 import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import type {
@@ -38,6 +40,8 @@ type ORPCContext = {
 const wsRouter = implement(workspaceManagementContract)
   .$context<ORPCContext>()
   .use(orpcErrorMiddleware);
+
+const workspaceScopedRouter = wsRouter.use(workspaceScoped);
 
 export const workspaceManagementORPCRouter = wsRouter.router({
   workspaces: {
@@ -61,9 +65,8 @@ export const workspaceManagementORPCRouter = wsRouter.router({
     templates: wsRouter.workspaces.templates.handler(async () => {
       return SCHEMA_TEMPLATES.map(({ id, name, description }) => ({ id, name, description }));
     }),
-    export: wsRouter.workspaces.export.handler(async ({ input, context }) => {
-      const workspaceId = await resolveWorkspace(context.db.catalog, input.params.workspace);
-      const authCtx = await buildApiAuthCtx(context.db, workspaceId, context.event);
+    export: workspaceScopedRouter.workspaces.export.handler(async ({ input, context }) => {
+      const { workspace: workspaceId, authCtx } = context;
 
       const workspaceData = await context.db.workspace.getWorkspace(workspaceId);
 
@@ -153,123 +156,125 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         body: new Blob([zipBuffer], { type: 'application/zip' })
       };
     }),
-    importParse: wsRouter.workspaces.importParse.handler(async ({ input, context }) => {
-      const workspaceId = await resolveWorkspace(context.db.catalog, input.params.workspace);
-      const authCtx = await buildApiAuthCtx(context.db, workspaceId, context.event);
+    importParse: workspaceScopedRouter.workspaces.importParse.handler(
+      async ({ input, context }) => {
+        const { workspace: workspaceId, authCtx } = context;
 
-      // Extract ZIP file contents
-      // ORPC/OpenAPI may pass the file as Buffer, Blob, or File
-      const file = input.body.file;
-      let zipBuffer: Buffer;
+        // Extract ZIP file contents
+        // ORPC/OpenAPI may pass the file as Buffer, Blob, or File
+        const file = input.body.file;
+        let zipBuffer: Buffer;
 
-      type FileWithArrayBuffer = { arrayBuffer: () => Promise<ArrayBuffer> };
-      type FileWithData = { data: Buffer };
+        type FileWithArrayBuffer = { arrayBuffer: () => Promise<ArrayBuffer> };
+        type FileWithData = { data: Buffer };
 
-      if (Buffer.isBuffer(file)) {
-        zipBuffer = file;
-      } else if (file && typeof (file as FileWithArrayBuffer).arrayBuffer === 'function') {
-        const arrayBuffer = await (file as FileWithArrayBuffer).arrayBuffer();
-        zipBuffer = Buffer.from(arrayBuffer);
-      } else if (
-        file &&
-        typeof file === 'object' &&
-        'data' in file &&
-        Buffer.isBuffer((file as FileWithData).data)
-      ) {
-        zipBuffer = (file as FileWithData).data;
-      } else {
-        throw new HTTPError({
-          status: 400,
-          message: 'Invalid file format - expected File, Blob, or Buffer'
-        });
-      }
-
-      const extracted = await ZipExtractor.parseImportZip(zipBuffer);
-      const manifest = extracted.manifest as ExportManifest;
-      for (const [path, checksum] of Object.entries(manifest.checksums ?? {})) {
-        const content = extracted.jsonFiles.get(path);
-        if (!content || calculateChecksum(content) !== checksum) {
+        if (Buffer.isBuffer(file)) {
+          zipBuffer = file;
+        } else if (file && typeof (file as FileWithArrayBuffer).arrayBuffer === 'function') {
+          const arrayBuffer = await (file as FileWithArrayBuffer).arrayBuffer();
+          zipBuffer = Buffer.from(arrayBuffer);
+        } else if (
+          file &&
+          typeof file === 'object' &&
+          'data' in file &&
+          Buffer.isBuffer((file as FileWithData).data)
+        ) {
+          zipBuffer = (file as FileWithData).data;
+        } else {
           throw new HTTPError({
             status: 400,
-            message: `Import archive checksum mismatch: ${path}`
+            message: 'Invalid file format - expected File, Blob, or Buffer'
           });
         }
-      }
 
-      // Parse and validate the import data
-      const result = await parseImport(context.db, authCtx, workspaceId, manifest, {
-        config: extracted.config as ExportConfig | undefined,
-        schemas: extracted.schemas as ExportSchema[] | undefined,
-        entities: extracted.entities as ExportEntity[] | undefined,
-        projects: extracted.projects as ExportProject[] | undefined,
-        content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
-        documents: extracted.documents as ExportDocumentData | undefined
-      });
+        const extracted = await ZipExtractor.parseImportZip(zipBuffer);
+        const manifest = extracted.manifest as ExportManifest;
+        for (const [path, checksum] of Object.entries(manifest.checksums ?? {})) {
+          const content = extracted.jsonFiles.get(path);
+          if (!content || calculateChecksum(content) !== checksum) {
+            throw new HTTPError({
+              status: 400,
+              message: `Import archive checksum mismatch: ${path}`
+            });
+          }
+        }
 
-      if (!result.valid) return result;
-
-      // Only validated archives become executable sessions.
-      const importId = await storeImportCache(
-        context.db,
-        workspaceId,
-        authCtx.userId,
-        manifest,
-        {
+        // Parse and validate the import data
+        const result = await parseImport(context.db, authCtx, workspaceId, manifest, {
           config: extracted.config as ExportConfig | undefined,
           schemas: extracted.schemas as ExportSchema[] | undefined,
           entities: extracted.entities as ExportEntity[] | undefined,
           projects: extracted.projects as ExportProject[] | undefined,
           content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
           documents: extracted.documents as ExportDocumentData | undefined
-        },
-        extracted.contentFiles
-      );
-
-      return { ...result, import_id: importId };
-    }),
-    importExecute: wsRouter.workspaces.importExecute.handler(async ({ input, context }) => {
-      const workspaceId = await resolveWorkspace(context.db.catalog, input.params.workspace);
-      const authCtx = await buildApiAuthCtx(context.db, workspaceId, context.event);
-
-      // Retrieve cached import data
-      const cached = await getImportCache(
-        context.db,
-        workspaceId,
-        authCtx.userId,
-        input.body.import_id
-      );
-
-      if (!cached) {
-        throw new HTTPError({
-          status: 404,
-          message: 'Import data not found or expired. Please upload the file again.'
         });
+
+        if (!result.valid) return result;
+
+        // Only validated archives become executable sessions.
+        const importId = await storeImportCache(
+          context.db,
+          workspaceId,
+          authCtx.userId,
+          manifest,
+          {
+            config: extracted.config as ExportConfig | undefined,
+            schemas: extracted.schemas as ExportSchema[] | undefined,
+            entities: extracted.entities as ExportEntity[] | undefined,
+            projects: extracted.projects as ExportProject[] | undefined,
+            content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
+            documents: extracted.documents as ExportDocumentData | undefined
+          },
+          extracted.contentFiles
+        );
+
+        return { ...result, import_id: importId };
       }
+    ),
+    importExecute: workspaceScopedRouter.workspaces.importExecute.handler(
+      async ({ input, context }) => {
+        const { workspace: workspaceId, authCtx } = context;
 
-      const executeOptions = {
-        import_id: input.body.import_id,
-        include: input.body.include,
-        conflict_resolutions: input.body.conflict_resolutions,
-        preserve_ids: input.body.options?.preserve_ids ?? false,
-        update_references: input.body.options?.update_references ?? true
-      };
+        // Retrieve cached import data
+        const cached = await getImportCache(
+          context.db,
+          workspaceId,
+          authCtx.userId,
+          input.body.import_id
+        );
 
-      // Execute import with conflict resolutions and cached data
-      const result = await executeImport(
-        context.db,
-        context.storage,
-        authCtx,
-        workspaceId,
-        executeOptions,
-        cached.data,
-        cached.contentFiles
-      );
+        if (!cached) {
+          throw new HTTPError({
+            status: 404,
+            message: 'Import data not found or expired. Please upload the file again.'
+          });
+        }
 
-      // Clean up cache after successful import
-      await deleteImportCache(context.db, input.body.import_id);
+        const executeOptions = {
+          import_id: input.body.import_id,
+          include: input.body.include,
+          conflict_resolutions: input.body.conflict_resolutions,
+          preserve_ids: input.body.options?.preserve_ids ?? false,
+          update_references: input.body.options?.update_references ?? true
+        };
 
-      return result;
-    })
+        // Execute import with conflict resolutions and cached data
+        const result = await executeImport(
+          context.db,
+          context.storage,
+          authCtx,
+          workspaceId,
+          executeOptions,
+          cached.data,
+          cached.contentFiles
+        );
+
+        // Clean up cache after successful import
+        await deleteImportCache(context.db, input.body.import_id);
+
+        return result;
+      }
+    )
   }
 });
 

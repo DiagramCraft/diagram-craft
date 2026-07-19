@@ -1,9 +1,19 @@
 import { createApiTest, expect } from '../helpers/fixtures';
+import { afterAll, beforeAll } from 'vitest';
 import { logAudit } from '@arch-register/server/domain/audit/db/auditLogging';
 import { seedIds, TEST_ADMIN } from '../helpers/seedHelper';
 import { AUDIT_ENTITY_1_ID } from '../helpers/testIds';
 
 const test = createApiTest();
+const originalNodeEnv = process.env['NODE_ENV'];
+
+beforeAll(() => {
+  process.env['NODE_ENV'] = 'development';
+});
+
+afterAll(() => {
+  process.env['NODE_ENV'] = originalNodeEnv;
+});
 
 test.describe('workspace webhooks', () => {
   test('creates, lists, rotates, updates, and deletes without exposing stored secrets', async ({

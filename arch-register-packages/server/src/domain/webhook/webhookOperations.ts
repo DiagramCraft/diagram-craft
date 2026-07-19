@@ -9,6 +9,7 @@ import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type { WorkspaceWebhookDbResult } from './db/webhookDatabase';
+import { assertPublicOutboundHost, UnsafeOutboundHostError } from '../../utils/outboundUrlSafety';
 
 const generateSecret = () => `whsec_${randomBytes(32).toString('base64url')}`;
 
@@ -35,6 +36,19 @@ export const normalizeWebhookUrl = (value: string) => {
     });
   }
   return url.toString();
+};
+
+export const assertSafeWebhookUrl = async (value: string) => {
+  if (process.env['NODE_ENV'] === 'development') return;
+  const url = new URL(value);
+  try {
+    await assertPublicOutboundHost(url.hostname, 'Webhook URL host must be publicly routable');
+  } catch (error) {
+    if (error instanceof UnsafeOutboundHostError) {
+      httpAssert.true(false, { status: 400, message: error.message });
+    }
+    throw error;
+  }
 };
 
 const normalizeFilter = async (
@@ -95,10 +109,12 @@ export const createWebhook = async (
   const ws = await authorize(db, workspace, event);
   const now = new Date();
   const secret = generateSecret();
+  const url = normalizeWebhookUrl(input.url);
+  await assertSafeWebhookUrl(url);
   const webhook = await db.webhook.createWebhook({
     id: randomUUID(),
     workspace: ws,
-    url: normalizeWebhookUrl(input.url),
+    url,
     event_filter: await normalizeFilter(db, ws, input.event_filter),
     hmac_secret: secret,
     enabled: input.enabled,
@@ -118,8 +134,10 @@ export const updateWebhook = async (
   const ws = await authorize(db, workspace, event);
   const existing = await db.webhook.getWebhook(ws, id);
   httpAssert.present(existing, { status: 404, message: 'Webhook not found' });
+  const url = normalizeWebhookUrl(input.url);
+  await assertSafeWebhookUrl(url);
   const updated = await db.webhook.updateWebhook(ws, id, {
-    url: normalizeWebhookUrl(input.url),
+    url,
     event_filter: await normalizeFilter(db, ws, input.event_filter),
     hmac_secret: existing.hmac_secret,
     enabled: input.enabled,
