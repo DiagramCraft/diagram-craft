@@ -59,4 +59,9 @@ describe('FilesystemStorage staged mutations', () => {
       Buffer.from('legacy content')
     );
   });
+
+  it('rejects traversal attempts when deleting a project tree', async () => {
+    const { storage } = await makeStorage();
+    await expect(storage.deleteAll('..', 'outside')).rejects.toThrow('Path traversal detected');
+  });
 });

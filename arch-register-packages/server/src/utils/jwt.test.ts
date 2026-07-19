@@ -22,19 +22,23 @@ describe('parseExpiryToSeconds', () => {
     expect(parseExpiryToSeconds('1d')).toBe(86400);
   });
 
-  it('falls back to 3600 for empty string', () => {
-    expect(parseExpiryToSeconds('')).toBe(3600);
+  it('rejects an empty string', () => {
+    expect(() => parseExpiryToSeconds('')).toThrow('Invalid JWT expiry');
   });
 
-  it('falls back to 3600 for invalid format (no unit)', () => {
-    expect(parseExpiryToSeconds('3600')).toBe(3600);
+  it('rejects invalid format (no unit)', () => {
+    expect(() => parseExpiryToSeconds('3600')).toThrow('Invalid JWT expiry');
   });
 
-  it('falls back to 3600 for invalid format (unknown unit)', () => {
-    expect(parseExpiryToSeconds('10w')).toBe(3600);
+  it('rejects invalid format (unknown unit)', () => {
+    expect(() => parseExpiryToSeconds('10w')).toThrow('Invalid JWT expiry');
   });
 
-  it('falls back to 3600 for non-numeric value', () => {
-    expect(parseExpiryToSeconds('xh')).toBe(3600);
+  it('rejects non-numeric values', () => {
+    expect(() => parseExpiryToSeconds('xh')).toThrow('Invalid JWT expiry');
+  });
+
+  it('rejects zero duration', () => {
+    expect(() => parseExpiryToSeconds('0s')).toThrow('greater than zero');
   });
 });

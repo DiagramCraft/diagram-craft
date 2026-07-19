@@ -60,7 +60,14 @@ const main = async () => {
     logger.info('Shutting down...');
     await collaborationServer.close();
     await db.core.close();
-    server.close();
+    if (server.listening) {
+      await new Promise<void>((resolve, reject) => {
+        server.close(error => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+    }
     process.exit(0);
   };
 

@@ -11,15 +11,19 @@ export const escapeCsvValue = (value: unknown, delimiter: string = ';'): string 
   if (value == null) return '';
 
   const str = String(value);
+  const safeStr = /^[=+\-@]/.test(str) ? `'${str}` : str;
 
   // Check if value needs quoting
   const needsQuoting =
-    str.includes(delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r');
+    safeStr.includes(delimiter) ||
+    safeStr.includes('"') ||
+    safeStr.includes('\n') ||
+    safeStr.includes('\r');
 
-  if (!needsQuoting) return str;
+  if (!needsQuoting) return safeStr;
 
   // Escape internal quotes by doubling them
-  const escaped = str.replace(/"/g, '""');
+  const escaped = safeStr.replace(/"/g, '""');
 
   return `"${escaped}"`;
 };

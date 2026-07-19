@@ -1,7 +1,7 @@
 import { defineHandler, getQuery, H3, redirect } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import { generateTokenPair } from '../../utils/jwt';
+import { generateTokenPair, getTokenExpirySeconds } from '../../utils/jwt';
 import { handleCallback } from './oidcClient';
 import { setAuthCookies } from '../../utils/cookies';
 import { httpAssert } from '../../utils/httpAssert';
@@ -90,7 +90,13 @@ export const createOidcCallbackRoute = (db: DatabaseAdapter) => {
       });
 
       const tokens = generateTokenPair(user);
-      setAuthCookies(event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+      setAuthCookies(
+        event,
+        tokens.access_token,
+        tokens.refresh_token,
+        tokens.expires_in,
+        getTokenExpirySeconds('refresh')
+      );
 
       const frontendUrl = process.env['OIDC_FRONTEND_REDIRECT_URI'] ?? '/';
       return redirect(frontendUrl, 302);
