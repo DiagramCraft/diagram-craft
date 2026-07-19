@@ -91,6 +91,35 @@
   font-size: 12px;
 }
 
+.aiValueRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.aiIndicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r, 4px);
+  color: var(--accent-fg);
+}
+
+.aiIndicator:hover,
+.aiIndicator:focus-visible {
+  background: var(--panel-bg);
+}
+
+.aiFindingsList {
+  margin: 4px 0;
+  padding-left: 16px;
+  font-size: 11px;
+}
+
 .documentLink {
   color: var(--accent-fg);
   cursor: pointer;

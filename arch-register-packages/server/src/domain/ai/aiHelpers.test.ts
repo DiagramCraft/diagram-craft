@@ -92,6 +92,12 @@ describe('ai chat route helpers', () => {
     });
 
     expect(buildAiConfigInput({ api_key: '' })).toEqual({ api_key_enc: null });
+
+    expect(buildAiConfigInput({ model: '', base_url: '', system_prompt: '' })).toEqual({
+      model: null,
+      base_url: null,
+      system_prompt: null
+    });
   });
 
   it('rejects invalid AI config inputs', () => {

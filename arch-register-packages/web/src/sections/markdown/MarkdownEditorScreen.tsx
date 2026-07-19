@@ -153,6 +153,9 @@ export const MarkdownEditorScreen = () => {
   const [body, setBody] = useState('');
   const [documentTypeId, setDocumentTypeId] = useState<string | null>(isDraft ? draftType : null);
   const [metadata, setMetadata] = useState<NonNullable<typeof data>['metadata']>({});
+  const [generatedMetadata, setGeneratedMetadata] = useState<
+    NonNullable<typeof data>['generated_metadata']
+  >({});
   const [paneMode, setPaneMode] = useState<MarkdownPaneMode>(
     isDraft || requestedMode === 'edit' ? 'edit' : 'preview'
   );
@@ -355,6 +358,7 @@ export const MarkdownEditorScreen = () => {
       setBody(data.body);
       setDocumentTypeId(data.document_type_id);
       setMetadata(data.metadata);
+      setGeneratedMetadata(data.generated_metadata ?? {});
       initializedRef.current = true;
       setDirty(false);
       return;
@@ -363,6 +367,7 @@ export const MarkdownEditorScreen = () => {
       setBody(data.body);
       setDocumentTypeId(data.document_type_id);
       setMetadata(data.metadata);
+      setGeneratedMetadata(data.generated_metadata ?? {});
     }
   }, [isDraft, data, dirty]);
 
@@ -908,6 +913,7 @@ export const MarkdownEditorScreen = () => {
                   documentTypes={availableDocumentTypes}
                   fields={documentFields}
                   metadata={metadata}
+                  generatedMetadata={generatedMetadata}
                   readOnly={isReadOnly || screenState.screenMode !== 'edit'}
                   attemptedSave={attemptedSave}
                   onTypeChange={handleDocumentTypeChange}

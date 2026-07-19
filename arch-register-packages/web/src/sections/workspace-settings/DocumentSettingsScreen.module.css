@@ -168,6 +168,12 @@
   font-size: 12px;
 }
 
+.linkButton {
+  color: var(--accent-fg);
+  text-decoration: underline;
+  font-size: inherit;
+}
+
 .fieldsHint {
   display: flex;
   align-items: flex-start;
@@ -179,7 +185,7 @@
 
 .aiActionRow {
   display: grid;
-  grid-template-columns: 1fr 2fr 100px 28px;
+  grid-template-columns: 1fr 130px 2fr 160px 28px 28px;
   align-items: start;
   gap: 10px;
   padding: 10px;
