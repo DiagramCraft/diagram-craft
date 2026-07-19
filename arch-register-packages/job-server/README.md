@@ -28,9 +28,13 @@ pnpm start
 
 The worker does not expose an HTTP listener. Job handlers are registered by system components and receive the run ID as `jobId` together with the workspace, schedule, system identity, and payload.
 
-Email notification delivery uses Resend when `RESEND_API_KEY`, `NOTIFICATION_EMAIL_FROM`, and
-`PUBLIC_APP_URL` are configured. Set `NOTIFICATION_EMAIL_RECIPIENT_DOMAIN_OVERRIDE` to a test
-domain to rewrite all recipients while preserving their local parts; the sender is not changed.
+Email notification delivery uses Resend when `NOTIFICATION_EMAIL_PROVIDER=resend` and
+`RESEND_API_KEY`, `NOTIFICATION_EMAIL_FROM`, and `PUBLIC_APP_URL` are configured. For a raw SMTP
+server, set `NOTIFICATION_EMAIL_PROVIDER=smtp`, `SMTP_HOST`, and optionally `SMTP_PORT` (default
+`587`), `SMTP_SECURE` (default `false`; use `true` for implicit TLS, typically port `465`),
+`SMTP_USER`, and `SMTP_PASSWORD`. SMTP credentials must be supplied together when authentication
+is required. Set `NOTIFICATION_EMAIL_RECIPIENT_DOMAIN_OVERRIDE` to a test domain to rewrite all
+recipients while preserving their local parts; the sender is not changed.
 
 AI metadata generation decrypts each workspace's stored AI provider credentials itself, so the job
 server process needs the *same* `AI_ENCRYPTION_KEY` (and `AI_ENCRYPTION_SALT`, if the deployment set
