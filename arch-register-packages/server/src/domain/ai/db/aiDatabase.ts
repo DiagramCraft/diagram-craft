@@ -91,6 +91,7 @@ export const aiMappers = {
 
 export type AiDatabase = {
   getAiConfig(ws: string): Promise<AiConfigDbResult | null>;
+  listAiConfigs(): Promise<AiConfigDbResult[]>;
   upsertAiConfig(ws: string, input: AiConfigInputDbUpsert): Promise<AiConfigDbResult>;
 
   listConversations(ws: string, userId: string): Promise<AiConversationDbResult[]>;
