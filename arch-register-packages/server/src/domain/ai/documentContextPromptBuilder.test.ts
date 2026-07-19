@@ -69,4 +69,36 @@ describe('buildDocumentActionPrompt', () => {
 
     expect(prompt).not.toContain('Old field');
   });
+
+  it('describes the structured metadata result only when an output field is provided', () => {
+    const field = {
+      id: 'status',
+      name: 'Status',
+      type: 'text' as const,
+      requirement: 'required' as const,
+      retired: false
+    };
+    const metadataPrompt = buildDocumentActionPrompt({
+      documentTitle: 'Decision.md',
+      locationPath: 'adr/decision.md',
+      documentType: makeDocumentType({ fields: [field] }),
+      metadata: {},
+      body: 'Body.',
+      actionPrompt: 'Generate status.',
+      outputField: field
+    });
+    const interactivePrompt = buildDocumentActionPrompt({
+      documentTitle: 'Decision.md',
+      locationPath: 'adr/decision.md',
+      documentType: makeDocumentType({ fields: [field] }),
+      metadata: {},
+      body: 'Body.',
+      actionPrompt: 'Discuss status.'
+    });
+
+    expect(metadataPrompt).toContain('Return a JSON object with exactly these fields:');
+    expect(metadataPrompt).toContain('reason: a concise explanation');
+    expect(metadataPrompt).toContain('findings: an array');
+    expect(interactivePrompt).not.toContain('Return a JSON object with exactly these fields:');
+  });
 });

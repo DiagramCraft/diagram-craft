@@ -55,7 +55,12 @@ import {
   validateDocumentMetadata,
   validateDocumentTypeWrite
 } from '../document/documentValidation';
-import { parseGeneratedValue } from '../document/documentAiValue';
+import {
+  documentMetadataGenerationOutputSchema,
+  parseGeneratedResponse,
+  parseGeneratedValue,
+  type ParsedDocumentAiResponse
+} from '../document/documentAiValue';
 import {
   compareDocuments,
   matchesDocumentCondition,
@@ -852,6 +857,92 @@ export const testDocumentAiAction = async (
       );
 
       const adapter = createAiTextAdapter(aiConfig);
+
+      if (action.kind === 'metadata_generator' && outputField) {
+        return (async function* testMetadataGenerator(): AsyncGenerator<AiActionTestEvent> {
+          const startedAt = Date.now();
+          const errors: string[] = [];
+          const toolCalls: Array<{
+            name: string;
+            status: 'completed' | 'failed';
+            error: string | null;
+          }> = [];
+          let rawOutput = '';
+          let parsedValue = null;
+          let status: 'success' | 'invalid_output' | 'failed' = 'success';
+
+          try {
+            let generatedResponse: Extract<ParsedDocumentAiResponse, { ok: true }>;
+            try {
+              const structured = await chat({
+                adapter,
+                messages: [{ role: 'user', content: prompt }],
+                tools,
+                temperature: aiConfig.temperature,
+                outputSchema: documentMetadataGenerationOutputSchema(outputField)
+              });
+              rawOutput = JSON.stringify(structured);
+              const parsed = parseGeneratedResponse(outputField, rawOutput);
+              if (!parsed.ok) throw new Error(parsed.error);
+              generatedResponse = parsed;
+            } catch (structuredError) {
+              const legacyOutput = await chat({
+                adapter,
+                messages: [{ role: 'user', content: prompt }],
+                tools,
+                temperature: aiConfig.temperature,
+                stream: false
+              });
+              rawOutput = legacyOutput;
+              const parsed = parseGeneratedResponse(outputField, rawOutput);
+              if (!parsed.ok) {
+                throw new Error(
+                  `Structured output failed (${structuredError instanceof Error ? structuredError.message : String(structuredError)}); ` +
+                    `legacy output was invalid: ${parsed.error}`
+                );
+              }
+              generatedResponse = parsed;
+            }
+
+            parsedValue = generatedResponse.value;
+            const validation = validateDocumentMetadata(
+              [outputField],
+              { [outputField.id]: generatedResponse.value },
+              false,
+              false
+            );
+            if (validation.errors.length > 0) {
+              status = 'invalid_output';
+              errors.push(...validation.errors);
+            }
+          } catch (cause) {
+            status = 'failed';
+            errors.push(
+              `AI request failed: ${cause instanceof Error ? cause.message : String(cause)}`
+            );
+          }
+
+          yield {
+            type: 'done',
+            actionId: action.id,
+            actionName: action.name,
+            kind: action.kind,
+            prompt: action.prompt,
+            documentTitle: node.name,
+            nodeId: node.id,
+            provider: aiConfig.provider,
+            model: aiConfig.model,
+            durationMs: Date.now() - startedAt,
+            rawOutput,
+            parsedValue,
+            outputFieldId: outputField.id,
+            status,
+            errors,
+            toolCalls
+          };
+        })();
+      }
+
       const stream = chat({
         adapter,
         messages: [{ role: 'user', content: prompt }],

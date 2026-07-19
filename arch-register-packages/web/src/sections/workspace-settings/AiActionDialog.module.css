@@ -26,24 +26,6 @@
   font-weight: 600;
 }
 
-.testButton {
-  flex: 0 0 auto;
-  padding: 6px 12px;
-  border-radius: var(--r);
-  background: var(--accent-bg);
-  color: var(--accent-fg);
-  font-size: 12px;
-}
-
-.testButton:hover:not(:disabled) {
-  filter: brightness(1.08);
-}
-
-.testButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
 .hint {
   color: var(--cmp-fg-disabled);
   font-size: 11px;
@@ -121,6 +103,37 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font: inherit;
+}
+
+.metadataOutput {
+  display: grid;
+  gap: 12px;
+}
+
+.metadataField {
+  display: grid;
+  gap: 4px;
+  line-height: 1.4;
+}
+
+.metadataLabel {
+  color: var(--base-fg-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.metadataValue {
+  color: var(--base-fg);
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.metadataFindings {
+  margin: 0;
+  padding-left: 18px;
 }
 
 .details,

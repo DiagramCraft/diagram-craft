@@ -41,9 +41,14 @@ vi.mock('../ai/chatTools', () => ({ createAiChatTools }));
 vi.mock('@tanstack/ai', () => ({ chat }));
 vi.mock('../jobs/jobOperations', () => ({ createJobSchedule, updateJobSchedule }));
 
-const chatAnswer = (text: string) =>
-  vi.fn(async function* () {
-    yield { type: 'TEXT_MESSAGE_CONTENT', delta: text };
+const chatAnswer = (
+  text: string,
+  reason = 'The document supports this value.',
+  findings: string[] = []
+) =>
+  vi.fn(async (options: { outputSchema?: unknown; stream?: boolean }) => {
+    if (options.outputSchema) return { value: text, reason, findings };
+    return text;
   });
 
 const documentType = {
@@ -354,15 +359,11 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
     expect(upsertPendingMetadataGeneration).not.toHaveBeenCalled();
   });
 
-  it('ignores reasoning/thinking chunks and only uses the final answer text', async () => {
+  it('stores the structured reason and findings as generation details', async () => {
     chat.mockImplementation(
-      vi.fn(async function* () {
-        yield {
-          type: 'REASONING_MESSAGE_CONTENT',
-          delta: 'Let me think about this at length before answering... '
-        };
-        yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'Great summary' };
-      })
+      chatAnswer('Great summary', 'The summary is supported by the document body.', [
+        'The document describes the proposed change.'
+      ])
     );
     const upsertDocumentMetadata = vi.fn();
     const db = {
@@ -398,8 +399,57 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         values: { summary: 'Great summary' },
         generated_metadata: expect.objectContaining({
           summary: expect.objectContaining({
-            explanation: 'Let me think about this at length before answering...'
+            explanation: 'The summary is supported by the document body.',
+            findings: ['The document describes the proposed change.']
           })
+        })
+      })
+    );
+  });
+
+  it('falls back to a legacy response when structured output is unavailable', async () => {
+    chat.mockImplementation(
+      vi.fn(async (options: { outputSchema?: unknown; stream?: boolean }) => {
+        if (options.outputSchema) throw new Error('structured output is unsupported');
+        return 'Legacy summary';
+      })
+    );
+    const upsertDocumentMetadata = vi.fn();
+    const upsertPendingMetadataGeneration = vi.fn();
+    const db = {
+      document: {
+        claimDueMetadataGenerations: vi.fn(async () => [scheduleRow()]),
+        getDocumentMetadata: vi.fn(async () => ({
+          workspace: 'ws-1',
+          node_id: 'node-1',
+          document_type_id: 'type-1',
+          values: {},
+          generated_metadata: {},
+          updated_at: new Date()
+        })),
+        getDocumentType: vi.fn(async () => documentType),
+        upsertDocumentMetadata,
+        upsertPendingMetadataGeneration
+      },
+      project: {
+        getAnyContentNodeById: vi.fn(async () => node),
+        getNextMarkdownRevisionNumber: vi.fn(async () => 6),
+        createMarkdownRevision: vi.fn()
+      },
+      auth: { getUser: vi.fn(async () => user) },
+      core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
+    } as unknown as DatabaseAdapter;
+
+    const handler = createDocumentMetadataGenerationScanJobHandler(db, makeStorage());
+    const result = await handler({ jobId: 'job-1', workspace: 'ws-1', payload: {} });
+
+    expect(result.success).toBe(1);
+    expect(chat).toHaveBeenCalledTimes(2);
+    expect(upsertDocumentMetadata).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: { summary: 'Legacy summary' },
+        generated_metadata: expect.objectContaining({
+          summary: expect.objectContaining({ explanation: null, findings: [] })
         })
       })
     );

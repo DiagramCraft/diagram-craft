@@ -5,6 +5,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { Button } from '@diagram-craft/app-components/Button';
 import type {
   AiActionTestResult,
   DocumentListItem
@@ -28,6 +29,30 @@ const scopeLabel = (document: DocumentListItem) => {
   if (document.scope === 'project') return 'Project document';
   if (document.scope === 'entity') return 'Entity document';
   return 'Workspace document';
+};
+
+type MetadataOutput = {
+  value: unknown;
+  reason: string | null;
+  findings: string[];
+};
+
+const parseMetadataOutput = (rawOutput: string, parsedValue: unknown): MetadataOutput | null => {
+  try {
+    const parsed: unknown = JSON.parse(rawOutput);
+    if (typeof parsed !== 'object' || parsed === null || !('value' in parsed)) return null;
+
+    const response = parsed as { value: unknown; reason?: unknown; findings?: unknown };
+    return {
+      value: response.value,
+      reason: typeof response.reason === 'string' ? response.reason : null,
+      findings: Array.isArray(response.findings)
+        ? response.findings.filter((finding): finding is string => typeof finding === 'string')
+        : []
+    };
+  } catch {
+    return parsedValue === null ? null : { value: parsedValue, reason: null, findings: [] };
+  }
 };
 
 export const AiActionDialog = ({
@@ -146,6 +171,10 @@ export const AiActionDialog = ({
     (draft.kind !== 'metadata_generator' || draft.outputFieldId.length > 0);
 
   const displayOutput = result?.rawOutput ?? streamingText;
+  const metadataOutput =
+    result?.kind === 'metadata_generator'
+      ? parseMetadataOutput(result.rawOutput, result.parsedValue)
+      : null;
   const testDisabled =
     running ||
     !draft ||
@@ -256,14 +285,9 @@ export const AiActionDialog = ({
                     Choose an accessible document of this type. Testing does not save any changes.
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className={styles.testButton}
-                  onClick={() => void runTest()}
-                  disabled={testDisabled}
-                >
+                <Button variant="primary" onClick={() => void runTest()} disabled={testDisabled}>
                   {running ? 'Testing…' : 'Test action'}
-                </button>
+                </Button>
               </div>
 
               <DialogSection label="Test document">
@@ -329,6 +353,31 @@ export const AiActionDialog = ({
                     <div className={styles.output}>
                       {(result?.kind ?? draft.kind) === 'interactive' ? (
                         <SafeMarkdown text={displayOutput} />
+                      ) : metadataOutput ? (
+                        <div className={styles.metadataOutput}>
+                          <div className={styles.metadataField}>
+                            <div className={styles.metadataLabel}>Value</div>
+                            <code className={styles.metadataValue}>
+                              {JSON.stringify(metadataOutput.value)}
+                            </code>
+                          </div>
+                          {metadataOutput.reason && (
+                            <div className={styles.metadataField}>
+                              <div className={styles.metadataLabel}>Reason</div>
+                              <div>{metadataOutput.reason}</div>
+                            </div>
+                          )}
+                          {metadataOutput.findings.length > 0 && (
+                            <div className={styles.metadataField}>
+                              <div className={styles.metadataLabel}>Findings</div>
+                              <ul className={styles.metadataFindings}>
+                                {metadataOutput.findings.map((finding, index) => (
+                                  <li key={`${finding}-${index}`}>{finding}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <pre>{displayOutput}</pre>
                       )}
@@ -341,11 +390,13 @@ export const AiActionDialog = ({
                         {result.provider} · {result.model} · {result.durationMs} ms ·{' '}
                         {result.status}
                       </div>
-                      {result.kind === 'metadata_generator' && result.parsedValue !== null && (
-                        <div className={styles.parsedValue}>
-                          Parsed value: <code>{JSON.stringify(result.parsedValue)}</code>
-                        </div>
-                      )}
+                      {result.kind === 'metadata_generator' &&
+                        !metadataOutput &&
+                        result.parsedValue !== null && (
+                          <div className={styles.parsedValue}>
+                            Parsed value: <code>{JSON.stringify(result.parsedValue)}</code>
+                          </div>
+                        )}
                       {result.errors.length > 0 && (
                         <div className={styles.errorList}>
                           {result.errors.map((message, index) => (
