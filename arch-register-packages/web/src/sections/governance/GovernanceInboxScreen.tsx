@@ -155,7 +155,9 @@ export const GovernanceInboxScreen = () => {
       submission.case.status === 'open' || submission.case.outcome === 'request_changes';
     if (submittedStatus === 'open') return needsAttention;
     if (submittedStatus === 'completed') {
-      return submission.case.status === 'completed' && submission.case.outcome !== 'request_changes';
+      return (
+        submission.case.status === 'completed' && submission.case.outcome !== 'request_changes'
+      );
     }
     return true;
   });
@@ -362,7 +364,9 @@ export const GovernanceInboxScreen = () => {
                             ? submission.openAssignments.map(describeWaitingOn).join(' · ')
                             : 'Awaiting review'
                           : `Status: ${humanize(submission.case.status)}${
-                              submission.case.outcome ? ` (${humanize(submission.case.outcome)})` : ''
+                              submission.case.outcome
+                                ? ` (${humanize(submission.case.outcome)})`
+                                : ''
                             }`}
                     </div>
                     {proposalNote && (

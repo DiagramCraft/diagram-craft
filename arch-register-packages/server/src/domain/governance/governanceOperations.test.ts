@@ -486,9 +486,7 @@ describe('listMyGovernanceAssignments', () => {
     const caseB = makeCase({ id: 'case-b' });
     const assignmentA = makeAssignment({ id: 'assignment-a', case_id: 'case-a' });
     const assignmentB = makeAssignment({ id: 'assignment-b', case_id: 'case-b' });
-    const db = makeDb(
-      makeGovernanceDouble(caseA, assignmentA, [assignmentB], [caseB])
-    );
+    const db = makeDb(makeGovernanceDouble(caseA, assignmentA, [assignmentB], [caseB]));
 
     const tasks = await listMyGovernanceAssignments(db, 'ws-1', event, { state: 'open' });
 

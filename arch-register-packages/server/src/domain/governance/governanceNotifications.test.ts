@@ -101,7 +101,6 @@ describe('governance notification delivery', () => {
     );
   });
 
-
   it('creates an actionable notification for a directly assigned user', async () => {
     const createNotification = vi.fn(async input => input);
     const db = {
