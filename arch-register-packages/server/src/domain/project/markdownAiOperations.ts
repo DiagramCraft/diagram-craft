@@ -15,10 +15,14 @@ import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';
 import { createAiChatTools } from '../ai/chatTools';
 import { buildDocumentActionPrompt } from '../ai/documentContextPromptBuilder';
 import {
+  documentMetadataGenerationOutputSchema,
+  parseGeneratedResponse,
+  type ParsedDocumentAiResponse
+} from '../document/documentAiValue';
+import {
   validateDocumentMetadata,
   validateDocumentTypeWrite
 } from '../document/documentValidation';
-import { parseGeneratedValue } from '../document/documentAiValue';
 
 import { projectDbErrorMessages, storageScope } from './projectOperationHelpers';
 
@@ -215,13 +219,16 @@ export const testDocumentAiAction = async (
       );
 
       const adapter = createAiTextAdapter(aiConfig);
-      const stream = chat({
-        adapter,
-        messages: [{ role: 'user', content: prompt }],
-        tools,
-        temperature: aiConfig.temperature,
-        stream: true
-      });
+      const isMetadataGenerator = action.kind === 'metadata_generator' && outputField !== null;
+      const stream = isMetadataGenerator
+        ? null
+        : chat({
+            adapter,
+            messages: [{ role: 'user', content: prompt }],
+            tools,
+            temperature: aiConfig.temperature,
+            stream: true
+          });
 
       return (async function* testAndStream(): AsyncGenerator<AiActionTestEvent> {
         const startedAt = Date.now();
@@ -233,6 +240,77 @@ export const testDocumentAiAction = async (
         }> = [];
         const errors: string[] = [];
         let streamError: string | null = null;
+
+        if (isMetadataGenerator && outputField) {
+          let rawOutput = '';
+          let parsedValue = null;
+          let status: 'success' | 'invalid_output' | 'failed' = 'success';
+
+          try {
+            let generatedResponse: ParsedDocumentAiResponse;
+            try {
+              const structured = await chat({
+                adapter,
+                messages: [{ role: 'user', content: prompt }],
+                tools,
+                temperature: aiConfig.temperature,
+                outputSchema: documentMetadataGenerationOutputSchema(outputField)
+              });
+              rawOutput = JSON.stringify(structured);
+              generatedResponse = parseGeneratedResponse(outputField, rawOutput);
+              if (!generatedResponse.ok) throw new Error(generatedResponse.error);
+            } catch {
+              const legacyAnswer = await chat({
+                adapter,
+                messages: [{ role: 'user', content: prompt }],
+                tools,
+                temperature: aiConfig.temperature,
+                stream: false
+              });
+              rawOutput =
+                typeof legacyAnswer === 'string' ? legacyAnswer : JSON.stringify(legacyAnswer);
+              generatedResponse = parseGeneratedResponse(outputField, rawOutput);
+              if (!generatedResponse.ok) throw new Error(generatedResponse.error);
+            }
+
+            parsedValue = generatedResponse.value;
+            const validation = validateDocumentMetadata(
+              [outputField],
+              { [outputField.id]: parsedValue },
+              false,
+              false
+            );
+            if (validation.errors.length > 0) {
+              status = 'invalid_output';
+              errors.push(...validation.errors);
+            }
+          } catch (cause) {
+            status = 'failed';
+            errors.push(
+              `AI request failed: ${cause instanceof Error ? cause.message : String(cause)}`
+            );
+          }
+
+          yield {
+            type: 'done',
+            actionId: action.id,
+            actionName: action.name,
+            kind: action.kind,
+            prompt: action.prompt,
+            documentTitle: node.name,
+            nodeId: node.id,
+            provider: aiConfig.provider,
+            model: aiConfig.model,
+            durationMs: Date.now() - startedAt,
+            rawOutput,
+            parsedValue,
+            outputFieldId: outputField.id,
+            status,
+            errors,
+            toolCalls
+          };
+          return;
+        }
 
         try {
           // biome-ignore lint/suspicious/noExplicitAny: Stream chunk type varies by AI provider implementation
@@ -264,7 +342,7 @@ export const testDocumentAiAction = async (
         let status: 'success' | 'invalid_output' | 'failed' = streamError ? 'failed' : 'success';
 
         if (!streamError && action.kind === 'metadata_generator' && outputField) {
-          const parsed = parseGeneratedValue(outputField, rawOutput);
+          const parsed = parseGeneratedResponse(outputField, rawOutput);
           if (!parsed.ok) {
             status = 'invalid_output';
             errors.push(parsed.error);
