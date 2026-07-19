@@ -4,6 +4,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../lib/http';
 import styles from '../dialogs/AddEntityDialog.module.css';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 
 type ContentFolderDialogProps = {
   open: boolean;
@@ -27,12 +28,12 @@ export const ContentFolderDialog = ({
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(nameRef, { enabled: open });
 
   useEffect(() => {
     if (open) {
       setName('');
       setError('');
-      setTimeout(() => nameRef.current?.focus(), 0);
     }
   }, [open]);
 

@@ -13,6 +13,7 @@ import { Banner } from '../components/Banner';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 
 type ApiWorkspace = {
   id: string;
@@ -131,6 +132,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(nameRef, { enabled: open, delay: 30 });
 
   useEffect(() => {
     if (!open) return;
@@ -146,7 +148,6 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
     setCopyFrom('');
     setCopyParts(Object.fromEntries(COPY_PARTS.map(p => [p.id, p.default])));
     setError('');
-    setTimeout(() => nameRef.current?.focus(), 30);
   }, [open]);
 
   useEffect(() => {

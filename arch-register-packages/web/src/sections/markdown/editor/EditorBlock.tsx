@@ -7,6 +7,7 @@ import { TbChevronDown, TbChevronUp, TbGripVertical, TbTrash } from 'react-icons
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { useMdxBlockRegistry } from './MdxBlockRegistryContext';
+import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 import styles from './EditorBlock.module.css';
 
 // ── Utilities ────────────────────────────────────────────────────────────────
@@ -220,6 +221,7 @@ const BlockContextMenu = ({
 }) => {
   const editor = useEditorRef();
   const mdxRegistry = useMdxBlockRegistry();
+  const { schedule } = useCancellableTimeout();
 
   const currentIdx = () => {
     const p = editor.api.findPath(element);
@@ -273,7 +275,7 @@ const BlockContextMenu = ({
       const pasted = await pasteBlockFromClipboard(editor, idx, navigator.clipboard);
       if (pasted) {
         const path = [idx + 1];
-        setTimeout(() => {
+        schedule(() => {
           editor.tf.select(path);
           editor.tf.focus();
         }, 50);
@@ -289,7 +291,7 @@ const BlockContextMenu = ({
       const path = [idx, 0];
       // The context menu closing (and stealing focus back) races with Plate
       // mounting the new node's DOM — deferring lets both settle first.
-      setTimeout(() => {
+      schedule(() => {
         editor.tf.select({ path, offset: 0 });
         editor.tf.focus();
       }, 50);
@@ -302,7 +304,7 @@ const BlockContextMenu = ({
     if (idx !== null) {
       editor.tf.insertNodes({ type: 'p', children: [{ text: '' }] }, { at: [idx + 1] });
       const path = [idx + 1, 0];
-      setTimeout(() => {
+      schedule(() => {
         editor.tf.select({ path, offset: 0 });
         editor.tf.focus();
       }, 50);
@@ -314,7 +316,7 @@ const BlockContextMenu = ({
     const idx = currentIdx();
     if (idx !== null) {
       unnestBlock(editor, idx);
-      setTimeout(() => {
+      schedule(() => {
         editor.tf.select([idx]);
         editor.tf.focus();
       }, 50);
@@ -330,7 +332,7 @@ const BlockContextMenu = ({
         wrapperSpec?.editorSpec?.createWrapper ??
         ((child: TElement) => ({ type: wrapperType, children: [child] }));
       wrapBlock(editor, idx, createWrapper);
-      setTimeout(() => {
+      schedule(() => {
         editor.tf.select([idx]);
         editor.tf.focus();
       }, 50);

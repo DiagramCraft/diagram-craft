@@ -1,0 +1,114 @@
+// @vitest-environment jsdom
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { useEntityBrowserSelection, type BulkEditStep } from './useEntityBrowserSelection';
+
+const mocks = vi.hoisted(() => ({
+  getEntity: vi.fn(),
+  updateEntity: vi.fn(),
+  useUpdateEntity: vi.fn()
+}));
+
+vi.mock('../../../hooks/useEntities', () => ({
+  useUpdateEntity: mocks.useUpdateEntity
+}));
+
+vi.mock('../../../lib/orpcClient', () => ({
+  orpcClient: { entities: { get: mocks.getEntity } }
+}));
+
+const schema = {
+  id: 'schema-1',
+  name: 'Service',
+  fields: []
+} as unknown as EntitySchema;
+
+const entity = {
+  _uid: 'entity-1',
+  _publicId: 'SRV-1',
+  _schema: { id: schema.id, name: schema.name },
+  _name: 'Service',
+  _slug: 'service',
+  _namespace: 'default',
+  _description: '',
+  _owner: null,
+  _lifecycle: null,
+  _targetLifecycle: null,
+  _targetLifecycleDate: null,
+  _tags: [],
+  _links: [],
+  _visibilityMode: 'public',
+  _completeness: null,
+  canView: true,
+  canEdit: true,
+  canDelete: true,
+  canAdmin: true,
+  canCreateChild: true
+} as EntityRecord;
+
+type SelectionState = ReturnType<typeof useEntityBrowserSelection>;
+
+const Harness = (props: { stateRef: React.MutableRefObject<SelectionState | null> }) => {
+  props.stateRef.current = useEntityBrowserSelection({
+    workspaceId: 'workspace-1',
+    entities: [entity],
+    filtered: [entity],
+    filteredCount: 1,
+    schemaMap: new Map([[schema.id, { schema, index: 0 }]])
+  });
+  return null;
+};
+
+describe('useEntityBrowserSelection delayed clearing', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+  let stateRef: React.MutableRefObject<SelectionState | null>;
+
+  beforeEach(() => {
+    (
+      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.useFakeTimers();
+    mocks.getEntity.mockResolvedValue(entity);
+    mocks.updateEntity.mockResolvedValue(entity);
+    mocks.useUpdateEntity.mockReturnValue({ mutateAsync: mocks.updateEntity });
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    stateRef = { current: null };
+    act(() => root.render(<Harness stateRef={stateRef} />));
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('clears only after the latest successful action delay', async () => {
+    const state = () => stateRef.current!;
+
+    act(() => state().handleSelectRow(entity._uid));
+    await act(async () => {
+      await state().handleConfirm();
+    });
+    expect(state().step satisfies BulkEditStep).toBe('done');
+    expect(state().selectedIds).toEqual(new Set([entity._uid]));
+
+    act(() => vi.advanceTimersByTime(1000));
+    await act(async () => {
+      await state().handleConfirm();
+    });
+
+    act(() => vi.advanceTimersByTime(800));
+    expect(state().selectedIds).toEqual(new Set([entity._uid]));
+
+    act(() => vi.advanceTimersByTime(1000));
+    expect(state().selectedIds).toEqual(new Set());
+    expect(state().step).toBe('edit');
+  });
+});
