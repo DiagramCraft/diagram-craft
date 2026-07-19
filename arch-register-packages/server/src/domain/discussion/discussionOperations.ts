@@ -106,7 +106,7 @@ const toApiPost = (
   objectId: row.object_id,
   parentPostId: row.parent_post_id,
   authorId: row.author_id,
-  authorName: (row.author_id && authorNames.get(row.author_id)) || UNKNOWN_AUTHOR_NAME,
+  authorName: (row.author_id && authorNames.get(row.author_id)) ?? UNKNOWN_AUTHOR_NAME,
   body: row.body,
   createdAt: row.created_at.toISOString(),
   updatedAt: row.updated_at.toISOString(),

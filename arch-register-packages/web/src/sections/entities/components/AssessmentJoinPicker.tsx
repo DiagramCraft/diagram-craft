@@ -18,7 +18,7 @@ export const AssessmentJoinPicker = ({
   const actionsRef = useRef<PopoverActions | null>(null);
   const groups = new Map<string, AssessmentJoinOption[]>();
   for (const option of options) {
-    const group = option.projectName || 'Other';
+    const group = option.projectName ?? 'Other';
     groups.set(group, [...(groups.get(group) ?? []), option]);
   }
   const selected = options.find(o => o.assessment.id === value) ?? null;

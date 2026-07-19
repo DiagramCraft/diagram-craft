@@ -509,7 +509,7 @@ export const EntityBrowser = ({
         message={
           hookDeleteTarget ? (
             <>
-              The entity <b>{hookDeleteTarget._name || hookDeleteTarget._slug}</b> will be
+              The entity <b>{hookDeleteTarget._name ?? hookDeleteTarget._slug}</b> will be
               permanently deleted.
             </>
           ) : (
@@ -526,7 +526,7 @@ export const EntityBrowser = ({
           open={true}
           workspaceId={workspaceId}
           entityId={collectionTarget._uid}
-          entityName={collectionTarget._name || collectionTarget._slug}
+          entityName={collectionTarget._name ?? collectionTarget._slug}
           onClose={() => setCollectionTarget(null)}
         />
       )}

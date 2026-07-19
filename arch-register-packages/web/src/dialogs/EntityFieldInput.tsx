@@ -30,7 +30,7 @@ export const EntityFieldInput = ({
         >
           {candidates.map(entity => (
             <option key={entity._uid} value={entity._uid}>
-              {entity._name || entity._slug}
+              {entity._name ?? entity._slug}
             </option>
           ))}
         </select>
@@ -44,14 +44,14 @@ export const EntityFieldInput = ({
     return (
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
-          value={selected || undefined}
+          value={selected ?? undefined}
           onChange={next => onChange(next ? [next] : [])}
           placeholder="—"
           style={{ width: '100%' }}
         >
           {candidates.map(entity => (
             <Select.Item key={entity._uid} value={entity._uid}>
-              {entity._name || entity._slug}
+              {entity._name ?? entity._slug}
             </Select.Item>
           ))}
         </Select.Root>
@@ -63,7 +63,7 @@ export const EntityFieldInput = ({
     return (
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
-          value={typeof value === 'string' ? value || undefined : undefined}
+          value={typeof value === 'string' ? (value ?? undefined) : undefined}
           onChange={next => onChange(next ?? '')}
           placeholder="—"
           style={{ width: '100%' }}
@@ -95,7 +95,7 @@ export const EntityFieldInput = ({
     return (
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
-          value={typeof value === 'string' ? value || undefined : undefined}
+          value={typeof value === 'string' ? (value ?? undefined) : undefined}
           onChange={next => onChange(next ?? '')}
           placeholder="Not set"
           style={{ width: '100%' }}

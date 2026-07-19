@@ -51,7 +51,7 @@ const toApiPost = (row: WikiCommentDbResult, authorNames: Map<string, string>): 
   nodeId: row.node_id,
   parentPostId: row.parent_post_id,
   authorId: row.author_id,
-  authorName: (row.author_id && authorNames.get(row.author_id)) || UNKNOWN_AUTHOR_NAME,
+  authorName: (row.author_id && authorNames.get(row.author_id)) ?? UNKNOWN_AUTHOR_NAME,
   body: row.body,
   anchor: {
     quote: row.quote,

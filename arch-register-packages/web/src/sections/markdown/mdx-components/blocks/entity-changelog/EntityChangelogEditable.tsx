@@ -69,12 +69,12 @@ export const EntityChangelogEditable = ({
       }
       content={
         <EntityChangelog
-          id={entityId || undefined}
-          schema={schema || undefined}
-          owner={owner || undefined}
-          lifecycle={lifecycle || undefined}
-          limit={limit || undefined}
-          since={since || undefined}
+          id={entityId ?? undefined}
+          schema={schema ?? undefined}
+          owner={owner ?? undefined}
+          lifecycle={lifecycle ?? undefined}
+          limit={limit ?? undefined}
+          since={since ?? undefined}
         />
       }
       dialog={(open, onClose) => (

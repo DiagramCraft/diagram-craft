@@ -45,10 +45,10 @@ export const AiSettingsSubSection = ({ workspaceSlug }: { workspaceSlug: string 
     const data: UpsertAiConfigRequest = {
       enabled,
       provider,
-      base_url: provider === 'openai' ? baseUrl || null : null,
-      model: model || null,
+      base_url: provider === 'openai' ? (baseUrl ?? null) : null,
+      model: model ?? null,
       temperature,
-      system_prompt: systemPrompt || null
+      system_prompt: systemPrompt ?? null
     };
     if (apiKey) {
       data.api_key = apiKey;

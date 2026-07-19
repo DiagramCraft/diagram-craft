@@ -107,10 +107,10 @@ export const PlanFutureChangeDialog = ({
       slug: existingProposed?.slug ?? entity._slug,
       namespace: existingProposed?.namespace ?? entity._namespace,
       description: (planState['_description'] as string) ?? entity._description,
-      owner: (planState['_owner'] as string) || null,
-      lifecycle: (planState['_lifecycle'] as string) || null,
-      target_lifecycle: (planState['_targetLifecycle'] as string) || null,
-      target_lifecycle_date: (planState['_targetLifecycleDate'] as string) || null,
+      owner: (planState['_owner'] as string) ?? null,
+      lifecycle: (planState['_lifecycle'] as string) ?? null,
+      target_lifecycle: (planState['_targetLifecycle'] as string) ?? null,
+      target_lifecycle_date: (planState['_targetLifecycleDate'] as string) ?? null,
       tags: existingProposed?.tags ?? entity._tags,
       links: existingProposed?.links ?? entity._links,
       schema_id: existingProposed?.schema_id ?? entity._schema.id,
@@ -123,9 +123,9 @@ export const PlanFutureChangeDialog = ({
         {
           snapshotId: snapshot.id,
           projectId,
-          targetDate: milestoneId ? null : targetDate || null,
-          milestoneId: milestoneId || null,
-          commitMessage: commitMessage || null,
+          targetDate: milestoneId ? null : (targetDate ?? null),
+          milestoneId: milestoneId ?? null,
+          commitMessage: commitMessage ?? null,
           proposedState
         },
         { onSuccess: onClose }
@@ -134,9 +134,9 @@ export const PlanFutureChangeDialog = ({
       createFutureUpdate.mutate(
         {
           projectId,
-          targetDate: milestoneId ? null : targetDate || null,
-          milestoneId: milestoneId || null,
-          commitMessage: commitMessage || null,
+          targetDate: milestoneId ? null : (targetDate ?? null),
+          milestoneId: milestoneId ?? null,
+          commitMessage: commitMessage ?? null,
           proposedState
         },
         { onSuccess: onClose }

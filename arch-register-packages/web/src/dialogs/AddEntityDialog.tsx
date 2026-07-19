@@ -230,14 +230,16 @@ export const AddEntityDialog = ({
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
+    const owner = meta.owner.trim();
+    const namespace = meta.namespace.trim();
 
     const body = {
       _schemaId: schemaId,
       _name: entityName.trim(),
       _description: meta.description.trim(),
-      _owner: meta.owner.trim() || null,
-      _lifecycle: meta.lifecycle || null,
-      _namespace: meta.namespace.trim() || 'default',
+      _owner: owner === '' ? null : owner,
+      _lifecycle: meta.lifecycle === '' ? null : meta.lifecycle,
+      _namespace: namespace === '' ? 'default' : namespace,
       _tags: tags,
       _links: [],
       ...dataFields
@@ -292,7 +294,7 @@ export const AddEntityDialog = ({
           <div data-testid="new-entity-type">
             <FormElement label="Type" required hint={selectedSchema?.description}>
               <Select.Root
-                value={schemaId || undefined}
+                value={schemaId ?? undefined}
                 onChange={value => {
                   const nextSchemaId = value ?? '';
                   setSchemaId(nextSchemaId);
@@ -316,7 +318,7 @@ export const AddEntityDialog = ({
           <div data-testid="new-entity-template">
             <FormElement label="Template" required={false}>
               <Select.Root
-                value={templateId || '__none__'}
+                value={templateId ?? '__none__'}
                 onChange={value => resetAndApplyTemplate(value === '__none__' ? '' : (value ?? ''))}
                 placeholder="No template"
                 style={{ width: '100%' }}
@@ -381,7 +383,7 @@ export const AddEntityDialog = ({
             <div className={styles.row}>
               <FormElement label="Owner" required={false}>
                 <Select.Root
-                  value={meta.owner || undefined}
+                  value={meta.owner ?? undefined}
                   onChange={value => setMetaField('owner', value ?? '')}
                   placeholder="—"
                   style={{ width: '100%' }}
@@ -395,7 +397,7 @@ export const AddEntityDialog = ({
               </FormElement>
               <FormElement label="Lifecycle" required={false}>
                 <Select.Root
-                  value={meta.lifecycle || undefined}
+                  value={meta.lifecycle ?? undefined}
                   onChange={value => setMetaField('lifecycle', value ?? '')}
                   placeholder="—"
                   style={{ width: '100%' }}

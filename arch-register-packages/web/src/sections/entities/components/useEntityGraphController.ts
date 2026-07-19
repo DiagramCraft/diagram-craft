@@ -140,7 +140,7 @@ export const useEntityGraphController = ({
   const createDiagram = useCallback(() => {
     const graphNodes = nodes.map(node => ({
       id: node.id,
-      label: node.data.entityName || node.id
+      label: node.data.entityName ?? node.id
     }));
     const graphEdges = edges.map(edge => ({
       id: edge.id,

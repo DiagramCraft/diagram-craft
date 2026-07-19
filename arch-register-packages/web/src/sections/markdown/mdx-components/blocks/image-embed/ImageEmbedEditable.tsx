@@ -61,9 +61,9 @@ export const ImageEmbedEditable = ({
       content={
         <ImageEmbed
           id={fileId}
-          alt={alt || undefined}
-          size={size || undefined}
-          align={align || undefined}
+          alt={alt ?? undefined}
+          size={size ?? undefined}
+          align={align ?? undefined}
         />
       }
       dialog={(open, onClose) => (

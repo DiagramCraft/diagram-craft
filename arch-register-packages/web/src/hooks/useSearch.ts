@@ -34,7 +34,7 @@ export const useSearch = (
         query: {
           q: params.q,
           limitPerType: params.limitPerType ?? undefined,
-          types: params.types?.join(',') ?? undefined
+          types: params.types?.join(',') === '' ? undefined : params.types?.join(',')
         }
       }),
     enabled: queryOptions?.enabled ?? (!!workspaceId && !!params.q.trim()),

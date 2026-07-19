@@ -67,7 +67,8 @@ export const DiagramEmbedDialog = ({
 
     let resolvedFileId = fileId;
     if (mode === 'new') {
-      const name = diagramName.trim() || 'Diagram';
+      const trimmedName = diagramName.trim();
+      const name = trimmedName === '' ? 'Diagram' : trimmedName;
       const file = await createDiagramAttachment.mutateAsync({
         name,
         content: emptyDiagram(name)

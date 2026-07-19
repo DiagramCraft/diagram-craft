@@ -221,7 +221,7 @@ const TreeNodeRow = ({
               />
             )
           }
-          title={item._name || item._slug}
+          title={item._name ?? item._slug}
           titleMuted={!!(projectContext && item._projectLink?.linked === false)}
           subtitle={
             columns.some(c => c.id === '_description') && item._description

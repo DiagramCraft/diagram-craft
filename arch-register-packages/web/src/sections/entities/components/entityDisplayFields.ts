@@ -147,11 +147,11 @@ export const formatEntityDisplayValue = (
     }
     return String(value);
   }
-  if (field.id === '_description') return entity._description || null;
+  if (field.id === '_description') return entity._description ?? null;
   if (field.id === '_owner') return entity._owner?.name ?? null;
   if (field.id === '_lifecycle') return entity._lifecycle?.name ?? null;
-  if (field.id === '_slug') return entity._slug || null;
-  if (field.id === '_namespace') return entity._namespace || null;
+  if (field.id === '_slug') return entity._slug ?? null;
+  if (field.id === '_namespace') return entity._namespace ?? null;
   if (field.id === '_tags') return entity._tags.length ? entity._tags.join(', ') : null;
   if (field.id === '_completeness')
     return entity._completeness == null ? null : `${entity._completeness}%`;

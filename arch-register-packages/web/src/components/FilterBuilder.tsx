@@ -256,10 +256,10 @@ const FilterRow = ({
   const field = fields.find(f => f.id === condition.fieldId) ?? fields[0]!;
 
   // Local draft value for text inputs — only committed on Enter to avoid per-keystroke requests
-  const [localTextValue, setLocalTextValue] = React.useState((condition.value as string) || '');
+  const [localTextValue, setLocalTextValue] = React.useState((condition.value as string) ?? '');
   // biome-ignore lint/correctness/useExhaustiveDependencies: fieldId is intentional — resets localTextValue when field changes, even if condition.value was already ''
   React.useEffect(() => {
-    setLocalTextValue((condition.value as string) || '');
+    setLocalTextValue((condition.value as string) ?? '');
   }, [condition.fieldId, condition.value]);
 
   const commitTextValue = () => onUpdate({ value: localTextValue });
@@ -320,7 +320,7 @@ const FilterRow = ({
             </Select.Root>
           ) : field.type === 'date' ? (
             <DateInput
-              value={(condition.value as string) || ''}
+              value={(condition.value as string) ?? ''}
               onChange={v => onUpdate({ value: v })}
             />
           ) : field.type === 'number' ? (

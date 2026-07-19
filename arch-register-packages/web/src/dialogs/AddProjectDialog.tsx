@@ -72,7 +72,7 @@ export const AddProjectDialog = ({
       const project = await createProjectMutation.mutateAsync({
         name: trimmed,
         description: description.trim(),
-        owner: owner || null,
+        owner: owner ?? null,
         status,
         color
       });
@@ -149,7 +149,7 @@ export const AddProjectDialog = ({
         </FormElement>
         <FormElement label="Owner" required={false}>
           <Select.Root
-            value={owner || undefined}
+            value={owner ?? undefined}
             onChange={value => setOwner(value ?? '')}
             placeholder={canCreateWithoutOwner ? 'No owner' : 'Select owner'}
             style={{ width: '100%' }}

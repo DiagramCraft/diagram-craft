@@ -185,7 +185,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
       } = {
         name: name.trim(),
         slug,
-        badge: badge || initialsOf(name),
+        badge: badge ?? initialsOf(name),
         color,
         description: description.trim()
       };
@@ -263,7 +263,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                     : 'var(--cmp-bg-hover)'
                 }}
               >
-                {badge || '—'}
+                {badge ?? '—'}
               </div>
               <input
                 className={styles.badgeInput}
@@ -363,7 +363,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
             <div className={styles.copyPanel}>
               <FormElement label="Copy from" required>
                 <Select.Root
-                  value={copyFrom || undefined}
+                  value={copyFrom ?? undefined}
                   onChange={value => setCopyFrom(value ?? '')}
                   placeholder={workspaces.length === 0 ? 'Loading…' : 'Select workspace'}
                   style={{ width: '100%' }}

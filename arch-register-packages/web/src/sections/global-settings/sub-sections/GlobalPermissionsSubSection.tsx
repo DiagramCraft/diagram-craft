@@ -348,7 +348,7 @@ const AddUserDialog = ({
               </div>
               <div className={styles.fieldRight}>
                 <Select.Root
-                  value={selectedUserId || undefined}
+                  value={selectedUserId ?? undefined}
                   onChange={value => setSelectedUserId(value ?? '')}
                   style={{ width: '100%' }}
                 >

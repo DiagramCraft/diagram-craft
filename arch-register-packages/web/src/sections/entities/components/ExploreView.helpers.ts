@@ -189,7 +189,7 @@ export const buildExploreGraph = ({
           fromEntityName: relation.entityName,
           toColumn: 1 - hop,
           toEntityId: entity.entityId,
-          toEntityName: entity.name || entity.slug,
+          toEntityName: entity.name ?? entity.slug,
           fieldName: relation.fieldName,
           fieldLabel: getRelationDisplayLabel(relation),
           kind: relation.kind
@@ -216,7 +216,7 @@ export const buildExploreGraph = ({
         connectors.push({
           fromColumn: hop - 1,
           fromEntityId: entity.entityId,
-          fromEntityName: entity.name || entity.slug,
+          fromEntityName: entity.name ?? entity.slug,
           toColumn: hop,
           toEntityId: relation.entityId,
           toEntityName: relation.entityName,

@@ -481,7 +481,7 @@ const ConfigBar = ({
     <FilterDropdown
       label="Start"
       value={cfg.startFieldId ?? ''}
-      onChange={v => onChange({ startFieldId: v || null })}
+      onChange={v => onChange({ startFieldId: v ?? null })}
       options={[
         { value: '', label: '— none —' },
         ...dateFields.map(f => ({ value: f.id, label: f.label }))
@@ -493,7 +493,7 @@ const ConfigBar = ({
     <FilterDropdown
       label="End"
       value={cfg.endFieldId ?? ''}
-      onChange={v => onChange({ endFieldId: v || null })}
+      onChange={v => onChange({ endFieldId: v ?? null })}
       options={[
         { value: '', label: '— none —' },
         ...dateFields.map(f => ({ value: f.id, label: f.label }))

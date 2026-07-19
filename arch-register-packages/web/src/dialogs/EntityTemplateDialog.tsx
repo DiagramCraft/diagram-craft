@@ -169,7 +169,7 @@ export const EntityTemplateDialog = ({
             <div className={styles.row}>
               <FormElement label="Owner" required={false}>
                 <Select.Root
-                  value={meta.owner || undefined}
+                  value={meta.owner ?? undefined}
                   onChange={value => setMeta(current => ({ ...current, owner: value ?? '' }))}
                   placeholder="Not set"
                   style={{ width: '100%' }}
@@ -183,7 +183,7 @@ export const EntityTemplateDialog = ({
               </FormElement>
               <FormElement label="Lifecycle" required={false}>
                 <Select.Root
-                  value={meta.lifecycle || undefined}
+                  value={meta.lifecycle ?? undefined}
                   onChange={value => setMeta(current => ({ ...current, lifecycle: value ?? '' }))}
                   placeholder="Not set"
                   style={{ width: '100%' }}

@@ -66,7 +66,7 @@ export const exportEntitiesCsv = async (
       }
     }
     for (const entity of allEntities) {
-      if (referenceIds.has(entity.id)) referenceLookup.set(entity.id, entity.name || entity.slug);
+      if (referenceIds.has(entity.id)) referenceLookup.set(entity.id, entity.name ?? entity.slug);
     }
   }
 

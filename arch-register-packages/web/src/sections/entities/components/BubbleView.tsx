@@ -297,7 +297,7 @@ export const BubbleView = ({
                 value={config?.sizeFieldId ?? ''}
                 disabled={!config}
                 onChange={e =>
-                  config && applyConfig({ ...config, sizeFieldId: e.target.value || null })
+                  config && applyConfig({ ...config, sizeFieldId: e.target.value ?? null })
                 }
               >
                 <option value="">Uniform</option>
@@ -319,7 +319,7 @@ export const BubbleView = ({
                 value={config?.colorFieldId ?? ''}
                 disabled={!config}
                 onChange={e =>
-                  config && applyConfig({ ...config, colorFieldId: e.target.value || null })
+                  config && applyConfig({ ...config, colorFieldId: e.target.value ?? null })
                 }
               >
                 <option value="">Uniform</option>

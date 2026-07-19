@@ -120,7 +120,7 @@ const TokenCreateDialog = ({
         <label className={styles.field}>
           <span className={styles.label}>Workspace</span>
           <Select.Root
-            value={workspace || undefined}
+            value={workspace ?? undefined}
             onChange={value => setWorkspace(value ?? '')}
             placeholder={workspaces.length === 0 ? 'No workspaces available' : 'Select workspace'}
             style={{ width: '100%' }}

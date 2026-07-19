@@ -46,7 +46,7 @@ export const RestoreSnapshotDialog = ({
   );
 
   const handleConfirm = () => {
-    onConfirm(commitMessage || undefined);
+    onConfirm(commitMessage ?? undefined);
   };
 
   return (

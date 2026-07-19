@@ -89,10 +89,10 @@ export const ProjectSettingsForm = ({
         data: {
           name: trimmed,
           description: description.trim(),
-          owner: owner || null,
+          owner: owner ?? null,
           status,
           color,
-          target_date: targetDate || null
+          target_date: targetDate ?? null
         }
       },
       {

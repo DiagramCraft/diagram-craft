@@ -56,7 +56,7 @@ export const LifecycleSubSection = ({
       if (statesDirty) {
         await updateLifecycleStatesMutation.mutateAsync(
           states.map((s, i) => ({
-            id: s.id.trim() || crypto.randomUUID(),
+            id: s.id.trim() === '' ? crypto.randomUUID() : s.id.trim(),
             label: s.label,
             color: s.color,
             sort_order: i,
@@ -172,7 +172,7 @@ export const LifecycleSubSection = ({
               <Select.Item value="">None</Select.Item>
               {states.map(s => (
                 <Select.Item key={s.id} value={s.id}>
-                  {s.label.trim() || 'Untitled state'}
+                  {s.label.trim() === '' ? 'Untitled state' : s.label.trim()}
                 </Select.Item>
               ))}
             </Select.Root>

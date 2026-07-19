@@ -314,7 +314,7 @@ const DocValueEdit = ({
         style={{ width: '100%', maxWidth: 260 }}
         value={displayValue(value)}
         rows={3}
-        onChange={next => onChange(next || null)}
+        onChange={next => onChange(next ?? null)}
       />
     );
   }
@@ -408,7 +408,7 @@ const DocValueEdit = ({
       type={field.type === 'date' ? 'date' : 'text'}
       style={{ width: '100%', maxWidth: 260 }}
       value={typeof value === 'string' ? value : ''}
-      onChange={next => onChange(next || null)}
+      onChange={next => onChange(next ?? null)}
     />
   );
 };
@@ -560,21 +560,24 @@ export const MarkdownPropertiesPanel = ({
                 These values are not defined by the selected document type. Remove them before
                 completing this migration.
               </div>
-              {unreviewedMetadata.map(([fieldId, value]) => (
-                <div
-                  key={fieldId}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}
-                >
-                  <code style={{ flex: 1 }}>
-                    {fieldId} = {displayValue(value) || '—'}
-                  </code>
-                  {!readOnly && (
-                    <button type="button" onClick={() => onValueChange(fieldId, undefined)}>
-                      Remove
-                    </button>
-                  )}
-                </div>
-              ))}
+              {unreviewedMetadata.map(([fieldId, value]) => {
+                const shownValue = displayValue(value);
+                return (
+                  <div
+                    key={fieldId}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}
+                  >
+                    <code style={{ flex: 1 }}>
+                      {fieldId} = {shownValue === '' ? '—' : shownValue}
+                    </code>
+                    {!readOnly && (
+                      <button type="button" onClick={() => onValueChange(fieldId, undefined)}>
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

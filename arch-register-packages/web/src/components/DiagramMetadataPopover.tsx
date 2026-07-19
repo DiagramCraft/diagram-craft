@@ -40,7 +40,7 @@ export const DiagramMetadataPopover = ({
             <HoverCardDescription>{contentMetadata.description}</HoverCardDescription>
           ) : null}
 
-          {(contentMetadata?.category || contentMetadata?.company) && (
+          {(contentMetadata?.category ?? contentMetadata?.company) && (
             <div className={styles.badgeRows}>
               {contentMetadata.category ? (
                 <TooltipRow label="Category" value={contentMetadata.category} />

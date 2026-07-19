@@ -96,8 +96,8 @@ export const AuditLogSubSection = ({
 
   // Use TanStack Query for audit log fetching
   const { data: entries = [], isLoading: loading } = useAuditLog(workspace.url_slug, {
-    entityType: entityType || null,
-    operation: operation || null,
+    entityType: entityType ?? null,
+    operation: operation ?? null,
     startDate: startDate ? toStartOfDay(startDate) : null,
     endDate: endDate ? toEndOfDay(endDate) : null,
     limit: 100

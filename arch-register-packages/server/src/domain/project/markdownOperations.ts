@@ -740,7 +740,7 @@ export const uploadMarkdownAttachment = async (
       dbErrorMessages: projectDbErrorMessages
     },
     async ({ ws, authCtx }) => {
-      const fileName = fileNameFromPath(filePath) || originalFilename;
+      const fileName = fileNameFromPath(filePath) ?? originalFilename;
       const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(markdownNode, {
         status: 404,

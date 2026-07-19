@@ -208,7 +208,7 @@ export const Interactive = {
           <select
             value={selectedSchema ?? ''}
             onChange={e => {
-              const val = e.target.value || null;
+              const val = e.target.value ?? null;
               setSelectedSchema(val);
               if (val) {
                 setConditions([{ fieldId: '_schemaId', op: 'equals', value: val }]);

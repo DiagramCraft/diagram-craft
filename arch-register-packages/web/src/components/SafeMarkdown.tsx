@@ -81,18 +81,20 @@ const renderNode = (node: ASTNode, key: string, options: RenderOptions): ReactNo
         node.subtype === 'ordered' ? (
           <ol
             key={key}
-            className={
-              `${classes.list ?? ''}${isChecklist ? ' task-list' : ''}`.trim() || undefined
-            }
+            className={(() => {
+              const className = `${classes.list ?? ''}${isChecklist ? ' task-list' : ''}`.trim();
+              return className === '' ? undefined : className;
+            })()}
           >
             {rendered()}
           </ol>
         ) : (
           <ul
             key={key}
-            className={
-              `${classes.list ?? ''}${isChecklist ? ' task-list' : ''}`.trim() || undefined
-            }
+            className={(() => {
+              const className = `${classes.list ?? ''}${isChecklist ? ' task-list' : ''}`.trim();
+              return className === '' ? undefined : className;
+            })()}
           >
             {rendered()}
           </ul>

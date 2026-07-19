@@ -345,14 +345,14 @@ const DocumentTypeEditor = ({
                     (selected ? typeColor.get(selected.id) : undefined) ??
                     'var(--base-fg-dim)'
                   }
-                  name={name || 'New document type'}
+                  name={name ?? 'New document type'}
                   icon={icon}
                   size={26}
                 />
               }
-              title={name || 'New document type'}
+              title={name ?? 'New document type'}
               description={
-                description ||
+                description ??
                 `${fields.filter(field => !field.retired).length} fields${selected ? ` · version ${selected.version}` : ''}`
               }
             />
@@ -693,7 +693,8 @@ const DocumentFieldRow = ({
                     const [enumValue, ...label] = option.split(':');
                     return {
                       value: enumValue!.trim(),
-                      label: label.join(':').trim() || enumValue!.trim()
+                      label:
+                        label.join(':').trim() === '' ? enumValue!.trim() : label.join(':').trim()
                     };
                   })
               })
@@ -916,7 +917,7 @@ const DocumentTemplateEditor = ({
                   size={26}
                 />
               }
-              title={name || 'New template'}
+              title={name ?? 'New template'}
               description={`For ${selectedType ? selectedType.name : 'an unknown type'}${selectedType?.archived ? ' · archived type' : ''}`}
             />
           </div>
@@ -1123,7 +1124,7 @@ const TemplateDefaultInput = ({
       <input
         type="date"
         value={typeof value === 'string' ? value : ''}
-        onChange={event => onChange(event.target.value || undefined)}
+        onChange={event => onChange(event.target.value ?? undefined)}
       />
     );
   }
@@ -1157,7 +1158,7 @@ const TemplateDefaultInput = ({
   return (
     <TextInput
       value={typeof value === 'string' ? value : ''}
-      onChange={v => onChange(v || undefined)}
+      onChange={v => onChange(v ?? undefined)}
       style={{ width: '100%' }}
     />
   );

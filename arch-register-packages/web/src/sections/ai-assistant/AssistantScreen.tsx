@@ -418,12 +418,12 @@ export const AssistantScreen = () => {
                   {m.role === 'assistant' ? (
                     <TbSparkles size={13} />
                   ) : user ? (
-                    (user.display_name || user.email || '?')
+                    ((user.display_name ?? user.email ?? '?')
                       .split(/[\s@.]+/)
                       .slice(0, 2)
                       .map(w => w[0] ?? '')
                       .join('')
-                      .toUpperCase() || '?'
+                      .toUpperCase() ?? '?')
                   ) : (
                     'U'
                   )}

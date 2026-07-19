@@ -24,7 +24,7 @@ export const EntityPicker = ({
   const [query, setQuery] = useState('');
 
   const { data: searchResults = [] } = useEntities(workspaceSlug, {
-    q: query || undefined,
+    q: query ?? undefined,
     view: 'summary',
     limit: 8
   });

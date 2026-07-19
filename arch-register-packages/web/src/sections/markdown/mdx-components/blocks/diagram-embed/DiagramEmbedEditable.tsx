@@ -52,7 +52,7 @@ export const DiagramEmbedEditable = ({
           <span>Choose diagram…</span>
         </>
       }
-      content={<DiagramEmbed id={fileId} caption={caption || undefined} />}
+      content={<DiagramEmbed id={fileId} caption={caption ?? undefined} />}
       dialog={(open, onClose) => (
         <DiagramEmbedDialog element={element} open={open} onClose={onClose} isNew={isNew} />
       )}

@@ -33,7 +33,7 @@ export const ExternalContentStatusDialog = ({ mount, open, onClose }: Props) => 
           <strong>Repository:</strong> {mount.source.source_config.url}
         </div>
         <div>
-          <strong>Repository path:</strong> {mount.source_path || '/'}
+          <strong>Repository path:</strong> {mount.source_path ?? '/'}
         </div>
         <div>
           <strong>Refresh interval:</strong> Every {mount.interval_hours} hour

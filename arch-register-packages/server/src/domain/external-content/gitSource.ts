@@ -243,7 +243,7 @@ export const readGitSnapshot = async (
   const tree = await runGit(treeArgs, 2 * 1024 * 1024, signal);
   const entries = parseTree(tree.stdout.toString('utf8'), sourcePath);
   if (entries.length === 0)
-    throw new Error(`Git source path '${sourcePath || '/'}' contains no files`);
+    throw new Error(`Git source path '${sourcePath ?? '/'}' contains no files`);
   const files = new Array<GitSnapshotFile>(entries.length);
   let nextIndex = 0;
   const readNext = async () => {
