@@ -7,7 +7,11 @@ import type {
   GovernanceEventDbResult
 } from './db/governanceDatabase';
 import type { GovernanceCaseListFilter } from './db/governanceDatabase';
-import { decideGovernanceAssignment, listMySubmittedGovernanceCases } from './governanceOperations';
+import {
+  decideGovernanceAssignment,
+  listMyGovernanceAssignments,
+  listMySubmittedGovernanceCases
+} from './governanceOperations';
 import type { GovernanceRegistry } from './governanceRegistry';
 
 const authCtxMock = {
@@ -116,6 +120,9 @@ const makeGovernanceDouble = (
     ),
     listAssignmentsForCase: vi.fn(async (caseId: string) =>
       [...assignments.values()].filter(a => a.case_id === caseId)
+    ),
+    listAssignments: vi.fn(async (workspace: string) =>
+      [...assignments.values()].filter(a => a.workspace === workspace)
     ),
     getAssignment: vi.fn(async (id: string) => assignments.get(id) ?? null),
     completeAssignmentIfOpen: vi.fn(async (id: string, resolvedAt: Date) => {
@@ -446,6 +453,46 @@ describe('decideGovernanceAssignment', () => {
 
       expect(second.case.status).toBe('open');
     });
+  });
+});
+
+describe('listMyGovernanceAssignments', () => {
+  it('collapses multiple non-independent assignments for the same case and action into one task', async () => {
+    const caseRow = makeCase();
+    const teamPathAssignment = makeAssignment({
+      id: 'assignment-team-path',
+      action: 'approve',
+      target_type: 'user',
+      target_user_id: 'user-1'
+    });
+    const capabilityPathAssignment = makeAssignment({
+      id: 'assignment-capability-path',
+      action: 'approve',
+      target_type: 'user',
+      target_user_id: 'user-1'
+    });
+    const db = makeDb(
+      makeGovernanceDouble(caseRow, teamPathAssignment, [capabilityPathAssignment])
+    );
+
+    const tasks = await listMyGovernanceAssignments(db, 'ws-1', event, { state: 'open' });
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]?.case.id).toBe(caseRow.id);
+  });
+
+  it('does not collapse assignments belonging to different cases', async () => {
+    const caseA = makeCase({ id: 'case-a' });
+    const caseB = makeCase({ id: 'case-b' });
+    const assignmentA = makeAssignment({ id: 'assignment-a', case_id: 'case-a' });
+    const assignmentB = makeAssignment({ id: 'assignment-b', case_id: 'case-b' });
+    const db = makeDb(
+      makeGovernanceDouble(caseA, assignmentA, [assignmentB], [caseB])
+    );
+
+    const tasks = await listMyGovernanceAssignments(db, 'ws-1', event, { state: 'open' });
+
+    expect(tasks.map(t => t.case.id).sort()).toEqual(['case-a', 'case-b']);
   });
 });
 

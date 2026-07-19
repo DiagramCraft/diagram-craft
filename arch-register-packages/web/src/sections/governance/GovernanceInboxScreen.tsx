@@ -76,13 +76,16 @@ export const GovernanceInboxScreen = () => {
     !!workspace && scope === 'assigned'
   );
   const {
-    data: submissions = [],
+    data: rawSubmissions = [],
     isLoading: submissionsLoading,
     error: submissionsError
   } = useGovernanceSubmissions(
     workspace,
     {
-      status: submittedStatus,
+      // 'open' also needs to surface completed-but-request_changes cases (the proposer still
+      // has to act on those), so it fetches unfiltered and narrows client-side below instead of
+      // asking the server for status: 'open' directly.
+      ...(submittedStatus === 'open' ? {} : { status: submittedStatus }),
       ...(caseKind ? { caseKind } : {})
     },
     !!workspace && scope === 'submitted'
@@ -97,7 +100,7 @@ export const GovernanceInboxScreen = () => {
   const entityIds = [
     ...new Set([
       ...tasks.filter(task => task.case.subjectType === 'entity').map(task => task.case.subjectId),
-      ...submissions
+      ...rawSubmissions
         .filter(submission => submission.case.subjectType === 'entity')
         .map(submission => submission.case.subjectId)
     ])
@@ -119,7 +122,7 @@ export const GovernanceInboxScreen = () => {
           task => task.case.caseKind === 'entity.change' && task.case.subjectType === 'entity'
         )
         .map(task => task.case.subjectId),
-      ...submissions
+      ...rawSubmissions
         .filter(
           submission =>
             submission.case.caseKind === 'entity.change' && submission.case.subjectType === 'entity'
@@ -138,6 +141,24 @@ export const GovernanceInboxScreen = () => {
     entityChangeIds.map((entityId, index) => [entityId, proposalQueries[index]?.data])
   );
   const withdrawEntityChangeProposal = useWithdrawEntityChangeProposal(workspace);
+  // Withdrawing an entity-change proposal whose case had already completed (e.g. after a
+  // 'request_changes' decision) updates the proposal, not the case — `cancelCaseIfOpen` is a
+  // no-op on a case that's no longer open, so `submission.case.status`/`outcome` alone can't
+  // tell a withdrawn proposal apart from one still awaiting revision. Fall back to the
+  // proposal's own status for entity-change cases.
+  const isEntityChangeProposalWithdrawn = (submission: GovernanceSubmission) =>
+    submission.case.caseKind === 'entity.change' &&
+    proposalsByEntityId.get(submission.case.subjectId)?.status === 'withdrawn';
+  const submissions = rawSubmissions.filter(submission => {
+    if (isEntityChangeProposalWithdrawn(submission)) return submittedStatus === 'cancelled';
+    const needsAttention =
+      submission.case.status === 'open' || submission.case.outcome === 'request_changes';
+    if (submittedStatus === 'open') return needsAttention;
+    if (submittedStatus === 'completed') {
+      return submission.case.status === 'completed' && submission.case.outcome !== 'request_changes';
+    }
+    return true;
+  });
 
   const requestChangesCaseIds = [
     ...new Set(
@@ -247,7 +268,7 @@ export const GovernanceInboxScreen = () => {
               setSubmittedStatus(event.target.value as 'open' | 'completed' | 'cancelled')
             }
           >
-            <option value="open">Awaiting others</option>
+            <option value="open">Needs attention</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Withdrawn / cancelled</option>
           </select>
@@ -312,6 +333,16 @@ export const GovernanceInboxScreen = () => {
                   ? withdrawEntityChangeProposal.isPending
                   : withdrawCase.isPending;
               const requestChangesReason = requestChangesReasonByCaseId.get(submission.case.id);
+              // A case being cancelled requires it to still be open (`cancelGovernanceCase`),
+              // but an entity-change proposal can be withdrawn independent of case status —
+              // its own status stays 'open' until the proposer explicitly withdraws or a
+              // decision is approved/rejected, so a 'changes_requested' case (which is
+              // otherwise 'completed') is still withdrawable through that path.
+              const canWithdraw =
+                !isEntityChangeProposalWithdrawn(submission) &&
+                (submission.case.status === 'open' ||
+                  (submission.case.caseKind === 'entity.change' &&
+                    submission.case.outcome === 'request_changes'));
               return (
                 <li className={styles.task} key={submission.case.id}>
                   <div className={styles.taskMain}>
@@ -324,13 +355,15 @@ export const GovernanceInboxScreen = () => {
                       <span>Submitted {new Date(submission.case.createdAt).toLocaleString()}</span>
                     </div>
                     <div className={styles.taskProposalMeta}>
-                      {submission.case.status === 'open'
-                        ? submission.openAssignments.length > 0
-                          ? submission.openAssignments.map(describeWaitingOn).join(' · ')
-                          : 'Awaiting review'
-                        : `Status: ${humanize(submission.case.status)}${
-                            submission.case.outcome ? ` (${humanize(submission.case.outcome)})` : ''
-                          }`}
+                      {isEntityChangeProposalWithdrawn(submission)
+                        ? 'Status: Withdrawn'
+                        : submission.case.status === 'open'
+                          ? submission.openAssignments.length > 0
+                            ? submission.openAssignments.map(describeWaitingOn).join(' · ')
+                            : 'Awaiting review'
+                          : `Status: ${humanize(submission.case.status)}${
+                              submission.case.outcome ? ` (${humanize(submission.case.outcome)})` : ''
+                            }`}
                     </div>
                     {proposalNote && (
                       <div className={styles.taskNote} title={proposalNote}>
@@ -346,7 +379,7 @@ export const GovernanceInboxScreen = () => {
                     )}
                   </div>
                   <div className={styles.taskAction}>
-                    {submission.case.status === 'open' && (
+                    {canWithdraw && (
                       <Button
                         variant="secondary"
                         disabled={withdrawPending}
