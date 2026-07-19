@@ -19,15 +19,18 @@ The implemented settings area includes:
 - general workspace identity
 - lifecycle
 - model overview
-- schemas
+- entity types (schemas)
 - document types and templates
 - roles and permissions
+- global permissions
 - teams
 - members
 - AI
 - export and import
 - analytics
 - audit log
+- webhooks
+- job monitoring
 - danger zone
 
 ## General
@@ -38,6 +41,19 @@ Use general settings to manage the basic workspace identity such as name, slug, 
 
 Lifecycle settings define the allowed lifecycle states for entities in the workspace. They control classification and
 filtering, not access.
+
+One state can be designated as the workspace's deprecated state. Finalizing an
+[entity deprecation](../use/governance) moves the entity to that state.
+
+## Governance Policies
+
+Approval and deprecation requirements are configured per entity type, not workspace-wide. On each entity type in
+**Entity Types**, administrators can set:
+
+- **Entity approval policy** — require approval before entity changes take effect
+- **Entity deprecation** — require a deprecation proposal to retire entities of this type
+
+See [Governance and Approvals](../use/governance) for how these workflows behave for users.
 
 ## Document Types And Templates
 
@@ -56,6 +72,15 @@ These three sections exist for different operational jobs:
 - **Danger zone** for irreversible operations
 
 Keep them conceptually separate. They solve different problems.
+
+## Webhooks And Job Monitoring
+
+Two operational sections support integrations and background work:
+
+- **Webhooks** configures outbound webhooks for workspace events and shows delivery behavior, so external systems
+  can react to changes in Arch Register.
+- **Job monitoring** shows scheduled jobs, job servers, and run history, with cancellation available for supported
+  jobs.
 
 ## Related Pages
 

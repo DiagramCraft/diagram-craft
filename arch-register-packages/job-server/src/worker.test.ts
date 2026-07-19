@@ -142,6 +142,66 @@ describe('createJobServer', () => {
     expect(db.jobs.failRun).toHaveBeenCalledWith(expect.objectContaining({ error: 'failure' }));
   });
 
+  it('aborts execution when the lease heartbeat is rejected', async () => {
+    const db = makeDb(claim);
+    (db.jobs.heartbeatRun as ReturnType<typeof vi.fn>).mockResolvedValue(false);
+    const handler = vi.fn<JobHandler>(
+      ({ signal }) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(signal.reason));
+        })
+    );
+    const worker = createJobServer({
+      db,
+      handlers: new Map([['test', handler]]),
+      workerId: 'worker-1',
+      serverName: 'Worker one',
+      instanceId: 'instance-1',
+      maxConcurrency: 1,
+      pollIntervalMs: 1,
+      leaseDurationMs: 100,
+      heartbeatIntervalMs: 5,
+      serverPingIntervalMs: 10
+    });
+
+    const start = worker.start();
+    await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(worker.activeRuns()).toBe(0));
+    await worker.stop();
+    await start;
+
+    expect(db.jobs.completeRun).not.toHaveBeenCalled();
+    expect(db.jobs.failRun).not.toHaveBeenCalled();
+    expect(db.jobs.retryRun).not.toHaveBeenCalled();
+  });
+
+  it('keeps polling after a transient database error', async () => {
+    const db = makeDb(claim);
+    (db.jobs.recoverExpiredRuns as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('connection reset')
+    );
+    const handler = vi.fn<JobHandler>(async () => null);
+    const worker = createJobServer({
+      db,
+      handlers: new Map([['test', handler]]),
+      workerId: 'worker-1',
+      serverName: 'Worker one',
+      instanceId: 'instance-1',
+      maxConcurrency: 1,
+      pollIntervalMs: 1,
+      leaseDurationMs: 100,
+      heartbeatIntervalMs: 10,
+      serverPingIntervalMs: 10
+    });
+
+    const start = worker.start();
+    await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
+    await worker.stop();
+    await start;
+
+    expect(db.jobs.completeRun).toHaveBeenCalled();
+  });
+
   it('requeues retryable handler failures while attempts remain', async () => {
     const retryClaim = {
       ...claim,
