@@ -19,6 +19,10 @@ import {
 import { isGovernanceCaseVisible } from '../governance/governanceOperations';
 import { createGovernanceRegistry } from '../governance/governanceRegistry';
 import type { InboxNotificationDbResult } from '../notification/db/notificationDatabase';
+import {
+  canAccessCommentNotification,
+  isCommentNotification
+} from '../notification/commentNotifications';
 
 const checker = new PermissionChecker();
 
@@ -92,6 +96,33 @@ const toNotificationItem = (
     };
   }
 
+  if (isCommentNotification(notification)) {
+    return {
+      id: notification.id,
+      category: notification.category,
+      event_type: notification.event_type,
+      resource_type: notification.resource_type,
+      resource_id: notification.resource_id,
+      case_id: notification.case_id,
+      assignment_id: notification.assignment_id,
+      title: notification.title,
+      message: notification.message,
+      action_route: notification.action_route,
+      read_at: notification.read_at?.toISOString() ?? null,
+      entity_id: null,
+      entity_public_id: null,
+      entity_name: null,
+      entity_slug: null,
+      schema_id: null,
+      operation: null,
+      changed_by_user_id: notification.actor_user_id,
+      changed_by_display_name: notification.actor_display_name,
+      timestamp: notification.occurred_at.toISOString(),
+      created_at: notification.created_at.toISOString(),
+      audit_log_id: null
+    };
+  }
+
   return {
     id: notification.id,
     category: notification.category,
@@ -131,6 +162,17 @@ const listVisibleNotifications = async (
     notifications.map(async notification => {
       if (isEntityNotification(notification)) {
         return canAccessNotification(authCtx, entityMap, { entity_id: notification.resource_id })
+          ? notification
+          : null;
+      }
+      if (isCommentNotification(notification)) {
+        return (await canAccessCommentNotification(
+          db,
+          workspace,
+          authCtx,
+          notification.presentation_metadata,
+          entityMap
+        ))
           ? notification
           : null;
       }

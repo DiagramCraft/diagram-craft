@@ -19,6 +19,7 @@ import type {
   DiscussionSummaryEntry,
   UpdateDiscussionPostRequest
 } from '@arch-register/api-types/discussionContract';
+import { createCommentNotifications } from '../notification/commentNotifications';
 
 const UNKNOWN_AUTHOR_NAME = 'Unknown user';
 
@@ -196,6 +197,7 @@ export const createDiscussionPost = async (
   await resolveObjectContext(db, ws, authCtx, body.objectType, body.objectId);
   requireWorkspaceCapability(authCtx, 'comments', 'You do not have permission to post discussions');
 
+  let parentAuthorId: string | null = null;
   if (body.parentPostId) {
     const parent = await db.discussion.getPost(ws, body.parentPostId);
     httpAssert.present(parent, { status: 404, message: `Post '${body.parentPostId}' not found` });
@@ -207,20 +209,40 @@ export const createDiscussionPost = async (
       status: 400,
       message: 'Reply must target a root post, not another reply'
     });
+    parentAuthorId = parent.author_id;
   }
 
   const timestamp = new Date();
-  const row = await db.discussion.createPost({
-    id: randomUUID(),
-    workspace: ws,
-    object_type: body.objectType,
-    object_id: body.objectId,
-    parent_post_id: body.parentPostId ?? null,
-    author_id: event.context.user.id,
-    body: body.body,
-    created_at: timestamp,
-    updated_at: timestamp
-  });
+  const write = async (tx: DatabaseAdapter) => {
+    const row = await tx.discussion.createPost({
+      id: randomUUID(),
+      workspace: ws,
+      object_type: body.objectType,
+      object_id: body.objectId,
+      parent_post_id: body.parentPostId ?? null,
+      author_id: event.context.user.id,
+      body: body.body,
+      created_at: timestamp,
+      updated_at: timestamp
+    });
+
+    if (body.objectType !== 'assessment') {
+      await createCommentNotifications(tx, {
+        workspace: ws,
+        commentId: row.id,
+        objectType: body.objectType,
+        objectId: body.objectId,
+        commentSurface: 'discussion',
+        parentPostId: body.parentPostId ?? null,
+        parentAuthorId,
+        actorUserId: event.context.user.id,
+        occurredAt: timestamp
+      });
+    }
+    return row;
+  };
+  const row =
+    db.core && !db.core.isTransaction ? await db.core.transaction(write) : await write(db);
 
   const authorNames = await buildAuthorNameMap(db);
   return toApiPost(row, authorNames);
