@@ -20,6 +20,7 @@ const user: UserDbResult = {
   oidc_issuer: null,
   oidc_subject: null,
   is_active: true,
+  is_system_actor: false,
   color: '#123456',
   created_at: now,
   updated_at: now,

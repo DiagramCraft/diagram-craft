@@ -94,6 +94,30 @@ export type DocumentLinkIndexDbResult = {
   position: number;
 };
 
+export type DocumentMetadataGenerationScheduleDbResult = {
+  workspace: string;
+  node_id: string;
+  action_id: string;
+  run_after_at: Date;
+  source_revision: number;
+  generator_version: number;
+  scheduled_by_user_id: string;
+  attempt_count: number;
+  updated_at: Date;
+};
+
+export type DocumentMetadataGenerationScheduleDbUpsert = {
+  workspace: string;
+  node_id: string;
+  action_id: string;
+  run_after_at: Date;
+  source_revision: number;
+  generator_version: number;
+  scheduled_by_user_id: string;
+  attempt_count?: number;
+  updated_at: Date;
+};
+
 export type DocumentDatabase = {
   listDocumentTypes(workspace: string, includeArchived?: boolean): Promise<DocumentTypeDbResult[]>;
   getDocumentType(workspace: string, id: string): Promise<DocumentTypeDbResult | null>;
@@ -166,4 +190,15 @@ export type DocumentDatabase = {
     workspace: string,
     documentId: string
   ): Promise<DocumentLinkIndexDbResult[]>;
+
+  markGeneratedMetadataOutdatedForDocumentType(
+    workspace: string,
+    documentTypeId: string
+  ): Promise<void>;
+
+  upsertPendingMetadataGeneration(input: DocumentMetadataGenerationScheduleDbUpsert): Promise<void>;
+  claimDueMetadataGenerations(
+    workspace: string,
+    now: Date
+  ): Promise<DocumentMetadataGenerationScheduleDbResult[]>;
 };

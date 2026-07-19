@@ -4,6 +4,8 @@ import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import type {
   DocumentDatabase,
   DocumentMetadataDbUpsert,
+  DocumentMetadataGenerationScheduleDbResult,
+  DocumentMetadataGenerationScheduleDbUpsert,
   DocumentTemplateDbCreate,
   DocumentTemplateDbResult,
   DocumentTypeDbCreate,
@@ -92,6 +94,20 @@ const linkMapper = (row: DatabaseRow) => ({
   target_type: String(row['target_type']) as 'entity' | 'document',
   target_id: String(row['target_id']),
   position: Number(row['position'])
+});
+
+const generationScheduleMapper = (
+  row: DatabaseRow
+): DocumentMetadataGenerationScheduleDbResult => ({
+  workspace: String(row['workspace']),
+  node_id: String(row['node_id']),
+  action_id: String(row['action_id']),
+  run_after_at: databaseDate(row['run_after_at']),
+  source_revision: Number(row['source_revision']),
+  generator_version: Number(row['generator_version']),
+  scheduled_by_user_id: String(row['scheduled_by_user_id']),
+  attempt_count: Number(row['attempt_count']),
+  updated_at: databaseDate(row['updated_at'])
 });
 
 export class SqliteDocumentDatabase extends SqliteDatabaseBase implements DocumentDatabase {
@@ -465,6 +481,54 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
       'SELECT * FROM document_link_index WHERE workspace = ? AND target_type = ? AND target_id = ? ORDER BY node_id, field_id, position',
       [workspace, 'document', documentId],
       linkMapper
+    );
+  }
+
+  async markGeneratedMetadataOutdatedForDocumentType(workspace: string, documentTypeId: string) {
+    this.run(
+      `UPDATE content_node_document
+       SET generated_metadata = (
+         SELECT json_group_object(je.key, json_set(je.value, '$.status', 'outdated'))
+         FROM json_each(content_node_document.generated_metadata) AS je
+       )
+       WHERE workspace = ? AND document_type_id = ? AND generated_metadata != '{}'`,
+      [workspace, documentTypeId]
+    );
+  }
+
+  async upsertPendingMetadataGeneration(input: DocumentMetadataGenerationScheduleDbUpsert) {
+    this.run(
+      `INSERT INTO document_metadata_generation_schedule
+         (workspace, node_id, action_id, run_after_at, source_revision, generator_version, scheduled_by_user_id, attempt_count, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(workspace, node_id, action_id) DO UPDATE SET
+         run_after_at = excluded.run_after_at,
+         source_revision = excluded.source_revision,
+         generator_version = excluded.generator_version,
+         scheduled_by_user_id = excluded.scheduled_by_user_id,
+         attempt_count = excluded.attempt_count,
+         updated_at = excluded.updated_at`,
+      [
+        input.workspace,
+        input.node_id,
+        input.action_id,
+        input.run_after_at.toISOString(),
+        input.source_revision,
+        input.generator_version,
+        input.scheduled_by_user_id,
+        input.attempt_count ?? 0,
+        input.updated_at.toISOString()
+      ]
+    );
+  }
+
+  async claimDueMetadataGenerations(workspace: string, now: Date) {
+    return this.all(
+      `DELETE FROM document_metadata_generation_schedule
+       WHERE workspace = ? AND run_after_at <= ?
+       RETURNING *`,
+      [workspace, now.toISOString()],
+      generationScheduleMapper
     );
   }
 }

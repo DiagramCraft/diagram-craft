@@ -10,6 +10,8 @@ import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgr
 import type {
   DocumentDatabase,
   DocumentMetadataDbUpsert,
+  DocumentMetadataGenerationScheduleDbResult,
+  DocumentMetadataGenerationScheduleDbUpsert,
   DocumentTemplateDbCreate,
   DocumentTemplateDbResult,
   DocumentTypeDbCreate,
@@ -94,6 +96,19 @@ const linkMapper = (row: DatabaseRow) => ({
   target_type: String(row['target_type']) as 'entity' | 'document',
   target_id: String(row['target_id']),
   position: Number(row['position'])
+});
+const generationScheduleMapper = (
+  row: DatabaseRow
+): DocumentMetadataGenerationScheduleDbResult => ({
+  workspace: String(row['workspace']),
+  node_id: String(row['node_id']),
+  action_id: String(row['action_id']),
+  run_after_at: databaseDate(row['run_after_at']),
+  source_revision: Number(row['source_revision']),
+  generator_version: Number(row['generator_version']),
+  scheduled_by_user_id: String(row['scheduled_by_user_id']),
+  attempt_count: Number(row['attempt_count']),
+  updated_at: databaseDate(row['updated_at'])
 });
 
 export class PostgresDocumentDatabase extends PostgresDatabaseBase implements DocumentDatabase {
@@ -362,5 +377,39 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
       [workspace, 'document', documentId]
     );
     return mapDatabaseRows(rows, linkMapper);
+  }
+  async markGeneratedMetadataOutdatedForDocumentType(workspace: string, documentTypeId: string) {
+    await this.sql`
+      UPDATE content_node_document
+      SET generated_metadata = (
+        SELECT jsonb_object_agg(entry.key, entry.value || jsonb_build_object('status', 'outdated'))
+        FROM jsonb_each(generated_metadata) AS entry
+      )
+      WHERE workspace = ${workspace} AND document_type_id = ${documentTypeId}
+        AND generated_metadata <> '{}'::jsonb
+    `;
+  }
+  async upsertPendingMetadataGeneration(input: DocumentMetadataGenerationScheduleDbUpsert) {
+    await this.sql`
+      INSERT INTO document_metadata_generation_schedule
+        (workspace, node_id, action_id, run_after_at, source_revision, generator_version, scheduled_by_user_id, attempt_count, updated_at)
+      VALUES
+        (${input.workspace}, ${input.node_id}, ${input.action_id}, ${input.run_after_at}, ${input.source_revision}, ${input.generator_version}, ${input.scheduled_by_user_id}, ${input.attempt_count ?? 0}, ${input.updated_at})
+      ON CONFLICT (workspace, node_id, action_id) DO UPDATE SET
+        run_after_at = EXCLUDED.run_after_at,
+        source_revision = EXCLUDED.source_revision,
+        generator_version = EXCLUDED.generator_version,
+        scheduled_by_user_id = EXCLUDED.scheduled_by_user_id,
+        attempt_count = EXCLUDED.attempt_count,
+        updated_at = EXCLUDED.updated_at
+    `;
+  }
+  async claimDueMetadataGenerations(workspace: string, now: Date) {
+    const rows = await this.sql<DatabaseRow[]>`
+      DELETE FROM document_metadata_generation_schedule
+      WHERE workspace = ${workspace} AND run_after_at <= ${now}
+      RETURNING *
+    `;
+    return mapDatabaseRows(rows, generationScheduleMapper);
   }
 }

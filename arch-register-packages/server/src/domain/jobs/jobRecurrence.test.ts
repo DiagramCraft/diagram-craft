@@ -6,6 +6,18 @@ import {
 } from './jobRecurrence';
 
 describe('job recurrence', () => {
+  it('calculates minute occurrences from an anchored start', () => {
+    const recurrence = {
+      type: 'minutes' as const,
+      intervalMinutes: 5,
+      startsAt: new Date('2026-01-01T00:00:00.000Z')
+    };
+
+    expect(nextJobOccurrence(recurrence, new Date('2026-01-01T00:12:00.000Z'))).toEqual(
+      new Date('2026-01-01T00:15:00.000Z')
+    );
+  });
+
   it('calculates hourly occurrences from an anchored start', () => {
     const recurrence = {
       type: 'hours' as const,
@@ -51,6 +63,9 @@ describe('job recurrence', () => {
   });
 
   it('rejects invalid recurrence definitions', () => {
+    expect(() =>
+      validateJobScheduleRecurrence({ type: 'minutes', intervalMinutes: 0, startsAt: new Date() })
+    ).toThrow();
     expect(() =>
       validateJobScheduleRecurrence({ type: 'hours', intervalHours: 0, startsAt: new Date() })
     ).toThrow();

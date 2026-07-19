@@ -8,6 +8,8 @@ import { createStorage } from '@arch-register/server/storage/storage';
 import { createExternalContentJobHandler } from '@arch-register/server/domain/external-content/externalContentJobs';
 import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webhook/webhookDelivery';
 import { createGovernanceNotificationJobHandler } from '@arch-register/server/domain/governance/governanceNotifications';
+import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
+import { METADATA_GENERATION_SCAN_JOB_TYPE } from '@arch-register/server/domain/document/aiMetadataGenerationConstants';
 
 const logger = createLogger('job-server');
 
@@ -45,6 +47,10 @@ const main = async () => {
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
   handlers.set('governance.notification', createGovernanceNotificationJobHandler(db));
+  handlers.set(
+    METADATA_GENERATION_SCAN_JOB_TYPE,
+    createDocumentMetadataGenerationScanJobHandler(db, storage)
+  );
   const server = createJobServer({
     db,
     handlers,

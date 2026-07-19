@@ -39,7 +39,10 @@ import { chat } from '@tanstack/ai';
 import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';
 import { createAiChatTools } from '../ai/chatTools';
 import { buildDocumentActionPrompt } from '../ai/documentContextPromptBuilder';
-import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
+import type {
+  DocumentGeneratedMetadata,
+  DocumentMetadata
+} from '@arch-register/api-types/documentContract';
 import type { DocumentListItem } from '@arch-register/api-types/projectContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
@@ -53,6 +56,7 @@ import {
   type DocumentListCandidate
 } from '../document/documentFilterHelpers';
 import { coordinateContentWrite } from './contentWriteCoordinator';
+import { scheduleMetadataGenerationForDocument } from '../document/documentMetadataGenerationJob';
 import {
   listSiblingNodes,
   projectDbErrorMessages,
@@ -83,7 +87,7 @@ const toApiMarkdownRevisionDetail = (
   body: revision.body
 });
 
-const createContentNodeRevision = async (
+export const createContentNodeRevision = async (
   db: DatabaseAdapter,
   ws: string,
   nodeId: string,
@@ -111,7 +115,11 @@ const createContentNodeRevision = async (
   });
 };
 
-const getDocumentState = async (db: DatabaseAdapter, ws: string, node: ContentNodeDbResult) => {
+export const getDocumentState = async (
+  db: DatabaseAdapter,
+  ws: string,
+  node: ContentNodeDbResult
+) => {
   if (!db.document) {
     return {
       documentType: null,
@@ -135,6 +143,34 @@ const getDocumentState = async (db: DatabaseAdapter, ws: string, node: ContentNo
     availableFields: fields.filter(field => !field.retired),
     retiredFields: fields.filter(field => field.retired)
   };
+};
+
+const metadataValueEquals = (a: unknown, b: unknown): boolean => {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((value, index) => value === sortedB[index]);
+  }
+  return a === b;
+};
+
+const metadataEquals = (a: DocumentMetadata, b: DocumentMetadata): boolean => {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const key of keys) {
+    if (!metadataValueEquals(a[key] ?? null, b[key] ?? null)) return false;
+  }
+  return true;
+};
+
+const outdateGeneratedMetadata = (
+  generatedMetadata: DocumentGeneratedMetadata
+): DocumentGeneratedMetadata => {
+  const next: DocumentGeneratedMetadata = {};
+  for (const [fieldId, result] of Object.entries(generatedMetadata)) {
+    next[fieldId] = result.status === 'outdated' ? result : { ...result, status: 'outdated' };
+  }
+  return next;
 };
 
 const resolveDocumentMetadata = async (
@@ -274,7 +310,7 @@ const isMarkdownNode = (node: Pick<ContentNodeDbResult, 'type' | 'path' | 'mount
   node.type === 'markdown' ||
   (node.type === 'file' && node.mount_id != null && isMarkdownPath(node.path));
 
-const readMarkdownBody = (content: Buffer) => {
+export const readMarkdownBody = (content: Buffer) => {
   const rawContent = content.toString('utf8');
 
   try {
@@ -1036,6 +1072,9 @@ export const saveMarkdownContent = async (
       const timestamp = new Date();
       const nextName = name?.trim() ? name.trim() : node.name;
       const previousContent = await storage.read(ws, storageScope(ws, node), node.id);
+      const bodyChanged = readMarkdownBody(previousContent) !== body;
+      const metadataChanged = !metadataEquals(currentDocument.metadata, nextMetadata);
+      const effectiveChange = bodyChanged || metadataChanged;
       let row!: ContentNodeDbResult;
       let revision: MarkdownRevisionDbResult | undefined;
       await coordinateContentWrite({
@@ -1044,18 +1083,17 @@ export const saveMarkdownContent = async (
         operation: 'update-markdown',
         scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
         nodeIds: [node.id],
-        storageChanges:
-          readMarkdownBody(previousContent) === body
-            ? []
-            : [
-                {
-                  type: 'write',
-                  workspace: ws,
-                  storageId: storageScope(ws, node),
-                  nodeId: node.id,
-                  content
-                }
-              ],
+        storageChanges: bodyChanged
+          ? [
+              {
+                type: 'write',
+                workspace: ws,
+                storageId: storageScope(ws, node),
+                nodeId: node.id,
+                content
+              }
+            ]
+          : [],
         writeDatabase: async tx => {
           row = await tx.project.upsertContentNode({
             id: node.id,
@@ -1080,7 +1118,9 @@ export const saveMarkdownContent = async (
               node_id: node.id,
               document_type_id: nextDocumentTypeId ?? null,
               values: nextMetadata,
-              generated_metadata: currentDocument.generatedMetadata,
+              generated_metadata: effectiveChange
+                ? outdateGeneratedMetadata(currentDocument.generatedMetadata)
+                : currentDocument.generatedMetadata,
               updated_at: timestamp
             });
             await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
@@ -1100,6 +1140,16 @@ export const saveMarkdownContent = async (
             nextMetadata,
             tx
           );
+          if (effectiveChange && nextDocumentType) {
+            await scheduleMetadataGenerationForDocument(tx, {
+              workspace: ws,
+              nodeId: node.id,
+              documentType: nextDocumentType,
+              sourceRevision: revision.revision_number,
+              scheduledByUserId: authCtx.userId,
+              now: timestamp
+            });
+          }
         },
         afterCommit: [
           {
@@ -1494,6 +1544,10 @@ export const restoreMarkdownRevision = async (
       const content = Buffer.from(JSON.stringify({ body: revision.body }), 'utf8');
       const timestamp = new Date();
       const nextName = revision.title?.trim() ? revision.title.trim() : node.name;
+      const previousContent = await storage.read(ws, storageScope(ws, node), node.id);
+      const effectiveChange =
+        readMarkdownBody(previousContent) !== revision.body ||
+        !metadataEquals(currentDocument.metadata, resolvedMetadata.values);
       let row!: ContentNodeDbResult;
       let restoredRevision: MarkdownRevisionDbResult | undefined;
       await coordinateContentWrite({
@@ -1535,7 +1589,9 @@ export const restoreMarkdownRevision = async (
               node_id: node.id,
               document_type_id: revision.document_type_id,
               values: resolvedMetadata.values,
-              generated_metadata: currentDocument.generatedMetadata,
+              generated_metadata: effectiveChange
+                ? outdateGeneratedMetadata(currentDocument.generatedMetadata)
+                : currentDocument.generatedMetadata,
               updated_at: timestamp
             });
             await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
@@ -1555,6 +1611,16 @@ export const restoreMarkdownRevision = async (
             resolvedMetadata.values,
             tx
           );
+          if (effectiveChange && restoredType) {
+            await scheduleMetadataGenerationForDocument(tx, {
+              workspace: ws,
+              nodeId: node.id,
+              documentType: restoredType,
+              sourceRevision: restoredRevision.revision_number,
+              scheduledByUserId: authCtx.userId,
+              now: timestamp
+            });
+          }
         },
         afterCommit: [
           {
