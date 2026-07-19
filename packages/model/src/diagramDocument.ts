@@ -73,6 +73,7 @@ export class DiagramDocument
   hash: string | undefined;
   readonly #releasables = new Releasables();
   activeDiagramId: string | undefined;
+  #locked = false;
 
   constructor(
     readonly registry: Registry,
@@ -142,6 +143,22 @@ export class DiagramDocument
 
   get diagrams() {
     return this.#diagrams.values.filter(d => !d.parent);
+  }
+
+  get locked() {
+    return this.#locked;
+  }
+
+  isLocked() {
+    return this.#locked;
+  }
+
+  setLocked(value: boolean, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#locked = value;
+    });
+    const anyDiagram = this.diagrams[0];
+    if (anyDiagram) this.emit('diagramChanged', { diagram: anyDiagram });
   }
 
   *diagramIterator(opts: DiagramIteratorOpts = {}) {

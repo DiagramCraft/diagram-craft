@@ -1,0 +1,17 @@
+.isDocumentIndicator {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  font-size: 14px;
+  border: none;
+  border-left: 1px solid var(--cmp-border);
+  padding: 0 0.5rem;
+  background-color: var(--panel-bg);
+  border-radius: 0;
+  color: var(--panel-fg);
+  cursor: pointer;
+
+  &[data-locked="true"] {
+    color: var(--error-fg);
+  }
+}

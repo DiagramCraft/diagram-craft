@@ -64,7 +64,8 @@ export const serializeDiagramDocument = async (
       overrides: serializeOverrides(document.data.db)
     },
     ...(stories.length > 0 && { stories }),
-    activeDiagramId: document.activeDiagramId
+    activeDiagramId: document.activeDiagramId,
+    isLocked: document.locked ? true : undefined
   };
 
   // Generate hash based on the serialized JSON (excluding any existing hash)
@@ -148,7 +149,8 @@ export const serializeDiagram = (
       y: diagram.viewBox.offset.y,
       zoom: diagram.viewBox.zoomLevel
     },
-    canvas: diagram.bounds
+    canvas: diagram.bounds,
+    isLocked: diagram.locked ? true : undefined
   };
 };
 
@@ -230,7 +232,8 @@ export const serializeDiagramElement = (
       props: node.storedProps,
       metadata: node.metadata,
       texts: node.texts,
-      tags: node.tags.length > 0 ? node.tags : undefined
+      tags: node.tags.length > 0 ? node.tags : undefined,
+      isLocked: node.locked ? true : undefined
     };
   } else if (isEdge(element)) {
     const edge = element;
@@ -252,7 +255,8 @@ export const serializeDiagramElement = (
       children: edge.children.map(child =>
         serializeDiagramElement(child, options)
       ) as SerializedNode[],
-      tags: edge.tags.length > 0 ? edge.tags : undefined
+      tags: edge.tags.length > 0 ? edge.tags : undefined,
+      isLocked: edge.locked ? true : undefined
     };
   } else {
     throw new VerifyNotReached();

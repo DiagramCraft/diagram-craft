@@ -33,7 +33,8 @@ export const AIToolWindow = () => {
   const [textAreaKey, setTextAreaKey] = useState(0);
 
   const activeLayer = diagram.activeLayer;
-  const isDisabled = activeLayer.type !== 'regular' || activeLayer.isLocked() || loading;
+  const isDisabled =
+    activeLayer.type !== 'regular' || activeLayer.isLocked() || diagram.isLocked() || loading;
 
   useEventListener(diagram.layers, 'layerStructureChange', redraw);
 

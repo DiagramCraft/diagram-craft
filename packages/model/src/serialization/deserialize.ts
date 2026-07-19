@@ -148,6 +148,7 @@ export const deserializeDiagramElements = (
       else if (c.parent) nodeLookup.get(c.parent.id)?.addChild(node, uow);
 
       if (c.tags && c.tags.length > 0) node.setTags(c.tags ?? [], uow);
+      if (c.isLocked) node.setLocked(true, uow);
       nodeLookup.set(c.id, node);
     }
   }
@@ -180,6 +181,7 @@ export const deserializeDiagramElements = (
       else if (e.parent) nodeLookup.get(e.parent.id)?.addChild(edge, uow);
 
       if (e.tags && e.tags.length > 0) edge.setTags(e.tags ?? [], uow);
+      if (e.isLocked) edge.setLocked(true, uow);
 
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
@@ -305,6 +307,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     }
     if (tags.size > 0) {
       doc.tags.set(Array.from(tags));
+    }
+
+    if (document.isLocked) {
+      UnitOfWork.executeSilently(undefined, uow => doc.setLocked(true, uow));
     }
 
     if (document.data?.providers) {
@@ -434,7 +440,10 @@ const deserializeDiagrams = async <T extends Diagram>(
     const edgeLookup = new ElementLookup<DiagramEdge>();
 
     const newDiagram = diagramFactory($d, doc);
-    UnitOfWork.executeSilently(newDiagram, uow => newDiagram.setBounds($d.canvas, uow));
+    UnitOfWork.executeSilently(newDiagram, uow => {
+      newDiagram.setBounds($d.canvas, uow);
+      if ($d.isLocked) newDiagram.setLocked(true, uow);
+    });
 
     // First ensure all node types are loaded
     const loaded = new Set<string>();

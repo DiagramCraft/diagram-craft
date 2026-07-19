@@ -132,6 +132,7 @@ export class Diagram
   readonly uid = newid();
   readonly _crdt: WatchableValue<CRDTMap<DiagramCRDT>>;
   hasEdgesWithLineHops = false;
+  #locked = false;
 
   // Shared properties
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
@@ -332,6 +333,21 @@ export class Diagram
 
   get document(): DiagramDocument {
     return this.#document!;
+  }
+
+  get locked() {
+    return this.#locked;
+  }
+
+  isLocked() {
+    return this.#locked || this.document.isLocked();
+  }
+
+  setLocked(value: boolean, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#locked = value;
+      this.emitDiagramChange('metadata');
+    });
   }
 
   _prepareAttach(parent?: Diagram) {

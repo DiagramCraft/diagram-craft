@@ -1,4 +1,4 @@
-import { AbstractAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, AbstractToggleAction } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
 import { newid } from '@diagram-craft/utils/id';
 import { DocumentBuilder } from '@diagram-craft/model/diagram';
@@ -10,7 +10,9 @@ import { $tStr, $t } from '@diagram-craft/utils/localize';
 export const diagramActions = (application: Application) => ({
   DIAGRAM_ADD: new DiagramAddAction(application),
   DIAGRAM_REMOVE: new DiagramRemoveAction(application),
-  DIAGRAM_RENAME: new DiagramRenameAction(application)
+  DIAGRAM_RENAME: new DiagramRenameAction(application),
+  DIAGRAM_TOGGLE_LOCK: new DiagramToggleLockAction(application),
+  DOCUMENT_TOGGLE_LOCK: new DocumentToggleLockAction(application)
 });
 
 declare global {
@@ -111,5 +113,51 @@ class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Applica
         }
       )
     );
+  }
+}
+
+class DiagramToggleLockAction extends AbstractToggleAction<{ diagramId?: string }, Application> {
+  name = $tStr('action.DIAGRAM_TOGGLE_LOCK.name', 'Toggle Diagram Locked');
+
+  isEnabled({ diagramId }: { diagramId?: string }): boolean {
+    return (
+      diagramId !== undefined && this.context.model.activeDocument.byId(diagramId) !== undefined
+    );
+  }
+
+  getState({ diagramId }: { diagramId?: string }): boolean {
+    if (!diagramId) return false;
+    const diagram = this.context.model.activeDocument.byId(diagramId);
+    assert.present(diagram);
+    return diagram.locked;
+  }
+
+  execute({ diagramId }: { diagramId?: string }): void {
+    precondition.is.present(diagramId);
+
+    const document = this.context.model.activeDocument;
+    const diagram = document.byId(diagramId);
+    assert.present(diagram);
+
+    diagram.undoManager.execute('Toggle diagram locked', uow => {
+      diagram.setLocked(!diagram.locked, uow);
+    });
+  }
+}
+
+class DocumentToggleLockAction extends AbstractToggleAction<undefined, Application> {
+  name = $tStr('action.DOCUMENT_TOGGLE_LOCK.name', 'Toggle Document Locked');
+
+  getState(): boolean {
+    return this.context.model.activeDocument.locked;
+  }
+
+  execute(): void {
+    const document = this.context.model.activeDocument;
+    const activeDiagram = this.context.model.activeDiagram;
+
+    activeDiagram.undoManager.execute('Toggle document locked', uow => {
+      document.setLocked(!document.locked, uow);
+    });
   }
 }
