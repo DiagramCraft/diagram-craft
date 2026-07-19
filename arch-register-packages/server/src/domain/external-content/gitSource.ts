@@ -29,6 +29,10 @@ const MAX_CONCURRENT_FILE_READS = Math.max(
 );
 const GIT_TIMEOUT_MS = positiveEnvNumber('EXTERNAL_CONTENT_GIT_TIMEOUT_MS', 5 * 60 * 1000);
 
+const throwIfAborted = (signal?: AbortSignal) => {
+  if (signal?.aborted) throw signal.reason ?? new Error('Job execution aborted');
+};
+
 export type GitSnapshotFile = {
   path: string;
   size: number;
@@ -57,12 +61,13 @@ const gitEnv = () => ({
   USERPROFILE: gitHome()
 });
 
-const runGit = async (args: string[], maxBuffer = 2 * 1024 * 1024) =>
+const runGit = async (args: string[], maxBuffer = 2 * 1024 * 1024, signal?: AbortSignal) =>
   execFileAsync('git', ['-c', 'http.followRedirects=false', ...args], {
     env: gitEnv(),
     maxBuffer,
     timeout: GIT_TIMEOUT_MS,
     killSignal: 'SIGKILL',
+    signal,
     encoding: 'buffer'
   });
 
@@ -136,12 +141,14 @@ const cachePathFor = (sourceId: string) =>
     sourceId
   );
 
-const ensureMirror = async (sourceId: string, config: GitSourceConfig) => {
+const ensureMirror = async (sourceId: string, config: GitSourceConfig, signal?: AbortSignal) => {
+  throwIfAborted(signal);
   const root =
     process.env['EXTERNAL_CONTENT_CACHE_DIR'] ?? join(tmpdir(), 'arch-register-external-content');
   await mkdir(root, { recursive: true });
   await mkdir(gitHome(), { recursive: true });
   await assertSafeGitUrl(config.url);
+  throwIfAborted(signal);
   const path = cachePathFor(sourceId);
   let exists = true;
   try {
@@ -152,12 +159,13 @@ const ensureMirror = async (sourceId: string, config: GitSourceConfig) => {
   if (!exists) {
     await runGit(
       ['clone', '--bare', '--single-branch', '--depth=1', '--no-tags', '--', config.url, path],
-      16 * 1024 * 1024
+      16 * 1024 * 1024,
+      signal
     );
   } else {
-    await runGit(['-C', path, 'remote', 'update', '--prune'], 16 * 1024 * 1024);
+    await runGit(['-C', path, 'remote', 'update', '--prune'], 16 * 1024 * 1024, signal);
   }
-  const objectStats = await runGit(['-C', path, 'count-objects', '-v']);
+  const objectStats = await runGit(['-C', path, 'count-objects', '-v'], 2 * 1024 * 1024, signal);
   const repositoryBytes = objectStats.stdout
     .toString('utf8')
     .split('\n')
@@ -171,8 +179,12 @@ const ensureMirror = async (sourceId: string, config: GitSourceConfig) => {
   return path;
 };
 
-const resolveHead = async (repoPath: string) => {
-  const result = await runGit(['-C', repoPath, 'ls-remote', '--symref', 'origin', 'HEAD']);
+const resolveHead = async (repoPath: string, signal?: AbortSignal) => {
+  const result = await runGit(
+    ['-C', repoPath, 'ls-remote', '--symref', 'origin', 'HEAD'],
+    2 * 1024 * 1024,
+    signal
+  );
   const line = result.stdout
     .toString('utf8')
     .split('\n')
@@ -213,17 +225,22 @@ const parseTree = (output: string, sourcePath: string) => {
   return entries;
 };
 
-export const prepareGitRepository = (sourceId: string, config: GitSourceConfig) =>
-  ensureMirror(sourceId, config);
+export const prepareGitRepository = (
+  sourceId: string,
+  config: GitSourceConfig,
+  signal?: AbortSignal
+) => ensureMirror(sourceId, config, signal);
 
 export const readGitSnapshot = async (
   repoPath: string,
-  sourcePath: string
+  sourcePath: string,
+  signal?: AbortSignal
 ): Promise<GitSnapshot> => {
-  const revision = await resolveHead(repoPath);
+  throwIfAborted(signal);
+  const revision = await resolveHead(repoPath, signal);
   const treeArgs = ['-C', repoPath, 'ls-tree', '-r', '-l', '-z', revision];
   if (sourcePath) treeArgs.push('--', sourcePath);
-  const tree = await runGit(treeArgs);
+  const tree = await runGit(treeArgs, 2 * 1024 * 1024, signal);
   const entries = parseTree(tree.stdout.toString('utf8'), sourcePath);
   if (entries.length === 0)
     throw new Error(`Git source path '${sourcePath || '/'}' contains no files`);
@@ -231,6 +248,7 @@ export const readGitSnapshot = async (
   let nextIndex = 0;
   const readNext = async () => {
     while (true) {
+      throwIfAborted(signal);
       const index = nextIndex++;
       if (index >= entries.length) return;
       const entry = entries[index]!;
@@ -241,7 +259,8 @@ export const readGitSnapshot = async (
           'show',
           `${revision}:${sourcePath ? `${sourcePath}/${entry.path}` : entry.path}`
         ],
-        MAX_FILE_BYTES + 1
+        MAX_FILE_BYTES + 1,
+        signal
       );
       files[index] = { path: entry.path, size: entry.size, content: Buffer.from(result.stdout) };
     }
@@ -255,10 +274,11 @@ export const readGitSnapshot = async (
 export const fetchGitSnapshot = async (
   sourceId: string,
   config: GitSourceConfig,
-  sourcePath: string
+  sourcePath: string,
+  signal?: AbortSignal
 ): Promise<GitSnapshot> => {
-  const repoPath = await prepareGitRepository(sourceId, config);
-  return readGitSnapshot(repoPath, sourcePath);
+  const repoPath = await ensureMirror(sourceId, config, signal);
+  return readGitSnapshot(repoPath, sourcePath, signal);
 };
 
 export const gitFileName = (path: string) => basename(path);

@@ -6,6 +6,7 @@ import { RetryableJobError } from '../jobs/jobRetry';
 
 const JOB_TYPE = 'webhook.delivery';
 const SYSTEM_IDENTITY = 'webhooks';
+const NEVER_ABORTED_SIGNAL = new AbortController().signal;
 
 export type WebhookEvent = {
   version: '1';
@@ -81,7 +82,13 @@ const isWebhookEvent = (value: unknown): value is WebhookEvent =>
 
 export const createWebhookDeliveryHandler =
   (db: DatabaseAdapter) =>
-  async (context: { jobId: string; workspace: string; payload: Record<string, unknown> }) => {
+  async (context: {
+    jobId: string;
+    workspace: string;
+    payload: Record<string, unknown>;
+    signal?: AbortSignal;
+  }) => {
+    const signal = context.signal ?? NEVER_ABORTED_SIGNAL;
     const webhookId = context.payload['webhookId'];
     const event = context.payload['event'];
     if (typeof webhookId !== 'string' || !isWebhookEvent(event)) {
@@ -97,7 +104,7 @@ export const createWebhookDeliveryHandler =
       response = await fetch(webhook.url, {
         method: 'POST',
         redirect: 'manual',
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
         headers: {
           'content-type': 'application/json',
           'user-agent': 'Arch-Register-Webhooks/1.0',

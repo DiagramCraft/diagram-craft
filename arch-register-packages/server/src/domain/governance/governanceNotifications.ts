@@ -12,6 +12,11 @@ import { notificationTypeForGovernanceEvent } from '../notification/notification
 import { isChannelEnabled } from '../notification/notificationPreferences';
 
 const checker = new PermissionChecker();
+const NEVER_ABORTED_SIGNAL = new AbortController().signal;
+
+const throwIfAborted = (signal: AbortSignal) => {
+  if (signal.aborted) throw signal.reason ?? new Error('Job execution aborted');
+};
 
 type GovernanceNotificationJobPayload = {
   caseId: string;
@@ -64,20 +69,26 @@ const getPresentation = (eventType: GovernanceEventType, caseKind: string) => {
 const listAssignmentRecipients = async (
   db: DatabaseAdapter,
   workspace: string,
-  assignment: Awaited<ReturnType<DatabaseAdapter['governance']['getAssignment']>>
+  assignment: Awaited<ReturnType<DatabaseAdapter['governance']['getAssignment']>>,
+  signal: AbortSignal
 ) => {
+  throwIfAborted(signal);
   if (!assignment) return [];
 
   if (assignment.target_type === 'user') {
     if (!assignment.target_user_id) return [];
+    throwIfAborted(signal);
     const user = await db.auth.getUser(assignment.target_user_id);
     return user?.is_active ? [user] : [];
   }
 
+  throwIfAborted(signal);
   const members = await db.workspace.listWorkspaceMembers(workspace);
+  throwIfAborted(signal);
   const teamAssignments = await db.workspace.listTeamAssignments(workspace);
   const activeUsers = await Promise.all(
     members.map(async member => {
+      throwIfAborted(signal);
       const user = await db.auth.getUser(member.user_id);
       return user?.is_active ? { member, user } : null;
     })
@@ -98,6 +109,7 @@ const listAssignmentRecipients = async (
       .map(item => item!.user);
   }
 
+  throwIfAborted(signal);
   const roleDefinitions = resolveWorkspaceRoleDefinitions(
     await db.workspace.listCustomWorkspaceRoles(workspace)
   );
@@ -107,7 +119,10 @@ const listAssignmentRecipients = async (
     type: 'team' as const
   }));
   const globalRoles = await Promise.all(
-    activeUsers.map(async item => (item ? db.auth.listGlobalRoleAssignments(item.user.id) : []))
+    activeUsers.map(async item => {
+      throwIfAborted(signal);
+      return item ? db.auth.listGlobalRoleAssignments(item.user.id) : [];
+    })
   );
 
   return activeUsers
@@ -148,8 +163,10 @@ const createGovernanceNotification = async (
     actorUserId: string | null;
     actorDisplayName: string | null;
     occurredAt: Date;
+    signal: AbortSignal;
   }
 ) => {
+  throwIfAborted(input.signal);
   const notificationType = notificationTypeForGovernanceEvent(input.eventType);
   const inAppEnabled = await isChannelEnabled(
     db,
@@ -184,11 +201,17 @@ const createGovernanceNotification = async (
 
 export const createGovernanceNotificationJobHandler =
   (db: DatabaseAdapter) =>
-  async (context: { workspace: string; payload: Record<string, unknown> }) => {
+  async (context: {
+    workspace: string;
+    payload: Record<string, unknown>;
+    signal?: AbortSignal;
+  }) => {
+    const signal = context.signal ?? NEVER_ABORTED_SIGNAL;
     if (!isPayload(context.payload))
       throw new Error('Governance notification job has an invalid payload');
 
     try {
+      throwIfAborted(signal);
       const caseRow = await db.governance.getCase(context.workspace, context.payload.caseId);
       if (!caseRow) return { skipped: true, reason: 'case-not-found' };
       const event = (await db.governance.listEvents(caseRow.id)).find(
@@ -201,20 +224,24 @@ export const createGovernanceNotificationJobHandler =
 
       if (event.event_type === 'submitted') {
         for (const assignment of assignments) {
+          throwIfAborted(signal);
           for (const recipient of await listAssignmentRecipients(
             db,
             context.workspace,
-            assignment
+            assignment,
+            signal
           )) {
             recipients.set(`${recipient.id}:${assignment.id}`, assignment.id);
           }
         }
       } else {
         for (const assignment of assignments) {
+          throwIfAborted(signal);
           for (const recipient of await listAssignmentRecipients(
             db,
             context.workspace,
-            assignment
+            assignment,
+            signal
           )) {
             recipients.set(`${recipient.id}:none`, null);
           }
@@ -223,6 +250,7 @@ export const createGovernanceNotificationJobHandler =
       }
 
       for (const [recipientKey, assignmentId] of recipients) {
+        throwIfAborted(signal);
         const recipientUserId = recipientKey.split(':')[0]!;
         await createGovernanceNotification(db, {
           workspace: context.workspace,
@@ -236,7 +264,8 @@ export const createGovernanceNotificationJobHandler =
           recipientUserId,
           actorUserId: event.actor_user_id,
           actorDisplayName: actor?.display_name ?? null,
-          occurredAt: event.occurred_at
+          occurredAt: event.occurred_at,
+          signal
         });
       }
 
