@@ -21,6 +21,7 @@ import { router } from './router';
 import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
+import { DevTools } from './dev/DevTools';
 
 const InnerApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -38,30 +39,38 @@ const InnerApp = () => {
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          background: 'var(--base-bg)'
-        }}
-      >
+      <>
         <div
           style={{
-            width: '40px',
-            height: '40px',
-            border: '3px solid var(--cmp-border)',
-            borderTopColor: 'var(--accent-fg)',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            background: 'var(--base-bg)'
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              border: '3px solid var(--cmp-border)',
+              borderTopColor: 'var(--accent-fg)',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }}
+          />
+        </div>
+        <DevTools />
+      </>
     );
   }
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <DevTools />
+    </>
+  );
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

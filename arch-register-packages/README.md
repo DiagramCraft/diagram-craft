@@ -130,6 +130,22 @@ DEV_API_DELAY_VARIANCE_MS=200
 
 This applies an approximate 300-700ms delay to each API request. The delay middleware is disabled by default and has no effect outside development mode.
 
+### Switching Users In Development
+
+A dev-only user switcher lets you instantly assume the identity of any user in the database, bypassing login
+entirely — useful for testing permissions and workspace roles without juggling credentials.
+
+Configure these environment variables in `server/.env`:
+
+```bash
+NODE_ENV=development
+DEV_USER_SWITCHER_ENABLED=true
+```
+
+Both must be set — the switcher stays disabled if either is missing, and it is always disabled when
+`NODE_ENV=production` regardless of the flag. When enabled, a floating dev toolbar appears in the web app (even on
+the login screen) listing all users; picking one signs you in as that user immediately.
+
 ## 🧪 Testing
 
 ### Type Checking

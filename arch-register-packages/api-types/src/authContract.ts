@@ -69,7 +69,7 @@ const authMeResponseSchema = z.object({
     .describe('Teams organized by workspace')
 });
 
-const userSummarySchema = z.object({
+export const userSummarySchema = z.object({
   id: z.string().describe('User identifier'),
   user_id: z.string().describe('Unique user identifier'),
   email: z.string().nullable().describe('User email address (may be null)'),

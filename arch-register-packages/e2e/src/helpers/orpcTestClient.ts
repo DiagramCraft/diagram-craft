@@ -4,6 +4,7 @@ import type { AnyContractRouter, ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { projectContract } from '@arch-register/api-types/projectContract';
 import { authPublicContract, authProtectedContract } from '@arch-register/api-types/authContract';
+import { devContract } from '@arch-register/api-types/devContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
@@ -45,6 +46,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     projects: make(projectContract).projects,
     auth: make(authPublicContract).auth,
     authProtected: make(authProtectedContract).authProtected,
+    dev: make(devContract).dev,
     entities: make(workspaceEntityContract).entities,
     enums: make(workspaceEnumContract).enums,
     schemas: make(workspaceSchemaContract).schemas,
