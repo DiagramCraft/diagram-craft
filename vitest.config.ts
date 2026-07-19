@@ -25,7 +25,10 @@ export default defineConfig({
       reporter: ['text', 'json', 'json-summary'],
       reportsDirectory: './coverage'
     },
-    reporters: ['dot']
+    reporters: ['dot'],
+    // Keep application logging enabled while preventing expected test-time console output from
+    // obscuring the test result. Logs remain visible when the application or server is run normally.
+    onConsoleLog: () => false
   },
   resolve: {
     tsconfigPaths: true

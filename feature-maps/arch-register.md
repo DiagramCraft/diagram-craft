@@ -34,7 +34,8 @@
               relationships, and schema-specific behavior.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates,
-              fields, versions, validation rules, and interactive AI actions for structured content.
+            fields, versions, validation rules, and AI actions for structured content. Administrators can edit actions
+            in a dialog and test an unsaved action against an existing document of the same type without persistence.
 
         - @id:ar.workspace.lifecycle Workspaces can define lifecycle states, designate one as the deprecated state,
           and use them as part of entity and project review workflows.

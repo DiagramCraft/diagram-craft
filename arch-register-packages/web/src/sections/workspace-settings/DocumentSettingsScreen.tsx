@@ -13,7 +13,6 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import type {
@@ -54,6 +53,7 @@ import { toFieldId } from '../../utils/fieldId';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { settingsSectionTarget } from '../../routes/settingsNavigation';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
+import { AiActionDialog } from './AiActionDialog';
 import styles from './DocumentSettingsScreen.module.css';
 
 const FIELD_TYPE_OPTIONS: { value: DocumentFieldType; label: string }[] = [
@@ -88,14 +88,6 @@ const newDocumentField = (existingIds: ReadonlySet<string> = new Set<string>()):
     retired: false
   };
 };
-
-const newAiAction = (): DocumentAiAction => ({
-  id: crypto.randomUUID(),
-  name: '',
-  kind: 'interactive',
-  prompt: '',
-  enabled: true
-});
 
 const isLinkType = (type: DocumentFieldType) => type === 'entity_link' || type === 'document_link';
 const NEW_DOCUMENT_TYPE_ID = 'new';
@@ -195,6 +187,8 @@ const DocumentTypeEditor = ({
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [aiActionDialogOpen, setAiActionDialogOpen] = useState(false);
+  const [editingAiAction, setEditingAiAction] = useState<DocumentAiAction | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
@@ -213,6 +207,8 @@ const DocumentTypeEditor = ({
       setDirty(false);
       setShowHistory(false);
       setPendingFieldChanges(null);
+      setAiActionDialogOpen(false);
+      setEditingAiAction(null);
     } else if (isNew) {
       setName('');
       setDescription('');
@@ -221,6 +217,8 @@ const DocumentTypeEditor = ({
       setColor(null);
       setIcon(null);
       setDirty(true);
+      setAiActionDialogOpen(false);
+      setEditingAiAction(null);
     }
   }, [isNew, selected]);
 
@@ -253,19 +251,31 @@ const DocumentTypeEditor = ({
     setDirty(true);
   };
 
-  const updateAiAction = (actionId: string, next: DocumentAiAction) => {
-    setAiActions(current => current.map(action => (action.id === actionId ? next : action)));
-    setDirty(true);
-  };
-
   const removeAiAction = (actionId: string) => {
     setAiActions(current => current.filter(action => action.id !== actionId));
     setDirty(true);
   };
 
-  const addAiAction = () => {
-    setAiActions(current => [...current, newAiAction()]);
+  const openAddAiAction = () => {
+    setEditingAiAction(null);
+    setAiActionDialogOpen(true);
+  };
+
+  const openEditAiAction = (action: DocumentAiAction) => {
+    setEditingAiAction(action);
+    setAiActionDialogOpen(true);
+  };
+
+  const saveAiActionFromDialog = (action: DocumentAiAction) => {
+    setAiActions(current => {
+      const exists = current.some(item => item.id === action.id);
+      return exists
+        ? current.map(item => (item.id === action.id ? action : item))
+        : [...current, action];
+    });
     setDirty(true);
+    setAiActionDialogOpen(false);
+    setEditingAiAction(null);
   };
 
   const handleSave = async (fieldMigrations?: FieldMigrations) => {
@@ -503,7 +513,7 @@ const DocumentTypeEditor = ({
                 <>
                   <div className={styles.fieldsHead}>
                     <div className={styles.sectionLabel}>AI Actions</div>
-                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addAiAction}>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openAddAiAction}>
                       Add AI action
                     </Button>
                   </div>
@@ -514,22 +524,7 @@ const DocumentTypeEditor = ({
                         <DocumentAiActionRow
                           key={action.id}
                           action={action}
-                          fields={fields}
-                          claimedFieldIds={
-                            new Set(
-                              aiActions
-                                .filter(
-                                  (
-                                    other
-                                  ): other is Extract<
-                                    DocumentAiAction,
-                                    { kind: 'metadata_generator' }
-                                  > => other.id !== action.id && other.kind === 'metadata_generator'
-                                )
-                                .map(other => other.outputFieldId)
-                            )
-                          }
-                          onUpdate={next => updateAiAction(action.id, next)}
+                          onEdit={() => openEditAiAction(action)}
                           onRemove={() => removeAiAction(action.id)}
                         />
                       ))}
@@ -549,6 +544,31 @@ const DocumentTypeEditor = ({
                   </div>
                 </>
               )}
+
+              <AiActionDialog
+                open={aiActionDialogOpen}
+                onClose={() => {
+                  setAiActionDialogOpen(false);
+                  setEditingAiAction(null);
+                }}
+                onSave={saveAiActionFromDialog}
+                workspaceSlug={workspaceSlug}
+                documentTypeId={selected?.id ?? null}
+                action={editingAiAction}
+                fields={fields}
+                claimedFieldIds={
+                  new Set(
+                    aiActions
+                      .filter(
+                        (
+                          other
+                        ): other is Extract<DocumentAiAction, { kind: 'metadata_generator' }> =>
+                          other.id !== editingAiAction?.id && other.kind === 'metadata_generator'
+                      )
+                      .map(other => other.outputFieldId)
+                  )
+                }
+              />
 
               <div className={styles.bottomActions}>
                 {selected && (
@@ -786,101 +806,27 @@ const DocumentFieldRow = ({
   );
 };
 
-const AI_ACTION_KIND_OPTIONS: { value: DocumentAiAction['kind']; label: string }[] = [
-  { value: 'interactive', label: 'Interactive' },
-  { value: 'metadata_generator', label: 'Metadata generator' }
-];
-
 const DocumentAiActionRow = ({
   action,
-  fields,
-  claimedFieldIds,
-  onUpdate,
+  onEdit,
   onRemove
 }: {
   action: DocumentAiAction;
-  fields: DocumentField[];
-  claimedFieldIds: ReadonlySet<string>;
-  onUpdate: (next: DocumentAiAction) => void;
+  onEdit: () => void;
   onRemove: () => void;
 }) => {
-  const eligibleFields = fields.filter(
-    field => !field.retired && !isLinkType(field.type) && !claimedFieldIds.has(field.id)
-  );
-
-  const handleKindChange = (kind: string | undefined) => {
-    if (kind === 'metadata_generator') {
-      onUpdate({
-        id: action.id,
-        name: action.name,
-        prompt: action.prompt,
-        enabled: action.enabled,
-        kind: 'metadata_generator',
-        outputFieldId: eligibleFields[0]?.id ?? ''
-      });
-    } else if (kind === 'interactive') {
-      onUpdate({
-        id: action.id,
-        name: action.name,
-        prompt: action.prompt,
-        enabled: action.enabled,
-        kind: 'interactive'
-      });
-    }
-  };
-
   return (
     <div className={styles.aiActionRow}>
-      <TextInput
-        value={action.name}
-        onChange={value => onUpdate({ ...action, name: value ?? '' })}
-        placeholder="Action name"
-        style={{ width: '100%' }}
-      />
-      <Select.Root value={action.kind} onChange={handleKindChange} style={{ width: '100%' }}>
-        {AI_ACTION_KIND_OPTIONS.map(option => (
-          <Select.Item key={option.value} value={option.value}>
-            {option.label}
-          </Select.Item>
-        ))}
-      </Select.Root>
-      <TextArea
-        value={action.prompt}
-        onChange={value => onUpdate({ ...action, prompt: value ?? '' })}
-        rows={2}
-        style={{ width: '100%' }}
-      />
-      <div>
-        {action.kind === 'metadata_generator' &&
-          (eligibleFields.length > 0 || action.outputFieldId ? (
-            <Select.Root
-              value={action.outputFieldId}
-              onChange={fieldId => onUpdate({ ...action, outputFieldId: fieldId ?? '' })}
-              style={{ width: '100%' }}
-            >
-              {eligibleFields
-                .concat(
-                  fields.filter(
-                    field => field.id === action.outputFieldId && !eligibleFields.includes(field)
-                  )
-                )
-                .map(field => (
-                  <Select.Item key={field.id} value={field.id}>
-                    {field.name}
-                  </Select.Item>
-                ))}
-            </Select.Root>
-          ) : (
-            <div className="dim" style={{ fontSize: 11 }}>
-              No eligible fields — add a text, long text, boolean, date, number, or enum field
-              first.
-            </div>
-          ))}
-      </div>
-      <Checkbox
-        value={action.enabled}
-        onChange={value => onUpdate({ ...action, enabled: value ?? false })}
-      />
+      <button type="button" className={styles.aiActionName} onClick={onEdit}>
+        {action.name || 'Unnamed action'}
+      </button>
+      <button type="button" className={styles.aiActionKind} onClick={onEdit}>
+        {action.kind === 'interactive' ? 'Interactive' : 'Metadata generator'}
+        {!action.enabled && <span className={styles.aiActionDisabled}>Disabled</span>}
+      </button>
+      <button type="button" className={styles.aiActionEdit} onClick={onEdit}>
+        Edit
+      </button>
       <button type="button" className={styles.iconBtn} onClick={onRemove}>
         <TbTrash size={13} />
       </button>

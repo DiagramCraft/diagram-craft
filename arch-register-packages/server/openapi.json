@@ -33382,6 +33382,363 @@
         }
       }
     },
+    "/{workspace}/documents/{nodeId}/ai-actions/test": {
+      "post": {
+        "operationId": "projects.testDocumentAiAction",
+        "summary": "Test a document type AI action",
+        "description": "Tests a draft document type AI action against an existing document using read-only tools and permissions without persisting any document, metadata, revision, or schedule changes.",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Markdown document identifier"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "documentTypeId": {
+                    "type": "string",
+                    "description": "Document type being edited"
+                  },
+                  "action": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true
+                          },
+                          "kind": {
+                            "const": "interactive"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "prompt",
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true
+                          },
+                          "kind": {
+                            "const": "metadata_generator"
+                          },
+                          "outputFieldId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "prompt",
+                          "kind",
+                          "outputFieldId"
+                        ]
+                      }
+                    ],
+                    "description": "Unsaved AI action draft"
+                  }
+                },
+                "required": [
+                  "documentTypeId",
+                  "action"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "event": {
+                          "const": "message"
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "const": "delta"
+                                },
+                                "delta": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "delta"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "const": "done"
+                                },
+                                "actionId": {
+                                  "type": "string"
+                                },
+                                "actionName": {
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "interactive",
+                                    "metadata_generator"
+                                  ],
+                                  "type": "string"
+                                },
+                                "prompt": {
+                                  "type": "string"
+                                },
+                                "documentTitle": {
+                                  "type": "string"
+                                },
+                                "nodeId": {
+                                  "type": "string"
+                                },
+                                "provider": {
+                                  "type": "string"
+                                },
+                                "model": {
+                                  "type": "string"
+                                },
+                                "durationMs": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "rawOutput": {
+                                  "type": "string"
+                                },
+                                "parsedValue": {
+                                  "anyOf": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "boolean"
+                                        },
+                                        {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "outputFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "status": {
+                                  "enum": [
+                                    "success",
+                                    "invalid_output",
+                                    "failed"
+                                  ],
+                                  "type": "string"
+                                },
+                                "errors": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "toolCalls": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "description": "Read-only tool name"
+                                      },
+                                      "status": {
+                                        "enum": [
+                                          "completed",
+                                          "failed"
+                                        ],
+                                        "type": "string",
+                                        "description": "Tool execution status"
+                                      },
+                                      "error": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Actionable tool error, if any"
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "status",
+                                      "error"
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "actionId",
+                                "actionName",
+                                "kind",
+                                "prompt",
+                                "documentTitle",
+                                "nodeId",
+                                "provider",
+                                "model",
+                                "durationMs",
+                                "rawOutput",
+                                "parsedValue",
+                                "outputFieldId",
+                                "status",
+                                "errors",
+                                "toolCalls"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "event",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "event": {
+                          "const": "done"
+                        },
+                        "data": {},
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "event"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "event": {
+                          "const": "error"
+                        },
+                        "data": {},
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "event"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/documents": {
       "get": {
         "operationId": "projects.listDocuments",
