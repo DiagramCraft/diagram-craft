@@ -8,6 +8,7 @@ import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErro
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import {
   buildApiAuthCtx,
+  buildApiEntityAuthCtx,
   filterVisibleEntities,
   requireWorkspaceCapability
 } from '../auth/authorization';
@@ -43,7 +44,7 @@ export const createDiagramCraftORPCRouter = () => {
 
       getData: diagramCraftRouter.diagramCraft.getData.handler(async ({ input, context }) => {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const authCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.view');
 
         const entities = filterVisibleEntities(

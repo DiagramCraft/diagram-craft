@@ -2,13 +2,16 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import {
   type AuthorizationContext,
-  buildAuthorizationContext,
+  buildEntityAuthorizationContext,
+  buildWorkspaceAuthorizationContext,
   CapabilityEvaluator,
   type EntityAction,
   type Entity as PermissionEntity,
-  fetchAuthorizationContextData,
+  fetchEntityAuthorizationContextData,
+  fetchWorkspaceAuthorizationContextData,
   PermissionChecker,
   ProjectAction,
+  type WorkspaceAuthorizationContext,
   type WorkspaceCapability
 } from '@arch-register/permissions';
 import { ServerDataProvider } from './ServerAuthorizationDataProvider';
@@ -49,7 +52,7 @@ export const requireEntityAction = (
  * and throws an appropriate HTTP error.
  */
 export const requireGlobalPermission = (
-  context: AuthorizationContext,
+  context: WorkspaceAuthorizationContext,
   permission: GlobalPermission,
   message?: string
 ) => {
@@ -67,7 +70,7 @@ export const requireGlobalPermission = (
  * have all workspace capabilities.
  */
 export const requireWorkspaceCapability = (
-  context: AuthorizationContext,
+  context: WorkspaceAuthorizationContext,
   capability: WorkspaceCapability,
   message?: string
 ) => {
@@ -78,7 +81,7 @@ export const requireWorkspaceCapability = (
   });
 };
 
-export const requireSchemaRead = (context: AuthorizationContext, message?: string) => {
+export const requireSchemaRead = (context: WorkspaceAuthorizationContext, message?: string) => {
   requireWorkspaceCapability(
     context,
     'ws.view',
@@ -100,7 +103,7 @@ export const filterVisibleEntities = <T extends PermissionEntity>(
  * 
  * Checks if user has workspace admin role or global admin permission.
  */
-export const requireWorkspaceAdmin = (context: AuthorizationContext, message?: string) => {
+export const requireWorkspaceAdmin = (context: WorkspaceAuthorizationContext, message?: string) => {
   const isWorkspaceAdmin = checker.hasWorkspaceCapability(context, 'people.role');
   const isGlobalAdmin = checker.hasGlobalPermission(context, 'admin_platform');
 
@@ -118,7 +121,7 @@ export const requireWorkspaceAdmin = (context: AuthorizationContext, message?: s
  * and throws an appropriate HTTP error.
  */
 export const requireProjectAction = (
-  context: AuthorizationContext,
+  context: WorkspaceAuthorizationContext,
   ownerTeamId: string | null,
   action: ProjectAction,
   message?: string
@@ -130,16 +133,18 @@ export const requireProjectAction = (
   });
 };
 
-export const canAccessProject = (context: AuthorizationContext, ownerTeamId: string | null) =>
-  checker.hasProjectPermission(context, ownerTeamId, 'edit_project');
+export const canAccessProject = (
+  context: WorkspaceAuthorizationContext,
+  ownerTeamId: string | null
+) => checker.hasProjectPermission(context, ownerTeamId, 'edit_project');
 
 export const canAccessNonProjectContent = (
-  context: AuthorizationContext,
+  context: WorkspaceAuthorizationContext,
   action: 'read' | 'edit'
 ) => checker.hasWorkspaceCapability(context, action === 'read' ? 'content.view' : 'content.edit');
 
 export const requireProjectAccess = (
-  context: AuthorizationContext,
+  context: WorkspaceAuthorizationContext,
   ownerTeamId: string | null,
   message?: string
 ) => {
@@ -157,7 +162,7 @@ export const requireProjectAccess = (
  * and throws an appropriate HTTP error.
  */
 export const requireCanCreateProject = (
-  context: AuthorizationContext,
+  context: WorkspaceAuthorizationContext,
   ownerTeamId: string | null,
   message?: string
 ) => {
@@ -175,7 +180,7 @@ export const requireCanCreateProject = (
  * and throws an appropriate HTTP error.
  */
 export const requireCanCreateTopLevelEntity = (
-  context: AuthorizationContext,
+  context: WorkspaceAuthorizationContext,
   ownerTeamId: string | null,
   message?: string
 ) => {
@@ -188,17 +193,15 @@ export const requireCanCreateTopLevelEntity = (
 };
 
 /**
- * Build authorization context for an authenticated event.
+ * Build workspace-level authorization context for an authenticated event.
  *
- * This fetches all necessary permission data from the database
- * and constructs an AuthorizationContext that can be used with
- * PermissionChecker and CapabilityEvaluator.
+ * Entity schemas, entities, and grants are loaded only by buildApiEntityAuthCtx.
  */
 export const buildApiAuthCtx = async (
   db: DatabaseAdapter,
   workspace: string,
   event: AuthenticatedEvent
-): Promise<AuthorizationContext> => {
+): Promise<WorkspaceAuthorizationContext> => {
   const userId = event.context.user?.id;
   httpAssert.present(userId, {
     status: 401,
@@ -220,10 +223,7 @@ export const buildApiAuthCtx = async (
     });
   }
 
-  const cache = (event.context.authorizationContextCache ??= new Map<
-    string,
-    Promise<AuthorizationContext>
-  >());
+  const cache = (event.context.authorizationContextCache ??= new Map());
   const cached = cache.get(workspace);
   if (cached) return cached;
 
@@ -232,26 +232,69 @@ export const buildApiAuthCtx = async (
 
     if (workspace === GLOBAL_WS) {
       const globalRoles = await dataProvider.getGlobalRoles(userId);
-      return buildAuthorizationContext({
+      return buildWorkspaceAuthorizationContext({
         userId,
         globalRoles,
-        workspaceRole: null,
-        schemas: [],
-        entities: [],
-        grants: []
+        workspaceRole: null
       });
     }
 
-    const contextData = await fetchAuthorizationContextData(dataProvider, workspace, userId);
+    const contextData = await fetchWorkspaceAuthorizationContextData(
+      dataProvider,
+      workspace,
+      userId
+    );
     if (apiToken) {
-      return buildAuthorizationContext({
+      return buildWorkspaceAuthorizationContext({
         ...contextData,
         // API tokens are workspace-scoped and the ceiling limits every
         // permission source, including workspace roles, team roles, and grants.
         workspaceCapabilityCeiling: apiToken.capabilities
       });
     }
-    return buildAuthorizationContext(contextData);
+    return buildWorkspaceAuthorizationContext(contextData);
+  })();
+
+  cache.set(workspace, contextPromise);
+
+  try {
+    return await contextPromise;
+  } catch (error) {
+    if (cache.get(workspace) === contextPromise) cache.delete(workspace);
+    throw error;
+  }
+};
+
+/**
+ * Build a full authorization context for an authenticated event.
+ *
+ * This upgrades the request's workspace context with schemas, entities, and
+ * grants for operations that perform entity-scoped permission checks.
+ */
+export const buildApiEntityAuthCtx = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+): Promise<AuthorizationContext> => {
+  const cache = (event.context.entityAuthorizationContextCache ??= new Map());
+  const cached = cache.get(workspace);
+  if (cached) return cached;
+
+  const contextPromise = (async () => {
+    const workspaceContext = await buildApiAuthCtx(db, workspace, event);
+    if (workspace === GLOBAL_WS) {
+      return buildEntityAuthorizationContext(workspaceContext, {
+        schemas: [],
+        entities: [],
+        grants: []
+      });
+    }
+
+    const entityData = await fetchEntityAuthorizationContextData(
+      new ServerDataProvider(db),
+      workspace
+    );
+    return buildEntityAuthorizationContext(workspaceContext, entityData);
   })();
 
   cache.set(workspace, contextPromise);

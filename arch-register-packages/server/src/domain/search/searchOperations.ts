@@ -1,6 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, canAccessProject } from '../auth/authorization';
+import { buildApiEntityAuthCtx as buildApiAuthCtx, canAccessProject } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { SEARCH_DEFAULTS } from '../../constants';
 import { PermissionChecker } from '@arch-register/permissions';

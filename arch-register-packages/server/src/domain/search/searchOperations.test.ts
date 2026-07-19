@@ -13,6 +13,16 @@ vi.mock('../auth/authorization', () => ({
     entities: new Map(),
     grants: []
   })),
+  buildApiEntityAuthCtx: vi.fn(async () => ({
+    userId: 'user-1',
+    globalPermissions: new Set(['admin_platform']),
+    workspaceRole: null,
+    workspaceRoles: new Map(),
+    teamRolesByTeam: new Map(),
+    schemas: new Map(),
+    entities: new Map(),
+    grants: []
+  })),
   canAccessProject: vi.fn((_: unknown, owner: string | null) => owner !== 'hidden-team')
 }));
 

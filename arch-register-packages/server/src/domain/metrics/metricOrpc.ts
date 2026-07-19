@@ -5,7 +5,10 @@ import { workspaceMetricContract } from '@arch-register/api-types/metricContract
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { buildApiAuthCtx, requireProjectAccess } from '../auth/authorization';
+import {
+  buildApiEntityAuthCtx as buildApiAuthCtx,
+  requireProjectAccess
+} from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import { getBoxMetrics } from './metricOperations';

@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
   buildApiAuthCtx,
+  buildApiEntityAuthCtx,
   requireEntityAction,
   requireWorkspaceCapability
 } from '../auth/authorization';
@@ -36,7 +37,7 @@ export const toApi = (view: SavedViewDbResult): ApiSavedView => ({
 });
 
 const canAccessPinnedEntity = (
-  authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
+  authCtx: Awaited<ReturnType<typeof buildApiEntityAuthCtx>>,
   entityMap: Map<string, Entity>,
   entityId: string
 ) => {
@@ -136,7 +137,7 @@ export const listPinnedEntities = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<PinnedEntity[]> => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
@@ -169,7 +170,7 @@ export const createPinnedEntity = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<PinnedEntity> => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const entity = await db.catalog.getEntity(workspace, entityId);

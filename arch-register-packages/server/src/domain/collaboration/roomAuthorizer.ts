@@ -1,8 +1,8 @@
 import type { IncomingMessage } from 'node:http';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import {
-  buildAuthorizationContext,
-  fetchAuthorizationContextData
+  buildWorkspaceAuthorizationContext,
+  fetchWorkspaceAuthorizationContextData
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { ServerDataProvider } from '../auth/ServerAuthorizationDataProvider';
@@ -39,9 +39,13 @@ const buildContext = async (
   db: DatabaseAdapter,
   workspace: string,
   userId: string
-): Promise<AuthorizationContext> => {
-  const data = await fetchAuthorizationContextData(new ServerDataProvider(db), workspace, userId);
-  return buildAuthorizationContext(data);
+): Promise<WorkspaceAuthorizationContext> => {
+  const data = await fetchWorkspaceAuthorizationContextData(
+    new ServerDataProvider(db),
+    workspace,
+    userId
+  );
+  return buildWorkspaceAuthorizationContext(data);
 };
 
 export const createRoomAuthorizer = (db: DatabaseAdapter): RoomAuthorizer => {

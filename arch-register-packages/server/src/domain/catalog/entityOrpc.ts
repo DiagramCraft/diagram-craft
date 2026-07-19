@@ -3,7 +3,8 @@ import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import {
-  buildApiAuthCtx,
+  buildApiAuthCtx as buildApiWorkspaceAuthCtx,
+  buildApiEntityAuthCtx as buildApiAuthCtx,
   filterVisibleEntities,
   requireEntityAction,
   requireProjectAccess
@@ -105,7 +106,7 @@ const entityHandlers = {
 
   timelineMarkers: entityRouter.entities.timelineMarkers.handler(async ({ input, context }) => {
     const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    await buildApiAuthCtx(context.db, workspace, context.event);
+    await buildApiWorkspaceAuthCtx(context.db, workspace, context.event);
     return await getTimelineMarkers(context.db, workspace);
   }),
 

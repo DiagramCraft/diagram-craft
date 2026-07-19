@@ -44,9 +44,13 @@ export {
 // Export authorization context builder helpers
 export {
   buildAuthorizationContext,
+  buildEntityAuthorizationContext,
   buildWorkspaceAuthorizationContext,
+  fetchEntityAuthorizationContextData,
   fetchAuthorizationContextData,
+  fetchWorkspaceAuthorizationContextData,
   type AuthorizationContextData,
+  type EntityAuthorizationContextData,
   type WorkspaceAuthorizationContextData,
   type PermissionDataProvider
 } from './AuthorizationContextBuilder.js';

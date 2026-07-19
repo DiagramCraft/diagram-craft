@@ -6,6 +6,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { ServerDataProvider } from './ServerAuthorizationDataProvider';
 import {
   buildApiAuthCtx,
+  buildApiEntityAuthCtx,
   filterVisibleEntities,
   GLOBAL_WS,
   requireSchemaRead
@@ -142,9 +143,9 @@ describe('buildApiAuthCtx request cache', () => {
     const second = await buildApiAuthCtx(db, 'ws-1', event);
 
     expect(second).toBe(first);
-    expect(provider.getEntities).toHaveBeenCalledTimes(1);
-    expect(provider.getSchemas).toHaveBeenCalledTimes(1);
-    expect(provider.getEntityGrants).toHaveBeenCalledTimes(1);
+    expect(provider.getEntities).not.toHaveBeenCalled();
+    expect(provider.getSchemas).not.toHaveBeenCalled();
+    expect(provider.getEntityGrants).not.toHaveBeenCalled();
     expect(provider.getTeamAssignments).toHaveBeenCalledTimes(1);
     expect(provider.getGlobalRoles).toHaveBeenCalledTimes(1);
     expect(provider.getTeams).toHaveBeenCalledTimes(1);
@@ -158,16 +159,16 @@ describe('buildApiAuthCtx request cache', () => {
     const entitiesReady = new Promise<void>(resolve => {
       releaseEntities = resolve;
     });
-    provider.getEntities.mockImplementation(async () => {
+    provider.getWorkspaceRole.mockImplementation(async () => {
       await entitiesReady;
-      return [];
+      return null;
     });
     const event = makeEvent();
 
     const firstPromise = buildApiAuthCtx(db, 'ws-1', event);
     const secondPromise = buildApiAuthCtx(db, 'ws-1', event);
 
-    expect(provider.getEntities).toHaveBeenCalledTimes(1);
+    expect(provider.getWorkspaceRole).toHaveBeenCalledTimes(1);
     releaseEntities();
 
     const [first, second] = await Promise.all([firstPromise, secondPromise]);
@@ -185,7 +186,7 @@ describe('buildApiAuthCtx request cache', () => {
 
     expect(secondWorkspace).not.toBe(first);
     expect(secondRequest).not.toBe(first);
-    expect(provider.getEntities).toHaveBeenCalledTimes(3);
+    expect(provider.getEntities).not.toHaveBeenCalled();
   });
 
   it('caches global authorization separately', async () => {
@@ -203,11 +204,72 @@ describe('buildApiAuthCtx request cache', () => {
   it('removes a failed context build from the cache', async () => {
     const provider = mockDataProvider();
     const error = new Error('temporary authorization data failure');
-    provider.getSchemas.mockRejectedValueOnce(error);
+    provider.getWorkspaceRole.mockRejectedValueOnce(error);
     const event = makeEvent();
 
     await expect(buildApiAuthCtx(db, 'ws-1', event)).rejects.toBe(error);
     await expect(buildApiAuthCtx(db, 'ws-1', event)).resolves.toBeDefined();
-    expect(provider.getSchemas).toHaveBeenCalledTimes(2);
+    expect(provider.getWorkspaceRole).toHaveBeenCalledTimes(2);
+  });
+
+  it('loads entity authorization data only for an entity context', async () => {
+    const provider = mockDataProvider();
+    const event = makeEvent();
+
+    const workspaceContext = await buildApiAuthCtx(db, 'ws-1', event);
+    expect(workspaceContext).not.toHaveProperty('entities');
+    expect(provider.getEntities).not.toHaveBeenCalled();
+    expect(provider.getSchemas).not.toHaveBeenCalled();
+    expect(provider.getEntityGrants).not.toHaveBeenCalled();
+
+    const first = await buildApiEntityAuthCtx(db, 'ws-1', event);
+    const second = await buildApiEntityAuthCtx(db, 'ws-1', event);
+
+    expect(first).toBe(second);
+    expect(first.entities).toBeInstanceOf(Map);
+    expect(first.schemas).toBeInstanceOf(Map);
+    expect(provider.getEntities).toHaveBeenCalledTimes(1);
+    expect(provider.getSchemas).toHaveBeenCalledTimes(1);
+    expect(provider.getEntityGrants).toHaveBeenCalledTimes(1);
+    expect(provider.getWorkspaceRole).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares an in-flight entity context build', async () => {
+    const provider = mockDataProvider();
+    let releaseEntities!: () => void;
+    const entitiesReady = new Promise<void>(resolve => {
+      releaseEntities = resolve;
+    });
+    provider.getEntities.mockImplementation(async () => {
+      await entitiesReady;
+      return [];
+    });
+    const event = makeEvent();
+
+    const firstPromise = buildApiEntityAuthCtx(db, 'ws-1', event);
+    const secondPromise = buildApiEntityAuthCtx(db, 'ws-1', event);
+
+    await vi.waitFor(() => expect(provider.getEntities).toHaveBeenCalledTimes(1));
+    releaseEntities();
+
+    const [first, second] = await Promise.all([firstPromise, secondPromise]);
+    expect(second).toBe(first);
+  });
+
+  it('preserves API-token capability ceilings when loading entity data', async () => {
+    const provider = mockDataProvider();
+    const event = makeEvent() as AuthenticatedEvent;
+    event.context.apiToken = {
+      type: 'api_token',
+      id: 'token-1',
+      workspace: 'ws-1',
+      capabilities: ['ws.view'],
+      created_by: 'user-1'
+    };
+
+    const context = await buildApiEntityAuthCtx(db, 'ws-1', event);
+
+    expect(context.workspaceCapabilityCeiling).toEqual(new Set(['ws.view']));
+    expect(provider.getEntities).toHaveBeenCalledTimes(1);
   });
 });
