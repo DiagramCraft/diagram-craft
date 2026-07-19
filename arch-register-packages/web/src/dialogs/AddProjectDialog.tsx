@@ -11,6 +11,7 @@ import { ColorPicker } from '../components/ColorPicker';
 import { useCreateProject } from '../hooks/useProjects';
 import styles from './AddEntityDialog.module.css';
 import { Project } from '@arch-register/api-types/projectContract';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 
 const PROJECT_STATUSES = [
   { value: 'draft', label: 'Draft' },
@@ -43,6 +44,7 @@ export const AddProjectDialog = ({
   const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(nameRef, { enabled: open });
   const creatableTeams = useMemo(
     () => teams.filter(team => canCreateProject(workspaceId, team.id)),
     [canCreateProject, teams, workspaceId]
@@ -57,7 +59,6 @@ export const AddProjectDialog = ({
       setStatus('active');
       setColor(null);
       setError('');
-      setTimeout(() => nameRef.current?.focus(), 0);
     }
   }, [canCreateWithoutOwner, creatableTeams, open]);
 

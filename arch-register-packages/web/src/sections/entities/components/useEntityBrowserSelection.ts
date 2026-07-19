@@ -4,6 +4,7 @@ import { orpcClient } from '../../../lib/orpcClient';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { canClearBulkField, getBulkEditableFields, type BulkEditableField } from './bulkEditFields';
+import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 
 export type BulkFieldRow = {
   rowId: string;
@@ -93,26 +94,19 @@ export const useEntityBrowserSelection = ({
 }: UseEntityBrowserSelectionProps) => {
   const updateEntityMutation = useUpdateEntity(workspaceId);
   const previousFilteredCountRef = useRef(0);
-  const clearSelectionTimerRef = useRef<number | null>(null);
+  const { cancel, schedule } = useCancellableTimeout();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [fieldRows, setFieldRows] = useState<BulkFieldRow[]>([]);
   const [step, setStep] = useState<BulkEditStep>('edit');
   const [result, setResult] = useState<BulkEditResult | null>(null);
 
   const clearSelection = useCallback(() => {
+    cancel();
     setSelectedIds(new Set());
     setFieldRows([]);
     setStep('edit');
     setResult(null);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (clearSelectionTimerRef.current !== null) {
-        window.clearTimeout(clearSelectionTimerRef.current);
-      }
-    };
-  }, []);
+  }, [cancel]);
 
   useEffect(() => {
     if (previousFilteredCountRef.current !== filteredCount) {
@@ -164,6 +158,8 @@ export const useEntityBrowserSelection = ({
   }, []);
 
   const handleConfirm = useCallback(async () => {
+    cancel();
+
     const permSkipped: BulkEditSkip[] = selectedEntities
       .filter(entity => entity.canEdit === false)
       .map(entity => ({ entity, reason: 'No edit permission' }));
@@ -201,10 +197,7 @@ export const useEntityBrowserSelection = ({
     setResult({ applied, skipped });
     setStep('done');
     if (skipped.length === 0) {
-      clearSelectionTimerRef.current = window.setTimeout(() => {
-        clearSelectionTimerRef.current = null;
-        clearSelection();
-      }, 1800);
+      schedule(clearSelection, 1800);
     }
   }, [
     selectedEntities,
@@ -213,7 +206,9 @@ export const useEntityBrowserSelection = ({
     availableFields,
     updateEntityMutation,
     workspaceId,
-    clearSelection
+    clearSelection,
+    cancel,
+    schedule
   ]);
 
   return {

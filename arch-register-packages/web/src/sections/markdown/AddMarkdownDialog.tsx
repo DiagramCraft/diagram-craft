@@ -7,6 +7,7 @@ import { ApiError } from '../../lib/http';
 import styles from '../../dialogs/AddEntityDialog.module.css';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
+import { useAutoFocus } from '../../hooks/useAutoFocus';
 
 type AddMarkdownDialogProps = {
   open: boolean;
@@ -38,6 +39,7 @@ export const AddMarkdownDialog = ({
   const [templateId, setTemplateId] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(nameRef, { enabled: open });
   const { data: documentTypes = [], isLoading: documentTypesLoading } =
     useDocumentTypes(workspaceSlug);
   const { data: workspaceTemplates = [], isLoading: workspaceTemplatesLoading } =
@@ -60,7 +62,6 @@ export const AddMarkdownDialog = ({
       setDocumentTypeId('');
       setTemplateId('');
       setError('');
-      setTimeout(() => nameRef.current?.focus(), 0);
     }
   }, [open]);
 

@@ -4,6 +4,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useEntities } from '../../../hooks/useEntities';
 import { useAddProjectEntity } from '../../../hooks/useProjects';
+import { useAutoFocus } from '../../../hooks/useAutoFocus';
 import { ApiError } from '../../../lib/http';
 import styles from './AddEntityToProjectDialog.module.css';
 
@@ -28,6 +29,7 @@ export const AddEntityToProjectDialog = ({
   const [entityType, setEntityType] = useState('');
   const [error, setError] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(searchRef, { enabled: open, delay: 40 });
 
   const { data: allResults = [] } = useEntities(workspaceId, {
     view: 'summary',
@@ -54,7 +56,6 @@ export const AddEntityToProjectDialog = ({
       setSelectedId('');
       setEntityType('');
       setError('');
-      setTimeout(() => searchRef.current?.focus(), 40);
     }
   }, [open]);
 

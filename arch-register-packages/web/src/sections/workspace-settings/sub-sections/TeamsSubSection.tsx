@@ -25,6 +25,7 @@ import {
   useUpdateTeams
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './TeamsSubSection.module.css';
+import { useAutoFocus } from '../../../hooks/useAutoFocus';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { WorkspaceUserInfo } from '@arch-register/api-types/workspaceContract';
@@ -457,13 +458,13 @@ const TeamDialog = ({
   const [color, setColor] = useState<string | null>(initialColor ?? null);
   const [description, setDescription] = useState(initialDescription ?? '');
   const teamInputRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(teamInputRef, { enabled: open });
 
   useEffect(() => {
     if (!open) return;
     setTeamName(initialTeamName);
     setColor(initialColor ?? null);
     setDescription(initialDescription ?? '');
-    setTimeout(() => teamInputRef.current?.focus(), 0);
   }, [initialTeamName, initialColor, initialDescription, open]);
 
   if (!open) return null;

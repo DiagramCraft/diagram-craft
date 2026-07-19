@@ -18,6 +18,7 @@ import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntityFieldInput } from './EntityFieldInput';
 import { applyEntityTemplate, createEntityFormDefaults } from '../lib/entityTemplates';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 
 type EntityApiResponse = {
   _uid: string;
@@ -65,6 +66,7 @@ export const AddEntityDialog = ({
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(nameRef, { enabled: open });
   const creatableTeams = useMemo(
     () => teams.filter(team => canCreateTopLevelEntity(workspaceId, team.id)),
     [canCreateTopLevelEntity, teams, workspaceId]
@@ -84,7 +86,6 @@ export const AddEntityDialog = ({
       setFields(baseline.fields);
       setMeta(baseline.meta);
       setError('');
-      setTimeout(() => nameRef.current?.focus(), 0);
     }
   }, [canCreateWithoutOwner, creatableTeams, open, preselectedSchemaId, schemas]);
 

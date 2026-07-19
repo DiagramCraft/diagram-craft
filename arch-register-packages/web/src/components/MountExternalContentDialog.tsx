@@ -6,6 +6,7 @@ import type { ExternalContentMount } from '@arch-register/api-types/externalCont
 import { ApiError } from '../lib/http';
 import { useExternalContentOperations } from '../hooks/useExternalContent';
 import styles from '../dialogs/AddEntityDialog.module.css';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 
 type Props = {
   workspaceId: string;
@@ -21,6 +22,7 @@ export const MountExternalContentDialog = ({ workspaceId, open, mount, onClose }
   const [intervalHours, setIntervalHours] = useState('1');
   const [error, setError] = useState('');
   const mountPointRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(mountPointRef, { enabled: open, delay: 30, trigger: mount?.id });
   const operations = useExternalContentOperations(workspaceId);
   const editing = !!mount;
 
@@ -31,7 +33,6 @@ export const MountExternalContentDialog = ({ workspaceId, open, mount, onClose }
     setMountPoint(mount?.destination_path ?? '');
     setIntervalHours(String(mount?.interval_hours ?? 1));
     setError('');
-    setTimeout(() => mountPointRef.current?.focus(), 30);
   }, [open, mount]);
 
   const handleSubmit = async () => {

@@ -7,6 +7,7 @@ import { ApiError } from '../../lib/http';
 import { useContentScopeOperations, type ContentScope } from '../../hooks/useContentScope';
 import { useProjectTemplates, useWorkspaceOnlyTemplates } from '../../hooks/useTemplates';
 import styles from './AddDiagramDialog.module.css';
+import { useAutoFocus } from '../../hooks/useAutoFocus';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
 
 type AddDiagramDialogProps = {
@@ -104,6 +105,7 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(nameRef, { enabled: open, delay: 30 });
 
   // Project context: project + workspace templates
   const { data: projectTemplateData, isLoading: projectTemplatesLoading } = useProjectTemplates(
@@ -142,7 +144,6 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
     setSelected('blank');
     setName('');
     setError('');
-    setTimeout(() => nameRef.current?.focus(), 30);
   }, [open]);
 
   // Keyboard shortcuts
