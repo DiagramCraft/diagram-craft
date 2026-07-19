@@ -5,7 +5,11 @@ import {
   createDocumentMetadataGenerationScanJobHandler,
   scheduleMetadataGenerationForDocument
 } from './documentMetadataGenerationJob';
-import { METADATA_GENERATION_SCAN_JOB_TYPE } from './aiMetadataGenerationConstants';
+import {
+  METADATA_GENERATION_DEBOUNCE_MS,
+  METADATA_GENERATION_SCAN_INTERVAL_MINUTES,
+  METADATA_GENERATION_SCAN_JOB_TYPE
+} from './aiMetadataGenerationConstants';
 
 const { buildApiEntityAuthCtx } = vi.hoisted(() => ({
   buildApiEntityAuthCtx: vi.fn(async () => ({ userId: 'user-1' }))
@@ -23,8 +27,9 @@ const { chat } = vi.hoisted(() => ({
   chat: vi.fn()
 }));
 
-const { createJobSchedule } = vi.hoisted(() => ({
-  createJobSchedule: vi.fn()
+const { createJobSchedule, updateJobSchedule } = vi.hoisted(() => ({
+  createJobSchedule: vi.fn(),
+  updateJobSchedule: vi.fn()
 }));
 
 vi.mock('../auth/authorization', () => ({ buildApiEntityAuthCtx }));
@@ -34,7 +39,7 @@ vi.mock('../ai/tanstackAiAdapter', () => ({
 }));
 vi.mock('../ai/chatTools', () => ({ createAiChatTools }));
 vi.mock('@tanstack/ai', () => ({ chat }));
-vi.mock('../jobs/jobOperations', () => ({ createJobSchedule }));
+vi.mock('../jobs/jobOperations', () => ({ createJobSchedule, updateJobSchedule }));
 
 const chatAnswer = (text: string) =>
   vi.fn(async function* () {
@@ -141,6 +146,7 @@ const scheduleRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
 describe('scheduleMetadataGenerationForDocument', () => {
   beforeEach(() => {
     createJobSchedule.mockClear();
+    updateJobSchedule.mockClear();
   });
 
   it('does nothing when there are no enabled metadata generators', async () => {
@@ -187,7 +193,7 @@ describe('scheduleMetadataGenerationForDocument', () => {
         workspace: 'ws-1',
         node_id: 'node-1',
         action_id: 'gen-1',
-        run_after_at: new Date(now.getTime() + 10 * 60 * 1000),
+        run_after_at: new Date(now.getTime() + METADATA_GENERATION_DEBOUNCE_MS),
         source_revision: 5,
         generator_version: 3,
         scheduled_by_user_id: 'user-1',
@@ -199,14 +205,28 @@ describe('scheduleMetadataGenerationForDocument', () => {
       expect.objectContaining({
         workspace: 'ws-1',
         jobType: METADATA_GENERATION_SCAN_JOB_TYPE,
-        recurrence: { type: 'minutes', intervalMinutes: 5, startsAt: now }
+        recurrence: {
+          type: 'minutes',
+          intervalMinutes: METADATA_GENERATION_SCAN_INTERVAL_MINUTES,
+          startsAt: now
+        }
       }),
       now
     );
   });
 
-  it('skips bootstrapping the scan schedule when one already exists', async () => {
-    const listSchedules = vi.fn(async () => [{ job_type: METADATA_GENERATION_SCAN_JOB_TYPE }]);
+  it('skips bootstrapping the scan schedule when one already exists with the current interval', async () => {
+    const listSchedules = vi.fn(async () => [
+      {
+        id: 'schedule-1',
+        job_type: METADATA_GENERATION_SCAN_JOB_TYPE,
+        recurrence: {
+          type: 'minutes' as const,
+          intervalMinutes: METADATA_GENERATION_SCAN_INTERVAL_MINUTES,
+          startsAt: new Date('2026-01-01T00:00:00Z')
+        }
+      }
+    ]);
     const db = {
       jobs: { listSchedules },
       document: { upsertPendingMetadataGeneration: vi.fn() }
@@ -222,6 +242,49 @@ describe('scheduleMetadataGenerationForDocument', () => {
     });
 
     expect(createJobSchedule).not.toHaveBeenCalled();
+    expect(updateJobSchedule).not.toHaveBeenCalled();
+  });
+
+  it('self-heals a schedule left over from a previous scan interval', async () => {
+    const listSchedules = vi.fn(async () => [
+      {
+        id: 'schedule-1',
+        job_type: METADATA_GENERATION_SCAN_JOB_TYPE,
+        recurrence: {
+          type: 'minutes' as const,
+          intervalMinutes: METADATA_GENERATION_SCAN_INTERVAL_MINUTES + 3,
+          startsAt: new Date('2020-01-01T00:00:00Z')
+        }
+      }
+    ]);
+    const db = {
+      jobs: { listSchedules },
+      document: { upsertPendingMetadataGeneration: vi.fn() }
+    } as unknown as DatabaseAdapter;
+
+    const now = new Date('2026-01-01T00:00:00Z');
+    await scheduleMetadataGenerationForDocument(db, {
+      workspace: 'ws-1',
+      nodeId: 'node-1',
+      documentType,
+      sourceRevision: 5,
+      scheduledByUserId: 'user-1',
+      now
+    });
+
+    expect(createJobSchedule).not.toHaveBeenCalled();
+    expect(updateJobSchedule).toHaveBeenCalledWith(
+      db,
+      'schedule-1',
+      {
+        recurrence: {
+          type: 'minutes',
+          intervalMinutes: METADATA_GENERATION_SCAN_INTERVAL_MINUTES,
+          startsAt: now
+        }
+      },
+      now
+    );
   });
 });
 
@@ -289,6 +352,57 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
       expect.objectContaining({ created_by: '00000000-0000-0000-0000-0000000000a1' })
     );
     expect(upsertPendingMetadataGeneration).not.toHaveBeenCalled();
+  });
+
+  it('ignores reasoning/thinking chunks and only uses the final answer text', async () => {
+    chat.mockImplementation(
+      vi.fn(async function* () {
+        yield {
+          type: 'REASONING_MESSAGE_CONTENT',
+          delta: 'Let me think about this at length before answering... '
+        };
+        yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'Great summary' };
+      })
+    );
+    const upsertDocumentMetadata = vi.fn();
+    const db = {
+      document: {
+        claimDueMetadataGenerations: vi.fn(async () => [scheduleRow()]),
+        getDocumentMetadata: vi.fn(async () => ({
+          workspace: 'ws-1',
+          node_id: 'node-1',
+          document_type_id: 'type-1',
+          values: {},
+          generated_metadata: {},
+          updated_at: new Date()
+        })),
+        getDocumentType: vi.fn(async () => documentType),
+        upsertDocumentMetadata,
+        upsertPendingMetadataGeneration: vi.fn()
+      },
+      project: {
+        getAnyContentNodeById: vi.fn(async () => node),
+        getNextMarkdownRevisionNumber: vi.fn(async () => 6),
+        createMarkdownRevision: vi.fn()
+      },
+      auth: { getUser: vi.fn(async () => user) },
+      core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
+    } as unknown as DatabaseAdapter;
+
+    const handler = createDocumentMetadataGenerationScanJobHandler(db, makeStorage());
+    const result = await handler({ jobId: 'job-1', workspace: 'ws-1', payload: {} });
+
+    expect(result.success).toBe(1);
+    expect(upsertDocumentMetadata).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: { summary: 'Great summary' },
+        generated_metadata: expect.objectContaining({
+          'gen-1': expect.objectContaining({
+            explanation: 'Let me think about this at length before answering...'
+          })
+        })
+      })
+    );
   });
 
   it('discards the result when the document changed while generating', async () => {
@@ -462,5 +576,35 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
       skipped: 1
     });
     expect(chat).not.toHaveBeenCalled();
+  });
+
+  it('counts an unexpected error as a retry when attempts remain, not a permanent failure', async () => {
+    const upsertPendingMetadataGeneration = vi.fn();
+    const db = {
+      document: {
+        claimDueMetadataGenerations: vi.fn(async () => [scheduleRow({ attempt_count: 0 })]),
+        getDocumentMetadata: vi.fn(async () => {
+          throw new Error('database connection lost');
+        }),
+        upsertPendingMetadataGeneration
+      },
+      project: { getAnyContentNodeById: vi.fn(async () => node) },
+      core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
+    } as unknown as DatabaseAdapter;
+
+    const handler = createDocumentMetadataGenerationScanJobHandler(db, makeStorage());
+    const result = await handler({ jobId: 'job-1', workspace: 'ws-1', payload: {} });
+
+    expect(result).toEqual({
+      processed: 1,
+      success: 0,
+      failed: 0,
+      retrying: 1,
+      discarded: 0,
+      skipped: 0
+    });
+    expect(upsertPendingMetadataGeneration).toHaveBeenCalledWith(
+      expect.objectContaining({ attempt_count: 1 })
+    );
   });
 });

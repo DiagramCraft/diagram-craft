@@ -32,6 +32,13 @@ Email notification delivery uses Resend when `RESEND_API_KEY`, `NOTIFICATION_EMA
 `PUBLIC_APP_URL` are configured. Set `NOTIFICATION_EMAIL_RECIPIENT_DOMAIN_OVERRIDE` to a test
 domain to rewrite all recipients while preserving their local parts; the sender is not changed.
 
+AI metadata generation decrypts each workspace's stored AI provider credentials itself, so the job
+server process needs the *same* `AI_ENCRYPTION_KEY` (and `AI_ENCRYPTION_SALT`, if the deployment set
+a non-default one) as the main server — these are not read from the main server's `.env`
+automatically since each process loads its own. Without a matching key, generation runs fail with
+`AI_ENCRYPTION_KEY is required to read workspace AI credentials` (or a decryption error if the keys
+don't match) and retry once before recording a permanent failure.
+
 `JOB_SERVER_ID` is the stable server identity and must be unique among active job servers. It
 defaults to the host name, so deployments that run multiple job servers on one host must configure
 it explicitly.

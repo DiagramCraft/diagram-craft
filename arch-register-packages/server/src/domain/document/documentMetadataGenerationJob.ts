@@ -1,8 +1,9 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import { createLogger } from '../../utils/logger';
 import { buildApiEntityAuthCtx } from '../auth/authorization';
-import { createJobSchedule } from '../jobs/jobOperations';
+import { createJobSchedule, updateJobSchedule } from '../jobs/jobOperations';
 import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';
 import { createAiChatTools } from '../ai/chatTools';
 import { buildDocumentActionPrompt } from '../ai/documentContextPromptBuilder';
@@ -29,6 +30,8 @@ import {
   METADATA_GENERATION_SCAN_SYSTEM_IDENTITY
 } from './aiMetadataGenerationConstants';
 
+const logger = createLogger('ai-metadata-generation');
+
 const readBody = (content: Buffer): string => {
   const raw = content.toString('utf8');
   try {
@@ -48,7 +51,31 @@ const ensureMetadataGenerationScanScheduleExists = async (
   now: Date
 ) => {
   const schedules = await db.jobs.listSchedules(workspace);
-  if (schedules.some(schedule => schedule.job_type === METADATA_GENERATION_SCAN_JOB_TYPE)) return;
+  const existing = schedules.find(
+    schedule => schedule.job_type === METADATA_GENERATION_SCAN_JOB_TYPE
+  );
+  if (existing) {
+    // Self-heal a schedule created under a previous interval constant so operators can tune the
+    // scan cadence without needing a data migration.
+    if (
+      existing.recurrence.type !== 'minutes' ||
+      existing.recurrence.intervalMinutes !== METADATA_GENERATION_SCAN_INTERVAL_MINUTES
+    ) {
+      await updateJobSchedule(
+        db,
+        existing.id,
+        {
+          recurrence: {
+            type: 'minutes',
+            intervalMinutes: METADATA_GENERATION_SCAN_INTERVAL_MINUTES,
+            startsAt: now
+          }
+        },
+        now
+      );
+    }
+    return;
+  }
   await createJobSchedule(
     db,
     {
@@ -94,6 +121,10 @@ export const scheduleMetadataGenerationForDocument = async (
 
   const runAfterAt = new Date(params.now.getTime() + METADATA_GENERATION_DEBOUNCE_MS);
   for (const action of generatorActions) {
+    logger.info(
+      `Scheduled metadata generation for node ${params.nodeId}, action ${action.id}, to run at ${runAfterAt.toISOString()}`,
+      { workspace: params.workspace, sourceRevision: params.sourceRevision }
+    );
     await db.document.upsertPendingMetadataGeneration({
       workspace: params.workspace,
       node_id: params.nodeId,
@@ -143,6 +174,15 @@ const parseGeneratedValue = (field: DocumentField, rawAnswer: string): ParsedVal
   }
 };
 
+const MAX_EXPLANATION_LENGTH = 4000;
+
+const truncateExplanation = (explanation: string | null): string | null => {
+  if (!explanation) return null;
+  return explanation.length > MAX_EXPLANATION_LENGTH
+    ? `${explanation.slice(0, MAX_EXPLANATION_LENGTH)}…`
+    : explanation;
+};
+
 const writeGenerationOutcome = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -153,6 +193,7 @@ const writeGenerationOutcome = async (
         actionId: string;
         fieldId: string;
         value: DocumentMetadata[string];
+        explanation: string | null;
         sourceRevision: number;
         generatorVersion: number;
         documentTypeId: string | null;
@@ -165,6 +206,7 @@ const writeGenerationOutcome = async (
         actionId: string;
         fieldId: string;
         failureNotice: string;
+        explanation: string | null;
         sourceRevision: number;
         generatorVersion: number;
         now: Date;
@@ -180,7 +222,7 @@ const writeGenerationOutcome = async (
             actionId: outcome.actionId,
             fieldId: outcome.fieldId,
             status: 'success',
-            explanation: null,
+            explanation: truncateExplanation(outcome.explanation),
             findings: [],
             failureNotice: null,
             generatedAt: outcome.now.toISOString(),
@@ -191,7 +233,7 @@ const writeGenerationOutcome = async (
             actionId: outcome.actionId,
             fieldId: outcome.fieldId,
             status: 'failed',
-            explanation: null,
+            explanation: truncateExplanation(outcome.explanation),
             findings: [],
             failureNotice: outcome.failureNotice,
             generatedAt: outcome.now.toISOString(),
@@ -243,7 +285,8 @@ const scheduleRetryOrFail = async (
   db: DatabaseAdapter,
   row: DocumentMetadataGenerationScheduleDbResult,
   now: Date,
-  failureNotice: string
+  failureNotice: string,
+  explanation: string | null = null
 ): Promise<'retrying' | 'failed'> => {
   if (row.attempt_count + 1 < METADATA_GENERATION_MAX_ATTEMPTS) {
     await db.document.upsertPendingMetadataGeneration({
@@ -264,6 +307,7 @@ const scheduleRetryOrFail = async (
     actionId: row.action_id,
     fieldId: row.action_id,
     failureNotice,
+    explanation,
     sourceRevision: row.source_revision,
     generatorVersion: row.generator_version,
     now
@@ -279,25 +323,40 @@ const processGenerationRow = async (
   row: DocumentMetadataGenerationScheduleDbResult,
   now: Date
 ): Promise<ProcessOutcome> => {
+  const skip = (reason: string) => {
+    logger.info(`Skipping node ${row.node_id}, action ${row.action_id}: ${reason}`, {
+      workspace: row.workspace
+    });
+    return 'skipped' as const;
+  };
+
   const node = await db.project.getAnyContentNodeById(row.workspace, row.node_id);
-  if (!node) return 'skipped';
+  if (!node) return skip('document no longer exists');
 
   const metadataRow = await db.document.getDocumentMetadata(row.workspace, node.id);
   const documentType = metadataRow?.document_type_id
     ? await db.document.getDocumentType(row.workspace, metadataRow.document_type_id)
     : null;
-  const action = documentType?.aiActions.find(
+  if (!documentType) return skip('document no longer has a document type');
+  const action = documentType.aiActions.find(
     candidate =>
       candidate.id === row.action_id && candidate.enabled && candidate.kind === 'metadata_generator'
   );
-  if (action?.kind !== 'metadata_generator' || !documentType) return 'skipped';
+  if (action?.kind !== 'metadata_generator')
+    return skip('generator action is missing, disabled, or no longer a metadata generator');
 
   const outputField = documentType.fields.find(
     field => field.id === action.outputFieldId && !field.retired
   );
-  if (!outputField) return 'skipped';
+  if (!outputField) return skip(`target field '${action.outputFieldId}' is missing or retired`);
 
-  const fail = (message: string) => scheduleRetryOrFail(db, row, now, message);
+  const fail = (message: string, explanation: string | null = null) => {
+    logger.warn(
+      `Generation failed for node ${row.node_id}, action ${row.action_id}: ${message}`,
+      { workspace: row.workspace, attempt: row.attempt_count + 1 }
+    );
+    return scheduleRetryOrFail(db, row, now, message, explanation);
+  };
 
   const aiConfig = await resolveAiConfig(db, row.workspace);
   if (!aiConfig) return (await fail('AI is not configured for this workspace')) as ProcessOutcome;
@@ -332,7 +391,14 @@ const processGenerationRow = async (
     }
   } as unknown as AuthenticatedEvent;
 
+  logger.info(
+    `Running generator ${action.id} for node ${node.id} (field '${outputField.id}') using ${aiConfig.provider}/${aiConfig.model}`,
+    { workspace: row.workspace, attempt: row.attempt_count + 1 }
+  );
+
   let rawAnswer: string;
+  let explanation: string | null;
+  const startedAt = Date.now();
   try {
     const authCtx = await buildApiEntityAuthCtx(db, row.workspace, fakeEvent);
     const adapter = createAiTextAdapter(aiConfig);
@@ -351,16 +417,25 @@ const processGenerationRow = async (
       stream: true
     });
     const capturedContent: string[] = [];
+    const capturedReasoning: string[] = [];
+    // Keep the model's reasoning/thinking trace separate from its final answer — the generator's
+    // output must be strictly parseable as the target field's value, so mixing reasoning into it
+    // (as the interactive AI action intentionally does for display) would make that impossible.
+    // The reasoning is still useful context, so it's kept and stored as the result's explanation.
     // biome-ignore lint/suspicious/noExplicitAny: Stream chunk type varies by AI provider implementation
     for await (const chunk of stream as AsyncIterable<any>) {
-      if (
-        (chunk.type === 'TEXT_MESSAGE_CONTENT' || chunk.type === 'REASONING_MESSAGE_CONTENT') &&
-        chunk.delta
-      ) {
+      if (chunk.type === 'TEXT_MESSAGE_CONTENT' && chunk.delta) {
         capturedContent.push(chunk.delta);
+      } else if (chunk.type === 'REASONING_MESSAGE_CONTENT' && chunk.delta) {
+        capturedReasoning.push(chunk.delta);
       }
     }
     rawAnswer = capturedContent.join('');
+    explanation = capturedReasoning.join('').trim() || null;
+    logger.info(
+      `Generator ${action.id} for node ${node.id} answered in ${Date.now() - startedAt}ms: ${JSON.stringify(rawAnswer.slice(0, 200))}`,
+      { workspace: row.workspace }
+    );
   } catch (error) {
     return (await fail(
       `AI request failed: ${error instanceof Error ? error.message : String(error)}`
@@ -372,10 +447,17 @@ const processGenerationRow = async (
   // debounce window, so there is nothing further to schedule here.
   const currentRevisionNumber =
     (await db.project.getNextMarkdownRevisionNumber(row.workspace, node.id)) - 1;
-  if (currentRevisionNumber !== row.source_revision) return 'discarded';
+  if (currentRevisionNumber !== row.source_revision) {
+    logger.info(
+      `Discarding result for node ${node.id}, action ${action.id}: document changed during generation ` +
+        `(source revision ${row.source_revision}, current revision ${currentRevisionNumber})`,
+      { workspace: row.workspace }
+    );
+    return 'discarded';
+  }
 
   const parsed = parseGeneratedValue(outputField, rawAnswer);
-  if (!parsed.ok) return (await fail(parsed.error)) as ProcessOutcome;
+  if (!parsed.ok) return (await fail(parsed.error, explanation)) as ProcessOutcome;
 
   const validation = validateDocumentMetadata(
     [outputField],
@@ -384,13 +466,14 @@ const processGenerationRow = async (
     false
   );
   if (validation.errors.length > 0)
-    return (await fail(validation.errors.join('; '))) as ProcessOutcome;
+    return (await fail(validation.errors.join('; '), explanation)) as ProcessOutcome;
 
   await writeGenerationOutcome(db, row.workspace, node.id, {
     status: 'success',
     actionId: action.id,
     fieldId: outputField.id,
     value: parsed.value,
+    explanation,
     sourceRevision: row.source_revision,
     generatorVersion: documentType.version ?? 1,
     documentTypeId: documentType.id,
@@ -398,6 +481,10 @@ const processGenerationRow = async (
     body,
     now
   });
+  logger.info(
+    `Wrote generated value for node ${node.id}, field '${outputField.id}': ${JSON.stringify(parsed.value)}`,
+    { workspace: row.workspace }
+  );
   return 'success';
 };
 
@@ -411,6 +498,9 @@ export const createDocumentMetadataGenerationScanJobHandler =
   }) => {
     const now = new Date();
     const claimed = await db.document.claimDueMetadataGenerations(context.workspace, now);
+    logger.debug(
+      `Scan tick for workspace ${context.workspace}: ${claimed.length} generation(s) due`
+    );
 
     const summary = {
       processed: claimed.length,
@@ -425,14 +515,17 @@ export const createDocumentMetadataGenerationScanJobHandler =
         const outcome = await processGenerationRow(db, storage, row, now);
         summary[outcome] += 1;
       } catch (error) {
-        await scheduleRetryOrFail(
-          db,
-          row,
-          now,
-          error instanceof Error ? error.message : String(error)
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error(
+          `Unexpected error generating node ${row.node_id}, action ${row.action_id}: ${message}`,
+          error instanceof Error ? error : undefined
         );
-        summary.failed += 1;
+        const outcome = await scheduleRetryOrFail(db, row, now, message);
+        summary[outcome] += 1;
       }
+    }
+    if (claimed.length > 0) {
+      logger.info(`Scan tick for workspace ${context.workspace} finished`, summary);
     }
     return summary;
   };
