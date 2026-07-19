@@ -62,6 +62,48 @@ const makeEvent = (): GovernanceEventDbResult => ({
 });
 
 describe('governance notification delivery', () => {
+  it('notifies the case initiator (proposer) when changes are requested', async () => {
+    const changesRequestedEvent = {
+      ...makeEvent(),
+      event_type: 'changes_requested' as const,
+      actor_user_id: 'approver-1',
+      reason: 'Please fix the description'
+    };
+    const createNotification = vi.fn(async input => input);
+    const db = {
+      governance: {
+        getCase: vi.fn(async () => makeCase()),
+        listEvents: vi.fn(async () => [changesRequestedEvent]),
+        listAssignmentsForCase: vi.fn(async () => [makeAssignment()])
+      },
+      auth: {
+        getUser: vi.fn(async (id: string) => ({
+          id,
+          display_name: id === 'initiator-1' ? 'Initiator' : 'Approver',
+          is_active: true
+        }))
+      },
+      notification: { createNotification },
+      notificationPreference: { listOverrides: vi.fn(async () => []) }
+    } as unknown as DatabaseAdapter;
+
+    const result = await createGovernanceNotificationJobHandler(db)({
+      workspace: 'workspace-1',
+      payload: { caseId: 'case-1', eventId: 'event-1', eventType: 'changes_requested' }
+    });
+
+    // The proposer (case initiator) must be notified, not just the other assignees.
+    expect(result).toEqual({ recipients: 2 });
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'initiator-1',
+        category: 'information',
+        case_id: 'case-1',
+        actor_display_name: 'Approver'
+      })
+    );
+  });
+
   it('creates an actionable notification for a directly assigned user', async () => {
     const createNotification = vi.fn(async input => input);
     const db = {

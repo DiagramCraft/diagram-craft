@@ -34,6 +34,9 @@ The normal flow is:
 
 The created record opens in the detail screen.
 
+Workspaces can also configure entity templates. Creating from a template pre-fills the record so recurring entity
+structures stay consistent.
+
 ## Edit An Entity
 
 The detail screen is where you edit:
@@ -55,6 +58,15 @@ The detail screen is where you edit:
 The entity detail screen also exposes related content and history rather than forcing those concerns back into the
 browser.
 
+If the entity's schema requires approval for changes, saving submits a change proposal for review instead of updating
+the record directly. See [Governance and Approvals](governance).
+
+## Bulk Edit
+
+In the table view of the entity browser, select multiple rows to open the bulk edit toolbar. Bulk edit updates
+supported fields across the whole selection in one operation — useful for reassigning owners or correcting a
+classification field across many records.
+
 ## Relationships
 
 Entities can relate to each other in two main ways:
@@ -73,8 +85,17 @@ Each entity can also carry content in its own scope:
 - diagrams
 - uploaded files
 
-Entity detail also exposes relationship views, change history, and timeline-oriented views. Those advanced screens
-are documented separately so this page stays focused on the common flow.
+Entity detail also exposes several context and planning tabs:
+
+- **Topology** for the entity's relationships and dependencies in a topology layout
+- **Graph** for exploring the relationship graph outward from the entity
+- **Dependents** and **Related content** for records and material connected to the entity
+- **Changes** for entity change history
+- **Timeline** for historical and planned change over time
+- **Discussions** for threads attached to the record
+
+Use the watch button on the detail screen to follow the entity and receive
+[notifications](collaboration-notifications) when it changes.
 
 When an entity is in scope for an open project assessment, its detail screen also shows an **Assessments** tab. Use
 that tab to fill in the entity's assessment fields without opening the full project assessment grid.
@@ -82,6 +103,8 @@ that tab to fill in the entity's assessment fields without opening the full proj
 ## Related Pages
 
 - [Entity Views](entity-views)
+- [Governance and Approvals](governance)
+- [Collaboration and Notifications](collaboration-notifications)
 - [Assessments](assessments)
 - [Content](content)
 - [Entity Screen Reference](../reference/entity-screen-reference)

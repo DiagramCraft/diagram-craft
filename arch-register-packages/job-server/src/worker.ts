@@ -1,9 +1,5 @@
 import { createLogger } from '@arch-register/server/utils/logger';
-import type {
-  DatabaseAdapter,
-  JobRunClaim,
-  JobRunDbResult
-} from '@arch-register/server/db/database';
+import type { DatabaseAdapter, JobRunClaim } from '@arch-register/server/db/database';
 import { RetryableJobError, retryDelayMs } from '@arch-register/server/domain/jobs/jobRetry';
 
 export type JobExecutionContext = {
@@ -13,6 +9,9 @@ export type JobExecutionContext = {
   jobType: string;
   systemIdentity: string;
   payload: Record<string, unknown>;
+  // Aborted when the run's lease is lost; handlers should stop side effects as
+  // another worker may already be executing the same run.
+  signal: AbortSignal;
 };
 
 export type JobExecutionResult = Record<string, unknown> | null | void;
@@ -35,6 +34,8 @@ export type JobServerOptions = {
 
 const logger = createLogger('job-server');
 
+const MAX_POLL_BACKOFF_MS = 60_000;
+
 const formatError = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 const executeClaim = async (
@@ -50,9 +51,10 @@ const executeClaim = async (
   logger.info(
     `Picked up job ${claim.run.id} (${claim.run.job_type}) for workspace ${claim.run.workspace}`
   );
+  const abortController = new AbortController();
   let heartbeatInFlight = false;
   const heartbeat = setInterval(() => {
-    if (heartbeatInFlight) return;
+    if (heartbeatInFlight || abortController.signal.aborted) return;
     heartbeatInFlight = true;
     void db.jobs
       .heartbeatRun(
@@ -63,7 +65,10 @@ const executeClaim = async (
         new Date(now().getTime() + leaseDurationMs)
       )
       .then(healthy => {
-        if (!healthy) logger.warn(`Lease heartbeat rejected for job ${claim.run.id}`);
+        if (!healthy && !abortController.signal.aborted) {
+          logger.warn(`Lease heartbeat rejected for job ${claim.run.id}; aborting execution`);
+          abortController.abort(new Error(`Lease lost for job ${claim.run.id}`));
+        }
       })
       .catch(error => logger.error(`Lease heartbeat failed for job ${claim.run.id}`, error))
       .finally(() => {
@@ -79,7 +84,8 @@ const executeClaim = async (
       workspace: claim.run.workspace,
       jobType: claim.run.job_type,
       systemIdentity: claim.run.system_identity,
-      payload: claim.run.payload
+      payload: claim.run.payload,
+      signal: abortController.signal
     });
     const completed = await db.jobs.completeRun({
       runId: claim.run.id,
@@ -94,6 +100,10 @@ const executeClaim = async (
       logger.info(`Completed job ${claim.run.id} (${claim.run.job_type})`);
     }
   } catch (error) {
+    if (abortController.signal.aborted) {
+      logger.warn(`Job ${claim.run.id} (${claim.run.job_type}) stopped after losing its lease`);
+      return;
+    }
     const failure = error instanceof Error ? error : new Error(String(error));
     logger.error(`Job ${claim.run.id} (${claim.run.job_type}) failed`, failure);
     if (failure instanceof RetryableJobError && claim.run.attempt_count < claim.run.max_attempts) {
@@ -160,26 +170,48 @@ export const createJobServer = (options: JobServerOptions) => {
         options.heartbeatIntervalMs,
         options.leaseDurationMs,
         now
-      ).finally(() => {
-        running.delete(execution);
-      });
+      )
+        .catch(error =>
+          logger.error(
+            `Job execution for ${claim.run.id} failed unexpectedly`,
+            error instanceof Error ? error : new Error(String(error))
+          )
+        )
+        .finally(() => {
+          running.delete(execution);
+        });
       running.add(execution);
     }
   };
 
   const runLoop = async () => {
+    let consecutiveFailures = 0;
     while (active) {
-      const timestamp = now();
-      const recovered = await options.db.jobs.recoverExpiredRuns(timestamp);
-      if (recovered > 0) {
-        logger.warn(`Recovered ${recovered} expired job lease(s)`);
+      try {
+        const timestamp = now();
+        const recovered = await options.db.jobs.recoverExpiredRuns(timestamp);
+        if (recovered > 0) {
+          logger.warn(`Recovered ${recovered} expired job lease(s)`);
+        }
+        const materialized = await options.db.jobs.materializeDueSchedules(timestamp);
+        if (materialized > 0) {
+          logger.info(`Materialized ${materialized} due job run(s)`);
+        }
+        await launchAvailable();
+        consecutiveFailures = 0;
+      } catch (error) {
+        consecutiveFailures++;
+        logger.error(
+          `Job polling iteration failed (${consecutiveFailures} consecutive failure(s))`,
+          error instanceof Error ? error : new Error(String(error))
+        );
       }
-      const materialized = await options.db.jobs.materializeDueSchedules(timestamp);
-      if (materialized > 0) {
-        logger.info(`Materialized ${materialized} due job run(s)`);
-      }
-      await launchAvailable();
-      if (active) await new Promise(resolve => setTimeout(resolve, options.pollIntervalMs));
+      if (!active) break;
+      const delayMs =
+        consecutiveFailures === 0
+          ? options.pollIntervalMs
+          : Math.min(options.pollIntervalMs * 2 ** consecutiveFailures, MAX_POLL_BACKOFF_MS);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   };
 
@@ -235,12 +267,3 @@ export const createJobServer = (options: JobServerOptions) => {
     activeRuns: () => running.size
   };
 };
-
-export const jobRunToExecutionContext = (run: JobRunDbResult): JobExecutionContext => ({
-  jobId: run.id,
-  scheduleId: run.schedule_id,
-  workspace: run.workspace,
-  jobType: run.job_type,
-  systemIdentity: run.system_identity,
-  payload: run.payload
-});
