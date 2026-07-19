@@ -10,11 +10,12 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { TimelineScaffold } from '../../components/timeline/TimelineScaffold';
 import {
-  buildTimelineRange,
+  SnapshotTimelineShell,
+  useSnapshotTimeline
+} from '../../components/timeline/SnapshotTimeline';
+import {
   formatTimelineDate,
-  getTodayTimelinePx,
   stringDateToTimelinePx,
   type TimelineColumnWidths,
   type TimelineZoom
@@ -127,33 +128,22 @@ export const ProjectTimelineTab = ({
     [projectEntities]
   );
 
-  const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
+  const timelineDates = useMemo(() => {
     const dates: Date[] = [];
     for (const s of datedSnapshots) {
       const effectiveDate = getSnapshotEffectiveDate(s, milestonesById);
       if (effectiveDate) dates.push(new Date(`${effectiveDate}T00:00:00`));
     }
-    return buildTimelineRange({
-      dates,
-      zoom,
-      columnWidths: COL_W,
-      today: TODAY
-    });
-  }, [datedSnapshots, milestonesById, zoom, TODAY]);
+    return dates;
+  }, [datedSnapshots, milestonesById]);
 
-  const todayPx = useMemo(
-    () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
-    [TODAY, rangeStart, rangeEnd, totalWidth]
-  );
-
-  const milestoneMarkers = useMemo(() => {
-    return [...milestonesById.values()]
-      .map(milestone => ({
-        milestone,
-        px: stringDateToTimelinePx(milestone.target_date, rangeStart, rangeEnd, totalWidth)
-      }))
-      .filter((m): m is { milestone: Milestone; px: number } => m.px !== null);
-  }, [milestonesById, rangeStart, rangeEnd, totalWidth]);
+  const timeline = useSnapshotTimeline({
+    dates: timelineDates,
+    zoom,
+    columnWidths: COL_W,
+    milestones: milestonesById,
+    today: TODAY
+  });
 
   const handleSelect = (snap: EntitySnapshot | null) => {
     setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));
@@ -177,10 +167,15 @@ export const ProjectTimelineTab = ({
           {schema && <TypeBadge color={schema.color} icon={schema.icon} size={14} />}
           <span className={styles.ptlName}>{entity.entity_name}</span>
         </div>
-        <div className={styles.ptlTrack} style={{ width: totalWidth }}>
+        <div className={styles.ptlTrack} style={{ width: timeline.totalWidth }}>
           {datedEntitySnaps.map(snap => {
             const effectiveDate = getSnapshotEffectiveDate(snap, milestonesById);
-            const px = stringDateToTimelinePx(effectiveDate, rangeStart, rangeEnd, totalWidth);
+            const px = stringDateToTimelinePx(
+              effectiveDate,
+              timeline.rangeStart,
+              timeline.rangeEnd,
+              timeline.totalWidth
+            );
             if (px === null) return null;
             const isSelected = selectedSnap?.id === snap.id;
             const snapColor = snap.status === 'applied' ? 'var(--green)' : markerColor;
@@ -277,66 +272,39 @@ export const ProjectTimelineTab = ({
       </div>
 
       <div className={styles.ptlBody}>
-        <TimelineScaffold
+        <SnapshotTimelineShell
+          context={timeline}
           scrollClassName={styles.ptlScroll}
           innerClassName={styles.ptlInner}
           labelWidth={LABEL_W}
-          totalWidth={totalWidth}
-          todayPx={todayPx}
+          classes={{
+            head: styles.ptlHead,
+            corner: styles.ptlCorner,
+            cornerLabel: styles.ptlCornerLabel,
+            columns: styles.ptlCols,
+            column: styles.ptlCol,
+            currentColumn: styles.ptlColNow,
+            today: styles.ptlToday,
+            todayPip: styles.ptlTodayPip,
+            milestoneLine: styles.ptlMilestoneLine,
+            milestoneLabel: styles.ptlMilestoneLabel
+          }}
+          cornerLabel={`${totalEntities} entities`}
+          showHeader={datedSnapshots.length > 0}
+          showToday={datedSnapshots.length > 0}
+          showMilestones={datedSnapshots.length > 0}
+          milestoneAriaLabel={milestone =>
+            `Milestone: ${milestone.name} (${milestone.target_date})`
+          }
           todayScrollAlign={0.4}
-          header={
-            datedSnapshots.length > 0 ? (
-              <div className={styles.ptlHead}>
-                <div className={styles.ptlCorner}>
-                  <span className={styles.ptlCornerLabel}>{totalEntities} entities</span>
-                </div>
-                <div className={styles.ptlCols} style={{ width: totalWidth }}>
-                  {columns.map((col, i) => (
-                    <div
-                      key={i}
-                      className={`${styles.ptlCol} ${col.isCurrent ? styles.ptlColNow : ''}`}
-                      style={{ width: col.width }}
-                    >
-                      {col.label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null
-          }
-          todayLine={
-            todayPx === null || datedSnapshots.length === 0 ? null : (
-              <div className={styles.ptlToday} style={{ left: LABEL_W + todayPx }}>
-                <span className={styles.ptlTodayPip}>▾</span>
-              </div>
-            )
-          }
-          overlayLines={
-            datedSnapshots.length === 0
-              ? null
-              : milestoneMarkers.map(({ milestone, px }) => (
-                  <div
-                    key={milestone.id}
-                    role="img"
-                    className={styles.ptlMilestoneLine}
-                    style={{ left: LABEL_W + px }}
-                    title={`${milestone.name} (${milestone.target_date})`}
-                    aria-label={`Milestone: ${milestone.name} (${milestone.target_date})`}
-                  >
-                    <span
-                      className={styles.ptlMilestoneLabel}
-                      title={`${milestone.name} (${milestone.target_date})`}
-                    >
-                      {milestone.name}
-                    </span>
-                  </div>
-                ))
-          }
         >
-          {datedSnapshots.length > 0 && (
+          {timeline.milestoneMarkers.length > 0 && datedSnapshots.length > 0 && (
             <div className={styles.ptlMilestoneLane}>
               <div className={styles.ptlMilestoneLaneCorner}>Milestones</div>
-              <div className={styles.ptlMilestoneLaneTrack} style={{ width: totalWidth }} />
+              <div
+                className={styles.ptlMilestoneLaneTrack}
+                style={{ width: timeline.totalWidth }}
+              />
             </div>
           )}
 
@@ -381,7 +349,7 @@ export const ProjectTimelineTab = ({
               })}
             </div>
           )}
-        </TimelineScaffold>
+        </SnapshotTimelineShell>
 
         {/* Detail panel */}
         {selectedSnap &&
