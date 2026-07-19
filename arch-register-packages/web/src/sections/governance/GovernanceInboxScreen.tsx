@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { TbClipboardCheck, TbClock, TbExternalLink } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Title } from '../../components/Title';
 import {
+  governanceKeys,
   useDecideGovernanceAssignment,
   useGovernanceSubmissions,
   useGovernanceTasks,
@@ -83,8 +87,11 @@ export const GovernanceInboxScreen = () => {
     },
     !!workspace && scope === 'submitted'
   );
+  const queryClient = useQueryClient();
   const decide = useDecideGovernanceAssignment(workspace);
   const withdrawCase = useWithdrawGovernanceCase(workspace);
+  const [requestChangesTask, setRequestChangesTask] = useState<GovernanceTask | null>(null);
+  const [requestChangesReason, setRequestChangesReason] = useState('');
   const isLoading = scope === 'assigned' ? tasksLoading : submissionsLoading;
   const error = scope === 'assigned' ? tasksError : submissionsError;
   const entityIds = [
@@ -132,6 +139,29 @@ export const GovernanceInboxScreen = () => {
   );
   const withdrawEntityChangeProposal = useWithdrawEntityChangeProposal(workspace);
 
+  const requestChangesCaseIds = [
+    ...new Set(
+      submissions
+        .filter(submission => submission.case.outcome === 'request_changes')
+        .map(submission => submission.case.id)
+    )
+  ];
+  const caseEventsQueries = useQueries({
+    queries: requestChangesCaseIds.map(caseId => ({
+      queryKey: [...governanceKeys.all, 'events', workspace, caseId],
+      queryFn: () => orpcClient.governance.cases.events({ params: { workspace, id: caseId } }),
+      enabled: !!workspace
+    }))
+  });
+  const requestChangesReasonByCaseId = new Map(
+    requestChangesCaseIds.map((caseId, index) => [
+      caseId,
+      [...(caseEventsQueries[index]?.data ?? [])]
+        .reverse()
+        .find(caseEvent => caseEvent.eventType === 'changes_requested')?.reason
+    ])
+  );
+
   const withdrawSubmission = (submission: GovernanceSubmission) => {
     if (submission.case.caseKind === 'entity.change' && submission.case.subjectType === 'entity') {
       const proposal = proposalsByEntityId.get(submission.case.subjectId);
@@ -144,6 +174,27 @@ export const GovernanceInboxScreen = () => {
       return;
     }
     withdrawCase.mutate({ caseId: submission.case.id });
+  };
+
+  const submitRequestChanges = () => {
+    if (!requestChangesTask) return;
+    const reason = requestChangesReason.trim();
+    if (reason === '') return;
+    decide.mutate(
+      { assignmentId: requestChangesTask.assignment.id, decision: 'request_changes', reason },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({
+            queryKey: entityChangeKeys.current(workspace, requestChangesTask.case.subjectId)
+          });
+          await queryClient.invalidateQueries({
+            queryKey: entityKeys.detail(workspace, requestChangesTask.case.subjectId)
+          });
+          setRequestChangesTask(null);
+          setRequestChangesReason('');
+        }
+      }
+    );
   };
 
   return (
@@ -260,6 +311,7 @@ export const GovernanceInboxScreen = () => {
                 submission.case.caseKind === 'entity.change'
                   ? withdrawEntityChangeProposal.isPending
                   : withdrawCase.isPending;
+              const requestChangesReason = requestChangesReasonByCaseId.get(submission.case.id);
               return (
                 <li className={styles.task} key={submission.case.id}>
                   <div className={styles.taskMain}>
@@ -284,6 +336,12 @@ export const GovernanceInboxScreen = () => {
                       <div className={styles.taskNote} title={proposalNote}>
                         <span className={styles.taskNoteLabel}>Your note</span>
                         <span>{previewNote(proposalNote)}</span>
+                      </div>
+                    )}
+                    {requestChangesReason && (
+                      <div className={styles.taskNote} title={requestChangesReason}>
+                        <span className={styles.taskNoteLabel}>Reviewer requested changes</span>
+                        <span>{previewNote(requestChangesReason)}</span>
                       </div>
                     )}
                   </div>
@@ -387,6 +445,20 @@ export const GovernanceInboxScreen = () => {
                       {decision === 'approve' ? 'Approve' : 'Acknowledge'}
                     </Button>
                   )}
+                  {task.requiresAction &&
+                    decision === 'approve' &&
+                    task.case.caseKind === 'entity.change' && (
+                      <Button
+                        disabled={decide.isPending}
+                        onClick={event => {
+                          event.stopPropagation();
+                          setRequestChangesTask(task);
+                          setRequestChangesReason('');
+                        }}
+                      >
+                        Request changes
+                      </Button>
+                    )}
                   <Button
                     variant="ghost"
                     icon={<TbExternalLink size={12} />}
@@ -401,6 +473,30 @@ export const GovernanceInboxScreen = () => {
           })}
         </ul>
       )}
+      <Dialog
+        open={requestChangesTask != null}
+        onClose={() => setRequestChangesTask(null)}
+        title="Request changes?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setRequestChangesTask(null) },
+          {
+            label: decide.isPending ? 'Submitting…' : 'Request changes',
+            type: 'default',
+            disabled: decide.isPending || requestChangesReason.trim() === '',
+            onClick: submitRequestChanges
+          }
+        ]}
+      >
+        <p>The proposer will be notified and can revise and resubmit this proposal.</p>
+        <FormElement label="Reason" required>
+          <TextInput
+            value={requestChangesReason}
+            onChange={value => setRequestChangesReason(value ?? '')}
+            placeholder="Explain what needs to change"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
     </div>
   );
 };

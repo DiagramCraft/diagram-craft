@@ -74,7 +74,11 @@ import { buildEntityRefLookup } from './entityDetailHelpers';
 import { CollectionPickerDialog } from './components/CollectionPickerDialog';
 import type { EntityChangeRevision } from '@arch-register/api-types/entityChangeContract';
 import { useAuth } from '../../auth/AuthContext';
-import { useDecideGovernanceAssignment, useGovernanceTasks } from '../../hooks/useGovernance';
+import {
+  useDecideGovernanceAssignment,
+  useGovernanceCaseEvents,
+  useGovernanceTasks
+} from '../../hooks/useGovernance';
 import { entityChangeKeys } from '../../hooks/useEntityChanges';
 import { entityKeys } from '../../queries/entities';
 
@@ -188,10 +192,16 @@ const EntityChangeProposalPanel = ({
   const bypass = useBypassEntityApproval(workspaceId, entityId);
   const [bypassDialogOpen, setBypassDialogOpen] = useState(false);
   const [bypassReason, setBypassReason] = useState('');
+  const [requestChangesDialogOpen, setRequestChangesDialogOpen] = useState(false);
+  const [requestChangesReason, setRequestChangesReason] = useState('');
   const { data: governanceTasks = [] } = useGovernanceTasks(workspaceId, {
     caseKind: 'entity.change',
     state: 'open'
   });
+  const { data: caseEvents = [] } = useGovernanceCaseEvents(
+    workspaceId,
+    revision.status === 'changes_requested' ? revision.caseId : null
+  );
   const decide = useDecideGovernanceAssignment(workspaceId);
   const approvalTask = governanceTasks.find(
     task =>
@@ -202,18 +212,34 @@ const EntityChangeProposalPanel = ({
   );
   const status = proposalStatusLabels[revision.status];
   const rows = proposalDiffRows(revision);
+  const requestedChangesReason = [...caseEvents]
+    .reverse()
+    .find(caseEvent => caseEvent.eventType === 'changes_requested')?.reason;
+  const invalidateProposalQueries = () =>
+    Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: entityChangeKeys.current(workspaceId, entityId)
+      }),
+      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) })
+    ]);
   const approve = () => {
     if (!approvalTask) return;
     decide.mutate(
       { assignmentId: approvalTask.assignment.id, decision: 'approve' },
+      { onSuccess: invalidateProposalQueries }
+    );
+  };
+  const executeRequestChanges = () => {
+    if (!approvalTask) return;
+    const reason = requestChangesReason.trim();
+    if (reason === '') return;
+    decide.mutate(
+      { assignmentId: approvalTask.assignment.id, decision: 'request_changes', reason },
       {
         onSuccess: async () => {
-          await Promise.all([
-            queryClient.invalidateQueries({
-              queryKey: entityChangeKeys.current(workspaceId, entityId)
-            }),
-            queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) })
-          ]);
+          await invalidateProposalQueries();
+          setRequestChangesDialogOpen(false);
+          setRequestChangesReason('');
         }
       }
     );
@@ -252,9 +278,17 @@ const EntityChangeProposalPanel = ({
           <div className={styles.proposalActions}>
             <span className={styles.proposalStatus}>{status}</span>
             {approvalTask && (
-              <Button variant="primary" onClick={approve} disabled={decide.isPending}>
-                {decide.isPending ? 'Approving…' : 'Approve change'}
-              </Button>
+              <>
+                <Button variant="primary" onClick={approve} disabled={decide.isPending}>
+                  {decide.isPending ? 'Approving…' : 'Approve change'}
+                </Button>
+                <Button
+                  onClick={() => setRequestChangesDialogOpen(true)}
+                  disabled={decide.isPending}
+                >
+                  Request changes
+                </Button>
+              </>
             )}
             {canOverrideApproval && (
               <Button
@@ -268,6 +302,11 @@ const EntityChangeProposalPanel = ({
           </div>
         </div>
         {revision.message && <p className={styles.proposalMessage}>{revision.message}</p>}
+        {revision.status === 'changes_requested' && requestedChangesReason && (
+          <p className={styles.proposalMessage}>
+            <strong>Reviewer requested changes:</strong> {requestedChangesReason}
+          </p>
+        )}
         <div className={styles.proposalDiff}>
           <div className={styles.proposalDiffHeader}>
             <span>Field</span>
@@ -306,6 +345,30 @@ const EntityChangeProposalPanel = ({
             value={bypassReason}
             onChange={value => setBypassReason(value ?? '')}
             placeholder="Explain why approval is being bypassed"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
+      <Dialog
+        open={requestChangesDialogOpen}
+        onClose={() => setRequestChangesDialogOpen(false)}
+        title="Request changes?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setRequestChangesDialogOpen(false) },
+          {
+            label: decide.isPending ? 'Submitting…' : 'Request changes',
+            type: 'default',
+            disabled: decide.isPending || requestChangesReason.trim() === '',
+            onClick: executeRequestChanges
+          }
+        ]}
+      >
+        <p>The proposer will be notified and can revise and resubmit this proposal.</p>
+        <FormElement label="Reason" required>
+          <TextInput
+            value={requestChangesReason}
+            onChange={value => setRequestChangesReason(value ?? '')}
+            placeholder="Explain what needs to change"
             style={{ width: '100%' }}
           />
         </FormElement>

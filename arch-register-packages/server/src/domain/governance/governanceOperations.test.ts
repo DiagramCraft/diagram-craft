@@ -316,6 +316,52 @@ describe('decideGovernanceAssignment', () => {
     expect(retried.case.status).toBe('completed');
   });
 
+  describe('request_changes decisions', () => {
+    it('rejects a request_changes decision without a reason', async () => {
+      const caseRow = makeCase();
+      const assignment = makeAssignment();
+      const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+
+      await expect(
+        decideGovernanceAssignment(db, 'ws-1', assignment.id, event, {
+          decision: 'request_changes',
+          idempotencyKey: 'key-1'
+        })
+      ).rejects.toMatchObject({ status: 400 });
+    });
+
+    it('rejects a request_changes decision with a blank reason', async () => {
+      const caseRow = makeCase();
+      const assignment = makeAssignment();
+      const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+
+      await expect(
+        decideGovernanceAssignment(db, 'ws-1', assignment.id, event, {
+          decision: 'request_changes',
+          reason: '   ',
+          idempotencyKey: 'key-1'
+        })
+      ).rejects.toMatchObject({ status: 400 });
+    });
+
+    it('records the reason on the event and completes the case when a reason is provided', async () => {
+      const caseRow = makeCase();
+      const assignment = makeAssignment();
+      const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+
+      const result = await decideGovernanceAssignment(db, 'ws-1', assignment.id, event, {
+        decision: 'request_changes',
+        reason: 'Please fix the description',
+        idempotencyKey: 'key-1'
+      });
+
+      expect(result.case.status).toBe('completed');
+      expect(result.case.outcome).toBe('request_changes');
+      expect(result.event.eventType).toBe('changes_requested');
+      expect(result.event.reason).toBe('Please fix the description');
+    });
+  });
+
   describe('independent assignments (#1718 group acknowledgement)', () => {
     const registryWithIndependentAck: GovernanceRegistry = new Map([
       ['test.echo', { independentAssignmentActions: new Set(['acknowledge']) }]
