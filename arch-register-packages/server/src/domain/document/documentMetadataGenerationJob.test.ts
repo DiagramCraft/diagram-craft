@@ -333,6 +333,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         createMarkdownRevision
       },
       auth: { getUser: vi.fn(async () => user) },
+      audit: { createAuditLog: vi.fn(async () => ({})) },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
     } as unknown as DatabaseAdapter;
 
@@ -396,6 +397,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         createMarkdownRevision: vi.fn()
       },
       auth: { getUser: vi.fn(async () => user) },
+      audit: { createAuditLog: vi.fn(async () => ({})) },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
     } as unknown as DatabaseAdapter;
 
@@ -446,6 +448,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         createMarkdownRevision: vi.fn()
       },
       auth: { getUser: vi.fn(async () => user) },
+      audit: { createAuditLog: vi.fn(async () => ({})) },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
     } as unknown as DatabaseAdapter;
 
@@ -489,6 +492,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         createMarkdownRevision: vi.fn()
       },
       auth: { getUser: vi.fn(async () => user) },
+      audit: { createAuditLog: vi.fn(async () => ({})) },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
     } as unknown as DatabaseAdapter;
 
@@ -531,6 +535,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         createMarkdownRevision: vi.fn()
       },
       auth: { getUser: vi.fn(async () => user) },
+      audit: { createAuditLog: vi.fn(async () => ({})) },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
     } as unknown as DatabaseAdapter;
 
@@ -576,6 +581,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         createMarkdownRevision: vi.fn()
       },
       auth: { getUser: vi.fn(async () => user) },
+      audit: { createAuditLog: vi.fn(async () => ({})) },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
     } as unknown as DatabaseAdapter;
 
@@ -620,6 +626,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
       },
       project: { getAnyContentNodeById: vi.fn(async () => node) },
       auth: { getUser: vi.fn(async () => user) },
+      audit: { createAuditLog: vi.fn(async () => ({})) },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
     } as unknown as DatabaseAdapter;
 

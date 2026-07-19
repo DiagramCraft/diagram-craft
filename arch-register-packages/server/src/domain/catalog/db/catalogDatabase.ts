@@ -10,6 +10,7 @@ import {
 } from '@arch-register/api-types/viewContract';
 import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
   databaseDate,
   databaseDateOnly,
@@ -171,6 +172,11 @@ export type Entity = {
   links: EntityLink[];
   schema_id: string;
   data: Record<string, unknown>;
+  // Latest external-update result per field id, for fields whose schema definition carries
+  // `external_kind`. Keyed by field id; latest result only, no history. Always populated (as
+  // `{}` if empty) when read from the database; optional here mainly so existing in-memory
+  // fixtures/constructors that predate this field don't all need updating.
+  generated_metadata?: ExternalMetadata;
   visibility_mode: VisibilityMode | null;
   created_at: Date;
   updated_at: Date;
@@ -190,6 +196,8 @@ export type EntityDbResult = Entity & {
 export type EntityDbCreate = Omit<Entity, 'version' | 'approval_policy_override'> & {
   version?: number;
   approval_policy_override?: 'required' | 'disabled' | null;
+  // Defaults to {} (a newly created entity starts with no external metadata).
+  generated_metadata?: ExternalMetadata;
 };
 
 export type EntityDbUpdate = Omit<
@@ -197,6 +205,9 @@ export type EntityDbUpdate = Omit<
   'id' | 'workspace' | 'public_id' | 'created_at' | 'version'
 > & {
   version?: number;
+  // Omit to leave the stored value untouched (the common case for a plain field update);
+  // pass explicitly to write a new value (e.g. when outdating or applying an external update).
+  generated_metadata?: ExternalMetadata;
 };
 
 // -- Entity Snapshot
@@ -245,6 +256,11 @@ export const catalogMappers = {
     links: parseDatabaseJson<EntityLink[]>(row['links'], [], 'entity.links'),
     schema_id: String(row['schema_id']),
     data: parseDatabaseJson<Record<string, unknown>>(row['data'], {}, 'entity.data'),
+    generated_metadata: parseDatabaseJson<ExternalMetadata>(
+      row['generated_metadata'],
+      {},
+      'entity.generated_metadata'
+    ),
     visibility_mode:
       row['visibility_mode'] == null
         ? null

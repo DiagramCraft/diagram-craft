@@ -1,6 +1,7 @@
 import type { EntityDbCreate, DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
 import { Entity } from './db/catalogDatabase';
+import { outdateExternalMetadata, valueEquals } from '../externalMetadata/externalMetadataHelpers';
 
 const AUTOSAVE_KEEP_COUNT = 50;
 
@@ -90,11 +91,28 @@ export const createEntityWithAudit = async (
   return row;
 };
 
+// A genuine user edit to any entity field marks all of that entity's external-field metadata
+// `outdated` — unless the caller already set `generated_metadata` explicitly (an external update
+// applying its own result, which must not outdate itself).
+const withOutdatedMetadataIfChanged = (previous: Entity, next: EntityDbUpdate): EntityDbUpdate => {
+  if (next.generated_metadata !== undefined) return next;
+  const currentMetadata = previous.generated_metadata ?? {};
+  if (Object.keys(currentMetadata).length === 0) return next;
+  const dataKeys = new Set([...Object.keys(previous.data), ...Object.keys(next.data)]);
+  const dataChanged = [...dataKeys].some(
+    key => !valueEquals(previous.data[key] ?? null, next.data[key] ?? null)
+  );
+  return dataChanged
+    ? { ...next, generated_metadata: outdateExternalMetadata(currentMetadata) }
+    : next;
+};
+
 export const updateEntityWithAudit = async (
   db: DatabaseAdapter,
   params: UpdateEntityWithAuditParams
 ) => {
-  const row = await db.catalog.updateEntity(params.workspace, params.entityId, params.next);
+  const next = withOutdatedMetadataIfChanged(params.previous, params.next);
+  const row = await db.catalog.updateEntity(params.workspace, params.entityId, next);
 
   if (row == null) return null;
 
@@ -139,10 +157,11 @@ export const updateEntityWithAuditIfVersion = async (
   db: DatabaseAdapter,
   params: ConditionalUpdateEntityWithAuditParams
 ) => {
+  const next = withOutdatedMetadataIfChanged(params.previous, params.next);
   const row = await db.catalog.updateEntityIfVersion(
     params.workspace,
     params.entityId,
-    params.next,
+    next,
     params.expectedVersion
   );
 

@@ -364,6 +364,7 @@ export const DocumentTypeEditor = ({
                     <span>Type</span>
                     <span>Options / Cardinality</span>
                     <span>Requirement</span>
+                    <span>External</span>
                     <span />
                   </div>
                   {fields.map(field => (

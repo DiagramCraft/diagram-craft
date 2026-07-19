@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { defineOperation } from '../operation';
-import { buildApiAuthCtx } from '../auth/authorization';
+import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { writeAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 
 import { getMarkdownAttachmentNodes } from './contentNodeRoleUtils';
@@ -26,8 +26,15 @@ import type { DocumentMetadata } from '@arch-register/api-types/documentContract
 
 import {
   assertDocumentMetadataValid,
+  assertNoExternalDocumentFieldWrites,
   validateDocumentMetadata
 } from '../document/documentValidation';
+import type { ExternalUpdateEnvelope } from '@arch-register/api-types/common';
+import {
+  applyExternalFieldUpdate,
+  assertNoExternalFieldWrites,
+  assertValidExternalUpdateTarget
+} from '../externalMetadata/externalMetadataHelpers';
 
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import { scheduleMetadataGenerationForDocument } from '../document/documentMetadataGenerationJob';
@@ -393,6 +400,7 @@ export const saveMarkdownContent = async (
   documentTypeId: string | null | undefined,
   metadata: DocumentMetadata | undefined,
   event: AuthenticatedEvent,
+  external?: ExternalUpdateEnvelope,
   allowTypeMigration = false
 ): Promise<ProjectFile> => {
   return defineOperation(
@@ -454,6 +462,27 @@ export const saveMarkdownContent = async (
       } else if (!allowTypeMigration || !typeChanged) {
         assertDocumentMetadataValid([], nextMetadata, true);
       }
+      const documentFields = currentDocument.availableFields.concat(currentDocument.retiredFields);
+      if (external) {
+        requireWorkspaceCapability(
+          authCtx,
+          'ent.external_update',
+          'You do not have permission to perform external updates on documents'
+        );
+        httpAssert.true(!typeChanged, {
+          status: 400,
+          message: 'External updates cannot change the document type'
+        });
+        const otherFields = assertValidExternalUpdateTarget(
+          documentFields,
+          external,
+          currentDocument.metadata,
+          nextMetadata
+        );
+        assertNoExternalFieldWrites(otherFields, currentDocument.metadata, nextMetadata);
+      } else if (!typeChanged) {
+        assertNoExternalDocumentFieldWrites(documentFields, currentDocument.metadata, nextMetadata);
+      }
       const content = Buffer.from(JSON.stringify({ body }), 'utf8');
       const timestamp = new Date();
       const nextName = name?.trim() ? name.trim() : node.name;
@@ -461,6 +490,14 @@ export const saveMarkdownContent = async (
       const bodyChanged = readMarkdownBody(previousContent) !== body;
       const metadataChanged = !metadataEquals(currentDocument.metadata, nextMetadata);
       const effectiveChange = bodyChanged || metadataChanged;
+      const nextGeneratedMetadata = external
+        ? {
+            ...currentDocument.generatedMetadata,
+            [external.fieldId]: applyExternalFieldUpdate(external.fieldId, external, timestamp)
+          }
+        : effectiveChange
+          ? outdateGeneratedMetadata(currentDocument.generatedMetadata)
+          : currentDocument.generatedMetadata;
       let row!: ContentNodeDbResult;
       let revision: MarkdownRevisionDbResult | undefined;
       await coordinateContentWrite({
@@ -504,9 +541,7 @@ export const saveMarkdownContent = async (
               node_id: node.id,
               document_type_id: nextDocumentTypeId ?? null,
               values: nextMetadata,
-              generated_metadata: effectiveChange
-                ? outdateGeneratedMetadata(currentDocument.generatedMetadata)
-                : currentDocument.generatedMetadata,
+              generated_metadata: nextGeneratedMetadata,
               updated_at: timestamp
             });
             await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
@@ -526,7 +561,7 @@ export const saveMarkdownContent = async (
             nextMetadata,
             tx
           );
-          if (effectiveChange && nextDocumentType) {
+          if (!external && effectiveChange && nextDocumentType) {
             await scheduleMetadataGenerationForDocument(tx, {
               workspace: ws,
               nodeId: node.id,
@@ -553,6 +588,17 @@ export const saveMarkdownContent = async (
                   path: row.path,
                   ...(revision
                     ? { revision_id: revision.id, revision_number: revision.revision_number }
+                    : {}),
+                  ...(external
+                    ? {
+                        external_kind: external.kind,
+                        external_field_id: external.fieldId,
+                        source: external.source,
+                        status: external.status,
+                        requestId: external.requestId ?? null,
+                        explanation: external.explanation ?? null,
+                        failureNotice: external.failureNotice ?? null
+                      }
                     : {})
                 }
               })
@@ -585,6 +631,7 @@ export const migrateMarkdownContent = async (
     documentTypeId,
     metadata,
     event,
+    undefined,
     true
   );
 

@@ -82,7 +82,8 @@ const documentType = {
       name: 'Summary',
       type: 'text' as const,
       requirement: 'optional' as const,
-      retired: false
+      retired: false,
+      external_kind: 'ai' as const
     }
   ],
   color: null,

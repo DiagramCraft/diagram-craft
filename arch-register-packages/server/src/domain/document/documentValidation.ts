@@ -5,6 +5,7 @@ import type {
 } from '@arch-register/api-types/documentContract';
 import { DOCUMENT_AI_READ_ONLY_TOOLS } from '@arch-register/api-types/documentContract';
 import { httpAssert } from '../../utils/httpAssert';
+import { assertNoExternalFieldWrites } from '../externalMetadata/externalMetadataHelpers';
 
 const isEmpty = (value: unknown) =>
   value === undefined ||
@@ -109,8 +110,22 @@ export const validateDocumentTypeWrite = (input: DocumentTypeWrite) => {
       status: 400,
       message: `AI metadata generator '${action.id}' cannot target ${outputField.type} field '${action.outputFieldId}'`
     });
+    httpAssert.true(outputField.external_kind === 'ai', {
+      status: 400,
+      message: `AI metadata generator '${action.id}' can only target a field with external_kind 'ai' (field '${action.outputFieldId}')`
+    });
   }
 };
+
+/**
+ * Rejects a plain (non-external-update) document save that changes the value of any field
+ * carrying `external_kind` — such fields are read-only to ordinary users.
+ */
+export const assertNoExternalDocumentFieldWrites = (
+  fields: DocumentField[],
+  currentMetadata: DocumentMetadata,
+  nextMetadata: DocumentMetadata
+) => assertNoExternalFieldWrites(fields, currentMetadata, nextMetadata);
 
 const valueCardinality = (value: unknown) =>
   Array.isArray(value) ? value.length : isEmpty(value) ? 0 : 1;

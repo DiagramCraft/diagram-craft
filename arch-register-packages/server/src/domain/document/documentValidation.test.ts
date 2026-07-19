@@ -107,9 +107,10 @@ describe('validateDocumentTypeWrite', () => {
               id: 'status',
               name: 'Status',
               type: 'enum',
-              enumOptions: [{ value: 'ok', label: 'OK' }]
+              enumOptions: [{ value: 'ok', label: 'OK' }],
+              external_kind: 'ai'
             }),
-            makeField({ id: 'score', name: 'Score', type: 'number' })
+            makeField({ id: 'score', name: 'Score', type: 'number', external_kind: 'ai' })
           ],
           [
             {
@@ -177,6 +178,22 @@ describe('validateDocumentTypeWrite', () => {
     expect(() => validateDocumentTypeWrite(makeTypeWrite(fields, [action]))).toThrow(message);
   });
 
+  it('rejects a metadata generator targeting a field without external_kind ai', () => {
+    const action: DocumentAiAction = {
+      id: 'generator',
+      name: 'Generator',
+      kind: 'metadata_generator',
+      prompt: 'Generate a value.',
+      outputFieldId: 'status',
+      enabled: true
+    };
+    expect(() =>
+      validateDocumentTypeWrite(
+        makeTypeWrite([makeField({ id: 'status', name: 'Status' })], [action])
+      )
+    ).toThrow("AI metadata generator 'generator' can only target a field with external_kind 'ai'");
+  });
+
   it('rejects multiple metadata generators targeting the same field', () => {
     const actions: DocumentAiAction[] = [
       {
@@ -198,7 +215,7 @@ describe('validateDocumentTypeWrite', () => {
     ];
     expect(() =>
       validateDocumentTypeWrite(
-        makeTypeWrite([makeField({ id: 'status', name: 'Status' })], actions)
+        makeTypeWrite([makeField({ id: 'status', name: 'Status', external_kind: 'ai' })], actions)
       )
     ).toThrow("Multiple AI metadata generators target field 'status'");
   });

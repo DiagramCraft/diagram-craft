@@ -4,7 +4,11 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 import { slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 
-import { requireEntityAction, requireCanCreateTopLevelEntity } from '../auth/authorization';
+import {
+  requireEntityAction,
+  requireCanCreateTopLevelEntity,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 
 import type { EntityMutationActor } from './entityMutations';
 import { createEntityWithAudit, updateEntityWithAudit, entityToBaseState } from './entityMutations';
@@ -29,6 +33,13 @@ import { listAllCatalogEntities } from './entityLoader';
 
 import type { Entity, EntityDbCreate, EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import { entityRequiresApproval } from './entityChangeOperations';
+import { assertNoExternalEntityFieldWrites } from './entityValidation';
+import type { ExternalMetadata } from '@arch-register/api-types/common';
+import {
+  applyExternalFieldUpdate,
+  assertNoExternalFieldWrites,
+  assertValidExternalUpdateTarget
+} from '../externalMetadata/externalMetadataHelpers';
 
 const allocateEntityPublicId = async (
   db: DatabaseAdapter,
@@ -79,6 +90,7 @@ export const createEntity = async (
       fields: payload.fields,
       entities
     });
+    assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
     const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
     const parents = getEntityParentsFromPayload(schema, normalizedFields, entityLookup);
     const fallbackOwner = (await db.workspace.listTeams(workspace))[0]?.id ?? null;
@@ -313,6 +325,7 @@ export const bulkCreateEntities = async (
           fields: draft.entity.data,
           entities: allEntities
         });
+        assertNoExternalEntityFieldWrites(draft.schema.fields, {}, draft.entity.data);
         const parents = getEntityParentsFromPayload(draft.schema, draft.entity.data, entityLookup);
         if (authCtx) {
           if (parents.length > 0) {
@@ -420,11 +433,50 @@ export const updateEntity = async (
       entities
     });
 
+    const timestamp = new Date();
+    let nextGeneratedMetadata: ExternalMetadata | undefined;
+    let auditMetadata: Record<string, unknown> | undefined;
+    if (payload.external) {
+      if (authCtx)
+        requireWorkspaceCapability(
+          authCtx,
+          'ent.external_update',
+          'You do not have permission to perform external updates on entities'
+        );
+      const otherFields = assertValidExternalUpdateTarget(
+        schema.fields,
+        payload.external,
+        oldRow.data,
+        normalizedFields
+      );
+      assertNoExternalFieldWrites(otherFields, oldRow.data, normalizedFields);
+      nextGeneratedMetadata = {
+        ...(oldRow.generated_metadata ?? {}),
+        [payload.external.fieldId]: applyExternalFieldUpdate(
+          payload.external.fieldId,
+          payload.external,
+          timestamp
+        )
+      };
+      auditMetadata = {
+        external_kind: payload.external.kind,
+        external_field_id: payload.external.fieldId,
+        source: payload.external.source,
+        status: payload.external.status,
+        requestId: payload.external.requestId ?? null,
+        explanation: payload.external.explanation ?? null,
+        failureNotice: payload.external.failureNotice ?? null
+      };
+    } else {
+      assertNoExternalEntityFieldWrites(schema.fields, oldRow.data, normalizedFields);
+    }
+
     const row = await updateEntityWithAudit(db, {
       workspace,
       entityId: oldRow.id,
       previous: oldRow,
       actor,
+      auditMetadata,
       next: {
         slug: payload.slug,
         namespace: payload.namespace,
@@ -439,7 +491,10 @@ export const updateEntity = async (
         schema_id: payload.schemaId,
         data: normalizedFields,
         visibility_mode: payload.visibilityMode,
-        updated_at: new Date()
+        updated_at: timestamp,
+        ...(nextGeneratedMetadata !== undefined
+          ? { generated_metadata: nextGeneratedMetadata }
+          : {})
       }
     });
 
