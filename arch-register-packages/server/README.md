@@ -40,7 +40,8 @@ for explicitly enabled, single-worker local development with
 The worker concurrency and lease settings are configured with
 `JOB_SERVER_ID`, `JOB_SERVER_NAME`, `JOB_SERVER_MAX_CONCURRENCY`,
 `JOB_SERVER_POLL_INTERVAL_MS`, `JOB_SERVER_LEASE_DURATION_MS`,
-`JOB_SERVER_HEARTBEAT_INTERVAL_MS`, and `JOB_SERVER_PING_INTERVAL_MS`.
+`JOB_SERVER_HEARTBEAT_INTERVAL_MS`, `JOB_SERVER_PING_INTERVAL_MS`,
+`JOB_SERVER_JOB_TIMEOUT_MS`, and `JOB_SERVER_SHUTDOWN_TIMEOUT_MS`.
 
 ## Local PostgreSQL setup
 

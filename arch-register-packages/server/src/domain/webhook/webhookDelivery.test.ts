@@ -130,4 +130,28 @@ describe('webhook delivery', () => {
       })
     ).rejects.toThrow('Webhook returned HTTP 400');
   });
+
+  it('cancels an in-flight request when the job signal is aborted', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async (_input: string | URL | Request, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+          })
+      )
+    );
+
+    const execution = createWebhookDeliveryHandler(db)({
+      jobId: 'delivery-1',
+      workspace: 'ws-1',
+      payload: { webhookId: 'hook-1', event },
+      signal: controller.signal
+    });
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalled());
+    controller.abort(new Error('lease lost'));
+
+    await expect(execution).rejects.toBeInstanceOf(RetryableJobError);
+  });
 });

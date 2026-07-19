@@ -12,8 +12,10 @@ import { createGovernanceNotificationJobHandler } from '@arch-register/server/do
 const logger = createLogger('job-server');
 
 const positiveInteger = (name: string, fallback: number) => {
-  const value = Number(process.env[name] ?? fallback);
-  if (!Number.isInteger(value) || value < 1) throw new Error(`${name} must be a positive integer`);
+  const raw = String(process.env[name] ?? fallback).trim();
+  if (!/^[1-9]\d*$/.test(raw)) throw new Error(`${name} must be a positive integer`);
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value)) throw new Error(`${name} must be a positive integer`);
   return value;
 };
 
@@ -36,6 +38,8 @@ const main = async () => {
   const leaseDurationMs = positiveInteger('JOB_SERVER_LEASE_DURATION_MS', 30000);
   const heartbeatIntervalMs = positiveInteger('JOB_SERVER_HEARTBEAT_INTERVAL_MS', 5000);
   const serverPingIntervalMs = positiveInteger('JOB_SERVER_PING_INTERVAL_MS', 60000);
+  const jobTimeoutMs = positiveInteger('JOB_SERVER_JOB_TIMEOUT_MS', 10 * 60 * 1000);
+  const shutdownTimeoutMs = positiveInteger('JOB_SERVER_SHUTDOWN_TIMEOUT_MS', 30 * 1000);
   const handlers = new Map<string, JobHandler>();
   const storage = createStorage();
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
@@ -51,14 +55,36 @@ const main = async () => {
     pollIntervalMs,
     leaseDurationMs,
     heartbeatIntervalMs,
-    serverPingIntervalMs
+    serverPingIntervalMs,
+    jobTimeoutMs,
+    shutdownTimeoutMs
   });
 
-  const shutdown = async () => {
-    logger.info('Shutting down job server...');
-    await server.stop();
-    await db.core.close();
-    process.exit(0);
+  let shutdownPromise: Promise<void> | null = null;
+  const shutdown = () => {
+    if (shutdownPromise) return shutdownPromise;
+    shutdownPromise = (async () => {
+      logger.info('Shutting down job server...');
+      try {
+        await server.stop();
+      } catch (error) {
+        logger.error(
+          'Job server shutdown encountered an error',
+          error instanceof Error ? error : new Error(String(error))
+        );
+      } finally {
+        try {
+          await db.core.close();
+        } catch (error) {
+          logger.error(
+            'Failed to close the job server database',
+            error instanceof Error ? error : new Error(String(error))
+          );
+        }
+        process.exit(0);
+      }
+    })();
+    return shutdownPromise;
   };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);

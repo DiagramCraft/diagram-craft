@@ -32,6 +32,10 @@ const mimeTypes: Record<string, string> = {
   '.yml': 'application/yaml'
 };
 
+const throwIfAborted = (signal?: AbortSignal) => {
+  if (signal?.aborted) throw signal.reason ?? new Error('Job execution aborted');
+};
+
 const fileType = (path: string): 'diagram' | 'markdown' | 'file' =>
   isMarkdownPath(path) ? 'markdown' : path.toLowerCase().endsWith('.json') ? 'diagram' : 'file';
 
@@ -103,8 +107,10 @@ const syncMount = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
   mount: ExternalContentMountDbResult,
-  snapshot: GitSnapshot
+  snapshot: GitSnapshot,
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   const existing = await db.project.listContentNodesByMount(mount.workspace, mount.id);
   const allNodes = mount.project_id
     ? await db.project.listContentNodes(mount.workspace, mount.project_id)
@@ -164,6 +170,7 @@ const syncMount = async (
     writeDatabase: async tx => {
       const parentIds = new Map<string, string | null>();
       for (const path of desired.folders) {
+        throwIfAborted(signal);
         parentIds.set(
           path,
           path === mount.destination_path
@@ -172,6 +179,7 @@ const syncMount = async (
         );
       }
       for (const item of upserts) {
+        throwIfAborted(signal);
         const existingNode = byPath.get(item.path);
         const type = item.type;
         await tx.project.upsertContentNode({
@@ -215,6 +223,7 @@ const syncMount = async (
         }
       }
       for (const node of stale) {
+        throwIfAborted(signal);
         await tx.project.deleteContentNodesByIds(mount.workspace, [node.id]);
         await tx.project.deleteContentMetadata(mount.workspace, node.id);
       }
@@ -228,6 +237,7 @@ const syncMount = async (
     }
   });
   for (const node of stale) {
+    throwIfAborted(signal);
     if (node.type !== 'folder')
       await storage.delete(mount.workspace, scope.storage_id, node.id).catch(() => undefined);
   }
@@ -238,8 +248,10 @@ export const syncExternalContentSource = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
   workspace: string,
-  sourceId: string
+  sourceId: string,
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   const source = await db.externalContent.getSource(workspace, sourceId);
   if (!source?.enabled) return { skipped: true };
   const now = new Date();
@@ -251,15 +263,18 @@ export const syncExternalContentSource = async (
   });
   const mounts = await db.externalContent.listMountsBySource(workspace, source.id);
   try {
-    const repoPath = await prepareGitRepository(source.id, source.source_config);
+    throwIfAborted(signal);
+    const repoPath = await prepareGitRepository(source.id, source.source_config, signal);
     const results = [];
     let revision: string | null = null;
     for (const mount of mounts) {
       try {
-        const mountSnapshot = await readGitSnapshot(repoPath, mount.source_path);
+        throwIfAborted(signal);
+        const mountSnapshot = await readGitSnapshot(repoPath, mount.source_path, signal);
         revision ??= mountSnapshot.revision;
-        results.push(await syncMount(db, storage, mount, mountSnapshot));
+        results.push(await syncMount(db, storage, mount, mountSnapshot, signal));
       } catch (error) {
+        throwIfAborted(signal);
         await db.externalContent.updateMount(mount.id, {
           status: 'failed',
           last_error: error instanceof Error ? error.message : String(error),
@@ -268,6 +283,7 @@ export const syncExternalContentSource = async (
       }
     }
     const allMountsFailed = mounts.length > 0 && results.length === 0;
+    throwIfAborted(signal);
     await db.externalContent.updateSource(source.id, {
       status: allMountsFailed ? 'failed' : 'succeeded',
       last_synced_at: allMountsFailed ? source.last_synced_at : now,
@@ -277,6 +293,7 @@ export const syncExternalContentSource = async (
     });
     return { revision, mounts: mounts.length, results };
   } catch (error) {
+    throwIfAborted(signal);
     const message = error instanceof Error ? error.message : String(error);
     await db.externalContent.updateSource(source.id, {
       status: 'failed',

@@ -21,6 +21,8 @@ DATABASE_URL=postgresql://arch_register:password@localhost:5432/arch_register \
 JOB_SERVER_ID=jobs-eu-1 \
 JOB_SERVER_NAME="EU job server 1" \
 JOB_SERVER_MAX_CONCURRENCY=4 \
+JOB_SERVER_JOB_TIMEOUT_MS=600000 \
+JOB_SERVER_SHUTDOWN_TIMEOUT_MS=30000 \
 pnpm start
 ```
 
@@ -31,4 +33,6 @@ defaults to the host name, so deployments that run multiple job servers on one h
 it explicitly.
 `JOB_SERVER_NAME` controls the display name in job monitoring and defaults to the host name. The
 server records a status ping every minute by default; `JOB_SERVER_PING_INTERVAL_MS` can override
-that interval.
+that interval. Jobs are limited to ten minutes by default; `JOB_SERVER_JOB_TIMEOUT_MS` can override
+the execution timeout. Shutdown waits up to 30 seconds for active jobs by default;
+`JOB_SERVER_SHUTDOWN_TIMEOUT_MS` can override that deadline.
