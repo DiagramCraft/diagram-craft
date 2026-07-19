@@ -18,8 +18,11 @@ const outputFieldInstruction = (field: DocumentField): string => {
   return [
     ``,
     `## Output`,
-    `Respond with ${shape} for the field "${field.name}", and nothing else — no explanation, no`,
-    `surrounding text, no markdown formatting.`
+    `Return a JSON object with exactly these fields:`,
+    `- value: ${shape} for the field "${field.name}".`,
+    `- reason: a concise explanation of why this value is supported by the document.`,
+    `- findings: an array of concise observations from the document that support or qualify the value.`,
+    `Do not include surrounding prose or markdown formatting.`
   ].join('\n');
 };
 

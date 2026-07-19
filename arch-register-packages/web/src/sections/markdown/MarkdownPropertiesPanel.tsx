@@ -626,7 +626,7 @@ export const MarkdownPropertiesPanel = ({
                 <div key={field.id} className={`${styles.row} ${error ? styles.rowError : ''}`}>
                   <div className={styles.label}>
                     <span>{field.name}</span>
-                    {field.requirement === 'optional' && (
+                    {field.requirement === 'optional' && !isAiManaged && (
                       <span className={styles.optionalLabel}>(optional)</span>
                     )}
                   </div>
@@ -649,7 +649,9 @@ export const MarkdownPropertiesPanel = ({
                       )}
                     </div>
                     {error && <div className={styles.error}>{error}</div>}
-                    {!error && warning && <div className={styles.warning}>{warning}</div>}
+                    {!error && warning && !isAiManaged && (
+                      <div className={styles.warning}>{warning}</div>
+                    )}
                   </div>
                 </div>
               );
