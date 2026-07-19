@@ -29983,6 +29983,17 @@
                                         "type": "boolean",
                                         "default": true
                                       },
+                                      "tools": {
+                                        "type": "array",
+                                        "items": {
+                                          "enum": [
+                                            "query_entities",
+                                            "get_entity_details",
+                                            "traverse_relations"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
                                       "kind": {
                                         "const": "interactive"
                                       }
@@ -30012,6 +30023,17 @@
                                       "enabled": {
                                         "type": "boolean",
                                         "default": true
+                                      },
+                                      "tools": {
+                                        "type": "array",
+                                        "items": {
+                                          "enum": [
+                                            "query_entities",
+                                            "get_entity_details",
+                                            "traverse_relations"
+                                          ],
+                                          "type": "string"
+                                        }
                                       },
                                       "kind": {
                                         "const": "metadata_generator"
@@ -33442,6 +33464,17 @@
                             "type": "boolean",
                             "default": true
                           },
+                          "tools": {
+                            "type": "array",
+                            "items": {
+                              "enum": [
+                                "query_entities",
+                                "get_entity_details",
+                                "traverse_relations"
+                              ],
+                              "type": "string"
+                            }
+                          },
                           "kind": {
                             "const": "interactive"
                           }
@@ -33471,6 +33504,17 @@
                           "enabled": {
                             "type": "boolean",
                             "default": true
+                          },
+                          "tools": {
+                            "type": "array",
+                            "items": {
+                              "enum": [
+                                "query_entities",
+                                "get_entity_details",
+                                "traverse_relations"
+                              ],
+                              "type": "string"
+                            }
                           },
                           "kind": {
                             "const": "metadata_generator"
@@ -43804,6 +43848,17 @@
                                   "type": "boolean",
                                   "default": true
                                 },
+                                "tools": {
+                                  "type": "array",
+                                  "items": {
+                                    "enum": [
+                                      "query_entities",
+                                      "get_entity_details",
+                                      "traverse_relations"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
                                 "kind": {
                                   "const": "interactive"
                                 }
@@ -43833,6 +43888,17 @@
                                 "enabled": {
                                   "type": "boolean",
                                   "default": true
+                                },
+                                "tools": {
+                                  "type": "array",
+                                  "items": {
+                                    "enum": [
+                                      "query_entities",
+                                      "get_entity_details",
+                                      "traverse_relations"
+                                    ],
+                                    "type": "string"
+                                  }
                                 },
                                 "kind": {
                                   "const": "metadata_generator"
@@ -44037,6 +44103,17 @@
                               "type": "boolean",
                               "default": true
                             },
+                            "tools": {
+                              "type": "array",
+                              "items": {
+                                "enum": [
+                                  "query_entities",
+                                  "get_entity_details",
+                                  "traverse_relations"
+                                ],
+                                "type": "string"
+                              }
+                            },
                             "kind": {
                               "const": "interactive"
                             }
@@ -44066,6 +44143,17 @@
                             "enabled": {
                               "type": "boolean",
                               "default": true
+                            },
+                            "tools": {
+                              "type": "array",
+                              "items": {
+                                "enum": [
+                                  "query_entities",
+                                  "get_entity_details",
+                                  "traverse_relations"
+                                ],
+                                "type": "string"
+                              }
                             },
                             "kind": {
                               "const": "metadata_generator"
@@ -44277,6 +44365,17 @@
                                 "type": "boolean",
                                 "default": true
                               },
+                              "tools": {
+                                "type": "array",
+                                "items": {
+                                  "enum": [
+                                    "query_entities",
+                                    "get_entity_details",
+                                    "traverse_relations"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
                               "kind": {
                                 "const": "interactive"
                               }
@@ -44306,6 +44405,17 @@
                               "enabled": {
                                 "type": "boolean",
                                 "default": true
+                              },
+                              "tools": {
+                                "type": "array",
+                                "items": {
+                                  "enum": [
+                                    "query_entities",
+                                    "get_entity_details",
+                                    "traverse_relations"
+                                  ],
+                                  "type": "string"
+                                }
                               },
                               "kind": {
                                 "const": "metadata_generator"
@@ -44533,6 +44643,17 @@
                                 "type": "boolean",
                                 "default": true
                               },
+                              "tools": {
+                                "type": "array",
+                                "items": {
+                                  "enum": [
+                                    "query_entities",
+                                    "get_entity_details",
+                                    "traverse_relations"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
                               "kind": {
                                 "const": "interactive"
                               }
@@ -44562,6 +44683,17 @@
                               "enabled": {
                                 "type": "boolean",
                                 "default": true
+                              },
+                              "tools": {
+                                "type": "array",
+                                "items": {
+                                  "enum": [
+                                    "query_entities",
+                                    "get_entity_details",
+                                    "traverse_relations"
+                                  ],
+                                  "type": "string"
+                                }
                               },
                               "kind": {
                                 "const": "metadata_generator"
@@ -44773,6 +44905,17 @@
                               "type": "boolean",
                               "default": true
                             },
+                            "tools": {
+                              "type": "array",
+                              "items": {
+                                "enum": [
+                                  "query_entities",
+                                  "get_entity_details",
+                                  "traverse_relations"
+                                ],
+                                "type": "string"
+                              }
+                            },
                             "kind": {
                               "const": "interactive"
                             }
@@ -44802,6 +44945,17 @@
                             "enabled": {
                               "type": "boolean",
                               "default": true
+                            },
+                            "tools": {
+                              "type": "array",
+                              "items": {
+                                "enum": [
+                                  "query_entities",
+                                  "get_entity_details",
+                                  "traverse_relations"
+                                ],
+                                "type": "string"
+                              }
                             },
                             "kind": {
                               "const": "metadata_generator"
@@ -45013,6 +45167,17 @@
                                 "type": "boolean",
                                 "default": true
                               },
+                              "tools": {
+                                "type": "array",
+                                "items": {
+                                  "enum": [
+                                    "query_entities",
+                                    "get_entity_details",
+                                    "traverse_relations"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
                               "kind": {
                                 "const": "interactive"
                               }
@@ -45042,6 +45207,17 @@
                               "enabled": {
                                 "type": "boolean",
                                 "default": true
+                              },
+                              "tools": {
+                                "type": "array",
+                                "items": {
+                                  "enum": [
+                                    "query_entities",
+                                    "get_entity_details",
+                                    "traverse_relations"
+                                  ],
+                                  "type": "string"
+                                }
                               },
                               "kind": {
                                 "const": "metadata_generator"
@@ -45333,6 +45509,17 @@
                                 "type": "boolean",
                                 "default": true
                               },
+                              "tools": {
+                                "type": "array",
+                                "items": {
+                                  "enum": [
+                                    "query_entities",
+                                    "get_entity_details",
+                                    "traverse_relations"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
                               "kind": {
                                 "const": "interactive"
                               }
@@ -45362,6 +45549,17 @@
                               "enabled": {
                                 "type": "boolean",
                                 "default": true
+                              },
+                              "tools": {
+                                "type": "array",
+                                "items": {
+                                  "enum": [
+                                    "query_entities",
+                                    "get_entity_details",
+                                    "traverse_relations"
+                                  ],
+                                  "type": "string"
+                                }
                               },
                               "kind": {
                                 "const": "metadata_generator"
@@ -45588,6 +45786,17 @@
                                   "type": "boolean",
                                   "default": true
                                 },
+                                "tools": {
+                                  "type": "array",
+                                  "items": {
+                                    "enum": [
+                                      "query_entities",
+                                      "get_entity_details",
+                                      "traverse_relations"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
                                 "kind": {
                                   "const": "interactive"
                                 }
@@ -45617,6 +45826,17 @@
                                 "enabled": {
                                   "type": "boolean",
                                   "default": true
+                                },
+                                "tools": {
+                                  "type": "array",
+                                  "items": {
+                                    "enum": [
+                                      "query_entities",
+                                      "get_entity_details",
+                                      "traverse_relations"
+                                    ],
+                                    "type": "string"
+                                  }
                                 },
                                 "kind": {
                                   "const": "metadata_generator"

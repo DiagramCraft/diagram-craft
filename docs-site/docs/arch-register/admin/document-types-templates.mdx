@@ -54,7 +54,9 @@ can view a typed document; metadata generators run automatically after document 
 modify documents, metadata, or entities through its AI tools.
 
 Actions are shown by name and type when editing a document type. Select **Add AI action** or **Edit** to open the action
-dialog, where you can set the name, kind, prompt, output field for metadata generators, and enabled state.
+dialog, where you can set the name, kind, prompt, available read-only tools, output field for metadata generators, and
+enabled state. The standard tools are querying entities, reading entity details, and traversing relationships. Existing
+actions without an explicit tool selection continue to use all standard tools; selecting no tools is also allowed.
 
 Before saving or enabling an action, administrators can choose an existing accessible document of the same type and
 select **Test action**. Testing uses the current unsaved action draft and returns the complete model output, provider,

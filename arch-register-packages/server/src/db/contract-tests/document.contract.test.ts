@@ -192,7 +192,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
           name: 'Summarize',
           kind: 'interactive',
           prompt: 'Summarize this.',
-          enabled: true
+          enabled: true,
+          tools: ['query_entities']
         },
         {
           id: 'summary-generator',
@@ -200,7 +201,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
           kind: 'metadata_generator',
           prompt: 'Write a summary.',
           outputFieldId: 'summary',
-          enabled: false
+          enabled: false,
+          tools: []
         }
       ],
       created_at: now,
@@ -212,7 +214,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
         name: 'Summarize',
         kind: 'interactive',
         prompt: 'Summarize this.',
-        enabled: true
+        enabled: true,
+        tools: ['query_entities']
       },
       {
         id: 'summary-generator',
@@ -220,7 +223,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
         kind: 'metadata_generator',
         prompt: 'Write a summary.',
         outputFieldId: 'summary',
-        enabled: false
+        enabled: false,
+        tools: []
       }
     ]);
 
@@ -234,7 +238,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
           name: 'Summarize v2',
           kind: 'interactive',
           prompt: 'Summarize this document.',
-          enabled: false
+          enabled: false,
+          tools: ['get_entity_details']
         },
         {
           id: 'summary-generator',
@@ -242,7 +247,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
           kind: 'metadata_generator',
           prompt: 'Write a summary.',
           outputFieldId: 'summary',
-          enabled: false
+          enabled: false,
+          tools: []
         }
       ],
       updated_at: new Date()
@@ -253,7 +259,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
         name: 'Summarize v2',
         kind: 'interactive',
         prompt: 'Summarize this document.',
-        enabled: false
+        enabled: false,
+        tools: ['get_entity_details']
       },
       {
         id: 'summary-generator',
@@ -261,7 +268,8 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
         kind: 'metadata_generator',
         prompt: 'Write a summary.',
         outputFieldId: 'summary',
-        enabled: false
+        enabled: false,
+        tools: []
       }
     ]);
     expect((await db.document.getDocumentType(workspace, type.id))?.aiActions).toEqual(

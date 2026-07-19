@@ -390,7 +390,7 @@ const processGenerationRow = async (
       row.workspace,
       authCtx,
       { id: scheduledByUser.id, displayName: scheduledByUser.display_name },
-      { readOnly: true }
+      { readOnly: true, toolIds: action.tools }
     );
     try {
       const structured = await chat({

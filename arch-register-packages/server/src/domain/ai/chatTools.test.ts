@@ -257,6 +257,29 @@ const actor = {
 };
 
 describe('createAiChatTools', () => {
+  it('exposes the standard read-only set when no selection is provided', () => {
+    const tools = createAiChatTools(db, 'ws-1', null, actor, { readOnly: true });
+    expect(tools.map(tool => tool.name)).toEqual([
+      'query_entities',
+      'get_entity_details',
+      'traverse_relations'
+    ]);
+  });
+
+  it('filters the read-only tool set by the requested IDs', () => {
+    const selected = createAiChatTools(db, 'ws-1', null, actor, {
+      readOnly: true,
+      toolIds: ['get_entity_details', 'query_entities']
+    });
+    expect(selected.map(tool => tool.name)).toEqual(['query_entities', 'get_entity_details']);
+
+    const none = createAiChatTools(db, 'ws-1', null, actor, {
+      readOnly: true,
+      toolIds: []
+    });
+    expect(none).toEqual([]);
+  });
+
   it('queries actual entity content, not just schema metadata', async () => {
     const tools = createAiChatTools(db, 'ws-1', null, actor);
     const queryEntities = tools.find(tool => tool.name === 'query_entities');

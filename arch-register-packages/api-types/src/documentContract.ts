@@ -52,11 +52,51 @@ export const documentFieldSchema = z.object({
   retired: z.boolean().default(false)
 });
 
+export const documentAiToolIdSchema = z.enum([
+  'query_entities',
+  'get_entity_details',
+  'traverse_relations'
+]);
+
+export type DocumentAiToolId = z.infer<typeof documentAiToolIdSchema>;
+
+export const DOCUMENT_AI_READ_ONLY_TOOLS: ReadonlyArray<{
+  id: DocumentAiToolId;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: 'query_entities',
+    label: 'Query entities',
+    description: 'Find visible entities by text, schema, owner, or lifecycle.'
+  },
+  {
+    id: 'get_entity_details',
+    label: 'Get entity details',
+    description: 'Read an entity, its fields, and its visible relationships.'
+  },
+  {
+    id: 'traverse_relations',
+    label: 'Traverse relations',
+    description: 'Explore visible entity relationships across multiple hops.'
+  }
+];
+
+const documentAiToolSelectionSchema = z
+  .array(documentAiToolIdSchema)
+  .superRefine((tools, context) => {
+    if (new Set(tools).size !== tools.length) {
+      context.addIssue({ code: z.ZodIssueCode.custom, message: 'AI action tools must be unique' });
+    }
+  });
+
 const documentAiActionBaseSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   prompt: z.string().min(1),
-  enabled: z.boolean().default(true)
+  enabled: z.boolean().default(true),
+  // Omitted means the standard read-only tool set for backwards compatibility; [] means no tools.
+  tools: documentAiToolSelectionSchema.optional()
 });
 
 export const documentAiActionSchema = z.discriminatedUnion('kind', [
