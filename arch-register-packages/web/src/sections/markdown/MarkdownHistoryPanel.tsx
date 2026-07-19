@@ -104,6 +104,7 @@ const RevisionPropertiesPanel = ({
       documentTypes={documentTypes}
       fields={documentType?.fields ?? []}
       metadata={metadata}
+      generatedMetadata={{}}
       readOnly
       onTypeChange={() => {}}
       onValueChange={() => {}}

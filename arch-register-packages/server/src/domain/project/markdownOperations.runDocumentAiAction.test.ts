@@ -94,6 +94,14 @@ const documentType = {
       kind: 'interactive' as const,
       prompt: 'Do not run.',
       enabled: false
+    },
+    {
+      id: 'generate-summary',
+      name: 'Generate summary',
+      kind: 'metadata_generator' as const,
+      prompt: 'Generate the summary field.',
+      enabled: true,
+      outputFieldId: 'summary'
     }
   ],
   created_at: new Date('2024-01-01T00:00:00Z'),
@@ -184,6 +192,16 @@ describe('runDocumentAiAction', () => {
     await expect(
       runDocumentAiAction(db, storage, 'ws-1', 'node-1', 'disabled-action', event)
     ).rejects.toThrow();
+  });
+
+  it('rejects an enabled metadata_generator action (not runnable as interactive)', async () => {
+    const db = makeDb();
+    const storage = makeStorage();
+
+    await expect(
+      runDocumentAiAction(db, storage, 'ws-1', 'node-1', 'generate-summary', event)
+    ).rejects.toThrow();
+    expect(chat).not.toHaveBeenCalled();
   });
 
   it('rejects an unknown action id', async () => {

@@ -52,6 +52,7 @@ import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { toFieldId } from '../../utils/fieldId';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
+import { settingsSectionTarget } from '../../routes/settingsNavigation';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
 import styles from './DocumentSettingsScreen.module.css';
 
@@ -90,7 +91,7 @@ const newDocumentField = (existingIds: ReadonlySet<string> = new Set<string>()):
 
 const newAiAction = (): DocumentAiAction => ({
   id: crypto.randomUUID(),
-  name: 'New AI action',
+  name: '',
   kind: 'interactive',
   prompt: '',
   enabled: true
@@ -184,7 +185,7 @@ const DocumentTypeEditor = ({
   const updateType = useUpdateDocumentType(workspaceSlug);
   const archiveType = useArchiveDocumentType(workspaceSlug);
   const deleteType = useDeleteDocumentType(workspaceSlug);
-  const { data: aiStatus } = useAiStatus(workspaceSlug);
+  const { data: aiStatus, isLoading: aiStatusLoading } = useAiStatus(workspaceSlug);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -252,12 +253,8 @@ const DocumentTypeEditor = ({
     setDirty(true);
   };
 
-  const updateAiAction = (actionId: string, patch: Partial<DocumentAiAction>) => {
-    setAiActions(current =>
-      current.map(action =>
-        action.id === actionId ? ({ ...action, ...patch } as DocumentAiAction) : action
-      )
-    );
+  const updateAiAction = (actionId: string, next: DocumentAiAction) => {
+    setAiActions(current => current.map(action => (action.id === actionId ? next : action)));
     setDirty(true);
   };
 
@@ -481,6 +478,27 @@ const DocumentTypeEditor = ({
                 field will ask you to choose how to migrate its data before saving.
               </div>
 
+              {!aiStatusLoading && !aiStatus?.configured && (
+                <div className={styles.fieldsHead}>
+                  <div className={styles.sectionLabel}>AI Actions</div>
+                </div>
+              )}
+              {!aiStatusLoading && !aiStatus?.configured && (
+                <div className={styles.fieldsTable}>
+                  <div className={styles.fieldEmpty}>
+                    AI isn&apos;t configured for this workspace yet.{' '}
+                    <button
+                      type="button"
+                      className={styles.linkButton}
+                      onClick={() => navigate(settingsSectionTarget(workspaceSlug, 'ai'))}
+                    >
+                      Set up AI
+                    </button>{' '}
+                    to define metadata generators and interactive actions for this document type.
+                  </div>
+                </div>
+              )}
+
               {aiStatus?.configured && (
                 <>
                   <div className={styles.fieldsHead}>
@@ -496,7 +514,22 @@ const DocumentTypeEditor = ({
                         <DocumentAiActionRow
                           key={action.id}
                           action={action}
-                          onUpdate={patch => updateAiAction(action.id, patch)}
+                          fields={fields}
+                          claimedFieldIds={
+                            new Set(
+                              aiActions
+                                .filter(
+                                  (
+                                    other
+                                  ): other is Extract<
+                                    DocumentAiAction,
+                                    { kind: 'metadata_generator' }
+                                  > => other.id !== action.id && other.kind === 'metadata_generator'
+                                )
+                                .map(other => other.outputFieldId)
+                            )
+                          }
+                          onUpdate={next => updateAiAction(action.id, next)}
                           onRemove={() => removeAiAction(action.id)}
                         />
                       ))}
@@ -753,32 +786,100 @@ const DocumentFieldRow = ({
   );
 };
 
+const AI_ACTION_KIND_OPTIONS: { value: DocumentAiAction['kind']; label: string }[] = [
+  { value: 'interactive', label: 'Interactive' },
+  { value: 'metadata_generator', label: 'Metadata generator' }
+];
+
 const DocumentAiActionRow = ({
   action,
+  fields,
+  claimedFieldIds,
   onUpdate,
   onRemove
 }: {
   action: DocumentAiAction;
-  onUpdate: (patch: Partial<DocumentAiAction>) => void;
+  fields: DocumentField[];
+  claimedFieldIds: ReadonlySet<string>;
+  onUpdate: (next: DocumentAiAction) => void;
   onRemove: () => void;
 }) => {
+  const eligibleFields = fields.filter(
+    field => !field.retired && !isLinkType(field.type) && !claimedFieldIds.has(field.id)
+  );
+
+  const handleKindChange = (kind: string | undefined) => {
+    if (kind === 'metadata_generator') {
+      onUpdate({
+        id: action.id,
+        name: action.name,
+        prompt: action.prompt,
+        enabled: action.enabled,
+        kind: 'metadata_generator',
+        outputFieldId: eligibleFields[0]?.id ?? ''
+      });
+    } else if (kind === 'interactive') {
+      onUpdate({
+        id: action.id,
+        name: action.name,
+        prompt: action.prompt,
+        enabled: action.enabled,
+        kind: 'interactive'
+      });
+    }
+  };
+
   return (
     <div className={styles.aiActionRow}>
       <TextInput
         value={action.name}
-        onChange={value => onUpdate({ name: value ?? '' })}
+        onChange={value => onUpdate({ ...action, name: value ?? '' })}
+        placeholder="Action name"
         style={{ width: '100%' }}
       />
+      <Select.Root value={action.kind} onChange={handleKindChange} style={{ width: '100%' }}>
+        {AI_ACTION_KIND_OPTIONS.map(option => (
+          <Select.Item key={option.value} value={option.value}>
+            {option.label}
+          </Select.Item>
+        ))}
+      </Select.Root>
       <TextArea
         value={action.prompt}
-        onChange={value => onUpdate({ prompt: value ?? '' })}
+        onChange={value => onUpdate({ ...action, prompt: value ?? '' })}
         rows={2}
         style={{ width: '100%' }}
       />
+      <div>
+        {action.kind === 'metadata_generator' &&
+          (eligibleFields.length > 0 || action.outputFieldId ? (
+            <Select.Root
+              value={action.outputFieldId}
+              onChange={fieldId => onUpdate({ ...action, outputFieldId: fieldId ?? '' })}
+              style={{ width: '100%' }}
+            >
+              {eligibleFields
+                .concat(
+                  fields.filter(
+                    field => field.id === action.outputFieldId && !eligibleFields.includes(field)
+                  )
+                )
+                .map(field => (
+                  <Select.Item key={field.id} value={field.id}>
+                    {field.name}
+                  </Select.Item>
+                ))}
+            </Select.Root>
+          ) : (
+            <div className="dim" style={{ fontSize: 11 }}>
+              No eligible fields — add a text, long text, boolean, date, number, or enum field
+              first.
+            </div>
+          ))}
+      </div>
       <Checkbox
         value={action.enabled}
-        onChange={value => onUpdate({ enabled: value ?? false })}
-        label="Enabled"
+        onChange={value => onUpdate({ ...action, enabled: value ?? false })}
       />
       <button type="button" className={styles.iconBtn} onClick={onRemove}>
         <TbTrash size={13} />

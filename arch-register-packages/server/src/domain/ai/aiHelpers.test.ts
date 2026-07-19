@@ -100,6 +100,12 @@ describe('ai chat route helpers', () => {
     expect(buildAiConfigInput({ api_key: 'plain-key' }).api_key_enc).toMatch(/^v1:/);
 
     expect(buildAiConfigInput({ api_key: '' })).toEqual({ api_key_enc: null });
+
+    expect(buildAiConfigInput({ model: '', base_url: '', system_prompt: '' })).toEqual({
+      model: null,
+      base_url: null,
+      system_prompt: null
+    });
   });
 
   it('rejects new API key writes when encryption is not configured', () => {

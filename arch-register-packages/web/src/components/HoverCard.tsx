@@ -51,6 +51,7 @@ export const HoverCard = ({
         onMouseLeave={scheduleClose}
         onFocus={scheduleOpen}
         onBlur={scheduleClose}
+        onClick={() => setOpen(true)}
       >
         {children}
       </span>
