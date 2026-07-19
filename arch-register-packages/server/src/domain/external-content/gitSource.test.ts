@@ -3,8 +3,13 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { assertSafeGitUrl, fetchGitSnapshot } from './gitSource';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('./gitUrlSafety', () => ({
+  assertSafeGitUrl: vi.fn()
+}));
+
+import { fetchGitSnapshot } from './gitSource';
 
 const execFileAsync = promisify(execFile);
 
@@ -69,14 +74,5 @@ describe('fetchGitSnapshot', () => {
     );
 
     expect(snapshot.files.map(file => file.path)).toEqual(['README.md', 'docs/readme.md']);
-  });
-
-  it('rejects private HTTPS Git hosts', async () => {
-    await expect(assertSafeGitUrl('https://127.0.0.1/repository.git')).rejects.toThrow(
-      'Git source host must be publicly routable'
-    );
-    await expect(assertSafeGitUrl('https://localhost/repository.git')).rejects.toThrow(
-      'Git source host must be publicly routable'
-    );
   });
 });

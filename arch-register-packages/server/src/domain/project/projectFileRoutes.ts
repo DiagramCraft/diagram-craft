@@ -4,6 +4,7 @@ import {
   getRouterParam,
   readBody,
   readMultipartFormData,
+  assertBodySize,
   HTTPError
 } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
@@ -19,10 +20,12 @@ import { PROJECT_SCOPE, ENTITY_SCOPE, WORKSPACE_SCOPE } from './contentScope';
 import { uploadMarkdownAttachment, createMarkdownDiagramAttachment } from './markdownOperations';
 
 const MAX_SIZE_BYTES = parseInt(process.env['UPLOAD_MAX_SIZE_MB'] ?? '50', 10) * 1024 * 1024;
+const MAX_REQUEST_SIZE_BYTES = MAX_SIZE_BYTES + 1024 * 1024;
 
 const readUpload = async (
   event: AuthenticatedEvent
 ): Promise<{ buffer: Buffer; mimeType: string; originalFilename: string }> => {
+  await assertBodySize(event, MAX_REQUEST_SIZE_BYTES);
   const parts = await readMultipartFormData(event);
   const file = parts?.find(p => p.name === 'file');
   if (!file) {

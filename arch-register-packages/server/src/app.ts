@@ -81,6 +81,8 @@ export const createApp = (
     }
   });
 
+  app.use(createSecurityHeadersMiddleware());
+
   const corsOriginEnv = process.env['CORS_ORIGIN'] ?? '*';
   const corsOrigin: '*' | string[] =
     corsOriginEnv === '*' ? '*' : corsOriginEnv.split(',').map(s => s.trim());
@@ -113,7 +115,6 @@ export const createApp = (
 
   app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
 
-  app.use(createSecurityHeadersMiddleware());
   app.use(createDevDelayMiddleware());
 
   // Public routes (no auth required)

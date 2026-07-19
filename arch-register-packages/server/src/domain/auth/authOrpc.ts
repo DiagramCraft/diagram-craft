@@ -6,8 +6,7 @@ import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { verifyPassword } from '../../utils/password';
-import { generateTokenPair, verifyToken } from '../../utils/jwt';
+import { generateTokenPair, getTokenExpirySeconds, verifyToken } from '../../utils/jwt';
 import { generateAuthUrl } from './oidcClient';
 import { clearAuthCookies, setAuthCookies } from '../../utils/cookies';
 import { getCookie } from 'h3';
@@ -17,7 +16,8 @@ import {
   buildAuthMeResponse,
   buildUserUpdateInput,
   parseRequestedGlobalRoles,
-  selectRefreshToken
+  selectRefreshToken,
+  verifyLoginPassword
 } from './authHelpers';
 import { resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
 import type { TeamRole } from '@arch-register/permissions';
@@ -55,6 +55,7 @@ export const authPublicORPCRouter = publicRouter.router({
       if (!user && input.body.username.includes('@')) {
         user = await context.db.auth.getUserByEmail(input.body.username);
       }
+      const isValid = await verifyLoginPassword(user, input.body.password);
       orpcAssert.present(user, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
       orpcAssert.string(user.password_hash, {
         code: 'UNAUTHORIZED',
@@ -69,12 +70,17 @@ export const authPublicORPCRouter = publicRouter.router({
         message: 'User account is inactive'
       });
 
-      const isValid = await verifyPassword(user.password_hash, input.body.password);
       orpcAssert.true(isValid, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
 
       await context.db.auth.updateUserLastLogin(user.id, new Date());
       const tokens = generateTokenPair(user);
-      setAuthCookies(context.event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+      setAuthCookies(
+        context.event,
+        tokens.access_token,
+        tokens.refresh_token,
+        tokens.expires_in,
+        getTokenExpirySeconds('refresh')
+      );
       return tokens;
     }),
 
@@ -120,7 +126,13 @@ export const authPublicORPCRouter = publicRouter.router({
       orpcAssert.true(user.is_active, { code: 'FORBIDDEN', message: 'User account is inactive' });
 
       const tokens = generateTokenPair(user);
-      setAuthCookies(context.event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+      setAuthCookies(
+        context.event,
+        tokens.access_token,
+        tokens.refresh_token,
+        tokens.expires_in,
+        getTokenExpirySeconds('refresh')
+      );
       return tokens;
     }),
 

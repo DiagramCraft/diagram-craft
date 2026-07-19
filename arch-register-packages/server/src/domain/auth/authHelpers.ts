@@ -4,7 +4,11 @@ import {
 } from '@arch-register/permissions';
 import type { TeamRole } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
+import { verifyPassword } from '../../utils/password';
 import { GlobalRole, UserDbResult } from './db/authDatabase';
+
+const DUMMY_PASSWORD_HASH =
+  '$argon2id$v=19$m=65536,t=3,p=4$Px/0E4/Uidg2/8aJ6c08zA$bYyBAz45tuMYV2oXsOeQzlXH1WMNAApkAxtr8wR9pJo';
 
 type RefreshBody = {
   refresh_token?: string;
@@ -37,6 +41,17 @@ type WorkspaceMembershipData = {
  */
 export const selectRefreshToken = (cookieToken: string | null | undefined, body?: RefreshBody) =>
   cookieToken ?? body?.refresh_token;
+
+export const verifyLoginPassword = async (
+  user: UserDbResult | null,
+  password: string
+): Promise<boolean> => {
+  if (!user?.password_hash || user.auth_provider !== 'local') {
+    await verifyPassword(DUMMY_PASSWORD_HASH, password);
+    return false;
+  }
+  return verifyPassword(user.password_hash, password);
+};
 
 export const buildAuthMeResponse = (
   user: UserDbResult,

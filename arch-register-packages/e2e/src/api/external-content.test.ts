@@ -4,7 +4,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
+import { vi } from 'vitest';
 import { createStorage } from '@arch-register/server/storage/storage';
+
+vi.mock('@arch-register/server/domain/external-content/gitUrlSafety', () => ({
+  assertSafeGitUrl: vi.fn()
+}));
+
 import { syncExternalContentSource } from '@arch-register/server/domain/external-content/externalContentSync';
 import { createApiTest, expect } from '../helpers/fixtures';
 

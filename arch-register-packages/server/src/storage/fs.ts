@@ -156,6 +156,6 @@ export class FilesystemStorage implements StorageAdapter {
   }
 
   async deleteAll(workspace: string, projectId: string): Promise<void> {
-    await rm(join(this.baseDir, workspace, projectId), { recursive: true, force: true });
+    await rm(this.resolvePath(workspace, projectId, ''), { recursive: true, force: true });
   }
 }

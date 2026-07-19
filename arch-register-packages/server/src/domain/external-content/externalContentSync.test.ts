@@ -4,7 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
+
+vi.mock('./gitUrlSafety', () => ({
+  assertSafeGitUrl: vi.fn()
+}));
+
 import { FilesystemStorage } from '../../storage/fs';
 import { runContractSuiteAgainstBothDrivers } from '../../db/contract-tests/harness';
 import { createFixtureWorkspace } from '../../db/contract-tests/projectFixtures';

@@ -6,11 +6,16 @@ const TAG_LENGTH = 16;
 
 const FALLBACK_SALT = 'arch-register-ai';
 
+let cachedKey: { raw: string; salt: string; key: Buffer } | null = null;
+
 const getKey = (): Buffer | null => {
   const raw = process.env['AI_ENCRYPTION_KEY'];
   if (!raw) return null;
   const salt = process.env['AI_ENCRYPTION_SALT'] ?? FALLBACK_SALT;
-  return scryptSync(raw, salt, 32);
+  if (cachedKey?.raw === raw && cachedKey.salt === salt) return cachedKey.key;
+  const key = scryptSync(raw, salt, 32);
+  cachedKey = { raw, salt, key };
+  return key;
 };
 
 /**
