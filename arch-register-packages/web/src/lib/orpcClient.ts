@@ -7,6 +7,7 @@ import { assessmentContract } from '@arch-register/api-types/assessmentContract'
 import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
+import { devContract } from '@arch-register/api-types/devContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
@@ -55,6 +56,7 @@ const webContracts = {
   ...aiContract,
   ...authPublicContract,
   ...authProtectedContract,
+  ...devContract,
   ...workspaceAnalyticsContract,
   ...workspaceMetricContract,
   ...jobsContract,
