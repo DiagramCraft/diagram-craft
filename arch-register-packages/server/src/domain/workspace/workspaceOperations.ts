@@ -299,6 +299,7 @@ const copyTypedWorkspaceDocuments = async (
         node_id: targetNodeId,
         document_type_id: targetTypeId,
         values,
+        generated_metadata: state.generated_metadata,
         updated_at: timestamp
       });
       const links = (await db.document.listDocumentLinks(sourceWorkspace, nodeId)).flatMap(link => {

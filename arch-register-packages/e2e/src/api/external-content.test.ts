@@ -136,6 +136,7 @@ test('opens an external MDX file through the Markdown API as read-only content',
       document_type: null,
       document_type_id: null,
       metadata: {},
+      generated_metadata: {},
       available_fields: [],
       retired_fields: []
     });

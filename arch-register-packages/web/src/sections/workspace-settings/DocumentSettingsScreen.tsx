@@ -254,7 +254,9 @@ const DocumentTypeEditor = ({
 
   const updateAiAction = (actionId: string, patch: Partial<DocumentAiAction>) => {
     setAiActions(current =>
-      current.map(action => (action.id === actionId ? { ...action, ...patch } : action))
+      current.map(action =>
+        action.id === actionId ? ({ ...action, ...patch } as DocumentAiAction) : action
+      )
     );
     setDirty(true);
   };

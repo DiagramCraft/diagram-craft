@@ -1621,6 +1621,7 @@ const importDocuments = async (
       name: type.name,
       description: type.description,
       fields: type.fields,
+      aiActions: type.aiActions ?? [],
       color: type.color,
       icon: type.icon,
       updated_at: now
@@ -1722,6 +1723,7 @@ const importDocuments = async (
       node_id: nodeId,
       document_type_id: documentTypeId,
       values,
+      generated_metadata: item.generated_metadata ?? {},
       updated_at: new Date()
     });
     const links = item.links.flatMap(link => {

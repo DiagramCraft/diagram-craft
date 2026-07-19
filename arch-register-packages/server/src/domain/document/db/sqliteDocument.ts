@@ -39,6 +39,7 @@ const typeVersionMapper = (row: DatabaseRow): DocumentTypeVersionDbResult => ({
   name: String(row['name']),
   description: String(row['description'] ?? ''),
   fields: parseDatabaseJson(row['fields'], [], 'document_type_version.fields'),
+  aiActions: parseDatabaseJson(row['ai_actions'], [], 'document_type_version.ai_actions'),
   color: row['color'] == null ? null : String(row['color']),
   icon: row['icon'] == null ? null : String(row['icon']),
   change_summary: parseDatabaseJson(
@@ -76,6 +77,11 @@ const metadataMapper = (row: DatabaseRow) => ({
   node_id: String(row['node_id']),
   document_type_id: row['document_type_id'] == null ? null : String(row['document_type_id']),
   values: parseDatabaseJson(row['values'], {}, 'content_node_document.values'),
+  generated_metadata: parseDatabaseJson(
+    row['generated_metadata'],
+    {},
+    'content_node_document.generated_metadata'
+  ),
   updated_at: databaseDate(row['updated_at'])
 });
 
@@ -214,7 +220,7 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
 
   async createDocumentTypeVersion(input: DocumentTypeVersionDbCreate) {
     this.run(
-      'INSERT INTO document_type_version (id, workspace, document_type_id, version, name, description, fields, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO document_type_version (id, workspace, document_type_id, version, name, description, fields, ai_actions, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -223,6 +229,7 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
         input.name,
         input.description,
         JSON.stringify(input.fields),
+        JSON.stringify(input.aiActions ?? []),
         input.color,
         input.icon,
         JSON.stringify(input.change_summary),
@@ -246,8 +253,31 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
     const result = this.run(
       `UPDATE content_node_document
        SET "values" = json_set(json_remove("values", '$."' || ? || '"'), '$."' || ? || '"', json_extract("values", '$."' || ? || '"'))
-       WHERE workspace = ? AND document_type_id = ? AND json_extract("values", '$."' || ? || '"') IS NOT NULL`,
-      [oldFieldId, newFieldId, oldFieldId, workspace, documentTypeId, oldFieldId]
+         , generated_metadata = CASE
+           WHEN json_type(generated_metadata, '$."' || ? || '"') IS NOT NULL
+           THEN json_set(
+             json_remove(generated_metadata, '$."' || ? || '"'),
+             '$."' || ? || '"',
+             json_set(json_extract(generated_metadata, '$."' || ? || '"'), '$.fieldId', ?)
+           )
+           ELSE generated_metadata
+         END
+       WHERE workspace = ? AND document_type_id = ?
+         AND (json_extract("values", '$."' || ? || '"') IS NOT NULL OR json_type(generated_metadata, '$."' || ? || '"') IS NOT NULL)`,
+      [
+        oldFieldId,
+        newFieldId,
+        oldFieldId,
+        oldFieldId,
+        oldFieldId,
+        newFieldId,
+        oldFieldId,
+        newFieldId,
+        workspace,
+        documentTypeId,
+        oldFieldId,
+        oldFieldId
+      ]
     );
     return result.changes;
   }
@@ -255,9 +285,11 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
   async removeDocumentMetadataField(workspace: string, documentTypeId: string, fieldId: string) {
     const result = this.run(
       `UPDATE content_node_document
-       SET "values" = json_remove("values", '$."' || ? || '"')
-       WHERE workspace = ? AND document_type_id = ? AND json_extract("values", '$."' || ? || '"') IS NOT NULL`,
-      [fieldId, workspace, documentTypeId, fieldId]
+       SET "values" = json_remove("values", '$."' || ? || '"'),
+           generated_metadata = json_remove(generated_metadata, '$."' || ? || '"')
+       WHERE workspace = ? AND document_type_id = ?
+         AND (json_extract("values", '$."' || ? || '"') IS NOT NULL OR json_type(generated_metadata, '$."' || ? || '"') IS NOT NULL)`,
+      [fieldId, fieldId, workspace, documentTypeId, fieldId, fieldId]
     );
     return result.changes;
   }
@@ -359,14 +391,18 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
   }
 
   async upsertDocumentMetadata(input: DocumentMetadataDbUpsert) {
+    const generatedMetadata = input.generated_metadata;
+    const generatedMetadataSql =
+      generatedMetadata === undefined ? JSON.stringify({}) : JSON.stringify(generatedMetadata);
     this.run(
-      `INSERT INTO content_node_document (workspace, node_id, document_type_id, "values", updated_at) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(node_id) DO UPDATE SET document_type_id = excluded.document_type_id, "values" = excluded."values", updated_at = excluded.updated_at`,
+      `INSERT INTO content_node_document (workspace, node_id, document_type_id, "values", generated_metadata, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(node_id) DO UPDATE SET document_type_id = excluded.document_type_id, "values" = excluded."values", ${generatedMetadata === undefined ? '' : 'generated_metadata = excluded.generated_metadata,'} updated_at = excluded.updated_at`,
       [
         input.workspace,
         input.node_id,
         input.document_type_id,
         JSON.stringify(input.values),
+        generatedMetadataSql,
         input.updated_at.toISOString()
       ]
     );

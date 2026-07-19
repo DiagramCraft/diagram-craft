@@ -44,6 +44,7 @@ const typeVersionMapper = (row: DatabaseRow): DocumentTypeVersionDbResult => ({
   name: String(row['name']),
   description: String(row['description'] ?? ''),
   fields: parseDatabaseJson(row['fields'], [], 'document_type_version.fields'),
+  aiActions: parseDatabaseJson(row['ai_actions'], [], 'document_type_version.ai_actions'),
   color: row['color'] == null ? null : String(row['color']),
   icon: row['icon'] == null ? null : String(row['icon']),
   change_summary: parseDatabaseJson(
@@ -79,6 +80,11 @@ const metadataMapper = (row: DatabaseRow) => ({
   node_id: String(row['node_id']),
   document_type_id: row['document_type_id'] == null ? null : String(row['document_type_id']),
   values: parseDatabaseJson(row['values'], {}, 'content_node_document.values'),
+  generated_metadata: parseDatabaseJson(
+    row['generated_metadata'],
+    {},
+    'content_node_document.generated_metadata'
+  ),
   updated_at: databaseDate(row['updated_at'])
 });
 const linkMapper = (row: DatabaseRow) => ({
@@ -179,9 +185,9 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
   async createDocumentTypeVersion(input: DocumentTypeVersionDbCreate) {
     const [row] = (await this.sql`
       INSERT INTO document_type_version
-        (id, workspace, document_type_id, version, name, description, fields, color, icon, change_summary, created_by, created_at)
+        (id, workspace, document_type_id, version, name, description, fields, ai_actions, color, icon, change_summary, created_by, created_at)
       VALUES
-        (${input.id}, ${input.workspace}, ${input.document_type_id}, ${input.version}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
+        (${input.id}, ${input.workspace}, ${input.document_type_id}, ${input.version}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.aiActions ?? [])}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
       RETURNING *
     `) as DatabaseRow[];
     return typeVersionMapper(row!);
@@ -195,8 +201,19 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
     const rows = (await this.sql`
       UPDATE content_node_document
       SET "values" = ("values" - ${oldFieldId}::text)
-        || jsonb_build_object(${newFieldId}::text, "values" -> ${oldFieldId}::text)
-      WHERE workspace = ${workspace} AND document_type_id = ${documentTypeId} AND "values" ? ${oldFieldId}::text
+        || jsonb_build_object(${newFieldId}::text, "values" -> ${oldFieldId}::text),
+        generated_metadata = CASE
+          WHEN generated_metadata ? ${oldFieldId}::text
+          THEN (generated_metadata - ${oldFieldId}::text)
+            || jsonb_build_object(
+              ${newFieldId}::text,
+              (generated_metadata -> ${oldFieldId}::text)
+                || jsonb_build_object('fieldId', ${newFieldId}::text)
+            )
+          ELSE generated_metadata
+        END
+      WHERE workspace = ${workspace} AND document_type_id = ${documentTypeId}
+        AND ("values" ? ${oldFieldId}::text OR generated_metadata ? ${oldFieldId}::text)
       RETURNING node_id
     `) as DatabaseRow[];
     return rows.length;
@@ -204,8 +221,10 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
   async removeDocumentMetadataField(workspace: string, documentTypeId: string, fieldId: string) {
     const rows = (await this.sql`
       UPDATE content_node_document
-      SET "values" = "values" - ${fieldId}::text
-      WHERE workspace = ${workspace} AND document_type_id = ${documentTypeId} AND "values" ? ${fieldId}::text
+      SET "values" = "values" - ${fieldId}::text,
+        generated_metadata = generated_metadata - ${fieldId}::text
+      WHERE workspace = ${workspace} AND document_type_id = ${documentTypeId}
+        AND ("values" ? ${fieldId}::text OR generated_metadata ? ${fieldId}::text)
       RETURNING node_id
     `) as DatabaseRow[];
     return rows.length;
@@ -290,8 +309,16 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
     return mapDatabaseRow(rows[0], metadataMapper);
   }
   async upsertDocumentMetadata(input: DocumentMetadataDbUpsert) {
+    if (input.generated_metadata === undefined) {
+      await this.sql`
+        INSERT INTO content_node_document (workspace, node_id, document_type_id, "values", generated_metadata, updated_at)
+        VALUES (${input.workspace}, ${input.node_id}, ${input.document_type_id}, ${this.json(input.values)}, ${this.json({})}, ${input.updated_at})
+        ON CONFLICT (node_id) DO UPDATE SET document_type_id = EXCLUDED.document_type_id, "values" = EXCLUDED."values", updated_at = EXCLUDED.updated_at
+      `;
+      return;
+    }
     await this
-      .sql`INSERT INTO content_node_document (workspace, node_id, document_type_id, "values", updated_at) VALUES (${input.workspace}, ${input.node_id}, ${input.document_type_id}, ${this.json(input.values)}, ${input.updated_at}) ON CONFLICT (node_id) DO UPDATE SET document_type_id = EXCLUDED.document_type_id, "values" = EXCLUDED."values", updated_at = EXCLUDED.updated_at`;
+      .sql`INSERT INTO content_node_document (workspace, node_id, document_type_id, "values", generated_metadata, updated_at) VALUES (${input.workspace}, ${input.node_id}, ${input.document_type_id}, ${this.json(input.values)}, ${this.json(input.generated_metadata)}, ${input.updated_at}) ON CONFLICT (node_id) DO UPDATE SET document_type_id = EXCLUDED.document_type_id, "values" = EXCLUDED."values", generated_metadata = EXCLUDED.generated_metadata, updated_at = EXCLUDED.updated_at`;
   }
   async deleteDocumentMetadata(workspace: string, nodeId: string) {
     await this
