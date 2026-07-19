@@ -122,6 +122,7 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
+import type { Point } from '@diagram-craft/geometry/point';
 
 /**
  * Represents the resolution state of a comment.
@@ -211,17 +212,21 @@ export class Comment {
    * @param element - The diagram element this comment is attached to (for element comments)
    * @param parentId - ID of the parent comment if this is a reply
    * @param userColor - Optional color associated with the author for UI display
+   * @param position - The diagram-space point this comment is anchored to (for point comments)
    *
    * @remarks
    * For element comments, the `element` parameter must be provided. The element
    * reference is maintained but may become stale if the element is deleted.
+   *
+   * For point comments, the `position` parameter must be provided. It anchors the
+   * comment to a fixed diagram-space location that isn't tied to any element.
    *
    * For reply comments, `parentId` must reference an existing comment in the same
    * diagram. The parent can be verified using {@link CommentManager.getComment}.
    */
   constructor(
     public readonly diagram: Diagram,
-    public readonly type: 'element' | 'diagram',
+    public readonly type: 'element' | 'diagram' | 'point',
     public readonly id: string,
     message: string,
     public readonly author: string,
@@ -229,7 +234,8 @@ export class Comment {
     state: CommentState = 'unresolved',
     public readonly element?: DiagramElement,
     public readonly parentId?: string,
-    public readonly userColor?: string
+    public readonly userColor?: string,
+    public readonly position?: Point
   ) {
     this.#state = state;
     this.#message = message;
@@ -352,7 +358,9 @@ export class Comment {
       type: this.type,
       diagramId: this.diagram.id,
       elementId: this.element?.id,
-      userColor: this.userColor
+      userColor: this.userColor,
+      x: this.position?.x,
+      y: this.position?.y
     };
   }
 
@@ -374,6 +382,11 @@ export class Comment {
     const element =
       serialized.type === 'element' ? diagram.lookup(serialized.elementId!) : undefined;
 
+    const position =
+      serialized.type === 'point' && serialized.x !== undefined && serialized.y !== undefined
+        ? { x: serialized.x, y: serialized.y }
+        : undefined;
+
     return new Comment(
       diagram,
       serialized.type,
@@ -384,7 +397,8 @@ export class Comment {
       serialized.state,
       element,
       serialized.parentId,
-      serialized.userColor
+      serialized.userColor,
+      position
     );
   }
 }
@@ -401,10 +415,12 @@ export type SerializedComment = {
   message: string;
   state: CommentState;
   parentId?: string;
-  type: 'diagram' | 'element';
+  type: 'diagram' | 'element' | 'point';
   diagramId: string;
   elementId?: string;
   userColor?: string;
+  x?: number;
+  y?: number;
 };
 
 /**
@@ -588,6 +604,30 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> implement
 
       const comment = Comment.deserialize(serialized, this.diagram);
       if (!comment.isStale()) result.push(comment);
+    }
+    return result;
+  }
+
+  /**
+   * Returns only point comments — comments anchored to an arbitrary diagram-space
+   * location rather than an element or the diagram as a whole.
+   *
+   * @returns Array of active point comments
+   *
+   * @example
+   * ```typescript
+   * const pointComments = manager.getPointComments();
+   * for (const c of pointComments) {
+   *   console.log(c.position);
+   * }
+   * ```
+   */
+  getPointComments(): Comment[] {
+    const result: Comment[] = [];
+    for (const serialized of this.commentsMap.values()) {
+      if (serialized.type !== 'point') continue;
+
+      result.push(Comment.deserialize(serialized, this.diagram));
     }
     return result;
   }
