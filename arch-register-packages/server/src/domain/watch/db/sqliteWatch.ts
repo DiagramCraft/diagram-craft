@@ -57,22 +57,29 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
 
   async createNotificationsFromAudit(input: CreateNotificationsFromAuditInput) {
     const { auditLog, changedByDisplayName } = input;
-    const watcherIds = (
-      input.watcherUserIds ??
-      (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))
-    ).filter(userId => userId !== auditLog.user_id);
+    const watcherRecipients =
+      input.watcherRecipients ??
+      (
+        input.watcherUserIds ??
+        (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))
+      ).map(userId => ({ userId, email: null, inAppEnabled: true, emailEnabled: false }));
 
-    for (const userId of watcherIds) {
+    for (const recipient of watcherRecipients) {
+      if (recipient.userId === auditLog.user_id) continue;
+      if (!recipient.inAppEnabled && !recipient.emailEnabled) continue;
       const entitySlug = auditLog.entity_slug ?? auditLog.entity_id;
+      const notificationId = newid();
+      const deliveryKey = `entity-watch:${auditLog.id}:user:${recipient.userId}`;
       this.run(
         `INSERT OR IGNORE INTO user_inbox_notification (
           id, user_id, workspace, category, event_type, resource_type, resource_id,
           case_id, assignment_id, actor_user_id, actor_display_name, title, message,
-          action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key,
+          in_app_enabled
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          newid(),
-          userId,
+          notificationId,
+          recipient.userId,
           auditLog.workspace,
           'information',
           `entity.${auditLog.operation}`,
@@ -89,9 +96,34 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
           auditLog.timestamp.toISOString(),
           new Date().toISOString(),
           null,
-          `entity-watch:${auditLog.id}:user:${userId}`
+          deliveryKey,
+          recipient.inAppEnabled ? 1 : 0
         ]
       );
+      if (recipient.emailEnabled && recipient.email) {
+        const notification = this.get<{ id: string }>(
+          'SELECT id FROM user_inbox_notification WHERE user_id = ? AND delivery_key = ?',
+          [recipient.userId, deliveryKey]
+        );
+        if (notification) {
+          this.run(
+            `INSERT OR IGNORE INTO notification_delivery (
+              id, notification_id, user_id, workspace, channel, status, recipient_email,
+              max_attempts, next_attempt_at, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, 'email', 'pending', ?, 5, ?, ?, ?)`,
+            [
+              newid(),
+              notification.id,
+              recipient.userId,
+              auditLog.workspace,
+              recipient.email,
+              new Date().toISOString(),
+              new Date().toISOString(),
+              new Date().toISOString()
+            ]
+          );
+        }
+      }
     }
   }
 }

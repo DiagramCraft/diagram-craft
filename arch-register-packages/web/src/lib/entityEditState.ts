@@ -13,6 +13,9 @@ export const slugifyEntityName = (name: string) =>
 export const relationIds = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
+const emptyStringToNull = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? null : (value ?? null);
+
 export const createEntityEditState = (
   entity: EntityRecord,
   schema: EntitySchema
@@ -80,10 +83,10 @@ export const createEntityUpdateBody = (
     _slug: (editState._slug as string) ?? entity._slug,
     _namespace: (editState._namespace as string) ?? entity._namespace,
     _description: (editState._description as string) ?? '',
-    _owner: (editState._owner as string) ?? null,
-    _lifecycle: (editState._lifecycle as string) ?? null,
-    _targetLifecycle: (editState._targetLifecycle as string) ?? null,
-    _targetLifecycleDate: (editState._targetLifecycleDate as string) ?? null,
+    _owner: emptyStringToNull(editState._owner),
+    _lifecycle: emptyStringToNull(editState._lifecycle),
+    _targetLifecycle: emptyStringToNull(editState._targetLifecycle),
+    _targetLifecycleDate: emptyStringToNull(editState._targetLifecycleDate),
     _tags: tags,
     _links: links.filter(link => link.url.trim() !== ''),
     ...dataFields

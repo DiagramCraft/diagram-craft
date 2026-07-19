@@ -175,7 +175,7 @@ export const toApiJobSchedule = (schedule: JobScheduleDbResult) => ({
   system_identity: schedule.system_identity,
   priority: schedule.priority,
   recurrence:
-    schedule.recurrence.type === 'hours'
+    schedule.recurrence.type === 'hours' || schedule.recurrence.type === 'minutes'
       ? { ...schedule.recurrence, startsAt: schedule.recurrence.startsAt.toISOString() }
       : schedule.recurrence,
   enabled: schedule.enabled,

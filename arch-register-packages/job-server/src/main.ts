@@ -8,6 +8,12 @@ import { createStorage } from '@arch-register/server/storage/storage';
 import { createExternalContentJobHandler } from '@arch-register/server/domain/external-content/externalContentJobs';
 import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webhook/webhookDelivery';
 import { createGovernanceNotificationJobHandler } from '@arch-register/server/domain/governance/governanceNotifications';
+import {
+  createEmailDeliveryConfigFromEnv,
+  createNotificationDeliveryJobHandler,
+  ensureAllNotificationDeliverySchedules,
+  NOTIFICATION_DELIVERY_JOB_TYPE
+} from '@arch-register/server/domain/notification/emailDelivery';
 
 const logger = createLogger('job-server');
 
@@ -42,9 +48,14 @@ const main = async () => {
   const shutdownTimeoutMs = positiveInteger('JOB_SERVER_SHUTDOWN_TIMEOUT_MS', 30 * 1000);
   const handlers = new Map<string, JobHandler>();
   const storage = createStorage();
+  await ensureAllNotificationDeliverySchedules(db);
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
   handlers.set('governance.notification', createGovernanceNotificationJobHandler(db));
+  handlers.set(
+    NOTIFICATION_DELIVERY_JOB_TYPE,
+    createNotificationDeliveryJobHandler(db, createEmailDeliveryConfigFromEnv())
+  );
   const server = createJobServer({
     db,
     handlers,

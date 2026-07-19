@@ -96,11 +96,11 @@ export const filterVisibleEntities = <T extends PermissionEntity>(
 
 /**
  * Require project action permission, throw 403 if not allowed.
- * 
+ *
 
-/**
+ /**
  * Require workspace admin role, throw 403 if not allowed.
- * 
+ *
  * Checks if user has workspace admin role or global admin permission.
  */
 export const requireWorkspaceAdmin = (context: WorkspaceAuthorizationContext, message?: string) => {
@@ -305,4 +305,21 @@ export const buildApiEntityAuthCtx = async (
     if (cache.get(workspace) === contextPromise) cache.delete(workspace);
     throw error;
   }
+};
+
+/** Builds the current authorization context for a persisted user in a worker. */
+export const buildUserAuthCtx = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  userId: string
+): Promise<AuthorizationContext> => {
+  const dataProvider = new ServerDataProvider(db);
+  const workspaceData = await fetchWorkspaceAuthorizationContextData(
+    dataProvider,
+    workspace,
+    userId
+  );
+  const workspaceContext = buildWorkspaceAuthorizationContext(workspaceData);
+  const entityData = await fetchEntityAuthorizationContextData(dataProvider, workspace);
+  return buildEntityAuthorizationContext(workspaceContext, entityData);
 };

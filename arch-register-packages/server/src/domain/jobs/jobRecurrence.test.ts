@@ -18,6 +18,18 @@ describe('job recurrence', () => {
     );
   });
 
+  it('calculates minute occurrences from an anchored start', () => {
+    const recurrence = {
+      type: 'minutes' as const,
+      intervalMinutes: 2,
+      startsAt: new Date('2026-01-01T01:00:00.000Z')
+    };
+
+    expect(nextJobOccurrence(recurrence, new Date('2026-01-01T01:05:00.000Z'))).toEqual(
+      new Date('2026-01-01T01:06:00.000Z')
+    );
+  });
+
   it('calculates daily and weekly UTC occurrences', () => {
     expect(
       nextJobOccurrence({ type: 'daily', timeUtc: '09:30' }, new Date('2026-01-01T10:00:00.000Z'))
@@ -53,6 +65,9 @@ describe('job recurrence', () => {
   it('rejects invalid recurrence definitions', () => {
     expect(() =>
       validateJobScheduleRecurrence({ type: 'hours', intervalHours: 0, startsAt: new Date() })
+    ).toThrow();
+    expect(() =>
+      validateJobScheduleRecurrence({ type: 'minutes', intervalMinutes: 0, startsAt: new Date() })
     ).toThrow();
     expect(() => validateJobScheduleRecurrence({ type: 'daily', timeUtc: '25:00' })).toThrow();
     expect(() =>
