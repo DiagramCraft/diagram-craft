@@ -24,6 +24,7 @@ import { buildSystemPrompt } from './systemPromptBuilder';
 import { createAiChatTools } from './chatTools';
 import { httpAssert } from '@arch-register/server/utils/httpAssert';
 import { orpcAssert } from '@arch-register/server/utils/orpcAssert';
+import { AiEncryptionError } from '../../utils/encryption';
 
 const toConversationResponse = (c: {
   id: string;
@@ -198,7 +199,17 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
       updateConfig: aiRouter.ai.updateConfig.handler(async ({ input, context }) => {
         const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.settings');
-        const configInput = buildAiConfigInput(input.body as Record<string, unknown>);
+        let configInput: ReturnType<typeof buildAiConfigInput>;
+        try {
+          configInput = buildAiConfigInput(input.body as Record<string, unknown>);
+        } catch (error) {
+          if (error instanceof AiEncryptionError) {
+            throw new ORPCError('INTERNAL_SERVER_ERROR', {
+              message: 'AI credential encryption is not configured correctly'
+            });
+          }
+          throw error;
+        }
         const config = await context.db.ai.upsertAiConfig(workspace, configInput);
         return createAiConfigResponse(config);
       }),

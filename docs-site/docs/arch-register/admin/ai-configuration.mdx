@@ -28,6 +28,11 @@ The current UI exposes configuration for:
 The workspace prompt is shared configuration, not a per-user preference. Treat it as a workspace behavior control and
 manage it accordingly.
 
+Workspace API keys are stored using a versioned encrypted format. Configure `AI_ENCRYPTION_KEY` before saving a key;
+new plaintext credential writes are rejected. For legacy values or key rotation, run the server's
+`rotate:ai-keys` command in `--check` mode and then `--apply` mode with the appropriate `--legacy-format` and old-key
+environment variables. Do this during a maintenance window, and remove the old key after successful migration.
+
 ## Related Pages
 
 - [AI Assistant and Extract](../use/ai-assistant-extract)

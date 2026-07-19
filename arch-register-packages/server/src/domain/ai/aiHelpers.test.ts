@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   buildAiConfigInput,
   buildConversationAutoTitle,
@@ -7,6 +7,14 @@ import {
   parseExtractResponse
 } from './aiHelpers';
 import { AiConfigDbResult } from './db/aiDatabase';
+
+beforeEach(() => {
+  process.env['AI_ENCRYPTION_KEY'] = 'test-encryption-key';
+});
+
+afterEach(() => {
+  delete process.env['AI_ENCRYPTION_KEY'];
+});
 
 const now = new Date('2026-06-07T10:00:00.000Z');
 
@@ -81,17 +89,25 @@ describe('ai chat route helpers', () => {
         system_prompt: 'Focus on architecture.',
         enabled: true
       })
-    ).toEqual({
+    ).toMatchObject({
       provider: 'openai',
-      api_key_enc: 'plain-key',
       model: 'gpt-4.1',
       base_url: 'http://localhost:9999/v1',
       temperature: 0.6,
       system_prompt: 'Focus on architecture.',
       enabled: true
     });
+    expect(buildAiConfigInput({ api_key: 'plain-key' }).api_key_enc).toMatch(/^v1:/);
 
     expect(buildAiConfigInput({ api_key: '' })).toEqual({ api_key_enc: null });
+  });
+
+  it('rejects new API key writes when encryption is not configured', () => {
+    delete process.env['AI_ENCRYPTION_KEY'];
+
+    expect(() => buildAiConfigInput({ api_key: 'plain-key' })).toThrowError(
+      'AI_ENCRYPTION_KEY is required'
+    );
   });
 
   it('rejects invalid AI config inputs', () => {
