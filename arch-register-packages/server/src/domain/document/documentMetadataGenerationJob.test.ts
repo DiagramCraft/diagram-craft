@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage.types';
+import type { DocumentAiToolId } from '@arch-register/api-types/documentContract';
 import {
   createDocumentMetadataGenerationScanJobHandler,
   scheduleMetadataGenerationForDocument
@@ -76,7 +77,8 @@ const documentType = {
       kind: 'metadata_generator' as const,
       prompt: 'Summarize the document.',
       enabled: true,
-      outputFieldId: 'summary'
+      outputFieldId: 'summary',
+      tools: ['get_entity_details'] as DocumentAiToolId[]
     },
     {
       id: 'gen-disabled',
@@ -352,6 +354,13 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
           summary: expect.objectContaining({ status: 'success', fieldId: 'summary' })
         })
       })
+    );
+    expect(createAiChatTools).toHaveBeenCalledWith(
+      db,
+      'ws-1',
+      { userId: 'user-1' },
+      { id: 'user-1', displayName: 'User One' },
+      { readOnly: true, toolIds: ['get_entity_details'] }
     );
     expect(createMarkdownRevision).toHaveBeenCalledWith(
       expect.objectContaining({ created_by: '00000000-0000-0000-0000-0000000000a1' })

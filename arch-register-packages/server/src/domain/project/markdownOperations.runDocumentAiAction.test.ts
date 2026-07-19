@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage.types';
-import { runDocumentAiAction, testDocumentAiAction } from './markdownOperations';
+import type { DocumentAiToolId } from '@arch-register/api-types/documentContract';
+import { runDocumentAiAction, testDocumentAiAction } from './markdownAiOperations';
 
 const { requireWorkspaceCapability, requireProjectAccess } = vi.hoisted(() => ({
   requireWorkspaceCapability: vi.fn(),
@@ -94,7 +95,8 @@ const documentType = {
       name: 'Summarize',
       kind: 'interactive' as const,
       prompt: 'Summarize.',
-      enabled: true
+      enabled: true,
+      tools: ['query_entities'] as DocumentAiToolId[]
     },
     {
       id: 'disabled-action',
@@ -177,7 +179,7 @@ describe('runDocumentAiAction', () => {
       'ws-1',
       { userId: 'user-1' },
       { id: 'user-1', displayName: 'User One' },
-      { readOnly: true }
+      { readOnly: true, toolIds: ['query_entities'] }
     );
     expect(chat).toHaveBeenCalledWith(
       expect.objectContaining({ tools: ['read-only-tool'], stream: true })
@@ -250,7 +252,8 @@ describe('runDocumentAiAction', () => {
         name: 'Draft action',
         kind: 'interactive',
         prompt: 'Use the draft prompt.',
-        enabled: false
+        enabled: false,
+        tools: []
       },
       event
     );
@@ -279,7 +282,7 @@ describe('runDocumentAiAction', () => {
       'ws-1',
       { userId: 'user-1' },
       { id: 'user-1', displayName: 'User One' },
-      { readOnly: true }
+      { readOnly: true, toolIds: [] }
     );
   });
 

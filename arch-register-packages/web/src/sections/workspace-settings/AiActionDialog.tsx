@@ -10,7 +10,12 @@ import type {
   AiActionTestResult,
   DocumentListItem
 } from '@arch-register/api-types/projectContract';
-import type { DocumentAiAction, DocumentField } from '@arch-register/api-types/documentContract';
+import {
+  DOCUMENT_AI_READ_ONLY_TOOLS,
+  type DocumentAiAction,
+  type DocumentAiToolId,
+  type DocumentField
+} from '@arch-register/api-types/documentContract';
 import { testDocumentAiAction } from '../../hooks/useDocumentAiActions';
 import { SafeMarkdown } from '../../components/SafeMarkdown';
 import { DocumentPicker } from '../../components/DocumentPicker';
@@ -21,6 +26,8 @@ const KIND_LABELS: Record<DocumentAiAction['kind'], string> = {
   interactive: 'Interactive',
   metadata_generator: 'Metadata generator'
 };
+
+const ALL_TOOL_IDS: DocumentAiToolId[] = DOCUMENT_AI_READ_ONLY_TOOLS.map(tool => tool.id);
 
 const isLinkType = (field: DocumentField) =>
   field.type === 'entity_link' || field.type === 'document_link';
@@ -87,13 +94,16 @@ export const AiActionDialog = ({
   useEffect(() => {
     if (!open) return;
     setDraft(
-      action ?? {
-        id: crypto.randomUUID(),
-        name: '',
-        kind: 'interactive',
-        prompt: '',
-        enabled: true
-      }
+      action
+        ? { ...action, tools: action.tools ?? [...ALL_TOOL_IDS] }
+        : {
+            id: crypto.randomUUID(),
+            name: '',
+            kind: 'interactive',
+            prompt: '',
+            enabled: true,
+            tools: [...ALL_TOOL_IDS]
+          }
     );
     setSelectedDocument(null);
     setStreamingText('');
@@ -111,6 +121,7 @@ export const AiActionDialog = ({
         name: draft.name,
         prompt: draft.prompt,
         enabled: draft.enabled,
+        tools: draft.tools,
         kind: 'interactive'
       });
       return;
@@ -120,6 +131,7 @@ export const AiActionDialog = ({
       name: draft.name,
       prompt: draft.prompt,
       enabled: draft.enabled,
+      tools: draft.tools,
       kind: 'metadata_generator',
       outputFieldId:
         draft.kind === 'metadata_generator' && draft.outputFieldId
@@ -156,6 +168,19 @@ export const AiActionDialog = ({
     draft.prompt.trim().length > 0 &&
     (draft.kind !== 'metadata_generator' || draft.outputFieldId.length > 0);
 
+  const saveDraft = () => {
+    if (!draft) return;
+    const selectedTools = draft.tools ?? ALL_TOOL_IDS;
+    const nextDraft: DocumentAiAction = { ...draft, tools: [...selectedTools] };
+    if (
+      selectedTools.length === ALL_TOOL_IDS.length &&
+      ALL_TOOL_IDS.every(toolId => selectedTools.includes(toolId))
+    ) {
+      delete nextDraft.tools;
+    }
+    onSave(nextDraft);
+  };
+
   const displayOutput = result?.rawOutput ?? streamingText;
   const metadataOutput =
     result?.kind === 'metadata_generator'
@@ -180,7 +205,7 @@ export const AiActionDialog = ({
         {
           label: action ? 'Save changes' : 'Add action',
           type: 'default',
-          onClick: () => draft && onSave(draft),
+          onClick: saveDraft,
           disabled: !canSave || running
         }
       ]}
@@ -194,72 +219,103 @@ export const AiActionDialog = ({
             </Tabs.List>
 
             <Tabs.Content value="edit" style={{ height: 'auto' }}>
-              <div className={styles.formGrid}>
-                <DialogSection label="Name">
-                  <TextInput
-                    value={draft.name}
-                    onChange={value => setDraft({ ...draft, name: value ?? '' })}
-                    placeholder="Action name"
+              <div className={styles.editContent}>
+                <div className={styles.formGrid}>
+                  <DialogSection label="Name">
+                    <TextInput
+                      value={draft.name}
+                      onChange={value => setDraft({ ...draft, name: value ?? '' })}
+                      placeholder="Action name"
+                      style={{ width: '100%' }}
+                    />
+                  </DialogSection>
+                  <DialogSection label="Type">
+                    <Select.Root value={draft.kind} onChange={updateKind} style={{ width: '100%' }}>
+                      {Object.entries(KIND_LABELS).map(([value, label]) => (
+                        <Select.Item key={value} value={value}>
+                          {label}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </DialogSection>
+                </div>
+
+                <DialogSection label="Prompt">
+                  <TextArea
+                    value={draft.prompt}
+                    onChange={value => setDraft({ ...draft, prompt: value ?? '' })}
+                    rows={5}
                     style={{ width: '100%' }}
+                    placeholder="Instructions for the AI action"
                   />
                 </DialogSection>
-                <DialogSection label="Type">
-                  <Select.Root value={draft.kind} onChange={updateKind} style={{ width: '100%' }}>
-                    {Object.entries(KIND_LABELS).map(([value, label]) => (
-                      <Select.Item key={value} value={value}>
-                        {label}
-                      </Select.Item>
+
+                <DialogSection label="Available tools">
+                  <div className={styles.toolList}>
+                    {DOCUMENT_AI_READ_ONLY_TOOLS.map(tool => (
+                      <label key={tool.id} className={styles.toolRow}>
+                        <Checkbox
+                          value={draft.tools?.includes(tool.id) ?? true}
+                          onChange={value => {
+                            const selectedTools = draft.tools ?? ALL_TOOL_IDS;
+                            const nextTools = value
+                              ? [...selectedTools, tool.id]
+                              : selectedTools.filter(toolId => toolId !== tool.id);
+                            setDraft({ ...draft, tools: [...new Set(nextTools)] });
+                          }}
+                        />
+                        <span>
+                          <span className={styles.toolLabel}>{tool.label}</span>
+                          <span className={styles.toolDescription}>{tool.description}</span>
+                        </span>
+                      </label>
                     ))}
-                  </Select.Root>
+                  </div>
+                  <div className={styles.hint}>
+                    The selected tools are still limited by the initiating user&apos;s permissions.
+                    Select none to run this action without architecture tools.
+                  </div>
                 </DialogSection>
-              </div>
 
-              <DialogSection label="Prompt">
-                <TextArea
-                  value={draft.prompt}
-                  onChange={value => setDraft({ ...draft, prompt: value ?? '' })}
-                  rows={5}
-                  style={{ width: '100%' }}
-                  placeholder="Instructions for the AI action"
-                />
-              </DialogSection>
-
-              {draft.kind === 'metadata_generator' && (
-                <DialogSection label="Output field">
-                  {eligibleFields.length > 0 || draft.outputFieldId ? (
-                    <Select.Root
-                      value={draft.outputFieldId}
-                      onChange={value => setDraft({ ...draft, outputFieldId: value ?? '' })}
-                      style={{ width: '100%' }}
-                    >
-                      {eligibleFields
-                        .concat(
-                          fields.filter(
-                            field =>
-                              field.id === draft.outputFieldId && !eligibleFields.includes(field)
+                {draft.kind === 'metadata_generator' && (
+                  <DialogSection label="Output field">
+                    {eligibleFields.length > 0 || draft.outputFieldId ? (
+                      <Select.Root
+                        value={draft.outputFieldId}
+                        onChange={value => setDraft({ ...draft, outputFieldId: value ?? '' })}
+                        style={{ width: '100%' }}
+                      >
+                        {eligibleFields
+                          .concat(
+                            fields.filter(
+                              field =>
+                                field.id === draft.outputFieldId && !eligibleFields.includes(field)
+                            )
                           )
-                        )
-                        .map(field => (
-                          <Select.Item key={field.id} value={field.id}>
-                            {field.name}
-                          </Select.Item>
-                        ))}
-                    </Select.Root>
-                  ) : (
-                    <div className={styles.hint}>
-                      Add a text, long text, boolean, date, number, or enum field first.
-                    </div>
-                  )}
-                </DialogSection>
-              )}
+                          .map(field => (
+                            <Select.Item key={field.id} value={field.id}>
+                              {field.name}
+                            </Select.Item>
+                          ))}
+                      </Select.Root>
+                    ) : (
+                      <div className={styles.hint}>
+                        Add a text, long text, boolean, date, number, or enum field first.
+                      </div>
+                    )}
+                  </DialogSection>
+                )}
 
-              <div className={styles.enabledRow}>
-                <Checkbox
-                  value={draft.enabled}
-                  onChange={value => setDraft({ ...draft, enabled: value ?? false })}
-                />
-                <span>Enabled for production</span>
-                {!draft.enabled && <span className={styles.hint}>Testing is still available.</span>}
+                <div className={styles.enabledRow}>
+                  <Checkbox
+                    value={draft.enabled}
+                    onChange={value => setDraft({ ...draft, enabled: value ?? false })}
+                  />
+                  <span>Enabled for production</span>
+                  {!draft.enabled && (
+                    <span className={styles.hint}>Testing is still available.</span>
+                  )}
+                </div>
               </div>
             </Tabs.Content>
 

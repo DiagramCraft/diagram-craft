@@ -6,7 +6,7 @@ import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authoriza
 import { defineOperation } from '../operation';
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
-import { countEntities } from './entityOperations';
+import { countEntities } from './entityQueryOperations';
 import { listAllCatalogEntities } from './entityLoader';
 import {
   toApiSchema,

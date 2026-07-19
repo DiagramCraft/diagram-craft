@@ -1,5 +1,8 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import { normalizeEntityQueryOptions, type NormalizedEntityQueryOptions } from './entityOperations';
+import {
+  normalizeEntityQueryOptions,
+  type NormalizedEntityQueryOptions
+} from './entityQueryOperations';
 
 type EntityQuery = {
   _schemaId?: string;

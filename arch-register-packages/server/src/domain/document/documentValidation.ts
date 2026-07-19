@@ -3,6 +3,7 @@ import type {
   DocumentMetadata,
   DocumentTypeWrite
 } from '@arch-register/api-types/documentContract';
+import { DOCUMENT_AI_READ_ONLY_TOOLS } from '@arch-register/api-types/documentContract';
 import { httpAssert } from '../../utils/httpAssert';
 
 const isEmpty = (value: unknown) =>
@@ -73,6 +74,20 @@ export const validateDocumentTypeWrite = (input: DocumentTypeWrite) => {
       status: 400,
       message: `AI action '${action.id}' must have a prompt`
     });
+    if (action.tools !== undefined) {
+      httpAssert.true(new Set(action.tools).size === action.tools.length, {
+        status: 400,
+        message: `AI action '${action.id}' tools must be unique`
+      });
+      const knownTools = new Set(DOCUMENT_AI_READ_ONLY_TOOLS.map(tool => tool.id));
+      httpAssert.true(
+        action.tools.every(tool => knownTools.has(tool)),
+        {
+          status: 400,
+          message: `AI action '${action.id}' contains an unknown tool`
+        }
+      );
+    }
     if (action.kind !== 'metadata_generator') continue;
 
     httpAssert.true(!generatorOutputFields.has(action.outputFieldId), {

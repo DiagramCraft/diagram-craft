@@ -14,6 +14,7 @@ import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
+import type { DocumentAiToolId } from '@arch-register/api-types/documentContract';
 
 const checker = new PermissionChecker();
 
@@ -375,7 +376,7 @@ export const createAiChatTools = (
   workspaceId: string,
   authCtx: AuthorizationContext | null,
   actor: EntityMutationActor,
-  options: { readOnly?: boolean } = {}
+  options: { readOnly?: boolean; toolIds?: readonly DocumentAiToolId[] } = {}
 ) => {
   const queryEntities = queryEntitiesTool.server(async rawArgs => {
     const args = rawArgs as QueryEntitiesArgs;
@@ -775,6 +776,11 @@ export const createAiChatTools = (
     };
   });
 
-  if (options.readOnly) return [queryEntities, getEntityDetails, traverseRelations];
+  if (options.readOnly) {
+    const readOnlyTools = [queryEntities, getEntityDetails, traverseRelations];
+    if (options.toolIds === undefined) return readOnlyTools;
+    const allowedToolIds = new Set(options.toolIds);
+    return readOnlyTools.filter(tool => allowedToolIds.has(tool.name as DocumentAiToolId));
+  }
   return [queryEntities, getEntityDetails, createEntity, updateEntity, traverseRelations];
 };

@@ -42,8 +42,9 @@ Document types can define interactive AI actions. When a document's type has act
 the document can launch them from the document sidebar.
 
 An action runs its predefined prompt read-only against the document's body, structured metadata, type, and location —
-it never modifies the document. The result is temporary; if it is worth keeping or exploring further, continue it as
-an Assistant conversation from the result panel.
+it never modifies the document. Each action can be restricted to a selected subset of the read-only architecture
+tools. Tool use is additionally limited by the initiating user's normal permissions. The result is temporary; if it is
+worth keeping or exploring further, continue it as an Assistant conversation from the result panel.
 
 Actions are defined per document type in
 [Document Types and Templates](../admin/document-types-templates).

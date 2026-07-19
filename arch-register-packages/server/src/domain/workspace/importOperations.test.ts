@@ -26,7 +26,8 @@ vi.mock('../../utils/logger', () => ({
 }));
 
 import { exportWorkspace } from './exportOperations';
-import { executeImport, parseImport } from './importOperations';
+import { parseImport } from './importParseOperations';
+import { executeImport } from './importExecutionOperations';
 
 const makeAuthCtx = (): AuthorizationContext => ({ userId: 'user-1' }) as AuthorizationContext;
 
