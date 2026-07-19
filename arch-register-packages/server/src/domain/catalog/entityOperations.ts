@@ -56,6 +56,59 @@ type CollectedEntity = {
   completeness: number | null;
 };
 
+export type EntityQueryOptions = {
+  schemaId?: string | null;
+  owner?: string | null;
+  lifecycle?: string | null;
+  q?: string | null;
+  conditions?: FilterCondition[];
+  assessmentId?: string | null;
+  projectId?: string | null;
+  projectScope?: 'project' | 'all';
+  collectionId?: string | null;
+  view?: 'summary' | 'full';
+  limit?: number | null;
+  offset?: number | null;
+  asOf?: Date | null;
+  includeProjectSnapshots?: boolean;
+};
+
+export type NormalizedEntityQueryOptions = {
+  schemaId: string | null;
+  owner: string | null;
+  lifecycle: string | null;
+  q: string;
+  conditions: FilterCondition[];
+  assessmentId: string | null;
+  projectId: string | null;
+  projectScope: 'project' | 'all';
+  collectionId: string | null;
+  view: 'summary' | 'full';
+  limit: number | null;
+  offset: number;
+  asOf: Date | null;
+  includeProjectSnapshots: boolean;
+};
+
+export const normalizeEntityQueryOptions = (
+  options: EntityQueryOptions
+): NormalizedEntityQueryOptions => ({
+  schemaId: options.schemaId ?? null,
+  owner: options.owner ?? null,
+  lifecycle: options.lifecycle ?? null,
+  q: options.q ?? '',
+  conditions: options.conditions ?? [],
+  assessmentId: options.assessmentId ?? null,
+  projectId: options.projectId ?? null,
+  projectScope: options.projectScope ?? 'all',
+  collectionId: options.collectionId ?? null,
+  view: options.view ?? 'full',
+  limit: options.limit ?? null,
+  offset: options.offset ?? 0,
+  asOf: options.asOf ?? null,
+  includeProjectSnapshots: options.includeProjectSnapshots ?? true
+});
+
 const attachProjectLink = (
   entity: EntityRecord,
   rowId: string,
@@ -141,56 +194,13 @@ export const listEntities = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
-  options: {
-    schemaId?: string | null;
-    owner?: string | null;
-    lifecycle?: string | null;
-    q?: string | null;
-    conditions?: FilterCondition[];
-    assessmentId?: string | null;
-    projectId?: string | null;
-    projectScope?: 'project' | 'all';
-    collectionId?: string | null;
-    view?: 'summary' | 'full';
-    limit?: number | null;
-    offset?: number | null;
-    asOf?: Date | null;
-    includeProjectSnapshots?: boolean;
-  }
+  options: EntityQueryOptions
 ): Promise<EntityRecord[]> => {
-  const {
-    schemaId = null,
-    owner = null,
-    lifecycle = null,
-    q = '',
-    conditions = [],
-    assessmentId = null,
-    projectId = null,
-    projectScope = 'all',
-    collectionId = null,
-    view = 'full',
-    limit,
-    offset = 0,
-    asOf = null,
-    includeProjectSnapshots = true
-  } = options;
+  const { limit, offset, ...queryOptions } = normalizeEntityQueryOptions(options);
   const safeOffset = Math.max(Math.trunc(offset ?? 0), 0);
   const safeLimit = limit == null ? null : Math.max(Math.trunc(limit), 1);
   try {
-    const rows = await collectEntities(db, workspace, authCtx, {
-      schemaId,
-      owner,
-      lifecycle,
-      q,
-      conditions,
-      assessmentId,
-      projectId,
-      projectScope,
-      collectionId,
-      view,
-      asOf,
-      includeProjectSnapshots
-    });
+    const rows = await collectEntities(db, workspace, authCtx, queryOptions);
     const windowed =
       safeLimit != null ? rows.slice(safeOffset, safeOffset + safeLimit) : rows.slice(safeOffset);
     return windowed.map(row => row.entity);
@@ -203,34 +213,9 @@ export const countEntities = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
-  options: {
-    schemaId?: string | null;
-    owner?: string | null;
-    lifecycle?: string | null;
-    q?: string | null;
-    conditions?: FilterCondition[];
-    assessmentId?: string | null;
-    projectId?: string | null;
-    projectScope?: 'project' | 'all';
-    collectionId?: string | null;
-    asOf?: Date | null;
-    includeProjectSnapshots?: boolean;
-  }
+  options: Omit<EntityQueryOptions, 'view' | 'limit' | 'offset'>
 ): Promise<number> => {
-  const rows = await collectEntities(db, workspace, authCtx, {
-    schemaId: options.schemaId ?? null,
-    owner: options.owner ?? null,
-    lifecycle: options.lifecycle ?? null,
-    q: options.q ?? '',
-    conditions: options.conditions ?? [],
-    assessmentId: options.assessmentId ?? null,
-    projectId: options.projectId ?? null,
-    projectScope: options.projectScope ?? 'all',
-    collectionId: options.collectionId ?? null,
-    view: 'full',
-    asOf: options.asOf ?? null,
-    includeProjectSnapshots: options.includeProjectSnapshots ?? true
-  });
+  const rows = await collectEntities(db, workspace, authCtx, { ...options, view: 'full' });
   return rows.length;
 };
 
@@ -238,35 +223,22 @@ const collectEntities = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
-  options: {
-    schemaId?: string | null;
-    owner?: string | null;
-    lifecycle?: string | null;
-    q?: string | null;
-    conditions?: FilterCondition[];
-    assessmentId?: string | null;
-    projectId?: string | null;
-    projectScope?: 'project' | 'all';
-    collectionId?: string | null;
-    view?: 'summary' | 'full';
-    asOf?: Date | null;
-    includeProjectSnapshots?: boolean;
-  }
+  options: EntityQueryOptions
 ): Promise<CollectedEntity[]> => {
   const {
-    schemaId = null,
-    owner = null,
-    lifecycle = null,
-    q = '',
-    conditions = [],
-    assessmentId = null,
-    projectId = null,
-    projectScope = 'all',
-    collectionId = null,
-    view = 'full',
-    asOf = null,
-    includeProjectSnapshots = true
-  } = options;
+    schemaId,
+    owner,
+    lifecycle,
+    q,
+    conditions,
+    assessmentId,
+    projectId,
+    projectScope,
+    collectionId,
+    view,
+    asOf,
+    includeProjectSnapshots
+  } = normalizeEntityQueryOptions(options);
   // _completeness is computed post-fetch; assessment conditions are evaluated against the
   // joined assessment's bulk response map; all remaining conditions can be evaluated in SQL
   const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);

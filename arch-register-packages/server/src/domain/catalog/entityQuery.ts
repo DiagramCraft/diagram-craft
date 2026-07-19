@@ -1,4 +1,5 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { normalizeEntityQueryOptions, type NormalizedEntityQueryOptions } from './entityOperations';
 
 type EntityQuery = {
   _schemaId?: string;
@@ -23,21 +24,22 @@ const parseAsOf = (value: string | undefined): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
-export const parseEntityQuery = (query: EntityQuery) => ({
-  schemaId: query._schemaId ?? null,
-  owner: query.owner ?? null,
-  lifecycle: query.lifecycle ?? null,
-  q: query.q ?? '',
-  conditions: query.conditions ?? [],
-  assessmentId: query.assessmentId ?? null,
-  projectId: query.projectId ?? null,
-  projectScope: query.projectScope ?? 'all',
-  collectionId: query.collectionId ?? null,
-  view: query.view ?? 'full',
-  limit: query.limit ?? null,
-  offset: query.offset ?? 0,
-  asOf: parseAsOf(query.asOf),
-  includeProjectSnapshots: query.includeProjectSnapshots ?? true
-});
+export const parseEntityQuery = (query: EntityQuery): NormalizedEntityQueryOptions =>
+  normalizeEntityQueryOptions({
+    schemaId: query._schemaId,
+    owner: query.owner,
+    lifecycle: query.lifecycle,
+    q: query.q,
+    conditions: query.conditions,
+    assessmentId: query.assessmentId,
+    projectId: query.projectId,
+    projectScope: query.projectScope,
+    collectionId: query.collectionId,
+    view: query.view,
+    limit: query.limit,
+    offset: query.offset,
+    asOf: parseAsOf(query.asOf),
+    includeProjectSnapshots: query.includeProjectSnapshots
+  });
 
 export type ParsedEntityQuery = ReturnType<typeof parseEntityQuery>;
