@@ -892,6 +892,7 @@ export const MarkdownEditorScreen = () => {
               readTime={readTime}
               workspaceId={workspaceSlug}
               nodeId={nodeId}
+              initialCommentId={search.commentId}
               showDiscussion={!isDraft}
               showBacklinks={!isDraft}
               commentsMode={commentsMode}

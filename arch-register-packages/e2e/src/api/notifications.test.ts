@@ -30,6 +30,15 @@ const test = createApiTest({
       'admin',
       now
     );
+    await server.db.workspace.replaceTeamAssignments(seedIds.workspace.default, [
+      {
+        workspace: seedIds.workspace.default,
+        team_id: seedIds.teams.design,
+        user_id: editorUserId,
+        role: 'team_editor',
+        created_at: now
+      }
+    ]);
   }
 }).extend<{ editorAuth: string }>({
   editorAuth: [
@@ -163,6 +172,120 @@ test.describe('entity watch notifications', () => {
       headers: { Authorization: auth }
     });
     expect(await countRes.json()).toEqual({ count: 0 });
+  });
+
+  test('notifies entity owners about comments and comment authors about replies', async ({
+    server,
+    auth,
+    editorAuth
+  }) => {
+    await resetInbox(server.baseUrl, auth);
+    await resetInbox(server.baseUrl, editorAuth);
+
+    const rootRes = await fetch(`${server.baseUrl}/api/default/discussions`, {
+      method: 'POST',
+      headers: jsonHeaders(auth),
+      body: JSON.stringify({
+        objectType: 'entity',
+        objectId: componentId,
+        body: 'A new entity discussion'
+      })
+    });
+    expect(rootRes.status).toBe(200);
+
+    const ownerNotificationsRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
+      headers: { Authorization: editorAuth }
+    });
+    const ownerNotifications = (await ownerNotificationsRes.json()) as Array<
+      Record<string, unknown>
+    >;
+    expect(ownerNotifications).toEqual([
+      expect.objectContaining({
+        event_type: 'comment.created',
+        resource_type: 'comment',
+        message: 'E2E Admin commented on Frontend App',
+        action_route: '/entities/CMP-2?tab=discussions'
+      })
+    ]);
+
+    await resetInbox(server.baseUrl, editorAuth);
+    const editorRootRes = await fetch(`${server.baseUrl}/api/default/discussions`, {
+      method: 'POST',
+      headers: jsonHeaders(editorAuth),
+      body: JSON.stringify({
+        objectType: 'entity',
+        objectId: componentId,
+        body: 'Owner comment'
+      })
+    });
+    expect(editorRootRes.status).toBe(200);
+    const editorRoot = (await editorRootRes.json()) as { id: string };
+
+    const replyRes = await fetch(`${server.baseUrl}/api/default/discussions`, {
+      method: 'POST',
+      headers: jsonHeaders(auth),
+      body: JSON.stringify({
+        objectType: 'entity',
+        objectId: componentId,
+        parentPostId: editorRoot.id,
+        body: 'A reply to the owner comment'
+      })
+    });
+    expect(replyRes.status).toBe(200);
+
+    const replyNotificationsRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
+      headers: { Authorization: editorAuth }
+    });
+    const replyNotifications = (await replyNotificationsRes.json()) as Array<
+      Record<string, unknown>
+    >;
+    expect(replyNotifications).toEqual([
+      expect.objectContaining({
+        event_type: 'comment.replied',
+        resource_type: 'comment',
+        message: 'E2E Admin replied to your comment on Frontend App'
+      })
+    ]);
+  });
+
+  test('notifies a content author about inline comments and links to the thread', async ({
+    server,
+    auth,
+    editorAuth
+  }) => {
+    await resetInbox(server.baseUrl, editorAuth);
+
+    const documentRes = await fetch(`${server.baseUrl}/api/default/content/markdown`, {
+      method: 'POST',
+      headers: jsonHeaders(editorAuth),
+      body: JSON.stringify({ name: 'Inline Review' })
+    });
+    expect(documentRes.status).toBe(200);
+    const document = (await documentRes.json()) as { id: string };
+    const commentRes = await fetch(`${server.baseUrl}/api/default/wiki-comments`, {
+      method: 'POST',
+      headers: jsonHeaders(auth),
+      body: JSON.stringify({
+        nodeId: document.id,
+        body: 'Please review this line',
+        anchor: { quote: 'review', prefix: 'Please ', suffix: ' this', start: 7, end: 13 }
+      })
+    });
+    expect(commentRes.status).toBe(200);
+    const comment = (await commentRes.json()) as { id: string };
+
+    const notificationsRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
+      headers: { Authorization: editorAuth }
+    });
+    const notifications = (await notificationsRes.json()) as Array<Record<string, unknown>>;
+    expect(notifications).toEqual([
+      expect.objectContaining({
+        event_type: 'comment.created',
+        resource_id: comment.id,
+        message: 'E2E Admin commented on Inline Review',
+        action_route: `/content/wiki/${document.id}?commentId=${comment.id}`
+      })
+    ]);
   });
 
   test('clear all removes all unread notifications and self-authored changes are ignored', async ({
