@@ -14,6 +14,7 @@ import type {
 import { RetryableJobError } from '../jobs/jobRetry';
 import { notificationTypeForGovernanceEvent } from '../notification/notificationPreferenceCatalog';
 import { isChannelEnabled } from '../notification/notificationPreferences';
+import { createEmailDelivery } from '../notification/notificationDelivery';
 
 const checker = new PermissionChecker();
 const NEVER_ABORTED_SIGNAL = new AbortController().signal;
@@ -180,10 +181,14 @@ const createGovernanceNotification = async (
     notificationType,
     'in_app'
   );
-  if (!inAppEnabled) return;
+  const recipient = await db.auth.getUser(input.recipientUserId);
+  const emailEnabled =
+    recipient?.email != null &&
+    (await isChannelEnabled(db, input.recipientUserId, input.workspace, notificationType, 'email'));
+  if (!inAppEnabled && !emailEnabled) return;
 
   const presentation = getPresentation(input.eventType, input.caseKind);
-  await db.notification.createNotification({
+  const notification = await db.notification.createNotification({
     id: randomUUID(),
     user_id: input.recipientUserId,
     workspace: input.workspace,
@@ -200,8 +205,13 @@ const createGovernanceNotification = async (
     action_route: `/governance?caseId=${encodeURIComponent(input.caseId)}`,
     presentation_metadata: { caseKind: input.caseKind },
     occurred_at: input.occurredAt,
-    delivery_key: `governance:${input.eventId}:user:${input.recipientUserId}:assignment:${input.assignmentId ?? 'none'}`
+    delivery_key: `governance:${input.eventId}:user:${input.recipientUserId}:assignment:${input.assignmentId ?? 'none'}`,
+    in_app_enabled: inAppEnabled
   });
+  const deliveryAdapter = (db as unknown as DatabaseAdapter).notificationDelivery;
+  if (emailEnabled && deliveryAdapter) {
+    await createEmailDelivery(db, notification, recipient!.email!);
+  }
 };
 
 const resolveGovernanceNotificationRecipients = async (

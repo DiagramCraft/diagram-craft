@@ -172,7 +172,9 @@ export const MarkdownEditorPane = (props: {
     clearSelection();
   };
 
-  const enabledAiActions = aiActions.filter(action => action.enabled);
+  const enabledAiActions = aiActions.filter(
+    action => action.enabled && action.kind === 'interactive'
+  );
 
   const aiActionsSection = enabledAiActions.length > 0 && (
     <div className={styles.aiActionsSection}>

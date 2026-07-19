@@ -64,9 +64,9 @@ describe('getNotificationPreferences', () => {
       isDefault: true
     });
 
-    // Every notification type's non-in_app channels default to disabled and unimplemented.
+    // Every notification type's non-in_app channels default to disabled; email is implemented.
     const email = result.channels.find(c => c.channel === 'email');
-    expect(email).toMatchObject({ implemented: false });
+    expect(email).toMatchObject({ implemented: true });
   });
 
   it('reflects explicit overrides instead of the catalog default', async () => {

@@ -93,31 +93,52 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
         tx as unknown as { notificationPreference?: { listOverrides?: unknown } }
       ).notificationPreference;
 
-      let gatedWatcherUserIds = watcherUserIds;
+      let watcherRecipients: Array<{
+        userId: string;
+        email: string | null;
+        inAppEnabled: boolean;
+        emailEnabled: boolean;
+      }> =
+        watcherUserIds?.map(userId => ({
+          userId,
+          email: null,
+          inAppEnabled: true,
+          emailEnabled: false
+        })) ?? [];
       if (typeof notificationPreferenceAdapter?.listOverrides === 'function') {
         const candidateWatcherIds =
           watcherUserIds ?? (await tx.watch.listWatcherUserIds(workspace, entityId));
-        const allowance = await Promise.all(
-          candidateWatcherIds.map(async watcherId => ({
-            watcherId,
-            allowed: await isChannelEnabled(
-              tx,
-              watcherId,
-              workspace,
-              'entity-watch-activity',
-              'in_app'
-            )
-          }))
-        );
-        gatedWatcherUserIds = allowance
-          .filter(entry => entry.allowed)
-          .map(entry => entry.watcherId);
+        watcherRecipients = (
+          await Promise.all(
+            candidateWatcherIds.map(async userId => {
+              const user = await tx.auth.getUser(userId);
+              const inAppEnabled = await isChannelEnabled(
+                tx,
+                userId,
+                workspace,
+                'entity-watch-activity',
+                'in_app'
+              );
+              const emailEnabled =
+                user?.email != null &&
+                (await isChannelEnabled(tx, userId, workspace, 'entity-watch-activity', 'email'));
+              return inAppEnabled || emailEnabled
+                ? {
+                    userId,
+                    email: user?.email ?? null,
+                    inAppEnabled,
+                    emailEnabled
+                  }
+                : null;
+            })
+          )
+        ).filter((recipient): recipient is NonNullable<typeof recipient> => recipient != null);
       }
 
       await tx.watch.createNotificationsFromAudit({
         auditLog,
         changedByDisplayName: userDisplayName ?? userId ?? 'system',
-        watcherUserIds: gatedWatcherUserIds
+        watcherRecipients
       });
     }
   };

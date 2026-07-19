@@ -33,6 +33,7 @@ import {
   createPublicAuthORPCHandler,
   createProtectedAuthORPCHandler
 } from './domain/auth/authOrpc';
+import { createDevORPCHandler } from './domain/dev/devOrpc';
 import { createAiORPCHandler } from './domain/ai/aiOrpc';
 import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
 import { createWorkspaceAnalyticsORPCHandler } from './domain/analytics/workspaceAnalyticsOrpc';
@@ -122,6 +123,9 @@ export const createApp = (
 
   // Public routes (no auth required)
   app.use(createPublicAuthORPCHandler(db));
+  // Always mounted: dev.config must be reachable to report enabled/disabled, and
+  // dev.listUsers/dev.switchUser re-check isDevUserSwitcherEnabled() on every call.
+  app.use(createDevORPCHandler(db));
   const oidcCallbackRoute = createOidcCallbackRoute(db);
   app.use(oidcCallbackRoute.app);
 

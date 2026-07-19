@@ -17,6 +17,10 @@
         - @id:ar.access.workspaces Users can enter a workspace and work within the workspace’s data, projects,
           permissions, and settings boundary.
 
+        - @id:ar.access.dev-switcher @status:experimental Development-mode deployments can optionally expose a
+          user-switcher toolbar that instantly assumes the identity of any user in the database, bypassing login,
+          for local testing only.
+
     - @id:ar.workspace Users can orient themselves in a workspace and administrators can configure its shared operating
       model.
 
@@ -202,8 +206,9 @@
 
             - @id:ar.collaboration.notifications.delivery-preferences Users can choose, per notification type and
               per delivery channel, whether they receive that notification. In-app delivery is on by default for
-              normal notification types and off by default for reminder types; email, Slack, and SMS are modeled
-              as channels but not yet deliverable. Preferences are scoped per user per workspace and only affect
+              normal notification types and off by default for reminder types; email is available when configured by
+              the deployment, while Slack and SMS are not yet deliverable. Preferences are scoped per user per
+              workspace and only affect
               future notifications, not existing Inbox items.
 
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,

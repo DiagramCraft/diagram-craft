@@ -10,6 +10,12 @@ import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webho
 import { createGovernanceNotificationJobHandler } from '@arch-register/server/domain/governance/governanceNotifications';
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
 import { METADATA_GENERATION_SCAN_JOB_TYPE } from '@arch-register/server/domain/document/aiMetadataGenerationConstants';
+import {
+  createEmailDeliveryConfigFromEnv,
+  createNotificationDeliveryJobHandler,
+  ensureAllNotificationDeliverySchedules,
+  NOTIFICATION_DELIVERY_JOB_TYPE
+} from '@arch-register/server/domain/notification/emailDelivery';
 
 const logger = createLogger('job-server');
 
@@ -44,12 +50,17 @@ const main = async () => {
   const shutdownTimeoutMs = positiveInteger('JOB_SERVER_SHUTDOWN_TIMEOUT_MS', 30 * 1000);
   const handlers = new Map<string, JobHandler>();
   const storage = createStorage();
+  await ensureAllNotificationDeliverySchedules(db);
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
   handlers.set('governance.notification', createGovernanceNotificationJobHandler(db));
   handlers.set(
     METADATA_GENERATION_SCAN_JOB_TYPE,
     createDocumentMetadataGenerationScanJobHandler(db, storage)
+  );
+  handlers.set(
+    NOTIFICATION_DELIVERY_JOB_TYPE,
+    createNotificationDeliveryJobHandler(db, createEmailDeliveryConfigFromEnv())
   );
   const server = createJobServer({
     db,

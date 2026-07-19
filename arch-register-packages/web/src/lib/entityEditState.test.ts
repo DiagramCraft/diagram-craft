@@ -64,6 +64,28 @@ describe('entity detail edit state', () => {
     expect(body._links).toEqual(links);
   });
 
+  it('serializes empty optional references as null', () => {
+    const body = createEntityUpdateBody(
+      entity,
+      schema,
+      {
+        ...createEntityEditState(entity, schema),
+        _owner: '',
+        _lifecycle: '',
+        _targetLifecycle: '',
+        _targetLifecycleDate: ''
+      },
+      links
+    );
+
+    expect(body).toMatchObject({
+      _owner: null,
+      _lifecycle: null,
+      _targetLifecycle: null,
+      _targetLifecycleDate: null
+    });
+  });
+
   it('creates stable slugs from names', () => {
     expect(slugifyEntityName('Payments & Billing API')).toBe('payments-billing-api');
   });

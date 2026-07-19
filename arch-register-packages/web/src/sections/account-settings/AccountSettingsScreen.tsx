@@ -25,7 +25,7 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   },
   notifications: {
     title: 'Notifications',
-    sub: 'Choose which notification types deliver to your in-app inbox.'
+    sub: 'Choose which notification types deliver in-app and by email.'
   },
   'api-tokens': {
     title: 'API tokens',

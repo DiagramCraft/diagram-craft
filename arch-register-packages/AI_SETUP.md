@@ -59,6 +59,22 @@ Environment variable fallback:
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
 
+## Bootstrap AI Configuration
+
+The bootstrap seed only enables workspace AI configuration when explicitly requested:
+
+```bash
+BOOTSTRAP_AI_PROVIDER=openrouter \
+BOOTSTRAP_AI_MODEL=anthropic/claude-sonnet-4-20250514 \
+BOOTSTRAP_AI_API_KEY=... \
+AI_ENCRYPTION_KEY=... \
+pnpm --filter @arch-register/server bootstrap -- --bootstrap-ai
+```
+
+`BOOTSTRAP_AI_PROVIDER`, `BOOTSTRAP_AI_MODEL`, and `BOOTSTRAP_AI_API_KEY` are all required, and the provider must be
+`openrouter` or `openai`. The encrypted configuration is applied to every seeded workspace. The command validates these
+values before resetting the database; without `--bootstrap-ai`, the bootstrap AI variables are ignored.
+
 Workspace API-key storage:
 
 - `AI_ENCRYPTION_KEY` is required before workspace AI configuration can store an API key.

@@ -7,7 +7,7 @@ export const NOTIFICATION_CHANNEL_CATALOG: Record<
   { label: string; implemented: boolean }
 > = {
   in_app: { label: 'In-app', implemented: true },
-  email: { label: 'Email', implemented: false },
+  email: { label: 'Email', implemented: true },
   slack: { label: 'Slack', implemented: false },
   sms: { label: 'SMS', implemented: false }
 };

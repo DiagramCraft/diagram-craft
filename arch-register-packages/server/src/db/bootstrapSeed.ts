@@ -35,8 +35,13 @@ import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
 import type { StorageAdapter } from '../storage/storage.types';
 import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
 import { randomUUID } from 'node:crypto';
+import type { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
 
 type Database = Awaited<ReturnType<typeof createDatabase>>;
+
+export type BootstrapSeedOptions = {
+  aiConfig?: AiConfigInputDbUpsert;
+};
 
 export const validateBootstrapSeed = async (db: Database) => {
   const workspaces = await db.workspace.listWorkspaces();
@@ -230,7 +235,12 @@ const seedBootstrapCollections = async (db: Database) => {
   }
 };
 
-export const seedBootstrapData = async (db: Database, storage: StorageAdapter) => {
+export const seedBootstrapData = async (
+  db: Database,
+  storage: StorageAdapter,
+  options: BootstrapSeedOptions = {}
+) => {
+  const aiConfig = options.aiConfig ?? seedAiConfig;
   const syncTimestamp = new Date();
   for (const workspace of seedWorkspaces) {
     await db.workspace.createWorkspace(workspace);
@@ -270,7 +280,7 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
     }
   }
   for (const workspace of seedWorkspaces) {
-    await db.ai.upsertAiConfig(workspace.id, seedAiConfig);
+    await db.ai.upsertAiConfig(workspace.id, aiConfig);
   }
   for (const entity of seedEntities) {
     await db.catalog.createEntity(entity);

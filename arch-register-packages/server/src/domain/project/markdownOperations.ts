@@ -686,7 +686,8 @@ export const runDocumentAiAction = async (
 
       const document = await getDocumentState(db, ws, node);
       const action = document.documentType?.aiActions.find(
-        candidate => candidate.id === actionId && candidate.enabled
+        candidate =>
+          candidate.id === actionId && candidate.enabled && candidate.kind === 'interactive'
       );
       httpAssert.present(action, {
         status: 404,
