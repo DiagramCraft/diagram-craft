@@ -10,9 +10,9 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import type { CollaborationServer } from './collaborationServer';
 import { DiagramAutoSave, type AutoSaveWriter } from './diagramAutoSave';
 import { createLogger } from '../../utils/logger';
+import type { RoomAuthorizationResult, RoomAuthorizer, RoomGrant } from './roomAuthorizer';
 
 export type TempPathResolver = (name: string) => string;
-export type WebSocketAuthenticator = (request: IncomingMessage) => Promise<boolean>;
 
 const log = createLogger('YjsCollaborationServer');
 
@@ -22,6 +22,9 @@ const wsReadyStateConnecting = 0;
 const wsReadyStateOpen = 1;
 const messageSync = 0;
 const messageAwareness = 1;
+const syncStep1 = 0;
+const syncStep2 = 1;
+const syncUpdate = 2;
 const pingTimeout = 30000;
 
 const normalizeDocName = (name: string) => {
@@ -44,7 +47,7 @@ const matchesPath = (requestUrl: string, basePath: string) => {
 };
 
 class WSSharedDoc extends Y.Doc {
-  readonly conns = new Map<WebSocket, Set<number>>();
+  readonly conns = new Map<WebSocket, { controlledIds: Set<number>; grant: RoomGrant }>();
   readonly awareness = new awarenessProtocol.Awareness(this);
 
   constructor(
@@ -63,10 +66,10 @@ class WSSharedDoc extends Y.Doc {
         const changedClients = added.concat(updated, removed);
 
         if (connection !== null) {
-          const controlledIds = this.conns.get(connection);
-          if (controlledIds) {
-            added.forEach((clientId: number) => controlledIds.add(clientId));
-            removed.forEach((clientId: number) => controlledIds.delete(clientId));
+          const state = this.conns.get(connection);
+          if (state) {
+            added.forEach((clientId: number) => state.controlledIds.add(clientId));
+            removed.forEach((clientId: number) => state.controlledIds.delete(clientId));
           }
         }
 
@@ -78,7 +81,7 @@ class WSSharedDoc extends Y.Doc {
         );
 
         const message = encoding.toUint8Array(encoder);
-        this.conns.forEach((_ids, conn) => this.sendCallback(this, conn, message));
+        this.conns.forEach((_state, conn) => this.sendCallback(this, conn, message));
       }
     );
 
@@ -88,7 +91,7 @@ class WSSharedDoc extends Y.Doc {
       syncProtocol.writeUpdate(encoder, update);
       const message = encoding.toUint8Array(encoder);
 
-      this.conns.forEach((_ids, conn) => this.sendCallback(this, conn, message));
+      this.conns.forEach((_state, conn) => this.sendCallback(this, conn, message));
     });
   }
 }
@@ -104,24 +107,27 @@ export class YjsCollaborationServer implements CollaborationServer {
     private readonly basePath = YJS_WEBSOCKET_PATH,
     private readonly autoSaveWriter?: AutoSaveWriter,
     private readonly tempPathResolver?: TempPathResolver,
-    private readonly authenticator?: WebSocketAuthenticator
+    private readonly authorizer?: RoomAuthorizer
   ) {
-    this.webSocketServer.on('connection', (connection: WebSocket, request: IncomingMessage) => {
-      const docName = getDocName(request.url ?? this.basePath, this.basePath);
-      this.setupYjsWebSocketConnection(connection, docName);
+    this.webSocketServer.on(
+      'connection',
+      (connection: WebSocket, request: IncomingMessage, grant: RoomGrant) => {
+        const docName = getDocName(request.url ?? this.basePath, this.basePath);
+        this.setupYjsWebSocketConnection(connection, docName, grant);
 
-      if (!this.autoSaves.has(docName) && this.autoSaveWriter && docName.endsWith('.json')) {
-        const doc = this.docs.get(docName);
-        if (doc) {
-          const tempPath = this.tempPathResolver?.(docName) ?? docName;
-          log.debug(`Setting up auto-save on WebSocket connect: ${docName}`);
-          this.autoSaves.set(
-            docName,
-            new DiagramAutoSave(doc, docName, tempPath, this.autoSaveWriter)
-          );
+        if (!this.autoSaves.has(docName) && this.autoSaveWriter && docName.endsWith('.json')) {
+          const doc = this.docs.get(docName);
+          if (doc) {
+            const tempPath = this.tempPathResolver?.(docName) ?? docName;
+            log.debug(`Setting up auto-save on WebSocket connect: ${docName}`);
+            this.autoSaves.set(
+              docName,
+              new DiagramAutoSave(doc, docName, tempPath, this.autoSaveWriter)
+            );
+          }
         }
       }
-    });
+    );
 
     this.upgradeHandler = async (request, socket, head) => {
       if (!matchesPath(request.url ?? '', this.basePath)) {
@@ -130,23 +136,24 @@ export class YjsCollaborationServer implements CollaborationServer {
         return;
       }
 
-      if (this.authenticator) {
-        try {
-          const authenticated = await this.authenticator(request);
-          if (!authenticated) {
-            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-            socket.destroy();
-            return;
-          }
-        } catch {
-          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-          socket.destroy();
-          return;
-        }
+      let authorization: RoomAuthorizationResult;
+      try {
+        const docName = getDocName(request.url ?? this.basePath, this.basePath);
+        authorization = this.authorizer ? await this.authorizer(request, docName) : { status: 403 };
+      } catch (error) {
+        log.error(`Room authorization failed for ${request.url ?? this.basePath}`, error);
+        authorization = { status: 403 };
+      }
+
+      if ('status' in authorization) {
+        const statusText = authorization.status === 401 ? 'Unauthorized' : 'Forbidden';
+        socket.write(`HTTP/1.1 ${authorization.status} ${statusText}\r\n\r\n`);
+        socket.destroy();
+        return;
       }
 
       this.webSocketServer.handleUpgrade(request, socket, head, (connection: WebSocket) => {
-        this.webSocketServer.emit('connection', connection, request);
+        this.webSocketServer.emit('connection', connection, request, authorization.grant);
       });
     };
   }
@@ -232,12 +239,16 @@ export class YjsCollaborationServer implements CollaborationServer {
     return autoSave?.flushPrimaryIfDirty(reason) ?? Promise.resolve();
   }
 
-  private closeConn(doc: WSSharedDoc, conn: WebSocket): void {
+  private closeConn(doc: WSSharedDoc, conn: WebSocket, code?: number, reason?: string): void {
     const controlledIds = doc.conns.get(conn);
     doc.conns.delete(conn);
 
     if (controlledIds) {
-      awarenessProtocol.removeAwarenessStates(doc.awareness, [...controlledIds], null);
+      awarenessProtocol.removeAwarenessStates(
+        doc.awareness,
+        [...controlledIds.controlledIds],
+        null
+      );
     }
 
     this.flushAutoSave(doc.name, 'room-leave').catch(error => {
@@ -251,7 +262,7 @@ export class YjsCollaborationServer implements CollaborationServer {
       this.autoSaves.delete(doc.name);
     }
 
-    conn.close();
+    conn.close(code, reason);
   }
 
   private send(doc: WSSharedDoc, conn: WebSocket, message: Uint8Array): void {
@@ -279,10 +290,33 @@ export class YjsCollaborationServer implements CollaborationServer {
 
       switch (messageType) {
         case messageSync:
-          encoding.writeVarUint(encoder, messageSync);
-          syncProtocol.readSyncMessage(decoder, encoder, doc, conn);
-          if (encoding.length(encoder) > 1) {
-            this.send(doc, conn, encoding.toUint8Array(encoder));
+          {
+            const syncType = decoding.readVarUint(decoder);
+            const grant = doc.conns.get(conn)?.grant;
+            if (grant?.readOnly && (syncType === syncStep2 || syncType === syncUpdate)) {
+              log.warn(
+                `Dropped write from read-only collaboration room: docName=${doc.name} userId=${grant.userId}`
+              );
+              return;
+            }
+
+            encoding.writeVarUint(encoder, messageSync);
+            switch (syncType) {
+              case syncStep1:
+                syncProtocol.readSyncStep1(decoder, encoder, doc);
+                break;
+              case syncStep2:
+                syncProtocol.readSyncStep2(decoder, doc, conn);
+                break;
+              case syncUpdate:
+                syncProtocol.readUpdate(decoder, doc, conn);
+                break;
+              default:
+                throw new Error(`Unknown Yjs sync message type: ${syncType}`);
+            }
+            if (encoding.length(encoder) > 1) {
+              this.send(doc, conn, encoding.toUint8Array(encoder));
+            }
           }
           break;
         case messageAwareness:
@@ -298,11 +332,11 @@ export class YjsCollaborationServer implements CollaborationServer {
     }
   }
 
-  private setupYjsWebSocketConnection(conn: WebSocket, docName: string): void {
+  private setupYjsWebSocketConnection(conn: WebSocket, docName: string, grant: RoomGrant): void {
     conn.binaryType = 'arraybuffer';
     const doc = this.getOrCreateYDoc(docName);
     log.debug(`WebSocket connected: docName=${docName} hasAutoSave=${this.autoSaves.has(docName)}`);
-    doc.conns.set(conn, new Set());
+    doc.conns.set(conn, { controlledIds: new Set(), grant });
     this.flushAutoSave(docName, 'room-enter').catch(error => {
       log.error(`Failed to flush auto-save on room enter: ${docName}`, error);
     });
@@ -329,6 +363,16 @@ export class YjsCollaborationServer implements CollaborationServer {
       }
 
       if (doc.conns.has(conn)) {
+        const connectionGrant = doc.conns.get(conn)?.grant;
+        if (connectionGrant && Date.now() / 1000 >= connectionGrant.tokenExpiresAt) {
+          log.info(
+            `Closing expired collaboration connection: docName=${docName} userId=${connectionGrant.userId}`
+          );
+          this.closeConn(doc, conn, 4401, 'Access token expired');
+          clearInterval(pingInterval);
+          return;
+        }
+
         pongReceived = false;
         try {
           conn.ping();
