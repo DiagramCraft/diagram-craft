@@ -14,7 +14,10 @@ import { chat } from '@tanstack/ai';
 import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';
 import { createAiChatTools } from '../ai/chatTools';
 import { buildDocumentActionPrompt } from '../ai/documentContextPromptBuilder';
-import { validateDocumentMetadata, validateDocumentTypeWrite } from '../document/documentValidation';
+import {
+  validateDocumentMetadata,
+  validateDocumentTypeWrite
+} from '../document/documentValidation';
 import { parseGeneratedValue } from '../document/documentAiValue';
 
 import { projectDbErrorMessages, storageScope } from './projectOperationHelpers';
@@ -165,7 +168,9 @@ export const testDocumentAiAction = async (
         message: 'The selected document does not use the document type being edited'
       });
 
-      const actions = document.documentType.aiActions.filter(candidate => candidate.id !== action.id);
+      const actions = document.documentType.aiActions.filter(
+        candidate => candidate.id !== action.id
+      );
       validateDocumentTypeWrite({
         name: document.documentType.name,
         description: document.documentType.description,
