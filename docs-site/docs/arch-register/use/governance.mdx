@@ -1,0 +1,54 @@
+# Governance And Approvals
+
+Workspaces can require review before certain entity changes take effect. This page covers the governance inbox and
+the two governed workflows: entity change approval and entity deprecation.
+
+## My Work
+
+**My Work** in the navigation rail is the governance inbox. It shows an open-task count badge and has two scopes:
+
+- **Assigned** lists open governance tasks waiting on you, with completed task history available separately
+- **Submitted** lists governance work you have started, so you can see what — or who — is currently blocking it
+
+Filter tasks by state, task kind (approve, acknowledge, review, remediate), case kind, and due date (overdue, or due
+within a week). Each task links back to the governed record.
+
+From the **Submitted** scope you can withdraw an open submission where permitted.
+
+Governance tasks also appear as action items in the [notification feed](collaboration-notifications); those
+notifications clear automatically when the underlying task is resolved, superseded, or cancelled.
+
+## Entity Change Approval
+
+Administrators can require approval for entity changes per schema, using the **Entity approval policy** setting on
+the entity type. When approval is required:
+
+1. Saving a change submits an immutable revision instead of updating the entity directly.
+2. Approvers review a before/after diff of the proposed change.
+3. Approvers approve, or request changes — after requested changes, the submitter can resubmit.
+4. On approval, the proposed state is applied to the live entity.
+
+Two special cases are supported:
+
+- if you are the sole eligible approver, you can self-approve your own submission
+- authorized users can record an approval bypass, which is captured in the audit trail
+
+## Entity Deprecation
+
+Schemas can also opt in to a deprecation workflow via a per-schema **Entity deprecation** policy. When enabled,
+retiring an entity goes through a deprecation proposal rather than a direct lifecycle edit:
+
+- propose a deprecation with a target date, a reason, an optional successor entity, and an optional related project
+- the proposal routes through approval like other governed changes
+- affected owner teams are notified and asked to acknowledge the deprecation
+- the deprecation can be postponed, finalized on schedule, or cancelled while in flight
+
+Finalizing moves the entity to the workspace's designated deprecated lifecycle state, configured in
+**Workspace Settings → Lifecycle**.
+
+## Related Pages
+
+- [Collaboration and Notifications](collaboration-notifications)
+- [Entities](entities)
+- [Workspace Settings](../admin/workspace-settings)
+- [Roles and Permissions](../admin/roles-permissions)

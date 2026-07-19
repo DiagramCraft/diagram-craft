@@ -29,5 +29,6 @@ projects, diagrams, and documentation around that catalog.
 - Adding the first entity
 - Creating the first project and diagram
 - Day-to-day usage guides for entities, projects, content, search, and AI features
+- Collaboration, notifications, and governance workflows such as change approval and deprecation
 - Workspace administration for model, permissions, AI, export/import, and operational controls
 - Reference pages for scope, permissions, and implemented product screens

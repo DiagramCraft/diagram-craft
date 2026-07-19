@@ -27,7 +27,8 @@ The main project screen is where you manage:
 - file tree
 - associated entities
 - assessments
-- planned changes
+- milestones
+- planned changes and the project timeline
 
 <ThemedImage
   alt="Project detail screen in Arch Register"
@@ -36,6 +37,23 @@ The main project screen is where you manage:
     dark: require('/img/arch-register/projects/detail-home-dark.png').default,
   }}
 />
+
+## Milestones
+
+Milestones give a project its planning checkpoints. Each milestone has a target date and a status, and planned entity
+changes can be associated with a milestone instead of a fixed date.
+
+## Planned Changes
+
+Planned changes record proposed future changes to entities within the scope of a project, without touching the
+current live entity state. A planned change can be:
+
+- targeted at a future date, or associated with a project milestone
+- inspected in the project timeline and in entity timeline views, alongside historical change
+- applied when it is ready, promoting the proposed state into the live entity
+
+Use planned changes when a project needs to describe a future state — a decommissioning, a migration target — before
+it happens.
 
 ## Use Projects When
 
