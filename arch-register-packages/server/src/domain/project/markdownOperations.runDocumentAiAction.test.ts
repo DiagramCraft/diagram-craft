@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage.types';
-import { runDocumentAiAction } from './markdownAiOperations';
+import { runDocumentAiAction, testDocumentAiAction } from './markdownAiOperations';
 
 const { requireWorkspaceCapability, requireProjectAccess } = vi.hoisted(() => ({
   requireWorkspaceCapability: vi.fn(),
@@ -75,7 +75,15 @@ const documentType = {
   workspace: 'ws-1',
   name: 'ADR',
   description: '',
-  fields: [],
+  fields: [
+    {
+      id: 'summary',
+      name: 'Summary',
+      type: 'text' as const,
+      requirement: 'optional' as const,
+      retired: false
+    }
+  ],
   color: null,
   icon: null,
   archived: false,
@@ -134,7 +142,11 @@ describe('runDocumentAiAction', () => {
   beforeEach(() => {
     requireWorkspaceCapability.mockReset().mockImplementation(() => undefined);
     requireProjectAccess.mockReset().mockImplementation(() => undefined);
-    resolveAiConfig.mockReset().mockResolvedValue({ temperature: 0.3 });
+    resolveAiConfig.mockReset().mockResolvedValue({
+      provider: 'openai',
+      model: 'test-model',
+      temperature: 0.3
+    });
     createAiChatTools.mockClear();
     chat.mockClear();
   });
@@ -221,6 +233,77 @@ describe('runDocumentAiAction', () => {
     await expect(
       runDocumentAiAction(db, storage, 'ws-1', 'node-1', 'summarize', event)
     ).rejects.toThrow();
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it('tests an unsaved interactive action and returns diagnostics without persistence', async () => {
+    const db = makeDb();
+    const storage = makeStorage();
+    const generator = await testDocumentAiAction(
+      db,
+      storage,
+      'ws-1',
+      'node-1',
+      'type-1',
+      {
+        id: 'draft-action',
+        name: 'Draft action',
+        kind: 'interactive',
+        prompt: 'Use the draft prompt.',
+        enabled: false
+      },
+      event
+    );
+    const events = [];
+    for await (const next of generator) events.push(next);
+
+    expect(events).toEqual([
+      { type: 'delta', delta: 'The ' },
+      { type: 'delta', delta: 'answer.' },
+      expect.objectContaining({
+        type: 'done',
+        actionId: 'draft-action',
+        actionName: 'Draft action',
+        kind: 'interactive',
+        rawOutput: 'The answer.',
+        parsedValue: null,
+        status: 'success',
+        provider: 'openai',
+        model: 'test-model',
+        errors: [],
+        toolCalls: []
+      })
+    ]);
+    expect(createAiChatTools).toHaveBeenCalledWith(
+      db,
+      'ws-1',
+      { userId: 'user-1' },
+      { id: 'user-1', displayName: 'User One' },
+      { readOnly: true }
+    );
+  });
+
+  it('rejects testing a document from another document type', async () => {
+    const db = makeDb();
+    const storage = makeStorage();
+
+    await expect(
+      testDocumentAiAction(
+        db,
+        storage,
+        'ws-1',
+        'node-1',
+        'other-type',
+        {
+          id: 'draft-action',
+          name: 'Draft action',
+          kind: 'interactive',
+          prompt: 'Use the draft prompt.',
+          enabled: true
+        },
+        event
+      )
+    ).rejects.toThrow('does not use the document type being edited');
     expect(chat).not.toHaveBeenCalled();
   });
 });

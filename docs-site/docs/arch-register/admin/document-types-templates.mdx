@@ -48,10 +48,18 @@ Values are checked against the field type when a document is saved.
 
 ### AI Actions
 
-A document type can define interactive AI actions: named, predefined prompts that anyone who can view a typed
-document can run from the document sidebar. An action runs read-only against the document's body, metadata, type,
-and location, and never modifies the document. Add actions with **Add AI action** when editing the type; each action
-has a name and a prompt.
+A document type can define interactive AI actions and metadata generators. Actions are named, predefined prompts that
+use the document body, metadata, type, and location with read-only tools. Interactive actions can be run by anyone who
+can view a typed document; metadata generators run automatically after document changes. Neither action kind can
+modify documents, metadata, or entities through its AI tools.
+
+Actions are shown by name and type when editing a document type. Select **Add AI action** or **Edit** to open the action
+dialog, where you can set the name, kind, prompt, output field for metadata generators, and enabled state.
+
+Before saving or enabling an action, administrators can choose an existing accessible document of the same type and
+select **Test action**. Testing uses the current unsaved action draft and returns the complete model output, provider,
+model, duration, parsed metadata value when applicable, and any actionable parsing, validation, permission, or tool
+errors. Testing does not change the document, metadata, revisions, or generation schedules.
 
 AI actions require workspace [AI configuration](ai-configuration) to be in place. See
 [AI Assistant and Extract](../use/ai-assistant-extract) for the reader-facing workflow.

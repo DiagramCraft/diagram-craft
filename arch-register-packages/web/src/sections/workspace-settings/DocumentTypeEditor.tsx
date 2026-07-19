@@ -34,6 +34,7 @@ import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { settingsSectionTarget } from '../../routes/settingsNavigation';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
+import { AiActionDialog } from './AiActionDialog';
 import styles from './DocumentSettingsScreen.module.css';
 
 const newDocumentField = (existingIds: ReadonlySet<string> = new Set<string>()): DocumentField => {
@@ -51,14 +52,6 @@ const newDocumentField = (existingIds: ReadonlySet<string> = new Set<string>()):
     retired: false
   };
 };
-
-const newAiAction = (): DocumentAiAction => ({
-  id: crypto.randomUUID(),
-  name: '',
-  kind: 'interactive',
-  prompt: '',
-  enabled: true
-});
 
 const NEW_DOCUMENT_TYPE_ID = 'new';
 
@@ -94,6 +87,8 @@ export const DocumentTypeEditor = ({
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [aiActionDialogOpen, setAiActionDialogOpen] = useState(false);
+  const [editingAiAction, setEditingAiAction] = useState<DocumentAiAction | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
@@ -112,6 +107,8 @@ export const DocumentTypeEditor = ({
       setDirty(false);
       setShowHistory(false);
       setPendingFieldChanges(null);
+      setAiActionDialogOpen(false);
+      setEditingAiAction(null);
     } else if (isNew) {
       setName('');
       setDescription('');
@@ -120,6 +117,8 @@ export const DocumentTypeEditor = ({
       setColor(null);
       setIcon(null);
       setDirty(true);
+      setAiActionDialogOpen(false);
+      setEditingAiAction(null);
     }
   }, [isNew, selected]);
 
@@ -152,19 +151,31 @@ export const DocumentTypeEditor = ({
     setDirty(true);
   };
 
-  const updateAiAction = (actionId: string, next: DocumentAiAction) => {
-    setAiActions(current => current.map(action => (action.id === actionId ? next : action)));
-    setDirty(true);
-  };
-
   const removeAiAction = (actionId: string) => {
     setAiActions(current => current.filter(action => action.id !== actionId));
     setDirty(true);
   };
 
-  const addAiAction = () => {
-    setAiActions(current => [...current, newAiAction()]);
+  const openAddAiAction = () => {
+    setEditingAiAction(null);
+    setAiActionDialogOpen(true);
+  };
+
+  const openEditAiAction = (action: DocumentAiAction) => {
+    setEditingAiAction(action);
+    setAiActionDialogOpen(true);
+  };
+
+  const saveAiActionFromDialog = (action: DocumentAiAction) => {
+    setAiActions(current => {
+      const exists = current.some(item => item.id === action.id);
+      return exists
+        ? current.map(item => (item.id === action.id ? action : item))
+        : [...current, action];
+    });
     setDirty(true);
+    setAiActionDialogOpen(false);
+    setEditingAiAction(null);
   };
 
   const handleSave = async (fieldMigrations?: FieldMigrations) => {
@@ -402,7 +413,7 @@ export const DocumentTypeEditor = ({
                 <>
                   <div className={styles.fieldsHead}>
                     <div className={styles.sectionLabel}>AI Actions</div>
-                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addAiAction}>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openAddAiAction}>
                       Add AI action
                     </Button>
                   </div>
@@ -413,22 +424,7 @@ export const DocumentTypeEditor = ({
                         <DocumentAiActionRow
                           key={action.id}
                           action={action}
-                          fields={fields}
-                          claimedFieldIds={
-                            new Set(
-                              aiActions
-                                .filter(
-                                  (
-                                    other
-                                  ): other is Extract<
-                                    DocumentAiAction,
-                                    { kind: 'metadata_generator' }
-                                  > => other.id !== action.id && other.kind === 'metadata_generator'
-                                )
-                                .map(other => other.outputFieldId)
-                            )
-                          }
-                          onUpdate={next => updateAiAction(action.id, next)}
+                          onEdit={() => openEditAiAction(action)}
                           onRemove={() => removeAiAction(action.id)}
                         />
                       ))}
@@ -448,6 +444,31 @@ export const DocumentTypeEditor = ({
                   </div>
                 </>
               )}
+
+              <AiActionDialog
+                open={aiActionDialogOpen}
+                onClose={() => {
+                  setAiActionDialogOpen(false);
+                  setEditingAiAction(null);
+                }}
+                onSave={saveAiActionFromDialog}
+                workspaceSlug={workspaceSlug}
+                documentTypeId={selected?.id ?? null}
+                action={editingAiAction}
+                fields={fields}
+                claimedFieldIds={
+                  new Set(
+                    aiActions
+                      .filter(
+                        (
+                          other
+                        ): other is Extract<DocumentAiAction, { kind: 'metadata_generator' }> =>
+                          other.id !== editingAiAction?.id && other.kind === 'metadata_generator'
+                      )
+                      .map(other => other.outputFieldId)
+                  )
+                }
+              />
 
               <div className={styles.bottomActions}>
                 {selected && (

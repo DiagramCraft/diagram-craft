@@ -185,8 +185,8 @@
 
 .aiActionRow {
   display: grid;
-  grid-template-columns: 1fr 130px 2fr 160px 28px 28px;
-  align-items: start;
+  grid-template-columns: 1fr 180px auto 28px;
+  align-items: center;
   gap: 10px;
   padding: 10px;
   font-size: 12px;
@@ -199,6 +199,38 @@
 
 .aiActionRow:hover {
   background: var(--panel-bg);
+}
+
+.aiActionName,
+.aiActionKind,
+.aiActionEdit {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--base-fg-dim);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aiActionName {
+  color: var(--base-fg);
+  font-weight: 500;
+}
+
+.aiActionKind {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+
+.aiActionEdit {
+  color: var(--accent-fg);
+  font-size: 11px;
+}
+
+.aiActionDisabled {
+  color: var(--cmp-fg-disabled);
 }
 
 .iconBtn {

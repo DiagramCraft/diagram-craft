@@ -65,7 +65,7 @@ import {
   listDocuments
 } from './markdownListingOperations';
 import { createMarkdownDiagramAttachment } from './markdownAttachmentOperations';
-import { runDocumentAiAction } from './markdownAiOperations';
+import { runDocumentAiAction, testDocumentAiAction } from './markdownAiOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
 type ORPCContext = {
@@ -305,6 +305,20 @@ const entityContentHandlers = {
         input.params.workspace,
         input.params.nodeId,
         input.params.actionId,
+        context.event
+      );
+    }
+  ),
+  testDocumentAiAction: projectRouter.projects.testDocumentAiAction.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await testDocumentAiAction(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.params.nodeId,
+        input.body.documentTypeId,
+        input.body.action,
         context.event
       );
     }
