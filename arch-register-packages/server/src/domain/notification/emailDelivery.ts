@@ -26,17 +26,24 @@ export const ensureNotificationDeliverySchedule = async (
       schedule.system_identity === NOTIFICATION_DELIVERY_SYSTEM_IDENTITY
   );
   if (existing) return existing;
-  return createJobSchedule(db, {
-    workspace,
-    jobType: NOTIFICATION_DELIVERY_JOB_TYPE,
-    systemIdentity: NOTIFICATION_DELIVERY_SYSTEM_IDENTITY,
-    payload: {},
-    priority: 5,
-    recurrence: { type: 'minutes', intervalMinutes: 2, startsAt: now }
-  }, now);
+  return createJobSchedule(
+    db,
+    {
+      workspace,
+      jobType: NOTIFICATION_DELIVERY_JOB_TYPE,
+      systemIdentity: NOTIFICATION_DELIVERY_SYSTEM_IDENTITY,
+      payload: {},
+      priority: 5,
+      recurrence: { type: 'minutes', intervalMinutes: 2, startsAt: now }
+    },
+    now
+  );
 };
 
-export const ensureAllNotificationDeliverySchedules = async (db: DatabaseAdapter, now = new Date()) => {
+export const ensureAllNotificationDeliverySchedules = async (
+  db: DatabaseAdapter,
+  now = new Date()
+) => {
   const workspaces = await db.workspace.listWorkspaces();
   for (const workspace of workspaces) {
     await ensureNotificationDeliverySchedule(db, workspace.id, now);
@@ -58,7 +65,10 @@ export type EmailProvider = {
 };
 
 export class RetryableEmailError extends Error {
-  constructor(message: string, readonly retryAfterMs?: number) {
+  constructor(
+    message: string,
+    readonly retryAfterMs?: number
+  ) {
     super(message);
     this.name = 'RetryableEmailError';
   }
@@ -115,7 +125,9 @@ export type EmailDeliveryConfig = {
 };
 
 export const createEmailDeliveryConfigFromEnv = (): EmailDeliveryConfig => {
-  const providerName = (process.env['NOTIFICATION_EMAIL_PROVIDER'] ?? 'resend').trim().toLowerCase();
+  const providerName = (process.env['NOTIFICATION_EMAIL_PROVIDER'] ?? 'resend')
+    .trim()
+    .toLowerCase();
   const apiKey = process.env['RESEND_API_KEY']?.trim() ?? '';
   const from = process.env['NOTIFICATION_EMAIL_FROM']?.trim() || null;
   const publicAppUrl = process.env['PUBLIC_APP_URL']?.trim().replace(/\/$/, '') || null;
@@ -277,7 +289,10 @@ export const createNotificationDeliveryJobHandler = (
         if (!workspace) throw new PermanentEmailError('Workspace not found');
         const url = absoluteUrl(config.publicAppUrl, route.urlPath);
         const email = buildEmail(notification, url, workspace.name);
-        const recipient = overrideRecipientDomain(claim.recipient_email, config.recipientDomainOverride);
+        const recipient = overrideRecipientDomain(
+          claim.recipient_email,
+          config.recipientDomainOverride
+        );
         logger.info('Sending notification email', {
           deliveryId: claim.id,
           notificationId: claim.notification_id,

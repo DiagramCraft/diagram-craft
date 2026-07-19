@@ -68,7 +68,11 @@ export class PostgresNotificationDeliveryDatabase
             WHERE id = ${String(row['id'])}
             RETURNING *
           `;
-          if (claimed) result.push({ ...notificationDeliveryMappers.delivery(claimed), lease_token: leaseToken });
+          if (claimed)
+            result.push({
+              ...notificationDeliveryMappers.delivery(claimed),
+              lease_token: leaseToken
+            });
         }
         return result;
       });
@@ -77,7 +81,13 @@ export class PostgresNotificationDeliveryDatabase
     }
   }
 
-  async markSent(id: string, leaseToken: string, provider: string, providerMessageId: string, sentAt: Date) {
+  async markSent(
+    id: string,
+    leaseToken: string,
+    provider: string,
+    providerMessageId: string,
+    sentAt: Date
+  ) {
     try {
       const rows = await this.sql`
         UPDATE notification_delivery
@@ -92,7 +102,13 @@ export class PostgresNotificationDeliveryDatabase
     }
   }
 
-  async markRetry(id: string, leaseToken: string, nextAttemptAt: Date, error: string, updatedAt: Date) {
+  async markRetry(
+    id: string,
+    leaseToken: string,
+    nextAttemptAt: Date,
+    error: string,
+    updatedAt: Date
+  ) {
     try {
       const rows = await this.sql`
         UPDATE notification_delivery

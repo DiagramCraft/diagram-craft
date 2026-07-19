@@ -93,7 +93,13 @@ export class SqliteNotificationDeliveryDatabase
     return claim();
   }
 
-  async markSent(id: string, leaseToken: string, provider: string, providerMessageId: string, sentAt: Date) {
+  async markSent(
+    id: string,
+    leaseToken: string,
+    provider: string,
+    providerMessageId: string,
+    sentAt: Date
+  ) {
     return (
       this.run(
         `UPDATE notification_delivery
@@ -105,7 +111,13 @@ export class SqliteNotificationDeliveryDatabase
     );
   }
 
-  async markRetry(id: string, leaseToken: string, nextAttemptAt: Date, error: string, updatedAt: Date) {
+  async markRetry(
+    id: string,
+    leaseToken: string,
+    nextAttemptAt: Date,
+    error: string,
+    updatedAt: Date
+  ) {
     return (
       this.run(
         `UPDATE notification_delivery

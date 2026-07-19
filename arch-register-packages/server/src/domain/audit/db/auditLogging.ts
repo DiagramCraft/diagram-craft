@@ -98,12 +98,13 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
         email: string | null;
         inAppEnabled: boolean;
         emailEnabled: boolean;
-      }> = watcherUserIds?.map(userId => ({
-        userId,
-        email: null,
-        inAppEnabled: true,
-        emailEnabled: false
-      })) ?? [];
+      }> =
+        watcherUserIds?.map(userId => ({
+          userId,
+          email: null,
+          inAppEnabled: true,
+          emailEnabled: false
+        })) ?? [];
       if (typeof notificationPreferenceAdapter?.listOverrides === 'function') {
         const candidateWatcherIds =
           watcherUserIds ?? (await tx.watch.listWatcherUserIds(workspace, entityId));
@@ -120,13 +121,7 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
               );
               const emailEnabled =
                 user?.email != null &&
-                (await isChannelEnabled(
-                  tx,
-                  userId,
-                  workspace,
-                  'entity-watch-activity',
-                  'email'
-                ));
+                (await isChannelEnabled(tx, userId, workspace, 'entity-watch-activity', 'email'));
               return inAppEnabled || emailEnabled
                 ? {
                     userId,

@@ -68,9 +68,10 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
     try {
       const watcherRecipients =
         input.watcherRecipients ??
-        (input.watcherUserIds ?? (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))).map(
-          userId => ({ userId, email: null, inAppEnabled: true, emailEnabled: false })
-        );
+        (
+          input.watcherUserIds ??
+          (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))
+        ).map(userId => ({ userId, email: null, inAppEnabled: true, emailEnabled: false }));
 
       for (const recipient of watcherRecipients) {
         if (recipient.userId === auditLog.user_id) continue;

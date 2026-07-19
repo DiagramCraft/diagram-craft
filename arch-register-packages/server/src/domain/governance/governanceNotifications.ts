@@ -184,13 +184,7 @@ const createGovernanceNotification = async (
   const recipient = await db.auth.getUser(input.recipientUserId);
   const emailEnabled =
     recipient?.email != null &&
-    (await isChannelEnabled(
-      db,
-      input.recipientUserId,
-      input.workspace,
-      notificationType,
-      'email'
-    ));
+    (await isChannelEnabled(db, input.recipientUserId, input.workspace, notificationType, 'email'));
   if (!inAppEnabled && !emailEnabled) return;
 
   const presentation = getPresentation(input.eventType, input.caseKind);
