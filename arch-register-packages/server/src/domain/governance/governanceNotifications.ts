@@ -6,7 +6,11 @@ import {
   type WorkspaceCapability
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
-import type { GovernanceEventType } from './db/governanceDatabase';
+import type {
+  GovernanceCaseDbResult,
+  GovernanceEventDbResult,
+  GovernanceEventType
+} from './db/governanceDatabase';
 import { RetryableJobError } from '../jobs/jobRetry';
 import { notificationTypeForGovernanceEvent } from '../notification/notificationPreferenceCatalog';
 import { isChannelEnabled } from '../notification/notificationPreferences';
@@ -182,6 +186,72 @@ const createGovernanceNotification = async (
   });
 };
 
+const resolveGovernanceNotificationRecipients = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  caseRow: GovernanceCaseDbResult,
+  event: GovernanceEventDbResult
+) => {
+  const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
+  const recipients = new Map<string, string | null>();
+
+  if (event.event_type === 'submitted') {
+    for (const assignment of assignments) {
+      for (const recipient of await listAssignmentRecipients(db, workspace, assignment)) {
+        recipients.set(`${recipient.id}:${assignment.id}`, assignment.id);
+      }
+    }
+  } else {
+    for (const assignment of assignments) {
+      for (const recipient of await listAssignmentRecipients(db, workspace, assignment)) {
+        recipients.set(`${recipient.id}:none`, null);
+      }
+    }
+    if (caseRow.initiator_user_id) recipients.set(`${caseRow.initiator_user_id}:none`, null);
+  }
+
+  return recipients;
+};
+
+/**
+ * Creates the in-app notifications for a governance event in the caller's transaction.
+ * External channels intentionally remain outside this path and will be handled by the
+ * asynchronous notification delivery work tracked in #2211.
+ */
+export const createGovernanceInAppNotifications = async (
+  db: DatabaseAdapter,
+  caseRow: GovernanceCaseDbResult,
+  event: GovernanceEventDbResult
+) => {
+  const actor = event.actor_user_id ? await db.auth.getUser(event.actor_user_id) : null;
+  const recipients = await resolveGovernanceNotificationRecipients(
+    db,
+    caseRow.workspace,
+    caseRow,
+    event
+  );
+
+  for (const [recipientKey, assignmentId] of recipients) {
+    const recipientUserId = recipientKey.split(':')[0]!;
+    await createGovernanceNotification(db, {
+      workspace: caseRow.workspace,
+      eventId: event.id,
+      eventType: event.event_type,
+      caseId: caseRow.id,
+      subjectType: caseRow.subject_type,
+      subjectId: caseRow.subject_id,
+      caseKind: caseRow.case_kind,
+      assignmentId,
+      recipientUserId,
+      actorUserId: event.actor_user_id,
+      actorDisplayName: actor?.display_name ?? null,
+      occurredAt: event.occurred_at
+    });
+  }
+
+  return { recipients: recipients.size };
+};
+
 export const createGovernanceNotificationJobHandler =
   (db: DatabaseAdapter) =>
   async (context: { workspace: string; payload: Record<string, unknown> }) => {
@@ -195,52 +265,7 @@ export const createGovernanceNotificationJobHandler =
         candidate => candidate.id === context.payload.eventId
       );
       if (!event) return { skipped: true, reason: 'event-not-found' };
-      const actor = event.actor_user_id ? await db.auth.getUser(event.actor_user_id) : null;
-      const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
-      const recipients = new Map<string, string | null>();
-
-      if (event.event_type === 'submitted') {
-        for (const assignment of assignments) {
-          for (const recipient of await listAssignmentRecipients(
-            db,
-            context.workspace,
-            assignment
-          )) {
-            recipients.set(`${recipient.id}:${assignment.id}`, assignment.id);
-          }
-        }
-      } else {
-        for (const assignment of assignments) {
-          for (const recipient of await listAssignmentRecipients(
-            db,
-            context.workspace,
-            assignment
-          )) {
-            recipients.set(`${recipient.id}:none`, null);
-          }
-        }
-        if (caseRow.initiator_user_id) recipients.set(`${caseRow.initiator_user_id}:none`, null);
-      }
-
-      for (const [recipientKey, assignmentId] of recipients) {
-        const recipientUserId = recipientKey.split(':')[0]!;
-        await createGovernanceNotification(db, {
-          workspace: context.workspace,
-          eventId: event.id,
-          eventType: event.event_type,
-          caseId: caseRow.id,
-          subjectType: caseRow.subject_type,
-          subjectId: caseRow.subject_id,
-          caseKind: caseRow.case_kind,
-          assignmentId,
-          recipientUserId,
-          actorUserId: event.actor_user_id,
-          actorDisplayName: actor?.display_name ?? null,
-          occurredAt: event.occurred_at
-        });
-      }
-
-      return { recipients: recipients.size };
+      return await createGovernanceInAppNotifications(db, caseRow, event);
     } catch (error) {
       throw new RetryableJobError(
         `Governance notification delivery failed: ${error instanceof Error ? error.message : String(error)}`

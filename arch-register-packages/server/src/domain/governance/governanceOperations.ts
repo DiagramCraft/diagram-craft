@@ -4,7 +4,6 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import type {
   AuthorizationContext,
   TeamRole,
@@ -21,6 +20,7 @@ import type {
 } from './db/governanceDatabase';
 import { isEligibleForAssignment, resolveAssignmentEligibility } from './governanceEligibility';
 import { createGovernanceRegistry, type GovernanceRegistry } from './governanceRegistry';
+import { createGovernanceInAppNotifications } from './governanceNotifications';
 import type {
   GovernanceAssignment,
   GovernanceCase,
@@ -32,9 +32,6 @@ import type {
   ListGovernanceTasksQuery,
   ListGovernanceCasesQuery
 } from '@arch-register/api-types/governanceContract';
-
-const NOTIFICATION_JOB_TYPE = 'governance.notification';
-const NOTIFICATION_SYSTEM_IDENTITY = 'governance';
 
 // One decision closes the whole case in this foundation. Group acknowledgement (multiple
 // independent tasks per case) is deferred to whichever domain needs it (see #1718) rather than
@@ -146,9 +143,8 @@ const toAssignmentCreate = (
 });
 
 /**
- * Appends a governance event and enqueues its notification delivery in the same transaction
- * (outbox pattern, mirroring `domain/audit/db/auditLogging.ts::writeAudit`). A failed enqueue
- * rolls back the event instead of leaving history that nobody was ever notified about.
+ * Appends a governance event and creates its in-app notifications in the same transaction.
+ * External notification channels are intentionally deferred to asynchronous delivery (#2211).
  */
 export const recordGovernanceEvent = async (
   tx: DatabaseAdapter,
@@ -175,13 +171,7 @@ export const recordGovernanceEvent = async (
     metadata: input.metadata
   });
 
-  await enqueueOneOffJobRun(tx, {
-    workspace: caseRow.workspace,
-    jobType: NOTIFICATION_JOB_TYPE,
-    systemIdentity: NOTIFICATION_SYSTEM_IDENTITY,
-    payload: { caseId: caseRow.id, eventId: event.id, eventType: event.event_type },
-    maxAttempts: 5
-  });
+  await createGovernanceInAppNotifications(tx, caseRow, event);
 
   return event;
 };
