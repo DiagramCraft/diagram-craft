@@ -3,7 +3,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
-import { listEntities } from '../catalog/entityOperations';
+import { listEntities } from '../catalog/entityQueryOperations';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
 const resolveAssessmentResponseEntityName = async (

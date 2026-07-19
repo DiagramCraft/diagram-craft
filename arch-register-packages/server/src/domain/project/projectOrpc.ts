@@ -15,22 +15,24 @@ import {
 import {
   listProjectFiles,
   createFolder,
+  updateTemplateStatus,
+  listEntityContentNodes,
+  createEntityFolder,
+  listWorkspaceContentNodes,
+  createWorkspaceFolder
+} from './contentNodeOperations';
+import {
   getFileContent,
   saveFile,
   cloneContentFile,
   relocateContentFile,
-  updateTemplateStatus,
-  listEntityContentNodes,
-  createEntityFolder,
   createEntityFile,
-  listWorkspaceContentNodes,
-  createWorkspaceFolder,
   createWorkspaceFile,
   getWorkspaceFileContent,
   saveWorkspaceFile,
   getProjectFile,
   getFileContentById
-} from './contentNodeOperations';
+} from './contentFileOperations';
 import {
   deleteContentFile,
   deleteContentFolder,
@@ -54,15 +56,16 @@ import {
   saveMarkdownContent,
   migrateMarkdownContent,
   listMarkdownRevisions,
+  getMarkdownRevision,
+  restoreMarkdownRevision
+} from './markdownDocumentOperations';
+import {
   listRelatedContent,
   listDocumentBacklinks,
-  listDocuments,
-  getMarkdownRevision,
-  restoreMarkdownRevision,
-  createMarkdownDiagramAttachment,
-  runDocumentAiAction,
-  testDocumentAiAction
-} from './markdownOperations';
+  listDocuments
+} from './markdownListingOperations';
+import { createMarkdownDiagramAttachment } from './markdownAttachmentOperations';
+import { runDocumentAiAction, testDocumentAiAction } from './markdownAiOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
 type ORPCContext = {
