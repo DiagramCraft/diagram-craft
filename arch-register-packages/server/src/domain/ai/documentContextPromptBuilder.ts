@@ -4,6 +4,25 @@ import type {
   DocumentType
 } from '@arch-register/api-types/documentContract';
 
+const outputFieldInstruction = (field: DocumentField): string => {
+  const shape =
+    field.type === 'boolean'
+      ? `the exact word "true" or "false"`
+      : field.type === 'number'
+        ? 'a single numeric value'
+        : field.type === 'enum'
+          ? `exactly one of: ${(field.enumOptions ?? []).map(option => option.value).join(', ')}`
+          : field.type === 'date'
+            ? 'a single ISO 8601 date (YYYY-MM-DD)'
+            : 'a single text value';
+  return [
+    ``,
+    `## Output`,
+    `Respond with ${shape} for the field "${field.name}", and nothing else — no explanation, no`,
+    `surrounding text, no markdown formatting.`
+  ].join('\n');
+};
+
 export const buildDocumentActionPrompt = (params: {
   documentTitle: string;
   locationPath: string;
@@ -11,8 +30,10 @@ export const buildDocumentActionPrompt = (params: {
   metadata: DocumentMetadata;
   body: string;
   actionPrompt: string;
+  outputField?: DocumentField;
 }): string => {
-  const { documentTitle, locationPath, documentType, metadata, body, actionPrompt } = params;
+  const { documentTitle, locationPath, documentType, metadata, body, actionPrompt, outputField } =
+    params;
 
   const fieldDescriptions = (documentType?.fields ?? [])
     .filter((field: DocumentField) => !field.retired)
@@ -39,7 +60,8 @@ export const buildDocumentActionPrompt = (params: {
     body,
     ``,
     `## Instructions`,
-    actionPrompt
+    actionPrompt,
+    ...(outputField ? [outputFieldInstruction(outputField)] : [])
   ];
 
   return parts.join('\n');

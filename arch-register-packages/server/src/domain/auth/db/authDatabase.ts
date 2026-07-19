@@ -28,6 +28,7 @@ export type UserDbResult = {
   oidc_issuer: string | null;
   oidc_subject: string | null;
   is_active: boolean;
+  is_system_actor: boolean;
   color: string | null;
   created_at: Date;
   updated_at: Date;
@@ -36,9 +37,10 @@ export type UserDbResult = {
 
 export type UserDbCreate = Omit<
   UserDbResult,
-  'user_id' | 'created_at' | 'updated_at' | 'last_login_at'
+  'user_id' | 'created_at' | 'updated_at' | 'last_login_at' | 'is_system_actor'
 > & {
   user_id?: string;
+  is_system_actor?: boolean;
   created_at: Date;
   updated_at: Date;
   last_login_at: Date | null;
@@ -92,6 +94,7 @@ export const authMappers = {
     oidc_issuer: row['oidc_issuer'] == null ? null : String(row['oidc_issuer']),
     oidc_subject: row['oidc_subject'] == null ? null : String(row['oidc_subject']),
     is_active: databaseBoolean(row['is_active']),
+    is_system_actor: databaseBoolean(row['is_system_actor']),
     color: row['color'] == null ? null : String(row['color']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at']),

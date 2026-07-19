@@ -7,13 +7,13 @@ import {
 
 export type JobScheduleRecurrence =
   | {
-      type: 'hours';
-      intervalHours: number;
+      type: 'minutes';
+      intervalMinutes: number;
       startsAt: Date;
     }
   | {
-      type: 'minutes';
-      intervalMinutes: number;
+      type: 'hours';
+      intervalHours: number;
       startsAt: Date;
     }
   | {

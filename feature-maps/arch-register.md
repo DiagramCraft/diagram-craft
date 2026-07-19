@@ -289,4 +289,15 @@
           against the document's body, metadata, type, and location, and can continue the temporary result in an
           AI conversation.
 
+        - @id:ar.ai.metadata-generation @status:experimental Document type-defined AI metadata generators run
+          automatically, read-only, a short time after an effective body or metadata change, producing one
+          validated value per generator's target field. The previous value and generation details (explanation,
+          findings, status, timestamp, source revision, generator version) stay visible but are marked outdated
+          as soon as the document changes, and a further edit while generation is running discards its result and
+          reschedules against the latest revision. A failed generation is retried once before its failure notice
+          is retained. Successful values are written to document history under a dedicated AI system actor rather
+          than the editing user, so they do not themselves trigger another generation run. Changing a generator's
+          prompt or configuration marks existing results outdated without regenerating until the next document
+          edit.
+
         - @id:ar.ai.configuration Administrators can configure the AI provider and workspace-level AI settings.

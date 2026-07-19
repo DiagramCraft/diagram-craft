@@ -338,6 +338,11 @@ export const updateDocumentType = async (
         });
         httpAssert.present(updated, { status: 404, message: `Document type '${id}' not found` });
 
+        // Any document-type change can affect what a generator produces (prompt, target field,
+        // or field definitions), so conservatively mark every existing result outdated. This does
+        // not enqueue generation — that only happens on the next actual document edit.
+        await tx.document.markGeneratedMetadataOutdatedForDocumentType(ws, id);
+
         await tx.document.createDocumentTypeVersion({
           id: randomUUID(),
           workspace: ws,
