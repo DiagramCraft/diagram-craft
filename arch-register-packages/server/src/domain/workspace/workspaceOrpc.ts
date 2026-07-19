@@ -16,7 +16,8 @@ import {
   deleteWorkspace
 } from './workspaceOperations';
 import { exportWorkspace, calculateChecksum } from './exportOperations';
-import { parseImport, executeImport } from './importOperations';
+import { parseImport } from './importParseOperations';
+import { executeImport } from './importExecutionOperations';
 import { storeImportCache, getImportCache, deleteImportCache } from './importCache';
 import { ZipBuilder, ZipExtractor } from '../../utils/zipBuilder';
 import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';

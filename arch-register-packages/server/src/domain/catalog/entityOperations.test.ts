@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import type { AssessmentDbResult, AssessmentResponseDbResult } from '../project/db/projectDatabase';
 import { buildAuthorizationContext } from '@arch-register/permissions';
-import { countEntities, listEntities, listEntitiesWithCount } from './entityOperations';
+import { countEntities, listEntities, listEntitiesWithCount } from './entityQueryOperations';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
 

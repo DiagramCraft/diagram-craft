@@ -17,7 +17,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { filterVisibleEntities } from '../auth/authorization';
 import { filterEntities, matchesFilterCondition } from '../catalog/dataHelpers';
-import { resolveJoinedAssessment } from '../catalog/entityOperations';
+import { resolveJoinedAssessment } from '../catalog/entityQueryOperations';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
 

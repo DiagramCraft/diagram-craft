@@ -26,16 +26,20 @@ import {
   getEntityFacets,
   getTimelineMarkers,
   getEntityTree,
-  getEntity,
+  getEntity
+} from './entityQueryOperations';
+import {
   getEntityRelations,
   getBatchEntityRelations,
-  getEntityDependents,
+  getEntityDependents
+} from './entityRelationshipOperations';
+import {
   createEntity,
   bulkCreateEntities,
   updateEntity,
   cloneEntity,
   deleteEntity
-} from './entityOperations';
+} from './entityMutationOperations';
 import { listAllCatalogEntities } from './entityLoader';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { parseEntityQuery } from './entityQuery';

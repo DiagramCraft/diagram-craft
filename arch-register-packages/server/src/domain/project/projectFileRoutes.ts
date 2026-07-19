@@ -17,7 +17,10 @@ import {
   downloadWorkspaceFile
 } from './fileTransferOperations';
 import { PROJECT_SCOPE, ENTITY_SCOPE, WORKSPACE_SCOPE } from './contentScope';
-import { uploadMarkdownAttachment, createMarkdownDiagramAttachment } from './markdownOperations';
+import {
+  uploadMarkdownAttachment,
+  createMarkdownDiagramAttachment
+} from './markdownAttachmentOperations';
 
 const MAX_SIZE_BYTES = parseInt(process.env['UPLOAD_MAX_SIZE_MB'] ?? '50', 10) * 1024 * 1024;
 const MAX_REQUEST_SIZE_BYTES = MAX_SIZE_BYTES + 1024 * 1024;

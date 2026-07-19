@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage.types';
-import { runDocumentAiAction } from './markdownOperations';
+import { runDocumentAiAction } from './markdownAiOperations';
 
 const { requireWorkspaceCapability, requireProjectAccess } = vi.hoisted(() => ({
   requireWorkspaceCapability: vi.fn(),

@@ -3,7 +3,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import { listWorkspaceContentNodes } from './contentNodeOperations';
-import { getMarkdownContent } from './markdownOperations';
+import { getMarkdownContent } from './markdownDocumentOperations';
 import { uploadContentFile } from './fileTransferOperations';
 import { ENTITY_SCOPE } from './contentScope';
 
