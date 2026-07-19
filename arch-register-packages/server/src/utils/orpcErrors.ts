@@ -4,6 +4,11 @@ import { z } from 'zod';
 import { createLogger } from './logger';
 import { OpenAPIHandlerOptions } from '@orpc/openapi/fetch';
 import { getORPCErrorLogLevel } from './errorLogging';
+import type { AuthorizationContext } from '@arch-register/permissions';
+import type { DatabaseAdapter } from '../db/database';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import { buildApiAuthCtx } from '../domain/auth/authorization';
+import { resolveWorkspace } from '../domain/workspace/resolveWorkspace';
 
 const orpcLogger = createLogger('orpc');
 
@@ -59,6 +64,37 @@ export const orpcErrorMiddleware = os.middleware(async ({ next }) => {
   } catch (error) {
     return toORPCError(error);
   }
+});
+
+export type WorkspaceScopedContext = {
+  db: DatabaseAdapter;
+  event: AuthenticatedEvent;
+  workspace: string;
+  authCtx: AuthorizationContext;
+};
+
+type WorkspaceScopedBaseContext = Pick<WorkspaceScopedContext, 'db' | 'event'>;
+
+type WorkspaceScopedInput = {
+  params: {
+    workspace: string;
+  };
+};
+
+/**
+ * Resolves the workspace route parameter and prepares authorization context
+ * before a workspace-scoped procedure runs.
+ */
+export const workspaceScoped = os.middleware<
+  Pick<WorkspaceScopedContext, 'workspace' | 'authCtx'>,
+  unknown
+>(async ({ context, next }, input) => {
+  const { db, event } = context as WorkspaceScopedBaseContext;
+  const { params } = input as WorkspaceScopedInput;
+  const workspace = await resolveWorkspace(db.catalog, params.workspace);
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+
+  return next({ context: { workspace, authCtx } });
 });
 
 // Shared clientInterceptors for all OpenAPIHandler instances.

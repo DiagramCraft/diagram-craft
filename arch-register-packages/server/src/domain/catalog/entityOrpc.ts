@@ -3,14 +3,16 @@ import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import {
-  buildApiAuthCtx,
   filterVisibleEntities,
   requireEntityAction,
   requireProjectAccess
 } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import {
+  orpcErrorInterceptors,
+  orpcErrorMiddleware,
+  workspaceScoped
+} from '../../utils/orpcErrors';
 import { httpAssert } from '../../utils/httpAssert';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { buildEntityGrantInputs } from './dataHelpers';
@@ -47,12 +49,12 @@ type ORPCContext = {
 
 const entityRouter = implement(workspaceEntityContract)
   .$context<ORPCContext>()
-  .use(orpcErrorMiddleware);
+  .use(orpcErrorMiddleware)
+  .use(workspaceScoped);
 
 const entityHandlers = {
   list: entityRouter.entities.list.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const query = parseEntityQuery(input.query);
     if (query.collectionId) {
       const collection = await context.db.view.getCollection(
@@ -74,8 +76,7 @@ const entityHandlers = {
   }),
 
   count: entityRouter.entities.count.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const query = parseEntityQuery(input.query);
     if (query.collectionId) {
       const collection = await context.db.view.getCollection(
@@ -97,21 +98,18 @@ const entityHandlers = {
     return { total };
   }),
 
-  facets: entityRouter.entities.facets.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+  facets: entityRouter.entities.facets.handler(async ({ context }) => {
+    const { workspace, authCtx } = context;
     return await getEntityFacets(context.db, workspace, authCtx);
   }),
 
-  timelineMarkers: entityRouter.entities.timelineMarkers.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    await buildApiAuthCtx(context.db, workspace, context.event);
+  timelineMarkers: entityRouter.entities.timelineMarkers.handler(async ({ context }) => {
+    const { workspace } = context;
     return await getTimelineMarkers(context.db, workspace);
   }),
 
   tree: entityRouter.entities.tree.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     if (input.query.projectId) {
       const project = await context.db.project.getProject(workspace, input.query.projectId);
       httpAssert.present(project, {
@@ -138,26 +136,22 @@ const entityHandlers = {
   }),
 
   get: entityRouter.entities.get.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     return await getEntity(context.db, workspace, input.params.id, authCtx);
   }),
 
   relations: entityRouter.entities.relations.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     return await getEntityRelations(context.db, workspace, input.params.id, authCtx);
   }),
 
   batchRelations: entityRouter.entities.batchRelations.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     return await getBatchEntityRelations(context.db, workspace, input.body.ids, authCtx);
   }),
 
   dependents: entityRouter.entities.dependents.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const transitive = input.query?.transitive === 'true';
     const maxDepth = input.query?.maxDepth ? parseInt(input.query.maxDepth, 10) : undefined;
     return await getEntityDependents(
@@ -170,8 +164,7 @@ const entityHandlers = {
   }),
 
   create: entityRouter.entities.create.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
     return await createEntity(
       context.db,
@@ -183,8 +176,7 @@ const entityHandlers = {
   }),
 
   bulkCreate: entityRouter.entities.bulkCreate.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
     return await bulkCreateEntities(
       context.db,
@@ -196,8 +188,7 @@ const entityHandlers = {
   }),
 
   update: entityRouter.entities.update.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
     return await updateEntity(
       context.db,
@@ -210,8 +201,7 @@ const entityHandlers = {
   }),
 
   clone: entityRouter.entities.clone.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
     return await cloneEntity(context.db, workspace, input.params.id, authCtx, {
       id: auditUser.id,
@@ -220,8 +210,7 @@ const entityHandlers = {
   }),
 
   remove: entityRouter.entities.remove.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
     return await deleteEntity(context.db, workspace, input.params.id, authCtx, {
       id: auditUser.id,
@@ -230,8 +219,7 @@ const entityHandlers = {
   }),
 
   getAccess: entityRouter.entities.getAccess.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     httpAssert.present(entity, {
       status: 404,
@@ -253,8 +241,7 @@ const entityHandlers = {
   }),
 
   updateAccess: entityRouter.entities.updateAccess.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     httpAssert.present(entity, {
       status: 404,
@@ -308,8 +295,7 @@ const entityHandlers = {
 
 const entityTransferHandlers = {
   importParse: entityRouter.entities.importParse.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     return await importParse(context.db, authCtx, {
       workspace,
       schemaId: input.body.schemaId,
@@ -318,8 +304,7 @@ const entityTransferHandlers = {
   }),
 
   importCommit: entityRouter.entities.importCommit.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
     return await importCommit(context.db, authCtx, {
       workspace,
@@ -330,23 +315,20 @@ const entityTransferHandlers = {
   }),
 
   exportCsv: entityRouter.entities.exportCsv.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const query = parseEntityQuery(input.query);
     return exportEntitiesCsv(context.db, workspace, authCtx, query);
   }),
 
   downloadTemplate: entityRouter.entities.downloadTemplate.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     return downloadEntityImportTemplate(context.db, workspace, authCtx, input.params.schemaId);
   })
 };
 
 const snapshotHandlers = {
   list: entityRouter.entities.snapshots.list.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     httpAssert.present(entity, {
       status: 404,
@@ -364,8 +346,7 @@ const snapshotHandlers = {
 
   listByProject: entityRouter.entities.snapshots.listByProject.handler(
     async ({ input, context }) => {
-      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      const { workspace, authCtx } = context;
       const project = await context.db.project.getProject(workspace, input.params.projectId);
       orpcAssert.present(project, { code: 'NOT_FOUND', message: 'Project not found' });
       requireProjectAccess(
@@ -387,8 +368,7 @@ const snapshotHandlers = {
   ),
 
   create: entityRouter.entities.snapshots.create.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     httpAssert.present(entity, {
       status: 404,
@@ -458,8 +438,7 @@ const snapshotHandlers = {
   }),
 
   update: entityRouter.entities.snapshots.update.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     httpAssert.present(entity, {
       status: 404,
@@ -512,8 +491,7 @@ const snapshotHandlers = {
   }),
 
   remove: entityRouter.entities.snapshots.remove.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     httpAssert.present(entity, {
       status: 404,
@@ -542,8 +520,7 @@ const snapshotHandlers = {
   }),
 
   promote: entityRouter.entities.snapshots.promote.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     httpAssert.present(entity, {
       status: 404,
@@ -568,8 +545,7 @@ const snapshotHandlers = {
   }),
 
   apply: entityRouter.entities.snapshots.apply.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     httpAssert.present(entity, {
       status: 404,
@@ -606,8 +582,7 @@ const snapshotHandlers = {
     return serializeEntitySnapshot(applied);
   }),
   restore: entityRouter.entities.snapshots.restore.handler(async ({ input, context }) => {
-    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const { workspace, authCtx } = context;
 
     const entity = await context.db.catalog.getEntity(workspace, input.params.id);
     orpcAssert.present(entity, {

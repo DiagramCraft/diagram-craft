@@ -4,9 +4,12 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { buildApiAuthCtx, requireProjectAccess } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import {
+  orpcErrorInterceptors,
+  orpcErrorMiddleware,
+  workspaceScoped
+} from '../../utils/orpcErrors';
+import { requireProjectAccess } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import { getBoxMetrics } from './metricOperations';
 
@@ -17,13 +20,13 @@ type ORPCContext = {
 
 const metricRouter = implement(workspaceMetricContract)
   .$context<ORPCContext>()
-  .use(orpcErrorMiddleware);
+  .use(orpcErrorMiddleware)
+  .use(workspaceScoped);
 
 export const workspaceMetricORPCRouter = metricRouter.router({
   metrics: {
     rollup: metricRouter.metrics.rollup.handler(async ({ input, context }) => {
-      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      const { workspace, authCtx } = context;
       const { body } = input;
 
       if (body.projectId) {
