@@ -4,7 +4,11 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
+import {
+  orpcErrorInterceptors,
+  orpcErrorMiddleware,
+  workspaceScoped
+} from '../../utils/orpcErrors';
 import { buildApiEntityAuthCtx, requireProjectAccess } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import { getBoxMetrics } from './metricOperations';

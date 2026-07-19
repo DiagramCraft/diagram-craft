@@ -9,7 +9,11 @@ import {
   filterVisibleEntities,
   requireWorkspaceCapability
 } from '../auth/authorization';
-import { orpcErrorInterceptors, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
+import {
+  orpcErrorInterceptors,
+  orpcErrorMiddleware,
+  workspaceScoped
+} from '../../utils/orpcErrors';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import type { AIGenerateRequest } from '../ai/aiServer';
