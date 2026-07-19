@@ -106,7 +106,8 @@ export const authPublicORPCRouter = publicRouter.router({
       const refreshToken = selectRefreshToken(cookieToken, input.body);
       orpcAssert.present(refreshToken, {
         code: 'UNAUTHORIZED',
-        message: 'Refresh token is required'
+        message: 'Refresh token is required',
+        data: { expected: true }
       });
 
       let payload: JWTPayload;
