@@ -133,6 +133,11 @@ export const requireProjectAction = (
 export const canAccessProject = (context: AuthorizationContext, ownerTeamId: string | null) =>
   checker.hasProjectPermission(context, ownerTeamId, 'edit_project');
 
+export const canAccessNonProjectContent = (
+  context: AuthorizationContext,
+  action: 'read' | 'edit'
+) => checker.hasWorkspaceCapability(context, action === 'read' ? 'content.view' : 'content.edit');
+
 export const requireProjectAccess = (
   context: AuthorizationContext,
   ownerTeamId: string | null,
