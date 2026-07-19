@@ -7,7 +7,7 @@ import {
 } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { randomUUID } from 'node:crypto';
 import type { WikiCommentDbResult } from './db/wikiCommentDatabase';
 import type {
@@ -21,7 +21,7 @@ const UNKNOWN_AUTHOR_NAME = 'Unknown user';
 const resolveNodeContext = async (
   db: DatabaseAdapter,
   ws: string,
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   nodeId: string
 ) => {
   const node = await db.project.getAnyContentNodeById(ws, nodeId);

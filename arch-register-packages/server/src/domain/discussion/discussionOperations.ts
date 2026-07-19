@@ -2,6 +2,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
   buildApiAuthCtx,
+  buildApiEntityAuthCtx,
   requireEntityAction,
   requireProjectAccess,
   requireWorkspaceCapability
@@ -126,7 +127,7 @@ export const listDiscussionPosts = async (
   event: AuthenticatedEvent
 ): Promise<DiscussionPost[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   await resolveObjectContext(db, ws, authCtx, objectType, objectId);
 
   const [rows, authorNames] = await Promise.all([
@@ -142,7 +143,7 @@ export const summarizeDiscussions = async (
   event: AuthenticatedEvent
 ): Promise<DiscussionSummaryEntry[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const [rows, authorNames] = await Promise.all([
@@ -191,7 +192,7 @@ export const createDiscussionPost = async (
   event: AuthenticatedEvent
 ): Promise<DiscussionPost> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   await resolveObjectContext(db, ws, authCtx, body.objectType, body.objectId);
   requireWorkspaceCapability(authCtx, 'comments', 'You do not have permission to post discussions');
 

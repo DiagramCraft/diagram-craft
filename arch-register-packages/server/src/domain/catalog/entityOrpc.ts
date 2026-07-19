@@ -9,6 +9,7 @@ import {
 } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
+  entityScoped,
   orpcErrorInterceptors,
   orpcErrorMiddleware,
   workspaceScoped
@@ -50,7 +51,8 @@ type ORPCContext = {
 const entityRouter = implement(workspaceEntityContract)
   .$context<ORPCContext>()
   .use(orpcErrorMiddleware)
-  .use(workspaceScoped);
+  .use(workspaceScoped)
+  .use(entityScoped);
 
 const entityHandlers = {
   list: entityRouter.entities.list.handler(async ({ input, context }) => {

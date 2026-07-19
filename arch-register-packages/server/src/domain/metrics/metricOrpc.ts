@@ -9,7 +9,7 @@ import {
   orpcErrorMiddleware,
   workspaceScoped
 } from '../../utils/orpcErrors';
-import { requireProjectAccess } from '../auth/authorization';
+import { buildApiEntityAuthCtx, requireProjectAccess } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import { getBoxMetrics } from './metricOperations';
 
@@ -38,7 +38,8 @@ export const workspaceMetricORPCRouter = metricRouter.router({
         requireProjectAccess(authCtx, project.owner);
       }
 
-      return await getBoxMetrics(context.db, workspace, authCtx, {
+      const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
+      return await getBoxMetrics(context.db, workspace, entityAuthCtx, {
         boxEntityIds: body.boxEntityIds,
         metric: body.metric,
         schemaId: body.schemaId,

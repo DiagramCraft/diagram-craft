@@ -1,5 +1,5 @@
 import type { DatabaseAdapter } from '../../db/database';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { requireProjectAction, requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type { ContentNodeDbResult } from './db/projectDatabase';
@@ -63,7 +63,7 @@ export interface ContentScopeResolver {
     db: DatabaseAdapter,
     ws: string,
     identifier: string | undefined,
-    authCtx: AuthorizationContext,
+    authCtx: WorkspaceAuthorizationContext,
     action: ContentAction
   ): Promise<ResolvedContentScope>;
 }

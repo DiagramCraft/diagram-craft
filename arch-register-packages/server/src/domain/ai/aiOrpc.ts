@@ -10,7 +10,7 @@ import {
   orpcErrorMiddleware,
   workspaceScoped
 } from '../../utils/orpcErrors';
-import { requireWorkspaceCapability } from '../auth/authorization';
+import { buildApiEntityAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveAiConfig, createAiTextAdapter } from './tanstackAiAdapter';
 import {
   createAiConfigResponse,
@@ -251,7 +251,8 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
         ].join('\n');
 
         const adapter = createAdapter(aiConfig);
-        const systemPrompt = await buildPrompt(context.db, workspace, authCtx, extractPrompt);
+        const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
+        const systemPrompt = await buildPrompt(context.db, workspace, entityAuthCtx, extractPrompt);
         const result = await chatImpl({
           adapter,
           messages: [{ role: 'user', content: input.body.text }],
@@ -274,15 +275,16 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           });
         }
 
+        const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
         const systemPrompt = await buildPrompt(
           context.db,
           workspace,
-          authCtx,
+          entityAuthCtx,
           aiConfig.systemPrompt
         );
         const adapter = createAdapter(aiConfig);
         const user = context.event.context.user;
-        const tools = createTools(context.db, workspace, authCtx, {
+        const tools = createTools(context.db, workspace, entityAuthCtx, {
           id: user.id,
           displayName: user.display_name
         });

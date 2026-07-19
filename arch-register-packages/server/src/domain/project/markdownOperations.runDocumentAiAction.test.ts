@@ -26,6 +26,7 @@ const { chat } = vi.hoisted(() => ({
 
 vi.mock('../auth/authorization', () => ({
   buildApiAuthCtx: vi.fn(async () => ({ userId: 'user-1' })),
+  buildApiEntityAuthCtx: vi.fn(async () => ({ userId: 'user-1' })),
   requireEntityAction: vi.fn(),
   requireProjectAccess,
   requireProjectAction: vi.fn(),

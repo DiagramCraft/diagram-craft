@@ -5,11 +5,15 @@ import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContr
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
+  buildApiEntityAuthCtx,
+  filterVisibleEntities,
+  requireWorkspaceCapability
+} from '../auth/authorization';
+import {
   orpcErrorInterceptors,
   orpcErrorMiddleware,
   workspaceScoped
 } from '../../utils/orpcErrors';
-import { filterVisibleEntities, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import type { AIGenerateRequest } from '../ai/aiServer';
@@ -44,8 +48,9 @@ export const createDiagramCraftORPCRouter = () => {
         const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
 
+        const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
         const entities = filterVisibleEntities(
-          authCtx,
+          entityAuthCtx,
           await listAllCatalogEntities(context.db, workspace)
         );
         return entities.map(entity => toDiagramCraftData(entity));

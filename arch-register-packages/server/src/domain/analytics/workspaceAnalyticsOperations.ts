@@ -5,7 +5,7 @@ import type {
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
-  buildApiAuthCtx,
+  buildApiEntityAuthCtx as buildApiAuthCtx,
   filterVisibleEntities,
   requireWorkspaceCapability
 } from '../auth/authorization';

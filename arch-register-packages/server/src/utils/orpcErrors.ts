@@ -4,10 +4,13 @@ import { z } from 'zod';
 import { createLogger } from './logger';
 import { OpenAPIHandlerOptions } from '@orpc/openapi/fetch';
 import { getORPCErrorLogLevel } from './errorLogging';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type {
+  AuthorizationContext,
+  WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../db/database';
 import type { AuthenticatedEvent } from '../middleware/auth';
-import { buildApiAuthCtx } from '../domain/auth/authorization';
+import { buildApiAuthCtx, buildApiEntityAuthCtx } from '../domain/auth/authorization';
 import { resolveWorkspace } from '../domain/workspace/resolveWorkspace';
 
 const orpcLogger = createLogger('orpc');
@@ -70,7 +73,7 @@ export type WorkspaceScopedContext = {
   db: DatabaseAdapter;
   event: AuthenticatedEvent;
   workspace: string;
-  authCtx: AuthorizationContext;
+  authCtx: WorkspaceAuthorizationContext;
 };
 
 type WorkspaceScopedBaseContext = Pick<WorkspaceScopedContext, 'db' | 'event'>;
@@ -95,6 +98,20 @@ export const workspaceScoped = os.middleware<
   const authCtx = await buildApiAuthCtx(db, workspace, event);
 
   return next({ context: { workspace, authCtx } });
+});
+
+/**
+ * Upgrades a workspace-scoped request with entity schemas, entities, and
+ * grants for procedures that perform entity-level authorization.
+ */
+export const entityScoped = os.middleware<
+  Pick<WorkspaceScopedContext, 'authCtx'> & { authCtx: AuthorizationContext },
+  unknown
+>(async ({ context, next }) => {
+  const { db, event, workspace } = context as WorkspaceScopedContext;
+  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
+
+  return next({ context: { authCtx } });
 });
 
 // Shared clientInterceptors for all OpenAPIHandler instances.

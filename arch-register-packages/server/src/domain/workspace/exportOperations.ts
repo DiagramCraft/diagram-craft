@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
@@ -20,7 +20,7 @@ const checker = new PermissionChecker();
 export const exportWorkspace = async (
   db: DatabaseAdapter,
   storage: StorageAdapter | undefined,
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   options: ExportOptions
 ): Promise<{
@@ -198,7 +198,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
 
 const exportEntities = async (
   db: DatabaseAdapter,
-  _authCtx: AuthorizationContext,
+  _authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   filters?: {
     schema_ids?: string[];

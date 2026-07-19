@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { defineEntityOperation, defineOperation } from '../operation';
 import {
   buildApiAuthCtx,
   requireEntityAction,
@@ -631,7 +631,7 @@ export const runDocumentAiAction = async (
   actionId: string,
   event: AuthenticatedEvent
 ): Promise<AsyncGenerator<RunAiActionEvent>> => {
-  return defineOperation(
+  return defineEntityOperation(
     db,
     workspace,
     event,
@@ -1186,7 +1186,7 @@ export const listRelatedContent = async (
   entityId: string,
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
+  defineEntityOperation(
     db,
     workspace,
     event,

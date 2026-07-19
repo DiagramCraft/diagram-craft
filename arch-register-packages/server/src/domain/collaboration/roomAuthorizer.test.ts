@@ -4,22 +4,22 @@ import { createRoomAuthorizer } from './roomAuthorizer';
 
 const {
   verifyToken,
-  fetchAuthorizationContextData,
-  buildAuthorizationContext,
+  fetchWorkspaceAuthorizationContextData,
+  buildWorkspaceAuthorizationContext,
   canAccessProject,
   canAccessNonProjectContent
 } = vi.hoisted(() => ({
   verifyToken: vi.fn(),
-  fetchAuthorizationContextData: vi.fn(),
-  buildAuthorizationContext: vi.fn(),
+  fetchWorkspaceAuthorizationContextData: vi.fn(),
+  buildWorkspaceAuthorizationContext: vi.fn(),
   canAccessProject: vi.fn(),
   canAccessNonProjectContent: vi.fn()
 }));
 
 vi.mock('../../utils/jwt', () => ({ verifyToken }));
 vi.mock('@arch-register/permissions', () => ({
-  fetchAuthorizationContextData,
-  buildAuthorizationContext
+  fetchWorkspaceAuthorizationContextData,
+  buildWorkspaceAuthorizationContext
 }));
 vi.mock('../auth/authorization', () => ({ canAccessProject, canAccessNonProjectContent }));
 
@@ -39,8 +39,8 @@ describe('createRoomAuthorizer', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     verifyToken.mockReturnValue({ sub: 'user-1', type: 'access', exp: 1234567890 });
-    fetchAuthorizationContextData.mockResolvedValue({});
-    buildAuthorizationContext.mockReturnValue({});
+    fetchWorkspaceAuthorizationContextData.mockResolvedValue({});
+    buildWorkspaceAuthorizationContext.mockReturnValue({});
     canAccessProject.mockReturnValue(true);
     canAccessNonProjectContent.mockReturnValue(true);
   });
