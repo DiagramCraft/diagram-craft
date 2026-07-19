@@ -283,6 +283,45 @@ describe('runDocumentAiAction', () => {
     );
   });
 
+  it('tests metadata-generator actions with structured output', async () => {
+    chat.mockImplementation((async (options: { outputSchema?: unknown }) =>
+      options.outputSchema
+        ? {
+            value: 'Generated summary',
+            reason: 'The document contains a concise decision.',
+            findings: ['The decision is stated in the document body.']
+          }
+        : 'Generated summary') as never);
+    const generator = await testDocumentAiAction(
+      makeDb(),
+      makeStorage(),
+      'ws-1',
+      'node-1',
+      'type-1',
+      documentType.aiActions[2]!,
+      event
+    );
+    const events = [];
+    for await (const next of generator) events.push(next);
+
+    expect(events).toEqual([
+      expect.objectContaining({
+        type: 'done',
+        kind: 'metadata_generator',
+        rawOutput: JSON.stringify({
+          value: 'Generated summary',
+          reason: 'The document contains a concise decision.',
+          findings: ['The decision is stated in the document body.']
+        }),
+        parsedValue: 'Generated summary',
+        outputFieldId: 'summary',
+        status: 'success',
+        errors: []
+      })
+    ]);
+    expect(chat).toHaveBeenCalledWith(expect.objectContaining({ outputSchema: expect.anything() }));
+  });
+
   it('rejects testing a document from another document type', async () => {
     const db = makeDb();
     const storage = makeStorage();

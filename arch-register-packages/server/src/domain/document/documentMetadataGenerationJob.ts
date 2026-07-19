@@ -8,7 +8,11 @@ import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';
 import { createAiChatTools } from '../ai/chatTools';
 import { buildDocumentActionPrompt } from '../ai/documentContextPromptBuilder';
 import { validateDocumentMetadata } from './documentValidation';
-import { parseGeneratedValue } from './documentAiValue';
+import {
+  documentMetadataGenerationOutputSchema,
+  parseGeneratedResponse,
+  type ParsedDocumentAiResponse
+} from './documentAiValue';
 import { storageScope } from '../project/projectOperationHelpers';
 import { chat } from '@tanstack/ai';
 import type {
@@ -159,6 +163,7 @@ const writeGenerationOutcome = async (
         fieldId: string;
         value: DocumentMetadata[string];
         explanation: string | null;
+        findings: string[];
         sourceRevision: number;
         generatorVersion: number;
         documentTypeId: string | null;
@@ -172,6 +177,7 @@ const writeGenerationOutcome = async (
         fieldId: string;
         failureNotice: string;
         explanation: string | null;
+        findings: string[];
         sourceRevision: number;
         generatorVersion: number;
         now: Date;
@@ -188,7 +194,7 @@ const writeGenerationOutcome = async (
             fieldId: outcome.fieldId,
             status: 'success',
             explanation: truncateExplanation(outcome.explanation),
-            findings: [],
+            findings: outcome.findings,
             failureNotice: null,
             generatedAt: outcome.now.toISOString(),
             sourceRevision: outcome.sourceRevision,
@@ -199,7 +205,7 @@ const writeGenerationOutcome = async (
             fieldId: outcome.fieldId,
             status: 'failed',
             explanation: truncateExplanation(outcome.explanation),
-            findings: [],
+            findings: outcome.findings,
             failureNotice: outcome.failureNotice,
             generatedAt: outcome.now.toISOString(),
             sourceRevision: outcome.sourceRevision,
@@ -255,6 +261,7 @@ const scheduleRetryOrFail = async (
   now: Date,
   failureNotice: string,
   explanation: string | null = null,
+  findings: string[] = [],
   // The target field id, when known. Falls back to the action id for the rare case where an
   // unexpected error strikes before the generator's target field could even be resolved — this
   // keeps the failure durably logged, even though it won't surface against a specific field in
@@ -281,6 +288,7 @@ const scheduleRetryOrFail = async (
     fieldId,
     failureNotice,
     explanation,
+    findings,
     sourceRevision: row.source_revision,
     generatorVersion: row.generator_version,
     now
@@ -323,12 +331,12 @@ const processGenerationRow = async (
   );
   if (!outputField) return skip(`target field '${action.outputFieldId}' is missing or retired`);
 
-  const fail = (message: string, explanation: string | null = null) => {
+  const fail = (message: string, explanation: string | null = null, findings: string[] = []) => {
     logger.warn(`Generation failed for node ${row.node_id}, action ${row.action_id}: ${message}`, {
       workspace: row.workspace,
       attempt: row.attempt_count + 1
     });
-    return scheduleRetryOrFail(db, row, now, message, explanation, outputField.id);
+    return scheduleRetryOrFail(db, row, now, message, explanation, findings, outputField.id);
   };
 
   const aiConfig = await resolveAiConfig(db, row.workspace);
@@ -371,6 +379,8 @@ const processGenerationRow = async (
 
   let rawAnswer: string;
   let explanation: string | null;
+  let findings: string[];
+  let generatedResponse: Extract<ParsedDocumentAiResponse, { ok: true }>;
   const startedAt = Date.now();
   try {
     const authCtx = await buildApiEntityAuthCtx(db, row.workspace, fakeEvent);
@@ -382,35 +392,47 @@ const processGenerationRow = async (
       { id: scheduledByUser.id, displayName: scheduledByUser.display_name },
       { readOnly: true }
     );
-    const stream = chat({
-      adapter,
-      messages: [{ role: 'user', content: prompt }],
-      tools,
-      temperature: aiConfig.temperature,
-      stream: true
-    });
-    const capturedContent: string[] = [];
-    const capturedReasoning: string[] = [];
-    // Keep the model's reasoning/thinking trace separate from its final answer — the generator's
-    // output must be strictly parseable as the target field's value, so mixing reasoning into it
-    // (as the interactive AI action intentionally does for display) would make that impossible.
-    // The reasoning is still useful context, so it's kept and stored as the result's explanation.
-    // biome-ignore lint/suspicious/noExplicitAny: Stream chunk type varies by AI provider implementation
-    for await (const chunk of stream as AsyncIterable<any>) {
-      if (chunk.type === 'TEXT_MESSAGE_CONTENT' && chunk.delta) {
-        capturedContent.push(chunk.delta);
-      } else if (chunk.type === 'REASONING_MESSAGE_CONTENT' && chunk.delta) {
-        capturedReasoning.push(chunk.delta);
-      }
+    try {
+      const structured = await chat({
+        adapter,
+        messages: [{ role: 'user', content: prompt }],
+        tools,
+        temperature: aiConfig.temperature,
+        outputSchema: documentMetadataGenerationOutputSchema(outputField)
+      });
+      rawAnswer = JSON.stringify(structured);
+      const parsedResponse = parseGeneratedResponse(outputField, rawAnswer);
+      if (!parsedResponse.ok) throw new Error(parsedResponse.error);
+      generatedResponse = parsedResponse;
+    } catch (structuredError) {
+      logger.warn(
+        `Structured metadata output failed for action ${action.id}; trying legacy response parsing`,
+        {
+          workspace: row.workspace,
+          error:
+            structuredError instanceof Error ? structuredError.message : String(structuredError)
+        }
+      );
+      const legacyAnswer = await chat({
+        adapter,
+        messages: [{ role: 'user', content: prompt }],
+        tools,
+        temperature: aiConfig.temperature,
+        stream: false
+      });
+      rawAnswer = legacyAnswer;
+      const parsedResponse = parseGeneratedResponse(outputField, rawAnswer);
+      if (!parsedResponse.ok) throw new Error(parsedResponse.error);
+      generatedResponse = parsedResponse;
     }
-    rawAnswer = capturedContent.join('');
-    explanation = capturedReasoning.join('').trim() || null;
+    explanation = generatedResponse.explanation;
+    findings = generatedResponse.findings;
     logger.info(
       `Generator ${action.id} for node ${node.id} answered in ${Date.now() - startedAt}ms: ${JSON.stringify(rawAnswer.slice(0, 200))}`,
       {
         workspace: row.workspace,
-        reasoningChunks: capturedReasoning.length,
-        reasoningLength: explanation?.length ?? 0
+        explanationLength: explanation?.length ?? 0,
+        findingsCount: findings.length
       }
     );
   } catch (error) {
@@ -433,24 +455,23 @@ const processGenerationRow = async (
     return 'discarded';
   }
 
-  const parsed = parseGeneratedValue(outputField, rawAnswer);
-  if (!parsed.ok) return (await fail(parsed.error, explanation)) as ProcessOutcome;
-
   const validation = validateDocumentMetadata(
     [outputField],
-    { [outputField.id]: parsed.value },
+    { [outputField.id]: generatedResponse.value },
     false,
     false
   );
-  if (validation.errors.length > 0)
-    return (await fail(validation.errors.join('; '), explanation)) as ProcessOutcome;
+  if (validation.errors.length > 0) {
+    return (await fail(validation.errors.join('; '), explanation, findings)) as ProcessOutcome;
+  }
 
   await writeGenerationOutcome(db, row.workspace, node.id, {
     status: 'success',
     actionId: action.id,
     fieldId: outputField.id,
-    value: parsed.value,
+    value: generatedResponse.value,
     explanation,
+    findings,
     sourceRevision: row.source_revision,
     generatorVersion: documentType.version ?? 1,
     documentTypeId: documentType.id,
@@ -459,7 +480,7 @@ const processGenerationRow = async (
     now
   });
   logger.info(
-    `Wrote generated value for node ${node.id}, field '${outputField.id}': ${JSON.stringify(parsed.value)}`,
+    `Wrote generated value for node ${node.id}, field '${outputField.id}': ${JSON.stringify(generatedResponse.value)}`,
     { workspace: row.workspace }
   );
   return 'success';
