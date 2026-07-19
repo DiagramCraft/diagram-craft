@@ -1,11 +1,10 @@
 import './tokens.css';
-import { applyTheme } from './hooks/useTheme';
+import { applyTheme, migrateTheme } from './hooks/useTheme';
 
 // Apply saved theme immediately to avoid flash of wrong theme
 (() => {
   try {
-    const saved = localStorage.getItem('ar-theme');
-    applyTheme(saved === 'light' ? 'light' : 'dark');
+    applyTheme(migrateTheme());
   } catch {
     /* ignore */
   }

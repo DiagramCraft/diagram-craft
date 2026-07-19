@@ -22,6 +22,7 @@ import {
   useRevokeAccountApiToken
 } from '../../hooks/useAccountApiTokens';
 import { useWorkspaces } from '../../hooks/useWorkspaces';
+import { formatDate } from '../../utils/dateFormat';
 import styles from './ApiTokensSubSection.module.css';
 
 const EDITOR_CAPABILITIES = [...WORKSPACE_ROLE_CAPABILITIES.editor];
@@ -38,9 +39,6 @@ const CAPABILITY_LABELS: Record<string, string> = {
   comments: 'Comment and discuss',
   export: 'Export data'
 };
-
-const formatDate = (value: string | null) =>
-  value ? new Date(value).toLocaleDateString() : 'Never';
 
 const toExpiryIso = (value: string) =>
   value === '' ? null : new Date(`${value}T23:59:59.999Z`).toISOString();
@@ -293,11 +291,11 @@ export const ApiTokensSubSection = ({
                   <Table.Row key={token.id}>
                     <Table.NameCell
                       title={token.name}
-                      subtitle={`Created ${formatDate(token.created_at)}`}
+                      subtitle={`Created ${formatDate(token.created_at, 'Never')}`}
                       icon={<TbKey size={14} />}
                     />
                     <Table.Cell>{token.capabilities.length} editor capabilities</Table.Cell>
-                    <Table.Cell>{formatDate(token.last_used_at)}</Table.Cell>
+                    <Table.Cell>{formatDate(token.last_used_at, 'Never')}</Table.Cell>
                     <Table.Cell>
                       {token.expires_at ? formatDate(token.expires_at) : 'Never'}
                     </Table.Cell>

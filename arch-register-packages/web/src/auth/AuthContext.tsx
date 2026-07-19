@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  type ReactNode
+} from 'react';
 import { AuthorizationDataProvider } from './AuthorizationDataContext';
 import type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData } from './types';
 import {
@@ -197,18 +205,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [clearAuthState]);
 
-  const authValue: AuthContextType = {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-    login,
-    loginWithOidc,
-    logout,
-    refreshToken: () => refreshToken(),
-    reloadUser: async () => {
-      await fetchCurrentUser();
-    }
-  };
+  const reloadUser = useCallback(async () => {
+    await fetchCurrentUser();
+  }, [fetchCurrentUser]);
+
+  const authValue = useMemo<AuthContextType>(
+    () => ({
+      user,
+      isLoading,
+      isAuthenticated: !!user,
+      login,
+      loginWithOidc,
+      logout,
+      refreshToken,
+      reloadUser
+    }),
+    [user, isLoading, login, loginWithOidc, logout, refreshToken, reloadUser]
+  );
 
   return (
     <AuthContext.Provider value={authValue}>

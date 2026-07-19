@@ -1,13 +1,12 @@
 import type { ExternalContentMount } from '@arch-register/api-types/externalContentContract';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { formatDateTime } from '../utils/dateFormat';
 
 type Props = {
   mount: ExternalContentMount | null;
   open: boolean;
   onClose: () => void;
 };
-
-const formatDate = (value: string | null) => (value ? new Date(value).toLocaleString() : 'Never');
 
 const statusLabel = (mount: ExternalContentMount) => {
   if (mount.status === 'syncing' || mount.source.status === 'syncing') return 'Syncing';
@@ -40,7 +39,7 @@ export const ExternalContentStatusDialog = ({ mount, open, onClose }: Props) => 
           {mount.interval_hours === 1 ? '' : 's'}
         </div>
         <div>
-          <strong>Last synchronized:</strong> {formatDate(mount.last_synced_at)}
+          <strong>Last synchronized:</strong> {formatDateTime(mount.last_synced_at, 'Never')}
         </div>
         {mount.last_revision && (
           <div>

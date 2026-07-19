@@ -50,6 +50,7 @@ import { Title } from '../../components/Title';
 import { resolveDocumentTypeColor, SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { toFieldId } from '../../utils/fieldId';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
 import styles from './DocumentSettingsScreen.module.css';
@@ -70,13 +71,6 @@ const REQUIREMENT_OPTIONS: { value: DocumentRequirement; label: string }[] = [
   { value: 'expected', label: 'Expected' },
   { value: 'optional', label: 'Optional' }
 ];
-
-const toFieldId = (name: string) =>
-  name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
 
 const newDocumentField = (existingIds: ReadonlySet<string> = new Set<string>()): DocumentField => {
   let id = 'new_field';
