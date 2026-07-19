@@ -16,9 +16,9 @@ import {
   type DocumentAiToolId,
   type DocumentField
 } from '@arch-register/api-types/documentContract';
-import { useDocumentList } from '../../hooks/useDocuments';
 import { testDocumentAiAction } from '../../hooks/useDocumentAiActions';
 import { SafeMarkdown } from '../../components/SafeMarkdown';
+import { DocumentPicker } from '../../components/DocumentPicker';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import styles from './AiActionDialog.module.css';
 
@@ -31,12 +31,6 @@ const ALL_TOOL_IDS: DocumentAiToolId[] = DOCUMENT_AI_READ_ONLY_TOOLS.map(tool =>
 
 const isLinkType = (field: DocumentField) =>
   field.type === 'entity_link' || field.type === 'document_link';
-
-const scopeLabel = (document: DocumentListItem) => {
-  if (document.scope === 'project') return 'Project document';
-  if (document.scope === 'entity') return 'Entity document';
-  return 'Workspace document';
-};
 
 type MetadataOutput = {
   value: unknown;
@@ -82,7 +76,6 @@ export const AiActionDialog = ({
   claimedFieldIds: ReadonlySet<string>;
 }) => {
   const [draft, setDraft] = useState<DocumentAiAction | null>(null);
-  const [query, setQuery] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<DocumentListItem | null>(null);
   const [streamingText, setStreamingText] = useState('');
   const [result, setResult] = useState<AiActionTestResult | null>(null);
@@ -96,12 +89,6 @@ export const AiActionDialog = ({
         field => !field.retired && !isLinkType(field) && !claimedFieldIds.has(field.id)
       ),
     [claimedFieldIds, fields]
-  );
-
-  const { data: documents = [], isLoading: documentsLoading } = useDocumentList(
-    workspaceSlug,
-    { q: query, documentTypeId: documentTypeId ?? undefined, limit: 50 },
-    { enabled: open && !!documentTypeId && !!query.trim() }
   );
 
   useEffect(() => {
@@ -118,7 +105,6 @@ export const AiActionDialog = ({
             tools: [...ALL_TOOL_IDS]
           }
     );
-    setQuery('');
     setSelectedDocument(null);
     setStreamingText('');
     setResult(null);
@@ -352,48 +338,27 @@ export const AiActionDialog = ({
                     Save this document type before testing an action.
                   </div>
                 ) : (
-                  <>
-                    {selectedDocument && !query && (
-                      <button
-                        type="button"
-                        className={styles.selectedDocument}
-                        onClick={() => setSelectedDocument(null)}
-                      >
-                        <span>{selectedDocument.file.name}</span>
-                        <span className={styles.hint}>Clear</span>
-                      </button>
-                    )}
-                    <TextInput
-                      value={query}
-                      onChange={value => setQuery(value ?? '')}
-                      placeholder="Search documents of this type…"
-                      style={{ width: '100%' }}
-                    />
-                    {query.trim() && (
-                      <div className={styles.documentResults}>
-                        {documentsLoading && <div className={styles.hint}>Searching…</div>}
-                        {!documentsLoading && documents.length === 0 && (
-                          <div className={styles.hint}>No matching documents found.</div>
-                        )}
-                        {documents.map(document => (
-                          <button
-                            type="button"
-                            key={document.file.id}
-                            className={styles.documentResult}
-                            onClick={() => {
-                              setSelectedDocument(document);
-                              setQuery('');
-                              setResult(null);
-                              setStreamingText('');
-                            }}
-                          >
-                            <span>{document.file.name}</span>
-                            <span className={styles.hint}>{scopeLabel(document)}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
+                  <DocumentPicker
+                    selectedDocumentId={selectedDocument?.file.id ?? ''}
+                    selectedDocument={
+                      selectedDocument ? { name: selectedDocument.file.name } : null
+                    }
+                    documentTypeId={documentTypeId ?? undefined}
+                    limit={50}
+                    allowedScopes={['workspace', 'project', 'entity']}
+                    treeScopes={[
+                      {
+                        scope: { kind: 'workspace', workspaceId: workspaceSlug },
+                        label: 'Workspace'
+                      }
+                    ]}
+                    onSelectDocument={document => {
+                      setSelectedDocument(document);
+                      setResult(null);
+                      setStreamingText('');
+                    }}
+                    onClearDocument={() => setSelectedDocument(null)}
+                  />
                 )}
               </DialogSection>
 

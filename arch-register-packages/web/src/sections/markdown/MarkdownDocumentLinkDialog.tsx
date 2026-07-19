@@ -47,7 +47,7 @@ export const MarkdownDocumentLinkDialog = ({
           <DocumentPicker
             selectedDocumentId={selectedDocumentId}
             selectedDocument={selectedDocument}
-            onSelectDocument={document => setSelectedDocumentId(document.fileId)}
+            onSelectDocument={document => setSelectedDocumentId(document.file.id)}
             onClearDocument={() => setSelectedDocumentId('')}
           />
         </DialogSection>

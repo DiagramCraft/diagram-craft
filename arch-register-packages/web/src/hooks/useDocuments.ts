@@ -1,4 +1,10 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query';
 import type {
   DocumentMetadata,
   DocumentTemplateWrite,
@@ -33,6 +39,28 @@ export type DocumentListOptions = {
   sortDir?: 'asc' | 'desc';
   limit?: number;
 };
+
+export type DocumentScope = 'workspace' | 'project' | 'entity';
+
+const DOCUMENT_SCOPES: readonly DocumentScope[] = ['workspace', 'project', 'entity'];
+
+export const documentPickerQueryScopes = (
+  allowedScopes: readonly DocumentScope[] = DOCUMENT_SCOPES
+): Array<DocumentScope | undefined> => {
+  const uniqueScopes = [...new Set(allowedScopes)];
+  return uniqueScopes.length === DOCUMENT_SCOPES.length ? [undefined] : uniqueScopes;
+};
+
+export const mergeDocumentPickerResults = <T extends { file: { id: string } }>(
+  results: readonly (readonly T[])[],
+  limit = 8
+): T[] =>
+  results
+    .flat()
+    .filter(
+      (document, index, all) => all.findIndex(item => item.file.id === document.file.id) === index
+    )
+    .slice(0, limit);
 
 export const documentKeys = {
   typesRoot: (workspaceId: string) => ['document-types', workspaceId] as const,
@@ -136,6 +164,59 @@ export const useDocumentList = (
       }),
     enabled: queryOptions?.enabled ?? !!workspaceId
   });
+
+export const useDocumentPickerSearch = (
+  workspaceId: string,
+  options: {
+    q: string;
+    documentTypeId?: string;
+    allowedScopes?: readonly DocumentScope[];
+    limit?: number;
+  },
+  queryOptions?: { enabled?: boolean }
+) => {
+  const allowedScopes = options.allowedScopes ?? DOCUMENT_SCOPES;
+  const queryScopes = documentPickerQueryScopes(allowedScopes);
+  const enabled =
+    (queryOptions?.enabled ?? true) &&
+    !!workspaceId &&
+    !!options.q.trim() &&
+    queryScopes.length > 0;
+
+  const queries = useQueries({
+    queries: queryScopes.map(scope => ({
+      queryKey: documentKeys.list(workspaceId, {
+        q: options.q,
+        scope,
+        documentTypeId: options.documentTypeId,
+        limit: options.limit
+      }),
+      queryFn: () =>
+        orpcClient.projects.listDocuments({
+          params: { workspace: workspaceId },
+          query: {
+            q: options.q,
+            scope,
+            document_type_id: options.documentTypeId,
+            limit: options.limit
+          }
+        }),
+      enabled,
+      staleTime: 2 * 60 * 1000
+    }))
+  });
+
+  const documents = mergeDocumentPickerResults(
+    queries.map(query => query.data ?? []),
+    options.limit ?? 8
+  );
+
+  return {
+    data: documents,
+    isLoading: queries.some(query => query.isLoading),
+    isError: queries.some(query => query.isError)
+  };
+};
 
 export const useCreateDocumentType = (workspaceId: string) => {
   const queryClient = useQueryClient();
