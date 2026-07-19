@@ -96,7 +96,7 @@ export const runDocumentAiAction = async (
         ws,
         authCtx,
         { id: event.context.user.id, displayName: event.context.user.display_name },
-        { readOnly: true }
+        { readOnly: true, toolIds: action.tools }
       );
 
       const stream = chat({
@@ -215,7 +215,7 @@ export const testDocumentAiAction = async (
         ws,
         entityAuthCtx,
         { id: event.context.user.id, displayName: event.context.user.display_name },
-        { readOnly: true }
+        { readOnly: true, toolIds: action.tools }
       );
 
       const adapter = createAiTextAdapter(aiConfig);

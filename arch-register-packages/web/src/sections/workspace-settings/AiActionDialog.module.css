@@ -4,12 +4,43 @@
   gap: 12px;
 }
 
+.editContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .enabledRow {
   display: flex;
   align-items: center;
   gap: 7px;
   margin: 12px 0 18px;
   font-size: 12px;
+}
+
+.toolList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toolRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toolLabel,
+.toolDescription {
+  display: block;
+}
+
+.toolDescription {
+  margin-top: 2px;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
 }
 
 .testHeader {

@@ -3,6 +3,7 @@ import {
   documentContract,
   documentEnumOptionSchema,
   documentGeneratedMetadataSchema,
+  documentAiActionSchema,
   documentFieldSchema,
   documentFieldTypeSchema,
   documentMetadataSchema,
@@ -177,6 +178,27 @@ describe('document response schemas', () => {
       updated_at: '2026-07-16T12:00:00.000Z'
     };
     expect(documentTypeSchema.parse(type).aiActions).toEqual(type.aiActions);
+  });
+
+  it('accepts omitted, selected, and empty AI tool selections', () => {
+    const action = {
+      id: 'summarize',
+      name: 'Summarize',
+      kind: 'interactive' as const,
+      prompt: 'Summarize the document.',
+      enabled: true
+    };
+
+    expect(documentAiActionSchema.parse(action).tools).toBeUndefined();
+    expect(
+      documentAiActionSchema.parse({ ...action, tools: ['query_entities', 'traverse_relations'] })
+        .tools
+    ).toEqual(['query_entities', 'traverse_relations']);
+    expect(documentAiActionSchema.parse({ ...action, tools: [] }).tools).toEqual([]);
+    expect(() => documentAiActionSchema.parse({ ...action, tools: ['unknown_tool'] })).toThrow();
+    expect(() =>
+      documentAiActionSchema.parse({ ...action, tools: ['query_entities', 'query_entities'] })
+    ).toThrow('AI action tools must be unique');
   });
 });
 
