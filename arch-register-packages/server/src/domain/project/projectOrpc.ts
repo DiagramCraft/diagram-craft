@@ -60,7 +60,8 @@ import {
   getMarkdownRevision,
   restoreMarkdownRevision,
   createMarkdownDiagramAttachment,
-  runDocumentAiAction
+  runDocumentAiAction,
+  testDocumentAiAction
 } from './markdownOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -301,6 +302,20 @@ const entityContentHandlers = {
         input.params.workspace,
         input.params.nodeId,
         input.params.actionId,
+        context.event
+      );
+    }
+  ),
+  testDocumentAiAction: projectRouter.projects.testDocumentAiAction.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await testDocumentAiAction(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.params.nodeId,
+        input.body.documentTypeId,
+        input.body.action,
         context.event
       );
     }

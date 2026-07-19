@@ -22,7 +22,7 @@ export const documentFieldTypeSchema = z.enum([
 
 export const documentRequirementSchema = z.enum(['required', 'expected', 'optional']);
 
-const documentValueSchema = z.union([
+export const documentValueSchema = z.union([
   z.string(),
   z.number(),
   z.boolean(),

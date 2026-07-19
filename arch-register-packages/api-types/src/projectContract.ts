@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
 import {
   documentFieldSchema,
+  documentAiActionSchema,
+  documentValueSchema,
   documentGeneratedMetadataSchema,
   documentMetadataSchema,
   documentTypeSchema
@@ -199,6 +201,36 @@ const runAiActionEventSchema = z.discriminatedUnion('type', [
   runAiActionResponseSchema.extend({
     type: z.literal('done').describe('Signals the run is complete with the full answer')
   })
+]);
+
+const aiActionTestToolCallSchema = z.object({
+  name: z.string().describe('Read-only tool name'),
+  status: z.enum(['completed', 'failed']).describe('Tool execution status'),
+  error: z.string().nullable().describe('Actionable tool error, if any')
+});
+
+const aiActionTestResultSchema = z.object({
+  type: z.literal('done'),
+  actionId: z.string(),
+  actionName: z.string(),
+  kind: z.enum(['interactive', 'metadata_generator']),
+  prompt: z.string(),
+  documentTitle: z.string(),
+  nodeId: z.string(),
+  provider: z.string(),
+  model: z.string(),
+  durationMs: z.number().int().nonnegative(),
+  rawOutput: z.string(),
+  parsedValue: documentValueSchema.nullable(),
+  outputFieldId: z.string().nullable(),
+  status: z.enum(['success', 'invalid_output', 'failed']),
+  errors: z.array(z.string()),
+  toolCalls: z.array(aiActionTestToolCallSchema)
+});
+
+const aiActionTestEventSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('delta'), delta: z.string() }),
+  aiActionTestResultSchema
 ]);
 
 const documentListQuerySchema = z.object({
@@ -1224,6 +1256,26 @@ export const projectContract = oc.tag('Projects').router({
         })
       )
       .output(eventIterator(runAiActionEventSchema)),
+    testDocumentAiAction: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/documents/{nodeId}/ai-actions/test',
+        inputStructure: 'detailed',
+        summary: 'Test a document type AI action',
+        description:
+          'Tests a draft document type AI action against an existing document using read-only tools and permissions without persisting any document, metadata, revision, or schedule changes.',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: ws.extend({ nodeId: z.string().describe('Markdown document identifier') }),
+          body: z.object({
+            documentTypeId: z.string().describe('Document type being edited'),
+            action: documentAiActionSchema.describe('Unsaved AI action draft')
+          })
+        })
+      )
+      .output(eventIterator(aiActionTestEventSchema)),
     listDocuments: oc
       .route({
         method: 'GET',
@@ -1245,6 +1297,8 @@ export type ContentMetadata = z.infer<typeof contentMetadataSchema>;
 export type MarkdownContent = z.infer<typeof markdownContentSchema>;
 export type RunAiActionResponse = z.infer<typeof runAiActionResponseSchema>;
 export type RunAiActionEvent = z.infer<typeof runAiActionEventSchema>;
+export type AiActionTestResult = z.infer<typeof aiActionTestResultSchema>;
+export type AiActionTestEvent = z.infer<typeof aiActionTestEventSchema>;
 export type MarkdownRevisionSummary = z.infer<typeof markdownRevisionSummarySchema>;
 export type MarkdownRevisionDetail = z.infer<typeof markdownRevisionDetailSchema>;
 export type FileTree = z.infer<typeof fileTreeSchema>;
