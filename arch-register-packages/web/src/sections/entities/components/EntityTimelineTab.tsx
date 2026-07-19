@@ -5,11 +5,12 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Project, ProjectEntity } from '@arch-register/api-types/projectContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { TimelineScaffold } from '../../../components/timeline/TimelineScaffold';
 import {
-  buildTimelineRange,
+  SnapshotTimelineShell,
+  useSnapshotTimeline
+} from '../../../components/timeline/SnapshotTimeline';
+import {
   formatTimelineDate,
-  getTodayTimelinePx,
   stringDateToTimelinePx,
   type TimelineColumnWidths,
   type TimelineZoom
@@ -93,7 +94,7 @@ export const EntityTimelineTab = ({
     [entityProjects]
   );
 
-  const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
+  const timelineDates = useMemo(() => {
     const dates: Date[] = [];
     for (const s of ownSnaps) if (s.created_at) dates.push(new Date(s.created_at));
     for (const { snaps } of projectLanes) {
@@ -103,27 +104,16 @@ export const EntityTimelineTab = ({
         if (effectiveDate) dates.push(new Date(`${effectiveDate}T00:00:00`));
       }
     }
-    return buildTimelineRange({
-      dates,
-      zoom,
-      columnWidths: COL_W,
-      today: TODAY
-    });
-  }, [ownSnaps, projectLanes, timelineMilestonesById, zoom, TODAY]);
+    return dates;
+  }, [ownSnaps, projectLanes, timelineMilestonesById]);
 
-  const todayPx = useMemo(
-    () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
-    [TODAY, rangeStart, rangeEnd, totalWidth]
-  );
-
-  const milestoneMarkers = useMemo(() => {
-    return [...timelineMilestonesById.values()]
-      .map(milestone => ({
-        milestone,
-        px: stringDateToTimelinePx(milestone.target_date, rangeStart, rangeEnd, totalWidth)
-      }))
-      .filter((m): m is { milestone: Milestone; px: number } => m.px !== null);
-  }, [timelineMilestonesById, rangeStart, rangeEnd, totalWidth]);
+  const timeline = useSnapshotTimeline({
+    dates: timelineDates,
+    zoom,
+    columnWidths: COL_W,
+    milestones: timelineMilestonesById,
+    today: TODAY
+  });
 
   const handleSelect = (snap: EntitySnapshot | null) => {
     setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));
@@ -174,67 +164,42 @@ export const EntityTimelineTab = ({
       </div>
 
       <div className={styles.etlBody}>
-        <TimelineScaffold
+        <SnapshotTimelineShell
+          context={timeline}
           scrollClassName={styles.etlScroll}
           innerClassName={styles.etlInner}
           labelWidth={LABEL_W}
-          totalWidth={totalWidth}
-          todayPx={todayPx}
+          classes={{
+            head: styles.etlHead,
+            corner: styles.etlCorner,
+            cornerLabel: styles.etlCornerLabel,
+            columns: styles.etlCols,
+            column: styles.etlCol,
+            currentColumn: styles.etlColNow,
+            today: styles.etlToday,
+            todayPip: styles.etlTodayPip,
+            milestoneLine: styles.etlMilestoneLine,
+            milestoneLabel: styles.etlMilestoneLabel
+          }}
+          cornerLabel="Lanes"
           todayScrollAlign={0.5}
-          header={
-            <div className={styles.etlHead}>
-              <div className={styles.etlCorner}>
-                <span className={styles.etlCornerLabel}>Lanes</span>
-              </div>
-              <div className={styles.etlCols} style={{ width: totalWidth }}>
-                {columns.map((col, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.etlCol} ${col.isCurrent ? styles.etlColNow : ''}`}
-                    style={{ width: col.width }}
-                  >
-                    {col.label}
-                  </div>
-                ))}
-              </div>
-            </div>
-          }
-          todayLine={
-            todayPx === null ? null : (
-              <div className={styles.etlToday} style={{ left: LABEL_W + todayPx }}>
-                <span className={styles.etlTodayPip}>▾</span>
-              </div>
-            )
-          }
-          overlayLines={milestoneMarkers.map(({ milestone, px }) => (
-            <div
-              key={milestone.id}
-              className={styles.etlMilestoneLine}
-              style={{ left: LABEL_W + px }}
-              title={`${milestone.name} (${milestone.target_date})`}
-            >
-              <span
-                className={styles.etlMilestoneLabel}
-                title={`${milestone.name} (${milestone.target_date})`}
-              >
-                {milestone.name}
-              </span>
-            </div>
-          ))}
         >
-          {milestoneMarkers.length > 0 && (
+          {timeline.milestoneMarkers.length > 0 && (
             <div className={styles.etlMilestoneLane}>
               <div className={styles.etlMilestoneLaneCorner}>Milestones</div>
-              <div className={styles.etlMilestoneLaneTrack} style={{ width: totalWidth }} />
+              <div
+                className={styles.etlMilestoneLaneTrack}
+                style={{ width: timeline.totalWidth }}
+              />
             </div>
           )}
 
           {ownSnaps.length > 0 && (
             <OwnHistoryLane
               snaps={ownSnaps}
-              rangeStart={rangeStart}
-              rangeEnd={rangeEnd}
-              totalWidth={totalWidth}
+              rangeStart={timeline.rangeStart}
+              rangeEnd={timeline.rangeEnd}
+              totalWidth={timeline.totalWidth}
               selectedId={selectedSnap?.id}
               onSelect={handleSelect}
             />
@@ -248,14 +213,14 @@ export const EntityTimelineTab = ({
               isConflicted={conflictedProjectIds.has(projectId)}
               conflictedSnapIds={conflictedSnapIds}
               milestonesById={timelineMilestonesById}
-              rangeStart={rangeStart}
-              rangeEnd={rangeEnd}
-              totalWidth={totalWidth}
+              rangeStart={timeline.rangeStart}
+              rangeEnd={timeline.rangeEnd}
+              totalWidth={timeline.totalWidth}
               selectedId={selectedSnap?.id}
               onSelect={handleSelect}
             />
           ))}
-        </TimelineScaffold>
+        </SnapshotTimelineShell>
 
         {selectedSnap && (
           <SnapDetail
