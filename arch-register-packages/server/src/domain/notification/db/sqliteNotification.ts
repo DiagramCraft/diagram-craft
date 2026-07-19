@@ -7,8 +7,17 @@ export class SqliteNotificationDatabase extends SqliteDatabaseBase implements No
     return this.all(
       `SELECT * FROM user_inbox_notification
        WHERE user_id = ? AND workspace = ?
+         AND in_app_enabled = 1
        ORDER BY occurred_at DESC, created_at DESC`,
       [userId, workspace],
+      notificationMappers.notification
+    );
+  }
+
+  async getNotification(id: string) {
+    return await this.get(
+      'SELECT * FROM user_inbox_notification WHERE id = ?',
+      [id],
       notificationMappers.notification
     );
   }
@@ -16,7 +25,7 @@ export class SqliteNotificationDatabase extends SqliteDatabaseBase implements No
   async countUnread(userId: string, workspace: string) {
     const row = this.get<{ count: number }>(
       `SELECT COUNT(*) AS count FROM user_inbox_notification
-       WHERE user_id = ? AND workspace = ? AND read_at IS NULL`,
+       WHERE user_id = ? AND workspace = ? AND in_app_enabled = 1 AND read_at IS NULL`,
       [userId, workspace]
     );
     return Number(row?.count ?? 0);
@@ -68,8 +77,9 @@ export class SqliteNotificationDatabase extends SqliteDatabaseBase implements No
       `INSERT OR IGNORE INTO user_inbox_notification (
         id, user_id, workspace, category, event_type, resource_type, resource_id,
         case_id, assignment_id, actor_user_id, actor_display_name, title, message,
-        action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key,
+        in_app_enabled
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.user_id,
@@ -89,7 +99,8 @@ export class SqliteNotificationDatabase extends SqliteDatabaseBase implements No
         input.occurred_at.toISOString(),
         (input.created_at ?? new Date()).toISOString(),
         input.read_at?.toISOString() ?? null,
-        input.delivery_key
+        input.delivery_key,
+        (input.in_app_enabled ?? true) ? 1 : 0
       ]
     );
     return (await this.get(

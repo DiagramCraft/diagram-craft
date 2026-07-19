@@ -23,6 +23,7 @@ import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument
 import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
 import { PostgresNotificationDatabase } from '../domain/notification/db/postgresNotification';
 import { PostgresNotificationPreferenceDatabase } from '../domain/notification/db/postgresNotificationPreference';
+import { PostgresNotificationDeliveryDatabase } from '../domain/notification/db/postgresNotificationDelivery';
 import { PostgresEntityChangeDatabase } from '../domain/catalog/db/postgresEntityChange';
 import { PostgresEntityDeprecationDatabase } from '../domain/catalog/db/postgresEntityDeprecation';
 import { createLogger } from '../utils/logger';
@@ -52,6 +53,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly governance: PostgresGovernanceDatabase;
   readonly notification: PostgresNotificationDatabase;
   readonly notificationPreference: PostgresNotificationPreferenceDatabase;
+  readonly notificationDelivery: PostgresNotificationDeliveryDatabase;
   readonly entityChange: PostgresEntityChangeDatabase;
   readonly entityDeprecation: PostgresEntityDeprecationDatabase;
   readonly core;
@@ -75,6 +77,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       governance: new PostgresGovernanceDatabase(sql),
       notification: new PostgresNotificationDatabase(sql),
       notificationPreference: new PostgresNotificationPreferenceDatabase(sql),
+      notificationDelivery: new PostgresNotificationDeliveryDatabase(sql),
       entityChange: new PostgresEntityChangeDatabase(sql),
       entityDeprecation: new PostgresEntityDeprecationDatabase(sql)
     };
@@ -130,6 +133,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.governance = new PostgresGovernanceDatabase(this.sql);
     this.notification = new PostgresNotificationDatabase(this.sql);
     this.notificationPreference = new PostgresNotificationPreferenceDatabase(this.sql);
+    this.notificationDelivery = new PostgresNotificationDeliveryDatabase(this.sql);
     this.entityChange = new PostgresEntityChangeDatabase(this.sql);
     this.entityDeprecation = new PostgresEntityDeprecationDatabase(this.sql);
 

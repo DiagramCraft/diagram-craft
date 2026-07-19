@@ -15,6 +15,7 @@ import { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
 import { buildDefaultAdrDocuments } from '../document/documentDefaults';
+import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -394,6 +395,7 @@ export const createWorkspace = async (
       requireGlobalPermission(authCtx, 'admin_platform');
       const timestamp = new Date();
       const row = await db.workspace.createWorkspace(buildCreateInput(input, timestamp));
+      await ensureNotificationDeliverySchedule(db, row.id, timestamp);
       await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
 
       const { template, replicate_from, include } = input;

@@ -28,6 +28,10 @@ pnpm start
 
 The worker does not expose an HTTP listener. Job handlers are registered by system components and receive the run ID as `jobId` together with the workspace, schedule, system identity, and payload.
 
+Email notification delivery uses Resend when `RESEND_API_KEY`, `NOTIFICATION_EMAIL_FROM`, and
+`PUBLIC_APP_URL` are configured. Set `NOTIFICATION_EMAIL_RECIPIENT_DOMAIN_OVERRIDE` to a test
+domain to rewrite all recipients while preserving their local parts; the sender is not changed.
+
 `JOB_SERVER_ID` is the stable server identity and must be unique among active job servers. It
 defaults to the host name, so deployments that run multiple job servers on one host must configure
 it explicitly.

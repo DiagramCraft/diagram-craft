@@ -14,6 +14,11 @@ const jobServerSchema = z.object({
 
 const recurrenceSchema = z.discriminatedUnion('type', [
   z.object({
+    type: z.literal('minutes'),
+    intervalMinutes: z.number().int().positive(),
+    startsAt: z.string()
+  }),
+  z.object({
     type: z.literal('hours'),
     intervalHours: z.number().int().positive(),
     startsAt: z.string()

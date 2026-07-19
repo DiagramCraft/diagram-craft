@@ -262,7 +262,7 @@ export const normalizeEntityRelationFields = ({
 };
 
 const extractId = (value: unknown): string | null => {
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return value.trim() === '' ? null : value;
   if (
     value != null &&
     typeof value === 'object' &&

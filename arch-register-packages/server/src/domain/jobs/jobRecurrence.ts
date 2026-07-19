@@ -14,6 +14,13 @@ const parseTimeUtc = (value: string) => {
 
 export const validateJobScheduleRecurrence = (recurrence: JobScheduleRecurrence) => {
   switch (recurrence.type) {
+    case 'minutes':
+      if (!Number.isInteger(recurrence.intervalMinutes) || recurrence.intervalMinutes < 1) {
+        throw new Error('Minute recurrence intervalMinutes must be a positive integer');
+      }
+      if (Number.isNaN(recurrence.startsAt.getTime()))
+        throw new Error('Invalid recurrence startsAt');
+      return;
     case 'hours':
       if (!Number.isInteger(recurrence.intervalHours) || recurrence.intervalHours < 1) {
         throw new Error('Hourly recurrence intervalHours must be a positive integer');
@@ -47,6 +54,12 @@ export const nextJobOccurrence = (recurrence: JobScheduleRecurrence, atOrAfter: 
   validateJobScheduleRecurrence(recurrence);
 
   switch (recurrence.type) {
+    case 'minutes': {
+      const intervalMs = recurrence.intervalMinutes * 60 * 1000;
+      const elapsed = atOrAfter.getTime() - recurrence.startsAt.getTime();
+      const steps = Math.max(0, Math.ceil(elapsed / intervalMs));
+      return new Date(recurrence.startsAt.getTime() + steps * intervalMs);
+    }
     case 'hours': {
       const intervalMs = recurrence.intervalHours * 60 * 60 * 1000;
       const elapsed = atOrAfter.getTime() - recurrence.startsAt.getTime();

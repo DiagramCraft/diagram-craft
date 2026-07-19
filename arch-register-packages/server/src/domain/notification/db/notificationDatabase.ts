@@ -1,4 +1,9 @@
-import { databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
+import {
+  databaseBoolean,
+  databaseDate,
+  parseDatabaseJson,
+  type DatabaseRow
+} from '../../../db/rowMappers';
 
 export type InboxNotificationCategory = 'information' | 'action';
 
@@ -22,14 +27,16 @@ export type InboxNotificationDbResult = {
   created_at: Date;
   read_at: Date | null;
   delivery_key: string;
+  in_app_enabled: boolean;
 };
 
 export type InboxNotificationDbCreate = Omit<
   InboxNotificationDbResult,
-  'created_at' | 'read_at'
+  'created_at' | 'read_at' | 'in_app_enabled'
 > & {
   created_at?: Date;
   read_at?: Date | null;
+  in_app_enabled?: boolean;
 };
 
 export const notificationMappers = {
@@ -57,12 +64,14 @@ export const notificationMappers = {
     occurred_at: databaseDate(row['occurred_at']),
     created_at: databaseDate(row['created_at']),
     read_at: row['read_at'] == null ? null : databaseDate(row['read_at']),
-    delivery_key: String(row['delivery_key'])
+    delivery_key: String(row['delivery_key']),
+    in_app_enabled: row['in_app_enabled'] == null ? true : databaseBoolean(row['in_app_enabled'])
   })
 };
 
 export type NotificationDatabase = {
   listNotifications(userId: string, workspace: string): Promise<InboxNotificationDbResult[]>;
+  getNotification(id: string): Promise<InboxNotificationDbResult | null>;
   countUnread(userId: string, workspace: string): Promise<number>;
   markRead(userId: string, workspace: string, id: string, readAt: Date): Promise<boolean>;
   markAllRead(userId: string, workspace: string, readAt: Date): Promise<number>;

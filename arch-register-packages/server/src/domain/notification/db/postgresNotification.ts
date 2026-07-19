@@ -10,16 +10,24 @@ export class PostgresNotificationDatabase
   async listNotifications(userId: string, workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM user_inbox_notification
-      WHERE user_id = ${userId} AND workspace = ${workspace}
+      WHERE user_id = ${userId} AND workspace = ${workspace} AND in_app_enabled = TRUE
       ORDER BY occurred_at DESC, created_at DESC
     `;
     return mapDatabaseRows(rows, notificationMappers.notification);
   }
 
+  async getNotification(id: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM user_inbox_notification WHERE id = ${id}
+    `;
+    return row ? notificationMappers.notification(row) : null;
+  }
+
   async countUnread(userId: string, workspace: string) {
     const [row] = await this.sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count FROM user_inbox_notification
-      WHERE user_id = ${userId} AND workspace = ${workspace} AND read_at IS NULL
+      WHERE user_id = ${userId} AND workspace = ${workspace}
+        AND in_app_enabled = TRUE AND read_at IS NULL
     `;
     return Number(row?.count ?? 0);
   }
@@ -85,13 +93,15 @@ export class PostgresNotificationDatabase
         INSERT INTO user_inbox_notification (
           id, user_id, workspace, category, event_type, resource_type, resource_id,
           case_id, assignment_id, actor_user_id, actor_display_name, title, message,
-          action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key
+          action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key,
+          in_app_enabled
         ) VALUES (
           ${input.id}, ${input.user_id}, ${input.workspace}, ${input.category}, ${input.event_type},
           ${input.resource_type}, ${input.resource_id}, ${input.case_id}, ${input.assignment_id},
           ${input.actor_user_id}, ${input.actor_display_name}, ${input.title}, ${input.message},
           ${input.action_route}, ${this.json(input.presentation_metadata)}, ${input.occurred_at},
-          ${input.created_at ?? new Date()}, ${input.read_at ?? null}, ${input.delivery_key}
+          ${input.created_at ?? new Date()}, ${input.read_at ?? null}, ${input.delivery_key},
+          ${input.in_app_enabled ?? true}
         )
         ON CONFLICT (user_id, delivery_key) DO NOTHING
         RETURNING *

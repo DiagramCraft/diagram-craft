@@ -66,29 +66,52 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
   async createNotificationsFromAudit(input: CreateNotificationsFromAuditInput) {
     const { auditLog, changedByDisplayName } = input;
     try {
-      const watcherUserIds =
-        input.watcherUserIds ??
-        (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id));
+      const watcherRecipients =
+        input.watcherRecipients ??
+        (input.watcherUserIds ?? (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))).map(
+          userId => ({ userId, email: null, inAppEnabled: true, emailEnabled: false })
+        );
 
-      for (const userId of watcherUserIds) {
-        if (userId === auditLog.user_id) continue;
+      for (const recipient of watcherRecipients) {
+        if (recipient.userId === auditLog.user_id) continue;
+        if (!recipient.inAppEnabled && !recipient.emailEnabled) continue;
         const entitySlug = auditLog.entity_slug ?? auditLog.entity_id;
+        const notificationId = randomUUID();
+        const deliveryKey = `entity-watch:${auditLog.id}:user:${recipient.userId}`;
         await this.sql`
           INSERT INTO user_inbox_notification (
             id, user_id, workspace, category, event_type, resource_type, resource_id,
             case_id, assignment_id, actor_user_id, actor_display_name, title, message,
-            action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key
+            action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key,
+            in_app_enabled
           )
           VALUES (
-            ${randomUUID()}, ${userId}, ${auditLog.workspace}, 'information',
+            ${notificationId}, ${recipient.userId}, ${auditLog.workspace}, 'information',
             ${`entity.${auditLog.operation}`}, 'entity', ${auditLog.entity_id}, NULL, NULL,
             ${auditLog.user_id}, ${changedByDisplayName}, ${auditLog.entity_name},
             ${`${changedByDisplayName} ${auditLog.operation}d this entity`}, NULL,
             ${this.json({ entitySlug, schemaId: auditLog.schema_id })}, ${auditLog.timestamp},
-            NOW(), NULL, ${`entity-watch:${auditLog.id}:user:${userId}`}
+            NOW(), NULL, ${deliveryKey}, ${recipient.inAppEnabled}
           )
           ON CONFLICT (user_id, delivery_key) DO NOTHING
         `;
+        if (recipient.emailEnabled && recipient.email) {
+          const [notification] = await this.sql<{ id: string }[]>`
+            SELECT id FROM user_inbox_notification
+            WHERE user_id = ${recipient.userId} AND delivery_key = ${deliveryKey}
+          `;
+          if (notification) {
+            await this.sql`
+              INSERT INTO notification_delivery (
+                id, notification_id, user_id, workspace, channel, status, recipient_email,
+                max_attempts, next_attempt_at, created_at, updated_at
+              ) VALUES (
+                ${randomUUID()}, ${notification.id}, ${recipient.userId}, ${auditLog.workspace},
+                'email', 'pending', ${recipient.email}, 5, NOW(), NOW(), NOW()
+              ) ON CONFLICT (notification_id, channel) DO NOTHING
+            `;
+          }
+        }
       }
     } catch (error) {
       return normalizePostgresError(error);

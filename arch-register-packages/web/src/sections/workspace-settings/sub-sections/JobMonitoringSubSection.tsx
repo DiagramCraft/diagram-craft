@@ -45,12 +45,16 @@ const formatDuration = (value: number | null) => {
 };
 
 const formatRecurrence = (recurrence: {
-  type: 'hours' | 'daily' | 'weekly';
+  type: 'minutes' | 'hours' | 'daily' | 'weekly';
+  intervalMinutes?: number;
   intervalHours?: number;
   startsAt?: string;
   weekdayUtc?: number;
   timeUtc?: string;
 }) => {
+  if (recurrence.type === 'minutes') {
+    return `Every ${recurrence.intervalMinutes} minute(s) from ${formatDateTime(recurrence.startsAt)}`;
+  }
   if (recurrence.type === 'hours') {
     return `Every ${recurrence.intervalHours} hour(s) from ${formatDateTime(recurrence.startsAt)}`;
   }

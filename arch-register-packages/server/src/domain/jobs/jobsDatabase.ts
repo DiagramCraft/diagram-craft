@@ -12,6 +12,11 @@ export type JobScheduleRecurrence =
       startsAt: Date;
     }
   | {
+      type: 'minutes';
+      intervalMinutes: number;
+      startsAt: Date;
+    }
+  | {
       type: 'daily';
       timeUtc: string;
     }
@@ -191,7 +196,7 @@ export const jobMappers = {
         { type: 'daily', timeUtc: '00:00' },
         'job_schedule.recurrence'
       );
-      return recurrence.type === 'hours'
+      return recurrence.type === 'hours' || recurrence.type === 'minutes'
         ? { ...recurrence, startsAt: databaseDate(recurrence.startsAt) }
         : recurrence;
     })(),

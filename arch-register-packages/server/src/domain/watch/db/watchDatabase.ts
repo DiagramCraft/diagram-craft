@@ -14,6 +14,12 @@ export type CreateNotificationsFromAuditInput = {
   auditLog: AuditLogDbResult;
   changedByDisplayName: string;
   watcherUserIds?: string[];
+  watcherRecipients?: Array<{
+    userId: string;
+    email: string | null;
+    inAppEnabled: boolean;
+    emailEnabled: boolean;
+  }>;
 };
 
 export const watchMappers = {

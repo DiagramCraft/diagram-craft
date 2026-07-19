@@ -263,3 +263,14 @@ export const buildApiAuthCtx = async (
     throw error;
   }
 };
+
+/** Builds the current authorization context for a persisted user in a worker. */
+export const buildUserAuthCtx = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  userId: string
+): Promise<AuthorizationContext> => {
+  const dataProvider = new ServerDataProvider(db);
+  const contextData = await fetchAuthorizationContextData(dataProvider, workspace, userId);
+  return buildAuthorizationContext(contextData);
+};

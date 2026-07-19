@@ -14,6 +14,7 @@ import type { DocumentDatabase } from '../domain/document/db/documentDatabase';
 import type { GovernanceDatabase } from '../domain/governance/db/governanceDatabase';
 import type { NotificationDatabase } from '../domain/notification/db/notificationDatabase';
 import type { NotificationPreferenceDatabase } from '../domain/notification/db/notificationPreferenceDatabase';
+import type { NotificationDeliveryDatabase } from '../domain/notification/db/notificationDeliveryDatabase';
 import type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 // Keep the existing import path stable for database consumers.
@@ -49,6 +50,7 @@ export type DatabaseAdapter = {
   governance: GovernanceDatabase;
   notification: NotificationDatabase;
   notificationPreference: NotificationPreferenceDatabase;
+  notificationDelivery: NotificationDeliveryDatabase;
   entityChange: EntityChangeDatabase;
   entityDeprecation: EntityDeprecationDatabase;
 };
@@ -151,6 +153,12 @@ export type {
   NotificationPreferenceDbResult,
   NotificationPreferenceOverride
 } from '../domain/notification/db/notificationPreferenceDatabase';
+export type {
+  NotificationDeliveryDatabase,
+  NotificationDeliveryDbCreate,
+  NotificationDeliveryDbResult,
+  NotificationDeliveryClaim
+} from '../domain/notification/db/notificationDeliveryDatabase';
 export type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 export type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 

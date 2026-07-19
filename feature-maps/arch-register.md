@@ -202,8 +202,9 @@
 
             - @id:ar.collaboration.notifications.delivery-preferences Users can choose, per notification type and
               per delivery channel, whether they receive that notification. In-app delivery is on by default for
-              normal notification types and off by default for reminder types; email, Slack, and SMS are modeled
-              as channels but not yet deliverable. Preferences are scoped per user per workspace and only affect
+              normal notification types and off by default for reminder types; email is available when configured by
+              the deployment, while Slack and SMS are not yet deliverable. Preferences are scoped per user per
+              workspace and only affect
               future notifications, not existing Inbox items.
 
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,

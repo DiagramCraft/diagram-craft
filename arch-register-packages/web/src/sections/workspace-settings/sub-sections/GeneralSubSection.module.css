@@ -77,3 +77,45 @@
 .fieldRight {
   min-width: 0;
 }
+
+/* Notification preference table */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.preferenceTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.preferenceTable th,
+.preferenceTable td {
+  padding: 12px 16px;
+  border-bottom: 1px dashed var(--panel-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.preferenceTable thead th {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.preferenceTable thead th:not(:first-child),
+.preferenceTable tbody td {
+  width: 110px;
+  text-align: center;
+}
+
+.preferenceTable tbody th {
+  font-weight: normal;
+  text-align: left;
+}
+
+.preferenceTable tbody tr:last-child th,
+.preferenceTable tbody tr:last-child td {
+  border-bottom: 0;
+}

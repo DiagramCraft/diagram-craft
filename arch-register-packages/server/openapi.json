@@ -40939,6 +40939,28 @@
                             "type": "object",
                             "properties": {
                               "type": {
+                                "const": "minutes"
+                              },
+                              "intervalMinutes": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "exclusiveMinimum": 0
+                              },
+                              "startsAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "intervalMinutes",
+                              "startsAt"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
                                 "const": "hours"
                               },
                               "intervalHours": {

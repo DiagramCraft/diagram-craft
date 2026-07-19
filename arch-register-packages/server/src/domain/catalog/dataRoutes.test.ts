@@ -211,6 +211,22 @@ describe('data route helpers', () => {
     });
   });
 
+  it('treats empty owner and lifecycle references as unset', () => {
+    expect(
+      parseEntityMutationPayload({
+        _schemaId: 'schema-component',
+        _name: 'Frontend App',
+        _owner: '',
+        _lifecycle: '  ',
+        _targetLifecycle: ''
+      })
+    ).toMatchObject({
+      requestedOwner: null,
+      requestedLifecycle: null,
+      requestedTargetLifecycle: null
+    });
+  });
+
   it('resolves create owner by explicit owner, inherited parent, schema default, and fallback', () => {
     const teamIds = new Set(['Platform Engineering', 'Design Systems']);
     expect(resolveCreateOwner('Design Systems', [domain], systemSchema, teamIds, null)).toBe(
