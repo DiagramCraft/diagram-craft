@@ -22,6 +22,7 @@ export const makeNodeTextEditor = (includeColor: boolean): Editor => {
       <NodeTextPanelForm
         diagram={diagram}
         config={config}
+        enabled={makeProperty($p, 'text.enabled', nodeDefaults, onChange)}
         font={makeProperty($p, 'text.font', nodeDefaults, onChange)}
         fontSize={makeProperty($p, 'text.fontSize', nodeDefaults, onChange)}
         lineHeight={makeProperty($p, 'text.lineHeight', nodeDefaults, onChange)}

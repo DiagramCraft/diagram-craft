@@ -119,6 +119,8 @@
 
   - @id:dc.styling.basic
     Users can configure fills, strokes, line widths, arrowheads, typography, alignment, spacing, and opacity.
+    Fill, stroke, and text rendering can each be toggled on or off independently, hiding the visual without
+    affecting stored content, sizing, or selection.
 
   - @id:dc.styling.fills
     Users can apply solid colors, linear and radial gradients, patterns, textures, and image fills.

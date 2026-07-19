@@ -259,6 +259,7 @@ export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtension
   };
 
   text?: {
+    enabled?: boolean;
     font?: string;
     fontSize?: number;
     lineHeight?: number;
