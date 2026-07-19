@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildUserAuthCtx } from '../auth/authorization';
 import { PermissionChecker } from '@arch-register/permissions';
@@ -117,6 +118,92 @@ export class ResendEmailProvider implements EmailProvider {
   }
 }
 
+type SmtpError = {
+  code?: unknown;
+  responseCode?: unknown;
+};
+
+const smtpResponseCode = (error: unknown) => {
+  if (typeof error !== 'object' || error == null) return undefined;
+  const value = (error as SmtpError).responseCode;
+  return typeof value === 'number' ? value : undefined;
+};
+
+const smtpErrorCode = (error: unknown) => {
+  if (typeof error !== 'object' || error == null) return undefined;
+  const value = (error as SmtpError).code;
+  return typeof value === 'string' ? value : undefined;
+};
+
+const retryableSmtpErrorCodes = new Set([
+  'EAI_AGAIN',
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'ECONNABORTED',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+  'EPIPE',
+  'ESOCKET',
+  'ETIMEDOUT'
+]);
+
+const smtpErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+const toEmailError = (error: unknown) => {
+  const responseCode = smtpResponseCode(error);
+  const errorMessage = smtpErrorMessage(error);
+  if (
+    (responseCode != null && responseCode >= 400 && responseCode < 500) ||
+    retryableSmtpErrorCodes.has(smtpErrorCode(error) ?? '')
+  ) {
+    return new RetryableEmailError(errorMessage);
+  }
+  return new PermanentEmailError(errorMessage);
+};
+
+export class SmtpEmailProvider implements EmailProvider {
+  readonly name = 'smtp';
+
+  constructor(private readonly transporter: ReturnType<typeof nodemailer.createTransport>) {}
+
+  async send(message: EmailMessage, signal: AbortSignal) {
+    if (signal.aborted) throw signal.reason ?? new Error('Email delivery aborted');
+    try {
+      const result = await this.transporter.sendMail({
+        from: message.from,
+        to: message.to,
+        subject: message.subject,
+        html: message.html,
+        text: message.text
+      });
+      if (!result.messageId) throw new RetryableEmailError('SMTP returned no message ID');
+      return { id: result.messageId };
+    } catch (error) {
+      if (error instanceof RetryableEmailError || error instanceof PermanentEmailError) {
+        throw error;
+      }
+      throw toEmailError(error);
+    }
+  }
+}
+
+const smtpPortFromEnv = () => {
+  const value = process.env['SMTP_PORT']?.trim() || '587';
+  const port = Number(value);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error(`Invalid SMTP_PORT '${value}'`);
+  }
+  return port;
+};
+
+const smtpSecureFromEnv = () => {
+  const value = process.env['SMTP_SECURE']?.trim().toLowerCase() || 'false';
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  throw new Error(`Invalid SMTP_SECURE '${value}'`);
+};
+
 export type EmailDeliveryConfig = {
   provider: EmailProvider | null;
   from: string | null;
@@ -134,12 +221,34 @@ export const createEmailDeliveryConfigFromEnv = (): EmailDeliveryConfig => {
   const recipientDomainOverride =
     process.env['NOTIFICATION_EMAIL_RECIPIENT_DOMAIN_OVERRIDE']?.trim().replace(/^@/, '') || null;
 
-  if (providerName !== 'resend') {
+  if (providerName !== 'resend' && providerName !== 'smtp') {
     throw new Error(`Unsupported notification email provider '${providerName}'`);
   }
 
+  let provider: EmailProvider | null = null;
+  if (providerName === 'resend') {
+    provider = apiKey ? new ResendEmailProvider(new Resend(apiKey)) : null;
+  } else {
+    const host = process.env['SMTP_HOST']?.trim() ?? '';
+    const user = process.env['SMTP_USER']?.trim() ?? '';
+    const password = process.env['SMTP_PASSWORD'] ?? '';
+    if (Boolean(user) !== Boolean(password)) {
+      throw new Error('SMTP_USER and SMTP_PASSWORD must be configured together');
+    }
+    if (host) {
+      provider = new SmtpEmailProvider(
+        nodemailer.createTransport({
+          host,
+          port: smtpPortFromEnv(),
+          secure: smtpSecureFromEnv(),
+          ...(user ? { auth: { user, pass: password } } : {})
+        })
+      );
+    }
+  }
+
   return {
-    provider: apiKey ? new ResendEmailProvider(new Resend(apiKey)) : null,
+    provider,
     from,
     publicAppUrl,
     recipientDomainOverride

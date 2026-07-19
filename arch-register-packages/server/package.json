@@ -45,6 +45,7 @@
     "lib0": "^0.2.117",
     "openid-client": "^6.8.4",
     "postgres": "^3.4.5",
+    "nodemailer": "^8.0.9",
     "resend": "^6.0.0",
     "ws": "^8.21.0",
     "y-protocols": "^1.0.7",
@@ -56,6 +57,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/unzipper": "^0.10.10",
     "@types/jsonwebtoken": "^9.0.5",
+    "@types/nodemailer": "^7.0.4",
     "@types/node": "^20.14.2",
     "@types/ws": "^8.18.1",
     "vitest": "^4.1.9"
