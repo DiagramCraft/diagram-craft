@@ -54,3 +54,4 @@ export {
 // Export permission checker and capability evaluator
 export { PermissionChecker } from './PermissionChecker.js';
 export { CapabilityEvaluator } from './CapabilityEvaluator.js';
+
