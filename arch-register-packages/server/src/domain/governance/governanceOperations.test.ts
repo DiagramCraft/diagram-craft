@@ -30,10 +30,6 @@ vi.mock('../workspace/resolveWorkspace', () => ({
   resolveWorkspace: vi.fn(async () => 'ws-1')
 }));
 
-vi.mock('../jobs/jobOperations', () => ({
-  enqueueOneOffJobRun: vi.fn(async () => {})
-}));
-
 vi.mock('node:crypto', () => ({
   randomUUID: () => 'event-generated'
 }));
@@ -88,6 +84,7 @@ type GovernanceSnapshot = {
   assignments: Map<string, GovernanceAssignmentDbResult>;
   events: GovernanceEventDbResult[];
   decisionRequests: Map<string, string>;
+  notifications: unknown[];
 };
 
 const makeGovernanceDouble = (
@@ -100,6 +97,7 @@ const makeGovernanceDouble = (
   const assignments = new Map([assignment, ...extraAssignments].map(a => [a.id, a] as const));
   const events: GovernanceEventDbResult[] = [];
   const decisionRequests = new Map<string, string>();
+  const notifications: unknown[] = [];
 
   return {
     getCase: vi.fn(async (_ws: string, id: string) => cases.get(id) ?? null),
@@ -169,12 +167,17 @@ const makeGovernanceDouble = (
         decisionRequests.set(`${assignmentId}:${idempotencyKey}`, eventId);
       }
     ),
+    createNotification: vi.fn(async (input: unknown) => {
+      notifications.push(input);
+      return input;
+    }),
     // Test-only: snapshot/restore so `makeDb`'s transaction wrapper can simulate rollback.
     _snapshot: (): GovernanceSnapshot => ({
       cases: new Map(cases),
       assignments: new Map(assignments),
       events: [...events],
-      decisionRequests: new Map(decisionRequests)
+      decisionRequests: new Map(decisionRequests),
+      notifications: [...notifications]
     }),
     _restore: (snapshot: GovernanceSnapshot) => {
       cases.clear();
@@ -185,7 +188,10 @@ const makeGovernanceDouble = (
       events.push(...snapshot.events);
       decisionRequests.clear();
       snapshot.decisionRequests.forEach((v, k) => decisionRequests.set(k, v));
-    }
+      notifications.length = 0;
+      notifications.push(...snapshot.notifications);
+    },
+    notifications
   };
 };
 
@@ -193,7 +199,18 @@ const makeDb = (governance: ReturnType<typeof makeGovernanceDouble>): DatabaseAd
   ({
     catalog: {},
     governance,
+    auth: {
+      getUser: vi.fn(async (id: string) => ({
+        id,
+        display_name: id,
+        is_active: true
+      }))
+    },
+    notificationPreference: {
+      listOverrides: vi.fn(async () => [])
+    },
     notification: {
+      createNotification: governance.createNotification,
       markReadByAssignmentIds: vi.fn(async () => 0),
       markReadByCaseIds: vi.fn(async () => 0)
     },
@@ -228,7 +245,8 @@ describe('decideGovernanceAssignment', () => {
   it('allows self-approval when the case explicitly permits it', async () => {
     const caseRow = makeCase({ initiator_user_id: 'user-1', self_approval_allowed: true });
     const assignment = makeAssignment();
-    const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+    const governance = makeGovernanceDouble(caseRow, assignment);
+    const db = makeDb(governance);
 
     const result = await decideGovernanceAssignment(db, 'ws-1', assignment.id, event, {
       decision: 'approve',
@@ -237,6 +255,17 @@ describe('decideGovernanceAssignment', () => {
 
     expect(result.case.status).toBe('completed');
     expect(result.case.outcome).toBe('approve');
+    expect(governance.notifications).toHaveLength(1);
+    expect(governance.notifications).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          user_id: 'user-1',
+          event_type: 'approved',
+          case_id: 'case-1',
+          assignment_id: null
+        })
+      ])
+    );
   });
 
   it('rejects a decision from a user who is not eligible for the assignment', async () => {
@@ -270,6 +299,7 @@ describe('decideGovernanceAssignment', () => {
     expect(second.event.id).toBe(first.event.id);
     // Only the first request should have completed the assignment.
     expect(governance.completeAssignmentIfOpen).toHaveBeenCalledTimes(1);
+    expect(governance.notifications).toHaveLength(2);
   });
 
   it('rejects a second decision with a different idempotency key once the assignment is resolved', async () => {
@@ -333,6 +363,25 @@ describe('decideGovernanceAssignment', () => {
       retryRegistry
     );
     expect(retried.case.status).toBe('completed');
+  });
+
+  it('rolls back the decision when synchronous in-app notification creation fails', async () => {
+    const caseRow = makeCase();
+    const assignment = makeAssignment();
+    const governance = makeGovernanceDouble(caseRow, assignment);
+    governance.createNotification.mockRejectedValueOnce(new Error('notification failed'));
+    const db = makeDb(governance);
+
+    await expect(
+      decideGovernanceAssignment(db, 'ws-1', assignment.id, event, {
+        decision: 'approve',
+        idempotencyKey: 'key-1'
+      })
+    ).rejects.toThrow('notification failed');
+
+    expect((await governance.getAssignment(assignment.id))?.status).toBe('open');
+    expect(await governance.listEvents(caseRow.id)).toEqual([]);
+    expect(governance.notifications).toEqual([]);
   });
 
   describe('independent assignments (#1718 group acknowledgement)', () => {

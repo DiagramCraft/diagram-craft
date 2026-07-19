@@ -6,7 +6,10 @@ import type {
   GovernanceCaseDbResult,
   GovernanceEventDbResult
 } from './db/governanceDatabase';
-import { createGovernanceNotificationJobHandler } from './governanceNotifications';
+import {
+  createGovernanceInAppNotifications,
+  createGovernanceNotificationJobHandler
+} from './governanceNotifications';
 
 const now = new Date('2026-07-18T10:00:00.000Z');
 
@@ -78,10 +81,7 @@ describe('governance notification delivery', () => {
       notificationPreference: { listOverrides: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
 
-    const result = await createGovernanceNotificationJobHandler(db)({
-      workspace: 'workspace-1',
-      payload: { caseId: 'case-1', eventId: 'event-1', eventType: 'submitted' }
-    });
+    const result = await createGovernanceInAppNotifications(db, makeCase(), makeEvent());
 
     expect(result).toEqual({ recipients: 1 });
     expect(createNotification).toHaveBeenCalledWith(
@@ -111,10 +111,7 @@ describe('governance notification delivery', () => {
       notificationPreference: { listOverrides: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
 
-    await createGovernanceNotificationJobHandler(db)({
-      workspace: 'workspace-1',
-      payload: { caseId: 'case-1', eventId: 'event-1', eventType: 'submitted' }
-    });
+    await createGovernanceInAppNotifications(db, makeCase(), makeEvent());
 
     expect(createNotification).toHaveBeenCalledTimes(2);
     expect(createNotification.mock.calls.map(([input]) => input.assignment_id)).toEqual(
@@ -152,10 +149,7 @@ describe('governance notification delivery', () => {
       notificationPreference: { listOverrides }
     } as unknown as DatabaseAdapter;
 
-    await createGovernanceNotificationJobHandler(db)({
-      workspace: 'workspace-1',
-      payload: { caseId: 'case-1', eventId: 'event-1', eventType: 'approved' }
-    });
+    await createGovernanceInAppNotifications(db, makeCase(), approvedEvent);
 
     // 'approved' is bucketed as governance-case-activity, which the recipient disabled.
     expect(createNotification).not.toHaveBeenCalled();
@@ -172,11 +166,32 @@ describe('governance notification delivery', () => {
       }
     } as unknown as DatabaseAdapter;
 
-    await createGovernanceNotificationJobHandler(db2)({
+    await createGovernanceInAppNotifications(db2, makeCase(), submittedEvent);
+
+    expect(createNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps already-queued legacy jobs idempotent through the same delivery path', async () => {
+    const createNotification = vi.fn(async input => input);
+    const db = {
+      governance: {
+        getCase: vi.fn(async () => makeCase()),
+        listEvents: vi.fn(async () => [makeEvent()]),
+        listAssignmentsForCase: vi.fn(async () => [makeAssignment()])
+      },
+      auth: {
+        getUser: vi.fn(async (id: string) => ({ id, display_name: id, is_active: true }))
+      },
+      notification: { createNotification },
+      notificationPreference: { listOverrides: vi.fn(async () => []) }
+    } as unknown as DatabaseAdapter;
+
+    const result = await createGovernanceNotificationJobHandler(db)({
       workspace: 'workspace-1',
       payload: { caseId: 'case-1', eventId: 'event-1', eventType: 'submitted' }
     });
 
+    expect(result).toEqual({ recipients: 1 });
     expect(createNotification).toHaveBeenCalledTimes(1);
   });
 });
