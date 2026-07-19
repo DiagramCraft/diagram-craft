@@ -241,7 +241,10 @@ const writeGenerationOutcome = async (
             generatorVersion: outcome.generatorVersion
           };
 
-    const nextGenerated = { ...current.generated_metadata, [outcome.actionId]: resultEntry };
+    // Keyed by target field id (not action id) — this is the same convention used by
+    // renameDocumentMetadataField/removeDocumentMetadataField and by the web UI's
+    // generatedMetadata[field.id] lookup.
+    const nextGenerated = { ...current.generated_metadata, [outcome.fieldId]: resultEntry };
 
     if (outcome.status === 'failed') {
       await tx.document.upsertDocumentMetadata({
@@ -286,7 +289,12 @@ const scheduleRetryOrFail = async (
   row: DocumentMetadataGenerationScheduleDbResult,
   now: Date,
   failureNotice: string,
-  explanation: string | null = null
+  explanation: string | null = null,
+  // The target field id, when known. Falls back to the action id for the rare case where an
+  // unexpected error strikes before the generator's target field could even be resolved — this
+  // keeps the failure durably logged, even though it won't surface against a specific field in
+  // the properties panel (generatedMetadata is keyed by field id).
+  fieldId: string = row.action_id
 ): Promise<'retrying' | 'failed'> => {
   if (row.attempt_count + 1 < METADATA_GENERATION_MAX_ATTEMPTS) {
     await db.document.upsertPendingMetadataGeneration({
@@ -305,7 +313,7 @@ const scheduleRetryOrFail = async (
   await writeGenerationOutcome(db, row.workspace, row.node_id, {
     status: 'failed',
     actionId: row.action_id,
-    fieldId: row.action_id,
+    fieldId,
     failureNotice,
     explanation,
     sourceRevision: row.source_revision,
@@ -351,11 +359,11 @@ const processGenerationRow = async (
   if (!outputField) return skip(`target field '${action.outputFieldId}' is missing or retired`);
 
   const fail = (message: string, explanation: string | null = null) => {
-    logger.warn(
-      `Generation failed for node ${row.node_id}, action ${row.action_id}: ${message}`,
-      { workspace: row.workspace, attempt: row.attempt_count + 1 }
-    );
-    return scheduleRetryOrFail(db, row, now, message, explanation);
+    logger.warn(`Generation failed for node ${row.node_id}, action ${row.action_id}: ${message}`, {
+      workspace: row.workspace,
+      attempt: row.attempt_count + 1
+    });
+    return scheduleRetryOrFail(db, row, now, message, explanation, outputField.id);
   };
 
   const aiConfig = await resolveAiConfig(db, row.workspace);
@@ -434,7 +442,11 @@ const processGenerationRow = async (
     explanation = capturedReasoning.join('').trim() || null;
     logger.info(
       `Generator ${action.id} for node ${node.id} answered in ${Date.now() - startedAt}ms: ${JSON.stringify(rawAnswer.slice(0, 200))}`,
-      { workspace: row.workspace }
+      {
+        workspace: row.workspace,
+        reasoningChunks: capturedReasoning.length,
+        reasoningLength: explanation?.length ?? 0
+      }
     );
   } catch (error) {
     return (await fail(

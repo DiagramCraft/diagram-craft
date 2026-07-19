@@ -344,7 +344,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
       expect.objectContaining({
         values: { summary: 'Great summary' },
         generated_metadata: expect.objectContaining({
-          'gen-1': expect.objectContaining({ status: 'success', fieldId: 'summary' })
+          summary: expect.objectContaining({ status: 'success', fieldId: 'summary' })
         })
       })
     );
@@ -397,7 +397,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
       expect.objectContaining({
         values: { summary: 'Great summary' },
         generated_metadata: expect.objectContaining({
-          'gen-1': expect.objectContaining({
+          summary: expect.objectContaining({
             explanation: 'Let me think about this at length before answering...'
           })
         })
@@ -535,7 +535,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
     expect(upsertDocumentMetadata).toHaveBeenCalledWith(
       expect.objectContaining({
         generated_metadata: expect.objectContaining({
-          'gen-1': expect.objectContaining({ status: 'failed', failureNotice: expect.any(String) })
+          summary: expect.objectContaining({ status: 'failed', failureNotice: expect.any(String) })
         })
       })
     );
