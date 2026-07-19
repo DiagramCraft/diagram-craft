@@ -1,6 +1,7 @@
 import type {
   DocumentAiAction,
   DocumentField,
+  DocumentGeneratedMetadata,
   DocumentMetadata,
   DocumentTemplateWrite,
   DocumentTypeWrite
@@ -39,6 +40,7 @@ export type DocumentTypeVersionDbResult = {
   name: string;
   description: string;
   fields: DocumentField[];
+  aiActions: DocumentAiAction[];
   color: string | null;
   icon: string | null;
   change_summary: Record<string, unknown>;
@@ -46,7 +48,9 @@ export type DocumentTypeVersionDbResult = {
   created_at: Date;
 };
 
-export type DocumentTypeVersionDbCreate = DocumentTypeVersionDbResult;
+export type DocumentTypeVersionDbCreate = Omit<DocumentTypeVersionDbResult, 'aiActions'> & {
+  aiActions?: DocumentAiAction[];
+};
 
 export type DocumentTemplateDbResult = {
   id: string;
@@ -73,10 +77,13 @@ export type DocumentMetadataDbResult = {
   node_id: string;
   document_type_id: string | null;
   values: DocumentMetadata;
+  generated_metadata: DocumentGeneratedMetadata;
   updated_at: Date;
 };
 
-export type DocumentMetadataDbUpsert = DocumentMetadataDbResult;
+export type DocumentMetadataDbUpsert = Omit<DocumentMetadataDbResult, 'generated_metadata'> & {
+  generated_metadata?: DocumentGeneratedMetadata;
+};
 
 export type DocumentLinkIndexDbResult = {
   workspace: string;

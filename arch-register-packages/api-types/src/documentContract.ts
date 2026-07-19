@@ -52,13 +52,39 @@ export const documentFieldSchema = z.object({
   retired: z.boolean().default(false)
 });
 
-export const documentAiActionSchema = z.object({
+const documentAiActionBaseSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  kind: z.literal('interactive'),
   prompt: z.string().min(1),
   enabled: z.boolean().default(true)
 });
+
+export const documentAiActionSchema = z.discriminatedUnion('kind', [
+  documentAiActionBaseSchema.extend({
+    kind: z.literal('interactive')
+  }),
+  documentAiActionBaseSchema.extend({
+    kind: z.literal('metadata_generator'),
+    outputFieldId: z.string().min(1)
+  })
+]);
+
+export const documentGeneratedMetadataResultSchema = z.object({
+  actionId: z.string().min(1),
+  fieldId: z.string().min(1),
+  status: z.enum(['success', 'failed', 'outdated']),
+  explanation: z.string().nullable(),
+  findings: z.array(z.string()),
+  failureNotice: z.string().nullable(),
+  generatedAt: z.string(),
+  sourceRevision: z.number().int().positive(),
+  generatorVersion: z.number().int().positive()
+});
+
+export const documentGeneratedMetadataSchema = z.record(
+  z.string().min(1),
+  documentGeneratedMetadataResultSchema
+);
 
 export const documentTypeSchema = z.object({
   id: z.string(),
@@ -89,6 +115,7 @@ const documentTypeVersionSchema = z.object({
   fields: z.array(documentFieldSchema).describe('Field definitions at this version'),
   color: z.string().nullable().describe('Document type color at this version'),
   icon: z.string().nullable().describe('Document type icon at this version'),
+  aiActions: z.array(documentAiActionSchema).default([]),
   changeSummary: z
     .record(z.string(), z.unknown())
     .describe('Summary of what changed relative to the previous version'),
@@ -273,6 +300,8 @@ export type DocumentFieldType = z.infer<typeof documentFieldTypeSchema>;
 export type DocumentRequirement = z.infer<typeof documentRequirementSchema>;
 export type DocumentField = z.infer<typeof documentFieldSchema>;
 export type DocumentAiAction = z.infer<typeof documentAiActionSchema>;
+export type DocumentGeneratedMetadataResult = z.infer<typeof documentGeneratedMetadataResultSchema>;
+export type DocumentGeneratedMetadata = z.infer<typeof documentGeneratedMetadataSchema>;
 export type DocumentMetadata = z.infer<typeof documentMetadataSchema>;
 export type DocumentType = z.infer<typeof documentTypeSchema>;
 export type DocumentTemplate = z.infer<typeof documentTemplateSchema>;

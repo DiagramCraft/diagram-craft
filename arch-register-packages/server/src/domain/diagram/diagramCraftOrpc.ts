@@ -4,13 +4,16 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import {
-  buildApiAuthCtx,
+  buildApiEntityAuthCtx,
   filterVisibleEntities,
   requireWorkspaceCapability
 } from '../auth/authorization';
+import {
+  orpcErrorInterceptors,
+  orpcErrorMiddleware,
+  workspaceScoped
+} from '../../utils/orpcErrors';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import type { AIGenerateRequest } from '../ai/aiServer';
@@ -24,14 +27,14 @@ type ORPCContext = {
 
 const diagramCraftRouter = implement(diagramCraftContract)
   .$context<ORPCContext>()
-  .use(orpcErrorMiddleware);
+  .use(orpcErrorMiddleware)
+  .use(workspaceScoped);
 
 export const createDiagramCraftORPCRouter = () => {
   return diagramCraftRouter.router({
     diagramCraft: {
-      getSchemas: diagramCraftRouter.diagramCraft.getSchemas.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      getSchemas: diagramCraftRouter.diagramCraft.getSchemas.handler(async ({ context }) => {
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
 
         const [schemas, enums] = await Promise.all([
@@ -41,21 +44,20 @@ export const createDiagramCraftORPCRouter = () => {
         return schemas.map(schema => toDiagramCraftSchema(schema, enums));
       }),
 
-      getData: diagramCraftRouter.diagramCraft.getData.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      getData: diagramCraftRouter.diagramCraft.getData.handler(async ({ context }) => {
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
 
+        const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
         const entities = filterVisibleEntities(
-          authCtx,
+          entityAuthCtx,
           await listAllCatalogEntities(context.db, workspace)
         );
         return entities.map(entity => toDiagramCraftData(entity));
       }),
 
       generate: diagramCraftRouter.diagramCraft.generate.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
 
         const aiConfig = await resolveAiConfig(context.db, workspace);

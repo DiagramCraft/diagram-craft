@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { defineEntityOperation, defineOperation } from '../operation';
 import {
   buildApiAuthCtx,
   requireEntityAction,
@@ -117,6 +117,7 @@ const getDocumentState = async (db: DatabaseAdapter, ws: string, node: ContentNo
       documentType: null,
       documentTypeId: null,
       metadata: {},
+      generatedMetadata: {},
       availableFields: [],
       retiredFields: []
     };
@@ -130,6 +131,7 @@ const getDocumentState = async (db: DatabaseAdapter, ws: string, node: ContentNo
     documentType,
     documentTypeId: metadata?.document_type_id ?? null,
     metadata: metadata?.values ?? {},
+    generatedMetadata: metadata?.generated_metadata ?? {},
     availableFields: fields.filter(field => !field.retired),
     retiredFields: fields.filter(field => field.retired)
   };
@@ -471,6 +473,7 @@ export const saveNewMarkdownContent = async (
               node_id: nodeId,
               document_type_id: input.document_type_id ?? null,
               values: resolvedMetadata.values,
+              generated_metadata: {},
               updated_at: timestamp
             });
             await tx.document.replaceDocumentLinks(ws, nodeId, resolvedMetadata.links);
@@ -612,6 +615,7 @@ export const getMarkdownContent = async (
           : null,
         document_type_id: document.documentTypeId,
         metadata: document.metadata,
+        generated_metadata: document.generatedMetadata,
         available_fields: document.availableFields,
         retired_fields: document.retiredFields
       };
@@ -627,7 +631,7 @@ export const runDocumentAiAction = async (
   actionId: string,
   event: AuthenticatedEvent
 ): Promise<AsyncGenerator<RunAiActionEvent>> => {
-  return defineOperation(
+  return defineEntityOperation(
     db,
     workspace,
     event,
@@ -1076,6 +1080,7 @@ export const saveMarkdownContent = async (
               node_id: node.id,
               document_type_id: nextDocumentTypeId ?? null,
               values: nextMetadata,
+              generated_metadata: currentDocument.generatedMetadata,
               updated_at: timestamp
             });
             await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
@@ -1181,7 +1186,7 @@ export const listRelatedContent = async (
   entityId: string,
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
+  defineEntityOperation(
     db,
     workspace,
     event,
@@ -1468,6 +1473,7 @@ export const restoreMarkdownRevision = async (
       await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
       const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
       httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
+      const currentDocument = await getDocumentState(db, ws, node);
       const restoredType = revision.document_type_id
         ? await db.document.getDocumentType(ws, revision.document_type_id)
         : null;
@@ -1529,6 +1535,7 @@ export const restoreMarkdownRevision = async (
               node_id: node.id,
               document_type_id: revision.document_type_id,
               values: resolvedMetadata.values,
+              generated_metadata: currentDocument.generatedMetadata,
               updated_at: timestamp
             });
             await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);

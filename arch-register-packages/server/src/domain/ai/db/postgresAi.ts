@@ -16,6 +16,15 @@ export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDataba
     return row ? aiMappers.config(row) : null;
   }
 
+  async listAiConfigs() {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM workspace_ai_config
+      WHERE api_key_enc IS NOT NULL
+      ORDER BY workspace
+    `;
+    return mapDatabaseRows(rows, aiMappers.config);
+  }
+
   async upsertAiConfig(ws: string, input: AiConfigInputDbUpsert) {
     try {
       const now = new Date();

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
 import {
   documentFieldSchema,
+  documentGeneratedMetadataSchema,
   documentMetadataSchema,
   documentTypeSchema
 } from '@arch-register/api-types/documentContract';
@@ -125,6 +126,9 @@ const markdownContentSchema = z.object({
   document_type: documentTypeSchema.nullable().describe('Assigned typed document definition'),
   document_type_id: z.string().nullable().describe('Assigned document type identifier'),
   metadata: documentMetadataSchema.describe('Structured document metadata'),
+  generated_metadata: documentGeneratedMetadataSchema.describe(
+    'AI-generated metadata details keyed by output field identifier'
+  ),
   available_fields: z.array(documentFieldSchema).describe('Current fields available for editing'),
   retired_fields: z.array(documentFieldSchema).describe('Retired fields retained for history')
 });

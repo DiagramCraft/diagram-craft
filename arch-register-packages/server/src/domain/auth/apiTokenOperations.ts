@@ -6,7 +6,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { buildApiAuthCtx, requireWorkspaceCapability } from './authorization';
 import { generateApiToken, toApiToken } from './apiTokens';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { recordApiTokenAudit } from './apiTokenAudit';
 
 const EDITOR_CAPABILITIES = new Set<WorkspaceCapability>(WORKSPACE_ROLE_CAPABILITIES.editor);
@@ -70,7 +70,7 @@ const createToken = async (
   workspace: string,
   input: CreateApiTokenInput,
   event: AuthenticatedEvent,
-  authCtx: AuthorizationContext
+  authCtx: WorkspaceAuthorizationContext
 ) => {
   const now = new Date();
   const parsed = parseCreateInput(input, now);

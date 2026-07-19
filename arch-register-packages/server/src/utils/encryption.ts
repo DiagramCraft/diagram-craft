@@ -5,17 +5,43 @@ const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
 
 const FALLBACK_SALT = 'arch-register-ai';
+export const VERSIONED_CIPHERTEXT_PREFIX = 'v1:';
 
-let cachedKey: { raw: string; salt: string; key: Buffer } | null = null;
+export type EncryptionErrorCode = 'missing-key' | 'invalid-ciphertext' | 'unsupported-version';
 
-const getKey = (): Buffer | null => {
-  const raw = process.env['AI_ENCRYPTION_KEY'];
-  if (!raw) return null;
-  const salt = process.env['AI_ENCRYPTION_SALT'] ?? FALLBACK_SALT;
-  if (cachedKey?.raw === raw && cachedKey.salt === salt) return cachedKey.key;
+export class AiEncryptionError extends Error {
+  constructor(
+    public readonly code: EncryptionErrorCode,
+    message: string
+  ) {
+    super(message);
+    this.name = 'AiEncryptionError';
+  }
+}
+
+export type EncryptionKeyMaterial = {
+  raw: string;
+  salt: string;
+  key: Buffer;
+};
+
+let cachedKey: EncryptionKeyMaterial | null = null;
+
+const deriveKey = (raw: string, salt: string): EncryptionKeyMaterial => {
+  if (cachedKey?.raw === raw && cachedKey.salt === salt) return cachedKey;
   const key = scryptSync(raw, salt, 32);
   cachedKey = { raw, salt, key };
-  return key;
+  return cachedKey;
+};
+
+export const getEncryptionKeyMaterial = (
+  keyEnv = 'AI_ENCRYPTION_KEY',
+  saltEnv = 'AI_ENCRYPTION_SALT'
+): EncryptionKeyMaterial | null => {
+  const raw = process.env[keyEnv];
+  if (!raw) return null;
+  const salt = process.env[saltEnv] ?? FALLBACK_SALT;
+  return deriveKey(raw, salt);
 };
 
 /**
@@ -26,7 +52,7 @@ export const getEncryptionWarnings = (): string[] => {
   const warnings: string[] = [];
   if (!process.env['AI_ENCRYPTION_KEY']) {
     warnings.push(
-      'AI_ENCRYPTION_KEY is not set — AI provider API keys will be stored as plaintext in the database'
+      'AI_ENCRYPTION_KEY is not set — workspace AI API key writes are disabled; environment provider keys remain available'
     );
   }
   if (!process.env['AI_ENCRYPTION_SALT']) {
@@ -37,27 +63,92 @@ export const getEncryptionWarnings = (): string[] => {
   return warnings;
 };
 
-export const encrypt = (plaintext: string): string => {
-  const key = getKey();
-  if (!key) {
-    return plaintext;
+const decodePayload = (payload: string): Buffer => {
+  if (!payload || payload.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(payload)) {
+    throw new AiEncryptionError('invalid-ciphertext', 'AI credential ciphertext is invalid');
   }
-  const iv = randomBytes(IV_LENGTH);
-  const cipher = createCipheriv(ALGORITHM, key, iv);
-  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return Buffer.concat([iv, tag, encrypted]).toString('base64');
+  const buf = Buffer.from(payload, 'base64');
+  if (buf.length < IV_LENGTH + TAG_LENGTH) {
+    throw new AiEncryptionError('invalid-ciphertext', 'AI credential ciphertext is invalid');
+  }
+  return buf;
 };
 
-export const decrypt = (ciphertext: string): string => {
-  const key = getKey();
-  if (!key) return ciphertext;
-  const buf = Buffer.from(ciphertext, 'base64');
-  if (buf.length < IV_LENGTH + TAG_LENGTH) return ciphertext;
+const encryptWithKeyMaterial = (plaintext: string, material: EncryptionKeyMaterial): string => {
+  const iv = randomBytes(IV_LENGTH);
+  const cipher = createCipheriv(ALGORITHM, material.key, iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${VERSIONED_CIPHERTEXT_PREFIX}${Buffer.concat([iv, tag, encrypted]).toString('base64')}`;
+};
+
+const decryptPayload = (payload: string, material: EncryptionKeyMaterial): string => {
+  const buf = decodePayload(payload);
   const iv = buf.subarray(0, IV_LENGTH);
   const tag = buf.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH);
   const encrypted = buf.subarray(IV_LENGTH + TAG_LENGTH);
-  const decipher = createDecipheriv(ALGORITHM, key, iv);
-  decipher.setAuthTag(tag);
-  return decipher.update(encrypted) + decipher.final('utf8');
+  try {
+    const decipher = createDecipheriv(ALGORITHM, material.key, iv);
+    decipher.setAuthTag(tag);
+    return decipher.update(encrypted) + decipher.final('utf8');
+  } catch {
+    throw new AiEncryptionError('invalid-ciphertext', 'AI credential ciphertext is invalid');
+  }
 };
+
+export const encrypt = (plaintext: string): string => {
+  const material = getEncryptionKeyMaterial();
+  if (!material) {
+    throw new AiEncryptionError(
+      'missing-key',
+      'AI_ENCRYPTION_KEY is required to store workspace AI credentials'
+    );
+  }
+  return encryptWithKeyMaterial(plaintext, material);
+};
+
+export const decrypt = (storedValue: string): string => {
+  if (!storedValue.startsWith(VERSIONED_CIPHERTEXT_PREFIX)) {
+    if (storedValue.startsWith('v')) {
+      throw new AiEncryptionError(
+        'unsupported-version',
+        'AI credential ciphertext version is not supported'
+      );
+    }
+    return storedValue;
+  }
+
+  const material = getEncryptionKeyMaterial();
+  if (!material) {
+    throw new AiEncryptionError(
+      'missing-key',
+      'AI_ENCRYPTION_KEY is required to read workspace AI credentials'
+    );
+  }
+
+  return decryptPayload(storedValue.slice(VERSIONED_CIPHERTEXT_PREFIX.length), material);
+};
+
+export const encryptWithKey = (plaintext: string, material: EncryptionKeyMaterial): string =>
+  encryptWithKeyMaterial(plaintext, material);
+
+export const decryptVersionedWithKey = (
+  storedValue: string,
+  material: EncryptionKeyMaterial
+): string => {
+  if (!storedValue.startsWith(VERSIONED_CIPHERTEXT_PREFIX)) {
+    if (storedValue.startsWith('v')) {
+      throw new AiEncryptionError(
+        'unsupported-version',
+        'AI credential ciphertext version is not supported'
+      );
+    }
+    throw new AiEncryptionError('invalid-ciphertext', 'AI credential ciphertext is invalid');
+  }
+  return decryptPayload(storedValue.slice(VERSIONED_CIPHERTEXT_PREFIX.length), material);
+};
+
+export const decryptLegacyCiphertextWithKey = (
+  storedValue: string,
+  material: EncryptionKeyMaterial
+): string => decryptPayload(storedValue, material);

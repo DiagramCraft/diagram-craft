@@ -59,6 +59,20 @@ Environment variable fallback:
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
 
+Workspace API-key storage:
+
+- `AI_ENCRYPTION_KEY` is required before workspace AI configuration can store an API key.
+- `AI_ENCRYPTION_SALT` is optional but should be set explicitly in production.
+- Stored workspace credentials use the versioned `v1:` format and are never written as new plaintext.
+- Existing unmarked values can be migrated with:
+
+  ```bash
+  AI_ENCRYPTION_KEY=... pnpm --filter @arch-register/server rotate:ai-keys -- --legacy-format=plaintext --check
+  AI_ENCRYPTION_KEY=... pnpm --filter @arch-register/server rotate:ai-keys -- --legacy-format=plaintext --apply
+  ```
+
+For key rotation, set `AI_ENCRYPTION_KEY` and `AI_ENCRYPTION_KEY_OLD` (and the corresponding current/old salts when changing salts). Run the command in `--check` mode first, then `--apply`, while the application is stopped or in a maintenance window. Remove the old-key variables after a successful migration. Use `--legacy-format=ciphertext` when unmarked values use the previous AES-GCM format; migration aborts without writes if any value cannot be decrypted.
+
 Important current caveat:
 
 - The adapter code supports both `openrouter` and `openai`.

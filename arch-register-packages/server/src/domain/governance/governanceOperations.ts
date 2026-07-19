@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  buildApiEntityAuthCtx,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
@@ -308,7 +312,7 @@ export const getGovernanceCase = async (
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceCase> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const notFound = { status: 404, message: `Governance case '${caseId}' not found` };
@@ -338,7 +342,7 @@ export const listGovernanceCases = async (
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceCase[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const filter: GovernanceCaseListFilter = {
@@ -408,7 +412,7 @@ export const listGovernanceCaseEvents = async (
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceEvent[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const notFound = { status: 404, message: `Governance case '${caseId}' not found` };
@@ -439,7 +443,7 @@ export const listMyGovernanceAssignments = async (
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceTask[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
@@ -540,7 +544,7 @@ export const cancelGovernanceCase = async (
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceCase> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const notFound = { status: 404, message: `Governance case '${caseId}' not found` };

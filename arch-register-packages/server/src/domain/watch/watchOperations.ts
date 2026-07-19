@@ -2,6 +2,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
   buildApiAuthCtx,
+  buildApiEntityAuthCtx,
   requireEntityAction,
   requireWorkspaceCapability
 } from '../auth/authorization';
@@ -151,7 +152,7 @@ export const listWatching = async (
   event: AuthenticatedEvent
 ): Promise<WatchedEntity[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
@@ -178,7 +179,7 @@ export const createWatch = async (
   event: AuthenticatedEvent
 ): Promise<WatchedEntity> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const entity = await db.catalog.getEntity(ws, entityId);
@@ -207,7 +208,7 @@ export const deleteWatch = async (
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const entity = await db.catalog.getEntity(ws, entityId);
@@ -222,7 +223,7 @@ export const listNotifications = async (
   event: AuthenticatedEvent
 ): Promise<NotificationItem[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
@@ -245,7 +246,7 @@ export const getNotificationCount = async (
   event: AuthenticatedEvent
 ): Promise<NotificationCount> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;

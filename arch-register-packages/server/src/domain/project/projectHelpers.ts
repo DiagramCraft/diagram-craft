@@ -1,6 +1,6 @@
 import type { ProjectDbResult, ProjectEntityDbResult } from './db/projectDatabase';
 import type { ContentNodeDbResult as InternalProjectFile } from './db/projectDatabase';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { fileNameFromPath, isMarkdownPath, stripMarkdownExtension } from './contentFileHelpers';
 import {
   ContentMetadata,
@@ -12,7 +12,7 @@ import {
 } from '@arch-register/api-types/projectContract';
 
 const getProjectCapabilities = (
-  context: AuthorizationContext | null,
+  context: WorkspaceAuthorizationContext | null,
   _ownerTeamId: string | null
 ) => {
   if (!context) {
@@ -35,7 +35,7 @@ const getProjectCapabilities = (
 export const toApiProject = (
   project: ProjectDbResult,
   fileCount: number,
-  authCtx: AuthorizationContext | null
+  authCtx: WorkspaceAuthorizationContext | null
 ): Project => ({
   id: project.id,
   public_id: project.public_id ?? project.id,
@@ -121,7 +121,7 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
 export const toApiProjectDetail = (
   project: ProjectDbResult,
   files: FileTree,
-  authCtx: AuthorizationContext | null
+  authCtx: WorkspaceAuthorizationContext | null
 ): ProjectDetail => ({
   id: project.id,
   public_id: project.public_id ?? project.id,

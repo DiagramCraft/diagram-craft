@@ -3,7 +3,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { Entity, EntityDbUpdate } from './db/catalogDatabase';
 import {
-  buildApiAuthCtx,
+  buildApiEntityAuthCtx as buildApiAuthCtx,
   requireEntityAction,
   requireWorkspaceCapability
 } from '../auth/authorization';

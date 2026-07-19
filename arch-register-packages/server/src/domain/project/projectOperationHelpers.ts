@@ -1,4 +1,4 @@
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
@@ -97,7 +97,7 @@ export const storageScope = (
 ) => node.project_id ?? node.entity_id ?? ws;
 
 export const requireNonProjectContentAccess = (
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   action: 'read' | 'edit'
 ) =>
   requireWorkspaceCapability(

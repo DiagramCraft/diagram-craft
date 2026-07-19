@@ -10,7 +10,10 @@ import {
   coordinateContentWrite,
   type ContentStorageChange
 } from '../project/contentWriteCoordinator';
-import type { AuthorizationContext, WorkspaceCapability } from '@arch-register/permissions';
+import type {
+  WorkspaceAuthorizationContext,
+  WorkspaceCapability
+} from '@arch-register/permissions';
 import { formatPublicId } from '../../utils/publicIds';
 import { httpAssert } from '../../utils/httpAssert';
 import { PermissionChecker } from '@arch-register/permissions';
@@ -50,7 +53,7 @@ const describeImportPersistenceError = (error: unknown) => {
 
 export const parseImport = async (
   db: DatabaseAdapter,
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   manifest: ExportManifest,
   data: {
@@ -671,7 +674,7 @@ const toSerializableMapping = (mapping: IdMapping): WorkspaceImportPlan['id_mapp
 
 const buildImportPlan = async (
   db: DatabaseAdapter,
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   options: ImportExecuteOptions,
   data: {
@@ -881,7 +884,7 @@ const applyConflictRenames = <
 export const executeImport = async (
   db: DatabaseAdapter,
   storage: StorageAdapter | undefined,
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   options: ImportExecuteOptions,
   data: {
@@ -1264,7 +1267,7 @@ const importSchemas = async (
 
 const importEntities = async (
   db: DatabaseAdapter,
-  _authCtx: AuthorizationContext,
+  _authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   entities: ExportEntity[],
   preserveIds: boolean,
@@ -1446,7 +1449,7 @@ const storageScope = (
 const importContentNodes = async (
   db: DatabaseAdapter,
   storage: StorageAdapter | undefined,
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   contentNodes: ExportContentNode[],
   preserveIds: boolean,
@@ -1621,6 +1624,7 @@ const importDocuments = async (
       name: type.name,
       description: type.description,
       fields: type.fields,
+      aiActions: type.aiActions ?? [],
       color: type.color,
       icon: type.icon,
       updated_at: now
@@ -1722,6 +1726,7 @@ const importDocuments = async (
       node_id: nodeId,
       document_type_id: documentTypeId,
       values,
+      generated_metadata: item.generated_metadata ?? {},
       updated_at: new Date()
     });
     const links = item.links.flatMap(link => {

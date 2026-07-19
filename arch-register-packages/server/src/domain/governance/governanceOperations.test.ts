@@ -27,6 +27,7 @@ const authCtxMock = {
 
 vi.mock('../auth/authorization', () => ({
   buildApiAuthCtx: vi.fn(async () => authCtxMock),
+  buildApiEntityAuthCtx: vi.fn(async () => authCtxMock),
   requireWorkspaceCapability: vi.fn()
 }));
 

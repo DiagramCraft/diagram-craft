@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
   buildApiAuthCtx,
+  buildApiEntityAuthCtx,
   requireEntityAction,
   requireWorkspaceCapability
 } from '../auth/authorization';
@@ -97,7 +98,7 @@ export const addEntityToCollection = async (
   entityId: string,
   event: AuthenticatedEvent
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
   const collection = await db.view.getCollection(authCtx.userId, workspace, collectionId);
   httpAssert.present(collection, { status: 404, message: 'Collection not found' });

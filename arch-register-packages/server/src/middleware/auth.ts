@@ -5,7 +5,10 @@ import type { AuthDatabase } from '../db/database';
 import type { JWTPayload } from '../types';
 import { httpAssert } from '../utils/httpAssert';
 import { UserDbResult } from '../domain/auth/db/authDatabase';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type {
+  AuthorizationContext,
+  WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
 import {
   API_TOKEN_PREFIX,
   hashApiToken,
@@ -19,7 +22,8 @@ export type AuthenticatedEvent = H3Event & {
     user: UserDbResult;
     token: JWTPayload | ApiTokenPrincipal;
     apiToken?: ApiTokenPrincipal;
-    authorizationContextCache?: Map<string, Promise<AuthorizationContext>>;
+    authorizationContextCache?: Map<string, Promise<WorkspaceAuthorizationContext>>;
+    entityAuthorizationContextCache?: Map<string, Promise<AuthorizationContext>>;
   };
 };
 

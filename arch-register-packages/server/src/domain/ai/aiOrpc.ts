@@ -5,9 +5,12 @@ import { aiContract } from '@arch-register/api-types/aiContract';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  orpcErrorInterceptors,
+  orpcErrorMiddleware,
+  workspaceScoped
+} from '../../utils/orpcErrors';
+import { buildApiEntityAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveAiConfig, createAiTextAdapter } from './tanstackAiAdapter';
 import {
   createAiConfigResponse,
@@ -21,6 +24,7 @@ import { buildSystemPrompt } from './systemPromptBuilder';
 import { createAiChatTools } from './chatTools';
 import { httpAssert } from '@arch-register/server/utils/httpAssert';
 import { orpcAssert } from '@arch-register/server/utils/orpcAssert';
+import { AiEncryptionError } from '../../utils/encryption';
 
 const toConversationResponse = (c: {
   id: string;
@@ -68,7 +72,10 @@ type AiORPCDeps = {
   randomId?: () => string;
 };
 
-const aiRouter = implement(aiContract).$context<ORPCContext>().use(orpcErrorMiddleware);
+const aiRouter = implement(aiContract)
+  .$context<ORPCContext>()
+  .use(orpcErrorMiddleware)
+  .use(workspaceScoped);
 
 export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
   const chatImpl = deps.chatImpl ?? chat;
@@ -80,9 +87,8 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
   return aiRouter.router({
     ai: {
-      listConversations: aiRouter.ai.listConversations.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      listConversations: aiRouter.ai.listConversations.handler(async ({ context }) => {
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
         const user = context.event.context.user;
         const conversations = await context.db.ai.listConversations(workspace, user.id);
@@ -90,8 +96,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
       }),
 
       createConversation: aiRouter.ai.createConversation.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
         const user = context.event.context.user;
         const title =
@@ -111,8 +116,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
       }),
 
       updateConversation: aiRouter.ai.updateConversation.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
         const user = context.event.context.user;
 
@@ -136,8 +140,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
       }),
 
       deleteConversation: aiRouter.ai.deleteConversation.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
         const user = context.event.context.user;
 
@@ -157,8 +160,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
       }),
 
       listMessages: aiRouter.ai.listMessages.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
         const user = context.event.context.user;
 
@@ -176,18 +178,16 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
         return messages.map(toMessageResponse);
       }),
 
-      getStatus: aiRouter.ai.getStatus.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      getStatus: aiRouter.ai.getStatus.handler(async ({ context }) => {
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
 
         const aiConfig = await resolveAi(context.db, workspace);
         return { configured: aiConfig !== null };
       }),
 
-      getConfig: aiRouter.ai.getConfig.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      getConfig: aiRouter.ai.getConfig.handler(async ({ context }) => {
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.settings');
 
         const config = await context.db.ai.getAiConfig(workspace);
@@ -197,17 +197,25 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
       }),
 
       updateConfig: aiRouter.ai.updateConfig.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.settings');
-        const configInput = buildAiConfigInput(input.body as Record<string, unknown>);
+        let configInput: ReturnType<typeof buildAiConfigInput>;
+        try {
+          configInput = buildAiConfigInput(input.body as Record<string, unknown>);
+        } catch (error) {
+          if (error instanceof AiEncryptionError) {
+            throw new ORPCError('INTERNAL_SERVER_ERROR', {
+              message: 'AI credential encryption is not configured correctly'
+            });
+          }
+          throw error;
+        }
         const config = await context.db.ai.upsertAiConfig(workspace, configInput);
         return createAiConfigResponse(config);
       }),
 
       extract: aiRouter.ai.extract.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
 
         const aiConfig = await resolveAi(context.db, workspace);
@@ -254,7 +262,8 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
         ].join('\n');
 
         const adapter = createAdapter(aiConfig);
-        const systemPrompt = await buildPrompt(context.db, workspace, authCtx, extractPrompt);
+        const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
+        const systemPrompt = await buildPrompt(context.db, workspace, entityAuthCtx, extractPrompt);
         const result = await chatImpl({
           adapter,
           messages: [{ role: 'user', content: input.body.text }],
@@ -267,8 +276,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
       }),
 
       chat: aiRouter.ai.chat.handler(async ({ input, context }) => {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
 
         const aiConfig = await resolveAi(context.db, workspace);
@@ -278,15 +286,16 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           });
         }
 
+        const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
         const systemPrompt = await buildPrompt(
           context.db,
           workspace,
-          authCtx,
+          entityAuthCtx,
           aiConfig.systemPrompt
         );
         const adapter = createAdapter(aiConfig);
         const user = context.event.context.user;
-        const tools = createTools(context.db, workspace, authCtx, {
+        const tools = createTools(context.db, workspace, entityAuthCtx, {
           id: user.id,
           displayName: user.display_name
         });

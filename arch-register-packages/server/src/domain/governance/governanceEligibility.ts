@@ -1,6 +1,6 @@
 import {
   PermissionChecker,
-  type AuthorizationContext,
+  type WorkspaceAuthorizationContext,
   type TeamRole,
   type WorkspaceCapability
 } from '@arch-register/permissions';
@@ -21,7 +21,7 @@ export type EligibilityResult =
  * assignment was created.
  */
 export const resolveAssignmentEligibility = (
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   userId: string,
   assignment: GovernanceAssignmentDbResult
 ): EligibilityResult => {
@@ -58,7 +58,7 @@ export const resolveAssignmentEligibility = (
 };
 
 export const isEligibleForAssignment = (
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   userId: string,
   assignment: GovernanceAssignmentDbResult
 ): boolean => resolveAssignmentEligibility(authCtx, userId, assignment).eligible;

@@ -104,6 +104,19 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       node_id: nodeId,
       document_type_id: type.id,
       values: { status: 'proposed', affected_entities: [entity.id] },
+      generated_metadata: {
+        status: {
+          actionId: 'status-generator',
+          fieldId: 'status',
+          status: 'success',
+          explanation: 'The document is proposed.',
+          findings: ['Proposal language detected'],
+          failureNotice: null,
+          generatedAt: '2026-07-19T12:00:00.000Z',
+          sourceRevision: 3,
+          generatorVersion: 2
+        }
+      },
       updated_at: now
     });
     await db.document.replaceDocumentLinks(workspace, nodeId, [
@@ -118,7 +131,10 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
     expect(await db.document.getDocumentMetadata(workspace, nodeId)).toMatchObject({
       node_id: nodeId,
       document_type_id: type.id,
-      values: { status: 'proposed', affected_entities: [entity.id] }
+      values: { status: 'proposed', affected_entities: [entity.id] },
+      generated_metadata: {
+        status: expect.objectContaining({ actionId: 'status-generator', status: 'success' })
+      }
     });
     expect(await db.document.listDocumentsLinkingEntity(workspace, entity.id)).toEqual([
       expect.objectContaining({
@@ -159,7 +175,15 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       workspace,
       name: 'Runbook',
       description: 'A runbook',
-      fields: [],
+      fields: [
+        {
+          id: 'summary',
+          name: 'Summary',
+          type: 'long_text',
+          requirement: 'optional',
+          retired: false
+        }
+      ],
       color: null,
       icon: null,
       aiActions: [
@@ -169,6 +193,14 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
           kind: 'interactive',
           prompt: 'Summarize this.',
           enabled: true
+        },
+        {
+          id: 'summary-generator',
+          name: 'Generate summary',
+          kind: 'metadata_generator',
+          prompt: 'Write a summary.',
+          outputFieldId: 'summary',
+          enabled: false
         }
       ],
       created_at: now,
@@ -181,6 +213,14 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
         kind: 'interactive',
         prompt: 'Summarize this.',
         enabled: true
+      },
+      {
+        id: 'summary-generator',
+        name: 'Generate summary',
+        kind: 'metadata_generator',
+        prompt: 'Write a summary.',
+        outputFieldId: 'summary',
+        enabled: false
       }
     ]);
 
@@ -195,6 +235,14 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
           kind: 'interactive',
           prompt: 'Summarize this document.',
           enabled: false
+        },
+        {
+          id: 'summary-generator',
+          name: 'Generate summary',
+          kind: 'metadata_generator',
+          prompt: 'Write a summary.',
+          outputFieldId: 'summary',
+          enabled: false
         }
       ],
       updated_at: new Date()
@@ -205,6 +253,14 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
         name: 'Summarize v2',
         kind: 'interactive',
         prompt: 'Summarize this document.',
+        enabled: false
+      },
+      {
+        id: 'summary-generator',
+        name: 'Generate summary',
+        kind: 'metadata_generator',
+        prompt: 'Write a summary.',
+        outputFieldId: 'summary',
         enabled: false
       }
     ]);
@@ -410,6 +466,19 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       node_id: node1,
       document_type_id: type.id,
       values: { status: 'proposed', affected_entities: [] },
+      generated_metadata: {
+        status: {
+          actionId: 'status-generator',
+          fieldId: 'status',
+          status: 'success',
+          explanation: null,
+          findings: [],
+          failureNotice: null,
+          generatedAt: '2026-07-19T12:00:00.000Z',
+          sourceRevision: 1,
+          generatorVersion: 1
+        }
+      },
       updated_at: now
     });
     await db.document.upsertDocumentMetadata({
@@ -438,6 +507,9 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
     expect((await db.document.getDocumentMetadata(workspace, node1))!.values).toEqual({
       decision_status: 'proposed',
       affected_entities: []
+    });
+    expect((await db.document.getDocumentMetadata(workspace, node1))!.generated_metadata).toEqual({
+      decision_status: expect.objectContaining({ fieldId: 'decision_status' })
     });
     expect((await db.document.getDocumentMetadata(workspace, node2))!.values).toEqual({
       affected_entities: []

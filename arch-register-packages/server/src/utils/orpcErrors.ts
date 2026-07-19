@@ -4,6 +4,14 @@ import { z } from 'zod';
 import { createLogger } from './logger';
 import { OpenAPIHandlerOptions } from '@orpc/openapi/fetch';
 import { getORPCErrorLogLevel } from './errorLogging';
+import type {
+  AuthorizationContext,
+  WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
+import type { DatabaseAdapter } from '../db/database';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import { buildApiAuthCtx, buildApiEntityAuthCtx } from '../domain/auth/authorization';
+import { resolveWorkspace } from '../domain/workspace/resolveWorkspace';
 
 const orpcLogger = createLogger('orpc');
 
@@ -59,6 +67,51 @@ export const orpcErrorMiddleware = os.middleware(async ({ next }) => {
   } catch (error) {
     return toORPCError(error);
   }
+});
+
+export type WorkspaceScopedContext = {
+  db: DatabaseAdapter;
+  event: AuthenticatedEvent;
+  workspace: string;
+  authCtx: WorkspaceAuthorizationContext;
+};
+
+type WorkspaceScopedBaseContext = Pick<WorkspaceScopedContext, 'db' | 'event'>;
+
+type WorkspaceScopedInput = {
+  params: {
+    workspace: string;
+  };
+};
+
+/**
+ * Resolves the workspace route parameter and prepares authorization context
+ * before a workspace-scoped procedure runs.
+ */
+export const workspaceScoped = os.middleware<
+  Pick<WorkspaceScopedContext, 'workspace' | 'authCtx'>,
+  unknown
+>(async ({ context, next }, input) => {
+  const { db, event } = context as WorkspaceScopedBaseContext;
+  const { params } = input as WorkspaceScopedInput;
+  const workspace = await resolveWorkspace(db.catalog, params.workspace);
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+
+  return next({ context: { workspace, authCtx } });
+});
+
+/**
+ * Upgrades a workspace-scoped request with entity schemas, entities, and
+ * grants for procedures that perform entity-level authorization.
+ */
+export const entityScoped = os.middleware<
+  Pick<WorkspaceScopedContext, 'authCtx'> & { authCtx: AuthorizationContext },
+  unknown
+>(async ({ context, next }) => {
+  const { db, event, workspace } = context as WorkspaceScopedContext;
+  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
+
+  return next({ context: { authCtx } });
 });
 
 // Shared clientInterceptors for all OpenAPIHandler instances.
