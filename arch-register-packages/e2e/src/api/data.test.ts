@@ -41,7 +41,7 @@ test.describe('data routes', () => {
         q: 'react'
       }
     });
-    expect(body).toEqual([
+    expect(body.items).toEqual([
       expect.objectContaining({
         _uid: componentId,
         _name: 'Frontend App',
@@ -49,7 +49,8 @@ test.describe('data routes', () => {
         _schema: expect.objectContaining({ id: componentSchemaId })
       })
     ]);
-    expect(body[0]).not.toHaveProperty('technology');
+    expect(body.total).toBe(1);
+    expect(body.items[0]).not.toHaveProperty('technology');
   });
 
   test('GET /api/:workspace/data returns 401 without authentication', async ({ server }) => {
@@ -244,7 +245,8 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { q: 'Rollback Component', view: 'summary' }
     });
-    expect(matches).toEqual([]);
+    expect(matches.items).toEqual([]);
+    expect(matches.total).toBe(0);
   });
 
   test('POST /api/:workspace/data/bulk rejects unresolved symbolic references without writes', async ({
@@ -271,7 +273,8 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { q: 'Unresolved Component', view: 'summary' }
     });
-    expect(matches).toEqual([]);
+    expect(matches.items).toEqual([]);
+    expect(matches.total).toBe(0);
   });
 
   test('GET /api/:workspace/data/:id returns entity detail', async ({ orpc, seeded: _ }) => {
@@ -662,7 +665,7 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { conditions }
     });
-    const names = body.map(e => e._name);
+    const names = body.items.map(e => e._name);
     expect(names).toEqual(expect.arrayContaining(['Auth Service', 'Auth API']));
     expect(names).not.toContain('API Gateway');
     expect(names).not.toContain('Engineering');
@@ -688,7 +691,7 @@ test.describe('data routes', () => {
       )
       .map(entity => entity.name)
       .sort();
-    expect(body.map(entity => entity._name).sort()).toEqual(expectedNames);
+    expect(body.items.map(entity => entity._name).sort()).toEqual(expectedNames);
   });
 
   test('GET /api/:workspace/data filters by conditions _lifecycle empty', async ({
@@ -718,7 +721,7 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { _schemaId: componentSchemaId, conditions }
     });
-    const names = body.map(e => e._name);
+    const names = body.items.map(e => e._name);
     expect(names).toContain('No Lifecycle Component');
     expect(names).not.toContain('Has Lifecycle Component');
     expect(names).not.toContain('API Gateway');

@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useEntities, useEntityCount, useEntityFacets } from '../../../hooks/useEntities';
+import { useEntities, useEntityFacets } from '../../../hooks/useEntities';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
@@ -58,6 +58,7 @@ export const useEntityBrowserData = ({
 
   const {
     data: pagedEntities = [],
+    total: pagedTotal,
     isLoading: isPagedLoading,
     isFetching: isPagedFetching
   } = useEntities(
@@ -83,6 +84,7 @@ export const useEntityBrowserData = ({
 
   const {
     data: fullEntities = [],
+    total: fullTotal,
     isLoading: isFullLoading,
     isFetching: isFullFetching
   } = useEntities(
@@ -106,23 +108,6 @@ export const useEntityBrowserData = ({
 
   const entities = isPagedBrowse ? pagedEntities : fullEntities;
   const { data: facets } = useEntityFacets(workspaceId);
-  const { data: entityCount } = useEntityCount(
-    workspaceId,
-    {
-      schemaId: typeFilter,
-      owner: ownerFilter,
-      lifecycle: statusFilter,
-      q,
-      conditions,
-      assessmentId: joinAssessmentId,
-      projectId: projectId ?? undefined,
-      projectScope: projectId ? effectiveProjectScope : undefined,
-      collectionId: collectionId ?? undefined,
-      asOf,
-      includeProjectSnapshots
-    },
-    { enabled: enabled && !!workspaceId }
-  );
   const schemaMap = useMemo(() => {
     const map = new Map<string, { schema: EntitySchema; index: number }>();
     schemas.forEach((schema, index) => map.set(schema.id, { schema, index }));
@@ -212,7 +197,7 @@ export const useEntityBrowserData = ({
   }, [dateBrowserEnabled, entities, sort]);
 
   const filteredCount = filtered.length;
-  const totalCount = entityCount?.total ?? filteredCount;
+  const totalCount = (isPagedBrowse ? pagedTotal : fullTotal) ?? filteredCount;
   const isLoading = isPagedBrowse
     ? isPagedLoading || isPagedFetching
     : isFullLoading || isFullFetching;

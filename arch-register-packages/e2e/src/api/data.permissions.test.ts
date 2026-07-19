@@ -89,7 +89,8 @@ test.describe('data permission routes', () => {
       .map(entity => entity.id)
       .sort();
 
-    expect(entities.map(entity => entity._uid).sort()).toEqual(expectedEntityIds);
+    expect(entities.items.map(entity => entity._uid).sort()).toEqual(expectedEntityIds);
+    expect(entities.total).toBe(expectedEntityIds.length);
   });
 
   test('filtering: restricted facets and tree only include visible entities', async ({
@@ -191,6 +192,7 @@ test.describe('data permission routes', () => {
       params: { workspace: 'default' },
       query: { q: 'Forbidden Bulk Component', view: 'summary' }
     });
-    expect(matches).toEqual([]);
+    expect(matches.items).toEqual([]);
+    expect(matches.total).toBe(0);
   });
 });

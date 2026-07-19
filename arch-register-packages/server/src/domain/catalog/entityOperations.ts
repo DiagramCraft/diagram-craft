@@ -56,6 +56,31 @@ type CollectedEntity = {
   completeness: number | null;
 };
 
+type EntityListOptions = {
+  schemaId?: string | null;
+  owner?: string | null;
+  lifecycle?: string | null;
+  q?: string | null;
+  conditions?: FilterCondition[];
+  assessmentId?: string | null;
+  projectId?: string | null;
+  projectScope?: 'project' | 'all';
+  collectionId?: string | null;
+  view?: 'summary' | 'full';
+  asOf?: Date | null;
+  includeProjectSnapshots?: boolean;
+};
+
+type EntityListPageOptions = EntityListOptions & {
+  limit?: number | null;
+  offset?: number | null;
+};
+
+export type EntityListPage = {
+  items: EntityRecord[];
+  total: number;
+};
+
 const attachProjectLink = (
   entity: EntityRecord,
   rowId: string,
@@ -137,27 +162,12 @@ const allocateEntityPublicId = async (
   return formatPublicId(schema.key_prefix, sequenceNumber);
 };
 
-export const listEntities = async (
+export const listEntitiesWithCount = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
-  options: {
-    schemaId?: string | null;
-    owner?: string | null;
-    lifecycle?: string | null;
-    q?: string | null;
-    conditions?: FilterCondition[];
-    assessmentId?: string | null;
-    projectId?: string | null;
-    projectScope?: 'project' | 'all';
-    collectionId?: string | null;
-    view?: 'summary' | 'full';
-    limit?: number | null;
-    offset?: number | null;
-    asOf?: Date | null;
-    includeProjectSnapshots?: boolean;
-  }
-): Promise<EntityRecord[]> => {
+  options: EntityListPageOptions
+): Promise<EntityListPage> => {
   const {
     schemaId = null,
     owner = null,
@@ -193,29 +203,30 @@ export const listEntities = async (
     });
     const windowed =
       safeLimit != null ? rows.slice(safeOffset, safeOffset + safeLimit) : rows.slice(safeOffset);
-    return windowed.map(row => row.entity);
+    return {
+      items: windowed.map(row => row.entity),
+      total: rows.length
+    };
   } catch (error) {
     return handleError(error, 'Failed to retrieve data');
   }
+};
+
+export const listEntities = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  options: EntityListPageOptions
+): Promise<EntityRecord[]> => {
+  const page = await listEntitiesWithCount(db, workspace, authCtx, options);
+  return page.items;
 };
 
 export const countEntities = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
-  options: {
-    schemaId?: string | null;
-    owner?: string | null;
-    lifecycle?: string | null;
-    q?: string | null;
-    conditions?: FilterCondition[];
-    assessmentId?: string | null;
-    projectId?: string | null;
-    projectScope?: 'project' | 'all';
-    collectionId?: string | null;
-    asOf?: Date | null;
-    includeProjectSnapshots?: boolean;
-  }
+  options: EntityListOptions
 ): Promise<number> => {
   const rows = await collectEntities(db, workspace, authCtx, {
     schemaId: options.schemaId ?? null,
@@ -238,20 +249,7 @@ const collectEntities = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
-  options: {
-    schemaId?: string | null;
-    owner?: string | null;
-    lifecycle?: string | null;
-    q?: string | null;
-    conditions?: FilterCondition[];
-    assessmentId?: string | null;
-    projectId?: string | null;
-    projectScope?: 'project' | 'all';
-    collectionId?: string | null;
-    view?: 'summary' | 'full';
-    asOf?: Date | null;
-    includeProjectSnapshots?: boolean;
-  }
+  options: EntityListOptions
 ): Promise<CollectedEntity[]> => {
   const {
     schemaId = null,
