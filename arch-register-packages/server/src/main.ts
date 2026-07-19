@@ -22,7 +22,7 @@ const main = async () => {
 
   const db = await createDatabase();
   const storage = createStorage();
-  const app = createApp(db, storage);
+  const { app, dispose } = createApp(db, storage);
 
   const autoSaveWriter = createAutoSaveWriter(db, storage);
   const roomAuthorizer = createRoomAuthorizer(db);
@@ -58,6 +58,7 @@ const main = async () => {
 
   const shutdown = async () => {
     logger.info('Shutting down...');
+    dispose();
     await collaborationServer.close();
     await db.core.close();
     if (server.listening) {

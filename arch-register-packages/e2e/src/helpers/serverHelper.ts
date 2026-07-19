@@ -38,7 +38,7 @@ export async function startTestServer(options: StartTestServerOptions = {}): Pro
   process.env['STORAGE_FS_BASE'] = join(tmpDir, 'storage');
 
   const storage = createStorage();
-  const app = createApp(db, storage, options.appOptions);
+  const { app, dispose } = createApp(db, storage, options.appOptions);
 
   const server = createServer(toNodeHandler(app));
   await new Promise<void>((resolve, reject) => {
@@ -54,6 +54,7 @@ export async function startTestServer(options: StartTestServerOptions = {}): Pro
     baseUrl: `http://127.0.0.1:${port}`,
     db,
     stop: async () => {
+      dispose();
       await new Promise<void>((resolve, reject) =>
         server.close(err => (err ? reject(err) : resolve()))
       );

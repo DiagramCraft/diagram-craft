@@ -119,7 +119,8 @@ export const createApp = (
 
   // Public routes (no auth required)
   app.use(createPublicAuthORPCHandler(db));
-  app.use(createOidcCallbackRoute(db));
+  const oidcCallbackRoute = createOidcCallbackRoute(db);
+  app.use(oidcCallbackRoute.app);
 
   app.use(requireAuth(db.auth));
 
@@ -163,5 +164,8 @@ export const createApp = (
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
   app.use(createDiagramCraftORPCHandler(db));
 
-  return app;
+  return {
+    app,
+    dispose: oidcCallbackRoute.dispose
+  };
 };
