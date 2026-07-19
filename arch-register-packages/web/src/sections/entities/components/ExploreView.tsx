@@ -501,7 +501,7 @@ export const ExploreView = ({
                                     isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }
                                   }
                                 >
-                                  {entity.name || entity.slug}
+                                  {entity.name ?? entity.slug}
                                 </div>
                                 {selectedDisplayFields.includes('_slug') && (
                                   <div className={styles.entitySlug}>{entity.slug}</div>

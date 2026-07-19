@@ -323,7 +323,7 @@ const AddMemberDialog = ({
               </div>
               <div className={styles.fieldRight}>
                 <Select.Root
-                  value={selectedUserId || undefined}
+                  value={selectedUserId ?? undefined}
                   onChange={value => setSelectedUserId(value ?? '')}
                   style={{ width: '100%' }}
                 >
@@ -346,7 +346,7 @@ const AddMemberDialog = ({
               </div>
               <div className={styles.fieldRight}>
                 <Select.Root
-                  value={selectedRole || undefined}
+                  value={selectedRole ?? undefined}
                   onChange={value => setSelectedRole(value ?? '')}
                   style={{ width: '100%' }}
                 >

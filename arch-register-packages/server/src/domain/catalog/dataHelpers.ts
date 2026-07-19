@@ -400,7 +400,7 @@ export const buildEntityRelations = (
         entityId: row.id,
         publicId: row.public_id ?? row.id,
         entitySlug: row.slug,
-        entityName: row.name || row.slug,
+        entityName: row.name ?? row.slug,
         entitySchemaId: row.schema_id,
         fieldName: field.name,
         fieldPredicate: field.predicate,
@@ -491,7 +491,7 @@ export const buildEntityDependents = (
         entityId: entity.id,
         publicId: entity.public_id ?? entity.id,
         entitySlug: entity.slug ?? entity.id,
-        entityName: entity.name || entity.slug || entity.id,
+        entityName: entity.name ?? entity.slug ?? entity.id,
         entitySchemaId: entity.schema_id,
         schemaName: schema?.name ?? entity.schema_id,
         lifecycleState: entity.lifecycle ?? null,
@@ -511,7 +511,7 @@ export const buildEntityDependents = (
             ...viaPath,
             {
               entityId: currentId,
-              entityName: currentEntity?.name || currentEntity?.slug || currentId
+              entityName: currentEntity?.name ?? currentEntity?.slug ?? currentId
             }
           ]
         ]);

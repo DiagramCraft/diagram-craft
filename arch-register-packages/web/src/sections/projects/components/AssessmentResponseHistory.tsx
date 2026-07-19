@@ -64,7 +64,10 @@ export const AssessmentResponseHistory = ({
                 <span className={styles.entryTime}>{formatDateTime(entry.timestamp)}</span>
               </div>
               <div className={styles.entryFields}>
-                {changedFieldLabels(entry, assessment).join(', ') || '—'}
+                {(() => {
+                  const labels = changedFieldLabels(entry, assessment).join(', ');
+                  return labels === '' ? '—' : labels;
+                })()}
               </div>
             </div>
           ))}

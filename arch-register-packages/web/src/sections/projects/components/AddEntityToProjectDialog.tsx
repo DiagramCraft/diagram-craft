@@ -67,7 +67,7 @@ export const AddEntityToProjectDialog = ({
     try {
       await addEntityMutation.mutateAsync({
         entity_id: selectedId,
-        entity_type: entityType || null
+        entity_type: entityType ?? null
       });
       onClose();
     } catch (err) {
@@ -146,7 +146,7 @@ export const AddEntityToProjectDialog = ({
                   className={`${styles.aedItem} ${selectedId === e._uid ? styles.aedItemSelected : ''}`}
                   onClick={() => setSelectedId(e._uid)}
                 >
-                  <span className={styles.aedItemName}>{e._name || e._slug}</span>
+                  <span className={styles.aedItemName}>{e._name ?? e._slug}</span>
                   <span className={styles.aedItemType}>{e._schema?.name ?? ''}</span>
                 </button>
               ))

@@ -62,7 +62,7 @@ export const ApplySnapshotDialog = ({
       if ((snapshot.target_date ?? '') !== targetDate) {
         await updateSnapshotMutation.mutateAsync({
           snapshotId: snapshot.id,
-          targetDate: targetDate || null
+          targetDate: targetDate ?? null
         });
       }
 

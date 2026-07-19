@@ -32,7 +32,7 @@ export const buildContainmentTreeIndex = (
   return { nodeMap, childrenOf };
 };
 
-const nodeName = (node: TreeNode) => node._name || node._slug;
+const nodeName = (node: TreeNode) => node._name ?? node._slug;
 
 export const sortContainmentNodes = (nodes: TreeNode[], schemaId: string | null): TreeNode[] =>
   nodes

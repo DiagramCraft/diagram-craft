@@ -100,7 +100,7 @@ const DEFAULT_CONFIG: MapConfig = {
   metricConfig: undefined
 };
 
-const nodeName = (n: TreeNode) => n._name || n._slug;
+const nodeName = (n: TreeNode) => n._name ?? n._slug;
 
 const aggregationLabel = (aggregation: MetricAggregation) =>
   AGGREGATION_OPTIONS.find(o => o.value === aggregation)?.label ?? aggregation;
@@ -240,7 +240,7 @@ const SchemaSelect = ({
       <select
         className={styles.select}
         value={value ?? ''}
-        onChange={e => onChange(e.target.value || null)}
+        onChange={e => onChange(e.target.value ?? null)}
       >
         <option value="">— select —</option>
         {options.map(s => (
@@ -476,7 +476,7 @@ export const MapView = ({
     [onEntityClick]
   );
 
-  const rootLabel = (cfg.level1SchemaId && schemaMap.get(cfg.level1SchemaId)?.schema.name) || 'Map';
+  const rootLabel = (cfg.level1SchemaId && schemaMap.get(cfg.level1SchemaId)?.schema.name) ?? 'Map';
 
   const isUnconfigured = !cfg.level1SchemaId;
 
@@ -554,7 +554,7 @@ export const MapView = ({
                 className={styles.select}
                 value={metricConfig?.sourceSchemaId ?? ''}
                 onChange={e => {
-                  const schemaId = e.target.value || null;
+                  const schemaId = e.target.value ?? null;
                   setMetricConfig(
                     schemaId
                       ? {

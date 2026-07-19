@@ -166,7 +166,7 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
   const handleSubmit = async () => {
     const trimmed = name.trim();
     const fallbackName = selected === 'blank' ? 'Untitled diagram' : selected.name;
-    const finalName = trimmed || fallbackName;
+    const finalName = trimmed ?? fallbackName;
 
     if (finalName.includes('/')) {
       setError('Name cannot contain /');

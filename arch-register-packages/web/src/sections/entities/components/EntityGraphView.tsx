@@ -96,7 +96,7 @@ export const EntityGraphView = ({
       return (
         <>
           <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={16} />
-          <span className={styles.eNodeName}>{entityName || node.id}</span>
+          <span className={styles.eNodeName}>{entityName ?? node.id}</span>
           {hiddenCount > 0 && <span className={styles.eHiddenBadge}>+{hiddenCount}</span>}
         </>
       );

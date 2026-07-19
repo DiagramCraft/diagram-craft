@@ -532,7 +532,7 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
         if (!searchText) return true;
         const q = searchText.toLowerCase();
         return (
-          cmd.label.toLowerCase().includes(q) || (cmd.keywords?.some(k => k.includes(q)) ?? false)
+          cmd.label.toLowerCase().includes(q) ?? cmd.keywords?.some(k => k.includes(q)) ?? false
         );
       }),
     [searchText]

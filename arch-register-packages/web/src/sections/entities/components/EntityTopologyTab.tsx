@@ -195,7 +195,7 @@ export const EntityTopologyTab = ({
           <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={28} />
           <div className={styles.topoEntityMeta}>
             <div className={styles.topoEntityEyebrow}>{schema?.name ?? 'Entity'}</div>
-            <div className={styles.topoEntityName}>{entity._name || entity._slug}</div>
+            <div className={styles.topoEntityName}>{entity._name ?? entity._slug}</div>
           </div>
           {entity._lifecycle && (
             <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />

@@ -60,9 +60,9 @@ export const ProposeEntityDeprecationDialog = ({
         baseVersion,
         reason: reason.trim(),
         targetDate,
-        successorEntityId: successorEntityId || undefined,
-        projectId: projectId || undefined,
-        notes: notes.trim() || undefined
+        successorEntityId: successorEntityId ?? undefined,
+        projectId: projectId ?? undefined,
+        notes: notes.trim() === '' ? undefined : notes.trim()
       },
       {
         onSuccess: () => {
@@ -218,8 +218,8 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
       {
         caseId: deprecation.id,
         idempotencyKey: crypto.randomUUID(),
-        comment: ackComment.trim() || undefined,
-        plannedRemediation: ackRemediation.trim() || undefined,
+        comment: ackComment.trim() === '' ? undefined : ackComment.trim(),
+        plannedRemediation: ackRemediation.trim() === '' ? undefined : ackRemediation.trim(),
         riskAccepted: ackRiskAccepted
       },
       {
@@ -245,7 +245,7 @@ export const EntityDeprecationPanel = ({ deprecation, workspaceId, entityId, tea
     finalize.mutate(
       {
         caseId: deprecation.id,
-        reason: finalizeReason.trim() || undefined,
+        reason: finalizeReason.trim() === '' ? undefined : finalizeReason.trim(),
         override: finalizeOverride || undefined
       },
       { onSuccess: () => setFinalizeDialogOpen(false) }

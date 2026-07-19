@@ -90,8 +90,8 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
   } = useJobSchedules(workspaceSlug);
   const runFilters = useMemo(
     () => ({
-      scheduleId: scheduleId || undefined,
-      status: status || undefined,
+      scheduleId: scheduleId ?? undefined,
+      status: status === '' ? undefined : status,
       plannedFrom: plannedFrom ? `${plannedFrom}T00:00:00.000Z` : undefined,
       plannedTo: plannedTo ? `${plannedTo}T23:59:59.999Z` : undefined,
       limit: PAGE_SIZE,

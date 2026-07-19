@@ -93,7 +93,8 @@ export const WorkspaceSettingsSidebar = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const section = location.pathname.split('/').pop() || 'general';
+  const rawSection = location.pathname.split('/').pop();
+  const section = rawSection == null || rawSection === '' ? 'general' : rawSection;
 
   const groups = useMemo(() => {
     const g: Record<string, SettingsNavItem[]> = {};

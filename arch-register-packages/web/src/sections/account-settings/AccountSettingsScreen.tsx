@@ -74,11 +74,12 @@ export const AccountSettingsScreen = () => {
     setSaveSuccess(false);
 
     try {
+      const trimmedDisplayName = displayName.trim();
       await updateUser.mutateAsync({
         userId: user.id,
         updates: {
           color: selectedColor,
-          display_name: displayName.trim() || user.display_name
+          display_name: trimmedDisplayName === '' ? user.display_name : trimmedDisplayName
         }
       });
 

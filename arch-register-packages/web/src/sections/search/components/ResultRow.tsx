@@ -63,13 +63,13 @@ export const ResultRow = ({
             <button
               type="button"
               className={styles.rowName}
-              aria-label={`Search result: ${e._name || e._slug}`}
+              aria-label={`Search result: ${e._name ?? e._slug}`}
               onClick={ev => {
                 ev.stopPropagation();
                 onOpen();
               }}
             >
-              <Hi s={e._name || e._slug} q={q} />
+              <Hi s={e._name ?? e._slug} q={q} />
             </button>
             <Chip tone="ghost">{e.schemaName}</Chip>
             {e._lifecycle && (

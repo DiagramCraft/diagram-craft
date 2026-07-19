@@ -53,7 +53,7 @@ export const EntityMetric = ({ schema, owner, lifecycle, label }: Props) => {
   }
 
   const count = entities.length;
-  const displayLabel = label || 'Entities';
+  const displayLabel = label ?? 'Entities';
 
   return (
     <div className={styles.card}>

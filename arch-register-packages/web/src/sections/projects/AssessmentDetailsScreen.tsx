@@ -444,7 +444,7 @@ export const AssessmentDetailsScreen = ({
                                   className={styles.entNameBtn}
                                   title={entity._name}
                                 >
-                                  {entity._name || entity._slug}
+                                  {entity._name ?? entity._slug}
                                 </Link>
                               }
                             />

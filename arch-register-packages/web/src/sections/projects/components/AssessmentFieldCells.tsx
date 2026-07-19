@@ -14,7 +14,8 @@ type CellProps = {
 
 export const RatingCell = ({ value, onChange, disabled }: CellProps) => {
   const [hover, setHover] = useState<number | null>(null);
-  const current = typeof value === 'number' ? value : Number(value) || 0;
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  const current = Number.isNaN(numericValue) ? 0 : numericValue;
 
   return (
     <div className={styles.stars} onMouseLeave={() => setHover(null)}>

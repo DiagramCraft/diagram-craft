@@ -17,7 +17,7 @@ export type EntityBrowserBaseViewProps = {
   readOnly?: boolean;
 };
 
-export const entityName = (entity: EntityRecord) => entity._name || entity._slug;
+export const entityName = (entity: EntityRecord) => entity._name ?? entity._slug;
 
 export const entityMenuItems = (
   entity: EntityRecord,

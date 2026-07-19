@@ -97,7 +97,7 @@ export const BulkFieldInput = ({
       <Select.Root value={value} placeholder="No change" onChange={v => onValue(v ?? '')}>
         {referenceCandidates.map(entity => (
           <Select.Item key={entity._uid} value={entity._uid}>
-            {entity._name || entity._slug}
+            {entity._name ?? entity._slug}
           </Select.Item>
         ))}
       </Select.Root>

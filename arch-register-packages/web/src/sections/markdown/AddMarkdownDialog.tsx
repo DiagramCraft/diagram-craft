@@ -75,8 +75,8 @@ export const AddMarkdownDialog = ({
     if (onOpenDraft) {
       onOpenDraft({
         name: trimmed,
-        documentTypeId: documentTypeId || null,
-        templateId: templateId || null
+        documentTypeId: documentTypeId ?? null,
+        templateId: templateId ?? null
       });
       onClose();
       return;
@@ -133,7 +133,7 @@ export const AddMarkdownDialog = ({
         </FormElement>
         <FormElement label="Document type" required={false}>
           <Select.Root
-            value={documentTypeId || '__untyped__'}
+            value={documentTypeId ?? '__untyped__'}
             onChange={value =>
               handleDocumentTypeChange(value === '__untyped__' ? '' : (value ?? ''))
             }
@@ -150,7 +150,7 @@ export const AddMarkdownDialog = ({
         </FormElement>
         <FormElement label="Template" required={false}>
           <Select.Root
-            value={templateId || '__blank__'}
+            value={templateId ?? '__blank__'}
             onChange={value => handleTemplateChange(value === '__blank__' ? '' : (value ?? ''))}
             disabled={documentTemplatesLoading || isPending}
             style={{ width: '100%' }}

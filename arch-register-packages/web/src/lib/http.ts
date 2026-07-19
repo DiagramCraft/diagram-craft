@@ -63,7 +63,7 @@ const errorMessageFromResponse = async (response: Response): Promise<string> => 
     }
   }
 
-  return response.statusText || `Request failed with status ${response.status}`;
+  return response.statusText ?? `Request failed with status ${response.status}`;
 };
 
 export const ensureApiResponse = async (response: Response): Promise<Response> => {

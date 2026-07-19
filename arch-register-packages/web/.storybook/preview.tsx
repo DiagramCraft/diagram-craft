@@ -24,7 +24,7 @@ const preview: Preview = {
   },
   decorators: [
     (Story, context) => {
-      const theme = context.globals.theme || 'dark';
+      const theme = context.globals.theme ?? 'dark';
       
       // Apply theme to document root
       if (typeof document !== 'undefined') {

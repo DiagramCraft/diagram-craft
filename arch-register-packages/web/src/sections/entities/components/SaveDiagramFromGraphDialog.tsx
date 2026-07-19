@@ -96,7 +96,8 @@ export const SaveDiagramFromGraphDialog = ({
   const isPending = contentOperations.createDiagram.isPending;
 
   const handleSubmit = async () => {
-    const finalName = name.trim() || defaultName;
+    const trimmedName = name.trim();
+    const finalName = trimmedName === '' ? defaultName : trimmedName;
     if (finalName.includes('/')) {
       setError('Name cannot contain /');
       return;

@@ -98,7 +98,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
-      contentOperations.upload.mutate({ file: f, folder: folder || null });
+      contentOperations.upload.mutate({ file: f, folder: folder ?? null });
     }
     e.target.value = '';
   };
@@ -218,7 +218,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         }}
         workspaceId={workspaceSlug}
         context="workspace"
-        folder={folder || null}
+        folder={folder ?? null}
       />
 
       <AddMarkdownDialog
@@ -233,14 +233,14 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           navigate(
             workspaceMarkdownDraftRoute(workspaceSlug, {
               draftName: draft.name,
-              draftFolder: folder || undefined,
+              draftFolder: folder ?? undefined,
               draftType: draft.documentTypeId ?? undefined,
               draftTemplate: draft.templateId ?? undefined
             })
           )
         }
         onCreate={name =>
-          contentOperations.createMarkdown.mutateAsync({ name, folder: folder || null })
+          contentOperations.createMarkdown.mutateAsync({ name, folder: folder ?? null })
         }
         isPending={contentOperations.createMarkdown.isPending}
       />
@@ -251,7 +251,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         onCreated={() => setAddFolderOpen(false)}
         onSubmit={path => contentOperations.createFolder.mutateAsync(path)}
         isPending={contentOperations.createFolder.isPending}
-        parentFolder={folder || undefined}
+        parentFolder={folder ?? undefined}
         placeholder="e.g. Architecture"
       />
     </div>

@@ -564,7 +564,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     );
   }
 
-  const entityName = entity._name || entity._slug;
+  const entityName = entity._name ?? entity._slug;
   const latestProposalRevision = changeProposal?.revisions.at(-1);
   const menuItems: MenuItem[] = [
     {
@@ -662,7 +662,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                         : createPinnedEntity.mutate({
                             entityId: entity?._uid ?? entityId,
                             entityPublicId: entity?._publicId ?? entityId,
-                            entityName: entity._name || entity._slug,
+                            entityName: entity._name ?? entity._slug,
                             entitySlug: entity._slug,
                             schemaId: entity._schema.id
                           })
@@ -803,7 +803,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           graphProps={{
             workspaceId,
             rootEntityId: entity._uid,
-            rootEntityName: entity._name || entity._slug,
+            rootEntityName: entity._name ?? entity._slug,
             rootEntitySchemaId: entity._schema.id,
             schemas,
             onEntityClick: navigateToEntity

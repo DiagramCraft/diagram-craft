@@ -109,7 +109,7 @@ export class PostgresDatabase implements DatabaseAdapter {
         ) {
           return;
         }
-        logger.info(message || 'PostgreSQL notice', notice);
+        logger.info(message ?? 'PostgreSQL notice', notice);
       }
     });
 

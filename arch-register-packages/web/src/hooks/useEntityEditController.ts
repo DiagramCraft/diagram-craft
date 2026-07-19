@@ -86,7 +86,7 @@ export const useEntityEditController = ({
         {
           baseVersion: entity?._version ?? 1,
           proposedState: pendingSaveBody,
-          message: saveConfirmMessage || undefined
+          message: saveConfirmMessage ?? undefined
         },
         {
           onSuccess: () => {
@@ -104,7 +104,7 @@ export const useEntityEditController = ({
       {
         onSuccess: () => {
           if (saveConfirmSignificant) {
-            promoteSnapshot.mutate({ commitMessage: saveConfirmMessage || undefined });
+            promoteSnapshot.mutate({ commitMessage: saveConfirmMessage ?? undefined });
           }
           setEditing(false);
           setEditState({});

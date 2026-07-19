@@ -230,7 +230,7 @@ export const buildSavedViewPayload = ({
   projectId: scope === 'project' ? (projectId ?? null) : null,
   projectScope: scope === 'project' ? (projectScope ?? null) : null,
   name,
-  description: description || null,
+  description: description ?? null,
   isAdminView: isAdminView ?? false,
   viewMode: view,
   filters: {

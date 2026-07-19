@@ -66,7 +66,9 @@ export const importParse = async (
   const entities = validatedRows.map(row => {
     const rowName = row.data['Name']?.toLowerCase().trim();
     const rowSlug = row.data['Slug']?.trim();
-    const rowNamespace = row.data['Namespace']?.trim() || 'default';
+    const rowNamespaceValue = row.data['Namespace']?.trim();
+    const rowNamespace =
+      rowNamespaceValue == null || rowNamespaceValue === '' ? 'default' : rowNamespaceValue;
 
     let existingEntity: (typeof allEntities)[0] | undefined;
     let matchType: 'id' | 'slug' | 'name' | 'none' = 'none';
@@ -113,7 +115,7 @@ export const importParse = async (
     }
 
     if (matchType === 'none' || matchType === 'name') {
-      const proposedSlug = rowSlug || (rowName ? slugify(rowName) : '');
+      const proposedSlug = rowSlug ?? (rowName ? slugify(rowName) : '');
       if (proposedSlug) {
         const wouldConflict = entitiesBySlug.has(`${rowNamespace}:${proposedSlug}`);
         if (wouldConflict) {
@@ -248,8 +250,8 @@ export const importCommit = async (
         throw new Error(`Entity ${existingId} has different schema type`);
     } else {
       const proposedSlug =
-        (entityData._slug as string) || slugify((entityData._name as string) ?? '');
-      const proposedNamespace = (entityData._namespace as string) || 'default';
+        (entityData._slug as string) ?? slugify((entityData._name as string) ?? '');
+      const proposedNamespace = (entityData._namespace as string) ?? 'default';
       if (entitiesBySlug.has(`${proposedNamespace}:${proposedSlug}`)) {
         throw new Error(
           `Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`

@@ -814,8 +814,11 @@ const resolvedName = (
   id: string,
   fallback: string,
   resolutions: Record<string, ImportResolution>
-) =>
-  resolutions[id]?.action === 'rename' ? resolutions[id]?.new_name?.trim() || fallback : fallback;
+) => {
+  if (resolutions[id]?.action !== 'rename') return fallback;
+  const newName = resolutions[id]?.new_name?.trim();
+  return newName == null || newName === '' ? fallback : newName;
+};
 
 const applyConflictRenames = <
   T extends {

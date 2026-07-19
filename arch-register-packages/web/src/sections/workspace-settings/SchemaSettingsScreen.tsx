@@ -81,7 +81,7 @@ export const SchemaSettingsScreen = () => {
       navigate({
         to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
-        search: { schema: id || undefined }
+        search: { schema: id ?? undefined }
       });
     },
     [navigate, workspaceSlug]
@@ -687,7 +687,7 @@ const FieldRow = ({
     if (field.type === 'select') {
       return (
         <Select.Root
-          value={field.enumId || undefined}
+          value={field.enumId ?? undefined}
           disabled={!canEdit}
           onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
           placeholder="Select enum..."
@@ -705,7 +705,7 @@ const FieldRow = ({
       return (
         <div style={{ display: 'grid', gap: 8 }}>
           <Select.Root
-            value={field.schemaId || undefined}
+            value={field.schemaId ?? undefined}
             disabled={!canEdit}
             onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<SchemaField>)}
             placeholder="Select type..."
@@ -725,7 +725,9 @@ const FieldRow = ({
               value={field.predicate ?? ''}
               disabled={!canEdit}
               onChange={value =>
-                onUpdate({ predicate: value?.trim() || undefined } as Partial<SchemaField>)
+                onUpdate({
+                  predicate: value?.trim() == null || value.trim() === '' ? undefined : value.trim()
+                } as Partial<SchemaField>)
               }
               style={{ width: '100%' }}
               placeholder="e.g., belongs to, depends on"

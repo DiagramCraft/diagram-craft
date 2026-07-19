@@ -23,7 +23,7 @@ export const LabelDialog = ({
   const el = element as LabelSlateElement;
 
   const [text, setText] = useState(el.content ?? '');
-  const [color, setColor] = useState(el.color || SCHEMA_COLORS[0]!);
+  const [color, setColor] = useState(el.color ?? SCHEMA_COLORS[0]!);
 
   const canSave = text.trim().length > 0;
 

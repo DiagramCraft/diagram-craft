@@ -8,7 +8,7 @@ export const stableHue = (id: string) => {
 };
 
 const getInitials = (name: string, email: string | null) => {
-  const source = name || email || '';
+  const source = name ?? email ?? '';
   return source
     .split(/[\s@.]+/)
     .slice(0, 2)

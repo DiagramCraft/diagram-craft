@@ -121,7 +121,7 @@ export const EntityOverviewTab = ({
 
         <MetaPropRow
           label="Name"
-          value={entity._name || '—'}
+          value={entity._name ?? '—'}
           editing={editing}
           editValue={editState['_name'] as string}
           onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugifyEntityName(v) }))}
@@ -133,7 +133,7 @@ export const EntityOverviewTab = ({
           editValue={editState['_slug'] as string}
           onChange={v => setEditState(s => ({ ...s, _slug: v }))}
         />
-        {(entity._description || editing) && (
+        {((entity._description != null && entity._description !== '') || editing) && (
           <div className={styles.metaPropRow}>
             <span className={styles.metaPropLabel}>Description</span>
             <span className={styles.metaPropValue}>
@@ -280,7 +280,7 @@ export const EntityOverviewTab = ({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <TbExternalLink size={11} /> {l.title || l.url}
+                  <TbExternalLink size={11} /> {l.title ?? l.url}
                 </a>
               </span>
             </div>
@@ -522,7 +522,7 @@ const PropertyRow = ({
       const candidates = referenceOptions[field.schemaId] ?? [];
       const availableItems: MultiSelectItem[] = candidates.map(entity => ({
         value: entity._uid,
-        label: entity._name || entity._slug
+        label: entity._name ?? entity._slug
       }));
       return (
         <MultiSelect
@@ -545,7 +545,7 @@ const PropertyRow = ({
           <option value="">—</option>
           {candidates.map(e => (
             <option key={e._uid} value={e._uid}>
-              {e._name || e._slug}
+              {e._name ?? e._slug}
             </option>
           ))}
         </select>

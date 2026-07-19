@@ -35,7 +35,7 @@ export const resolveSchemaDefaultOwner = (
     : fallbackOwner;
 
 const defaultKeyPrefixFromName = (name: string) =>
-  normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) || name.slice(0, 5));
+  normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) ?? name.slice(0, 5));
 
 const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] => {
   if (!Array.isArray(fields)) return [];
