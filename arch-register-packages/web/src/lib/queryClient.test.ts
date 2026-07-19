@@ -24,13 +24,16 @@ describe('query client retries', () => {
     expect(mutationFn).toHaveBeenCalledTimes(2);
   });
 
-  it('does not retry unauthorized queries and retains the existing policy otherwise', () => {
+  it('does not retry client errors and retains retries for server errors', () => {
     const retry = createQueryClient().getDefaultOptions().queries?.retry;
     expect(retry).toBeTypeOf('function');
     if (typeof retry !== 'function') throw new Error('Expected a query retry predicate');
 
-    expect(retry(0, new ApiError(401, 'Unauthorized'))).toBe(false);
+    for (const status of [400, 401, 403, 404, 409]) {
+      expect(retry(0, new ApiError(status, 'Client error'))).toBe(false);
+    }
     expect(retry(2, new ApiError(503, 'Unavailable'))).toBe(true);
     expect(retry(3, new ApiError(503, 'Unavailable'))).toBe(false);
+    expect(retry(0, new Error('Network failure'))).toBe(true);
   });
 });

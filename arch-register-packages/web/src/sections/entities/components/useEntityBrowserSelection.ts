@@ -93,6 +93,7 @@ export const useEntityBrowserSelection = ({
 }: UseEntityBrowserSelectionProps) => {
   const updateEntityMutation = useUpdateEntity(workspaceId);
   const previousFilteredCountRef = useRef(0);
+  const clearSelectionTimerRef = useRef<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [fieldRows, setFieldRows] = useState<BulkFieldRow[]>([]);
   const [step, setStep] = useState<BulkEditStep>('edit');
@@ -103,6 +104,14 @@ export const useEntityBrowserSelection = ({
     setFieldRows([]);
     setStep('edit');
     setResult(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (clearSelectionTimerRef.current !== null) {
+        window.clearTimeout(clearSelectionTimerRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -191,7 +200,12 @@ export const useEntityBrowserSelection = ({
 
     setResult({ applied, skipped });
     setStep('done');
-    if (skipped.length === 0) setTimeout(clearSelection, 1800);
+    if (skipped.length === 0) {
+      clearSelectionTimerRef.current = window.setTimeout(() => {
+        clearSelectionTimerRef.current = null;
+        clearSelection();
+      }, 1800);
+    }
   }, [
     selectedEntities,
     schemaMap,

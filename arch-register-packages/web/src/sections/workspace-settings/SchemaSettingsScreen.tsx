@@ -31,16 +31,10 @@ import {
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { EmptyState } from '../../components/EmptyState';
+import { toFieldId } from '../../utils/fieldId';
 import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
-
-const toFieldId = (name: string) =>
-  name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
 
 const deriveKeyPrefix = (value: string) =>
   value

@@ -19,6 +19,7 @@ import {
 } from '../../../../../routes/publicObjectRoutes';
 import { decodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
 import { DOCUMENT_BROWSER_BASE_COLUMN_IDS, type DocumentBrowserScope } from './types';
+import { formatDate } from '../../../../../utils/dateFormat';
 import styles from './DocumentBrowserEmbed.module.css';
 
 type Props = {
@@ -41,9 +42,6 @@ const displayValue = (value: unknown): string => {
   if (value === false) return 'No';
   return value == null || value === '' ? '—' : String(value);
 };
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value));
 
 const getLocationLabel = ({
   scope,
