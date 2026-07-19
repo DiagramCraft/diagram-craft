@@ -146,6 +146,20 @@ This resets the selected database driver, recreates the schema, and loads seed d
 pnpm bootstrap
 ```
 
+To seed enabled AI configuration for all bootstrap workspaces, provide the dedicated bootstrap variables and use the
+explicit switch:
+
+```bash
+BOOTSTRAP_AI_PROVIDER=openrouter \
+BOOTSTRAP_AI_MODEL=anthropic/claude-sonnet-4-20250514 \
+BOOTSTRAP_AI_API_KEY=... \
+AI_ENCRYPTION_KEY=... \
+pnpm bootstrap -- --bootstrap-ai
+```
+
+The command fails before resetting the database if any required value is missing or the provider is unsupported.
+Without `--bootstrap-ai`, these variables have no effect and the seeded AI configuration remains disabled.
+
 You should see:
 
 ```
