@@ -32,6 +32,8 @@ const sidebars: SidebarsConfig = {
         'use/projects',
         'use/assessments',
         'use/content',
+        'use/collaboration-notifications',
+        'use/governance',
         'use/ai-assistant-extract',
         'use/account-settings'
       ]
