@@ -29944,6 +29944,40 @@
                               "maximum": 9007199254740991,
                               "description": "Current document type version number"
                             },
+                            "aiActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "kind": {
+                                    "const": "interactive"
+                                  },
+                                  "prompt": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "default": true
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "kind",
+                                  "prompt"
+                                ]
+                              },
+                              "default": []
+                            },
                             "created_at": {
                               "type": "string"
                             },
@@ -33043,6 +33077,174 @@
         }
       }
     },
+    "/{workspace}/documents/{nodeId}/ai-actions/{actionId}/run": {
+      "post": {
+        "operationId": "projects.runDocumentAiAction",
+        "summary": "Run an interactive AI action for a document",
+        "description": "Runs a document type-defined interactive AI action against the current document body, metadata, document type, and location context, using read-only tools, and streams the answer as it is generated. Does not modify the document, its metadata, or any entities.",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Markdown node identifier"
+            }
+          },
+          {
+            "name": "actionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "AI action identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "event": {
+                          "const": "message"
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "const": "delta"
+                                },
+                                "delta": {
+                                  "type": "string",
+                                  "description": "Incremental answer text"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "delta"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "actionId": {
+                                  "type": "string",
+                                  "description": "Identifier of the AI action that was run"
+                                },
+                                "actionName": {
+                                  "type": "string",
+                                  "description": "Display name of the AI action"
+                                },
+                                "prompt": {
+                                  "type": "string",
+                                  "description": "Predefined prompt of the AI action"
+                                },
+                                "answer": {
+                                  "type": "string",
+                                  "description": "The AI-generated answer"
+                                },
+                                "documentTitle": {
+                                  "type": "string",
+                                  "description": "Title of the document the action was run against"
+                                },
+                                "nodeId": {
+                                  "type": "string",
+                                  "description": "Markdown node identifier the action was run against"
+                                },
+                                "type": {
+                                  "const": "done",
+                                  "description": "Signals the run is complete with the full answer"
+                                }
+                              },
+                              "required": [
+                                "actionId",
+                                "actionName",
+                                "prompt",
+                                "answer",
+                                "documentTitle",
+                                "nodeId",
+                                "type"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "event",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "event": {
+                          "const": "done"
+                        },
+                        "data": {},
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "event"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "event": {
+                          "const": "error"
+                        },
+                        "data": {},
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "event"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/documents": {
       "get": {
         "operationId": "projects.listDocuments",
@@ -34499,6 +34701,351 @@
                   "required": [
                     "success",
                     "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/notification-preferences": {
+      "get": {
+        "operationId": "notificationPreferences.get",
+        "summary": "Get notification delivery preferences",
+        "description": "Retrieves the notification-type and channel catalog along with the current user's effective delivery preferences for this workspace.",
+        "tags": [
+          "NotificationPreferences",
+          "NotificationPreferences"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notificationTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "notificationType": {
+                            "enum": [
+                              "entity-watch-activity",
+                              "governance-task-assigned",
+                              "governance-case-activity",
+                              "governance-proposal-reminder"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable name of the notification type"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "What triggers this notification type"
+                          },
+                          "category": {
+                            "enum": [
+                              "normal",
+                              "reminder"
+                            ],
+                            "type": "string",
+                            "description": "Whether this is a normal notification type or a reminder"
+                          }
+                        },
+                        "required": [
+                          "notificationType",
+                          "label",
+                          "description",
+                          "category"
+                        ]
+                      }
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "channel": {
+                            "enum": [
+                              "in_app",
+                              "email",
+                              "slack",
+                              "sms"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable name of the delivery channel"
+                          },
+                          "implemented": {
+                            "type": "boolean",
+                            "description": "Whether this channel can currently deliver notifications"
+                          }
+                        },
+                        "required": [
+                          "channel",
+                          "label",
+                          "implemented"
+                        ]
+                      }
+                    },
+                    "preferences": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "notificationType": {
+                            "enum": [
+                              "entity-watch-activity",
+                              "governance-task-assigned",
+                              "governance-case-activity",
+                              "governance-proposal-reminder"
+                            ],
+                            "type": "string"
+                          },
+                          "channel": {
+                            "enum": [
+                              "in_app",
+                              "email",
+                              "slack",
+                              "sms"
+                            ],
+                            "type": "string"
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "description": "Whether this channel is enabled for this notification type"
+                          },
+                          "isDefault": {
+                            "type": "boolean",
+                            "description": "True if this reflects the catalog default rather than an explicit override"
+                          }
+                        },
+                        "required": [
+                          "notificationType",
+                          "channel",
+                          "enabled",
+                          "isDefault"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "notificationTypes",
+                    "channels",
+                    "preferences"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "notificationPreferences.update",
+        "summary": "Update notification delivery preferences",
+        "description": "Sets the current user's delivery preference for one or more notification-type/channel pairs in this workspace. Only affects future notifications.",
+        "tags": [
+          "NotificationPreferences",
+          "NotificationPreferences"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preferences": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "notificationType": {
+                          "enum": [
+                            "entity-watch-activity",
+                            "governance-task-assigned",
+                            "governance-case-activity",
+                            "governance-proposal-reminder"
+                          ],
+                          "type": "string"
+                        },
+                        "channel": {
+                          "enum": [
+                            "in_app",
+                            "email",
+                            "slack",
+                            "sms"
+                          ],
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "notificationType",
+                        "channel",
+                        "enabled"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "preferences"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notificationTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "notificationType": {
+                            "enum": [
+                              "entity-watch-activity",
+                              "governance-task-assigned",
+                              "governance-case-activity",
+                              "governance-proposal-reminder"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable name of the notification type"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "What triggers this notification type"
+                          },
+                          "category": {
+                            "enum": [
+                              "normal",
+                              "reminder"
+                            ],
+                            "type": "string",
+                            "description": "Whether this is a normal notification type or a reminder"
+                          }
+                        },
+                        "required": [
+                          "notificationType",
+                          "label",
+                          "description",
+                          "category"
+                        ]
+                      }
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "channel": {
+                            "enum": [
+                              "in_app",
+                              "email",
+                              "slack",
+                              "sms"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable name of the delivery channel"
+                          },
+                          "implemented": {
+                            "type": "boolean",
+                            "description": "Whether this channel can currently deliver notifications"
+                          }
+                        },
+                        "required": [
+                          "channel",
+                          "label",
+                          "implemented"
+                        ]
+                      }
+                    },
+                    "preferences": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "notificationType": {
+                            "enum": [
+                              "entity-watch-activity",
+                              "governance-task-assigned",
+                              "governance-case-activity",
+                              "governance-proposal-reminder"
+                            ],
+                            "type": "string"
+                          },
+                          "channel": {
+                            "enum": [
+                              "in_app",
+                              "email",
+                              "slack",
+                              "sms"
+                            ],
+                            "type": "string"
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "description": "Whether this channel is enabled for this notification type"
+                          },
+                          "isDefault": {
+                            "type": "boolean",
+                            "description": "True if this reflects the catalog default rather than an explicit override"
+                          }
+                        },
+                        "required": [
+                          "notificationType",
+                          "channel",
+                          "enabled",
+                          "isDefault"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "notificationTypes",
+                    "channels",
+                    "preferences"
                   ]
                 }
               }
@@ -38516,6 +39063,48 @@
                       "created_at"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/ai/status": {
+      "get": {
+        "operationId": "ai.getStatus",
+        "summary": "Get AI status",
+        "description": "Reports whether AI is actively and validly configured for the workspace, without exposing configuration details. Available to any workspace viewer.",
+        "tags": [
+          "AI",
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "configured": {
+                      "type": "boolean",
+                      "description": "Whether AI is active and usable"
+                    }
+                  },
+                  "required": [
+                    "configured"
+                  ]
                 }
               }
             }
@@ -42676,6 +43265,40 @@
                         "maximum": 9007199254740991,
                         "description": "Current document type version number"
                       },
+                      "aiActions": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "kind": {
+                              "const": "interactive"
+                            },
+                            "prompt": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "default": true
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "kind",
+                            "prompt"
+                          ]
+                        },
+                        "default": []
+                      },
                       "created_at": {
                         "type": "string"
                       },
@@ -42835,6 +43458,39 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "aiActions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "kind": {
+                          "const": "interactive"
+                        },
+                        "prompt": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "enabled": {
+                          "type": "boolean",
+                          "default": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "kind",
+                        "prompt"
+                      ]
+                    }
                   },
                   "fieldMigrations": {
                     "type": "object",
@@ -43003,6 +43659,40 @@
                       "minimum": 1,
                       "maximum": 9007199254740991,
                       "description": "Current document type version number"
+                    },
+                    "aiActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "kind": {
+                            "const": "interactive"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "kind",
+                          "prompt"
+                        ]
+                      },
+                      "default": []
                     },
                     "created_at": {
                       "type": "string"
@@ -43187,6 +43877,40 @@
                       "maximum": 9007199254740991,
                       "description": "Current document type version number"
                     },
+                    "aiActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "kind": {
+                            "const": "interactive"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "kind",
+                          "prompt"
+                        ]
+                      },
+                      "default": []
+                    },
                     "created_at": {
                       "type": "string"
                     },
@@ -43353,6 +44077,39 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "aiActions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "kind": {
+                          "const": "interactive"
+                        },
+                        "prompt": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "enabled": {
+                          "type": "boolean",
+                          "default": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "kind",
+                        "prompt"
+                      ]
+                    }
                   },
                   "fieldMigrations": {
                     "type": "object",
@@ -43521,6 +44278,40 @@
                       "minimum": 1,
                       "maximum": 9007199254740991,
                       "description": "Current document type version number"
+                    },
+                    "aiActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "kind": {
+                            "const": "interactive"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "kind",
+                          "prompt"
+                        ]
+                      },
+                      "default": []
                     },
                     "created_at": {
                       "type": "string"
@@ -43768,6 +44559,40 @@
                       "minimum": 1,
                       "maximum": 9007199254740991,
                       "description": "Current document type version number"
+                    },
+                    "aiActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "kind": {
+                            "const": "interactive"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "kind",
+                          "prompt"
+                        ]
+                      },
+                      "default": []
                     },
                     "created_at": {
                       "type": "string"

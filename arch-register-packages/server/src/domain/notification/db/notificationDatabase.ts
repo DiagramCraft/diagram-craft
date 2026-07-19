@@ -66,5 +66,18 @@ export type NotificationDatabase = {
   countUnread(userId: string, workspace: string): Promise<number>;
   markRead(userId: string, workspace: string, id: string, readAt: Date): Promise<boolean>;
   markAllRead(userId: string, workspace: string, readAt: Date): Promise<number>;
+  /**
+   * Marks unread notifications tied to any of the given governance assignments as read. Used to
+   * clear a user's notification the moment their action item is resolved, independent of whether
+   * they ever open the bell.
+   */
+  markReadByAssignmentIds(assignmentIds: string[], readAt: Date): Promise<number>;
+  /**
+   * Marks unread notifications tied to any of the given governance cases as read. Informational
+   * notifications (assigned, approved, rejected, etc.) carry a case_id but no assignment_id, so
+   * they are not caught by `markReadByAssignmentIds`; this clears them once the case they belong
+   * to is fully resolved, since nothing about it remains actionable at that point.
+   */
+  markReadByCaseIds(caseIds: string[], readAt: Date): Promise<number>;
   createNotification(input: InboxNotificationDbCreate): Promise<InboxNotificationDbResult>;
 };

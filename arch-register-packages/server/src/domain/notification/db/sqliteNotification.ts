@@ -41,6 +41,28 @@ export class SqliteNotificationDatabase extends SqliteDatabaseBase implements No
     return result.changes;
   }
 
+  async markReadByAssignmentIds(assignmentIds: string[], readAt: Date) {
+    if (assignmentIds.length === 0) return 0;
+    const placeholders = assignmentIds.map(() => '?').join(', ');
+    const result = this.run(
+      `UPDATE user_inbox_notification SET read_at = ?
+       WHERE assignment_id IN (${placeholders}) AND read_at IS NULL`,
+      [readAt.toISOString(), ...assignmentIds]
+    );
+    return result.changes;
+  }
+
+  async markReadByCaseIds(caseIds: string[], readAt: Date) {
+    if (caseIds.length === 0) return 0;
+    const placeholders = caseIds.map(() => '?').join(', ');
+    const result = this.run(
+      `UPDATE user_inbox_notification SET read_at = ?
+       WHERE case_id IN (${placeholders}) AND read_at IS NULL`,
+      [readAt.toISOString(), ...caseIds]
+    );
+    return result.changes;
+  }
+
   async createNotification(input: InboxNotificationDbCreate) {
     this.run(
       `INSERT OR IGNORE INTO user_inbox_notification (

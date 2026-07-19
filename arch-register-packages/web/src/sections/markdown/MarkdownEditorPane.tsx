@@ -7,9 +7,10 @@ import {
   useRef,
   useState
 } from 'react';
-import { TbMessage, TbMessageCirclePlus } from 'react-icons/tb';
+import { TbMessage, TbMessageCirclePlus, TbSparkles } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { DocumentAiAction } from '@arch-register/api-types/documentContract';
 import { createTextAnchor, reanchorText } from '@arch-register/api-types/textAnchor';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
 import { MdxPreview } from './preview/MdxPreview';
@@ -49,6 +50,9 @@ export const MarkdownEditorPane = (props: {
   showBacklinks?: boolean;
   propertiesPanel?: ReactNode;
   commentsMode: CommentsDisplayMode;
+  aiActions?: DocumentAiAction[];
+  runningAiActionId?: string | null;
+  onRunAiAction?: (action: DocumentAiAction) => void;
 }) => {
   const {
     screenMode,
@@ -64,7 +68,10 @@ export const MarkdownEditorPane = (props: {
     showDiscussion = true,
     showBacklinks = true,
     propertiesPanel,
-    commentsMode
+    commentsMode,
+    aiActions = [],
+    runningAiActionId = null,
+    onRunAiAction
   } = props;
 
   const { data: discussionPosts = [] } = useDiscussions(
@@ -165,6 +172,29 @@ export const MarkdownEditorPane = (props: {
     clearSelection();
   };
 
+  const enabledAiActions = aiActions.filter(action => action.enabled);
+
+  const aiActionsSection = enabledAiActions.length > 0 && (
+    <div className={styles.aiActionsSection}>
+      <div className={styles.aiActionsLabel}>AI actions</div>
+      <div className={styles.aiActionsList}>
+        {enabledAiActions.map(action => (
+          <Button
+            key={action.id}
+            variant="ghost"
+            size="sm"
+            className={styles.aiActionButton}
+            icon={<TbSparkles size={13} />}
+            disabled={runningAiActionId !== null}
+            onClick={() => onRunAiAction?.(action)}
+          >
+            {runningAiActionId === action.id ? 'Running…' : action.name}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+
   const showPlateEditor = screenMode === 'edit' && paneMode === 'edit';
   const showRawEditor = screenMode === 'edit' && paneMode === 'raw';
 
@@ -203,14 +233,19 @@ export const MarkdownEditorPane = (props: {
             <div className={styles.previewEmpty}>Nothing to preview yet.</div>
           )}
         </article>
-        {toc.length > 0 && (
+        {(toc.length > 0 || enabledAiActions.length > 0) && (
           <aside className={styles.toc}>
-            <div className={styles.tocLabel}>On this page</div>
-            {toc.map((h, i) => (
-              <div key={i} className={styles.tocItem}>
-                {h}
-              </div>
-            ))}
+            {toc.length > 0 && (
+              <>
+                <div className={styles.tocLabel}>On this page</div>
+                {toc.map((h, i) => (
+                  <div key={i} className={styles.tocItem}>
+                    {h}
+                  </div>
+                ))}
+              </>
+            )}
+            {aiActionsSection}
           </aside>
         )}
       </div>
@@ -337,14 +372,19 @@ export const MarkdownEditorPane = (props: {
           }}
         />
       )}
-      {toc.length > 0 && (
+      {(toc.length > 0 || enabledAiActions.length > 0) && (
         <aside className={styles.toc}>
-          <div className={styles.tocLabel}>On this page</div>
-          {toc.map((h, i) => (
-            <div key={i} className={styles.tocItem}>
-              {h}
-            </div>
-          ))}
+          {toc.length > 0 && (
+            <>
+              <div className={styles.tocLabel}>On this page</div>
+              {toc.map((h, i) => (
+                <div key={i} className={styles.tocItem}>
+                  {h}
+                </div>
+              ))}
+            </>
+          )}
+          {aiActionsSection}
         </aside>
       )}
     </div>

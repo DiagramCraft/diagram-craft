@@ -20,6 +20,7 @@ import { SqliteWebhookDatabase } from '../domain/webhook/db/sqliteWebhook';
 import { SqliteDocumentDatabase } from '../domain/document/db/sqliteDocument';
 import { SqliteGovernanceDatabase } from '../domain/governance/db/sqliteGovernance';
 import { SqliteNotificationDatabase } from '../domain/notification/db/sqliteNotification';
+import { SqliteNotificationPreferenceDatabase } from '../domain/notification/db/sqliteNotificationPreference';
 import { SqliteEntityChangeDatabase } from '../domain/catalog/db/sqliteEntityChange';
 import { SqliteEntityDeprecationDatabase } from '../domain/catalog/db/sqliteEntityDeprecation';
 
@@ -44,6 +45,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly document;
   readonly governance;
   readonly notification;
+  readonly notificationPreference;
   readonly entityChange;
   readonly entityDeprecation;
   private transactionTail: Promise<void> = Promise.resolve();
@@ -70,6 +72,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.document = new SqliteDocumentDatabase(() => this.db);
     this.governance = new SqliteGovernanceDatabase(() => this.db);
     this.notification = new SqliteNotificationDatabase(() => this.db);
+    this.notificationPreference = new SqliteNotificationPreferenceDatabase(() => this.db);
     this.entityChange = new SqliteEntityChangeDatabase(() => this.db);
     this.entityDeprecation = new SqliteEntityDeprecationDatabase(() => this.db);
 
@@ -143,6 +146,7 @@ export class SqliteDatabase implements DatabaseAdapter {
       document: this.document,
       governance: this.governance,
       notification: this.notification,
+      notificationPreference: this.notificationPreference,
       entityChange: this.entityChange,
       entityDeprecation: this.entityDeprecation
     };

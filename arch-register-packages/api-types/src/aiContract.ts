@@ -133,6 +133,18 @@ export const aiContract = oc.tag('AI').router({
       })
       .input(z.object({ params: wsAndUUID }))
       .output(z.array(aiMessageSchema)),
+    getStatus: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/ai/status',
+        inputStructure: 'detailed',
+        summary: 'Get AI status',
+        description:
+          'Reports whether AI is actively and validly configured for the workspace, without exposing configuration details. Available to any workspace viewer.',
+        tags: ['AI']
+      })
+      .input(z.object({ params: ws }))
+      .output(z.object({ configured: z.boolean().describe('Whether AI is active and usable') })),
     getConfig: oc
       .route({
         method: 'GET',

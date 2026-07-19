@@ -47,6 +47,23 @@ export const validateDocumentTypeWrite = (input: DocumentTypeWrite) => {
       );
     }
   }
+
+  const actionIds = new Set<string>();
+  for (const action of input.aiActions ?? []) {
+    httpAssert.true(!actionIds.has(action.id), {
+      status: 400,
+      message: `Duplicate AI action id '${action.id}'`
+    });
+    actionIds.add(action.id);
+    httpAssert.true(action.name.trim().length > 0, {
+      status: 400,
+      message: `AI action '${action.id}' must have a name`
+    });
+    httpAssert.true(action.prompt.trim().length > 0, {
+      status: 400,
+      message: `AI action '${action.id}' must have a prompt`
+    });
+  }
 };
 
 const valueCardinality = (value: unknown) =>

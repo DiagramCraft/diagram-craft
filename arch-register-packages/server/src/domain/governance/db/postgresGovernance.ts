@@ -151,17 +151,21 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
     decidedAssignmentId: string,
     resolvedAt: Date
   ) {
-    await this.sql`
+    const rows = await this.sql<{ id: string }[]>`
       UPDATE governance_assignment SET status = 'superseded', resolved_at = ${resolvedAt}
       WHERE case_id = ${caseId} AND action = ${action} AND id != ${decidedAssignmentId} AND status = 'open'
+      RETURNING id
     `;
+    return rows.map(row => row.id);
   }
 
   async supersedeAllOpenAssignmentsForCase(caseId: string, resolvedAt: Date) {
-    await this.sql`
+    const rows = await this.sql<{ id: string }[]>`
       UPDATE governance_assignment SET status = 'superseded', resolved_at = ${resolvedAt}
       WHERE case_id = ${caseId} AND status = 'open'
+      RETURNING id
     `;
+    return rows.map(row => row.id);
   }
 
   async appendEvent(input: GovernanceEventDbCreate) {

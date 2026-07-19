@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type {
   WatchDbCreate,
   WatchDatabase,
@@ -62,41 +63,6 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
     }
   }
 
-  async listNotifications(userId: string, workspace: string) {
-    const rows = await this.sql<DatabaseRow[]>`
-      SELECT * FROM user_notification
-      WHERE user_id = ${userId} AND workspace = ${workspace}
-      ORDER BY timestamp DESC, created_at DESC
-    `;
-    return mapDatabaseRows(rows, watchMappers.notification);
-  }
-
-  async deleteNotification(userId: string, workspace: string, notificationId: string) {
-    try {
-      const [row] = await this.sql<DatabaseRow[]>`
-        DELETE FROM user_notification
-        WHERE id = ${notificationId} AND user_id = ${userId} AND workspace = ${workspace}
-        RETURNING *
-      `;
-      return row ? watchMappers.notification(row) : null;
-    } catch (error) {
-      return normalizePostgresError(error);
-    }
-  }
-
-  async clearNotifications(userId: string, workspace: string) {
-    try {
-      const rows = await this.sql<{ id: string }[]>`
-        DELETE FROM user_notification
-        WHERE user_id = ${userId} AND workspace = ${workspace}
-        RETURNING id
-      `;
-      return rows.length;
-    } catch (error) {
-      return normalizePostgresError(error);
-    }
-  }
-
   async createNotificationsFromAudit(input: CreateNotificationsFromAuditInput) {
     const { auditLog, changedByDisplayName } = input;
     try {
@@ -106,36 +72,22 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
 
       for (const userId of watcherUserIds) {
         if (userId === auditLog.user_id) continue;
+        const entitySlug = auditLog.entity_slug ?? auditLog.entity_id;
         await this.sql`
-          INSERT INTO user_notification (
-            user_id,
-            workspace,
-            entity_id,
-            audit_log_id,
-            operation,
-            entity_name,
-            entity_slug,
-            schema_id,
-            changed_by_user_id,
-            changed_by_display_name,
-            timestamp,
-            created_at
+          INSERT INTO user_inbox_notification (
+            id, user_id, workspace, category, event_type, resource_type, resource_id,
+            case_id, assignment_id, actor_user_id, actor_display_name, title, message,
+            action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key
           )
           VALUES (
-            ${userId},
-            ${auditLog.workspace},
-            ${auditLog.entity_id},
-            ${auditLog.id},
-            ${auditLog.operation},
-            ${auditLog.entity_name},
-            ${auditLog.entity_slug ?? auditLog.entity_id},
-            ${auditLog.schema_id},
-            ${auditLog.user_id},
-            ${changedByDisplayName},
-            ${auditLog.timestamp},
-            NOW()
+            ${randomUUID()}, ${userId}, ${auditLog.workspace}, 'information',
+            ${`entity.${auditLog.operation}`}, 'entity', ${auditLog.entity_id}, NULL, NULL,
+            ${auditLog.user_id}, ${changedByDisplayName}, ${auditLog.entity_name},
+            ${`${changedByDisplayName} ${auditLog.operation}d this entity`}, NULL,
+            ${this.json({ entitySlug, schemaId: auditLog.schema_id })}, ${auditLog.timestamp},
+            NOW(), NULL, ${`entity-watch:${auditLog.id}:user:${userId}`}
           )
-          ON CONFLICT (user_id, audit_log_id) DO NOTHING
+          ON CONFLICT (user_id, delivery_key) DO NOTHING
         `;
       }
     } catch (error) {

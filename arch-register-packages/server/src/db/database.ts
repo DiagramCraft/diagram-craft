@@ -13,6 +13,7 @@ import type { WebhookDatabase } from '../domain/webhook/db/webhookDatabase';
 import type { DocumentDatabase } from '../domain/document/db/documentDatabase';
 import type { GovernanceDatabase } from '../domain/governance/db/governanceDatabase';
 import type { NotificationDatabase } from '../domain/notification/db/notificationDatabase';
+import type { NotificationPreferenceDatabase } from '../domain/notification/db/notificationPreferenceDatabase';
 import type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 // Keep the existing import path stable for database consumers.
@@ -47,6 +48,7 @@ export type DatabaseAdapter = {
   document: DocumentDatabase;
   governance: GovernanceDatabase;
   notification: NotificationDatabase;
+  notificationPreference: NotificationPreferenceDatabase;
   entityChange: EntityChangeDatabase;
   entityDeprecation: EntityDeprecationDatabase;
 };
@@ -144,6 +146,11 @@ export type {
   InboxNotificationDbCreate,
   InboxNotificationDbResult
 } from '../domain/notification/db/notificationDatabase';
+export type {
+  NotificationPreferenceDatabase,
+  NotificationPreferenceDbResult,
+  NotificationPreferenceOverride
+} from '../domain/notification/db/notificationPreferenceDatabase';
 export type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 export type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 

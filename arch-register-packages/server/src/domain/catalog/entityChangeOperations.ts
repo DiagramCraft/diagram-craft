@@ -28,7 +28,9 @@ import type {
 } from './db/entityChangeDatabase';
 import {
   createGovernanceCaseInTransaction,
-  recordGovernanceEvent
+  recordGovernanceEvent,
+  resolveAssignmentNotifications,
+  resolveCaseNotifications
 } from '../governance/governanceOperations';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
@@ -544,7 +546,9 @@ export const withdrawEntityChangeProposal = async (
     await tx.entityChange.updateProposalStatus(workspace, proposal.id, 'withdrawn', now, now);
     const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
     if (cancelled) {
-      await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+      const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+      await resolveAssignmentNotifications(tx, supersededIds, now);
+      await resolveCaseNotifications(tx, cancelled.id, now);
       await recordGovernanceEvent(tx, cancelled, {
         eventType: 'cancelled',
         actorUserId: event.context.user.id,
@@ -593,7 +597,12 @@ export const bypassEntityApproval = async (
         if (caseRow) {
           const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
           if (cancelled) {
-            await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+            const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+              caseRow.id,
+              now
+            );
+            await resolveAssignmentNotifications(tx, supersededIds, now);
+            await resolveCaseNotifications(tx, cancelled.id, now);
             await recordGovernanceEvent(tx, cancelled, {
               eventType: 'admin_override',
               actorUserId: event.context.user.id,

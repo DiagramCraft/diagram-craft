@@ -12,6 +12,7 @@ import { MemberAvatar } from '../../components/MemberAvatar';
 import { useUpdateUser } from '../../hooks/useUsers';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ApiTokensSubSection } from './ApiTokensSubSection';
+import { NotificationPreferencesSubSection } from './NotificationPreferencesSubSection';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   profile: {
@@ -21,6 +22,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   appearance: {
     title: 'Appearance',
     sub: 'Customize how your account is represented throughout the workspace.'
+  },
+  notifications: {
+    title: 'Notifications',
+    sub: 'Choose which notification types deliver to your in-app inbox.'
   },
   'api-tokens': {
     title: 'API tokens',
@@ -47,9 +52,11 @@ export const AccountSettingsScreen = () => {
   const section =
     params.section === 'appearance'
       ? 'appearance'
-      : params.section === 'api-tokens'
-        ? 'api-tokens'
-        : 'profile';
+      : params.section === 'notifications'
+        ? 'notifications'
+        : params.section === 'api-tokens'
+          ? 'api-tokens'
+          : 'profile';
 
   useEffect(() => {
     if (user) {
@@ -120,6 +127,8 @@ export const AccountSettingsScreen = () => {
           createDialogOpen={apiTokenAddDialogOpen}
           onCloseCreateDialog={() => setApiTokenAddDialogOpen(false)}
         />
+      ) : section === 'notifications' ? (
+        <NotificationPreferencesSubSection />
       ) : (
         <div className={styles.blockList}>
           {section === 'profile' && (

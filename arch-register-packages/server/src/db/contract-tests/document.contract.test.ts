@@ -147,6 +147,72 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
     expect(revision.metadata).toEqual({ status: 'proposed', affected_entities: [entity.id] });
   });
 
+  it('round-trips interactive AI actions on create and update, defaulting to empty', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const defaultType = await createType(db, workspace, 'Untyped Actions');
+    expect(defaultType.aiActions).toEqual([]);
+
+    const now = new Date();
+    const type = await db.document.createDocumentType({
+      id: randomUUID(),
+      workspace,
+      name: 'Runbook',
+      description: 'A runbook',
+      fields: [],
+      color: null,
+      icon: null,
+      aiActions: [
+        {
+          id: 'summarize',
+          name: 'Summarize',
+          kind: 'interactive',
+          prompt: 'Summarize this.',
+          enabled: true
+        }
+      ],
+      created_at: now,
+      updated_at: now
+    });
+    expect(type.aiActions).toEqual([
+      {
+        id: 'summarize',
+        name: 'Summarize',
+        kind: 'interactive',
+        prompt: 'Summarize this.',
+        enabled: true
+      }
+    ]);
+
+    const updated = await db.document.updateDocumentType(workspace, type.id, {
+      name: type.name,
+      description: type.description,
+      fields: type.fields,
+      aiActions: [
+        {
+          id: 'summarize',
+          name: 'Summarize v2',
+          kind: 'interactive',
+          prompt: 'Summarize this document.',
+          enabled: false
+        }
+      ],
+      updated_at: new Date()
+    });
+    expect(updated?.aiActions).toEqual([
+      {
+        id: 'summarize',
+        name: 'Summarize v2',
+        kind: 'interactive',
+        prompt: 'Summarize this document.',
+        enabled: false
+      }
+    ]);
+    expect((await db.document.getDocumentType(workspace, type.id))?.aiActions).toEqual(
+      updated?.aiActions
+    );
+  });
+
   it('supports archived definitions without hiding them from explicit reads', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

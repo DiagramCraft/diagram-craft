@@ -30,7 +30,7 @@
               relationships, and schema-specific behavior.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates,
-              fields, versions, and validation rules for structured content.
+              fields, versions, validation rules, and interactive AI actions for structured content.
 
         - @id:ar.workspace.lifecycle Workspaces can define lifecycle states, designate one as the deprecated state,
           and use them as part of entity and project review workflows.
@@ -195,8 +195,16 @@
 
         - @id:ar.collaboration.watches Users can watch entities and receive notifications when relevant changes occur.
 
-        - @id:ar.collaboration.notifications Users can inspect unread notifications and clear or remove notification
-          state.
+        - @id:ar.collaboration.notifications Users can inspect a single consolidated in-app notification feed
+          covering entity-watch changes and governance action items, see an unread count badge, and clear or mark
+          notifications read. A governance action-item notification is cleared automatically once its underlying
+          task is resolved, superseded, or cancelled, without requiring the user to open the notification.
+
+            - @id:ar.collaboration.notifications.delivery-preferences Users can choose, per notification type and
+              per delivery channel, whether they receive that notification. In-app delivery is on by default for
+              normal notification types and off by default for reminder types; email, Slack, and SMS are modeled
+              as channels but not yet deliverable. Preferences are scoped per user per workspace and only affect
+              future notifications, not existing Inbox items.
 
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,
           filter work by task and due-date attributes, and navigate to governed cases.
@@ -270,5 +278,10 @@
 
         - @id:ar.ai.entity-extraction @status:experimental Users can submit supported content to an AI extraction
           workflow, review parsed entities, and accept selected results.
+
+        - @id:ar.ai.document-actions @status:experimental Users who can view a document can launch document
+          type-defined interactive AI actions from the document sidebar, running a predefined prompt read-only
+          against the document's body, metadata, type, and location, and can continue the temporary result in an
+          AI conversation.
 
         - @id:ar.ai.configuration Administrators can configure the AI provider and workspace-level AI settings.

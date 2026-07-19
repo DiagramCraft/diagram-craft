@@ -227,28 +227,42 @@ test.describe('ai chat routes', () => {
       has_api_key: true
     });
 
-    const updated = await orpc.ai.updateConfig({
-      params: { workspace: 'default' },
-      body: {
+    try {
+      const updated = await orpc.ai.updateConfig({
+        params: { workspace: 'default' },
+        body: {
+          provider: 'openrouter',
+          api_key: null,
+          model: 'router-model',
+          base_url: 'http://mock-router',
+          temperature: 0.8,
+          system_prompt: 'Use bullets',
+          enabled: false
+        }
+      });
+      expect(updated).toMatchObject({
+        workspace: seedIds.workspace.default,
         provider: 'openrouter',
-        api_key: null,
         model: 'router-model',
         base_url: 'http://mock-router',
         temperature: 0.8,
         system_prompt: 'Use bullets',
-        enabled: false
-      }
-    });
-    expect(updated).toMatchObject({
-      workspace: seedIds.workspace.default,
-      provider: 'openrouter',
-      model: 'router-model',
-      base_url: 'http://mock-router',
-      temperature: 0.8,
-      system_prompt: 'Use bullets',
-      enabled: false,
-      has_api_key: true
-    });
+        enabled: false,
+        has_api_key: true
+      });
+    } finally {
+      await orpc.ai.updateConfig({
+        params: { workspace: 'default' },
+        body: {
+          provider: config.provider,
+          base_url: config.base_url,
+          model: config.model,
+          temperature: config.temperature,
+          system_prompt: config.system_prompt,
+          enabled: config.enabled
+        }
+      });
+    }
   });
 
   test('GET /api/:workspace/ai/config returns 404 when unset', async ({ orpc, seeded: _ }) => {
