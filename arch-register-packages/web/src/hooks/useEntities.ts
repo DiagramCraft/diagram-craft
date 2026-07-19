@@ -19,7 +19,7 @@ export const useEntities = (
   options: EntityListOptions = {},
   queryOptions?: { enabled?: boolean }
 ) => {
-  return useQuery({
+  const query = useQuery({
     queryKey: entityKeys.list(workspaceId, options),
     queryFn: () =>
       orpcClient.entities.list({
@@ -33,6 +33,12 @@ export const useEntities = (
       }),
     enabled: queryOptions?.enabled ?? !!workspaceId
   });
+
+  return {
+    ...query,
+    data: query.data?.items ?? [],
+    total: query.data?.total
+  };
 };
 
 // Hook for fetching a single entity
@@ -209,11 +215,13 @@ export const useEntitiesBySchema = (
   return useQueries({
     queries: schemaIds.map(schemaId => ({
       queryKey: entityKeys.list(workspaceId, { schemaId, view: 'summary', conditions }),
-      queryFn: () =>
-        orpcClient.entities.list({
+      queryFn: async () => {
+        const page = await orpcClient.entities.list({
           params: { workspace: workspaceId },
           query: { ...toEntityListQuery({ schemaId, conditions }), view: 'summary' }
-        }),
+        });
+        return page.items;
+      },
       enabled: !!workspaceId && !!schemaId
     }))
   });

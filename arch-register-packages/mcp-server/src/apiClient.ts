@@ -92,18 +92,12 @@ export class ArchRegisterApiClient {
     params.set('view', 'full');
 
     const path = `/${encodePath(this.workspace)}/data?${params.toString()}`;
-    const countParams = new URLSearchParams(params);
-    countParams.delete('limit');
-    countParams.delete('offset');
-    countParams.delete('view');
-    const countPath = `/${encodePath(this.workspace)}/data/count?${countParams.toString()}`;
+    const page = await this.request<{
+      items: Array<Record<string, unknown>>;
+      total: number;
+    }>(path);
 
-    const [entities, count] = await Promise.all([
-      this.request<Array<Record<string, unknown>>>(path),
-      this.request<{ total: number }>(countPath)
-    ]);
-
-    return { entities, total: count.total };
+    return { entities: page.items, total: page.total };
   }
 
   async getEntity(entityId: string) {

@@ -47,17 +47,18 @@ test.describe('Collections API', () => {
       params: { workspace: 'default' },
       query: { collectionId: first.id }
     });
-    expect(entities.map(entity => entity._uid)).toEqual([entityId]);
+    expect(entities.items.map(entity => entity._uid)).toEqual([entityId]);
+    expect(entities.total).toBe(1);
 
     await orpc.collections.removeEntity({
       params: { workspace: 'default', id: first.id, entityId }
     });
-    expect(
-      await orpc.entities.list({
-        params: { workspace: 'default' },
-        query: { collectionId: first.id }
-      })
-    ).toEqual([]);
+    const removed = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { collectionId: first.id }
+    });
+    expect(removed.items).toEqual([]);
+    expect(removed.total).toBe(0);
 
     await orpc.collections.remove({ params: { workspace: 'default', id: second.id } });
     expect((await orpc.entities.get({ params: { workspace: 'default', id: entityId } }))._uid).toBe(

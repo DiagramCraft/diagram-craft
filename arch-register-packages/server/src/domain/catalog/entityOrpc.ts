@@ -18,7 +18,7 @@ import { updateEntityWithAudit } from './entityMutations';
 import { logAudit } from '../audit/db/auditLogging';
 import { importParse, importCommit } from './importOperations';
 import {
-  listEntities,
+  listEntitiesWithCount,
   countEntities,
   getEntityFacets,
   getTimelineMarkers,
@@ -70,7 +70,7 @@ const entityHandlers = {
       });
       requireProjectAccess(authCtx, project.owner);
     }
-    return await listEntities(context.db, workspace, authCtx, query);
+    return await listEntitiesWithCount(context.db, workspace, authCtx, query);
   }),
 
   count: entityRouter.entities.count.handler(async ({ input, context }) => {

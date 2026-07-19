@@ -13,9 +13,10 @@ describe('ArchRegisterApiClient', () => {
     const fetchImpl: typeof fetch = vi.fn(async (input, init = {}) => {
       const url = String(input);
       requests.push({ url, init });
-      return url.includes('/count')
-        ? makeResponse({ total: 7 })
-        : makeResponse([{ _uid: 'entity-1', _name: 'Payments API' }]);
+      return makeResponse({
+        items: [{ _uid: 'entity-1', _name: 'Payments API' }],
+        total: 7
+      });
     }) as unknown as typeof fetch;
     const client = new ArchRegisterApiClient({
       baseUrl: 'https://arch-register.example.test/',
@@ -36,7 +37,7 @@ describe('ArchRegisterApiClient', () => {
       entities: [{ _uid: 'entity-1', _name: 'Payments API' }],
       total: 7
     });
-    expect(requests).toHaveLength(2);
+    expect(requests).toHaveLength(1);
     const listRequest = requests.find(request => request.url.includes('/data?'))!;
     const listUrl = new URL(listRequest.url);
     expect(listUrl.pathname).toBe('/api/workspace%2Fone/data');

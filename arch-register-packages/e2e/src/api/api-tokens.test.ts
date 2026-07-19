@@ -36,7 +36,8 @@ test.describe('workspace API tokens', () => {
       params: { workspace: 'default' },
       query: { view: 'summary' }
     });
-    expect(entities.length).toBeGreaterThan(0);
+    expect(entities.items.length).toBeGreaterThan(0);
+    expect(entities.total).toBeGreaterThan(0);
     expect(await server.db.auth.listApiTokenAudit(seedIds.workspace.default)).toEqual(
       expect.arrayContaining([expect.objectContaining({ token_id: created.id, event: 'used' })])
     );

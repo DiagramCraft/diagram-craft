@@ -276,7 +276,7 @@ test('workspace copy preserves typed documents, links, templates, and entity con
     params: { workspace: copiedWorkspace.url_slug },
     query: {}
   });
-  const copiedEntity = copiedEntities.find(entityItem => entityItem._name === entity._name);
+  const copiedEntity = copiedEntities.items.find(entityItem => entityItem._name === entity._name);
   expect(copiedEntity).toEqual(expect.objectContaining({ _name: entity._name }));
   expect(copiedEntity?._uid).not.toBe(entity._uid);
 

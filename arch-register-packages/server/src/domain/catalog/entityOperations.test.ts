@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import type { AssessmentDbResult, AssessmentResponseDbResult } from '../project/db/projectDatabase';
 import { buildAuthorizationContext } from '@arch-register/permissions';
-import { countEntities, listEntities } from './entityOperations';
+import { countEntities, listEntities, listEntitiesWithCount } from './entityOperations';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
 
@@ -159,6 +159,24 @@ describe('listEntities', () => {
         offset: 200
       }
     );
+  });
+});
+
+describe('listEntitiesWithCount', () => {
+  it('returns the page and total from the same filtered collection', async () => {
+    const entities = Array.from({ length: 250 }, (_, index) => makeEntity(index));
+    const db = makeDb(entities);
+
+    const result = await listEntitiesWithCount(db, 'ws-1', null, {
+      view: 'summary',
+      limit: 1,
+      offset: 200
+    });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?._uid).toBe('entity-200');
+    expect(result.total).toBe(250);
+    expect(db.catalog.listEntitiesPaginated).toHaveBeenCalledTimes(2);
   });
 });
 

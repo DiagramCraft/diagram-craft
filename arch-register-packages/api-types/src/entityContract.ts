@@ -148,6 +148,11 @@ const entityCountResponseSchema = z.object({
   total: z.number().int().describe('Total number of entities matching the filters')
 });
 
+const entityListResponseSchema = z.object({
+  items: z.array(entityRecordSchema).describe('Entities on the requested page'),
+  total: z.number().int().describe('Total number of entities matching the filters')
+});
+
 // ── Facets ────────────────────────────────────────────────────
 
 const entityFacetBucketSchema = z.object({
@@ -391,7 +396,7 @@ export const workspaceEntityContract = oc.tag('Entities').router({
           })
         })
       )
-      .output(z.array(entityRecordSchema)),
+      .output(entityListResponseSchema),
     count: oc
       .route({
         method: 'GET',
