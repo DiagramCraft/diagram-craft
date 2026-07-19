@@ -44,6 +44,7 @@ import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
+import { getHttpErrorLogLevel } from './utils/errorLogging';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -64,19 +65,21 @@ export const createApp = (
     onError: (error, event) => {
       const method = getMethod(event);
       const path = getRequestPath(event);
-      if (error.status >= 500) {
-        const cause = error.cause instanceof Error ? error.cause : error;
-        httpLogger.error(`${error.status} ${method} ${path}: ${error.message}`, cause);
-      } else if (error.status === 404) {
-        httpLogger.info(`404 ${method} ${path}`);
-      } else if (
-        error.status === 401 &&
-        error.message === 'Missing or invalid authorization header'
-      ) {
-        // Expected auth failure during initial page load - log as debug to reduce noise
-        httpLogger.debug(`${error.status} ${method} ${path}: ${error.message}`);
-      } else {
-        httpLogger.warn(`${error.status} ${method} ${path}: ${error.message}`);
+      switch (getHttpErrorLogLevel(error)) {
+        case 'error': {
+          const cause = error.cause instanceof Error ? error.cause : error;
+          httpLogger.error(`${error.status} ${method} ${path}: ${error.message}`, cause);
+          break;
+        }
+        case 'debug':
+          httpLogger.debug(`${error.status} ${method} ${path}: ${error.message}`);
+          break;
+        case 'info':
+          httpLogger.info(`404 ${method} ${path}`);
+          break;
+        case 'warn':
+          httpLogger.warn(`${error.status} ${method} ${path}: ${error.message}`);
+          break;
       }
     }
   });

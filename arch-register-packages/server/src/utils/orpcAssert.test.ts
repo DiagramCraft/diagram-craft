@@ -102,4 +102,16 @@ describe('orpcAssert error input', () => {
       message: 'Missing'
     });
   });
+
+  it('preserves typed error metadata', () => {
+    expect(
+      errorOf(() =>
+        orpcAssert.present(null, {
+          code: 'UNAUTHORIZED',
+          message: 'Expected failure',
+          data: { expected: true }
+        })
+      )
+    ).toMatchObject({ data: { expected: true } });
+  });
 });

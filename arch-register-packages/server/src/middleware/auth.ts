@@ -40,7 +40,11 @@ export const createAuthMiddleware = (db: AuthDatabase) => {
     const isBearerHeader = authHeader?.startsWith('Bearer ') ?? false;
     const isApiTokenCandidate = isBearerHeader && token?.startsWith(API_TOKEN_PREFIX);
 
-    httpAssert.present(token, { status: 401, message: 'Missing or invalid authorization header' });
+    httpAssert.present(token, {
+      status: 401,
+      message: 'Missing or invalid authorization header',
+      data: { expected: true }
+    });
 
     let payload: JWTPayload | null = null;
     try {
