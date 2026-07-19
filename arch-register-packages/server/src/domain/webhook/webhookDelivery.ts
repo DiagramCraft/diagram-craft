@@ -3,6 +3,8 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuditLogDbResult } from '../audit/db/auditDatabase';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import { RetryableJobError } from '../jobs/jobRetry';
+import { UnsafeOutboundHostError } from './webhookRequest';
+import { sendWebhookRequest } from './webhookRequest';
 
 const JOB_TYPE = 'webhook.delivery';
 const SYSTEM_IDENTITY = 'webhooks';
@@ -99,11 +101,9 @@ export const createWebhookDeliveryHandler =
 
     const body = JSON.stringify(event);
     const signature = createHmac('sha256', webhook.hmac_secret).update(body).digest('hex');
-    let response: Response;
+    let response: Awaited<ReturnType<typeof sendWebhookRequest>>;
     try {
-      response = await fetch(webhook.url, {
-        method: 'POST',
-        redirect: 'manual',
+      response = await sendWebhookRequest(new URL(webhook.url), {
         signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
         headers: {
           'content-type': 'application/json',
@@ -116,22 +116,24 @@ export const createWebhookDeliveryHandler =
         body
       });
     } catch (error) {
+      if (error instanceof UnsafeOutboundHostError) throw error;
       throw new RetryableJobError(
         `Webhook request failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
 
-    if (response.ok) {
-      await response.body?.cancel();
+    if (response.status >= 200 && response.status < 300) {
       return { status_code: response.status };
     }
-    await response.body?.cancel();
     const message = `Webhook returned HTTP ${response.status}`;
+    if (response.status >= 300 && response.status < 400) {
+      throw new Error(message);
+    }
     if (response.status === 408 || response.status === 429 || response.status >= 500) {
       throw new RetryableJobError(
         message,
         response.status === 429 || response.status === 503
-          ? retryAfterMs(response.headers.get('retry-after'))
+          ? retryAfterMs(response.retryAfter)
           : undefined
       );
     }

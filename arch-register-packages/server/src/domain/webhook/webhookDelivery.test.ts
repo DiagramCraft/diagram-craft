@@ -7,6 +7,14 @@ import {
   createWebhookDeliveryHandler,
   enqueueWebhookDeliveries
 } from './webhookDelivery';
+import { sendWebhookRequest } from './webhookRequest';
+
+vi.mock('./webhookRequest', async importOriginal => {
+  const actual = await importOriginal<typeof import('./webhookRequest')>();
+  return { ...actual, sendWebhookRequest: vi.fn() };
+});
+
+const sendWebhookRequestMock = vi.mocked(sendWebhookRequest);
 
 const webhook = {
   id: 'hook-1',
@@ -37,7 +45,10 @@ const event = auditLogToWebhookEvent({
 
 const db = { webhook: { getWebhook: vi.fn(async () => webhook) } } as unknown as DatabaseAdapter;
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  sendWebhookRequestMock.mockReset();
+});
 
 describe('webhook delivery', () => {
   it('queues only enabled webhooks whose operation and schema filters match', async () => {
@@ -85,19 +96,16 @@ describe('webhook delivery', () => {
   });
 
   it('sends the exact signed payload and delivery headers', async () => {
-    const fetchMock = vi.fn(
-      async (_input: string | URL | Request, _init?: RequestInit) =>
-        new Response(null, { status: 204 })
-    );
-    vi.stubGlobal('fetch', fetchMock);
+    sendWebhookRequestMock.mockResolvedValue({ status: 204, retryAfter: null });
     await createWebhookDeliveryHandler(db)({
       jobId: 'delivery-1',
       workspace: 'ws-1',
       payload: { webhookId: 'hook-1', event }
     });
-    const [, init] = fetchMock.mock.calls[0]!;
-    const body = String(init?.body);
-    const headers = init?.headers as Record<string, string>;
+    const [url, request] = sendWebhookRequestMock.mock.calls[0]!;
+    const body = request.body;
+    const headers = request.headers;
+    expect(url).toEqual(new URL(webhook.url));
     expect(JSON.parse(body)).toEqual(event);
     expect(headers['x-arch-register-delivery-id']).toBe('delivery-1');
     expect(headers['x-arch-register-signature-256']).toBe(
@@ -106,10 +114,7 @@ describe('webhook delivery', () => {
   });
 
   it('classifies temporary and permanent HTTP responses', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(null, { status: 503 }))
-    );
+    sendWebhookRequestMock.mockResolvedValueOnce({ status: 503, retryAfter: null });
     await expect(
       createWebhookDeliveryHandler(db)({
         jobId: 'delivery-1',
@@ -118,10 +123,7 @@ describe('webhook delivery', () => {
       })
     ).rejects.toBeInstanceOf(RetryableJobError);
 
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(null, { status: 400 }))
-    );
+    sendWebhookRequestMock.mockResolvedValueOnce({ status: 400, retryAfter: null });
     await expect(
       createWebhookDeliveryHandler(db)({
         jobId: 'delivery-1',
@@ -133,14 +135,11 @@ describe('webhook delivery', () => {
 
   it('cancels an in-flight request when the job signal is aborted', async () => {
     const controller = new AbortController();
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(
-        async (_input: string | URL | Request, init?: RequestInit) =>
-          new Promise<Response>((_resolve, reject) => {
-            init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
-          })
-      )
+    sendWebhookRequestMock.mockImplementation(
+      async (_url, request) =>
+        new Promise((_resolve, reject) => {
+          request.signal.addEventListener('abort', () => reject(request.signal.reason));
+        })
     );
 
     const execution = createWebhookDeliveryHandler(db)({
@@ -149,9 +148,22 @@ describe('webhook delivery', () => {
       payload: { webhookId: 'hook-1', event },
       signal: controller.signal
     });
-    await vi.waitFor(() => expect(fetch).toHaveBeenCalled());
+    await vi.waitFor(() => expect(sendWebhookRequestMock).toHaveBeenCalled());
     controller.abort(new Error('lease lost'));
 
     await expect(execution).rejects.toBeInstanceOf(RetryableJobError);
+  });
+
+  it('does not follow redirects', async () => {
+    sendWebhookRequestMock.mockResolvedValue({ status: 302, retryAfter: null });
+
+    await expect(
+      createWebhookDeliveryHandler(db)({
+        jobId: 'delivery-1',
+        workspace: 'ws-1',
+        payload: { webhookId: 'hook-1', event }
+      })
+    ).rejects.toThrow('Webhook returned HTTP 302');
+    expect(sendWebhookRequestMock).toHaveBeenCalledTimes(1);
   });
 });
