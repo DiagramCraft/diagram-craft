@@ -2,15 +2,17 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import {
   type AuthorizationContext,
-  buildAuthorizationContext,
   CapabilityEvaluator,
   type EntityAction,
   type Entity as PermissionEntity,
-  fetchAuthorizationContextData,
   PermissionChecker,
   ProjectAction,
   type WorkspaceCapability
 } from '@arch-register/permissions';
+import {
+  buildAuthorizationContext,
+  fetchAuthorizationContextData
+} from '@arch-register/permissions/src/AuthorizationContextBuilder';
 import { ServerDataProvider } from './ServerAuthorizationDataProvider';
 import { httpAssert } from '../../utils/httpAssert';
 import { Entity } from '../catalog/db/catalogDatabase';
