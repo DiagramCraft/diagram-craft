@@ -14,7 +14,6 @@ import {
 } from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
 import { LayerIndicator } from './react-app/LayerIndicator';
-import { DocumentIndicator } from './react-app/DocumentIndicator';
 import {
   markStartOfNodeLinkPopup,
   NodeLinkPopup,
@@ -686,7 +685,6 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                 <div id="tabs">
                   <DocumentTabs document={doc} />
                   <LayerIndicator />
-                  <DocumentIndicator />
                 </div>
               </div>
 
