@@ -43,12 +43,12 @@ export const executeNodeAction = (
         body: JSON.stringify(payload)
       })
         .then(res => {
-          if (!res.ok) {
-            console.error(`REST call action failed: ${res.status} ${res.statusText}`);
-          }
+          if (res.ok) return;
+
+          console.error(`Failed: ${res.status} ${res.statusText}`);
         })
         .catch(error => {
-          console.error('REST call action failed', error);
+          console.error('Failed', error);
         });
       return;
     }
