@@ -83,6 +83,19 @@ describe('UserState', () => {
     expect(new UserState().stencilPickerViewMode).toBe('list');
   });
 
+  test('persists the comment visibility mode', () => {
+    const userState = new UserState();
+
+    expect(userState.commentVisibility).toBe('all');
+
+    userState.commentVisibility = 'unresolved';
+
+    expect(JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}')).toMatchObject({
+      commentVisibility: 'unresolved'
+    });
+    expect(new UserState().commentVisibility).toBe('unresolved');
+  });
+
   test('only emits change when persisted state actually changes', () => {
     const userState = new UserState();
     const changeListener = vi.fn();

@@ -124,6 +124,7 @@ Diagram Craft splits its tool windows between a left sidebar and a right sidebar
   - `My Threads`
 - Notes:
   - both tabs support sorting, grouping, and hiding resolved threads
+  - the header controls also choose whether all, unresolved, or no comment markers are shown in the drawing area
   - when elements are selected, the panel narrows to threads attached to that selection
 
 ### Style Overview

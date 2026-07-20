@@ -39,6 +39,7 @@ import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationC
 import { HoverOverlayComponent } from '../components/HoverOverlayComponent';
 import { CommentPinsComponent } from '../components/CommentPinsComponent';
 import { getAncestorWithClass } from '@diagram-craft/utils-dom/dom';
+import type { CommentVisibility } from '../components/commentVisibility';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -224,7 +225,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
     const canvasState = {
       context: props.context,
-      diagram
+      diagram,
+      commentVisibility: props.commentVisibility
     };
 
     const viewBox = this.getViewboxString(props);
@@ -521,4 +523,5 @@ export type Props = BaseCanvasProps & {
 export type CanvasState = {
   context: Context;
   diagram: Diagram;
+  commentVisibility?: CommentVisibility;
 };
