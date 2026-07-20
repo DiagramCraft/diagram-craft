@@ -16,6 +16,7 @@ import type { SerializedDiagramDocument } from '@diagram-craft/model/serializati
 import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
 import { vnodeToString } from './vnodeSerializer';
 import type { ToolType } from '@diagram-craft/canvas/tool';
+import type { CommentVisibility } from '@diagram-craft/canvas/components/commentVisibility';
 
 // Minimal stub Context for server-side rendering.
 // Only `tool.get()` might be called during render() and only when a node is
@@ -31,7 +32,8 @@ const ssrContext: Context = {
   },
   help: { set: () => {}, push: () => {}, pop: () => {} },
   actions: {},
-  marquee: new Marquee()
+  marquee: new Marquee(),
+  commentVisibility: new Observable<CommentVisibility>('all')
 };
 
 // Reuse the registry across renders — constructing it is expensive.

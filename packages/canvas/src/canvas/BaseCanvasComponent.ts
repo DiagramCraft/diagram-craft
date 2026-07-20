@@ -23,7 +23,6 @@ import styles from './canvas.css?inline';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
-import type { CommentVisibility } from '../components/commentVisibility';
 
 export type BaseCanvasProps = {
   id: string;
@@ -32,7 +31,6 @@ export type BaseCanvasProps = {
   context: Context;
   className?: string;
   diagram: Diagram;
-  commentVisibility?: CommentVisibility;
   onClick?: (e: MouseEvent) => void;
 };
 

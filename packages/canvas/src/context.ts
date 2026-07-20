@@ -9,6 +9,7 @@ import type { ActionMap } from '@diagram-craft/canvas/action';
 import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
 import { NODE_LINK_POPUP_NO_SHAPE_ID as MODEL_NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/model/stencilRegistry';
 import type { UndoableAction } from '@diagram-craft/model/undoManager';
+import type { CommentVisibility } from './components/commentVisibility';
 
 export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => void;
 export type OnDoubleClick = (id: string, coord: Point) => void;
@@ -59,6 +60,7 @@ export interface Context {
   actions: Partial<ActionMap>;
   marquee: Marquee;
   actionState: Observable<'enabled' | 'disabled'>;
+  commentVisibility: Observable<CommentVisibility>;
 }
 
 /**

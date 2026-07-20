@@ -12,6 +12,7 @@ import { Observable } from '@diagram-craft/canvas/component/component';
 import { Marquee } from '@diagram-craft/canvas/marquee';
 import type { Context } from '@diagram-craft/canvas/context';
 import type { ToolType } from '@diagram-craft/canvas/tool';
+import type { CommentVisibility } from '@diagram-craft/canvas/components/commentVisibility';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useContentFile, useContentFileContent } from '../../../../../hooks/useContentScope';
 import { initializeDiagramCraft } from '../../../../../diagramcraft-initial-config';
@@ -43,7 +44,8 @@ const VIEWER_CONTEXT: Context = {
   tool: new Observable<ToolType>('move'),
   actions: {},
   marquee: new Marquee(),
-  actionState: new Observable<'enabled' | 'disabled'>('enabled')
+  actionState: new Observable<'enabled' | 'disabled'>('enabled'),
+  commentVisibility: new Observable<CommentVisibility>('all')
 };
 
 export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) => {

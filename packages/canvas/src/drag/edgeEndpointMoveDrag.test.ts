@@ -144,7 +144,8 @@ const createContext = (): Context =>
     tool: {} as Context['tool'],
     actions: {},
     marquee: {} as Context['marquee'],
-    actionState: {} as Context['actionState']
+    actionState: {} as Context['actionState'],
+    commentVisibility: {} as Context['commentVisibility']
   }) as Context;
 
 const mountDiagramElement = (diagramId: string) => {

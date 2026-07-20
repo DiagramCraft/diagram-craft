@@ -642,7 +642,6 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                             onDrop={canvasDropHandler($d)}
                             onDragOver={canvasDragOverHandler($d)}
                             context={application}
-                            commentVisibility={userState.current.commentVisibility}
                           />
                         }
                       />

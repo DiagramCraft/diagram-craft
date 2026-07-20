@@ -125,10 +125,11 @@ export class CommentPinsComponent extends Component<CanvasState> {
     onEvent(diagram.commentManager, 'commentAdded', () => this.redraw());
     onEvent(diagram.commentManager, 'commentUpdated', () => this.redraw());
     onEvent(diagram.commentManager, 'commentRemoved', () => this.redraw());
+    onEvent(props.context.commentVisibility, 'change', () => this.redraw());
 
     return svg.g(
       {},
-      ...getCommentMarkers(diagram, props.commentVisibility).map(marker =>
+      ...getCommentMarkers(diagram, props.context.commentVisibility.get()).map(marker =>
         this.renderMarker(marker, props)
       )
     );
