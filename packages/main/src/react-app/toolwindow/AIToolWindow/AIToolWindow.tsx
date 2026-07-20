@@ -34,7 +34,7 @@ export const AIToolWindow = () => {
 
   const activeLayer = diagram.activeLayer;
   const isDisabled =
-    activeLayer.type !== 'regular' || activeLayer.isLocked() || diagram.isLocked() || loading;
+    activeLayer.type !== 'regular' || activeLayer.isEffectivelyLocked() || loading;
 
   useEventListener(diagram.layers, 'layerStructureChange', redraw);
 

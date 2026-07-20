@@ -86,7 +86,7 @@ export interface DiagramElement extends Detachable<DiagramElement | Layer> {
   readonly crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
   readonly locked: boolean;
-  isLocked(): boolean;
+  isEffectivelyLocked(): boolean;
   setLocked(value: boolean, uow: UnitOfWork): void;
   isHidden(): boolean;
 
@@ -315,8 +315,8 @@ export abstract class AbstractDiagramElement
     return this.#locked;
   }
 
-  isLocked() {
-    return this.#locked || this.layer.isLocked() || this.diagram.isLocked();
+  isEffectivelyLocked() {
+    return this.locked || this.layer.isEffectivelyLocked();
   }
 
   setLocked(value: boolean, uow: UnitOfWork) {

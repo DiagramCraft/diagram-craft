@@ -260,7 +260,8 @@ export class ShapeBuilder {
   makeOnDblclickHandle(textId: string | undefined = '1') {
     if (
       isNode(this.props.element) &&
-      (!this.props.element.renderProps.capabilities.editable || this.props.element.isLocked())
+      (!this.props.element.renderProps.capabilities.editable ||
+        this.props.element.isEffectivelyLocked())
     ) {
       return;
     }

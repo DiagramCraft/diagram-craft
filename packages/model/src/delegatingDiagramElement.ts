@@ -193,8 +193,8 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     return this.delegate.locked;
   }
 
-  isLocked() {
-    return this.delegate.isLocked();
+  isEffectivelyLocked() {
+    return this.delegate.isEffectivelyLocked();
   }
 
   setLocked(value: boolean, uow: UnitOfWork) {

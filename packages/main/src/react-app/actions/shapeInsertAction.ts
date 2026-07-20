@@ -32,7 +32,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
     return ActionCriteria.EventTriggered(
       activeDiagram.layers,
       'layerStructureChange',
-      () => activeLayer.type === 'regular' && !activeLayer.isLocked() && !activeDiagram.isLocked()
+      () => activeLayer.type === 'regular' && !activeLayer.isEffectivelyLocked()
     );
   }
 

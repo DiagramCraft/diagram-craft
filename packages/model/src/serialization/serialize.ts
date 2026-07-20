@@ -167,7 +167,7 @@ export const serializeLayer = (
       elements: (layer as RegularLayer).elements.map(
         element => serializeDiagramElement(element, options) as SerializedRegularElement
       ),
-      isLocked: layer.isLocked()
+      isLocked: layer.locked
     };
   } else if (layer.type === 'reference') {
     return {
@@ -199,7 +199,7 @@ export const serializeLayer = (
           ? (serializeDiagramElement(m.element, options) as SerializedModificationElement)
           : undefined
       })),
-      isLocked: layer.isLocked()
+      isLocked: layer.locked
     };
   } else {
     throw new NotImplementedYet();

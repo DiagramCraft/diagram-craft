@@ -47,8 +47,7 @@ export class ToolAction extends AbstractToggleAction<undefined, Application> {
       'layerStructureChange',
       () =>
         context.model.activeDiagram.activeLayer.type === 'regular' &&
-        !context.model.activeDiagram.activeLayer.isLocked() &&
-        !context.model.activeDiagram.isLocked()
+        !context.model.activeDiagram.activeLayer.isEffectivelyLocked()
     );
   }
 

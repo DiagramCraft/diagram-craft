@@ -37,25 +37,25 @@ describe.each(Backends.all())('Layer [%s]', (_name, backend) => {
     it('should set the locked state of a layer', () => {
       const { diagram1, layer1 } = standardTestModel(backend);
 
-      const originalLocked = layer1.isLocked();
+      const originalLocked = layer1.locked;
 
       // Act
       diagram1.undoManager.execute('Lock', uow => layer1.setLocked(true, uow));
 
       // Verify
-      expect(layer1.isLocked()).toBe(true);
+      expect(layer1.locked).toBe(true);
 
       // Act
       diagram1.undoManager.undo();
 
       // Verify
-      expect(layer1.isLocked()).toBe(originalLocked);
+      expect(layer1.locked).toBe(originalLocked);
 
       // Act
       diagram1.undoManager.redo();
 
       // Verify
-      expect(layer1.isLocked()).toBe(true);
+      expect(layer1.locked).toBe(true);
     });
   });
 });

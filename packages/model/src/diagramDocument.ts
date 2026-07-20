@@ -149,8 +149,8 @@ export class DiagramDocument
     return this.#locked;
   }
 
-  isLocked() {
-    return this.#locked;
+  isEffectivelyLocked() {
+    return this.locked;
   }
 
   setLocked(value: boolean, uow: UnitOfWork) {

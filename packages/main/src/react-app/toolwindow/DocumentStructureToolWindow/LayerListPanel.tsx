@@ -74,13 +74,13 @@ const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
         if (props.layer.type === 'reference') return;
 
         props.diagram.undoManager.execute('Toggle lock', uow => {
-          props.layer.setLocked(!props.layer.isLocked(), uow);
+          props.layer.setLocked(!props.layer.locked, uow);
         });
         e.preventDefault();
         e.stopPropagation();
       }}
     >
-      {props.layer.isLocked() ? <TbLock/> : <TbLockOff/>}
+      {props.layer.locked ? <TbLock/> : <TbLockOff/>}
     </span>
   );
 };
