@@ -53,6 +53,24 @@ describe('parser', () => {
     });
   });
 
+  test('parses node with text.enabled=false', () => {
+    const input = `n1: rect {
+  props: "text.enabled=false"
+}`;
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      id: 'n1',
+      type: 'node',
+      shape: 'rect',
+      props: {
+        text: { enabled: false }
+      }
+    });
+  });
+
   test('parses simple edge', () => {
     const input = 'e2: edge';
     const result = parse(input);
