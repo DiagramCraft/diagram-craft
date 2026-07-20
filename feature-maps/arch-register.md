@@ -18,14 +18,17 @@
           permissions, and settings boundary.
 
         - @id:ar.access.dev-switcher @status:experimental Development-mode deployments can optionally expose a
-          user-switcher toolbar that instantly assumes the identity of any user in the database, bypassing login,
-          for local testing only.
+          user-switcher toolbar that instantly assumes the identity of any user in the database, bypassing login, for
+          local testing only.
 
     - @id:ar.workspace Users can orient themselves in a workspace and administrators can configure its shared operating
       model.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas.
+
+        - @id:ar.workspace.templates Administrators can create a workspace from a built-in architecture template,
+          including its entity schemas, select-option enums, and document types and associated templates.
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, teams, roles, members,
           document types, templates, AI, analytics, audit, and other workspace settings.
@@ -34,14 +37,14 @@
               relationships, and schema-specific behavior, including marking a field as externally managed (by AI, an
               integration, or an internal automation) with a refresh mode of on-change or scheduled.
 
-            - @id:ar.workspace.configuration.document-types Administrators can define document types, templates,
-            fields, versions, validation rules, and AI actions for structured content, including marking a field as
-            externally managed (by AI, an integration, or an internal automation) with a refresh mode of on-change or
-            scheduled. Administrators can edit actions, select their read-only architecture tools, and test an unsaved
-            action against an existing document of the same type without persistence.
+            - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
+              versions, validation rules, and AI actions for structured content, including marking a field as externally
+              managed (by AI, an integration, or an internal automation) with a refresh mode of on-change or scheduled.
+              Administrators can edit actions, select their read-only architecture tools, and test an unsaved action
+              against an existing document of the same type without persistence.
 
-        - @id:ar.workspace.lifecycle Workspaces can define lifecycle states, designate one as the deprecated state,
-          and use them as part of entity and project review workflows.
+        - @id:ar.workspace.lifecycle Workspaces can define lifecycle states, designate one as the deprecated state, and
+          use them as part of entity and project review workflows.
 
         - @id:ar.workspace.analytics Administrators can inspect workspace-wide analytics and completeness-oriented
           views.
@@ -56,9 +59,9 @@
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
           lifecycle, links, references, and custom values. A schema field marked as externally managed (by AI, an
-          integration, or an internal automation) is read-only to users; its current value stays visible alongside
-          the latest update's source, timestamp, status, and any explanation or findings. A user edit to any other
-          field on the entity marks that entity's external field results outdated.
+          integration, or an internal automation) is read-only to users; its current value stays visible alongside the
+          latest update's source, timestamp, status, and any explanation or findings. A user edit to any other field on
+          the entity marks that entity's external field results outdated.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records.
@@ -98,10 +101,10 @@
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
           colour in a bubble view.
 
-        - @id:ar.entity-views.map Users can inspect containment hierarchies as a nested capability map, colouring
-          boxes by a configurable metric rolled up from descendant entities (numeric fields, lifecycle state, or
-          assessment fields), using dominant-option or worst aggregation. For enum-sourced metrics, "worst" ranks
-          options by the admin-configured top-to-bottom order of the enum's options.
+        - @id:ar.entity-views.map Users can inspect containment hierarchies as a nested capability map, colouring boxes
+          by a configurable metric rolled up from descendant entities (numeric fields, lifecycle state, or assessment
+          fields), using dominant-option or worst aggregation. For enum-sourced metrics, "worst" ranks options by the
+          admin-configured top-to-bottom order of the enum's options.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view.
 
@@ -206,37 +209,35 @@
 
         - @id:ar.collaboration.watches Users can watch entities and receive notifications when relevant changes occur.
 
-        - @id:ar.collaboration.notifications Users can inspect a single consolidated in-app notification feed
-          covering entity-watch changes, comment activity, and governance action items, see an unread count badge,
-          navigate to the related resource, and clear or mark notifications read. A governance action-item
-          notification is cleared automatically once its underlying task is resolved, superseded, or cancelled,
-          without requiring the user to open the notification.
+        - @id:ar.collaboration.notifications Users can inspect a single consolidated in-app notification feed covering
+          entity-watch changes, comment activity, and governance action items, see an unread count badge, navigate to
+          the related resource, and clear or mark notifications read. A governance action-item notification is cleared
+          automatically once its underlying task is resolved, superseded, or cancelled, without requiring the user to
+          open the notification.
 
             - @id:ar.collaboration.notifications.comment-activity Users receive in-app notifications when someone
               comments on an entity or content they own, or replies to their comment, subject to current access and
               excluding the person who posted the comment.
 
-            - @id:ar.collaboration.notifications.delivery-preferences Users can choose, per notification type and
-              per delivery channel, whether they receive that notification. In-app delivery is on by default for
-              normal notification types and off by default for reminder types; email is available when configured by
-              the deployment, while Slack and SMS are not yet deliverable. Preferences are scoped per user per
-              workspace and only affect
-              future notifications, not existing Inbox items.
+            - @id:ar.collaboration.notifications.delivery-preferences Users can choose, per notification type and per
+              delivery channel, whether they receive that notification. In-app delivery is on by default for normal
+              notification types and off by default for reminder types; email is available when configured by the
+              deployment, while Slack and SMS are not yet deliverable. Preferences are scoped per user per workspace and
+              only affect future notifications, not existing Inbox items.
 
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,
           filter work by task and due-date attributes, and navigate to governed cases.
 
-            - @id:ar.collaboration.governance-inbox.my-submissions Users can review governance work they have
-              submitted, see what or who is currently blocking it, and withdraw an open submission where permitted.
+            - @id:ar.collaboration.governance-inbox.my-submissions Users can review governance work they have submitted,
+              see what or who is currently blocking it, and withdraw an open submission where permitted.
 
-        - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity
-          changes, while authorized users can submit immutable revisions, review before/after diffs, resubmit after
-          requested changes, self-approve when they are the sole eligible approver, and record an audited approval
-          bypass.
+        - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity changes,
+          while authorized users can submit immutable revisions, review before/after diffs, resubmit after requested
+          changes, self-approve when they are the sole eligible approver, and record an audited approval bypass.
 
         - @id:ar.collaboration.entity-deprecation Workspace administrators can require deprecation proposals for
-          entities on schemas that opt in, while authorized users can propose a deprecation with a target date,
-          reason, successor entity, and related project, route it through approval, notify affected owner teams for
+          entities on schemas that opt in, while authorized users can propose a deprecation with a target date, reason,
+          successor entity, and related project, route it through approval, notify affected owner teams for
           acknowledgement, postpone or finalize on schedule, and cancel an in-flight deprecation; finalizing moves the
           entity to the workspace's designated deprecated lifecycle state.
 
@@ -255,8 +256,8 @@
         - @id:ar.authorization.teams Administrators can create teams, manage memberships, and use team assignments in
           authorization decisions.
 
-        - @id:ar.authorization.visibility Workspaces and entities can use public or restricted visibility modes subject to
-          the permission model.
+        - @id:ar.authorization.visibility Workspaces and entities can use public or restricted visibility modes subject
+          to the permission model.
 
     - @id:ar.import-export Users and administrators can move supported workspace, entity, project, and content data into
       and out of Arch Register.
@@ -296,21 +297,20 @@
         - @id:ar.ai.entity-extraction @status:experimental Users can submit supported content to an AI extraction
           workflow, review parsed entities, and accept selected results.
 
-        - @id:ar.ai.document-actions @status:experimental Users who can view a document can launch document
-          type-defined interactive AI actions from the document sidebar, running a predefined prompt read-only
-          against the document's body, metadata, type, and location, and can continue the temporary result in an
-          AI conversation.
+        - @id:ar.ai.document-actions @status:experimental Users who can view a document can launch document type-defined
+          interactive AI actions from the document sidebar, running a predefined prompt read-only against the document's
+          body, metadata, type, and location, and can continue the temporary result in an AI conversation.
 
         - @id:ar.ai.metadata-generation @status:experimental Document type-defined AI metadata generators run
-          automatically, read-only, a short time after an effective body or metadata change, producing one
-          validated value per generator's target field; a generator's target field must be marked externally
-          managed with kind AI. The previous value and generation details (explanation, findings, status, timestamp,
-          source revision, generator version) stay visible but are marked outdated as soon as the document changes,
-          and a further edit while generation is running discards its result and reschedules against the latest
-          revision. A failed generation is retried once before its failure notice is retained. Successful values are
-          written to document history under a dedicated AI system actor rather than the editing user, so they do not
-          themselves trigger another generation run. Changing a generator's prompt or configuration marks existing
-          results outdated without regenerating until the next document edit. Every such update, successful or
-          failed, is recorded in the workspace audit log alongside the previous and new values.
+          automatically, read-only, a short time after an effective body or metadata change, producing one validated
+          value per generator's target field; a generator's target field must be marked externally managed with kind AI.
+          The previous value and generation details (explanation, findings, status, timestamp, source revision,
+          generator version) stay visible but are marked outdated as soon as the document changes, and a further edit
+          while generation is running discards its result and reschedules against the latest revision. A failed
+          generation is retried once before its failure notice is retained. Successful values are written to document
+          history under a dedicated AI system actor rather than the editing user, so they do not themselves trigger
+          another generation run. Changing a generator's prompt or configuration marks existing results outdated without
+          regenerating until the next document edit. Every such update, successful or failed, is recorded in the
+          workspace audit log alongside the previous and new values.
 
         - @id:ar.ai.configuration Administrators can configure the AI provider and workspace-level AI settings.

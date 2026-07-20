@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { instantiateTemplate } from './schemaTemplates';
+import {
+  instantiateTemplate,
+  instantiateTemplateDefinitions,
+  SCHEMA_TEMPLATES
+} from './schemaTemplates';
 
 describe('instantiateTemplate', () => {
   it('preserves date fields in enriched templates', () => {
@@ -53,5 +57,46 @@ describe('instantiateTemplate', () => {
       type: 'reference',
       predicate: 'consumes'
     });
+  });
+
+  it('defines an enum for every select field in every built-in template', () => {
+    for (const template of SCHEMA_TEMPLATES) {
+      const enumIds = new Set(template.enums.map(enumeration => enumeration.id));
+      const selectFields = template.schemas.flatMap(schema =>
+        schema.fields.filter(field => field.type === 'select')
+      );
+
+      expect(selectFields.every(field => enumIds.has(field.enumId))).toBe(true);
+      expect(template.enums.every(enumeration => enumeration.options.length > 0)).toBe(true);
+    }
+  });
+
+  it('materializes enums and document definitions with remapped references', () => {
+    const definitions = instantiateTemplateDefinitions(
+      'ws-1',
+      'security',
+      new Date('2026-01-01T00:00:00.000Z')
+    );
+    const enumIds = new Set(definitions.enums.map(enumeration => enumeration.id));
+    const securitySelects = definitions.schemas.flatMap(schema =>
+      schema.fields.filter(field => field.type === 'select')
+    );
+
+    expect(definitions.enums).toHaveLength(6);
+    expect(securitySelects.every(field => enumIds.has(field.enumId))).toBe(true);
+    expect(definitions.documentTypes).toEqual([
+      expect.objectContaining({
+        name: 'Architecture Decision Record',
+        workspace: 'ws-1'
+      })
+    ]);
+    expect(definitions.documentTemplates).toEqual([
+      expect.objectContaining({
+        name: 'Architecture Decision Record',
+        workspace: 'ws-1',
+        document_type_id: definitions.documentTypes[0]!.id,
+        metadata_defaults: { status: 'Proposed' }
+      })
+    ]);
   });
 });
