@@ -61,7 +61,7 @@ const VisibilityToggle = (props: { layer: Layer; diagram: Diagram }) => {
         e.stopPropagation();
       }}
     >
-      {props.diagram.layers.visible.includes(props.layer) ? <TbEye /> : <TbEyeOff />}
+      {props.diagram.layers.visible.includes(props.layer) ? <TbEye/> : <TbEyeOff/>}
     </span>
   );
 };
@@ -80,7 +80,7 @@ const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
         e.stopPropagation();
       }}
     >
-      {props.layer.isLocked() ? <TbLock /> : <TbLockOff />}
+      {props.layer.isLocked() ? <TbLock/> : <TbLockOff/>}
     </span>
   );
 };
@@ -155,9 +155,9 @@ const LayerEntry = (props: { layer: Layer }) => {
                 gap: '0.1rem'
               }}
             >
-              {layer.type === 'reference' ? <TbLink /> : undefined}
-              {layer.resolveForced().type === 'rule' ? <TbAdjustments /> : undefined}
-              {layer.type === 'modification' ? <TbLayersSelectedBottom /> : undefined}
+              {layer.type === 'reference' ? <TbLink/> : undefined}
+              {layer.resolveForced().type === 'rule' ? <TbAdjustments/> : undefined}
+              {layer.type === 'modification' ? <TbLayersSelectedBottom/> : undefined}
               {layer.name}
             </div>
           </Tree.NodeLabel>
@@ -171,29 +171,29 @@ const LayerEntry = (props: { layer: Layer }) => {
                   e.stopPropagation();
                 }}
               >
-                <TbPlus />
+                <TbPlus/>
               </span>
             )}
             {layer.type !== 'reference' && layer.type !== 'rule' ? (
-              <LockToggle layer={layer} diagram={diagram} />
+              <LockToggle layer={layer} diagram={diagram}/>
             ) : (
               ''
             )}
-            <VisibilityToggle layer={layer} diagram={diagram} />
+            <VisibilityToggle layer={layer} diagram={diagram}/>
           </Tree.NodeCell>
           {!(layer instanceof ReferenceLayer) && (
             <Tree.Children>
               {layer instanceof RegularLayer && (
                 <div style={{ display: 'contents' }}>
                   {layer.elements.toReversed().map(e => (
-                    <ElementEntry key={e.id} element={e} />
+                    <ElementEntry key={e.id} element={e}/>
                   ))}
                 </div>
               )}
               {layer instanceof RuleLayer && (
                 <div style={{ display: 'contents' }}>
                   {layer.rules.toReversed().map(e => (
-                    <RuleEntry key={e.id} diagram={diagram} rule={e} layer={layer} />
+                    <RuleEntry key={e.id} diagram={diagram} rule={e} layer={layer}/>
                   ))}
                 </div>
               )}
@@ -231,7 +231,7 @@ const LayerEntry = (props: { layer: Layer }) => {
               <div style={{ display: 'contents' }}>
                 <Tree.Node className={styles.eNode}>
                   <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
-                    <TbArrowNarrowRight /> {layer.referenceName()}
+                    <TbArrowNarrowRight/> {layer.referenceName()}
                   </Tree.NodeLabel>
                 </Tree.Node>
               </div>
@@ -249,7 +249,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
   const application = useApplication();
   const actions = application.actions;
 
-  const icon = <TbFilterCog />;
+  const icon = <TbFilterCog/>;
 
   return (
     <RuleContextMenu
@@ -285,7 +285,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
                 e.stopPropagation();
               }}
             >
-              <TbPencil />
+              <TbPencil/>
             </span>
           </Tree.NodeCell>
         </Tree.Node>
@@ -303,18 +303,18 @@ const ModificationEntry = (props: {
   const element = m.type === 'remove' ? props.diagram.lookup(m.id) : m.element;
 
   // Determine icon based on element type (same as ElementEntry)
-  let icon = <TbRectangle />;
+  let icon = <TbRectangle/>;
   if (element) {
     if (isEdge(element)) {
-      icon = <TbLine />;
+      icon = <TbLine/>;
     } else if (isNode(element) && element.nodeType === 'group') {
-      icon = <TbBoxMultiple />;
+      icon = <TbBoxMultiple/>;
     } else if (isNode(element) && element.nodeType === 'table') {
-      icon = <TbTable />;
+      icon = <TbTable/>;
     } else if (isNode(element) && element.nodeType === 'text') {
-      icon = <TbTextSize />;
+      icon = <TbTextSize/>;
     } else if (isNode(element) && element.nodeType === 'tableRow') {
-      icon = <TbTableRow />;
+      icon = <TbTableRow/>;
     }
   }
 
@@ -354,7 +354,7 @@ const ModificationEntry = (props: {
             e.stopPropagation();
           }}
         >
-          <TbTrash />
+          <TbTrash/>
         </span>
       </Tree.NodeCell>
     </Tree.Node>
@@ -373,7 +373,7 @@ const ElementLockToggle = (props: { element: DiagramElement; diagram: Diagram })
         e.stopPropagation();
       }}
     >
-      {props.element.locked ? <TbLock /> : <TbLockOff />}
+      {props.element.locked ? <TbLock/> : null}
     </span>
   );
 };
@@ -421,19 +421,19 @@ const ElementEntry = (props: { element: DiagramElement }) => {
     }
   );
 
-  let icon = <TbRectangle />;
+  let icon = <TbRectangle/>;
   if (isEdge(e)) {
-    icon = <TbLine />;
+    icon = <TbLine/>;
   } else if (isNode(e) && e.nodeType === 'group') {
-    icon = <TbBoxMultiple />;
+    icon = <TbBoxMultiple/>;
   } else if (isNode(e) && e.nodeType === 'table') {
-    icon = <TbTable />;
+    icon = <TbTable/>;
   } else if (isNode(e) && e.nodeType === 'text') {
-    icon = <TbTextSize />;
+    icon = <TbTextSize/>;
   } else if (isNode(e) && e.nodeType === 'tableRow') {
-    icon = <TbTableRow />;
+    icon = <TbTableRow/>;
   } else if (isNode(e) && e.nodeType === 'tableCell') {
-    icon = <TbLayoutGrid />;
+    icon = <TbLayoutGrid/>;
   }
 
   return (
@@ -459,16 +459,16 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         <Tree.NodeLabelText>{e.name}</Tree.NodeLabelText>
       </Tree.NodeLabel>
       <Tree.NodeCell type={'action'}>
-        <ElementLockToggle element={e} diagram={diagram} />
+        <ElementLockToggle element={e} diagram={diagram}/>
       </Tree.NodeCell>
 
       {(childrenAllowed || (isEdge(e) && e.children.length > 0)) && (
         <Tree.Children>
           {(isNode(e)
-            ? (e.getDefinition() as ShapeNodeDefinition).getSortedChildren(e)
-            : e.children.toReversed()
+              ? (e.getDefinition() as ShapeNodeDefinition).getSortedChildren(e)
+              : e.children.toReversed()
           ).map(c => (
-            <ElementEntry key={c.id} element={c} />
+            <ElementEntry key={c.id} element={c}/>
           ))}
         </Tree.Children>
       )}
@@ -534,10 +534,10 @@ export const LayerListPanel = () => {
         data-dragmimetype={'application/x-diagram-craft-element-instances'}
       >
         {layers.map(l => (
-          <LayerEntry key={l.id} layer={l} />
+          <LayerEntry key={l.id} layer={l}/>
         ))}
       </Tree.Root>
-      <LayerContextMenu element={<div style={{ height: '100%' }}></div>} />
+      <LayerContextMenu element={<div style={{ height: '100%' }}></div>}/>
     </ToolWindowPanel>
   );
 };
