@@ -28,6 +28,88 @@ const workspaceTemplateSchema = z.object({
   description: z.string().describe('Template description')
 });
 
+const definitionImportSourceSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('builtin'), id: z.string().min(1) }),
+  z.object({ kind: z.literal('workspace'), id: z.string().min(1) })
+]);
+
+const definitionImportSelectionSchema = z.object({
+  schemas: z.array(z.string()),
+  enums: z.array(z.string()),
+  documentTypes: z.array(z.string())
+});
+
+const definitionImportRenameSchema = z.object({
+  kind: z.enum(['schema', 'enum', 'documentType']),
+  id: z.string().min(1),
+  name: z.string().trim().min(1)
+});
+
+const definitionImportDefinitionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  dependency: z.boolean(),
+  definition: z.record(z.string(), z.unknown())
+});
+
+const definitionImportSourceOptionSchema = z.object({
+  kind: z.enum(['builtin', 'workspace']),
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  schemas: z.array(z.object({ id: z.string(), name: z.string() })),
+  enums: z.array(z.object({ id: z.string(), name: z.string() })),
+  documentTypes: z.array(z.object({ id: z.string(), name: z.string() }))
+});
+
+const definitionImportConflictSchema = z.object({
+  kind: z.enum(['schema', 'enum', 'documentType']),
+  id: z.string(),
+  name: z.string(),
+  existingName: z.string()
+});
+
+const definitionImportPreviewSchema = z.object({
+  source: definitionImportSourceSchema,
+  selection: definitionImportSelectionSchema,
+  renames: z.array(definitionImportRenameSchema),
+  schemas: z.array(definitionImportDefinitionSchema),
+  enums: z.array(definitionImportDefinitionSchema),
+  documentTypes: z.array(definitionImportDefinitionSchema),
+  conflicts: z.array(definitionImportConflictSchema),
+  keyPrefixRemaps: z.array(
+    z.object({ sourceId: z.string(), name: z.string(), from: z.string(), to: z.string() })
+  ),
+  errors: z.array(z.string()),
+  fingerprint: z.string()
+});
+
+const definitionImportPreviewRequestSchema = z.object({
+  source: definitionImportSourceSchema,
+  selection: definitionImportSelectionSchema,
+  renames: z.array(definitionImportRenameSchema).default([])
+});
+
+const definitionImportExecuteRequestSchema = z.object({
+  source: definitionImportSourceSchema,
+  selection: definitionImportSelectionSchema,
+  renames: z.array(definitionImportRenameSchema).default([]),
+  schemas: z.array(definitionImportDefinitionSchema),
+  enums: z.array(definitionImportDefinitionSchema),
+  documentTypes: z.array(definitionImportDefinitionSchema),
+  keyPrefixRemaps: z.array(
+    z.object({ sourceId: z.string(), name: z.string(), from: z.string(), to: z.string() })
+  ),
+  fingerprint: z.string(),
+  confirmed: z.literal(true)
+});
+
+const definitionImportExecuteResponseSchema = z.object({
+  schemas: z.number().int(),
+  enums: z.number().int(),
+  documentTypes: z.number().int()
+});
+
 // ── Export/Import schemas ─────────────────────────────────────
 
 const exportDataTypeSchema = z
@@ -342,6 +424,42 @@ export const workspaceManagementContract = oc.tag('Workspaces').router({
         tags: ['Workspaces']
       })
       .output(z.array(workspaceTemplateSchema)),
+    definitionImportSources: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/definition-import/sources',
+        inputStructure: 'detailed',
+        summary: 'List definition import sources',
+        description:
+          'Lists built-in templates and workspaces available as definition import sources.',
+        tags: ['Workspaces']
+      })
+      .input(z.object({ params: ws }))
+      .output(z.array(definitionImportSourceOptionSchema)),
+    definitionImportPreview: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/definition-import/preview',
+        inputStructure: 'detailed',
+        summary: 'Preview definition import',
+        description:
+          'Resolves selected schema, enum, and document-type dependencies and conflicts.',
+        tags: ['Workspaces']
+      })
+      .input(z.object({ params: ws, body: definitionImportPreviewRequestSchema }))
+      .output(definitionImportPreviewSchema),
+    definitionImportExecute: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/definition-import/execute',
+        inputStructure: 'detailed',
+        summary: 'Execute definition import',
+        description:
+          'Creates the confirmed definition set atomically in the destination workspace.',
+        tags: ['Workspaces']
+      })
+      .input(z.object({ params: ws, body: definitionImportExecuteRequestSchema }))
+      .output(definitionImportExecuteResponseSchema),
     export: oc
       .route({
         method: 'POST',
@@ -494,3 +612,10 @@ export type ExportRequest = z.infer<typeof exportRequestSchema>;
 export type ImportParseResponse = z.infer<typeof importParseResponseSchema>;
 export type ImportExecuteRequest = z.infer<typeof importExecuteRequestSchema>;
 export type ImportExecuteResponse = z.infer<typeof importExecuteResponseSchema>;
+export type DefinitionImportSource = z.infer<typeof definitionImportSourceSchema>;
+export type DefinitionImportSelection = z.infer<typeof definitionImportSelectionSchema>;
+export type DefinitionImportRename = z.infer<typeof definitionImportRenameSchema>;
+export type DefinitionImportPreview = z.infer<typeof definitionImportPreviewSchema>;
+export type DefinitionImportPreviewRequest = z.infer<typeof definitionImportPreviewRequestSchema>;
+export type DefinitionImportExecuteRequest = z.infer<typeof definitionImportExecuteRequestSchema>;
+export type DefinitionImportExecuteResponse = z.infer<typeof definitionImportExecuteResponseSchema>;

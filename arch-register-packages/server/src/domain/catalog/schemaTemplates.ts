@@ -16,7 +16,7 @@ import type {
 } from '../document/db/documentDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
-type SymbolicField =
+export type SymbolicField =
   | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' }
   | { id: string; name: string; type: 'select'; enumId: string }
   | {
@@ -38,7 +38,7 @@ type SymbolicField =
       maxCount: 1;
     };
 
-type TemplateSchema = {
+export type TemplateSchema = {
   symId: string;
   name: string;
   description: string;
@@ -47,13 +47,13 @@ type TemplateSchema = {
   fields: SymbolicField[];
 };
 
-type SymbolicEnum = {
+export type SymbolicEnum = {
   id: string;
   name: string;
   options: Array<{ value: string; label: string }>;
 };
 
-type SymbolicDocumentType = {
+export type SymbolicDocumentType = {
   id: string;
   name: string;
   description: string;
@@ -62,7 +62,7 @@ type SymbolicDocumentType = {
   icon: string | null;
 };
 
-type SymbolicDocumentTemplate = {
+export type SymbolicDocumentTemplate = {
   id: string;
   name: string;
   body: string;
@@ -70,7 +70,7 @@ type SymbolicDocumentTemplate = {
   metadataDefaults: DocumentMetadata;
 };
 
-type SchemaTemplate = {
+export type SchemaTemplate = {
   id: string;
   name: string;
   description: string;

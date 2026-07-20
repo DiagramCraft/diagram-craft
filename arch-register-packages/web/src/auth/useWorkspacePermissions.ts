@@ -6,6 +6,7 @@ import { buildWorkspaceAuthorizationContextFromAuthData } from './authorizationC
 
 type WorkspacePermissions = {
   canManageWorkspaces: boolean;
+  canAdministerWorkspace: boolean;
   canManageGlobalRoles: boolean;
   canViewSchemas: boolean;
   canEditSchemas: boolean;
@@ -38,6 +39,10 @@ export const useWorkspacePermissions = (
 
     const canManageWorkspaces =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.settings');
+    const canAdministerWorkspace =
+      hasWorkspaceContext &&
+      (checker.hasWorkspaceCapability(context, 'people.role') ||
+        checker.hasGlobalPermission(context, 'admin_platform'));
     const canManageGlobalRoles =
       context != null && checker.hasGlobalPermission(context, 'manage_workspace_roles');
     const canViewSchemas =
@@ -70,6 +75,7 @@ export const useWorkspacePermissions = (
 
     return {
       canManageWorkspaces,
+      canAdministerWorkspace,
       canManageGlobalRoles,
       canViewSchemas,
       canEditSchemas,
