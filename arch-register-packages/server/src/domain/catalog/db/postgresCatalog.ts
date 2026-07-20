@@ -300,7 +300,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEntity(input: EntityDbCreate) {
     try {
       await this.sql`
-        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, version, approval_policy_override, created_at, updated_at)
+        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, visibility_mode, version, approval_policy_override, created_at, updated_at)
         VALUES (
           ${input.id},
           ${input.workspace},
@@ -317,6 +317,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
           ${this.json(input.links)},
           ${input.schema_id},
           ${this.json(input.data)},
+          ${this.json(input.generated_metadata ?? {})},
           ${input.visibility_mode},
           ${input.version ?? 1},
           ${input.approval_policy_override ?? null},
@@ -346,6 +347,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             links = ${this.json(input.links)},
             schema_id = ${input.schema_id},
             data = ${this.json(input.data)},
+            generated_metadata = COALESCE(${input.generated_metadata !== undefined ? this.json(input.generated_metadata) : null}::jsonb, generated_metadata),
             visibility_mode = ${input.visibility_mode},
             version = version + 1,
             approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
@@ -380,6 +382,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             links = ${this.json(input.links)},
             schema_id = ${input.schema_id},
             data = ${this.json(input.data)},
+            generated_metadata = COALESCE(${input.generated_metadata !== undefined ? this.json(input.generated_metadata) : null}::jsonb, generated_metadata),
             visibility_mode = ${input.visibility_mode},
             version = version + 1,
             approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),

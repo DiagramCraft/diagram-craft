@@ -43,6 +43,7 @@ export type WorkspaceCapability =
   | 'ent.propose'
   | 'ent.approve'
   | 'ent.override'
+  | 'ent.external_update'
   | 'comments'
   | 'export'
   | 'schema.edit'

@@ -1,6 +1,11 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndUUID } from '@arch-register/api-types/common';
+import {
+  ws,
+  wsAndUUID,
+  externalFieldSchema,
+  assertRefreshModeRequiresExternalKind
+} from '@arch-register/api-types/common';
 
 const requirementLevelSchema = z
   .enum(['required', 'expected', 'optional'])
@@ -16,7 +21,8 @@ const baseFieldSchema = z.object({
   archived: z
     .boolean()
     .optional()
-    .describe('Whether the field is archived (hidden, but data is retained)')
+    .describe('Whether the field is archived (hidden, but data is retained)'),
+  ...externalFieldSchema.shape
 });
 
 const textFieldSchema = baseFieldSchema.extend({
@@ -85,6 +91,10 @@ const schemaFieldInputSchema = z
     referenceFieldSchema,
     containmentFieldSchema
   ])
+  .superRefine((field, ctx) => {
+    const issue = assertRefreshModeRequiresExternalKind(field);
+    if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+  })
   .describe('Schema field definition');
 
 const fieldOptionSchema = z.object({
@@ -107,6 +117,10 @@ const schemaFieldResponseSchema = z
     referenceFieldSchema,
     containmentFieldSchema
   ])
+  .superRefine((field, ctx) => {
+    const issue = assertRefreshModeRequiresExternalKind(field);
+    if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+  })
   .describe('Schema field with resolved options');
 
 const entityTemplateFieldValueSchema = z.union([

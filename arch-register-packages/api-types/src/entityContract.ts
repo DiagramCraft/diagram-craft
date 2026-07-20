@@ -1,6 +1,13 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId, foreignKeySchema, UUID_REGEX } from '@arch-register/api-types/common';
+import {
+  ws,
+  wsAndId,
+  foreignKeySchema,
+  UUID_REGEX,
+  externalMetadataSchema,
+  externalUpdateEnvelopeSchema
+} from '@arch-register/api-types/common';
 import { conditionsQuerySchema } from '@arch-register/api-types/viewContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
@@ -56,7 +63,10 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
     .describe('Entity-specific approval policy override'),
   _visibilityMode: visibilityModeSchema.nullable().describe('Entity visibility mode'),
   _completeness: z.number().nullable().describe('Field completeness percentage (0-100)'),
-  _projectLink: projectLinkSchema.optional().describe('Project linkage information')
+  _projectLink: projectLinkSchema.optional().describe('Project linkage information'),
+  _externalMetadata: externalMetadataSchema
+    .optional()
+    .describe('Latest external-update metadata, keyed by field id, for external_kind fields')
 });
 
 // EntityRecord = EntitySummary + dynamic schema fields
@@ -94,7 +104,13 @@ const entityMutationBodySchema = z
       .enum(['public', 'restricted'])
       .nullable()
       .optional()
-      .describe('Entity visibility mode')
+      .describe('Entity visibility mode'),
+    _external: externalUpdateEnvelopeSchema
+      .optional()
+      .describe(
+        'Present when this mutation is an external update (AI/integration/automation) rather ' +
+          'than a user edit; required to write to any field with external_kind set'
+      )
   })
   .catchall(z.unknown())
   .describe('Entity mutation data with schema-specific fields');

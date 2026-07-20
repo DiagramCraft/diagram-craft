@@ -31,12 +31,14 @@
           document types, templates, AI, analytics, audit, and other workspace settings.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
-              relationships, and schema-specific behavior.
+              relationships, and schema-specific behavior, including marking a field as externally managed (by AI, an
+              integration, or an internal automation) with a refresh mode of on-change or scheduled.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates,
-            fields, versions, validation rules, and AI actions for structured content. Administrators can edit actions,
-            select their read-only architecture tools, and test an unsaved action against an existing document of the
-            same type without persistence.
+            fields, versions, validation rules, and AI actions for structured content, including marking a field as
+            externally managed (by AI, an integration, or an internal automation) with a refresh mode of on-change or
+            scheduled. Administrators can edit actions, select their read-only architecture tools, and test an unsaved
+            action against an existing document of the same type without persistence.
 
         - @id:ar.workspace.lifecycle Workspaces can define lifecycle states, designate one as the deprecated state,
           and use them as part of entity and project review workflows.
@@ -53,7 +55,10 @@
           descendants and related records.
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
-          lifecycle, links, references, and custom values.
+          lifecycle, links, references, and custom values. A schema field marked as externally managed (by AI, an
+          integration, or an internal automation) is read-only to users; its current value stays visible alongside
+          the latest update's source, timestamp, status, and any explanation or findings. A user edit to any other
+          field on the entity marks that entity's external field results outdated.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records.
@@ -298,13 +303,14 @@
 
         - @id:ar.ai.metadata-generation @status:experimental Document type-defined AI metadata generators run
           automatically, read-only, a short time after an effective body or metadata change, producing one
-          validated value per generator's target field. The previous value and generation details (explanation,
-          findings, status, timestamp, source revision, generator version) stay visible but are marked outdated
-          as soon as the document changes, and a further edit while generation is running discards its result and
-          reschedules against the latest revision. A failed generation is retried once before its failure notice
-          is retained. Successful values are written to document history under a dedicated AI system actor rather
-          than the editing user, so they do not themselves trigger another generation run. Changing a generator's
-          prompt or configuration marks existing results outdated without regenerating until the next document
-          edit.
+          validated value per generator's target field; a generator's target field must be marked externally
+          managed with kind AI. The previous value and generation details (explanation, findings, status, timestamp,
+          source revision, generator version) stay visible but are marked outdated as soon as the document changes,
+          and a further edit while generation is running discards its result and reschedules against the latest
+          revision. A failed generation is retried once before its failure notice is retained. Successful values are
+          written to document history under a dedicated AI system actor rather than the editing user, so they do not
+          themselves trigger another generation run. Changing a generator's prompt or configuration marks existing
+          results outdated without regenerating until the next document edit. Every such update, successful or
+          failed, is recorded in the workspace audit log alongside the previous and new values.
 
         - @id:ar.ai.configuration Administrators can configure the AI provider and workspace-level AI settings.

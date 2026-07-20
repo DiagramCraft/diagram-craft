@@ -18,6 +18,9 @@ import { toFieldId } from '../../utils/fieldId';
 import styles from './DocumentSettingsScreen.module.css';
 
 import { FIELD_TYPE_OPTIONS, REQUIREMENT_OPTIONS, isLinkType } from './documentSettingsHelpers';
+
+const NOT_EXTERNAL = '__not_external__';
+
 export const DocumentFieldRow = ({
   field,
   onUpdate,
@@ -42,6 +45,7 @@ export const DocumentFieldRow = ({
         <span>
           <Chip tone="ghost">Retired</Chip>
         </span>
+        <span className="dim">—</span>
         <button
           type="button"
           className={styles.iconBtn}
@@ -161,6 +165,38 @@ export const DocumentFieldRow = ({
           </Select.Item>
         ))}
       </Select.Root>
+      <div style={{ display: 'grid', gap: 4 }}>
+        <Select.Root
+          value={field.external_kind ?? NOT_EXTERNAL}
+          onChange={value =>
+            onUpdate(
+              value === NOT_EXTERNAL || !value
+                ? { external_kind: undefined, refresh_mode: undefined }
+                : { external_kind: value as DocumentField['external_kind'] }
+            )
+          }
+          style={{ width: '100%' }}
+        >
+          <Select.Item value={NOT_EXTERNAL}>Not external</Select.Item>
+          <Select.Item value="ai">AI</Select.Item>
+          <Select.Item value="integration">Integration</Select.Item>
+          <Select.Item value="automation">Automation</Select.Item>
+        </Select.Root>
+        {field.external_kind && (
+          <Select.Root
+            value={field.refresh_mode ?? 'on_change'}
+            onChange={value =>
+              onUpdate({
+                refresh_mode: (value ?? 'on_change') as DocumentField['refresh_mode']
+              })
+            }
+            style={{ width: '100%' }}
+          >
+            <Select.Item value="on_change">On change</Select.Item>
+            <Select.Item value="scheduled">Scheduled</Select.Item>
+          </Select.Root>
+        )}
+      </div>
       <button type="button" className={styles.iconBtn} onClick={onRemove}>
         <TbTrash size={13} />
       </button>

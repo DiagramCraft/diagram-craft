@@ -1,6 +1,11 @@
 import { oc, eventIterator } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
+import {
+  ws,
+  wsAndId,
+  foreignKeySchema,
+  externalUpdateEnvelopeSchema
+} from '@arch-register/api-types/common';
 import {
   documentFieldSchema,
   documentAiActionSchema,
@@ -1088,7 +1093,13 @@ export const projectContract = oc.tag('Projects').router({
             body: z.string().describe('Markdown content'),
             name: z.string().optional().describe('Optional new name for the document'),
             document_type_id: z.string().nullable().optional().describe('Document type identifier'),
-            metadata: documentMetadataSchema.optional().describe('Structured metadata values')
+            metadata: documentMetadataSchema.optional().describe('Structured metadata values'),
+            external: externalUpdateEnvelopeSchema
+              .optional()
+              .describe(
+                'Present when this save is an external update (AI/integration/automation) ' +
+                  'rather than a user edit; required to write to any field with external_kind set'
+              )
           })
         })
       )

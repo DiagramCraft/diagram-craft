@@ -1,18 +1,9 @@
 import { useState, type ReactNode } from 'react';
-import {
-  TbCheck,
-  TbChevronRight,
-  TbInfoCircle,
-  TbLink,
-  TbPlus,
-  TbSparkles,
-  TbX
-} from 'react-icons/tb';
+import { TbCheck, TbChevronRight, TbInfoCircle, TbLink, TbPlus, TbX } from 'react-icons/tb';
 import { Link } from '@tanstack/react-router';
 import type {
   DocumentField,
   DocumentGeneratedMetadata,
-  DocumentGeneratedMetadataResult,
   DocumentAiAction,
   DocumentMetadata,
   DocumentType
@@ -24,14 +15,7 @@ import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
 import { HoverCard } from '../../components/HoverCard';
 import { DocumentHoverCardBody } from '../../components/DocumentHoverCardBody';
-import {
-  HoverCardDescription,
-  HoverCardRows,
-  HoverCardTitle,
-  TooltipChip,
-  TooltipChips,
-  TooltipRow
-} from '../../components/HoverCardParts';
+import { ExternalMetadataIndicator } from '../../components/ExternalMetadataIndicator';
 import { useContentFile } from '../../hooks/useContentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveDocumentTypeColor } from '../../lib/schemaPresentation';
@@ -118,82 +102,6 @@ const DocumentLink = ({ documentId }: { documentId: string }) => {
     </HoverCard>
   );
 };
-
-const STATUS_LABEL: Record<DocumentGeneratedMetadataResult['status'], string> = {
-  success: 'Generated',
-  failed: 'Generation failed',
-  outdated: 'Outdated'
-};
-
-const formatTimestamp = (iso: string) => {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
-};
-
-const AiMetadataResultBody = ({
-  action,
-  result
-}: {
-  action: DocumentAiAction;
-  result: DocumentGeneratedMetadataResult | undefined;
-}) => (
-  <>
-    <HoverCardTitle>{action.name}</HoverCardTitle>
-    {!result ? (
-      <HoverCardDescription>No generated result yet.</HoverCardDescription>
-    ) : (
-      <>
-        <TooltipChips>
-          <TooltipChip
-            style={
-              result.status === 'outdated'
-                ? { color: 'var(--warning-fg, #b8860b)' }
-                : result.status === 'failed'
-                  ? { color: 'var(--danger-fg, #c94a4a)' }
-                  : undefined
-            }
-          >
-            {STATUS_LABEL[result.status]}
-          </TooltipChip>
-        </TooltipChips>
-        {result.explanation && <HoverCardDescription>{result.explanation}</HoverCardDescription>}
-        {result.findings.length > 0 && (
-          <ul className={styles.aiFindingsList}>
-            {result.findings.map((finding, index) => (
-              <li key={index}>{finding}</li>
-            ))}
-          </ul>
-        )}
-        {result.failureNotice && (
-          <HoverCardDescription>{result.failureNotice}</HoverCardDescription>
-        )}
-        <HoverCardRows>
-          <TooltipRow label="Generated" value={formatTimestamp(result.generatedAt)} />
-          <TooltipRow label="Assessed revision" value={result.sourceRevision} />
-          <TooltipRow label="Generator version" value={result.generatorVersion} />
-        </HoverCardRows>
-      </>
-    )}
-  </>
-);
-
-const AiMetadataIndicator = ({
-  action,
-  result
-}: {
-  action: DocumentAiAction;
-  result: DocumentGeneratedMetadataResult | undefined;
-}) => (
-  <HoverCard content={<AiMetadataResultBody action={action} result={result} />}>
-    <button
-      type="button"
-      className={styles.aiIndicator}
-      aria-label={`AI-generated value — ${result ? STATUS_LABEL[result.status] : 'no result yet'}`}
-    >
-      <TbSparkles size={11} />
-    </button>
-  </HoverCard>
-);
 
 type Validation = { errors: Record<string, string>; warnings: Record<string, string> };
 
@@ -621,18 +529,18 @@ export const MarkdownPropertiesPanel = ({
               const error = showErrors ? errors[field.id] : undefined;
               const warning = warnings[field.id];
               const generatorAction = generatorByFieldId.get(field.id);
-              const isAiManaged = generatorAction !== undefined;
+              const isExternal = field.external_kind !== undefined;
               return (
                 <div key={field.id} className={`${styles.row} ${error ? styles.rowError : ''}`}>
                   <div className={styles.label}>
                     <span>{field.name}</span>
-                    {field.requirement === 'optional' && !isAiManaged && (
+                    {field.requirement === 'optional' && !isExternal && (
                       <span className={styles.optionalLabel}>(optional)</span>
                     )}
                   </div>
                   <div className={styles.value}>
                     <div className={styles.aiValueRow}>
-                      {readOnly || isAiManaged ? (
+                      {readOnly || isExternal ? (
                         <DocValueView field={field} value={value} />
                       ) : (
                         <DocValueEdit
@@ -641,15 +549,16 @@ export const MarkdownPropertiesPanel = ({
                           onChange={v => onValueChange(field.id, v)}
                         />
                       )}
-                      {isAiManaged && (
-                        <AiMetadataIndicator
-                          action={generatorAction}
+                      {isExternal && (
+                        <ExternalMetadataIndicator
+                          kind={field.external_kind!}
+                          title={generatorAction?.name}
                           result={generatedMetadata[field.id]}
                         />
                       )}
                     </div>
                     {error && <div className={styles.error}>{error}</div>}
-                    {!error && warning && !isAiManaged && (
+                    {!error && warning && !isExternal && (
                       <div className={styles.warning}>{warning}</div>
                     )}
                   </div>

@@ -55,6 +55,7 @@ export const toApiEntity = (
   _approvalPolicyOverride: entity.approval_policy_override ?? null,
   _visibilityMode: entity.visibility_mode,
   _completeness: completeness,
+  _externalMetadata: entity.generated_metadata ?? {},
   ...getEntityCapabilities(authCtx, entity),
   ...entity.data
 });
@@ -89,5 +90,6 @@ export const toApiEntitySummary = (
   _approvalPolicyOverride: entity.approval_policy_override ?? null,
   _visibilityMode: entity.visibility_mode,
   _completeness: completeness,
+  _externalMetadata: entity.generated_metadata ?? {},
   ...getEntityCapabilities(authCtx, entity)
 });

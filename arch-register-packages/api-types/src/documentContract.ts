@@ -1,6 +1,13 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId } from '@arch-register/api-types/common';
+import {
+  ws,
+  wsAndId,
+  externalFieldSchema,
+  assertRefreshModeRequiresExternalKind,
+  externalMetadataResultSchema,
+  externalMetadataSchema
+} from '@arch-register/api-types/common';
 
 const booleanQuerySchema = z.preprocess(value => {
   if (typeof value === 'boolean') return value;
@@ -37,20 +44,26 @@ export const documentEnumOptionSchema = z.object({
   label: z.string().min(1)
 });
 
-export const documentFieldSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  type: documentFieldTypeSchema,
-  requirement: documentRequirementSchema,
-  minCardinality: z.number().int().nonnegative().optional(),
-  maxCardinality: z.number().int().nonnegative().optional(),
-  enumOptions: z.array(documentEnumOptionSchema).optional(),
-  // Display label used when presenting the reverse of this link on the target
-  // (e.g. a "Supersedes" document_link field with inverseName "Superseded by").
-  // Only meaningful for entity_link / document_link fields.
-  inverseName: z.string().min(1).optional(),
-  retired: z.boolean().default(false)
-});
+export const documentFieldSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    type: documentFieldTypeSchema,
+    requirement: documentRequirementSchema,
+    minCardinality: z.number().int().nonnegative().optional(),
+    maxCardinality: z.number().int().nonnegative().optional(),
+    enumOptions: z.array(documentEnumOptionSchema).optional(),
+    // Display label used when presenting the reverse of this link on the target
+    // (e.g. a "Supersedes" document_link field with inverseName "Superseded by").
+    // Only meaningful for entity_link / document_link fields.
+    inverseName: z.string().min(1).optional(),
+    retired: z.boolean().default(false),
+    ...externalFieldSchema.shape
+  })
+  .superRefine((field, ctx) => {
+    const issue = assertRefreshModeRequiresExternalKind(field);
+    if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+  });
 
 export const documentAiToolIdSchema = z.enum([
   'query_entities',
@@ -109,22 +122,12 @@ export const documentAiActionSchema = z.discriminatedUnion('kind', [
   })
 ]);
 
-export const documentGeneratedMetadataResultSchema = z.object({
-  actionId: z.string().min(1),
-  fieldId: z.string().min(1),
-  status: z.enum(['success', 'failed', 'outdated']),
-  explanation: z.string().nullable(),
-  findings: z.array(z.string()),
-  failureNotice: z.string().nullable(),
-  generatedAt: z.string(),
-  sourceRevision: z.number().int().positive(),
-  generatorVersion: z.number().int().positive()
-});
+// Generalized external-field metadata shape (source, timestamp, status, explanation, findings,
+// sourceVersion, requestId), with the AI-specific extras (actionId, sourceRevision,
+// generatorVersion) retained as optional fields for document AI metadata generation.
+export const documentGeneratedMetadataResultSchema = externalMetadataResultSchema;
 
-export const documentGeneratedMetadataSchema = z.record(
-  z.string().min(1),
-  documentGeneratedMetadataResultSchema
-);
+export const documentGeneratedMetadataSchema = externalMetadataSchema;
 
 export const documentTypeSchema = z.object({
   id: z.string(),

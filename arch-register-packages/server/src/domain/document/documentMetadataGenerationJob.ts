@@ -20,6 +20,9 @@ import type {
   DocumentGeneratedMetadata,
   DocumentMetadata
 } from '@arch-register/api-types/documentContract';
+import type { ExternalUpdateEnvelope } from '@arch-register/api-types/common';
+import { applyExternalFieldUpdate } from '../externalMetadata/externalMetadataHelpers';
+import { writeAudit } from '../audit/db/auditLogging';
 import type {
   DocumentMetadataGenerationScheduleDbResult,
   DocumentTypeDbResult
@@ -186,36 +189,36 @@ const writeGenerationOutcome = async (
   await db.core.transaction(async tx => {
     const current = await tx.document.getDocumentMetadata(workspace, nodeId);
     if (!current) return;
+    const node = await tx.project.getAnyContentNodeById(workspace, nodeId);
 
-    const resultEntry: DocumentGeneratedMetadata[string] =
-      outcome.status === 'success'
-        ? {
-            actionId: outcome.actionId,
-            fieldId: outcome.fieldId,
-            status: 'success',
-            explanation: truncateExplanation(outcome.explanation),
-            findings: outcome.findings,
-            failureNotice: null,
-            generatedAt: outcome.now.toISOString(),
-            sourceRevision: outcome.sourceRevision,
-            generatorVersion: outcome.generatorVersion
-          }
-        : {
-            actionId: outcome.actionId,
-            fieldId: outcome.fieldId,
-            status: 'failed',
-            explanation: truncateExplanation(outcome.explanation),
-            findings: outcome.findings,
-            failureNotice: outcome.failureNotice,
-            generatedAt: outcome.now.toISOString(),
-            sourceRevision: outcome.sourceRevision,
-            generatorVersion: outcome.generatorVersion
-          };
+    const envelope: ExternalUpdateEnvelope = {
+      fieldId: outcome.fieldId,
+      kind: 'ai',
+      source: outcome.actionId,
+      status: outcome.status,
+      failureNotice: outcome.status === 'failed' ? outcome.failureNotice : undefined,
+      explanation: truncateExplanation(outcome.explanation) ?? undefined,
+      findings: outcome.findings
+    };
+    const resultEntry: DocumentGeneratedMetadata[string] = {
+      ...applyExternalFieldUpdate(outcome.fieldId, envelope, outcome.now),
+      actionId: outcome.actionId,
+      sourceRevision: outcome.sourceRevision,
+      generatorVersion: outcome.generatorVersion
+    };
 
     // Keyed by target field id (not action id) — this is the same convention used by
     // renameDocumentMetadataField/removeDocumentMetadataField and by the web UI's
     // generatedMetadata[field.id] lookup.
     const nextGenerated = { ...current.generated_metadata, [outcome.fieldId]: resultEntry };
+    const auditMetadata = {
+      external_kind: 'ai',
+      external_field_id: outcome.fieldId,
+      source: outcome.actionId,
+      status: outcome.status,
+      explanation: resultEntry.explanation,
+      failureNotice: resultEntry.failureNotice
+    };
 
     if (outcome.status === 'failed') {
       await tx.document.upsertDocumentMetadata({
@@ -225,6 +228,16 @@ const writeGenerationOutcome = async (
         values: current.values,
         generated_metadata: nextGenerated,
         updated_at: outcome.now
+      });
+      await writeAudit(tx, {
+        workspace,
+        userId: AI_SYSTEM_USER_ID,
+        operation: 'update',
+        entityType: 'content_node',
+        entityId: nodeId,
+        entityName: node?.name ?? nodeId,
+        changes: {},
+        metadata: auditMetadata
       });
       return;
     }
@@ -251,6 +264,17 @@ const writeGenerationOutcome = async (
       restored_from_revision_id: null,
       document_type_id: outcome.documentTypeId,
       metadata: nextValues
+    });
+
+    await writeAudit(tx, {
+      workspace,
+      userId: AI_SYSTEM_USER_ID,
+      operation: 'update',
+      entityType: 'content_node',
+      entityId: nodeId,
+      entityName: node?.name ?? nodeId,
+      changes: { new: { [outcome.fieldId]: outcome.value } },
+      metadata: auditMetadata
     });
   });
 };

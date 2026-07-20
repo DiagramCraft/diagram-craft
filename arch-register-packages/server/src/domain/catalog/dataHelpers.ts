@@ -8,6 +8,10 @@ import { httpAssert } from '../../utils/httpAssert';
 import { ContainmentField, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import {
+  externalUpdateEnvelopeSchema,
+  type ExternalUpdateEnvelope
+} from '@arch-register/api-types/common';
 
 export const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
@@ -178,6 +182,7 @@ export type EntityMutationPayload = {
   tags: string[];
   links: EntityLink[];
   visibilityMode: 'public' | 'restricted' | null;
+  external: ExternalUpdateEnvelope | null;
   fields: Record<string, unknown>;
 };
 
@@ -291,8 +296,15 @@ export const parseEntityMutationPayload = (
     _tags = [],
     _links = [],
     _visibilityMode,
+    _external,
     ...fields
   } = body;
+
+  const externalParsed = _external ? externalUpdateEnvelopeSchema.safeParse(_external) : undefined;
+  httpAssert.true(_external === undefined || externalParsed?.success === true, {
+    status: 400,
+    message: '_external is not a valid external update envelope'
+  });
 
   const resolvedSchemaId = extractId(_schemaId) ?? extractId(_schema);
   httpAssert.string(resolvedSchemaId, {
@@ -323,6 +335,7 @@ export const parseEntityMutationPayload = (
     links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
     visibilityMode:
       _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null,
+    external: externalParsed?.success ? externalParsed.data : null,
     fields
   };
 };

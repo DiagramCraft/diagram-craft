@@ -13,6 +13,7 @@ import type {
   EntitySummary
 } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { ExternalMetadataResult } from '@arch-register/api-types/common';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type {
@@ -26,6 +27,7 @@ import sharedStyles from '../EntityDetailScreen.module.css';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { useMilestonesForProjects } from '../../../hooks/useMilestones';
 import { getSnapshotDateLabel, toMilestonesById } from './snapshotDisplay';
+import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -102,6 +104,7 @@ export const EntityOverviewTab = ({
                   refLookup={refLookup}
                   referenceOptions={referenceOptions}
                   hasError={validationErrors.has(f.id)}
+                  externalMeta={entity._externalMetadata?.[f.id]}
                 />
               ))}
             </div>
@@ -506,7 +509,8 @@ const PropertyRow = ({
   onChange,
   refLookup,
   referenceOptions,
-  hasError
+  hasError,
+  externalMeta
 }: {
   field: EntitySchema['fields'][number];
   value: unknown;
@@ -516,7 +520,9 @@ const PropertyRow = ({
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
   hasError?: boolean;
+  externalMeta?: ExternalMetadataResult;
 }) => {
+  const isExternal = field.external_kind !== undefined;
   const renderEditor = () => {
     if (field.type === 'reference') {
       const candidates = referenceOptions[field.schemaId] ?? [];
@@ -664,7 +670,10 @@ const PropertyRow = ({
         className={styles.propValue}
         style={hasError ? { flexDirection: 'column', alignItems: 'flex-start' } : undefined}
       >
-        {editing ? renderEditor() : renderDisplay()}
+        {editing && !isExternal ? renderEditor() : renderDisplay()}
+        {isExternal && (
+          <ExternalMetadataIndicator kind={field.external_kind!} result={externalMeta} />
+        )}
         {hasError && <span className={styles.propErrorMsg}>This field is required</span>}
       </div>
     </div>

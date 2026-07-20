@@ -108,11 +108,13 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
         status: {
           actionId: 'status-generator',
           fieldId: 'status',
+          external_kind: 'ai',
           status: 'success',
+          source: 'status-generator',
           explanation: 'The document is proposed.',
           findings: ['Proposal language detected'],
           failureNotice: null,
-          generatedAt: '2026-07-19T12:00:00.000Z',
+          timestamp: '2026-07-19T12:00:00.000Z',
           sourceRevision: 3,
           generatorVersion: 2
         }
@@ -478,11 +480,13 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
         status: {
           actionId: 'status-generator',
           fieldId: 'status',
+          external_kind: 'ai',
           status: 'success',
+          source: 'status-generator',
           explanation: null,
           findings: [],
           failureNotice: null,
-          generatedAt: '2026-07-19T12:00:00.000Z',
+          timestamp: '2026-07-19T12:00:00.000Z',
           sourceRevision: 1,
           generatorVersion: 1
         }

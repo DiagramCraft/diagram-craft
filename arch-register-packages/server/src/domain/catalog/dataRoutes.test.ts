@@ -207,6 +207,7 @@ describe('data route helpers', () => {
       tags: ['react'],
       links: [],
       visibilityMode: 'public',
+      external: null,
       fields: { system: ['system-1'] }
     });
   });

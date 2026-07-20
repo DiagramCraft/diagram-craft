@@ -654,7 +654,8 @@ const markdownHandlers = {
         input.body.name,
         input.body.document_type_id,
         input.body.metadata,
-        context.event
+        context.event,
+        input.body.external
       );
     }
   ),

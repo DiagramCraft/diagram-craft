@@ -24,6 +24,7 @@ import type {
 } from '@arch-register/api-types/documentContract';
 
 import { documentLinksFromMetadata } from '../document/documentValidation';
+import { outdateExternalMetadata } from '../externalMetadata/externalMetadataHelpers';
 
 import {
   listSiblingNodes,
@@ -128,15 +129,10 @@ export const metadataEquals = (a: DocumentMetadata, b: DocumentMetadata): boolea
   return true;
 };
 
+// Thin alias kept for call-site continuity; the actual logic is shared with entities.
 export const outdateGeneratedMetadata = (
   generatedMetadata: DocumentGeneratedMetadata
-): DocumentGeneratedMetadata => {
-  const next: DocumentGeneratedMetadata = {};
-  for (const [fieldId, result] of Object.entries(generatedMetadata)) {
-    next[fieldId] = result.status === 'outdated' ? result : { ...result, status: 'outdated' };
-  }
-  return next;
-};
+): DocumentGeneratedMetadata => outdateExternalMetadata(generatedMetadata);
 
 export const resolveDocumentMetadata = async (
   db: DatabaseAdapter,

@@ -42,6 +42,8 @@ const deriveKeyPrefix = (value: string) =>
     .toUpperCase()
     .slice(0, 5);
 
+const NOT_EXTERNAL = '__not_external__';
+
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 export const SchemaSettingsScreen = () => {
@@ -493,6 +495,7 @@ export const SchemaSettingsScreen = () => {
                     <span>Type</span>
                     <span>Options / Ref</span>
                     <span>Completeness</span>
+                    <span>External</span>
                     <span />
                   </div>
                   {fields.map(f => {
@@ -891,6 +894,40 @@ const FieldRow = ({
         <Select.Item value="expected">Expected</Select.Item>
         <Select.Item value="required">Required</Select.Item>
       </Select.Root>
+      <div style={{ display: 'grid', gap: 4 }}>
+        <Select.Root
+          value={field.external_kind ?? NOT_EXTERNAL}
+          disabled={!canEdit}
+          onChange={value =>
+            onUpdate(
+              value === NOT_EXTERNAL || !value
+                ? { external_kind: undefined, refresh_mode: undefined }
+                : { external_kind: value as SchemaField['external_kind'] }
+            )
+          }
+          style={{ width: '100%' }}
+        >
+          <Select.Item value={NOT_EXTERNAL}>Not external</Select.Item>
+          <Select.Item value="ai">AI</Select.Item>
+          <Select.Item value="integration">Integration</Select.Item>
+          <Select.Item value="automation">Automation</Select.Item>
+        </Select.Root>
+        {field.external_kind && (
+          <Select.Root
+            value={field.refresh_mode ?? 'on_change'}
+            disabled={!canEdit}
+            onChange={value =>
+              onUpdate({
+                refresh_mode: (value ?? 'on_change') as SchemaField['refresh_mode']
+              } as Partial<SchemaField>)
+            }
+            style={{ width: '100%' }}
+          >
+            <Select.Item value="on_change">On change</Select.Item>
+            <Select.Item value="scheduled">Scheduled</Select.Item>
+          </Select.Root>
+        )}
+      </div>
       {onRemove && (
         <button type="button" className={styles.iconBtn} onClick={onRemove}>
           <TbTrash size={13} />

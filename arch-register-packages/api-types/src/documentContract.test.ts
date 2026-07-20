@@ -86,11 +86,13 @@ describe('document metadata schemas', () => {
       status: {
         actionId: 'status-generator',
         fieldId: 'status',
+        external_kind: 'ai' as const,
         status: 'outdated' as const,
+        source: 'status-generator',
         explanation: 'Previous assessment.',
         findings: ['The document changed.'],
         failureNotice: null,
-        generatedAt: '2026-07-19T12:00:00.000Z',
+        timestamp: '2026-07-19T12:00:00.000Z',
         sourceRevision: 2,
         generatorVersion: 4
       }

@@ -88,7 +88,7 @@
 .fieldsTh,
 .fieldRow {
   display: grid;
-  grid-template-columns: 24px 160px 1fr 130px 1.2fr 80px 28px;
+  grid-template-columns: 24px 160px 1fr 130px 1.2fr 80px 110px 28px;
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
