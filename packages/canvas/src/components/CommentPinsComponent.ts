@@ -1,31 +1,24 @@
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { Component, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import { _p, Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 import type { Comment } from '@diagram-craft/model/comment';
+import type { Indicator } from '@diagram-craft/model/diagramProps';
+import { DeepRequired } from '@diagram-craft/utils/types';
+import { INDICATORS } from './indicators';
 
 const PIN_SIZE = 20;
+const COMMENT_PIN_BOUNDS: Box = { x: 0, y: 0, w: PIN_SIZE, h: PIN_SIZE, r: 0 };
 
-const pinPath = () => {
-  const b = new PathListBuilder().withTransform(
-    fromUnitLCS({ x: 0, y: 0, w: PIN_SIZE, h: PIN_SIZE, r: 0 })
-  );
-
-  b.moveTo(Point.of(0, 0.1));
-  b.arcTo(_p(0.1, 0), 0.1, 0.1, 0, 0, 1);
-  b.lineTo(_p(0.9, 0));
-  b.arcTo(_p(1, 0.1), 0.1, 0.1, 0, 0, 1);
-  b.lineTo(_p(1, 0.6));
-  b.arcTo(_p(0.9, 0.7), 0.1, 0.1, 0, 0, 1);
-  b.lineTo(_p(0.7, 0.7));
-  b.lineTo(_p(0.9, 1));
-  b.lineTo(_p(0.4, 0.7));
-  b.lineTo(_p(0.1, 0.7));
-  b.arcTo(_p(0, 0.6), 0.1, 0.1, 0, 0, 1);
-  b.close();
-
-  return b.getPaths().asSvgPath();
+const COMMENT_PIN_INDICATOR: DeepRequired<Indicator> = {
+  enabled: true,
+  shape: 'comment',
+  color: 'var(--accent-9)',
+  height: PIN_SIZE,
+  width: PIN_SIZE,
+  direction: 'e',
+  position: 'c',
+  offset: 0
 };
 
 export class CommentPinsComponent extends Component<CanvasState> {
@@ -53,13 +46,7 @@ export class CommentPinsComponent extends Component<CanvasState> {
     return svg.g(
       {
         transform: `translate(${point.x - PIN_SIZE / 2}, ${point.y - PIN_SIZE})`,
-        style: 'cursor: pointer;'
-      },
-      svg.path({
-        d: pinPath(),
-        stroke: 'var(--accent-9)',
-        fill: 'var(--accent-3)',
-        'stroke-width': 1.5,
+        style: 'cursor: pointer;',
         on: {
           mousedown: e => {
             e.preventDefault();
@@ -67,7 +54,12 @@ export class CommentPinsComponent extends Component<CanvasState> {
             props.context.actions.COMMENT_EDIT?.execute({ comment });
           }
         }
-      })
+      },
+      INDICATORS.comment(
+        COMMENT_PIN_BOUNDS,
+        COMMENT_PIN_INDICATOR,
+        'var(--accent-3)'
+      )
     );
   }
 }
