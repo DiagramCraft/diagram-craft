@@ -33,7 +33,7 @@ export class ReferenceLayer<
     this.#reference = reference;
   }
 
-  isLocked(): boolean {
+  get locked() {
     return true;
   }
 

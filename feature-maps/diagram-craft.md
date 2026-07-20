@@ -26,7 +26,7 @@
 
     - @id:dc.editor.elements.actions
       Users can attach labeled actions to shapes, including actions that open a URL, navigate to another diagram, or
-      toggle a layer.
+      toggle a layer, or call a configured REST endpoint.
 
   - @id:dc.editor.selection
     Users can select single or multiple elements, grow or shrink a selection, and manipulate the selection as a unit.
@@ -91,6 +91,9 @@
   - @id:dc.organization.layers
     Users can create, rename, reorder, hide, lock, and manage regular layers within a diagram.
 
+  - @id:dc.organization.element-locking
+    Users can lock individual elements and unlock them from the element context menu or document structure panel.
+
   - @id:dc.organization.special-layers
     Users can work with specialized layer types for reuse, data-driven behavior, and controlled overrides.
 
@@ -119,6 +122,8 @@
 
   - @id:dc.styling.basic
     Users can configure fills, strokes, line widths, arrowheads, typography, alignment, spacing, and opacity.
+    Fill, stroke, and text rendering can each be toggled on or off independently, hiding the visual without
+    affecting stored content, sizing, or selection.
 
   - @id:dc.styling.fills
     Users can apply solid colors, linear and radial gradients, patterns, textures, and image fills.

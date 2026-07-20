@@ -207,9 +207,14 @@
         - @id:ar.collaboration.watches Users can watch entities and receive notifications when relevant changes occur.
 
         - @id:ar.collaboration.notifications Users can inspect a single consolidated in-app notification feed
-          covering entity-watch changes and governance action items, see an unread count badge, and clear or mark
-          notifications read. A governance action-item notification is cleared automatically once its underlying
-          task is resolved, superseded, or cancelled, without requiring the user to open the notification.
+          covering entity-watch changes, comment activity, and governance action items, see an unread count badge,
+          navigate to the related resource, and clear or mark notifications read. A governance action-item
+          notification is cleared automatically once its underlying task is resolved, superseded, or cancelled,
+          without requiring the user to open the notification.
+
+            - @id:ar.collaboration.notifications.comment-activity Users receive in-app notifications when someone
+              comments on an entity or content they own, or replies to their comment, subject to current access and
+              excluding the person who posted the comment.
 
             - @id:ar.collaboration.notifications.delivery-preferences Users can choose, per notification type and
               per delivery channel, whether they receive that notification. In-app delivery is on by default for

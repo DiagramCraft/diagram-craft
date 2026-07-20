@@ -1,7 +1,7 @@
 import { Tabs as BaseUITabs } from '@base-ui/react/tabs';
 import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
-import { TbFiles, TbPlus } from 'react-icons/tb';
+import { TbFiles, TbLock, TbPlus } from 'react-icons/tb';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { ActionMenuItem } from './components/ActionMenuItem';
 import React, { type ReactElement, useRef, useEffect } from 'react';
@@ -66,6 +66,7 @@ const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
         <ActionMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
           Delete
         </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_TOGGLE_LOCK'} arg={{ diagramId: props.diagramId }} />
         {diagram.diagrams.length > 0 && (
           <>
             <Menu.Separator />
@@ -137,6 +138,12 @@ const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDo
             {path[0] === d &&
               path.length > 1 &&
               path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
+
+            {d.locked && (
+              <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
+                <TbLock />
+              </div>
+            )}
 
             {d.diagrams.length > 0 && (
               <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>

@@ -18,6 +18,7 @@ export const NOTIFICATION_CHANNELS = Object.keys(
 
 export type NotificationType =
   | 'entity-watch-activity'
+  | 'comment-activity'
   | 'governance-task-assigned'
   | 'governance-case-activity'
   | 'governance-proposal-reminder';
@@ -36,6 +37,12 @@ export const NOTIFICATION_TYPE_CATALOG: Record<
   'entity-watch-activity': {
     label: 'Watched entity activity',
     description: 'Changes to entities you watch.',
+    category: 'normal',
+    defaultChannels: ['in_app']
+  },
+  'comment-activity': {
+    label: 'Comment activity',
+    description: 'New comments on content and entities you own, or replies to your comments.',
     category: 'normal',
     defaultChannels: ['in_app']
   },

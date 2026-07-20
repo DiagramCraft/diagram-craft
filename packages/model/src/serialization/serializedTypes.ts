@@ -70,6 +70,7 @@ export type SerializedDiagram = {
   };
   canvas: DiagramBounds;
   comments?: ReadonlyArray<SerializedComment>;
+  isLocked?: boolean;
 };
 
 export type SerializedStory = Story;
@@ -103,6 +104,7 @@ export interface SerializedDiagramDocument {
   stories?: ReadonlyArray<SerializedStory>;
   hash?: string;
   activeDiagramId?: string;
+  isLocked?: boolean;
 }
 
 export type SerializedOverride = {
@@ -131,6 +133,7 @@ export interface SerializedNode {
   metadata: ElementMetadata;
   texts: NodeTexts;
   tags?: ReadonlyArray<string>;
+  isLocked?: boolean;
 }
 
 export type SerializedPointInNodeEndpoint = {
@@ -171,6 +174,7 @@ export interface SerializedEdge {
   metadata: ElementMetadata;
   children?: ReadonlyArray<SerializedElement>;
   tags?: ReadonlyArray<string>;
+  isLocked?: boolean;
 }
 
 export type SerializedRegularNode = Omit<SerializedNode, 'type' | 'children'> & {

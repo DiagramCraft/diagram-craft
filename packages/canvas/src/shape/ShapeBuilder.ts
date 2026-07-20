@@ -121,6 +121,11 @@ export class ShapeBuilder {
     onSizeChange?: (size: Extent) => void
   ) {
     if (isNode(this.props.element)) {
+      const resolvedTextProps = textProps ?? (this.props.elementProps as NodeProps).text;
+      if (resolvedTextProps?.enabled === false) {
+        return;
+      }
+
       const parentBounds = this.props.element.bounds;
       const effectiveBounds = { ...(bounds ?? parentBounds) };
       this.nodes.push(
@@ -129,7 +134,7 @@ export class ShapeBuilder {
           id: `text_${id}_${this.props.element.id}`,
           node: this.props.element,
           metadata: this.props.element.dataForTemplate,
-          textProps: textProps ?? (this.props.elementProps as NodeProps).text,
+          textProps: resolvedTextProps,
           text: text ?? this.props.element.getText(),
           bounds: { ...effectiveBounds, r: effectiveBounds.r - parentBounds.r },
           onMouseDown: this.props.onMouseDown,
@@ -252,7 +257,8 @@ export class ShapeBuilder {
   makeOnDblclickHandle(textId: string | undefined = '1') {
     if (
       isNode(this.props.element) &&
-      this.props.element.renderProps.capabilities.editable === false
+      (!this.props.element.renderProps.capabilities.editable ||
+        this.props.element.isEffectivelyLocked())
     ) {
       return;
     }

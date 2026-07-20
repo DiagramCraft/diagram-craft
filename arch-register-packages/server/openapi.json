@@ -37154,20 +37154,48 @@
                         "description": "ISO 8601 timestamp when read"
                       },
                       "entity_id": {
-                        "type": "string",
-                        "description": "Entity identifier"
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Entity identifier, when this is an entity notification"
                       },
                       "entity_public_id": {
-                        "type": "string",
-                        "description": "Public entity identifier"
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Public entity identifier, when this is an entity notification"
                       },
                       "entity_name": {
-                        "type": "string",
-                        "description": "Entity name"
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Entity name, when this is an entity notification"
                       },
                       "entity_slug": {
-                        "type": "string",
-                        "description": "Entity URL slug"
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Entity URL slug, when this is an entity notification"
                       },
                       "schema_id": {
                         "anyOf": [
@@ -37181,20 +37209,41 @@
                         "description": "Schema identifier (may be null)"
                       },
                       "operation": {
-                        "enum": [
-                          "create",
-                          "update",
-                          "delete"
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
                         ],
-                        "type": "string",
                         "description": "Type of operation that triggered the notification"
                       },
                       "changed_by_user_id": {
-                        "type": "string",
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
                         "description": "User who made the change"
                       },
                       "changed_by_display_name": {
-                        "type": "string",
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
                         "description": "Display name of user who made the change"
                       },
                       "timestamp": {
@@ -37206,7 +37255,14 @@
                         "description": "ISO 8601 timestamp when notification was created"
                       },
                       "audit_log_id": {
-                        "type": "string",
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
                         "description": "Reference to audit log entry"
                       }
                     },
@@ -37414,6 +37470,7 @@
                           "notificationType": {
                             "enum": [
                               "entity-watch-activity",
+                              "comment-activity",
                               "governance-task-assigned",
                               "governance-case-activity",
                               "governance-proposal-reminder"
@@ -37483,6 +37540,7 @@
                           "notificationType": {
                             "enum": [
                               "entity-watch-activity",
+                              "comment-activity",
                               "governance-task-assigned",
                               "governance-case-activity",
                               "governance-proposal-reminder"
@@ -37560,6 +37618,7 @@
                         "notificationType": {
                           "enum": [
                             "entity-watch-activity",
+                            "comment-activity",
                             "governance-task-assigned",
                             "governance-case-activity",
                             "governance-proposal-reminder"
@@ -37610,6 +37669,7 @@
                           "notificationType": {
                             "enum": [
                               "entity-watch-activity",
+                              "comment-activity",
                               "governance-task-assigned",
                               "governance-case-activity",
                               "governance-proposal-reminder"
@@ -37679,6 +37739,7 @@
                           "notificationType": {
                             "enum": [
                               "entity-watch-activity",
+                              "comment-activity",
                               "governance-task-assigned",
                               "governance-case-activity",
                               "governance-proposal-reminder"

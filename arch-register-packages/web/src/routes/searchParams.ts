@@ -131,6 +131,7 @@ export const validateEntityDetailSearch = (
 });
 
 export type MarkdownSearchParams = {
+  commentId?: string;
   draftName?: string;
   draftFolder?: string;
   draftType?: string;
@@ -144,6 +145,7 @@ export type MarkdownSearchParams = {
 };
 
 export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams => ({
+  commentId: typeof raw.commentId === 'string' ? raw.commentId : undefined,
   draftName: typeof raw.draftName === 'string' ? raw.draftName : undefined,
   draftFolder: typeof raw.draftFolder === 'string' ? raw.draftFolder : undefined,
   draftType: typeof raw.draftType === 'string' ? raw.draftType : undefined,

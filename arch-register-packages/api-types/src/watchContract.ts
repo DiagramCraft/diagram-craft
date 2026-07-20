@@ -29,19 +29,32 @@ const notificationItemSchema = z.object({
   message: z.string().optional().describe('Presentation message'),
   action_route: z.string().nullable().optional().describe('Optional in-app action route'),
   read_at: z.string().nullable().optional().describe('ISO 8601 timestamp when read'),
-  entity_id: z.string().describe('Entity identifier'),
-  entity_public_id: z.string().describe('Public entity identifier'),
-  entity_name: z.string().describe('Entity name'),
-  entity_slug: z.string().describe('Entity URL slug'),
+  entity_id: z
+    .string()
+    .nullable()
+    .describe('Entity identifier, when this is an entity notification'),
+  entity_public_id: z
+    .string()
+    .nullable()
+    .describe('Public entity identifier, when this is an entity notification'),
+  entity_name: z.string().nullable().describe('Entity name, when this is an entity notification'),
+  entity_slug: z
+    .string()
+    .nullable()
+    .describe('Entity URL slug, when this is an entity notification'),
   schema_id: z.string().nullable().describe('Schema identifier (may be null)'),
   operation: z
     .enum(['create', 'update', 'delete'])
+    .nullable()
     .describe('Type of operation that triggered the notification'),
-  changed_by_user_id: z.string().describe('User who made the change'),
-  changed_by_display_name: z.string().describe('Display name of user who made the change'),
+  changed_by_user_id: z.string().nullable().describe('User who made the change'),
+  changed_by_display_name: z
+    .string()
+    .nullable()
+    .describe('Display name of user who made the change'),
   timestamp: z.string().describe('ISO 8601 timestamp of the change'),
   created_at: z.string().describe('ISO 8601 timestamp when notification was created'),
-  audit_log_id: z.string().describe('Reference to audit log entry')
+  audit_log_id: z.string().nullable().describe('Reference to audit log entry')
 });
 
 const notificationCountSchema = z.object({

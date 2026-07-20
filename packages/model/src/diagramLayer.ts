@@ -96,12 +96,16 @@ export abstract class Layer<
     return this.#name.get()!;
   }
 
+  get locked() {
+    return this.#locked;
+  }
+
   setName(name: string, uow: UnitOfWork) {
     uow.executeUpdate(this, () => this.#name.set(name));
   }
 
-  isLocked() {
-    return this.#locked;
+  isEffectivelyLocked() {
+    return this.locked || this.diagram.isEffectivelyLocked();
   }
 
   setLocked(value: boolean, uow: UnitOfWork) {
@@ -141,7 +145,7 @@ export abstract class Layer<
     return {
       _snapshotType: 'layer',
       name: this.name,
-      locked: this.isLocked(),
+      locked: this.locked,
       type: this.type
     };
   }
