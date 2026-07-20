@@ -35,8 +35,7 @@ export class PointCommentMoveDrag extends Drag {
   onDrag({ offset, modifiers }: DragEvents.DragStart) {
     if (
       !this.#moved &&
-      Point.distance(offset, this.initialPointer) <
-        DRAG_THRESHOLD / this.diagram.viewBox.zoomLevel
+      Point.distance(offset, this.initialPointer) < DRAG_THRESHOLD / this.diagram.viewBox.zoomLevel
     ) {
       return;
     }
