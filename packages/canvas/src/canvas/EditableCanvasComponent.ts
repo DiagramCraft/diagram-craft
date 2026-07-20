@@ -37,6 +37,7 @@ import { MoveTool } from '../tools/moveTool';
 import { PanTool } from '../tools/panTool';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { HoverOverlayComponent } from '../components/HoverOverlayComponent';
+import { CommentPinsComponent } from '../components/CommentPinsComponent';
 import { getAncestorWithClass } from '@diagram-craft/utils-dom/dom';
 
 const removeSuffix = (s: string) => {
@@ -428,7 +429,9 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             hoverElement: this.hoverElement
           }),
 
-          this.subComponent($cmp(AwarenessCursorComponent), { ...canvasState })
+          this.subComponent($cmp(AwarenessCursorComponent), { ...canvasState }),
+
+          this.subComponent($cmp(CommentPinsComponent), { ...canvasState })
         ]
       )
     ]);

@@ -11,6 +11,7 @@ import {
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
+import type { Point } from '@diagram-craft/geometry/point';
 
 export const commentActions = (application: Application) => ({
   COMMENT_ADD: new CommentAddAction(application),
@@ -23,14 +24,17 @@ declare global {
   }
 }
 
-class CommentAddAction extends AbstractSelectionAction<Application, { elementId: string }> {
+class CommentAddAction extends AbstractSelectionAction<
+  Application,
+  { elementId: string; point: Point }
+> {
   name = $tStr('action.COMMENT_ADD.name', 'Add Comment');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both, undefined, true);
   }
 
-  execute(arg?: Partial<{ elementId: string }>): void {
+  execute(arg?: Partial<{ elementId: string; point: Point }>): void {
     const diagram = this.context.model.activeDiagram;
 
     let selectedElement: DiagramElement | undefined;
@@ -42,6 +46,8 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
         selectionState.elements.length === 1 ? selectionState.elements[0] : undefined;
     }
 
+    const point = selectedElement ? undefined : arg?.point;
+
     this.context.ui.showDialog(
       CommentDialog.create(
         {
@@ -52,7 +58,7 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
           const userState = this.context.awareness.state;
           const comment = new Comment(
             diagram,
-            selectedElement ? 'element' : 'diagram',
+            selectedElement ? 'element' : point ? 'point' : 'diagram',
             newid(),
             data.message,
             userState.name,
@@ -60,7 +66,8 @@ class CommentAddAction extends AbstractSelectionAction<Application, { elementId:
             'unresolved',
             selectedElement,
             undefined,
-            userState.color
+            userState.color,
+            point
           );
 
           diagram.commentManager.addComment(comment);
