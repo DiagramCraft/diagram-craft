@@ -45,11 +45,14 @@ export class CommentPinsComponent extends Component<CanvasState> {
   }
 
   private renderPin(comment: Comment, props: CanvasState) {
-    const screenPoint = props.diagram.viewBox.toScreenPoint(comment.position!);
+    // The pin is rendered inside the canvas SVG, whose viewBox already applies
+    // the diagram-to-screen pan and zoom transform. Keep the pin in diagram
+    // coordinates so its anchor remains attached to the comment location.
+    const point = comment.position!;
 
     return svg.g(
       {
-        transform: `translate(${screenPoint.x - PIN_SIZE / 2}, ${screenPoint.y - PIN_SIZE})`,
+        transform: `translate(${point.x - PIN_SIZE / 2}, ${point.y - PIN_SIZE})`,
         style: 'cursor: pointer;'
       },
       svg.path({
