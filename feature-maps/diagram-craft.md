@@ -26,7 +26,7 @@
 
     - @id:dc.editor.elements.actions
       Users can attach labeled actions to shapes, including actions that open a URL, navigate to another diagram, or
-      toggle a layer.
+      toggle a layer, or call a configured REST endpoint.
 
   - @id:dc.editor.selection
     Users can select single or multiple elements, grow or shrink a selection, and manipulate the selection as a unit.
