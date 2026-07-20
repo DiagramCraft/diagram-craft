@@ -221,7 +221,10 @@
     Users can see awareness information about other participants in a shared editing session.
 
   - @id:dc.collaboration.comments
-    Users can add, view, sort, and manage comments associated with diagram elements.
+    Users can add, view, sort, and manage comments associated with diagram elements or canvas locations.
+
+    - @id:dc.collaboration.comments.move-point
+      Users can move unresolved point comments to a new canvas location.
 
     - @id:dc.collaboration.comments.resolve
       Users can resolve comments so their review state is visibly different from open discussion.

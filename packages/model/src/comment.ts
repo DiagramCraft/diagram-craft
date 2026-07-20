@@ -198,6 +198,7 @@ export class Comment {
 
   #state: CommentState;
   #message: string;
+  #position: Point | undefined;
 
   /**
    * Creates a new comment instance.
@@ -235,10 +236,25 @@ export class Comment {
     public readonly element?: DiagramElement,
     public readonly parentId?: string,
     public readonly userColor?: string,
-    public readonly position?: Point
+    position?: Point
   ) {
     this.#state = state;
     this.#message = message;
+    this.#position = position;
+  }
+
+  get position() {
+    return this.#position;
+  }
+
+  /**
+   * Moves a point comment to a new diagram-space position.
+   *
+   * The updated comment must be persisted through {@link CommentManager.updateComment}.
+   */
+  moveTo(position: Point) {
+    precondition.is.true(this.type === 'point');
+    this.#position = position;
   }
 
   /**
@@ -694,6 +710,20 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> implement
 
       this.emit('commentUpdated', { comment });
     }
+  }
+
+  /**
+   * Updates the diagram-space position of a point comment and persists it.
+   *
+   * @returns True when the comment existed and was a point comment.
+   */
+  updatePointCommentPosition(commentId: string, position: Point): boolean {
+    const comment = this.getComment(commentId);
+    if (!comment || comment.type !== 'point') return false;
+
+    comment.moveTo(position);
+    this.updateComment(comment);
+    return true;
   }
 
   /**
