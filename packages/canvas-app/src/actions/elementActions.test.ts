@@ -5,7 +5,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 
-const { ElementConvertToNameAction, ElementUnlockAction } = _test;
+const { ElementConvertToNameAction, ElementToggleLockAction } = _test;
 
 const mkContext = (d: Diagram): ActionContext => {
   return {
@@ -70,29 +70,29 @@ describe('ElementConvertToNameElementAction', () => {
   });
 });
 
-describe('ElementUnlockAction', () => {
-  test('should unlock the requested element', () => {
+describe('ElementToggleLockAction', () => {
+  test('should toggle the requested element lock', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const node = layer.addNode({ id: 'node-1' });
 
-    UnitOfWork.execute(diagram, uow => node.setLocked(true, uow));
-
-    const action = new ElementUnlockAction(mkContext(diagram));
+    const action = new ElementToggleLockAction(mkContext(diagram));
 
     expect(action.isEnabled({ elementId: node.id })).toBe(true);
     action.execute({ elementId: node.id });
+    expect(node.locked).toBe(true);
 
+    action.execute({ elementId: node.id });
     expect(node.locked).toBe(false);
   });
 
-  test('should not be enabled for an unlocked or unknown element', () => {
+  test('should not be enabled for an unknown element', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const node = layer.addNode({ id: 'node-1' });
-    const action = new ElementUnlockAction(mkContext(diagram));
+    const action = new ElementToggleLockAction(mkContext(diagram));
 
-    expect(action.isEnabled({ elementId: node.id })).toBe(false);
+    expect(action.isEnabled({ elementId: node.id })).toBe(true);
     expect(action.isEnabled({ elementId: 'missing' })).toBe(false);
   });
 });

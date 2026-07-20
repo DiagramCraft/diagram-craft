@@ -16,28 +16,28 @@ declare global {
 
 export const elementActions = (context: ActionContext) => ({
   ELEMENT_CONVERT_TO_NAME_ELEMENT: new ElementConvertToNameAction(context),
-  ELEMENT_UNLOCK: new ElementUnlockAction(context)
+  ELEMENT_TOGGLE_LOCK: new ElementToggleLockAction(context)
 });
 
-type ElementUnlockActionArg = { elementId?: string };
+type ElementToggleLockActionArg = { elementId?: string };
 
-class ElementUnlockAction extends AbstractAction<ElementUnlockActionArg> {
-  name = $tStr('action.ELEMENT_UNLOCK.name', 'Unlock Element');
+class ElementToggleLockAction extends AbstractAction<ElementToggleLockActionArg> {
+  name = $tStr('action.ELEMENT_TOGGLE_LOCK.name', 'Toggle Element Locked');
   availableInCommandPalette = false;
 
-  isEnabled({ elementId }: ElementUnlockActionArg): boolean {
-    return this.context.model.activeDiagram.lookup(elementId ?? '')?.locked ?? false;
+  isEnabled({ elementId }: ElementToggleLockActionArg): boolean {
+    return this.context.model.activeDiagram.lookup(elementId ?? '') !== undefined;
   }
 
-  execute({ elementId }: ElementUnlockActionArg): void {
+  execute({ elementId }: ElementToggleLockActionArg): void {
     precondition.is.present(elementId);
 
     const diagram = this.context.model.activeDiagram;
     const element = diagram.lookup(elementId);
     assert.present(element);
 
-    diagram.undoManager.execute('Unlock element', uow => {
-      element.setLocked(false, uow);
+    diagram.undoManager.execute('Toggle element locked', uow => {
+      element.setLocked(!element.locked, uow);
     });
   }
 }
@@ -88,5 +88,5 @@ class ElementConvertToNameAction extends AbstractSelectionAction {
 
 export const _test = {
   ElementConvertToNameAction,
-  ElementUnlockAction
+  ElementToggleLockAction
 };
