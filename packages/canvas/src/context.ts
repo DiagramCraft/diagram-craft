@@ -41,6 +41,7 @@ export interface UIActions {
 export interface ContextMenus {
   canvas: object;
   selection: object;
+  'locked-element': { elementId: string };
   guide: { guideId: string };
 }
 

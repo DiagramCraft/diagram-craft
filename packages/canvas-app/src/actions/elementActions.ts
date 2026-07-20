@@ -3,9 +3,9 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, precondition } from '@diagram-craft/utils/assert';
 import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
@@ -15,8 +15,32 @@ declare global {
 }
 
 export const elementActions = (context: ActionContext) => ({
-  ELEMENT_CONVERT_TO_NAME_ELEMENT: new ElementConvertToNameAction(context)
+  ELEMENT_CONVERT_TO_NAME_ELEMENT: new ElementConvertToNameAction(context),
+  ELEMENT_UNLOCK: new ElementUnlockAction(context)
 });
+
+type ElementUnlockActionArg = { elementId?: string };
+
+class ElementUnlockAction extends AbstractAction<ElementUnlockActionArg> {
+  name = $tStr('action.ELEMENT_UNLOCK.name', 'Unlock Element');
+  availableInCommandPalette = false;
+
+  isEnabled({ elementId }: ElementUnlockActionArg): boolean {
+    return this.context.model.activeDiagram.lookup(elementId ?? '')?.locked ?? false;
+  }
+
+  execute({ elementId }: ElementUnlockActionArg): void {
+    precondition.is.present(elementId);
+
+    const diagram = this.context.model.activeDiagram;
+    const element = diagram.lookup(elementId);
+    assert.present(element);
+
+    diagram.undoManager.execute('Unlock element', uow => {
+      element.setLocked(false, uow);
+    });
+  }
+}
 
 class ElementConvertToNameAction extends AbstractSelectionAction {
   name = $tStr('action.ELEMENT_CONVERT_TO_NAME_ELEMENT.name', 'Convert to named element');
@@ -63,5 +87,6 @@ class ElementConvertToNameAction extends AbstractSelectionAction {
 }
 
 export const _test = {
-  ElementConvertToNameAction
+  ElementConvertToNameAction,
+  ElementUnlockAction
 };
