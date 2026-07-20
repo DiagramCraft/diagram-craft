@@ -6,6 +6,10 @@ import type { Comment } from '@diagram-craft/model/comment';
 import type { Indicator } from '@diagram-craft/model/diagramProps';
 import { DeepRequired } from '@diagram-craft/utils/types';
 import { INDICATORS } from './indicators';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
+import { PointCommentMoveDrag } from '../drag/pointCommentDrag';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
+import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 const PIN_SIZE = 20;
 const COMMENT_PIN_BOUNDS: Box = { x: 0, y: 0, w: PIN_SIZE, h: PIN_SIZE, r: 0 };
@@ -46,12 +50,29 @@ export class CommentPinsComponent extends Component<CanvasState> {
     return svg.g(
       {
         transform: `translate(${point.x - PIN_SIZE / 2}, ${point.y - PIN_SIZE})`,
-        style: 'cursor: pointer;',
+        style: 'cursor: grab;',
         on: {
           mousedown: e => {
+            if (e.button !== 0) return;
+
+            const canvas = CanvasDomHelper.diagramElement(props.diagram);
+            if (!canvas) return;
+
+            const initialPointer = props.diagram.viewBox.toDiagramPoint(
+              EventHelper.pointWithRespectTo(e, canvas)
+            );
+            const drag = new PointCommentMoveDrag(props.diagram, comment.id, initialPointer);
+
+            DRAG_DROP_MANAGER.initiate(drag, () => {
+              if (!drag.didMove) {
+                props.context.actions.COMMENT_EDIT?.execute({
+                  comment: props.diagram.commentManager.getComment(comment.id) ?? comment
+                });
+              }
+            });
+
             e.preventDefault();
             e.stopPropagation();
-            props.context.actions.COMMENT_EDIT?.execute({ comment });
           }
         }
       },

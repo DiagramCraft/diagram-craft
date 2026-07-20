@@ -292,6 +292,34 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       expect(pointComments[0]!.position).toEqual({ x: 10, y: 20 });
     });
 
+    it('should update and synchronize a point comment position', () => {
+      const pointComment = new Comment(
+        diagram,
+        'point',
+        'point-1',
+        'Point comment',
+        'Author',
+        new Date(),
+        'unresolved',
+        undefined,
+        undefined,
+        undefined,
+        { x: 10, y: 20 }
+      );
+      const eventSpy = vi.fn();
+      commentManager.on('commentUpdated', eventSpy);
+
+      commentManager.addComment(pointComment);
+
+      expect(commentManager.updatePointCommentPosition('point-1', { x: 30, y: 40 })).toBe(true);
+      expect(commentManager.getComment('point-1')!.position).toEqual({ x: 30, y: 40 });
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+
+      if (commentManager2) {
+        expect(commentManager2.getComment('point-1')!.position).toEqual({ x: 30, y: 40 });
+      }
+    });
+
     it('should update existing comment', () => {
       const comment = new Comment(diagram, 'diagram', '1', 'Msg', 'Author', new Date());
 
