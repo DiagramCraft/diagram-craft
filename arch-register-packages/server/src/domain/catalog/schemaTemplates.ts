@@ -7,8 +7,13 @@ import {
   AR_COLOR_RED
 } from '@arch-register/api-types/colors';
 import { randomUUID } from 'node:crypto';
-import type { SchemaDbCreate } from '../../db/database';
-import { SchemaField } from '@arch-register/api-types/schemaContract';
+import type { SchemaDbCreate, WorkspaceEnumDbCreate } from '../../db/database';
+import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
+import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import type {
+  DocumentTemplateDbCreate,
+  DocumentTypeDbCreate
+} from '../document/db/documentDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
 type SymbolicField =
@@ -42,12 +47,238 @@ type TemplateSchema = {
   fields: SymbolicField[];
 };
 
+type SymbolicEnum = {
+  id: string;
+  name: string;
+  options: Array<{ value: string; label: string }>;
+};
+
+type SymbolicDocumentType = {
+  id: string;
+  name: string;
+  description: string;
+  fields: DocumentField[];
+  color: string | null;
+  icon: string | null;
+};
+
+type SymbolicDocumentTemplate = {
+  id: string;
+  name: string;
+  body: string;
+  documentTypeId: string;
+  metadataDefaults: DocumentMetadata;
+};
+
 type SchemaTemplate = {
   id: string;
   name: string;
   description: string;
   schemas: TemplateSchema[];
+  enums: SymbolicEnum[];
+  documentTypes: SymbolicDocumentType[];
+  documentTemplates: SymbolicDocumentTemplate[];
 };
+
+const enumDefinition = (
+  id: string,
+  name: string,
+  options: Array<{ value: string; label: string }>
+): SymbolicEnum => ({ id, name, options });
+
+export const ADR_DOCUMENT_TYPE_NAME = 'Architecture Decision Record';
+export const ADR_DOCUMENT_TEMPLATE_NAME = 'Architecture Decision Record';
+
+export const ADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
+  id: 'architecture-decision-record',
+  name: ADR_DOCUMENT_TYPE_NAME,
+  description: 'A structured record of an architecture decision.',
+  color: AR_COLOR_PURPLE,
+  icon: 'clipboard',
+  fields: [
+    {
+      id: 'status',
+      name: 'Status',
+      type: 'enum',
+      requirement: 'required',
+      enumOptions: [
+        { value: 'Proposed', label: 'Proposed' },
+        { value: 'Accepted', label: 'Accepted' },
+        { value: 'Superseded', label: 'Superseded' },
+        { value: 'Deprecated', label: 'Deprecated' }
+      ],
+      retired: false
+    },
+    {
+      id: 'decision_date',
+      name: 'Decision date',
+      type: 'date',
+      requirement: 'expected',
+      retired: false
+    },
+    {
+      id: 'affected_entities',
+      name: 'Affected entities',
+      type: 'entity_link',
+      requirement: 'optional',
+      minCardinality: 0,
+      retired: false
+    },
+    {
+      id: 'supersedes',
+      name: 'Supersedes',
+      type: 'document_link',
+      requirement: 'optional',
+      minCardinality: 0,
+      inverseName: 'Superseded by',
+      retired: false
+    }
+  ]
+};
+
+export const ADR_DOCUMENT_TEMPLATE_DEFINITION: SymbolicDocumentTemplate = {
+  id: 'architecture-decision-record-template',
+  name: ADR_DOCUMENT_TEMPLATE_NAME,
+  body: '# {{title}}\n\n## Context\n\n## Decision drivers\n\n## Considered options\n\n## Decision\n\n## Consequences\n',
+  documentTypeId: ADR_DOCUMENT_TYPE_DEFINITION.id,
+  metadataDefaults: { status: 'Proposed' }
+};
+
+const commonDocumentTypes = [ADR_DOCUMENT_TYPE_DEFINITION];
+const commonDocumentTemplates = [ADR_DOCUMENT_TEMPLATE_DEFINITION];
+
+const backstageEnums = [
+  enumDefinition('api-type', 'API Type', [
+    { value: 'openapi', label: 'OpenAPI' },
+    { value: 'grpc', label: 'gRPC' },
+    { value: 'graphql', label: 'GraphQL' },
+    { value: 'asyncapi', label: 'AsyncAPI' }
+  ]),
+  enumDefinition('component-kind', 'Component Kind', [
+    { value: 'service', label: 'Service' },
+    { value: 'library', label: 'Library' },
+    { value: 'website', label: 'Website' },
+    { value: 'documentation', label: 'Documentation' }
+  ]),
+  enumDefinition('resource-kind', 'Resource Kind', [
+    { value: 'database', label: 'Database' },
+    { value: 'cache', label: 'Cache' },
+    { value: 'queue', label: 'Queue' },
+    { value: 'blob-storage', label: 'Blob Storage' }
+  ])
+];
+
+const itilEnums = [
+  enumDefinition('application-tier', 'Application Tier', [
+    { value: 'strategic', label: 'Strategic' },
+    { value: 'tactical', label: 'Tactical' },
+    { value: 'commodity', label: 'Commodity' }
+  ]),
+  enumDefinition('host-type', 'Host Type', [
+    { value: 'physical', label: 'Physical' },
+    { value: 'virtual', label: 'Virtual' },
+    { value: 'container', label: 'Container' }
+  ]),
+  enumDefinition('environment', 'Environment', [
+    { value: 'development', label: 'Development' },
+    { value: 'test', label: 'Test' },
+    { value: 'staging', label: 'Staging' },
+    { value: 'production', label: 'Production' }
+  ])
+];
+
+const dddEnums = [
+  enumDefinition('service-kind', 'Service Kind', [
+    { value: 'domain', label: 'Domain' },
+    { value: 'application', label: 'Application' },
+    { value: 'infrastructure', label: 'Infrastructure' }
+  ]),
+  enumDefinition('event-type', 'Event Type', [
+    { value: 'command', label: 'Command' },
+    { value: 'event', label: 'Event' },
+    { value: 'query', label: 'Query' }
+  ])
+];
+
+const teamTopologiesEnums = [
+  enumDefinition('team-type', 'Team Type', [
+    { value: 'stream-aligned', label: 'Stream-aligned' },
+    { value: 'platform', label: 'Platform' },
+    { value: 'enabling', label: 'Enabling' },
+    { value: 'complicated-subsystem', label: 'Complicated Subsystem' }
+  ]),
+  enumDefinition('interaction-mode', 'Interaction Mode', [
+    { value: 'collaboration', label: 'Collaboration' },
+    { value: 'x-as-a-service', label: 'X-as-a-Service' },
+    { value: 'facilitating', label: 'Facilitating' }
+  ])
+];
+
+const dataMeshEnums = [
+  enumDefinition('data-product-type', 'Data Product Type', [
+    { value: 'source-aligned', label: 'Source-aligned' },
+    { value: 'aggregate', label: 'Aggregate' },
+    { value: 'consumer-aligned', label: 'Consumer-aligned' }
+  ]),
+  enumDefinition('dataset-format', 'Dataset Format', [
+    { value: 'csv', label: 'CSV' },
+    { value: 'json', label: 'JSON' },
+    { value: 'avro', label: 'Avro' },
+    { value: 'parquet', label: 'Parquet' },
+    { value: 'relational', label: 'Relational' }
+  ])
+];
+
+const archimateEnums = [
+  enumDefinition('layer', 'Layer', [
+    { value: 'business', label: 'Business' },
+    { value: 'application', label: 'Application' },
+    { value: 'technology', label: 'Technology' }
+  ]),
+  enumDefinition('technology-kind', 'Technology Kind', [
+    { value: 'device', label: 'Device' },
+    { value: 'system-software', label: 'System Software' },
+    { value: 'artifact', label: 'Artifact' }
+  ])
+];
+
+const securityEnums = [
+  enumDefinition('classification', 'Classification', [
+    { value: 'public', label: 'Public' },
+    { value: 'internal', label: 'Internal' },
+    { value: 'confidential', label: 'Confidential' },
+    { value: 'restricted', label: 'Restricted' }
+  ]),
+  enumDefinition('asset-type', 'Asset Type', [
+    { value: 'data', label: 'Data' },
+    { value: 'service', label: 'Service' },
+    { value: 'infrastructure', label: 'Infrastructure' },
+    { value: 'credential', label: 'Credential' }
+  ]),
+  enumDefinition('stride-category', 'STRIDE Category', [
+    { value: 'spoofing', label: 'Spoofing' },
+    { value: 'tampering', label: 'Tampering' },
+    { value: 'repudiation', label: 'Repudiation' },
+    { value: 'information-disclosure', label: 'Information Disclosure' },
+    { value: 'denial-of-service', label: 'Denial of Service' },
+    { value: 'elevation-of-privilege', label: 'Elevation of Privilege' }
+  ]),
+  enumDefinition('control-type', 'Control Type', [
+    { value: 'preventive', label: 'Preventive' },
+    { value: 'detective', label: 'Detective' },
+    { value: 'corrective', label: 'Corrective' }
+  ]),
+  enumDefinition('likelihood', 'Likelihood', [
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' }
+  ]),
+  enumDefinition('impact', 'Impact', [
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' }
+  ])
+];
 
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   {
@@ -89,7 +320,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
-          { id: 'api_type', name: 'Type', type: 'select', enumId: '' },
+          { id: 'api_type', name: 'Type', type: 'select', enumId: 'api-type' },
           {
             id: 'system',
             name: 'System',
@@ -108,7 +339,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
+          { id: 'kind', name: 'Kind', type: 'select', enumId: 'component-kind' },
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'go_live_date', name: 'Go Live Date', type: 'date' },
           {
@@ -148,7 +379,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_ORANGE,
         icon: 'database',
         fields: [
-          { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
+          { id: 'kind', name: 'Kind', type: 'select', enumId: 'resource-kind' },
           { id: 'planned_decommission', name: 'Planned Decommission', type: 'date' },
           {
             id: 'system',
@@ -161,7 +392,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       }
-    ]
+    ],
+    enums: backstageEnums,
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   },
   {
     id: 'c4',
@@ -233,7 +467,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       }
-    ]
+    ],
+    enums: [],
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   },
   {
     id: 'itil',
@@ -275,7 +512,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'box',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'tier', name: 'Tier', type: 'select', enumId: '' },
+          { id: 'tier', name: 'Tier', type: 'select', enumId: 'application-tier' },
           { id: 'sunset_date', name: 'Sunset Date', type: 'date' },
           {
             id: 'service',
@@ -312,8 +549,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_ORANGE,
         icon: 'server',
         fields: [
-          { id: 'host_type', name: 'Type', type: 'select', enumId: '' },
-          { id: 'environment', name: 'Environment', type: 'select', enumId: '' },
+          { id: 'host_type', name: 'Type', type: 'select', enumId: 'host-type' },
+          { id: 'environment', name: 'Environment', type: 'select', enumId: 'environment' },
           { id: 'patch_deadline', name: 'Patch Deadline', type: 'date' },
           {
             id: 'applications',
@@ -333,7 +570,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       }
-    ]
+    ],
+    enums: itilEnums,
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   },
   {
     id: 'ddd',
@@ -363,7 +603,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
+          { id: 'kind', name: 'Kind', type: 'select', enumId: 'service-kind' },
           { id: 'technology', name: 'Technology', type: 'text' },
           {
             id: 'domain',
@@ -391,7 +631,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'zap',
         fields: [
-          { id: 'event_type', name: 'Type', type: 'select', enumId: '' },
+          { id: 'event_type', name: 'Type', type: 'select', enumId: 'event-type' },
           {
             id: 'producer',
             name: 'Producer',
@@ -410,7 +650,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       }
-    ]
+    ],
+    enums: dddEnums,
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   },
   {
     id: 'team-topologies',
@@ -425,7 +668,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_YELLOW,
         icon: 'users',
         fields: [
-          { id: 'team_type', name: 'Type', type: 'select', enumId: '' },
+          { id: 'team_type', name: 'Type', type: 'select', enumId: 'team-type' },
           { id: 'cognitive_load', name: 'Cognitive Load Notes', type: 'longtext' }
         ]
       },
@@ -455,7 +698,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'arrow-right',
         fields: [
-          { id: 'mode', name: 'Mode', type: 'select', enumId: '' },
+          { id: 'mode', name: 'Mode', type: 'select', enumId: 'interaction-mode' },
           {
             id: 'from_team',
             name: 'From Team',
@@ -475,7 +718,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'expected_duration', name: 'Expected Duration', type: 'text' }
         ]
       }
-    ]
+    ],
+    enums: teamTopologiesEnums,
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   },
   {
     id: 'data-mesh',
@@ -516,7 +762,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'dp_type', name: 'Type', type: 'select', enumId: '' },
+          { id: 'dp_type', name: 'Type', type: 'select', enumId: 'data-product-type' },
           { id: 'slo', name: 'SLOs', type: 'longtext' },
           { id: 'review_date', name: 'Review Date', type: 'date' },
           {
@@ -544,7 +790,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'table',
         fields: [
-          { id: 'format', name: 'Format', type: 'select', enumId: '' },
+          { id: 'format', name: 'Format', type: 'select', enumId: 'dataset-format' },
           { id: 'schema_url', name: 'Schema URL', type: 'text' },
           { id: 'deprecation_date', name: 'Deprecation Date', type: 'date' },
           {
@@ -583,7 +829,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       }
-    ]
+    ],
+    enums: dataMeshEnums,
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   },
   {
     id: 'archimate',
@@ -633,7 +882,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'box',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'layer', name: 'Layer', type: 'select', enumId: '' },
+          { id: 'layer', name: 'Layer', type: 'select', enumId: 'layer' },
           { id: 'retirement_date', name: 'Retirement Date', type: 'date' },
           {
             id: 'realises',
@@ -671,7 +920,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'server',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
+          { id: 'kind', name: 'Kind', type: 'select', enumId: 'technology-kind' },
           { id: 'end_of_support', name: 'End of Support', type: 'date' },
           {
             id: 'hosts',
@@ -683,7 +932,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       }
-    ]
+    ],
+    enums: archimateEnums,
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   },
   {
     id: 'security',
@@ -698,8 +950,13 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_YELLOW,
         icon: 'shield',
         fields: [
-          { id: 'classification', name: 'Classification', type: 'select', enumId: '' },
-          { id: 'asset_type', name: 'Type', type: 'select', enumId: '' }
+          {
+            id: 'classification',
+            name: 'Classification',
+            type: 'select',
+            enumId: 'classification'
+          },
+          { id: 'asset_type', name: 'Type', type: 'select', enumId: 'asset-type' }
         ]
       },
       {
@@ -709,7 +966,12 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_RED,
         icon: 'alert-triangle',
         fields: [
-          { id: 'stride_category', name: 'STRIDE Category', type: 'select', enumId: '' },
+          {
+            id: 'stride_category',
+            name: 'STRIDE Category',
+            type: 'select',
+            enumId: 'stride-category'
+          },
           { id: 'discovered_on', name: 'Discovered On', type: 'date' },
           {
             id: 'affected_assets',
@@ -729,7 +991,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'check-circle',
         fields: [
-          { id: 'control_type', name: 'Type', type: 'select', enumId: '' },
+          { id: 'control_type', name: 'Type', type: 'select', enumId: 'control-type' },
           { id: 'last_verified', name: 'Last Verified', type: 'date' },
           {
             id: 'mitigates',
@@ -757,8 +1019,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_YELLOW,
         icon: 'zap',
         fields: [
-          { id: 'likelihood', name: 'Likelihood', type: 'select', enumId: '' },
-          { id: 'impact', name: 'Impact', type: 'select', enumId: '' },
+          { id: 'likelihood', name: 'Likelihood', type: 'select', enumId: 'likelihood' },
+          { id: 'impact', name: 'Impact', type: 'select', enumId: 'impact' },
           { id: 'review_due', name: 'Review Due', type: 'date' },
           {
             id: 'threat',
@@ -778,21 +1040,44 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       }
-    ]
+    ],
+    enums: securityEnums,
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   }
 ];
 
-export const instantiateTemplate = (workspaceId: string, templateId: string): SchemaDbCreate[] => {
-  const template = SCHEMA_TEMPLATES.find(t => t.id === templateId);
-  if (!template) return [];
+export type InstantiatedTemplate = {
+  schemas: SchemaDbCreate[];
+  enums: WorkspaceEnumDbCreate[];
+  documentTypes: DocumentTypeDbCreate[];
+  documentTemplates: DocumentTemplateDbCreate[];
+};
 
-  const now = new Date();
+export const instantiateTemplateDefinitions = (
+  workspaceId: string,
+  templateId: string,
+  now = new Date()
+): InstantiatedTemplate => {
+  const template = SCHEMA_TEMPLATES.find(t => t.id === templateId);
+  if (!template) {
+    return { schemas: [], enums: [], documentTypes: [], documentTemplates: [] };
+  }
+
   const idMap = new Map<string, string>();
   for (const schema of template.schemas) {
     idMap.set(schema.symId, randomUUID());
   }
+  const enumIdMap = new Map<string, string>();
+  for (const enumeration of template.enums) {
+    enumIdMap.set(enumeration.id, randomUUID());
+  }
+  const documentTypeIdMap = new Map<string, string>();
+  for (const documentType of template.documentTypes) {
+    documentTypeIdMap.set(documentType.id, randomUUID());
+  }
 
-  return template.schemas.map(schema => {
+  const schemas = template.schemas.map(schema => {
     const resolvedFields: SchemaField[] = schema.fields.map(field => {
       if (field.type === 'reference') {
         const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
@@ -819,7 +1104,12 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Sc
         };
       }
       if (field.type === 'select') {
-        return { id: field.id, name: field.name, type: field.type, enumId: field.enumId };
+        return {
+          id: field.id,
+          name: field.name,
+          type: field.type,
+          enumId: enumIdMap.get(field.enumId) ?? field.enumId
+        };
       }
       if (field.type === 'text') {
         return { id: field.id, name: field.name, type: 'text' };
@@ -849,4 +1139,61 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Sc
       updated_at: now
     };
   });
+
+  const enums: WorkspaceEnumDbCreate[] = template.enums.map(enumeration => ({
+    id: enumIdMap.get(enumeration.id)!,
+    workspace: workspaceId,
+    name: enumeration.name,
+    options: enumeration.options,
+    sort_order: template.enums.indexOf(enumeration),
+    created_at: now,
+    updated_at: now
+  }));
+
+  const documentTypes: DocumentTypeDbCreate[] = template.documentTypes.map(documentType => ({
+    id: documentTypeIdMap.get(documentType.id)!,
+    workspace: workspaceId,
+    name: documentType.name,
+    description: documentType.description,
+    fields: documentType.fields,
+    color: documentType.color,
+    icon: documentType.icon,
+    created_at: now,
+    updated_at: now
+  }));
+
+  const documentTemplates: DocumentTemplateDbCreate[] = template.documentTemplates.map(
+    documentTemplate => ({
+      id: randomUUID(),
+      workspace: workspaceId,
+      project_id: null,
+      name: documentTemplate.name,
+      body: documentTemplate.body,
+      document_type_id: documentTypeIdMap.get(documentTemplate.documentTypeId)!,
+      metadata_defaults: { ...documentTemplate.metadataDefaults },
+      created_at: now,
+      updated_at: now
+    })
+  );
+
+  return { schemas, enums, documentTypes, documentTemplates };
 };
+
+export const instantiateTemplateDocuments = (
+  workspaceId: string,
+  templateId: string,
+  now = new Date()
+) => {
+  const { documentTypes, documentTemplates } = instantiateTemplateDefinitions(
+    workspaceId,
+    templateId,
+    now
+  );
+  return { documentTypes, documentTemplates };
+};
+
+export const instantiateTemplate = (
+  workspaceId: string,
+  templateId: string,
+  now?: Date
+): SchemaDbCreate[] => instantiateTemplateDefinitions(workspaceId, templateId, now).schemas;

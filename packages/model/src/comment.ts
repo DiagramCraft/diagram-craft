@@ -719,7 +719,7 @@ export class CommentManager extends EventEmitter<CommentManagerEvents> implement
    */
   updatePointCommentPosition(commentId: string, position: Point): boolean {
     const comment = this.getComment(commentId);
-    if (!comment || comment.type !== 'point') return false;
+    if (comment?.type !== 'point') return false;
 
     comment.moveTo(position);
     this.updateComment(comment);

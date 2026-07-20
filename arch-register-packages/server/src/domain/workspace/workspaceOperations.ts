@@ -9,12 +9,11 @@ import { HTTPError } from 'h3';
 import { handleDbError, slugify } from '../../utils/http';
 import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
 import { toApiWorkspace } from './workspaceHelpers';
-import { instantiateTemplate } from '../catalog/schemaTemplates';
+import { instantiateTemplateDefinitions } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
-import { buildDefaultAdrDocuments } from '../document/documentDefaults';
 import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
 
 const shortCodeFrom = (name: string): string =>
@@ -675,8 +674,11 @@ export const createWorkspace = async (
         await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
 
         if (typeof template === 'string' && template && template !== 'blank') {
-          const schemas = instantiateTemplate(row.id, template);
-          for (const schema of schemas) {
+          const definitions = instantiateTemplateDefinitions(row.id, template, timestamp);
+          for (const enumeration of definitions.enums) {
+            await db.catalog.createEnum(enumeration);
+          }
+          for (const schema of definitions.schemas) {
             await db.catalog.createSchema(schema);
             if (schema.key_prefix) {
               await db.workspace.registerPublicIdPrefix(
@@ -687,9 +689,12 @@ export const createWorkspace = async (
               );
             }
           }
-          const adr = buildDefaultAdrDocuments(row.id, timestamp);
-          await db.document.createDocumentType(adr.documentType);
-          await db.document.createDocumentTemplate(adr.template);
+          for (const documentType of definitions.documentTypes) {
+            await db.document.createDocumentType(documentType);
+          }
+          for (const documentTemplate of definitions.documentTemplates) {
+            await db.document.createDocumentTemplate(documentTemplate);
+          }
         }
       }
 

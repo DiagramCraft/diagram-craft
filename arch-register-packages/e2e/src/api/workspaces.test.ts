@@ -62,6 +62,44 @@ test.describe('workspace routes', () => {
     expect(teams.map(team => team.name)).toEqual(['Platform Team', 'UX Team', 'Security Team']);
   });
 
+  test('POST /api/workspaces materializes template enums and document types', async ({
+    server,
+    orpc
+  }) => {
+    const created = await orpc.workspaces.create({
+      body: { name: 'Security Template Workspace', template: 'security' }
+    });
+
+    const [schemas, enums, documentTypes, documentTemplates] = await Promise.all([
+      server.db.catalog.listSchemas(created.id),
+      server.db.catalog.listEnums(created.id),
+      server.db.document.listDocumentTypes(created.id),
+      server.db.document.listDocumentTemplates(created.id)
+    ]);
+    const enumIds = new Set(enums.map(enumeration => enumeration.id));
+    const selectFields = schemas.flatMap(schema =>
+      schema.fields.filter(field => field.type === 'select')
+    );
+
+    expect(enums).toHaveLength(6);
+    expect(enums.every(enumeration => enumeration.options.length > 0)).toBe(true);
+    expect(selectFields.every(field => enumIds.has(field.enumId))).toBe(true);
+    expect(documentTypes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'Architecture Decision Record', archived: false })
+      ])
+    );
+    const adrType = documentTypes.find(type => type.name === 'Architecture Decision Record');
+    expect(documentTemplates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Architecture Decision Record',
+          document_type_id: adrType?.id
+        })
+      ])
+    );
+  });
+
   test('POST /api/workspaces applies slug and badge overrides', async ({ orpc }) => {
     const created = await orpc.workspaces.create({
       body: {
