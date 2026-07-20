@@ -8,6 +8,7 @@ const notificationChannelSchema = z.enum(['in_app', 'email', 'slack', 'sms']);
 
 const notificationTypeSchema = z.enum([
   'entity-watch-activity',
+  'comment-activity',
   'governance-task-assigned',
   'governance-case-activity',
   'governance-proposal-reminder'

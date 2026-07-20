@@ -330,6 +330,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
   },
 
   text: {
+    enabled: true,
     color: 'var(--canvas-fg)',
     fontSize: 10,
     lineHeight: 1,

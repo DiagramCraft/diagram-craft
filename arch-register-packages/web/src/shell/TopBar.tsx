@@ -42,7 +42,14 @@ import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
 import type { DiscussionSummaryEntry } from '@arch-register/api-types/discussionContract';
 import type { BreadcrumbItem } from './shellTypes';
-import { asEntityPublicId, entityDetailRoute } from '../routes/publicObjectRoutes';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  entityMarkdownRoute,
+  projectMarkdownRoute,
+  workspaceMarkdownRoute
+} from '../routes/publicObjectRoutes';
 import { useDismissibleMenu } from '../hooks/useDismissibleMenu';
 import { discussionRoute } from './topBarViewModel';
 
@@ -482,6 +489,58 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
     navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
   };
 
+  const openNotificationRoute = (route: string) => {
+    setOpen(false);
+    const url = new URL(route, 'http://notification.local');
+    const commentId = url.searchParams.get('commentId') ?? undefined;
+    const entityWikiMatch = url.pathname.match(/^\/entities\/([^/]+)\/wiki\/([^/]+)$/);
+    if (entityWikiMatch) {
+      navigate(
+        entityMarkdownRoute(
+          workspaceSlug,
+          asEntityPublicId(decodeURIComponent(entityWikiMatch[1]!)),
+          decodeURIComponent(entityWikiMatch[2]!),
+          commentId ? { commentId } : undefined
+        )
+      );
+      return;
+    }
+
+    const projectWikiMatch = url.pathname.match(/^\/projects\/([^/]+)\/wiki\/([^/]+)$/);
+    if (projectWikiMatch) {
+      navigate(
+        projectMarkdownRoute(
+          workspaceSlug,
+          asProjectPublicId(decodeURIComponent(projectWikiMatch[1]!)),
+          decodeURIComponent(projectWikiMatch[2]!),
+          commentId ? { commentId } : undefined
+        )
+      );
+      return;
+    }
+
+    const workspaceWikiMatch = url.pathname.match(/^\/content\/wiki\/([^/]+)$/);
+    if (workspaceWikiMatch) {
+      navigate(
+        workspaceMarkdownRoute(
+          workspaceSlug,
+          decodeURIComponent(workspaceWikiMatch[1]!),
+          commentId ? { commentId } : undefined
+        )
+      );
+      return;
+    }
+
+    const entityMatch = url.pathname.match(/^\/entities\/([^/]+)$/);
+    if (entityMatch) {
+      navigate(
+        entityDetailRoute(workspaceSlug, asEntityPublicId(decodeURIComponent(entityMatch[1]!)), {
+          tab: url.searchParams.get('tab') === 'discussions' ? 'discussions' : undefined
+        })
+      );
+    }
+  };
+
   return (
     <div className={styles.notificationMenu} ref={ref}>
       <button
@@ -531,6 +590,7 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
               <NotificationList
                 notifications={notifications}
                 onOpenEntity={openEntity}
+                onOpenRoute={openNotificationRoute}
                 onOpenGovernance={() => {
                   setOpen(false);
                   navigate({ to: '/$workspaceSlug/governance', params: { workspaceSlug } });
@@ -558,6 +618,7 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
 const NotificationList = ({
   notifications,
   onOpenEntity,
+  onOpenRoute,
   onOpenGovernance,
   onClear,
   clearingId,
@@ -565,6 +626,7 @@ const NotificationList = ({
 }: {
   notifications: NotificationItem[];
   onOpenEntity: (entityId: string) => void;
+  onOpenRoute: (route: string) => void;
   onOpenGovernance: () => void;
   onClear: (notificationId: string) => void;
   clearingId: string | null;
@@ -582,11 +644,17 @@ const NotificationList = ({
   return (
     <div className={styles.notificationList}>
       {notifications.map(item => {
+        const notificationLabel = item.entity_name ?? item.title ?? 'Notification';
         const openNotification = () => {
-          if (item.category === 'action' || item.case_id) {
+          if (item.resource_type === 'comment' && item.action_route) {
+            onClear(item.id);
+            onOpenRoute(item.action_route);
+          } else if (item.category === 'action' || item.case_id) {
             onClear(item.id);
             onOpenGovernance();
-          } else if (item.operation !== 'delete') onOpenEntity(item.entity_public_id);
+          } else if (item.operation !== 'delete' && item.entity_public_id) {
+            onOpenEntity(item.entity_public_id);
+          }
         };
         return (
           // biome-ignore lint/a11y/useSemanticElements: row wraps an interactive clear button; a nested <button> would be invalid HTML
@@ -595,7 +663,7 @@ const NotificationList = ({
             role="button"
             tabIndex={0}
             className={`${styles.notificationRow} ${item.read_at == null ? styles.notificationRowUnread : ''}`}
-            aria-label={`Notification: ${item.entity_name}`}
+            aria-label={`Notification: ${notificationLabel}`}
             onClick={openNotification}
             onKeyDown={event => {
               if (event.key === 'Enter' || event.key === ' ') {
@@ -619,8 +687,8 @@ const NotificationList = ({
             <button
               type="button"
               className={styles.notificationClear}
-              aria-label={`Clear notification for ${item.entity_name}`}
-              title={`Clear notification for ${item.entity_name}`}
+              aria-label={`Clear notification for ${notificationLabel}`}
+              title={`Clear notification for ${notificationLabel}`}
               onClick={event => {
                 event.stopPropagation();
                 onClear(item.id);

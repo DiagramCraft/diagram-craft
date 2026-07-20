@@ -46,6 +46,7 @@ export const MarkdownEditorPane = (props: {
   attachments: MarkdownEditorPaneAttachments;
   workspaceId: string;
   nodeId: string;
+  initialCommentId?: string;
   showDiscussion?: boolean;
   showBacklinks?: boolean;
   propertiesPanel?: ReactNode;
@@ -65,6 +66,7 @@ export const MarkdownEditorPane = (props: {
     attachments,
     workspaceId,
     nodeId,
+    initialCommentId,
     showDiscussion = true,
     showBacklinks = true,
     propertiesPanel,
@@ -104,6 +106,10 @@ export const MarkdownEditorPane = (props: {
     setActiveCommentId(null);
     setInlinePopupRect(null);
   }, [commentsMode]);
+
+  useEffect(() => {
+    if (initialCommentId) setActiveCommentId(initialCommentId);
+  }, [initialCommentId]);
 
   // Kept in sync with the rendered preview DOM (not derived from the markdown AST directly),
   // since MdxPreview's DOM text-node content is what selection offsets are measured against.

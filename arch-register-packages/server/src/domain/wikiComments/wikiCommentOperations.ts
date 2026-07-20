@@ -15,6 +15,7 @@ import type {
   UpdateWikiCommentRequest,
   WikiComment
 } from '@arch-register/api-types/wikiCommentContract';
+import { createCommentNotifications } from '../notification/commentNotifications';
 
 const UNKNOWN_AUTHOR_NAME = 'Unknown user';
 
@@ -107,6 +108,7 @@ export const createWikiComment = async (
 
   let anchor = body.anchor;
 
+  let parentAuthorId: string | null = null;
   if (body.parentPostId) {
     const parent = await db.wikiComment.getPost(ws, body.parentPostId);
     httpAssert.present(parent, { status: 404, message: `Post '${body.parentPostId}' not found` });
@@ -125,26 +127,44 @@ export const createWikiComment = async (
       start: parent.anchor_start,
       end: parent.anchor_end
     };
+    parentAuthorId = parent.author_id;
   }
 
   httpAssert.present(anchor, { status: 400, message: 'A root comment requires an anchor' });
 
   const timestamp = new Date();
-  const row = await db.wikiComment.createPost({
-    id: randomUUID(),
-    workspace: ws,
-    node_id: nodeId,
-    parent_post_id: body.parentPostId ?? null,
-    author_id: event.context.user.id,
-    body: body.body,
-    quote: anchor.quote,
-    prefix: anchor.prefix,
-    suffix: anchor.suffix,
-    anchor_start: anchor.start,
-    anchor_end: anchor.end,
-    created_at: timestamp,
-    updated_at: timestamp
-  });
+  const write = async (tx: DatabaseAdapter) => {
+    const row = await tx.wikiComment.createPost({
+      id: randomUUID(),
+      workspace: ws,
+      node_id: nodeId,
+      parent_post_id: body.parentPostId ?? null,
+      author_id: event.context.user.id,
+      body: body.body,
+      quote: anchor.quote,
+      prefix: anchor.prefix,
+      suffix: anchor.suffix,
+      anchor_start: anchor.start,
+      anchor_end: anchor.end,
+      created_at: timestamp,
+      updated_at: timestamp
+    });
+
+    await createCommentNotifications(tx, {
+      workspace: ws,
+      commentId: row.id,
+      objectType: 'content_node',
+      objectId: nodeId,
+      commentSurface: 'inline',
+      parentPostId: body.parentPostId ?? null,
+      parentAuthorId,
+      actorUserId: event.context.user.id,
+      occurredAt: timestamp
+    });
+    return row;
+  };
+  const row =
+    db.core && !db.core.isTransaction ? await db.core.transaction(write) : await write(db);
 
   const authorNames = await buildAuthorNameMap(db);
   return toApiPost(row, authorNames);
