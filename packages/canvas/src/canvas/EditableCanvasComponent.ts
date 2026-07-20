@@ -48,9 +48,9 @@ const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement
 ):
   | {
-  id: string;
-  type: 'edge' | 'node';
-}
+      id: string;
+      type: 'edge' | 'node';
+    }
   | undefined => {
   let element: SVGElement | HTMLElement | null = e;
   while (element) {
@@ -425,11 +425,11 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
           this.tool.type === 'move'
             ? this.subComponent($cmp(AnchorHandlesComponent), {
-              ...canvasState,
-              hoverElement: this.hoverElement,
-              point: this.point,
-              modifiers: this.modifiers
-            })
+                ...canvasState,
+                hoverElement: this.hoverElement,
+                point: this.point,
+                modifiers: this.modifiers
+              })
             : svg.g({}),
 
           this.subComponent($cmp(HoverOverlayComponent), {

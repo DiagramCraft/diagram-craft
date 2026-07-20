@@ -86,15 +86,13 @@ export class MessageDialogCommand implements DialogCommand<MessageDialogProps, E
   constructor(
     public readonly props: MessageDialogProps,
     public readonly onOk: (data: EmptyObject) => void,
-    public readonly onCancel: () => void = () => {
-    }
-  ) {
-  }
+    public readonly onCancel: () => void = () => {}
+  ) {}
 }
 
 export type ContextMenuTarget<T extends keyof ContextMenus = keyof ContextMenus> =
   ContextMenus[T] & {
-  pos: Point;
-} & {
-  type: T;
-};
+    pos: Point;
+  } & {
+    type: T;
+  };
