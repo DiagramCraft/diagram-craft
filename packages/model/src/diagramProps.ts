@@ -206,7 +206,7 @@ export const ensureCustomProp = <T extends object, K extends keyof T>(
   return customPropsMap[key] as NonNullable<T[K]>;
 };
 
-export type NodeActionType = 'url' | 'diagram' | 'layer' | 'none';
+export type NodeActionType = 'url' | 'diagram' | 'layer' | 'rest' | 'none';
 
 export interface NodeAction {
   label: string;
@@ -259,6 +259,7 @@ export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtension
   };
 
   text?: {
+    enabled?: boolean;
     font?: string;
     fontSize?: number;
     lineHeight?: number;

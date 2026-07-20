@@ -209,4 +209,14 @@ describe('diagram property resolution', () => {
 
     expect(edge.renderProps.fill.color).toBe('after');
   });
+
+  it('resolves fill.enabled, stroke.enabled and text.enabled to true by default', () => {
+    const diagram = TestModel.newDiagram();
+    const layer = diagram.newLayer();
+    const node = layer.addNode({ id: 'default-enabled-node' });
+
+    expect(node.renderProps.fill.enabled).toBe(true);
+    expect(node.renderProps.stroke.enabled).toBe(true);
+    expect(node.renderProps.text.enabled).toBe(true);
+  });
 });
