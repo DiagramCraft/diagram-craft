@@ -55,11 +55,7 @@ export class CommentPinsComponent extends Component<CanvasState> {
           }
         }
       },
-      INDICATORS.comment(
-        COMMENT_PIN_BOUNDS,
-        COMMENT_PIN_INDICATOR,
-        'var(--accent-3)'
-      )
+      INDICATORS.comment(COMMENT_PIN_BOUNDS, COMMENT_PIN_INDICATOR, 'var(--accent-3)')
     );
   }
 }
