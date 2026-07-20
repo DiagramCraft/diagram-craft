@@ -95,12 +95,16 @@ export type FileActions = {
 };
 
 const defaultFileActions: FileActions = {
-  loadDocument: async () => {},
-  newDocument: async () => {},
-  clearDirty: () => {}
+  loadDocument: async () => {
+  },
+  newDocument: async () => {
+  },
+  clearDirty: () => {
+  }
 };
 
-const noopProgressCallback: ProgressCallback = () => {};
+const noopProgressCallback: ProgressCallback = () => {
+};
 
 const defaultConfiguration: ConfigurationContextType = {
   palette: {
@@ -514,7 +518,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
               if (item.dialog.id !== 'commandPalette') return null;
               return (
                 <div key={item.id} style={{ zIndex: item.zIndex }}>
-                  <CommandPalette open={true} onClose={() => item.dialog.onCancel?.()} />
+                  <CommandPalette open={true} onClose={() => item.dialog.onCancel?.()}/>
                 </div>
               );
             })}
@@ -599,24 +603,24 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                 leftSlot={
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     {headerLeft}
-                    <MainToolbar />
+                    <MainToolbar/>
                   </div>
                 }
               >
-                <DocumentName dirty={externalDirty ?? false} name={documentName} />
+                <DocumentName dirty={externalDirty ?? false} name={documentName}/>
                 <div style={{ display: 'flex', marginLeft: 'auto' }}>
-                  <AwarenessToolbar />
-                  <AuxToolbar />
+                  <AwarenessToolbar/>
+                  <AuxToolbar/>
                 </div>
               </TopBar>
 
               <div id="window-area">
                 <div id="toolbar">
-                  <ContextSpecificToolbar />
+                  <ContextSpecificToolbar/>
                 </div>
 
-                <LeftSidebar />
-                <RightSidebar />
+                <LeftSidebar/>
+                <RightSidebar/>
 
                 <div id="canvas-area">
                   <ErrorBoundary>
@@ -634,9 +638,9 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                             offset={
                               (userState.current.panelLeft ?? -1) >= 0
                                 ? {
-                                    x: 250,
-                                    y: 0
-                                  }
+                                  x: 250,
+                                  y: 0
+                                }
                                 : Point.ORIGIN
                             }
                             onDrop={canvasDropHandler($d)}
@@ -651,7 +655,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                           createContextMenu={state => {
                             if (state.type === 'canvas') {
                               return (
-                                <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
+                                <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>}/>
                               );
                             } else if (state.type === 'selection') {
                               return (
@@ -659,15 +663,15 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                                   target={state as ContextMenuTarget<'selection'>}
                                 />
                               );
-                            } else if (state.type === 'locked-element') {
+                            } else if (state.type === 'lockedElement') {
                               return (
                                 <LockedElementContextMenu
-                                  target={state as ContextMenuTarget<'locked-element'>}
+                                  target={state as ContextMenuTarget<'lockedElement'>}
                                 />
                               );
                             } else if (state.type === 'guide') {
                               return (
-                                <GuideContextMenu target={state as ContextMenuTarget<'guide'>} />
+                                <GuideContextMenu target={state as ContextMenuTarget<'guide'>}/>
                               );
                             } else {
                               VERIFY_NOT_REACHED();
@@ -678,10 +682,10 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                     </ContextMenu.Root>
                   </ErrorBoundary>
 
-                  <Ruler id="ruler-h" orientation={'horizontal'} />
-                  <Ruler id="ruler-v" orientation={'vertical'} />
-                  <CanvasOutline />
-                  <CanvasTooltip />
+                  <Ruler id="ruler-h" orientation={'horizontal'}/>
+                  <Ruler id="ruler-v" orientation={'vertical'}/>
+                  <CanvasOutline/>
+                  <CanvasTooltip/>
 
                   <NodeLinkPopup
                     {...popoverState}
@@ -690,15 +694,15 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                 </div>
 
                 <div id="tabs">
-                  <DocumentTabs document={doc} />
-                  <LayerIndicator />
+                  <DocumentTabs document={doc}/>
+                  <LayerIndicator/>
                 </div>
               </div>
 
-              <HelpMessage helpState={helpState.current} />
+              <HelpMessage helpState={helpState.current}/>
             </div>
 
-            {preview && <Preview onClose={() => setPreview(false)} />}
+            {preview && <Preview onClose={() => setPreview(false)}/>}
           </ConfigurationContext.Provider>
         </ApplicationContext.Provider>
       </DialogContextProvider>

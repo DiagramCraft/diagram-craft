@@ -26,7 +26,7 @@ import type { Endpoint } from '@diagram-craft/model/endpoint';
 import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
 
 export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
-  new (shapeNodeDefinition: T): BaseNodeComponent<T>;
+  new(shapeNodeDefinition: T): BaseNodeComponent<T>;
 };
 
 export type TextHandler = {
@@ -55,7 +55,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   public readonly name: string;
   public readonly type: string;
   public readonly component: NodeShapeConstructor<this>;
-  public readonly overlayComponent?: { new (): Component<{ node: DiagramNode }> };
+  public readonly overlayComponent?: { new(): Component<{ node: DiagramNode }> };
 
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   protected constructor(type: string, component: NodeShapeConstructor<any>);
@@ -265,7 +265,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   requestFocus(node: DiagramNode, selectAll = true): void {
-    if (node.renderProps.capabilities.editable === false || node.isLocked()) return;
+    if (!node.renderProps.capabilities.editable || node.isLocked()) return;
 
     const editable = document
       .getElementById(`text_1_${node.id}`)

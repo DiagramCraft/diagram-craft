@@ -28,9 +28,9 @@ import { resolveFillForRendering } from './shapeFill';
 
 const defaultOnChange =
   (element: DiagramNode, textId: string = '1') =>
-  (text: string) => {
-    element.diagram.undoManager.execute('Change text', uow => element.setText(text, uow, textId));
-  };
+    (text: string) => {
+      element.diagram.undoManager.execute('Change text', uow => element.setText(text, uow, textId));
+    };
 
 type ShapeBuilderProps = {
   element: DiagramElement;
@@ -66,7 +66,8 @@ export class ShapeBuilder {
   controlPoints: ControlPoint[] = [];
   boundaryPathExists = false;
 
-  constructor(private readonly props: ShapeBuilderProps) {}
+  constructor(private readonly props: ShapeBuilderProps) {
+  }
 
   add(vnode: VNode) {
     this.nodes.push(vnode);
@@ -85,7 +86,8 @@ export class ShapeBuilder {
       on: {
         mousedown: this.props.onMouseDown,
         dblclick:
-          this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {})
+          this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {
+          })
       }
     });
     this.nodes.push(g);
@@ -179,7 +181,8 @@ export class ShapeBuilder {
             mousedown: this.props.onMouseDown,
 
             dblclick:
-              this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {})
+              this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {
+              })
           }
         }))
         .map(p => opts.map!(svg.path(p)))
@@ -257,8 +260,7 @@ export class ShapeBuilder {
   makeOnDblclickHandle(textId: string | undefined = '1') {
     if (
       isNode(this.props.element) &&
-      (this.props.element.renderProps.capabilities.editable === false ||
-        this.props.element.isLocked())
+      (!this.props.element.renderProps.capabilities.editable || this.props.element.isLocked())
     ) {
       return;
     }
