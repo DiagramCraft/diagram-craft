@@ -150,6 +150,26 @@ export const CommentItem = ({ thread, onResolve, formatDate }: CommentItemProps)
             </a>
           )}
 
+          {root.type === 'point' && (
+            <a
+              href="#"
+              onClick={e => {
+                e.preventDefault();
+                const { position } = root;
+                if (!position) return;
+                const { dimensions } = diagram.viewBox;
+                diagram.viewBox.pan({
+                  x: position.x - dimensions.w / 2,
+                  y: position.y - dimensions.h / 2
+                });
+              }}
+              className={styles.eAnchorLink}
+            >
+              <TbLink size={11} />
+              {getElementNameFromComment(root)}
+            </a>
+          )}
+
           {isResolved && (
             <div>
               <div className={styles.eResolvedPill}>
