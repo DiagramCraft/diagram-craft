@@ -306,6 +306,8 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
         // biome-ignore lint/suspicious/noExplicitAny: false positive
         map.set(fullPath, value as any);
       } else if (value instanceof Object && Object.keys(value).length === 0) {
+        // Remove any previously flattened children before storing the empty-object marker.
+        this.deleteKeysWithPrefix(`${fullPath}.`);
         map.set(fullPath, undefined);
       } else {
         // First, remove all existing nested properties under this path
