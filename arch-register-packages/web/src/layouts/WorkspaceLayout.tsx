@@ -86,6 +86,7 @@ export const WorkspaceLayout = () => {
 
   const {
     canManageWorkspaces,
+    canAdministerWorkspace,
     canViewSchemas,
     canEditSchemas,
     canManageTeams,
@@ -198,6 +199,7 @@ export const WorkspaceLayout = () => {
       projectEntityTypes,
       permissions: {
         canManageWorkspaces,
+        canAdministerWorkspace,
         canViewSchemas,
         canEditSchemas,
         canManageTeams,
@@ -224,6 +226,7 @@ export const WorkspaceLayout = () => {
       teams,
       projectEntityTypes,
       canManageWorkspaces,
+      canAdministerWorkspace,
       canViewSchemas,
       canEditSchemas,
       canManageTeams,

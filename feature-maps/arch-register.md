@@ -268,6 +268,10 @@
         - @id:ar.import-export.workspace-import Authorized users can validate, preview, and execute supported workspace
           imports.
 
+        - @id:ar.import-export.definition-import Workspace administrators can preview and atomically import selected
+          schemas, reusable enums, and active document types from built-in templates or another administered workspace,
+          including recursively resolved dependencies and remapped references.
+
         - @id:ar.import-export.entity-csv Users can import and export entity collections through CSV workflows.
 
     - @id:ar.integrations Arch Register exposes integration surfaces for external clients, content sources, event

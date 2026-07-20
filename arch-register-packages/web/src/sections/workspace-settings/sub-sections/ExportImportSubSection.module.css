@@ -219,3 +219,110 @@
   font-size: 11.5px;
   color: var(--cmp-fg-disabled);
 }
+
+.previewMessages {
+  margin-top: 10px;
+}
+
+.previewTable {
+  margin-top: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.previewTableHeader,
+.previewTableRow {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.2fr) minmax(150px, 1fr) minmax(160px, 1fr);
+  column-gap: 16px;
+  align-items: center;
+  padding: 9px 12px;
+}
+
+.previewTableHeader {
+  background: var(--cmp-bg);
+  color: var(--cmp-fg-disabled);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.previewTableRow {
+  min-height: 48px;
+  border-top: 1px solid var(--panel-border);
+  font-size: 12.5px;
+}
+
+.previewName,
+.previewStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.previewType,
+.previewStatusDetail,
+.previewRenameEmpty {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.previewStatusReady,
+.previewStatusDependency,
+.previewStatusConflict {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+}
+
+.previewStatusReady {
+  color: var(--success-fg, var(--green));
+}
+
+.previewStatusDependency {
+  color: var(--cmp-fg-disabled);
+}
+
+.previewStatusConflict {
+  color: var(--error-fg);
+}
+
+.previewRename {
+  min-width: 0;
+}
+
+.previewRename :global(input) {
+  width: 100%;
+}
+
+@media (max-width: 700px) {
+  .previewTableHeader {
+    display: none;
+  }
+
+  .previewTableRow {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
+
+  .previewStatus::before,
+  .previewRename::before {
+    color: var(--cmp-fg-disabled);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .previewStatus::before {
+    content: "Status";
+  }
+
+  .previewRename::before {
+    content: "Rename";
+  }
+}

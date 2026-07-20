@@ -22,6 +22,11 @@ import { storeImportCache, getImportCache, deleteImportCache } from './importCac
 import { ZipBuilder, ZipExtractor } from '../../utils/zipBuilder';
 import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
+import {
+  executeDefinitionImport,
+  listDefinitionImportSources,
+  previewDefinitionImport
+} from './definitionImportOperations';
 import type {
   ExportManifest,
   ExportConfig,
@@ -66,6 +71,18 @@ export const workspaceManagementORPCRouter = wsRouter.router({
     templates: wsRouter.workspaces.templates.handler(async () => {
       return SCHEMA_TEMPLATES.map(({ id, name, description }) => ({ id, name, description }));
     }),
+    definitionImportSources: workspaceScopedRouter.workspaces.definitionImportSources.handler(
+      async ({ input, context }) =>
+        listDefinitionImportSources(context.db, input.params.workspace, context.event)
+    ),
+    definitionImportPreview: workspaceScopedRouter.workspaces.definitionImportPreview.handler(
+      async ({ input, context }) =>
+        previewDefinitionImport(context.db, input.params.workspace, input.body, context.event)
+    ),
+    definitionImportExecute: workspaceScopedRouter.workspaces.definitionImportExecute.handler(
+      async ({ input, context }) =>
+        executeDefinitionImport(context.db, input.params.workspace, input.body, context.event)
+    ),
     export: workspaceScopedRouter.workspaces.export.handler(async ({ input, context }) => {
       const { workspace: workspaceId, authCtx } = context;
 

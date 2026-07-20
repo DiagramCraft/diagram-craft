@@ -7,6 +7,7 @@ import { orpcClient } from '../../../lib/orpcClient';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import styles from './ExportImportSubSection.module.css';
 import { downloadBlob } from '../../../lib/browserDownload';
+import { DefinitionImportSubSection } from './DefinitionImportSubSection';
 
 type ImportConflict = {
   type: 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes' | 'documents';
@@ -52,7 +53,7 @@ type ConflictResolution = { action: 'skip' | 'merge' | 'overwrite' | 'rename'; n
 
 export const ExportImportSubSection = () => {
   const { workspace } = useWorkspaceContext();
-  const [tab, setTab] = useState<'export' | 'import'>('export');
+  const [tab, setTab] = useState<'export' | 'import' | 'definitions'>('export');
 
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     include_config: true,
@@ -250,10 +251,11 @@ export const ExportImportSubSection = () => {
 
   return (
     <div className={styles.blockList}>
-      <Tabs.Root value={tab} onValueChange={v => setTab(v as 'export' | 'import')}>
+      <Tabs.Root value={tab} onValueChange={v => setTab(v as 'export' | 'import' | 'definitions')}>
         <Tabs.List>
           <Tabs.Trigger value="export">Export</Tabs.Trigger>
           <Tabs.Trigger value="import">Import</Tabs.Trigger>
+          <Tabs.Trigger value="definitions">Definition import</Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
 
@@ -555,6 +557,8 @@ export const ExportImportSubSection = () => {
           </div>
         </div>
       )}
+
+      {tab === 'definitions' && <DefinitionImportSubSection />}
     </div>
   );
 };
