@@ -17,6 +17,10 @@ export class Application extends BaseApplication<ApplicationUIActions> {
     super();
     this.userState = userState;
     this.awareness = awareness;
+    this.commentVisibility.set(userState.commentVisibility);
+    userState.on('change', ({ after }) => {
+      this.commentVisibility.set(after.commentVisibility);
+    });
   }
 
   ready: boolean = false;

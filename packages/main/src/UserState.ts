@@ -1,5 +1,6 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import type { CommentVisibility } from '@diagram-craft/canvas/components/commentVisibility';
 
 type UserStateEvents = {
   change: { after: UserState };
@@ -25,6 +26,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #panelRightWidth: number = 248;
   #showHelp: boolean = true;
   #showRulers: boolean = true;
+  #commentVisibility: CommentVisibility = 'all';
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
   #stencilPickerViewMode: PickerViewMode = 'grid';
   #stencilSearchAllPackages: boolean = true;
@@ -54,6 +56,10 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#panelRightWidth = state.panelRightWidth ?? 248;
     this.#showHelp = state.showHelp ?? true;
     this.#showRulers = state.showRulers ?? true;
+    this.#commentVisibility =
+      state.commentVisibility === 'unresolved' || state.commentVisibility === 'none'
+        ? state.commentVisibility
+        : 'all';
     this.#stencils =
       state.stencils?.map((stencil: { id: string; isOpen?: boolean }) => ({
         ...stencil,
@@ -256,6 +262,16 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.triggerChange();
   }
 
+  get commentVisibility(): CommentVisibility {
+    return this.#commentVisibility;
+  }
+
+  set commentVisibility(commentVisibility: CommentVisibility) {
+    if (this.#commentVisibility === commentVisibility) return;
+    this.#commentVisibility = commentVisibility;
+    this.triggerChange();
+  }
+
   getToolWindowTab(windowId: string): string | undefined {
     return this.#toolWindowTabs[windowId];
   }
@@ -295,6 +311,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
       panelRightWidth: this.#panelRightWidth,
       showHelp: this.#showHelp,
       showRulers: this.#showRulers,
+      commentVisibility: this.#commentVisibility,
       stencils: this.#stencils,
       stencilPickerViewMode: this.#stencilPickerViewMode,
       stencilSearchAllPackages: this.#stencilSearchAllPackages,
