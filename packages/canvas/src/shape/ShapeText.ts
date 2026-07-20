@@ -69,6 +69,8 @@ export class ShapeText extends Component<ShapeTextProps> {
   private height: number = 0;
 
   static edit(textId: string, element: DiagramNode) {
+    if (element.isLocked()) return;
+
     const elementId = element.id;
     const domId = `text_${textId}_${elementId}`;
 
@@ -169,7 +171,7 @@ export class ShapeText extends Component<ShapeTextProps> {
         on: {
           mousedown: props.onMouseDown,
           dblclick: (e: MouseEvent) => {
-            if (!props.node.renderProps.capabilities.editable) return;
+            if (!props.node.renderProps.capabilities.editable || props.node.isLocked()) return;
             ShapeText.edit(textId, props.node);
             e.preventDefault();
             e.stopPropagation();
