@@ -338,12 +338,23 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                 y: event.clientY - bounds.y
               };
 
+              const hoveredId = getAncestorDiagramElement(event.target as SVGElement)?.id;
+              const id = hoveredId ?? (this.tool as AbstractTool).currentElement;
+              const el = diagram.lookup(id ?? '');
+
               const isClickOnSelection = Box.contains(
                 selection.bounds,
                 diagram.viewBox.toDiagramPoint(point)
               );
 
-              if (isClickOnSelection) {
+              if (el?.locked) {
+                props.context.ui.showContextMenu(
+                  'lockedElement',
+                  diagram.viewBox.toDiagramPoint(point),
+                  event,
+                  { elementId: el.id }
+                );
+              } else if (isClickOnSelection) {
                 props.context.ui.showContextMenu(
                   'selection',
                   diagram.viewBox.toDiagramPoint(point),
@@ -351,9 +362,6 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                   {}
                 );
               } else {
-                const id = (this.tool as AbstractTool).currentElement;
-                const el = diagram.lookup(id ?? '');
-
                 if (el && this.tool instanceof MoveTool) {
                   diagram.selection.setElements([el]);
                   props.context.ui.showContextMenu(

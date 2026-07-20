@@ -693,7 +693,8 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
         Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e }))])
       ),
       texts: this.#text.getClone(),
-      tags: [...this.tags]
+      tags: [...this.tags],
+      isLocked: this.locked
     };
   }
 
@@ -703,6 +704,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     this.changeNodeType(snapshot.nodeType, uow);
     this.#text.set(snapshot.texts);
     this.forceUpdateMetadata(snapshot.metadata);
+    this.setLocked(snapshot.isLocked ?? false, uow);
 
     this.setChildren(
       snapshot.children.filter(c => this.diagram.lookup(c)).map(c => this.diagram.lookup(c)!),

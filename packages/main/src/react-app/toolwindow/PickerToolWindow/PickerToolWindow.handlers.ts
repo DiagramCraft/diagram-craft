@@ -10,7 +10,7 @@ export const canvasDropHandler = ($d: Diagram) => {
 export const canvasDragOverHandler = ($d: Diagram) => {
   return (e: DragEvent) => {
     const activeLayer = $d.activeLayer;
-    if (activeLayer.isLocked() || activeLayer.resolve()?.type === 'rule') {
+    if (activeLayer.isEffectivelyLocked() || activeLayer.resolve()?.type === 'rule') {
       e.dataTransfer!.dropEffect = 'none';
     } else {
       e.preventDefault();

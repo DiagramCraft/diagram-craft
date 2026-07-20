@@ -27,11 +27,12 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
   name = $tStr('action.SHAPE_INSERT.name', 'Insert Shape');
 
   getCriteria(application: Application) {
-    const activeLayer = application.model.activeDiagram.activeLayer;
+    const activeDiagram = application.model.activeDiagram;
+    const activeLayer = activeDiagram.activeLayer;
     return ActionCriteria.EventTriggered(
-      application.model.activeDiagram.layers,
+      activeDiagram.layers,
       'layerStructureChange',
-      () => activeLayer.type === 'regular' && !activeLayer.isLocked()
+      () => activeLayer.type === 'regular' && !activeLayer.isEffectivelyLocked()
     );
   }
 

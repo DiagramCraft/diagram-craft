@@ -36,6 +36,63 @@ const addStep = (
 ) => doc.stories.addStep(doc.stories.getStory(story.id)!, newid(), title, description);
 
 describe('deserializeDiagramDocument', () => {
+  describe('lock state', () => {
+    it('serializes local locks without inheriting document locks', async () => {
+      const originalDoc = TestModel.newDocument();
+      const diagram = new TestDiagramBuilder(originalDoc, 'diagram-1');
+      const unlockedLayer = diagram.newLayer('unlocked-layer');
+      const lockedLayer = diagram.newLayer('locked-layer');
+      const node = unlockedLayer.addNode({ id: 'node-1' });
+
+      UnitOfWork.execute(diagram, uow => lockedLayer.setLocked(true, uow));
+      UnitOfWork.executeSilently(undefined, uow => originalDoc.setLocked(true, uow));
+      originalDoc.addDiagram(diagram);
+
+      const serialized = await serializeDiagramDocument(originalDoc);
+      const serializedUnlockedLayer = serialized.diagrams[0]!.layers.find(
+        layer => layer.id === unlockedLayer.id
+      )!;
+      const serializedLockedLayer = serialized.diagrams[0]!.layers.find(
+        layer => layer.id === lockedLayer.id
+      )!;
+
+      if (
+        (serializedUnlockedLayer.layerType !== 'regular' &&
+          serializedUnlockedLayer.layerType !== 'basic') ||
+        (serializedLockedLayer.layerType !== 'regular' &&
+          serializedLockedLayer.layerType !== 'basic')
+      ) {
+        throw new Error('Expected regular layers');
+      }
+
+      expect(serialized.isLocked).toBe(true);
+      expect(serializedUnlockedLayer.isLocked).toBe(false);
+      expect(serializedLockedLayer.isLocked).toBe(true);
+      expect(node.locked).toBe(false);
+
+      const newDoc = TestModel.newDocument();
+      await deserializeDiagramDocument(
+        serialized,
+        newDoc,
+        (d, doc) => new TestDiagramBuilder(doc, d.id)
+      );
+
+      const newDiagram = newDoc.diagrams[0]!;
+      const newUnlockedLayer = newDiagram.layers.byId(unlockedLayer.id)!;
+      const newLockedLayer = newDiagram.layers.byId(lockedLayer.id)!;
+      const newNode = newDiagram.lookup(node.id)!;
+
+      expect(newDoc.locked).toBe(true);
+      expect(newDiagram.locked).toBe(false);
+      expect(newDiagram.isEffectivelyLocked()).toBe(true);
+      expect(newUnlockedLayer.locked).toBe(false);
+      expect(newUnlockedLayer.isEffectivelyLocked()).toBe(true);
+      expect(newLockedLayer.locked).toBe(true);
+      expect(newNode.locked).toBe(false);
+      expect(newNode.isEffectivelyLocked()).toBe(true);
+    });
+  });
+
   describe('duplicate ids', () => {
     it('should warn for each duplicate element id in regular layers', async () => {
       const originalDoc = TestModel.newDocument();

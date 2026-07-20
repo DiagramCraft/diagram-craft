@@ -25,7 +25,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
       'layerStructureChange',
       () =>
         application.model.activeDiagram.activeLayer.type === 'regular' &&
-        !application.model.activeDiagram.activeLayer.isLocked()
+        !application.model.activeDiagram.activeLayer.isEffectivelyLocked()
     );
   }
 

@@ -210,7 +210,7 @@ export class AnchorHandlesComponent extends Component<Props> {
       return svg.g({});
     }
 
-    if (node.layer.type !== 'regular' || node.layer.isLocked()) {
+    if (node.layer.type !== 'regular' || node.isEffectivelyLocked()) {
       return svg.g({});
     }
 

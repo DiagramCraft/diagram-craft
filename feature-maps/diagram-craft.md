@@ -91,6 +91,9 @@
   - @id:dc.organization.layers
     Users can create, rename, reorder, hide, lock, and manage regular layers within a diagram.
 
+  - @id:dc.organization.element-locking
+    Users can lock individual elements and unlock them from the element context menu or document structure panel.
+
   - @id:dc.organization.special-layers
     Users can work with specialized layer types for reuse, data-driven behavior, and controlled overrides.
 

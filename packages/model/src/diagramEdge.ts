@@ -699,13 +699,15 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         offsetType: ln.offsetType ?? 'absolute',
         timeOffset: ln.timeOffset
       })),
-      tags: [...this.tags]
+      tags: [...this.tags],
+      isLocked: this.locked
     };
   }
 
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props.set(snapshot.props as EdgeProps);
+    this.setLocked(snapshot.isLocked ?? false, uow);
     this.setStart(
       Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup, this.diagram.edgeLookup, true),
       uow
@@ -766,10 +768,6 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 
   /* ***** ***** ******************************************************************************************** */
-
-  isLocked() {
-    return this.layer.isLocked();
-  }
 
   // TODO: Should this really be in DiagramEdge??
   path(): Path {

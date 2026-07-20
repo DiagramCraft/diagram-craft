@@ -161,7 +161,7 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
     if (!id) return false;
     const layer = this.context.model.activeDiagram.layers.byId(id);
     assert.present(layer);
-    return layer.isLocked();
+    return layer.locked;
   }
 
   execute({ id }: LayerActionArg): void {
@@ -172,7 +172,7 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
     assert.present(layer);
 
     diagram.undoManager.execute('Toggle layer locked', uow => {
-      layer.setLocked(!layer.isLocked(), uow);
+      layer.setLocked(!layer.locked, uow);
     });
   }
 }

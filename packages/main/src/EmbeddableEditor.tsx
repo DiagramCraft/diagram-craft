@@ -3,6 +3,7 @@ import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasCon
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { GuideContextMenu } from './react-app/context-menu-dispatcher/GuideContextMenu';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
+import { LockedElementContextMenu } from './react-app/context-menu-dispatcher/LockedElementContextMenu';
 import { ContextSpecificToolbar } from './react-app/toolbar/ContextSpecificToolbar';
 import { useEventListener } from './react-app/hooks/useEventListener';
 import { useRedraw } from './react-app/hooks/useRedraw';
@@ -656,6 +657,12 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                               return (
                                 <SelectionContextMenu
                                   target={state as ContextMenuTarget<'selection'>}
+                                />
+                              );
+                            } else if (state.type === 'lockedElement') {
+                              return (
+                                <LockedElementContextMenu
+                                  target={state as ContextMenuTarget<'lockedElement'>}
                                 />
                               );
                             } else if (state.type === 'guide') {

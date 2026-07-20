@@ -74,13 +74,13 @@ const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
         if (props.layer.type === 'reference') return;
 
         props.diagram.undoManager.execute('Toggle lock', uow => {
-          props.layer.setLocked(!props.layer.isLocked(), uow);
+          props.layer.setLocked(!props.layer.locked, uow);
         });
         e.preventDefault();
         e.stopPropagation();
       }}
     >
-      {props.layer.isLocked() ? <TbLock /> : <TbLockOff />}
+      {props.layer.locked ? <TbLock /> : <TbLockOff />}
     </span>
   );
 };
@@ -361,6 +361,23 @@ const ModificationEntry = (props: {
   );
 };
 
+const ElementLockToggle = (props: { element: DiagramElement; diagram: Diagram }) => {
+  return (
+    <span
+      style={{ cursor: 'pointer' }}
+      onClick={e => {
+        props.diagram.undoManager.execute('Toggle element locked', uow => {
+          props.element.setLocked(!props.element.locked, uow);
+        });
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
+      {props.element.locked ? <TbLock /> : null}
+    </span>
+  );
+};
+
 const ElementEntry = (props: { element: DiagramElement }) => {
   const diagram = useDiagram();
   const e = props.element;
@@ -437,10 +454,13 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         diagram.selection.toggle(e);
       }}
     >
-      <Tree.NodeLabel style={{ gridColumn: '1/4' }}>
+      <Tree.NodeLabel>
         <Tree.NodeLabelIcon>{icon}</Tree.NodeLabelIcon>
         <Tree.NodeLabelText>{e.name}</Tree.NodeLabelText>
       </Tree.NodeLabel>
+      <Tree.NodeCell type={'action'}>
+        <ElementLockToggle element={e} diagram={diagram} />
+      </Tree.NodeCell>
 
       {(childrenAllowed || (isEdge(e) && e.children.length > 0)) && (
         <Tree.Children>
@@ -464,7 +484,12 @@ export const LayerListPanel = () => {
 
   const names = Object.fromEntries(
     diagram.layers.all.flatMap(l =>
-      l instanceof RegularLayer ? l.elements.map(e => [e.id, e.name]) : []
+      l instanceof RegularLayer ? l.elements.map(e => [e.id, e.name] as const) : []
+    )
+  );
+  const locks = Object.fromEntries(
+    diagram.layers.all.flatMap(l =>
+      l instanceof RegularLayer ? l.elements.map(e => [e.id, e.locked] as const) : []
     )
   );
 
@@ -477,7 +502,7 @@ export const LayerListPanel = () => {
   useEventListener(diagram.layers, 'layerStructureChange', redraw);
 
   useEventListener(diagram, 'elementChange', ({ element }) => {
-    if (names[element.id] !== element.name) {
+    if (names[element.id] !== element.name || locks[element.id] !== element.locked) {
       redraw();
     }
   });

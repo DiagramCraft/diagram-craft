@@ -265,7 +265,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   requestFocus(node: DiagramNode, selectAll = true): void {
-    if (node.renderProps.capabilities.editable === false) return;
+    if (!node.renderProps.capabilities.editable || node.isEffectivelyLocked()) return;
 
     const editable = document
       .getElementById(`text_1_${node.id}`)

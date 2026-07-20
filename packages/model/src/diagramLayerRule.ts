@@ -287,10 +287,6 @@ export class RuleLayer extends Layer<RuleLayer> {
     }
   }
 
-  isLocked(): boolean {
-    return false;
-  }
-
   resolve() {
     return this;
   }
