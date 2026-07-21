@@ -61,19 +61,13 @@ export type ApiTokenDbResult = {
   name: string;
   token_hash: string;
   capabilities: string[];
-  created_by: string | null;
-  created_by_name: string | null;
+  created_by: string;
   created_at: Date;
   last_used_at: Date | null;
   expires_at: Date | null;
 };
 
-export type ApiTokenDbCreate = Omit<
-  ApiTokenDbResult,
-  'last_used_at' | 'created_by' | 'created_by_name'
-> & {
-  created_by: string;
-  created_by_name: string;
+export type ApiTokenDbCreate = Omit<ApiTokenDbResult, 'last_used_at'> & {
   last_used_at?: Date | null;
 };
 
@@ -117,8 +111,7 @@ export const authMappers = {
     name: String(row['name']),
     token_hash: String(row['token_hash']),
     capabilities: parseDatabaseJson<string[]>(row['capabilities'], [], 'api_token.capabilities'),
-    created_by: row['created_by'] == null ? null : String(row['created_by']),
-    created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
+    created_by: String(row['created_by']),
     created_at: databaseDate(row['created_at']),
     last_used_at: row['last_used_at'] == null ? null : databaseDate(row['last_used_at']),
     expires_at: row['expires_at'] == null ? null : databaseDate(row['expires_at'])
@@ -145,11 +138,15 @@ export type AuthDatabase = {
   listUsers(): Promise<UserDbResult[]>;
 
   createApiToken(input: ApiTokenDbCreate): Promise<ApiTokenDbResult>;
-  listApiTokens(workspace: string): Promise<ApiTokenDbResult[]>;
+  listApiTokens(workspace: string, createdBy?: string): Promise<ApiTokenDbResult[]>;
   countApiTokens(workspace: string, createdBy: string): Promise<number>;
   listApiTokensByCreator(createdBy: string): Promise<ApiTokenDbResult[]>;
   getApiTokenByHash(tokenHash: string): Promise<ApiTokenDbResult | null>;
-  deleteApiToken(workspace: string, id: string): Promise<ApiTokenDbResult | null>;
+  deleteApiToken(
+    workspace: string,
+    id: string,
+    createdBy?: string
+  ): Promise<ApiTokenDbResult | null>;
   deleteApiTokenByCreator(createdBy: string, id: string): Promise<ApiTokenDbResult | null>;
   updateApiTokenLastUsed(id: string, timestamp: Date): Promise<void>;
   createApiTokenAudit(input: ApiTokenAuditDbResult): Promise<ApiTokenAuditDbResult>;

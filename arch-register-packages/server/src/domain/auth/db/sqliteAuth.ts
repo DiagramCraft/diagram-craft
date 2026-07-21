@@ -94,7 +94,7 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
 
   async createApiToken(input: ApiTokenDbCreate) {
     this.run(
-      'INSERT INTO api_token (id, workspace, name, token_hash, capabilities, created_by, created_by_name, created_at, last_used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO api_token (id, workspace, name, token_hash, capabilities, created_by, created_at, last_used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -102,7 +102,6 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
         input.token_hash,
         JSON.stringify(input.capabilities),
         input.created_by,
-        input.created_by_name,
         input.created_at.toISOString(),
         input.last_used_at?.toISOString() ?? null,
         input.expires_at?.toISOString() ?? null
@@ -115,7 +114,14 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     ))!;
   }
 
-  async listApiTokens(workspace: string) {
+  async listApiTokens(workspace: string, createdBy?: string) {
+    if (createdBy != null) {
+      return this.all(
+        'SELECT * FROM api_token WHERE workspace = ? AND created_by = ? ORDER BY created_at DESC, id DESC',
+        [workspace, createdBy],
+        authMappers.apiToken
+      );
+    }
     return this.all(
       'SELECT * FROM api_token WHERE workspace = ? ORDER BY created_at DESC, id DESC',
       [workspace],
@@ -147,7 +153,22 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     );
   }
 
-  async deleteApiToken(workspace: string, id: string) {
+  async deleteApiToken(workspace: string, id: string, createdBy?: string) {
+    if (createdBy != null) {
+      const existing = this.get(
+        'SELECT * FROM api_token WHERE workspace = ? AND id = ? AND created_by = ?',
+        [workspace, id, createdBy],
+        authMappers.apiToken
+      );
+      if (!existing) return null;
+      this.run('DELETE FROM api_token WHERE workspace = ? AND id = ? AND created_by = ?', [
+        workspace,
+        id,
+        createdBy
+      ]);
+      return existing;
+    }
+
     const existing = this.get(
       'SELECT * FROM api_token WHERE workspace = ? AND id = ?',
       [workspace, id],

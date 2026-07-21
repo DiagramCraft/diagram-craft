@@ -12,7 +12,6 @@ import type {
 import {
   API_TOKEN_PREFIX,
   hashApiToken,
-  REMOVED_TOKEN_OWNER_USER_ID,
   toApiTokenPrincipal,
   type ApiTokenPrincipal
 } from '../domain/auth/apiTokens';
@@ -72,9 +71,7 @@ export const createAuthMiddleware = (db: AuthDatabase) => {
         });
       }
 
-      // If the creator's user account has been removed, created_by is NULL -
-      // the token keeps working, authenticated as the system placeholder user.
-      const user = await db.getUser(apiToken.created_by ?? REMOVED_TOKEN_OWNER_USER_ID);
+      const user = await db.getUser(apiToken.created_by);
       httpAssert.present(user, { status: 401, message: 'User not found' });
       httpAssert.true(user.is_active, { status: 403, message: 'User account is inactive' });
 

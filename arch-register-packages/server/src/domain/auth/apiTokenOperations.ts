@@ -4,7 +4,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { buildApiAuthCtx, requireWorkspaceCapability } from './authorization';
-import { generateApiToken, toApiToken } from './apiTokens';
+import { generateApiToken, toApiToken, WORKSPACE_TOKEN_OWNER_ID } from './apiTokens';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { recordApiTokenAudit } from './apiTokenAudit';
@@ -73,7 +73,8 @@ const createToken = async (
   workspace: string,
   input: CreateApiTokenInput,
   event: AuthenticatedEvent,
-  authCtx: WorkspaceAuthorizationContext
+  authCtx: WorkspaceAuthorizationContext,
+  createdBy: string
 ) => {
   const now = new Date();
   const parsed = parseCreateInput(input, now);
@@ -81,7 +82,7 @@ const createToken = async (
     requireWorkspaceCapability(authCtx, capability);
   }
 
-  const tokenCount = await db.auth.countApiTokens(workspace, event.context.user.id);
+  const tokenCount = await db.auth.countApiTokens(workspace, createdBy);
   httpAssert.true(tokenCount < MAX_API_TOKENS_PER_WORKSPACE, {
     status: 409,
     message: `Users may have at most ${MAX_API_TOKENS_PER_WORKSPACE} API tokens per workspace`
@@ -94,8 +95,7 @@ const createToken = async (
     name: parsed.name,
     token_hash: tokenHash,
     capabilities: parsed.capabilities,
-    created_by: event.context.user.id,
-    created_by_name: event.context.user.display_name,
+    created_by: createdBy,
     created_at: now,
     last_used_at: null,
     expires_at: parsed.expiresAt
@@ -123,7 +123,7 @@ export const listApiTokens = async (
 ) => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'people.role');
-  return (await db.auth.listApiTokens(workspace)).map(toApiToken);
+  return (await db.auth.listApiTokens(workspace, WORKSPACE_TOKEN_OWNER_ID)).map(toApiToken);
 };
 
 export const createApiToken = async (
@@ -134,7 +134,7 @@ export const createApiToken = async (
 ) => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'people.role');
-  return createToken(db, workspace, input, event, authCtx);
+  return createToken(db, workspace, input, event, authCtx, WORKSPACE_TOKEN_OWNER_ID);
 };
 
 export const listUserApiTokens = async (db: DatabaseAdapter, event: AuthenticatedEvent) => {
@@ -148,7 +148,7 @@ export const createUserApiToken = async (
 ) => {
   const workspace = await resolveWorkspace(db.catalog, input.workspace);
   const authCtx = await buildApiAuthCtx(db, workspace, event);
-  return createToken(db, workspace, input, event, authCtx);
+  return createToken(db, workspace, input, event, authCtx, event.context.user.id);
 };
 
 export const revokeUserApiToken = async (
@@ -177,7 +177,7 @@ export const revokeApiToken = async (
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'people.role');
 
-  const revoked = await db.auth.deleteApiToken(workspace, id);
+  const revoked = await db.auth.deleteApiToken(workspace, id, WORKSPACE_TOKEN_OWNER_ID);
   httpAssert.present(revoked, { status: 404, message: 'API token not found' });
   await recordApiTokenAudit(db.auth, {
     workspace,

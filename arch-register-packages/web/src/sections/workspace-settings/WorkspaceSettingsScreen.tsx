@@ -46,7 +46,7 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   },
   'api-tokens': {
     title: 'API Tokens',
-    sub: 'Manage API tokens created by any member of this workspace.'
+    sub: 'Manage API tokens owned by this workspace, independent of any individual member.'
   },
   'teams': {
     title: 'Teams',

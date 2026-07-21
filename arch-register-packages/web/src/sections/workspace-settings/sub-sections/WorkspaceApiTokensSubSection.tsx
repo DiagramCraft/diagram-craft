@@ -191,8 +191,9 @@ export const WorkspaceApiTokensSubSection = ({
   return (
     <div className={styles.container}>
       <div className={styles.intro}>
-        API tokens created by any member of this workspace. Revoking a token here immediately
-        disables it, regardless of who created it.
+        Tokens created here are owned by the workspace itself, not any individual member, so they
+        keep working even if the admin who created them leaves. For a personal token tied to your
+        own account, use Account Settings instead.
       </div>
 
       {error ? (
@@ -211,7 +212,6 @@ export const WorkspaceApiTokensSubSection = ({
           <Table.Head>
             <Table.Row>
               <Table.HeaderCell>Token</Table.HeaderCell>
-              <Table.HeaderCell>Created by</Table.HeaderCell>
               <Table.HeaderCell>Capabilities</Table.HeaderCell>
               <Table.HeaderCell>Last used</Table.HeaderCell>
               <Table.HeaderCell>Expires</Table.HeaderCell>
@@ -226,7 +226,6 @@ export const WorkspaceApiTokensSubSection = ({
                   subtitle={`Created ${formatDate(token.created_at, 'Never')}`}
                   icon={<TbKey size={14} />}
                 />
-                <Table.Cell>{token.created_by_name ?? 'Unknown'}</Table.Cell>
                 <Table.Cell>{token.capabilities.length} editor capabilities</Table.Cell>
                 <Table.Cell>{formatDate(token.last_used_at, 'Never')}</Table.Cell>
                 <Table.Cell>{token.expires_at ? formatDate(token.expires_at) : 'Never'}</Table.Cell>
