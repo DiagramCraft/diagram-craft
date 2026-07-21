@@ -1,5 +1,5 @@
 import { type DiagramElementCRDT } from './diagramElement';
-import type { UnitOfWork, UOWTrackable } from './unitOfWork';
+import { getRemoteUnitOfWork, type UnitOfWork, type UOWTrackable } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import type { RuleLayer } from './diagramLayerRule';
@@ -39,9 +39,9 @@ export abstract class Layer<
     | ModificationLayer
 > implements UOWTrackable, AttachmentConsumer, Releasable, Detachable<LayerAttachParent>
 {
-  #locked = false;
   #id: CRDTProp<LayerCRDT, 'id'>;
   #name: CRDTProp<LayerCRDT, 'name'>;
+  #locked: CRDTProp<LayerCRDT, 'locked'>;
   protected _type: LayerType = 'regular';
   _isAttached = false;
 
@@ -72,6 +72,13 @@ export abstract class Layer<
       }
     });
     this.#id = new CRDTProp(this._crdt, 'id');
+    this.#locked = new CRDTProp(this._crdt, 'locked', {
+      onRemoteChange: () => {
+        getRemoteUnitOfWork(diagram).updateElement(this);
+        diagram.layers.emit('layerStructureChange', {});
+      },
+      initialValue: false
+    });
 
     this.diagram = diagram;
   }
@@ -97,7 +104,7 @@ export abstract class Layer<
   }
 
   get locked() {
-    return this.#locked;
+    return this.#locked.getNonNull();
   }
 
   setName(name: string, uow: UnitOfWork) {
@@ -110,8 +117,8 @@ export abstract class Layer<
 
   setLocked(value: boolean, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      this.#locked = value;
-      this.diagram.layers.emit('layerStructureChange');
+      this.#locked.set(value);
+      this.diagram.layers.emit('layerStructureChange', {});
     });
   }
 
@@ -195,6 +202,7 @@ export type LayerCRDT = {
   id: string;
   name: string;
   type: LayerType;
+  locked: boolean;
 
   // Reference layer
   referenceLayerId: string;

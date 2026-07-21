@@ -110,6 +110,7 @@ export type DiagramCRDT = {
   id: string;
   parent: string | undefined;
   name: string;
+  locked: boolean;
   canvas: Omit<Box, 'r'>;
   props: FlatCRDTMap;
   layers: CRDTMap<LayerManagerCRDT>;
@@ -132,12 +133,12 @@ export class Diagram
   readonly uid = newid();
   readonly _crdt: WatchableValue<CRDTMap<DiagramCRDT>>;
   hasEdgesWithLineHops = false;
-  #locked = false;
 
   // Shared properties
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
   readonly #id: CRDTProp<DiagramCRDT, 'id'>;
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
+  readonly #locked: CRDTProp<DiagramCRDT, 'locked'>;
   readonly #canvas: CRDTProp<DiagramCRDT, 'canvas'>;
   readonly #props: CRDTObject<DiagramProps>;
   readonly #guides: CRDTMap<Record<string, Guide>>;
@@ -183,6 +184,10 @@ export class Diagram
     });
     this.#parent = new CRDTProp(this._crdt, 'parent', {
       onRemoteChange: () => this.emitDiagramChange('metadata')
+    });
+    this.#locked = new CRDTProp(this._crdt, 'locked', {
+      onRemoteChange: () => this.emitDiagramChange('metadata'),
+      initialValue: false
     });
     const initialCanvas = {
       w: Math.max(DEFAULT_CANVAS.w, canvasSize?.w ?? 0),
@@ -336,7 +341,7 @@ export class Diagram
   }
 
   get locked() {
-    return this.#locked;
+    return this.#locked.getNonNull();
   }
 
   isEffectivelyLocked() {
@@ -345,7 +350,7 @@ export class Diagram
 
   setLocked(value: boolean, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      this.#locked = value;
+      this.#locked.set(value);
       this.emitDiagramChange('metadata');
     });
   }
