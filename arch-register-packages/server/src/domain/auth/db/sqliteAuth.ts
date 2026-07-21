@@ -7,6 +7,7 @@ import type {
 } from './authDatabase';
 import { authMappers } from './authDatabase';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
+import { DatabaseError } from '../../../db/database';
 
 export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
@@ -52,6 +53,10 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
   }
 
   async updateUser(id: string, input: UserDbUpdate) {
+    const existing = await this.getUser(id);
+    if (existing?.is_system_actor) {
+      throw new DatabaseError('check', 'System users cannot be modified', undefined, { id });
+    }
     const sets: string[] = [];
     const values: unknown[] = [];
 

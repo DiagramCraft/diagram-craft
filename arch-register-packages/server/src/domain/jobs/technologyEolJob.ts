@@ -10,11 +10,13 @@ import {
   assertValidExternalUpdateTarget
 } from '../externalMetadata/externalMetadataHelpers';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { getSystemUserId } from '../auth/systemUsers';
 
 export const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
 export const TECHNOLOGY_EOL_SYSTEM_IDENTITY = 'technology-eol';
 export const TECHNOLOGY_EOL_SOURCE = 'endoflife.date';
-export const TECHNOLOGY_EOL_SYSTEM_USER_ID = '00000000-0000-0000-0000-0000000000a1';
+// See domain/auth/systemUsers.ts for the registry.
+export const TECHNOLOGY_EOL_SYSTEM_USER_ID = getSystemUserId('technology-eol-job');
 
 type EolRelease = {
   cycle?: unknown;

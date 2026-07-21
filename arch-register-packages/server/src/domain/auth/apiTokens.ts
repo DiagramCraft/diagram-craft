@@ -1,13 +1,15 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { WorkspaceCapability } from '@arch-register/permissions';
 import type { ApiTokenDbResult } from './db/authDatabase';
+import { getSystemUserId } from './systemUsers';
 
 export const API_TOKEN_PREFIX = 'ar_pat_';
 
 // Owner of API tokens created from Workspace Admin > API Tokens, as opposed
 // to personal tokens owned by the user who created them. Keeps workspace
 // tokens working regardless of which admin created or later leaves them.
-export const WORKSPACE_TOKEN_OWNER_ID = '00000000-0000-0000-0000-0000000000a3';
+// See systemUsers.ts for the registry.
+export const WORKSPACE_TOKEN_OWNER_ID = getSystemUserId('workspace-token-owner');
 
 export type ApiTokenPrincipal = {
   type: 'api_token';

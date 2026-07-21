@@ -1,6 +1,8 @@
-// Reserved user row seeded by migration 055_add_system_actor_user; writes made by AI metadata
-// generators are attributed to this actor instead of the human who scheduled the run.
-export const AI_SYSTEM_USER_ID = '00000000-0000-0000-0000-0000000000a1';
+import { getSystemUserId } from '../auth/systemUsers';
+
+// Writes made by AI metadata generators are attributed to this actor instead of
+// the human who scheduled the run. See domain/auth/systemUsers.ts for the registry.
+export const AI_SYSTEM_USER_ID = getSystemUserId('ai-metadata-generator');
 
 export const METADATA_GENERATION_DEBOUNCE_MS = 1 * 60 * 1000;
 export const METADATA_GENERATION_RETRY_DELAY_MS = 60 * 1000;

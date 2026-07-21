@@ -76,6 +76,9 @@ export const userSummarySchema = z.object({
   display_name: z.string().nullable().describe('User display name'),
   auth_provider: z.string().describe('Authentication provider (local or oidc)'),
   is_active: z.boolean().describe('Whether the user account is active'),
+  is_system_actor: z
+    .boolean()
+    .describe('Whether this is a system-managed actor, not a real user account'),
   color: z.string().nullable().describe('User color preference (hex format)')
 });
 
