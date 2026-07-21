@@ -950,7 +950,7 @@ const seedTechnologies: Entity[] = [
     slug: 'nodejs',
     namespace: 'default',
     name: 'Node.js',
-    description: 'JavaScript runtime built on Chrome\'s V8 JavaScript engine.',
+    description: "JavaScript runtime built on Chrome's V8 JavaScript engine.",
     owner: TEAM_IDS.platform,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -1000,7 +1000,8 @@ const seedTechnologies: Entity[] = [
     slug: 'go',
     namespace: 'default',
     name: 'Go',
-    description: 'An open source programming language that makes it easy to build simple, reliable, and efficient software.',
+    description:
+      'An open source programming language that makes it easy to build simple, reliable, and efficient software.',
     owner: TEAM_IDS.platform,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -1025,7 +1026,8 @@ const seedTechnologies: Entity[] = [
     slug: 'python',
     namespace: 'default',
     name: 'Python',
-    description: 'A programming language that lets you work quickly and integrate systems more effectively.',
+    description:
+      'A programming language that lets you work quickly and integrate systems more effectively.',
     owner: TEAM_IDS.data,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -1100,7 +1102,7 @@ const seedTechnologies: Entity[] = [
     slug: 'postgresql',
     namespace: 'default',
     name: 'PostgreSQL',
-    description: 'The world\'s most advanced open source relational database.',
+    description: "The world's most advanced open source relational database.",
     owner: TEAM_IDS.platform,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -1181,7 +1183,9 @@ const seedTechnologies: Entity[] = [
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['database', 'search'],
-    links: [{ url: 'https://www.elastic.co/elasticsearch', title: 'Official site', type: 'website' }],
+    links: [
+      { url: 'https://www.elastic.co/elasticsearch', title: 'Official site', type: 'website' }
+    ],
     schema_id: '00000000-0000-0000-0000-000000000007',
     data: {
       product: 'Elasticsearch',
