@@ -27,6 +27,7 @@ import {
   requireMarkdownNodeAccess,
   isMarkdownNode
 } from './markdownOperationHelpers';
+import { getDocumentWorkflowStatuses } from '../document/documentWorkflowOperations';
 export const listRelatedContent = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -198,6 +199,7 @@ export const listDocuments = async (
         scope: 'workspace' | 'project' | 'entity';
         state: Awaited<ReturnType<typeof getDocumentState>>;
         candidate: DocumentListCandidate;
+        workflow: Awaited<ReturnType<typeof getDocumentWorkflowStatuses>>;
       }> = [];
 
       const q = options.q?.trim().toLowerCase();
@@ -231,11 +233,24 @@ export const listDocuments = async (
 
         if (q && !node.name.toLowerCase().includes(q)) continue;
 
+        const workflow =
+          state.documentType && typeof db.document.getCurrentWorkflowRequests === 'function'
+            ? await getDocumentWorkflowStatuses(db, ws, node.id, state.documentType, state.metadata)
+            : [];
+        const filterMetadata = { ...state.metadata };
+        for (const status of workflow) {
+          if (status.pendingValue != null) {
+            const field = state.documentType?.fields.find(item => item.id === status.fieldId);
+            const option = field?.enumOptions?.find(item => item.value === status.pendingValue);
+            filterMetadata[status.fieldId] = `Pending: ${option?.label ?? status.pendingValue}`;
+          }
+        }
+
         const candidate: DocumentListCandidate = {
           title: node.name,
           updatedAt: node.updated_at,
           documentTypeId: state.documentTypeId,
-          metadata: state.metadata
+          metadata: filterMetadata
         };
 
         if (
@@ -245,21 +260,22 @@ export const listDocuments = async (
           continue;
         }
 
-        candidates.push({ node, scope, state, candidate });
+        candidates.push({ node, scope, state, candidate, workflow });
       }
 
       candidates.sort((a, b) =>
         compareDocuments(a.candidate, b.candidate, options.sort, options.sortDir ?? 'asc')
       );
 
-      return candidates.slice(0, options.limit ?? 100).map(({ node, scope, state }) => ({
+      return candidates.slice(0, options.limit ?? 100).map(({ node, scope, state, workflow }) => ({
         file: toApiProjectFile(node),
         scope,
         document_type_id: state.documentTypeId,
         document_type_name: state.documentType?.name ?? null,
         document_type_color: state.documentType?.color ?? null,
         document_type_icon: state.documentType?.icon ?? null,
-        metadata: state.metadata
+        metadata: state.metadata,
+        workflow
       }));
     }
   );

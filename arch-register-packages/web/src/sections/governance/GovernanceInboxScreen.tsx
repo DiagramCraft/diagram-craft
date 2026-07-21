@@ -23,6 +23,7 @@ import type {
 import styles from './GovernanceInboxScreen.module.css';
 import { orpcClient } from '../../lib/orpcClient';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
+import { workspaceMarkdownRoute } from '../../routes/publicObjectRoutes';
 import { entityKeys } from '../../queries/entities';
 import { entityChangeKeys, useWithdrawEntityChangeProposal } from '../../hooks/useEntityChanges';
 
@@ -328,6 +329,12 @@ export const GovernanceInboxScreen = () => {
               const viewSubject = () => {
                 if (subjectEntity?._publicId) {
                   navigate(entityDetailRoute(workspace, asEntityPublicId(subjectEntity._publicId)));
+                } else if (submission.case.subjectType === 'document') {
+                  navigate(
+                    workspaceMarkdownRoute(workspace, submission.case.subjectId, {
+                      mode: 'preview'
+                    })
+                  );
                 }
               };
               const withdrawPending =
@@ -399,9 +406,15 @@ export const GovernanceInboxScreen = () => {
                       variant="ghost"
                       icon={<TbExternalLink size={12} />}
                       onClick={viewSubject}
-                      disabled={!subjectEntity?._publicId}
+                      disabled={
+                        !subjectEntity?._publicId && submission.case.subjectType !== 'document'
+                      }
                     >
-                      {submission.case.subjectType === 'entity' ? 'View entity' : 'View case'}
+                      {submission.case.subjectType === 'entity'
+                        ? 'View entity'
+                        : submission.case.subjectType === 'document'
+                          ? 'View document'
+                          : 'View case'}
                     </Button>
                   </div>
                 </li>
@@ -435,6 +448,10 @@ export const GovernanceInboxScreen = () => {
             const viewSubject = () => {
               if (subjectEntity?._publicId) {
                 navigate(entityDetailRoute(workspace, asEntityPublicId(subjectEntity._publicId)));
+              } else if (task.case.subjectType === 'document') {
+                navigate(
+                  workspaceMarkdownRoute(workspace, task.case.subjectId, { mode: 'preview' })
+                );
               }
             };
             return (
@@ -484,7 +501,8 @@ export const GovernanceInboxScreen = () => {
                   )}
                   {task.requiresAction &&
                     decision === 'approve' &&
-                    task.case.caseKind === 'entity.change' && (
+                    (task.case.caseKind === 'entity.change' ||
+                      task.case.caseKind === 'document.status') && (
                       <Button
                         disabled={decide.isPending}
                         onClick={event => {
@@ -500,9 +518,13 @@ export const GovernanceInboxScreen = () => {
                     variant="ghost"
                     icon={<TbExternalLink size={12} />}
                     onClick={viewSubject}
-                    disabled={!subjectEntity?._publicId}
+                    disabled={!subjectEntity?._publicId && task.case.subjectType !== 'document'}
                   >
-                    {task.case.subjectType === 'entity' ? 'View entity' : 'View case'}
+                    {task.case.subjectType === 'entity'
+                      ? 'View entity'
+                      : task.case.subjectType === 'document'
+                        ? 'View document'
+                        : 'View case'}
                   </Button>
                 </div>
               </li>

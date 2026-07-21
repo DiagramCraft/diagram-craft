@@ -22,7 +22,9 @@ describe('document field schemas', () => {
       'number',
       'enum',
       'entity_link',
-      'document_link'
+      'document_link',
+      'user_link',
+      'team_link'
     ]);
     expect(documentRequirementSchema.options).toEqual(['required', 'expected', 'optional']);
     expect(

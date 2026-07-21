@@ -12,7 +12,9 @@ export const FIELD_TYPE_OPTIONS: { value: DocumentFieldType; label: string }[] =
   { value: 'number', label: 'Number' },
   { value: 'enum', label: 'Enum' },
   { value: 'entity_link', label: 'Entity link' },
-  { value: 'document_link', label: 'Document link' }
+  { value: 'document_link', label: 'Document link' },
+  { value: 'user_link', label: 'User link' },
+  { value: 'team_link', label: 'Team link' }
 ];
 
 export const REQUIREMENT_OPTIONS: { value: DocumentRequirement; label: string }[] = [
@@ -27,4 +29,7 @@ export const AI_ACTION_KIND_OPTIONS: { value: DocumentAiAction['kind']; label: s
 ];
 
 export const isLinkType = (type: DocumentFieldType) =>
-  type === 'entity_link' || type === 'document_link';
+  type === 'entity_link' ||
+  type === 'document_link' ||
+  type === 'user_link' ||
+  type === 'team_link';

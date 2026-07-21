@@ -8,7 +8,8 @@ import { Select } from '@diagram-craft/app-components/Select';
 import type {
   DocumentField,
   DocumentFieldType,
-  DocumentRequirement
+  DocumentRequirement,
+  DocumentStatusApproval
 } from '@arch-register/api-types/documentContract';
 
 import { Chip } from '../../components/Chip';
@@ -21,12 +22,36 @@ import { FIELD_TYPE_OPTIONS, REQUIREMENT_OPTIONS, isLinkType } from './documentS
 
 const NOT_EXTERNAL = '__not_external__';
 
+const approvalPatch = (
+  field: DocumentField,
+  optionValue: string,
+  patch: Partial<DocumentStatusApproval> | null
+) =>
+  (field.enumOptions ?? []).map(option =>
+    option.value !== optionValue
+      ? option
+      : patch
+        ? {
+            ...option,
+            approval: {
+              required: option.approval?.required ?? false,
+              fallbackUserIds: option.approval?.fallbackUserIds ?? [],
+              fallbackTeamIds: option.approval?.fallbackTeamIds ?? [],
+              ...(option.approval ?? {}),
+              ...patch
+            }
+          }
+        : { value: option.value, label: option.label }
+  );
+
 export const DocumentFieldRow = ({
   field,
+  allFields,
   onUpdate,
   onRemove
 }: {
   field: DocumentField;
+  allFields: DocumentField[];
   onUpdate: (patch: Partial<DocumentField>) => void;
   onRemove: () => void;
 }) => {
@@ -93,29 +118,142 @@ export const DocumentFieldRow = ({
       </Select.Root>
       <span className={styles.fieldOptions}>
         {field.type === 'enum' ? (
-          <TextInput
-            value={(field.enumOptions ?? [])
-              .map(option => `${option.value}:${option.label}`)
-              .join(', ')}
-            placeholder="proposed:Proposed, accepted:Accepted"
-            onChange={value =>
-              onUpdate({
-                enumOptions: (value ?? '')
-                  .split(',')
-                  .map(option => option.trim())
-                  .filter(Boolean)
-                  .map(option => {
-                    const [enumValue, ...label] = option.split(':');
-                    return {
-                      value: enumValue!.trim(),
-                      label:
-                        label.join(':').trim() === '' ? enumValue!.trim() : label.join(':').trim()
-                    };
-                  })
-              })
-            }
-            style={{ width: '100%' }}
-          />
+          <span style={{ display: 'grid', gap: 5 }}>
+            <TextInput
+              value={(field.enumOptions ?? [])
+                .map(option => `${option.value}:${option.label}`)
+                .join(', ')}
+              placeholder="proposed:Proposed, accepted:Accepted"
+              onChange={value => {
+                const existing = new Map(
+                  (field.enumOptions ?? []).map(option => [option.value, option])
+                );
+                onUpdate({
+                  enumOptions: (value ?? '')
+                    .split(',')
+                    .map(option => option.trim())
+                    .filter(Boolean)
+                    .map(option => {
+                      const [enumValue, ...label] = option.split(':');
+                      const parsedValue = enumValue!.trim();
+                      const prior = existing.get(parsedValue);
+                      return {
+                        value: parsedValue,
+                        label: label.join(':').trim() === '' ? parsedValue : label.join(':').trim(),
+                        ...(prior?.approval ? { approval: prior.approval } : {})
+                      };
+                    })
+                });
+              }}
+              style={{ width: '100%' }}
+            />
+            <label className="dim" style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={field.isStatus ?? false}
+                onChange={event => onUpdate({ isStatus: event.target.checked })}
+              />
+              Status field
+            </label>
+            {(field.isStatus ?? false) &&
+              (field.enumOptions ?? []).map(option => (
+                <label
+                  key={option.value}
+                  className="dim"
+                  style={{ display: 'flex', gap: 5, alignItems: 'center' }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={option.approval?.required ?? false}
+                    onChange={event =>
+                      onUpdate({
+                        enumOptions: approvalPatch(field, option.value, {
+                          required: event.target.checked,
+                          ...(event.target.checked && !option.approval?.requiredApprovals
+                            ? { requiredApprovals: 1 }
+                            : {})
+                        })
+                      })
+                    }
+                  />
+                  Require approval for {option.label}
+                </label>
+              ))}
+            {(field.isStatus ?? false) &&
+              (field.enumOptions ?? [])
+                .filter(option => option.approval?.required)
+                .map(option => {
+                  const approval = option.approval!;
+                  const sourceFields = allFields.filter(
+                    candidate => candidate.type === 'user_link' || candidate.type === 'team_link'
+                  );
+                  return (
+                    <span key={`${option.value}-approval`} style={{ display: 'grid', gap: 4 }}>
+                      <span className="dim">Approvers for {option.label}</span>
+                      <Select.Root
+                        value={approval.approverFieldId ?? '__fallback__'}
+                        onChange={value =>
+                          onUpdate({
+                            enumOptions: approvalPatch(field, option.value, {
+                              approverFieldId: value === '__fallback__' ? undefined : value
+                            })
+                          })
+                        }
+                      >
+                        <Select.Item value="__fallback__">Fallback IDs</Select.Item>
+                        {sourceFields.map(source => (
+                          <Select.Item key={source.id} value={source.id}>
+                            From {source.name}
+                          </Select.Item>
+                        ))}
+                      </Select.Root>
+                      <TextInput
+                        value={String(approval.requiredApprovals ?? 1)}
+                        placeholder="Required approvals"
+                        onChange={value =>
+                          onUpdate({
+                            enumOptions: approvalPatch(field, option.value, {
+                              requiredApprovals: Math.max(1, Number(value ?? 1))
+                            })
+                          })
+                        }
+                      />
+                      {!approval.approverFieldId && (
+                        <>
+                          <TextInput
+                            value={(approval.fallbackUserIds ?? []).join(', ')}
+                            placeholder="Fallback user IDs"
+                            onChange={value =>
+                              onUpdate({
+                                enumOptions: approvalPatch(field, option.value, {
+                                  fallbackUserIds: (value ?? '')
+                                    .split(',')
+                                    .map(item => item.trim())
+                                    .filter(Boolean)
+                                })
+                              })
+                            }
+                          />
+                          <TextInput
+                            value={(approval.fallbackTeamIds ?? []).join(', ')}
+                            placeholder="Fallback team IDs"
+                            onChange={value =>
+                              onUpdate({
+                                enumOptions: approvalPatch(field, option.value, {
+                                  fallbackTeamIds: (value ?? '')
+                                    .split(',')
+                                    .map(item => item.trim())
+                                    .filter(Boolean)
+                                })
+                              })
+                            }
+                          />
+                        </>
+                      )}
+                    </span>
+                  );
+                })}
+          </span>
         ) : isLinkType(field.type) ? (
           <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

@@ -8,6 +8,7 @@ import type {
   DocumentMetadata,
   DocumentType
 } from '@arch-register/api-types/documentContract';
+import type { DocumentWorkflowStatus } from '@arch-register/api-types/documentContract';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
@@ -40,6 +41,7 @@ type MarkdownPropertiesPanelProps = {
   fields: DocumentField[];
   metadata: DocumentMetadata;
   generatedMetadata: DocumentGeneratedMetadata;
+  workflow?: DocumentWorkflowStatus[];
   readOnly: boolean;
   attemptedSave?: boolean;
   onTypeChange: (id: string | null) => void;
@@ -423,6 +425,7 @@ export const MarkdownPropertiesPanel = ({
   fields,
   metadata,
   generatedMetadata,
+  workflow = [],
   readOnly,
   attemptedSave = false,
   onTypeChange,
@@ -512,6 +515,23 @@ export const MarkdownPropertiesPanel = ({
               )}
             </div>
           </div>
+          {workflow
+            .filter(item => item.pendingValue != null)
+            .map(item => {
+              const field = fields.find(candidate => candidate.id === item.fieldId);
+              const target = field?.enumOptions?.find(option => option.value === item.pendingValue);
+              return (
+                <div className={styles.row} key={`workflow-${item.fieldId}`}>
+                  <div className={styles.label}>{field?.name ?? item.fieldId}</div>
+                  <div className={styles.value}>
+                    <span className={styles.readValue}>
+                      Pending: {target?.label ?? item.pendingValue} ({item.approvalsReceived}/
+                      {item.approvalsRequired})
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
 
           {documentTypeId == null && !hasMetadata ? (
             <div className="dim" style={{ fontSize: 11, padding: '6px 0' }}>

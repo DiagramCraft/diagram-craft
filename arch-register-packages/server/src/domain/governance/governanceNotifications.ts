@@ -114,6 +114,20 @@ const listAssignmentRecipients = async (
       .map(item => item!.user);
   }
 
+  if (assignment.target_type === 'team') {
+    return activeUsers
+      .filter(
+        item =>
+          item != null &&
+          teamAssignments.some(
+            membership =>
+              membership.user_id === item.member.user_id &&
+              membership.team_id === assignment.target_team_id
+          )
+      )
+      .map(item => item!.user);
+  }
+
   throwIfAborted(signal);
   const roleDefinitions = resolveWorkspaceRoleDefinitions(
     await db.workspace.listCustomWorkspaceRoles(workspace)

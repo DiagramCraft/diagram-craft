@@ -32,6 +32,16 @@ export const resolveAssignmentEligibility = (
       }
       return { eligible: false };
     }
+    case 'team': {
+      if (!assignment.target_team_id) return { eligible: false };
+      const team = authCtx.teams.some(item => item.id === assignment.target_team_id);
+      const member = authCtx.teamAssignments.some(
+        item => item.teamId === assignment.target_team_id
+      );
+      return team && member
+        ? { eligible: true, authorizationPath: `team:${assignment.target_team_id}` }
+        : { eligible: false };
+    }
     case 'team_role': {
       if (!assignment.target_team_id || !assignment.target_team_role) return { eligible: false };
       const roles = authCtx.teamRolesByTeam.get(assignment.target_team_id);

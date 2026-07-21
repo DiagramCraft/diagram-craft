@@ -57,6 +57,11 @@ import {
   isMarkdownNode,
   readMarkdownBody
 } from './markdownOperationHelpers';
+import {
+  applyDocumentWorkflowSave,
+  getDocumentWorkflowStatuses,
+  listDocumentWorkflowHistory
+} from '../document/documentWorkflowOperations';
 const createScopedMarkdownDoc = async (
   scope: ContentScopeResolver,
   db: DatabaseAdapter,
@@ -234,18 +239,7 @@ export const saveNewMarkdownContent = async (
             created_byIfNew: authCtx.userId,
             updated_by: authCtx.userId
           });
-          if (input.document_type_id || Object.keys(input.metadata).length > 0) {
-            await tx.document.upsertDocumentMetadata({
-              workspace: ws,
-              node_id: nodeId,
-              document_type_id: input.document_type_id ?? null,
-              values: resolvedMetadata.values,
-              generated_metadata: {},
-              updated_at: timestamp
-            });
-            await tx.document.replaceDocumentLinks(ws, nodeId, resolvedMetadata.links);
-          }
-          await createContentNodeRevision(
+          const revision = await createContentNodeRevision(
             tx,
             ws,
             nodeId,
@@ -258,6 +252,28 @@ export const saveNewMarkdownContent = async (
             resolvedMetadata.values,
             tx
           );
+          const effectiveMetadata = await applyDocumentWorkflowSave(tx, {
+            workspace: ws,
+            nodeId,
+            documentType,
+            currentMetadata: {},
+            nextMetadata: resolvedMetadata.values,
+            changeKind: 'major',
+            isNew: true,
+            initiatorUserId: authCtx.userId,
+            sourceRevision: revision.revision_number
+          });
+          if (input.document_type_id || Object.keys(effectiveMetadata).length > 0) {
+            await tx.document.upsertDocumentMetadata({
+              workspace: ws,
+              node_id: nodeId,
+              document_type_id: input.document_type_id ?? null,
+              values: effectiveMetadata,
+              generated_metadata: {},
+              updated_at: timestamp
+            });
+            await tx.document.replaceDocumentLinks(ws, nodeId, resolvedMetadata.links);
+          }
         },
         afterCommit: [
           {
@@ -384,7 +400,18 @@ export const getMarkdownContent = async (
         metadata: document.metadata,
         generated_metadata: document.generatedMetadata,
         available_fields: document.availableFields,
-        retired_fields: document.retiredFields
+        retired_fields: document.retiredFields,
+        ...(document.documentType
+          ? {
+              workflow: await getDocumentWorkflowStatuses(
+                db,
+                ws,
+                node.id,
+                document.documentType,
+                document.metadata
+              )
+            }
+          : {})
       };
     }
   );
@@ -401,7 +428,8 @@ export const saveMarkdownContent = async (
   metadata: DocumentMetadata | undefined,
   event: AuthenticatedEvent,
   external?: ExternalUpdateEnvelope,
-  allowTypeMigration = false
+  allowTypeMigration = false,
+  changeKind: 'minor' | 'major' = 'minor'
 ): Promise<ProjectFile> => {
   return defineOperation(
     db,
@@ -535,19 +563,6 @@ export const saveMarkdownContent = async (
             created_byIfNew: node.created_by,
             updated_by: authCtx.userId
           });
-          if (nextDocumentTypeId !== null || Object.keys(nextMetadata).length > 0) {
-            await tx.document.upsertDocumentMetadata({
-              workspace: ws,
-              node_id: node.id,
-              document_type_id: nextDocumentTypeId ?? null,
-              values: nextMetadata,
-              generated_metadata: nextGeneratedMetadata,
-              updated_at: timestamp
-            });
-            await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
-          } else {
-            await tx.document.deleteDocumentMetadata(ws, node.id);
-          }
           revision = await createContentNodeRevision(
             tx,
             ws,
@@ -561,6 +576,30 @@ export const saveMarkdownContent = async (
             nextMetadata,
             tx
           );
+          const effectiveMetadata = await applyDocumentWorkflowSave(tx, {
+            workspace: ws,
+            nodeId: node.id,
+            documentType: nextDocumentType,
+            currentMetadata: currentDocument.metadata,
+            nextMetadata,
+            changeKind,
+            isNew: false,
+            initiatorUserId: authCtx.userId,
+            sourceRevision: revision.revision_number
+          });
+          if (nextDocumentTypeId !== null || Object.keys(effectiveMetadata).length > 0) {
+            await tx.document.upsertDocumentMetadata({
+              workspace: ws,
+              node_id: node.id,
+              document_type_id: nextDocumentTypeId ?? null,
+              values: effectiveMetadata,
+              generated_metadata: nextGeneratedMetadata,
+              updated_at: timestamp
+            });
+            await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
+          } else {
+            await tx.document.deleteDocumentMetadata(ws, node.id);
+          }
           if (!external && effectiveChange && nextDocumentType) {
             await scheduleMetadataGenerationForDocument(tx, {
               workspace: ws,
@@ -619,7 +658,8 @@ export const migrateMarkdownContent = async (
   name: string | undefined,
   documentTypeId: string | null,
   metadata: DocumentMetadata,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  changeKind: 'minor' | 'major' = 'major'
 ): Promise<ProjectFile> =>
   saveMarkdownContent(
     db,
@@ -632,7 +672,8 @@ export const migrateMarkdownContent = async (
     metadata,
     event,
     undefined,
-    true
+    true,
+    changeKind
   );
 
 export const listMarkdownRevisions = async (
@@ -662,6 +703,34 @@ export const listMarkdownRevisions = async (
     }
   );
 };
+
+export const listMarkdownWorkflowHistory = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  nodeId: string,
+  event: AuthenticatedEvent
+) =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    {
+      fallback: 'Failed to retrieve document workflow history',
+      dbErrorMessages: projectDbErrorMessages
+    },
+    async ({ ws, authCtx }) => {
+      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+      httpAssert.true(isMarkdownNode(node), {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+      const document = await getDocumentState(db, ws, node);
+      if (!document.documentType) return [];
+      return listDocumentWorkflowHistory(db, ws, nodeId, document.documentType, event);
+    }
+  );
 
 export const getMarkdownRevision = async (
   db: DatabaseAdapter,
@@ -699,7 +768,8 @@ export const restoreMarkdownRevision = async (
   workspace: string,
   nodeId: string,
   revisionId: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  changeKind: 'minor' | 'major' = 'major'
 ): Promise<ProjectFile> => {
   return defineOperation(
     db,
@@ -779,21 +849,6 @@ export const restoreMarkdownRevision = async (
             created_byIfNew: node.created_by,
             updated_by: authCtx.userId
           });
-          if (revision.document_type_id || Object.keys(revision.metadata).length > 0) {
-            await tx.document.upsertDocumentMetadata({
-              workspace: ws,
-              node_id: node.id,
-              document_type_id: revision.document_type_id,
-              values: resolvedMetadata.values,
-              generated_metadata: effectiveChange
-                ? outdateGeneratedMetadata(currentDocument.generatedMetadata)
-                : currentDocument.generatedMetadata,
-              updated_at: timestamp
-            });
-            await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
-          } else {
-            await tx.document.deleteDocumentMetadata(ws, node.id);
-          }
           restoredRevision = await createContentNodeRevision(
             tx,
             ws,
@@ -807,6 +862,32 @@ export const restoreMarkdownRevision = async (
             resolvedMetadata.values,
             tx
           );
+          const effectiveMetadata = await applyDocumentWorkflowSave(tx, {
+            workspace: ws,
+            nodeId: node.id,
+            documentType: restoredType,
+            currentMetadata: currentDocument.metadata,
+            nextMetadata: resolvedMetadata.values,
+            changeKind,
+            isNew: false,
+            initiatorUserId: authCtx.userId,
+            sourceRevision: restoredRevision.revision_number
+          });
+          if (revision.document_type_id || Object.keys(effectiveMetadata).length > 0) {
+            await tx.document.upsertDocumentMetadata({
+              workspace: ws,
+              node_id: node.id,
+              document_type_id: revision.document_type_id,
+              values: effectiveMetadata,
+              generated_metadata: effectiveChange
+                ? outdateGeneratedMetadata(currentDocument.generatedMetadata)
+                : currentDocument.generatedMetadata,
+              updated_at: timestamp
+            });
+            await tx.document.replaceDocumentLinks(ws, node.id, resolvedMetadata.links);
+          } else {
+            await tx.document.deleteDocumentMetadata(ws, node.id);
+          }
           if (effectiveChange && restoredType) {
             await scheduleMetadataGenerationForDocument(tx, {
               workspace: ws,
