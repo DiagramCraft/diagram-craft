@@ -77,6 +77,18 @@ export const useUpdateJobSchedule = (workspaceSlug: string) => {
   });
 };
 
+export const useRunJobScheduleNow = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (scheduleId: string) =>
+      orpcClient.jobs.schedules.runNow({
+        params: { workspace: workspaceSlug, id: scheduleId }
+      }),
+    onSuccess: () => invalidateJobQueries(queryClient, workspaceSlug)
+  });
+};
+
 export const useCancelJobRun = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
 
