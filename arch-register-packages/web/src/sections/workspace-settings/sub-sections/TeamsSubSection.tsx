@@ -2,7 +2,6 @@ import { type TeamRole } from '@arch-register/permissions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Banner } from '../../../components/Banner';
@@ -11,6 +10,7 @@ import { ColorPicker } from '../../../components/ColorPicker';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
+import { UserGroupPicker } from '../../../components/UserGroupPicker';
 import { getUserLabel } from '../../../utils/userLabel';
 import type {
   TeamAssignmentInfo,
@@ -627,22 +627,17 @@ const AddMembersDialog = ({
             })}
 
             {availableUsers.length > 0 ? (
-              <Select.Root
-                value={undefined}
-                onChange={value => {
-                  if (value) pickUser(value);
-                }}
-                placeholder="Choose a person to add…"
-                style={{ width: '100%' }}
-              >
-                {availableUsers.map(user => (
-                  <Select.Item key={user.id} value={user.id}>
-                    {getUserLabel(user)}
-                    {user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
-                    {!user.is_active ? ' - inactive' : ''}
-                  </Select.Item>
-                ))}
-              </Select.Root>
+              <UserGroupPicker
+                items={availableUsers.map(user => ({
+                  id: user.id,
+                  kind: 'user' as const,
+                  label: `${getUserLabel(user)}${!user.is_active ? ' - inactive' : ''}`,
+                  email: user.email,
+                  color: user.color
+                }))}
+                onSelect={item => pickUser(item.id)}
+                placeholder="Search people to add…"
+              />
             ) : assignments.length === 0 ? (
               <div className={styles.emptyInline}>
                 All workspace users are already in this team.

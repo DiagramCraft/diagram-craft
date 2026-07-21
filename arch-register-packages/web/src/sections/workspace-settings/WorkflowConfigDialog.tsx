@@ -4,6 +4,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { MemberAvatar, stableHue } from '../../components/MemberAvatar';
+import { UserGroupPicker } from '../../components/UserGroupPicker';
 import { useWorkspaceUsers } from '../../hooks/useWorkspaceMembers';
 import { useTeams } from '../../hooks/useWorkspaceConfig';
 import type {
@@ -24,8 +25,6 @@ type WorkflowConfigDialogProps = {
 };
 
 const FALLBACK = '__fallback__';
-const ADD_USER = '__add_user__';
-const ADD_TEAM = '__add_team__';
 
 const defaultApproval = (): DocumentStatusApproval => ({
   required: true,
@@ -175,8 +174,7 @@ export const WorkflowConfigDialog = ({
     );
   };
 
-  const addApprover = (option: EnumOption, kind: 'user' | 'team', id: string | null) => {
-    if (!id || id === ADD_USER || id === ADD_TEAM) return;
+  const addApprover = (option: EnumOption, kind: 'user' | 'team', id: string) => {
     updateOption(option.value, current => {
       const approval = { ...defaultApproval(), ...(current.approval ?? {}) };
       const key = kind === 'user' ? 'fallbackUserIds' : 'fallbackTeamIds';
@@ -332,17 +330,18 @@ export const WorkflowConfigDialog = ({
                           users={activeUsers}
                           onRemove={id => removeApprover(option, 'user', id)}
                         />
-                        <Select.Root
-                          value={ADD_USER}
-                          onChange={value => addApprover(option, 'user', value ?? null)}
-                        >
-                          <Select.Item value={ADD_USER}>Add a user…</Select.Item>
-                          {activeUsers.map(user => (
-                            <Select.Item key={user.id} value={user.id}>
-                              {user.display_name} {user.email ? `(${user.email})` : ''}
-                            </Select.Item>
-                          ))}
-                        </Select.Root>
+                        <UserGroupPicker
+                          items={activeUsers.map(user => ({
+                            id: user.id,
+                            kind: 'user' as const,
+                            label: user.display_name,
+                            email: user.email,
+                            color: user.color
+                          }))}
+                          excludeIds={approval.fallbackUserIds}
+                          onSelect={item => addApprover(option, 'user', item.id)}
+                          placeholder="Search users to add…"
+                        />
                       </div>
                     </div>
 
@@ -361,17 +360,16 @@ export const WorkflowConfigDialog = ({
                           labels={teamLabels}
                           onRemove={id => removeApprover(option, 'team', id)}
                         />
-                        <Select.Root
-                          value={ADD_TEAM}
-                          onChange={value => addApprover(option, 'team', value ?? null)}
-                        >
-                          <Select.Item value={ADD_TEAM}>Add a team or group…</Select.Item>
-                          {teams.map(team => (
-                            <Select.Item key={team.id} value={team.id}>
-                              {team.name}
-                            </Select.Item>
-                          ))}
-                        </Select.Root>
+                        <UserGroupPicker
+                          items={teams.map(team => ({
+                            id: team.id,
+                            kind: 'team' as const,
+                            label: team.name
+                          }))}
+                          excludeIds={approval.fallbackTeamIds}
+                          onSelect={item => addApprover(option, 'team', item.id)}
+                          placeholder="Search teams or groups to add…"
+                        />
                       </div>
                     </div>
                   </div>
