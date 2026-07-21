@@ -57,6 +57,11 @@ export type OwnerDbResult = {
 
 export type OwnerDbCreate = OwnerDbResult;
 
+export type TeamListOptions = {
+  q?: string;
+  limit?: number;
+};
+
 export type MemberDbResult = {
   workspace: string;
   user_id: string;
@@ -180,7 +185,7 @@ export type WorkspaceDatabase = {
     types: ProjectEntityTypeDbCreate[]
   ): Promise<ProjectEntityTypeDbResult[]>;
 
-  listTeams(ws: string): Promise<OwnerDbResult[]>;
+  listTeams(ws: string, options?: TeamListOptions): Promise<OwnerDbResult[]>;
   replaceTeams(ws: string, teams: OwnerDbCreate[]): Promise<OwnerDbResult[]>;
 
   listTeamAssignments(ws: string): Promise<TeamMembershipDbResult[]>;

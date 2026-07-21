@@ -139,6 +139,16 @@ const userInfoSchema = z.object({
   color: z.string().nullable().optional().describe('Optional user color (hex format)')
 });
 
+const pickerSearchQuerySchema = z.object({
+  q: z.string().optional().describe('Case-insensitive search query'),
+  limit: z
+    .preprocess(
+      value => (value === undefined ? undefined : Number(value)),
+      z.number().int().positive().max(100).optional()
+    )
+    .describe('Maximum number of results (default 50, maximum 100)')
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const workspaceConfigContract = oc.tag('Workspace Config').router({
@@ -189,7 +199,7 @@ export const workspaceConfigContract = oc.tag('Workspace Config').router({
             'Retrieves all teams configured for the workspace. Teams are used to organize users and assign permissions.',
           tags: ['Workspace Config']
         })
-        .input(z.object({ params: ws }))
+        .input(z.object({ params: ws, query: pickerSearchQuerySchema.optional() }))
         .output(z.array(teamSchema)),
       replace: oc
         .route({
@@ -353,7 +363,7 @@ export const workspaceConfigContract = oc.tag('Workspace Config').router({
             'Retrieves all users that can be added to the workspace, including their authentication provider and status.',
           tags: ['Workspace Config']
         })
-        .input(z.object({ params: ws }))
+        .input(z.object({ params: ws, query: pickerSearchQuerySchema.optional() }))
         .output(z.array(userInfoSchema))
     },
     tokens: {

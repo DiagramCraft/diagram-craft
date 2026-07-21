@@ -124,11 +124,12 @@ export const replaceProjectEntityTypes = async (
 export const listTeams = async (
   db: DatabaseAdapter,
   workspace: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  options?: { q?: string; limit?: number }
 ): Promise<OwnerDbResult[]> => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
-  return await db.workspace.listTeams(workspace);
+  return await db.workspace.listTeams(workspace, options);
 };
 
 export const replaceTeams = async (
@@ -405,12 +406,13 @@ export const removeMember = async (
 export const listUsers = async (
   db: DatabaseAdapter,
   workspace: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  options?: { q?: string; limit?: number }
 ) => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'people.invite');
 
-  const users = await db.auth.listUsers();
+  const users = await db.auth.listUsers(options);
   return users.map(user => ({
     id: user.id,
     email: user.email,

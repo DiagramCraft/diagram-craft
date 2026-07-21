@@ -84,6 +84,25 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
       expect(names).toEqual([...names].sort());
     });
 
+    it('searches users by display name or email and applies a limit', async () => {
+      const db = getDb();
+      const alpha = await createFixtureUser(db);
+      const beta = await createFixtureUser(db);
+      await db.auth.updateUser(alpha.id, {
+        display_name: 'Alpha Owner',
+        email: 'alpha@example.com',
+        updated_at: new Date()
+      });
+      await db.auth.updateUser(beta.id, {
+        display_name: 'Beta Owner',
+        email: 'beta@example.com',
+        updated_at: new Date()
+      });
+
+      expect((await db.auth.listUsers({ q: 'alpha' })).map(user => user.id)).toEqual([alpha.id]);
+      expect((await db.auth.listUsers({ q: 'EXAMPLE.COM', limit: 1 })).length).toBe(1);
+    });
+
     it('normalizes a duplicate email to a unique DatabaseError', async () => {
       const db = getDb();
       const created = await createFixtureUser(db);

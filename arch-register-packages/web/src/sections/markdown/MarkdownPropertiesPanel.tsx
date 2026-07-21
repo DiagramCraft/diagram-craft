@@ -478,7 +478,8 @@ const WorkspaceLinkValueEdit = ({
       ))}
       {(field.maxCardinality !== 1 || values.length === 0) && (
         <UserGroupPicker
-          items={available}
+          kind={isUserLink ? 'user' : 'team'}
+          activeOnly={isUserLink}
           excludeIds={values}
           onSelect={item => addValue(item.id)}
           placeholder={isUserLink ? 'Search users to add…' : 'Search teams or groups to add…'}
