@@ -38,6 +38,7 @@ const mappingDefinitions = (mapping: MappingForm): SchemaFieldMappingDefinition[
     id: 'productFieldId',
     label: 'Product key',
     description: 'The endoflife.date product identifier, for example nodejs or nginx.',
+    direction: 'input',
     required: true,
     allowedTypes: ['text', 'longtext'],
     value: mapping.productFieldId
@@ -46,6 +47,7 @@ const mappingDefinitions = (mapping: MappingForm): SchemaFieldMappingDefinition[
     id: 'cycleFieldId',
     label: 'Release cycle',
     description: 'The stable release cycle identifier, for example 22 or 1.25.',
+    direction: 'input',
     required: true,
     allowedTypes: ['text', 'longtext'],
     value: mapping.cycleFieldId
@@ -64,6 +66,7 @@ const mappingDefinitions = (mapping: MappingForm): SchemaFieldMappingDefinition[
     id,
     label,
     description: 'Optional destination maintained by this job.',
+    direction: 'output' as const,
     allowedTypes:
       kind === 'text'
         ? (['text', 'longtext'] as SchemaField['type'][])

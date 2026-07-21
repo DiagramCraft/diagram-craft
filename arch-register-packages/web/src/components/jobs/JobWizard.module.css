@@ -60,6 +60,38 @@
   gap: 12px;
 }
 
+.mappingColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mappingColumn {
+  min-width: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+  padding: 12px;
+  background: var(--base-bg);
+}
+
+.mappingColumnHeader {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 12px;
+}
+
+.mappingColumnTitle {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mappingColumnDescription {
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 3px;
+}
+
 .typeCard {
   border: 1px solid var(--accent-fg);
   border-radius: 7px;
@@ -105,4 +137,10 @@
   grid-template-columns: 100px 1fr;
   gap: 8px;
   align-items: end;
+}
+
+@media (max-width: 640px) {
+  .mappingColumns {
+    grid-template-columns: 1fr;
+  }
 }
