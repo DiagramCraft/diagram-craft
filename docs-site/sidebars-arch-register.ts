@@ -61,7 +61,8 @@ const sidebars: SidebarsConfig = {
         'reference/entity-screen-reference',
         'reference/project-content-screen-reference',
         'reference/mcp-server',
-        'reference/api-integrations'
+        'reference/api-integrations',
+        'reference/external-integrations'
       ]
     },
     {

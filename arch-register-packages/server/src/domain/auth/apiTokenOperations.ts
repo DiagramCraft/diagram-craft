@@ -9,7 +9,10 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { recordApiTokenAudit } from './apiTokenAudit';
 
-const EDITOR_CAPABILITIES = new Set<WorkspaceCapability>(WORKSPACE_ROLE_CAPABILITIES.editor);
+const EDITOR_CAPABILITIES = new Set<WorkspaceCapability>([
+  ...WORKSPACE_ROLE_CAPABILITIES.editor,
+  'ent.external_update'
+]);
 export const MAX_API_TOKENS_PER_WORKSPACE = 10;
 
 const getOneYearFrom = (date: Date) => {
