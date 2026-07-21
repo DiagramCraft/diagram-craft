@@ -49,7 +49,6 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
-  { id: 'api-tokens', label: 'API Tokens', icon: <TbKey size={12} />, group: 'People' },
   {
     id: 'global-permissions',
     label: 'Global permissions',
@@ -65,13 +64,14 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   },
   { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
-  { id: 'webhooks', label: 'Webhooks', icon: <TbWebhook size={12} />, group: 'Workspace' },
-  { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Workspace' },
+  { id: 'api-tokens', label: 'API Tokens', icon: <TbKey size={12} />, group: 'Administration' },
+  { id: 'webhooks', label: 'Webhooks', icon: <TbWebhook size={12} />, group: 'Administration' },
+  { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Administration' },
   {
     id: 'danger',
     label: 'Danger zone',
     icon: <TbTrash size={12} />,
-    group: 'Workspace',
+    group: 'Administration',
     tone: 'danger'
   }
 ];

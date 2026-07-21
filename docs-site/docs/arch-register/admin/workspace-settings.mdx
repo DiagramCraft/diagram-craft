@@ -29,6 +29,7 @@ The implemented settings area includes:
 - export and import
 - analytics
 - audit log
+- API tokens
 - webhooks
 - job monitoring
 - danger zone
@@ -63,24 +64,27 @@ can also create project-specific Markdown templates from project settings.
 
 See [Document Types And Templates](document-types-templates) for the full configuration and usage workflow.
 
-## Analytics, Audit, And Danger Zone
+## Analytics And Audit
 
-These three sections exist for different operational jobs:
+These two sections exist for different operational jobs:
 
 - **Analytics** for workspace-wide coverage and completeness views
 - **Audit log** for change inspection
-- **Danger zone** for irreversible operations
 
 Keep them conceptually separate. They solve different problems.
 
-## Webhooks And Job Monitoring
+## Administration
 
-Two operational sections support integrations and background work:
+The **Administration** group collects settings for operating the workspace day to day, separate from its data model
+and membership:
 
+- **API tokens** creates workspace-scoped API tokens backed by a system user, each restricted to a chosen subset of
+  role capabilities and with an optional expiry date, for use by external clients and integrations.
 - **Webhooks** configures outbound webhooks for workspace events and shows delivery behavior, so external systems
   can react to changes in Arch Register.
 - **Job monitoring** shows scheduled jobs, job servers, and run history, with cancellation available for supported
   jobs.
+- **Danger zone** for irreversible operations.
 
 ## Related Pages
 

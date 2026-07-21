@@ -281,7 +281,9 @@
       delivery, and scheduled work.
 
         - @id:ar.integrations.api External clients can use the documented API contract and API tokens to access
-          supported Arch Register operations.
+          supported Arch Register operations. Administrators can create workspace-scoped API tokens backed by a
+          system user, restricted to a chosen subset of role capabilities, with an optional expiry date, in addition
+          to the personal API tokens available from account settings.
 
         - @id:ar.integrations.mcp External AI or automation clients can use the MCP server’s supported discovery and
           mutation tools.
