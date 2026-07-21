@@ -12,9 +12,11 @@
 
 **Relations.** Entities are connected through Reference and Containment fields. Reference fields capture directional relationships (e.g. "depends on", "integrates with"), while Containment fields model hierarchies (e.g. a domain containing services). Both incoming and outgoing relations are visible on the entity detail page.
 
-**Technology lifecycle tracking.** Architecture-focused built-in templates include a Technology Release schema with
-support dates, source keys, and technology-radar status. Applications, services, and infrastructure can reference
-technology releases, and seeded workspaces include table, radar, and timeline views for lifecycle planning.
+**Technology lifecycle tracking.** The Default workspace template and seeded workspace include a standalone
+Technology Release catalog with support dates, source keys, and technology-radar status. Applications, services, and
+infrastructure can reference technology releases, and the seeded workspace includes table, radar, and timeline views
+for lifecycle planning.
+Built-in model templates retain their native concepts rather than introducing Technology Release as a model element.
 
 ---
 

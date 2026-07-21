@@ -59,35 +59,17 @@ describe('instantiateTemplate', () => {
     });
   });
 
-  it('adds technology release tracking to architecture-focused templates', () => {
-    for (const templateId of ['backstage', 'c4', 'itil', 'ddd', 'archimate']) {
-      const definitions = instantiateTemplateDefinitions('ws-1', templateId);
-      const technologyRelease = definitions.schemas.find(
-        schema => schema.name === 'Technology Release'
-      );
-      expect(technologyRelease).toBeDefined();
-      expect(technologyRelease?.fields).toContainEqual({
-        id: 'eol_date',
-        name: 'EOL Date',
-        type: 'date',
-        external_kind: 'integration',
-        refresh_mode: 'scheduled'
-      });
-      expect(
-        definitions.schemas.some(schema =>
-          schema.fields.some(
-            field => field.type === 'reference' && field.schemaId === technologyRelease?.id
-          )
-        )
-      ).toBe(true);
-    }
+  it('keeps technology release scoped to the default catalog template', () => {
+    const defaultTemplate = SCHEMA_TEMPLATES.find(template => template.id === 'default');
+    expect(defaultTemplate?.schemas).toContainEqual(
+      expect.objectContaining({ name: 'Technology Release' })
+    );
 
-    expect(instantiateTemplateDefinitions('ws-1', 'data-mesh').schemas).not.toContainEqual(
-      expect.objectContaining({ name: 'Technology Release' })
-    );
-    expect(instantiateTemplateDefinitions('ws-1', 'team-topologies').schemas).not.toContainEqual(
-      expect.objectContaining({ name: 'Technology Release' })
-    );
+    for (const template of SCHEMA_TEMPLATES.filter(template => template.id !== 'default')) {
+      expect(template.schemas).not.toContainEqual(
+        expect.objectContaining({ name: 'Technology Release' })
+      );
+    }
   });
 
   it('defines an enum for every select field in every built-in template', () => {

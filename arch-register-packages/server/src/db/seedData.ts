@@ -803,51 +803,37 @@ export const seedSchemas: SchemaDbResult[] = [
       {
         id: 'latest_version',
         name: 'Latest Version',
-        type: 'text',
-        external_kind: 'integration',
-        refresh_mode: 'scheduled'
+        type: 'text'
       },
       {
         id: 'release_date',
         name: 'Release Date',
-        type: 'date',
-        external_kind: 'integration',
-        refresh_mode: 'scheduled'
+        type: 'date'
       },
       {
         id: 'active_support_until',
         name: 'Active Support Until',
-        type: 'date',
-        external_kind: 'integration',
-        refresh_mode: 'scheduled'
+        type: 'date'
       },
       {
         id: 'security_support_until',
         name: 'Security Support Until',
-        type: 'date',
-        external_kind: 'integration',
-        refresh_mode: 'scheduled'
+        type: 'date'
       },
       {
         id: 'eol_date',
         name: 'EOL Date',
-        type: 'date',
-        external_kind: 'integration',
-        refresh_mode: 'scheduled'
+        type: 'date'
       },
       {
         id: 'source_url',
         name: 'Source URL',
-        type: 'text',
-        external_kind: 'integration',
-        refresh_mode: 'scheduled'
+        type: 'text'
       },
       {
         id: 'last_synchronized',
         name: 'Last Synchronized',
-        type: 'date',
-        external_kind: 'integration',
-        refresh_mode: 'scheduled'
+        type: 'date'
       },
       {
         id: 'category',

@@ -228,14 +228,21 @@ test.describe('search routes', () => {
         entityId: '00000000-0000-0000-0003-000000000002',
         schemaName: 'Component',
         _name: 'Frontend App',
-        matchedFields: ['technology'],
+        matchedFields: [],
         matchedMetadata: expect.arrayContaining(['description', 'tags'])
+      }),
+      expect.objectContaining({
+        entityId: '00000000-0000-0000-0006-000000000002',
+        schemaName: 'Technology Release',
+        _name: 'React 18',
+        matchedFields: ['product', 'provider_product', 'source_url'],
+        matchedMetadata: expect.arrayContaining(['name', 'slug', 'description', 'links'])
       }),
       expect.objectContaining({
         entityId: '00000000-0000-0000-0003-000000000008',
         schemaName: 'Component',
         _name: 'Reporting Dashboard',
-        matchedFields: ['technology'],
+        matchedFields: [],
         matchedMetadata: ['tags']
       })
     ]);
@@ -256,7 +263,17 @@ test.describe('search routes', () => {
       {
         schemaId: '00000000-0000-0000-0000-000000000003',
         name: 'Component',
-        fieldMatches: [{ fieldId: 'technology', fieldName: 'Technology' }]
+        fieldMatches: [{ fieldId: 'technology_releases', fieldName: 'Technology Releases' }]
+      },
+      {
+        schemaId: '00000000-0000-0000-0000-000000000005',
+        name: 'Resource',
+        fieldMatches: [{ fieldId: 'technology_releases', fieldName: 'Technology Releases' }]
+      },
+      {
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        name: 'Technology Release',
+        fieldMatches: []
       }
     ]);
   });
