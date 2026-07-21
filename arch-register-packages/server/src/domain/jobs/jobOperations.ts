@@ -1,8 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
+import type { CreateJobBody, TechnologyEolMapping } from '@arch-register/api-types/jobsContract';
 import { httpAssert } from '../../utils/httpAssert';
-import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  requireWorkspaceAdmin,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { nextJobOccurrence, validateJobScheduleRecurrence } from './jobRecurrence';
 import type {
@@ -168,11 +173,16 @@ const parseOptionalDate = (value: string | undefined, name: string): Date | unde
   return date;
 };
 
-export const toApiJobSchedule = (schedule: JobScheduleDbResult) => ({
+export const toApiJobSchedule = (
+  schedule: JobScheduleDbResult,
+  targetSchema: { id: string; name: string | null } | null = null
+) => ({
   id: schedule.id,
   workspace: schedule.workspace,
   job_type: schedule.job_type,
   system_identity: schedule.system_identity,
+  target_schema_id: targetSchema?.id ?? null,
+  target_schema_name: targetSchema?.name ?? null,
   priority: schedule.priority,
   recurrence:
     schedule.recurrence.type === 'hours' || schedule.recurrence.type === 'minutes'
@@ -183,6 +193,18 @@ export const toApiJobSchedule = (schedule: JobScheduleDbResult) => ({
   created_at: schedule.created_at.toISOString(),
   updated_at: schedule.updated_at.toISOString()
 });
+
+export const createConfiguredJob = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  body: CreateJobBody,
+  event: AuthenticatedEvent
+) => {
+  if (body.jobType === TECHNOLOGY_EOL_JOB_TYPE) {
+    return createTechnologyEolJob(db, workspace, body, event);
+  }
+  throw new Error(`Unsupported job type '${body.jobType}'`);
+};
 
 export const toApiJobServer = (server: JobServerDbResult, now = new Date()) => {
   const status: JobServerStatus =
@@ -263,8 +285,191 @@ export const listJobSchedules = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceAdmin(authCtx);
-  const schedules = await db.jobs.listSchedules(ws);
-  return schedules.map(toApiJobSchedule);
+  const [schedules, schemas] = await Promise.all([
+    db.jobs.listSchedules(ws),
+    db.catalog.listSchemas(ws)
+  ]);
+  const schemaNames = new Map(schemas.map(schema => [schema.id, schema.name]));
+  return schedules.map(schedule =>
+    toApiJobSchedule(
+      schedule,
+      typeof schedule.payload['schemaId'] === 'string'
+        ? {
+            id: schedule.payload['schemaId'],
+            name: schemaNames.get(schedule.payload['schemaId']) ?? null
+          }
+        : null
+    )
+  );
+};
+
+const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
+const TECHNOLOGY_EOL_SYSTEM_IDENTITY = 'technology-eol';
+
+const destinationFieldIds = (mapping: TechnologyEolMapping) =>
+  [
+    mapping.latestVersionFieldId,
+    mapping.releaseDateFieldId,
+    mapping.supportUntilFieldId,
+    mapping.securityUntilFieldId,
+    mapping.eolDateFieldId,
+    mapping.sourceUrlFieldId,
+    mapping.synchronizedAtFieldId
+  ].filter((fieldId): fieldId is string => fieldId != null);
+
+const compatibleField = (field: { type: string }, role: 'text' | 'date') =>
+  role === 'text'
+    ? field.type === 'text' || field.type === 'longtext'
+    : field.type === 'date' || field.type === 'text' || field.type === 'longtext';
+
+const assertTechnologyEolMapping = (
+  schema: Awaited<ReturnType<DatabaseAdapter['catalog']['getSchema']>>,
+  mapping: TechnologyEolMapping
+) => {
+  if (!schema) {
+    httpAssert.present(schema, { status: 404, message: 'Target schema not found' });
+    throw new Error('Target schema not found');
+  }
+  const fields = new Map(schema.fields.map(field => [field.id, field]));
+  const inputFields = [mapping.productFieldId, mapping.cycleFieldId];
+  for (const fieldId of inputFields) {
+    const field = fields.get(fieldId);
+    httpAssert.present(field, { status: 400, message: `Input field '${fieldId}' was not found` });
+    httpAssert.true(compatibleField(field!, 'text'), {
+      status: 400,
+      message: `Input field '${fieldId}' must be a text field`
+    });
+  }
+
+  const destinations = destinationFieldIds(mapping);
+  httpAssert.true(new Set(destinations).size === destinations.length, {
+    status: 400,
+    message: 'Each destination field can only be mapped once'
+  });
+  httpAssert.true(!destinations.some(fieldId => inputFields.includes(fieldId)), {
+    status: 400,
+    message: 'Input fields cannot also be destination fields'
+  });
+  for (const fieldId of destinations) {
+    const field = fields.get(fieldId);
+    httpAssert.present(field, {
+      status: 400,
+      message: `Destination field '${fieldId}' was not found`
+    });
+    httpAssert.true(
+      compatibleField(field!, fieldId === mapping.sourceUrlFieldId ? 'text' : 'date'),
+      {
+        status: 400,
+        message: `Destination field '${fieldId}' has an incompatible type`
+      }
+    );
+  }
+  return schema;
+};
+
+const createTechnologyEolJob = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  body: Extract<CreateJobBody, { jobType: 'technology-eol' }>,
+  event: AuthenticatedEvent
+) => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  requireWorkspaceAdmin(authCtx);
+  requireWorkspaceCapability(authCtx, 'schema.edit');
+
+  const now = new Date();
+  return db.core.transaction(async tx => {
+    const schema = await tx.catalog.getSchema(ws, body.schemaId);
+    const targetSchema = assertTechnologyEolMapping(schema, body.mapping);
+    const schedules = await tx.jobs.listSchedules(ws);
+    httpAssert.true(
+      !schedules.some(
+        schedule =>
+          schedule.job_type === TECHNOLOGY_EOL_JOB_TYPE &&
+          schedule.payload['schemaId'] === body.schemaId
+      ),
+      { status: 409, message: 'A Technology End of Life job already exists for this schema' }
+    );
+
+    const destinationIds = new Set(destinationFieldIds(body.mapping));
+    const nextFields = targetSchema.fields.map(field =>
+      destinationIds.has(field.id)
+        ? { ...field, external_kind: 'integration' as const, refresh_mode: 'scheduled' as const }
+        : field
+    );
+    const updatedSchema = await tx.catalog.updateSchema(ws, targetSchema.id, {
+      name: targetSchema.name,
+      key_prefix: targetSchema.key_prefix,
+      description: targetSchema.description,
+      fields: nextFields,
+      templates: targetSchema.templates ?? [],
+      color: targetSchema.color,
+      icon: targetSchema.icon,
+      default_owner: targetSchema.default_owner,
+      entity_approval_policy: targetSchema.entity_approval_policy,
+      deprecation_policy: targetSchema.deprecation_policy,
+      version: (targetSchema.version ?? 1) + 1,
+      updated_at: now
+    });
+    httpAssert.present(updatedSchema, { status: 404, message: 'Target schema not found' });
+
+    await tx.catalog.createSchemaVersion({
+      id: randomUUID(),
+      workspace: ws,
+      schema_id: targetSchema.id,
+      version: updatedSchema.version ?? 1,
+      name: updatedSchema.name,
+      description: updatedSchema.description,
+      fields: updatedSchema.fields,
+      templates: updatedSchema.templates ?? [],
+      color: updatedSchema.color,
+      icon: updatedSchema.icon,
+      change_summary: { source: TECHNOLOGY_EOL_JOB_TYPE, externalFields: [...destinationIds] },
+      created_by: authCtx.userId,
+      created_at: now
+    });
+
+    await tx.audit.createAuditLog({
+      workspace: ws,
+      timestamp: now,
+      user_id: authCtx.userId,
+      operation: 'update',
+      entity_type: 'entity_schema',
+      entity_id: targetSchema.id,
+      entity_name: targetSchema.name,
+      entity_slug: null,
+      schema_id: targetSchema.id,
+      changes: { old: { fields: targetSchema.fields }, new: { fields: updatedSchema.fields } },
+      metadata: { source: TECHNOLOGY_EOL_JOB_TYPE, externalFields: [...destinationIds] }
+    });
+
+    const recurrence =
+      body.frequency.unit === 'minutes'
+        ? {
+            type: 'minutes' as const,
+            intervalMinutes: body.frequency.value,
+            startsAt: new Date(now.getTime() + body.frequency.value * 60_000)
+          }
+        : {
+            type: 'hours' as const,
+            intervalHours: body.frequency.value,
+            startsAt: new Date(now.getTime() + body.frequency.value * 3_600_000)
+          };
+    const schedule = await createJobSchedule(
+      tx,
+      {
+        workspace: ws,
+        jobType: TECHNOLOGY_EOL_JOB_TYPE,
+        systemIdentity: TECHNOLOGY_EOL_SYSTEM_IDENTITY,
+        payload: { schemaId: targetSchema.id, mapping: body.mapping },
+        priority: 5,
+        recurrence
+      },
+      now
+    );
+    return toApiJobSchedule(schedule, { id: targetSchema.id, name: targetSchema.name });
+  });
 };
 
 export const listJobRuns = async (

@@ -1,0 +1,108 @@
+.stepStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0 12px;
+}
+
+.stepTitle {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stepDescription,
+.schemaDescription {
+  color: var(--base-fg-dim);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.loading {
+  color: var(--base-fg-dim);
+  padding: 8px 0;
+}
+
+.notice,
+.warning {
+  border: 1px solid color-mix(in oklch, var(--warning-fg) 45%, var(--cmp-border));
+  border-radius: 6px;
+  background: color-mix(in oklch, var(--warning-fg) 9%, var(--base-bg));
+  color: var(--base-fg);
+  padding: 9px 10px;
+  font-size: 11px;
+}
+
+.warning {
+  margin-top: 6px;
+  color: var(--warning-fg);
+}
+
+.schemaCard {
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--base-bg);
+}
+
+.schemaName {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.schemaMeta {
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+.mappingList {
+  display: grid;
+  gap: 12px;
+}
+
+.typeCard {
+  border: 1px solid var(--accent-fg);
+  border-radius: 7px;
+  padding: 14px;
+  background: color-mix(in oklch, var(--accent-fg) 8%, var(--base-bg));
+}
+
+.typeCardTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.typeCardDescription {
+  color: var(--base-fg-dim);
+  line-height: 1.5;
+}
+
+.progress {
+  display: flex;
+  gap: 6px;
+  padding: 10px 0 2px;
+  border: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.progressItem {
+  flex: 1;
+  border-top: 2px solid var(--cmp-border);
+  padding-top: 5px;
+  color: var(--base-fg-dim);
+  font-size: 10px;
+}
+
+.progressItem[data-active="true"] {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+  font-weight: 600;
+}
+
+.frequencyRow {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 8px;
+  align-items: end;
+}
