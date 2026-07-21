@@ -111,6 +111,9 @@
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
           display modes, and joined data such as assessment fields.
 
+        - @id:ar.entity-views.technology-lifecycle Users can use saved table, radar, and timeline views to review
+          technology release lifecycles, radar governance status, and end-of-life planning dates.
+
     - @id:ar.search Users can discover entities, projects, documents, and other workspace content without navigating
       each hierarchy manually.
 

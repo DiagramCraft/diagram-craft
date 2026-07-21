@@ -59,6 +59,19 @@ describe('instantiateTemplate', () => {
     });
   });
 
+  it('keeps technology release scoped to the default catalog template', () => {
+    const defaultTemplate = SCHEMA_TEMPLATES.find(template => template.id === 'default');
+    expect(defaultTemplate?.schemas).toContainEqual(
+      expect.objectContaining({ name: 'Technology Release' })
+    );
+
+    for (const template of SCHEMA_TEMPLATES.filter(template => template.id !== 'default')) {
+      expect(template.schemas).not.toContainEqual(
+        expect.objectContaining({ name: 'Technology Release' })
+      );
+    }
+  });
+
   it('defines an enum for every select field in every built-in template', () => {
     for (const template of SCHEMA_TEMPLATES) {
       const enumIds = new Set(template.enums.map(enumeration => enumeration.id));

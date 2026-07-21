@@ -242,6 +242,56 @@ const archimateEnums = [
   ])
 ];
 
+const technologyEnums = [
+  enumDefinition('technology-category', 'Technology Category', [
+    { value: 'language', label: 'Language' },
+    { value: 'framework', label: 'Framework' },
+    { value: 'database', label: 'Database' },
+    { value: 'operating-system', label: 'Operating System' },
+    { value: 'runtime', label: 'Runtime' },
+    { value: 'library', label: 'Library' }
+  ]),
+  enumDefinition('technology-radar-status', 'Technology Radar Status', [
+    { value: 'adopt', label: 'Adopt' },
+    { value: 'trial', label: 'Trial' },
+    { value: 'assess', label: 'Assess' },
+    { value: 'hold', label: 'Hold' }
+  ])
+];
+
+const technologyReleaseSchema: TemplateSchema = {
+  symId: 'technology_release',
+  name: 'Technology Release',
+  description:
+    'A product release cycle tracked for support lifecycle, technology radar governance, and planning.',
+  color: AR_COLOR_BLUE,
+  icon: 'cpu',
+  fields: [
+    { id: 'product', name: 'Product', type: 'text' },
+    { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
+    { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
+    { id: 'latest_version', name: 'Latest Version', type: 'text' },
+    { id: 'release_date', name: 'Release Date', type: 'date' },
+    { id: 'active_support_until', name: 'Active Support Until', type: 'date' },
+    { id: 'security_support_until', name: 'Security Support Until', type: 'date' },
+    { id: 'eol_date', name: 'EOL Date', type: 'date' },
+    { id: 'source_url', name: 'Source URL', type: 'text' },
+    { id: 'last_synchronized', name: 'Last Synchronized', type: 'date' },
+    { id: 'category', name: 'Category', type: 'select', enumId: 'technology-category' },
+    { id: 'radar_status', name: 'Radar Status', type: 'select', enumId: 'technology-radar-status' }
+  ]
+};
+
+const technologyReleaseReference = (): SymbolicField => ({
+  id: 'technology_releases',
+  name: 'Technology Releases',
+  predicate: 'uses',
+  type: 'reference',
+  symSchemaId: 'technology_release',
+  minCount: 0,
+  maxCount: -1
+});
+
 const securityEnums = [
   enumDefinition('classification', 'Classification', [
     { value: 'public', label: 'Public' },
@@ -281,6 +331,131 @@ const securityEnums = [
 ];
 
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
+  {
+    id: 'default',
+    name: 'Default',
+    description:
+      'Diagram Craft default catalog — Domain, System, Component, API, Resource, and Technology Release.',
+    schemas: [
+      {
+        symId: 'domain',
+        name: 'Domain',
+        description: 'A high-level grouping that owns one or more Systems.',
+        color: AR_COLOR_YELLOW,
+        icon: 'globe',
+        fields: []
+      },
+      {
+        symId: 'system',
+        name: 'System',
+        description:
+          'A collection of resources that exposes one or more APIs to users and other Systems.',
+        color: AR_COLOR_PURPLE,
+        icon: 'layers',
+        fields: [
+          {
+            id: 'domain',
+            name: 'Domain',
+            predicate: 'belongs to',
+            type: 'containment',
+            symSchemaId: 'domain',
+            minCount: 1,
+            maxCount: 1
+          }
+        ]
+      },
+      {
+        symId: 'component',
+        name: 'Component',
+        description: 'A deployable unit of code within a System (service, library, website, etc.).',
+        color: AR_COLOR_GREEN,
+        icon: 'box',
+        fields: [
+          technologyReleaseReference(),
+          {
+            id: 'system',
+            name: 'System',
+            predicate: 'belongs to',
+            type: 'containment',
+            symSchemaId: 'system',
+            minCount: 1,
+            maxCount: 1
+          },
+          {
+            id: 'provides_apis',
+            name: 'Provided APIs',
+            predicate: 'provides',
+            type: 'reference',
+            symSchemaId: 'api',
+            minCount: 0,
+            maxCount: -1
+          },
+          {
+            id: 'consumes_apis',
+            name: 'Consumed APIs',
+            predicate: 'consumes',
+            type: 'reference',
+            symSchemaId: 'api',
+            minCount: 0,
+            maxCount: -1
+          },
+          {
+            id: 'depends_on',
+            name: 'Depends On',
+            predicate: 'depends on',
+            type: 'reference',
+            symSchemaId: 'component',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
+      },
+      {
+        symId: 'api',
+        name: 'API',
+        description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
+        color: AR_COLOR_BLUE,
+        icon: 'api',
+        fields: [
+          { id: 'api_type', name: 'Type', type: 'select', enumId: 'api-type' },
+          {
+            id: 'system',
+            name: 'System',
+            predicate: 'belongs to',
+            type: 'containment',
+            symSchemaId: 'system',
+            minCount: 1,
+            maxCount: 1
+          }
+        ]
+      },
+      {
+        symId: 'resource',
+        name: 'Resource',
+        description:
+          'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
+        color: AR_COLOR_ORANGE,
+        icon: 'database',
+        fields: [
+          { id: 'resource_type', name: 'Type', type: 'text' },
+          technologyReleaseReference(),
+          {
+            id: 'system',
+            name: 'System',
+            predicate: 'belongs to',
+            type: 'containment',
+            symSchemaId: 'system',
+            minCount: 0,
+            maxCount: 1
+          }
+        ]
+      },
+      technologyReleaseSchema
+    ],
+    enums: [backstageEnums[0]!, ...technologyEnums],
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
+  },
   {
     id: 'backstage',
     name: 'Backstage',
