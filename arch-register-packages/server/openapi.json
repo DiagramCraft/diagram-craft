@@ -32670,7 +32670,9 @@
                                       "number",
                                       "enum",
                                       "entity_link",
-                                      "document_link"
+                                      "document_link",
+                                      "user_link",
+                                      "team_link"
                                     ],
                                     "type": "string"
                                   },
@@ -32704,6 +32706,43 @@
                                         "label": {
                                           "type": "string",
                                           "minLength": 1
+                                        },
+                                        "approval": {
+                                          "type": "object",
+                                          "properties": {
+                                            "required": {
+                                              "type": "boolean"
+                                            },
+                                            "requiredApprovals": {
+                                              "type": "integer",
+                                              "minimum": -9007199254740991,
+                                              "maximum": 9007199254740991,
+                                              "exclusiveMinimum": 0
+                                            },
+                                            "approverFieldId": {
+                                              "type": "string",
+                                              "minLength": 1
+                                            },
+                                            "fallbackUserIds": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "default": []
+                                            },
+                                            "fallbackTeamIds": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "default": []
+                                            }
+                                          },
+                                          "required": [
+                                            "required"
+                                          ]
                                         }
                                       },
                                       "required": [
@@ -32711,6 +32750,9 @@
                                         "label"
                                       ]
                                     }
+                                  },
+                                  "isStatus": {
+                                    "type": "boolean"
                                   },
                                   "inverseName": {
                                     "type": "string",
@@ -33079,7 +33121,9 @@
                               "number",
                               "enum",
                               "entity_link",
-                              "document_link"
+                              "document_link",
+                              "user_link",
+                              "team_link"
                             ],
                             "type": "string"
                           },
@@ -33113,6 +33157,43 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
+                                },
+                                "approval": {
+                                  "type": "object",
+                                  "properties": {
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "requiredApprovals": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    },
+                                    "approverFieldId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "fallbackUserIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    },
+                                    "fallbackTeamIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    }
+                                  },
+                                  "required": [
+                                    "required"
+                                  ]
                                 }
                               },
                               "required": [
@@ -33120,6 +33201,9 @@
                                 "label"
                               ]
                             }
+                          },
+                          "isStatus": {
+                            "type": "boolean"
                           },
                           "inverseName": {
                             "type": "string",
@@ -33178,7 +33262,9 @@
                               "number",
                               "enum",
                               "entity_link",
-                              "document_link"
+                              "document_link",
+                              "user_link",
+                              "team_link"
                             ],
                             "type": "string"
                           },
@@ -33212,6 +33298,43 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
+                                },
+                                "approval": {
+                                  "type": "object",
+                                  "properties": {
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "requiredApprovals": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    },
+                                    "approverFieldId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "fallbackUserIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    },
+                                    "fallbackTeamIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    }
+                                  },
+                                  "required": [
+                                    "required"
+                                  ]
                                 }
                               },
                               "required": [
@@ -33219,6 +33342,9 @@
                                 "label"
                               ]
                             }
+                          },
+                          "isStatus": {
+                            "type": "boolean"
                           },
                           "inverseName": {
                             "type": "string",
@@ -33254,6 +33380,87 @@
                         ]
                       },
                       "description": "Retired fields retained for history"
+                    },
+                    "workflow": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "effectiveValue": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "pendingValue": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "requestId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "caseId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "approvalsReceived": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "approvalsRequired": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "state": {
+                            "enum": [
+                              "none",
+                              "pending",
+                              "changes_requested",
+                              "blocked"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fieldId",
+                          "effectiveValue",
+                          "pendingValue",
+                          "requestId",
+                          "caseId",
+                          "approvalsReceived",
+                          "approvalsRequired",
+                          "state"
+                        ]
+                      }
                     }
                   },
                   "required": [
@@ -33353,6 +33560,14 @@
                       ]
                     },
                     "description": "Structured metadata values"
+                  },
+                  "change_kind": {
+                    "enum": [
+                      "minor",
+                      "major"
+                    ],
+                    "type": "string",
+                    "default": "minor"
                   },
                   "external": {
                     "type": "object",
@@ -33780,6 +33995,14 @@
                       ]
                     },
                     "description": "Reviewed structured metadata values"
+                  },
+                  "change_kind": {
+                    "enum": [
+                      "minor",
+                      "major"
+                    ],
+                    "type": "string",
+                    "default": "major"
                   }
                 },
                 "required": [
@@ -34599,6 +34822,262 @@
         }
       }
     },
+    "/{workspace}/markdown/{nodeId}/workflow-history": {
+      "get": {
+        "operationId": "projects.listMarkdownWorkflowHistory",
+        "summary": "List document workflow history",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "fieldId": {
+                        "type": "string"
+                      },
+                      "fieldName": {
+                        "type": "string"
+                      },
+                      "eventType": {
+                        "enum": [
+                          "approved",
+                          "rejected",
+                          "admin_override"
+                        ],
+                        "type": "string"
+                      },
+                      "actorUserId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "occurredAt": {
+                        "type": "string"
+                      },
+                      "reason": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "targetValue": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "caseId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "fieldId",
+                      "fieldName",
+                      "eventType",
+                      "actorUserId",
+                      "occurredAt",
+                      "reason",
+                      "targetValue",
+                      "caseId"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/markdown/{nodeId}/workflow-override": {
+      "post": {
+        "operationId": "projects.overrideMarkdownWorkflow",
+        "summary": "Override document workflow status",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "field_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "target_value": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "field_id",
+                  "target_value",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "fieldId": {
+                        "type": "string"
+                      },
+                      "effectiveValue": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "pendingValue": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "requestId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "caseId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "approvalsReceived": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "approvalsRequired": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "exclusiveMinimum": 0
+                      },
+                      "state": {
+                        "enum": [
+                          "none",
+                          "pending",
+                          "changes_requested",
+                          "blocked"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "fieldId",
+                      "effectiveValue",
+                      "pendingValue",
+                      "requestId",
+                      "caseId",
+                      "approvalsReceived",
+                      "approvalsRequired",
+                      "state"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/markdown/{nodeId}/revisions/{revisionId}": {
       "get": {
         "operationId": "projects.getMarkdownRevision",
@@ -34804,6 +35283,26 @@
             }
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "change_kind": {
+                    "enum": [
+                      "minor",
+                      "major"
+                    ],
+                    "type": "string",
+                    "default": "major"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -37238,6 +37737,87 @@
                             {
                               "type": "null"
                             }
+                          ]
+                        }
+                      },
+                      "workflow": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fieldId": {
+                              "type": "string"
+                            },
+                            "effectiveValue": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "pendingValue": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "requestId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "caseId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "approvalsReceived": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "approvalsRequired": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "exclusiveMinimum": 0
+                            },
+                            "state": {
+                              "enum": [
+                                "none",
+                                "pending",
+                                "changes_requested",
+                                "blocked"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "fieldId",
+                            "effectiveValue",
+                            "pendingValue",
+                            "requestId",
+                            "caseId",
+                            "approvalsReceived",
+                            "approvalsRequired",
+                            "state"
                           ]
                         }
                       }
@@ -47396,7 +47976,9 @@
                                 "number",
                                 "enum",
                                 "entity_link",
-                                "document_link"
+                                "document_link",
+                                "user_link",
+                                "team_link"
                               ],
                               "type": "string"
                             },
@@ -47430,6 +48012,43 @@
                                   "label": {
                                     "type": "string",
                                     "minLength": 1
+                                  },
+                                  "approval": {
+                                    "type": "object",
+                                    "properties": {
+                                      "required": {
+                                        "type": "boolean"
+                                      },
+                                      "requiredApprovals": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991,
+                                        "exclusiveMinimum": 0
+                                      },
+                                      "approverFieldId": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "fallbackUserIds": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "default": []
+                                      },
+                                      "fallbackTeamIds": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "default": []
+                                      }
+                                    },
+                                    "required": [
+                                      "required"
+                                    ]
                                   }
                                 },
                                 "required": [
@@ -47437,6 +48056,9 @@
                                   "label"
                                 ]
                               }
+                            },
+                            "isStatus": {
+                              "type": "boolean"
                             },
                             "inverseName": {
                               "type": "string",
@@ -47677,7 +48299,9 @@
                             "number",
                             "enum",
                             "entity_link",
-                            "document_link"
+                            "document_link",
+                            "user_link",
+                            "team_link"
                           ],
                           "type": "string"
                         },
@@ -47711,6 +48335,43 @@
                               "label": {
                                 "type": "string",
                                 "minLength": 1
+                              },
+                              "approval": {
+                                "type": "object",
+                                "properties": {
+                                  "required": {
+                                    "type": "boolean"
+                                  },
+                                  "requiredApprovals": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "exclusiveMinimum": 0
+                                  },
+                                  "approverFieldId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "fallbackUserIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "default": []
+                                  },
+                                  "fallbackTeamIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "default": []
+                                  }
+                                },
+                                "required": [
+                                  "required"
+                                ]
                               }
                             },
                             "required": [
@@ -47718,6 +48379,9 @@
                               "label"
                             ]
                           }
+                        },
+                        "isStatus": {
+                          "type": "boolean"
                         },
                         "inverseName": {
                           "type": "string",
@@ -47947,7 +48611,9 @@
                               "number",
                               "enum",
                               "entity_link",
-                              "document_link"
+                              "document_link",
+                              "user_link",
+                              "team_link"
                             ],
                             "type": "string"
                           },
@@ -47981,6 +48647,43 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
+                                },
+                                "approval": {
+                                  "type": "object",
+                                  "properties": {
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "requiredApprovals": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    },
+                                    "approverFieldId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "fallbackUserIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    },
+                                    "fallbackTeamIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    }
+                                  },
+                                  "required": [
+                                    "required"
+                                  ]
                                 }
                               },
                               "required": [
@@ -47988,6 +48691,9 @@
                                 "label"
                               ]
                             }
+                          },
+                          "isStatus": {
+                            "type": "boolean"
                           },
                           "inverseName": {
                             "type": "string",
@@ -48242,7 +48948,9 @@
                               "number",
                               "enum",
                               "entity_link",
-                              "document_link"
+                              "document_link",
+                              "user_link",
+                              "team_link"
                             ],
                             "type": "string"
                           },
@@ -48276,6 +48984,43 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
+                                },
+                                "approval": {
+                                  "type": "object",
+                                  "properties": {
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "requiredApprovals": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    },
+                                    "approverFieldId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "fallbackUserIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    },
+                                    "fallbackTeamIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    }
+                                  },
+                                  "required": [
+                                    "required"
+                                  ]
                                 }
                               },
                               "required": [
@@ -48283,6 +49028,9 @@
                                 "label"
                               ]
                             }
+                          },
+                          "isStatus": {
+                            "type": "boolean"
                           },
                           "inverseName": {
                             "type": "string",
@@ -48530,7 +49278,9 @@
                             "number",
                             "enum",
                             "entity_link",
-                            "document_link"
+                            "document_link",
+                            "user_link",
+                            "team_link"
                           ],
                           "type": "string"
                         },
@@ -48564,6 +49314,43 @@
                               "label": {
                                 "type": "string",
                                 "minLength": 1
+                              },
+                              "approval": {
+                                "type": "object",
+                                "properties": {
+                                  "required": {
+                                    "type": "boolean"
+                                  },
+                                  "requiredApprovals": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "exclusiveMinimum": 0
+                                  },
+                                  "approverFieldId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "fallbackUserIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "default": []
+                                  },
+                                  "fallbackTeamIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "default": []
+                                  }
+                                },
+                                "required": [
+                                  "required"
+                                ]
                               }
                             },
                             "required": [
@@ -48571,6 +49358,9 @@
                               "label"
                             ]
                           }
+                        },
+                        "isStatus": {
+                          "type": "boolean"
                         },
                         "inverseName": {
                           "type": "string",
@@ -48800,7 +49590,9 @@
                               "number",
                               "enum",
                               "entity_link",
-                              "document_link"
+                              "document_link",
+                              "user_link",
+                              "team_link"
                             ],
                             "type": "string"
                           },
@@ -48834,6 +49626,43 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
+                                },
+                                "approval": {
+                                  "type": "object",
+                                  "properties": {
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "requiredApprovals": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    },
+                                    "approverFieldId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "fallbackUserIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    },
+                                    "fallbackTeamIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    }
+                                  },
+                                  "required": [
+                                    "required"
+                                  ]
                                 }
                               },
                               "required": [
@@ -48841,6 +49670,9 @@
                                 "label"
                               ]
                             }
+                          },
+                          "isStatus": {
+                            "type": "boolean"
                           },
                           "inverseName": {
                             "type": "string",
@@ -49159,7 +49991,9 @@
                               "number",
                               "enum",
                               "entity_link",
-                              "document_link"
+                              "document_link",
+                              "user_link",
+                              "team_link"
                             ],
                             "type": "string"
                           },
@@ -49193,6 +50027,43 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
+                                },
+                                "approval": {
+                                  "type": "object",
+                                  "properties": {
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "requiredApprovals": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    },
+                                    "approverFieldId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "fallbackUserIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    },
+                                    "fallbackTeamIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "default": []
+                                    }
+                                  },
+                                  "required": [
+                                    "required"
+                                  ]
                                 }
                               },
                               "required": [
@@ -49200,6 +50071,9 @@
                                 "label"
                               ]
                             }
+                          },
+                          "isStatus": {
+                            "type": "boolean"
                           },
                           "inverseName": {
                             "type": "string",
@@ -49459,7 +50333,9 @@
                                 "number",
                                 "enum",
                                 "entity_link",
-                                "document_link"
+                                "document_link",
+                                "user_link",
+                                "team_link"
                               ],
                               "type": "string"
                             },
@@ -49493,6 +50369,43 @@
                                   "label": {
                                     "type": "string",
                                     "minLength": 1
+                                  },
+                                  "approval": {
+                                    "type": "object",
+                                    "properties": {
+                                      "required": {
+                                        "type": "boolean"
+                                      },
+                                      "requiredApprovals": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991,
+                                        "exclusiveMinimum": 0
+                                      },
+                                      "approverFieldId": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "fallbackUserIds": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "default": []
+                                      },
+                                      "fallbackTeamIds": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "default": []
+                                      }
+                                    },
+                                    "required": [
+                                      "required"
+                                    ]
                                   }
                                 },
                                 "required": [
@@ -49500,6 +50413,9 @@
                                   "label"
                                 ]
                               }
+                            },
+                            "isStatus": {
+                              "type": "boolean"
                             },
                             "inverseName": {
                               "type": "string",

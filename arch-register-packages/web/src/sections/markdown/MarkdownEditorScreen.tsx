@@ -168,6 +168,7 @@ export const MarkdownEditorScreen = () => {
     [isDraft, paneMode, requestedMode, requestedPanel]
   );
   const [dirty, setDirty] = useState(isDraft);
+  const [changeKind, setChangeKind] = useState<'minor' | 'major'>('minor');
   const [attemptedSave, setAttemptedSave] = useState(false);
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -428,28 +429,32 @@ export const MarkdownEditorScreen = () => {
     []
   );
 
-  const saveExistingDocument = useCallback(async () => {
-    const currentDocumentTypeId = data?.document_type_id ?? null;
-    const input = {
+  const saveExistingDocument = useCallback(
+    async (kind: 'minor' | 'major') => {
+      const currentDocumentTypeId = data?.document_type_id ?? null;
+      const input = {
+        body,
+        name: headingTitle ?? undefined,
+        document_type_id: documentTypeId,
+        metadata,
+        change_kind: kind
+      };
+      if (documentTypeId !== currentDocumentTypeId) {
+        await migrateMutation.mutateAsync(input);
+      } else {
+        await saveMutation.mutateAsync(input);
+      }
+    },
+    [
       body,
-      name: headingTitle ?? undefined,
-      document_type_id: documentTypeId,
-      metadata
-    };
-    if (documentTypeId !== currentDocumentTypeId) {
-      await migrateMutation.mutateAsync(input);
-    } else {
-      await saveMutation.mutateAsync(input);
-    }
-  }, [
-    body,
-    data?.document_type_id,
-    documentTypeId,
-    headingTitle,
-    metadata,
-    migrateMutation,
-    saveMutation
-  ]);
+      data?.document_type_id,
+      documentTypeId,
+      headingTitle,
+      metadata,
+      migrateMutation,
+      saveMutation
+    ]
+  );
 
   const saveDraftDocument = useCallback(async () => {
     const title = resolvedTitle.trim();
@@ -512,7 +517,7 @@ export const MarkdownEditorScreen = () => {
       return;
     }
     if (saveMutation.isPending || migrateMutation.isPending) return;
-    await saveExistingDocument();
+    await saveExistingDocument(changeKind);
     setDirty(false);
     setAttemptedSave(false);
     rotateDiagramSession();
@@ -531,7 +536,8 @@ export const MarkdownEditorScreen = () => {
     clearCloseSummary,
     isReadOnly,
     documentFields,
-    metadata
+    metadata,
+    changeKind
   ]);
 
   const handleSaveAndClose = useCallback(async () => {
@@ -556,7 +562,7 @@ export const MarkdownEditorScreen = () => {
         return;
       }
       if (saveMutation.isPending || migrateMutation.isPending) return;
-      await saveExistingDocument();
+      await saveExistingDocument(changeKind);
       setDirty(false);
       setAttemptedSave(false);
     }
@@ -577,7 +583,8 @@ export const MarkdownEditorScreen = () => {
     exitMarkdownEditor,
     isReadOnly,
     documentFields,
-    metadata
+    metadata,
+    changeKind
   ]);
 
   const handleEnterEdit = useCallback(() => {
@@ -723,7 +730,7 @@ export const MarkdownEditorScreen = () => {
   const handleRestore = useCallback(
     async (revisionId: string) => {
       if (isReadOnly || restoreMutation.isPending) return;
-      await restoreMutation.mutateAsync(revisionId);
+      await restoreMutation.mutateAsync({ revisionId, change_kind: 'major' });
       setDirty(false);
       clearDiagramSessionState();
       exitMarkdownEditor();
@@ -851,14 +858,28 @@ export const MarkdownEditorScreen = () => {
           />
 
           {(isDraft || (!isReadOnly && screenState.screenMode === 'edit')) && (
-            <MarkdownEditorToolbar
-              paneMode={screenState.paneMode}
-              hasUnsavedChanges={hasUnsavedChanges}
-              onSelectPane={handleSelectPane}
-              onSave={handleSave}
-              onSaveAndClose={handleSaveAndClose}
-              onClose={isDraft ? handleDraftClose : handleClose}
-            />
+            <>
+              {!isDraft && (
+                <label className={styles.changeKind}>
+                  Change impact
+                  <select
+                    value={changeKind}
+                    onChange={event => setChangeKind(event.target.value as 'minor' | 'major')}
+                  >
+                    <option value="minor">Minor — preserve pending approval</option>
+                    <option value="major">Major — request target approval</option>
+                  </select>
+                </label>
+              )}
+              <MarkdownEditorToolbar
+                paneMode={screenState.paneMode}
+                hasUnsavedChanges={hasUnsavedChanges}
+                onSelectPane={handleSelectPane}
+                onSave={handleSave}
+                onSaveAndClose={handleSaveAndClose}
+                onClose={isDraft ? handleDraftClose : handleClose}
+              />
+            </>
           )}
 
           {/* viewPanel is only ever 'history' while screenMode is 'preview' (see MarkdownEditorScreen.state.ts); never true in draft mode */}
@@ -915,6 +936,7 @@ export const MarkdownEditorScreen = () => {
                   fields={documentFields}
                   metadata={metadata}
                   generatedMetadata={generatedMetadata}
+                  workflow={data?.workflow}
                   readOnly={isReadOnly || screenState.screenMode !== 'edit'}
                   attemptedSave={attemptedSave}
                   onTypeChange={handleDocumentTypeChange}

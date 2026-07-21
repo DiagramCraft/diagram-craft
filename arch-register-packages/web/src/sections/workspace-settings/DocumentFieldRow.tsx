@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
-import { TbTrash, TbEye, TbGripVertical } from 'react-icons/tb';
+import { TbTrash, TbEye, TbGripVertical, TbSettings, TbSettingsCheck } from 'react-icons/tb';
 
+import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 
@@ -18,19 +19,25 @@ import { toFieldId } from '../../utils/fieldId';
 import styles from './DocumentSettingsScreen.module.css';
 
 import { FIELD_TYPE_OPTIONS, REQUIREMENT_OPTIONS, isLinkType } from './documentSettingsHelpers';
+import { WorkflowConfigDialog } from './WorkflowConfigDialog';
 
 const NOT_EXTERNAL = '__not_external__';
 
 export const DocumentFieldRow = ({
   field,
+  workspaceSlug,
+  allFields,
   onUpdate,
   onRemove
 }: {
   field: DocumentField;
+  workspaceSlug: string;
+  allFields: DocumentField[];
   onUpdate: (patch: Partial<DocumentField>) => void;
   onRemove: () => void;
 }) => {
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
+  const [workflowDialogOpen, setWorkflowDialogOpen] = useState(false);
 
   if (field.retired) {
     return (
@@ -82,7 +89,13 @@ export const DocumentFieldRow = ({
       />
       <Select.Root
         value={field.type}
-        onChange={value => value && onUpdate({ type: value as DocumentFieldType })}
+        onChange={value =>
+          value &&
+          onUpdate({
+            type: value as DocumentFieldType,
+            ...(value === 'enum' ? {} : { isStatus: false })
+          })
+        }
         style={{ width: '100%' }}
       >
         {FIELD_TYPE_OPTIONS.map(option => (
@@ -93,29 +106,61 @@ export const DocumentFieldRow = ({
       </Select.Root>
       <span className={styles.fieldOptions}>
         {field.type === 'enum' ? (
-          <TextInput
-            value={(field.enumOptions ?? [])
-              .map(option => `${option.value}:${option.label}`)
-              .join(', ')}
-            placeholder="proposed:Proposed, accepted:Accepted"
-            onChange={value =>
-              onUpdate({
-                enumOptions: (value ?? '')
-                  .split(',')
-                  .map(option => option.trim())
-                  .filter(Boolean)
-                  .map(option => {
-                    const [enumValue, ...label] = option.split(':');
-                    return {
-                      value: enumValue!.trim(),
-                      label:
-                        label.join(':').trim() === '' ? enumValue!.trim() : label.join(':').trim()
-                    };
-                  })
-              })
-            }
-            style={{ width: '100%' }}
-          />
+          <span style={{ display: 'grid', gap: 5 }}>
+            <TextInput
+              value={(field.enumOptions ?? [])
+                .map(option => `${option.value}:${option.label}`)
+                .join(', ')}
+              placeholder="proposed:Proposed, accepted:Accepted"
+              onChange={value => {
+                const existing = new Map(
+                  (field.enumOptions ?? []).map(option => [option.value, option])
+                );
+                onUpdate({
+                  enumOptions: (value ?? '')
+                    .split(',')
+                    .map(option => option.trim())
+                    .filter(Boolean)
+                    .map(option => {
+                      const [enumValue, ...label] = option.split(':');
+                      const parsedValue = enumValue!.trim();
+                      const prior = existing.get(parsedValue);
+                      return {
+                        value: parsedValue,
+                        label: label.join(':').trim() === '' ? parsedValue : label.join(':').trim(),
+                        ...(prior?.approval ? { approval: prior.approval } : {})
+                      };
+                    })
+                });
+              }}
+              style={{ width: '100%' }}
+            />
+            <Button
+              variant="ghost"
+              icon={
+                field.isStatus ? (
+                  <TbSettingsCheck size={12} color="var(--green)" />
+                ) : (
+                  <TbSettings size={12} />
+                )
+              }
+              title={field.isStatus ? 'Workflow enabled' : 'Workflow not configured'}
+              onClick={() => setWorkflowDialogOpen(true)}
+            >
+              {field.isStatus ? 'Workflow enabled' : 'Configure workflow'}
+            </Button>
+            <WorkflowConfigDialog
+              open={workflowDialogOpen}
+              workspaceSlug={workspaceSlug}
+              field={field}
+              allFields={allFields}
+              onClose={() => setWorkflowDialogOpen(false)}
+              onSave={patch => {
+                onUpdate(patch);
+                setWorkflowDialogOpen(false);
+              }}
+            />
+          </span>
         ) : isLinkType(field.type) ? (
           <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

@@ -8,7 +8,7 @@ const governanceCaseStatusSchema = z.enum(['open', 'completed', 'cancelled']);
 
 const governanceAssignmentActionSchema = z.enum(['approve', 'acknowledge', 'review', 'remediate']);
 
-const governanceAssignmentTargetTypeSchema = z.enum(['user', 'team_role', 'capability']);
+const governanceAssignmentTargetTypeSchema = z.enum(['user', 'team', 'team_role', 'capability']);
 
 const governanceEventTypeSchema = z.enum([
   'submitted',

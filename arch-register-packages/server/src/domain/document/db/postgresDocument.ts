@@ -89,6 +89,38 @@ const metadataMapper = (row: DatabaseRow) => ({
   ),
   updated_at: databaseDate(row['updated_at'])
 });
+
+const workflowRequestMapper = (row: DatabaseRow) => ({
+  id: String(row['id']),
+  workspace: String(row['workspace']),
+  node_id: String(row['node_id']),
+  field_id: String(row['field_id']),
+  case_id: String(row['case_id']),
+  previous_value: String(row['previous_value']),
+  target_value: String(row['target_value']),
+  status: String(row['status']) as
+    | 'pending'
+    | 'changes_requested'
+    | 'approved'
+    | 'rejected'
+    | 'superseded'
+    | 'blocked',
+  required_approvals: Number(row['required_approvals']),
+  resolved_slots: parseDatabaseJson(
+    row['resolved_slots'],
+    [],
+    'document_workflow_request.resolved_slots'
+  ),
+  policy_snapshot: parseDatabaseJson(
+    row['policy_snapshot'],
+    {},
+    'document_workflow_request.policy_snapshot'
+  ),
+  source_revision: row['source_revision'] == null ? null : Number(row['source_revision']),
+  initiator_user_id: row['initiator_user_id'] == null ? null : String(row['initiator_user_id']),
+  created_at: databaseDate(row['created_at']),
+  resolved_at: row['resolved_at'] == null ? null : databaseDate(row['resolved_at'])
+});
 const linkMapper = (row: DatabaseRow) => ({
   workspace: String(row['workspace']),
   node_id: String(row['node_id']),
@@ -340,6 +372,67 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
       .sql`DELETE FROM document_link_index WHERE workspace = ${workspace} AND node_id = ${nodeId}`;
     await this
       .sql`DELETE FROM content_node_document WHERE workspace = ${workspace} AND node_id = ${nodeId}`;
+  }
+
+  async getCurrentWorkflowRequests(workspace: string, nodeId: string) {
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `SELECT * FROM document_workflow_request
+       WHERE workspace = $1 AND node_id = $2 AND status IN ('pending', 'changes_requested', 'blocked')
+       ORDER BY field_id`,
+      [workspace, nodeId]
+    );
+    return mapDatabaseRows(rows, workflowRequestMapper);
+  }
+
+  async getWorkflowRequestByCase(workspace: string, caseId: string) {
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      'SELECT * FROM document_workflow_request WHERE workspace = $1 AND case_id = $2',
+      [workspace, caseId]
+    );
+    return mapDatabaseRow(rows[0], workflowRequestMapper);
+  }
+
+  async createWorkflowRequest(input: import('./documentDatabase').DocumentWorkflowRequestDbCreate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO document_workflow_request
+          (id, workspace, node_id, field_id, case_id, previous_value, target_value, status,
+           required_approvals, resolved_slots, policy_snapshot, source_revision, initiator_user_id,
+           created_at, resolved_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.node_id}, ${input.field_id}, ${input.case_id},
+          ${input.previous_value}, ${input.target_value}, ${input.status}, ${input.required_approvals},
+          ${this.json(input.resolved_slots)}, ${this.json(input.policy_snapshot)}, ${input.source_revision},
+          ${input.initiator_user_id}, ${input.created_at}, ${input.resolved_at ?? null})
+        RETURNING *
+      `;
+      return workflowRequestMapper(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateWorkflowRequestStatus(
+    workspace: string,
+    id: string,
+    status: import('./documentDatabase').DocumentWorkflowRequestStatus,
+    resolvedAt?: Date | null
+  ) {
+    const rows = await this.sql<DatabaseRow[]>`
+      UPDATE document_workflow_request
+      SET status = ${status}, resolved_at = ${resolvedAt ?? null}
+      WHERE workspace = ${workspace} AND id = ${id}
+      RETURNING *
+    `;
+    return rows[0] ? workflowRequestMapper(rows[0]) : null;
+  }
+
+  async listWorkflowRequests(workspace: string, nodeId: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM document_workflow_request
+      WHERE workspace = ${workspace} AND node_id = ${nodeId}
+      ORDER BY created_at DESC
+    `;
+    return mapDatabaseRows(rows, workflowRequestMapper);
   }
   async listDocumentLinks(workspace: string, nodeId: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
