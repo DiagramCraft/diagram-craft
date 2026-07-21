@@ -1,15 +1,15 @@
 import { useState } from 'react';
 
-import { TbTrash, TbEye, TbGripVertical } from 'react-icons/tb';
+import { TbTrash, TbEye, TbGripVertical, TbSettings } from 'react-icons/tb';
 
+import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 
 import type {
   DocumentField,
   DocumentFieldType,
-  DocumentRequirement,
-  DocumentStatusApproval
+  DocumentRequirement
 } from '@arch-register/api-types/documentContract';
 
 import { Chip } from '../../components/Chip';
@@ -19,43 +19,25 @@ import { toFieldId } from '../../utils/fieldId';
 import styles from './DocumentSettingsScreen.module.css';
 
 import { FIELD_TYPE_OPTIONS, REQUIREMENT_OPTIONS, isLinkType } from './documentSettingsHelpers';
+import { WorkflowConfigDialog } from './WorkflowConfigDialog';
 
 const NOT_EXTERNAL = '__not_external__';
 
-const approvalPatch = (
-  field: DocumentField,
-  optionValue: string,
-  patch: Partial<DocumentStatusApproval> | null
-) =>
-  (field.enumOptions ?? []).map(option =>
-    option.value !== optionValue
-      ? option
-      : patch
-        ? {
-            ...option,
-            approval: {
-              required: option.approval?.required ?? false,
-              fallbackUserIds: option.approval?.fallbackUserIds ?? [],
-              fallbackTeamIds: option.approval?.fallbackTeamIds ?? [],
-              ...(option.approval ?? {}),
-              ...patch
-            }
-          }
-        : { value: option.value, label: option.label }
-  );
-
 export const DocumentFieldRow = ({
   field,
+  workspaceSlug,
   allFields,
   onUpdate,
   onRemove
 }: {
   field: DocumentField;
+  workspaceSlug: string;
   allFields: DocumentField[];
   onUpdate: (patch: Partial<DocumentField>) => void;
   onRemove: () => void;
 }) => {
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
+  const [workflowDialogOpen, setWorkflowDialogOpen] = useState(false);
 
   if (field.retired) {
     return (
@@ -107,7 +89,13 @@ export const DocumentFieldRow = ({
       />
       <Select.Root
         value={field.type}
-        onChange={value => value && onUpdate({ type: value as DocumentFieldType })}
+        onChange={value =>
+          value &&
+          onUpdate({
+            type: value as DocumentFieldType,
+            ...(value === 'enum' ? {} : { isStatus: false })
+          })
+        }
         style={{ width: '100%' }}
       >
         {FIELD_TYPE_OPTIONS.map(option => (
@@ -147,112 +135,25 @@ export const DocumentFieldRow = ({
               }}
               style={{ width: '100%' }}
             />
-            <label className="dim" style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-              <input
-                type="checkbox"
-                checked={field.isStatus ?? false}
-                onChange={event => onUpdate({ isStatus: event.target.checked })}
-              />
-              Status field
-            </label>
-            {(field.isStatus ?? false) &&
-              (field.enumOptions ?? []).map(option => (
-                <label
-                  key={option.value}
-                  className="dim"
-                  style={{ display: 'flex', gap: 5, alignItems: 'center' }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={option.approval?.required ?? false}
-                    onChange={event =>
-                      onUpdate({
-                        enumOptions: approvalPatch(field, option.value, {
-                          required: event.target.checked,
-                          ...(event.target.checked && !option.approval?.requiredApprovals
-                            ? { requiredApprovals: 1 }
-                            : {})
-                        })
-                      })
-                    }
-                  />
-                  Require approval for {option.label}
-                </label>
-              ))}
-            {(field.isStatus ?? false) &&
-              (field.enumOptions ?? [])
-                .filter(option => option.approval?.required)
-                .map(option => {
-                  const approval = option.approval!;
-                  const sourceFields = allFields.filter(
-                    candidate => candidate.type === 'user_link' || candidate.type === 'team_link'
-                  );
-                  return (
-                    <span key={`${option.value}-approval`} style={{ display: 'grid', gap: 4 }}>
-                      <span className="dim">Approvers for {option.label}</span>
-                      <Select.Root
-                        value={approval.approverFieldId ?? '__fallback__'}
-                        onChange={value =>
-                          onUpdate({
-                            enumOptions: approvalPatch(field, option.value, {
-                              approverFieldId: value === '__fallback__' ? undefined : value
-                            })
-                          })
-                        }
-                      >
-                        <Select.Item value="__fallback__">Fallback IDs</Select.Item>
-                        {sourceFields.map(source => (
-                          <Select.Item key={source.id} value={source.id}>
-                            From {source.name}
-                          </Select.Item>
-                        ))}
-                      </Select.Root>
-                      <TextInput
-                        value={String(approval.requiredApprovals ?? 1)}
-                        placeholder="Required approvals"
-                        onChange={value =>
-                          onUpdate({
-                            enumOptions: approvalPatch(field, option.value, {
-                              requiredApprovals: Math.max(1, Number(value ?? 1))
-                            })
-                          })
-                        }
-                      />
-                      {!approval.approverFieldId && (
-                        <>
-                          <TextInput
-                            value={(approval.fallbackUserIds ?? []).join(', ')}
-                            placeholder="Fallback user IDs"
-                            onChange={value =>
-                              onUpdate({
-                                enumOptions: approvalPatch(field, option.value, {
-                                  fallbackUserIds: (value ?? '')
-                                    .split(',')
-                                    .map(item => item.trim())
-                                    .filter(Boolean)
-                                })
-                              })
-                            }
-                          />
-                          <TextInput
-                            value={(approval.fallbackTeamIds ?? []).join(', ')}
-                            placeholder="Fallback team IDs"
-                            onChange={value =>
-                              onUpdate({
-                                enumOptions: approvalPatch(field, option.value, {
-                                  fallbackTeamIds: (value ?? '')
-                                    .split(',')
-                                    .map(item => item.trim())
-                                    .filter(Boolean)
-                                })
-                              })
-                            }
-                          />
-                        </>
-                      )}
-                    </span>
-                  );
-                })}
+            <Button
+              variant="ghost"
+              icon={<TbSettings size={12} />}
+              onClick={() => setWorkflowDialogOpen(true)}
+            >
+              Configure workflow
+            </Button>
+            {field.isStatus && <span className="dim">Workflow enabled</span>}
+            <WorkflowConfigDialog
+              open={workflowDialogOpen}
+              workspaceSlug={workspaceSlug}
+              field={field}
+              allFields={allFields}
+              onClose={() => setWorkflowDialogOpen(false)}
+              onSave={patch => {
+                onUpdate(patch);
+                setWorkflowDialogOpen(false);
+              }}
+            />
           </span>
         ) : isLinkType(field.type) ? (
           <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
