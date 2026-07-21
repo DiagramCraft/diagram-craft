@@ -131,6 +131,7 @@ export type JobRunRetry = Omit<JobRunFailure, 'completedAt'> & {
 
 export type JobRunListOptions = {
   scheduleId?: string;
+  jobType?: string;
   status?: JobRunStatus;
   plannedFrom?: Date;
   plannedTo?: Date;

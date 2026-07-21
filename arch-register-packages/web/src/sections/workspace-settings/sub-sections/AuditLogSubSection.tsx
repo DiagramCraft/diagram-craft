@@ -24,7 +24,8 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
   { value: 'project', label: 'Project' },
   { value: 'content_node', label: 'Diagram / folder' },
   { value: 'assessment', label: 'Assessment' },
-  { value: 'assessment_response', label: 'Assessment response' }
+  { value: 'assessment_response', label: 'Assessment response' },
+  { value: 'automation_note', label: 'Automation note' }
 ];
 
 const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
@@ -48,7 +49,8 @@ const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   workspace: 'workspace',
   assessment: 'assessment',
   assessment_response: 'assessment response',
-  project_milestone: 'milestone'
+  project_milestone: 'milestone',
+  automation_note: 'automation note'
 };
 
 const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
@@ -59,7 +61,8 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   content_node: styles.typeFile ?? '',
   assessment: styles.typeAssessment ?? '',
   assessment_response: styles.typeAssessment ?? '',
-  project_milestone: styles.typeAssessment ?? ''
+  project_milestone: styles.typeAssessment ?? '',
+  automation_note: styles.typeAssessment ?? ''
 };
 
 const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];

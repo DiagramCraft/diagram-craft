@@ -10,6 +10,7 @@ import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase
 import type { JobDatabase } from '../domain/jobs/jobsDatabase';
 import type { ExternalContentDatabase } from '../domain/external-content/db/externalContentDatabase';
 import type { WebhookDatabase } from '../domain/webhook/db/webhookDatabase';
+import type { AutomationRuleDatabase } from '../domain/automation/db/automationRuleDatabase';
 import type { DocumentDatabase } from '../domain/document/db/documentDatabase';
 import type { GovernanceDatabase } from '../domain/governance/db/governanceDatabase';
 import type { NotificationDatabase } from '../domain/notification/db/notificationDatabase';
@@ -46,6 +47,7 @@ export type DatabaseAdapter = {
   jobs: JobDatabase;
   externalContent: ExternalContentDatabase;
   webhook: WebhookDatabase;
+  automationRule: AutomationRuleDatabase;
   document: DocumentDatabase;
   governance: GovernanceDatabase;
   notification: NotificationDatabase;
@@ -136,6 +138,12 @@ export type {
   WorkspaceWebhookDbResult,
   WorkspaceWebhookDbUpdate
 } from '../domain/webhook/db/webhookDatabase';
+export type {
+  AutomationRuleDatabase,
+  AutomationRuleDbCreate,
+  AutomationRuleDbResult,
+  AutomationRuleDbUpdate
+} from '../domain/automation/db/automationRuleDatabase';
 export type { DocumentDatabase } from '../domain/document/db/documentDatabase';
 export type {
   GovernanceDatabase,

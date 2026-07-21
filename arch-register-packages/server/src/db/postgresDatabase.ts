@@ -19,6 +19,7 @@ import { PostgresWikiCommentDatabase } from '../domain/wikiComments/db/postgresW
 import { PostgresJobDatabase } from '../domain/jobs/db/postgresJobs';
 import { PostgresExternalContentDatabase } from '../domain/external-content/db/postgresExternalContent';
 import { PostgresWebhookDatabase } from '../domain/webhook/db/postgresWebhook';
+import { PostgresAutomationRuleDatabase } from '../domain/automation/db/postgresAutomationRule';
 import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument';
 import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
 import { PostgresNotificationDatabase } from '../domain/notification/db/postgresNotification';
@@ -49,6 +50,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly jobs: PostgresJobDatabase;
   readonly externalContent: PostgresExternalContentDatabase;
   readonly webhook: PostgresWebhookDatabase;
+  readonly automationRule: PostgresAutomationRuleDatabase;
   readonly document: PostgresDocumentDatabase;
   readonly governance: PostgresGovernanceDatabase;
   readonly notification: PostgresNotificationDatabase;
@@ -73,6 +75,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       jobs: new PostgresJobDatabase(sql),
       externalContent: new PostgresExternalContentDatabase(sql),
       webhook: new PostgresWebhookDatabase(sql),
+      automationRule: new PostgresAutomationRuleDatabase(sql),
       document: new PostgresDocumentDatabase(sql),
       governance: new PostgresGovernanceDatabase(sql),
       notification: new PostgresNotificationDatabase(sql),
@@ -129,6 +132,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.jobs = new PostgresJobDatabase(this.sql);
     this.externalContent = new PostgresExternalContentDatabase(this.sql);
     this.webhook = new PostgresWebhookDatabase(this.sql);
+    this.automationRule = new PostgresAutomationRuleDatabase(this.sql);
     this.document = new PostgresDocumentDatabase(this.sql);
     this.governance = new PostgresGovernanceDatabase(this.sql);
     this.notification = new PostgresNotificationDatabase(this.sql);

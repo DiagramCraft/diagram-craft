@@ -21,7 +21,8 @@ export type NotificationType =
   | 'comment-activity'
   | 'governance-task-assigned'
   | 'governance-case-activity'
-  | 'governance-proposal-reminder';
+  | 'governance-proposal-reminder'
+  | 'automation-rule';
 
 export type NotificationTypeCategory = 'normal' | 'reminder';
 
@@ -63,6 +64,12 @@ export const NOTIFICATION_TYPE_CATALOG: Record<
     description: 'Reminders that a governed proposal needs attention.',
     category: 'reminder',
     defaultChannels: []
+  },
+  'automation-rule': {
+    label: 'Automation rule notifications',
+    description: 'Notifications sent by workspace automation rules.',
+    category: 'normal',
+    defaultChannels: ['in_app']
   }
 };
 

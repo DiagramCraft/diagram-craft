@@ -41,6 +41,7 @@ import { createWorkspaceMetricORPCHandler } from './domain/metrics/metricOrpc';
 import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
 import { createExternalContentORPCHandler } from './domain/external-content/externalContentOrpc';
 import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
+import { createAutomationRuleORPCHandler } from './domain/automation/automationRuleOrpc';
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
@@ -151,6 +152,7 @@ export const createApp = (
   app.use(createJobsORPCHandler(db));
   app.use(createExternalContentORPCHandler(db, storage));
   app.use(createWebhookORPCHandler(db));
+  app.use(createAutomationRuleORPCHandler(db));
   app.use(createDocumentORPCHandler(db));
   app.use(createProjectFileRoutesHandler(db, storage));
   app.use(createProjectORPCHandler(db, storage));

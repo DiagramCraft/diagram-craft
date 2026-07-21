@@ -11,7 +11,8 @@ const notificationTypeSchema = z.enum([
   'comment-activity',
   'governance-task-assigned',
   'governance-case-activity',
-  'governance-proposal-reminder'
+  'governance-proposal-reminder',
+  'automation-rule'
 ]);
 
 const notificationTypeMetaSchema = z.object({

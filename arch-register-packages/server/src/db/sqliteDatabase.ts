@@ -17,6 +17,7 @@ import { SqliteWikiCommentDatabase } from '../domain/wikiComments/db/sqliteWikiC
 import { SqliteJobDatabase } from '../domain/jobs/db/sqliteJobs';
 import { SqliteExternalContentDatabase } from '../domain/external-content/db/sqliteExternalContent';
 import { SqliteWebhookDatabase } from '../domain/webhook/db/sqliteWebhook';
+import { SqliteAutomationRuleDatabase } from '../domain/automation/db/sqliteAutomationRule';
 import { SqliteDocumentDatabase } from '../domain/document/db/sqliteDocument';
 import { SqliteGovernanceDatabase } from '../domain/governance/db/sqliteGovernance';
 import { SqliteNotificationDatabase } from '../domain/notification/db/sqliteNotification';
@@ -43,6 +44,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly jobs;
   readonly externalContent;
   readonly webhook;
+  readonly automationRule;
   readonly document;
   readonly governance;
   readonly notification;
@@ -71,6 +73,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.jobs = new SqliteJobDatabase(() => this.db);
     this.externalContent = new SqliteExternalContentDatabase(() => this.db);
     this.webhook = new SqliteWebhookDatabase(() => this.db);
+    this.automationRule = new SqliteAutomationRuleDatabase(() => this.db);
     this.document = new SqliteDocumentDatabase(() => this.db);
     this.governance = new SqliteGovernanceDatabase(() => this.db);
     this.notification = new SqliteNotificationDatabase(() => this.db);
@@ -146,6 +149,7 @@ export class SqliteDatabase implements DatabaseAdapter {
       jobs: this.jobs,
       externalContent: this.externalContent,
       webhook: this.webhook,
+      automationRule: this.automationRule,
       document: this.document,
       governance: this.governance,
       notification: this.notification,

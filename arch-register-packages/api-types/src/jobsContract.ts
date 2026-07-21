@@ -105,7 +105,7 @@ const jobScheduleUpdateSchema = z.object({
   enabled: z.boolean().optional()
 });
 
-const jobRunListQuerySchema = z.object({
+export const jobRunListQuerySchema = z.object({
   scheduleId: z.string().optional(),
   status: jobRunStatusSchema.optional(),
   plannedFrom: z.string().optional(),
@@ -120,7 +120,7 @@ const jobRunListQuerySchema = z.object({
   )
 });
 
-const jobRunPageSchema = z.object({
+export const jobRunPageSchema = z.object({
   items: z.array(jobRunSchema),
   total: z.number().int().nonnegative(),
   limit: z.number().int().positive(),
