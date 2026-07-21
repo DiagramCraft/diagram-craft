@@ -71,6 +71,12 @@ const jobRunSchema = z.object({
   max_attempts: z.number().int().positive()
 });
 
+const jobScheduleUpdateSchema = z.object({
+  priority: z.number().int().min(1).max(10).optional(),
+  recurrence: recurrenceSchema.optional(),
+  enabled: z.boolean().optional()
+});
+
 const jobRunListQuerySchema = z.object({
   scheduleId: z.string().optional(),
   status: jobRunStatusSchema.optional(),
@@ -116,12 +122,23 @@ export const jobsContract = oc.tag('Jobs').router({
           path: '/{workspace}/jobs/schedules',
           inputStructure: 'detailed',
           summary: 'List workspace job schedules',
-          description:
-            'Lists system-owned recurring job schedules for workspace administrators. Schedules cannot be created or changed through this API.',
+          description: 'Lists recurring job schedules for workspace administrators.',
           tags: ['Jobs']
         })
         .input(z.object({ params: ws }))
-        .output(z.array(jobScheduleSchema))
+        .output(z.array(jobScheduleSchema)),
+      update: oc
+        .route({
+          method: 'PATCH',
+          path: '/{workspace}/jobs/schedules/{id}',
+          inputStructure: 'detailed',
+          summary: 'Update a workspace job schedule',
+          description:
+            'Updates recurrence, priority, or enabled state for a workspace job schedule.',
+          tags: ['Jobs']
+        })
+        .input(z.object({ params: wsAndUUID, body: jobScheduleUpdateSchema }))
+        .output(jobScheduleSchema)
     },
     runs: {
       list: oc
@@ -161,5 +178,6 @@ export type JobRunStatus = z.infer<typeof jobRunStatusSchema>;
 export type JobServerStatus = z.infer<typeof jobServerStatusSchema>;
 export type JobServer = z.infer<typeof jobServerSchema>;
 export type JobSchedule = z.infer<typeof jobScheduleSchema>;
+export type JobScheduleUpdate = z.infer<typeof jobScheduleUpdateSchema>;
 export type JobRun = z.infer<typeof jobRunSchema>;
 export type JobRunPage = z.infer<typeof jobRunPageSchema>;

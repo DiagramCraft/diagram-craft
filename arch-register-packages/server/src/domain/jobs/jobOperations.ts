@@ -267,6 +267,73 @@ export const listJobSchedules = async (
   return schedules.map(toApiJobSchedule);
 };
 
+export type ApiJobScheduleRecurrence =
+  | { type: 'minutes'; intervalMinutes: number; startsAt: string }
+  | { type: 'hours'; intervalHours: number; startsAt: string }
+  | { type: 'daily'; timeUtc: string }
+  | { type: 'weekly'; weekdayUtc: number; timeUtc: string };
+
+export type WorkspaceJobScheduleUpdate = {
+  priority?: number;
+  recurrence?: ApiJobScheduleRecurrence;
+  enabled?: boolean;
+};
+
+const fromApiRecurrence = (recurrence: ApiJobScheduleRecurrence): JobScheduleRecurrence => {
+  if (recurrence.type === 'minutes' || recurrence.type === 'hours') {
+    const startsAt = new Date(recurrence.startsAt);
+    httpAssert.true(!Number.isNaN(startsAt.getTime()), {
+      status: 400,
+      statusText: 'Bad Request',
+      message: 'recurrence.startsAt must be a valid ISO timestamp'
+    });
+    return { ...recurrence, startsAt };
+  }
+  return recurrence;
+};
+
+export const updateWorkspaceJobSchedule = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  input: WorkspaceJobScheduleUpdate,
+  event: AuthenticatedEvent,
+  now = new Date()
+) => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  requireWorkspaceAdmin(authCtx);
+
+  const existing = await db.jobs.getSchedule(id);
+  httpAssert.present(existing, {
+    status: 404,
+    statusText: 'Not Found',
+    message: 'Job schedule not found'
+  });
+  httpAssert.true(existing.workspace === ws, {
+    status: 404,
+    statusText: 'Not Found',
+    message: 'Job schedule not found'
+  });
+
+  const updated = await updateJobSchedule(
+    db,
+    id,
+    {
+      priority: input.priority,
+      recurrence: input.recurrence ? fromApiRecurrence(input.recurrence) : undefined,
+      enabled: input.enabled
+    },
+    now
+  );
+  httpAssert.present(updated, {
+    status: 404,
+    statusText: 'Not Found',
+    message: 'Job schedule not found'
+  });
+  return toApiJobSchedule(updated);
+};
+
 export const listJobRuns = async (
   db: DatabaseAdapter,
   workspace: string,

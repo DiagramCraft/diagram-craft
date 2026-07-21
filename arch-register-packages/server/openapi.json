@@ -44427,7 +44427,7 @@
       "get": {
         "operationId": "jobs.schedules.list",
         "summary": "List workspace job schedules",
-        "description": "Lists system-owned recurring job schedules for workspace administrators. Schedules cannot be created or changed through this API.",
+        "description": "Lists recurring job schedules for workspace administrators.",
         "tags": [
           "Jobs",
           "Jobs"
@@ -44579,6 +44579,279 @@
                       "updated_at"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/jobs/schedules/{id}": {
+      "patch": {
+        "operationId": "jobs.schedules.update",
+        "summary": "Update a workspace job schedule",
+        "description": "Updates recurrence, priority, or enabled state for a workspace job schedule.",
+        "tags": [
+          "Jobs",
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "recurrence": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "minutes"
+                          },
+                          "intervalMinutes": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "startsAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "intervalMinutes",
+                          "startsAt"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "hours"
+                          },
+                          "intervalHours": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "startsAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "intervalHours",
+                          "startsAt"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "daily"
+                          },
+                          "timeUtc": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "timeUtc"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "weekly"
+                          },
+                          "weekdayUtc": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 6
+                          },
+                          "timeUtc": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "weekdayUtc",
+                          "timeUtc"
+                        ]
+                      }
+                    ]
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "workspace": {
+                      "type": "string"
+                    },
+                    "job_type": {
+                      "type": "string"
+                    },
+                    "system_identity": {
+                      "type": "string"
+                    },
+                    "priority": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "recurrence": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "minutes"
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "exclusiveMinimum": 0
+                            },
+                            "startsAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalMinutes",
+                            "startsAt"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "hours"
+                            },
+                            "intervalHours": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "exclusiveMinimum": 0
+                            },
+                            "startsAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalHours",
+                            "startsAt"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "daily"
+                            },
+                            "timeUtc": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "timeUtc"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "weekly"
+                            },
+                            "weekdayUtc": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 6
+                            },
+                            "timeUtc": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "weekdayUtc",
+                            "timeUtc"
+                          ]
+                        }
+                      ]
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "next_occurrence_at": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "job_type",
+                    "system_identity",
+                    "priority",
+                    "recurrence",
+                    "enabled",
+                    "next_occurrence_at",
+                    "created_at",
+                    "updated_at"
+                  ]
                 }
               }
             }

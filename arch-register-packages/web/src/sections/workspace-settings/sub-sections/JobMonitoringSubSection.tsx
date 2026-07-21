@@ -1,21 +1,264 @@
-import { useMemo, useState } from 'react';
-import { TbPlayerPause, TbRefresh } from 'react-icons/tb';
+import { useEffect, useMemo, useState } from 'react';
+import { TbEdit, TbPlayerPause, TbRefresh } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import type { JobRunStatus } from '@arch-register/api-types/jobsContract';
+import type { JobRunStatus, JobSchedule } from '@arch-register/api-types/jobsContract';
 import {
   useCancelJobRun,
   useJobRuns,
   useJobSchedules,
-  useJobServers
+  useJobServers,
+  useUpdateJobSchedule
 } from '../../../hooks/useJobs';
+import { useWorkspacePermissions } from '../../../auth/useWorkspacePermissions';
 import { Table } from '../../../components/table/Table';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { formatDateTime } from '../../../utils/dateFormat';
 import styles from './JobMonitoringSubSection.module.css';
+
+type RecurrenceType = 'minutes' | 'hours' | 'daily' | 'weekly';
+
+const WEEKDAYS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' }
+];
+
+const toDatetimeLocal = (iso: string) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
+};
+
+const fromDatetimeLocal = (value: string) => `${value}:00.000Z`;
+
+const ScheduleEditorDialog = ({
+  schedule,
+  pending,
+  error,
+  onClose,
+  onSave
+}: {
+  schedule: JobSchedule | null;
+  pending: boolean;
+  error: Error | null;
+  onClose: () => void;
+  onSave: (input: {
+    priority: number;
+    enabled: boolean;
+    recurrence:
+      | { type: 'minutes'; intervalMinutes: number; startsAt: string }
+      | { type: 'hours'; intervalHours: number; startsAt: string }
+      | { type: 'daily'; timeUtc: string }
+      | { type: 'weekly'; weekdayUtc: number; timeUtc: string };
+  }) => void;
+}) => {
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>('daily');
+  const [intervalMinutes, setIntervalMinutes] = useState(15);
+  const [intervalHours, setIntervalHours] = useState(1);
+  const [startsAt, setStartsAt] = useState('');
+  const [timeUtc, setTimeUtc] = useState('00:00');
+  const [weekdayUtc, setWeekdayUtc] = useState(1);
+  const [priority, setPriority] = useState(5);
+  const [enabled, setEnabled] = useState(true);
+
+  useEffect(() => {
+    if (!schedule) return;
+    const recurrence = schedule.recurrence;
+    setRecurrenceType(recurrence.type);
+    setIntervalMinutes(recurrence.type === 'minutes' ? recurrence.intervalMinutes : 15);
+    setIntervalHours(recurrence.type === 'hours' ? recurrence.intervalHours : 1);
+    setStartsAt(
+      recurrence.type === 'minutes' || recurrence.type === 'hours'
+        ? toDatetimeLocal(recurrence.startsAt)
+        : ''
+    );
+    setTimeUtc(
+      recurrence.type === 'daily' || recurrence.type === 'weekly' ? recurrence.timeUtc : '00:00'
+    );
+    setWeekdayUtc(recurrence.type === 'weekly' ? recurrence.weekdayUtc : 1);
+    setPriority(schedule.priority);
+    setEnabled(schedule.enabled);
+  }, [schedule]);
+
+  if (!schedule) return null;
+
+  const timeUtcValid = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeUtc);
+  const startsAtValid = startsAt.trim() !== '';
+  const recurrenceValid =
+    recurrenceType === 'minutes'
+      ? Number.isInteger(intervalMinutes) && intervalMinutes > 0 && startsAtValid
+      : recurrenceType === 'hours'
+        ? Number.isInteger(intervalHours) && intervalHours > 0 && startsAtValid
+        : timeUtcValid;
+  const priorityValid = Number.isInteger(priority) && priority >= 1 && priority <= 10;
+  const isValid = recurrenceValid && priorityValid;
+
+  const buildRecurrence = ():
+    | { type: 'minutes'; intervalMinutes: number; startsAt: string }
+    | { type: 'hours'; intervalHours: number; startsAt: string }
+    | { type: 'daily'; timeUtc: string }
+    | { type: 'weekly'; weekdayUtc: number; timeUtc: string } => {
+    if (recurrenceType === 'minutes') {
+      return { type: 'minutes', intervalMinutes, startsAt: fromDatetimeLocal(startsAt) };
+    }
+    if (recurrenceType === 'hours') {
+      return { type: 'hours', intervalHours, startsAt: fromDatetimeLocal(startsAt) };
+    }
+    if (recurrenceType === 'daily') return { type: 'daily', timeUtc };
+    return { type: 'weekly', weekdayUtc, timeUtc };
+  };
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`Edit schedule: ${schedule.job_type}`}
+      width={480}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: pending ? 'Saving…' : 'Save schedule',
+          type: 'default',
+          disabled: pending || !isValid,
+          onClick: () => onSave({ priority, enabled, recurrence: buildRecurrence() })
+        }
+      ]}
+    >
+      <div className={styles.form}>
+        <label className={styles.field}>
+          <span className={styles.label}>Recurrence type</span>
+          <select
+            className={styles.input}
+            value={recurrenceType}
+            onChange={event => setRecurrenceType(event.target.value as RecurrenceType)}
+          >
+            <option value="minutes">Every N minutes</option>
+            <option value="hours">Every N hours</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+          </select>
+        </label>
+
+        {recurrenceType === 'minutes' && (
+          <>
+            <label className={styles.field}>
+              <span className={styles.label}>Interval (minutes)</span>
+              <input
+                className={styles.input}
+                type="number"
+                min={1}
+                value={intervalMinutes}
+                onChange={event => setIntervalMinutes(Number(event.target.value))}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>Starts at (UTC)</span>
+              <input
+                className={styles.input}
+                type="datetime-local"
+                value={startsAt}
+                onChange={event => setStartsAt(event.target.value)}
+              />
+            </label>
+          </>
+        )}
+
+        {recurrenceType === 'hours' && (
+          <>
+            <label className={styles.field}>
+              <span className={styles.label}>Interval (hours)</span>
+              <input
+                className={styles.input}
+                type="number"
+                min={1}
+                value={intervalHours}
+                onChange={event => setIntervalHours(Number(event.target.value))}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>Starts at (UTC)</span>
+              <input
+                className={styles.input}
+                type="datetime-local"
+                value={startsAt}
+                onChange={event => setStartsAt(event.target.value)}
+              />
+            </label>
+          </>
+        )}
+
+        {recurrenceType === 'daily' && (
+          <label className={styles.field}>
+            <span className={styles.label}>Time of day (UTC, HH:mm)</span>
+            <input
+              className={styles.input}
+              type="time"
+              value={timeUtc}
+              onChange={event => setTimeUtc(event.target.value)}
+            />
+          </label>
+        )}
+
+        {recurrenceType === 'weekly' && (
+          <>
+            <label className={styles.field}>
+              <span className={styles.label}>Day of week (UTC)</span>
+              <select
+                className={styles.input}
+                value={weekdayUtc}
+                onChange={event => setWeekdayUtc(Number(event.target.value))}
+              >
+                {WEEKDAYS.map(day => (
+                  <option key={day.value} value={day.value}>
+                    {day.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>Time of day (UTC, HH:mm)</span>
+              <input
+                className={styles.input}
+                type="time"
+                value={timeUtc}
+                onChange={event => setTimeUtc(event.target.value)}
+              />
+            </label>
+          </>
+        )}
+
+        <label className={styles.field}>
+          <span className={styles.label}>Priority (1-10)</span>
+          <input
+            className={styles.input}
+            type="number"
+            min={1}
+            max={10}
+            value={priority}
+            onChange={event => setPriority(Number(event.target.value))}
+          />
+        </label>
+
+        <label className={styles.check}>
+          <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
+        </label>
+
+        {error && <div className={styles.error}>{error.message}</div>}
+      </div>
+    </Dialog>
+  );
+};
 
 const PAGE_SIZE = 50;
 
@@ -71,6 +314,7 @@ const formatSummary = (result: Record<string, unknown> | null, error: string | n
 type JobsTab = 'schedules' | 'history' | 'servers';
 
 export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const { canManageJobs } = useWorkspacePermissions(workspaceSlug);
   const [tab, setTab] = useState<JobsTab>('schedules');
   const [scheduleId, setScheduleId] = useState('');
   const [status, setStatus] = useState<'' | JobRunStatus>('');
@@ -78,6 +322,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
   const [plannedTo, setPlannedTo] = useState('');
   const [offset, setOffset] = useState(0);
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<JobSchedule | null>(null);
 
   const {
     data: servers = [],
@@ -110,6 +355,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
     refetch: refetchRuns
   } = useJobRuns(workspaceSlug, runFilters);
   const cancelRun = useCancelJobRun(workspaceSlug);
+  const updateSchedule = useUpdateJobSchedule(workspaceSlug);
 
   const pageCount = Math.max(1, Math.ceil((runs?.total ?? 0) / PAGE_SIZE));
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
@@ -201,7 +447,11 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
           <div className={styles.sectionHead}>
             <div>
               <div className={styles.sectionTitle}>Recurring schedules</div>
-              <div className={styles.sectionSub}>Schedules are managed by system components.</div>
+              <div className={styles.sectionSub}>
+                {canManageJobs
+                  ? 'Workspace admins can edit recurrence, priority, and enabled state.'
+                  : 'Schedules are managed by workspace administrators.'}
+              </div>
             </div>
             <Button
               variant="ghost"
@@ -228,21 +478,20 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                     <Table.HeaderCell width={70}>Priority</Table.HeaderCell>
                     <Table.HeaderCell width={90}>State</Table.HeaderCell>
                     <Table.HeaderCell width={170}>Next planned run</Table.HeaderCell>
+                    {canManageJobs && <Table.HeaderCell width={70} />}
                   </Table.Row>
                 </Table.Head>
                 <Table.Body>
                   {schedules.map(schedule => (
-                    <Table.Row
-                      key={schedule.id}
-                      selected={schedule.id === scheduleId}
-                      onClick={() => {
-                        updateFilter(() =>
-                          setScheduleId(schedule.id === scheduleId ? '' : schedule.id)
-                        );
-                        setTab('history');
-                      }}
-                    >
-                      <Table.Cell>
+                    <Table.Row key={schedule.id} selected={schedule.id === scheduleId}>
+                      <Table.Cell
+                        onClick={() => {
+                          updateFilter(() =>
+                            setScheduleId(schedule.id === scheduleId ? '' : schedule.id)
+                          );
+                          setTab('history');
+                        }}
+                      >
                         <div>{schedule.job_type}</div>
                         <div className={styles.muted}>{schedule.system_identity}</div>
                       </Table.Cell>
@@ -257,6 +506,18 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                         </Chip>
                       </Table.Cell>
                       <Table.Cell>{formatDateTime(schedule.next_occurrence_at)}</Table.Cell>
+                      {canManageJobs && (
+                        <Table.ActionsCell>
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            icon={<TbEdit size={13} />}
+                            onClick={() => setEditTarget(schedule)}
+                          >
+                            Edit
+                          </Button>
+                        </Table.ActionsCell>
+                      )}
                     </Table.Row>
                   ))}
                 </Table.Body>
@@ -426,6 +687,19 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
           )}
         </section>
       )}
+
+      <ScheduleEditorDialog
+        schedule={editTarget}
+        pending={updateSchedule.isPending}
+        error={updateSchedule.error as Error | null}
+        onClose={() => setEditTarget(null)}
+        onSave={input => {
+          if (editTarget == null) return;
+          void updateSchedule.mutateAsync({ id: editTarget.id, body: input }).then(() => {
+            setEditTarget(null);
+          });
+        }}
+      />
 
       <DeleteConfirmationDialog
         open={cancelTarget != null}
