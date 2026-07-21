@@ -16,7 +16,8 @@ import {
   TbActivity,
   TbWebhook,
   TbFileDescription,
-  TbBolt
+  TbBolt,
+  TbKey
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -64,14 +65,15 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   },
   { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
-  { id: 'webhooks', label: 'Webhooks', icon: <TbWebhook size={12} />, group: 'Workspace' },
-  { id: 'automation', label: 'Automation rules', icon: <TbBolt size={12} />, group: 'Workspace' },
-  { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Workspace' },
+  { id: 'api-tokens', label: 'API Tokens', icon: <TbKey size={12} />, group: 'Administration' },
+  { id: 'webhooks', label: 'Webhooks', icon: <TbWebhook size={12} />, group: 'Administration' },
+  { id: 'automation', label: 'Automation rules', icon: <TbBolt size={12} />, group: 'Administration' },
+  { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Administration' },
   {
     id: 'danger',
     label: 'Danger zone',
     icon: <TbTrash size={12} />,
-    group: 'Workspace',
+    group: 'Administration',
     tone: 'danger'
   }
 ];

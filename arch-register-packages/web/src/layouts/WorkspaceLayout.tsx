@@ -110,6 +110,7 @@ export const WorkspaceLayout = () => {
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
       ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
+      ...(canAdministerWorkspace ? ['api-tokens'] : []),
       ...(canManageWorkspaces ? ['ai'] : []),
       ...(canManageJobs ? ['webhooks', 'automation', 'jobs'] : []),
       ...(canViewAudit ? ['analytics', 'audit'] : [])
@@ -119,6 +120,7 @@ export const WorkspaceLayout = () => {
       canManageTeams,
       canViewSchemas,
       canManageMembers,
+      canAdministerWorkspace,
       canViewAudit,
       canManageJobs
     ]

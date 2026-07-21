@@ -19,6 +19,7 @@ import { JobMonitoringSubSection } from './sub-sections/JobMonitoringSubSection'
 import { WebhooksSubSection } from './sub-sections/WebhooksSubSection';
 import { AutomationRulesSubSection } from './sub-sections/AutomationRulesSubSection';
 import { CreateJobDialog } from '../../components/jobs/CreateJobDialog';
+import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -43,6 +44,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'roles': {
     title: 'Roles & permissions',
     sub: 'Manage built-in roles and create custom workspace roles.'
+  },
+  'api-tokens': {
+    title: 'API Tokens',
+    sub: 'Manage API tokens owned by this workspace, independent of any individual member.'
   },
   'teams': {
     title: 'Teams',
@@ -103,6 +108,7 @@ export const WorkspaceSettingsScreen = () => {
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
   const [rolesAddDialogOpen, setRolesAddDialogOpen] = useState(false);
   const [jobAddDialogOpen, setJobAddDialogOpen] = useState(false);
+  const [apiTokenAddDialogOpen, setApiTokenAddDialogOpen] = useState(false);
 
   useEffect(() => {
     if (sectionIsValid || !ctx.defaultSettingsSection) return;
@@ -174,6 +180,14 @@ export const WorkspaceSettingsScreen = () => {
       >
         Add job
       </Button>
+    ) : section === 'api-tokens' ? (
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setApiTokenAddDialogOpen(true)}
+      >
+        Create token
+      </Button>
     ) : undefined;
 
   return (
@@ -210,6 +224,13 @@ export const WorkspaceSettingsScreen = () => {
           workspaceSlug={workspaceSlug}
           addDialogOpen={membersAddDialogOpen}
           onCloseAddDialog={() => setMembersAddDialogOpen(false)}
+        />
+      )}
+      {section === 'api-tokens' && (
+        <WorkspaceApiTokensSubSection
+          workspaceSlug={workspaceSlug}
+          createDialogOpen={apiTokenAddDialogOpen}
+          onCloseCreateDialog={() => setApiTokenAddDialogOpen(false)}
         />
       )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
