@@ -4,6 +4,10 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type { JobRunStatus, JobSchedule } from '@arch-register/api-types/jobsContract';
 import {
@@ -136,119 +140,98 @@ const ScheduleEditorDialog = ({
       ]}
     >
       <div className={styles.form}>
-        <label className={styles.field}>
-          <span className={styles.label}>Recurrence type</span>
-          <select
-            className={styles.input}
+        <FormElement label="Recurrence type">
+          <Select.Root
             value={recurrenceType}
-            onChange={event => setRecurrenceType(event.target.value as RecurrenceType)}
+            onChange={value => setRecurrenceType((value as RecurrenceType) ?? 'daily')}
+            style={{ width: '100%' }}
           >
-            <option value="minutes">Every N minutes</option>
-            <option value="hours">Every N hours</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-          </select>
-        </label>
+            <Select.Item value="minutes">Every N minutes</Select.Item>
+            <Select.Item value="hours">Every N hours</Select.Item>
+            <Select.Item value="daily">Daily</Select.Item>
+            <Select.Item value="weekly">Weekly</Select.Item>
+          </Select.Root>
+        </FormElement>
 
         {recurrenceType === 'minutes' && (
           <>
-            <label className={styles.field}>
-              <span className={styles.label}>Interval (minutes)</span>
-              <input
-                className={styles.input}
-                type="number"
-                min={1}
+            <FormElement label="Interval (minutes)">
+              <NumberInput
                 value={intervalMinutes}
-                onChange={event => setIntervalMinutes(Number(event.target.value))}
+                min={1}
+                step={1}
+                numberOfDecimals={0}
+                onChange={value => setIntervalMinutes(value ?? 1)}
               />
-            </label>
-            <label className={styles.field}>
-              <span className={styles.label}>Starts at (UTC)</span>
-              <input
-                className={styles.input}
+            </FormElement>
+            <FormElement label="Starts at (UTC)">
+              <TextInput
                 type="datetime-local"
                 value={startsAt}
-                onChange={event => setStartsAt(event.target.value)}
+                onChange={value => setStartsAt(value ?? '')}
               />
-            </label>
+            </FormElement>
           </>
         )}
 
         {recurrenceType === 'hours' && (
           <>
-            <label className={styles.field}>
-              <span className={styles.label}>Interval (hours)</span>
-              <input
-                className={styles.input}
-                type="number"
-                min={1}
+            <FormElement label="Interval (hours)">
+              <NumberInput
                 value={intervalHours}
-                onChange={event => setIntervalHours(Number(event.target.value))}
+                min={1}
+                step={1}
+                numberOfDecimals={0}
+                onChange={value => setIntervalHours(value ?? 1)}
               />
-            </label>
-            <label className={styles.field}>
-              <span className={styles.label}>Starts at (UTC)</span>
-              <input
-                className={styles.input}
+            </FormElement>
+            <FormElement label="Starts at (UTC)">
+              <TextInput
                 type="datetime-local"
                 value={startsAt}
-                onChange={event => setStartsAt(event.target.value)}
+                onChange={value => setStartsAt(value ?? '')}
               />
-            </label>
+            </FormElement>
           </>
         )}
 
         {recurrenceType === 'daily' && (
-          <label className={styles.field}>
-            <span className={styles.label}>Time of day (UTC, HH:mm)</span>
-            <input
-              className={styles.input}
-              type="time"
-              value={timeUtc}
-              onChange={event => setTimeUtc(event.target.value)}
-            />
-          </label>
+          <FormElement label="Time of day (UTC)">
+            <TextInput type="time" value={timeUtc} onChange={value => setTimeUtc(value ?? '')} />
+          </FormElement>
         )}
 
         {recurrenceType === 'weekly' && (
           <>
-            <label className={styles.field}>
-              <span className={styles.label}>Day of week (UTC)</span>
-              <select
-                className={styles.input}
-                value={weekdayUtc}
-                onChange={event => setWeekdayUtc(Number(event.target.value))}
+            <FormElement label="Day of week (UTC)">
+              <Select.Root
+                value={String(weekdayUtc)}
+                onChange={value => setWeekdayUtc(Number(value ?? 1))}
+                style={{ width: '100%' }}
               >
                 {WEEKDAYS.map(day => (
-                  <option key={day.value} value={day.value}>
+                  <Select.Item key={day.value} value={String(day.value)}>
                     {day.label}
-                  </option>
+                  </Select.Item>
                 ))}
-              </select>
-            </label>
-            <label className={styles.field}>
-              <span className={styles.label}>Time of day (UTC, HH:mm)</span>
-              <input
-                className={styles.input}
-                type="time"
-                value={timeUtc}
-                onChange={event => setTimeUtc(event.target.value)}
-              />
-            </label>
+              </Select.Root>
+            </FormElement>
+            <FormElement label="Time of day (UTC)">
+              <TextInput type="time" value={timeUtc} onChange={value => setTimeUtc(value ?? '')} />
+            </FormElement>
           </>
         )}
 
-        <label className={styles.field}>
-          <span className={styles.label}>Priority (1-10)</span>
-          <input
-            className={styles.input}
-            type="number"
+        <FormElement label="Priority (1-10)">
+          <NumberInput
+            value={priority}
             min={1}
             max={10}
-            value={priority}
-            onChange={event => setPriority(Number(event.target.value))}
+            step={1}
+            numberOfDecimals={0}
+            onChange={value => setPriority(value ?? 5)}
           />
-        </label>
+        </FormElement>
 
         <label className={styles.check}>
           <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled

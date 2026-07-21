@@ -104,17 +104,6 @@
   gap: 12px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.label {
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .check {
   display: flex;
   align-items: center;
