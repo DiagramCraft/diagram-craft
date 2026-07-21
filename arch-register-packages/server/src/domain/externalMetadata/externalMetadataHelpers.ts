@@ -69,9 +69,8 @@ export const outdateExternalMetadata = (metadata: ExternalMetadata): ExternalMet
 /**
  * Validates that an external-update envelope's target field exists, carries a matching
  * `external_kind`, and — for a failed update — that its value hasn't actually changed. Returns
- * the fields list with the target field removed, ready to pass to
- * {@link assertNoExternalFieldWrites} so every *other* field (external or not) is still
- * protected from this same write.
+ * the fields list with the target field removed for callers that need to inspect the remaining
+ * external fields.
  */
 export const assertValidExternalUpdateTarget = (
   fields: ExternalCapableField[],
@@ -93,6 +92,26 @@ export const assertValidExternalUpdateTarget = (
     { status: 400, message: 'A failed external update must not change the field value' }
   );
   return fields.filter(field => field.id !== envelope.fieldId);
+};
+
+/**
+ * External updates are single-field writes. The caller must send the current entity
+ * representation for all other fields, but none of those values may change as part of
+ * the external mutation.
+ */
+export const assertExternalUpdateOnlyChangesTarget = (
+  targetFieldId: string,
+  current: Record<string, unknown>,
+  next: Record<string, unknown>
+): void => {
+  const fieldIds = new Set([...Object.keys(current), ...Object.keys(next)]);
+  const changed = [...fieldIds].filter(
+    fieldId => fieldId !== targetFieldId && !fieldValueEquals(current, next, fieldId)
+  );
+  httpAssert.true(changed.length === 0, {
+    status: 400,
+    message: `An external update may only change field '${targetFieldId}'`
+  });
 };
 
 /**

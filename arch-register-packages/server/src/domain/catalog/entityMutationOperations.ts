@@ -37,7 +37,7 @@ import { assertNoExternalEntityFieldWrites } from './entityValidation';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
   applyExternalFieldUpdate,
-  assertNoExternalFieldWrites,
+  assertExternalUpdateOnlyChangesTarget,
   assertValidExternalUpdateTarget
 } from '../externalMetadata/externalMetadataHelpers';
 
@@ -411,13 +411,28 @@ export const updateEntity = async (
       statusText: 'Conflict',
       message: 'This entity requires an approved change proposal before it can be edited'
     });
-    if (authCtx)
-      requireEntityAction(
-        authCtx,
-        oldRow,
-        'edit_entity',
-        'You do not have permission to edit this entity'
-      );
+    if (authCtx) {
+      if (payload.external) {
+        requireEntityAction(
+          authCtx,
+          oldRow,
+          'view_entity',
+          'You do not have permission to view this entity'
+        );
+        requireWorkspaceCapability(
+          authCtx,
+          'ent.external_update',
+          'You do not have permission to perform external updates on entities'
+        );
+      } else {
+        requireEntityAction(
+          authCtx,
+          oldRow,
+          'edit_entity',
+          'You do not have permission to edit this entity'
+        );
+      }
+    }
     if (authCtx && (owner !== oldRow.owner || payload.visibilityMode !== oldRow.visibility_mode)) {
       requireEntityAction(
         authCtx,
@@ -437,19 +452,65 @@ export const updateEntity = async (
     let nextGeneratedMetadata: ExternalMetadata | undefined;
     let auditMetadata: Record<string, unknown> | undefined;
     if (payload.external) {
-      if (authCtx)
-        requireWorkspaceCapability(
-          authCtx,
-          'ent.external_update',
-          'You do not have permission to perform external updates on entities'
-        );
-      const otherFields = assertValidExternalUpdateTarget(
+      assertValidExternalUpdateTarget(
         schema.fields,
         payload.external,
         oldRow.data,
         normalizedFields
       );
-      assertNoExternalFieldWrites(otherFields, oldRow.data, normalizedFields);
+      assertExternalUpdateOnlyChangesTarget(
+        payload.external.fieldId,
+        oldRow.data,
+        normalizedFields
+      );
+      httpAssert.true(payload.schemaId === oldRow.schema_id, {
+        status: 400,
+        message: 'An external update cannot change the entity schema'
+      });
+      httpAssert.true(payload.name === oldRow.name, {
+        status: 400,
+        message: 'An external update cannot change the entity name'
+      });
+      httpAssert.true(payload.slug === oldRow.slug, {
+        status: 400,
+        message: 'An external update cannot change the entity slug'
+      });
+      httpAssert.true(payload.namespace === oldRow.namespace, {
+        status: 400,
+        message: 'An external update cannot change the entity namespace'
+      });
+      httpAssert.true(payload.description === oldRow.description, {
+        status: 400,
+        message: 'An external update cannot change the entity description'
+      });
+      httpAssert.true(payload.requestedOwner === oldRow.owner, {
+        status: 400,
+        message: 'An external update cannot change the entity owner'
+      });
+      httpAssert.true(payload.requestedLifecycle === oldRow.lifecycle, {
+        status: 400,
+        message: 'An external update cannot change the entity lifecycle'
+      });
+      httpAssert.true(payload.requestedTargetLifecycle === oldRow.target_lifecycle, {
+        status: 400,
+        message: 'An external update cannot change the target lifecycle'
+      });
+      httpAssert.true(payload.requestedTargetLifecycleDate === oldRow.target_lifecycle_date, {
+        status: 400,
+        message: 'An external update cannot change the target lifecycle date'
+      });
+      httpAssert.true(JSON.stringify(payload.tags) === JSON.stringify(oldRow.tags), {
+        status: 400,
+        message: 'An external update cannot change entity tags'
+      });
+      httpAssert.true(JSON.stringify(payload.links) === JSON.stringify(oldRow.links), {
+        status: 400,
+        message: 'An external update cannot change entity links'
+      });
+      httpAssert.true(payload.visibilityMode === oldRow.visibility_mode, {
+        status: 400,
+        message: 'An external update cannot change entity visibility'
+      });
       nextGeneratedMetadata = {
         ...(oldRow.generated_metadata ?? {}),
         [payload.external.fieldId]: applyExternalFieldUpdate(

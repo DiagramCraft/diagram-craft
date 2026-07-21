@@ -9,6 +9,123 @@ const test = createApiTest({
 });
 
 test.describe('workspace API tokens', () => {
+  test('allows a view plus external-update token to change only an external field', async ({
+    server,
+    orpc
+  }) => {
+    const workspace = seedIds.workspace.default;
+    const schemaId = '00000000-0000-0000-000e-000000000001';
+    const entityId = '00000000-0000-0000-000e-000000000002';
+    const now = new Date();
+    await server.db.catalog.createSchema({
+      id: schemaId,
+      workspace,
+      name: 'External integration test',
+      description: '',
+      fields: [
+        { id: 'repository', name: 'Repository', type: 'text' },
+        {
+          id: 'latest_release',
+          name: 'Latest release',
+          type: 'text',
+          external_kind: 'integration',
+          refresh_mode: 'on_change'
+        }
+      ],
+      color: null,
+      icon: null,
+      default_owner: null,
+      key_prefix: 'EXT',
+      created_at: now,
+      updated_at: now
+    });
+    await server.db.catalog.createEntity({
+      id: entityId,
+      workspace,
+      public_id: 'EXT-001',
+      slug: 'external-integration-test',
+      namespace: 'default',
+      name: 'External integration test',
+      description: '',
+      owner: null,
+      lifecycle: null,
+      target_lifecycle: null,
+      target_lifecycle_date: null,
+      tags: [],
+      links: [],
+      schema_id: schemaId,
+      data: { repository: 'owner/repo', latest_release: 'v1.0.0' },
+      visibility_mode: 'public',
+      created_at: now,
+      updated_at: now
+    });
+
+    const created = await orpc.authProtected.apiTokens.create({
+      body: {
+        workspace: 'default',
+        name: 'External release integration',
+        capabilities: ['ws.view', 'ent.external_update']
+      }
+    });
+    const tokenClient = createTestORPCClient(server.baseUrl, `Bearer ${created.token}`);
+    const entity = await tokenClient.entities.get({
+      params: { workspace: 'default', id: entityId }
+    });
+
+    const updated = await tokenClient.entities.update({
+      params: { workspace: 'default', id: entityId },
+      body: {
+        _schemaId: schemaId,
+        _name: entity._name,
+        _slug: entity._slug,
+        _namespace: entity._namespace,
+        _description: entity._description,
+        _owner: null,
+        _lifecycle: null,
+        _targetLifecycle: null,
+        _targetLifecycleDate: null,
+        _tags: [],
+        _links: [],
+        _visibilityMode: 'public',
+        repository: 'owner/repo',
+        latest_release: 'v2.0.0',
+        _external: {
+          fieldId: 'latest_release',
+          kind: 'integration',
+          source: 'github-releases',
+          requestId: 'event-1'
+        }
+      } as never
+    });
+    expect(updated.latest_release).toBe('v2.0.0');
+
+    await expect(
+      tokenClient.entities.update({
+        params: { workspace: 'default', id: entityId },
+        body: {
+          _schemaId: schemaId,
+          _name: entity._name,
+          _slug: entity._slug,
+          _namespace: entity._namespace,
+          _description: entity._description,
+          _owner: null,
+          _lifecycle: null,
+          _targetLifecycle: null,
+          _targetLifecycleDate: null,
+          _tags: [],
+          _links: [],
+          _visibilityMode: 'public',
+          repository: 'changed/repo',
+          latest_release: 'v2.0.0'
+        } as never
+      })
+    ).rejects.toMatchObject({ status: 403 });
+
+    await orpc.authProtected.apiTokens.revoke({
+      params: { id: created.id }
+    });
+  });
+
   test('creates a restricted token, authenticates workspace API calls, and revokes it', async ({
     server,
     orpc
