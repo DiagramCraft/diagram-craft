@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { DatabaseError } from '../database';
 import { createFixtureUser } from './authFixtures';
+import { getSystemUserId } from '../../domain/auth/systemUsers';
 
 runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
   describe('user CRUD', () => {
@@ -126,6 +127,20 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
           last_login_at: null
         })
       ).rejects.toMatchObject({ code: 'unique' } satisfies Partial<DatabaseError>);
+    });
+  });
+
+  describe('system users', () => {
+    it('rejects updateUser against a seeded system-actor row', async () => {
+      const db = getDb();
+      const systemUserId = getSystemUserId('workspace-token-owner');
+
+      const seeded = await db.auth.getUser(systemUserId);
+      expect(seeded!.is_system_actor).toBe(true);
+
+      await expect(
+        db.auth.updateUser(systemUserId, { is_active: false, updated_at: new Date() })
+      ).rejects.toMatchObject({ code: 'check' } satisfies Partial<DatabaseError>);
     });
   });
 

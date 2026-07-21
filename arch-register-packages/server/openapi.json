@@ -42130,6 +42130,10 @@
                       "type": "boolean",
                       "description": "Whether the user account is active"
                     },
+                    "is_system_actor": {
+                      "type": "boolean",
+                      "description": "Whether this is a system-managed actor, not a real user account"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -42168,6 +42172,7 @@
                     "display_name",
                     "auth_provider",
                     "is_active",
+                    "is_system_actor",
                     "color",
                     "created_at",
                     "updated_at",
@@ -42237,6 +42242,10 @@
                         "type": "boolean",
                         "description": "Whether the user account is active"
                       },
+                      "is_system_actor": {
+                        "type": "boolean",
+                        "description": "Whether this is a system-managed actor, not a real user account"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -42256,6 +42265,7 @@
                       "display_name",
                       "auth_provider",
                       "is_active",
+                      "is_system_actor",
                       "color"
                     ]
                   }

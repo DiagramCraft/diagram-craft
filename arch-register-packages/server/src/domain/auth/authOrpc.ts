@@ -229,6 +229,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
         display_name: updatedUser.display_name,
         auth_provider: updatedUser.auth_provider,
         is_active: updatedUser.is_active,
+        is_system_actor: updatedUser.is_system_actor,
         color: updatedUser.color,
         created_at: updatedUser.created_at.toISOString(),
         updated_at: updatedUser.updated_at.toISOString(),
@@ -247,6 +248,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
         display_name: user.display_name,
         auth_provider: user.auth_provider,
         is_active: user.is_active,
+        is_system_actor: user.is_system_actor,
         color: user.color
       }));
     }),
@@ -270,6 +272,12 @@ export const authProtectedORPCRouter = protectedRouter.router({
         requireInteractiveSession(context.event);
         const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
         requireGlobalPermission(authCtx, 'manage_workspace_roles');
+        const targetUser = await context.db.auth.getUser(input.params.id);
+        orpcAssert.present(targetUser, { code: 'NOT_FOUND', message: 'User not found' });
+        orpcAssert.true(!targetUser.is_system_actor, {
+          code: 'FORBIDDEN',
+          message: 'System users cannot be assigned roles'
+        });
         const roles = parseRequestedGlobalRoles(input.body.roles);
         const assignments = await context.db.auth.replaceGlobalRoleAssignments(
           input.params.id,

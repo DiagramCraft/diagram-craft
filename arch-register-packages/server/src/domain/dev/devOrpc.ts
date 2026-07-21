@@ -35,6 +35,7 @@ export const devORPCRouter = devRouter.router({
         display_name: user.display_name,
         auth_provider: user.auth_provider,
         is_active: user.is_active,
+        is_system_actor: user.is_system_actor,
         color: user.color
       }));
     }),

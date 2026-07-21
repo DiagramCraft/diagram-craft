@@ -8,6 +8,7 @@ import type {
 import { authMappers } from './authDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
+import { DatabaseError } from '../../../db/database';
 
 export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
@@ -69,6 +70,10 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
   }
 
   async updateUser(id: string, input: UserDbUpdate) {
+    const existing = await this.getUser(id);
+    if (existing?.is_system_actor) {
+      throw new DatabaseError('check', 'System users cannot be modified', undefined, { id });
+    }
     try {
       const sets: Record<string, unknown> = { updated_at: input.updated_at };
 
