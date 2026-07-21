@@ -303,6 +303,20 @@ const technologyEnums = [
   ])
 ];
 
+const technologySchema: TemplateSchema = {
+  symId: 'technology',
+  name: 'Technology',
+  description: 'A technology product tracked for governance and planning.',
+  color: AR_COLOR_BLUE,
+  icon: 'chip',
+  fields: [
+    { id: 'product', name: 'Product', type: 'text' },
+    { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
+    { id: 'category', name: 'Category', type: 'select', enumId: 'technology-category' },
+    { id: 'radar_status', name: 'Radar Status', type: 'select', enumId: 'technology-radar-status' }
+  ]
+};
+
 const technologyReleaseSchema: TemplateSchema = {
   symId: 'technology_release',
   name: 'Technology Release',
@@ -311,6 +325,15 @@ const technologyReleaseSchema: TemplateSchema = {
   color: AR_COLOR_BLUE,
   icon: 'cpu',
   fields: [
+    {
+      id: 'technology',
+      name: 'Technology',
+      predicate: 'belongs to',
+      type: 'containment',
+      symSchemaId: 'technology',
+      minCount: 1,
+      maxCount: 1
+    },
     { id: 'product', name: 'Product', type: 'text' },
     { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
     { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
@@ -379,7 +402,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     id: 'default',
     name: 'Default',
     description:
-      'Diagram Craft default catalog — Domain, System, Component, API, Resource, and Technology Release.',
+      'Diagram Craft default catalog — Domain, System, Component, API, Resource, Technology, and Technology Release.',
     schemas: [
       {
         symId: 'domain',
@@ -494,6 +517,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       },
+      technologySchema,
       technologyReleaseSchema
     ],
     enums: [backstageEnums[0]!, ...technologyEnums],
