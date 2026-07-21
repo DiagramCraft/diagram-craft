@@ -83,6 +83,7 @@ test.describe('search permission routes', () => {
       resources.entityIds.customerApi,
       '00000000-0000-0000-0003-00000000000e',
       resources.entityIds.frontendApp,
+      '00000000-0000-0000-0007-000000000002',
       '00000000-0000-0000-0006-000000000002'
     ]);
     expect(result.projects).toEqual([]);

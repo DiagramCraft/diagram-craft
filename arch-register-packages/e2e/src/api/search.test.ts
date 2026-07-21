@@ -232,10 +232,17 @@ test.describe('search routes', () => {
         matchedMetadata: expect.arrayContaining(['description', 'tags'])
       }),
       expect.objectContaining({
+        entityId: '00000000-0000-0000-0007-000000000002',
+        schemaName: 'Technology',
+        _name: 'React',
+        matchedFields: expect.arrayContaining(['product', 'provider_product']),
+        matchedMetadata: expect.arrayContaining(['name', 'slug', 'links'])
+      }),
+      expect.objectContaining({
         entityId: '00000000-0000-0000-0006-000000000002',
         schemaName: 'Technology Release',
         _name: 'React 18',
-        matchedFields: ['product', 'provider_product', 'source_url'],
+        matchedFields: ['provider_product', 'source_url'],
         matchedMetadata: expect.arrayContaining(['name', 'slug', 'description', 'links'])
       }),
       expect.objectContaining({
@@ -273,6 +280,11 @@ test.describe('search routes', () => {
       {
         schemaId: '00000000-0000-0000-0000-000000000006',
         name: 'Technology Release',
+        fieldMatches: [{ fieldId: 'technology', fieldName: 'Technology' }]
+      },
+      {
+        schemaId: '00000000-0000-0000-0000-000000000007',
+        name: 'Technology',
         fieldMatches: []
       }
     ]);
