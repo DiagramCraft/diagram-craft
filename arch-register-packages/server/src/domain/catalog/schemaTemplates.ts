@@ -23,8 +23,11 @@ type SymbolicFieldMetadata = {
 };
 
 export type SymbolicField =
-  | ({ id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' } &
-      SymbolicFieldMetadata)
+  | ({
+      id: string;
+      name: string;
+      type: 'text' | 'longtext' | 'boolean' | 'date';
+    } & SymbolicFieldMetadata)
   | ({ id: string; name: string; type: 'select'; enumId: string } & SymbolicFieldMetadata)
   | ({
       id: string;

@@ -1117,7 +1117,9 @@ const seedTechnologyReleases: Entity[] = [
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['database', 'managed'],
-    links: [{ url: 'https://endoflife.date/postgresql', title: 'Lifecycle source', type: 'source' }],
+    links: [
+      { url: 'https://endoflife.date/postgresql', title: 'Lifecycle source', type: 'source' }
+    ],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       product: 'PostgreSQL',
@@ -1183,7 +1185,9 @@ const seedTechnologyReleases: Entity[] = [
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['messaging', 'managed'],
-    links: [{ url: 'https://endoflife.date/apache-kafka', title: 'Lifecycle source', type: 'source' }],
+    links: [
+      { url: 'https://endoflife.date/apache-kafka', title: 'Lifecycle source', type: 'source' }
+    ],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       product: 'Apache Kafka',
@@ -1216,7 +1220,9 @@ const seedTechnologyReleases: Entity[] = [
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['database', 'search'],
-    links: [{ url: 'https://endoflife.date/elasticsearch', title: 'Lifecycle source', type: 'source' }],
+    links: [
+      { url: 'https://endoflife.date/elasticsearch', title: 'Lifecycle source', type: 'source' }
+    ],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       product: 'Elasticsearch',
