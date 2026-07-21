@@ -69,9 +69,8 @@ export const outdateExternalMetadata = (metadata: ExternalMetadata): ExternalMet
 /**
  * Validates that an external-update envelope's target field exists, carries a matching
  * `external_kind`, and — for a failed update — that its value hasn't actually changed. Returns
- * the fields list with the target field removed, ready to pass to
- * {@link assertNoExternalFieldWrites} so every *other* field (external or not) is still
- * protected from this same write.
+ * the fields list with the target field removed for callers that need to inspect the remaining
+ * external fields.
  */
 export const assertValidExternalUpdateTarget = (
   fields: ExternalCapableField[],

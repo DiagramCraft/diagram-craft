@@ -33,5 +33,6 @@ test('builds a complete external update body without computed response fields', 
   assert.equal(body.github_repository, 'owner/repo');
   assert.equal(body.github_latest_release, 'v2.0.0');
   assert.equal('_uid' in body, false);
+  assert.equal('canView' in body, false);
   assert.equal('_external' in body, true);
 });

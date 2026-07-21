@@ -14,6 +14,14 @@ export class ArchRegisterApiError extends Error {
 
 export type ArchRegisterFetch = typeof fetch;
 
+const computedEntityKeys = new Set([
+  'canView',
+  'canEdit',
+  'canDelete',
+  'canAdmin',
+  'canCreateChild'
+]);
+
 const idFromReference = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === 'string') return value;
@@ -39,7 +47,7 @@ export const entityToUpdateBody = (
   }
 
   const customFields = Object.fromEntries(
-    Object.entries(entity).filter(([key]) => !key.startsWith('_'))
+    Object.entries(entity).filter(([key]) => !key.startsWith('_') && !computedEntityKeys.has(key))
   );
 
   return {
