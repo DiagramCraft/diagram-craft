@@ -80,6 +80,19 @@ const COLLECTION_IDS = {
   apisToReview: '00000000-0000-0000-0030-000000000002'
 } as const;
 
+const TECHNOLOGY_RELEASE_IDS = {
+  nodejs20: '00000000-0000-0000-0006-000000000001',
+  react18: '00000000-0000-0000-0006-000000000002',
+  go122: '00000000-0000-0000-0006-000000000003',
+  python312: '00000000-0000-0000-0006-000000000004',
+  java21: '00000000-0000-0000-0006-000000000005',
+  rust182: '00000000-0000-0000-0006-000000000006',
+  postgres15: '00000000-0000-0000-0006-000000000007',
+  redis7: '00000000-0000-0000-0006-000000000008',
+  kafka37: '00000000-0000-0000-0006-000000000009',
+  elasticsearch8: '00000000-0000-0000-0006-00000000000a'
+} as const;
+
 const USER_IDS = {
   globaladmin: seededUsers.globalAdmin.id,
   workspaceadmin: seededUsers.workspaceAdmin.id,
@@ -572,6 +585,36 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     created_at: now,
     updated_at: now
   },
+  {
+    id: '00000000-0000-0000-0000-e00000000003',
+    workspace: WORKSPACE_ID,
+    name: 'Technology Category',
+    options: [
+      { value: 'language', label: 'Language' },
+      { value: 'framework', label: 'Framework' },
+      { value: 'database', label: 'Database' },
+      { value: 'operating-system', label: 'Operating System' },
+      { value: 'runtime', label: 'Runtime' },
+      { value: 'library', label: 'Library' }
+    ],
+    sort_order: 1,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-e00000000004',
+    workspace: WORKSPACE_ID,
+    name: 'Technology Radar Status',
+    options: [
+      { value: 'adopt', label: 'Adopt' },
+      { value: 'trial', label: 'Trial' },
+      { value: 'assess', label: 'Assess' },
+      { value: 'hold', label: 'Hold' }
+    ],
+    sort_order: 2,
+    created_at: now,
+    updated_at: now
+  },
   // Second workspace enums
   {
     id: '00000000-0000-0000-0000-e00000000002',
@@ -632,7 +675,15 @@ export const seedSchemas: SchemaDbResult[] = [
     name: 'Component',
     description: 'A deployable unit of code within a System (service, library, website, etc.).',
     fields: [
-      { id: 'technology', name: 'Technology', type: 'text' },
+      {
+        id: 'technology_releases',
+        name: 'Technology Releases',
+        type: 'reference',
+        predicate: 'uses',
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        minCount: 0,
+        maxCount: -1
+      },
       {
         id: 'system',
         name: 'System',
@@ -714,6 +765,15 @@ export const seedSchemas: SchemaDbResult[] = [
     fields: [
       { id: 'resource_type', name: 'Type', type: 'text' },
       {
+        id: 'technology_releases',
+        name: 'Technology Releases',
+        type: 'reference',
+        predicate: 'uses',
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        minCount: 0,
+        maxCount: -1
+      },
+      {
         id: 'system',
         name: 'System',
         type: 'containment',
@@ -727,6 +787,85 @@ export const seedSchemas: SchemaDbResult[] = [
     icon: 'database',
     default_owner: null,
     key_prefix: 'RES',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000006',
+    workspace: WORKSPACE_ID,
+    name: 'Technology Release',
+    description:
+      'A product release cycle tracked for support lifecycle, technology radar governance, and planning.',
+    fields: [
+      { id: 'product', name: 'Product', type: 'text' },
+      { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
+      { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
+      {
+        id: 'latest_version',
+        name: 'Latest Version',
+        type: 'text',
+        external_kind: 'integration',
+        refresh_mode: 'scheduled'
+      },
+      {
+        id: 'release_date',
+        name: 'Release Date',
+        type: 'date',
+        external_kind: 'integration',
+        refresh_mode: 'scheduled'
+      },
+      {
+        id: 'active_support_until',
+        name: 'Active Support Until',
+        type: 'date',
+        external_kind: 'integration',
+        refresh_mode: 'scheduled'
+      },
+      {
+        id: 'security_support_until',
+        name: 'Security Support Until',
+        type: 'date',
+        external_kind: 'integration',
+        refresh_mode: 'scheduled'
+      },
+      {
+        id: 'eol_date',
+        name: 'EOL Date',
+        type: 'date',
+        external_kind: 'integration',
+        refresh_mode: 'scheduled'
+      },
+      {
+        id: 'source_url',
+        name: 'Source URL',
+        type: 'text',
+        external_kind: 'integration',
+        refresh_mode: 'scheduled'
+      },
+      {
+        id: 'last_synchronized',
+        name: 'Last Synchronized',
+        type: 'date',
+        external_kind: 'integration',
+        refresh_mode: 'scheduled'
+      },
+      {
+        id: 'category',
+        name: 'Category',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000003'
+      },
+      {
+        id: 'radar_status',
+        name: 'Radar Status',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000004'
+      }
+    ],
+    color: AR_COLOR_BLUE,
+    icon: 'cpu',
+    default_owner: null,
+    key_prefix: 'TEC',
     created_at: now,
     updated_at: now
   },
@@ -766,7 +905,341 @@ export const seedSchemas: SchemaDbResult[] = [
   }
 ];
 
+const seedTechnologyReleases: Entity[] = [
+  {
+    id: TECHNOLOGY_RELEASE_IDS.nodejs20,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-1',
+    slug: 'nodejs-20',
+    namespace: 'default',
+    name: 'Node.js 20',
+    description: 'Node.js 20 release cycle tracked for runtime support planning.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['runtime', 'javascript'],
+    links: [{ url: 'https://endoflife.date/nodejs', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'Node.js',
+      provider_product: 'nodejs',
+      release_cycle: '20',
+      latest_version: '20.19.0',
+      release_date: '2023-04-18',
+      active_support_until: '2024-10-22',
+      security_support_until: '2026-04-30',
+      eol_date: '2026-04-30',
+      source_url: 'https://endoflife.date/nodejs',
+      last_synchronized: '2026-01-01',
+      category: 'runtime',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.react18,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-2',
+    slug: 'react-18',
+    namespace: 'default',
+    name: 'React 18',
+    description: 'React 18 release cycle tracked for frontend support planning.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['framework', 'frontend'],
+    links: [{ url: 'https://endoflife.date/react', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'React',
+      provider_product: 'react',
+      release_cycle: '18',
+      latest_version: '18.3.1',
+      release_date: '2022-06-14',
+      active_support_until: '2025-12-31',
+      security_support_until: '2025-12-31',
+      eol_date: '2025-12-31',
+      source_url: 'https://endoflife.date/react',
+      last_synchronized: '2026-01-01',
+      category: 'framework',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.go122,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-3',
+    slug: 'go-1-22',
+    namespace: 'default',
+    name: 'Go 1.22',
+    description: 'Go 1.22 release cycle tracked for service support planning.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['language', 'backend'],
+    links: [{ url: 'https://endoflife.date/go', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'Go',
+      provider_product: 'go',
+      release_cycle: '1.22',
+      latest_version: '1.22.12',
+      release_date: '2024-02-06',
+      active_support_until: '2025-02-01',
+      security_support_until: '2025-02-01',
+      eol_date: '2025-02-01',
+      source_url: 'https://endoflife.date/go',
+      last_synchronized: '2026-01-01',
+      category: 'language',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.python312,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-4',
+    slug: 'python-3-12',
+    namespace: 'default',
+    name: 'Python 3.12',
+    description: 'Python 3.12 release cycle tracked for service support planning.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['language', 'data'],
+    links: [{ url: 'https://endoflife.date/python', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'Python',
+      provider_product: 'python',
+      release_cycle: '3.12',
+      latest_version: '3.12.9',
+      release_date: '2023-10-02',
+      active_support_until: '2024-10-07',
+      security_support_until: '2028-10-31',
+      eol_date: '2028-10-31',
+      source_url: 'https://endoflife.date/python',
+      last_synchronized: '2026-01-01',
+      category: 'language',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.java21,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-5',
+    slug: 'java-21',
+    namespace: 'default',
+    name: 'Java 21',
+    description: 'Java 21 release cycle tracked for service support planning.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['language', 'backend'],
+    links: [{ url: 'https://endoflife.date/java', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'Java',
+      provider_product: 'java',
+      release_cycle: '21',
+      latest_version: '21.0.5',
+      release_date: '2023-09-19',
+      active_support_until: '2028-09-30',
+      security_support_until: '2031-09-30',
+      eol_date: '2031-09-30',
+      source_url: 'https://endoflife.date/java',
+      last_synchronized: '2026-01-01',
+      category: 'language',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.rust182,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-6',
+    slug: 'rust-1-82',
+    namespace: 'default',
+    name: 'Rust 1.82',
+    description: 'Rust 1.82 release cycle tracked for service support planning.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle_date: '2026-06-30',
+    tags: ['language', 'backend'],
+    links: [{ url: 'https://endoflife.date/rust', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'Rust',
+      provider_product: 'rust',
+      release_cycle: '1.82',
+      latest_version: '1.82.0',
+      release_date: '2024-10-17',
+      active_support_until: '2025-04-17',
+      security_support_until: '2025-04-17',
+      eol_date: '2025-04-17',
+      source_url: 'https://endoflife.date/rust',
+      last_synchronized: '2026-01-01',
+      category: 'language',
+      radar_status: 'trial'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.postgres15,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-7',
+    slug: 'postgresql-15',
+    namespace: 'default',
+    name: 'PostgreSQL 15',
+    description: 'PostgreSQL 15 release cycle tracked for database support planning.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['database', 'managed'],
+    links: [{ url: 'https://endoflife.date/postgresql', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'PostgreSQL',
+      provider_product: 'postgresql',
+      release_cycle: '15',
+      latest_version: '15.10',
+      release_date: '2022-10-13',
+      active_support_until: '2026-11-11',
+      security_support_until: '2027-11-11',
+      eol_date: '2027-11-11',
+      source_url: 'https://endoflife.date/postgresql',
+      last_synchronized: '2026-01-01',
+      category: 'database',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.redis7,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-8',
+    slug: 'redis-7',
+    namespace: 'default',
+    name: 'Redis 7',
+    description: 'Redis 7 release cycle tracked for cache support planning.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['database', 'cache'],
+    links: [{ url: 'https://endoflife.date/redis', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'Redis',
+      provider_product: 'redis',
+      release_cycle: '7',
+      latest_version: '7.2.6',
+      release_date: '2022-04-27',
+      active_support_until: '2026-04-30',
+      security_support_until: '2027-04-30',
+      eol_date: '2027-04-30',
+      source_url: 'https://endoflife.date/redis',
+      last_synchronized: '2026-01-01',
+      category: 'database',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.kafka37,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-9',
+    slug: 'kafka-3-7',
+    namespace: 'default',
+    name: 'Kafka 3.7',
+    description: 'Kafka 3.7 release cycle tracked for messaging support planning.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['messaging', 'managed'],
+    links: [{ url: 'https://endoflife.date/apache-kafka', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'Apache Kafka',
+      provider_product: 'apache-kafka',
+      release_cycle: '3.7',
+      latest_version: '3.7.2',
+      release_date: '2024-02-28',
+      active_support_until: '2025-02-28',
+      security_support_until: '2025-02-28',
+      eol_date: '2025-02-28',
+      source_url: 'https://endoflife.date/apache-kafka',
+      last_synchronized: '2026-01-01',
+      category: 'runtime',
+      radar_status: 'assess'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_RELEASE_IDS.elasticsearch8,
+    workspace: WORKSPACE_ID,
+    public_id: 'TEC-10',
+    slug: 'elasticsearch-8',
+    namespace: 'default',
+    name: 'Elasticsearch 8',
+    description: 'Elasticsearch 8 release cycle tracked for search support planning.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['database', 'search'],
+    links: [{ url: 'https://endoflife.date/elasticsearch', title: 'Lifecycle source', type: 'source' }],
+    schema_id: '00000000-0000-0000-0000-000000000006',
+    data: {
+      product: 'Elasticsearch',
+      provider_product: 'elasticsearch',
+      release_cycle: '8',
+      latest_version: '8.15.3',
+      release_date: '2022-08-23',
+      active_support_until: '2026-08-31',
+      security_support_until: '2027-08-31',
+      eol_date: '2027-08-31',
+      source_url: 'https://endoflife.date/elasticsearch',
+      last_synchronized: '2026-01-01',
+      category: 'database',
+      radar_status: 'assess'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  }
+];
+
 export const seedEntities: Entity[] = [
+  ...seedTechnologyReleases,
   {
     id: '00000000-0000-0000-0001-000000000001',
     workspace: WORKSPACE_ID,
@@ -884,7 +1357,7 @@ export const seedEntities: Entity[] = [
     links: [{ url: 'https://github.com/example/api-gateway', title: 'Source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Node',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.nodejs20],
       system: ['00000000-0000-0000-0002-000000000001'],
       provides_apis: ['00000000-0000-0000-0004-000000000001'],
       consumes_apis: ['00000000-0000-0000-0004-000000000002'],
@@ -910,7 +1383,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'React',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.react18],
       system: ['00000000-0000-0000-0002-000000000001'],
       consumes_apis: [
         '00000000-0000-0000-0004-000000000001',
@@ -938,7 +1411,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Go',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.go122],
       system: ['00000000-0000-0000-0002-000000000002'],
       provides_apis: ['00000000-0000-0000-0004-000000000002']
     },
@@ -965,6 +1438,7 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000005',
     data: {
       resource_type: 'database',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.postgres15],
       system: ['00000000-0000-0000-0002-000000000001']
     },
     visibility_mode: null,
@@ -1191,7 +1665,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Go',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.go122],
       system: ['00000000-0000-0000-0002-000000000003'],
       provides_apis: ['00000000-0000-0000-0004-000000000003'],
       consumes_apis: ['00000000-0000-0000-0004-000000000002'],
@@ -1217,7 +1691,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Java',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.java21],
       system: ['00000000-0000-0000-0002-000000000003']
     },
     visibility_mode: null,
@@ -1240,7 +1714,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Python',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.python312],
       system: ['00000000-0000-0000-0002-000000000003'],
       consumes_apis: ['00000000-0000-0000-0004-000000000003'],
       depends_on: ['00000000-0000-0000-0003-000000000005']
@@ -1265,7 +1739,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Python',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.python312],
       system: ['00000000-0000-0000-0002-000000000004'],
       consumes_apis: [
         '00000000-0000-0000-0004-000000000001',
@@ -1292,7 +1766,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'React',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.react18],
       system: ['00000000-0000-0000-0002-000000000004'],
       consumes_apis: ['00000000-0000-0000-0004-000000000004'],
       depends_on: ['00000000-0000-0000-0003-000000000007']
@@ -1317,7 +1791,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Node',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.nodejs20],
       system: ['00000000-0000-0000-0002-000000000005'],
       provides_apis: ['00000000-0000-0000-0004-000000000005']
     },
@@ -1341,7 +1815,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Go',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.go122],
       system: ['00000000-0000-0000-0002-000000000005'],
       consumes_apis: ['00000000-0000-0000-0004-000000000005'],
       depends_on: ['00000000-0000-0000-0003-000000000009']
@@ -1366,7 +1840,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Rust',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.rust182],
       system: ['00000000-0000-0000-0002-000000000006'],
       provides_apis: ['00000000-0000-0000-0004-000000000006']
     },
@@ -1390,7 +1864,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Python',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.python312],
       system: ['00000000-0000-0000-0002-000000000006'],
       consumes_apis: ['00000000-0000-0000-0004-000000000006'],
       depends_on: ['00000000-0000-0000-0003-00000000000b']
@@ -1415,7 +1889,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Node',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.nodejs20],
       system: ['00000000-0000-0000-0002-000000000005'],
       consumes_apis: ['00000000-0000-0000-0004-000000000005'],
       depends_on: ['00000000-0000-0000-0003-000000000009']
@@ -1440,7 +1914,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Go',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.go122],
       system: ['00000000-0000-0000-0002-000000000001']
     },
     visibility_mode: null,
@@ -1463,7 +1937,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Rust',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.rust182],
       system: ['00000000-0000-0000-0002-000000000001'],
       depends_on: ['00000000-0000-0000-0003-00000000000e']
     },
@@ -1489,6 +1963,7 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000005',
     data: {
       resource_type: 'cache',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.redis7],
       system: ['00000000-0000-0000-0002-000000000001']
     },
     visibility_mode: null,
@@ -1512,6 +1987,7 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000005',
     data: {
       resource_type: 'message-queue',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.kafka37],
       system: ['00000000-0000-0000-0002-000000000005']
     },
     visibility_mode: null,
@@ -1558,6 +2034,7 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000005',
     data: {
       resource_type: 'database',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.postgres15],
       system: ['00000000-0000-0000-0002-000000000003']
     },
     visibility_mode: null,
@@ -1581,6 +2058,7 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000005',
     data: {
       resource_type: 'search-index',
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.elasticsearch8],
       system: ['00000000-0000-0000-0002-000000000006']
     },
     visibility_mode: null,
@@ -2548,6 +3026,65 @@ export const seedSavedViews: SavedViewDbResult[] = [
     filters: {
       owner: TEAM_IDS.platform,
       schemaId: '00000000-0000-0000-0000-000000000003'
+    },
+    config: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000004',
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
+    name: 'Technology Radar',
+    description: 'Technology releases positioned by category and radar governance status.',
+    is_admin_view: false,
+    view_mode: 'radar',
+    filters: { schemaId: '00000000-0000-0000-0000-000000000006' },
+    config: {
+      radar: {
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        quadrantFieldId: 'category',
+        ringFieldId: 'radar_status',
+        ringOrder: ['adopt', 'trial', 'assess', 'hold']
+      }
+    },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000005',
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
+    name: 'Technology Lifecycle',
+    description: 'Release dates and end-of-life dates for tracked technology releases.',
+    is_admin_view: false,
+    view_mode: 'timeline',
+    filters: { schemaId: '00000000-0000-0000-0000-000000000006' },
+    config: {
+      timeline: {
+        startFieldId: 'release_date',
+        endFieldId: 'eol_date',
+        groupBy: 'type',
+        zoom: 'year'
+      }
+    },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000006',
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
+    name: 'Technology Releases With EOL Dates',
+    description: 'Technology releases with lifecycle dates available for review and planning.',
+    is_admin_view: false,
+    view_mode: 'table',
+    filters: {
+      schemaId: '00000000-0000-0000-0000-000000000006',
+      conditions: [{ fieldId: 'eol_date', op: 'not_empty', value: null }]
     },
     config: null,
     created_at: now,

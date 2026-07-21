@@ -8,6 +8,7 @@ import {
 } from '@arch-register/api-types/colors';
 import { randomUUID } from 'node:crypto';
 import type { SchemaDbCreate, WorkspaceEnumDbCreate } from '../../db/database';
+import type { ExternalKind, RefreshMode } from '@arch-register/api-types/common';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import type {
@@ -16,10 +17,16 @@ import type {
 } from '../document/db/documentDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
+type SymbolicFieldMetadata = {
+  external_kind?: ExternalKind;
+  refresh_mode?: RefreshMode;
+};
+
 export type SymbolicField =
-  | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' }
-  | { id: string; name: string; type: 'select'; enumId: string }
-  | {
+  | ({ id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' } &
+      SymbolicFieldMetadata)
+  | ({ id: string; name: string; type: 'select'; enumId: string } & SymbolicFieldMetadata)
+  | ({
       id: string;
       name: string;
       predicate?: string;
@@ -27,8 +34,8 @@ export type SymbolicField =
       symSchemaId: string;
       minCount: number;
       maxCount: number;
-    }
-  | {
+    } & SymbolicFieldMetadata)
+  | ({
       id: string;
       name: string;
       predicate?: string;
@@ -36,7 +43,7 @@ export type SymbolicField =
       symSchemaId: string;
       minCount: 0 | 1;
       maxCount: 1;
-    };
+    } & SymbolicFieldMetadata);
 
 export type TemplateSchema = {
   symId: string;
@@ -242,6 +249,98 @@ const archimateEnums = [
   ])
 ];
 
+const technologyEnums = [
+  enumDefinition('technology-category', 'Technology Category', [
+    { value: 'language', label: 'Language' },
+    { value: 'framework', label: 'Framework' },
+    { value: 'database', label: 'Database' },
+    { value: 'operating-system', label: 'Operating System' },
+    { value: 'runtime', label: 'Runtime' },
+    { value: 'library', label: 'Library' }
+  ]),
+  enumDefinition('technology-radar-status', 'Technology Radar Status', [
+    { value: 'adopt', label: 'Adopt' },
+    { value: 'trial', label: 'Trial' },
+    { value: 'assess', label: 'Assess' },
+    { value: 'hold', label: 'Hold' }
+  ])
+];
+
+const technologyReleaseSchema: TemplateSchema = {
+  symId: 'technology_release',
+  name: 'Technology Release',
+  description:
+    'A product release cycle tracked for support lifecycle, technology radar governance, and planning.',
+  color: AR_COLOR_BLUE,
+  icon: 'cpu',
+  fields: [
+    { id: 'product', name: 'Product', type: 'text' },
+    { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
+    { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
+    {
+      id: 'latest_version',
+      name: 'Latest Version',
+      type: 'text',
+      external_kind: 'integration',
+      refresh_mode: 'scheduled'
+    },
+    {
+      id: 'release_date',
+      name: 'Release Date',
+      type: 'date',
+      external_kind: 'integration',
+      refresh_mode: 'scheduled'
+    },
+    {
+      id: 'active_support_until',
+      name: 'Active Support Until',
+      type: 'date',
+      external_kind: 'integration',
+      refresh_mode: 'scheduled'
+    },
+    {
+      id: 'security_support_until',
+      name: 'Security Support Until',
+      type: 'date',
+      external_kind: 'integration',
+      refresh_mode: 'scheduled'
+    },
+    {
+      id: 'eol_date',
+      name: 'EOL Date',
+      type: 'date',
+      external_kind: 'integration',
+      refresh_mode: 'scheduled'
+    },
+    {
+      id: 'source_url',
+      name: 'Source URL',
+      type: 'text',
+      external_kind: 'integration',
+      refresh_mode: 'scheduled'
+    },
+    {
+      id: 'last_synchronized',
+      name: 'Last Synchronized',
+      type: 'date',
+      external_kind: 'integration',
+      refresh_mode: 'scheduled'
+    },
+    { id: 'category', name: 'Category', type: 'select', enumId: 'technology-category' },
+    { id: 'radar_status', name: 'Radar Status', type: 'select', enumId: 'technology-radar-status' }
+  ]
+};
+
+const technologyReleaseReference = (): SymbolicField => ({
+  id: 'technology_releases',
+  name: 'Technology Releases',
+  predicate: 'uses',
+  type: 'reference',
+  symSchemaId: 'technology_release',
+  minCount: 0,
+  maxCount: -1
+});
+
 const securityEnums = [
   enumDefinition('classification', 'Classification', [
     { value: 'public', label: 'Public' },
@@ -286,6 +385,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     name: 'Backstage',
     description: 'CNCF Backstage Software Catalog — Domain, System, Component, API, Resource',
     schemas: [
+      technologyReleaseSchema,
       {
         symId: 'domain',
         name: 'Domain',
@@ -340,7 +440,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'box',
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: 'component-kind' },
-          { id: 'technology', name: 'Technology', type: 'text' },
+          technologyReleaseReference(),
           { id: 'go_live_date', name: 'Go Live Date', type: 'date' },
           {
             id: 'system',
@@ -389,11 +489,12 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             symSchemaId: 'system',
             minCount: 0,
             maxCount: 1
-          }
+          },
+          technologyReleaseReference()
         ]
       }
     ],
-    enums: backstageEnums,
+    enums: [...technologyEnums, ...backstageEnums],
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
   },
@@ -402,6 +503,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     name: 'C4 Model',
     description: 'C4 Model by Simon Brown — Person, Software System, Container, Component',
     schemas: [
+      technologyReleaseSchema,
       {
         symId: 'person',
         name: 'Person',
@@ -426,7 +528,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          technologyReleaseReference(),
           { id: 'description', name: 'Description', type: 'longtext' },
           {
             id: 'system',
@@ -446,7 +548,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'settings',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          technologyReleaseReference(),
           {
             id: 'container',
             name: 'Container',
@@ -468,7 +570,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         ]
       }
     ],
-    enums: [],
+    enums: technologyEnums,
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
   },
@@ -478,6 +580,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     description:
       'IT Service Management — Organization, Business Service, Application, Database, Host',
     schemas: [
+      technologyReleaseSchema,
       {
         symId: 'organization',
         name: 'Organization',
@@ -511,7 +614,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          technologyReleaseReference(),
           { id: 'tier', name: 'Tier', type: 'select', enumId: 'application-tier' },
           { id: 'sunset_date', name: 'Sunset Date', type: 'date' },
           {
@@ -531,7 +634,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_PURPLE,
         icon: 'database',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          technologyReleaseReference(),
           {
             id: 'application',
             name: 'Application',
@@ -571,7 +674,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         ]
       }
     ],
-    enums: itilEnums,
+    enums: [...technologyEnums, ...itilEnums],
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
   },
@@ -580,6 +683,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     name: 'Domain-Driven',
     description: 'Simple DDD-inspired model — Domain, Team, Service, Event',
     schemas: [
+      technologyReleaseSchema,
       {
         symId: 'domain',
         name: 'Domain',
@@ -604,7 +708,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'box',
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: 'service-kind' },
-          { id: 'technology', name: 'Technology', type: 'text' },
+          technologyReleaseReference(),
           {
             id: 'domain',
             name: 'Domain',
@@ -651,7 +755,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         ]
       }
     ],
-    enums: dddEnums,
+    enums: [...technologyEnums, ...dddEnums],
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
   },
@@ -839,6 +943,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     name: 'ArchiMate / TOGAF',
     description: 'The Open Group EA framework — Business, Application, and Technology layers',
     schemas: [
+      technologyReleaseSchema,
       {
         symId: 'business_capability',
         name: 'Business Capability',
@@ -881,7 +986,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          technologyReleaseReference(),
           { id: 'layer', name: 'Layer', type: 'select', enumId: 'layer' },
           { id: 'retirement_date', name: 'Retirement Date', type: 'date' },
           {
@@ -919,7 +1024,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_PURPLE,
         icon: 'server',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          technologyReleaseReference(),
           { id: 'kind', name: 'Kind', type: 'select', enumId: 'technology-kind' },
           { id: 'end_of_support', name: 'End of Support', type: 'date' },
           {
@@ -933,7 +1038,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         ]
       }
     ],
-    enums: archimateEnums,
+    enums: [...technologyEnums, ...archimateEnums],
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
   },
@@ -1079,9 +1184,14 @@ export const instantiateTemplateDefinitions = (
 
   const schemas = template.schemas.map(schema => {
     const resolvedFields: SchemaField[] = schema.fields.map(field => {
+      const externalMetadata =
+        field.external_kind === undefined
+          ? {}
+          : { external_kind: field.external_kind, refresh_mode: field.refresh_mode };
       if (field.type === 'reference') {
         const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
         return {
+          ...externalMetadata,
           id: field.id,
           name: field.name,
           predicate: field.predicate,
@@ -1094,6 +1204,7 @@ export const instantiateTemplateDefinitions = (
       if (field.type === 'containment') {
         const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
         return {
+          ...externalMetadata,
           id: field.id,
           name: field.name,
           predicate: field.predicate,
@@ -1105,6 +1216,7 @@ export const instantiateTemplateDefinitions = (
       }
       if (field.type === 'select') {
         return {
+          ...externalMetadata,
           id: field.id,
           name: field.name,
           type: field.type,
@@ -1112,15 +1224,15 @@ export const instantiateTemplateDefinitions = (
         };
       }
       if (field.type === 'text') {
-        return { id: field.id, name: field.name, type: 'text' };
+        return { ...externalMetadata, id: field.id, name: field.name, type: 'text' };
       }
       if (field.type === 'longtext') {
-        return { id: field.id, name: field.name, type: 'longtext' };
+        return { ...externalMetadata, id: field.id, name: field.name, type: 'longtext' };
       }
       if (field.type === 'boolean') {
-        return { id: field.id, name: field.name, type: 'boolean' };
+        return { ...externalMetadata, id: field.id, name: field.name, type: 'boolean' };
       }
-      return { id: field.id, name: field.name, type: 'date' };
+      return { ...externalMetadata, id: field.id, name: field.name, type: 'date' };
     });
 
     return {

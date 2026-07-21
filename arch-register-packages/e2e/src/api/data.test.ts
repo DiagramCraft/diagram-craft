@@ -130,7 +130,7 @@ test.describe('data routes', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('"Name"');
-    expect(body).toContain('"Technology"');
+    expect(body).toContain('"Technology Releases"');
     expect(body).toContain('"Depends On"');
   });
 
@@ -282,7 +282,7 @@ test.describe('data routes', () => {
     expect(body).toMatchObject({
       _uid: componentId,
       _name: 'Frontend App',
-      technology: 'React',
+      technology_releases: ['00000000-0000-0000-0006-000000000002'],
       depends_on: ['00000000-0000-0000-0003-000000000001', '00000000-0000-0000-0003-000000000003']
     });
   });
