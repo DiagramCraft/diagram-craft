@@ -278,14 +278,14 @@ test.describe('search routes', () => {
         fieldMatches: [{ fieldId: 'technology_releases', fieldName: 'Technology Releases' }]
       },
       {
-        schemaId: '00000000-0000-0000-0000-000000000006',
-        name: 'Technology Release',
-        fieldMatches: [{ fieldId: 'technology', fieldName: 'Technology' }]
-      },
-      {
         schemaId: '00000000-0000-0000-0000-000000000007',
         name: 'Technology',
         fieldMatches: []
+      },
+      {
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        name: 'Technology Release',
+        fieldMatches: [{ fieldId: 'technology', fieldName: 'Technology' }]
       }
     ]);
   });
