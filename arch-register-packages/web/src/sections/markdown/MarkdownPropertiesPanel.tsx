@@ -13,6 +13,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Chip } from '../../components/Chip';
+import { UserGroupPicker } from '../../components/UserGroupPicker';
 import { TypeBadge } from '../../components/TypeBadge';
 import { HoverCard } from '../../components/HoverCard';
 import { DocumentHoverCardBody } from '../../components/DocumentHoverCardBody';
@@ -439,8 +440,16 @@ const WorkspaceLinkValueEdit = ({
   const isUserLink = field.type === 'user_link';
   const values = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
   const available = isUserLink
-    ? users.filter(user => user.is_active).map(user => ({ id: user.id, label: user.display_name }))
-    : teams.map(team => ({ id: team.id, label: team.name }));
+    ? users
+        .filter(user => user.is_active)
+        .map(user => ({
+          id: user.id,
+          kind: 'user' as const,
+          label: user.display_name,
+          email: user.email,
+          color: user.color
+        }))
+    : teams.map(team => ({ id: team.id, kind: 'team' as const, label: team.name }));
   const labels = new Map(available.map(item => [item.id, item.label]));
   const addValue = (next: string | undefined) => {
     if (!next || values.includes(next)) return;
@@ -468,21 +477,12 @@ const WorkspaceLinkValueEdit = ({
         </Chip>
       ))}
       {(field.maxCardinality !== 1 || values.length === 0) && (
-        <Select.Root
-          value={isUserLink ? '__add_user__' : '__add_team__'}
-          onChange={next => addValue(next)}
-        >
-          <Select.Item value={isUserLink ? '__add_user__' : '__add_team__'}>
-            {isUserLink ? 'Add user…' : 'Add team or group…'}
-          </Select.Item>
-          {available
-            .filter(item => !values.includes(item.id))
-            .map(item => (
-              <Select.Item key={item.id} value={item.id}>
-                {item.label}
-              </Select.Item>
-            ))}
-        </Select.Root>
+        <UserGroupPicker
+          items={available}
+          excludeIds={values}
+          onSelect={item => addValue(item.id)}
+          placeholder={isUserLink ? 'Search users to add…' : 'Search teams or groups to add…'}
+        />
       )}
     </div>
   );
