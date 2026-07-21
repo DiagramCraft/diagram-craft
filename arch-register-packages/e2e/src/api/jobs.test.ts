@@ -140,6 +140,63 @@ test.describe('workspace job monitoring', () => {
     });
   });
 
+  test('creates a Technology End of Life job and marks destination fields external', async ({
+    server,
+    orpc
+  }) => {
+    const schema = await server.db.catalog.getSchema(
+      seedIds.workspace.default,
+      '00000000-0000-0000-0000-000000000006'
+    );
+    expect(schema).not.toBeNull();
+
+    const created = await orpc.jobs.schedules.create({
+      params: { workspace: 'default' },
+      body: {
+        jobType: 'technology-eol',
+        schemaId: schema!.id,
+        mapping: {
+          productFieldId: 'provider_product',
+          cycleFieldId: 'release_cycle',
+          latestVersionFieldId: 'latest_version',
+          releaseDateFieldId: 'release_date',
+          supportUntilFieldId: 'active_support_until',
+          securityUntilFieldId: 'security_support_until',
+          eolDateFieldId: 'eol_date',
+          sourceUrlFieldId: 'source_url',
+          synchronizedAtFieldId: 'last_synchronized'
+        },
+        frequency: { unit: 'hours', value: 24 }
+      }
+    });
+
+    expect(created).toMatchObject({
+      job_type: 'technology-eol',
+      system_identity: 'technology-eol',
+      target_schema_id: schema!.id,
+      target_schema_name: 'Technology Release',
+      enabled: true,
+      recurrence: { type: 'hours', intervalHours: 24 }
+    });
+    expect(new Date(created.next_occurrence_at).getTime()).toBeGreaterThan(Date.now());
+
+    const updatedSchema = await server.db.catalog.getSchema(seedIds.workspace.default, schema!.id);
+    expect(updatedSchema?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'eol_date',
+          external_kind: 'integration',
+          refresh_mode: 'scheduled'
+        }),
+        expect.objectContaining({
+          id: 'latest_version',
+          external_kind: 'integration',
+          refresh_mode: 'scheduled'
+        })
+      ])
+    );
+  });
+
   test('does not allow a run from another workspace to be cancelled', async ({ server, orpc }) => {
     const otherWorkspaceSchedule = await server.db.jobs.createSchedule(
       makeSchedule({

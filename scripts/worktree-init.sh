@@ -41,6 +41,9 @@ LINK_TARGETS=(
   ".claude"
   ".codex"
   ".local"
+  ".bob"
+  "AGENTS.md"
+  "CLAUDE.md"
 )
 
 for rel in "${LINK_TARGETS[@]}"; do

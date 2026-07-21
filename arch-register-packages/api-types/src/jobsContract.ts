@@ -39,6 +39,8 @@ const jobScheduleSchema = z.object({
   workspace: z.string(),
   job_type: z.string(),
   system_identity: z.string(),
+  target_schema_id: z.string().nullable(),
+  target_schema_name: z.string().nullable(),
   priority: z.number().int(),
   recurrence: recurrenceSchema,
   enabled: z.boolean(),
@@ -46,6 +48,32 @@ const jobScheduleSchema = z.object({
   created_at: z.string(),
   updated_at: z.string()
 });
+
+const technologyEolMappingSchema = z.object({
+  productFieldId: z.string().min(1),
+  cycleFieldId: z.string().min(1),
+  latestVersionFieldId: z.string().min(1).nullable(),
+  releaseDateFieldId: z.string().min(1).nullable(),
+  supportUntilFieldId: z.string().min(1).nullable(),
+  securityUntilFieldId: z.string().min(1).nullable(),
+  eolDateFieldId: z.string().min(1).nullable(),
+  sourceUrlFieldId: z.string().min(1).nullable(),
+  synchronizedAtFieldId: z.string().min(1).nullable()
+});
+
+const jobFrequencySchema = z.object({
+  unit: z.enum(['minutes', 'hours']),
+  value: z.number().int().positive()
+});
+
+const createJobBodySchema = z.discriminatedUnion('jobType', [
+  z.object({
+    jobType: z.literal('technology-eol'),
+    schemaId: z.string().min(1),
+    mapping: technologyEolMappingSchema,
+    frequency: jobFrequencySchema
+  })
+]);
 
 const jobRunSchema = z.object({
   id: z.string(),
@@ -69,6 +97,12 @@ const jobRunSchema = z.object({
   error: z.string().nullable(),
   attempt_count: z.number().int().nonnegative(),
   max_attempts: z.number().int().positive()
+});
+
+const jobScheduleUpdateSchema = z.object({
+  priority: z.number().int().min(1).max(10).optional(),
+  recurrence: recurrenceSchema.optional(),
+  enabled: z.boolean().optional()
 });
 
 const jobRunListQuerySchema = z.object({
@@ -117,11 +151,35 @@ export const jobsContract = oc.tag('Jobs').router({
           inputStructure: 'detailed',
           summary: 'List workspace job schedules',
           description:
-            'Lists system-owned recurring job schedules for workspace administrators. Schedules cannot be created or changed through this API.',
+            'Lists recurring job schedules for workspace administrators, including configured target schemas.',
           tags: ['Jobs']
         })
         .input(z.object({ params: ws }))
-        .output(z.array(jobScheduleSchema))
+        .output(z.array(jobScheduleSchema)),
+      update: oc
+        .route({
+          method: 'PATCH',
+          path: '/{workspace}/jobs/schedules/{id}',
+          inputStructure: 'detailed',
+          summary: 'Update a workspace job schedule',
+          description:
+            'Updates recurrence, priority, or enabled state for a workspace job schedule.',
+          tags: ['Jobs']
+        })
+        .input(z.object({ params: wsAndUUID, body: jobScheduleUpdateSchema }))
+        .output(jobScheduleSchema),
+      create: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/jobs/schedules',
+          inputStructure: 'detailed',
+          summary: 'Create a configured workspace job',
+          description:
+            'Creates an enabled recurring workspace job and applies its external field configuration atomically.',
+          tags: ['Jobs']
+        })
+        .input(z.object({ params: ws, body: createJobBodySchema }))
+        .output(jobScheduleSchema)
     },
     runs: {
       list: oc
@@ -161,5 +219,9 @@ export type JobRunStatus = z.infer<typeof jobRunStatusSchema>;
 export type JobServerStatus = z.infer<typeof jobServerStatusSchema>;
 export type JobServer = z.infer<typeof jobServerSchema>;
 export type JobSchedule = z.infer<typeof jobScheduleSchema>;
+export type JobScheduleUpdate = z.infer<typeof jobScheduleUpdateSchema>;
 export type JobRun = z.infer<typeof jobRunSchema>;
 export type JobRunPage = z.infer<typeof jobRunPageSchema>;
+export type TechnologyEolMapping = z.infer<typeof technologyEolMappingSchema>;
+export type JobFrequency = z.infer<typeof jobFrequencySchema>;
+export type CreateJobBody = z.infer<typeof createJobBodySchema>;

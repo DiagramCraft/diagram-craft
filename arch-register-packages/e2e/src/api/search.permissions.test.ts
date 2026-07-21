@@ -82,7 +82,8 @@ test.describe('search permission routes', () => {
     expect(result.entities.map(entity => entity.entityId)).toEqual([
       resources.entityIds.customerApi,
       '00000000-0000-0000-0003-00000000000e',
-      resources.entityIds.frontendApp
+      resources.entityIds.frontendApp,
+      '00000000-0000-0000-0006-000000000002'
     ]);
     expect(result.projects).toEqual([]);
     expect(result.files).toEqual([]);

@@ -35,4 +35,26 @@ test('job monitoring is restricted to workspace administrators', async ({ server
       query: {}
     })
   ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+  await expect(
+    personas.workspaceEditor.orpc.jobs.schedules.create({
+      params: { workspace: 'default' },
+      body: {
+        jobType: 'technology-eol',
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        mapping: {
+          productFieldId: 'provider_product',
+          cycleFieldId: 'release_cycle',
+          latestVersionFieldId: 'latest_version',
+          releaseDateFieldId: null,
+          supportUntilFieldId: null,
+          securityUntilFieldId: null,
+          eolDateFieldId: 'eol_date',
+          sourceUrlFieldId: null,
+          synchronizedAtFieldId: null
+        },
+        frequency: { unit: 'hours', value: 24 }
+      }
+    })
+  ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 });
