@@ -77,8 +77,9 @@
         - @id:ar.entities.templates Users can create entities from configured templates and use templates to standardize
           recurring entity structures.
 
-        - @id:ar.entities.technology-lifecycle Users can model technology releases as normal catalog entities, link
-          applications, services, and infrastructure to those releases, and record support and end-of-life dates.
+        - @id:ar.entities.technology-lifecycle Users can model technology releases as normal catalog entities through
+          the Default workspace template, link applications, services, and infrastructure to those releases, and
+          record support and end-of-life dates.
 
     - @id:ar.entity-views Users can browse, filter, search, and analyze entity collections through configurable views.
 
