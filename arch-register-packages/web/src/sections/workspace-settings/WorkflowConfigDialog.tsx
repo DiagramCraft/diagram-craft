@@ -331,13 +331,8 @@ export const WorkflowConfigDialog = ({
                           onRemove={id => removeApprover(option, 'user', id)}
                         />
                         <UserGroupPicker
-                          items={activeUsers.map(user => ({
-                            id: user.id,
-                            kind: 'user' as const,
-                            label: user.display_name,
-                            email: user.email,
-                            color: user.color
-                          }))}
+                          kind="user"
+                          activeOnly
                           excludeIds={approval.fallbackUserIds}
                           onSelect={item => addApprover(option, 'user', item.id)}
                           placeholder="Search users to add…"
@@ -361,11 +356,7 @@ export const WorkflowConfigDialog = ({
                           onRemove={id => removeApprover(option, 'team', id)}
                         />
                         <UserGroupPicker
-                          items={teams.map(team => ({
-                            id: team.id,
-                            kind: 'team' as const,
-                            label: team.name
-                          }))}
+                          kind="team"
                           excludeIds={approval.fallbackTeamIds}
                           onSelect={item => addApprover(option, 'team', item.id)}
                           placeholder="Search teams or groups to add…"

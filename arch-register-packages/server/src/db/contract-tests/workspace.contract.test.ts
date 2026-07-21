@@ -158,6 +158,38 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       const assignments = await db.workspace.listTeamAssignments(workspace);
       expect(assignments.map(a => a.team_id)).toEqual([teamA]);
     });
+
+    it('searches teams by name and applies a limit', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const teamA = randomUUID();
+      const teamB = randomUUID();
+
+      await db.workspace.replaceTeams(workspace, [
+        {
+          id: teamA,
+          workspace,
+          name: 'Platform Engineering',
+          sort_order: 0,
+          color: null,
+          description: '',
+          created_at: new Date()
+        },
+        {
+          id: teamB,
+          workspace,
+          name: 'Platform Operations',
+          sort_order: 1,
+          color: null,
+          description: '',
+          created_at: new Date()
+        }
+      ]);
+
+      const result = await db.workspace.listTeams(workspace, { q: 'platform', limit: 1 });
+      expect(result).toHaveLength(1);
+      expect(result[0]!.name).toBe('Platform Engineering');
+    });
   });
 
   describe('workspace members and roles', () => {

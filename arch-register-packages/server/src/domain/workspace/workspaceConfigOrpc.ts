@@ -57,9 +57,9 @@ export const workspaceConfigORPCRouter = configRouter.router({
       })
     },
     teams: {
-      list: configRouter.config.teams.list.handler(async ({ context }) => {
+      list: configRouter.config.teams.list.handler(async ({ input, context }) => {
         const { workspace } = context;
-        return await listTeams(context.db, workspace, context.event);
+        return await listTeams(context.db, workspace, context.event, input.query ?? undefined);
       }),
       replace: configRouter.config.teams.replace.handler(async ({ input, context }) => {
         const { workspace } = context;
@@ -120,9 +120,9 @@ export const workspaceConfigORPCRouter = configRouter.router({
       })
     },
     users: {
-      list: configRouter.config.users.list.handler(async ({ context }) => {
+      list: configRouter.config.users.list.handler(async ({ input, context }) => {
         const { workspace } = context;
-        return await listUsers(context.db, workspace, context.event);
+        return await listUsers(context.db, workspace, context.event, input.query ?? undefined);
       })
     },
     tokens: {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { DocumentListItem, ProjectFile } from '@arch-register/api-types/projectContract';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { Autocomplete } from '@diagram-craft/app-components/Autocomplete';
 import { TbFileText, TbFolder, TbFolderOpen } from 'react-icons/tb';
 import {
   useDocumentList,
@@ -226,7 +227,11 @@ export const DocumentPicker = ({
   const { workspaceSlug } = useWorkspaceContext();
   const [query, setQuery] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
-  const { data: searchResults = [], isLoading: searchLoading } = useDocumentPickerSearch(
+  const {
+    data: searchResults = [],
+    isLoading: searchLoading,
+    isError: searchError
+  } = useDocumentPickerSearch(
     workspaceSlug,
     { q: query, documentTypeId, allowedScopes, limit },
     { enabled: !!query.trim() }
@@ -249,14 +254,29 @@ export const DocumentPicker = ({
         </div>
       )}
       <div className={styles.inputRow}>
-        <input
-          // eslint-disable-next-line jsx-a11y/no-autofocus
-          autoFocus
-          type="text"
-          className={styles.pickerInput}
-          placeholder={selectedDocumentId ? 'Search to change document…' : 'Search for a document…'}
+        <Autocomplete
+          items={searchResults}
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onValueChange={setQuery}
+          onSelect={document => {
+            onSelectDocument(document);
+            setQuery('');
+          }}
+          getItemKey={document => document.file.id}
+          getItemLabel={document => document.file.name}
+          placeholder={selectedDocumentId ? 'Search to change document…' : 'Search for a document…'}
+          ariaLabel={selectedDocumentId ? 'Search to change document' : 'Search for a document'}
+          emptyMessage="No documents found"
+          loading={!!query.trim() && searchLoading}
+          errorMessage={query.trim() && searchError ? 'Unable to search documents' : undefined}
+          autoFocus
+          inputClassName={styles.pickerInput}
+          renderItem={document => (
+            <>
+              <span className={styles.pickerName}>{document.file.name}</span>
+              <span className={styles.pickerSchema}>{scopeLabel(document.scope)}</span>
+            </>
+          )}
         />
         {canBrowse && (
           <button type="button" className={styles.browseButton} onClick={() => setBrowseOpen(true)}>
@@ -264,28 +284,6 @@ export const DocumentPicker = ({
           </button>
         )}
       </div>
-      {query.trim() && (
-        <div className={styles.pickerResults}>
-          {searchLoading && <div className={styles.pickerHint}>Searching…</div>}
-          {!searchLoading && searchResults.length === 0 && (
-            <div className={styles.pickerHint}>No documents found</div>
-          )}
-          {searchResults.map(document => (
-            <button
-              key={document.file.id}
-              type="button"
-              className={`${styles.pickerItem} ${document.file.id === selectedDocumentId ? styles.pickerItemActive : ''}`}
-              onClick={() => {
-                onSelectDocument(document);
-                setQuery('');
-              }}
-            >
-              <span className={styles.pickerName}>{document.file.name}</span>
-              <span className={styles.pickerSchema}>{scopeLabel(document.scope)}</span>
-            </button>
-          ))}
-        </div>
-      )}
       {canBrowse && (
         <Dialog
           open={browseOpen}

@@ -93,8 +93,29 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     this.run('UPDATE users SET last_login_at = ? WHERE id = ?', [timestamp.toISOString(), id]);
   }
 
-  async listUsers() {
-    return this.all('SELECT * FROM users ORDER BY display_name', [], authMappers.user);
+  async listUsers(options?: { q?: string; limit?: number }) {
+    const query = options?.q?.trim();
+    const limit =
+      options?.limit == null
+        ? query
+          ? 50
+          : undefined
+        : Math.min(Math.max(Math.trunc(options.limit), 1), 100);
+    const pattern = query ? `%${query.replace(/[\\%_]/g, '\\$&')}%` : undefined;
+    const clauses = ['1 = 1'];
+    const params: unknown[] = [];
+    if (pattern != null) {
+      clauses.push(
+        "(LOWER(display_name) LIKE LOWER(?) ESCAPE '\\' OR LOWER(email) LIKE LOWER(?) ESCAPE '\\')"
+      );
+      params.push(pattern, pattern);
+    }
+    const limitClause = limit == null ? '' : ` LIMIT ${limit}`;
+    return this.all(
+      `SELECT * FROM users WHERE ${clauses.join(' AND ')} ORDER BY display_name, id${limitClause}`,
+      params,
+      authMappers.user
+    );
   }
 
   async createApiToken(input: ApiTokenDbCreate) {

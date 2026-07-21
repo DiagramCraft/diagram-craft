@@ -55,6 +55,11 @@ export type UserDbUpdate = {
   updated_at: Date;
 };
 
+export type UserListOptions = {
+  q?: string;
+  limit?: number;
+};
+
 export type ApiTokenDbResult = {
   id: string;
   workspace: string;
@@ -135,7 +140,7 @@ export type AuthDatabase = {
   createUser(input: UserDbCreate): Promise<UserDbResult>;
   updateUser(id: string, input: UserDbUpdate): Promise<UserDbResult | null>;
   updateUserLastLogin(id: string, timestamp: Date): Promise<void>;
-  listUsers(): Promise<UserDbResult[]>;
+  listUsers(options?: UserListOptions): Promise<UserDbResult[]>;
 
   createApiToken(input: ApiTokenDbCreate): Promise<ApiTokenDbResult>;
   listApiTokens(workspace: string, createdBy?: string): Promise<ApiTokenDbResult[]>;

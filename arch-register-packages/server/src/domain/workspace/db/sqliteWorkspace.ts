@@ -7,7 +7,8 @@ import {
   WorkspaceDbUpdate,
   RoleDefinitionDbUpdate,
   WorkspaceDatabase,
-  ProjectEntityTypeDbCreate
+  ProjectEntityTypeDbCreate,
+  TeamListOptions
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
@@ -183,10 +184,25 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return await this.listProjectEntityTypes(workspace);
   }
 
-  async listTeams(workspace: string) {
+  async listTeams(workspace: string, options?: TeamListOptions) {
+    const query = options?.q?.trim();
+    const limit =
+      options?.limit == null
+        ? query
+          ? 50
+          : undefined
+        : Math.min(Math.max(Math.trunc(options.limit), 1), 100);
+    const pattern = query ? `%${query.replace(/[\\%_]/g, '\\$&')}%` : undefined;
+    const clauses = ['workspace = ?'];
+    const params: unknown[] = [workspace];
+    if (pattern != null) {
+      clauses.push("LOWER(name) LIKE LOWER(?) ESCAPE '\\'");
+      params.push(pattern);
+    }
+    const limitClause = limit == null ? '' : ` LIMIT ${limit}`;
     return this.all(
-      'SELECT id, workspace, name, sort_order, color, description, created_at FROM workspace_owner WHERE workspace = ? ORDER BY sort_order, id',
-      [workspace],
+      `SELECT id, workspace, name, sort_order, color, description, created_at FROM workspace_owner WHERE ${clauses.join(' AND ')} ORDER BY sort_order, id${limitClause}`,
+      params,
       workspaceMappers.owner
     );
   }

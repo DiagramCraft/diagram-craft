@@ -3,7 +3,8 @@ import type {
   AuthDatabase,
   UserDbCreate,
   GlobalRole,
-  UserDbUpdate
+  UserDbUpdate,
+  UserListOptions
 } from './authDatabase';
 import { authMappers } from './authDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
@@ -107,9 +108,27 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
     }
   }
 
-  async listUsers() {
+  async listUsers(options?: UserListOptions) {
+    const query = options?.q?.trim();
+    const limit =
+      options?.limit == null
+        ? query
+          ? 50
+          : undefined
+        : Math.min(Math.max(Math.trunc(options.limit), 1), 100);
+    const pattern = query ? `%${query.replace(/[\\%_]/g, '\\$&')}%` : undefined;
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT * FROM users ORDER BY display_name
+      SELECT * FROM users
+      WHERE ${
+        pattern == null
+          ? this.sql`TRUE`
+          : this.sql`(
+        display_name ILIKE ${pattern} ESCAPE '\\'
+        OR email ILIKE ${pattern} ESCAPE '\\'
+      )`
+      }
+      ORDER BY display_name, id
+      ${limit == null ? this.sql`` : this.sql`LIMIT ${limit}`}
     `;
     return mapDatabaseRows(rows, authMappers.user);
   }

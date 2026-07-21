@@ -628,13 +628,8 @@ const AddMembersDialog = ({
 
             {availableUsers.length > 0 ? (
               <UserGroupPicker
-                items={availableUsers.map(user => ({
-                  id: user.id,
-                  kind: 'user' as const,
-                  label: `${getUserLabel(user)}${!user.is_active ? ' - inactive' : ''}`,
-                  email: user.email,
-                  color: user.color
-                }))}
+                kind="user"
+                excludeIds={[...existingUserIds, ...pickedUserIds]}
                 onSelect={item => pickUser(item.id)}
                 placeholder="Search people to add…"
               />

@@ -7,7 +7,8 @@ import {
   TeamMembershipDbCreate,
   RoleDefinitionDbCreate,
   RoleDefinitionDbUpdate,
-  ProjectEntityTypeDbCreate
+  ProjectEntityTypeDbCreate,
+  TeamListOptions
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
@@ -199,12 +200,22 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     }
   }
 
-  async listTeams(workspace: string) {
+  async listTeams(workspace: string, options?: TeamListOptions) {
+    const query = options?.q?.trim();
+    const limit =
+      options?.limit == null
+        ? query
+          ? 50
+          : undefined
+        : Math.min(Math.max(Math.trunc(options.limit), 1), 100);
+    const pattern = query ? `%${query.replace(/[\\%_]/g, '\\$&')}%` : undefined;
     const rows = await this.sql<DatabaseRow[]>`
       SELECT id, workspace, name, sort_order, color, description, created_at
       FROM workspace_owner
       WHERE workspace = ${workspace}
+      AND ${pattern == null ? this.sql`TRUE` : this.sql`name ILIKE ${pattern} ESCAPE '\\'`}
       ORDER BY sort_order, id
+      ${limit == null ? this.sql`` : this.sql`LIMIT ${limit}`}
     `;
     return mapDatabaseRows(rows, workspaceMappers.owner);
   }
