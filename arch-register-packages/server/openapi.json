@@ -38025,7 +38025,8 @@
                           "content_node",
                           "assessment",
                           "assessment_response",
-                          "project_milestone"
+                          "project_milestone",
+                          "automation_note"
                         ],
                         "type": "string",
                         "description": "Type of entity affected"
@@ -38869,7 +38870,8 @@
                               "comment-activity",
                               "governance-task-assigned",
                               "governance-case-activity",
-                              "governance-proposal-reminder"
+                              "governance-proposal-reminder",
+                              "automation-rule"
                             ],
                             "type": "string"
                           },
@@ -38939,7 +38941,8 @@
                               "comment-activity",
                               "governance-task-assigned",
                               "governance-case-activity",
-                              "governance-proposal-reminder"
+                              "governance-proposal-reminder",
+                              "automation-rule"
                             ],
                             "type": "string"
                           },
@@ -39017,7 +39020,8 @@
                             "comment-activity",
                             "governance-task-assigned",
                             "governance-case-activity",
-                            "governance-proposal-reminder"
+                            "governance-proposal-reminder",
+                            "automation-rule"
                           ],
                           "type": "string"
                         },
@@ -39068,7 +39072,8 @@
                               "comment-activity",
                               "governance-task-assigned",
                               "governance-case-activity",
-                              "governance-proposal-reminder"
+                              "governance-proposal-reminder",
+                              "automation-rule"
                             ],
                             "type": "string"
                           },
@@ -39138,7 +39143,8 @@
                               "comment-activity",
                               "governance-task-assigned",
                               "governance-case-activity",
-                              "governance-proposal-reminder"
+                              "governance-proposal-reminder",
+                              "automation-rule"
                             ],
                             "type": "string"
                           },
