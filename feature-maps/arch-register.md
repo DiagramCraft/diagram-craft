@@ -289,8 +289,12 @@
         - @id:ar.integrations.webhooks Administrators can configure webhooks and inspect supported delivery behavior for
           workspace events.
 
-        - @id:ar.integrations.jobs Administrators can inspect scheduled jobs, job servers, run history, and supported
-          cancellation operations.
+        - @id:ar.integrations.jobs Administrators can create and configure supported recurring jobs, inspect scheduled
+          jobs, job servers, run history, and supported cancellation operations.
+
+            - @id:ar.integrations.jobs.standard_jobs Administrators can configure a Technology End of Life job to
+              hydrate mapped schema fields from endoflife.date while recording those fields as scheduled integration
+              data.
 
         - @id:ar.integrations.external-content @status:experimental Configured external content providers can be mounted
           and synchronized into supported workspace content workflows.

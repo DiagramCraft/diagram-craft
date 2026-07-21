@@ -201,7 +201,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
           <div className={styles.sectionHead}>
             <div>
               <div className={styles.sectionTitle}>Recurring schedules</div>
-              <div className={styles.sectionSub}>Schedules are managed by system components.</div>
+              <div className={styles.sectionSub}>Recurring jobs run on registered job servers.</div>
             </div>
             <Button
               variant="ghost"
@@ -224,6 +224,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                 <Table.Head>
                   <Table.Row>
                     <Table.HeaderCell>Job type</Table.HeaderCell>
+                    <Table.HeaderCell>Target schema</Table.HeaderCell>
                     <Table.HeaderCell>Recurrence</Table.HeaderCell>
                     <Table.HeaderCell width={70}>Priority</Table.HeaderCell>
                     <Table.HeaderCell width={90}>State</Table.HeaderCell>
@@ -245,6 +246,9 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                       <Table.Cell>
                         <div>{schedule.job_type}</div>
                         <div className={styles.muted}>{schedule.system_identity}</div>
+                      </Table.Cell>
+                      <Table.Cell>
+                        {schedule.target_schema_name ?? <span className={styles.muted}>—</span>}
                       </Table.Cell>
                       <Table.Cell>{formatRecurrence(schedule.recurrence)}</Table.Cell>
                       <Table.Cell numeric>{schedule.priority}</Table.Cell>
