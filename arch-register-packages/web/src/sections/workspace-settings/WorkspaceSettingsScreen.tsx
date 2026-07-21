@@ -17,6 +17,7 @@ import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
 import { RoutePendingComponent } from '../../routes/RoutePendingComponent';
 import { JobMonitoringSubSection } from './sub-sections/JobMonitoringSubSection';
 import { WebhooksSubSection } from './sub-sections/WebhooksSubSection';
+import { CreateJobDialog } from '../../components/jobs/CreateJobDialog';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -68,7 +69,7 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   },
   'jobs': {
     title: 'Job monitoring',
-    sub: 'Monitor system-owned scheduled work and cancel queued runs.'
+    sub: 'Configure recurring jobs, inspect their runs, and cancel queued work.'
   },
   'webhooks': {
     title: 'Webhooks',
@@ -96,6 +97,7 @@ export const WorkspaceSettingsScreen = () => {
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
   const [rolesAddDialogOpen, setRolesAddDialogOpen] = useState(false);
+  const [jobAddDialogOpen, setJobAddDialogOpen] = useState(false);
 
   useEffect(() => {
     if (sectionIsValid || !ctx.defaultSettingsSection) return;
@@ -159,6 +161,14 @@ export const WorkspaceSettingsScreen = () => {
       >
         New custom role
       </Button>
+    ) : section === 'jobs' ? (
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setJobAddDialogOpen(true)}
+      >
+        Add job
+      </Button>
     ) : undefined;
 
   return (
@@ -218,6 +228,13 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
+      {section === 'jobs' && (
+        <CreateJobDialog
+          open={jobAddDialogOpen}
+          workspaceSlug={workspaceSlug}
+          onClose={() => setJobAddDialogOpen(false)}
+        />
+      )}
       {section === 'webhooks' && (
         <WebhooksSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
       )}

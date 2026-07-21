@@ -44427,7 +44427,7 @@
       "get": {
         "operationId": "jobs.schedules.list",
         "summary": "List workspace job schedules",
-        "description": "Lists system-owned recurring job schedules for workspace administrators. Schedules cannot be created or changed through this API.",
+        "description": "Lists recurring job schedules for workspace administrators, including configured target schemas.",
         "tags": [
           "Jobs",
           "Jobs"
@@ -44463,6 +44463,26 @@
                       },
                       "system_identity": {
                         "type": "string"
+                      },
+                      "target_schema_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "target_schema_name": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "priority": {
                         "type": "integer",
@@ -44571,6 +44591,8 @@
                       "workspace",
                       "job_type",
                       "system_identity",
+                      "target_schema_id",
+                      "target_schema_name",
                       "priority",
                       "recurrence",
                       "enabled",
@@ -44579,6 +44601,334 @@
                       "updated_at"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "jobs.schedules.create",
+        "summary": "Create a configured workspace job",
+        "description": "Creates an enabled recurring workspace job and applies its external field configuration atomically.",
+        "tags": [
+          "Jobs",
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jobType": {
+                    "const": "technology-eol"
+                  },
+                  "schemaId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "mapping": {
+                    "type": "object",
+                    "properties": {
+                      "productFieldId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "cycleFieldId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "latestVersionFieldId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "releaseDateFieldId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "supportUntilFieldId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "securityUntilFieldId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "eolDateFieldId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "sourceUrlFieldId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "synchronizedAtFieldId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "productFieldId",
+                      "cycleFieldId",
+                      "latestVersionFieldId",
+                      "releaseDateFieldId",
+                      "supportUntilFieldId",
+                      "securityUntilFieldId",
+                      "eolDateFieldId",
+                      "sourceUrlFieldId",
+                      "synchronizedAtFieldId"
+                    ]
+                  },
+                  "frequency": {
+                    "type": "object",
+                    "properties": {
+                      "unit": {
+                        "enum": [
+                          "minutes",
+                          "hours"
+                        ],
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "exclusiveMinimum": 0
+                      }
+                    },
+                    "required": [
+                      "unit",
+                      "value"
+                    ]
+                  }
+                },
+                "required": [
+                  "jobType",
+                  "schemaId",
+                  "mapping",
+                  "frequency"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "workspace": {
+                      "type": "string"
+                    },
+                    "job_type": {
+                      "type": "string"
+                    },
+                    "system_identity": {
+                      "type": "string"
+                    },
+                    "target_schema_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "target_schema_name": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "priority": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "recurrence": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "minutes"
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "exclusiveMinimum": 0
+                            },
+                            "startsAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalMinutes",
+                            "startsAt"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "hours"
+                            },
+                            "intervalHours": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "exclusiveMinimum": 0
+                            },
+                            "startsAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalHours",
+                            "startsAt"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "daily"
+                            },
+                            "timeUtc": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "timeUtc"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "weekly"
+                            },
+                            "weekdayUtc": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 6
+                            },
+                            "timeUtc": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "weekdayUtc",
+                            "timeUtc"
+                          ]
+                        }
+                      ]
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "next_occurrence_at": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "job_type",
+                    "system_identity",
+                    "target_schema_id",
+                    "target_schema_name",
+                    "priority",
+                    "recurrence",
+                    "enabled",
+                    "next_occurrence_at",
+                    "created_at",
+                    "updated_at"
+                  ]
                 }
               }
             }

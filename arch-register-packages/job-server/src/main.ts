@@ -9,6 +9,7 @@ import { createExternalContentJobHandler } from '@arch-register/server/domain/ex
 import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webhook/webhookDelivery';
 import { createGovernanceNotificationJobHandler } from '@arch-register/server/domain/governance/governanceNotifications';
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
+import { createTechnologyEolJobHandler } from '@arch-register/server/domain/jobs/technologyEolJob';
 import { METADATA_GENERATION_SCAN_JOB_TYPE } from '@arch-register/server/domain/document/aiMetadataGenerationConstants';
 import {
   createEmailDeliveryConfigFromEnv,
@@ -58,6 +59,7 @@ const main = async () => {
     METADATA_GENERATION_SCAN_JOB_TYPE,
     createDocumentMetadataGenerationScanJobHandler(db, storage)
   );
+  handlers.set('technology-eol', createTechnologyEolJobHandler(db));
   handlers.set(
     NOTIFICATION_DELIVERY_JOB_TYPE,
     createNotificationDeliveryJobHandler(db, createEmailDeliveryConfigFromEnv())
