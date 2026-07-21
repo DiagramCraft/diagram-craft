@@ -9,7 +9,7 @@ export type GovernanceCaseStatus = 'open' | 'completed' | 'cancelled';
 
 export type GovernanceAssignmentAction = 'approve' | 'acknowledge' | 'review' | 'remediate';
 
-export type GovernanceAssignmentTargetType = 'user' | 'team_role' | 'capability';
+export type GovernanceAssignmentTargetType = 'user' | 'team' | 'team_role' | 'capability';
 
 export type GovernanceAssignmentStatus = 'open' | 'completed' | 'superseded';
 

@@ -85,6 +85,37 @@ export type DocumentMetadataDbUpsert = Omit<DocumentMetadataDbResult, 'generated
   generated_metadata?: DocumentGeneratedMetadata;
 };
 
+export type DocumentWorkflowRequestStatus =
+  | 'pending'
+  | 'changes_requested'
+  | 'approved'
+  | 'rejected'
+  | 'superseded'
+  | 'blocked';
+
+export type DocumentWorkflowRequestDbResult = {
+  id: string;
+  workspace: string;
+  node_id: string;
+  field_id: string;
+  case_id: string;
+  previous_value: string;
+  target_value: string;
+  status: DocumentWorkflowRequestStatus;
+  required_approvals: number;
+  resolved_slots: Array<Record<string, unknown>>;
+  policy_snapshot: Record<string, unknown>;
+  source_revision: number | null;
+  initiator_user_id: string | null;
+  created_at: Date;
+  resolved_at: Date | null;
+};
+
+export type DocumentWorkflowRequestDbCreate = Omit<
+  DocumentWorkflowRequestDbResult,
+  'resolved_at'
+> & { resolved_at?: Date | null };
+
 export type DocumentLinkIndexDbResult = {
   workspace: string;
   node_id: string;
@@ -176,6 +207,27 @@ export type DocumentDatabase = {
   getDocumentMetadata(workspace: string, nodeId: string): Promise<DocumentMetadataDbResult | null>;
   upsertDocumentMetadata(input: DocumentMetadataDbUpsert): Promise<void>;
   deleteDocumentMetadata(workspace: string, nodeId: string): Promise<void>;
+  getCurrentWorkflowRequests(
+    workspace: string,
+    nodeId: string
+  ): Promise<DocumentWorkflowRequestDbResult[]>;
+  getWorkflowRequestByCase(
+    workspace: string,
+    caseId: string
+  ): Promise<DocumentWorkflowRequestDbResult | null>;
+  createWorkflowRequest(
+    input: DocumentWorkflowRequestDbCreate
+  ): Promise<DocumentWorkflowRequestDbResult>;
+  updateWorkflowRequestStatus(
+    workspace: string,
+    id: string,
+    status: DocumentWorkflowRequestStatus,
+    resolvedAt?: Date | null
+  ): Promise<DocumentWorkflowRequestDbResult | null>;
+  listWorkflowRequests(
+    workspace: string,
+    nodeId: string
+  ): Promise<DocumentWorkflowRequestDbResult[]>;
   listDocumentLinks(workspace: string, nodeId: string): Promise<DocumentLinkIndexDbResult[]>;
   replaceDocumentLinks(
     workspace: string,

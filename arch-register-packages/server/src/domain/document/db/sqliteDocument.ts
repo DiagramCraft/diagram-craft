@@ -87,6 +87,38 @@ const metadataMapper = (row: DatabaseRow) => ({
   updated_at: databaseDate(row['updated_at'])
 });
 
+const workflowRequestMapper = (row: DatabaseRow) => ({
+  id: String(row['id']),
+  workspace: String(row['workspace']),
+  node_id: String(row['node_id']),
+  field_id: String(row['field_id']),
+  case_id: String(row['case_id']),
+  previous_value: String(row['previous_value']),
+  target_value: String(row['target_value']),
+  status: String(row['status']) as
+    | 'pending'
+    | 'changes_requested'
+    | 'approved'
+    | 'rejected'
+    | 'superseded'
+    | 'blocked',
+  required_approvals: Number(row['required_approvals']),
+  resolved_slots: parseDatabaseJson(
+    row['resolved_slots'],
+    [],
+    'document_workflow_request.resolved_slots'
+  ),
+  policy_snapshot: parseDatabaseJson(
+    row['policy_snapshot'],
+    {},
+    'document_workflow_request.policy_snapshot'
+  ),
+  source_revision: row['source_revision'] == null ? null : Number(row['source_revision']),
+  initiator_user_id: row['initiator_user_id'] == null ? null : String(row['initiator_user_id']),
+  created_at: databaseDate(row['created_at']),
+  resolved_at: row['resolved_at'] == null ? null : databaseDate(row['resolved_at'])
+});
+
 const linkMapper = (row: DatabaseRow) => ({
   workspace: String(row['workspace']),
   node_id: String(row['node_id']),
@@ -433,6 +465,77 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
       workspace,
       nodeId
     ]);
+  }
+
+  async getCurrentWorkflowRequests(workspace: string, nodeId: string) {
+    return this.all(
+      `SELECT * FROM document_workflow_request
+       WHERE workspace = ? AND node_id = ? AND status IN ('pending', 'changes_requested', 'blocked')
+       ORDER BY field_id`,
+      [workspace, nodeId],
+      workflowRequestMapper
+    );
+  }
+
+  async getWorkflowRequestByCase(workspace: string, caseId: string) {
+    return this.get(
+      'SELECT * FROM document_workflow_request WHERE workspace = ? AND case_id = ?',
+      [workspace, caseId],
+      workflowRequestMapper
+    );
+  }
+
+  async createWorkflowRequest(input: import('./documentDatabase').DocumentWorkflowRequestDbCreate) {
+    this.run(
+      `INSERT INTO document_workflow_request
+        (id, workspace, node_id, field_id, case_id, previous_value, target_value, status,
+         required_approvals, resolved_slots, policy_snapshot, source_revision, initiator_user_id,
+         created_at, resolved_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        input.id,
+        input.workspace,
+        input.node_id,
+        input.field_id,
+        input.case_id,
+        input.previous_value,
+        input.target_value,
+        input.status,
+        input.required_approvals,
+        JSON.stringify(input.resolved_slots),
+        JSON.stringify(input.policy_snapshot),
+        input.source_revision,
+        input.initiator_user_id,
+        input.created_at.toISOString(),
+        input.resolved_at?.toISOString() ?? null
+      ]
+    );
+    return (await this.getWorkflowRequestByCase(input.workspace, input.case_id))!;
+  }
+
+  async updateWorkflowRequestStatus(
+    workspace: string,
+    id: string,
+    status: import('./documentDatabase').DocumentWorkflowRequestStatus,
+    resolvedAt?: Date | null
+  ) {
+    this.run(
+      'UPDATE document_workflow_request SET status = ?, resolved_at = ? WHERE workspace = ? AND id = ?',
+      [status, resolvedAt?.toISOString() ?? null, workspace, id]
+    );
+    return this.get(
+      'SELECT * FROM document_workflow_request WHERE workspace = ? AND id = ?',
+      [workspace, id],
+      workflowRequestMapper
+    );
+  }
+
+  async listWorkflowRequests(workspace: string, nodeId: string) {
+    return this.all(
+      'SELECT * FROM document_workflow_request WHERE workspace = ? AND node_id = ? ORDER BY created_at DESC',
+      [workspace, nodeId],
+      workflowRequestMapper
+    );
   }
 
   async listDocumentLinks(workspace: string, nodeId: string) {

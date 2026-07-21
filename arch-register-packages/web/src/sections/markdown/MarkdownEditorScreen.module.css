@@ -8,6 +8,23 @@
   overflow: hidden;
 }
 
+.changeKind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  color: var(--base-fg-dim);
+  font-size: 12px;
+}
+
+.changeKind select {
+  border: 1px solid var(--base-border);
+  border-radius: 4px;
+  background: var(--base-bg);
+  color: var(--base-fg);
+  padding: 4px 6px;
+}
+
 .hiddenInput {
   display: none;
 }

@@ -45,6 +45,7 @@ import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
+import { createDocumentGovernanceRegistry } from './domain/document/documentWorkflowOperations';
 import { getHttpErrorLogLevel } from './utils/errorLogging';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
@@ -163,7 +164,11 @@ export const createApp = (
   app.use(
     createGovernanceORPCHandler(
       db,
-      new Map([...createEntityGovernanceRegistry(), ...createDeprecationGovernanceRegistry()])
+      new Map([
+        ...createEntityGovernanceRegistry(),
+        ...createDeprecationGovernanceRegistry(),
+        ...createDocumentGovernanceRegistry()
+      ])
     )
   );
   app.use(createWikiCommentORPCHandler(db));

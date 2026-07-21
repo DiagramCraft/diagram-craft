@@ -12,7 +12,9 @@ import {
   documentValueSchema,
   documentGeneratedMetadataSchema,
   documentMetadataSchema,
-  documentTypeSchema
+  documentTypeSchema,
+  documentWorkflowHistoryEventSchema,
+  documentWorkflowStatusSchema
 } from '@arch-register/api-types/documentContract';
 import { conditionsQuerySchema } from '@arch-register/api-types/viewContract';
 
@@ -137,7 +139,8 @@ const markdownContentSchema = z.object({
     'AI-generated metadata details keyed by output field identifier'
   ),
   available_fields: z.array(documentFieldSchema).describe('Current fields available for editing'),
-  retired_fields: z.array(documentFieldSchema).describe('Retired fields retained for history')
+  retired_fields: z.array(documentFieldSchema).describe('Retired fields retained for history'),
+  workflow: z.array(documentWorkflowStatusSchema).optional()
 });
 
 const fileFolderSchema = z.object({
@@ -189,7 +192,8 @@ const documentListItemSchema = z.object({
   document_type_name: z.string().nullable(),
   document_type_color: z.string().nullable(),
   document_type_icon: z.string().nullable(),
-  metadata: documentMetadataSchema
+  metadata: documentMetadataSchema,
+  workflow: z.array(documentWorkflowStatusSchema).optional()
 });
 
 const runAiActionResponseSchema = z.object({
@@ -1094,6 +1098,7 @@ export const projectContract = oc.tag('Projects').router({
             name: z.string().optional().describe('Optional new name for the document'),
             document_type_id: z.string().nullable().optional().describe('Document type identifier'),
             metadata: documentMetadataSchema.optional().describe('Structured metadata values'),
+            change_kind: z.enum(['minor', 'major']).default('minor'),
             external: externalUpdateEnvelopeSchema
               .optional()
               .describe(
@@ -1124,7 +1129,8 @@ export const projectContract = oc.tag('Projects').router({
               .string()
               .nullable()
               .describe('New document type identifier, or null to remove the type'),
-            metadata: documentMetadataSchema.describe('Reviewed structured metadata values')
+            metadata: documentMetadataSchema.describe('Reviewed structured metadata values'),
+            change_kind: z.enum(['minor', 'major']).default('major')
           })
         })
       )
@@ -1169,6 +1175,35 @@ export const projectContract = oc.tag('Projects').router({
         })
       )
       .output(z.array(markdownRevisionSummarySchema)),
+    listMarkdownWorkflowHistory: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/markdown/{nodeId}/workflow-history',
+        inputStructure: 'detailed',
+        summary: 'List document workflow history',
+        tags: ['Projects']
+      })
+      .input(z.object({ params: ws.extend({ nodeId: z.string() }) }))
+      .output(z.array(documentWorkflowHistoryEventSchema)),
+    overrideMarkdownWorkflow: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/markdown/{nodeId}/workflow-override',
+        inputStructure: 'detailed',
+        summary: 'Override document workflow status',
+        tags: ['Projects']
+      })
+      .input(
+        z.object({
+          params: ws.extend({ nodeId: z.string() }),
+          body: z.object({
+            field_id: z.string().min(1),
+            target_value: z.string().min(1),
+            reason: z.string().min(1)
+          })
+        })
+      )
+      .output(z.array(documentWorkflowStatusSchema)),
     getMarkdownRevision: oc
       .route({
         method: 'GET',
@@ -1202,7 +1237,8 @@ export const projectContract = oc.tag('Projects').router({
           params: ws.extend({
             nodeId: z.string().describe('Markdown node identifier'),
             revisionId: z.string().describe('Revision identifier to restore')
-          })
+          }),
+          body: z.object({ change_kind: z.enum(['minor', 'major']).default('major') }).optional()
         })
       )
       .output(projectFileSchema),

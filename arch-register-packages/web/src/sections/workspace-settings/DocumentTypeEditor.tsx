@@ -371,6 +371,8 @@ export const DocumentTypeEditor = ({
                     <DocumentFieldRow
                       key={fieldKeysRef.current.get(field.id) ?? field.id}
                       field={field}
+                      workspaceSlug={workspaceSlug}
+                      allFields={fields}
                       onUpdate={patch => updateField(field.id, patch)}
                       onRemove={() => removeField(field)}
                     />

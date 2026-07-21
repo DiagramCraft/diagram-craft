@@ -39,7 +39,16 @@ export const validateDocumentTypeWrite = (input: DocumentTypeWrite) => {
         message: `Enum field '${field.id}' must define options`
       });
     }
-    if (field.type === 'entity_link' || field.type === 'document_link') {
+    httpAssert.true(!field.isStatus || field.type === 'enum', {
+      status: 400,
+      message: `Only enum field '${field.id}' can be a status field`
+    });
+    if (
+      field.type === 'entity_link' ||
+      field.type === 'document_link' ||
+      field.type === 'user_link' ||
+      field.type === 'team_link'
+    ) {
       httpAssert.true(
         field.maxCardinality === undefined ||
           field.maxCardinality !== 1 ||
@@ -50,9 +59,40 @@ export const validateDocumentTypeWrite = (input: DocumentTypeWrite) => {
     }
   }
 
+  const fieldsById = new Map(input.fields.map(field => [field.id, field]));
+  for (const field of input.fields.filter(field => field.isStatus)) {
+    for (const option of field.enumOptions ?? []) {
+      const approval = option.approval;
+      if (!approval?.required) continue;
+      httpAssert.true((approval.requiredApprovals ?? 0) > 0, {
+        status: 400,
+        message: `Status '${option.value}' on field '${field.id}' must require at least one approval`
+      });
+      if (approval.approverFieldId) {
+        const source = fieldsById.get(approval.approverFieldId);
+        httpAssert.present(source, {
+          status: 400,
+          message: `Status '${option.value}' references unknown approver field '${approval.approverFieldId}'`
+        });
+        httpAssert.true(source.type === 'user_link' || source.type === 'team_link', {
+          status: 400,
+          message: `Approver field '${approval.approverFieldId}' must be a user or team field`
+        });
+      }
+      httpAssert.true(
+        Boolean(approval.approverFieldId) ||
+          approval.fallbackUserIds.length > 0 ||
+          approval.fallbackTeamIds.length > 0,
+        {
+          status: 400,
+          message: `Status '${option.value}' on field '${field.id}' needs an approver source or fallback`
+        }
+      );
+    }
+  }
+
   const actionIds = new Set<string>();
   const generatorOutputFields = new Set<string>();
-  const fieldsById = new Map(input.fields.map(field => [field.id, field]));
   const generatorFieldTypes = new Set<DocumentField['type']>([
     'text',
     'long_text',
@@ -148,6 +188,8 @@ const valueTypeMatches = (field: DocumentField, value: unknown) => {
       );
     case 'entity_link':
     case 'document_link':
+    case 'user_link':
+    case 'team_link':
       return Array.isArray(value)
         ? value.every(item => typeof item === 'string' && item.length > 0)
         : typeof value === 'string' && value.length > 0;

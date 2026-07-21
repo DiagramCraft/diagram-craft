@@ -24,7 +24,9 @@ export const documentFieldTypeSchema = z.enum([
   'number',
   'enum',
   'entity_link',
-  'document_link'
+  'document_link',
+  'user_link',
+  'team_link'
 ]);
 
 export const documentRequirementSchema = z.enum(['required', 'expected', 'optional']);
@@ -39,9 +41,41 @@ export const documentValueSchema = z.union([
 
 export const documentMetadataSchema = z.record(z.string(), documentValueSchema);
 
+export const documentWorkflowStatusSchema = z.object({
+  fieldId: z.string(),
+  effectiveValue: z.string().nullable(),
+  pendingValue: z.string().nullable(),
+  requestId: z.string().nullable(),
+  caseId: z.string().nullable(),
+  approvalsReceived: z.number().int().nonnegative(),
+  approvalsRequired: z.number().int().positive(),
+  state: z.enum(['none', 'pending', 'changes_requested', 'blocked'])
+});
+
+export const documentWorkflowHistoryEventSchema = z.object({
+  id: z.string(),
+  fieldId: z.string(),
+  fieldName: z.string(),
+  eventType: z.enum(['approved', 'rejected', 'admin_override']),
+  actorUserId: z.string().nullable(),
+  occurredAt: z.string(),
+  reason: z.string().nullable(),
+  targetValue: z.string().nullable(),
+  caseId: z.string()
+});
+
+export const documentStatusApprovalSchema = z.object({
+  required: z.boolean(),
+  requiredApprovals: z.number().int().positive().optional(),
+  approverFieldId: z.string().min(1).optional(),
+  fallbackUserIds: z.array(z.string().min(1)).default([]),
+  fallbackTeamIds: z.array(z.string().min(1)).default([])
+});
+
 export const documentEnumOptionSchema = z.object({
   value: z.string().min(1),
-  label: z.string().min(1)
+  label: z.string().min(1),
+  approval: documentStatusApprovalSchema.optional()
 });
 
 export const documentFieldSchema = z
@@ -53,6 +87,7 @@ export const documentFieldSchema = z
     minCardinality: z.number().int().nonnegative().optional(),
     maxCardinality: z.number().int().nonnegative().optional(),
     enumOptions: z.array(documentEnumOptionSchema).optional(),
+    isStatus: z.boolean().optional(),
     // Display label used when presenting the reverse of this link on the target
     // (e.g. a "Supersedes" document_link field with inverseName "Superseded by").
     // Only meaningful for entity_link / document_link fields.
@@ -342,10 +377,13 @@ export const documentContract = oc.tag('Typed Documents').router({
 export type DocumentFieldType = z.infer<typeof documentFieldTypeSchema>;
 export type DocumentRequirement = z.infer<typeof documentRequirementSchema>;
 export type DocumentField = z.infer<typeof documentFieldSchema>;
+export type DocumentStatusApproval = z.infer<typeof documentStatusApprovalSchema>;
 export type DocumentAiAction = z.infer<typeof documentAiActionSchema>;
 export type DocumentGeneratedMetadataResult = z.infer<typeof documentGeneratedMetadataResultSchema>;
 export type DocumentGeneratedMetadata = z.infer<typeof documentGeneratedMetadataSchema>;
 export type DocumentMetadata = z.infer<typeof documentMetadataSchema>;
+export type DocumentWorkflowStatus = z.infer<typeof documentWorkflowStatusSchema>;
+export type DocumentWorkflowHistoryEvent = z.infer<typeof documentWorkflowHistoryEventSchema>;
 export type DocumentType = z.infer<typeof documentTypeSchema>;
 export type DocumentTemplate = z.infer<typeof documentTemplateSchema>;
 export type DocumentTypeWrite = z.infer<typeof documentTypeWriteSchema>;
