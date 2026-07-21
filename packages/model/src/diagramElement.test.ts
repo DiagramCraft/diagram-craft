@@ -46,6 +46,27 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
     });
   });
 
+  describe('setLocked', () => {
+    it('should sync the locked state live to a remote collaborator', () => {
+      const [root1, root2] = backend.syncedDocs();
+
+      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
+
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
+
+      const element = ElementFactory.emptyNode('id1', layer1);
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
+
+      // Act
+      UnitOfWork.execute(d1, uow => element.setLocked(true, uow));
+
+      // Verify
+      expect(element.locked).toBe(true);
+      if (doc2) expect(layer1_2!.elements[0]!.locked).toBe(true);
+    });
+  });
+
   /*  describe('setHighlights', () => {
     it('should set highlights', () => {
       const [root1, root2] = backend.syncedDocs();

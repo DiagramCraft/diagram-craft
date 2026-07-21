@@ -57,5 +57,16 @@ describe.each(Backends.all())('Layer [%s]', (_name, backend) => {
       // Verify
       expect(layer1.locked).toBe(true);
     });
+
+    it('should sync the locked state live to a remote collaborator', () => {
+      const { diagram1, layer1, layer2 } = standardTestModel(backend);
+
+      // Act
+      diagram1.undoManager.execute('Lock', uow => layer1.setLocked(true, uow));
+
+      // Verify
+      expect(layer1.locked).toBe(true);
+      if (layer2) expect(layer2.locked).toBe(true);
+    });
   });
 });

@@ -16,12 +16,13 @@ import { DataProviderPolicy, DiagramDocumentData } from './diagramDocumentData';
 import { DocumentProps } from './documentProps';
 import { DocumentTags } from './documentTags';
 import { DocumentStories } from './documentStories';
-import { watch } from '@diagram-craft/utils/watchableValue';
+import { watch, type WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { precondition } from '@diagram-craft/utils/assert';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
 import { CRDT, type CRDTMap, type CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
@@ -39,6 +40,10 @@ export type DocumentEvents = {
   diagramAdded: { diagram: Diagram };
   diagramRemoved: { diagram: Diagram };
   cleared: EmptyObject;
+};
+
+export type DiagramDocumentCRDT = {
+  locked: boolean;
 };
 
 export type DataTemplate = {
@@ -67,13 +72,14 @@ export class DiagramDocument
 
   // Shared properties
   readonly #diagrams: MappedCRDTOrderedMap<Diagram, DiagramCRDT>;
+  readonly #crdt: WatchableValue<CRDTMap<DiagramDocumentCRDT>>;
+  readonly #locked: CRDTProp<DiagramDocumentCRDT, 'locked'>;
 
   // Transient properties
   url: string | undefined;
   hash: string | undefined;
   readonly #releasables = new Releasables();
   activeDiagramId: string | undefined;
-  #locked = false;
 
   constructor(
     readonly registry: Registry,
@@ -105,6 +111,15 @@ export class DiagramDocument
         onInit: e => e._attach(this, getRemoteUnitOfWork(e))
       }
     );
+
+    this.#crdt = watch(this.root.getMap('document'));
+    this.#locked = new CRDTProp(this.#crdt, 'locked', {
+      onRemoteChange: () => {
+        const anyDiagram = this.diagrams[0];
+        if (anyDiagram) this.emit('diagramChanged', { diagram: anyDiagram });
+      },
+      initialValue: false
+    });
 
     this.#releasables.add(this.root.on('remoteClear', () => this.emit('cleared')));
   }
@@ -146,7 +161,7 @@ export class DiagramDocument
   }
 
   get locked() {
-    return this.#locked;
+    return this.#locked.getNonNull();
   }
 
   isEffectivelyLocked() {
@@ -155,7 +170,7 @@ export class DiagramDocument
 
   setLocked(value: boolean, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      this.#locked = value;
+      this.#locked.set(value);
     });
     const anyDiagram = this.diagrams[0];
     if (anyDiagram) this.emit('diagramChanged', { diagram: anyDiagram });
