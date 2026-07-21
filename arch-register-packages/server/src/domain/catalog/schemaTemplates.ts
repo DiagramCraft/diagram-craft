@@ -147,6 +147,50 @@ export const ADR_DOCUMENT_TEMPLATE_DEFINITION: SymbolicDocumentTemplate = {
 const commonDocumentTypes = [ADR_DOCUMENT_TYPE_DEFINITION];
 const commonDocumentTemplates = [ADR_DOCUMENT_TEMPLATE_DEFINITION];
 
+export const LADR_DOCUMENT_TYPE_NAME = 'Lightweight Architecture Decision Record';
+export const LADR_DOCUMENT_TEMPLATE_NAME = 'Lightweight Architecture Decision Record';
+
+export const LADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
+  id: 'lightweight-architecture-decision-record',
+  name: LADR_DOCUMENT_TYPE_NAME,
+  description: 'A concise, low-ceremony record of an architecture decision.',
+  color: AR_COLOR_PURPLE,
+  icon: 'clipboard',
+  fields: [
+    {
+      id: 'status',
+      name: 'Status',
+      type: 'enum',
+      requirement: 'required',
+      enumOptions: [
+        { value: 'Proposed', label: 'Proposed' },
+        { value: 'Accepted', label: 'Accepted' },
+        { value: 'Superseded', label: 'Superseded' },
+        { value: 'Deprecated', label: 'Deprecated' }
+      ],
+      retired: false
+    },
+    {
+      id: 'decision_date',
+      name: 'Decision date',
+      type: 'date',
+      requirement: 'expected',
+      retired: false
+    }
+  ]
+};
+
+export const LADR_DOCUMENT_TEMPLATE_DEFINITION: SymbolicDocumentTemplate = {
+  id: 'lightweight-architecture-decision-record-template',
+  name: LADR_DOCUMENT_TEMPLATE_NAME,
+  body: '# {{title}}\n\n## Decision\n\n## Rationale\n',
+  documentTypeId: LADR_DOCUMENT_TYPE_DEFINITION.id,
+  metadataDefaults: { status: 'Proposed' }
+};
+
+const lightweightDocumentTypes = [LADR_DOCUMENT_TYPE_DEFINITION];
+const lightweightDocumentTemplates = [LADR_DOCUMENT_TEMPLATE_DEFINITION];
+
 const backstageEnums = [
   enumDefinition('api-type', 'API Type', [
     { value: 'openapi', label: 'OpenAPI' },
@@ -644,8 +688,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     enums: [],
-    documentTypes: commonDocumentTypes,
-    documentTemplates: commonDocumentTemplates
+    documentTypes: lightweightDocumentTypes,
+    documentTemplates: lightweightDocumentTemplates
   },
   {
     id: 'itil',
@@ -827,8 +871,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     enums: dddEnums,
-    documentTypes: commonDocumentTypes,
-    documentTemplates: commonDocumentTemplates
+    documentTypes: lightweightDocumentTypes,
+    documentTemplates: lightweightDocumentTemplates
   },
   {
     id: 'team-topologies',
@@ -895,8 +939,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     enums: teamTopologiesEnums,
-    documentTypes: commonDocumentTypes,
-    documentTemplates: commonDocumentTemplates
+    documentTypes: lightweightDocumentTypes,
+    documentTemplates: lightweightDocumentTemplates
   },
   {
     id: 'data-mesh',
@@ -1006,8 +1050,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     enums: dataMeshEnums,
-    documentTypes: commonDocumentTypes,
-    documentTemplates: commonDocumentTemplates
+    documentTypes: lightweightDocumentTypes,
+    documentTemplates: lightweightDocumentTemplates
   },
   {
     id: 'archimate',
