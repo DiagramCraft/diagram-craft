@@ -11,6 +11,7 @@ import {
   listJobRuns,
   listJobSchedules,
   listJobServers,
+  triggerJobScheduleRun,
   updateWorkspaceJobSchedule
 } from './jobOperations';
 
@@ -46,6 +47,14 @@ export const jobsORPCRouter = jobsRouter.router({
           context.db,
           input.params.workspace,
           input.body,
+          context.event
+        );
+      }),
+      runNow: jobsRouter.jobs.schedules.runNow.handler(async ({ input, context }) => {
+        return await triggerJobScheduleRun(
+          context.db,
+          input.params.workspace,
+          input.params.id,
           context.event
         );
       })

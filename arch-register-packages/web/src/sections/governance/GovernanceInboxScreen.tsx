@@ -23,7 +23,9 @@ import type {
 import styles from './GovernanceInboxScreen.module.css';
 import { orpcClient } from '../../lib/orpcClient';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
+import { workspaceMarkdownRoute } from '../../routes/publicObjectRoutes';
 import { entityKeys } from '../../queries/entities';
+import { projectFileKeys } from '../../queries/content';
 import { entityChangeKeys, useWithdrawEntityChangeProposal } from '../../hooks/useEntityChanges';
 
 const humanize = (value: string) =>
@@ -114,6 +116,26 @@ export const GovernanceInboxScreen = () => {
   });
   const entitiesById = new Map(
     entityIds.map((entityId, index) => [entityId, entityQueries[index]?.data])
+  );
+  const documentIds = [
+    ...new Set([
+      ...tasks
+        .filter(task => task.case.subjectType === 'document')
+        .map(task => task.case.subjectId),
+      ...rawSubmissions
+        .filter(submission => submission.case.subjectType === 'document')
+        .map(submission => submission.case.subjectId)
+    ])
+  ];
+  const documentQueries = useQueries({
+    queries: documentIds.map(fileId => ({
+      queryKey: projectFileKeys.detail(workspace, fileId),
+      queryFn: () => orpcClient.projects.getFile({ params: { workspace, fileId } }),
+      enabled: !!workspace
+    }))
+  });
+  const documentsById = new Map(
+    documentIds.map((fileId, index) => [fileId, documentQueries[index]?.data])
   );
   const entityChangeIds = [
     ...new Set([
@@ -321,13 +343,24 @@ export const GovernanceInboxScreen = () => {
                 submission.case.subjectType === 'entity'
                   ? entitiesById.get(submission.case.subjectId)
                   : undefined;
-              const subjectLabel = subjectEntity?._name ?? submission.case.subjectId;
+              const subjectDocument =
+                submission.case.subjectType === 'document'
+                  ? documentsById.get(submission.case.subjectId)
+                  : undefined;
+              const subjectLabel =
+                subjectEntity?._name ?? subjectDocument?.name ?? submission.case.subjectId;
               const proposal = proposalsByEntityId.get(submission.case.subjectId);
               const latestRevision = proposal?.revisions.at(-1);
               const proposalNote = latestRevision?.message;
               const viewSubject = () => {
                 if (subjectEntity?._publicId) {
                   navigate(entityDetailRoute(workspace, asEntityPublicId(subjectEntity._publicId)));
+                } else if (submission.case.subjectType === 'document') {
+                  navigate(
+                    workspaceMarkdownRoute(workspace, submission.case.subjectId, {
+                      mode: 'preview'
+                    })
+                  );
                 }
               };
               const withdrawPending =
@@ -399,9 +432,15 @@ export const GovernanceInboxScreen = () => {
                       variant="ghost"
                       icon={<TbExternalLink size={12} />}
                       onClick={viewSubject}
-                      disabled={!subjectEntity?._publicId}
+                      disabled={
+                        !subjectEntity?._publicId && submission.case.subjectType !== 'document'
+                      }
                     >
-                      {submission.case.subjectType === 'entity' ? 'View entity' : 'View case'}
+                      {submission.case.subjectType === 'entity'
+                        ? 'View entity'
+                        : submission.case.subjectType === 'document'
+                          ? 'View document'
+                          : 'View case'}
                     </Button>
                   </div>
                 </li>
@@ -428,13 +467,22 @@ export const GovernanceInboxScreen = () => {
               task.case.subjectType === 'entity'
                 ? entitiesById.get(task.case.subjectId)
                 : undefined;
-            const subjectLabel = subjectEntity?._name ?? task.case.subjectId;
+            const subjectDocument =
+              task.case.subjectType === 'document'
+                ? documentsById.get(task.case.subjectId)
+                : undefined;
+            const subjectLabel =
+              subjectEntity?._name ?? subjectDocument?.name ?? task.case.subjectId;
             const proposal = proposalsByEntityId.get(task.case.subjectId);
             const latestRevision = proposal?.revisions.at(-1);
             const proposalNote = latestRevision?.message;
             const viewSubject = () => {
               if (subjectEntity?._publicId) {
                 navigate(entityDetailRoute(workspace, asEntityPublicId(subjectEntity._publicId)));
+              } else if (task.case.subjectType === 'document') {
+                navigate(
+                  workspaceMarkdownRoute(workspace, task.case.subjectId, { mode: 'preview' })
+                );
               }
             };
             return (
@@ -484,7 +532,8 @@ export const GovernanceInboxScreen = () => {
                   )}
                   {task.requiresAction &&
                     decision === 'approve' &&
-                    task.case.caseKind === 'entity.change' && (
+                    (task.case.caseKind === 'entity.change' ||
+                      task.case.caseKind === 'document.status') && (
                       <Button
                         disabled={decide.isPending}
                         onClick={event => {
@@ -500,9 +549,13 @@ export const GovernanceInboxScreen = () => {
                     variant="ghost"
                     icon={<TbExternalLink size={12} />}
                     onClick={viewSubject}
-                    disabled={!subjectEntity?._publicId}
+                    disabled={!subjectEntity?._publicId && task.case.subjectType !== 'document'}
                   >
-                    {task.case.subjectType === 'entity' ? 'View entity' : 'View case'}
+                    {task.case.subjectType === 'entity'
+                      ? 'View entity'
+                      : task.case.subjectType === 'document'
+                        ? 'View document'
+                        : 'View case'}
                   </Button>
                 </div>
               </li>

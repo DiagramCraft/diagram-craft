@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TbEdit, TbPlayerPause, TbRefresh } from 'react-icons/tb';
+import { TbEdit, TbPlayerPause, TbPlayerPlay, TbRefresh } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -15,6 +15,7 @@ import {
   useJobRuns,
   useJobSchedules,
   useJobServers,
+  useRunJobScheduleNow,
   useUpdateJobSchedule
 } from '../../../hooks/useJobs';
 import { useWorkspacePermissions } from '../../../auth/useWorkspacePermissions';
@@ -306,6 +307,8 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
   const [offset, setOffset] = useState(0);
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<JobSchedule | null>(null);
+  const [runNowTarget, setRunNowTarget] = useState<string | null>(null);
+  const [runNowError, setRunNowError] = useState<string | null>(null);
 
   const {
     data: servers = [],
@@ -339,6 +342,16 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
   } = useJobRuns(workspaceSlug, runFilters);
   const cancelRun = useCancelJobRun(workspaceSlug);
   const updateSchedule = useUpdateJobSchedule(workspaceSlug);
+  const runScheduleNow = useRunJobScheduleNow(workspaceSlug);
+
+  const handleRunNow = (schedule: JobSchedule) => {
+    setRunNowError(null);
+    setRunNowTarget(schedule.id);
+    runScheduleNow.mutate(schedule.id, {
+      onError: error => setRunNowError((error as Error).message),
+      onSettled: () => setRunNowTarget(null)
+    });
+  };
 
   const pageCount = Math.max(1, Math.ceil((runs?.total ?? 0) / PAGE_SIZE));
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
@@ -445,6 +458,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
               Refresh
             </Button>
           </div>
+          {runNowError && <div className={styles.error}>{runNowError}</div>}
           {schedulesLoading ? (
             <LoadingState text="Loading schedules…" size="sm" />
           ) : schedulesError ? (
@@ -462,7 +476,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                     <Table.HeaderCell width={70}>Priority</Table.HeaderCell>
                     <Table.HeaderCell width={90}>State</Table.HeaderCell>
                     <Table.HeaderCell width={170}>Next planned run</Table.HeaderCell>
-                    {canManageJobs && <Table.HeaderCell width={70} />}
+                    {canManageJobs && <Table.HeaderCell width={150} />}
                   </Table.Row>
                 </Table.Head>
                 <Table.Body>
@@ -495,6 +509,20 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                       <Table.Cell>{formatDateTime(schedule.next_occurrence_at)}</Table.Cell>
                       {canManageJobs && (
                         <Table.ActionsCell>
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            icon={<TbPlayerPlay size={13} />}
+                            disabled={!schedule.enabled || runNowTarget === schedule.id}
+                            title={
+                              schedule.enabled
+                                ? 'Run this job now, outside its normal schedule'
+                                : 'Enable the schedule to run it now'
+                            }
+                            onClick={() => handleRunNow(schedule)}
+                          >
+                            {runNowTarget === schedule.id ? 'Starting…' : 'Run now'}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="xs"

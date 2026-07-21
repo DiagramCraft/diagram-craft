@@ -56,6 +56,7 @@ const DECISION_EVENT_TYPES: Record<GovernanceDecisionAction, GovernanceEventType
 
 export type GovernanceAssignmentTarget =
   | { type: 'user'; userId: string }
+  | { type: 'team'; teamId: string }
   | { type: 'team_role'; teamId: string; teamRole: TeamRole }
   | { type: 'capability'; capability: WorkspaceCapability };
 
@@ -140,7 +141,8 @@ const toAssignmentCreate = (
   action: spec.action,
   target_type: spec.target.type,
   target_user_id: spec.target.type === 'user' ? spec.target.userId : null,
-  target_team_id: spec.target.type === 'team_role' ? spec.target.teamId : null,
+  target_team_id:
+    spec.target.type === 'team' || spec.target.type === 'team_role' ? spec.target.teamId : null,
   target_team_role: spec.target.type === 'team_role' ? spec.target.teamRole : null,
   target_capability: spec.target.type === 'capability' ? spec.target.capability : null,
   created_at: now
@@ -710,7 +712,18 @@ export const decideGovernanceAssignment = async (
 
     const isIndependentAssignment =
       config?.independentAssignmentActions?.has(assignment.action) ?? false;
-    if (!isIndependentAssignment) {
+    const completesCase =
+      CASE_COMPLETING_DECISIONS.has(input.decision) &&
+      (config?.shouldCompleteCase
+        ? await config.shouldCompleteCase({
+            tx,
+            case: caseRow,
+            assignmentId: assignment.id,
+            actorUserId: userId,
+            decision: input.decision
+          })
+        : !isIndependentAssignment);
+    if (completesCase) {
       const siblingSupersededIds = await tx.governance.supersedeOpenSiblingAssignments(
         caseRow.id,
         assignment.action,
@@ -721,7 +734,7 @@ export const decideGovernanceAssignment = async (
     }
 
     let resultingCase = caseRow;
-    if (CASE_COMPLETING_DECISIONS.has(input.decision) && !isIndependentAssignment) {
+    if (completesCase) {
       const completedCase = await tx.governance.completeCaseIfOpen(caseRow.id, input.decision, now);
       httpAssert.present(completedCase, {
         status: 409,

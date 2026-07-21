@@ -42,6 +42,17 @@ export type GovernanceCaseKindConfig = {
       decision: 'approve' | 'reject' | 'request_changes' | 'acknowledge';
     }
   ) => Promise<void>;
+  /**
+   * Decides whether this particular decision completes the case. Returning false leaves sibling
+   * assignments open, which is used by document status quorum approval.
+   */
+  shouldCompleteCase?: (context: {
+    tx: DatabaseAdapter;
+    case: GovernanceCaseDbResult;
+    assignmentId: string;
+    actorUserId: string;
+    decision: 'approve' | 'reject' | 'request_changes' | 'acknowledge';
+  }) => Promise<boolean>;
   beforeDecision?: (
     tx: DatabaseAdapter,
     context: {
