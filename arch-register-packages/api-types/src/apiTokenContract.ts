@@ -12,7 +12,11 @@ export const apiTokenSchema = z.object({
   capabilities: z
     .array(workspaceCapabilitySchema)
     .describe('Workspace capabilities granted to the token'),
-  created_by: z.string().describe('User who created the token'),
+  created_by: z.string().nullable().describe('User who created the token, or null if removed'),
+  created_by_name: z
+    .string()
+    .nullable()
+    .describe('Display name of the creator at time of creation, or null if unknown'),
   created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp'),
   last_used_at: timestampOutputSchema.nullable().describe('ISO 8601 last-use timestamp'),
   expires_at: timestampOutputSchema.nullable().describe('ISO 8601 expiration timestamp')

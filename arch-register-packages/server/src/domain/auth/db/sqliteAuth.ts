@@ -94,7 +94,7 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
 
   async createApiToken(input: ApiTokenDbCreate) {
     this.run(
-      'INSERT INTO api_token (id, workspace, name, token_hash, capabilities, created_by, created_at, last_used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO api_token (id, workspace, name, token_hash, capabilities, created_by, created_by_name, created_at, last_used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -102,6 +102,7 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
         input.token_hash,
         JSON.stringify(input.capabilities),
         input.created_by,
+        input.created_by_name,
         input.created_at.toISOString(),
         input.last_used_at?.toISOString() ?? null,
         input.expires_at?.toISOString() ?? null

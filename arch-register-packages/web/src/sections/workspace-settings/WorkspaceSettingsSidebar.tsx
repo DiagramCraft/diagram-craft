@@ -15,7 +15,8 @@ import {
   TbFileExport,
   TbActivity,
   TbWebhook,
-  TbFileDescription
+  TbFileDescription,
+  TbKey
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -48,6 +49,7 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
+  { id: 'api-tokens', label: 'API Tokens', icon: <TbKey size={12} />, group: 'People' },
   {
     id: 'global-permissions',
     label: 'Global permissions',

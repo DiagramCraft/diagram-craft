@@ -112,7 +112,7 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
   async createApiToken(input: ApiTokenDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO api_token (id, workspace, name, token_hash, capabilities, created_by, created_at, last_used_at, expires_at)
+        INSERT INTO api_token (id, workspace, name, token_hash, capabilities, created_by, created_by_name, created_at, last_used_at, expires_at)
         VALUES (
           ${input.id},
           ${input.workspace},
@@ -120,6 +120,7 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
           ${input.token_hash},
           ${this.json(input.capabilities)},
           ${input.created_by},
+          ${input.created_by_name},
           ${input.created_at},
           ${input.last_used_at ?? null},
           ${input.expires_at ?? null}

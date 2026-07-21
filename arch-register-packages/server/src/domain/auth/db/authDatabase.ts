@@ -61,13 +61,19 @@ export type ApiTokenDbResult = {
   name: string;
   token_hash: string;
   capabilities: string[];
-  created_by: string;
+  created_by: string | null;
+  created_by_name: string | null;
   created_at: Date;
   last_used_at: Date | null;
   expires_at: Date | null;
 };
 
-export type ApiTokenDbCreate = Omit<ApiTokenDbResult, 'last_used_at'> & {
+export type ApiTokenDbCreate = Omit<
+  ApiTokenDbResult,
+  'last_used_at' | 'created_by' | 'created_by_name'
+> & {
+  created_by: string;
+  created_by_name: string;
   last_used_at?: Date | null;
 };
 
@@ -111,7 +117,8 @@ export const authMappers = {
     name: String(row['name']),
     token_hash: String(row['token_hash']),
     capabilities: parseDatabaseJson<string[]>(row['capabilities'], [], 'api_token.capabilities'),
-    created_by: String(row['created_by']),
+    created_by: row['created_by'] == null ? null : String(row['created_by']),
+    created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
     created_at: databaseDate(row['created_at']),
     last_used_at: row['last_used_at'] == null ? null : databaseDate(row['last_used_at']),
     expires_at: row['expires_at'] == null ? null : databaseDate(row['expires_at'])

@@ -187,6 +187,7 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
         token_hash: 'hash-1',
         capabilities: ['ent.edit', 'content.view'],
         created_by: user.id,
+        created_by_name: user.display_name,
         created_at: now,
         last_used_at: null,
         expires_at: new Date(now.getTime() + 60_000)

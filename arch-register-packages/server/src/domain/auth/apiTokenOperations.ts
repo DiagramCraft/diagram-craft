@@ -95,6 +95,7 @@ const createToken = async (
     token_hash: tokenHash,
     capabilities: parsed.capabilities,
     created_by: event.context.user.id,
+    created_by_name: event.context.user.display_name,
     created_at: now,
     last_used_at: null,
     expires_at: parsed.expiresAt
