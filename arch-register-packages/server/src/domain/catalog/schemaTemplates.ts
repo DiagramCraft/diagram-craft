@@ -334,7 +334,6 @@ const technologyReleaseSchema: TemplateSchema = {
       minCount: 1,
       maxCount: 1
     },
-    { id: 'product', name: 'Product', type: 'text' },
     { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
     { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
     { id: 'latest_version', name: 'Latest Version', type: 'text' },

@@ -1214,7 +1214,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.nodejs],
-      product: 'Node.js',
       provider_product: 'nodejs',
       release_cycle: '20',
       latest_version: '20.19.0',
@@ -1248,7 +1247,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.react],
-      product: 'React',
       provider_product: 'react',
       release_cycle: '18',
       latest_version: '18.3.1',
@@ -1282,7 +1280,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.go],
-      product: 'Go',
       provider_product: 'go',
       release_cycle: '1.22',
       latest_version: '1.22.12',
@@ -1316,7 +1313,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.python],
-      product: 'Python',
       provider_product: 'python',
       release_cycle: '3.12',
       latest_version: '3.12.9',
@@ -1350,7 +1346,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.java],
-      product: 'Java',
       provider_product: 'java',
       release_cycle: '21',
       latest_version: '21.0.5',
@@ -1384,7 +1379,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.rust],
-      product: 'Rust',
       provider_product: 'rust',
       release_cycle: '1.82',
       latest_version: '1.82.0',
@@ -1420,7 +1414,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.postgresql],
-      product: 'PostgreSQL',
       provider_product: 'postgresql',
       release_cycle: '15',
       latest_version: '15.10',
@@ -1454,7 +1447,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.redis],
-      product: 'Redis',
       provider_product: 'redis',
       release_cycle: '7',
       latest_version: '7.2.6',
@@ -1490,7 +1482,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.kafka],
-      product: 'Apache Kafka',
       provider_product: 'apache-kafka',
       release_cycle: '3.7',
       latest_version: '3.7.2',
@@ -1526,7 +1517,6 @@ const seedTechnologyReleases: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
       technology: [TECHNOLOGY_IDS.elasticsearch],
-      product: 'Elasticsearch',
       provider_product: 'elasticsearch',
       release_cycle: '8',
       latest_version: '8.15.3',
