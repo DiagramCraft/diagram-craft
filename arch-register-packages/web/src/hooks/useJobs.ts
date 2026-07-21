@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { JobRunStatus, JobScheduleUpdate } from '@arch-register/api-types/jobsContract';
+import type {
+  CreateJobBody,
+  JobRunStatus,
+  JobScheduleUpdate
+} from '@arch-register/api-types/jobsContract';
 import { orpcClient } from '../lib/orpcClient';
 import { invalidateJobQueries, jobKeys } from '../queries/jobs';
 
@@ -27,6 +31,19 @@ export const useJobSchedules = (workspaceSlug: string, enabled = true) =>
     enabled: enabled && !!workspaceSlug,
     refetchInterval: 5000
   });
+
+export const useCreateJob = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: CreateJobBody) =>
+      orpcClient.jobs.schedules.create({
+        params: { workspace: workspaceSlug },
+        body
+      }),
+    onSuccess: async () => invalidateJobQueries(queryClient, workspaceSlug)
+  });
+};
 
 export const useJobRuns = (workspaceSlug: string, filters: JobRunFilters, enabled = true) =>
   useQuery({

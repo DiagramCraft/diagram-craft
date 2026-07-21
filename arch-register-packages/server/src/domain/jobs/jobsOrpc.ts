@@ -7,6 +7,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   cancelJobRun,
+  createConfiguredJob,
   listJobRuns,
   listJobSchedules,
   listJobServers,
@@ -36,6 +37,14 @@ export const jobsORPCRouter = jobsRouter.router({
           context.db,
           input.params.workspace,
           input.params.id,
+          input.body,
+          context.event
+        );
+      }),
+      create: jobsRouter.jobs.schedules.create.handler(async ({ input, context }) => {
+        return await createConfiguredJob(
+          context.db,
+          input.params.workspace,
           input.body,
           context.event
         );
