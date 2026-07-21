@@ -155,7 +155,11 @@ const FieldValueInput = ({
   const valueOptions = fields.find(f => f.id === fieldId)?.valueOptions;
   if (valueOptions) {
     return (
-      <Select.Root value={value} onChange={value => onChange(value ?? '')} style={{ width: '100%' }}>
+      <Select.Root
+        value={value}
+        onChange={value => onChange(value ?? '')}
+        style={{ width: '100%' }}
+      >
         <Select.Item value="">Select a value…</Select.Item>
         {valueOptions.map(option => (
           <Select.Item key={option.value} value={option.value}>
