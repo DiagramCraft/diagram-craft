@@ -138,11 +138,15 @@ export type AuthDatabase = {
   listUsers(): Promise<UserDbResult[]>;
 
   createApiToken(input: ApiTokenDbCreate): Promise<ApiTokenDbResult>;
-  listApiTokens(workspace: string): Promise<ApiTokenDbResult[]>;
+  listApiTokens(workspace: string, createdBy?: string): Promise<ApiTokenDbResult[]>;
   countApiTokens(workspace: string, createdBy: string): Promise<number>;
   listApiTokensByCreator(createdBy: string): Promise<ApiTokenDbResult[]>;
   getApiTokenByHash(tokenHash: string): Promise<ApiTokenDbResult | null>;
-  deleteApiToken(workspace: string, id: string): Promise<ApiTokenDbResult | null>;
+  deleteApiToken(
+    workspace: string,
+    id: string,
+    createdBy?: string
+  ): Promise<ApiTokenDbResult | null>;
   deleteApiTokenByCreator(createdBy: string, id: string): Promise<ApiTokenDbResult | null>;
   updateApiTokenLastUsed(id: string, timestamp: Date): Promise<void>;
   createApiTokenAudit(input: ApiTokenAuditDbResult): Promise<ApiTokenAuditDbResult>;

@@ -114,7 +114,14 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     ))!;
   }
 
-  async listApiTokens(workspace: string) {
+  async listApiTokens(workspace: string, createdBy?: string) {
+    if (createdBy != null) {
+      return this.all(
+        'SELECT * FROM api_token WHERE workspace = ? AND created_by = ? ORDER BY created_at DESC, id DESC',
+        [workspace, createdBy],
+        authMappers.apiToken
+      );
+    }
     return this.all(
       'SELECT * FROM api_token WHERE workspace = ? ORDER BY created_at DESC, id DESC',
       [workspace],
@@ -146,7 +153,22 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     );
   }
 
-  async deleteApiToken(workspace: string, id: string) {
+  async deleteApiToken(workspace: string, id: string, createdBy?: string) {
+    if (createdBy != null) {
+      const existing = this.get(
+        'SELECT * FROM api_token WHERE workspace = ? AND id = ? AND created_by = ?',
+        [workspace, id, createdBy],
+        authMappers.apiToken
+      );
+      if (!existing) return null;
+      this.run('DELETE FROM api_token WHERE workspace = ? AND id = ? AND created_by = ?', [
+        workspace,
+        id,
+        createdBy
+      ]);
+      return existing;
+    }
+
     const existing = this.get(
       'SELECT * FROM api_token WHERE workspace = ? AND id = ?',
       [workspace, id],

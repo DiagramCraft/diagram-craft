@@ -132,10 +132,11 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
     }
   }
 
-  async listApiTokens(workspace: string) {
+  async listApiTokens(workspace: string, createdBy?: string) {
     const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM api_token
       WHERE workspace = ${workspace}
+      ${createdBy != null ? this.sql`AND created_by = ${createdBy}` : this.sql``}
       ORDER BY created_at DESC, id DESC
     `;
     return mapDatabaseRows(rows, authMappers.apiToken);
@@ -166,11 +167,12 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
     return row ? authMappers.apiToken(row) : null;
   }
 
-  async deleteApiToken(workspace: string, id: string) {
+  async deleteApiToken(workspace: string, id: string, createdBy?: string) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         DELETE FROM api_token
         WHERE workspace = ${workspace} AND id = ${id}
+        ${createdBy != null ? this.sql`AND created_by = ${createdBy}` : this.sql``}
         RETURNING *
       `;
       return row ? authMappers.apiToken(row) : null;
