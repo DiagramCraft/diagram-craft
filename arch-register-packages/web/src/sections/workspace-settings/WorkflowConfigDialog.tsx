@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { MemberAvatar, stableHue } from '../../components/MemberAvatar';
 import { useWorkspaceUsers } from '../../hooks/useWorkspaceMembers';
 import { useTeams } from '../../hooks/useWorkspaceConfig';
 import type {
   DocumentField,
   DocumentStatusApproval
 } from '@arch-register/api-types/documentContract';
+import styles from './WorkflowConfigDialog.module.css';
 
 type EnumOption = NonNullable<DocumentField['enumOptions']>[number];
 
@@ -47,36 +50,79 @@ const copyOptions = (options: DocumentField['enumOptions']): EnumOption[] =>
       : {})
   }));
 
-const PickerValues = ({
-  values,
+const PickedUsers = ({
+  ids,
+  users,
+  onRemove
+}: {
+  ids: string[];
+  users: Array<{ id: string; display_name: string; email: string | null; color?: string | null }>;
+  onRemove: (id: string) => void;
+}) => {
+  const byId = useMemo(() => new Map(users.map(user => [user.id, user])), [users]);
+  if (ids.length === 0) return null;
+  return (
+    <div className={styles.pickedList}>
+      {ids.map(id => {
+        const user = byId.get(id);
+        return (
+          <span key={id} className={styles.pickedChip}>
+            <MemberAvatar
+              name={user?.display_name ?? null}
+              email={user?.email ?? null}
+              userId={id}
+              color={user?.color ?? null}
+              size={16}
+              hideTooltip
+            />
+            {user?.display_name ?? 'Unavailable user'}
+            <button
+              type="button"
+              className={styles.pickedRemove}
+              title="Remove approver"
+              onClick={() => onRemove(id)}
+            >
+              ×
+            </button>
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
+const PickedTeams = ({
+  ids,
   labels,
   onRemove
 }: {
-  values: string[];
+  ids: string[];
   labels: Map<string, string>;
-  onRemove: (value: string) => void;
-}) => (
-  <span style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-    {values.map(value => (
-      <button
-        type="button"
-        key={value}
-        onClick={() => onRemove(value)}
-        title="Remove approver"
-        style={{
-          border: '1px solid var(--cmp-border)',
-          borderRadius: 999,
-          background: 'var(--cmp-bg)',
-          color: 'var(--base-fg)',
-          padding: '3px 8px',
-          cursor: 'pointer'
-        }}
-      >
-        {labels.get(value) ?? 'Unavailable approver'} ×
-      </button>
-    ))}
-  </span>
-);
+  onRemove: (id: string) => void;
+}) => {
+  if (ids.length === 0) return null;
+  return (
+    <div className={styles.pickedList}>
+      {ids.map(id => (
+        <span key={id} className={styles.pickedChip}>
+          <span
+            className={styles.teamDot}
+            style={{ background: `oklch(0.65 0.15 ${stableHue(id)})` }}
+          />
+          {labels.get(id) ?? 'Unavailable team'}
+          <button
+            type="button"
+            className={styles.pickedRemove}
+            title="Remove approver"
+            onClick={() => onRemove(id)}
+          >
+            ×
+          </button>
+        </span>
+      ))}
+    </div>
+  );
+};
 
 export const WorkflowConfigDialog = ({
   open,
@@ -101,10 +147,6 @@ export const WorkflowConfigDialog = ({
     [allFields, field.id]
   );
   const activeUsers = users.filter(user => user.is_active);
-  const userLabels = useMemo(
-    () => new Map(users.map(user => [user.id, user.display_name])),
-    [users]
-  );
   const teamLabels = useMemo(() => new Map(teams.map(team => [team.id, team.name])), [teams]);
 
   useEffect(() => {
@@ -180,97 +222,116 @@ export const WorkflowConfigDialog = ({
         { label: 'Save workflow', type: 'default', onClick: save }
       ]}
     >
-      <div style={{ display: 'grid', gap: 18, maxHeight: '70vh', overflowY: 'auto' }}>
-        <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 600 }}>
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={event => setEnabled(event.target.checked)}
-          />
-          Use this enum as a document status workflow
-        </label>
-        <p className="dim" style={{ margin: 0, fontSize: 12 }}>
-          Documents can save immediately while a status transition waits for the configured
-          approvers. The current status remains effective until approval completes.
-        </p>
+      <div className={styles.body}>
+        <div className={styles.intro}>
+          <label className={styles.check}>
+            <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} />
+            Use this enum as a document status workflow
+          </label>
+          <p className={styles.hint}>
+            Documents can save immediately while a status transition waits for the configured
+            approvers. The current status remains effective until approval completes.
+          </p>
+        </div>
 
-        {options.map(option => {
-          const approval = option.approval;
-          const source = sourceFields.find(item => item.id === approval?.approverFieldId);
-          return (
-            <section
-              key={option.value}
-              style={{
-                display: 'grid',
-                gap: 10,
-                borderTop: '1px solid var(--cmp-border)',
-                paddingTop: 14
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <div>
-                  <strong>{option.label}</strong>
-                  <div className="dim" style={{ fontSize: 11 }}>
-                    Value: {option.value}
+        <div className={styles.optionList}>
+          {options.map(option => {
+            const approval = option.approval;
+            const source = sourceFields.find(item => item.id === approval?.approverFieldId);
+            return (
+              <div key={option.value} className={styles.optionCard}>
+                <div className={styles.optionHead}>
+                  <div>
+                    <div className={styles.optionName}>{option.label}</div>
+                    <div className={styles.optionValue}>Value: {option.value}</div>
                   </div>
-                </div>
-                <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
-                  <input
-                    type="checkbox"
-                    checked={approval?.required ?? false}
-                    disabled={!enabled}
-                    onChange={event => toggleApproval(option, event.target.checked)}
-                  />
-                  Approval required
-                </label>
-              </div>
-
-              {enabled && approval?.required && (
-                <>
-                  <label style={{ display: 'grid', gap: 5, fontSize: 12 }}>
-                    Required approvals
-                    <TextInput
-                      value={String(approval.requiredApprovals ?? 1)}
-                      onChange={value =>
-                        updateOption(option.value, current =>
-                          updateApproval(current, {
-                            requiredApprovals: Math.max(1, Number(value ?? 1) || 1)
-                          })
-                        )
-                      }
+                  <label className={styles.check}>
+                    <Checkbox
+                      value={approval?.required ?? false}
+                      disabled={!enabled}
+                      onChange={value => toggleApproval(option, value ?? false)}
                     />
+                    Approval required
                   </label>
-                  <label style={{ display: 'grid', gap: 5, fontSize: 12 }}>
-                    Approver source
-                    <Select.Root
-                      value={approval.approverFieldId ?? FALLBACK}
-                      onChange={value =>
-                        updateOption(option.value, current =>
-                          updateApproval(current, {
-                            approverFieldId: value === FALLBACK ? undefined : (value ?? undefined)
-                          })
-                        )
-                      }
-                    >
-                      <Select.Item value={FALLBACK}>Fallback users and teams</Select.Item>
-                      {sourceFields.map(sourceField => (
-                        <Select.Item key={sourceField.id} value={sourceField.id}>
-                          Document field: {sourceField.name} (
-                          {sourceField.type === 'user_link' ? 'users' : 'teams/groups'})
-                        </Select.Item>
-                      ))}
-                    </Select.Root>
-                  </label>
+                </div>
 
-                  {source ? (
-                    <p className="dim" style={{ margin: 0, fontSize: 12 }}>
-                      Approvers will be read from the document’s <strong>{source.name}</strong>{' '}
-                      {source.type === 'user_link' ? 'user values.' : 'team/group values.'}
-                    </p>
-                  ) : (
-                    <div style={{ display: 'grid', gap: 10 }}>
-                      <label style={{ display: 'grid', gap: 5, fontSize: 12 }}>
-                        Fallback users
+                {enabled && approval?.required && (
+                  <div className={styles.optionBody}>
+                    <div className={styles.field}>
+                      <div className={styles.fieldLeft}>
+                        <div className={styles.fieldLabel}>Required approvals</div>
+                        <div className={styles.fieldHint}>
+                          Number of approvals needed before the status change is applied.
+                        </div>
+                      </div>
+                      <div className={styles.fieldRight}>
+                        <TextInput
+                          type="number"
+                          value={String(approval.requiredApprovals ?? 1)}
+                          onChange={value =>
+                            updateOption(option.value, current =>
+                              updateApproval(current, {
+                                requiredApprovals: Math.max(1, Number(value ?? 1) || 1)
+                              })
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.field}>
+                      <div className={styles.fieldLeft}>
+                        <div className={styles.fieldLabel}>Approver source</div>
+                        <div className={styles.fieldHint}>
+                          Read approvers from a document field, or use the fallback list below.
+                        </div>
+                      </div>
+                      <div className={styles.fieldRight}>
+                        <Select.Root
+                          value={approval.approverFieldId ?? FALLBACK}
+                          onChange={value =>
+                            updateOption(option.value, current =>
+                              updateApproval(current, {
+                                approverFieldId:
+                                  value === FALLBACK ? undefined : (value ?? undefined)
+                              })
+                            )
+                          }
+                        >
+                          <Select.Item value={FALLBACK}>Fallback users and teams only</Select.Item>
+                          {sourceFields.map(sourceField => (
+                            <Select.Item key={sourceField.id} value={sourceField.id}>
+                              Document field: {sourceField.name} (
+                              {sourceField.type === 'user_link' ? 'users' : 'teams/groups'})
+                            </Select.Item>
+                          ))}
+                        </Select.Root>
+                        {source && (
+                          <p className={styles.sourceInfo}>
+                            Approvers will be read from the document's{' '}
+                            <strong>{source.name}</strong>{' '}
+                            {source.type === 'user_link' ? 'user values.' : 'team/group values.'}{' '}
+                            The fallback list below is used whenever that field has no value.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={styles.field}>
+                      <div className={styles.fieldLeft}>
+                        <div className={styles.fieldLabel}>Fallback users</div>
+                        <div className={styles.fieldHint}>
+                          {source
+                            ? 'Used when the document field above has no value.'
+                            : 'Used as the approvers for this status.'}
+                        </div>
+                      </div>
+                      <div className={styles.fieldRight}>
+                        <PickedUsers
+                          ids={approval.fallbackUserIds ?? []}
+                          users={activeUsers}
+                          onRemove={id => removeApprover(option, 'user', id)}
+                        />
                         <Select.Root
                           value={ADD_USER}
                           onChange={value => addApprover(option, 'user', value ?? null)}
@@ -282,14 +343,24 @@ export const WorkflowConfigDialog = ({
                             </Select.Item>
                           ))}
                         </Select.Root>
-                        <PickerValues
-                          values={approval.fallbackUserIds ?? []}
-                          labels={userLabels}
-                          onRemove={id => removeApprover(option, 'user', id)}
+                      </div>
+                    </div>
+
+                    <div className={styles.field}>
+                      <div className={styles.fieldLeft}>
+                        <div className={styles.fieldLabel}>Fallback teams / groups</div>
+                        <div className={styles.fieldHint}>
+                          {source
+                            ? 'Used when the document field above has no value.'
+                            : 'Used as the approvers for this status.'}
+                        </div>
+                      </div>
+                      <div className={styles.fieldRight}>
+                        <PickedTeams
+                          ids={approval.fallbackTeamIds ?? []}
+                          labels={teamLabels}
+                          onRemove={id => removeApprover(option, 'team', id)}
                         />
-                      </label>
-                      <label style={{ display: 'grid', gap: 5, fontSize: 12 }}>
-                        Fallback teams / groups
                         <Select.Root
                           value={ADD_TEAM}
                           onChange={value => addApprover(option, 'team', value ?? null)}
@@ -301,19 +372,14 @@ export const WorkflowConfigDialog = ({
                             </Select.Item>
                           ))}
                         </Select.Root>
-                        <PickerValues
-                          values={approval.fallbackTeamIds ?? []}
-                          labels={teamLabels}
-                          onRemove={id => removeApprover(option, 'team', id)}
-                        />
-                      </label>
+                      </div>
                     </div>
-                  )}
-                </>
-              )}
-            </section>
-          );
-        })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </Dialog>
   );

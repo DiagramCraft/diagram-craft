@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { TbTrash, TbEye, TbGripVertical, TbSettings } from 'react-icons/tb';
+import { TbTrash, TbEye, TbGripVertical, TbSettings, TbSettingsCheck } from 'react-icons/tb';
 
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -137,12 +137,18 @@ export const DocumentFieldRow = ({
             />
             <Button
               variant="ghost"
-              icon={<TbSettings size={12} />}
+              icon={
+                field.isStatus ? (
+                  <TbSettingsCheck size={12} color="var(--green)" />
+                ) : (
+                  <TbSettings size={12} />
+                )
+              }
+              title={field.isStatus ? 'Workflow enabled' : 'Workflow not configured'}
               onClick={() => setWorkflowDialogOpen(true)}
             >
-              Configure workflow
+              {field.isStatus ? 'Workflow enabled' : 'Configure workflow'}
             </Button>
-            {field.isStatus && <span className="dim">Workflow enabled</span>}
             <WorkflowConfigDialog
               open={workflowDialogOpen}
               workspaceSlug={workspaceSlug}

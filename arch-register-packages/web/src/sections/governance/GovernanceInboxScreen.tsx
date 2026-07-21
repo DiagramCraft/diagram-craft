@@ -25,6 +25,7 @@ import { orpcClient } from '../../lib/orpcClient';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import { workspaceMarkdownRoute } from '../../routes/publicObjectRoutes';
 import { entityKeys } from '../../queries/entities';
+import { projectFileKeys } from '../../queries/content';
 import { entityChangeKeys, useWithdrawEntityChangeProposal } from '../../hooks/useEntityChanges';
 
 const humanize = (value: string) =>
@@ -115,6 +116,26 @@ export const GovernanceInboxScreen = () => {
   });
   const entitiesById = new Map(
     entityIds.map((entityId, index) => [entityId, entityQueries[index]?.data])
+  );
+  const documentIds = [
+    ...new Set([
+      ...tasks
+        .filter(task => task.case.subjectType === 'document')
+        .map(task => task.case.subjectId),
+      ...rawSubmissions
+        .filter(submission => submission.case.subjectType === 'document')
+        .map(submission => submission.case.subjectId)
+    ])
+  ];
+  const documentQueries = useQueries({
+    queries: documentIds.map(fileId => ({
+      queryKey: projectFileKeys.detail(workspace, fileId),
+      queryFn: () => orpcClient.projects.getFile({ params: { workspace, fileId } }),
+      enabled: !!workspace
+    }))
+  });
+  const documentsById = new Map(
+    documentIds.map((fileId, index) => [fileId, documentQueries[index]?.data])
   );
   const entityChangeIds = [
     ...new Set([
@@ -322,7 +343,12 @@ export const GovernanceInboxScreen = () => {
                 submission.case.subjectType === 'entity'
                   ? entitiesById.get(submission.case.subjectId)
                   : undefined;
-              const subjectLabel = subjectEntity?._name ?? submission.case.subjectId;
+              const subjectDocument =
+                submission.case.subjectType === 'document'
+                  ? documentsById.get(submission.case.subjectId)
+                  : undefined;
+              const subjectLabel =
+                subjectEntity?._name ?? subjectDocument?.name ?? submission.case.subjectId;
               const proposal = proposalsByEntityId.get(submission.case.subjectId);
               const latestRevision = proposal?.revisions.at(-1);
               const proposalNote = latestRevision?.message;
@@ -441,7 +467,12 @@ export const GovernanceInboxScreen = () => {
               task.case.subjectType === 'entity'
                 ? entitiesById.get(task.case.subjectId)
                 : undefined;
-            const subjectLabel = subjectEntity?._name ?? task.case.subjectId;
+            const subjectDocument =
+              task.case.subjectType === 'document'
+                ? documentsById.get(task.case.subjectId)
+                : undefined;
+            const subjectLabel =
+              subjectEntity?._name ?? subjectDocument?.name ?? task.case.subjectId;
             const proposal = proposalsByEntityId.get(task.case.subjectId);
             const latestRevision = proposal?.revisions.at(-1);
             const proposalNote = latestRevision?.message;
