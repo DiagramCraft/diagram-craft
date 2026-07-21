@@ -10,7 +10,8 @@ import {
   createConfiguredJob,
   listJobRuns,
   listJobSchedules,
-  listJobServers
+  listJobServers,
+  updateWorkspaceJobSchedule
 } from './jobOperations';
 
 type ORPCContext = {
@@ -30,6 +31,15 @@ export const jobsORPCRouter = jobsRouter.router({
     schedules: {
       list: jobsRouter.jobs.schedules.list.handler(async ({ input, context }) => {
         return await listJobSchedules(context.db, input.params.workspace, context.event);
+      }),
+      update: jobsRouter.jobs.schedules.update.handler(async ({ input, context }) => {
+        return await updateWorkspaceJobSchedule(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.body,
+          context.event
+        );
       }),
       create: jobsRouter.jobs.schedules.create.handler(async ({ input, context }) => {
         return await createConfiguredJob(
