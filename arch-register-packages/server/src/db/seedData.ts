@@ -80,6 +80,19 @@ const COLLECTION_IDS = {
   apisToReview: '00000000-0000-0000-0030-000000000002'
 } as const;
 
+const TECHNOLOGY_IDS = {
+  nodejs: '00000000-0000-0000-0007-000000000001',
+  react: '00000000-0000-0000-0007-000000000002',
+  go: '00000000-0000-0000-0007-000000000003',
+  python: '00000000-0000-0000-0007-000000000004',
+  java: '00000000-0000-0000-0007-000000000005',
+  rust: '00000000-0000-0000-0007-000000000006',
+  postgresql: '00000000-0000-0000-0007-000000000007',
+  redis: '00000000-0000-0000-0007-000000000008',
+  kafka: '00000000-0000-0000-0007-000000000009',
+  elasticsearch: '00000000-0000-0000-0007-00000000000a'
+} as const;
+
 const TECHNOLOGY_RELEASE_IDS = {
   nodejs20: '00000000-0000-0000-0006-000000000001',
   react18: '00000000-0000-0000-0006-000000000002',
@@ -116,6 +129,8 @@ export const seedIds = {
   teams: TEAM_IDS,
   teams2: TEAM2_IDS,
   collections: COLLECTION_IDS,
+  technologies: TECHNOLOGY_IDS,
+  technologyReleases: TECHNOLOGY_RELEASE_IDS,
   users: USER_IDS
 } as const;
 
@@ -791,13 +806,49 @@ export const seedSchemas: SchemaDbResult[] = [
     updated_at: now
   },
   {
+    id: '00000000-0000-0000-0000-000000000007',
+    workspace: WORKSPACE_ID,
+    name: 'Technology',
+    description: 'A technology product tracked for governance and planning.',
+    fields: [
+      { id: 'product', name: 'Product', type: 'text' },
+      { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
+      {
+        id: 'category',
+        name: 'Category',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000003'
+      },
+      {
+        id: 'radar_status',
+        name: 'Radar Status',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000004'
+      }
+    ],
+    color: AR_COLOR_BLUE,
+    icon: 'chip',
+    default_owner: null,
+    key_prefix: 'TECH',
+    created_at: now,
+    updated_at: now
+  },
+  {
     id: '00000000-0000-0000-0000-000000000006',
     workspace: WORKSPACE_ID,
     name: 'Technology Release',
     description:
       'A product release cycle tracked for support lifecycle, technology radar governance, and planning.',
     fields: [
-      { id: 'product', name: 'Product', type: 'text' },
+      {
+        id: 'technology',
+        name: 'Technology',
+        type: 'containment',
+        predicate: 'belongs to',
+        schemaId: '00000000-0000-0000-0000-000000000007',
+        minCount: 1,
+        maxCount: 1
+      },
       { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
       { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
       {
@@ -891,6 +942,263 @@ export const seedSchemas: SchemaDbResult[] = [
   }
 ];
 
+const seedTechnologies: Entity[] = [
+  {
+    id: TECHNOLOGY_IDS.nodejs,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-1',
+    slug: 'nodejs',
+    namespace: 'default',
+    name: 'Node.js',
+    description: "JavaScript runtime built on Chrome's V8 JavaScript engine.",
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['runtime', 'javascript'],
+    links: [{ url: 'https://nodejs.org', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'Node.js',
+      provider_product: 'nodejs',
+      category: 'runtime',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.react,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-2',
+    slug: 'react',
+    namespace: 'default',
+    name: 'React',
+    description: 'A JavaScript library for building user interfaces.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['framework', 'frontend'],
+    links: [{ url: 'https://react.dev', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'React',
+      provider_product: 'react',
+      category: 'framework',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.go,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-3',
+    slug: 'go',
+    namespace: 'default',
+    name: 'Go',
+    description:
+      'An open source programming language that makes it easy to build simple, reliable, and efficient software.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['language', 'backend'],
+    links: [{ url: 'https://go.dev', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'Go',
+      provider_product: 'go',
+      category: 'language',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.python,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-4',
+    slug: 'python',
+    namespace: 'default',
+    name: 'Python',
+    description:
+      'A programming language that lets you work quickly and integrate systems more effectively.',
+    owner: TEAM_IDS.data,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['language', 'data'],
+    links: [{ url: 'https://www.python.org', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'Python',
+      provider_product: 'python',
+      category: 'language',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.java,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-5',
+    slug: 'java',
+    namespace: 'default',
+    name: 'Java',
+    description: 'A high-level, class-based, object-oriented programming language.',
+    owner: TEAM_IDS.payments,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['language', 'backend'],
+    links: [{ url: 'https://www.java.com', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'Java',
+      provider_product: 'java',
+      category: 'language',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.rust,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-6',
+    slug: 'rust',
+    namespace: 'default',
+    name: 'Rust',
+    description: 'A language empowering everyone to build reliable and efficient software.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle_date: '2026-06-30',
+    tags: ['language', 'backend'],
+    links: [{ url: 'https://www.rust-lang.org', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'Rust',
+      provider_product: 'rust',
+      category: 'language',
+      radar_status: 'trial'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.postgresql,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-7',
+    slug: 'postgresql',
+    namespace: 'default',
+    name: 'PostgreSQL',
+    description: "The world's most advanced open source relational database.",
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['database', 'managed'],
+    links: [{ url: 'https://www.postgresql.org', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'PostgreSQL',
+      provider_product: 'postgresql',
+      category: 'database',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.redis,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-8',
+    slug: 'redis',
+    namespace: 'default',
+    name: 'Redis',
+    description: 'An open source, in-memory data structure store.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['database', 'cache'],
+    links: [{ url: 'https://redis.io', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'Redis',
+      provider_product: 'redis',
+      category: 'database',
+      radar_status: 'adopt'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.kafka,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-9',
+    slug: 'kafka',
+    namespace: 'default',
+    name: 'Apache Kafka',
+    description: 'An open-source distributed event streaming platform.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['messaging', 'managed'],
+    links: [{ url: 'https://kafka.apache.org', title: 'Official site', type: 'website' }],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'Apache Kafka',
+      provider_product: 'apache-kafka',
+      category: 'runtime',
+      radar_status: 'assess'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: TECHNOLOGY_IDS.elasticsearch,
+    workspace: WORKSPACE_ID,
+    public_id: 'TECH-10',
+    slug: 'elasticsearch',
+    namespace: 'default',
+    name: 'Elasticsearch',
+    description: 'A distributed, RESTful search and analytics engine.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['database', 'search'],
+    links: [
+      { url: 'https://www.elastic.co/elasticsearch', title: 'Official site', type: 'website' }
+    ],
+    schema_id: '00000000-0000-0000-0000-000000000007',
+    data: {
+      product: 'Elasticsearch',
+      provider_product: 'elasticsearch',
+      category: 'database',
+      radar_status: 'assess'
+    },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  }
+];
+
 const seedTechnologyReleases: Entity[] = [
   {
     id: TECHNOLOGY_RELEASE_IDS.nodejs20,
@@ -908,7 +1216,7 @@ const seedTechnologyReleases: Entity[] = [
     links: [{ url: 'https://endoflife.date/nodejs', title: 'Lifecycle source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'Node.js',
+      technology: [TECHNOLOGY_IDS.nodejs],
       provider_product: 'nodejs',
       release_cycle: '20',
       latest_version: '20.19.0',
@@ -941,7 +1249,7 @@ const seedTechnologyReleases: Entity[] = [
     links: [{ url: 'https://endoflife.date/react', title: 'Lifecycle source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'React',
+      technology: [TECHNOLOGY_IDS.react],
       provider_product: 'react',
       release_cycle: '18',
       latest_version: '18.3.1',
@@ -974,7 +1282,7 @@ const seedTechnologyReleases: Entity[] = [
     links: [{ url: 'https://endoflife.date/go', title: 'Lifecycle source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'Go',
+      technology: [TECHNOLOGY_IDS.go],
       provider_product: 'go',
       release_cycle: '1.22',
       latest_version: '1.22.12',
@@ -1007,7 +1315,7 @@ const seedTechnologyReleases: Entity[] = [
     links: [{ url: 'https://endoflife.date/python', title: 'Lifecycle source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'Python',
+      technology: [TECHNOLOGY_IDS.python],
       provider_product: 'python',
       release_cycle: '3.12',
       latest_version: '3.12.9',
@@ -1040,7 +1348,7 @@ const seedTechnologyReleases: Entity[] = [
     links: [{ url: 'https://endoflife.date/java', title: 'Lifecycle source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'Java',
+      technology: [TECHNOLOGY_IDS.java],
       provider_product: 'java',
       release_cycle: '21',
       latest_version: '21.0.5',
@@ -1073,7 +1381,7 @@ const seedTechnologyReleases: Entity[] = [
     links: [{ url: 'https://endoflife.date/rust', title: 'Lifecycle source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'Rust',
+      technology: [TECHNOLOGY_IDS.rust],
       provider_product: 'rust',
       release_cycle: '1.82',
       latest_version: '1.82.0',
@@ -1108,7 +1416,7 @@ const seedTechnologyReleases: Entity[] = [
     ],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'PostgreSQL',
+      technology: [TECHNOLOGY_IDS.postgresql],
       provider_product: 'postgresql',
       release_cycle: '15',
       latest_version: '15.10',
@@ -1141,7 +1449,7 @@ const seedTechnologyReleases: Entity[] = [
     links: [{ url: 'https://endoflife.date/redis', title: 'Lifecycle source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'Redis',
+      technology: [TECHNOLOGY_IDS.redis],
       provider_product: 'redis',
       release_cycle: '7',
       latest_version: '7.2.6',
@@ -1176,7 +1484,7 @@ const seedTechnologyReleases: Entity[] = [
     ],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'Apache Kafka',
+      technology: [TECHNOLOGY_IDS.kafka],
       provider_product: 'apache-kafka',
       release_cycle: '3.7',
       latest_version: '3.7.2',
@@ -1211,7 +1519,7 @@ const seedTechnologyReleases: Entity[] = [
     ],
     schema_id: '00000000-0000-0000-0000-000000000006',
     data: {
-      product: 'Elasticsearch',
+      technology: [TECHNOLOGY_IDS.elasticsearch],
       provider_product: 'elasticsearch',
       release_cycle: '8',
       latest_version: '8.15.3',
@@ -1231,6 +1539,7 @@ const seedTechnologyReleases: Entity[] = [
 ];
 
 export const seedEntities: Entity[] = [
+  ...seedTechnologies,
   ...seedTechnologyReleases,
   {
     id: '00000000-0000-0000-0001-000000000001',
