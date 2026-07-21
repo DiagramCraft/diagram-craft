@@ -179,7 +179,19 @@ export const jobsContract = oc.tag('Jobs').router({
           tags: ['Jobs']
         })
         .input(z.object({ params: ws, body: createJobBodySchema }))
-        .output(jobScheduleSchema)
+        .output(jobScheduleSchema),
+      runNow: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/jobs/schedules/{id}/run',
+          inputStructure: 'detailed',
+          summary: 'Trigger an immediate run of a workspace job schedule',
+          description:
+            'Enqueues an immediate run of a workspace job schedule outside its recurrence. If a run is already queued or running for the schedule, that run is returned instead of creating a duplicate.',
+          tags: ['Jobs']
+        })
+        .input(z.object({ params: wsAndUUID }))
+        .output(jobRunSchema)
     },
     runs: {
       list: oc

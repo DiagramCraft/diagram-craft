@@ -197,6 +197,57 @@ test.describe('workspace job monitoring', () => {
     );
   });
 
+  test('run now returns the already-queued run instead of duplicating it', async ({
+    server,
+    orpc
+  }) => {
+    const schedule = await server.db.jobs.createSchedule(
+      makeSchedule({ id: randomUUID(), next_occurrence_at: now })
+    );
+    await server.db.jobs.materializeDueSchedules(now);
+    const before = await server.db.jobs.listRuns(seedIds.workspace.default, {
+      scheduleId: schedule.id,
+      limit: 10,
+      offset: 0
+    });
+    expect(before.total).toBe(1);
+
+    const run = await orpc.jobs.schedules.runNow({
+      params: { workspace: 'default', id: schedule.id }
+    });
+    expect(run).toMatchObject({ schedule_id: schedule.id, status: 'queued' });
+
+    const after = await server.db.jobs.listRuns(seedIds.workspace.default, {
+      scheduleId: schedule.id,
+      limit: 10,
+      offset: 0
+    });
+    expect(after.total).toBe(1);
+    expect(after.items[0]?.id).toBe(run.id);
+  });
+
+  test('rejects run now for a disabled schedule', async ({ server, orpc }) => {
+    const schedule = await server.db.jobs.createSchedule(
+      makeSchedule({ id: randomUUID(), enabled: false })
+    );
+
+    await expect(
+      orpc.jobs.schedules.runNow({ params: { workspace: 'default', id: schedule.id } })
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+
+  test('does not allow run now for a schedule from another workspace', async ({ server, orpc }) => {
+    const otherWorkspaceSchedule = await server.db.jobs.createSchedule(
+      makeSchedule({ id: randomUUID(), workspace: seedIds.workspace.second })
+    );
+
+    await expect(
+      orpc.jobs.schedules.runNow({
+        params: { workspace: 'default', id: otherWorkspaceSchedule.id }
+      })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
   test('does not allow a run from another workspace to be cancelled', async ({ server, orpc }) => {
     const otherWorkspaceSchedule = await server.db.jobs.createSchedule(
       makeSchedule({
