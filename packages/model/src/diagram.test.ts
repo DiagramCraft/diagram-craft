@@ -90,9 +90,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       doc2?.on?.('diagramChanged', documentDiagramChange[1]!);
 
       // Act
-      UnitOfWork.executeSilently(doc1.diagrams[0]!, uow =>
-        doc1.diagrams[0]!.setLocked(true, uow)
-      );
+      UnitOfWork.executeSilently(doc1.diagrams[0]!, uow => doc1.diagrams[0]!.setLocked(true, uow));
 
       // Verify
       expect(doc1.diagrams[0]!.locked).toBe(true);
