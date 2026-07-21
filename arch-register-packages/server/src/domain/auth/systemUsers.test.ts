@@ -3,9 +3,7 @@ import { getSystemUserId, isSystemUserId } from './systemUsers';
 
 describe('systemUsers', () => {
   it('looks up a system user id by key', () => {
-    expect(getSystemUserId('workspace-token-owner')).toBe(
-      '00000000-0000-0000-0000-0000000000a3'
-    );
+    expect(getSystemUserId('workspace-token-owner')).toBe('00000000-0000-0000-0000-0000000000a3');
   });
 
   it('shares the same underlying row for keys that reuse a seeded user', () => {

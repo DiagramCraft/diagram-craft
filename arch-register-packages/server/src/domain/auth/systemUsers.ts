@@ -5,7 +5,10 @@
 // Any future admin-facing user deactivation/deletion endpoint MUST check
 // isSystemUserId (or the row's own is_system_actor flag) before acting — see the
 // replaceGlobalRoles guardrail in authOrpc.ts for the existing precedent.
-export type SystemUserKey = 'ai-metadata-generator' | 'technology-eol-job' | 'workspace-token-owner';
+export type SystemUserKey =
+  | 'ai-metadata-generator'
+  | 'technology-eol-job'
+  | 'workspace-token-owner';
 
 type SystemUserDefinition = {
   id: string;
