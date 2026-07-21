@@ -61,7 +61,8 @@ const collectMatchedMetadata = (entity: EntityDbResult, query: string) => {
 const collectMatchedFields = (data: EntityDbResult['data'], query: string) =>
   Object.entries(data)
     .filter(([, value]) => includesQuery(value, query))
-    .map(([key]) => key);
+    .map(([key]) => key)
+    .sort();
 
 const collectFieldMatches = (fields: SchemaField[], query: string) =>
   fields
