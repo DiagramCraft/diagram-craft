@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ExternalMetadata, ExternalUpdateEnvelope } from '@arch-register/api-types/common';
 import {
   applyExternalFieldUpdate,
+  assertExternalUpdateOnlyChangesTarget,
   assertNoExternalFieldWrites,
   assertValidExternalUpdateTarget,
   isExternalField,
@@ -149,6 +150,38 @@ describe('assertValidExternalUpdateTarget', () => {
         { ...baseEnvelope, status: 'failed' },
         { riskScore: 1 },
         { riskScore: 1 }
+      )
+    ).not.toThrow();
+  });
+});
+
+describe('assertExternalUpdateOnlyChangesTarget', () => {
+  it('allows the declared target field to change', () => {
+    expect(() =>
+      assertExternalUpdateOnlyChangesTarget(
+        'release',
+        { repository: 'owner/repo', release: 'v1' },
+        { repository: 'owner/repo', release: 'v2' }
+      )
+    ).not.toThrow();
+  });
+
+  it('rejects changes to another field', () => {
+    expect(() =>
+      assertExternalUpdateOnlyChangesTarget(
+        'release',
+        { repository: 'owner/repo', release: 'v1' },
+        { repository: 'other/repo', release: 'v2' }
+      )
+    ).toThrow(/may only change field 'release'/);
+  });
+
+  it('treats reordered relation arrays as unchanged', () => {
+    expect(() =>
+      assertExternalUpdateOnlyChangesTarget(
+        'release',
+        { dependencies: ['a', 'b'], release: 'v1' },
+        { dependencies: ['b', 'a'], release: 'v2' }
       )
     ).not.toThrow();
   });

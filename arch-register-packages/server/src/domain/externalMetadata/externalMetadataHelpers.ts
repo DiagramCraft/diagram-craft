@@ -96,6 +96,26 @@ export const assertValidExternalUpdateTarget = (
 };
 
 /**
+ * External updates are single-field writes. The caller must send the current entity
+ * representation for all other fields, but none of those values may change as part of
+ * the external mutation.
+ */
+export const assertExternalUpdateOnlyChangesTarget = (
+  targetFieldId: string,
+  current: Record<string, unknown>,
+  next: Record<string, unknown>
+): void => {
+  const fieldIds = new Set([...Object.keys(current), ...Object.keys(next)]);
+  const changed = [...fieldIds].filter(
+    fieldId => fieldId !== targetFieldId && !fieldValueEquals(current, next, fieldId)
+  );
+  httpAssert.true(changed.length === 0, {
+    status: 400,
+    message: `An external update may only change field '${targetFieldId}'`
+  });
+};
+
+/**
  * Builds the new metadata entry for a single external field following a successful or failed
  * external update. On failure the caller must not have changed the field's value (asserted by
  * {@link assertExternalUpdateTargetsOwnFields} plus the caller keeping `next` equal to `current`
