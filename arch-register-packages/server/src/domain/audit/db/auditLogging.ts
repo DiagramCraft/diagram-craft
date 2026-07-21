@@ -1,9 +1,14 @@
 import type { AuditEntityType, AuditOperation } from './auditDatabase';
 import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
-import { Entity } from '../../catalog/db/catalogDatabase';
 import { enqueueWebhookDeliveries } from '../../webhook/webhookDelivery';
+import { enqueueAutomationRuleRuns } from '../../automation/automationRuleEvaluation';
 import { isChannelEnabled } from '../../notification/notificationPreferences';
+
+// Keep the existing import path stable for the many callers that import
+// flattenEntityAuditFields from here.
+// biome-ignore lint/performance/noBarrelFile: compatibility re-export, see auditFieldFlattening.ts
+export { flattenEntityAuditFields } from './auditFieldFlattening';
 
 const logger = createLogger('audit');
 
@@ -83,6 +88,17 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
       // enqueue rolls back the audit row instead of leaving a false impression
       // that the change was delivered.
       await enqueueWebhookDeliveries(tx, auditLog);
+    }
+
+    // Same partial-test-double tolerance as the webhook check above: skip enqueueing quietly
+    // when a focused unit test's database double doesn't provide the automationRule adapter.
+    const automationRuleAdapter = (tx as unknown as { automationRule?: { listRules?: unknown } })
+      .automationRule;
+    if (entityType === 'entity' && typeof automationRuleAdapter?.listRules === 'function') {
+      // Rule *matching* runs synchronously here, in the same transaction as the mutation, so a
+      // failed enqueue rolls back the audit row rather than silently dropping a rule execution.
+      // Rule *actions* run later via the job queue (see automationRuleExecution.ts).
+      await enqueueAutomationRuleRuns(tx, auditLog, metadata);
     }
 
     if (entityType === 'entity') {
@@ -192,19 +208,3 @@ export const extractEntityFields = (entity: Record<string, unknown>): Record<str
   const { id, created_at, updated_at, ...rest } = entity;
   return rest;
 };
-
-export const flattenEntityAuditFields = (entity: Entity): Record<string, unknown> => ({
-  _schemaId: entity.schema_id,
-  _name: entity.name,
-  _slug: entity.slug,
-  _namespace: entity.namespace,
-  _description: entity.description,
-  _owner: entity.owner,
-  _lifecycle: entity.lifecycle,
-  _targetLifecycle: entity.target_lifecycle,
-  _targetLifecycleDate: entity.target_lifecycle_date,
-  _tags: entity.tags,
-  _links: entity.links,
-  _visibilityMode: entity.visibility_mode,
-  ...entity.data
-});

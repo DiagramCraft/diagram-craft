@@ -17,6 +17,7 @@ import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
 import { RoutePendingComponent } from '../../routes/RoutePendingComponent';
 import { JobMonitoringSubSection } from './sub-sections/JobMonitoringSubSection';
 import { WebhooksSubSection } from './sub-sections/WebhooksSubSection';
+import { AutomationRulesSubSection } from './sub-sections/AutomationRulesSubSection';
 import { CreateJobDialog } from '../../components/jobs/CreateJobDialog';
 import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensSubSection';
 
@@ -79,6 +80,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'webhooks': {
     title: 'Webhooks',
     sub: 'Notify external systems when catalog entities change.'
+  },
+  'automation': {
+    title: 'Automation rules',
+    sub: 'Automatically take action when entities match a trigger and conditions.'
   },
   'danger': {
     title: 'Danger zone',
@@ -258,6 +263,13 @@ export const WorkspaceSettingsScreen = () => {
       )}
       {section === 'webhooks' && (
         <WebhooksSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+      )}
+      {section === 'automation' && (
+        <AutomationRulesSubSection
+          workspaceSlug={workspaceSlug}
+          schemas={ctx.schemas}
+          lifecycleStates={lifecycleStates}
+        />
       )}
       {section === 'danger' && <DangerZoneSubSection workspace={workspace} />}
     </div>

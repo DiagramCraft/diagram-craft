@@ -135,6 +135,10 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
       conditions.push('schedule_id = ?');
       params.push(options.scheduleId);
     }
+    if (options.jobType) {
+      conditions.push('job_type = ?');
+      params.push(options.jobType);
+    }
     if (options.status) {
       conditions.push('status = ?');
       params.push(options.status);

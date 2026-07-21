@@ -264,6 +264,12 @@ type JobRunListQuery = {
   offset?: number;
 };
 
+/**
+ * `jobType` is not part of the public `runs.list` filter query (it's fixed per-caller, e.g.
+ * automation rule runs always pass `automation-rule.execute`), so it's a separate parameter
+ * rather than part of `JobRunListQuery`.
+ */
+
 export const listJobServers = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -581,7 +587,8 @@ export const listJobRuns = async (
   workspace: string,
   query: JobRunListQuery,
   event: AuthenticatedEvent,
-  now = new Date()
+  now = new Date(),
+  jobType?: string
 ) => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
@@ -589,6 +596,7 @@ export const listJobRuns = async (
 
   const options: JobRunListOptions = {
     scheduleId: query.scheduleId,
+    jobType,
     status: query.status,
     plannedFrom: parseOptionalDate(query.plannedFrom, 'plannedFrom'),
     plannedTo: parseOptionalDate(query.plannedTo, 'plannedTo'),

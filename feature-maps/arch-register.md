@@ -298,6 +298,13 @@
               hydrate mapped schema fields from endoflife.date while recording those fields as scheduled integration
               data.
 
+        - @id:ar.integrations.automation-rules Workspace administrators can define, edit, and delete workspace-scoped
+          automation rules that match an entity trigger (creation, deletion, a field change, or a lifecycle transition)
+          and an optional set of field conditions, then run one or more configured actions — recording an audit note,
+          sending an in-app notification, or setting a field value on the triggering entity. Rules are matched
+          synchronously on every entity mutation; their actions execute asynchronously through the job queue, and
+          administrators can inspect recent rule runs, including failures, from workspace settings.
+
         - @id:ar.integrations.external-content @status:experimental Configured external content providers can be mounted
           and synchronized into supported workspace content workflows.
 

@@ -7,6 +7,8 @@ import { createJobServer, type JobHandler } from './worker';
 import { createStorage } from '@arch-register/server/storage/storage';
 import { createExternalContentJobHandler } from '@arch-register/server/domain/external-content/externalContentJobs';
 import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webhook/webhookDelivery';
+import { createAutomationRuleExecutionHandler } from '@arch-register/server/domain/automation/automationRuleExecution';
+import { AUTOMATION_RULE_JOB_TYPE } from '@arch-register/server/domain/automation/automationRuleEvaluation';
 import { createGovernanceNotificationJobHandler } from '@arch-register/server/domain/governance/governanceNotifications';
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
 import { createTechnologyEolJobHandler } from '@arch-register/server/domain/jobs/technologyEolJob';
@@ -54,6 +56,7 @@ const main = async () => {
   await ensureAllNotificationDeliverySchedules(db);
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
+  handlers.set(AUTOMATION_RULE_JOB_TYPE, createAutomationRuleExecutionHandler(db));
   handlers.set('governance.notification', createGovernanceNotificationJobHandler(db));
   handlers.set(
     METADATA_GENERATION_SCAN_JOB_TYPE,

@@ -29,6 +29,7 @@ import { workspaceMetricContract } from '@arch-register/api-types/metricContract
 import { jobsContract } from '@arch-register/api-types/jobsContract';
 import { externalContentContract } from '@arch-register/api-types/externalContentContract';
 import { webhookContract } from '@arch-register/api-types/webhookContract';
+import { automationRuleContract } from '@arch-register/api-types/automationRuleContract';
 import { documentContract } from '@arch-register/api-types/documentContract';
 import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
@@ -62,6 +63,7 @@ const webContracts = {
   ...jobsContract,
   ...externalContentContract,
   ...webhookContract,
+  ...automationRuleContract,
   ...documentContract,
   ...entityChangeContract,
   ...entityDeprecationContract,

@@ -144,6 +144,10 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
       params.push(options.scheduleId);
       conditions.push(`schedule_id = $${params.length}`);
     }
+    if (options.jobType) {
+      params.push(options.jobType);
+      conditions.push(`job_type = $${params.length}`);
+    }
     if (options.status) {
       params.push(options.status);
       conditions.push(`status = $${params.length}`);
