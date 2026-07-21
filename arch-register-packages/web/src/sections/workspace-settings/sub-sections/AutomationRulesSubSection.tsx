@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TbBolt, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import type {
   AutomationAction,
@@ -72,6 +72,102 @@ const defaultTriggerFor = (kind: TriggerKind): AutomationRuleTrigger => {
   return { kind };
 };
 
+type FieldOption = {
+  id: string;
+  name: string;
+  valueOptions?: { value: string; label: string }[];
+};
+
+const STATIC_METADATA_FIELDS: FieldOption[] = [
+  { id: '_name', name: 'Name' },
+  { id: '_slug', name: 'Slug' },
+  { id: '_description', name: 'Description' },
+  { id: '_namespace', name: 'Namespace' },
+  { id: '_owner', name: 'Owner' },
+  { id: '_tags', name: 'Tags' },
+  { id: '_completeness', name: 'Completeness' }
+];
+
+const fieldOptionsFor = (
+  schemas: EntitySchema[],
+  schemaId: string,
+  lifecycleStates: WorkspaceLifecycleState[]
+): FieldOption[] => {
+  const metadataFields: FieldOption[] = [
+    ...STATIC_METADATA_FIELDS,
+    {
+      id: '_lifecycle',
+      name: 'Lifecycle status',
+      valueOptions: lifecycleStates.map(s => ({ value: s.id, label: s.label }))
+    }
+  ];
+
+  let customFields: EntitySchema['fields'] = [];
+  if (schemaId) {
+    customFields = schemas.find(s => s.id === schemaId)?.fields ?? [];
+  } else if (schemas[0]) {
+    // No specific entity type selected: only offer fields common to every entity type.
+    customFields = schemas[0].fields.filter(f =>
+      schemas.every(s => s.fields.some(sf => sf.id === f.id))
+    );
+  }
+
+  return [
+    ...metadataFields,
+    ...customFields.map(f => ({
+      id: f.id,
+      name: f.name,
+      valueOptions: f.type === 'select' ? f.options : undefined
+    }))
+  ];
+};
+
+const FieldSelect = ({
+  fields,
+  value,
+  onChange
+}: {
+  fields: FieldOption[];
+  value: string;
+  onChange: (value: string) => void;
+}) => (
+  <Select.Root value={value} onChange={value => onChange(value ?? '')} style={{ width: '100%' }}>
+    <Select.Item value="">Select a field…</Select.Item>
+    {fields.map(field => (
+      <Select.Item key={field.id} value={field.id}>
+        {field.name}
+      </Select.Item>
+    ))}
+  </Select.Root>
+);
+
+const FieldValueInput = ({
+  fields,
+  fieldId,
+  value,
+  onChange
+}: {
+  fields: FieldOption[];
+  fieldId: string;
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  const valueOptions = fields.find(f => f.id === fieldId)?.valueOptions;
+  if (valueOptions) {
+    return (
+      <Select.Root value={value} onChange={value => onChange(value ?? '')} style={{ width: '100%' }}>
+        <Select.Item value="">Select a value…</Select.Item>
+        {valueOptions.map(option => (
+          <Select.Item key={option.value} value={option.value}>
+            {option.label}
+          </Select.Item>
+        ))}
+      </Select.Root>
+    );
+  }
+  return <TextInput value={value} onChange={value => onChange(value ?? '')} placeholder="Value" />;
+};
+
 const defaultActionFor = (kind: ActionKind): AutomationAction => {
   if (kind === 'create_audit_note') return { kind, note: '' };
   if (kind === 'send_notification') {
@@ -82,18 +178,20 @@ const defaultActionFor = (kind: ActionKind): AutomationAction => {
 
 const ConditionRow = ({
   condition,
+  fields,
   onChange,
   onRemove
 }: {
   condition: AutomationCondition;
+  fields: FieldOption[];
   onChange: (next: AutomationCondition) => void;
   onRemove: () => void;
 }) => (
   <div className={styles.row}>
-    <TextInput
+    <FieldSelect
+      fields={fields}
       value={condition.field}
-      onChange={value => onChange({ ...condition, field: value ?? '' })}
-      placeholder="Field (e.g. _lifecycle or a custom field id)"
+      onChange={value => onChange({ ...condition, field: value })}
     />
     <Select.Root
       value={condition.operator}
@@ -109,12 +207,13 @@ const ConditionRow = ({
       ))}
     </Select.Root>
     {(condition.operator === 'equals' || condition.operator === 'not_equals') && (
-      <TextInput
+      <FieldValueInput
+        fields={fields}
+        fieldId={condition.field}
         value={
           typeof condition.value === 'string' ? condition.value : String(condition.value ?? '')
         }
-        onChange={value => onChange({ ...condition, value: value ?? '' })}
-        placeholder="Value"
+        onChange={value => onChange({ ...condition, value })}
       />
     )}
     <Button variant="ghost" size="xs" icon={<TbTrash size={13} />} onClick={onRemove} />
@@ -123,12 +222,12 @@ const ConditionRow = ({
 
 const ActionRow = ({
   action,
-  schemas,
+  fields,
   onChange,
   onRemove
 }: {
   action: AutomationAction;
-  schemas: EntitySchema[];
+  fields: FieldOption[];
   onChange: (next: AutomationAction) => void;
   onRemove: () => void;
 }) => (
@@ -208,19 +307,19 @@ const ActionRow = ({
 
     {action.kind === 'set_field_value' && (
       <div className={styles.row}>
-        <TextInput
+        <FieldSelect
+          fields={fields}
           value={action.field}
-          onChange={value => onChange({ ...action, field: value ?? '' })}
-          placeholder="Field id"
+          onChange={value => onChange({ ...action, field: value })}
         />
-        <TextInput
+        <FieldValueInput
+          fields={fields}
+          fieldId={action.field}
           value={typeof action.value === 'string' ? action.value : String(action.value ?? '')}
-          onChange={value => onChange({ ...action, value: value ?? '' })}
-          placeholder="Value"
+          onChange={value => onChange({ ...action, value })}
         />
       </div>
     )}
-    {schemas.length === 0 && null}
   </div>
 );
 
@@ -269,6 +368,11 @@ const EditorDialog = ({
       setEnabled(rule.enabled);
     }
   }, [rule]);
+
+  const availableFields = useMemo(
+    () => fieldOptionsFor(schemas, schemaId, lifecycleStates),
+    [schemas, schemaId, lifecycleStates]
+  );
 
   if (!rule) return null;
 
@@ -403,6 +507,7 @@ const EditorDialog = ({
                 // eslint-disable-next-line react/no-array-index-key
                 key={index}
                 condition={condition}
+                fields={availableFields}
                 onChange={next => setConditions(conditions.map((c, i) => (i === index ? next : c)))}
                 onRemove={() => setConditions(conditions.filter((_, i) => i !== index))}
               />
@@ -428,7 +533,7 @@ const EditorDialog = ({
                 // eslint-disable-next-line react/no-array-index-key
                 key={index}
                 action={action}
-                schemas={schemas}
+                fields={availableFields}
                 onChange={next => setActions(actions.map((a, i) => (i === index ? next : a)))}
                 onRemove={() => setActions(actions.filter((_, i) => i !== index))}
               />

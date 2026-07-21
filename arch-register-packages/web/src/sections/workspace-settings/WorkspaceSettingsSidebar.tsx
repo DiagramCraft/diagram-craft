@@ -65,9 +65,9 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   },
   { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
+  { id: 'automation', label: 'Automation rules', icon: <TbBolt size={12} />, group: 'Workspace' },
   { id: 'api-tokens', label: 'API Tokens', icon: <TbKey size={12} />, group: 'Administration' },
   { id: 'webhooks', label: 'Webhooks', icon: <TbWebhook size={12} />, group: 'Administration' },
-  { id: 'automation', label: 'Automation rules', icon: <TbBolt size={12} />, group: 'Administration' },
   { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Administration' },
   {
     id: 'danger',
