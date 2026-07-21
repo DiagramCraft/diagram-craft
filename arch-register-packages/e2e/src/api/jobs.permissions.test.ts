@@ -30,6 +30,11 @@ test('job monitoring is restricted to workspace administrators', async ({ server
     personas.workspaceEditor.orpc.jobs.schedules.list({ params: { workspace: 'default' } })
   ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   await expect(
+    personas.workspaceEditor.orpc.jobs.schedules.runNow({
+      params: { workspace: 'default', id: schedules[0]!.id }
+    })
+  ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  await expect(
     personas.workspaceEditor.orpc.jobs.runs.list({
       params: { workspace: 'default' },
       query: {}

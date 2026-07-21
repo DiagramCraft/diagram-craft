@@ -539,6 +539,43 @@ export const updateWorkspaceJobSchedule = async (
   return toApiJobSchedule(updated);
 };
 
+export const triggerJobScheduleRun = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  event: AuthenticatedEvent,
+  now = new Date()
+) => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  requireWorkspaceAdmin(authCtx);
+
+  const existing = await db.jobs.getSchedule(id);
+  httpAssert.present(existing, {
+    status: 404,
+    statusText: 'Not Found',
+    message: 'Job schedule not found'
+  });
+  httpAssert.true(existing.workspace === ws, {
+    status: 404,
+    statusText: 'Not Found',
+    message: 'Job schedule not found'
+  });
+  httpAssert.true(existing.enabled, {
+    status: 409,
+    statusText: 'Conflict',
+    message: 'Disabled job schedules cannot be run'
+  });
+
+  const run = await enqueueJobRun(db, id, now);
+  httpAssert.present(run, {
+    status: 409,
+    statusText: 'Conflict',
+    message: 'Disabled job schedules cannot be run'
+  });
+  return toApiJobRun(run, now);
+};
+
 export const listJobRuns = async (
   db: DatabaseAdapter,
   workspace: string,
