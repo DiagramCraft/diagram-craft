@@ -229,7 +229,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       sql,
       params as Parameters<typeof this.sql.unsafe>[1]
     );
-    return mapDatabaseRows(rows, catalogMappers.enrichedEntity);
+    return mapDatabaseRows(rows, catalogMappers.entityQuery);
   }
 
   async listEntitiesPaginated(
