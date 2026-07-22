@@ -17843,7 +17843,7 @@
                             "required": [
                               "root"
                             ],
-                            "description": "Structured EntityQuery used by advanced saved views"
+                            "description": "Canonical structured EntityQuery used by this saved view"
                           },
                           "assessmentId": {
                             "anyOf": [
@@ -17857,6 +17857,9 @@
                             "description": "Joined assessment identifier for display, filtering, and view attributes"
                           }
                         },
+                        "required": [
+                          "entityQuery"
+                        ],
                         "description": "Entity filters applied in this view"
                       },
                       "config": {
@@ -19112,7 +19115,7 @@
                         "required": [
                           "root"
                         ],
-                        "description": "Structured EntityQuery used by advanced saved views"
+                        "description": "Canonical structured EntityQuery used by this saved view"
                       },
                       "assessmentId": {
                         "anyOf": [
@@ -19126,6 +19129,9 @@
                         "description": "Joined assessment identifier for display, filtering, and view attributes"
                       }
                     },
+                    "required": [
+                      "entityQuery"
+                    ],
                     "description": "Entity filters to apply"
                   },
                   "config": {
@@ -20617,7 +20623,7 @@
                           "required": [
                             "root"
                           ],
-                          "description": "Structured EntityQuery used by advanced saved views"
+                          "description": "Canonical structured EntityQuery used by this saved view"
                         },
                         "assessmentId": {
                           "anyOf": [
@@ -20631,6 +20637,9 @@
                           "description": "Joined assessment identifier for display, filtering, and view attributes"
                         }
                       },
+                      "required": [
+                        "entityQuery"
+                      ],
                       "description": "Entity filters applied in this view"
                     },
                     "config": {
@@ -21877,7 +21886,7 @@
                         "required": [
                           "root"
                         ],
-                        "description": "Structured EntityQuery used by advanced saved views"
+                        "description": "Canonical structured EntityQuery used by this saved view"
                       },
                       "assessmentId": {
                         "anyOf": [
@@ -21891,6 +21900,9 @@
                         "description": "Joined assessment identifier for display, filtering, and view attributes"
                       }
                     },
+                    "required": [
+                      "entityQuery"
+                    ],
                     "description": "Entity filters to apply"
                   },
                   "config": {
@@ -23377,7 +23389,7 @@
                           "required": [
                             "root"
                           ],
-                          "description": "Structured EntityQuery used by advanced saved views"
+                          "description": "Canonical structured EntityQuery used by this saved view"
                         },
                         "assessmentId": {
                           "anyOf": [
@@ -23391,6 +23403,9 @@
                           "description": "Joined assessment identifier for display, filtering, and view attributes"
                         }
                       },
+                      "required": [
+                        "entityQuery"
+                      ],
                       "description": "Entity filters applied in this view"
                     },
                     "config": {
