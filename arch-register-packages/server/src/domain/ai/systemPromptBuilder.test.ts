@@ -31,14 +31,14 @@ describe('buildSystemPrompt', () => {
         ) => {
           const all = [
             {
-              id: 'entity-public',
+              id: 'entity-owned',
               workspace: 'ws-1',
               public_id: 'APP-1',
-              slug: 'public-app',
+              slug: 'owned-app',
               namespace: 'default',
-              name: 'Public App',
+              name: 'Owned App',
               description: '',
-              owner: null,
+              owner: 'team-1',
               lifecycle: null,
               target_lifecycle: null,
               target_lifecycle_date: null,
@@ -46,7 +46,7 @@ describe('buildSystemPrompt', () => {
               links: [],
               schema_id: 'schema-1',
               data: {},
-              visibility_mode: 'public' as const,
+
               owner_name: null,
               lifecycle_label: null,
               target_lifecycle_label: null,
@@ -55,12 +55,12 @@ describe('buildSystemPrompt', () => {
               updated_at: now
             },
             {
-              id: 'entity-restricted',
+              id: 'entity-unowned',
               workspace: 'ws-1',
               public_id: 'APP-2',
-              slug: 'restricted-app',
+              slug: 'unowned-app',
               namespace: 'default',
-              name: 'Restricted App',
+              name: 'Unowned App',
               description: '',
               owner: null,
               lifecycle: null,
@@ -70,7 +70,7 @@ describe('buildSystemPrompt', () => {
               links: [],
               schema_id: 'schema-1',
               data: {},
-              visibility_mode: 'restricted' as const,
+
               owner_name: null,
               lifecycle_label: null,
               target_lifecycle_label: null,
@@ -83,14 +83,14 @@ describe('buildSystemPrompt', () => {
         },
         listEntities: async () => [
           {
-            id: 'entity-public',
+            id: 'entity-owned',
             workspace: 'ws-1',
             public_id: 'APP-1',
-            slug: 'public-app',
+            slug: 'owned-app',
             namespace: 'default',
-            name: 'Public App',
+            name: 'Owned App',
             description: '',
-            owner: null,
+            owner: 'team-1',
             lifecycle: null,
             target_lifecycle: null,
             target_lifecycle_date: null,
@@ -98,7 +98,7 @@ describe('buildSystemPrompt', () => {
             links: [],
             schema_id: 'schema-1',
             data: {},
-            visibility_mode: 'public' as const,
+
             owner_name: null,
             lifecycle_label: null,
             target_lifecycle_label: null,
@@ -107,12 +107,12 @@ describe('buildSystemPrompt', () => {
             updated_at: now
           },
           {
-            id: 'entity-restricted',
+            id: 'entity-unowned',
             workspace: 'ws-1',
             public_id: 'APP-2',
-            slug: 'restricted-app',
+            slug: 'unowned-app',
             namespace: 'default',
-            name: 'Restricted App',
+            name: 'Unowned App',
             description: '',
             owner: null,
             lifecycle: null,
@@ -122,7 +122,7 @@ describe('buildSystemPrompt', () => {
             links: [],
             schema_id: 'schema-1',
             data: {},
-            visibility_mode: 'restricted' as const,
+
             owner_name: null,
             lifecycle_label: null,
             target_lifecycle_label: null,
@@ -142,6 +142,7 @@ describe('buildSystemPrompt', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
       schemas: [
         {
           id: 'schema-1',
@@ -157,28 +158,27 @@ describe('buildSystemPrompt', () => {
       ],
       entities: [
         {
-          id: 'entity-public',
+          id: 'entity-owned',
           workspace: 'ws-1',
-          slug: 'public-app',
+          slug: 'owned-app',
           namespace: 'default',
-          name: 'Public App',
+          name: 'Owned App',
           description: '',
-          owner: null,
+          owner: 'team-1',
           lifecycle: null,
           tags: [],
           links: [],
           schema_id: 'schema-1',
           data: {},
-          visibility_mode: 'public',
           created_at: now,
           updated_at: now
         },
         {
-          id: 'entity-restricted',
+          id: 'entity-unowned',
           workspace: 'ws-1',
-          slug: 'restricted-app',
+          slug: 'unowned-app',
           namespace: 'default',
-          name: 'Restricted App',
+          name: 'Unowned App',
           description: '',
           owner: null,
           lifecycle: null,
@@ -186,7 +186,6 @@ describe('buildSystemPrompt', () => {
           links: [],
           schema_id: 'schema-1',
           data: {},
-          visibility_mode: 'restricted',
           created_at: now,
           updated_at: now
         }

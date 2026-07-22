@@ -240,7 +240,7 @@ const entityHandlers = {
     const grants = await context.db.catalog.getEntityGrants(workspace, entity.id);
     return {
       owner: entity.owner,
-      visibility_mode: entity.visibility_mode,
+      project_id: entity.project_id,
       approval_policy_override: entity.approval_policy_override ?? null,
       grants: grants.map(g => ({ ...g, created_at: g.created_at.toISOString() }))
     };
@@ -292,7 +292,7 @@ const entityHandlers = {
     }
     return {
       owner: current.owner,
-      visibility_mode: current.visibility_mode,
+      project_id: current.project_id,
       approval_policy_override: current.approval_policy_override ?? null,
       grants: grants.map(g => ({ ...g, created_at: g.created_at.toISOString() }))
     };
@@ -436,7 +436,7 @@ const snapshotHandlers = {
         links: entity.links,
         schema_id: entity.schema_id,
         data: entity.data,
-        visibility_mode: entity.visibility_mode
+        project_id: entity.project_id
       },
       proposed_state: input.body.proposedState
     });

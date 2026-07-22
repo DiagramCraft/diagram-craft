@@ -144,7 +144,6 @@ export class ArchRegisterApiClient {
         _owner: input.owner,
         _lifecycle: input.lifecycle,
         _tags: input.tags,
-        _visibilityMode: input.visibilityMode,
         ...(input.fields ?? {})
       })
     });
@@ -164,7 +163,6 @@ export class ArchRegisterApiClient {
           _owner: input.owner,
           _lifecycle: input.lifecycle,
           _tags: input.tags,
-          _visibilityMode: input.visibilityMode,
           ...(input.fields ?? {})
         })
       }

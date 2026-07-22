@@ -70,7 +70,6 @@ const makeEntity = (overrides: Partial<EntityDbResult>): EntityDbResult => ({
   links: [],
   schema_id: 'schema-service',
   data: { runbook: 'https://runbook' },
-  visibility_mode: 'public',
   project_id: null,
   created_at: now,
   updated_at: now,

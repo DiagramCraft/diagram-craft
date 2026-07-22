@@ -171,7 +171,6 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       links: [],
       schema_id: 'schema-1',
       data: {},
-      visibility_mode: 'public',
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -189,7 +188,6 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       links: [],
       schema_id: 'schema-1',
       data: {},
-      visibility_mode: 'public',
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -326,7 +324,6 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       links: [],
       schema_id: 'schema-1',
       data: {},
-      visibility_mode: 'public',
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -480,7 +477,6 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
           links: [],
           schema_id: 'schema-server',
           data: {},
-          visibility_mode: 'restricted',
           created_at: new Date('2024-01-01'),
           updated_at: new Date('2024-01-15')
         }

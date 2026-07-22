@@ -102,7 +102,6 @@ export type ExportEntity = {
   tags: string[];
   links: unknown[];
   data: Record<string, unknown>;
-  visibility_mode: 'public' | 'restricted' | null;
   project_id: string | null;
   grants?: Array<{
     id: string;

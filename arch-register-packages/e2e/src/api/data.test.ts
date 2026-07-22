@@ -418,7 +418,7 @@ test.describe('data routes', () => {
     });
     expect(getBody).toMatchObject({
       owner: seedIds.teams.design,
-      visibility_mode: null,
+      project_id: null,
       grants: []
     });
 

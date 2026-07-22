@@ -248,7 +248,6 @@ const buildProposedEntity = async (
     links: payload.links,
     schema_id: payload.schemaId,
     data,
-    visibility_mode: entity.visibility_mode,
     project_id: payload.projectId,
     updated_at: new Date()
   };
@@ -745,7 +744,6 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
               links: Array.isArray(next['links']) ? next['links'] : [],
               schema_id: String(next['schema_id']),
               data: (next['data'] as Record<string, unknown>) ?? {},
-              visibility_mode: entity.visibility_mode,
               project_id: (next['project_id'] as string | null) ?? null,
               updated_at: new Date()
             },

@@ -578,7 +578,6 @@ export const createAiChatTools = (
         links: [],
         schema_id: schema.id,
         data: args.fields ?? {},
-        visibility_mode: null,
         project_id: null,
         created_at: timestamp,
         updated_at: timestamp
@@ -661,7 +660,6 @@ export const createAiChatTools = (
           ...current.data,
           ...(args.fields ?? {})
         },
-        visibility_mode: current.visibility_mode,
         project_id: current.project_id,
         updated_at: new Date()
       }

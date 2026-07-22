@@ -30,7 +30,6 @@ const makeEntity = (overrides: Partial<EntityDbCreate> = {}): EntityDbCreate => 
     region: 'eu',
     criticality: 'high'
   },
-  visibility_mode: 'public',
   project_id: null,
   created_at: now,
   updated_at: now,
@@ -159,7 +158,7 @@ describe('flattenEntityAuditFields', () => {
       _targetLifecycleDate: null,
       _tags: ['core'],
       _links: [{ url: 'https://example.com', title: 'Example' }],
-      _visibilityMode: 'public',
+      _projectId: null,
       region: 'eu',
       criticality: 'high'
     });

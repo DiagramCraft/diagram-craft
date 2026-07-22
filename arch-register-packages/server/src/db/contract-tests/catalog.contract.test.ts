@@ -290,7 +290,6 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         links: [],
         schema_id: schema,
         data: {},
-        visibility_mode: null,
         project_id: null,
         updated_at: new Date()
       });

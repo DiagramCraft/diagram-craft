@@ -40,7 +40,6 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         links: customerPortal.links,
         schema_id: customerPortal.schema_id,
         data: customerPortal.data,
-        visibility_mode: 'restricted',
         project_id: null,
         updated_at: now
       });
@@ -80,12 +79,13 @@ test.describe('search permission routes', () => {
       query: { q: 'frontend', types: 'entities' }
     });
 
+    // This user has no workspace role — only an explicit subtree grant on customerPortal —
+    // so results outside that subtree are no longer visible now that there's no implicit
+    // "public entity" fallback; only matches within the granted subtree remain.
     expect(result.entities.map(entity => entity.entityId)).toEqual([
       resources.entityIds.customerApi,
       '00000000-0000-0000-0003-00000000000e',
-      resources.entityIds.frontendApp,
-      '00000000-0000-0000-0007-000000000002',
-      '00000000-0000-0000-0006-000000000002'
+      resources.entityIds.frontendApp
     ]);
     expect(result.projects).toEqual([]);
     expect(result.files).toEqual([]);

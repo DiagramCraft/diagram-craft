@@ -78,7 +78,6 @@ const createEntity = (
   links: [],
   schema_id: 'schema-1',
   data: parentId ? { parent: parentId } : {},
-  visibility_mode: 'restricted',
   created_at: new Date(),
   updated_at: new Date()
 });

@@ -21,7 +21,7 @@ export const entityToBaseState = (row: Entity): Record<string, unknown> => ({
   links: row.links,
   schema_id: row.schema_id,
   data: row.data,
-  visibility_mode: row.visibility_mode,
+  project_id: row.project_id,
   created_at: row.created_at,
   updated_at: row.updated_at
 });

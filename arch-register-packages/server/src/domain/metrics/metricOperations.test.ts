@@ -104,7 +104,6 @@ const makeService = (
   links: [],
   schema_id: 'service',
   data: { parent: parentId },
-  visibility_mode: null,
   project_id: null,
   created_at: now,
   updated_at: now,
@@ -131,7 +130,6 @@ const makeDomain = (id: string, overrides: Partial<EntityDbResult> = {}): Entity
   links: [],
   schema_id: 'domain',
   data: {},
-  visibility_mode: null,
   project_id: null,
   created_at: now,
   updated_at: now,
@@ -673,6 +671,8 @@ describe('getBoxMetrics', () => {
     userId: 'user-2',
     globalRoles: [],
     workspaceRole: null,
+    teamAssignments: [{ teamId: 'team-visible', role: 'team_admin' }],
+    teams: [],
     schemas: [],
     entities: [],
     grants: []
@@ -755,14 +755,13 @@ describe('getBoxMetrics', () => {
 
   it('excludes entities the caller cannot view from the aggregation', async () => {
     const entities = [
-      makeDomain('d1', { visibility_mode: 'public' }),
+      makeDomain('d1', { owner: 'team-visible' }),
       makeService('s1', 'd1', {
         data: { parent: 'd1', score: 10 },
-        visibility_mode: 'public'
+        owner: 'team-visible'
       }),
       makeService('s2', 'd1', {
-        data: { parent: 'd1', score: 100 },
-        visibility_mode: 'restricted'
+        data: { parent: 'd1', score: 100 }
       })
     ];
     const db = makeDb(entities);
@@ -777,16 +776,14 @@ describe('getBoxMetrics', () => {
 
   it('applies the current browser filters (owner) to roll-up inputs', async () => {
     const entities = [
-      makeDomain('d1', { visibility_mode: 'public' }),
+      makeDomain('d1'),
       makeService('s1', 'd1', {
         data: { parent: 'd1', score: 10 },
-        owner: 'team-a',
-        visibility_mode: 'public'
+        owner: 'team-a'
       }),
       makeService('s2', 'd1', {
         data: { parent: 'd1', score: 20 },
-        owner: 'team-b',
-        visibility_mode: 'public'
+        owner: 'team-b'
       })
     ];
     const db = makeDb(entities);

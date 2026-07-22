@@ -42,7 +42,6 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
         links: entity.links,
         schema_id: entity.schema_id,
         data: entity.data,
-        visibility_mode: entity.visibility_mode,
         project_id: entity.project_id,
         updated_at: new Date()
       },

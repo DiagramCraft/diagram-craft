@@ -251,7 +251,6 @@ test.describe('schema routes', () => {
       links: [],
       schema_id: apiSchemaId,
       data: {},
-      visibility_mode: null,
       project_id: null,
       created_at: new Date(),
       updated_at: new Date()

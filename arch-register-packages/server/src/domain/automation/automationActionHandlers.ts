@@ -203,7 +203,6 @@ const handleSetFieldValue: AutomationActionHandler = async context => {
       links: entity.links,
       schema_id: entity.schema_id,
       data: nextData,
-      visibility_mode: entity.visibility_mode,
       project_id: entity.project_id,
       updated_at: new Date()
     }

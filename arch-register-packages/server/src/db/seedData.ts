@@ -964,7 +964,6 @@ const seedTechnologies: Entity[] = [
       category: 'runtime',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -990,7 +989,6 @@ const seedTechnologies: Entity[] = [
       category: 'framework',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1017,7 +1015,6 @@ const seedTechnologies: Entity[] = [
       category: 'language',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1044,7 +1041,6 @@ const seedTechnologies: Entity[] = [
       category: 'language',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1070,7 +1066,6 @@ const seedTechnologies: Entity[] = [
       category: 'language',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1096,7 +1091,6 @@ const seedTechnologies: Entity[] = [
       category: 'language',
       radar_status: 'trial'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1122,7 +1116,6 @@ const seedTechnologies: Entity[] = [
       category: 'database',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1148,7 +1141,6 @@ const seedTechnologies: Entity[] = [
       category: 'database',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1174,7 +1166,6 @@ const seedTechnologies: Entity[] = [
       category: 'runtime',
       radar_status: 'assess'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1202,7 +1193,6 @@ const seedTechnologies: Entity[] = [
       category: 'database',
       radar_status: 'assess'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1239,7 +1229,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'runtime',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1273,7 +1262,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'framework',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1307,7 +1295,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'language',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1341,7 +1328,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'language',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1375,7 +1361,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'language',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1409,7 +1394,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'language',
       radar_status: 'trial'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1445,7 +1429,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'database',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1479,7 +1462,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'database',
       radar_status: 'adopt'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1515,7 +1497,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'runtime',
       radar_status: 'assess'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1551,7 +1532,6 @@ const seedTechnologyReleases: Entity[] = [
       category: 'database',
       radar_status: 'assess'
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1578,7 +1558,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000001',
     data: {},
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1599,7 +1578,6 @@ export const seedEntities: Entity[] = [
     links: [{ url: 'https://wiki.example.com/customer-portal', title: 'Wiki', type: 'docs' }],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: ['00000000-0000-0000-0001-000000000001'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1620,7 +1598,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: ['00000000-0000-0000-0001-000000000001'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1641,7 +1618,6 @@ export const seedEntities: Entity[] = [
     links: [{ url: 'https://api.example.com/docs/customer', title: 'API Docs', type: 'docs' }],
     schema_id: '00000000-0000-0000-0000-000000000004',
     data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000001'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1662,7 +1638,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
     data: { api_type: 'grpc', system: ['00000000-0000-0000-0002-000000000002'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1689,7 +1664,6 @@ export const seedEntities: Entity[] = [
       consumes_apis: ['00000000-0000-0000-0004-000000000002'],
       depends_on: ['00000000-0000-0000-0003-000000000003']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1718,7 +1692,6 @@ export const seedEntities: Entity[] = [
       ],
       depends_on: ['00000000-0000-0000-0003-000000000001', '00000000-0000-0000-0003-000000000003']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1743,7 +1716,6 @@ export const seedEntities: Entity[] = [
       system: ['00000000-0000-0000-0002-000000000002'],
       provides_apis: ['00000000-0000-0000-0004-000000000002']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1770,7 +1742,6 @@ export const seedEntities: Entity[] = [
       technology_releases: [TECHNOLOGY_RELEASE_IDS.postgres15],
       system: ['00000000-0000-0000-0002-000000000001']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1792,7 +1763,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000001',
     data: {},
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1813,7 +1783,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000001',
     data: {},
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1835,7 +1804,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: ['00000000-0000-0000-0001-000000000002'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1856,7 +1824,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: ['00000000-0000-0000-0001-000000000003'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1877,7 +1844,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: ['00000000-0000-0000-0001-000000000001'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1898,7 +1864,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: ['00000000-0000-0000-0001-000000000001'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1920,7 +1885,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
     data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000003'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1941,7 +1905,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
     data: { api_type: 'graphql', system: ['00000000-0000-0000-0002-000000000004'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1962,7 +1925,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
     data: { api_type: 'asyncapi', system: ['00000000-0000-0000-0002-000000000005'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1983,7 +1945,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
     data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000006'] },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2011,7 +1972,6 @@ export const seedEntities: Entity[] = [
       consumes_apis: ['00000000-0000-0000-0004-000000000002'],
       depends_on: ['00000000-0000-0000-0003-000000000005']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2035,7 +1995,6 @@ export const seedEntities: Entity[] = [
       technology_releases: [TECHNOLOGY_RELEASE_IDS.java21],
       system: ['00000000-0000-0000-0002-000000000003']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2061,7 +2020,6 @@ export const seedEntities: Entity[] = [
       consumes_apis: ['00000000-0000-0000-0004-000000000003'],
       depends_on: ['00000000-0000-0000-0003-000000000005']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2089,7 +2047,6 @@ export const seedEntities: Entity[] = [
         '00000000-0000-0000-0004-000000000003'
       ]
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2115,7 +2072,6 @@ export const seedEntities: Entity[] = [
       consumes_apis: ['00000000-0000-0000-0004-000000000004'],
       depends_on: ['00000000-0000-0000-0003-000000000007']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2140,7 +2096,6 @@ export const seedEntities: Entity[] = [
       system: ['00000000-0000-0000-0002-000000000005'],
       provides_apis: ['00000000-0000-0000-0004-000000000005']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2166,7 +2121,6 @@ export const seedEntities: Entity[] = [
       consumes_apis: ['00000000-0000-0000-0004-000000000005'],
       depends_on: ['00000000-0000-0000-0003-000000000009']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2191,7 +2145,6 @@ export const seedEntities: Entity[] = [
       system: ['00000000-0000-0000-0002-000000000006'],
       provides_apis: ['00000000-0000-0000-0004-000000000006']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2217,7 +2170,6 @@ export const seedEntities: Entity[] = [
       consumes_apis: ['00000000-0000-0000-0004-000000000006'],
       depends_on: ['00000000-0000-0000-0003-00000000000b']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2243,7 +2195,6 @@ export const seedEntities: Entity[] = [
       consumes_apis: ['00000000-0000-0000-0004-000000000005'],
       depends_on: ['00000000-0000-0000-0003-000000000009']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2267,7 +2218,6 @@ export const seedEntities: Entity[] = [
       technology_releases: [TECHNOLOGY_RELEASE_IDS.go122],
       system: ['00000000-0000-0000-0002-000000000001']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2292,7 +2242,6 @@ export const seedEntities: Entity[] = [
       system: ['00000000-0000-0000-0002-000000000001'],
       depends_on: ['00000000-0000-0000-0003-00000000000e']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2318,7 +2267,6 @@ export const seedEntities: Entity[] = [
       technology_releases: [TECHNOLOGY_RELEASE_IDS.redis7],
       system: ['00000000-0000-0000-0002-000000000001']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2343,7 +2291,6 @@ export const seedEntities: Entity[] = [
       technology_releases: [TECHNOLOGY_RELEASE_IDS.kafka37],
       system: ['00000000-0000-0000-0002-000000000005']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2367,7 +2314,6 @@ export const seedEntities: Entity[] = [
       resource_type: 'object-storage',
       system: ['00000000-0000-0000-0002-000000000004']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2392,7 +2338,6 @@ export const seedEntities: Entity[] = [
       technology_releases: [TECHNOLOGY_RELEASE_IDS.postgres15],
       system: ['00000000-0000-0000-0002-000000000003']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2417,7 +2362,6 @@ export const seedEntities: Entity[] = [
       technology_releases: [TECHNOLOGY_RELEASE_IDS.elasticsearch8],
       system: ['00000000-0000-0000-0002-000000000006']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2441,7 +2385,6 @@ export const seedEntities: Entity[] = [
       resource_type: 'data-warehouse',
       system: ['00000000-0000-0000-0002-000000000004']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2465,7 +2408,6 @@ export const seedEntities: Entity[] = [
       resource_type: 'cdn',
       system: ['00000000-0000-0000-0002-000000000001']
     },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2487,7 +2429,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000011',
     data: { platform: 'ios' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2508,7 +2449,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000012',
     data: { technology: 'Node' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2529,7 +2469,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000012',
     data: { technology: 'Rust' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2550,7 +2489,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000011',
     data: { platform: 'web' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2571,7 +2509,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000011',
     data: { platform: 'web' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2592,7 +2529,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000012',
     data: { technology: 'Go' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2613,7 +2549,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000012',
     data: { technology: 'Java' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2634,7 +2569,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000012',
     data: { technology: 'Rust' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now
@@ -2655,7 +2589,6 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000012',
     data: { technology: 'Python' },
-    visibility_mode: null,
     project_id: null,
     created_at: now,
     updated_at: now

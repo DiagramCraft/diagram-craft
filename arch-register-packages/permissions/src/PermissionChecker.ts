@@ -12,7 +12,6 @@ import type {
 } from './types.js';
 import { decodeRefs } from './utils.js';
 import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS } from './constants.js';
-import { VisibilityMode } from '@arch-register/api-types/entityContract';
 
 /**
  * Pure permission checker.
@@ -30,7 +29,7 @@ export class PermissionChecker {
    *
    * This checks:
    * - Global roles that grant entity permissions
-   * - Entity visibility (public entities are viewable by all)
+   * - Workspace-wide content.view (grants view_entity to any entity in the workspace)
    * - Owner team membership (grants entity_admin role)
    * - Explicit entity grants (direct or via subtree)
    *
@@ -196,11 +195,6 @@ export class PermissionChecker {
       }
     }
 
-    // Public entities are viewable by all
-    if (this.resolveEntityVisibility(context, entity) === 'public') {
-      actions.add('view_entity');
-    }
-
     const ancestorIds = this.collectAncestorIds(context, entity);
 
     // Direct owner team permissions apply to the entity itself
@@ -280,38 +274,6 @@ export class PermissionChecker {
     for (const action of candidateActions) {
       if (this.isEntityActionAllowedByCeiling(context, action)) actions.add(action);
     }
-  }
-
-  /**
-   * Resolve the effective visibility mode for an entity by traversing up the containment hierarchy.
-   *
-   * If an entity doesn't have an explicit visibility mode, we traverse up through
-   * its parent entities until we find one with a visibility mode, or default to 'public'.
-   *
-   * @param context - Authorization context with entity data
-   * @param entity - The entity to resolve visibility for
-   * @returns The effective visibility mode ('public' or 'restricted')
-   */
-  protected resolveEntityVisibility(context: AuthorizationContext, entity: Entity): VisibilityMode {
-    if (entity.visibility_mode) return entity.visibility_mode;
-
-    const queue = [...this.getParentIds(entity, context.schemas.get(entity.schema_id))];
-    const visited = new Set<string>();
-
-    while (queue.length > 0) {
-      const currentId = queue.shift()!;
-      if (visited.has(currentId)) continue;
-      visited.add(currentId);
-
-      const current = context.entities.get(currentId);
-      if (!current) continue;
-
-      if (current.visibility_mode) return current.visibility_mode;
-
-      queue.push(...this.getParentIds(current, context.schemas.get(current.schema_id)));
-    }
-
-    return 'public';
   }
 
   /**

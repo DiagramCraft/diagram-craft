@@ -18,7 +18,6 @@ export const buildEntityRefLookup = (relations: EntityRelations): RefLookup => {
       _targetLifecycleDate: null,
       _tags: [],
       _links: [],
-      _visibilityMode: null,
       _projectId: null,
       _completeness: null,
       canView: true,

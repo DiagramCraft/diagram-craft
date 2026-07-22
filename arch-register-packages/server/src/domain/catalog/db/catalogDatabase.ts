@@ -9,7 +9,7 @@ import {
   TimelineViewConfig
 } from '@arch-register/api-types/viewContract';
 import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
-import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { EntityRole } from '@arch-register/permissions';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
@@ -181,7 +181,6 @@ export type Entity = {
   // `{}` if empty) when read from the database; optional here mainly so existing in-memory
   // fixtures/constructors that predate this field don't all need updating.
   generated_metadata?: ExternalMetadata;
-  visibility_mode: VisibilityMode | null;
   // Set only when this entity was created solely for one project — it should not appear outside
   // that project's context. Distinct from project_entity, which associates an existing,
   // otherwise-normal entity with a project without restricting its general visibility.
@@ -269,10 +268,6 @@ export const catalogMappers = {
       {},
       'entity.generated_metadata'
     ),
-    visibility_mode:
-      row['visibility_mode'] == null
-        ? null
-        : (String(row['visibility_mode']) as Entity['visibility_mode']),
     project_id: row['project_id'] == null ? null : String(row['project_id']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at']),

@@ -126,7 +126,7 @@ describe('diagram craft transforms', () => {
       lifecycle: 'production',
       tags: ['react'],
       links: [],
-      visibility_mode: 'workspace',
+      project_id: null,
       created_at: new Date('2026-06-06T00:00:00.000Z'),
       updated_at: new Date('2026-06-06T00:00:00.000Z'),
       data: {
@@ -147,7 +147,7 @@ describe('diagram craft transforms', () => {
       _lifecycle: 'production',
       _tags: ['react'],
       _links: [],
-      _visibilityMode: 'workspace',
+      _projectId: null,
       name: 'Frontend App',
       description: 'React SPA',
       technology: 'React',

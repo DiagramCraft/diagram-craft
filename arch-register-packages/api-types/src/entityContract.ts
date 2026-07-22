@@ -32,8 +32,6 @@ const entityCapabilitiesSchema = z.object({
   canCreateChild: z.boolean().describe('Whether the user can create child entities')
 });
 
-const visibilityModeSchema = z.enum(['public', 'restricted']).describe('Entity visibility mode');
-
 const entitySummarySchema = entityCapabilitiesSchema.extend({
   _uid: z.string().describe('Unique entity identifier'),
   _publicId: z.string().describe('Public entity identifier (e.g., APP-001)'),
@@ -61,7 +59,6 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
     .nullable()
     .optional()
     .describe('Entity-specific approval policy override'),
-  _visibilityMode: visibilityModeSchema.nullable().describe('Entity visibility mode'),
   _projectId: z
     .string()
     .nullable()
@@ -108,11 +105,6 @@ const entityMutationBodySchema = z
       .describe('Target date for lifecycle transition (ISO 8601)'),
     _tags: z.array(z.string()).optional().describe('Entity tags'),
     _links: z.array(entityLinkSchema).optional().describe('External links'),
-    _visibilityMode: z
-      .enum(['public', 'restricted'])
-      .nullable()
-      .optional()
-      .describe('Entity visibility mode'),
     _projectId: z
       .string()
       .nullable()
@@ -300,7 +292,10 @@ const entityGrantInputSchema = z.object({
 
 const entityAccessSchema = z.object({
   owner: z.string().nullable().describe('Entity owner identifier'),
-  visibility_mode: z.enum(['public', 'restricted']).nullable().describe('Entity visibility mode'),
+  project_id: z
+    .string()
+    .nullable()
+    .describe('Set when this entity is scoped to a single project'),
   approval_policy_override: z
     .enum(['required', 'disabled'])
     .nullable()
@@ -945,7 +940,6 @@ export const workspaceEntityContract = oc.tag('Entities').router({
 });
 
 export type EntityLink = z.infer<typeof entityLinkSchema>;
-export type VisibilityMode = z.infer<typeof visibilityModeSchema>;
 export type EntitySummary = z.infer<typeof entitySummarySchema>;
 export type EntityRecord = z.infer<typeof entityRecordSchema>;
 export type EntityFacets = z.infer<typeof entityFacetsSchema>;

@@ -67,30 +67,29 @@ const schema = {
   updated_at: now
 };
 
-const publicEntity = {
-  id: 'entity-public',
+const ownedEntity = {
+  id: 'entity-owned',
   workspace: 'ws-1',
-  slug: 'public-app',
+  slug: 'owned-app',
   namespace: 'default',
-  name: 'Public App',
+  name: 'Owned App',
   description: '',
-  owner: null,
+  owner: 'team-1',
   lifecycle: null,
   tags: [],
   links: [],
   schema_id: 'schema-1',
   data: {},
-  visibility_mode: 'public' as const,
   created_at: now,
   updated_at: now
 };
 
-const restrictedEntity = {
-  ...publicEntity,
-  id: 'entity-restricted',
-  slug: 'restricted-app',
-  name: 'Restricted App',
-  visibility_mode: 'restricted' as const
+const unownedEntity = {
+  ...ownedEntity,
+  id: 'entity-unowned',
+  slug: 'unowned-app',
+  name: 'Unowned App',
+  owner: null
 };
 
 describe('authorization helpers', () => {
@@ -99,14 +98,15 @@ describe('authorization helpers', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
       schemas: [schema],
-      entities: [publicEntity, restrictedEntity],
+      entities: [ownedEntity, unownedEntity],
       grants: []
     });
 
-    expect(filterVisibleEntities(context, [publicEntity, restrictedEntity]).map(e => e.id)).toEqual(
-      ['entity-public']
-    );
+    expect(filterVisibleEntities(context, [ownedEntity, unownedEntity]).map(e => e.id)).toEqual([
+      'entity-owned'
+    ]);
   });
 
   it('requires schema read access via workspace view capability', () => {

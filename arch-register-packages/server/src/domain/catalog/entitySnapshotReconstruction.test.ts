@@ -35,7 +35,6 @@ const makeLiveEntity = (overrides: Partial<EntityDbResult>): EntityDbResult => (
   links: [],
   schema_id: 'schema-1',
   data: {},
-  visibility_mode: null,
   project_id: null,
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z'),

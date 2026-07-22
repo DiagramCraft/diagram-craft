@@ -20,7 +20,6 @@ const baseEntity: EntityDbResult = {
   links: [{ url: 'https://example.com', title: 'Example' }],
   schema_id: 'schema-1',
   data: { custom: 'value' },
-  visibility_mode: 'public',
   project_id: null,
   created_at: now,
   updated_at: now,
@@ -44,7 +43,7 @@ describe('toApiEntity', () => {
     expect(result._owner).toEqual({ id: 'team-a', name: 'Team A' });
     expect(result._lifecycle).toEqual({ id: 'lc-1', name: 'Production' });
     expect(result._tags).toEqual(['a', 'b']);
-    expect(result._visibilityMode).toBe('public');
+    expect(result._projectId).toBeNull();
   });
 
   it('spreads entity.data into the result', () => {

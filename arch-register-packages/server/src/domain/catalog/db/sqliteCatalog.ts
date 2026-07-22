@@ -313,7 +313,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createEntity(input: EntityDbCreate) {
     this.run(
-      'INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, visibility_mode, version, approval_policy_override, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -331,7 +331,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.schema_id,
         JSON.stringify(input.data),
         JSON.stringify(input.generated_metadata ?? {}),
-        input.visibility_mode,
+        input.project_id,
         input.version ?? 1,
         input.approval_policy_override ?? null,
         input.created_at.toISOString(),
@@ -343,7 +343,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateEntity(workspace: string, id: string, input: EntityDbUpdate) {
     this.run(
-      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, generated_metadata = COALESCE(?, generated_metadata), visibility_mode = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, generated_metadata = COALESCE(?, generated_metadata), project_id = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.slug,
         input.namespace,
@@ -358,7 +358,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.schema_id,
         JSON.stringify(input.data),
         input.generated_metadata !== undefined ? JSON.stringify(input.generated_metadata) : null,
-        input.visibility_mode,
+        input.project_id,
         input.approval_policy_override ?? null,
         input.updated_at.toISOString(),
         workspace,
@@ -375,7 +375,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     expectedVersion: number
   ) {
     const result = this.run(
-      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, generated_metadata = COALESCE(?, generated_metadata), visibility_mode = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), updated_at = ? WHERE workspace = ? AND id = ? AND version = ?',
+      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, generated_metadata = COALESCE(?, generated_metadata), project_id = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), updated_at = ? WHERE workspace = ? AND id = ? AND version = ?',
       [
         input.slug,
         input.namespace,
@@ -390,7 +390,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.schema_id,
         JSON.stringify(input.data),
         input.generated_metadata !== undefined ? JSON.stringify(input.generated_metadata) : null,
-        input.visibility_mode,
+        input.project_id,
         input.approval_policy_override ?? null,
         input.updated_at.toISOString(),
         workspace,

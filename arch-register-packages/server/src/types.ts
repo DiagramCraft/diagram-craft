@@ -1,4 +1,4 @@
-import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+import { EntityLink } from '@arch-register/api-types/entityContract';
 
 // Wire format used by the DiagramCraft integration (flat strings, not ForeignKey shapes).
 export type DiagramCraftEntityResponse = {
@@ -15,7 +15,7 @@ export type DiagramCraftEntityResponse = {
   _targetLifecycleDate: string | null;
   _tags: string[];
   _links: EntityLink[];
-  _visibilityMode: VisibilityMode | null;
+  _projectId: string | null;
   [field: string]: unknown;
 };
 
