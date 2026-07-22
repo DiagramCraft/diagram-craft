@@ -168,10 +168,7 @@ export class PermissionChecker {
         ROLE_ACTIONS['contributor'].forEach(action => actions.add(action));
       } else if (this.hasWorkspaceCapability(context, 'ent.propose')) {
         ROLE_ACTIONS['editor'].forEach(action => actions.add(action));
-      } else if (
-        this.hasWorkspaceCapability(context, 'ws.view') ||
-        this.hasWorkspaceCapability(context, 'content.view')
-      ) {
+      } else if (this.hasWorkspaceCapability(context, 'content.view')) {
         actions.add('view_entity');
       }
     }
@@ -241,10 +238,7 @@ export class PermissionChecker {
     switch (action) {
       case 'view_entity':
         return (
-          ceiling.has('ws.view') ||
-          ceiling.has('content.view') ||
-          ceiling.has('ent.edit') ||
-          ceiling.has('ent.propose')
+          ceiling.has('content.view') || ceiling.has('ent.edit') || ceiling.has('ent.propose')
         );
       case 'edit_entity':
         return ceiling.has('ent.edit') || ceiling.has('ent.propose');

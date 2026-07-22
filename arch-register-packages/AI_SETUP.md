@@ -428,13 +428,18 @@ The custom system prompt is appended after the generated workspace/system contex
 
 Current AI feature permissions:
 
-- chat requires `ws.view`
+- chat requires `ws.view` (feature-level access to the AI chat/extract endpoints)
 - extract requires `ws.view`
 - AI settings require `ws.settings`
-- entity read tools are filtered by entity visibility
+- entity read tools are filtered by `content.view` (the workspace capability that gates entity-level
+  `view_entity` — `ws.view` alone no longer implies entity read access, only `content.view`,
+  ownership/team roles, or explicit grants do)
 - create/update mutation tools enforce the same entity permission rules as normal server-side entity routes
 
 This is important: the model is not trusted with extra rights. Tools run through normal server permission checks.
+A token or role scoped to `ws.view` only can open the chat/extract endpoints but will not see any entity
+content unless it also has `content.view` (or ownership/grants) — the endpoints themselves stay gated by
+`ws.view`, while what entity data they can surface is gated separately by `content.view`.
 
 ## Current Limitations And Gaps
 

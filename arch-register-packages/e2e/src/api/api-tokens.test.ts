@@ -64,7 +64,7 @@ test.describe('workspace API tokens', () => {
       body: {
         workspace: 'default',
         name: 'External release integration',
-        capabilities: ['ws.view', 'ent.external_update']
+        capabilities: ['content.view', 'ent.external_update']
       }
     });
     const tokenClient = createTestORPCClient(server.baseUrl, `Bearer ${created.token}`);
