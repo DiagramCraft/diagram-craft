@@ -22,7 +22,6 @@ import {
  * Maps entity roles to the actions they can perform
  */
 export const ROLE_ACTIONS: Record<EntityRole, EntityAction[]> = {
-  viewer: ['view_entity'],
   editor: ['view_entity', 'edit_entity'],
   contributor: ['view_entity', 'edit_entity', 'create_child'],
   entity_admin: ['view_entity', 'edit_entity', 'create_child', 'admin_entity']
@@ -53,8 +52,11 @@ export const TEAM_ROLE_PERMISSIONS: Record<
     canCreateEntities: true
   },
   team_reviewer: {
-    directEntityActions: ROLE_ACTIONS['viewer'],
-    descendantEntityActions: ROLE_ACTIONS['viewer'],
+    // Team ownership grants view independently of any workspace-wide capability — a
+    // team_reviewer may have no general workspace role at all, so this can't be dropped in
+    // favor of content.view the way the standalone 'viewer' EntityRole grant could be.
+    directEntityActions: ['view_entity'],
+    descendantEntityActions: ['view_entity'],
     projectActions: [],
     canCreateProjects: false,
     canCreateEntities: false

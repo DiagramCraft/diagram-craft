@@ -429,7 +429,7 @@ test.describe('data routes', () => {
           {
             principal_type: 'team',
             principal_id: seedIds.teams.platform,
-            role: 'viewer',
+            role: 'editor',
             applies_to: 'subtree'
           }
         ]
@@ -442,11 +442,32 @@ test.describe('data routes', () => {
         expect.objectContaining({
           principal_type: 'team',
           principal_id: seedIds.teams.platform,
-          role: 'viewer',
+          role: 'editor',
           applies_to: 'subtree'
         })
       ]
     });
+  });
+
+  test('PUT /api/:workspace/data/:id/access rejects a viewer role grant', async ({
+    orpc,
+    seeded: _
+  }) => {
+    await expect(
+      orpc.entities.updateAccess({
+        params: { workspace: 'default', id: componentId },
+        body: {
+          grants: [
+            {
+              principal_type: 'team',
+              principal_id: seedIds.teams.platform,
+              role: 'viewer' as never,
+              applies_to: 'subtree'
+            }
+          ]
+        }
+      })
+    ).rejects.toMatchObject({ status: 400 });
   });
 
   test('PUT /api/:workspace/data/:id updates an entity', async ({ orpc, seeded: _ }) => {

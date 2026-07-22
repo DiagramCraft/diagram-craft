@@ -373,7 +373,7 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
   const createGrant = (
     entityId: string,
     userId: string,
-    role: 'viewer' | 'editor' | 'contributor' | 'entity_admin',
+    role: 'editor' | 'contributor' | 'entity_admin',
     scope: 'self' | 'subtree' = 'self'
   ): EntityGrant => ({
     id: `grant-${entityId}-${userId}`,
@@ -384,27 +384,6 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     role,
     applies_to: scope,
     created_at: new Date()
-  });
-
-  it('viewer role grants only view permission', () => {
-    const entity = createEntity('entity-1');
-    const grant = createGrant('entity-1', 'user-1', 'viewer');
-
-    const context = buildAuthorizationContext({
-      userId: 'user-1',
-      globalRoles: [],
-      workspaceRole: null,
-      teamAssignments: teamAssignments('team-1'),
-      teams: [],
-      schemas: [],
-      entities: [entity],
-      grants: [grant]
-    });
-
-    expect(checker.hasEntityPermission(context, entity, 'view_entity')).toBe(true);
-    expect(checker.hasEntityPermission(context, entity, 'edit_entity')).toBe(false);
-    expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(false);
-    expect(checker.hasEntityPermission(context, entity, 'admin_entity')).toBe(false);
   });
 
   it('editor role grants view and edit permissions', () => {
@@ -472,8 +451,8 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
 
   it('multiple grants combine permissions (union)', () => {
     const entity = createEntity('entity-1');
-    const viewerGrant = createGrant('entity-1', 'user-1', 'viewer');
     const editorGrant = createGrant('entity-1', 'user-1', 'editor');
+    const contributorGrant = createGrant('entity-1', 'user-1', 'contributor');
 
     const context = buildAuthorizationContext({
       userId: 'user-1',
@@ -483,12 +462,13 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
       teams: [],
       schemas: [],
       entities: [entity],
-      grants: [viewerGrant, editorGrant]
+      grants: [editorGrant, contributorGrant]
     });
 
-    // Should have editor permissions (union of viewer + editor)
+    // Should have contributor permissions (union of editor + contributor)
     expect(checker.hasEntityPermission(context, entity, 'view_entity')).toBe(true);
     expect(checker.hasEntityPermission(context, entity, 'edit_entity')).toBe(true);
+    expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(true);
   });
 
   it('grant on different entity does not apply', () => {
@@ -536,7 +516,7 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
   const createTeamGrant = (
     entityId: string,
     teamId: string,
-    role: 'viewer' | 'editor' | 'contributor' | 'entity_admin',
+    role: 'editor' | 'contributor' | 'entity_admin',
     scope: 'self' | 'subtree' = 'self'
   ): EntityGrant => ({
     id: `grant-${entityId}-${teamId}`,
@@ -588,8 +568,8 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
 
   it('user in multiple teams gets combined permissions', () => {
     const entity = createEntity('entity-1');
-    const team1Grant = createTeamGrant('entity-1', 'team-1', 'viewer');
-    const team2Grant = createTeamGrant('entity-1', 'team-2', 'editor');
+    const team1Grant = createTeamGrant('entity-1', 'team-1', 'editor');
+    const team2Grant = createTeamGrant('entity-1', 'team-2', 'contributor');
 
     const context = buildAuthorizationContext({
       userId: 'user-1',
@@ -602,9 +582,10 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
       grants: [team1Grant, team2Grant]
     });
 
-    // Should have editor permissions (union of viewer + editor)
+    // Should have contributor permissions (union of editor + contributor)
     expect(checker.hasEntityPermission(context, entity, 'view_entity')).toBe(true);
     expect(checker.hasEntityPermission(context, entity, 'edit_entity')).toBe(true);
+    expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(true);
   });
 
   it('direct user grant and team grant combine', () => {
@@ -615,7 +596,7 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
       entity_id: 'entity-1',
       principal_type: 'user',
       principal_id: 'user-1',
-      role: 'viewer',
+      role: 'editor',
       applies_to: 'self',
       created_at: new Date()
     };
@@ -632,7 +613,7 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
       grants: [userGrant, teamGrant]
     });
 
-    // Should have contributor permissions (union of viewer + contributor)
+    // Should have contributor permissions (union of editor + contributor)
     expect(checker.hasEntityPermission(context, entity, 'view_entity')).toBe(true);
     expect(checker.hasEntityPermission(context, entity, 'edit_entity')).toBe(true);
     expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(true);

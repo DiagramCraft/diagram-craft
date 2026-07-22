@@ -10,6 +10,7 @@ import {
 } from '@arch-register/api-types/viewContract';
 import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+import type { EntityRole } from '@arch-register/permissions';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
   databaseDate,
@@ -141,8 +142,6 @@ export type EntityGrantDbResult = {
   applies_to: EntityGrantScope;
   created_at: Date;
 };
-
-type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 
 type EntityGrantScope = 'self' | 'subtree';
 

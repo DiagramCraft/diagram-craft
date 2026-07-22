@@ -476,7 +476,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
           entity_id: entity.id,
           principal_type: 'user',
           principal_id: user.id,
-          role: 'viewer',
+          role: 'editor',
           applies_to: 'self',
           created_at: new Date()
         }

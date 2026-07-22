@@ -50,7 +50,7 @@ describe('PermissionChecker - Subtree Grants', () => {
   const createGrant = (
     entityId: string,
     userId: string,
-    role: 'viewer' | 'editor' | 'contributor' | 'entity_admin',
+    role: 'editor' | 'contributor' | 'entity_admin',
     scope: 'self' | 'subtree'
   ): EntityGrant => ({
     id: `grant-${entityId}-${userId}-${scope}`,
@@ -67,7 +67,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const schema = createSchema('schema-1');
     const parent = createEntity('parent');
     const child = createEntity('child', 'parent');
-    const grant = createGrant('parent', 'user-1', 'viewer', 'self');
+    const grant = createGrant('parent', 'user-1', 'editor', 'self');
 
     const context = buildAuthorizationContext({
       userId: 'user-1',
@@ -88,7 +88,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const schema = createSchema('schema-1');
     const parent = createEntity('parent');
     const child = createEntity('child', 'parent');
-    const grant = createGrant('parent', 'user-1', 'viewer', 'subtree');
+    const grant = createGrant('parent', 'user-1', 'editor', 'subtree');
 
     const context = buildAuthorizationContext({
       userId: 'user-1',
@@ -139,7 +139,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const parent = createEntity('parent');
     const child1 = createEntity('child1', 'parent');
     const child2 = createEntity('child2', 'parent');
-    const grant = createGrant('child1', 'user-1', 'viewer', 'subtree');
+    const grant = createGrant('child1', 'user-1', 'editor', 'subtree');
 
     const context = buildAuthorizationContext({
       userId: 'user-1',
@@ -163,8 +163,8 @@ describe('PermissionChecker - Subtree Grants', () => {
     const level1 = createEntity('level1', 'root');
     const level2 = createEntity('level2', 'level1');
 
-    const rootGrant = createGrant('root', 'user-1', 'viewer', 'subtree');
-    const level1Grant = createGrant('level1', 'user-1', 'editor', 'subtree');
+    const rootGrant = createGrant('root', 'user-1', 'editor', 'subtree');
+    const level1Grant = createGrant('level1', 'user-1', 'contributor', 'subtree');
 
     const context = buildAuthorizationContext({
       userId: 'user-1',
@@ -177,17 +177,20 @@ describe('PermissionChecker - Subtree Grants', () => {
       grants: [rootGrant, level1Grant]
     });
 
-    // Root has viewer permissions
+    // Root has editor permissions only (no create_child)
     expect(checker.hasEntityPermission(context, root, 'view_entity')).toBe(true);
-    expect(checker.hasEntityPermission(context, root, 'edit_entity')).toBe(false);
+    expect(checker.hasEntityPermission(context, root, 'edit_entity')).toBe(true);
+    expect(checker.hasEntityPermission(context, root, 'create_child')).toBe(false);
 
-    // Level1 has both viewer (from root) and editor (direct) = editor
+    // Level1 has both editor (from root) and contributor (direct) = contributor
     expect(checker.hasEntityPermission(context, level1, 'view_entity')).toBe(true);
     expect(checker.hasEntityPermission(context, level1, 'edit_entity')).toBe(true);
+    expect(checker.hasEntityPermission(context, level1, 'create_child')).toBe(true);
 
-    // Level2 has both viewer (from root) and editor (from level1) = editor
+    // Level2 has both editor (from root) and contributor (from level1) = contributor
     expect(checker.hasEntityPermission(context, level2, 'view_entity')).toBe(true);
     expect(checker.hasEntityPermission(context, level2, 'edit_entity')).toBe(true);
+    expect(checker.hasEntityPermission(context, level2, 'create_child')).toBe(true);
   });
 
   it('subtree grant with entity_admin role grants admin to all descendants', () => {
@@ -254,8 +257,8 @@ describe('PermissionChecker - Subtree Grants', () => {
       data: { parent_a: ['parent1'], parent_b: ['parent2'] }
     };
 
-    const grant1 = createGrant('parent1', 'user-1', 'viewer', 'subtree');
-    const grant2 = createGrant('parent2', 'user-1', 'editor', 'subtree');
+    const grant1 = createGrant('parent1', 'user-1', 'editor', 'subtree');
+    const grant2 = createGrant('parent2', 'user-1', 'contributor', 'subtree');
 
     const context = buildAuthorizationContext({
       userId: 'user-1',
@@ -268,9 +271,10 @@ describe('PermissionChecker - Subtree Grants', () => {
       grants: [grant1, grant2]
     });
 
-    // Child should have editor permissions (union of viewer + editor)
+    // Child should have contributor permissions (union of editor + contributor)
     expect(checker.hasEntityPermission(context, child, 'view_entity')).toBe(true);
     expect(checker.hasEntityPermission(context, child, 'edit_entity')).toBe(true);
+    expect(checker.hasEntityPermission(context, child, 'create_child')).toBe(true);
   });
 
   it('subtree grant does not apply to unrelated entity hierarchy', () => {

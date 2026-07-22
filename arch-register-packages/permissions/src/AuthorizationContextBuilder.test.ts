@@ -337,7 +337,7 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       entity_id: 'entity-1',
       principal_type: 'user',
       principal_id: 'user-1',
-      role: 'viewer',
+      role: 'editor',
       applies_to: 'self',
       created_at: new Date()
     };
@@ -514,7 +514,7 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
           entity_id: 'entity-1',
           principal_type: 'team',
           principal_id: 'team-operations',
-          role: 'viewer',
+          role: 'editor',
           applies_to: 'self',
           created_at: new Date('2024-01-01')
         }

@@ -269,7 +269,7 @@ const entityGrantSchema = z.object({
   entity_id: z.string().describe('Entity identifier'),
   principal_type: z.enum(['user', 'team']).describe('Principal type (user or team)'),
   principal_id: z.string().describe('Principal identifier'),
-  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']).describe('Granted role'),
+  role: z.enum(['editor', 'contributor', 'entity_admin']).describe('Granted role'),
   applies_to: z
     .enum(['self', 'subtree'])
     .describe('Grant scope (entity only or including children)'),
@@ -279,7 +279,7 @@ const entityGrantSchema = z.object({
 const entityGrantInputSchema = z.object({
   principal_type: z.enum(['user', 'team']).describe('Principal type (user or team)'),
   principal_id: z.string().describe('Principal identifier'),
-  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']).describe('Role to grant'),
+  role: z.enum(['editor', 'contributor', 'entity_admin']).describe('Role to grant'),
   applies_to: z
     .enum(['self', 'subtree'])
     .describe('Grant scope (entity only or including children)')

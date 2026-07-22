@@ -49,7 +49,7 @@ export type WorkspaceCapability =
   | 'schema.edit'
   | 'schema.publish';
 
-export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
+export type EntityRole = 'editor' | 'contributor' | 'entity_admin';
 
 export type EntityAction = 'view_entity' | 'edit_entity' | 'create_child' | 'admin_entity';
 
