@@ -95,7 +95,7 @@ export const resolveSnapshotEntityData = ({
     ),
     _tags: choose('tags', entity._tags, proposed.tags),
     _links: entity._links,
-    _visibilityMode: entity._visibilityMode ?? null
+    _projectId: choose('project_id', entity._projectId ?? null, proposed.project_id)
   };
   if (!schema) return resolved;
   const proposedData = (proposed.data as SnapshotState | undefined) ?? {};

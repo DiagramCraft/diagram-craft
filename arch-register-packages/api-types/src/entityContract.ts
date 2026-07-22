@@ -62,6 +62,14 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
     .optional()
     .describe('Entity-specific approval policy override'),
   _visibilityMode: visibilityModeSchema.nullable().describe('Entity visibility mode'),
+  _projectId: z
+    .string()
+    .nullable()
+    .describe(
+      'Set when this entity was created solely for one project — excluded from global ' +
+        'listings/search, visible only within that project. Distinct from _projectLink, which ' +
+        'associates an otherwise-normal entity with a project without restricting visibility.'
+    ),
   _completeness: z.number().nullable().describe('Field completeness percentage (0-100)'),
   _projectLink: projectLinkSchema.optional().describe('Project linkage information'),
   _externalMetadata: externalMetadataSchema
@@ -105,6 +113,11 @@ const entityMutationBodySchema = z
       .nullable()
       .optional()
       .describe('Entity visibility mode'),
+    _projectId: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Set to scope this entity to a single project; omit or set null for no scope'),
     _external: externalUpdateEnvelopeSchema
       .optional()
       .describe(

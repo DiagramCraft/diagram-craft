@@ -95,7 +95,7 @@ const proposalFieldLabels: Record<string, string> = {
   links: 'Links',
   schema_id: 'Schema',
   data: 'Entity fields',
-  visibility_mode: 'Visibility'
+  project_id: 'Project'
 };
 
 const proposalStatusLabels: Record<EntityChangeRevision['status'], string> = {

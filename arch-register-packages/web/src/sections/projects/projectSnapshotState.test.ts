@@ -14,7 +14,7 @@ const entity = {
   _targetLifecycleDate: null,
   _tags: ['live'],
   _links: [],
-  _visibilityMode: null,
+  _projectId: null,
   criticality: 'high'
 } as never;
 const base = {

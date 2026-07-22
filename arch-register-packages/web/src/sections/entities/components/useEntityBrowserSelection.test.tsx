@@ -41,6 +41,7 @@ const entity = {
   _tags: [],
   _links: [],
   _visibilityMode: 'public',
+  _projectId: null,
   _completeness: null,
   canView: true,
   canEdit: true,

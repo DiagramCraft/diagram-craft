@@ -46,7 +46,8 @@ const buildBaseMutationBody = (
     _targetLifecycleDate: entity._targetLifecycleDate,
     _tags: entity._tags,
     _links: entity._links,
-    _visibilityMode: entity._visibilityMode
+    _visibilityMode: entity._visibilityMode,
+    _projectId: entity._projectId
   };
 
   for (const field of schema?.fields ?? []) {
