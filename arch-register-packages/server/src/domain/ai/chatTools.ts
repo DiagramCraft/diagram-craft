@@ -274,7 +274,7 @@ const includesQuery = (value: unknown, query: string) =>
     .includes(query);
 
 const getVisibleEntities = (entities: Entity[], authCtx: AuthorizationContext | null) => {
-  if (authCtx === null) return entities;
+  if (authCtx === null || checker.hasWorkspaceWideEntityView(authCtx)) return entities;
   return entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
 };
 

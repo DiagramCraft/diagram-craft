@@ -145,6 +145,29 @@ export class PermissionChecker {
   }
 
   /**
+   * Check whether the user's workspace role alone (independent of any specific entity's
+   * ownership, ancestry, or grants) already grants `view_entity` workspace-wide.
+   *
+   * This is true for `content.view`, `ent.edit`, or `ent.propose`, and for global admins — the
+   * same conditions `getEntityActions` checks in its workspace-role branch. Callers doing
+   * bulk/list queries can use this to skip the per-entity `hasEntityPermission` check entirely
+   * (falling back to it only when this returns false, e.g. a token/role scoped to `ws.view` only).
+   */
+  hasWorkspaceWideEntityView(context: AuthorizationContext): boolean {
+    if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
+      return true;
+    }
+    if (context.workspaceRole == null && !context.globalPermissions.has('admin_platform')) {
+      return false;
+    }
+    return (
+      this.hasWorkspaceCapability(context, 'ent.edit') ||
+      this.hasWorkspaceCapability(context, 'ent.propose') ||
+      this.hasWorkspaceCapability(context, 'content.view')
+    );
+  }
+
+  /**
    * Get all entity actions available to the user for a specific entity.
    *
    * This is the core logic that determines what actions a user can perform

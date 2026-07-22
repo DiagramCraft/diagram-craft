@@ -254,7 +254,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     if (filters?.owner) whereParts.push(`e.owner = ${addParam(filters.owner)}`);
     if (filters?.lifecycle) whereParts.push(`e.lifecycle = ${addParam(filters.lifecycle)}`);
     if (filters?.projectScope === 'project' && filters.projectId) {
-      whereParts.push(`e.project_id = ${addParam(filters.projectId)}`);
+      const projectIdParam = addParam(filters.projectId);
+      whereParts.push(
+        `(e.project_id = ${projectIdParam} OR e.id IN (SELECT entity_id FROM project_entity WHERE workspace = e.workspace AND project_id = ${projectIdParam}))`
+      );
     } else {
       whereParts.push('e.project_id IS NULL');
     }

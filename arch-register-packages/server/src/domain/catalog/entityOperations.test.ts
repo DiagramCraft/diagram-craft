@@ -96,7 +96,9 @@ describe('listEntities', () => {
         owner: null,
         lifecycle: null,
         q: '',
-        conditions: []
+        conditions: [],
+        projectId: null,
+        projectScope: 'all'
       },
       {
         limit: 200,
@@ -111,7 +113,9 @@ describe('listEntities', () => {
         owner: null,
         lifecycle: null,
         q: '',
-        conditions: []
+        conditions: [],
+        projectId: null,
+        projectScope: 'all'
       },
       {
         limit: 200,
@@ -138,7 +142,9 @@ describe('listEntities', () => {
         owner: null,
         lifecycle: null,
         q: '',
-        conditions: []
+        conditions: [],
+        projectId: null,
+        projectScope: 'all'
       },
       {
         limit: 200,
@@ -153,7 +159,9 @@ describe('listEntities', () => {
         owner: null,
         lifecycle: null,
         q: '',
-        conditions: []
+        conditions: [],
+        projectId: null,
+        projectScope: 'all'
       },
       {
         limit: 200,
