@@ -445,6 +445,10 @@ export type CatalogDatabase = {
     filters?: EntityListDbFilters,
     pagination?: EntityListDbPagination
   ): Promise<EntityDbResult[]>;
+  // Runs a pre-compiled structured EntityQuery (see entityQueryIRCompiler.ts). Not used by any
+  // endpoint yet (#2326, specs/QUERY_LANGUAGE.md) — exists so the compiler's output is actually
+  // executable and testable against both dialects, not just a string-producing pure function.
+  runCompiledEntityQuery(sql: string, params: unknown[]): Promise<EntityDbResult[]>;
   listEntities(ws: string): Promise<EntityDbResult[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;

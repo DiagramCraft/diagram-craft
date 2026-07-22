@@ -224,6 +224,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return mapDatabaseRows(rows, catalogMappers.enrichedEntity);
   }
 
+  async runCompiledEntityQuery(sql: string, params: unknown[]) {
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      sql,
+      params as Parameters<typeof this.sql.unsafe>[1]
+    );
+    return mapDatabaseRows(rows, catalogMappers.enrichedEntity);
+  }
+
   async listEntitiesPaginated(
     workspace: string,
     filters?: EntityListDbFilters,
