@@ -5,6 +5,10 @@ import {
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
 import type { ReferenceField, SchemaField } from '@arch-register/api-types/schemaContract';
+import {
+  ASSESSMENT_PRESENCE_FIELD_ID,
+  ASSESSMENT_FIELD_PREFIX
+} from '@arch-register/api-types/assessmentFilter';
 import type { SchemaDbResult } from './db/catalogDatabase';
 
 export type SchemaCatalog = Map<string, SchemaDbResult>;
@@ -145,6 +149,31 @@ const validateNode = (
   }
 };
 
+// Detects whether any predicate in the tree addresses `_assessment`/`_assessment:<fieldId>` —
+// only ever a predicate's terminal fieldId, never a PathStep's own fieldId (a path step names a
+// traversal field, not an assessment address), but it can appear at any depth, including inside a
+// PathStep.filter (the `[...]` scoping, §4.3).
+const pathUsesAssessmentField = (steps: PathStep[]): boolean =>
+  steps.some(step => step.filter != null && nodeUsesAssessmentField(step.filter));
+
+const nodeUsesAssessmentField = (node: QueryNode): boolean => {
+  switch (node.kind) {
+    case 'and':
+    case 'or':
+      return node.children.some(nodeUsesAssessmentField);
+    case 'not':
+      return nodeUsesAssessmentField(node.child);
+    case 'predicate':
+      return (
+        node.fieldId === ASSESSMENT_PRESENCE_FIELD_ID ||
+        node.fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) ||
+        pathUsesAssessmentField(node.path)
+      );
+    case 'relationExists':
+      return pathUsesAssessmentField(node.path);
+  }
+};
+
 export const validateEntityQueryIR = (
   query: EntityQuery,
   schemas: SchemaCatalog
@@ -152,6 +181,13 @@ export const validateEntityQueryIR = (
   const errors: ValidationError[] = [];
   if (query.schemaId && !schemas.has(query.schemaId)) {
     errors.push({ path: ['schemaId'], message: `Unknown schemaId '${query.schemaId}'` });
+  }
+  if (!query.assessmentId && nodeUsesAssessmentField(query.root)) {
+    errors.push({
+      path: ['assessmentId'],
+      message:
+        "Query uses '_assessment'/'_assessment:<fieldId>' predicates but assessmentId is not set"
+    });
   }
   validateNode(query.root, schemas, ['root'], 0, errors);
   return errors.length === 0 ? { ok: true } : { ok: false, errors };

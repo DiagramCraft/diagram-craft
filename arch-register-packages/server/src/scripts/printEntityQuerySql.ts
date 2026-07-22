@@ -7,6 +7,7 @@
 //   node --import tsx src/scripts/printEntityQuerySql.ts --file query.json --dialect sqlite
 //   node --import tsx src/scripts/printEntityQuerySql.ts --file query.json --schemas schemas.json
 //   node --import tsx src/scripts/printEntityQuerySql.ts --file query.json --no-validate
+//   node --import tsx src/scripts/printEntityQuerySql.ts --file query.json --raw
 import { readFile } from 'node:fs/promises';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { SchemaDbResult } from '../domain/catalog/db/catalogDatabase';
@@ -18,6 +19,7 @@ import {
   compileEntityQueryIR,
   type EntityQueryDialect
 } from '../domain/catalog/entityQueryIRCompiler';
+import { formatCompiledSqlForDisplay } from './sqlDisplayFormat';
 
 const readStdin = async (): Promise<string> => {
   const chunks: Buffer[] = [];
@@ -32,9 +34,11 @@ const parseArgs = (argv: string[]) => {
     dialect?: EntityQueryDialect;
     workspace: string;
     validate: boolean;
+    raw: boolean;
   } = {
     workspace: 'workspace-1',
-    validate: true
+    validate: true,
+    raw: false
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -43,6 +47,7 @@ const parseArgs = (argv: string[]) => {
     else if (arg === '--dialect') args.dialect = argv[++i] as EntityQueryDialect;
     else if (arg === '--workspace') args.workspace = argv[++i]!;
     else if (arg === '--no-validate') args.validate = false;
+    else if (arg === '--raw') args.raw = true;
   }
   return args;
 };
@@ -58,11 +63,12 @@ const printCompiled = (
   query: EntityQuery,
   schemas: SchemaCatalog,
   workspace: string,
-  dialect: EntityQueryDialect
+  dialect: EntityQueryDialect,
+  raw: boolean
 ) => {
   const { sql, params } = compileEntityQueryIR(query, schemas, dialect, workspace);
   console.log(`-- ${label} --`);
-  console.log(sql.trim());
+  console.log(raw ? sql.trim() : formatCompiledSqlForDisplay(sql));
   console.log(`params: ${JSON.stringify(params)}`);
   console.log();
 };
@@ -87,7 +93,7 @@ const main = async () => {
 
   const dialects: EntityQueryDialect[] = args.dialect ? [args.dialect] : ['postgres', 'sqlite'];
   for (const dialect of dialects) {
-    printCompiled(dialect, query, schemas, args.workspace, dialect);
+    printCompiled(dialect, query, schemas, args.workspace, dialect, args.raw);
   }
 };
 

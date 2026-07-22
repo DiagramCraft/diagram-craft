@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureWorkspace } from './projectFixtures';
+import { createFixtureWorkspace, createFixtureProject } from './projectFixtures';
 import { createFixtureCatalogEntity } from './catalogFixtures';
 import type { DatabaseAdapter, DbDriver } from '../database';
 import type { SchemaDbResult } from '../../domain/catalog/db/catalogDatabase';
@@ -336,5 +336,72 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
 
     expect(new Set(irMatches.map(e => e.id))).toEqual(new Set(flatMatches.map(e => e.id)));
     expect(irMatches.map(e => e.id)).toEqual([matching.id]);
+  });
+
+  it('joins assessment_response for _assessment/_assessment:<fieldId> predicates', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const schema = await createSchema(db, workspace, { name: 'Technology' });
+
+    const highRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const lowRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const noResponse = await createFixtureCatalogEntity(db, workspace, schema.id);
+
+    const assessment = await db.project.createAssessment({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'Risk Assessment',
+      description: '',
+      status: 'open',
+      scope: [schema.id],
+      scope_conditions: [],
+      fields: [
+        { id: 'riskLevel', label: 'Risk Level', requirementLevel: 'required', type: 'rating' }
+      ],
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    await db.project.upsertAssessmentResponse({
+      workspace,
+      assessment_id: assessment.id,
+      entity_id: highRisk.id,
+      values: { riskLevel: 4 },
+      updated_by: null
+    });
+    await db.project.upsertAssessmentResponse({
+      workspace,
+      assessment_id: assessment.id,
+      entity_id: lowRisk.id,
+      values: { riskLevel: 1 },
+      updated_by: null
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+
+    const presenceQuery: EntityQuery = {
+      schemaId: schema.id,
+      assessmentId: assessment.id,
+      root: { kind: 'predicate', path: [], fieldId: '_assessment', op: 'not_empty', value: null }
+    };
+    const presenceMatches = await runQuery(db, driver, workspace, schemas, presenceQuery);
+    expect(new Set(presenceMatches.map(e => e.id))).toEqual(new Set([highRisk.id, lowRisk.id]));
+    expect(presenceMatches.some(e => e.id === noResponse.id)).toBe(false);
+
+    const fieldQuery: EntityQuery = {
+      schemaId: schema.id,
+      assessmentId: assessment.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_assessment:riskLevel',
+        op: 'gt',
+        value: 2
+      }
+    };
+    const fieldMatches = await runQuery(db, driver, workspace, schemas, fieldQuery);
+    expect(fieldMatches.map(e => e.id)).toEqual([highRisk.id]);
   });
 });

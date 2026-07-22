@@ -169,4 +169,62 @@ describe('validateEntityQueryIR', () => {
     };
     expect(validateEntityQueryIR(query, schemas)).toEqual({ ok: true });
   });
+
+  it('rejects an _assessment predicate when assessmentId is not set', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_assessment:riskLevel',
+        op: 'gte',
+        value: 3
+      }
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.some(e => e.path[0] === 'assessmentId')).toBe(true);
+    }
+  });
+
+  it('accepts an _assessment predicate when assessmentId is set', () => {
+    const query: EntityQuery = {
+      assessmentId: 'assessment-1',
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_assessment:riskLevel',
+        op: 'gte',
+        value: 3
+      }
+    };
+    expect(validateEntityQueryIR(query, schemas)).toEqual({ ok: true });
+  });
+
+  it('finds an _assessment predicate nested inside a PathStep.filter', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'relationExists',
+        path: [
+          {
+            kind: 'backward',
+            fieldId: 'domain',
+            ownerSchemaId: SYSTEM.id,
+            filter: {
+              kind: 'predicate',
+              path: [],
+              fieldId: '_assessment',
+              op: 'not_empty',
+              value: null
+            }
+          }
+        ]
+      }
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.some(e => e.path[0] === 'assessmentId')).toBe(true);
+    }
+  });
 });
