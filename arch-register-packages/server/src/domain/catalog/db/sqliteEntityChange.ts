@@ -83,6 +83,9 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
     closedAt: Date | null = null
   ) {
     const target = status === 'open' ? 'in_approval' : status === 'approved' ? 'applied' : status;
+    if (target !== 'in_approval') {
+      this.run('UPDATE entity_change_case_revision SET is_active = 0 WHERE case_id = ?', [id]);
+    }
     const result = this.run(
       'UPDATE entity_change_case SET status = ?, updated_at = ?, closed_at = ? WHERE workspace = ? AND id = ?',
       [target, updatedAt.toISOString(), closedAt?.toISOString() ?? null, workspace, id]
@@ -92,10 +95,14 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
 
   async createRevision(input: EntityChangeRevisionDbCreate) {
     const targetStatus = input.status === 'approved' ? 'applied' : input.status;
+    const isActive = ['draft', 'submitted', 'changes_requested'].includes(targetStatus) ? 1 : 0;
+    this.run('UPDATE entity_change_case_revision SET is_active = 0 WHERE case_id = ?', [
+      input.proposal_id
+    ]);
     this.run(
       `INSERT INTO entity_change_case_revision
-       (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, created_at, resolved_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, is_active, created_at, resolved_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.proposal_id,
@@ -106,6 +113,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
         input.message,
         input.created_by,
         targetStatus,
+        isActive,
         input.created_at.toISOString(),
         input.resolved_at?.toISOString() ?? null
       ]
@@ -169,9 +177,10 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
     resolvedAt: Date | null = null
   ) {
     const target = status === 'approved' ? 'applied' : status;
+    const isActive = ['draft', 'submitted', 'changes_requested'].includes(target) ? 1 : 0;
     const result = this.run(
-      'UPDATE entity_change_case_revision SET status = ?, resolved_at = ? WHERE workspace = ? AND id = ?',
-      [target, resolvedAt?.toISOString() ?? null, workspace, id]
+      'UPDATE entity_change_case_revision SET status = ?, is_active = ?, resolved_at = ? WHERE workspace = ? AND id = ?',
+      [target, isActive, resolvedAt?.toISOString() ?? null, workspace, id]
     );
     return result.changes === 0 ? null : await this.getRevision(workspace, id);
   }

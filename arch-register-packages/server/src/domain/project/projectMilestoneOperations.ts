@@ -142,6 +142,9 @@ export const updateMilestone = async (
         buildUpdateMilestoneInput(body, oldRow, new Date())
       );
       httpAssert.present(row, { status: 404, message: `Milestone '${id}' not found` });
+      if (row.target_date !== oldRow.target_date) {
+        await db.catalog.updateChangeCaseEffectiveDateForMilestone(ws, row.id, row.target_date);
+      }
 
       const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
       await logAudit(db, {

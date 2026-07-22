@@ -582,6 +582,11 @@ export type CatalogDatabase = {
     milestoneId: string,
     backfillTargetDate: string | null
   ): Promise<void>;
+  updateChangeCaseEffectiveDateForMilestone(
+    ws: string,
+    milestoneId: string,
+    effectiveDate: string | null
+  ): Promise<void>;
 };
 
 // -- Saved View

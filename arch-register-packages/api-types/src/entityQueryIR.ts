@@ -66,6 +66,13 @@ export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>
 export const entityQuerySchema = z.object({
   schemaId: z.string().optional(),
   assessmentId: z.string().optional(),
+  projectId: z.string().optional(),
+  projectScope: z.enum(['project', 'all']).optional(),
+  asOf: z
+    .string()
+    .refine(value => !Number.isNaN(Date.parse(value)), 'Invalid asOf date')
+    .optional(),
+  includeProjectSnapshots: z.boolean().optional(),
   root: queryNodeSchema
 });
 
