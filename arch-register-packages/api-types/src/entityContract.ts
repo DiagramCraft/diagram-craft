@@ -292,10 +292,7 @@ const entityGrantInputSchema = z.object({
 
 const entityAccessSchema = z.object({
   owner: z.string().nullable().describe('Entity owner identifier'),
-  project_id: z
-    .string()
-    .nullable()
-    .describe('Set when this entity is scoped to a single project'),
+  project_id: z.string().nullable().describe('Set when this entity is scoped to a single project'),
   approval_policy_override: z
     .enum(['required', 'disabled'])
     .nullable()

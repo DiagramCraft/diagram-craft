@@ -450,7 +450,9 @@ export const getEntityTree = async (
     const scopedEntities =
       authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
         ? allEntitiesRaw
-        : allEntitiesRaw.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
+        : allEntitiesRaw.filter(entity =>
+            checker.hasEntityPermission(authCtx, entity, 'view_entity')
+          );
 
     const containmentFieldsBySchema = new Map<string, string[]>();
     for (const schema of schemas) {

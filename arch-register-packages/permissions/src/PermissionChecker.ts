@@ -254,9 +254,7 @@ export class PermissionChecker {
 
     switch (action) {
       case 'view_entity':
-        return (
-          ceiling.has('content.view') || ceiling.has('ent.edit') || ceiling.has('ent.propose')
-        );
+        return ceiling.has('content.view') || ceiling.has('ent.edit') || ceiling.has('ent.propose');
       case 'edit_entity':
         return ceiling.has('ent.edit') || ceiling.has('ent.propose');
       case 'create_child':
