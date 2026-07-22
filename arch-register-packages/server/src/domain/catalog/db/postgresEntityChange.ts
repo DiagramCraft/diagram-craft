@@ -72,6 +72,13 @@ export class PostgresEntityChangeDatabase
     closedAt: Date | null = null
   ) {
     const target = status === 'open' ? 'in_approval' : status === 'approved' ? 'applied' : status;
+    if (target !== 'in_approval') {
+      await this.sql`
+        UPDATE entity_change_case_revision
+        SET is_active = FALSE
+        WHERE case_id = ${id}
+      `;
+    }
     const rows = (await this
       .sql`UPDATE entity_change_case SET status = ${target}, updated_at = ${updatedAt}, closed_at = ${closedAt} WHERE workspace = ${workspace} AND id = ${id} RETURNING *`) as DatabaseRow[];
     return rows[0] ? this.getProposal(workspace, id) : null;
@@ -80,8 +87,14 @@ export class PostgresEntityChangeDatabase
   async createRevision(input: EntityChangeRevisionDbCreate) {
     try {
       const targetStatus = input.status === 'approved' ? 'applied' : input.status;
+      const isActive = ['draft', 'submitted', 'changes_requested'].includes(targetStatus);
+      await this.sql`
+        UPDATE entity_change_case_revision
+        SET is_active = FALSE
+        WHERE case_id = ${input.proposal_id}
+      `;
       await this
-        .sql`INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, created_at, resolved_at) VALUES (${input.id}, ${input.proposal_id}, ${input.workspace}, ${input.revision_number}, ${input.policy_version}, ${this.json(input.resolved_policy)}, ${input.message}, ${input.created_by}, ${targetStatus}, ${input.created_at}, ${input.resolved_at ?? null})`;
+        .sql`INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, is_active, created_at, resolved_at) VALUES (${input.id}, ${input.proposal_id}, ${input.workspace}, ${input.revision_number}, ${input.policy_version}, ${this.json(input.resolved_policy)}, ${input.message}, ${input.created_by}, ${targetStatus}, ${isActive}, ${input.created_at}, ${input.resolved_at ?? null})`;
       await this
         .sql`INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff) VALUES (${randomUUID()}, ${input.id}, ${input.workspace}, ${input.entity_id}, ${input.base_version}, ${this.json(input.base_state)}, ${this.json(input.proposed_state)}, ${this.json(input.diff)})`;
       await this
@@ -126,8 +139,9 @@ export class PostgresEntityChangeDatabase
     resolvedAt: Date | null = null
   ) {
     const target = status === 'approved' ? 'applied' : status;
+    const isActive = ['draft', 'submitted', 'changes_requested'].includes(target);
     const rows = (await this
-      .sql`UPDATE entity_change_case_revision SET status = ${target}, resolved_at = ${resolvedAt} WHERE workspace = ${workspace} AND id = ${id} RETURNING *`) as DatabaseRow[];
+      .sql`UPDATE entity_change_case_revision SET status = ${target}, is_active = ${isActive}, resolved_at = ${resolvedAt} WHERE workspace = ${workspace} AND id = ${id} RETURNING *`) as DatabaseRow[];
     return rows[0] ? this.getRevision(workspace, id) : null;
   }
 }

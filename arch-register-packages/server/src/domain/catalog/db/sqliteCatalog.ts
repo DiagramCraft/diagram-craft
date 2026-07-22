@@ -621,7 +621,9 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       `SELECT m.id, c.workspace, m.entity_id,
               CASE WHEN r.status = 'applied' THEN 'applied' ELSE 'future_update' END AS status,
               c.id AS case_id, r.id AS case_revision_id,
-              c.project_id, c.effective_date AS target_date, c.milestone_id,
+              c.project_id,
+              CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
+              c.milestone_id,
               COALESCE(r.message, c.description) AS commit_message,
               r.created_at, r.created_by, u.display_name AS created_by_name,
               m.base_state, m.proposed_state
@@ -638,6 +640,9 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSnapshot(input: EntitySnapshotDbCreate) {
     if (input.status === 'future_update' || input.status === 'applied') {
+      if (input.target_date != null && input.milestone_id != null) {
+        throw new Error('A snapshot cannot specify both target_date and milestone_id');
+      }
       const caseId = randomUUID();
       const revisionId = randomUUID();
       this.run(
@@ -658,10 +663,21 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
           input.created_at.toISOString()
         ]
       );
+      if (input.milestone_id != null) {
+        this.run(
+          `UPDATE entity_change_case
+           SET effective_date = (
+             SELECT target_date FROM project_milestone
+             WHERE id = ? AND project_id = entity_change_case.project_id
+           )
+           WHERE id = ?`,
+          [input.milestone_id, caseId]
+        );
+      }
       this.run(
         `INSERT INTO entity_change_case_revision
-         (id, case_id, workspace, revision_number, message, created_by, status, created_at, resolved_at)
-         VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?)`,
+         (id, case_id, workspace, revision_number, message, created_by, status, is_active, created_at, resolved_at)
+         VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?)`,
         [
           revisionId,
           caseId,
@@ -669,6 +685,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
           input.commit_message,
           input.created_by,
           input.status === 'applied' ? 'applied' : 'draft',
+          input.status === 'applied' ? 0 : 1,
           input.created_at.toISOString(),
           input.status === 'applied' ? input.created_at.toISOString() : null
         ]
@@ -853,11 +870,25 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         snapshotId
       ]);
     if (updates.target_date !== undefined || updates.milestone_id !== undefined)
-      this.run('UPDATE entity_change_case SET effective_date = ?, milestone_id = ? WHERE id = ?', [
-        updates.milestone_id != null ? null : updates.target_date,
-        updates.milestone_id ?? null,
-        member.case_id
-      ]);
+      this.run(
+        `UPDATE entity_change_case
+         SET effective_date = CASE
+               WHEN ? IS NULL THEN ?
+               ELSE (
+                 SELECT target_date FROM project_milestone
+                 WHERE id = ? AND project_id = entity_change_case.project_id
+               )
+             END,
+             milestone_id = ?
+         WHERE id = ?`,
+        [
+          updates.milestone_id ?? null,
+          updates.target_date ?? null,
+          updates.milestone_id ?? null,
+          updates.milestone_id ?? null,
+          member.case_id
+        ]
+      );
     if (updates.commit_message !== undefined)
       this.run('UPDATE entity_change_case_revision SET message = ? WHERE id = ?', [
         updates.commit_message,
@@ -888,6 +919,17 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
+  async updateChangeCaseEffectiveDateForMilestone(
+    workspace: string,
+    milestoneId: string,
+    effectiveDate: string | null
+  ) {
+    this.run(
+      'UPDATE entity_change_case SET effective_date = ? WHERE workspace = ? AND milestone_id = ?',
+      [effectiveDate, workspace, milestoneId]
+    );
+  }
+
   async applySnapshot(workspace: string, snapshotId: string) {
     const existing = await this.getSnapshot(workspace, snapshotId);
     if (existing?.status !== 'future_update') return null;
@@ -898,7 +940,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
     if (!member) return null;
     this.run(
-      `UPDATE entity_change_case_revision SET status = 'applied', resolved_at = ? WHERE id = ?`,
+      `UPDATE entity_change_case_revision SET status = 'applied', is_active = 0, resolved_at = ? WHERE id = ?`,
       [new Date().toISOString(), member.revision_id]
     );
     this.run(

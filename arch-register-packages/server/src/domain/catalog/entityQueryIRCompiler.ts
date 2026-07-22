@@ -39,6 +39,10 @@ type CompileState = {
   dialect: EntityQueryDialect;
   workspace: string;
   assessmentId: string | undefined;
+  projectId: string | undefined;
+  projectScope: 'project' | 'all';
+  asOf: Date | null;
+  includeProjectSnapshots: boolean;
   params: unknown[];
   nextAliasIndex: number;
 };
@@ -255,29 +259,253 @@ const compileNode = (
   }
 };
 
-// Builds the base `scoped_entity` CTE: every entity in the workspace, excluding soft-deleted and
-// project-only rows (§ project scoping — mirrors `listEntitiesPaginated`'s default
-// `e.project_id IS NULL` when not project-scoped), left-joined once against the query's single
-// joined assessment response (if any). This is the one seam a later project-scoped or asOf
-// (point-in-time) mode would change — everything downstream reads `scoped_entity`, not `entity`.
+const projectScopeClause = (
+  column: string,
+  state: CompileState,
+  allowProjectScope: boolean
+): string => {
+  if (state.projectScope !== 'project') return `${column} IS NULL`;
+  if (!state.projectId) {
+    throw new UnsupportedEntityQueryIRError(
+      "projectScope 'project' requires EntityQuery.projectId to be set"
+    );
+  }
+  return allowProjectScope
+    ? `(${column} IS NULL OR ${column} = ${addParam(state, state.projectId)})`
+    : `${column} IS NULL`;
+};
+
+const stateText = (stateColumn: string, fieldId: string, dialect: EntityQueryDialect): string => {
+  if (dialect === 'postgres') {
+    const value = `${stateColumn}->>'${fieldId}'`;
+    return fieldId === 'project_id' ? `NULLIF(${value}, '')::uuid` : value;
+  }
+  return `json_extract(${stateColumn}, '$.${fieldId}')`;
+};
+
+const stateJson = (stateColumn: string, fieldId: string, dialect: EntityQueryDialect): string =>
+  dialect === 'postgres'
+    ? `${stateColumn}->'${fieldId}'`
+    : `json_extract(${stateColumn}, '$.${fieldId}')`;
+
+const liveEntityState = (dialect: EntityQueryDialect): string =>
+  dialect === 'postgres'
+    ? `jsonb_build_object(
+        'id', e.id,
+        'public_id', e.public_id,
+        'slug', e.slug,
+        'namespace', e.namespace,
+        'name', e.name,
+        'description', e.description,
+        'owner', e.owner,
+        'lifecycle', e.lifecycle,
+        'target_lifecycle', e.target_lifecycle,
+        'target_lifecycle_date', e.target_lifecycle_date,
+        'tags', e.tags,
+        'links', e.links,
+        'schema_id', e.schema_id,
+        'data', e.data,
+        'project_id', e.project_id,
+        'version', e.version,
+        'created_at', e.created_at,
+        'updated_at', e.updated_at
+      )`
+    : `json_object(
+        'id', e.id,
+        'public_id', e.public_id,
+        'slug', e.slug,
+        'namespace', e.namespace,
+        'name', e.name,
+        'description', e.description,
+        'owner', e.owner,
+        'lifecycle', e.lifecycle,
+        'target_lifecycle', e.target_lifecycle,
+        'target_lifecycle_date', e.target_lifecycle_date,
+        'tags', json(e.tags),
+        'links', json(e.links),
+        'schema_id', e.schema_id,
+        'data', json(e.data),
+        'project_id', e.project_id,
+        'version', e.version,
+        'created_at', e.created_at,
+        'updated_at', e.updated_at
+      )`;
+
+const temporalEntityProjection = (
+  stateColumn: string,
+  entityIdColumn: string,
+  workspaceColumn: string,
+  dialect: EntityQueryDialect
+): string => {
+  const text = (fieldId: string) => stateText(stateColumn, fieldId, dialect);
+  const json = (fieldId: string) => stateJson(stateColumn, fieldId, dialect);
+  const emptyObject = dialect === 'postgres' ? "'{}'::jsonb" : "'{}'";
+  const emptyArray = dialect === 'postgres' ? "'[]'::jsonb" : "'[]'";
+  const entityIdText = dialect === 'postgres' ? `${entityIdColumn}::text` : entityIdColumn;
+
+  return [
+    `${entityIdColumn} AS id`,
+    `${workspaceColumn} AS workspace`,
+    `COALESCE(${text('public_id')}, ${entityIdText}) AS public_id`,
+    `${text('slug')} AS slug`,
+    `COALESCE(${text('namespace')}, 'default') AS namespace`,
+    `COALESCE(${text('name')}, '') AS name`,
+    `COALESCE(${text('description')}, '') AS description`,
+    `${text('owner')} AS owner`,
+    `${text('lifecycle')} AS lifecycle`,
+    `${text('target_lifecycle')} AS target_lifecycle`,
+    `${text('target_lifecycle_date')} AS target_lifecycle_date`,
+    `COALESCE(${json('tags')}, ${emptyArray}) AS tags`,
+    `COALESCE(${json('links')}, ${emptyArray}) AS links`,
+    `${text('schema_id')} AS schema_id`,
+    `COALESCE(${json('data')}, ${emptyObject}) AS data`,
+    `${text('project_id')} AS project_id`,
+    `${text('created_at')} AS created_at`,
+    `${text('updated_at')} AS updated_at`,
+    `COALESCE(${text('version')}, '1') AS version`,
+    `COALESCE(${json('generated_metadata')}, ${emptyObject}) AS generated_metadata`,
+    `${text('approval_policy_override')} AS approval_policy_override`
+  ].join(',\n      ');
+};
+
+const buildTemporalSource = (state: CompileState): string => {
+  const asOf = state.asOf!;
+  const workspaceParam = addParam(state, state.workspace);
+  const asOfParam = addParam(state, asOf.toISOString());
+  const projectClause = projectScopeClause(
+    stateText('v.state', 'project_id', state.dialect),
+    state,
+    true
+  );
+  const mergeStates =
+    state.dialect === 'postgres'
+      ? 'future_state.state || event.proposed_state'
+      : 'json_patch(future_state.state, event.proposed_state)';
+  const initialEventNumber = state.dialect === 'postgres' ? '0::bigint' : '0';
+
+  const stateProjectColumn = (column: string) => stateText(column, 'project_id', state.dialect);
+  const temporalProjection = temporalEntityProjection(
+    'final_state.state',
+    'final_state.entity_id',
+    'final_state.workspace',
+    state.dialect
+  );
+
+  const fallbackWorkspaceParam = addParam(state, state.workspace);
+  const fallbackCreatedParam = addParam(state, asOf.toISOString());
+  const fallbackProjectClause = projectScopeClause('e.project_id', state, true);
+  const eventWorkspaceParam = addParam(state, state.workspace);
+  const eventCreatedParam = addParam(state, asOf.toISOString());
+  const eventDateParam = addParam(state, asOf.toISOString().slice(0, 10));
+  const caseProjectClause =
+    state.projectScope === 'project' && state.projectId && state.includeProjectSnapshots
+      ? `(c.project_id IS NULL OR c.project_id = ${addParam(state, state.projectId)})`
+      : 'c.project_id IS NULL';
+
+  return `
+    latest_entity_version AS (
+      SELECT v.*,
+             ROW_NUMBER() OVER (
+               PARTITION BY v.entity_id
+               ORDER BY v.created_at DESC, v.version_number DESC
+             ) AS row_number
+      FROM entity_version v
+      WHERE v.workspace = ${workspaceParam}
+        AND v.created_at <= ${asOfParam}
+    ),
+    baseline_entity_state AS (
+      SELECT v.entity_id, v.workspace, v.state
+      FROM latest_entity_version v
+      WHERE v.row_number = 1
+        AND v.kind <> 'deleted'
+        AND ${projectClause}
+      UNION ALL
+      SELECT e.id, e.workspace, ${liveEntityState(state.dialect)}
+      FROM entity e
+      WHERE e.workspace = ${fallbackWorkspaceParam}
+        AND e.deleted_at IS NULL
+        AND e.created_at <= ${fallbackCreatedParam}
+        AND NOT EXISTS (
+          SELECT 1 FROM entity_version any_version
+          WHERE any_version.workspace = e.workspace
+            AND any_version.entity_id = e.id
+        )
+        AND ${fallbackProjectClause}
+    ),
+    active_future_events AS (
+      SELECT m.entity_id,
+             c.id AS case_id,
+             c.effective_date,
+             r.created_at,
+             r.revision_number,
+             m.proposed_state,
+             ROW_NUMBER() OVER (
+               PARTITION BY m.entity_id
+               ORDER BY c.effective_date, r.created_at, r.revision_number, c.id
+             ) AS event_number
+      FROM entity_change_case_entity_version m
+      JOIN entity_change_case_revision r
+        ON r.id = m.revision_id
+       AND r.is_active = ${state.dialect === 'postgres' ? 'TRUE' : '1'}
+      JOIN entity_change_case c ON c.id = r.case_id
+      WHERE c.workspace = ${eventWorkspaceParam}
+        AND c.status IN ('planned', 'in_approval')
+        AND r.status IN ('draft', 'submitted', 'changes_requested')
+        AND r.created_at <= ${eventCreatedParam}
+        AND c.effective_date IS NOT NULL
+        AND c.effective_date <= ${eventDateParam}
+        AND ${caseProjectClause}
+    ),
+    future_state (entity_id, workspace, state, event_number) AS (
+      SELECT b.entity_id, b.workspace, b.state, ${initialEventNumber}
+      FROM baseline_entity_state b
+      UNION ALL
+      SELECT future_state.entity_id,
+             future_state.workspace,
+             ${mergeStates},
+             event.event_number
+      FROM future_state
+      JOIN active_future_events event
+        ON event.entity_id = future_state.entity_id
+       AND event.event_number = future_state.event_number + 1
+    ),
+    final_state AS (
+      SELECT entity_id, workspace, state,
+             ROW_NUMBER() OVER (
+               PARTITION BY entity_id
+               ORDER BY event_number DESC
+             ) AS row_number
+      FROM future_state
+    ),
+    temporal_entity_source AS (
+      SELECT ${temporalProjection}
+      FROM final_state
+      WHERE final_state.row_number = 1
+        AND ${projectScopeClause(stateProjectColumn('final_state.state'), state, true)}
+    )`;
+};
+
+// Builds the one source CTE consumed by every traversal alias. Live queries use entity directly;
+// temporal queries reconstruct a JSON state in SQL from entity_version and active future cases,
+// then project that state into the same entity-shaped columns expected by the result mapper.
 const buildScopeCte = (state: CompileState): string => {
   const hasAssessment = state.assessmentId != null;
-  const assessmentJoin = hasAssessment
-    ? ` LEFT JOIN assessment_response ar ON ar.entity_id = e.id AND ar.assessment_id = ${addParam(state, state.assessmentId)} AND ar.workspace = e.workspace`
-    : '';
   const assessmentColumn = hasAssessment
-    ? 'ar."values" AS assessment_values'
+    ? `ar."values" AS assessment_values`
     : state.dialect === 'postgres'
       ? 'NULL::jsonb AS assessment_values'
       : 'NULL AS assessment_values';
-  const workspaceParam = addParam(state, state.workspace);
+  const source = state.asOf ? buildTemporalSource(state) : '';
 
-  return (
-    `${SCOPE_CTE} AS (` +
-    `SELECT e.*, ${assessmentColumn} FROM entity e${assessmentJoin} ` +
-    `WHERE e.workspace = ${workspaceParam} AND e.deleted_at IS NULL AND e.project_id IS NULL` +
-    `)`
-  );
+  if (state.asOf) {
+    const assessmentParam = hasAssessment ? addParam(state, state.assessmentId) : null;
+    return `${source},\n    ${SCOPE_CTE} AS (\n      SELECT s.*, ${assessmentColumn}\n      FROM temporal_entity_source s\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = s.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = s.workspace\n    )`;
+  }
+
+  const assessmentParam = hasAssessment ? addParam(state, state.assessmentId) : null;
+  const workspaceParam = addParam(state, state.workspace);
+  const scopeClause = projectScopeClause('e.project_id', state, true);
+  return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM entity e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopeClause}\n    )`;
 };
 
 // Compiles a validated EntityQuery into a full `WITH scoped_entity AS (...) SELECT ...` statement,
@@ -295,9 +523,17 @@ export const compileEntityQueryIR = (
     dialect,
     workspace,
     assessmentId: query.assessmentId,
+    projectId: query.projectId,
+    projectScope: query.projectScope ?? 'all',
+    asOf: query.asOf ? new Date(query.asOf) : null,
+    includeProjectSnapshots: query.includeProjectSnapshots ?? true,
     params: [],
     nextAliasIndex: 1
   };
+
+  if (state.asOf && Number.isNaN(state.asOf.getTime())) {
+    throw new UnsupportedEntityQueryIRError(`Invalid asOf date '${query.asOf}'`);
+  }
 
   const cte = buildScopeCte(state);
   const whereParts: string[] = [];
@@ -307,7 +543,7 @@ export const compileEntityQueryIR = (
   whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, state));
 
   const sql = `
-    WITH ${cte}
+    WITH${state.asOf ? ' RECURSIVE' : ''} ${cte}
     SELECT ${ROOT_ALIAS}.*,
       wo.name   AS owner_name,
       ls.label  AS lifecycle_label,

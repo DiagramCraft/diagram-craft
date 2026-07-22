@@ -599,7 +599,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       SELECT m.id, c.workspace, m.entity_id,
              CASE WHEN r.status = 'applied' THEN 'applied' ELSE 'future_update' END AS status,
              c.id AS case_id, r.id AS case_revision_id,
-             c.project_id, c.effective_date AS target_date, c.milestone_id,
+             c.project_id,
+             CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
+             c.milestone_id,
              COALESCE(r.message, c.description) AS commit_message,
              r.created_at, r.created_by, u.display_name AS created_by_name,
              m.base_state, m.proposed_state
@@ -618,15 +620,28 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async createSnapshot(input: EntitySnapshotDbCreate) {
     if (input.status === 'future_update' || input.status === 'applied') {
+      if (input.target_date != null && input.milestone_id != null) {
+        throw new Error('A snapshot cannot specify both target_date and milestone_id');
+      }
       const caseId = randomUUID();
       const revisionId = randomUUID();
       await this.sql`
         INSERT INTO entity_change_case (id, workspace, project_id, status, purpose, name, description, effective_date, milestone_id, initiator_user_id, created_at, updated_at)
         VALUES (${caseId}, ${input.workspace}, ${input.project_id}, ${input.status === 'applied' ? 'applied' : 'planned'}, 'planned_change', ${input.commit_message}, ${input.commit_message}, ${input.target_date}, ${input.milestone_id}, ${input.created_by}, ${input.created_at}, ${input.created_at})
       `;
+      if (input.milestone_id != null) {
+        await this.sql`
+          UPDATE entity_change_case
+          SET effective_date = (
+            SELECT target_date FROM project_milestone
+            WHERE id = ${input.milestone_id} AND project_id = ${input.project_id}
+          )
+          WHERE id = ${caseId}
+        `;
+      }
       await this.sql`
-        INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, message, created_by, status, created_at, resolved_at)
-        VALUES (${revisionId}, ${caseId}, ${input.workspace}, 1, ${input.commit_message}, ${input.created_by}, ${input.status === 'applied' ? 'applied' : 'draft'}, ${input.created_at}, ${input.status === 'applied' ? input.created_at : null})
+        INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, message, created_by, status, is_active, created_at, resolved_at)
+        VALUES (${revisionId}, ${caseId}, ${input.workspace}, 1, ${input.commit_message}, ${input.created_by}, ${input.status === 'applied' ? 'applied' : 'draft'}, ${input.status !== 'applied'}, ${input.created_at}, ${input.status === 'applied' ? input.created_at : null})
       `;
       await this.sql`
         INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
@@ -765,8 +780,19 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       await this
         .sql`UPDATE entity_change_case_entity_version SET proposed_state = ${this.json(updates.proposed_state)} WHERE id = ${snapshotId}`;
     if (updates.target_date !== undefined || updates.milestone_id !== undefined)
-      await this
-        .sql`UPDATE entity_change_case SET effective_date = ${updates.milestone_id != null ? null : (updates.target_date ?? null)}, milestone_id = ${updates.milestone_id ?? null} WHERE id = ${member.case_id}`;
+      await this.sql`
+        UPDATE entity_change_case
+        SET effective_date = CASE
+              WHEN ${updates.milestone_id ?? null} IS NULL THEN ${updates.target_date ?? null}
+              ELSE (
+                SELECT target_date FROM project_milestone
+                WHERE id = ${updates.milestone_id ?? null}
+                  AND project_id = entity_change_case.project_id
+              )
+            END,
+            milestone_id = ${updates.milestone_id ?? null}
+        WHERE id = ${member.case_id}
+      `;
     if (updates.commit_message !== undefined)
       await this
         .sql`UPDATE entity_change_case_revision SET message = ${updates.commit_message} WHERE id = ${member.revision_id}`;
@@ -790,6 +816,18 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       .sql`UPDATE entity_change_case SET milestone_id = NULL, effective_date = ${backfillTargetDate} WHERE workspace = ${workspace} AND milestone_id = ${milestoneId}`;
   }
 
+  async updateChangeCaseEffectiveDateForMilestone(
+    workspace: string,
+    milestoneId: string,
+    effectiveDate: string | null
+  ) {
+    await this.sql`
+      UPDATE entity_change_case
+      SET effective_date = ${effectiveDate}
+      WHERE workspace = ${workspace} AND milestone_id = ${milestoneId}
+    `;
+  }
+
   async applySnapshot(workspace: string, snapshotId: string) {
     const existing = await this.getSnapshot(workspace, snapshotId);
     if (existing?.status !== 'future_update') return null;
@@ -799,7 +837,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     if (!member) return null;
     const now = new Date();
     await this
-      .sql`UPDATE entity_change_case_revision SET status = 'applied', resolved_at = ${now} WHERE id = ${member.revision_id}`;
+      .sql`UPDATE entity_change_case_revision SET status = 'applied', is_active = FALSE, resolved_at = ${now} WHERE id = ${member.revision_id}`;
     await this
       .sql`UPDATE entity_change_case SET status = 'applied', closed_at = ${now}, updated_at = ${now} WHERE id = ${member.case_id}`;
     return this.getSnapshot(workspace, snapshotId);

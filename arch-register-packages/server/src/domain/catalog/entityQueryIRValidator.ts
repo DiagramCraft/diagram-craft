@@ -189,6 +189,15 @@ export const validateEntityQueryIR = (
         "Query uses '_assessment'/'_assessment:<fieldId>' predicates but assessmentId is not set"
     });
   }
+  if (query.projectScope === 'project' && !query.projectId) {
+    errors.push({
+      path: ['projectId'],
+      message: "projectScope 'project' requires projectId"
+    });
+  }
+  if (query.asOf != null && Number.isNaN(Date.parse(query.asOf))) {
+    errors.push({ path: ['asOf'], message: `Invalid asOf date '${query.asOf}'` });
+  }
   validateNode(query.root, schemas, ['root'], 0, errors);
   return errors.length === 0 ? { ok: true } : { ok: false, errors };
 };
