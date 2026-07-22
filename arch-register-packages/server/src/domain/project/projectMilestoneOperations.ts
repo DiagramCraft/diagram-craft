@@ -183,7 +183,7 @@ export const deleteMilestone = async (
       const row = await db.project.getMilestone(ws, project.id, id);
       httpAssert.present(row, { status: 404, message: `Milestone '${id}' not found` });
 
-      // Backfill any linked entity_snapshot rows before removing the milestone, so the
+      // Backfill any linked planned change cases before removing the milestone, so the
       // planned date isn't lost, only the named grouping (ON DELETE SET NULL is a backstop).
       await db.catalog.reassignSnapshotsFromMilestone(ws, id, row.target_date);
       await db.project.deleteMilestone(ws, project.id, id);

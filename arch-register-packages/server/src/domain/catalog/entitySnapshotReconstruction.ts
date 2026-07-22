@@ -53,12 +53,13 @@ const entityToState = (entity: EntityDbResult): Record<string, unknown> => ({
   schema_id: entity.schema_id,
   data: entity.data,
   project_id: entity.project_id,
+  version: entity.version ?? 1,
   created_at: entity.created_at,
   updated_at: entity.updated_at
 });
 
 // Reconstructs entity state as it existed (or, for future dates, will exist) as of `asOf`,
-// using `entity_snapshot` history rather than the live `entity` table. Entities with no
+// using immutable `entity_version` history rather than the live `entity` table. Entities with no
 // snapshot baseline at or before `asOf`, or whose latest baseline is a `deleted` snapshot,
 // are excluded (they didn't exist yet / no longer existed at that point in time).
 export const reconstructEntitiesAsOf = async (
@@ -135,16 +136,32 @@ export const reconstructEntitiesAsOf = async (
   // autosave/saved_version/deleted row seen per entity is its latest baseline at or before `asOf`.
   const baselineByEntity = new Map<string, EntitySnapshotDbResult>();
   const futureUpdatesByEntity = new Map<string, EntitySnapshotDbResult[]>();
+  const futureUpdateGroups = new Map<string, EntitySnapshotDbResult[]>();
 
   for (const snapshot of snapshots) {
     if (snapshot.status === 'future_update') {
       if (!includeProjectSnapshots) continue;
       if (snapshot.project_id != null && !accessibleProjectIds.has(snapshot.project_id)) continue;
-      const list = futureUpdatesByEntity.get(snapshot.entity_id) ?? [];
-      list.push(snapshot);
-      futureUpdatesByEntity.set(snapshot.entity_id, list);
+      const groupKey = snapshot.case_revision_id ?? snapshot.id;
+      const group = futureUpdateGroups.get(groupKey) ?? [];
+      group.push(snapshot);
+      futureUpdateGroups.set(groupKey, group);
     } else {
       baselineByEntity.set(snapshot.entity_id, snapshot);
+    }
+  }
+
+  // A case revision is one coordinated future event. Preserve that ordering for every member
+  // instead of letting each entity independently order its member changes. The compatibility
+  // projection gives legacy single-member rows their own group key.
+  const orderedFutureGroups = [...futureUpdateGroups.values()].sort((a, b) =>
+    compareFutureUpdates(a[0]!, b[0]!, milestoneTargetDates)
+  );
+  for (const group of orderedFutureGroups) {
+    for (const update of group) {
+      const list = futureUpdatesByEntity.get(update.entity_id) ?? [];
+      list.push(update);
+      futureUpdatesByEntity.set(update.entity_id, list);
     }
   }
 
@@ -179,6 +196,7 @@ export const reconstructEntitiesAsOf = async (
       project_id: (state['project_id'] as string | null) ?? null,
       created_at: createdAt,
       updated_at: updatedAt,
+      version: Number(state['version'] ?? 1),
       owner_name: ownerId ? (ownerNameMap.get(ownerId) ?? ownerId) : null,
       lifecycle_label: lifecycleId ? (lifecycleLabelMap.get(lifecycleId) ?? lifecycleId) : null,
       target_lifecycle_label: targetLifecycleId

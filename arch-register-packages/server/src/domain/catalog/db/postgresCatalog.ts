@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type {
   CatalogDatabase,
   EntityGrantDbCretae,
@@ -12,14 +13,13 @@ import type {
   SchemaVersionDbCreate,
   PinnedEntityDbCreate,
   EntitySnapshotDbCreate,
+  EntitySnapshotDbResult,
+  EntityVersionDbCreate,
+  EntityVersionDbResult,
+  EntityVersionKind,
   TimelineMarkerDbResult
 } from './catalogDatabase';
-import {
-  ENTITY_SELECT_SQL,
-  ENTITY_SNAPSHOT_SELECT_SQL,
-  catalogMappers,
-  resolveEntityListPagination
-} from './catalogDatabase';
+import { ENTITY_SELECT_SQL, catalogMappers, resolveEntityListPagination } from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { isUuidLike } from '../../../utils/publicIds';
@@ -524,127 +524,224 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
   }
 
+  async createEntityVersion(input: EntityVersionDbCreate) {
+    const [row] = (await this.sql`
+      INSERT INTO entity_version (id, workspace, entity_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
+      VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.version_number}, ${input.kind}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${this.json(input.state)}, ${input.applied_case_revision_id})
+      RETURNING *
+    `) as DatabaseRow[];
+    return catalogMappers.entityVersion(row!);
+  }
+
+  async listEntityVersions(workspace: string, entityId: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT v.*, u.display_name AS created_by_name FROM entity_version v
+      LEFT JOIN users u ON u.id = v.created_by
+      WHERE v.workspace = ${workspace} AND v.entity_id = ${entityId}
+      ORDER BY v.created_at DESC
+    `;
+    return mapDatabaseRows(rows, catalogMappers.entityVersion);
+  }
+
+  async listEntityVersionsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
+    if (entityIds != null && entityIds.length === 0) return [];
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT v.*, u.display_name AS created_by_name FROM entity_version v
+      LEFT JOIN users u ON u.id = v.created_by
+      WHERE v.workspace = ${workspace} AND v.created_at <= ${asOf}
+      ${entityIds != null ? this.sql`AND v.entity_id = ANY(${entityIds})` : this.sql``}
+      ORDER BY v.entity_id, v.created_at ASC
+    `;
+    return mapDatabaseRows(rows, catalogMappers.entityVersion);
+  }
+
+  async updateEntityVersionKind(
+    workspace: string,
+    versionId: string,
+    kind: EntityVersionKind,
+    commitMessage: string | null
+  ) {
+    const [row] = (await this.sql`
+      UPDATE entity_version SET kind = ${kind}, commit_message = ${commitMessage}
+      WHERE workspace = ${workspace} AND id = ${versionId} RETURNING *
+    `) as DatabaseRow[];
+    return row ? catalogMappers.entityVersion(row) : null;
+  }
+
+  private snapshotFromVersion(version: EntityVersionDbResult): EntitySnapshotDbResult {
+    return {
+      id: version.id,
+      workspace: version.workspace,
+      entity_id: version.entity_id,
+      status:
+        version.kind === 'case_applied'
+          ? 'applied'
+          : version.kind === 'direct_edit' ||
+              version.kind === 'restored' ||
+              version.kind === 'bypass'
+            ? 'autosave'
+            : version.kind,
+      project_id: null,
+      target_date: null,
+      milestone_id: null,
+      commit_message: version.commit_message,
+      created_at: version.created_at,
+      created_by: version.created_by ?? '',
+      created_by_name: version.created_by_name,
+      base_state: version.state,
+      proposed_state: null,
+      case_revision_id: version.applied_case_revision_id
+    };
+  }
+
+  private async caseSnapshotRows(workspace: string, entityId?: string, projectId?: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT m.id, c.workspace, m.entity_id,
+             CASE WHEN r.status = 'applied' THEN 'applied' ELSE 'future_update' END AS status,
+             c.id AS case_id, r.id AS case_revision_id,
+             c.project_id, c.effective_date AS target_date, c.milestone_id,
+             COALESCE(r.message, c.description) AS commit_message,
+             r.created_at, r.created_by, u.display_name AS created_by_name,
+             m.base_state, m.proposed_state
+      FROM entity_change_case_entity_version m
+      JOIN entity_change_case_revision r ON r.id = m.revision_id
+      JOIN entity_change_case c ON c.id = r.case_id
+      LEFT JOIN users u ON u.id = r.created_by
+      WHERE c.workspace = ${workspace}
+        AND r.status IN ('draft', 'submitted', 'changes_requested', 'applied')
+        ${entityId != null ? this.sql`AND m.entity_id = ${entityId}` : this.sql``}
+        ${projectId != null ? this.sql`AND c.project_id = ${projectId}` : this.sql``}
+      ORDER BY r.created_at DESC
+    `;
+    return mapDatabaseRows(rows, catalogMappers.entitySnapshot);
+  }
+
   async createSnapshot(input: EntitySnapshotDbCreate) {
-    try {
-      const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, milestone_id, commit_message, created_at, created_by, created_by_name, base_state, proposed_state)
-        VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.status}, ${input.project_id}, ${input.target_date}, ${input.milestone_id}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${input.created_by_name}, ${this.json(input.base_state)}, ${input.proposed_state != null ? this.json(input.proposed_state) : null})
-        RETURNING *
+    if (input.status === 'future_update' || input.status === 'applied') {
+      const caseId = randomUUID();
+      const revisionId = randomUUID();
+      await this.sql`
+        INSERT INTO entity_change_case (id, workspace, project_id, status, purpose, name, description, effective_date, milestone_id, initiator_user_id, created_at, updated_at)
+        VALUES (${caseId}, ${input.workspace}, ${input.project_id}, ${input.status === 'applied' ? 'applied' : 'planned'}, 'planned_change', ${input.commit_message}, ${input.commit_message}, ${input.target_date}, ${input.milestone_id}, ${input.created_by}, ${input.created_at}, ${input.created_at})
       `;
-      return catalogMappers.entitySnapshot(row!);
-    } catch (error) {
-      return normalizePostgresError(error);
+      await this.sql`
+        INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, message, created_by, status, created_at, resolved_at)
+        VALUES (${revisionId}, ${caseId}, ${input.workspace}, 1, ${input.commit_message}, ${input.created_by}, ${input.status === 'applied' ? 'applied' : 'draft'}, ${input.created_at}, ${input.status === 'applied' ? input.created_at : null})
+      `;
+      await this.sql`
+        INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
+        VALUES (${input.id}, ${revisionId}, ${input.workspace}, ${input.entity_id}, ${Number(input.base_state['version'] ?? 1)}, ${this.json(input.base_state)}, ${this.json(input.proposed_state ?? input.base_state)}, ${this.json({})})
+      `;
+      return (await this.getSnapshot(input.workspace, input.id))!;
     }
+    const [maxRow] = await this.sql<
+      { max: number | null }[]
+    >`SELECT MAX(version_number)::int AS max FROM entity_version WHERE workspace = ${input.workspace} AND entity_id = ${input.entity_id}`;
+    const versionNumber =
+      input.status === 'deleted'
+        ? (maxRow?.max ?? 0) + 1
+        : Number(input.base_state['version'] ?? (maxRow?.max ?? 0) + 1);
+    await this.createEntityVersion({
+      id: input.id,
+      workspace: input.workspace,
+      entity_id: input.entity_id,
+      version_number: versionNumber,
+      kind: input.version_kind ?? input.status,
+      commit_message: input.commit_message,
+      created_at: input.created_at,
+      created_by: input.created_by,
+      state: input.proposed_state ?? input.base_state,
+      applied_case_revision_id: input.applied_case_revision_id ?? null
+    });
+    return (await this.getSnapshot(input.workspace, input.id))!;
+  }
+
+  private async getEntityVersionById(workspace: string, id: string) {
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT v.*, u.display_name AS created_by_name FROM entity_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ${workspace} AND v.id = ${id}`;
+    return row ? catalogMappers.entityVersion(row) : null;
   }
 
   async getSnapshot(workspace: string, snapshotId: string) {
-    const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${ENTITY_SNAPSHOT_SELECT_SQL} WHERE s.workspace = $1 AND s.id = $2`,
-      [workspace, snapshotId]
-    );
-    return rows[0] ? catalogMappers.entitySnapshot(rows[0]) : null;
+    const version = await this.getEntityVersionById(workspace, snapshotId);
+    if (version) return this.snapshotFromVersion(version);
+    return (await this.caseSnapshotRows(workspace)).find(row => row.id === snapshotId) ?? null;
   }
 
   async listSnapshots(workspace: string, entityId: string) {
-    const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${ENTITY_SNAPSHOT_SELECT_SQL} WHERE s.workspace = $1 AND s.entity_id = $2 ORDER BY s.created_at DESC`,
-      [workspace, entityId]
+    const versions = (await this.listEntityVersions(workspace, entityId)).map(v =>
+      this.snapshotFromVersion(v)
     );
-    return mapDatabaseRows(rows, catalogMappers.entitySnapshot);
+    const appliedRevisionIds = new Set(
+      versions.map(snapshot => snapshot.case_revision_id).filter((id): id is string => id != null)
+    );
+    const cases = (await this.caseSnapshotRows(workspace, entityId)).filter(
+      snapshot =>
+        snapshot.status !== 'applied' || !appliedRevisionIds.has(snapshot.case_revision_id ?? '')
+    );
+    const rows = [...versions, ...cases];
+    return rows.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
   }
 
   async listSnapshotsByProject(workspace: string, projectId: string) {
-    const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${ENTITY_SNAPSHOT_SELECT_SQL}
-       INNER JOIN project p ON p.id = s.project_id
-       WHERE s.workspace = $1
-         AND p.workspace = $1
-         AND (p.id::text = $2 OR p.public_id = $2)
-         AND s.status IN ('future_update', 'applied')
-       ORDER BY s.target_date ASC NULLS LAST, s.created_at DESC`,
-      [workspace, projectId]
-    );
-    return mapDatabaseRows(rows, catalogMappers.entitySnapshot);
+    const [project] = await this.sql<
+      { id: string }[]
+    >`SELECT id FROM project WHERE workspace = ${workspace} AND (id::text = ${projectId} OR public_id = ${projectId})`;
+    return project ? this.caseSnapshotRows(workspace, undefined, project.id) : [];
   }
 
   async listSnapshotsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
-    const rows = await this.sql<DatabaseRow[]>`
-      SELECT s.*, u.display_name as created_by_name
-      FROM entity_snapshot s
-      LEFT JOIN users u ON u.id = s.created_by
-      LEFT JOIN project_milestone m ON m.id = s.milestone_id
-      WHERE s.workspace = ${workspace}
-        AND (
-          (s.status IN ('autosave', 'saved_version', 'deleted') AND s.created_at <= ${asOf})
-          OR (s.status = 'future_update' AND COALESCE(s.target_date, m.target_date) <= ${asOf} AND s.created_at <= ${asOf})
-        )
-        ${entityIds != null ? this.sql`AND s.entity_id = ANY(${entityIds})` : this.sql``}
-      ORDER BY s.entity_id, s.created_at ASC
-    `;
-    return mapDatabaseRows(rows, catalogMappers.entitySnapshot);
+    const versions = (await this.listEntityVersionsAsOf(workspace, asOf, entityIds)).map(v =>
+      this.snapshotFromVersion(v)
+    );
+    const cases = (await this.caseSnapshotRows(workspace)).filter(
+      s =>
+        s.status === 'future_update' &&
+        (entityIds == null || entityIds.includes(s.entity_id)) &&
+        s.created_at <= asOf &&
+        (s.target_date == null || s.target_date <= asOf.toISOString().slice(0, 10))
+    );
+    return [...versions, ...cases].sort(
+      (a, b) =>
+        a.entity_id.localeCompare(b.entity_id) || a.created_at.getTime() - b.created_at.getTime()
+    );
   }
 
   async listEntityIdsWithAnySnapshot(workspace: string, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
-    // Only 'autosave'/'saved_version'/'deleted' count as "own history" checkpoints — a
-    // 'future_update' snapshot alone doesn't give us any real baseline state to reconstruct
-    // from, so it must not suppress the live-state fallback.
-    const rows = await this.sql<{ entity_id: string }[]>`
-      SELECT DISTINCT entity_id FROM entity_snapshot
-      WHERE workspace = ${workspace}
-        AND status IN ('autosave', 'saved_version', 'deleted')
-      ${entityIds != null ? this.sql`AND entity_id = ANY(${entityIds})` : this.sql``}
-    `;
-    return rows.map(r => r.entity_id);
+    const rows = await this.sql<
+      { entity_id: string }[]
+    >`SELECT DISTINCT entity_id FROM entity_version WHERE workspace = ${workspace} ${entityIds != null ? this.sql`AND entity_id = ANY(${entityIds})` : this.sql``}`;
+    return rows.map(row => row.entity_id);
   }
 
   async listTimelineMarkers(workspace: string) {
-    return await this.sql<TimelineMarkerDbResult[]>`
+    return this.sql<TimelineMarkerDbResult[]>`
       SELECT date, type, COUNT(*)::int AS count FROM (
-        SELECT target_date::text AS date, 'future_update' AS type
-        FROM entity_snapshot
-        WHERE workspace = ${workspace} AND status = 'future_update' AND target_date IS NOT NULL
-        UNION ALL
-        SELECT created_at::date::text AS date, 'saved_version' AS type
-        FROM entity_snapshot
-        WHERE workspace = ${workspace} AND status = 'saved_version'
-        UNION ALL
-        SELECT target_date::text AS date, 'applied' AS type
-        FROM entity_snapshot
-        WHERE workspace = ${workspace} AND status = 'applied' AND target_date IS NOT NULL
-      ) markers
-      GROUP BY date, type
-      ORDER BY date ASC
+        SELECT COALESCE(c.effective_date, m.target_date)::text AS date, 'future_update' AS type FROM entity_change_case c LEFT JOIN project_milestone m ON m.id = c.milestone_id WHERE c.workspace = ${workspace} AND c.status = 'planned' AND COALESCE(c.effective_date, m.target_date) IS NOT NULL
+        UNION ALL SELECT created_at::date::text AS date, 'saved_version' AS type FROM entity_version WHERE workspace = ${workspace} AND kind = 'saved_version'
+        UNION ALL SELECT COALESCE(c.effective_date, m.target_date)::text AS date, 'applied' AS type FROM entity_change_case c LEFT JOIN project_milestone m ON m.id = c.milestone_id WHERE c.workspace = ${workspace} AND c.status = 'applied' AND COALESCE(c.effective_date, m.target_date) IS NOT NULL
+      ) markers GROUP BY date, type ORDER BY date ASC
     `;
   }
 
   async pruneAutosaveSnapshots(workspace: string, entityId: string, keepCount: number) {
-    await this.sql`
-      DELETE FROM entity_snapshot
-      WHERE workspace = ${workspace} AND entity_id = ${entityId} AND status = 'autosave'
-        AND id NOT IN (
-          SELECT id FROM entity_snapshot
-          WHERE workspace = ${workspace} AND entity_id = ${entityId} AND status = 'autosave'
-          ORDER BY created_at DESC
-          LIMIT ${keepCount}
-        )
-    `;
+    await this
+      .sql`DELETE FROM entity_version WHERE workspace = ${workspace} AND entity_id = ${entityId} AND kind = 'autosave' AND id NOT IN (SELECT id FROM entity_version WHERE workspace = ${workspace} AND entity_id = ${entityId} AND kind = 'autosave' ORDER BY created_at DESC LIMIT ${keepCount})`;
   }
 
   async promoteSnapshot(workspace: string, snapshotId: string, commitMessage: string | null) {
-    const [row] = await this.sql<DatabaseRow[]>`
-      WITH updated AS (
-        UPDATE entity_snapshot
-        SET status = 'saved_version', commit_message = ${commitMessage}
-        WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'autosave'
-        RETURNING *
-      )
-      SELECT u.*, us.display_name as created_by_name
-      FROM updated u
-      LEFT JOIN users us ON us.id = u.created_by
-    `;
-    return row ? catalogMappers.entitySnapshot(row) : null;
+    const existing = await this.getEntityVersionById(workspace, snapshotId);
+    if (existing?.kind !== 'autosave') return null;
+    const updated = await this.updateEntityVersionKind(
+      workspace,
+      snapshotId,
+      'saved_version',
+      commitMessage
+    );
+    return updated ? this.snapshotFromVersion(updated) : null;
   }
 
   async updateSnapshot(
@@ -657,31 +754,30 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       commit_message?: string | null;
     }
   ) {
-    const existing = await this.sql<DatabaseRow[]>`
-      SELECT * FROM entity_snapshot WHERE id = ${snapshotId} AND workspace = ${workspace}
-    `;
-    if (String(existing[0]?.['status']) !== 'future_update') return null;
-
-    const [row] = await this.sql<DatabaseRow[]>`
-      UPDATE entity_snapshot
-      SET
-        proposed_state = ${updates.proposed_state !== undefined ? this.json(updates.proposed_state) : this.sql`proposed_state`},
-        target_date = ${updates.target_date !== undefined ? updates.target_date : this.sql`target_date`},
-        milestone_id = ${updates.milestone_id !== undefined ? updates.milestone_id : this.sql`milestone_id`},
-        commit_message = ${updates.commit_message !== undefined ? updates.commit_message : this.sql`commit_message`}
-      WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
-      RETURNING *
-    `;
-    return row ? catalogMappers.entitySnapshot(row) : null;
+    const existing = await this.getSnapshot(workspace, snapshotId);
+    if (existing?.status !== 'future_update') return null;
+    const [member] = await this.sql<
+      { revision_id: string; case_id: string }[]
+    >`SELECT m.revision_id, r.case_id FROM entity_change_case_entity_version m JOIN entity_change_case_revision r ON r.id = m.revision_id WHERE m.id = ${snapshotId} AND m.workspace = ${workspace}`;
+    if (!member) return null;
+    if (updates.proposed_state !== undefined)
+      await this
+        .sql`UPDATE entity_change_case_entity_version SET proposed_state = ${this.json(updates.proposed_state)} WHERE id = ${snapshotId}`;
+    if (updates.target_date !== undefined || updates.milestone_id !== undefined)
+      await this
+        .sql`UPDATE entity_change_case SET effective_date = ${updates.milestone_id != null ? null : (updates.target_date ?? null)}, milestone_id = ${updates.milestone_id ?? null} WHERE id = ${member.case_id}`;
+    if (updates.commit_message !== undefined)
+      await this
+        .sql`UPDATE entity_change_case_revision SET message = ${updates.commit_message} WHERE id = ${member.revision_id}`;
+    return this.getSnapshot(workspace, snapshotId);
   }
 
   async deleteSnapshot(workspace: string, snapshotId: string) {
-    const [row] = await this.sql<DatabaseRow[]>`
-      DELETE FROM entity_snapshot
-      WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
-      RETURNING *
-    `;
-    return row ? catalogMappers.entitySnapshot(row) : null;
+    const existing = await this.getSnapshot(workspace, snapshotId);
+    if (existing?.status !== 'future_update') return null;
+    await this
+      .sql`DELETE FROM entity_change_case WHERE id = (SELECT r.case_id FROM entity_change_case_entity_version m JOIN entity_change_case_revision r ON r.id = m.revision_id WHERE m.workspace = ${workspace} AND m.id = ${snapshotId})`;
+    return existing;
   }
 
   async reassignSnapshotsFromMilestone(
@@ -689,20 +785,22 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     milestoneId: string,
     backfillTargetDate: string | null
   ) {
-    await this.sql`
-      UPDATE entity_snapshot
-      SET milestone_id = NULL, target_date = ${backfillTargetDate}
-      WHERE workspace = ${workspace} AND milestone_id = ${milestoneId}
-    `;
+    await this
+      .sql`UPDATE entity_change_case SET milestone_id = NULL, effective_date = ${backfillTargetDate} WHERE workspace = ${workspace} AND milestone_id = ${milestoneId}`;
   }
 
   async applySnapshot(workspace: string, snapshotId: string) {
-    const [row] = await this.sql<DatabaseRow[]>`
-      UPDATE entity_snapshot
-      SET status = 'applied'
-      WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
-      RETURNING *
-    `;
-    return row ? catalogMappers.entitySnapshot(row) : null;
+    const existing = await this.getSnapshot(workspace, snapshotId);
+    if (existing?.status !== 'future_update') return null;
+    const [member] = await this.sql<
+      { revision_id: string; case_id: string }[]
+    >`SELECT m.revision_id, r.case_id FROM entity_change_case_entity_version m JOIN entity_change_case_revision r ON r.id = m.revision_id WHERE m.id = ${snapshotId} AND m.workspace = ${workspace}`;
+    if (!member) return null;
+    const now = new Date();
+    await this
+      .sql`UPDATE entity_change_case_revision SET status = 'applied', resolved_at = ${now} WHERE id = ${member.revision_id}`;
+    await this
+      .sql`UPDATE entity_change_case SET status = 'applied', closed_at = ${now}, updated_at = ${now} WHERE id = ${member.case_id}`;
+    return this.getSnapshot(workspace, snapshotId);
   }
 }

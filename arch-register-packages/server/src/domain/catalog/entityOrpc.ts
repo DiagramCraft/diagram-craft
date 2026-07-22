@@ -575,10 +575,21 @@ const snapshotHandlers = {
     });
 
     const auditUser = context.event.context.user;
-    await updateEntity(context.db, workspace, entity.id, input.body.resolvedEntityData, authCtx, {
-      id: auditUser.id,
-      displayName: auditUser.display_name
-    });
+    await updateEntity(
+      context.db,
+      workspace,
+      entity.id,
+      input.body.resolvedEntityData,
+      authCtx,
+      {
+        id: auditUser.id,
+        displayName: auditUser.display_name
+      },
+      {
+        versionKind: 'case_applied',
+        appliedCaseRevisionId: snapshot.case_revision_id
+      }
+    );
 
     const applied = await context.db.catalog.applySnapshot(workspace, input.params.snapshotId);
     orpcAssert.present(applied, {

@@ -32,6 +32,7 @@ import { hashPassword } from '../utils/password';
 import { UserDbCreate } from './database';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
 import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
+import { entityToBaseState } from '../domain/catalog/entityMutations';
 import type { StorageAdapter } from '../storage/storage.types';
 import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
 import { randomUUID } from 'node:crypto';
@@ -419,6 +420,28 @@ export const seedBootstrapData = async (
   }
 
   await seedBootstrapUsers(db);
+
+  // Seed the actual current state into the target historical version model before adding
+  // planned cases. Seed data is a clean bootstrap, so no legacy snapshot backfill is needed.
+  for (const workspace of Object.values(seededWorkspaces)) {
+    const entities = await listAllCatalogEntities(db, workspace.id);
+    for (const entity of entities) {
+      const versions = await db.catalog.listEntityVersions(workspace.id, entity.id);
+      if (versions.length > 0) continue;
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: workspace.id,
+        entity_id: entity.id,
+        version_number: entity.version ?? 1,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: entity.created_at,
+        created_by: null,
+        state: entityToBaseState(entity),
+        applied_case_revision_id: null
+      });
+    }
+  }
 
   for (const snapshot of seedEntitySnapshots) {
     await db.catalog.createSnapshot(snapshot);
