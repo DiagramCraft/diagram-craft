@@ -4,7 +4,9 @@ import {
   type NormalizedEntityQueryOptions
 } from './entityQueryOperations';
 
-type EntityQuery = {
+// HTTP query-param shape for listEntities/countEntities, distinct from the structured
+// `EntityQuery` IR type in `@arch-register/api-types/entityQueryIR`.
+type EntityListQueryParams = {
   _schemaId?: string;
   owner?: string;
   lifecycle?: string;
@@ -27,7 +29,7 @@ const parseAsOf = (value: string | undefined): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
-export const parseEntityQuery = (query: EntityQuery): NormalizedEntityQueryOptions =>
+export const parseEntityQuery = (query: EntityListQueryParams): NormalizedEntityQueryOptions =>
   normalizeEntityQueryOptions({
     schemaId: query._schemaId,
     owner: query.owner,

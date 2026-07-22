@@ -12,6 +12,7 @@
     "openapi:generate": "node --import tsx ./src/scripts/generateOpenApi.ts",
     "openapi:check": "node --import tsx ./src/scripts/checkOpenApi.ts",
     "cleanup:orphaned-files": "node --import tsx ./src/scripts/cleanupOrphanedFiles.ts",
+    "query:sql": "node --import tsx ./src/scripts/printEntityQuerySql.ts",
     "test:db-contract": "vitest run --config src/db/contract-tests/vitest.config.ts",
     "test:db-contract:watch": "vitest watch --config src/db/contract-tests/vitest.config.ts"
   },

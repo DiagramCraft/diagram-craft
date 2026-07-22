@@ -237,6 +237,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
+  async runCompiledEntityQuery(sql: string, params: unknown[]) {
+    return this.all(sql, params, catalogMappers.enrichedEntity);
+  }
+
   async listEntitiesPaginated(
     workspace: string,
     filters?: EntityListDbFilters,

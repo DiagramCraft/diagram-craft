@@ -8,26 +8,26 @@ export const browserViewSchema = z
   .enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix', 'explore', 'bubble', 'map'])
   .describe('Available view modes for displaying entities');
 
+export const filterOpSchema = z.enum([
+  'equals',
+  'not_equals',
+  'contains',
+  'starts_with',
+  'ends_with',
+  'empty',
+  'not_empty',
+  'before',
+  'after',
+  'on',
+  'gt',
+  'lt',
+  'gte',
+  'lte'
+]);
+
 export const filterConditionSchema = z.object({
   fieldId: z.string().describe('Field identifier to filter on'),
-  op: z
-    .enum([
-      'equals',
-      'not_equals',
-      'contains',
-      'starts_with',
-      'ends_with',
-      'empty',
-      'not_empty',
-      'before',
-      'after',
-      'on',
-      'gt',
-      'lt',
-      'gte',
-      'lte'
-    ])
-    .describe('Filter operation'),
+  op: filterOpSchema.describe('Filter operation'),
   value: z.unknown().describe('Filter value (type depends on field and operation)')
 });
 
