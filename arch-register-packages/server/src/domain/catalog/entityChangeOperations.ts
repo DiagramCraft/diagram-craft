@@ -752,7 +752,9 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
               id: event.actor_user_id ?? caseRow.initiator_user_id ?? 'system',
               displayName: actor?.display_name ?? null
             },
-            auditMetadata: { governanceCaseId: caseRow.id, proposalId, revisionId }
+            auditMetadata: { governanceCaseId: caseRow.id, proposalId, revisionId },
+            versionKind: 'case_applied',
+            appliedCaseRevisionId: revisionId
           });
           httpAssert.present(updated, {
             status: 409,

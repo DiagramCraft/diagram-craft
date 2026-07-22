@@ -69,8 +69,8 @@
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.
 
-        - @id:ar.entities.history Users can inspect entity change history and work with snapshots or restoration flows
-          where permitted.
+        - @id:ar.entities.history Users can inspect immutable entity versions, compare actual historical state, and
+          restore earlier versions where permitted.
 
         - @id:ar.entities.bulk-edit Users can select multiple entities and edit supported fields in bulk.
 
@@ -143,8 +143,8 @@
         - @id:ar.projects.milestones Users can manage project milestones with target dates and status, and associate
           planned entity changes with milestones.
 
-        - @id:ar.projects.planned-changes Users can record proposed future changes to entities within the scope of a
-          project without changing the current live entity state.
+        - @id:ar.projects.planned-changes Users can record named, coordinated change cases for one or more entities
+          within or outside a project without changing the current live entity state.
 
             - @id:ar.projects.planned-changes.schedule Users can target a planned entity change to a future date or
               associate it with a project milestone.
@@ -152,8 +152,8 @@
             - @id:ar.projects.planned-changes.timeline Users can inspect planned entity changes in project and
               entity-oriented timeline views alongside historical change information.
 
-            - @id:ar.projects.planned-changes.apply Users can apply a planned entity change when it is ready, promoting
-              the proposed state into the live entity.
+            - @id:ar.projects.planned-changes.apply Users can apply a planned entity change case atomically, promoting
+              all approved member states into the live entities.
 
         - @id:ar.projects.permissions Project content can be protected through the applicable workspace, project,
           entity, team, and role permissions.
@@ -234,9 +234,9 @@
             - @id:ar.collaboration.governance-inbox.my-submissions Users can review governance work they have submitted,
               see what or who is currently blocking it, and withdraw an open submission where permitted.
 
-        - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity changes,
-          while authorized users can submit immutable revisions, review before/after diffs, resubmit after requested
-          changes, self-approve when they are the sole eligible approver, and record an audited approval bypass.
+        - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity change
+          cases, while authorized users can submit immutable coordinated revisions, review before/after diffs across
+          all affected entities, resubmit after requested changes, and record an audited approval bypass.
 
         - @id:ar.collaboration.entity-deprecation Workspace administrators can require deprecation proposals for
           entities on schemas that opt in, while authorized users can propose a deprecation with a target date, reason,

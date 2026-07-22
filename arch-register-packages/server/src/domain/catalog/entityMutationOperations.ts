@@ -31,7 +31,13 @@ import { EntityRecord } from '@arch-register/api-types/entityContract';
 
 import { listAllCatalogEntities } from './entityLoader';
 
-import type { Entity, EntityDbCreate, EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import type {
+  Entity,
+  EntityDbCreate,
+  EntityDbResult,
+  EntityVersionKind,
+  SchemaDbResult
+} from './db/catalogDatabase';
 import { entityRequiresApproval } from './entityChangeOperations';
 import { assertNoExternalEntityFieldWrites } from './entityValidation';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
@@ -378,7 +384,11 @@ export const updateEntity = async (
   id: string,
   body: Record<string, unknown>,
   authCtx: AuthorizationContext | null,
-  actor: EntityMutationActor
+  actor: EntityMutationActor,
+  versionOptions?: {
+    versionKind?: EntityVersionKind;
+    appliedCaseRevisionId?: string | null;
+  }
 ): Promise<EntityRecord> => {
   const payload = parseEntityMutationPayload(body);
   const lifecycleValues = await getLifecycleValues(db, workspace);
@@ -556,7 +566,9 @@ export const updateEntity = async (
         ...(nextGeneratedMetadata !== undefined
           ? { generated_metadata: nextGeneratedMetadata }
           : {})
-      }
+      },
+      versionKind: versionOptions?.versionKind,
+      appliedCaseRevisionId: versionOptions?.appliedCaseRevisionId
     });
 
     httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });

@@ -1,6 +1,6 @@
 import type { EntityDbCreate, DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
-import { Entity } from './db/catalogDatabase';
+import { Entity, EntityVersionKind } from './db/catalogDatabase';
 import { outdateExternalMetadata, valueEquals } from '../externalMetadata/externalMetadataHelpers';
 
 const AUTOSAVE_KEEP_COUNT = 50;
@@ -22,6 +22,7 @@ export const entityToBaseState = (row: Entity): Record<string, unknown> => ({
   schema_id: row.schema_id,
   data: row.data,
   project_id: row.project_id,
+  version: row.version ?? 1,
   created_at: row.created_at,
   updated_at: row.updated_at
 });
@@ -44,6 +45,8 @@ type UpdateEntityWithAuditParams = {
   next: EntityDbUpdate;
   actor: EntityMutationActor;
   auditMetadata?: Record<string, unknown>;
+  versionKind?: EntityVersionKind;
+  appliedCaseRevisionId?: string | null;
 };
 
 type ConditionalUpdateEntityWithAuditParams = UpdateEntityWithAuditParams & {
@@ -146,7 +149,9 @@ export const updateEntityWithAudit = async (
     created_by: params.actor.id,
     created_by_name: params.actor.displayName,
     base_state: entityToBaseState(params.previous),
-    proposed_state: entityToBaseState(row)
+    proposed_state: entityToBaseState(row),
+    version_kind: params.versionKind ?? 'autosave',
+    applied_case_revision_id: params.appliedCaseRevisionId ?? null
   });
   await db.catalog.pruneAutosaveSnapshots(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
 
@@ -197,7 +202,9 @@ export const updateEntityWithAuditIfVersion = async (
     created_by: params.actor.id,
     created_by_name: params.actor.displayName,
     base_state: entityToBaseState(params.previous),
-    proposed_state: entityToBaseState(row)
+    proposed_state: entityToBaseState(row),
+    version_kind: params.versionKind ?? 'autosave',
+    applied_case_revision_id: params.appliedCaseRevisionId ?? null
   });
   await db.catalog.pruneAutosaveSnapshots(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
 

@@ -217,7 +217,32 @@ export type EntityDbUpdate = Omit<
   generated_metadata?: ExternalMetadata;
 };
 
-// -- Entity Snapshot
+// -- Entity versions and compatibility projections
+
+export type EntityVersionKind =
+  | 'autosave'
+  | 'saved_version'
+  | 'deleted'
+  | 'restored'
+  | 'direct_edit'
+  | 'case_applied'
+  | 'bypass';
+
+export type EntityVersionDbResult = {
+  id: string;
+  workspace: string;
+  entity_id: string;
+  version_number: number;
+  kind: EntityVersionKind;
+  commit_message: string | null;
+  created_at: Date;
+  created_by: string | null;
+  created_by_name: string | null;
+  state: Record<string, unknown>;
+  applied_case_revision_id: string | null;
+};
+
+export type EntityVersionDbCreate = Omit<EntityVersionDbResult, 'created_by_name'>;
 
 export type SnapshotStatus = 'autosave' | 'saved_version' | 'future_update' | 'applied' | 'deleted';
 
@@ -235,9 +260,15 @@ export type EntitySnapshotDbResult = {
   created_by_name: string | null;
   base_state: Record<string, unknown>;
   proposed_state: Record<string, unknown> | null;
+  /** Target-model identity for future/applied compatibility projections. */
+  case_id?: string | null;
+  case_revision_id?: string | null;
 };
 
-export type EntitySnapshotDbCreate = EntitySnapshotDbResult;
+export type EntitySnapshotDbCreate = EntitySnapshotDbResult & {
+  version_kind?: EntityVersionKind;
+  applied_case_revision_id?: string | null;
+};
 
 export type TimelineMarkerDbResult = {
   date: string;
@@ -306,7 +337,23 @@ export const catalogMappers = {
             row['proposed_state'],
             {},
             'entity_snapshot.proposed_state'
-          )
+          ),
+    case_id: row['case_id'] == null ? null : String(row['case_id']),
+    case_revision_id: row['case_revision_id'] == null ? null : String(row['case_revision_id'])
+  }),
+  entityVersion: (row: DatabaseRow): EntityVersionDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    version_number: Number(row['version_number']),
+    kind: row['kind'] as EntityVersionKind,
+    commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
+    created_at: databaseDate(row['created_at']),
+    created_by: row['created_by'] == null ? null : String(row['created_by']),
+    created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
+    state: parseDatabaseJson<Record<string, unknown>>(row['state'], {}, 'entity_version.state'),
+    applied_case_revision_id:
+      row['applied_case_revision_id'] == null ? null : String(row['applied_case_revision_id'])
   }),
   pinnedEntity: (row: DatabaseRow): PinnedEntityDbResult => ({
     user_id: String(row['user_id']),
@@ -465,6 +512,20 @@ export type CatalogDatabase = {
     override: 'required' | 'disabled' | null
   ): Promise<EntityDbResult | null>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
+
+  createEntityVersion(input: EntityVersionDbCreate): Promise<EntityVersionDbResult>;
+  listEntityVersions(ws: string, entityId: string): Promise<EntityVersionDbResult[]>;
+  listEntityVersionsAsOf(
+    ws: string,
+    asOf: Date,
+    entityIds?: string[]
+  ): Promise<EntityVersionDbResult[]>;
+  updateEntityVersionKind(
+    ws: string,
+    versionId: string,
+    kind: EntityVersionKind,
+    commitMessage: string | null
+  ): Promise<EntityVersionDbResult | null>;
 
   listEntityGrants(ws: string): Promise<EntityGrantDbResult[]>;
   getEntityGrants(ws: string, entityId: string): Promise<EntityGrantDbResult[]>;
