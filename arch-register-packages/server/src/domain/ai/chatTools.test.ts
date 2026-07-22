@@ -75,6 +75,7 @@ const entities: Entity[] = [
       tech: 'PostgreSQL'
     },
     visibility_mode: 'public',
+    project_id: null,
     created_at: now,
     updated_at: now
   },
@@ -98,6 +99,7 @@ const entities: Entity[] = [
       dependsOn: 'entity-cap-1'
     },
     visibility_mode: 'public',
+    project_id: null,
     created_at: now,
     updated_at: now
   },
@@ -121,6 +123,7 @@ const entities: Entity[] = [
       builtOn: 'entity-cap-2'
     },
     visibility_mode: 'public',
+    project_id: null,
     created_at: now,
     updated_at: now
   },
@@ -143,6 +146,7 @@ const entities: Entity[] = [
       critical: false
     },
     visibility_mode: 'public',
+    project_id: null,
     created_at: now,
     updated_at: now
   },
@@ -163,6 +167,7 @@ const entities: Entity[] = [
     schema_id: 'application',
     data: {},
     visibility_mode: 'public',
+    project_id: null,
     created_at: now,
     updated_at: now
   }

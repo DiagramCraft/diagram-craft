@@ -39,6 +39,7 @@ const makeEntity = (overrides: Record<string, unknown> = {}) => ({
   schema_id: 'schema-1',
   data: {},
   visibility_mode: 'public' as const,
+  project_id: null,
   created_at: new Date(),
   updated_at: new Date(),
   ...overrides

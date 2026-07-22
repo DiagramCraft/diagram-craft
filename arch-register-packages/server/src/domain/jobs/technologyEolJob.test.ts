@@ -47,6 +47,7 @@ const entity: EntityDbResult = {
   data: { provider: 'nodejs', cycle: '20' },
   generated_metadata: {},
   visibility_mode: null,
+  project_id: null,
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z'),
   version: 1,

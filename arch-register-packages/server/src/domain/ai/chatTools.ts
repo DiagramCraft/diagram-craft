@@ -42,7 +42,6 @@ type CreateEntityArgs = {
   owner?: string | null;
   lifecycle?: string | null;
   tags?: string[];
-  visibilityMode?: 'public' | 'restricted' | null;
   fields?: Record<string, unknown>;
 };
 
@@ -55,7 +54,6 @@ type UpdateEntityArgs = {
   owner?: string | null;
   lifecycle?: string | null;
   tags?: string[];
-  visibilityMode?: 'public' | 'restricted' | null;
   fields?: Record<string, unknown>;
 };
 
@@ -167,7 +165,6 @@ const createEntityTool = toolDefinition({
       owner: { type: ['string', 'null'] },
       lifecycle: { type: ['string', 'null'] },
       tags: { type: 'array', items: { type: 'string' } },
-      visibilityMode: { type: ['string', 'null'], enum: ['public', 'restricted', null] },
       fields: { type: 'object', additionalProperties: true }
     },
     required: ['schemaId'],
@@ -200,7 +197,6 @@ const updateEntityTool = toolDefinition({
       owner: { type: ['string', 'null'] },
       lifecycle: { type: ['string', 'null'] },
       tags: { type: 'array', items: { type: 'string' } },
-      visibilityMode: { type: ['string', 'null'], enum: ['public', 'restricted', null] },
       fields: { type: 'object', additionalProperties: true }
     },
     required: ['entityId'],
@@ -361,9 +357,6 @@ const summarizeEntity = (entity: Entity, schemaName: string | undefined) => ({
 
 const filterStringArray = (values: unknown): string[] =>
   Array.isArray(values) ? values.filter((value): value is string => typeof value === 'string') : [];
-
-const normalizeVisibilityMode = (value: unknown): 'public' | 'restricted' | null =>
-  value === 'public' || value === 'restricted' ? value : null;
 
 const normalizeOwner = (value: unknown, teamIds: Set<string>, fallback: string | null) => {
   if (value === null) return null;
@@ -585,7 +578,8 @@ export const createAiChatTools = (
         links: [],
         schema_id: schema.id,
         data: args.fields ?? {},
-        visibility_mode: normalizeVisibilityMode(args.visibilityMode),
+        visibility_mode: null,
+        project_id: null,
         created_at: timestamp,
         updated_at: timestamp
       }
@@ -617,20 +611,13 @@ export const createAiChatTools = (
 
     const teamIds = new Set((await db.workspace.listTeams(workspaceId)).map(team => team.id));
     const nextOwner = normalizeOwner(args.owner, teamIds, current.owner);
-    const nextVisibilityMode =
-      args.visibilityMode === undefined
-        ? current.visibility_mode
-        : normalizeVisibilityMode(args.visibilityMode);
 
-    if (
-      authCtx !== null &&
-      (nextOwner !== current.owner || nextVisibilityMode !== current.visibility_mode)
-    ) {
+    if (authCtx !== null && nextOwner !== current.owner) {
       requireEntityAction(
         authCtx,
         current,
         'admin_entity',
-        'You do not have permission to change ownership or visibility'
+        'You do not have permission to change ownership'
       );
     }
 
@@ -674,7 +661,8 @@ export const createAiChatTools = (
           ...current.data,
           ...(args.fields ?? {})
         },
-        visibility_mode: nextVisibilityMode,
+        visibility_mode: current.visibility_mode,
+        project_id: current.project_id,
         updated_at: new Date()
       }
     });

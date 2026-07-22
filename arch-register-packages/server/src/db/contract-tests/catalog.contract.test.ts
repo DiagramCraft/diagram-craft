@@ -291,6 +291,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         schema_id: schema,
         data: {},
         visibility_mode: null,
+        project_id: null,
         updated_at: new Date()
       });
 

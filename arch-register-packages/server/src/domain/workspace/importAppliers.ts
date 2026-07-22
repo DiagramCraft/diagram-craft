@@ -351,6 +351,7 @@ export const importEntities = async (
       links: entity.links as EntityDbCreate['links'],
       data: entity.data,
       visibility_mode: entity.visibility_mode,
+      project_id: entity.project_id,
       created_at: existing?.created_at ?? now,
       updated_at: now
     };
@@ -370,6 +371,7 @@ export const importEntities = async (
         links: input.links,
         data: input.data,
         visibility_mode: input.visibility_mode,
+        project_id: input.project_id,
         updated_at: now
       });
       updated++;

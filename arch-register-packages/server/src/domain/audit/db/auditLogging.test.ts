@@ -31,6 +31,7 @@ const makeEntity = (overrides: Partial<EntityDbCreate> = {}): EntityDbCreate => 
     criticality: 'high'
   },
   visibility_mode: 'public',
+  project_id: null,
   created_at: now,
   updated_at: now,
   ...overrides

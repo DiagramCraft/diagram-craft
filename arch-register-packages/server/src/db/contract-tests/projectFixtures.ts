@@ -62,6 +62,7 @@ export const createFixtureEntity = async (
     schema_id: schemaId,
     data: {},
     visibility_mode: null,
+    project_id: null,
     created_at: now,
     updated_at: now
   });

@@ -329,6 +329,7 @@ export const importCommit = async (
         schema_id: existingEntity.schema_id,
         data: extractEntityFields(normalizedRelationFields),
         visibility_mode: existingEntity.visibility_mode,
+        project_id: existingEntity.project_id,
         updated_at: new Date()
       };
 
@@ -378,6 +379,7 @@ export const importCommit = async (
         links: [],
         data: extractEntityFields(normalizedRelationFields),
         visibility_mode: null,
+        project_id: null,
         created_at: new Date(),
         updated_at: new Date()
       };

@@ -32,6 +32,7 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         schema_id: customerPortal.schema_id,
         data: customerPortal.data,
         visibility_mode: 'restricted',
+        project_id: null,
         updated_at: new Date('2026-02-02T00:00:00.000Z')
       });
 
@@ -49,6 +50,7 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         schema_id: identityPlatform.schema_id,
         data: identityPlatform.data,
         visibility_mode: 'restricted',
+        project_id: null,
         updated_at: new Date('2026-02-02T00:00:00.000Z')
       });
 

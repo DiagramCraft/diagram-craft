@@ -41,6 +41,7 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         schema_id: customerPortal.schema_id,
         data: customerPortal.data,
         visibility_mode: 'restricted',
+        project_id: null,
         updated_at: now
       });
 

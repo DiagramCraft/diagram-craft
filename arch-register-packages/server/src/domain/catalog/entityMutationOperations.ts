@@ -142,7 +142,8 @@ export const createEntity = async (
         links: payload.links,
         schema_id: payload.schemaId,
         data: normalizedFields,
-        visibility_mode: payload.visibilityMode,
+        visibility_mode: null,
+        project_id: payload.projectId,
         created_at: timestamp,
         updated_at: timestamp
       }
@@ -308,7 +309,8 @@ export const bulkCreateEntities = async (
             links: payload.links,
             schema_id: payload.schemaId,
             data: canonicalizeBulkRelationFields(payload.fields, schema, nameToId),
-            visibility_mode: payload.visibilityMode,
+            visibility_mode: null,
+            project_id: payload.projectId,
             created_at: timestamp,
             updated_at: timestamp
           }
@@ -433,12 +435,12 @@ export const updateEntity = async (
         );
       }
     }
-    if (authCtx && (owner !== oldRow.owner || payload.visibilityMode !== oldRow.visibility_mode)) {
+    if (authCtx && (owner !== oldRow.owner || payload.projectId !== oldRow.project_id)) {
       requireEntityAction(
         authCtx,
         oldRow,
         'admin_entity',
-        'You do not have permission to change ownership or visibility'
+        'You do not have permission to change ownership or project assignment'
       );
     }
 
@@ -507,9 +509,9 @@ export const updateEntity = async (
         status: 400,
         message: 'An external update cannot change entity links'
       });
-      httpAssert.true(payload.visibilityMode === oldRow.visibility_mode, {
+      httpAssert.true(payload.projectId === oldRow.project_id, {
         status: 400,
-        message: 'An external update cannot change entity visibility'
+        message: 'An external update cannot change entity project assignment'
       });
       nextGeneratedMetadata = {
         ...(oldRow.generated_metadata ?? {}),
@@ -551,7 +553,8 @@ export const updateEntity = async (
         links: payload.links,
         schema_id: payload.schemaId,
         data: normalizedFields,
-        visibility_mode: payload.visibilityMode,
+        visibility_mode: oldRow.visibility_mode,
+        project_id: payload.projectId,
         updated_at: timestamp,
         ...(nextGeneratedMetadata !== undefined
           ? { generated_metadata: nextGeneratedMetadata }
@@ -605,6 +608,7 @@ export const cloneEntity = async (
       schema_id: source.schema_id,
       data: source.data,
       visibility_mode: source.visibility_mode,
+      project_id: source.project_id,
       created_at: timestamp,
       updated_at: timestamp
     });

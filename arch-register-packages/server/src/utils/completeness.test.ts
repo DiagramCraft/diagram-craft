@@ -27,6 +27,7 @@ describe('computeEntityCompleteness', () => {
         optionalField: ''
       },
       visibility_mode: 'public',
+      project_id: null,
       created_at: now,
       updated_at: now
     };

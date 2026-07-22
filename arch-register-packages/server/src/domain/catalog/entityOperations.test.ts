@@ -24,6 +24,7 @@ const makeEntity = (index: number): EntityDbResult => ({
   schema_id: 'schema-1',
   data: {},
   visibility_mode: null,
+  project_id: null,
   created_at: now,
   updated_at: now,
   owner_name: null,

@@ -53,6 +53,7 @@ const makeEntity = (
   schema_id: schemaId,
   data: parentId == null ? {} : { parent: parentId },
   visibility_mode: null,
+  project_id: null,
   created_at: now,
   updated_at: now,
   owner_name: null,

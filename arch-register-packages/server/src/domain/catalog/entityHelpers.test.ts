@@ -21,6 +21,7 @@ const baseEntity: EntityDbResult = {
   schema_id: 'schema-1',
   data: { custom: 'value' },
   visibility_mode: 'public',
+  project_id: null,
   created_at: now,
   updated_at: now,
   owner_name: 'Team A',

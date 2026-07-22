@@ -247,6 +247,7 @@ const exportEntities = async (
     links: e.links,
     data: e.data,
     visibility_mode: e.visibility_mode as ExportEntity['visibility_mode'],
+    project_id: e.project_id,
     ...(includeGrants && {
       grants: (grantsMap.get(e.id) ?? []).map(g => ({
         id: g.id,
