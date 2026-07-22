@@ -610,6 +610,8 @@ const temporalEntityProjection = (
 ): string => {
   const text = (fieldId: string) => stateText(stateColumn, fieldId, dialect);
   const json = (fieldId: string) => stateJson(stateColumn, fieldId, dialect);
+  const uuid = (fieldId: string) =>
+    dialect === 'postgres' ? `NULLIF(${text(fieldId)}, '')::uuid` : text(fieldId);
   const emptyObject = dialect === 'postgres' ? "'{}'::jsonb" : "'{}'";
   const emptyArray = dialect === 'postgres' ? "'[]'::jsonb" : "'[]'";
   const entityIdText = dialect === 'postgres' ? `${entityIdColumn}::text` : entityIdColumn;
@@ -622,13 +624,13 @@ const temporalEntityProjection = (
     `COALESCE(${text('namespace')}, 'default') AS namespace`,
     `COALESCE(${text('name')}, '') AS name`,
     `COALESCE(${text('description')}, '') AS description`,
-    `${text('owner')} AS owner`,
-    `${text('lifecycle')} AS lifecycle`,
-    `${text('target_lifecycle')} AS target_lifecycle`,
+    `${uuid('owner')} AS owner`,
+    `${uuid('lifecycle')} AS lifecycle`,
+    `${uuid('target_lifecycle')} AS target_lifecycle`,
     `${text('target_lifecycle_date')} AS target_lifecycle_date`,
     `COALESCE(${json('tags')}, ${emptyArray}) AS tags`,
     `COALESCE(${json('links')}, ${emptyArray}) AS links`,
-    `${text('schema_id')} AS schema_id`,
+    `${uuid('schema_id')} AS schema_id`,
     `COALESCE(${json('data')}, ${emptyObject}) AS data`,
     `${text('project_id')} AS project_id`,
     `${text('created_at')} AS created_at`,
