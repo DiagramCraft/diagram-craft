@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { PostgresDatabaseBase, normalizePostgresError } from '../../../db/postgresBase';
 import type {
@@ -33,7 +34,7 @@ export class PostgresEntityChangeDatabase
 
   async getProposal(workspace: string, id: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${this.proposalSelect} WHERE c.workspace = $1 AND c.id = $2 ORDER BY r.revision_number DESC LIMIT 1`,
+      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = $1 AND c.id = $2 ORDER BY r.revision_number DESC LIMIT 1`,
       [workspace, id]
     );
     return rows[0] ? entityChangeMappers.proposal(rows[0]) : null;
@@ -41,7 +42,7 @@ export class PostgresEntityChangeDatabase
 
   async getOpenProposal(workspace: string, entityId: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${this.proposalSelect} WHERE c.workspace = $1 AND m.entity_id = $2 AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
+      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = $1 AND m.entity_id = $2 AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
       [workspace, entityId]
     );
     return rows[0] ? entityChangeMappers.proposal(rows[0]) : null;
@@ -57,7 +58,7 @@ export class PostgresEntityChangeDatabase
             ? 'c.status = $2'
             : '';
     const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${this.proposalSelect} WHERE c.workspace = $1 ${target ? `AND ${target}` : ''} ORDER BY c.updated_at DESC`,
+      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = $1 ${target ? `AND ${target}` : ''} ORDER BY c.updated_at DESC`,
       status && target === 'c.status = $2' ? [workspace, status] : [workspace]
     );
     return mapDatabaseRows(rows, entityChangeMappers.proposal);
@@ -82,7 +83,7 @@ export class PostgresEntityChangeDatabase
       await this
         .sql`INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, created_at, resolved_at) VALUES (${input.id}, ${input.proposal_id}, ${input.workspace}, ${input.revision_number}, ${input.policy_version}, ${this.json(input.resolved_policy)}, ${input.message}, ${input.created_by}, ${targetStatus}, ${input.created_at}, ${input.resolved_at ?? null})`;
       await this
-        .sql`INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff) VALUES (${`${input.id}-member`}, ${input.id}, ${input.workspace}, ${input.entity_id}, ${input.base_version}, ${this.json(input.base_state)}, ${this.json(input.proposed_state)}, ${this.json(input.diff)})`;
+        .sql`INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff) VALUES (${randomUUID()}, ${input.id}, ${input.workspace}, ${input.entity_id}, ${input.base_version}, ${this.json(input.base_state)}, ${this.json(input.proposed_state)}, ${this.json(input.diff)})`;
       await this
         .sql`UPDATE entity_change_case SET status = 'in_approval', updated_at = ${input.created_at} WHERE id = ${input.proposal_id}`;
       return (await this.getRevision(input.workspace, input.id))!;

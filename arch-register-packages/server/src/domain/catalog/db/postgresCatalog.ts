@@ -634,13 +634,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       `;
       return (await this.getSnapshot(input.workspace, input.id))!;
     }
+    const state = input.proposed_state ?? input.base_state;
     const [maxRow] = await this.sql<
       { max: number | null }[]
     >`SELECT MAX(version_number)::int AS max FROM entity_version WHERE workspace = ${input.workspace} AND entity_id = ${input.entity_id}`;
     const versionNumber =
       input.status === 'deleted'
         ? (maxRow?.max ?? 0) + 1
-        : Number(input.base_state['version'] ?? (maxRow?.max ?? 0) + 1);
+        : Number(state['version'] ?? (maxRow?.max ?? 0) + 1);
     await this.createEntityVersion({
       id: input.id,
       workspace: input.workspace,
@@ -650,7 +651,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       commit_message: input.commit_message,
       created_at: input.created_at,
       created_by: input.created_by,
-      state: input.proposed_state ?? input.base_state,
+      state,
       applied_case_revision_id: input.applied_case_revision_id ?? null
     });
     return (await this.getSnapshot(input.workspace, input.id))!;

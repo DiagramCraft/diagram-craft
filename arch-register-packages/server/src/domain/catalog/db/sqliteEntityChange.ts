@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import type {
   EntityChangeDatabase,
@@ -40,7 +41,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
 
   async getProposal(workspace: string, id: string) {
     return this.get(
-      `${this.proposalSelect} WHERE c.workspace = ? AND c.id = ? ORDER BY r.revision_number DESC LIMIT 1`,
+      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = ? AND c.id = ? ORDER BY r.revision_number DESC LIMIT 1`,
       [workspace, id],
       entityChangeMappers.proposal
     );
@@ -48,7 +49,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
 
   async getOpenProposal(workspace: string, entityId: string) {
     return this.get(
-      `${this.proposalSelect} WHERE c.workspace = ? AND m.entity_id = ? AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
+      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = ? AND m.entity_id = ? AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
       [workspace, entityId],
       entityChangeMappers.proposal
     );
@@ -68,7 +69,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
         ? [workspace, status]
         : [workspace];
     return this.all(
-      `${this.proposalSelect} WHERE c.workspace = ? ${target ? `AND ${target}` : ''} ORDER BY c.updated_at DESC`,
+      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = ? ${target ? `AND ${target}` : ''} ORDER BY c.updated_at DESC`,
       params,
       entityChangeMappers.proposal
     );
@@ -114,7 +115,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
        (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        `${input.id}-member`,
+        randomUUID(),
         input.id,
         input.workspace,
         input.entity_id,
