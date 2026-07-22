@@ -99,9 +99,12 @@ value           := quoted_string
                  | "date" "(" quoted_string ")"
                  | "enumValue" "(" quoted_string ")"
                  | "enumLabel" "(" quoted_string ")"
+                 | "empty" | "not_empty"                  (* bare keyword literals, not quoted_string — see below *)
 
-quoted_string   := '"' ( any character except unescaped " or \, or the escapes \" \\ ) * '"'
-                                                          (* exact escaping rules: open question, see §10 *)
+quoted_string   := '"' ( any character except unescaped " or \ ) * '"'
+                                                          (* the only two valid escapes are \" and \\; any other
+                                                             backslash sequence is a parse error — resolves the
+                                                             open question this line used to flag, see §10 *)
 schema_ref      := identifier | quoted_string            (* bare identifier only when the schema name has no
                                                              spaces or other identifier-breaking characters *)
 ```
@@ -110,8 +113,15 @@ schema_ref      := identifier | quoted_string            (* bare identifier only
   predicate applies to, evaluated on whatever entity the path has traversed to.
 - `field:value` (`:` / `=`) → `equals`; `!=` → `not_equals`; `~` → `contains`; `^=`/`$=` → `starts_with`/`ends_with`;
   `>`,`>=`,`<`,`<=` map to date `after`/`gte`-ish and numeric comparisons already in `filterConditionSchema`'s `op`
-  enum (`before`/`after`/`gt`/`lt`/`gte`/`lte`); a bare `path` with no comparator means `not_empty`. Explicit
-  `empty`/`not_empty`/`on` still need their own comparator token — not yet designed, see the open question in §10.
+  enum (`before`/`after`/`gt`/`lt`/`gte`/`lte`); a bare `path` with no comparator means `not_empty`.
+- **`empty`/`not_empty`/`on` comparator gap, resolved:** `empty` and `not_empty` are bare keyword *values*, not a new
+  comparator token — `field:empty` / `field = empty` compiles straight to `{ op: 'empty', value: null }`
+  (`not_empty` likewise), reusing the existing `:`/`=` comparator rather than inventing a new symbol. Any other
+  comparator paired with these keywords (`field != empty`) is a compile-time error, not a silent reinterpretation.
+  `on` needs no new token either — it's resolved from the terminal field's type, the same way `<`/`>` already
+  resolve to `before`/`after` for dates vs. `lt`/`gt` for numbers (line 112 above): when the terminal field is a
+  `date` field and the comparator is `:`/`=`, the op is `on` (exact-date match) instead of `equals`; for every other
+  field type `:`/`=` still means `equals` (or the `enumValue` sugar for `select` fields, below).
 - `schema:<schema_ref>` is a reserved pseudo-field (not a schema field) constraining the entity type at the *current*
   traversal position — needed because paths can cross schemas and predicates otherwise have no way to disambiguate which
   schema's field they mean when field ids collide (e.g. `category` exists on both `Technology`
@@ -702,11 +712,9 @@ query takes.
 Unresolved ambiguities this spec doesn't settle — as opposed to §11, which is deliberately-deferred *features*
 with a clear reason they're out of v1.
 
-- Exact reserved word list / escaping rules for the text grammar (schema and field names with spaces, e.g.
-  `Technology Release` vs a slug-style `technology_release`), plus a concrete comparator gap: §4.1's comparator table
-  has no token for `empty`/`not_empty`/`on`/`after` (only `equals`-via-`:`/`=`, so `eol_date:empty` as written would
-  parse as `eol_date = "empty"`, not the `empty` op) — needs resolving before this ships, but left as a lexical detail
-  rather than fully specified here.
+- ~~Exact escaping rules for the text grammar, plus the `empty`/`not_empty`/`on` comparator gap~~ — resolved in §4.1:
+  only `\"`/`\\` are valid escapes; `empty`/`not_empty` are bare keyword values under the existing `:`/`=`
+  comparator; `on` is resolved from the terminal field's type, the same way `<`/`>` already resolve per field type.
 - UI round-trip fidelity: does every structured-IR tree the visual builder can produce have a canonical textual form, or
   only a useful subset (analogous to how not every SQL query has a "nice" ORM equivalent)?
 - Whether projection (§4.6) needs any *text* grammar syntax at all, or stays a structured-IR/UI-only concern (the
