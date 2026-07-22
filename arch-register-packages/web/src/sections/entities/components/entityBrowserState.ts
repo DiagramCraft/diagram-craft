@@ -168,7 +168,7 @@ export const getSavedViewConfig = (view: SavedView): unknown | null => {
 };
 
 export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
-  type: view.filters.schemaId ?? undefined,
+  type: view.filters.entityQuery.schemaId ?? view.filters.schemaId ?? undefined,
   status: view.filters.status ?? undefined,
   owner: view.filters.owner ?? undefined,
   q: view.filters.q ?? undefined,
@@ -179,12 +179,10 @@ export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
   viewConfigs: serializeViewConfigs(
     getSavedViewConfig(view) == null ? {} : { [view.viewMode]: getSavedViewConfig(view) }
   ),
-  filters: view.filters.entityQuery
+  filters: view.filters.conditions?.length ? JSON.stringify(view.filters.conditions) : undefined,
+  entityQuery: view.filters.conditions?.length
     ? undefined
-    : view.filters.conditions
-      ? JSON.stringify(view.filters.conditions)
-      : undefined,
-  entityQuery: view.filters.entityQuery ? JSON.stringify(view.filters.entityQuery) : undefined,
+    : JSON.stringify(view.filters.entityQuery),
   joinAssessmentId: view.filters.assessmentId ?? undefined
 });
 
@@ -280,6 +278,13 @@ export const buildSavedViewPayload = ({
 }): CreateSavedViewRequest => {
   const resolvedEntityQuery =
     entityQuery ?? buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId });
+  const canonicalEntityQuery =
+    resolvedEntityQuery ??
+    ({
+      ...(typeFilter ? { schemaId: typeFilter } : {}),
+      ...(joinAssessmentId ? { assessmentId: joinAssessmentId } : {}),
+      root: { kind: 'and', children: [] }
+    } satisfies EntityQuery);
 
   return {
     scope,
@@ -295,7 +300,8 @@ export const buildSavedViewPayload = ({
       owner: ownerFilter,
       q,
       sort,
-      ...(resolvedEntityQuery ? { entityQuery: resolvedEntityQuery } : { conditions }),
+      entityQuery: canonicalEntityQuery,
+      ...(resolvedEntityQuery ? {} : { conditions }),
       assessmentId: joinAssessmentId ?? null
     },
     config: toSavedViewConfig(view, viewConfigs)

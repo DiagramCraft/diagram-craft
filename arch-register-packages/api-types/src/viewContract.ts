@@ -41,9 +41,9 @@ export const entityFiltersSchema = z.object({
   dateFilterValue: z.string().optional().describe('Date filter value (ISO 8601)'),
   sort: z.string().optional().describe('Sort field and direction (e.g., "name:asc")'),
   conditions: z.array(filterConditionSchema).optional().describe('Additional filter conditions'),
-  entityQuery: entityQuerySchema
-    .optional()
-    .describe('Structured EntityQuery used by advanced saved views'),
+  entityQuery: entityQuerySchema.describe(
+    'Canonical structured EntityQuery used by this saved view'
+  ),
   assessmentId: z
     .string()
     .nullable()

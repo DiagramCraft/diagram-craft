@@ -14,7 +14,8 @@ test.describe('Saved Views API', () => {
     viewMode: 'table' as const,
     filters: {
       status: seedIds.lifecycle.production,
-      q: 'test'
+      q: 'test',
+      entityQuery: { root: { kind: 'and', children: [] } }
     },
     config: null
   };

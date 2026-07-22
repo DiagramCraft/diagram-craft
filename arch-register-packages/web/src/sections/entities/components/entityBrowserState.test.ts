@@ -220,4 +220,46 @@ describe('structured entity query view persistence', () => {
       }
     });
   });
+
+  it('keeps a canonical query envelope for completeness fallback filters', () => {
+    const conditions = [{ fieldId: '_completeness', op: 'lt' as const, value: 50 }];
+    const payload = buildSavedViewPayload({
+      scope: 'workspace',
+      name: 'Incomplete components',
+      description: '',
+      view: 'table',
+      typeFilter: 'component',
+      statusFilter: null,
+      ownerFilter: null,
+      q: '',
+      sort: 'name',
+      conditions,
+      viewConfigs: {}
+    });
+
+    expect(payload.filters.entityQuery).toEqual({
+      schemaId: 'component',
+      root: { kind: 'and', children: [] }
+    });
+    expect(payload.filters.conditions).toEqual(conditions);
+
+    const search = toSavedViewSearch({
+      id: 'view-2',
+      workspaceId: 'workspace-1',
+      scope: 'workspace',
+      projectId: null,
+      projectScope: null,
+      name: 'Incomplete components',
+      description: null,
+      isAdminView: false,
+      viewMode: 'table',
+      filters: payload.filters,
+      config: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    });
+
+    expect(search.entityQuery).toBeUndefined();
+    expect(JSON.parse(search.filters!)).toEqual(conditions);
+  });
 });

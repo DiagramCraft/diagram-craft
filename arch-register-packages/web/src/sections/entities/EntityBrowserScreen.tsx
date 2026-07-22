@@ -13,12 +13,10 @@ import type { BrowserView } from '@arch-register/api-types/viewContract';
 import { EntityBrowser, SaveViewDialog } from './components/EntityBrowser';
 import {
   buildSavedViewPayload,
-  buildEntityQueryFromBrowserFilters,
   getFilterValue,
   parseEntityQueryFromSearch,
   parseConditionsFromSearch,
-  parseViewConfigs,
-  toSavedViewConfig
+  parseViewConfigs
 } from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/entityCsv';
 import { downloadBlob } from '../../lib/browserDownload';
@@ -98,29 +96,30 @@ export const EntityBrowserScreen = () => {
 
   const handleUpdateSavedView = useCallback(async () => {
     if (collectionId || !permissions.canManageViews || activeSavedView == null) return;
-    const resolvedEntityQuery =
-      entityQuery ??
-      buildEntityQueryFromBrowserFilters({
-        typeFilter,
-        conditions,
-        joinAssessmentId: search.joinAssessmentId ?? null
-      });
+    const savedViewPayload = buildSavedViewPayload({
+      scope: activeSavedView.scope,
+      name: activeSavedView.name,
+      description: activeSavedView.description ?? '',
+      isAdminView: activeSavedView.isAdminView,
+      view: view as BrowserView,
+      typeFilter,
+      statusFilter,
+      ownerFilter,
+      q,
+      sort,
+      conditions,
+      entityQuery,
+      viewConfigs,
+      joinAssessmentId: search.joinAssessmentId ?? null
+    });
     try {
       await updateSavedViewMutation.mutateAsync({
         id: activeSavedView.id,
         body: {
           projectScope: activeSavedView.projectScope,
           viewMode: view as BrowserView,
-          filters: {
-            schemaId: typeFilter,
-            status: statusFilter,
-            owner: ownerFilter,
-            q,
-            sort,
-            ...(resolvedEntityQuery ? { entityQuery: resolvedEntityQuery } : { conditions }),
-            assessmentId: search.joinAssessmentId ?? null
-          },
-          config: toSavedViewConfig(view as BrowserView, viewConfigs)
+          filters: savedViewPayload.filters,
+          config: savedViewPayload.config
         }
       });
     } catch {

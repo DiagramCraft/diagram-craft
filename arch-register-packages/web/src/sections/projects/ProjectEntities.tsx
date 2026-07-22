@@ -36,7 +36,6 @@ import { useDeleteSnapshot } from '../../hooks/useSnapshots';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
-  buildEntityQueryFromBrowserFilters,
   getFilterValue,
   parseConditionsFromSearch,
   parseEntityQueryFromSearch,
@@ -204,13 +203,24 @@ export const ProjectEntities = ({
   const handleUpdateSavedView = useCallback(async () => {
     if (activeSavedView == null) return;
     if (activeSavedView.scope !== 'project' || !project.canEdit) return;
-    const resolvedEntityQuery =
-      entityQuery ??
-      buildEntityQueryFromBrowserFilters({
-        typeFilter,
-        conditions,
-        joinAssessmentId: search.joinAssessmentId ?? null
-      });
+    const savedViewPayload = buildSavedViewPayload({
+      scope: activeSavedView.scope,
+      projectId: project.id,
+      projectScope,
+      name: activeSavedView.name,
+      description: activeSavedView.description ?? '',
+      isAdminView: activeSavedView.isAdminView,
+      view,
+      typeFilter,
+      statusFilter,
+      ownerFilter,
+      q,
+      sort,
+      conditions,
+      entityQuery,
+      viewConfigs,
+      joinAssessmentId: search.joinAssessmentId ?? null
+    });
 
     try {
       await updateSavedViewMutation.mutateAsync({
@@ -218,32 +228,8 @@ export const ProjectEntities = ({
         body: {
           projectScope: activeSavedView.scope === 'project' ? projectScope : null,
           viewMode: view,
-          filters: {
-            schemaId: typeFilter,
-            status: statusFilter,
-            owner: ownerFilter,
-            q,
-            sort,
-            ...(resolvedEntityQuery ? { entityQuery: resolvedEntityQuery } : { conditions }),
-            assessmentId: search.joinAssessmentId ?? null
-          },
-          config: buildSavedViewPayload({
-            scope: activeSavedView.scope,
-            projectId: project.id,
-            projectScope,
-            name: activeSavedView.name,
-            description: activeSavedView.description ?? '',
-            view,
-            typeFilter,
-            statusFilter,
-            ownerFilter,
-            q,
-            sort,
-            conditions,
-            entityQuery,
-            viewConfigs,
-            joinAssessmentId: search.joinAssessmentId ?? null
-          }).config
+          filters: savedViewPayload.filters,
+          config: savedViewPayload.config
         }
       });
     } catch {
