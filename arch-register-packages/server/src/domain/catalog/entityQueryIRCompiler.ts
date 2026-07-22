@@ -1,5 +1,10 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
+import type {
+  EntityQuery,
+  PathStep,
+  ProjectionField,
+  QueryNode
+} from '@arch-register/api-types/entityQueryIR';
 import {
   ASSESSMENT_PRESENCE_FIELD_ID,
   ASSESSMENT_FIELD_PREFIX
@@ -15,6 +20,10 @@ import type { SchemaCatalog } from './entityQueryIRValidator';
 export type EntityQueryDialect = 'postgres' | 'sqlite';
 
 export type CompiledEntityQuery = { sql: string; params: unknown[] };
+
+export type CompiledEntityQueryOptions = {
+  visibleEntityIds?: readonly string[];
+};
 
 // Raised for a fieldId/op combination that has no SQL translation in this dialect today —
 // `_completeness` (computed post-fetch from schema + data) is the same hybrid-seam fallback
@@ -45,6 +54,15 @@ type CompileState = {
   includeProjectSnapshots: boolean;
   params: unknown[];
   nextAliasIndex: number;
+  projectionBindings: ProjectionBinding[];
+  bindingByPath: Map<string, ProjectionBinding>;
+  compilingBinding: boolean;
+  visibleEntityIds?: readonly string[];
+};
+
+type ProjectionBinding = {
+  name: string;
+  path: PathStep[];
 };
 
 const addParam = (state: CompileState, value: unknown): string => {
@@ -53,6 +71,51 @@ const addParam = (state: CompileState, value: unknown): string => {
 };
 
 const nextAlias = (state: CompileState): string => `e${state.nextAliasIndex++}`;
+
+const pathKey = (path: PathStep[]): string => JSON.stringify(path);
+
+const pathStartsWith = (path: PathStep[], prefix: PathStep[]): boolean =>
+  prefix.every((step, index) => JSON.stringify(path[index]) === JSON.stringify(step));
+
+const collectRootPathOccurrences = (node: QueryNode, occurrences: PathStep[][]): void => {
+  switch (node.kind) {
+    case 'and':
+    case 'or':
+      node.children.forEach(child => collectRootPathOccurrences(child, occurrences));
+      return;
+    case 'not':
+      collectRootPathOccurrences(node.child, occurrences);
+      return;
+    case 'predicate':
+    case 'relationExists':
+      if (node.path.length > 0) occurrences.push(node.path);
+      return;
+  }
+};
+
+const relationIsMultiValued = (path: PathStep[], schemas: SchemaCatalog): boolean =>
+  path.some(step => {
+    const fields =
+      step.kind === 'backward'
+        ? [schemas.get(step.ownerSchemaId)?.fields.find(field => field.id === step.fieldId)]
+        : [...schemas.values()].map(schema =>
+            schema.fields.find(field => field.id === step.fieldId)
+          );
+    return fields.some(
+      field =>
+        (field?.type === 'reference' || field?.type === 'containment') && field.maxCount !== 1
+    );
+  });
+
+const effectiveProjectionAlias = (projection: ProjectionField): string => {
+  if (projection.alias) return projection.alias;
+  const path = projection.path
+    .map(step =>
+      step.kind === 'forward' ? step.fieldId : `<-${step.ownerSchemaId}.${step.fieldId}`
+    )
+    .join('.');
+  return path ? `${path}.${projection.fieldId}` : projection.fieldId;
+};
 
 const assertValidFieldId = (fieldId: string): void => {
   if (!isValidFieldId(fieldId)) {
@@ -228,6 +291,34 @@ const compilePathSteps = (
   );
 };
 
+const compileBoundNode = (
+  node: Extract<QueryNode, { kind: 'predicate' | 'relationExists' }>,
+  alias: string,
+  binding: ProjectionBinding,
+  state: CompileState
+): string => {
+  const bindingAlias = `pb_${binding.name}`;
+  const rootClause = `${bindingAlias}.root_id = ${alias}.id`;
+  if (node.kind === 'relationExists') {
+    return `EXISTS (SELECT 1 FROM ${binding.name} ${bindingAlias} WHERE ${rootClause})`;
+  }
+
+  const targetAlias = `pt_${binding.name}`;
+  const targetId = `${bindingAlias}.hop_${node.path.length}_id`;
+  const terminal = compilePredicateTerminal(
+    node.fieldId,
+    node.op,
+    node.value,
+    state.dialect,
+    state
+  )(targetAlias);
+  return (
+    `EXISTS (SELECT 1 FROM ${binding.name} ${bindingAlias} ` +
+    `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
+    `WHERE ${rootClause} AND ${terminal})`
+  );
+};
+
 const compileNode = (
   node: QueryNode,
   alias: string,
@@ -246,6 +337,10 @@ const compileNode = (
     case 'not':
       return `NOT (${compileNode(node.child, alias, schemas, state)})`;
     case 'predicate':
+      if (alias === ROOT_ALIAS && !state.compilingBinding) {
+        const binding = state.bindingByPath.get(pathKey(node.path));
+        if (binding) return compileBoundNode(node, alias, binding, state);
+      }
       return compilePathSteps(
         node.path,
         0,
@@ -255,8 +350,183 @@ const compileNode = (
         compilePredicateTerminal(node.fieldId, node.op, node.value, state.dialect, state)
       );
     case 'relationExists':
+      if (alias === ROOT_ALIAS && !state.compilingBinding) {
+        const binding = state.bindingByPath.get(pathKey(node.path));
+        if (binding) return compileBoundNode(node, alias, binding, state);
+      }
       return compilePathSteps(node.path, 0, alias, schemas, state, () => '1=1');
   }
+};
+
+const buildProjectionBindings = (
+  query: EntityQuery,
+  schemas: SchemaCatalog,
+  state: CompileState
+): string[] => {
+  const rootPaths: PathStep[][] = [];
+  collectRootPathOccurrences(query.root, rootPaths);
+  const projections = query.projections ?? [];
+  const pathsToBind = new Map<string, PathStep[]>();
+
+  for (const path of rootPaths) pathsToBind.set(pathKey(path), path);
+
+  for (const projection of projections) {
+    if (projection.path.length === 0) continue;
+    const candidates = rootPaths.filter(path => pathStartsWith(path, projection.path));
+    if (candidates.length > 1 && relationIsMultiValued(projection.path, schemas)) {
+      throw new UnsupportedEntityQueryIRError(
+        `Projection '${effectiveProjectionAlias(projection)}' is ambiguous because its multi-valued relation path is constrained by multiple independent predicates`
+      );
+    }
+    if (candidates.length === 0) pathsToBind.set(pathKey(projection.path), projection.path);
+  }
+
+  state.projectionBindings = [...pathsToBind.values()].map((path, index) => ({
+    name: `query_path_${index}`,
+    path
+  }));
+  state.bindingByPath = new Map(
+    state.projectionBindings.map(binding => [pathKey(binding.path), binding])
+  );
+
+  return state.projectionBindings.map(binding => {
+    const rootAlias = `pb_root_${binding.name}`;
+    let currentAlias = rootAlias;
+    const selectParts = [`${rootAlias}.id AS root_id`];
+    let from = `FROM ${SCOPE_CTE} ${rootAlias}`;
+
+    state.compilingBinding = true;
+    binding.path.forEach((step, stepIndex) => {
+      const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
+      const relation =
+        step.kind === 'forward'
+          ? relationJoinClause(currentAlias, step.fieldId, targetAlias, state.dialect)
+          : relationJoinClause(targetAlias, step.fieldId, currentAlias, state.dialect);
+      const ownerSchema =
+        step.kind === 'backward'
+          ? ` AND ${targetAlias}.schema_id = ${addParam(state, step.ownerSchemaId)}`
+          : '';
+      const filter = step.filter
+        ? ` AND ${compileNode(step.filter, targetAlias, schemas, state)}`
+        : '';
+      from += `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${filter}`;
+      selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
+      currentAlias = targetAlias;
+    });
+    state.compilingBinding = false;
+
+    return `${binding.name} AS (SELECT ${selectParts.join(', ')} ${from})`;
+  });
+};
+
+const projectionBindingFor = (
+  projection: ProjectionField,
+  state: CompileState
+): ProjectionBinding | null => {
+  if (projection.path.length === 0) return null;
+  const exact = state.bindingByPath.get(pathKey(projection.path));
+  if (exact) return exact;
+  return (
+    state.projectionBindings.find(binding => pathStartsWith(binding.path, projection.path)) ?? null
+  );
+};
+
+const projectionRawValue = (
+  alias: string,
+  fieldId: string,
+  dialect: EntityQueryDialect
+): string => {
+  if (fieldId === '_completeness') {
+    throw new UnsupportedEntityQueryIRError(
+      "Projection field '_completeness' requires in-memory evaluation"
+    );
+  }
+  if (fieldId === ASSESSMENT_PRESENCE_FIELD_ID) {
+    return dialect === 'postgres'
+      ? `to_jsonb(${alias}.assessment_values IS NOT NULL)`
+      : `(${alias}.assessment_values IS NOT NULL)`;
+  }
+  if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
+    assertValidFieldId(fieldId.slice(ASSESSMENT_FIELD_PREFIX.length));
+    return dialect === 'postgres'
+      ? `${alias}.assessment_values->'${fieldId.slice(ASSESSMENT_FIELD_PREFIX.length)}'`
+      : `json_extract(${alias}.assessment_values, '$.${fieldId.slice(ASSESSMENT_FIELD_PREFIX.length)}')`;
+  }
+  if (fieldId === '_id') {
+    return dialect === 'postgres' ? `to_jsonb(${alias}.id)` : `${alias}.id`;
+  }
+  if (Object.hasOwn(ENTITY_ARRAY_COLUMNS, fieldId)) {
+    const column = ENTITY_ARRAY_COLUMNS[fieldId]!.replace(/^e\./, `${alias}.`);
+    return dialect === 'postgres' ? column : `json(${column})`;
+  }
+  if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, fieldId)) {
+    const column = ENTITY_BUILTIN_COLUMNS[fieldId]!.replace(/^e\./, `${alias}.`);
+    return dialect === 'postgres' ? `to_jsonb(${column})` : column;
+  }
+  assertValidFieldId(fieldId);
+  return dialect === 'postgres'
+    ? `${alias}.data->'${fieldId}'`
+    : `json_extract(${alias}.data, '$.${fieldId}')`;
+};
+
+const projectionValue = (
+  projection: ProjectionField,
+  schemas: SchemaCatalog,
+  state: CompileState
+): { value: string; isArray: boolean } => {
+  const isArray = relationIsMultiValued(projection.path, schemas);
+  const binding = projectionBindingFor(projection, state);
+  if (!binding) {
+    return {
+      value: projectionRawValue(ROOT_ALIAS, projection.fieldId, state.dialect),
+      isArray: false
+    };
+  }
+
+  const bindingAlias = `pv_${binding.name}`;
+  const targetAlias = `pv_target_${binding.name}`;
+  const targetId = `${bindingAlias}.hop_${projection.path.length}_id`;
+  const raw = projectionRawValue(targetAlias, projection.fieldId, state.dialect);
+  const source =
+    `FROM ${binding.name} ${bindingAlias} ` +
+    `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
+    `WHERE ${bindingAlias}.root_id = ${ROOT_ALIAS}.id`;
+
+  if (!isArray) {
+    return { value: `(SELECT ${raw} ${source} LIMIT 1)`, isArray: false };
+  }
+
+  if (state.dialect === 'postgres') {
+    return {
+      value: `(SELECT COALESCE(jsonb_agg(${raw}), '[]'::jsonb) ${source})`,
+      isArray: true
+    };
+  }
+  return {
+    value: `(SELECT COALESCE(json_group_array(json(json_quote(${raw}))), json('[]')) ${source})`,
+    isArray: true
+  };
+};
+
+const compileProjectionObject = (
+  projections: ProjectionField[],
+  schemas: SchemaCatalog,
+  state: CompileState
+): string => {
+  if (projections.length === 0) return state.dialect === 'postgres' ? "'{}'::jsonb" : "json('{}')";
+
+  const entries = projections.flatMap(projection => {
+    const key = addParam(state, effectiveProjectionAlias(projection));
+    const projected = projectionValue(projection, schemas, state);
+    const value =
+      state.dialect === 'sqlite' && projected.isArray
+        ? `json(${projected.value})`
+        : projected.value;
+    return [key, value];
+  });
+  return state.dialect === 'postgres'
+    ? `jsonb_build_object(${entries.join(', ')})`
+    : `json_object(${entries.join(', ')})`;
 };
 
 const projectScopeClause = (
@@ -401,6 +671,13 @@ const buildTemporalSource = (state: CompileState): string => {
     state.projectScope === 'project' && state.projectId && state.includeProjectSnapshots
       ? `(c.project_id IS NULL OR c.project_id = ${addParam(state, state.projectId)})`
       : 'c.project_id IS NULL';
+  const visibleClause =
+    state.visibleEntityIds == null
+      ? ''
+      : state.visibleEntityIds.length === 0
+        ? '1=0'
+        : `final_state.entity_id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
+  const temporalScopeClause = `${projectScopeClause(stateProjectColumn('final_state.state'), state, true)} AND ${visibleClause || '1=1'}`;
 
   return `
     latest_entity_version AS (
@@ -481,7 +758,7 @@ const buildTemporalSource = (state: CompileState): string => {
       SELECT ${temporalProjection}
       FROM final_state
       WHERE final_state.row_number = 1
-        AND ${projectScopeClause(stateProjectColumn('final_state.state'), state, true)}
+        AND ${temporalScopeClause}
     )`;
 };
 
@@ -504,7 +781,13 @@ const buildScopeCte = (state: CompileState): string => {
 
   const assessmentParam = hasAssessment ? addParam(state, state.assessmentId) : null;
   const workspaceParam = addParam(state, state.workspace);
-  const scopeClause = projectScopeClause('e.project_id', state, true);
+  const visibleClause =
+    state.visibleEntityIds == null
+      ? ''
+      : state.visibleEntityIds.length === 0
+        ? '1=0'
+        : `e.id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
+  const scopeClause = `${projectScopeClause('e.project_id', state, true)} AND ${visibleClause || '1=1'}`;
   return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM entity e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopeClause}\n    )`;
 };
 
@@ -517,7 +800,8 @@ export const compileEntityQueryIR = (
   query: EntityQuery,
   schemas: SchemaCatalog,
   dialect: EntityQueryDialect,
-  workspace: string
+  workspace: string,
+  options: CompiledEntityQueryOptions = {}
 ): CompiledEntityQuery => {
   const state: CompileState = {
     dialect,
@@ -528,7 +812,11 @@ export const compileEntityQueryIR = (
     asOf: query.asOf ? new Date(query.asOf) : null,
     includeProjectSnapshots: query.includeProjectSnapshots ?? true,
     params: [],
-    nextAliasIndex: 1
+    nextAliasIndex: 1,
+    projectionBindings: [],
+    bindingByPath: new Map(),
+    compilingBinding: false,
+    visibleEntityIds: options.visibleEntityIds
   };
 
   if (state.asOf && Number.isNaN(state.asOf.getTime())) {
@@ -536,6 +824,8 @@ export const compileEntityQueryIR = (
   }
 
   const cte = buildScopeCte(state);
+  const projectionCtes = buildProjectionBindings(query, schemas, state);
+  const projectionObject = compileProjectionObject(query.projections ?? [], schemas, state);
   const whereParts: string[] = [];
   if (query.schemaId) {
     whereParts.push(`${ROOT_ALIAS}.schema_id = ${addParam(state, query.schemaId)}`);
@@ -543,12 +833,13 @@ export const compileEntityQueryIR = (
   whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, state));
 
   const sql = `
-    WITH${state.asOf ? ' RECURSIVE' : ''} ${cte}
+    WITH${state.asOf ? ' RECURSIVE' : ''} ${cte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}
     SELECT ${ROOT_ALIAS}.*,
       wo.name   AS owner_name,
       ls.label  AS lifecycle_label,
       tls.label AS target_lifecycle_label,
-      es.name   AS schema_name
+      es.name   AS schema_name,
+      ${projectionObject} AS projections
     FROM ${SCOPE_CTE} ${ROOT_ALIAS}
     LEFT JOIN workspace_owner wo            ON wo.id  = ${ROOT_ALIAS}.owner
     LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = ${ROOT_ALIAS}.lifecycle

@@ -174,6 +174,21 @@ const nodeUsesAssessmentField = (node: QueryNode): boolean => {
   }
 };
 
+const projectionUsesAssessmentField = (fieldId: string, path: PathStep[]): boolean =>
+  fieldId === ASSESSMENT_PRESENCE_FIELD_ID ||
+  fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) ||
+  pathUsesAssessmentField(path);
+
+const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[number]): string => {
+  if (projection.alias) return projection.alias;
+  const path = projection.path
+    .map(step =>
+      step.kind === 'forward' ? step.fieldId : `<-${step.ownerSchemaId}.${step.fieldId}`
+    )
+    .join('.');
+  return path ? `${path}.${projection.fieldId}` : projection.fieldId;
+};
+
 export const validateEntityQueryIR = (
   query: EntityQuery,
   schemas: SchemaCatalog
@@ -199,6 +214,41 @@ export const validateEntityQueryIR = (
     errors.push({ path: ['asOf'], message: `Invalid asOf date '${query.asOf}'` });
   }
   validateNode(query.root, schemas, ['root'], 0, errors);
+
+  const aliases = new Set<string>();
+  for (const [index, projection] of (query.projections ?? []).entries()) {
+    const projectionPath = ['projections', index] as (string | number)[];
+    validatePathSteps(projection.path, schemas, [...projectionPath, 'path'], 0, errors);
+    projection.path.forEach((step, stepIndex) => {
+      if (step.filter) {
+        errors.push({
+          path: [...projectionPath, 'path', stepIndex, 'filter'],
+          message: 'Projection paths cannot contain scoped filters'
+        });
+      }
+    });
+    if (!isKnownFieldId(projection.fieldId, schemas)) {
+      errors.push({
+        path: [...projectionPath, 'fieldId'],
+        message: `Unknown field '${projection.fieldId}'`
+      });
+    }
+    const alias = projectionAlias(projection);
+    if (aliases.has(alias)) {
+      errors.push({
+        path: [...projectionPath, 'alias'],
+        message: `Duplicate projection alias '${alias}'`
+      });
+    }
+    aliases.add(alias);
+    if (!query.assessmentId && projectionUsesAssessmentField(projection.fieldId, projection.path)) {
+      errors.push({
+        path: ['assessmentId'],
+        message:
+          "Query uses '_assessment'/'_assessment:<fieldId>' projections but assessmentId is not set"
+      });
+    }
+  }
   return errors.length === 0 ? { ok: true } : { ok: false, errors };
 };
 

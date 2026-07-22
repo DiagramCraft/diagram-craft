@@ -41,6 +41,18 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
   ])
 );
 
+export type ProjectionField = {
+  path: PathStep[];
+  fieldId: string;
+  alias?: string;
+};
+
+export const projectionFieldSchema = z.object({
+  path: z.array(pathStepSchema),
+  fieldId: z.string(),
+  alias: z.string().min(1).optional()
+});
+
 export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>
   z.discriminatedUnion('kind', [
     z.object({ kind: z.literal('and'), children: z.array(queryNodeSchema) }),
@@ -61,8 +73,6 @@ export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>
 // `_schemaId` predicate that may also appear in `root`, and (for `assessmentId`) supplied by the
 // query execution context rather than query text (specs/QUERY_LANGUAGE.md §4.4, §4.5).
 //
-// `projections` (specs/QUERY_LANGUAGE.md §4.6) is a later phase (out of scope for #2326) — not
-// modeled here yet.
 export const entityQuerySchema = z.object({
   schemaId: z.string().optional(),
   assessmentId: z.string().optional(),
@@ -73,6 +83,7 @@ export const entityQuerySchema = z.object({
     .refine(value => !Number.isNaN(Date.parse(value)), 'Invalid asOf date')
     .optional(),
   includeProjectSnapshots: z.boolean().optional(),
+  projections: z.array(projectionFieldSchema).optional(),
   root: queryNodeSchema
 });
 

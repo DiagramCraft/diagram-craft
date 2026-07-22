@@ -227,4 +227,53 @@ describe('validateEntityQueryIR', () => {
       expect(result.errors.some(e => e.path[0] === 'assessmentId')).toBe(true);
     }
   });
+
+  it('validates projection aliases and projection path bounds', () => {
+    const query: EntityQuery = {
+      root: { kind: 'and', children: [] },
+      projections: [
+        { path: [], fieldId: 'eol_date', alias: 'date' },
+        { path: [], fieldId: 'eol_date', alias: 'date' },
+        {
+          path: [
+            {
+              kind: 'backward',
+              fieldId: 'domain',
+              ownerSchemaId: SYSTEM.id,
+              filter: { kind: 'and', children: [] }
+            },
+            ...Array.from({ length: 6 }, () => ({
+              kind: 'backward' as const,
+              fieldId: 'domain',
+              ownerSchemaId: SYSTEM.id
+            }))
+          ],
+          fieldId: '_name'
+        }
+      ]
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(
+        result.errors.some(error => error.message.includes('Duplicate projection alias'))
+      ).toBe(true);
+      expect(
+        result.errors.some(error => error.message.includes('Projection paths cannot contain'))
+      ).toBe(true);
+      expect(result.errors.some(error => error.message.includes('MAX_PATH_HOPS'))).toBe(true);
+    }
+  });
+
+  it('requires assessmentId for projected assessment fields', () => {
+    const query: EntityQuery = {
+      root: { kind: 'and', children: [] },
+      projections: [{ path: [], fieldId: '_assessment:riskLevel' }]
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.some(error => error.path[0] === 'assessmentId')).toBe(true);
+    }
+  });
 });
