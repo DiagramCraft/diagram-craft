@@ -1,6 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, EntitySnapshotDbResult } from './db/catalogDatabase';
-import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { canAccessProject } from '../auth/authorization';
 import { listAllCatalogEntities } from './entityLoader';
@@ -52,7 +52,7 @@ const entityToState = (entity: EntityDbResult): Record<string, unknown> => ({
   links: entity.links,
   schema_id: entity.schema_id,
   data: entity.data,
-  visibility_mode: entity.visibility_mode,
+  project_id: entity.project_id,
   created_at: entity.created_at,
   updated_at: entity.updated_at
 });
@@ -176,7 +176,7 @@ export const reconstructEntitiesAsOf = async (
       links: (state['links'] as EntityLink[] | undefined) ?? [],
       schema_id: schemaId,
       data: (state['data'] as Record<string, unknown> | undefined) ?? {},
-      visibility_mode: (state['visibility_mode'] as VisibilityMode | null) ?? null,
+      project_id: (state['project_id'] as string | null) ?? null,
       created_at: createdAt,
       updated_at: updatedAt,
       owner_name: ownerId ? (ownerNameMap.get(ownerId) ?? ownerId) : null,

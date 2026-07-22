@@ -92,7 +92,10 @@ export const requireSchemaRead = (context: WorkspaceAuthorizationContext, messag
 export const filterVisibleEntities = <T extends PermissionEntity>(
   context: AuthorizationContext,
   entities: T[]
-): T[] => entities.filter(entity => checker.hasEntityPermission(context, entity, 'view_entity'));
+): T[] =>
+  checker.hasWorkspaceWideEntityView(context)
+    ? entities
+    : entities.filter(entity => checker.hasEntityPermission(context, entity, 'view_entity'));
 
 /**
  * Require project action permission, throw 403 if not allowed.

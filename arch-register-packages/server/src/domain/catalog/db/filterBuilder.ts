@@ -10,7 +10,8 @@ export const ENTITY_BUILTIN_COLUMNS: Record<string, string> = {
   _schemaId: 'e.schema_id',
   _lifecycle: 'e.lifecycle',
   _owner: 'e.owner',
-  _updatedAt: 'e.updated_at'
+  _updatedAt: 'e.updated_at',
+  _projectId: 'e.project_id'
 };
 
 // Maps built-in FilterCondition fieldIds backed by a JSON array column, where

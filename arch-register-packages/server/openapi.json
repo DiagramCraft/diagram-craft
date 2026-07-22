@@ -6429,21 +6429,16 @@
                             ],
                             "description": "Entity-specific approval policy override"
                           },
-                          "_visibilityMode": {
+                          "_projectId": {
                             "anyOf": [
                               {
-                                "enum": [
-                                  "public",
-                                  "restricted"
-                                ],
-                                "type": "string",
-                                "description": "Entity visibility mode"
+                                "type": "string"
                               },
                               {
                                 "type": "null"
                               }
                             ],
-                            "description": "Entity visibility mode"
+                            "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
                           },
                           "_completeness": {
                             "anyOf": [
@@ -6638,7 +6633,7 @@
                           "_targetLifecycleDate",
                           "_tags",
                           "_links",
-                          "_visibilityMode",
+                          "_projectId",
                           "_completeness"
                         ],
                         "additionalProperties": {},
@@ -6848,20 +6843,16 @@
                     },
                     "description": "External links"
                   },
-                  "_visibilityMode": {
+                  "_projectId": {
                     "anyOf": [
                       {
-                        "enum": [
-                          "public",
-                          "restricted"
-                        ],
                         "type": "string"
                       },
                       {
                         "type": "null"
                       }
                     ],
-                    "description": "Entity visibility mode"
+                    "description": "Set to scope this entity to a single project; omit or set null for no scope"
                   },
                   "_external": {
                     "type": "object",
@@ -7135,21 +7126,16 @@
                       ],
                       "description": "Entity-specific approval policy override"
                     },
-                    "_visibilityMode": {
+                    "_projectId": {
                       "anyOf": [
                         {
-                          "enum": [
-                            "public",
-                            "restricted"
-                          ],
-                          "type": "string",
-                          "description": "Entity visibility mode"
+                          "type": "string"
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Entity visibility mode"
+                      "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
                     },
                     "_completeness": {
                       "anyOf": [
@@ -7344,7 +7330,7 @@
                     "_targetLifecycleDate",
                     "_tags",
                     "_links",
-                    "_visibilityMode",
+                    "_projectId",
                     "_completeness"
                   ],
                   "additionalProperties": {},
@@ -8165,21 +8151,16 @@
                             ],
                             "description": "Entity-specific approval policy override"
                           },
-                          "_visibilityMode": {
+                          "_projectId": {
                             "anyOf": [
                               {
-                                "enum": [
-                                  "public",
-                                  "restricted"
-                                ],
-                                "type": "string",
-                                "description": "Entity visibility mode"
+                                "type": "string"
                               },
                               {
                                 "type": "null"
                               }
                             ],
-                            "description": "Entity visibility mode"
+                            "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
                           },
                           "_completeness": {
                             "anyOf": [
@@ -8378,7 +8359,7 @@
                           "_targetLifecycleDate",
                           "_tags",
                           "_links",
-                          "_visibilityMode",
+                          "_projectId",
                           "_completeness",
                           "_isMatch"
                         ],
@@ -8651,21 +8632,16 @@
                       ],
                       "description": "Entity-specific approval policy override"
                     },
-                    "_visibilityMode": {
+                    "_projectId": {
                       "anyOf": [
                         {
-                          "enum": [
-                            "public",
-                            "restricted"
-                          ],
-                          "type": "string",
-                          "description": "Entity visibility mode"
+                          "type": "string"
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Entity visibility mode"
+                      "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
                     },
                     "_completeness": {
                       "anyOf": [
@@ -8860,7 +8836,7 @@
                     "_targetLifecycleDate",
                     "_tags",
                     "_links",
-                    "_visibilityMode",
+                    "_projectId",
                     "_completeness"
                   ],
                   "additionalProperties": {},
@@ -9064,20 +9040,16 @@
                     },
                     "description": "External links"
                   },
-                  "_visibilityMode": {
+                  "_projectId": {
                     "anyOf": [
                       {
-                        "enum": [
-                          "public",
-                          "restricted"
-                        ],
                         "type": "string"
                       },
                       {
                         "type": "null"
                       }
                     ],
-                    "description": "Entity visibility mode"
+                    "description": "Set to scope this entity to a single project; omit or set null for no scope"
                   },
                   "_external": {
                     "type": "object",
@@ -9351,21 +9323,16 @@
                       ],
                       "description": "Entity-specific approval policy override"
                     },
-                    "_visibilityMode": {
+                    "_projectId": {
                       "anyOf": [
                         {
-                          "enum": [
-                            "public",
-                            "restricted"
-                          ],
-                          "type": "string",
-                          "description": "Entity visibility mode"
+                          "type": "string"
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Entity visibility mode"
+                      "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
                     },
                     "_completeness": {
                       "anyOf": [
@@ -9560,7 +9527,7 @@
                     "_targetLifecycleDate",
                     "_tags",
                     "_links",
-                    "_visibilityMode",
+                    "_projectId",
                     "_completeness"
                   ],
                   "additionalProperties": {},
@@ -10321,20 +10288,16 @@
                           },
                           "description": "External links"
                         },
-                        "_visibilityMode": {
+                        "_projectId": {
                           "anyOf": [
                             {
-                              "enum": [
-                                "public",
-                                "restricted"
-                              ],
                               "type": "string"
                             },
                             {
                               "type": "null"
                             }
                           ],
-                          "description": "Entity visibility mode"
+                          "description": "Set to scope this entity to a single project; omit or set null for no scope"
                         },
                         "_external": {
                           "type": "object",
@@ -10617,21 +10580,16 @@
                         ],
                         "description": "Entity-specific approval policy override"
                       },
-                      "_visibilityMode": {
+                      "_projectId": {
                         "anyOf": [
                           {
-                            "enum": [
-                              "public",
-                              "restricted"
-                            ],
-                            "type": "string",
-                            "description": "Entity visibility mode"
+                            "type": "string"
                           },
                           {
                             "type": "null"
                           }
                         ],
-                        "description": "Entity visibility mode"
+                        "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
                       },
                       "_completeness": {
                         "anyOf": [
@@ -10826,7 +10784,7 @@
                       "_targetLifecycleDate",
                       "_tags",
                       "_links",
-                      "_visibilityMode",
+                      "_projectId",
                       "_completeness"
                     ],
                     "additionalProperties": {},
@@ -11071,21 +11029,16 @@
                       ],
                       "description": "Entity-specific approval policy override"
                     },
-                    "_visibilityMode": {
+                    "_projectId": {
                       "anyOf": [
                         {
-                          "enum": [
-                            "public",
-                            "restricted"
-                          ],
-                          "type": "string",
-                          "description": "Entity visibility mode"
+                          "type": "string"
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Entity visibility mode"
+                      "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
                     },
                     "_completeness": {
                       "anyOf": [
@@ -11280,7 +11233,7 @@
                     "_targetLifecycleDate",
                     "_tags",
                     "_links",
-                    "_visibilityMode",
+                    "_projectId",
                     "_completeness"
                   ],
                   "additionalProperties": {},
@@ -11338,20 +11291,16 @@
                       ],
                       "description": "Entity owner identifier"
                     },
-                    "visibility_mode": {
+                    "project_id": {
                       "anyOf": [
                         {
-                          "enum": [
-                            "public",
-                            "restricted"
-                          ],
                           "type": "string"
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Entity visibility mode"
+                      "description": "Set when this entity is scoped to a single project"
                     },
                     "approval_policy_override": {
                       "anyOf": [
@@ -11399,7 +11348,6 @@
                           },
                           "role": {
                             "enum": [
-                              "viewer",
                               "editor",
                               "contributor",
                               "entity_admin"
@@ -11436,7 +11384,7 @@
                   },
                   "required": [
                     "owner",
-                    "visibility_mode",
+                    "project_id",
                     "grants"
                   ]
                 }
@@ -11497,7 +11445,6 @@
                         },
                         "role": {
                           "enum": [
-                            "viewer",
                             "editor",
                             "contributor",
                             "entity_admin"
@@ -11565,20 +11512,16 @@
                       ],
                       "description": "Entity owner identifier"
                     },
-                    "visibility_mode": {
+                    "project_id": {
                       "anyOf": [
                         {
-                          "enum": [
-                            "public",
-                            "restricted"
-                          ],
                           "type": "string"
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Entity visibility mode"
+                      "description": "Set when this entity is scoped to a single project"
                     },
                     "approval_policy_override": {
                       "anyOf": [
@@ -11626,7 +11569,6 @@
                           },
                           "role": {
                             "enum": [
-                              "viewer",
                               "editor",
                               "contributor",
                               "entity_admin"
@@ -11663,7 +11605,7 @@
                   },
                   "required": [
                     "owner",
-                    "visibility_mode",
+                    "project_id",
                     "grants"
                   ]
                 }

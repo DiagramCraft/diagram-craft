@@ -181,7 +181,7 @@ export type EntityMutationPayload = {
   requestedTargetLifecycleDate: string | null;
   tags: string[];
   links: EntityLink[];
-  visibilityMode: 'public' | 'restricted' | null;
+  projectId: string | null;
   external: ExternalUpdateEnvelope | null;
   fields: Record<string, unknown>;
 };
@@ -295,7 +295,7 @@ export const parseEntityMutationPayload = (
     _targetLifecycleDate = null,
     _tags = [],
     _links = [],
-    _visibilityMode,
+    _projectId = null,
     _external,
     ...fields
   } = body;
@@ -333,8 +333,7 @@ export const parseEntityMutationPayload = (
       typeof _targetLifecycleDate === 'string' ? _targetLifecycleDate : null,
     tags: Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [],
     links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
-    visibilityMode:
-      _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null,
+    projectId: extractId(_projectId),
     external: externalParsed?.success ? externalParsed.data : null,
     fields
   };
@@ -551,12 +550,9 @@ export const buildEntityGrantInputs = (
     httpAssert.string(typed['principal_id'], {
       message: 'principal_id must be a non-empty string'
     });
-    httpAssert.true(
-      ['viewer', 'editor', 'contributor', 'entity_admin'].includes(String(typed['role'])),
-      {
-        message: 'role must be viewer, editor, contributor, or entity_admin'
-      }
-    );
+    httpAssert.true(['editor', 'contributor', 'entity_admin'].includes(String(typed['role'])), {
+      message: 'role must be editor, contributor, or entity_admin'
+    });
     httpAssert.true(['self', 'subtree'].includes(String(typed['applies_to'])), {
       message: 'applies_to must be self or subtree'
     });
@@ -566,7 +562,7 @@ export const buildEntityGrantInputs = (
       entity_id: entityId,
       principal_type: typed['principal_type'] as 'user' | 'team',
       principal_id: typed['principal_id'] as string,
-      role: typed['role'] as 'viewer' | 'editor' | 'contributor' | 'entity_admin',
+      role: typed['role'] as 'editor' | 'contributor' | 'entity_admin',
       applies_to: typed['applies_to'] as 'self' | 'subtree',
       created_at: createdAt
     };

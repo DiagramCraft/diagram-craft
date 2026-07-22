@@ -46,7 +46,6 @@ export const mcpCreateEntityInput = z.object({
   owner: z.string().nullable().optional(),
   lifecycle: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
-  visibilityMode: z.enum(['public', 'restricted']).nullable().optional(),
   fields: z.record(z.string(), z.unknown()).optional()
 });
 
@@ -59,7 +58,6 @@ export const mcpUpdateEntityInput = mcpCreateEntityInput.extend({ entityId: z.st
   owner: true,
   lifecycle: true,
   tags: true,
-  visibilityMode: true,
   fields: true
 });
 
@@ -107,7 +105,7 @@ export type McpRelation = {
 export type McpEntityDetails = McpEntitySummary & {
   namespace: string;
   links: Array<{ url: string; title: string; type?: string }>;
-  visibilityMode: 'public' | 'restricted' | null;
+  projectId: string | null;
   schemaFields: unknown[];
   fields: Record<string, unknown>;
   outgoingRelations: McpRelation[];

@@ -104,10 +104,7 @@ const toEntityDetails = (entity: JsonObject, relations?: JsonObject) => {
     ...summary,
     namespace: stringValue(entity['_namespace']),
     links: Array.isArray(entity['_links']) ? entity['_links'] : [],
-    visibilityMode:
-      entity['_visibilityMode'] === 'public' || entity['_visibilityMode'] === 'restricted'
-        ? entity['_visibilityMode']
-        : null,
+    projectId: typeof entity['_projectId'] === 'string' ? entity['_projectId'] : null,
     schemaFields: Array.isArray(entity['_schemaFields']) ? entity['_schemaFields'] : [],
     fields: entityData(entity),
     outgoingRelations: relations?.['outgoing'] ?? [],
@@ -358,10 +355,6 @@ const registerMutationTools = (server: McpServer, api: ArchRegisterApiClient) =>
           tags: Array.isArray(current['_tags'])
             ? current['_tags'].filter((tag): tag is string => typeof tag === 'string')
             : [],
-          visibilityMode:
-            current['_visibilityMode'] === 'public' || current['_visibilityMode'] === 'restricted'
-              ? current['_visibilityMode']
-              : null,
           fields: { ...entityData(current), [input.fieldId]: input.value }
         });
         return {
@@ -401,13 +394,6 @@ const registerMutationTools = (server: McpServer, api: ArchRegisterApiClient) =>
             (Array.isArray(current['_tags'])
               ? current['_tags'].filter((tag): tag is string => typeof tag === 'string')
               : []),
-          visibilityMode:
-            input.visibilityMode === undefined
-              ? current['_visibilityMode'] === 'public' ||
-                current['_visibilityMode'] === 'restricted'
-                ? current['_visibilityMode']
-                : null
-              : input.visibilityMode,
           fields: { ...entityData(current), ...(input.fields ?? {}) }
         });
         return { entity, message: `Updated entity ${stringValue(entity['_uid'])}.` };

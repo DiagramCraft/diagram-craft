@@ -78,7 +78,7 @@ const entityState = (entity: Entity): Record<string, unknown> => ({
   links: entity.links,
   schema_id: entity.schema_id,
   data: entity.data,
-  visibility_mode: entity.visibility_mode,
+  project_id: entity.project_id,
   created_at: entity.created_at.toISOString(),
   updated_at: entity.updated_at.toISOString()
 });
@@ -96,7 +96,7 @@ const mutableStateKeys = [
   'links',
   'schema_id',
   'data',
-  'visibility_mode'
+  'project_id'
 ] as const;
 
 const buildDiff = (base: Record<string, unknown>, proposed: Record<string, unknown>) =>
@@ -186,7 +186,7 @@ const stateToMutationBody = (state: Record<string, unknown>, fallback: Entity) =
   _targetLifecycleDate: state['target_lifecycle_date'] ?? fallback.target_lifecycle_date,
   _tags: state['tags'] ?? fallback.tags,
   _links: state['links'] ?? fallback.links,
-  _visibilityMode: state['visibility_mode'] ?? fallback.visibility_mode,
+  _projectId: state['project_id'] ?? fallback.project_id,
   ...((state['data'] as Record<string, unknown> | undefined) ?? fallback.data)
 });
 
@@ -248,7 +248,7 @@ const buildProposedEntity = async (
     links: payload.links,
     schema_id: payload.schemaId,
     data,
-    visibility_mode: payload.visibilityMode,
+    project_id: payload.projectId,
     updated_at: new Date()
   };
   const state = {
@@ -392,7 +392,7 @@ const submitProposal = async (
     statusText: 'Conflict',
     message: 'The entity changed while this proposal was being edited'
   });
-  if (update.owner !== entity.owner || update.visibility_mode !== entity.visibility_mode) {
+  if (update.owner !== entity.owner || update.project_id !== entity.project_id) {
     requireEntityAction(authCtx, entity, 'admin_entity');
   }
 
@@ -744,7 +744,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
               links: Array.isArray(next['links']) ? next['links'] : [],
               schema_id: String(next['schema_id']),
               data: (next['data'] as Record<string, unknown>) ?? {},
-              visibility_mode: (next['visibility_mode'] as 'public' | 'restricted' | null) ?? null,
+              project_id: (next['project_id'] as string | null) ?? null,
               updated_at: new Date()
             },
             expectedVersion: entity.version ?? 1,

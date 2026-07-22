@@ -201,7 +201,7 @@ const applyRelease = async (
       tags: entity.tags,
       links: entity.links,
       schema_id: entity.schema_id,
-      visibility_mode: entity.visibility_mode,
+      project_id: entity.project_id,
       approval_policy_override: entity.approval_policy_override
     },
     auditMetadata: {

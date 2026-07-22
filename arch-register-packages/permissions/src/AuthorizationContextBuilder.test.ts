@@ -171,7 +171,6 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       links: [],
       schema_id: 'schema-1',
       data: {},
-      visibility_mode: 'public',
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -189,7 +188,6 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       links: [],
       schema_id: 'schema-1',
       data: {},
-      visibility_mode: 'public',
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -326,7 +324,6 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       links: [],
       schema_id: 'schema-1',
       data: {},
-      visibility_mode: 'public',
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -337,7 +334,7 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       entity_id: 'entity-1',
       principal_type: 'user',
       principal_id: 'user-1',
-      role: 'viewer',
+      role: 'editor',
       applies_to: 'self',
       created_at: new Date()
     };
@@ -480,7 +477,6 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
           links: [],
           schema_id: 'schema-server',
           data: {},
-          visibility_mode: 'restricted',
           created_at: new Date('2024-01-01'),
           updated_at: new Date('2024-01-15')
         }
@@ -514,7 +510,7 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
           entity_id: 'entity-1',
           principal_type: 'team',
           principal_id: 'team-operations',
-          role: 'viewer',
+          role: 'editor',
           applies_to: 'self',
           created_at: new Date('2024-01-01')
         }

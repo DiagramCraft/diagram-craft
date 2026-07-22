@@ -101,7 +101,7 @@ const makeEntity = (overrides: Partial<EntityDbResult> = {}): EntityDbResult => 
   links: [],
   schema_id: 'schema-service',
   data: {},
-  visibility_mode: null,
+  project_id: null,
   created_at: now,
   updated_at: now,
   owner_name: 'Jane Doe',

@@ -290,7 +290,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         links: [],
         schema_id: schema,
         data: {},
-        visibility_mode: null,
+        project_id: null,
         updated_at: new Date()
       });
 
@@ -460,6 +460,63 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     expect(notEmptyResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
   });
 
+  describe('project_id scoping', () => {
+    it('excludes project-exclusive entities from global (unscoped) listings', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const project = (await createFixtureProject(db, workspace)).id;
+      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Global entity' });
+      await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Project-exclusive entity',
+        project_id: project
+      });
+
+      const globalResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        {},
+        { limit: 10, offset: 0 }
+      );
+      expect(globalResult.map(e => e.name)).toEqual(['Global entity']);
+    });
+
+    it('includes project-exclusive entities and project_entity-linked entities when scoped to that project', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const project = (await createFixtureProject(db, workspace)).id;
+      const otherProject = (await createFixtureProject(db, workspace)).id;
+      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Global entity' });
+      const exclusiveEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Project-exclusive entity',
+        project_id: project
+      });
+      const linkedEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Linked entity'
+      });
+      await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Other project entity',
+        project_id: otherProject
+      });
+      await db.project.addProjectEntity({
+        workspace,
+        project_id: project,
+        entity_id: linkedEntity.id,
+        entity_type_id: null,
+        created_at: new Date()
+      });
+
+      const scopedResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { projectId: project, projectScope: 'project' },
+        { limit: 10, offset: 0 }
+      );
+      expect(scopedResult.map(e => e.id).sort()).toEqual(
+        [exclusiveEntity.id, linkedEntity.id].sort()
+      );
+    });
+  });
+
   describe('entity grants', () => {
     it('replaces entity grants atomically', async () => {
       const db = getDb();
@@ -475,7 +532,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
           entity_id: entity.id,
           principal_type: 'user',
           principal_id: user.id,
-          role: 'viewer',
+          role: 'editor',
           applies_to: 'self',
           created_at: new Date()
         }

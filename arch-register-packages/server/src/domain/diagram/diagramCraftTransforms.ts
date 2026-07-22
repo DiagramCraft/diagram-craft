@@ -79,7 +79,7 @@ export const toDiagramCraftData = (row: Entity): DiagramCraftEntityResponse => (
   _targetLifecycleDate: row.target_lifecycle_date,
   _tags: row.tags,
   _links: row.links,
-  _visibilityMode: row.visibility_mode,
+  _projectId: row.project_id,
   name: row.name,
   description: row.description,
   ...row.data

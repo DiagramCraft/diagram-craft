@@ -1,4 +1,3 @@
-import { seedEntities } from '@arch-register/server/db/seedData';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, csvRows, expect } from '../helpers/permissionFixtures';
 
@@ -31,7 +30,7 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         links: customerPortal.links,
         schema_id: customerPortal.schema_id,
         data: customerPortal.data,
-        visibility_mode: 'restricted',
+        project_id: null,
         updated_at: new Date('2026-02-02T00:00:00.000Z')
       });
 
@@ -48,7 +47,7 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         links: identityPlatform.links,
         schema_id: identityPlatform.schema_id,
         data: identityPlatform.data,
-        visibility_mode: 'restricted',
+        project_id: null,
         updated_at: new Date('2026-02-02T00:00:00.000Z')
       });
 
@@ -66,7 +65,7 @@ test.describe('data permission routes', () => {
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('filtering: explicit grant user sees public records and the granted subtree', async ({
+  test('filtering: explicit grant user sees only the granted subtree', async ({
     personas,
     restrictedSeed: _,
     resources
@@ -76,18 +75,21 @@ test.describe('data permission routes', () => {
       query: { view: 'summary' }
     });
 
-    const inaccessibleEntityIds = new Set([
-      resources.entityIds.identityPlatform,
-      resources.entityIds.authApi,
-      resources.entityIds.authService
-    ]);
-    const expectedEntityIds = seedEntities
-      .filter(
-        entity =>
-          entity.workspace === resources.workspaceId && !inaccessibleEntityIds.has(entity.id)
-      )
-      .map(entity => entity.id)
-      .sort();
+    // This user has no workspace role at all — only an explicit subtree grant on
+    // customerPortal (see permissionFixtures.ts). content.view is the only path to
+    // workspace-wide view now, so without it this user sees exactly the granted
+    // subtree and nothing else (no more implicit "public entity" visibility).
+    const expectedEntityIds = [
+      resources.entityIds.customerPortal,
+      resources.entityIds.customerApi,
+      resources.entityIds.frontendApp,
+      '00000000-0000-0000-0003-000000000001',
+      '00000000-0000-0000-0003-00000000000e',
+      '00000000-0000-0000-0003-00000000000f',
+      '00000000-0000-0000-0005-000000000001',
+      '00000000-0000-0000-0005-000000000002',
+      '00000000-0000-0000-0005-000000000008'
+    ].sort();
 
     expect(entities.items.map(entity => entity._uid).sort()).toEqual(expectedEntityIds);
     expect(entities.total).toBe(expectedEntityIds.length);
@@ -101,14 +103,7 @@ test.describe('data permission routes', () => {
     const facets = await personas.userWithExplicitEntityGrant.orpc.entities.facets({
       params: { workspace: 'default' }
     });
-    const inaccessibleEntityIds = new Set([
-      resources.entityIds.identityPlatform,
-      resources.entityIds.authApi,
-      resources.entityIds.authService
-    ]);
-    const expectedTotal = seedEntities.filter(
-      entity => entity.workspace === resources.workspaceId && !inaccessibleEntityIds.has(entity.id)
-    ).length;
+    const expectedTotal = 9;
     expect(facets.total).toBe(expectedTotal);
 
     const tree = await personas.userWithExplicitEntityGrant.orpc.entities.tree({
@@ -116,29 +111,28 @@ test.describe('data permission routes', () => {
       query: { q: 'frontend' }
     });
 
+    // The top-level domain ancestor above customerPortal is no longer visible: this user
+    // has no workspace role, and the subtree grant only covers customerPortal and its
+    // descendants, not its ancestors — there's no more "public entity" fallback to see it.
     expect(tree.nodes.map(node => node._uid)).toEqual(
       expect.arrayContaining([
         resources.entityIds.customerApi,
         resources.entityIds.frontendApp,
-        resources.entityIds.customerPortal,
-        '00000000-0000-0000-0001-000000000001'
+        resources.entityIds.customerPortal
       ])
     );
     expect(tree.nodes.map(node => node._uid)).not.toEqual(
       expect.arrayContaining([
         resources.entityIds.identityPlatform,
         resources.entityIds.authApi,
-        resources.entityIds.authService
+        resources.entityIds.authService,
+        '00000000-0000-0000-0001-000000000001'
       ])
     );
     expect(tree.edges).toEqual(
       expect.arrayContaining([
         { childId: resources.entityIds.customerApi, parentId: resources.entityIds.customerPortal },
-        { childId: resources.entityIds.frontendApp, parentId: resources.entityIds.customerPortal },
-        {
-          childId: resources.entityIds.customerPortal,
-          parentId: '00000000-0000-0000-0001-000000000001'
-        }
+        { childId: resources.entityIds.frontendApp, parentId: resources.entityIds.customerPortal }
       ])
     );
   });

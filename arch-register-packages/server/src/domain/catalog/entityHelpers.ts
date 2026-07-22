@@ -53,7 +53,7 @@ export const toApiEntity = (
   _updatedAt: entity.updated_at.toISOString(),
   _version: entity.version ?? 1,
   _approvalPolicyOverride: entity.approval_policy_override ?? null,
-  _visibilityMode: entity.visibility_mode,
+  _projectId: entity.project_id,
   _completeness: completeness,
   _externalMetadata: entity.generated_metadata ?? {},
   ...getEntityCapabilities(authCtx, entity),
@@ -88,7 +88,7 @@ export const toApiEntitySummary = (
   _updatedAt: entity.updated_at.toISOString(),
   _version: entity.version ?? 1,
   _approvalPolicyOverride: entity.approval_policy_override ?? null,
-  _visibilityMode: entity.visibility_mode,
+  _projectId: entity.project_id,
   _completeness: completeness,
   _externalMetadata: entity.generated_metadata ?? {},
   ...getEntityCapabilities(authCtx, entity)

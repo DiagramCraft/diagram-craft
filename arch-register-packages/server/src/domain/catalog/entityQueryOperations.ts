@@ -231,13 +231,16 @@ const collectEntities = async (
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const rows: CollectedEntity[] = [];
 
+  const hasWorkspaceWideView = authCtx != null && checker.hasWorkspaceWideEntityView(authCtx);
+
   const processEntity = (entity: EntityDbResult, extraConditions: FilterCondition[]) => {
-    if (authCtx && !checker.hasEntityPermission(authCtx, entity, 'view_entity')) return;
-    if (collectionEntityIdSet && !collectionEntityIdSet.has(entity.id)) return;
-    // In asOf mode, candidateEntityIds passed to reconstructEntitiesAsOf already scopes to
-    // project-linked entities as of that date; the live projectEntityMap doesn't apply here.
-    if (!asOf && projectId && projectScope === 'project' && !projectEntityMap.has(entity.id))
+    if (
+      authCtx &&
+      !hasWorkspaceWideView &&
+      !checker.hasEntityPermission(authCtx, entity, 'view_entity')
+    )
       return;
+    if (collectionEntityIdSet && !collectionEntityIdSet.has(entity.id)) return;
 
     const schema = schemaMap.get(entity.schema_id);
     const completeness = schema != null ? computeEntityCompleteness(entity, schema) : null;
@@ -311,7 +314,9 @@ const collectEntities = async (
         owner,
         lifecycle,
         q: q ?? '',
-        conditions: sqlConditions
+        conditions: sqlConditions,
+        projectId,
+        projectScope
       },
       {
         limit: dbPageSize,
@@ -351,9 +356,10 @@ export const getEntityFacets = async (
       db.catalog.listSchemas(workspace)
     ]);
     const schemaMap = new Map(schemas.map(s => [s.id, s]));
-    const entities = allEntities.filter(
-      entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
-    );
+    const entities =
+      authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
+        ? allEntities
+        : allEntities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
 
     const countBy = <T extends string | null>(values: T[]) =>
       [
@@ -436,18 +442,17 @@ export const getEntityTree = async (
     const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
     const [schemas, allEntitiesRaw, projectEntities, joinedAssessment] = await Promise.all([
       db.catalog.listSchemas(workspace),
-      listAllCatalogEntities(db, workspace),
+      listAllCatalogEntities(db, workspace, { projectId, projectScope }),
       projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
       resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0)
     ]);
     const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
-    const allEntities = allEntitiesRaw.filter(
-      entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
-    );
     const scopedEntities =
-      projectId && projectScope === 'project'
-        ? allEntities.filter(entity => projectEntityMap.has(entity.id))
-        : allEntities;
+      authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
+        ? allEntitiesRaw
+        : allEntitiesRaw.filter(entity =>
+            checker.hasEntityPermission(authCtx, entity, 'view_entity')
+          );
 
     const containmentFieldsBySchema = new Map<string, string[]>();
     for (const schema of schemas) {

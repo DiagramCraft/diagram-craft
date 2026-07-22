@@ -23,7 +23,7 @@ const makeEntity = (index: number): EntityDbResult => ({
   links: [],
   schema_id: 'schema-1',
   data: {},
-  visibility_mode: null,
+  project_id: null,
   created_at: now,
   updated_at: now,
   owner_name: null,
@@ -95,7 +95,9 @@ describe('listEntities', () => {
         owner: null,
         lifecycle: null,
         q: '',
-        conditions: []
+        conditions: [],
+        projectId: null,
+        projectScope: 'all'
       },
       {
         limit: 200,
@@ -110,7 +112,9 @@ describe('listEntities', () => {
         owner: null,
         lifecycle: null,
         q: '',
-        conditions: []
+        conditions: [],
+        projectId: null,
+        projectScope: 'all'
       },
       {
         limit: 200,
@@ -137,7 +141,9 @@ describe('listEntities', () => {
         owner: null,
         lifecycle: null,
         q: '',
-        conditions: []
+        conditions: [],
+        projectId: null,
+        projectScope: 'all'
       },
       {
         limit: 200,
@@ -152,7 +158,9 @@ describe('listEntities', () => {
         owner: null,
         lifecycle: null,
         q: '',
-        conditions: []
+        conditions: [],
+        projectId: null,
+        projectScope: 'all'
       },
       {
         limit: 200,

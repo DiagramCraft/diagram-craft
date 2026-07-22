@@ -22,6 +22,6 @@ export const flattenEntityAuditFields = (entity: Entity): Record<string, unknown
   _targetLifecycleDate: entity.target_lifecycle_date,
   _tags: entity.tags,
   _links: entity.links,
-  _visibilityMode: entity.visibility_mode,
+  _projectId: entity.project_id,
   ...entity.data
 });

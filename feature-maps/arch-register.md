@@ -253,14 +253,15 @@
         - @id:ar.authorization.workspace-roles Administrators can assign workspace roles such as owner, administrator,
           editor, reviewer, and viewer.
 
-        - @id:ar.authorization.entity-grants Administrators can grant entity-level access with scopes such as the entity
-          itself or its subtree.
+        - @id:ar.authorization.entity-grants Administrators can grant targeted entity-level edit, contribution, or
+          administration access (not view — that comes from workspace content access, team ownership, or these
+          grants' own edit-capable roles) with scopes such as the entity itself or its subtree.
 
         - @id:ar.authorization.teams Administrators can create teams, manage memberships, and use team assignments in
           authorization decisions.
 
-        - @id:ar.authorization.visibility Workspaces and entities can use public or restricted visibility modes subject
-          to the permission model.
+        - @id:ar.authorization.project-scope Entities can be scoped to a single project, which excludes them from
+          global listings and search while keeping them visible within that project's context.
 
     - @id:ar.import-export Users and administrators can move supported workspace, entity, project, and content data into
       and out of Arch Register.

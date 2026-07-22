@@ -21,7 +21,7 @@ The field IDs are configurable, so these names are only the defaults used by `.e
 
 Create an API token scoped to the workspace with:
 
-- `ws.view`
+- `content.view` (needed to read the entity through the public API)
 - `ent.external_update`
 
 The external update path permits the token to change only the field named by `_external.fieldId`.

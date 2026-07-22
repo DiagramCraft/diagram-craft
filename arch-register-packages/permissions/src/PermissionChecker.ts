@@ -12,7 +12,6 @@ import type {
 } from './types.js';
 import { decodeRefs } from './utils.js';
 import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS } from './constants.js';
-import { VisibilityMode } from '@arch-register/api-types/entityContract';
 
 /**
  * Pure permission checker.
@@ -30,7 +29,7 @@ export class PermissionChecker {
    *
    * This checks:
    * - Global roles that grant entity permissions
-   * - Entity visibility (public entities are viewable by all)
+   * - Workspace-wide content.view (grants view_entity to any entity in the workspace)
    * - Owner team membership (grants entity_admin role)
    * - Explicit entity grants (direct or via subtree)
    *
@@ -145,6 +144,29 @@ export class PermissionChecker {
   }
 
   /**
+   * Check whether the user's workspace role alone (independent of any specific entity's
+   * ownership, ancestry, or grants) already grants `view_entity` workspace-wide.
+   *
+   * This is true for `content.view`, `ent.edit`, or `ent.propose`, and for global admins — the
+   * same conditions `getEntityActions` checks in its workspace-role branch. Callers doing
+   * bulk/list queries can use this to skip the per-entity `hasEntityPermission` check entirely
+   * (falling back to it only when this returns false, e.g. a token/role scoped to `ws.view` only).
+   */
+  hasWorkspaceWideEntityView(context: AuthorizationContext): boolean {
+    if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
+      return true;
+    }
+    if (context.workspaceRole == null && !context.globalPermissions.has('admin_platform')) {
+      return false;
+    }
+    return (
+      this.hasWorkspaceCapability(context, 'ent.edit') ||
+      this.hasWorkspaceCapability(context, 'ent.propose') ||
+      this.hasWorkspaceCapability(context, 'content.view')
+    );
+  }
+
+  /**
    * Get all entity actions available to the user for a specific entity.
    *
    * This is the core logic that determines what actions a user can perform
@@ -168,17 +190,9 @@ export class PermissionChecker {
         ROLE_ACTIONS['contributor'].forEach(action => actions.add(action));
       } else if (this.hasWorkspaceCapability(context, 'ent.propose')) {
         ROLE_ACTIONS['editor'].forEach(action => actions.add(action));
-      } else if (
-        this.hasWorkspaceCapability(context, 'ws.view') ||
-        this.hasWorkspaceCapability(context, 'content.view')
-      ) {
+      } else if (this.hasWorkspaceCapability(context, 'content.view')) {
         actions.add('view_entity');
       }
-    }
-
-    // Public entities are viewable by all
-    if (this.resolveEntityVisibility(context, entity) === 'public') {
-      actions.add('view_entity');
     }
 
     const ancestorIds = this.collectAncestorIds(context, entity);
@@ -240,12 +254,7 @@ export class PermissionChecker {
 
     switch (action) {
       case 'view_entity':
-        return (
-          ceiling.has('ws.view') ||
-          ceiling.has('content.view') ||
-          ceiling.has('ent.edit') ||
-          ceiling.has('ent.propose')
-        );
+        return ceiling.has('content.view') || ceiling.has('ent.edit') || ceiling.has('ent.propose');
       case 'edit_entity':
         return ceiling.has('ent.edit') || ceiling.has('ent.propose');
       case 'create_child':
@@ -263,38 +272,6 @@ export class PermissionChecker {
     for (const action of candidateActions) {
       if (this.isEntityActionAllowedByCeiling(context, action)) actions.add(action);
     }
-  }
-
-  /**
-   * Resolve the effective visibility mode for an entity by traversing up the containment hierarchy.
-   *
-   * If an entity doesn't have an explicit visibility mode, we traverse up through
-   * its parent entities until we find one with a visibility mode, or default to 'public'.
-   *
-   * @param context - Authorization context with entity data
-   * @param entity - The entity to resolve visibility for
-   * @returns The effective visibility mode ('public' or 'restricted')
-   */
-  protected resolveEntityVisibility(context: AuthorizationContext, entity: Entity): VisibilityMode {
-    if (entity.visibility_mode) return entity.visibility_mode;
-
-    const queue = [...this.getParentIds(entity, context.schemas.get(entity.schema_id))];
-    const visited = new Set<string>();
-
-    while (queue.length > 0) {
-      const currentId = queue.shift()!;
-      if (visited.has(currentId)) continue;
-      visited.add(currentId);
-
-      const current = context.entities.get(currentId);
-      if (!current) continue;
-
-      if (current.visibility_mode) return current.visibility_mode;
-
-      queue.push(...this.getParentIds(current, context.schemas.get(current.schema_id)));
-    }
-
-    return 'public';
   }
 
   /**

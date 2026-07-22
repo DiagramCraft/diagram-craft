@@ -32,8 +32,6 @@ const entityCapabilitiesSchema = z.object({
   canCreateChild: z.boolean().describe('Whether the user can create child entities')
 });
 
-const visibilityModeSchema = z.enum(['public', 'restricted']).describe('Entity visibility mode');
-
 const entitySummarySchema = entityCapabilitiesSchema.extend({
   _uid: z.string().describe('Unique entity identifier'),
   _publicId: z.string().describe('Public entity identifier (e.g., APP-001)'),
@@ -61,7 +59,14 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
     .nullable()
     .optional()
     .describe('Entity-specific approval policy override'),
-  _visibilityMode: visibilityModeSchema.nullable().describe('Entity visibility mode'),
+  _projectId: z
+    .string()
+    .nullable()
+    .describe(
+      'Set when this entity was created solely for one project — excluded from global ' +
+        'listings/search, visible only within that project. Distinct from _projectLink, which ' +
+        'associates an otherwise-normal entity with a project without restricting visibility.'
+    ),
   _completeness: z.number().nullable().describe('Field completeness percentage (0-100)'),
   _projectLink: projectLinkSchema.optional().describe('Project linkage information'),
   _externalMetadata: externalMetadataSchema
@@ -100,11 +105,11 @@ const entityMutationBodySchema = z
       .describe('Target date for lifecycle transition (ISO 8601)'),
     _tags: z.array(z.string()).optional().describe('Entity tags'),
     _links: z.array(entityLinkSchema).optional().describe('External links'),
-    _visibilityMode: z
-      .enum(['public', 'restricted'])
+    _projectId: z
+      .string()
       .nullable()
       .optional()
-      .describe('Entity visibility mode'),
+      .describe('Set to scope this entity to a single project; omit or set null for no scope'),
     _external: externalUpdateEnvelopeSchema
       .optional()
       .describe(
@@ -269,7 +274,7 @@ const entityGrantSchema = z.object({
   entity_id: z.string().describe('Entity identifier'),
   principal_type: z.enum(['user', 'team']).describe('Principal type (user or team)'),
   principal_id: z.string().describe('Principal identifier'),
-  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']).describe('Granted role'),
+  role: z.enum(['editor', 'contributor', 'entity_admin']).describe('Granted role'),
   applies_to: z
     .enum(['self', 'subtree'])
     .describe('Grant scope (entity only or including children)'),
@@ -279,7 +284,7 @@ const entityGrantSchema = z.object({
 const entityGrantInputSchema = z.object({
   principal_type: z.enum(['user', 'team']).describe('Principal type (user or team)'),
   principal_id: z.string().describe('Principal identifier'),
-  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']).describe('Role to grant'),
+  role: z.enum(['editor', 'contributor', 'entity_admin']).describe('Role to grant'),
   applies_to: z
     .enum(['self', 'subtree'])
     .describe('Grant scope (entity only or including children)')
@@ -287,7 +292,7 @@ const entityGrantInputSchema = z.object({
 
 const entityAccessSchema = z.object({
   owner: z.string().nullable().describe('Entity owner identifier'),
-  visibility_mode: z.enum(['public', 'restricted']).nullable().describe('Entity visibility mode'),
+  project_id: z.string().nullable().describe('Set when this entity is scoped to a single project'),
   approval_policy_override: z
     .enum(['required', 'disabled'])
     .nullable()
@@ -932,7 +937,6 @@ export const workspaceEntityContract = oc.tag('Entities').router({
 });
 
 export type EntityLink = z.infer<typeof entityLinkSchema>;
-export type VisibilityMode = z.infer<typeof visibilityModeSchema>;
 export type EntitySummary = z.infer<typeof entitySummarySchema>;
 export type EntityRecord = z.infer<typeof entityRecordSchema>;
 export type EntityFacets = z.infer<typeof entityFacetsSchema>;

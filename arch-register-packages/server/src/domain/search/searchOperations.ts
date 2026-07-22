@@ -115,9 +115,10 @@ export const searchWorkspace = async (
       : Promise.resolve([])
   ]);
 
-  const visibleEntities = authCtx
-    ? entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'))
-    : entities;
+  const visibleEntities =
+    authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
+      ? entities
+      : entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
   const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
 
   const projectsResults = types.includes('projects')

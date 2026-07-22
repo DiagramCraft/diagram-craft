@@ -126,7 +126,7 @@ export const createPermissionApiTest = () =>
             entity_id: seededEntities.default.customerPortal.id,
             principal_type: 'user',
             principal_id: EXPLICIT_GRANT_USER_ID,
-            role: 'viewer',
+            role: 'editor',
             applies_to: 'subtree',
             created_at: now
           }

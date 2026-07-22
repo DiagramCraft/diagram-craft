@@ -4,8 +4,9 @@ MCP tools for querying and, optionally, updating one Arch Register workspace.
 
 ## Configuration
 
-Create an API token from Arch Register’s account settings. Read-only usage requires the `ws.view`
-capability. Mutation usage additionally requires `ent.edit` and `MCP_ENABLE_MUTATIONS=true`.
+Create an API token from Arch Register’s account settings. Read-only usage requires the `content.view`
+capability (entity read access is gated by `content.view`, not `ws.view`). Mutation usage additionally
+requires `ent.edit` and `MCP_ENABLE_MUTATIONS=true`.
 Tokens use the `ar_pat_` prefix and are returned only once when created.
 
 Required variables:

@@ -115,7 +115,7 @@ export const PlanFutureChangeDialog = ({
       links: existingProposed?.links ?? entity._links,
       schema_id: existingProposed?.schema_id ?? entity._schema.id,
       data: customData,
-      visibility_mode: existingProposed?.visibility_mode ?? entity._visibilityMode ?? null
+      project_id: existingProposed?.project_id ?? entity._projectId ?? null
     };
 
     if (snapshot) {

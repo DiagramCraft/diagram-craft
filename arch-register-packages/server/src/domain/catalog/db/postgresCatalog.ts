@@ -240,6 +240,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     if (filters?.schemaId) whereParts.push(`e.schema_id = ${addParam(filters.schemaId)}`);
     if (filters?.owner) whereParts.push(`e.owner = ${addParam(filters.owner)}`);
     if (filters?.lifecycle) whereParts.push(`e.lifecycle = ${addParam(filters.lifecycle)}`);
+    if (filters?.projectScope === 'project' && filters.projectId) {
+      const projectIdParam = addParam(filters.projectId);
+      whereParts.push(
+        `(e.project_id = ${projectIdParam} OR e.id IN (SELECT entity_id FROM project_entity WHERE workspace = e.workspace AND project_id = ${projectIdParam}))`
+      );
+    } else {
+      whereParts.push('e.project_id IS NULL');
+    }
     if (filters?.q?.trim()) {
       const pat = `%${escapeLike(filters.q.trim())}%`;
       whereParts.push(
@@ -300,7 +308,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEntity(input: EntityDbCreate) {
     try {
       await this.sql`
-        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, visibility_mode, version, approval_policy_override, created_at, updated_at)
+        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, created_at, updated_at)
         VALUES (
           ${input.id},
           ${input.workspace},
@@ -318,7 +326,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
           ${input.schema_id},
           ${this.json(input.data)},
           ${this.json(input.generated_metadata ?? {})},
-          ${input.visibility_mode},
+          ${input.project_id},
           ${input.version ?? 1},
           ${input.approval_policy_override ?? null},
           ${input.created_at},
@@ -348,7 +356,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             schema_id = ${input.schema_id},
             data = ${this.json(input.data)},
             generated_metadata = COALESCE(${input.generated_metadata !== undefined ? this.json(input.generated_metadata) : null}::jsonb, generated_metadata),
-            visibility_mode = ${input.visibility_mode},
+            project_id = ${input.project_id},
             version = version + 1,
             approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
             updated_at = ${input.updated_at}
@@ -383,7 +391,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             schema_id = ${input.schema_id},
             data = ${this.json(input.data)},
             generated_metadata = COALESCE(${input.generated_metadata !== undefined ? this.json(input.generated_metadata) : null}::jsonb, generated_metadata),
-            visibility_mode = ${input.visibility_mode},
+            project_id = ${input.project_id},
             version = version + 1,
             approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
             updated_at = ${input.updated_at}

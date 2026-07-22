@@ -55,7 +55,7 @@ test.describe('workspace API tokens', () => {
       links: [],
       schema_id: schemaId,
       data: { repository: 'owner/repo', latest_release: 'v1.0.0' },
-      visibility_mode: 'public',
+      project_id: null,
       created_at: now,
       updated_at: now
     });
@@ -64,7 +64,7 @@ test.describe('workspace API tokens', () => {
       body: {
         workspace: 'default',
         name: 'External release integration',
-        capabilities: ['ws.view', 'ent.external_update']
+        capabilities: ['content.view', 'ent.external_update']
       }
     });
     const tokenClient = createTestORPCClient(server.baseUrl, `Bearer ${created.token}`);
@@ -86,7 +86,6 @@ test.describe('workspace API tokens', () => {
         _targetLifecycleDate: null,
         _tags: [],
         _links: [],
-        _visibilityMode: 'public',
         repository: 'owner/repo',
         latest_release: 'v2.0.0',
         _external: {
@@ -114,7 +113,6 @@ test.describe('workspace API tokens', () => {
           _targetLifecycleDate: null,
           _tags: [],
           _links: [],
-          _visibilityMode: 'public',
           repository: 'changed/repo',
           latest_release: 'v2.0.0'
         } as never
