@@ -71,6 +71,15 @@ describe('validateSearchSearch', () => {
 });
 
 describe('validateEntitySearch', () => {
+  it('preserves a structured entity query URL parameter', () => {
+    const entityQuery = JSON.stringify({
+      schemaId: 'component',
+      root: { kind: 'and', children: [] }
+    });
+
+    expect(validateEntitySearch({ entityQuery }).entityQuery).toBe(entityQuery);
+  });
+
   it('parses entity browser search params used by saved views', () => {
     expect(
       validateEntitySearch({

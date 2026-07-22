@@ -1,29 +1,14 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndUUID } from '@arch-register/api-types/common';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import { filterOpSchema } from '@arch-register/api-types/filterOp';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
 export const browserViewSchema = z
   .enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix', 'explore', 'bubble', 'map'])
   .describe('Available view modes for displaying entities');
-
-export const filterOpSchema = z.enum([
-  'equals',
-  'not_equals',
-  'contains',
-  'starts_with',
-  'ends_with',
-  'empty',
-  'not_empty',
-  'before',
-  'after',
-  'on',
-  'gt',
-  'lt',
-  'gte',
-  'lte'
-]);
 
 export const filterConditionSchema = z.object({
   fieldId: z.string().describe('Field identifier to filter on'),
@@ -56,6 +41,9 @@ export const entityFiltersSchema = z.object({
   dateFilterValue: z.string().optional().describe('Date filter value (ISO 8601)'),
   sort: z.string().optional().describe('Sort field and direction (e.g., "name:asc")'),
   conditions: z.array(filterConditionSchema).optional().describe('Additional filter conditions'),
+  entityQuery: entityQuerySchema
+    .optional()
+    .describe('Structured EntityQuery used by advanced saved views'),
   assessmentId: z
     .string()
     .nullable()

@@ -13,7 +13,9 @@ import type { BrowserView } from '@arch-register/api-types/viewContract';
 import { EntityBrowser, SaveViewDialog } from './components/EntityBrowser';
 import {
   buildSavedViewPayload,
+  buildEntityQueryFromBrowserFilters,
   getFilterValue,
+  parseEntityQueryFromSearch,
   parseConditionsFromSearch,
   parseViewConfigs,
   toSavedViewConfig
@@ -37,7 +39,11 @@ export const EntityBrowserScreen = () => {
   const createSavedViewMutation = useCreateSavedView(workspaceId);
   const updateSavedViewMutation = useUpdateSavedView(workspaceId);
   const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
-  const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
+  const entityQuery = useMemo(() => parseEntityQueryFromSearch(search), [search]);
+  const typeFilter = useMemo(
+    () => entityQuery?.schemaId ?? getFilterValue(conditions, '_schemaId'),
+    [conditions, entityQuery]
+  );
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
   const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
   const requestedView = search.viewMode ?? 'table';
@@ -80,6 +86,7 @@ export const EntityBrowserScreen = () => {
           q,
           sort,
           conditions,
+          entityQuery,
           viewConfigs,
           joinAssessmentId: search.joinAssessmentId ?? null
         })
@@ -91,6 +98,13 @@ export const EntityBrowserScreen = () => {
 
   const handleUpdateSavedView = useCallback(async () => {
     if (collectionId || !permissions.canManageViews || activeSavedView == null) return;
+    const resolvedEntityQuery =
+      entityQuery ??
+      buildEntityQueryFromBrowserFilters({
+        typeFilter,
+        conditions,
+        joinAssessmentId: search.joinAssessmentId ?? null
+      });
     try {
       await updateSavedViewMutation.mutateAsync({
         id: activeSavedView.id,
@@ -103,7 +117,7 @@ export const EntityBrowserScreen = () => {
             owner: ownerFilter,
             q,
             sort,
-            conditions,
+            ...(resolvedEntityQuery ? { entityQuery: resolvedEntityQuery } : { conditions }),
             assessmentId: search.joinAssessmentId ?? null
           },
           config: toSavedViewConfig(view as BrowserView, viewConfigs)
@@ -116,6 +130,7 @@ export const EntityBrowserScreen = () => {
     activeSavedView,
     collectionId,
     conditions,
+    entityQuery,
     ownerFilter,
     permissions.canManageViews,
     q,

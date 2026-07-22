@@ -6,6 +6,7 @@ import type { BrowserSearch, BrowserViewConfigMap } from './entityBrowserState';
 import {
   getFilterValue,
   parseConditionsFromSearch,
+  parseEntityQueryFromSearch,
   parseViewConfigs,
   pruneAssessmentReferences,
   serializeViewConfigs
@@ -32,6 +33,13 @@ export const useEntityBrowserSearchState = ({
         type: search.type
       } as BrowserSearch),
     [search.filters, search.owner, search.status, search.type]
+  );
+  const entityQuery = useMemo(
+    () =>
+      parseEntityQueryFromSearch({
+        entityQuery: search.entityQuery
+      } as BrowserSearch),
+    [search.entityQuery]
   );
   const projectScope = projectId ? (search.projectScope ?? 'project') : 'all';
   const q = search.q ?? '';
@@ -78,6 +86,7 @@ export const useEntityBrowserSearchState = ({
     (next: FilterCondition[]) =>
       navigateBrowser({
         filters: next.length > 0 ? JSON.stringify(next) : undefined,
+        entityQuery: undefined,
         type: undefined,
         status: undefined,
         owner: undefined,
@@ -136,6 +145,7 @@ export const useEntityBrowserSearchState = ({
       navigateBrowser({
         joinAssessmentId: next ?? undefined,
         filters: prunedConditions.length > 0 ? JSON.stringify(prunedConditions) : undefined,
+        entityQuery: undefined,
         viewConfigs: serializeViewConfigs(prunedViewConfigs),
         viewId: undefined
       });
@@ -151,6 +161,7 @@ export const useEntityBrowserSearchState = ({
     clearAsOf,
     setIncludeProjectSnapshots,
     conditions,
+    entityQuery,
     joinAssessmentId: search.joinAssessmentId ?? null,
     collectionId,
     ownerFilter: getFilterValue(conditions, '_owner'),
@@ -166,7 +177,7 @@ export const useEntityBrowserSearchState = ({
     setView,
     sort,
     statusFilter: getFilterValue(conditions, '_lifecycle'),
-    typeFilter: getFilterValue(conditions, '_schemaId'),
+    typeFilter: entityQuery?.schemaId ?? getFilterValue(conditions, '_schemaId'),
     view,
     viewConfigs
   };

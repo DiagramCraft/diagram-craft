@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 
 type UseEntityBrowserPaginationProps = {
   isPagedBrowse: boolean;
   q: string;
   conditions: FilterCondition[];
+  entityQuery?: EntityQuery | null;
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
@@ -17,6 +19,7 @@ export const useEntityBrowserPagination = ({
   isPagedBrowse,
   q,
   conditions,
+  entityQuery,
   typeFilter,
   ownerFilter,
   statusFilter,
@@ -35,6 +38,7 @@ export const useEntityBrowserPagination = ({
     isPagedBrowse,
     q,
     conditions,
+    entityQuery,
     typeFilter,
     ownerFilter,
     statusFilter,

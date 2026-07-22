@@ -516,7 +516,8 @@ const compileProjectionObject = (
   if (projections.length === 0) return state.dialect === 'postgres' ? "'{}'::jsonb" : "json('{}')";
 
   const entries = projections.flatMap(projection => {
-    const key = addParam(state, effectiveProjectionAlias(projection));
+    const keyParam = addParam(state, effectiveProjectionAlias(projection));
+    const key = state.dialect === 'postgres' ? `${keyParam}::text` : keyParam;
     const projected = projectionValue(projection, schemas, state);
     const value =
       state.dialect === 'sqlite' && projected.isArray

@@ -1,12 +1,16 @@
 import {
   BrowserView,
+  BubbleViewConfig,
+  CardsViewConfig,
   EntityFilters,
   ExploreViewConfig,
   FilterCondition,
   MapViewConfig,
   MatrixViewConfig,
   RadarViewConfig,
-  TimelineViewConfig
+  TableViewConfig,
+  TimelineViewConfig,
+  TreeViewConfig
 } from '@arch-register/api-types/viewContract';
 import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
@@ -614,10 +618,14 @@ export type SavedViewDbResult = {
   view_mode: BrowserView;
   filters: EntityFilters;
   config: {
+    table?: TableViewConfig;
+    cards?: CardsViewConfig;
+    tree?: TreeViewConfig;
     radar?: RadarViewConfig;
     timeline?: TimelineViewConfig;
     matrix?: MatrixViewConfig;
     explore?: ExploreViewConfig;
+    bubble?: BubbleViewConfig;
     map?: MapViewConfig;
   } | null;
   created_at: Date;

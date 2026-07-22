@@ -4,6 +4,7 @@ import type {
   FilterCondition,
   SavedView
 } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
 import {
@@ -58,6 +59,16 @@ export const parseConditionsFromSearch = (search: BrowserSearch): FilterConditio
   if (search.status) initial.push({ fieldId: '_lifecycle', op: 'equals', value: search.status });
   if (search.owner) initial.push({ fieldId: '_owner', op: 'equals', value: search.owner });
   return initial;
+};
+
+export const parseEntityQueryFromSearch = (search: BrowserSearch): EntityQuery | null => {
+  if (!search.entityQuery) return null;
+  try {
+    const parsed: unknown = JSON.parse(search.entityQuery);
+    return parsed != null && typeof parsed === 'object' ? (parsed as EntityQuery) : null;
+  } catch {
+    return null;
+  }
 };
 
 export const parseJsonConfig = <T>(value: string | undefined): T | null => {
@@ -168,12 +179,51 @@ export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
   viewConfigs: serializeViewConfigs(
     getSavedViewConfig(view) == null ? {} : { [view.viewMode]: getSavedViewConfig(view) }
   ),
-  filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined,
+  filters: view.filters.entityQuery
+    ? undefined
+    : view.filters.conditions
+      ? JSON.stringify(view.filters.conditions)
+      : undefined,
+  entityQuery: view.filters.entityQuery ? JSON.stringify(view.filters.entityQuery) : undefined,
   joinAssessmentId: view.filters.assessmentId ?? undefined
 });
 
 export const getFilterValue = (conditions: FilterCondition[], fieldId: string) =>
   (conditions.find(c => c.fieldId === fieldId && c.op === 'equals')?.value as string) ?? null;
+
+export const buildEntityQueryFromBrowserFilters = ({
+  typeFilter,
+  conditions,
+  joinAssessmentId
+}: {
+  typeFilter: string | null;
+  conditions: FilterCondition[];
+  joinAssessmentId?: string | null;
+}): EntityQuery | null => {
+  if (conditions.some(condition => condition.fieldId === '_completeness')) return null;
+
+  return {
+    ...(typeFilter ? { schemaId: typeFilter } : {}),
+    ...(joinAssessmentId ? { assessmentId: joinAssessmentId } : {}),
+    root: {
+      kind: 'and',
+      children: conditions
+        .filter(
+          condition =>
+            condition.fieldId !== '_schemaId' &&
+            condition.fieldId !== '_owner' &&
+            condition.fieldId !== '_lifecycle'
+        )
+        .map(condition => ({
+          kind: 'predicate' as const,
+          path: [],
+          fieldId: condition.fieldId,
+          op: condition.op,
+          value: condition.value
+        }))
+    }
+  };
+};
 
 export const toSavedViewConfig = (
   view: BrowserView,
@@ -208,7 +258,8 @@ export const buildSavedViewPayload = ({
   sort,
   conditions,
   viewConfigs,
-  joinAssessmentId
+  joinAssessmentId,
+  entityQuery
 }: {
   scope: 'workspace' | 'project';
   projectId?: string;
@@ -225,22 +276,28 @@ export const buildSavedViewPayload = ({
   conditions: FilterCondition[];
   viewConfigs: BrowserViewConfigMap;
   joinAssessmentId?: string | null;
-}): CreateSavedViewRequest => ({
-  scope,
-  projectId: scope === 'project' ? (projectId ?? null) : null,
-  projectScope: scope === 'project' ? (projectScope ?? null) : null,
-  name,
-  description: description ?? null,
-  isAdminView: isAdminView ?? false,
-  viewMode: view,
-  filters: {
-    schemaId: typeFilter,
-    status: statusFilter,
-    owner: ownerFilter,
-    q,
-    sort,
-    conditions,
-    assessmentId: joinAssessmentId ?? null
-  },
-  config: toSavedViewConfig(view, viewConfigs)
-});
+  entityQuery?: EntityQuery | null;
+}): CreateSavedViewRequest => {
+  const resolvedEntityQuery =
+    entityQuery ?? buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId });
+
+  return {
+    scope,
+    projectId: scope === 'project' ? (projectId ?? null) : null,
+    projectScope: scope === 'project' ? (projectScope ?? null) : null,
+    name,
+    description: description ?? null,
+    isAdminView: isAdminView ?? false,
+    viewMode: view,
+    filters: {
+      schemaId: typeFilter,
+      status: statusFilter,
+      owner: ownerFilter,
+      q,
+      sort,
+      ...(resolvedEntityQuery ? { entityQuery: resolvedEntityQuery } : { conditions }),
+      assessmentId: joinAssessmentId ?? null
+    },
+    config: toSavedViewConfig(view, viewConfigs)
+  };
+};

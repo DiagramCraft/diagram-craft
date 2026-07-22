@@ -36,8 +36,10 @@ import { useDeleteSnapshot } from '../../hooks/useSnapshots';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
+  buildEntityQueryFromBrowserFilters,
   getFilterValue,
   parseConditionsFromSearch,
+  parseEntityQueryFromSearch,
   parseViewConfigs
 } from '../entities/components/entityBrowserState';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
@@ -139,7 +141,11 @@ export const ProjectEntities = ({
   const createSavedViewMutation = useCreateSavedView(workspaceSlug);
   const updateSavedViewMutation = useUpdateSavedView(workspaceSlug);
   const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
-  const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
+  const entityQuery = useMemo(() => parseEntityQueryFromSearch(search), [search]);
+  const typeFilter = useMemo(
+    () => entityQuery?.schemaId ?? getFilterValue(conditions, '_schemaId'),
+    [conditions, entityQuery]
+  );
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
   const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
   const view = (search.viewMode ?? 'table') as BrowserView;
@@ -185,6 +191,7 @@ export const ProjectEntities = ({
           q,
           sort,
           conditions,
+          entityQuery,
           viewConfigs,
           joinAssessmentId: search.joinAssessmentId ?? null
         })
@@ -197,6 +204,13 @@ export const ProjectEntities = ({
   const handleUpdateSavedView = useCallback(async () => {
     if (activeSavedView == null) return;
     if (activeSavedView.scope !== 'project' || !project.canEdit) return;
+    const resolvedEntityQuery =
+      entityQuery ??
+      buildEntityQueryFromBrowserFilters({
+        typeFilter,
+        conditions,
+        joinAssessmentId: search.joinAssessmentId ?? null
+      });
 
     try {
       await updateSavedViewMutation.mutateAsync({
@@ -210,7 +224,7 @@ export const ProjectEntities = ({
             owner: ownerFilter,
             q,
             sort,
-            conditions,
+            ...(resolvedEntityQuery ? { entityQuery: resolvedEntityQuery } : { conditions }),
             assessmentId: search.joinAssessmentId ?? null
           },
           config: buildSavedViewPayload({
@@ -226,6 +240,7 @@ export const ProjectEntities = ({
             q,
             sort,
             conditions,
+            entityQuery,
             viewConfigs,
             joinAssessmentId: search.joinAssessmentId ?? null
           }).config
@@ -246,6 +261,7 @@ export const ProjectEntities = ({
     q,
     sort,
     conditions,
+    entityQuery,
     viewConfigs,
     search.joinAssessmentId,
     updateSavedViewMutation

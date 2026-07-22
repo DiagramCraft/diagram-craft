@@ -9,6 +9,7 @@ import {
   externalUpdateEnvelopeSchema
 } from '@arch-register/api-types/common';
 import { conditionsQuerySchema } from '@arch-register/api-types/viewContract';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -71,7 +72,11 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
   _projectLink: projectLinkSchema.optional().describe('Project linkage information'),
   _externalMetadata: externalMetadataSchema
     .optional()
-    .describe('Latest external-update metadata, keyed by field id, for external_kind fields')
+    .describe('Latest external-update metadata, keyed by field id, for external_kind fields'),
+  _projections: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe('Values returned by structured EntityQuery projections')
 });
 
 // EntityRecord = EntitySummary + dynamic schema fields
@@ -129,12 +134,24 @@ const booleanQuerySchema = z.preprocess(value => {
   return undefined;
 }, z.boolean().optional());
 
+const entityQueryRequestSchema = z.preprocess(value => {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}, entityQuerySchema.optional());
+
 export const entityListFiltersSchema = z.object({
   _schemaId: z.string().optional().describe('Filter by schema identifier'),
   owner: z.string().optional().describe('Filter by owner identifier'),
   lifecycle: z.string().optional().describe('Filter by lifecycle state'),
   q: z.string().optional().describe('Search query string'),
   conditions: conditionsQuerySchema.describe('Additional filter conditions'),
+  entityQuery: entityQueryRequestSchema.describe(
+    'Structured EntityQuery IR, serialized as JSON when sent as a GET query parameter'
+  ),
   assessmentId: z
     .string()
     .optional()
