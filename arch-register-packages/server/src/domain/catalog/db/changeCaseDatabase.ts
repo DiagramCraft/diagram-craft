@@ -1,4 +1,9 @@
-import { databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
+import {
+  databaseDate,
+  databaseDateOnly,
+  parseDatabaseJson,
+  type DatabaseRow
+} from '../../../db/rowMappers';
 
 export type ChangeCaseStatus =
   | 'planned'
@@ -91,7 +96,7 @@ export const changeCaseMappers = {
     purpose: row['purpose'] as 'planned_change' | 'requested_change',
     name: row['name'] == null ? null : String(row['name']),
     description: row['description'] == null ? null : String(row['description']),
-    effective_date: row['effective_date'] == null ? null : String(row['effective_date']),
+    effective_date: row['effective_date'] == null ? null : databaseDateOnly(row['effective_date']),
     milestone_id: row['milestone_id'] == null ? null : String(row['milestone_id']),
     initiator_user_id: row['initiator_user_id'] == null ? null : String(row['initiator_user_id']),
     created_at: databaseDate(row['created_at']),
