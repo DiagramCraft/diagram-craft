@@ -68,7 +68,7 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
 
     const proposalId = randomUUID();
     const now = new Date();
-    await db.entityChange.createProposal({
+    await db.entityChange.createApproval({
       id: proposalId,
       workspace,
       entity_id: entity.id,
@@ -78,7 +78,7 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
       updated_at: now,
       closed_at: null
     });
-    const revision = await db.entityChange.createRevision({
+    const revision = await db.entityChange.createApprovalRevision({
       id: randomUUID(),
       proposal_id: proposalId,
       workspace,
@@ -96,8 +96,10 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
       created_at: now,
       resolved_at: null
     });
-    expect((await db.entityChange.getLatestRevision(workspace, proposalId))!.id).toBe(revision.id);
-    expect(await db.entityChange.listRevisions(workspace, proposalId)).toHaveLength(1);
+    expect((await db.entityChange.getLatestApprovalRevision(workspace, proposalId))!.id).toBe(
+      revision.id
+    );
+    expect(await db.entityChange.listApprovalRevisions(workspace, proposalId)).toHaveLength(1);
   });
 
   it('stores a bulk revision spanning multiple entities', async () => {
@@ -109,7 +111,7 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
 
     const bulkProposalId = randomUUID();
     const now = new Date();
-    await db.entityChange.createProposal({
+    await db.entityChange.createApproval({
       id: bulkProposalId,
       workspace,
       entity_id: entityA.id,
@@ -120,7 +122,7 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
       closed_at: null
     });
     const revisionId = randomUUID();
-    const members = await db.entityChange.createBulkRevision({
+    const members = await db.entityChange.createBulkApprovalRevision({
       id: revisionId,
       proposal_id: bulkProposalId,
       workspace,
@@ -157,8 +159,8 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
     expect(new Set(members.map(member => member.member_id)).size).toBe(2);
     members.forEach(member => expect(member.id).toBe(revisionId));
 
-    const fetchedMembers = await db.entityChange.getRevisionMembers(workspace, revisionId);
+    const fetchedMembers = await db.entityChange.getApprovalRevisionMembers(workspace, revisionId);
     expect(fetchedMembers).toHaveLength(2);
-    expect((await db.entityChange.getRevision(workspace, revisionId))!.id).toBe(revisionId);
+    expect((await db.entityChange.getApprovalRevision(workspace, revisionId))!.id).toBe(revisionId);
   });
 });

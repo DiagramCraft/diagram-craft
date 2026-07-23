@@ -27,9 +27,9 @@ import type {
   EntityChangeBulkApprovalRevision
 } from '@arch-register/api-types/entityChangeContract';
 import type {
-  EntityChangeProposalDbResult,
-  EntityChangeRevisionDbResult,
-  EntityChangeRevisionMemberDbResult
+  EntityChangeApprovalDbResult,
+  EntityChangeApprovalRevisionDbResult,
+  EntityChangeApprovalRevisionMemberDbResult
 } from './db/entityChangeDatabase';
 import {
   createGovernanceCaseInTransaction,
@@ -274,8 +274,8 @@ const buildProposedEntity = async (
   return { state, update: next };
 };
 
-const toApiRevision = (
-  revision: EntityChangeRevisionDbResult,
+const toApiApprovalRevision = (
+  revision: EntityChangeApprovalRevisionDbResult,
   caseId: string | null,
   createdByName: string | null
 ): EntityChangeApprovalRevision => ({
@@ -311,11 +311,11 @@ const findCaseForRevision = async (
   return cases.find(candidate => candidate.subject_version === revisionId) ?? null;
 };
 
-const toApiProposal = async (
+const toApiApproval = async (
   db: DatabaseAdapter,
-  proposal: EntityChangeProposalDbResult
+  proposal: EntityChangeApprovalDbResult
 ): Promise<EntityChangeApproval> => {
-  const revisions = await db.entityChange.listRevisions(proposal.workspace, proposal.id);
+  const revisions = await db.entityChange.listApprovalRevisions(proposal.workspace, proposal.id);
   const apiRevisions = await Promise.all(
     revisions.map(async revision => {
       const caseRow = await findCaseForRevision(
@@ -325,7 +325,7 @@ const toApiProposal = async (
         revision.id
       );
       const creator = revision.created_by ? await db.auth.getUser(revision.created_by) : null;
-      return toApiRevision(revision, caseRow?.id ?? null, creator?.display_name ?? null);
+      return toApiApprovalRevision(revision, caseRow?.id ?? null, creator?.display_name ?? null);
     })
   );
   return {
@@ -341,8 +341,8 @@ const toApiProposal = async (
   };
 };
 
-const toApiBulkRevision = (
-  members: EntityChangeRevisionMemberDbResult[],
+const toApiBulkApprovalRevision = (
+  members: EntityChangeApprovalRevisionMemberDbResult[],
   caseId: string | null,
   createdByName: string | null
 ): EntityChangeBulkApprovalRevision => {
@@ -383,18 +383,21 @@ const findCaseForBulkRevision = async (
   return cases.find(candidate => candidate.subject_version === revisionId) ?? null;
 };
 
-const toApiBulkProposal = async (
+const toApiBulkApproval = async (
   db: DatabaseAdapter,
-  proposal: EntityChangeProposalDbResult
+  proposal: EntityChangeApprovalDbResult
 ): Promise<EntityChangeBulkApproval> => {
-  const revisions = await db.entityChange.listRevisions(proposal.workspace, proposal.id);
+  const revisions = await db.entityChange.listApprovalRevisions(proposal.workspace, proposal.id);
   const revisionNumbers = [...new Set(revisions.map(revision => revision.revision_number))].sort(
     (a, b) => b - a
   );
   const apiRevisions = await Promise.all(
     revisionNumbers.map(async revisionNumber => {
       const revision = revisions.find(candidate => candidate.revision_number === revisionNumber)!;
-      const members = await db.entityChange.getRevisionMembers(proposal.workspace, revision.id);
+      const members = await db.entityChange.getApprovalRevisionMembers(
+        proposal.workspace,
+        revision.id
+      );
       const caseRow = await findCaseForBulkRevision(
         db,
         proposal.workspace,
@@ -402,7 +405,7 @@ const toApiBulkProposal = async (
         revision.id
       );
       const creator = revision.created_by ? await db.auth.getUser(revision.created_by) : null;
-      return toApiBulkRevision(members, caseRow?.id ?? null, creator?.display_name ?? null);
+      return toApiBulkApprovalRevision(members, caseRow?.id ?? null, creator?.display_name ?? null);
     })
   );
   const entityIds = [
@@ -447,8 +450,8 @@ export const getEntityChangeApproval = async (
   const entity = await db.catalog.getEntity(workspace, entityId);
   httpAssert.present(entity, { status: 404, message: 'Entity not found' });
   requireEntityAction(authCtx, entity, 'view_entity');
-  const proposal = await db.entityChange.getOpenProposal(workspace, entity.id);
-  return proposal ? await toApiProposal(db, proposal) : null;
+  const proposal = await db.entityChange.getOpenApproval(workspace, entity.id);
+  return proposal ? await toApiApproval(db, proposal) : null;
 };
 
 export const getBulkEntityChangeApproval = async (
@@ -459,9 +462,9 @@ export const getBulkEntityChangeApproval = async (
 ) => {
   const workspace = await resolveWorkspace(db.catalog, workspaceName);
   const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const proposal = await db.entityChange.getProposal(workspace, proposalId);
+  const proposal = await db.entityChange.getApproval(workspace, proposalId);
   if (!proposal) return null;
-  const apiProposal = await toApiBulkProposal(db, proposal);
+  const apiProposal = await toApiBulkApproval(db, proposal);
   for (const entityId of apiProposal.entityIds) {
     const entity = await db.catalog.getEntity(workspace, entityId);
     if (entity) requireEntityAction(authCtx, entity, 'view_entity');
@@ -564,7 +567,7 @@ export const submitBulkEntityChangeApproval = async (
 
   const proposal = await db.core.transaction(async tx => {
     const caseId = randomUUID();
-    const root = await tx.entityChange.createProposal({
+    const root = await tx.entityChange.createApproval({
       id: caseId,
       workspace,
       entity_id: prepared[0]!.entity.id,
@@ -575,7 +578,7 @@ export const submitBulkEntityChangeApproval = async (
       closed_at: null
     });
     const revisionId = randomUUID();
-    await tx.entityChange.createBulkRevision({
+    await tx.entityChange.createBulkApprovalRevision({
       id: revisionId,
       proposal_id: root.id,
       workspace,
@@ -618,7 +621,7 @@ export const submitBulkEntityChangeApproval = async (
     );
     return root;
   });
-  return await toApiBulkProposal(db, proposal);
+  return await toApiBulkApproval(db, proposal);
 };
 
 const submitProposal = async (
@@ -664,7 +667,7 @@ const submitProposal = async (
   const userId = event.context.user.id;
   const now = new Date();
   const proposal = await db.core.transaction(async tx => {
-    let root = await tx.entityChange.getOpenProposal(workspace, canonicalEntityId);
+    let root = await tx.entityChange.getOpenApproval(workspace, canonicalEntityId);
     if (expectedProposalId != null) {
       httpAssert.true(root?.id === expectedProposalId, {
         status: 404,
@@ -672,7 +675,7 @@ const submitProposal = async (
       });
     }
     if (root == null) {
-      root = await tx.entityChange.createProposal({
+      root = await tx.entityChange.createApproval({
         id: randomUUID(),
         workspace,
         entity_id: canonicalEntityId,
@@ -687,14 +690,14 @@ const submitProposal = async (
         status: 403,
         message: 'Only the proposal initiator can submit a new revision'
       });
-      const previous = await tx.entityChange.getLatestRevision(workspace, root.id);
+      const previous = await tx.entityChange.getLatestApprovalRevision(workspace, root.id);
       httpAssert.true(previous?.status === 'changes_requested' || previous?.status === 'stale', {
         status: 409,
         message: 'The current entity proposal is already awaiting a decision'
       });
     }
 
-    const previous = await tx.entityChange.getLatestRevision(workspace, root.id);
+    const previous = await tx.entityChange.getLatestApprovalRevision(workspace, root.id);
     const ownerTeamIds = await getTeamIds(tx, workspace);
     const assignments = ownerTeamIds.has(entity.owner ?? '')
       ? [
@@ -724,7 +727,7 @@ const submitProposal = async (
     );
     const selfApprovalAllowed = isSoleApprover(eligibleApproverIds, userId);
     const resolvedPolicy = { ...policy, selfApprovalAllowed };
-    const revision = await tx.entityChange.createRevision({
+    const revision = await tx.entityChange.createApprovalRevision({
       id: randomUUID(),
       proposal_id: root.id,
       workspace,
@@ -761,7 +764,7 @@ const submitProposal = async (
     );
     return root;
   });
-  return await toApiProposal(db, proposal);
+  return await toApiApproval(db, proposal);
 };
 
 export const submitEntityChangeApproval = (
@@ -791,7 +794,7 @@ export const withdrawEntityChangeApproval = async (
 ) => {
   const workspace = await resolveWorkspace(db.catalog, workspaceName);
   const { entity } = await assertCanPropose(db, workspace, entityId, event);
-  const proposal = await db.entityChange.getOpenProposal(workspace, entity.id);
+  const proposal = await db.entityChange.getOpenApproval(workspace, entity.id);
   httpAssert.true(proposal?.id === proposalId, {
     status: 404,
     message: 'Entity proposal not found'
@@ -801,14 +804,14 @@ export const withdrawEntityChangeApproval = async (
     status: 403,
     message: 'Only the proposal initiator can withdraw this proposal'
   });
-  const revision = await db.entityChange.getLatestRevision(workspace, proposal.id);
+  const revision = await db.entityChange.getLatestApprovalRevision(workspace, proposal.id);
   httpAssert.present(revision, { status: 409, message: 'The entity proposal has no revision' });
   const caseRow = await findCaseForRevision(db, workspace, entity.id, revision.id);
   httpAssert.present(caseRow, { status: 409, message: 'The entity proposal case is missing' });
   const now = new Date();
   await db.core.transaction(async tx => {
-    await tx.entityChange.updateRevisionStatus(workspace, revision.id, 'withdrawn', now);
-    await tx.entityChange.updateProposalStatus(workspace, proposal.id, 'withdrawn', now, now);
+    await tx.entityChange.updateApprovalRevisionStatus(workspace, revision.id, 'withdrawn', now);
+    await tx.entityChange.updateApprovalStatus(workspace, proposal.id, 'withdrawn', now, now);
     const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
     if (cancelled) {
       const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
@@ -824,7 +827,7 @@ export const withdrawEntityChangeApproval = async (
       });
     }
   });
-  return await toApiProposal(db, (await db.entityChange.getProposal(workspace, proposal.id))!);
+  return await toApiApproval(db, (await db.entityChange.getApproval(workspace, proposal.id))!);
 };
 
 export const bypassEntityApproval = async (
@@ -852,12 +855,12 @@ export const bypassEntityApproval = async (
     });
     if (row == null) return null;
 
-    const proposal = await tx.entityChange.getOpenProposal(workspace, canonicalEntityId);
+    const proposal = await tx.entityChange.getOpenApproval(workspace, canonicalEntityId);
     if (proposal) {
-      const revision = await tx.entityChange.getLatestRevision(workspace, proposal.id);
+      const revision = await tx.entityChange.getLatestApprovalRevision(workspace, proposal.id);
       if (revision) {
-        await tx.entityChange.updateRevisionStatus(workspace, revision.id, 'approved', now);
-        await tx.entityChange.updateProposalStatus(workspace, proposal.id, 'approved', now, now);
+        await tx.entityChange.updateApprovalRevisionStatus(workspace, revision.id, 'approved', now);
+        await tx.entityChange.updateApprovalStatus(workspace, proposal.id, 'approved', now, now);
         const caseRow = await findCaseForRevision(tx, workspace, canonicalEntityId, revision.id);
         if (caseRow) {
           const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
@@ -908,7 +911,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
         },
         beforeDecision: async (tx, { case: caseRow, decision }) => {
           if (decision !== 'approve') return 'proceed';
-          const revision = await tx.entityChange.getRevision(
+          const revision = await tx.entityChange.getApprovalRevision(
             caseRow.workspace,
             String(caseRow.payload['revisionId'])
           );
@@ -924,7 +927,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
               !equalValue(currentState[key], revision.proposed_state[key])
           );
           if (!conflicting) return 'proceed';
-          await tx.entityChange.updateRevisionStatus(
+          await tx.entityChange.updateApprovalRevisionStatus(
             caseRow.workspace,
             revision.id,
             'stale',
@@ -937,19 +940,19 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           const revisionId = String(payload['revisionId']);
           const proposalId = String(payload['proposalId']);
           if (decision === 'request_changes') {
-            await tx.entityChange.updateRevisionStatus(
+            await tx.entityChange.updateApprovalRevisionStatus(
               caseRow.workspace,
               revisionId,
               'changes_requested'
             );
           } else if (decision === 'reject') {
-            await tx.entityChange.updateRevisionStatus(
+            await tx.entityChange.updateApprovalRevisionStatus(
               caseRow.workspace,
               revisionId,
               'rejected',
               new Date()
             );
-            await tx.entityChange.updateProposalStatus(
+            await tx.entityChange.updateApprovalStatus(
               caseRow.workspace,
               proposalId,
               'rejected',
@@ -963,7 +966,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           const revisionId = String(payload['revisionId']);
           const proposalId = String(payload['proposalId']);
           const entityId = String(payload['entityId']);
-          const revision = await tx.entityChange.getRevision(caseRow.workspace, revisionId);
+          const revision = await tx.entityChange.getApprovalRevision(caseRow.workspace, revisionId);
           httpAssert.present(revision, {
             status: 409,
             message: 'The proposal revision no longer exists'
@@ -1048,13 +1051,13 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             statusText: 'Conflict',
             message: 'The entity changed after this proposal was submitted'
           });
-          await tx.entityChange.updateRevisionStatus(
+          await tx.entityChange.updateApprovalRevisionStatus(
             caseRow.workspace,
             revisionId,
             'approved',
             new Date()
           );
-          await tx.entityChange.updateProposalStatus(
+          await tx.entityChange.updateApprovalStatus(
             caseRow.workspace,
             proposalId,
             'approved',
@@ -1081,9 +1084,9 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           workspace: string,
           subjectId: string
         ) => {
-          const revision = await db.entityChange.getLatestRevision(workspace, subjectId);
+          const revision = await db.entityChange.getLatestApprovalRevision(workspace, subjectId);
           if (!revision) return false;
-          const members = await db.entityChange.getRevisionMembers(workspace, revision.id);
+          const members = await db.entityChange.getApprovalRevisionMembers(workspace, revision.id);
           if (members.length === 0) return false;
           for (const member of members) {
             const entity = await db.catalog.getEntity(workspace, member.entity_id);
@@ -1096,7 +1099,10 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
         beforeDecision: async (tx, { case: caseRow, decision }) => {
           if (decision !== 'approve') return 'proceed';
           const revisionId = String(caseRow.payload['revisionId']);
-          const members = await tx.entityChange.getRevisionMembers(caseRow.workspace, revisionId);
+          const members = await tx.entityChange.getApprovalRevisionMembers(
+            caseRow.workspace,
+            revisionId
+          );
           if (members.length === 0) return 'proceed';
           let anyConflicting = false;
           for (const member of members) {
@@ -1114,7 +1120,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             }
           }
           if (!anyConflicting) return 'proceed';
-          await tx.entityChange.updateRevisionStatus(
+          await tx.entityChange.updateApprovalRevisionStatus(
             caseRow.workspace,
             revisionId,
             'stale',
@@ -1127,19 +1133,19 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           const revisionId = String(payload['revisionId']);
           const proposalId = String(payload['proposalId']);
           if (decision === 'request_changes') {
-            await tx.entityChange.updateRevisionStatus(
+            await tx.entityChange.updateApprovalRevisionStatus(
               caseRow.workspace,
               revisionId,
               'changes_requested'
             );
           } else if (decision === 'reject') {
-            await tx.entityChange.updateRevisionStatus(
+            await tx.entityChange.updateApprovalRevisionStatus(
               caseRow.workspace,
               revisionId,
               'rejected',
               new Date()
             );
-            await tx.entityChange.updateProposalStatus(
+            await tx.entityChange.updateApprovalStatus(
               caseRow.workspace,
               proposalId,
               'rejected',
@@ -1152,7 +1158,10 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           const payload = caseRow.payload;
           const revisionId = String(payload['revisionId']);
           const proposalId = String(payload['proposalId']);
-          const members = await tx.entityChange.getRevisionMembers(caseRow.workspace, revisionId);
+          const members = await tx.entityChange.getApprovalRevisionMembers(
+            caseRow.workspace,
+            revisionId
+          );
           httpAssert.true(members.length > 0, {
             status: 409,
             message: 'The proposal revision no longer exists'
@@ -1250,13 +1259,13 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             appliedVersions.push({ entityId: entity.id, version: updated.version ?? 1 });
           }
 
-          await tx.entityChange.updateRevisionStatus(
+          await tx.entityChange.updateApprovalRevisionStatus(
             caseRow.workspace,
             revisionId,
             'approved',
             new Date()
           );
-          await tx.entityChange.updateProposalStatus(
+          await tx.entityChange.updateApprovalStatus(
             caseRow.workspace,
             proposalId,
             'approved',
