@@ -42,8 +42,8 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 
-export const ENTITY_CHANGE_CASE_KIND = 'entity.change';
-export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change.bulk';
+export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
+export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change-case.bulk';
 
 const permissionChecker = new PermissionChecker();
 
