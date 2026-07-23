@@ -6212,6 +6212,21 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "predicate"
                                         },
                                         "path": {
@@ -6329,6 +6344,21 @@
                                       },
                                       "required": [
                                         "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
                                       ]
                                     },
                                     {
@@ -6474,6 +6504,21 @@
                                 "type": "object",
                                 "properties": {
                                   "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
                                     "const": "predicate"
                                   },
                                   "path": {
@@ -6588,6 +6633,21 @@
                                 },
                                 "required": [
                                   "kind"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
                                 ]
                               },
                               {
@@ -6712,6 +6772,21 @@
                               "type": "object",
                               "properties": {
                                 "kind": {
+                                  "const": "freeText"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
                                   "const": "predicate"
                                 },
                                 "path": {
@@ -6771,6 +6846,21 @@
                       "required": [
                         "kind",
                         "child"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "freeText"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value"
                       ]
                     },
                     {
@@ -8367,6 +8457,21 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "predicate"
                                         },
                                         "path": {
@@ -8484,6 +8589,21 @@
                                       },
                                       "required": [
                                         "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
                                       ]
                                     },
                                     {
@@ -8629,6 +8749,21 @@
                                 "type": "object",
                                 "properties": {
                                   "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
                                     "const": "predicate"
                                   },
                                   "path": {
@@ -8743,6 +8878,21 @@
                                 },
                                 "required": [
                                   "kind"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
                                 ]
                               },
                               {
@@ -8867,6 +9017,21 @@
                               "type": "object",
                               "properties": {
                                 "kind": {
+                                  "const": "freeText"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
                                   "const": "predicate"
                                 },
                                 "path": {
@@ -8926,6 +9091,21 @@
                       "required": [
                         "kind",
                         "child"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "freeText"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value"
                       ]
                     },
                     {
@@ -9601,6 +9781,21 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "predicate"
                                         },
                                         "path": {
@@ -9718,6 +9913,21 @@
                                       },
                                       "required": [
                                         "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
                                       ]
                                     },
                                     {
@@ -9863,6 +10073,21 @@
                                 "type": "object",
                                 "properties": {
                                   "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
                                     "const": "predicate"
                                   },
                                   "path": {
@@ -9977,6 +10202,21 @@
                                 },
                                 "required": [
                                   "kind"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
                                 ]
                               },
                               {
@@ -10101,6 +10341,21 @@
                               "type": "object",
                               "properties": {
                                 "kind": {
+                                  "const": "freeText"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
                                   "const": "predicate"
                                 },
                                 "path": {
@@ -10160,6 +10415,21 @@
                       "required": [
                         "kind",
                         "child"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "freeText"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value"
                       ]
                     },
                     {
@@ -14606,6 +14876,21 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "predicate"
                                         },
                                         "path": {
@@ -14723,6 +15008,21 @@
                                       },
                                       "required": [
                                         "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
                                       ]
                                     },
                                     {
@@ -14868,6 +15168,21 @@
                                 "type": "object",
                                 "properties": {
                                   "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
                                     "const": "predicate"
                                   },
                                   "path": {
@@ -14982,6 +15297,21 @@
                                 },
                                 "required": [
                                   "kind"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
                                 ]
                               },
                               {
@@ -15106,6 +15436,21 @@
                               "type": "object",
                               "properties": {
                                 "kind": {
+                                  "const": "freeText"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
                                   "const": "predicate"
                                 },
                                 "path": {
@@ -15165,6 +15510,21 @@
                       "required": [
                         "kind",
                         "child"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "freeText"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value"
                       ]
                     },
                     {
@@ -17100,6 +17460,21 @@
                                                 "type": "object",
                                                 "properties": {
                                                   "kind": {
+                                                    "const": "freeText"
+                                                  },
+                                                  "value": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
                                                     "const": "predicate"
                                                   },
                                                   "path": {
@@ -17245,6 +17620,21 @@
                                                 },
                                                 "required": [
                                                   "kind"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "freeText"
+                                                  },
+                                                  "value": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
                                                 ]
                                               },
                                               {
@@ -17418,6 +17808,21 @@
                                           "type": "object",
                                           "properties": {
                                             "kind": {
+                                              "const": "freeText"
+                                            },
+                                            "value": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "value"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
                                               "const": "predicate"
                                             },
                                             "path": {
@@ -17560,6 +17965,21 @@
                                           },
                                           "required": [
                                             "kind"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "freeText"
+                                            },
+                                            "value": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "value"
                                           ]
                                         },
                                         {
@@ -17712,6 +18132,21 @@
                                         "type": "object",
                                         "properties": {
                                           "kind": {
+                                            "const": "freeText"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "value"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
                                             "const": "predicate"
                                           },
                                           "path": {
@@ -17785,6 +18220,21 @@
                                 "required": [
                                   "kind",
                                   "child"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
                                 ]
                               },
                               {
@@ -18511,6 +18961,21 @@
                                             "type": "object",
                                             "properties": {
                                               "kind": {
+                                                "const": "freeText"
+                                              },
+                                              "value": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "value"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
                                                 "const": "predicate"
                                               },
                                               "path": {
@@ -18628,6 +19093,21 @@
                                             },
                                             "required": [
                                               "kind"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "freeText"
+                                              },
+                                              "value": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "value"
                                             ]
                                           },
                                           {
@@ -18773,6 +19253,21 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "predicate"
                                         },
                                         "path": {
@@ -18887,6 +19382,21 @@
                                       },
                                       "required": [
                                         "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
                                       ]
                                     },
                                     {
@@ -19011,6 +19521,21 @@
                                     "type": "object",
                                     "properties": {
                                       "kind": {
+                                        "const": "freeText"
+                                      },
+                                      "value": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "value"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
                                         "const": "predicate"
                                       },
                                       "path": {
@@ -19070,6 +19595,21 @@
                             "required": [
                               "kind",
                               "child"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "freeText"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "value"
                             ]
                           },
                           {
@@ -19780,6 +20320,21 @@
                                               "type": "object",
                                               "properties": {
                                                 "kind": {
+                                                  "const": "freeText"
+                                                },
+                                                "value": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
                                                   "const": "predicate"
                                                 },
                                                 "path": {
@@ -19925,6 +20480,21 @@
                                               },
                                               "required": [
                                                 "kind"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "freeText"
+                                                },
+                                                "value": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
                                               ]
                                             },
                                             {
@@ -20098,6 +20668,21 @@
                                         "type": "object",
                                         "properties": {
                                           "kind": {
+                                            "const": "freeText"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "value"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
                                             "const": "predicate"
                                           },
                                           "path": {
@@ -20240,6 +20825,21 @@
                                         },
                                         "required": [
                                           "kind"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "freeText"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "value"
                                         ]
                                       },
                                       {
@@ -20392,6 +20992,21 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "predicate"
                                         },
                                         "path": {
@@ -20465,6 +21080,21 @@
                               "required": [
                                 "kind",
                                 "child"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "freeText"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
                               ]
                             },
                             {
@@ -21182,6 +21812,21 @@
                                             "type": "object",
                                             "properties": {
                                               "kind": {
+                                                "const": "freeText"
+                                              },
+                                              "value": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "value"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
                                                 "const": "predicate"
                                               },
                                               "path": {
@@ -21299,6 +21944,21 @@
                                             },
                                             "required": [
                                               "kind"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "freeText"
+                                              },
+                                              "value": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "value"
                                             ]
                                           },
                                           {
@@ -21444,6 +22104,21 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "predicate"
                                         },
                                         "path": {
@@ -21558,6 +22233,21 @@
                                       },
                                       "required": [
                                         "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
                                       ]
                                     },
                                     {
@@ -21682,6 +22372,21 @@
                                     "type": "object",
                                     "properties": {
                                       "kind": {
+                                        "const": "freeText"
+                                      },
+                                      "value": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "value"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
                                         "const": "predicate"
                                       },
                                       "path": {
@@ -21741,6 +22446,21 @@
                             "required": [
                               "kind",
                               "child"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "freeText"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "value"
                             ]
                           },
                           {
@@ -22446,6 +23166,21 @@
                                               "type": "object",
                                               "properties": {
                                                 "kind": {
+                                                  "const": "freeText"
+                                                },
+                                                "value": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
                                                   "const": "predicate"
                                                 },
                                                 "path": {
@@ -22591,6 +23326,21 @@
                                               },
                                               "required": [
                                                 "kind"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "freeText"
+                                                },
+                                                "value": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
                                               ]
                                             },
                                             {
@@ -22764,6 +23514,21 @@
                                         "type": "object",
                                         "properties": {
                                           "kind": {
+                                            "const": "freeText"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "value"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
                                             "const": "predicate"
                                           },
                                           "path": {
@@ -22906,6 +23671,21 @@
                                         },
                                         "required": [
                                           "kind"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "freeText"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "value"
                                         ]
                                       },
                                       {
@@ -23058,6 +23838,21 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "predicate"
                                         },
                                         "path": {
@@ -23131,6 +23926,21 @@
                               "required": [
                                 "kind",
                                 "child"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "freeText"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
                               ]
                             },
                             {
