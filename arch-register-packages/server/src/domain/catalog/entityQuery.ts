@@ -1,5 +1,5 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type { EntityQuery, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import { filterConditionsToEntityQueryIR } from './entityQueryIRMapping';
 import {
   normalizeEntityQueryOptions,
@@ -83,24 +83,45 @@ export const findEntityQueryRequestConflicts = (input: EntityListQueryParams): s
 /**
  * Produces the structured execution form for the existing HTTP query shape. Legacy `conditions`
  * are always compiled to IR when no explicit `entityQuery` is supplied, including `_completeness`
- * and assessment conditions, which the IR compiler expresses natively in SQL.
+ * and assessment conditions, which the IR compiler expresses natively in SQL. `owner`/`lifecycle`/`q`
+ * are folded into the tree as extra predicate/freeText nodes (rather than left for an in-memory
+ * post-filter) whether the request supplied an explicit `entityQuery` or legacy `conditions`.
  */
 export const buildEntityQueryForExecution = (
   input: EntityListQueryParams,
   parsed: ParsedEntityQuery
 ): EntityQuery | null => {
-  if (input.entityQuery) return input.entityQuery;
-
-  const mapped = filterConditionsToEntityQueryIR(
-    parsed.schemaId,
-    parsed.assessmentId,
-    parsed.conditions
-  );
-  return {
-    ...mapped,
+  const base: EntityQuery = input.entityQuery ?? {
+    ...filterConditionsToEntityQueryIR(parsed.schemaId, parsed.assessmentId, parsed.conditions),
     ...(parsed.projectId ? { projectId: parsed.projectId } : {}),
     ...(parsed.projectScope ? { projectScope: parsed.projectScope } : {}),
     ...(parsed.asOf ? { asOf: parsed.asOf.toISOString() } : {}),
     ...(parsed.asOf ? { includeProjectSnapshots: parsed.includeProjectSnapshots } : {})
   };
+
+  const extra: QueryNode[] = [];
+  if (parsed.owner) {
+    extra.push({
+      kind: 'predicate',
+      path: [],
+      fieldId: '_owner',
+      op: 'equals',
+      value: parsed.owner
+    });
+  }
+  if (parsed.lifecycle) {
+    extra.push({
+      kind: 'predicate',
+      path: [],
+      fieldId: '_lifecycle',
+      op: 'equals',
+      value: parsed.lifecycle
+    });
+  }
+  if (parsed.q) {
+    extra.push({ kind: 'freeText', value: parsed.q });
+  }
+  if (extra.length === 0) return base;
+
+  return { ...base, root: { kind: 'and', children: [base.root, ...extra] } };
 };

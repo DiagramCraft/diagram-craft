@@ -214,14 +214,6 @@ const collectEntitiesFromIR = async (
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
   const filteredRows = rows.filter(row => {
-    if (options.owner && row.owner !== options.owner) return false;
-    if (options.lifecycle && row.lifecycle !== options.lifecycle) return false;
-    if (
-      options.q &&
-      filterEntities([row], { schemaId: null, owner: null, lifecycle: null, q: options.q })
-        .length === 0
-    )
-      return false;
     if (collectionEntityIdSet && !collectionEntityIdSet.has(row.id)) return false;
     return true;
   });
