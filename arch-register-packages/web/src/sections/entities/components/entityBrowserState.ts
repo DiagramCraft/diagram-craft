@@ -52,6 +52,8 @@ export const parseDateValue = (value: unknown) => {
 };
 
 export const parseConditionsFromSearch = (search: BrowserSearch): FilterCondition[] => {
+  const canonicalQuery = parseEntityQueryFromSearch(search);
+  if (canonicalQuery != null) return filterConditionsFromEntityQuery(canonicalQuery);
   if (search.filters) {
     try {
       return JSON.parse(search.filters) as FilterCondition[];
@@ -74,6 +76,75 @@ export const parseEntityQueryFromSearch = (search: BrowserSearch): EntityQuery |
   } catch {
     return null;
   }
+};
+
+const rootChildren = (query: EntityQuery): EntityQuery['root'][] =>
+  query.root.kind === 'and' ? query.root.children : [query.root];
+
+const filterConditionsFromEntityQuery = (query: EntityQuery): FilterCondition[] =>
+  rootChildren(query)
+    .filter(
+      (node): node is Extract<EntityQuery['root'], { kind: 'predicate' }> =>
+        node.kind === 'predicate' && node.path.length === 0
+    )
+    .filter(condition => condition.fieldId !== '_schemaId')
+    .map(({ fieldId, op, value }) => ({ fieldId, op, value }));
+
+const freeTextQueryNode = (value: string): EntityQuery['root'] => ({
+  kind: 'or',
+  children: ['_name', '_slug', '_description'].map(fieldId => ({
+    kind: 'predicate' as const,
+    path: [],
+    fieldId,
+    op: 'contains' as const,
+    value
+  }))
+});
+
+const isFreeTextQueryNode = (node: EntityQuery['root']) =>
+  node.kind === 'or' &&
+  node.children.length === 3 &&
+  node.children.every(
+    child =>
+      child.kind === 'predicate' &&
+      child.path.length === 0 &&
+      child.op === 'contains' &&
+      typeof child.value === 'string' &&
+      ['_name', '_slug', '_description'].includes(child.fieldId)
+  );
+
+const withoutFreeTextQuery = (query: EntityQuery): EntityQuery => {
+  if (query.root.kind !== 'and') {
+    return isFreeTextQueryNode(query.root)
+      ? { ...query, root: { kind: 'and', children: [] } }
+      : query;
+  }
+  return {
+    ...query,
+    root: {
+      ...query.root,
+      children: query.root.children.filter(child => !isFreeTextQueryNode(child))
+    }
+  };
+};
+
+export const addFreeTextQuery = (query: EntityQuery, value: string): EntityQuery => {
+  const trimmed = value.trim();
+  const baseQuery = withoutFreeTextQuery(query);
+  if (!trimmed) return baseQuery;
+  return {
+    ...baseQuery,
+    root:
+      baseQuery.root.kind === 'and'
+        ? { ...baseQuery.root, children: [...baseQuery.root.children, freeTextQueryNode(trimmed)] }
+        : { kind: 'and', children: [baseQuery.root, freeTextQueryNode(trimmed)] }
+  };
+};
+
+const freeTextFromEntityQuery = (query: EntityQuery): string | undefined => {
+  const node = rootChildren(query).find(child => isFreeTextQueryNode(child));
+  const value = node?.kind === 'or' ? node.children[0] : undefined;
+  return value?.kind === 'predicate' && typeof value.value === 'string' ? value.value : undefined;
 };
 
 export const parseJsonConfig = <T>(value: string | undefined): T | null => {
@@ -173,22 +244,19 @@ export const getSavedViewConfig = (view: SavedView): unknown | null => {
 };
 
 export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
-  type: view.filters.entityQuery.schemaId ?? view.filters.schemaId ?? undefined,
-  status: view.filters.status ?? undefined,
-  owner: view.filters.owner ?? undefined,
-  q: view.filters.q ?? undefined,
+  type: view.filters.schemaId ?? undefined,
+  status: getFilterValue(filterConditionsFromEntityQuery(view.filters), '_lifecycle') ?? undefined,
+  owner: getFilterValue(filterConditionsFromEntityQuery(view.filters), '_owner') ?? undefined,
+  q: freeTextFromEntityQuery(view.filters),
   viewId: view.id,
   viewMode: view.viewMode,
-  sort: view.filters.sort ?? undefined,
+  sort: view.config?.sort ?? undefined,
   projectScope: view.projectScope ?? undefined,
   viewConfigs: serializeViewConfigs(
     getSavedViewConfig(view) == null ? {} : { [view.viewMode]: getSavedViewConfig(view) }
   ),
-  filters: view.filters.conditions?.length ? JSON.stringify(view.filters.conditions) : undefined,
-  entityQuery: view.filters.conditions?.length
-    ? undefined
-    : JSON.stringify(view.filters.entityQuery),
-  joinAssessmentId: view.filters.assessmentId ?? undefined
+  filters: undefined,
+  entityQuery: JSON.stringify(view.filters)
 });
 
 export const getFilterValue = (conditions: FilterCondition[], fieldId: string) =>
@@ -197,26 +265,21 @@ export const getFilterValue = (conditions: FilterCondition[], fieldId: string) =
 export const buildEntityQueryFromBrowserFilters = ({
   typeFilter,
   conditions,
-  joinAssessmentId
+  joinAssessmentId,
+  q = ''
 }: {
   typeFilter: string | null;
   conditions: FilterCondition[];
   joinAssessmentId?: string | null;
-}): EntityQuery | null => {
-  if (conditions.some(condition => condition.fieldId === '_completeness')) return null;
-
-  return {
+  q?: string;
+}): EntityQuery => {
+  const query: EntityQuery = {
     ...(typeFilter ? { schemaId: typeFilter } : {}),
     ...(joinAssessmentId ? { assessmentId: joinAssessmentId } : {}),
     root: {
       kind: 'and',
       children: conditions
-        .filter(
-          condition =>
-            condition.fieldId !== '_schemaId' &&
-            condition.fieldId !== '_owner' &&
-            condition.fieldId !== '_lifecycle'
-        )
+        .filter(condition => condition.fieldId !== '_schemaId')
         .map(condition => ({
           kind: 'predicate' as const,
           path: [],
@@ -226,24 +289,29 @@ export const buildEntityQueryFromBrowserFilters = ({
         }))
     }
   };
+  return addFreeTextQuery(query, q);
 };
 
 export const toSavedViewConfig = (
   view: BrowserView,
-  viewConfigs: BrowserViewConfigMap
+  viewConfigs: BrowserViewConfigMap,
+  sort?: string
 ): CreateSavedViewRequest['config'] => {
   const config = viewConfigs[view];
-  if (config == null) return null;
-  if (view === 'radar') return { radar: config as never };
-  if (view === 'timeline') return { timeline: config as never };
-  if (view === 'matrix') return { matrix: config as never };
-  if (view === 'explore') return { explore: config as never };
-  if (view === 'bubble') return { bubble: config as never };
-  if (view === 'map') return { map: config as never };
-  if (view === 'table') return { table: config as never };
-  if (view === 'cards') return { cards: config as never };
-  if (view === 'tree') return { tree: config as never };
-  return null;
+  const result: Record<string, unknown> = {};
+  if (sort && sort !== 'name') result.sort = sort;
+  if (config != null) {
+    if (view === 'radar') result.radar = config;
+    if (view === 'timeline') result.timeline = config;
+    if (view === 'matrix') result.matrix = config;
+    if (view === 'explore') result.explore = config;
+    if (view === 'bubble') result.bubble = config;
+    if (view === 'map') result.map = config;
+    if (view === 'table') result.table = config;
+    if (view === 'cards') result.cards = config;
+    if (view === 'tree') result.tree = config;
+  }
+  return Object.keys(result).length > 0 ? (result as CreateSavedViewRequest['config']) : null;
 };
 
 export const buildSavedViewPayload = ({
@@ -255,8 +323,6 @@ export const buildSavedViewPayload = ({
   isAdminView,
   view,
   typeFilter,
-  statusFilter,
-  ownerFilter,
   q,
   sort,
   conditions,
@@ -282,14 +348,9 @@ export const buildSavedViewPayload = ({
   entityQuery?: EntityQuery | null;
 }): CreateSavedViewRequest => {
   const resolvedEntityQuery =
-    entityQuery ?? buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId });
-  const canonicalEntityQuery =
-    resolvedEntityQuery ??
-    ({
-      ...(typeFilter ? { schemaId: typeFilter } : {}),
-      ...(joinAssessmentId ? { assessmentId: joinAssessmentId } : {}),
-      root: { kind: 'and', children: [] }
-    } satisfies EntityQuery);
+    entityQuery ??
+    buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId, q });
+  const canonicalEntityQuery = addFreeTextQuery(resolvedEntityQuery, q);
 
   return {
     scope,
@@ -299,16 +360,7 @@ export const buildSavedViewPayload = ({
     description: description ?? null,
     isAdminView: isAdminView ?? false,
     viewMode: view,
-    filters: {
-      schemaId: typeFilter,
-      status: statusFilter,
-      owner: ownerFilter,
-      q,
-      sort,
-      entityQuery: canonicalEntityQuery,
-      ...(resolvedEntityQuery ? {} : { conditions }),
-      assessmentId: joinAssessmentId ?? null
-    },
-    config: toSavedViewConfig(view, viewConfigs)
+    filters: canonicalEntityQuery,
+    config: toSavedViewConfig(view, viewConfigs, sort)
   };
 };

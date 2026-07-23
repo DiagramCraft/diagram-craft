@@ -28,28 +28,13 @@ export const conditionsQuerySchema = z.preprocess(value => {
   }
 }, z.array(filterConditionSchema).optional());
 
-export const entityFiltersSchema = z.object({
-  schemaId: z.string().nullable().optional().describe('Filter by schema identifier'),
-  status: z.string().nullable().optional().describe('Filter by lifecycle status'),
-  owner: z.string().nullable().optional().describe('Filter by owner identifier'),
-  q: z.string().optional().describe('Search query string'),
-  dateFilterField: z.string().optional().describe('Field identifier for date filtering'),
-  dateFilterOperator: z
-    .enum(['on', 'before', 'after', 'empty'])
-    .optional()
-    .describe('Date filter operation'),
-  dateFilterValue: z.string().optional().describe('Date filter value (ISO 8601)'),
-  sort: z.string().optional().describe('Sort field and direction (e.g., "name:asc")'),
-  conditions: z.array(filterConditionSchema).optional().describe('Additional filter conditions'),
-  entityQuery: entityQuerySchema.describe(
-    'Canonical structured EntityQuery used by this saved view'
-  ),
-  assessmentId: z
-    .string()
-    .nullable()
-    .optional()
-    .describe('Joined assessment identifier for display, filtering, and view attributes')
-});
+/**
+ * Saved views persist the canonical query directly. Keeping this schema strict is intentional:
+ * legacy flat filter fields must not be silently stripped and accepted as a saved-view contract.
+ */
+export const savedViewQuerySchema = entityQuerySchema
+  .strict()
+  .describe('Canonical structured EntityQuery used by this saved view');
 
 export const radarViewConfigSchema = z.object({
   schemaId: z.string().describe('Schema identifier for radar view'),
@@ -150,6 +135,7 @@ export const exploreViewConfigSchema = z.object({
 
 const viewConfigSchema = z
   .object({
+    sort: z.string().optional().describe('Entity sort mode, defaulting to name'),
     table: tableViewConfigSchema.optional().describe('Configuration for table view'),
     cards: cardsViewConfigSchema.optional().describe('Configuration for cards view'),
     tree: treeViewConfigSchema.optional().describe('Configuration for tree view'),
@@ -182,7 +168,7 @@ export const savedViewSchema = z.object({
     .boolean()
     .describe('Whether this view was pinned by a workspace admin for all members'),
   viewMode: browserViewSchema.describe('View display mode'),
-  filters: entityFiltersSchema.describe('Entity filters applied in this view'),
+  filters: savedViewQuerySchema.describe('Canonical EntityQuery applied in this view'),
   config: viewConfigSchema.describe('View-specific configuration'),
   createdAt: z.string().describe('ISO 8601 creation timestamp'),
   updatedAt: z.string().describe('ISO 8601 last update timestamp')
@@ -218,7 +204,7 @@ export const createViewBodySchema = z.object({
     .optional()
     .describe('Pin this view as a workspace admin view visible to all members'),
   viewMode: browserViewSchema.describe('View display mode'),
-  filters: entityFiltersSchema.describe('Entity filters to apply'),
+  filters: savedViewQuerySchema.describe('Canonical EntityQuery to apply'),
   config: viewConfigSchema.optional().describe('View-specific configuration')
 });
 
@@ -235,7 +221,7 @@ export const updateViewBodySchema = z.object({
     .optional()
     .describe('Pin this view as a workspace admin view visible to all members'),
   viewMode: browserViewSchema.optional().describe('View display mode'),
-  filters: entityFiltersSchema.optional().describe('Entity filters to apply'),
+  filters: savedViewQuerySchema.optional().describe('Canonical EntityQuery to apply'),
   config: viewConfigSchema.optional().describe('View-specific configuration')
 });
 
@@ -388,8 +374,6 @@ export const workspaceViewContract = oc.tag('Views').router({
 export type BrowserView = z.infer<typeof browserViewSchema>;
 
 export type FilterCondition = z.infer<typeof filterConditionSchema>;
-
-export type EntityFilters = z.infer<typeof entityFiltersSchema>;
 
 export type RadarViewConfig = z.infer<typeof radarViewConfigSchema>;
 

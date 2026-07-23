@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addFreeTextQuery,
   buildSavedViewPayload,
   buildEntityQueryFromBrowserFilters,
   isEntityInProject,
@@ -188,7 +189,7 @@ describe('structured entity query view persistence', () => {
       description: null,
       isAdminView: false,
       viewMode: 'table',
-      filters: { entityQuery },
+      filters: entityQuery,
       config: null,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z'
@@ -197,7 +198,7 @@ describe('structured entity query view persistence', () => {
     expect(parseEntityQueryFromSearch(search)).toEqual(entityQuery);
   });
 
-  it('includes the query in newly saved view payloads without changing legacy fields', () => {
+  it('persists the canonical query without legacy filter fields', () => {
     const payload = buildSavedViewPayload({
       scope: 'workspace',
       name: 'At risk',
@@ -213,8 +214,75 @@ describe('structured entity query view persistence', () => {
       entityQuery
     });
 
-    expect(payload.filters).toMatchObject({ schemaId: 'component', entityQuery });
-    expect(payload.filters.conditions).toBeUndefined();
+    expect(payload.filters).toEqual(entityQuery);
+    expect(payload.filters).not.toHaveProperty('conditions');
+  });
+
+  it('encodes free-text search in the query and sort in display configuration', () => {
+    const payload = buildSavedViewPayload({
+      scope: 'workspace',
+      name: 'Search view',
+      description: '',
+      view: 'table',
+      typeFilter: 'component',
+      statusFilter: null,
+      ownerFilter: null,
+      q: 'platform',
+      sort: 'owner',
+      conditions: [],
+      viewConfigs: {}
+    });
+
+    expect(payload.filters.root.kind).toBe('and');
+    const textNode = payload.filters.root.kind === 'and' ? payload.filters.root.children[0] : null;
+    expect(textNode?.kind).toBe('or');
+    expect(
+      textNode?.kind === 'or'
+        ? textNode.children.map(child => child.kind === 'predicate' && child.fieldId)
+        : []
+    ).toEqual(['_name', '_slug', '_description']);
+    expect(payload.config).toEqual({ sort: 'owner' });
+
+    const search = toSavedViewSearch({
+      id: 'view-search',
+      workspaceId: 'workspace-1',
+      scope: 'workspace',
+      projectId: null,
+      projectScope: null,
+      name: 'Search view',
+      description: null,
+      isAdminView: false,
+      viewMode: 'table',
+      filters: payload.filters,
+      config: payload.config ?? null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    });
+
+    expect(search.q).toBe('platform');
+    expect(search.sort).toBe('owner');
+  });
+
+  it('replaces an existing free-text clause when the search changes', () => {
+    const query = buildEntityQueryFromBrowserFilters({
+      typeFilter: 'component',
+      conditions: [],
+      q: 'old'
+    });
+
+    const updated = addFreeTextQuery(query, 'new');
+    const textValues =
+      updated.root.kind === 'and'
+        ? updated.root.children
+            .filter(child => child.kind === 'or')
+            .flatMap(child =>
+              child.children
+                .filter(grandchild => grandchild.kind === 'predicate')
+                .map(grandchild => grandchild.value)
+            )
+        : [];
+
+    expect(textValues).toEqual(['new', 'new', 'new']);
   });
 
   it('builds an IR query when saving a flat browser filter', () => {
@@ -223,7 +291,7 @@ describe('structured entity query view persistence', () => {
         typeFilter: 'component',
         conditions: [
           { fieldId: '_schemaId', op: 'equals', value: 'component' },
-          { fieldId: 'status', op: 'equals', value: 'active' }
+          { fieldId: '_lifecycle', op: 'equals', value: 'active' }
         ]
       })
     ).toEqual({
@@ -231,13 +299,13 @@ describe('structured entity query view persistence', () => {
       root: {
         kind: 'and',
         children: [
-          { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+          { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' }
         ]
       }
     });
   });
 
-  it('keeps a canonical query envelope for completeness fallback filters', () => {
+  it('stores completeness predicates directly in the canonical query', () => {
     const conditions = [{ fieldId: '_completeness', op: 'lt' as const, value: 50 }];
     const payload = buildSavedViewPayload({
       scope: 'workspace',
@@ -253,11 +321,21 @@ describe('structured entity query view persistence', () => {
       viewConfigs: {}
     });
 
-    expect(payload.filters.entityQuery).toEqual({
+    expect(payload.filters).toEqual({
       schemaId: 'component',
-      root: { kind: 'and', children: [] }
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: '_completeness',
+            op: 'lt',
+            value: 50
+          }
+        ]
+      }
     });
-    expect(payload.filters.conditions).toEqual(conditions);
 
     const search = toSavedViewSearch({
       id: 'view-2',
@@ -275,7 +353,7 @@ describe('structured entity query view persistence', () => {
       updatedAt: '2026-01-01T00:00:00.000Z'
     });
 
-    expect(search.entityQuery).toBeUndefined();
-    expect(JSON.parse(search.filters!)).toEqual(conditions);
+    expect(JSON.parse(search.entityQuery!)).toEqual(payload.filters);
+    expect(search.filters).toBeUndefined();
   });
 });

@@ -3319,11 +3319,13 @@ export const seedSavedViews: SavedViewDbResult[] = [
     is_admin_view: false,
     view_mode: 'table',
     filters: {
-      status: LIFECYCLE_IDS.production,
       schemaId: '00000000-0000-0000-0000-000000000002',
-      entityQuery: {
-        schemaId: '00000000-0000-0000-0000-000000000002',
-        root: { kind: 'and', children: [] }
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_lifecycle',
+        op: 'equals',
+        value: LIFECYCLE_IDS.production
       }
     },
     config: null,
@@ -3340,7 +3342,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     is_admin_view: false,
     view_mode: 'radar',
     filters: {
-      entityQuery: { root: { kind: 'and', children: [] } }
+      root: { kind: 'and', children: [] }
     },
     config: {
       radar: {
@@ -3368,11 +3370,13 @@ export const seedSavedViews: SavedViewDbResult[] = [
     is_admin_view: false,
     view_mode: 'cards',
     filters: {
-      owner: TEAM_IDS.platform,
       schemaId: '00000000-0000-0000-0000-000000000003',
-      entityQuery: {
-        schemaId: '00000000-0000-0000-0000-000000000003',
-        root: { kind: 'and', children: [] }
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_owner',
+        op: 'equals',
+        value: TEAM_IDS.platform
       }
     },
     config: null,
@@ -3390,10 +3394,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     view_mode: 'radar',
     filters: {
       schemaId: '00000000-0000-0000-0000-000000000006',
-      entityQuery: {
-        schemaId: '00000000-0000-0000-0000-000000000006',
-        root: { kind: 'and', children: [] }
-      }
+      root: { kind: 'and', children: [] }
     },
     config: {
       radar: {
@@ -3417,10 +3418,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     view_mode: 'timeline',
     filters: {
       schemaId: '00000000-0000-0000-0000-000000000006',
-      entityQuery: {
-        schemaId: '00000000-0000-0000-0000-000000000006',
-        root: { kind: 'and', children: [] }
-      }
+      root: { kind: 'and', children: [] }
     },
     config: {
       timeline: {
@@ -3444,15 +3442,12 @@ export const seedSavedViews: SavedViewDbResult[] = [
     view_mode: 'table',
     filters: {
       schemaId: '00000000-0000-0000-0000-000000000006',
-      entityQuery: {
-        schemaId: '00000000-0000-0000-0000-000000000006',
-        root: {
-          kind: 'predicate',
-          path: [],
-          fieldId: 'eol_date',
-          op: 'not_empty',
-          value: null
-        }
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'eol_date',
+        op: 'not_empty',
+        value: null
       }
     },
     config: null,
@@ -3470,23 +3465,21 @@ export const seedSavedViews: SavedViewDbResult[] = [
     is_admin_view: true,
     view_mode: 'table',
     filters: {
-      entityQuery: {
-        schemaId: '00000000-0000-0000-0000-000000000003',
-        root: {
-          kind: 'predicate',
+      schemaId: '00000000-0000-0000-0000-000000000003',
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+        fieldId: 'eol_date',
+        op: 'before',
+        value: '2026-06-30'
+      },
+      projections: [
+        {
           path: [{ kind: 'forward', fieldId: 'technology_releases' }],
           fieldId: 'eol_date',
-          op: 'before',
-          value: '2026-06-30'
-        },
-        projections: [
-          {
-            path: [{ kind: 'forward', fieldId: 'technology_releases' }],
-            fieldId: 'eol_date',
-            alias: 'technology_release_eol'
-          }
-        ]
-      }
+          alias: 'technology_release_eol'
+        }
+      ]
     },
     config: {
       table: { fieldIds: ['_projection:technology_release_eol'] }

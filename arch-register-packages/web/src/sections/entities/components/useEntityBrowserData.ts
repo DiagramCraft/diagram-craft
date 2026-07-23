@@ -4,7 +4,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import { parseDateValue } from './entityBrowserState';
+import { addFreeTextQuery, parseDateValue } from './entityBrowserState';
 
 type UseEntityBrowserDataProps = {
   workspaceId: string;
@@ -58,6 +58,15 @@ export const useEntityBrowserData = ({
   // While browsing a snapshot date, the "show all entities" toggle has no effect within a
   // project — only project-linked entities are ever shown.
   const effectiveProjectScope = asOf && projectId ? 'project' : projectScope;
+  const executionEntityQuery = entityQuery
+    ? addFreeTextQuery(
+        {
+          ...entityQuery,
+          ...(projectId ? { projectId, projectScope: effectiveProjectScope } : {})
+        },
+        q
+      )
+    : null;
 
   const {
     data: pagedEntities = [],
@@ -70,10 +79,10 @@ export const useEntityBrowserData = ({
       schemaId: typeFilter,
       owner: ownerFilter,
       lifecycle: statusFilter,
-      q,
-      conditions: entityQuery ? undefined : conditions,
-      entityQuery,
-      assessmentId: entityQuery?.assessmentId ?? joinAssessmentId,
+      q: executionEntityQuery ? undefined : q,
+      conditions: executionEntityQuery ? undefined : conditions,
+      entityQuery: executionEntityQuery,
+      assessmentId: executionEntityQuery?.assessmentId ?? joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
       collectionId: collectionId ?? undefined,
@@ -97,10 +106,10 @@ export const useEntityBrowserData = ({
       schemaId: typeFilter,
       owner: ownerFilter,
       lifecycle: statusFilter,
-      q,
-      conditions: entityQuery ? undefined : conditions,
-      entityQuery,
-      assessmentId: entityQuery?.assessmentId ?? joinAssessmentId,
+      q: executionEntityQuery ? undefined : q,
+      conditions: executionEntityQuery ? undefined : conditions,
+      entityQuery: executionEntityQuery,
+      assessmentId: executionEntityQuery?.assessmentId ?? joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
       collectionId: collectionId ?? undefined,

@@ -9,6 +9,7 @@ import { EntityBrowserView } from '../../../../entities/components/EntityBrowser
 import {
   getSavedViewConfig,
   isTreeBasedView,
+  toSavedViewSearch,
   type BrowserEntityRecord
 } from '../../../../entities/components/entityBrowserState';
 import styles from './EntityViewEmbed.module.css';
@@ -35,15 +36,20 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   const isTreeBased = !!savedView && isTreeBasedView(savedView.viewMode);
 
   const filters = savedView?.filters;
+  const savedViewSearch = savedView ? toSavedViewSearch(savedView) : {};
+  const resolvedProjectId = savedView?.projectId ?? projectId;
+  const projectScope = savedView?.projectScope ?? 'all';
+  const entityQuery =
+    filters == null
+      ? undefined
+      : {
+          ...filters,
+          ...(resolvedProjectId ? { projectId: resolvedProjectId, projectScope } : {})
+        };
   const { data: entities = [], isLoading: entitiesLoading } = useEntities(
     workspaceSlug,
     {
-      schemaId: filters?.schemaId ?? undefined,
-      owner: filters?.owner ?? undefined,
-      lifecycle: filters?.status ?? undefined,
-      q: filters?.q ?? undefined,
-      conditions: filters?.entityQuery ? undefined : (filters?.conditions ?? undefined),
-      entityQuery: filters?.entityQuery ?? undefined,
+      entityQuery,
       view: 'full',
       limit: 100
     },
@@ -90,17 +96,15 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
 
   const rows = entities as BrowserEntityRecord[];
   const viewConfig = getSavedViewConfig(savedView);
-  const typeFilter = savedView.filters.entityQuery?.schemaId ?? savedView.filters.schemaId ?? null;
-  const ownerFilter = savedView.filters.owner ?? null;
-  const statusFilter = savedView.filters.status ?? null;
-  const q = savedView.filters.q ?? '';
-  const resolvedProjectId = savedView.projectId ?? projectId;
-  const projectScope = savedView.projectScope ?? 'all';
+  const typeFilter = savedView.filters.schemaId ?? null;
+  const ownerFilter = savedViewSearch.owner ?? null;
+  const statusFilter = savedViewSearch.status ?? null;
+  const q = savedViewSearch.q ?? '';
   const displayFields = buildEntityDisplayFields(
     typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
     !!resolvedProjectId,
     null,
-    savedView.filters.entityQuery?.projections ?? []
+    savedView.filters.projections ?? []
   );
 
   return (
