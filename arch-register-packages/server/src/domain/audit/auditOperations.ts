@@ -4,6 +4,7 @@ import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorizati
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
 import { listEntities } from '../catalog/entityQueryOperations';
+import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
 const resolveAssessmentResponseEntityName = async (
@@ -96,10 +97,13 @@ export const listAuditLog = async (
 
   let entityIds: string[] | null = null;
   if (filters.owner || filters.lifecycle) {
-    const matchingEntities = await listEntities(db, ws, null, {
-      schemaId: filters.schemaId,
+    const queryInput = {
+      _schemaId: filters.schemaId,
       owner: filters.owner,
       lifecycle: filters.lifecycle
+    };
+    const matchingEntities = await listEntities(db, ws, null, {
+      entityQuery: buildEntityQueryForExecution(queryInput, parseEntityQuery(queryInput))
     });
     entityIds = matchingEntities.map(e => e._uid);
   }
