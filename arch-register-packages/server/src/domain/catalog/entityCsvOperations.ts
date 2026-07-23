@@ -4,15 +4,9 @@ import { decodeRefs } from '../../types';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { filterVisibleEntities, requireSchemaRead } from '../auth/authorization';
-import { filterEntities, relationFields } from './dataHelpers';
+import { relationFields } from './dataHelpers';
 import { listAllCatalogEntities } from './entityLoader';
-
-type EntityCsvFilter = {
-  schemaId: string | null;
-  owner: string | null;
-  lifecycle: string | null;
-  q: string;
-};
+import { listEntities, type EntityQueryOptions } from './entityQueryOperations';
 
 const csvResponse = (content: string, filename: string) => ({
   headers: {
@@ -41,18 +35,20 @@ export const exportEntitiesCsv = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext,
-  filter: EntityCsvFilter,
+  query: EntityQueryOptions,
   now = new Date()
 ) => {
-  const [schemas, allEntitiesRaw] = await Promise.all([
+  const [schemas, allEntitiesRaw, entities] = await Promise.all([
     db.catalog.listSchemas(workspace),
-    listAllCatalogEntities(db, workspace)
+    listAllCatalogEntities(db, workspace),
+    listEntities(db, workspace, authCtx, { ...query, view: 'full', limit: null, offset: 0 })
   ]);
   const allEntities = filterVisibleEntities(authCtx, allEntitiesRaw);
   const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
-  const entities = filterEntities(allEntities, filter).sort((a, b) => a.name.localeCompare(b.name));
-  const schema = filter.schemaId ? schemaMap.get(filter.schemaId) : undefined;
-  if (filter.schemaId) {
+  entities.sort((a, b) => (a._name as string).localeCompare(b._name as string));
+  const schemaId = query.schemaId ?? undefined;
+  const schema = schemaId ? schemaMap.get(schemaId) : undefined;
+  if (schemaId) {
     orpcAssert.present(schema, { code: 'NOT_FOUND', message: 'Schema not found' });
   }
 
@@ -62,7 +58,7 @@ export const exportEntitiesCsv = async (
     const referenceIds = new Set<string>();
     for (const entity of entities) {
       for (const field of relationFields(schema.fields)) {
-        decodeRefs(entity.data[field.id]).forEach(id => referenceIds.add(id));
+        decodeRefs(entity[field.id]).forEach(id => referenceIds.add(id));
       }
     }
     for (const entity of allEntities) {
@@ -71,23 +67,27 @@ export const exportEntitiesCsv = async (
   }
 
   const rows = entities.map(entity => {
+    const owner = entity._owner as { id: string; name: string } | null;
+    const lifecycle = entity._lifecycle as { id: string; name: string } | null;
+    const targetLifecycle = entity._targetLifecycle as { id: string; name: string } | null;
+    const entitySchema = entity._schema as { id: string; name: string };
     const row: Record<string, unknown> = {
-      ID: entity.id,
-      Name: entity.name,
-      Slug: entity.slug,
-      Namespace: entity.namespace,
-      Description: entity.description,
-      Owner: entity.owner ?? '',
-      Lifecycle: entity.lifecycle ?? '',
-      'Target Lifecycle': entity.target_lifecycle ?? '',
-      'Target Date': entity.target_lifecycle_date ?? '',
-      Tags: formatArrayForCsv(entity.tags),
-      Links: entity.links.length.toString(),
-      'Schema Type': schema?.name ?? schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
+      ID: entity._uid,
+      Name: entity._name,
+      Slug: entity._slug,
+      Namespace: entity._namespace,
+      Description: entity._description,
+      Owner: owner?.id ?? '',
+      Lifecycle: lifecycle?.id ?? '',
+      'Target Lifecycle': targetLifecycle?.id ?? '',
+      'Target Date': entity._targetLifecycleDate ?? '',
+      Tags: formatArrayForCsv((entity._tags as string[]) ?? []),
+      Links: ((entity._links as unknown[]) ?? []).length.toString(),
+      'Schema Type': schema?.name ?? entitySchema.name ?? entitySchema.id
     };
     if (schema) {
       for (const field of schema.fields) {
-        const value = entity.data[field.id];
+        const value = entity[field.id];
         if (field.type === 'reference' || field.type === 'containment') {
           row[field.name] = formatArrayForCsv(
             decodeRefs(value).map(id => referenceLookup.get(id) ?? id)

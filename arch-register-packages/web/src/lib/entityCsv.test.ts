@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { commitCsvImport, parseCsvImport } from './entityCsv';
+import { commitCsvImport, exportEntitiesToCSV, parseCsvImport } from './entityCsv';
 
 const importParseMock = vi.fn();
 const importCommitMock = vi.fn();
+const exportCsvMock = vi.fn();
 
 vi.mock('./orpcClient', () => ({
   orpcClient: {
     entities: {
       importParse: importParseMock,
-      importCommit: importCommitMock
+      importCommit: importCommitMock,
+      exportCsv: exportCsvMock
     }
   }
 }));
@@ -16,6 +18,46 @@ vi.mock('./orpcClient', () => ({
 beforeEach(() => {
   importParseMock.mockReset();
   importCommitMock.mockReset();
+  exportCsvMock.mockReset();
+});
+
+describe('exportEntitiesToCSV', () => {
+  it('forwards conditions and a JSON-serialized entityQuery to the exportCsv route', async () => {
+    const blob = new Blob(['id;name'], { type: 'text/csv' });
+    exportCsvMock.mockResolvedValue({ body: blob });
+
+    const conditions = [{ fieldId: '_lifecycle', op: 'equals' as const, value: 'active' }];
+    const entityQuery = { root: { kind: 'freeText' as const, value: 'payments' } };
+
+    const result = await exportEntitiesToCSV('demo', {
+      schemaId: 'application',
+      owner: 'team-1',
+      lifecycle: 'active',
+      q: 'payments',
+      conditions,
+      entityQuery,
+      collectionId: 'collection-1'
+    });
+
+    expect(result).toBe(blob);
+    expect(exportCsvMock).toHaveBeenCalledWith({
+      params: { workspace: 'demo' },
+      query: {
+        _schemaId: 'application',
+        owner: 'team-1',
+        lifecycle: 'active',
+        q: 'payments',
+        conditions,
+        entityQuery: JSON.stringify(entityQuery),
+        assessmentId: undefined,
+        projectId: undefined,
+        projectScope: undefined,
+        collectionId: 'collection-1',
+        asOf: undefined,
+        includeProjectSnapshots: undefined
+      }
+    });
+  });
 });
 
 describe('CSV import helpers', () => {

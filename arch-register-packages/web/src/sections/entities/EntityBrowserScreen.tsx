@@ -148,7 +148,11 @@ export const EntityBrowserScreen = () => {
         schemaId: typeFilter,
         owner: ownerFilter,
         lifecycle: statusFilter,
-        q
+        q,
+        conditions,
+        entityQuery,
+        collectionId,
+        asOf
       });
 
       downloadBlob(blob, `entities-${new Date().toISOString().split('T')[0]}.csv`);
@@ -156,7 +160,17 @@ export const EntityBrowserScreen = () => {
       console.error('Export failed:', error);
       alert('Failed to export entities. Please try again.');
     }
-  }, [ownerFilter, q, statusFilter, typeFilter, workspaceId]);
+  }, [
+    asOf,
+    collectionId,
+    conditions,
+    entityQuery,
+    ownerFilter,
+    q,
+    statusFilter,
+    typeFilter,
+    workspaceId
+  ]);
 
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
