@@ -77,6 +77,60 @@ describe('parseEntityQuery', () => {
       projectScope: 'all'
     });
   });
+
+  it('folds owner/lifecycle/q into the structured execution root, alongside legacy conditions', () => {
+    const input = {
+      owner: 'team-1',
+      lifecycle: 'active',
+      q: 'search term',
+      conditions: [{ fieldId: '_name', op: 'contains' as const, value: 'API' }]
+    };
+    const parsed = parseEntityQuery(input);
+    expect(buildEntityQueryForExecution(input, parsed)).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'and',
+            children: [
+              { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'API' }
+            ]
+          },
+          { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'team-1' },
+          { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' },
+          { kind: 'freeText', value: 'search term' }
+        ]
+      },
+      projectScope: 'all'
+    });
+  });
+
+  it('folds owner/lifecycle/q into an explicit entityQuery', () => {
+    const entityQuery = {
+      root: { kind: 'and' as const, children: [] }
+    };
+    const input = { entityQuery, owner: 'team-1', q: 'foo' };
+    const parsed = parseEntityQuery(input);
+    expect(buildEntityQueryForExecution(input, parsed)).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'and', children: [] },
+          { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'team-1' },
+          { kind: 'freeText', value: 'foo' }
+        ]
+      }
+    });
+  });
+
+  it('leaves the structured execution root unchanged when owner/lifecycle/q are absent', () => {
+    const input = { conditions: [] };
+    const parsed = parseEntityQuery(input);
+    expect(buildEntityQueryForExecution(input, parsed)).toEqual({
+      root: { kind: 'and', children: [] },
+      projectScope: 'all'
+    });
+  });
 });
 
 describe('findEntityQueryRequestConflicts', () => {

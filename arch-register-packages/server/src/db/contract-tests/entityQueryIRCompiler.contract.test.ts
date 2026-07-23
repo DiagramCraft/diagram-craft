@@ -20,6 +20,7 @@ import { filterConditionsToEntityQueryIR } from '../../domain/catalog/entityQuer
 import { matchesFilterCondition } from '../../domain/catalog/dataHelpers';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { countEntities, listEntitiesWithCount } from '../../domain/catalog/entityQueryOperations';
+import { buildEntityQueryForExecution, parseEntityQuery } from '../../domain/catalog/entityQuery';
 
 const createSchema = async (
   db: DatabaseAdapter,
@@ -88,6 +89,34 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       expect.arrayContaining([nameMatch.id, slugMatch.id, descriptionMatch.id])
     );
     expect(matches).toHaveLength(3);
+  });
+
+  it('folds legacy q into the IR and filters in SQL, without a second in-memory pass', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+
+    const nameMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'Platform Service'
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'Unrelated Service' });
+
+    // Simulates the full HTTP request path (entityOrpc.ts): parse -> fold q into the IR root ->
+    // execute. Exercises the fix for #2357, where `q` used to be applied as an always-on
+    // in-memory post-filter after the SQL query ran, rather than folded into the query itself.
+    const input = { _schemaId: schema.id, q: 'platform' };
+    const parsed = parseEntityQuery(input);
+    const entityQuery = buildEntityQueryForExecution(input, parsed);
+
+    const page = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery,
+      view: 'full',
+      limit: null,
+      offset: 0
+    });
+
+    expect(page.items.map(item => item._uid)).toEqual([nameMatch.id]);
+    expect(page.total).toBe(1);
   });
 
   it('resolves a forward single-hop reference predicate', async () => {
