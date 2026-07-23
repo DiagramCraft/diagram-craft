@@ -35,6 +35,11 @@ const formatVal = (v: unknown) => {
   return String(v);
 };
 
+const memberDisplayName = (member: ChangeCaseMember) =>
+  (member.proposed_state['name'] as string | undefined) ??
+  (member.base_state['name'] as string | undefined) ??
+  member.entity_id;
+
 const MemberStep = ({ workspaceId, member, schemas, stale, onResolved }: MemberStepProps) => {
   const { data: entity } = useEntity(workspaceId, member.entity_id);
   const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
@@ -181,6 +186,33 @@ export const ApplyChangeCaseDialog = ({
             }
       ]}
     >
+      {(changeCase.name || changeCase.commit_message) && (
+        <div className={styles.caseSummaryHead}>
+          {changeCase.name && <div className={styles.caseSummaryName}>{changeCase.name}</div>}
+          {changeCase.commit_message && (
+            <div className={styles.caseSummaryDescription}>{changeCase.commit_message}</div>
+          )}
+        </div>
+      )}
+
+      {members.length > 1 && (
+        <div className={styles.memberSummaryList}>
+          {members.map((m, i) => (
+            <button
+              key={m.id}
+              type="button"
+              className={`${styles.memberSummaryItem} ${i === stepIndex ? styles.memberSummaryItemActive : ''} ${resolutions[m.id] !== undefined ? styles.memberSummaryItemDone : ''}`}
+              onClick={() => setStepIndex(i)}
+            >
+              <span>{memberDisplayName(m)}</span>
+              {staleByMemberId.has(m.id) && (
+                <span className={styles.memberSummaryStale}>needs review</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       <MemberStep
         key={currentMember.id}
         workspaceId={workspaceId}

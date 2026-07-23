@@ -60,4 +60,37 @@ describe('project snapshot state', () => {
     });
     expect(resolved._description).toBe('Live description');
   });
+
+  it('does not treat differently-shaped empty values as a conflict or a planned change', () => {
+    const emptyEntity = {
+      _schema: { id: 'service' },
+      _name: 'Live name',
+      _slug: 'service',
+      _namespace: '',
+      _description: 'Live description',
+      _owner: { id: 'team-live' },
+      _lifecycle: null,
+      _targetLifecycle: null,
+      _targetLifecycleDate: null,
+      _tags: ['live'],
+      _links: [],
+      _projectId: null,
+      criticality: 'high'
+    } as never;
+    const emptyBase = { ...base, target_lifecycle: undefined, target_lifecycle_date: null };
+    const emptyProposed = { ...proposed, target_lifecycle: '', target_lifecycle_date: '' };
+
+    expect(
+      findSnapshotConflicts(emptyEntity, schema, emptyProposed, emptyBase).map(c => c.key)
+    ).not.toContain('target_lifecycle');
+
+    const resolved = resolveSnapshotEntityData({
+      entity: emptyEntity,
+      schema,
+      proposed: emptyProposed,
+      base: emptyBase,
+      conflictChoices: {}
+    });
+    expect(resolved._targetLifecycleDate).toBeNull();
+  });
 });

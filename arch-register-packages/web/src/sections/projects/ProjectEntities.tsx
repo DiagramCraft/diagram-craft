@@ -12,7 +12,8 @@ import {
   TbCopy,
   TbPencil,
   TbTrash,
-  TbFlag
+  TbFlag,
+  TbUsers
 } from 'react-icons/tb';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type {
@@ -32,7 +33,7 @@ import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
-import { useWithdrawChangeCase } from '../../hooks/useChangeCases';
+import { useChangeCasesByProject, useWithdrawChangeCase } from '../../hooks/useChangeCases';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
@@ -48,6 +49,7 @@ import { useMilestones } from '../../hooks/useMilestones';
 import { getSnapshotEffectiveDate, toMilestonesById } from '../entities/components/snapshotDisplay';
 import { diffSnapshotState } from '../entities/components/entityTimelineHelpers';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
+import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
@@ -94,19 +96,33 @@ export const ProjectEntities = ({
   onEditSnapshot: (snapshot: EntitySnapshot) => void;
 }) => {
   const [activeTab, setActiveTab] = useState<ViewTab>('entities');
-  const [groupBy, setGroupBy] = useState<GroupBy>('entity');
+  const [groupBy, setGroupBy] = useState<GroupBy>('date');
   const [isSavingView, setIsSavingView] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<EntitySnapshot | null>(null);
 
-  const pendingCount = futureSnapshots.length;
+  // Distinct change cases, not entity rows — a multi-entity case should count once.
+  const pendingCount = new Set(futureSnapshots.map(s => s.case_id ?? s.id)).size;
   const navigate = routeApi.useNavigate();
   const { workspaceSlug, permissions } = useWorkspaceContext();
   const withdrawChangeCaseMutation = useWithdrawChangeCase(workspaceSlug, project.id);
   const { data: milestones = [] } = useMilestones(workspaceSlug, project.id);
   const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
+  const { data: changeCases = [] } = useChangeCasesByProject(workspaceSlug, project.id);
+  const changeCaseById = useMemo(() => new Map(changeCases.map(c => [c.id, c])), [changeCases]);
   const search = routeApi.useSearch();
   const asOf = search.asOf;
   const readOnly = !!asOf;
+
+  const entityNameById = useMemo(
+    () => new Map(projectEntities.map(e => [e.entity_id, e.entity_name])),
+    [projectEntities]
+  );
+  const deleteTargetCaseEntityNames = useMemo(() => {
+    if (!deleteTarget?.case_id) return [];
+    return projectSnapshots
+      .filter(s => s.case_id === deleteTarget.case_id)
+      .map(s => entityNameById.get(s.entity_id) ?? s.entity_id);
+  }, [deleteTarget, projectSnapshots, entityNameById]);
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget?.case_id) return;
@@ -404,6 +420,7 @@ export const ProjectEntities = ({
           teams={teams}
           groupBy={groupBy}
           milestonesById={milestonesById}
+          changeCaseById={changeCaseById}
           onApplySnapshot={onApplySnapshot}
           onEditSnapshot={onEditSnapshot}
           onDeleteSnapshot={setDeleteTarget}
@@ -420,6 +437,7 @@ export const ProjectEntities = ({
             lifecycleStates={lifecycleStates}
             teams={teams}
             milestonesById={milestonesById}
+            changeCaseById={changeCaseById}
             canEdit={project.canEdit}
             onApplySnapshot={onApplySnapshot}
             onEditSnapshot={onEditSnapshot}
@@ -437,8 +455,22 @@ export const ProjectEntities = ({
       <DeleteConfirmationDialog
         open={!!deleteTarget}
         title="Delete future change"
-        message={deleteTarget ? 'Delete this planned future change?' : ''}
-        detail="This removes the planned change without modifying the current entity."
+        message={
+          deleteTargetCaseEntityNames.length > 1
+            ? `Delete this planned change for ${deleteTargetCaseEntityNames.length} entities?`
+            : 'Delete this planned future change?'
+        }
+        detail={
+          <>
+            This removes the planned change without modifying any current entity.
+            {deleteTargetCaseEntityNames.length > 1 && (
+              <>
+                <br />
+                Affected entities: {deleteTargetCaseEntityNames.join(', ')}
+              </>
+            )}
+          </>
+        }
         confirmLabel={withdrawChangeCaseMutation.isPending ? 'Deleting...' : 'Delete change'}
         onConfirm={() => void handleConfirmDelete()}
         onCancel={() => setDeleteTarget(null)}
@@ -457,6 +489,7 @@ const FutureChangesTab = ({
   teams,
   groupBy,
   milestonesById,
+  changeCaseById,
   onApplySnapshot,
   onEditSnapshot,
   onDeleteSnapshot
@@ -470,6 +503,7 @@ const FutureChangesTab = ({
   teams: WorkspaceTeam[];
   groupBy: GroupBy;
   milestonesById: Map<string, Milestone>;
+  changeCaseById: Map<string, ChangeCase>;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
   onEditSnapshot: (snapshot: EntitySnapshot) => void;
   onDeleteSnapshot: (snapshot: EntitySnapshot) => void;
@@ -495,6 +529,16 @@ const FutureChangesTab = ({
   const getEntitySchemaInfo = (entity: ProjectEntity | undefined) =>
     entity?.entity_schema ? schemaMap.get(entity.entity_schema.id) : undefined;
 
+  // Entities sharing a change case with each other — drives the "also includes" note in the
+  // group-by-entity view and the nested case panels in the group-by-date view.
+  const caseMembersMap = new Map<string, EntitySnapshot[]>();
+  for (const snap of futureSnapshots) {
+    if (!snap.case_id) continue;
+    const list = caseMembersMap.get(snap.case_id);
+    if (list) list.push(snap);
+    else caseMembersMap.set(snap.case_id, [snap]);
+  }
+
   if (groupBy === 'entity') {
     // Group by entity_id
     const groups = new Map<string, EntitySnapshot[]>();
@@ -517,23 +561,31 @@ const FutureChangesTab = ({
                   <span className={styles.futureGroupName}>{pe?.entity_name ?? entityId}</span>
                   {pe?.entity_schema && <Chip tone="ghost">{pe.entity_schema.name}</Chip>}
                 </div>
-                {snaps.map(snap => (
-                  <FutureSnapshotRow
-                    key={snap.id}
-                    snap={snap}
-                    showEntity={false}
-                    showMilestone
-                    entitySchema={getEntitySchema(pe)}
-                    entitySchemaInfo={getEntitySchemaInfo(pe)}
-                    milestonesById={milestonesById}
-                    lifecycleStates={lifecycleStates}
-                    teams={teams}
-                    canEdit={project.canEdit}
-                    onApply={onApplySnapshot}
-                    onEdit={onEditSnapshot}
-                    onDelete={onDeleteSnapshot}
-                  />
-                ))}
+                {snaps.map(snap => {
+                  const otherEntityNames = snap.case_id
+                    ? (caseMembersMap.get(snap.case_id) ?? [])
+                        .filter(s => s.entity_id !== entityId)
+                        .map(s => entityMap.get(s.entity_id)?.entity_name ?? s.entity_id)
+                    : [];
+                  return (
+                    <FutureSnapshotRow
+                      key={snap.id}
+                      snap={snap}
+                      showEntity={false}
+                      showMilestone
+                      entitySchema={getEntitySchema(pe)}
+                      entitySchemaInfo={getEntitySchemaInfo(pe)}
+                      milestonesById={milestonesById}
+                      lifecycleStates={lifecycleStates}
+                      teams={teams}
+                      canEdit={project.canEdit}
+                      otherEntityNames={otherEntityNames}
+                      onApply={onApplySnapshot}
+                      onEdit={onEditSnapshot}
+                      onDelete={onDeleteSnapshot}
+                    />
+                  );
+                })}
               </div>
             );
           })}
@@ -577,6 +629,19 @@ const FutureChangesTab = ({
                 .filter((entry): entry is [string, Milestone] => entry[1] != null)
             ).values()
           ];
+
+          // Sub-group this date's snapshots by change case, so a case renders as one nested
+          // panel (with its name/description) rather than as separate flat rows.
+          const caseGroups = new Map<string, EntitySnapshot[]>();
+          const orderedCaseKeys: string[] = [];
+          for (const snap of snaps) {
+            const caseKey = snap.case_id ?? snap.id;
+            if (!caseGroups.has(caseKey)) orderedCaseKeys.push(caseKey);
+            const list = caseGroups.get(caseKey);
+            if (list) list.push(snap);
+            else caseGroups.set(caseKey, [snap]);
+          }
+
           return (
             <div key={key} className={styles.futureGroup}>
               <div className={styles.futureGroupHead}>
@@ -591,24 +656,92 @@ const FutureChangesTab = ({
                   </Chip>
                 ))}
               </div>
-              {snaps.map(snap => (
-                <FutureSnapshotRow
-                  key={snap.id}
-                  snap={snap}
-                  showEntity={true}
-                  showMilestone={false}
-                  entityName={entityMap.get(snap.entity_id)?.entity_name}
-                  entitySchema={getEntitySchema(entityMap.get(snap.entity_id))}
-                  entitySchemaInfo={getEntitySchemaInfo(entityMap.get(snap.entity_id))}
-                  milestonesById={milestonesById}
-                  lifecycleStates={lifecycleStates}
-                  teams={teams}
-                  canEdit={project.canEdit}
-                  onApply={onApplySnapshot}
-                  onEdit={onEditSnapshot}
-                  onDelete={onDeleteSnapshot}
-                />
-              ))}
+              {orderedCaseKeys.map(caseKey => {
+                const caseSnaps = caseGroups.get(caseKey)!;
+                const changeCase = caseSnaps[0]!.case_id
+                  ? changeCaseById.get(caseSnaps[0]!.case_id!)
+                  : undefined;
+                const fallbackTitle =
+                  caseSnaps.length === 1
+                    ? (entityMap.get(caseSnaps[0]!.entity_id)?.entity_name ??
+                      caseSnaps[0]!.entity_id)
+                    : 'Untitled change';
+                const representativeSnap = caseSnaps[0]!;
+                return (
+                  <div key={caseKey} className={styles.futureCasePanel}>
+                    <div className={styles.futureCasePanelHead}>
+                      <div className={styles.futureCasePanelTitleRow}>
+                        <span className={styles.futureCasePanelName}>
+                          {changeCase?.name ?? fallbackTitle}
+                        </span>
+                        {caseSnaps.length > 1 && <Chip tone="ghost">{caseSnaps.length} entities</Chip>}
+                        <div style={{ flex: 1 }} />
+                        {project.canEdit && (
+                          <DropdownMenu
+                            trigger={
+                              <Button
+                                size="sm"
+                                variant="icon-only"
+                                aria-label="Change case actions"
+                                title="Change case actions"
+                                icon={<TbDots size={14} />}
+                              />
+                            }
+                            items={[
+                              {
+                                label: 'Apply',
+                                icon: <TbCheck size={14} />,
+                                onClick: () => onApplySnapshot(representativeSnap)
+                              },
+                              {
+                                label: 'Edit',
+                                icon: <TbPencil size={14} />,
+                                onClick: () => onEditSnapshot(representativeSnap)
+                              },
+                              {
+                                label: 'Remove',
+                                icon: <TbTrash size={14} />,
+                                danger: true,
+                                onClick: () => onDeleteSnapshot(representativeSnap)
+                              }
+                            ]}
+                          />
+                        )}
+                      </div>
+                      {changeCase?.commit_message && (
+                        <div className={styles.futureCasePanelDescription}>
+                          {changeCase.commit_message}
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.futureCasePanelBody}>
+                      {caseSnaps.map(snap => {
+                        const pe = entityMap.get(snap.entity_id);
+                        return (
+                          <FutureSnapshotRow
+                            key={snap.id}
+                            snap={snap}
+                            showEntity={true}
+                            showMilestone={false}
+                            showActions={false}
+                            showNote={false}
+                            entityName={pe?.entity_name}
+                            entitySchema={getEntitySchema(pe)}
+                            entitySchemaInfo={getEntitySchemaInfo(pe)}
+                            milestonesById={milestonesById}
+                            lifecycleStates={lifecycleStates}
+                            teams={teams}
+                            canEdit={project.canEdit}
+                            onApply={onApplySnapshot}
+                            onEdit={onEditSnapshot}
+                            onDelete={onDeleteSnapshot}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           );
         })}
@@ -628,6 +761,9 @@ const FutureSnapshotRow = ({
   lifecycleStates,
   teams,
   canEdit,
+  showActions = true,
+  showNote = true,
+  otherEntityNames = [],
   onApply,
   onEdit,
   onDelete
@@ -642,6 +778,9 @@ const FutureSnapshotRow = ({
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   canEdit: boolean;
+  showActions?: boolean;
+  showNote?: boolean;
+  otherEntityNames?: string[];
   onApply: (snapshot: EntitySnapshot) => void;
   onEdit: (snapshot: EntitySnapshot) => void;
   onDelete: (snapshot: EntitySnapshot) => void;
@@ -667,6 +806,12 @@ const FutureSnapshotRow = ({
           <span>{entityName ?? snap.entity_id}</span>
         </div>
       )}
+      {otherEntityNames.length > 0 && (
+        <div className={styles.futureRowAlsoIncludes}>
+          <TbUsers size={12} />
+          <span>Also includes {otherEntityNames.join(', ')}</span>
+        </div>
+      )}
       <div className={styles.futureRowBody}>
         <div className={styles.futureRowMeta}>
           {dateLabel && <span className={styles.futureRowDate}>{dateLabel}</span>}
@@ -675,11 +820,11 @@ const FutureSnapshotRow = ({
               {milestone.name}
             </Chip>
           )}
-          {snap.commit_message && (
+          {showNote && snap.commit_message && (
             <span className={styles.futureRowNote}>{snap.commit_message}</span>
           )}
         </div>
-        {canEdit && (
+        {canEdit && showActions && (
           <div className={styles.futureRowActions}>
             <DropdownMenu
               trigger={

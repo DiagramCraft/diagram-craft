@@ -10,7 +10,18 @@ export type SnapshotConflict = {
   currentVal: unknown;
 };
 
-const differs = (left: unknown, right: unknown) => JSON.stringify(left) !== JSON.stringify(right);
+// Treats null/undefined/''/[] as the same "empty" value so equivalent-but-differently-shaped
+// empty representations (e.g. a field stored as null vs. later re-serialized as '') don't read as
+// a conflict or a planned change when nothing actually changed.
+const normalizeEmpty = (value: unknown): unknown => {
+  if (value == null) return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  if (Array.isArray(value) && value.length === 0) return null;
+  return value;
+};
+
+const differs = (left: unknown, right: unknown) =>
+  JSON.stringify(normalizeEmpty(left)) !== JSON.stringify(normalizeEmpty(right));
 
 export const findSnapshotConflicts = (
   entity: EntityRecord | undefined,
