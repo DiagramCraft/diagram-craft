@@ -65,11 +65,17 @@ describe('parseEntityQuery', () => {
     });
   });
 
-  it('keeps completeness and assessment conditions on the legacy fallback path', () => {
+  it('maps completeness and assessment conditions to structured execution', () => {
     const parsed = parseEntityQuery({
       conditions: [{ fieldId: '_completeness', op: 'lt', value: 50 }]
     });
-    expect(buildEntityQueryForExecution({ conditions: parsed.conditions }, parsed)).toBeNull();
+    expect(buildEntityQueryForExecution({ conditions: parsed.conditions }, parsed)).toEqual({
+      root: {
+        kind: 'and',
+        children: [{ kind: 'predicate', path: [], fieldId: '_completeness', op: 'lt', value: 50 }]
+      },
+      projectScope: 'all'
+    });
   });
 });
 

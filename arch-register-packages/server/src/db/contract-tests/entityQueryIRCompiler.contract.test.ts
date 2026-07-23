@@ -377,6 +377,83 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(irMatches.map(e => e.id)).toEqual([matching.id]);
   });
 
+  it('matches the legacy evaluator for _completeness predicates mapped through the legacy path', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Technology' });
+
+    const complete = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      completeness: 90
+    });
+    const incomplete = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      completeness: 30
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const conditions: FilterCondition[] = [{ fieldId: '_completeness', op: 'lt', value: 50 }];
+
+    const irQuery = filterConditionsToEntityQueryIR(schema.id, null, conditions);
+    const irMatches = await runQuery(db, driver, workspace, schemas, irQuery);
+
+    const flatMatches = [complete, incomplete].filter(entity =>
+      conditions.every(c => matchesFilterCondition(entity, c, entity.completeness))
+    );
+
+    expect(new Set(irMatches.map(e => e.id))).toEqual(new Set(flatMatches.map(e => e.id)));
+    expect(irMatches.map(e => e.id)).toEqual([incomplete.id]);
+  });
+
+  it('compiles _assessment:<fieldId> conditions mapped through the legacy path to a matching SQL filter', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const schema = await createSchema(db, workspace, { name: 'Technology' });
+
+    const highRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const lowRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+
+    const assessment = await db.project.createAssessment({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'Risk Assessment',
+      description: '',
+      status: 'open',
+      scope: [schema.id],
+      scope_conditions: [],
+      fields: [
+        { id: 'riskLevel', label: 'Risk Level', requirementLevel: 'required', type: 'rating' }
+      ],
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    await db.project.upsertAssessmentResponse({
+      workspace,
+      assessment_id: assessment.id,
+      entity_id: highRisk.id,
+      values: { riskLevel: 4 },
+      updated_by: null
+    });
+    await db.project.upsertAssessmentResponse({
+      workspace,
+      assessment_id: assessment.id,
+      entity_id: lowRisk.id,
+      values: { riskLevel: 1 },
+      updated_by: null
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const conditions: FilterCondition[] = [
+      { fieldId: '_assessment:riskLevel', op: 'gt', value: 2 }
+    ];
+
+    const irQuery = filterConditionsToEntityQueryIR(schema.id, assessment.id, conditions);
+    const irMatches = await runQuery(db, driver, workspace, schemas, irQuery);
+
+    expect(irMatches.map(e => e.id)).toEqual([highRisk.id]);
+  });
+
   it('joins assessment_response for _assessment/_assessment:<fieldId> predicates', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

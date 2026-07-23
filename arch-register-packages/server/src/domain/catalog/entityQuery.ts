@@ -1,6 +1,5 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import { isAssessmentCondition } from '@arch-register/api-types/assessmentFilter';
 import { filterConditionsToEntityQueryIR } from './entityQueryIRMapping';
 import {
   normalizeEntityQueryOptions,
@@ -82,22 +81,15 @@ export const findEntityQueryRequestConflicts = (input: EntityListQueryParams): s
 };
 
 /**
- * Produces the structured execution form for the existing HTTP query shape. Legacy conditions that
- * depend on the in-memory assessment/completeness seams remain on the legacy path until those
- * evaluators are available for arbitrary IR trees.
+ * Produces the structured execution form for the existing HTTP query shape. Legacy `conditions`
+ * are always compiled to IR when no explicit `entityQuery` is supplied, including `_completeness`
+ * and assessment conditions, which the IR compiler expresses natively in SQL.
  */
 export const buildEntityQueryForExecution = (
   input: EntityListQueryParams,
   parsed: ParsedEntityQuery
 ): EntityQuery | null => {
   if (input.entityQuery) return input.entityQuery;
-  if (
-    parsed.conditions.some(
-      condition => condition.fieldId === '_completeness' || isAssessmentCondition(condition)
-    )
-  ) {
-    return null;
-  }
 
   const mapped = filterConditionsToEntityQueryIR(
     parsed.schemaId,
