@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { seedBootstrapData } from '../bootstrapSeed';
-import { seededWorkspaces } from '../seedFixtures';
+import { seededEntities, seededProjects, seededWorkspaces } from '../seedFixtures';
 import type { StorageAdapter } from '../../storage/storage.types';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { listEntitiesWithCount } from '../../domain/catalog/entityQueryOperations';
@@ -59,5 +59,20 @@ runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
       view: 'summary'
     });
     expect(identityResults.total).toBe(4);
+
+    const result = await listEntitiesWithCount(db, seededWorkspaces.default.id, null, {
+      projectId: seededProjects.authMigration.id,
+      projectScope: 'project',
+      view: 'summary'
+    });
+    expect(result.total).toBe(6);
+
+    const authMigrationAdapter = result.items.find(
+      item => item._uid === seededEntities.default.authMigrationAdapter.id
+    ) as { _uid: string; _projectId: string | null } | undefined;
+    expect(authMigrationAdapter).toMatchObject({
+      _uid: seededEntities.default.authMigrationAdapter.id,
+      _projectId: seededProjects.authMigration.id
+    });
   });
 });

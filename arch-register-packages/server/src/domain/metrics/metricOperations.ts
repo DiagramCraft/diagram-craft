@@ -369,14 +369,12 @@ export const getBoxMetrics = async (
     metric.source.kind === 'assessmentRating' ||
     metric.source.kind === 'assessmentEnum';
 
-  const [schemas, allEntities, lifecycleStates, projectEntities, joinedAssessment] =
-    await Promise.all([
-      db.catalog.listSchemas(workspace),
-      listAllCatalogEntities(db, workspace),
-      db.workspace.listLifecycleStates(workspace),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
-      resolveJoinedAssessment(db, workspace, authCtx, assessmentId, needsAssessment)
-    ]);
+  const [schemas, allEntities, lifecycleStates, joinedAssessment] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    listAllCatalogEntities(db, workspace, projectId ? { projectId, projectScope } : undefined),
+    db.workspace.listLifecycleStates(workspace),
+    resolveJoinedAssessment(db, workspace, authCtx, assessmentId, needsAssessment)
+  ]);
 
   if (metric.source.kind === 'assessmentRating') {
     httpAssert.present(joinedAssessment, {
@@ -387,12 +385,8 @@ export const getBoxMetrics = async (
 
   const enumOptions = await resolveEnumOptions(db, workspace, metric, schemas, joinedAssessment);
 
-  const projectEntityMap = new Map(projectEntities.map(e => [e.entity_id, e]));
   const visibleEntities = filterVisibleEntities(authCtx, allEntities);
-  const scopedEntities =
-    projectId && projectScope === 'project'
-      ? visibleEntities.filter(e => projectEntityMap.has(e.id))
-      : visibleEntities;
+  const scopedEntities = visibleEntities;
 
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const hasCompletenessCondition = otherConditions.some(c => c.fieldId === '_completeness');

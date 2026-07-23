@@ -223,6 +223,13 @@ export const seededEntities = {
       workspaceId: seededWorkspaces.default.id,
       schemaId: seededSchemas.default.component.id,
       name: 'Auth Service'
+    },
+    authMigrationAdapter: {
+      id: '00000000-0000-0000-0003-000000000010',
+      publicId: 'CMP-16',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.component.id,
+      name: 'Auth Migration Adapter'
     }
   },
   second: {

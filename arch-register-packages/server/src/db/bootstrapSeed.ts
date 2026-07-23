@@ -299,11 +299,11 @@ export const seedBootstrapData = async (
   for (const workspace of seedWorkspaces) {
     await db.ai.upsertAiConfig(workspace.id, aiConfig);
   }
-  for (const entity of seedEntities) {
-    await db.catalog.createEntity(entity);
-  }
   for (const project of seedProjects) {
     await db.project.createProject(project);
+  }
+  for (const entity of seedEntities) {
+    await db.catalog.createEntity(entity);
   }
   for (const assessment of seedAssessments) {
     await db.project.createAssessment(assessment);

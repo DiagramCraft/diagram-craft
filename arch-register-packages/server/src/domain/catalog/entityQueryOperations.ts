@@ -393,12 +393,23 @@ const collectEntities = async (
   };
 
   if (asOf) {
+    let projectLinkIds = new Set<string>();
     let candidateEntityIds: string[] | undefined;
     if (projectId && projectScope === 'project') {
       const links = await db.project.listProjectEntityLinks(workspace, projectId);
-      candidateEntityIds = links
-        .filter(link => link.created_at <= asOf)
-        .map(link => link.entity_id);
+      projectLinkIds = new Set(
+        links.filter(link => link.created_at <= asOf).map(link => link.entity_id)
+      );
+      const scopedCandidates = await listAllCatalogEntities(db, workspace, {
+        projectId,
+        projectScope
+      });
+      candidateEntityIds = [
+        ...new Set([
+          ...scopedCandidates.map(entity => entity.id),
+          ...links.map(link => link.entity_id)
+        ])
+      ];
     }
     const reconstructed = await reconstructEntitiesAsOf(
       db,
@@ -408,7 +419,18 @@ const collectEntities = async (
       candidateEntityIds,
       includeProjectSnapshots
     );
-    const filtered = filterEntities(reconstructed, { schemaId, owner, lifecycle, q: q ?? '' });
+    const filtered = filterEntities(reconstructed, {
+      schemaId,
+      owner,
+      lifecycle,
+      q: q ?? ''
+    }).filter(entity => {
+      if (!projectId) return entity.project_id == null;
+      if (projectScope === 'project') {
+        return entity.project_id === projectId || projectLinkIds.has(entity.id);
+      }
+      return entity.project_id == null || entity.project_id === projectId;
+    });
     for (const entity of filtered) {
       processEntity(entity, conditions);
     }

@@ -30,6 +30,11 @@ export type BrowserEntityRecord = EntityRecord & {
   _assessment?: Record<string, string | number> | null;
 };
 
+export const isEntityInProject = (
+  entity: Pick<BrowserEntityRecord, '_projectId' | '_projectLink'>,
+  projectId: string
+): boolean => entity._projectId === projectId || entity._projectLink?.linked === true;
+
 export type ProjectBrowserContext = {
   project: Pick<ProjectDetail, 'id' | 'canEdit'>;
   projectEntities: ProjectEntity[];

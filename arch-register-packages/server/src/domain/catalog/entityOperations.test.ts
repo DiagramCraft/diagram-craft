@@ -265,7 +265,8 @@ describe('listEntities with asOf', () => {
         listSchemas: vi.fn(async () => [schema]),
         listSnapshotsAsOf,
         listEntityIdsWithAnySnapshot: vi.fn(async () => []),
-        getEntity: vi.fn(async () => null)
+        getEntity: vi.fn(async () => null),
+        listEntitiesPaginated: vi.fn(async () => [])
       },
       project: {
         listProjectEntities: vi.fn(async () => []),

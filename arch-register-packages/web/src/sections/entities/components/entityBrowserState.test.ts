@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSavedViewPayload,
   buildEntityQueryFromBrowserFilters,
+  isEntityInProject,
   parseJsonConfig,
   parseEntityQueryFromSearch,
   parseViewConfigs,
@@ -10,6 +11,21 @@ import {
   toSavedViewConfig,
   toSavedViewSearch
 } from './entityBrowserState';
+
+describe('project entity membership highlighting', () => {
+  const linked = { linked: true, entityType: null, isDone: false };
+  const notLinked = { linked: false, entityType: null, isDone: false };
+  const cases: Array<[Parameters<typeof isEntityInProject>[0], boolean]> = [
+    [{ _projectId: 'project-1', _projectLink: undefined }, true],
+    [{ _projectId: null, _projectLink: linked }, true],
+    [{ _projectId: 'project-2', _projectLink: linked }, true],
+    [{ _projectId: null, _projectLink: notLinked }, false]
+  ];
+
+  it.each(cases)('recognizes project membership for %j', (entity, expected) => {
+    expect(isEntityInProject(entity, 'project-1')).toBe(expected);
+  });
+});
 
 describe('entity browser view field persistence', () => {
   it.each(['table', 'cards', 'tree'] as const)('saves %s field configuration', view => {

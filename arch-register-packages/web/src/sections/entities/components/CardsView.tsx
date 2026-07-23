@@ -17,6 +17,7 @@ import {
   getDisplayFieldIds,
   type EntityDisplayField
 } from './entityDisplayFields';
+import { isEntityInProject } from './entityBrowserState';
 
 type CardsViewProps = EntityBrowserBaseViewProps & {
   config: unknown;
@@ -81,7 +82,7 @@ export const CardsView = ({
             <div
               className={styles.cardName}
               style={
-                projectContext && entity._projectLink?.linked === false
+                projectContext != null && !isEntityInProject(entity, projectContext.project.id)
                   ? { color: 'var(--base-fg-more-dim)' }
                   : undefined
               }
