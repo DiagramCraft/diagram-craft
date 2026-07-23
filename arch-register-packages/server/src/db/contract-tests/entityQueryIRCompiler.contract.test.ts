@@ -58,6 +58,38 @@ const runQuery = async (
 };
 
 runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
+  it('matches root free-text across name, slug, and description', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+
+    const nameMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'Platform Service'
+    });
+    const slugMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      slug: 'platform-api'
+    });
+    const descriptionMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      description: 'Owned by the platform team'
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'Unrelated Service',
+      slug: 'unrelated'
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const query: EntityQuery = {
+      schemaId: schema.id,
+      root: { kind: 'freeText', value: 'PLATFORM' }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches.map(entity => entity.id)).toEqual(
+      expect.arrayContaining([nameMatch.id, slugMatch.id, descriptionMatch.id])
+    );
+    expect(matches).toHaveLength(3);
+  });
+
   it('resolves a forward single-hop reference predicate', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

@@ -170,6 +170,42 @@ describe('validateEntityQueryIR', () => {
     expect(validateEntityQueryIR(query, schemas)).toEqual({ ok: true });
   });
 
+  it('accepts free-text search at the root', () => {
+    expect(
+      validateEntityQueryIR({ root: { kind: 'freeText', value: 'platform' } }, schemas)
+    ).toEqual({ ok: true });
+  });
+
+  it('rejects free-text search inside a relation filter', () => {
+    const result = validateEntityQueryIR(
+      {
+        root: {
+          kind: 'relationExists',
+          path: [
+            {
+              kind: 'backward',
+              fieldId: 'domain',
+              ownerSchemaId: SYSTEM.id,
+              filter: { kind: 'freeText', value: 'platform' }
+            }
+          ]
+        }
+      },
+      schemas
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.some(error => error.message.includes('starting entity list'))).toBe(
+        true
+      );
+    }
+  });
+
+  it('rejects an empty free-text value', () => {
+    const result = validateEntityQueryIR({ root: { kind: 'freeText', value: '  ' } }, schemas);
+    expect(result.ok).toBe(false);
+  });
+
   it('rejects an _assessment predicate when assessmentId is not set', () => {
     const query: EntityQuery = {
       root: {

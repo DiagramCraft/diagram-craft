@@ -34,6 +34,8 @@ filter state.
 **Filtering and facets.** Entities can be filtered by schema type, lifecycle state, and owner team. Facet counts (the
 number of entities per value) are shown alongside each filter option, updating as filters are applied.
 
+The entity browser also supports case-insensitive free-text search across entity names, slugs, and descriptions.
+
 **Global search.** A workspace-wide search covers entities, projects, diagram files, and schemas simultaneously. Results
 are returned with match highlighting and categorised by type, allowing quick navigation to any artifact in the
 workspace.

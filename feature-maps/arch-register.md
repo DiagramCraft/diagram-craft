@@ -77,7 +77,8 @@
         - @id:ar.entities.templates Users can create entities from configured templates and use templates to standardize
           recurring entity structures.
 
-    - @id:ar.entity-views Users can browse, filter, search, and analyze entity collections through configurable views.
+    - @id:ar.entity-views Users can browse, filter, search, and analyze entity collections through configurable views,
+      including free-text search across entity names, slugs, and descriptions.
 
         - @id:ar.entity-views.table Users can inspect entities in a tabular browser with configurable fields, sorting,
           filtering, selection, and bulk actions.

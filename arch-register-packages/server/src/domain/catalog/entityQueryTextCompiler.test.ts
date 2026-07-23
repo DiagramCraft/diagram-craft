@@ -356,6 +356,28 @@ describe('parseEntityQueryText — worked examples (specs/QUERY_LANGUAGE_IR_EXAM
 });
 
 describe('parseEntityQueryText — date/enum/empty resolution', () => {
+  it('parses root free-text search as a dedicated node', () => {
+    expect(parseOk('schema:Component text:"platform"')).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: COMPONENT.id },
+          { kind: 'freeText', value: 'platform' }
+        ]
+      }
+    });
+  });
+
+  it('rejects free-text search inside a relation scope', () => {
+    const errors = parseErr('schema:Component technology_releases[text:"platform"]');
+    expect(errors.some(e => e.message.includes('starting entity list'))).toBe(true);
+  });
+
+  it('rejects an empty free-text value', () => {
+    const errors = parseErr('text:"  "');
+    expect(errors.some(e => e.message.includes('must not be empty'))).toBe(true);
+  });
+
   it('resolves date(...) and the </> to before/after mapping for date fields', () => {
     const query = parseOk('schema:Component technology_releases.eol_date > date("2026-01-01")');
     const predicate = (query.root as { children: unknown[] }).children[1];
@@ -508,6 +530,14 @@ describe('printEntityQueryText', () => {
     const query = parseOk(text);
     const printed = printEntityQueryText(query, schemas);
     expect(parseOk(printed)).toEqual(query);
+  });
+
+  it('round-trips a root free-text query', () => {
+    const query = parseOk('schema:Component text:"platform \\"api\\""');
+    expect(printEntityQueryText(query, schemas)).toBe(
+      'schema:Component AND text:"platform \\"api\\""'
+    );
+    expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);
   });
 
   it('always prints an explicit owner schema for backward steps', () => {

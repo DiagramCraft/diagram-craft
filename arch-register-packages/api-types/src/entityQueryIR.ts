@@ -19,6 +19,9 @@ export type QueryNode =
   | { kind: 'and'; children: QueryNode[] }
   | { kind: 'or'; children: QueryNode[] }
   | { kind: 'not'; child: QueryNode }
+  // Root-entity free-text search. This is intentionally not a field predicate: it may only
+  // appear in the root query tree, never inside a relation path's scoped filter.
+  | { kind: 'freeText'; value: string }
   | { kind: 'predicate'; path: PathStep[]; fieldId: string; op: FilterOp; value: unknown }
   | { kind: 'relationExists'; path: PathStep[] };
 
@@ -58,6 +61,7 @@ export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>
     z.object({ kind: z.literal('and'), children: z.array(queryNodeSchema) }),
     z.object({ kind: z.literal('or'), children: z.array(queryNodeSchema) }),
     z.object({ kind: z.literal('not'), child: queryNodeSchema }),
+    z.object({ kind: z.literal('freeText'), value: z.string() }),
     z.object({
       kind: z.literal('predicate'),
       path: z.array(pathStepSchema),

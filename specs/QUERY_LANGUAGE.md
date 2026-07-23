@@ -77,8 +77,11 @@ unary_expr      := "NOT" unary_expr
                  | "(" or_expr ")"
                  | predicate
 
-predicate       := path comparator value
+predicate       := free_text
+                 | path comparator value
                  | path                                     (* shorthand for path:not_empty *)
+
+free_text       := "text" ( ":" | "=" ) quoted_string       (* starting entity list only *)
 
 path            := segment ( "." segment )*
 segment         := step [ "[" or_expr "]" ]                  (* optional scoped sub-condition, see 4.3 *)
@@ -114,6 +117,10 @@ schema_ref      := identifier | quoted_string            (* bare identifier only
 - `field:value` (`:` / `=`) → `equals`; `!=` → `not_equals`; `~` → `contains`; `^=`/`$=` → `starts_with`/`ends_with`;
   `>`,`>=`,`<`,`<=` map to date `after`/`gte`-ish and numeric comparisons already in `filterConditionSchema`'s `op`
   enum (`before`/`after`/`gt`/`lt`/`gte`/`lte`); a bare `path` with no comparator means `not_empty`.
+- `text:"needle"` is a dedicated free-text clause for the starting entity list. It matches `_name`, `_slug`, or
+  `_description` using case-insensitive contains semantics. It may participate in the root boolean tree, but it is
+  invalid inside a forward/backward relation scope (`[...]`); relation predicates remain field-specific. Empty or
+  whitespace-only values are invalid, while an empty browser search omits the clause.
 - **`empty`/`not_empty`/`on` comparator gap, resolved:** `empty` and `not_empty` are bare keyword *values*, not a new
   comparator token — `field:empty` / `field = empty` compiles straight to `{ op: 'empty', value: null }`
   (`not_empty` likewise), reusing the existing `:`/`=` comparator rather than inventing a new symbol. Any other
@@ -389,6 +396,7 @@ type QueryNode =
   | { kind: 'and'; children: QueryNode[] }
   | { kind: 'or'; children: QueryNode[] }
   | { kind: 'not'; child: QueryNode }
+  | { kind: 'freeText'; value: string } // root starting-entity search only
   | { kind: 'predicate'; path: PathStep[]; fieldId: string; op: FilterOp; value: unknown }
   | { kind: 'relationExists'; path: PathStep[] };
 

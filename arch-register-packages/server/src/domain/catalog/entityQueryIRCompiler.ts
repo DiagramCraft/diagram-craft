@@ -248,6 +248,13 @@ const compilePredicateTerminal =
     return clause;
   };
 
+const compileFreeTextTerminal = (alias: string, value: string, state: CompileState): string =>
+  `(${['_name', '_slug', '_description']
+    .map(fieldId =>
+      compilePredicateTerminal(fieldId, 'contains', value, state.dialect, state)(alias)
+    )
+    .join(' OR ')})`;
+
 // Walks a PathStep[] emitting one correlated EXISTS subquery per hop (forward: the current alias's
 // JSON field contains the next alias's id; backward: the next alias's JSON field contains the
 // current alias's id, scoped to `ownerSchemaId`). `step.filter`, when present, is ANDed into the
@@ -278,7 +285,9 @@ const compilePathSteps = (
     step.kind === 'backward'
       ? ` AND ${alias}.schema_id = ${addParam(state, step.ownerSchemaId)}`
       : '';
-  const filterClause = step.filter ? ` AND ${compileNode(step.filter, alias, schemas, state)}` : '';
+  const filterClause = step.filter
+    ? ` AND ${compileNode(step.filter, alias, schemas, state, false)}`
+    : '';
   const rest = compilePathSteps(steps, index + 1, alias, schemas, state, terminal);
 
   return (
@@ -319,19 +328,31 @@ const compileNode = (
   node: QueryNode,
   alias: string,
   schemas: SchemaCatalog,
-  state: CompileState
+  state: CompileState,
+  allowFreeText: boolean
 ): string => {
   switch (node.kind) {
     case 'and':
       return node.children.length === 0
         ? '1=1'
-        : `(${node.children.map(child => compileNode(child, alias, schemas, state)).join(' AND ')})`;
+        : `(${node.children
+            .map(child => compileNode(child, alias, schemas, state, allowFreeText))
+            .join(' AND ')})`;
     case 'or':
       return node.children.length === 0
         ? '1=0'
-        : `(${node.children.map(child => compileNode(child, alias, schemas, state)).join(' OR ')})`;
+        : `(${node.children
+            .map(child => compileNode(child, alias, schemas, state, allowFreeText))
+            .join(' OR ')})`;
     case 'not':
-      return `NOT (${compileNode(node.child, alias, schemas, state)})`;
+      return `NOT (${compileNode(node.child, alias, schemas, state, allowFreeText)})`;
+    case 'freeText':
+      if (!allowFreeText) {
+        throw new UnsupportedEntityQueryIRError(
+          "'freeText' is only valid for the starting entity list"
+        );
+      }
+      return compileFreeTextTerminal(alias, node.value, state);
     case 'predicate':
       if (alias === ROOT_ALIAS && !state.compilingBinding) {
         const binding = state.bindingByPath.get(pathKey(node.path));
@@ -403,7 +424,7 @@ const buildProjectionBindings = (
           ? ` AND ${targetAlias}.schema_id = ${addParam(state, step.ownerSchemaId)}`
           : '';
       const filter = step.filter
-        ? ` AND ${compileNode(step.filter, targetAlias, schemas, state)}`
+        ? ` AND ${compileNode(step.filter, targetAlias, schemas, state, false)}`
         : '';
       from += `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${filter}`;
       selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
@@ -851,7 +872,7 @@ export const compileEntityQueryIR = (
   if (query.schemaId) {
     whereParts.push(`${ROOT_ALIAS}.schema_id = ${addParam(state, query.schemaId)}`);
   }
-  whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, state));
+  whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, state, true));
 
   const sql = `
     WITH${state.asOf ? ' RECURSIVE' : ''} ${cte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}

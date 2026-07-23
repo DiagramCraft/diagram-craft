@@ -535,7 +535,7 @@ const parseStep = (
     let filter: QueryNode | undefined;
     if (peek(state).kind === 'LBRACKET') {
       advance(state);
-      filter = parseOrExpr(state, ownerSchemaId, schemas, enums);
+      filter = parseOrExpr(state, ownerSchemaId, schemas, enums, false);
       expect(state, 'RBRACKET');
     }
     return {
@@ -564,7 +564,7 @@ const parseStep = (
       );
     }
     advance(state);
-    filter = parseOrExpr(state, nextSchemaId, schemas, enums);
+    filter = parseOrExpr(state, nextSchemaId, schemas, enums, false);
     expect(state, 'RBRACKET');
   }
 
@@ -607,12 +607,44 @@ const tryParseSchemaPredicate = (
   return { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: schemaId };
 };
 
+// `text:<string>` is a root-entity search clause rather than a normal field predicate. It is
+// deliberately rejected while parsing a relation's scoped filter so free-text search cannot
+// accidentally change the meaning of a forward or backward traversal.
+const tryParseFreeTextPredicate = (
+  state: ParserState,
+  allowFreeText: boolean
+): QueryNode | undefined => {
+  const token = peek(state);
+  if (token.kind !== 'IDENT' || token.text !== 'text') return undefined;
+  const comparator = state.tokens[state.pos + 1];
+  if (comparator?.kind !== 'COMPARATOR' || (comparator.text !== ':' && comparator.text !== '=')) {
+    return undefined;
+  }
+  if (!allowFreeText) {
+    throw new TextCompileError(
+      "'text' free-text search is only valid for the starting entity list",
+      token.offset
+    );
+  }
+  advance(state);
+  advance(state);
+  const valueToken = expect(state, 'STRING');
+  const value = valueToken.value as string;
+  if (value.trim() === '') {
+    throw new TextCompileError('Free-text search value must not be empty', valueToken.offset);
+  }
+  return { kind: 'freeText', value };
+};
+
 const parsePredicate = (
   state: ParserState,
   currentSchemaId: string | undefined,
   schemas: SchemaCatalog,
-  enums: EnumCatalog
+  enums: EnumCatalog,
+  allowFreeText: boolean
 ): QueryNode => {
+  const freeTextPredicate = tryParseFreeTextPredicate(state, allowFreeText);
+  if (freeTextPredicate) return freeTextPredicate;
   const schemaPredicate = tryParseSchemaPredicate(state, schemas);
   if (schemaPredicate) return schemaPredicate;
 
@@ -671,19 +703,23 @@ const parseUnaryExpr = (
   state: ParserState,
   currentSchemaId: string | undefined,
   schemas: SchemaCatalog,
-  enums: EnumCatalog
+  enums: EnumCatalog,
+  allowFreeText: boolean
 ): QueryNode => {
   if (peek(state).kind === 'NOT') {
     advance(state);
-    return { kind: 'not', child: parseUnaryExpr(state, currentSchemaId, schemas, enums) };
+    return {
+      kind: 'not',
+      child: parseUnaryExpr(state, currentSchemaId, schemas, enums, allowFreeText)
+    };
   }
   if (peek(state).kind === 'LPAREN') {
     advance(state);
-    const node = parseOrExpr(state, currentSchemaId, schemas, enums);
+    const node = parseOrExpr(state, currentSchemaId, schemas, enums, allowFreeText);
     expect(state, 'RPAREN');
     return node;
   }
-  return parsePredicate(state, currentSchemaId, schemas, enums);
+  return parsePredicate(state, currentSchemaId, schemas, enums, allowFreeText);
 };
 
 const startsUnaryExpr = (token: Token): boolean =>
@@ -696,17 +732,18 @@ const parseAndExpr = (
   state: ParserState,
   currentSchemaId: string | undefined,
   schemas: SchemaCatalog,
-  enums: EnumCatalog
+  enums: EnumCatalog,
+  allowFreeText: boolean
 ): QueryNode => {
-  const children = [parseUnaryExpr(state, currentSchemaId, schemas, enums)];
+  const children = [parseUnaryExpr(state, currentSchemaId, schemas, enums, allowFreeText)];
   for (;;) {
     if (peek(state).kind === 'AND') {
       advance(state);
-      children.push(parseUnaryExpr(state, currentSchemaId, schemas, enums));
+      children.push(parseUnaryExpr(state, currentSchemaId, schemas, enums, allowFreeText));
       continue;
     }
     if (startsUnaryExpr(peek(state))) {
-      children.push(parseUnaryExpr(state, currentSchemaId, schemas, enums)); // implicit AND
+      children.push(parseUnaryExpr(state, currentSchemaId, schemas, enums, allowFreeText)); // implicit AND
       continue;
     }
     break;
@@ -718,12 +755,13 @@ const parseOrExpr = (
   state: ParserState,
   currentSchemaId: string | undefined,
   schemas: SchemaCatalog,
-  enums: EnumCatalog
+  enums: EnumCatalog,
+  allowFreeText: boolean
 ): QueryNode => {
-  const children = [parseAndExpr(state, currentSchemaId, schemas, enums)];
+  const children = [parseAndExpr(state, currentSchemaId, schemas, enums, allowFreeText)];
   while (peek(state).kind === 'OR') {
     advance(state);
-    children.push(parseAndExpr(state, currentSchemaId, schemas, enums));
+    children.push(parseAndExpr(state, currentSchemaId, schemas, enums, allowFreeText));
   }
   return children.length === 1 ? children[0]! : { kind: 'or', children };
 };
@@ -766,7 +804,7 @@ export const parseEntityQueryText = (
     const tokens = tokenize(text);
     const rootSchemaId = deriveRootSchemaId(tokens, schemas);
     const state: ParserState = { tokens, pos: 0, hopsUsed: 0 };
-    const root = parseOrExpr(state, rootSchemaId, schemas, enums);
+    const root = parseOrExpr(state, rootSchemaId, schemas, enums, true);
     if (peek(state).kind !== 'EOF') {
       throw new TextCompileError(
         `Unexpected trailing input '${peek(state).text}'`,
@@ -903,6 +941,8 @@ const printNode = (
       return node.children.map(c => printUnary(c, schemaId, schemas)).join(' OR ');
     case 'not':
       return `NOT ${printUnary(node.child, schemaId, schemas)}`;
+    case 'freeText':
+      return `text:${quoteString(node.value)}`;
     case 'predicate':
     case 'relationExists':
       return printPredicateOrRelationExists(node, schemaId, schemas);
