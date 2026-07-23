@@ -280,6 +280,7 @@ export const EntityBrowser = ({
   });
   const {
     addFieldRow,
+    approvalRequiredCount,
     availableFields,
     clearSelection,
     fieldRows,
@@ -427,6 +428,7 @@ export const EntityBrowser = ({
               workspaceId={workspaceId}
               count={selectedIds.size}
               selectedEntities={selectedEntities}
+              approvalRequiredCount={approvalRequiredCount}
               fieldRows={fieldRows}
               availableFields={availableFields}
               step={step}

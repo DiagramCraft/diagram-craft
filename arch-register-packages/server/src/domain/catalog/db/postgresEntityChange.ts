@@ -5,6 +5,7 @@ import type {
   EntityChangeDatabase,
   EntityChangeProposalDbCreate,
   EntityChangeRevisionDbCreate,
+  EntityChangeBulkRevisionDbCreate,
   EntityChangeProposalStatus,
   EntityChangeRevisionStatus
 } from './entityChangeDatabase';
@@ -107,6 +108,40 @@ export class PostgresEntityChangeDatabase
 
   private revisionSelect =
     `SELECT r.*, m.entity_id, m.base_version, m.base_state, m.proposed_state, m.diff, r.case_id AS proposal_id FROM entity_change_case_revision r JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+
+  private revisionMemberSelect =
+    `SELECT r.*, m.id AS member_id, m.entity_id, m.base_version, m.base_state, m.proposed_state, m.diff, r.case_id AS proposal_id FROM entity_change_case_revision r JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+
+  async createBulkRevision(input: EntityChangeBulkRevisionDbCreate) {
+    try {
+      const targetStatus = input.status === 'approved' ? 'applied' : input.status;
+      const isActive = ['draft', 'submitted', 'changes_requested'].includes(targetStatus);
+      await this.sql`
+        UPDATE entity_change_case_revision
+        SET is_active = FALSE
+        WHERE case_id = ${input.proposal_id}
+      `;
+      await this
+        .sql`INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, is_active, created_at, resolved_at) VALUES (${input.id}, ${input.proposal_id}, ${input.workspace}, ${input.revision_number}, ${input.policy_version}, ${this.json(input.resolved_policy)}, ${input.message}, ${input.created_by}, ${targetStatus}, ${isActive}, ${input.created_at}, ${input.resolved_at ?? null})`;
+      for (const member of input.members) {
+        await this
+          .sql`INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff) VALUES (${randomUUID()}, ${input.id}, ${input.workspace}, ${member.entity_id}, ${member.base_version}, ${this.json(member.base_state)}, ${this.json(member.proposed_state)}, ${this.json(member.diff)})`;
+      }
+      await this
+        .sql`UPDATE entity_change_case SET status = 'in_approval', updated_at = ${input.created_at} WHERE id = ${input.proposal_id}`;
+      return await this.getRevisionMembers(input.workspace, input.id);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async getRevisionMembers(workspace: string, revisionId: string) {
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${this.revisionMemberSelect} WHERE r.workspace = $1 AND r.id = $2 ORDER BY m.entity_id`,
+      [workspace, revisionId]
+    );
+    return mapDatabaseRows(rows, entityChangeMappers.revisionMember);
+  }
 
   async getRevision(workspace: string, id: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(

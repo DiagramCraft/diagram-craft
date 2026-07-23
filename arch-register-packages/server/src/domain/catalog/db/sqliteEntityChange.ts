@@ -4,6 +4,7 @@ import type {
   EntityChangeDatabase,
   EntityChangeProposalDbCreate,
   EntityChangeRevisionDbCreate,
+  EntityChangeBulkRevisionDbCreate,
   EntityChangeProposalStatus,
   EntityChangeRevisionStatus
 } from './entityChangeDatabase';
@@ -145,6 +146,69 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
       r.case_id AS proposal_id
     FROM entity_change_case_revision r
     JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+
+  private revisionMemberSelect = `
+    SELECT r.*, m.id AS member_id, m.entity_id, m.base_version, m.base_state, m.proposed_state, m.diff,
+      r.case_id AS proposal_id
+    FROM entity_change_case_revision r
+    JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+
+  async createBulkRevision(input: EntityChangeBulkRevisionDbCreate) {
+    const targetStatus = input.status === 'approved' ? 'applied' : input.status;
+    const isActive = ['draft', 'submitted', 'changes_requested'].includes(targetStatus) ? 1 : 0;
+    this.run('UPDATE entity_change_case_revision SET is_active = 0 WHERE case_id = ?', [
+      input.proposal_id
+    ]);
+    this.run(
+      `INSERT INTO entity_change_case_revision
+       (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, is_active, created_at, resolved_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        input.id,
+        input.proposal_id,
+        input.workspace,
+        input.revision_number,
+        input.policy_version,
+        JSON.stringify(input.resolved_policy),
+        input.message,
+        input.created_by,
+        targetStatus,
+        isActive,
+        input.created_at.toISOString(),
+        input.resolved_at?.toISOString() ?? null
+      ]
+    );
+    for (const member of input.members) {
+      this.run(
+        `INSERT INTO entity_change_case_entity_version
+         (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          randomUUID(),
+          input.id,
+          input.workspace,
+          member.entity_id,
+          member.base_version,
+          JSON.stringify(member.base_state),
+          JSON.stringify(member.proposed_state),
+          JSON.stringify(member.diff)
+        ]
+      );
+    }
+    this.run("UPDATE entity_change_case SET status = 'in_approval', updated_at = ? WHERE id = ?", [
+      input.created_at.toISOString(),
+      input.proposal_id
+    ]);
+    return await this.getRevisionMembers(input.workspace, input.id);
+  }
+
+  async getRevisionMembers(workspace: string, revisionId: string) {
+    return this.all(
+      `${this.revisionMemberSelect} WHERE r.workspace = ? AND r.id = ? ORDER BY m.entity_id`,
+      [workspace, revisionId],
+      entityChangeMappers.revisionMember
+    );
+  }
 
   async getRevision(workspace: string, id: string) {
     return this.get(

@@ -49,6 +49,39 @@ export type EntityChangeRevisionDbCreate = Omit<
   'created_at' | 'resolved_at'
 > & { created_at: Date; resolved_at?: Date | null };
 
+/**
+ * A single member row (`entity_change_case_entity_version`) within a bulk revision. Bulk
+ * revisions back the multi-entity propose-a-change flow (#2365), where one revision spans several
+ * entities instead of the single-entity `EntityChangeRevisionDbCreate` shape above.
+ */
+export type EntityChangeRevisionMemberInput = {
+  entity_id: string;
+  base_version: number;
+  base_state: Record<string, unknown>;
+  proposed_state: Record<string, unknown>;
+  diff: Record<string, unknown>;
+};
+
+export type EntityChangeBulkRevisionDbCreate = {
+  id: string;
+  proposal_id: string;
+  workspace: string;
+  revision_number: number;
+  policy_version: string;
+  resolved_policy: Record<string, unknown>;
+  message: string | null;
+  created_by: string | null;
+  status: EntityChangeRevisionStatus;
+  created_at: Date;
+  resolved_at?: Date | null;
+  members: EntityChangeRevisionMemberInput[];
+};
+
+/** A member row of a bulk revision, carrying its own `entity_change_case_entity_version.id`. */
+export type EntityChangeRevisionMemberDbResult = EntityChangeRevisionDbResult & {
+  member_id: string;
+};
+
 export const entityChangeMappers = {
   proposal: (row: DatabaseRow): EntityChangeProposalDbResult => ({
     id: String(row['id']),
@@ -85,6 +118,10 @@ export const entityChangeMappers = {
     status: row['status'] as EntityChangeRevisionStatus,
     created_at: databaseDate(row['created_at']),
     resolved_at: row['resolved_at'] == null ? null : databaseDate(row['resolved_at'])
+  }),
+  revisionMember: (row: DatabaseRow): EntityChangeRevisionMemberDbResult => ({
+    ...entityChangeMappers.revision(row),
+    member_id: String(row['member_id'])
   })
 };
 
@@ -119,4 +156,11 @@ export type EntityChangeDatabase = {
     status: EntityChangeRevisionStatus,
     resolvedAt?: Date | null
   ): Promise<EntityChangeRevisionDbResult | null>;
+  createBulkRevision(
+    input: EntityChangeBulkRevisionDbCreate
+  ): Promise<EntityChangeRevisionMemberDbResult[]>;
+  getRevisionMembers(
+    workspace: string,
+    revisionId: string
+  ): Promise<EntityChangeRevisionMemberDbResult[]>;
 };

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useUpdateEntity } from '../../../hooks/useEntities';
+import { useSubmitBulkEntityChangeProposal } from '../../../hooks/useEntityChanges';
 import { orpcClient } from '../../../lib/orpcClient';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -20,6 +21,17 @@ export type BulkEditSkip = { entity: EntityRecord; reason: string };
 export type BulkEditResult = {
   applied: EntityRecord[];
   skipped: BulkEditSkip[];
+  proposed: { entities: EntityRecord[]; caseId: string } | null;
+};
+
+const entityRequiresApproval = (
+  entity: EntityRecord,
+  schemaMap: Map<string, { schema: EntitySchema; index: number }>
+): boolean => {
+  if (entity._approvalPolicyOverride === 'required') return true;
+  if (entity._approvalPolicyOverride === 'disabled') return false;
+  const schema = schemaMap.get(entity._schema.id)?.schema;
+  return (schema?.entity_approval_policy ?? 'disabled') === 'required';
 };
 
 type UseEntityBrowserSelectionProps = {
@@ -93,6 +105,7 @@ export const useEntityBrowserSelection = ({
   schemaMap
 }: UseEntityBrowserSelectionProps) => {
   const updateEntityMutation = useUpdateEntity(workspaceId);
+  const submitBulkProposalMutation = useSubmitBulkEntityChangeProposal(workspaceId);
   const previousFilteredCountRef = useRef(0);
   const { cancel, schedule } = useCancellableTimeout();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -142,6 +155,14 @@ export const useEntityBrowserSelection = ({
     [selectedEntities, schemaMap]
   );
 
+  const approvalRequiredCount = useMemo(
+    () =>
+      selectedEntities.filter(
+        entity => entity.canEdit !== false && entityRequiresApproval(entity, schemaMap)
+      ).length,
+    [selectedEntities, schemaMap]
+  );
+
   const addFieldRow = useCallback((fieldId: string) => {
     setFieldRows(prev => [
       ...prev,
@@ -157,18 +178,21 @@ export const useEntityBrowserSelection = ({
     setFieldRows(prev => prev.filter(row => row.rowId !== rowId));
   }, []);
 
-  const handleConfirm = useCallback(async () => {
+  const handleConfirm = useCallback(async (proposalMessage?: string) => {
     cancel();
 
     const permSkipped: BulkEditSkip[] = selectedEntities
       .filter(entity => entity.canEdit === false)
       .map(entity => ({ entity, reason: 'No edit permission' }));
     const editable = selectedEntities.filter(entity => entity.canEdit !== false);
+    const needsApproval = editable.filter(entity => entityRequiresApproval(entity, schemaMap));
+    const direct = editable.filter(entity => !entityRequiresApproval(entity, schemaMap));
 
     const applied: EntityRecord[] = [];
     const skipped: BulkEditSkip[] = [...permSkipped];
+    let proposed: BulkEditResult['proposed'] = null;
 
-    for (const entity of editable) {
+    for (const entity of direct) {
       try {
         const schema = schemaMap.get(entity._schema.id)?.schema;
         const fullEntity = await orpcClient.entities.get({
@@ -194,7 +218,49 @@ export const useEntityBrowserSelection = ({
       }
     }
 
-    setResult({ applied, skipped });
+    if (needsApproval.length === 1) {
+      skipped.push({
+        entity: needsApproval[0]!,
+        reason: 'This entity requires an approved change proposal before it can be edited'
+      });
+    } else if (needsApproval.length > 1) {
+      try {
+        const members = await Promise.all(
+          needsApproval.map(async entity => {
+            const schema = schemaMap.get(entity._schema.id)?.schema;
+            const fullEntity = await orpcClient.entities.get({
+              params: { workspace: workspaceId, id: entity._uid }
+            });
+            const body = buildBaseMutationBody(fullEntity, schema);
+            for (const row of fieldRows) {
+              if (!row.clearing && row.value === '') continue;
+              const field = availableFields.find(f => f.id === row.fieldId);
+              if (!field) continue;
+              applyFieldRowToBody(body, row, field);
+            }
+            return {
+              entityId: entity._uid,
+              baseVersion: fullEntity._version ?? 1,
+              proposedState: body
+            };
+          })
+        );
+        const result = await submitBulkProposalMutation.mutateAsync({
+          members,
+          message: proposalMessage?.trim() || undefined
+        });
+        proposed = { entities: needsApproval, caseId: result.id };
+      } catch (error) {
+        for (const entity of needsApproval) {
+          skipped.push({
+            entity,
+            reason: error instanceof Error ? error.message : 'Failed to submit change proposal'
+          });
+        }
+      }
+    }
+
+    setResult({ applied, skipped, proposed });
     setStep('done');
     if (skipped.length === 0) {
       schedule(clearSelection, 1800);
@@ -205,6 +271,7 @@ export const useEntityBrowserSelection = ({
     fieldRows,
     availableFields,
     updateEntityMutation,
+    submitBulkProposalMutation,
     workspaceId,
     clearSelection,
     cancel,
@@ -213,6 +280,7 @@ export const useEntityBrowserSelection = ({
 
   return {
     addFieldRow,
+    approvalRequiredCount,
     availableFields,
     canClearBulkField,
     clearSelection,

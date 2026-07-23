@@ -26,7 +26,11 @@ import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRo
 import { workspaceMarkdownRoute } from '../../routes/publicObjectRoutes';
 import { entityKeys } from '../../queries/entities';
 import { projectFileKeys } from '../../queries/content';
-import { entityChangeKeys, useWithdrawEntityChangeProposal } from '../../hooks/useEntityChanges';
+import {
+  bulkEntityChangeKeys,
+  entityChangeKeys,
+  useWithdrawEntityChangeProposal
+} from '../../hooks/useEntityChanges';
 
 const humanize = (value: string) =>
   value.replace(/[._-]+/g, ' ').replace(/\b\w/g, character => character.toUpperCase());
@@ -99,12 +103,33 @@ export const GovernanceInboxScreen = () => {
   const [requestChangesReason, setRequestChangesReason] = useState('');
   const isLoading = scope === 'assigned' ? tasksLoading : submissionsLoading;
   const error = scope === 'assigned' ? tasksError : submissionsError;
+  const bulkCaseIds = [
+    ...new Set([
+      ...tasks
+        .filter(task => task.case.caseKind === 'entity.change.bulk')
+        .map(task => task.case.subjectId),
+      ...rawSubmissions
+        .filter(submission => submission.case.caseKind === 'entity.change.bulk')
+        .map(submission => submission.case.subjectId)
+    ])
+  ];
+  const bulkProposalQueries = useQueries({
+    queries: bulkCaseIds.map(caseId => ({
+      queryKey: bulkEntityChangeKeys.detail(workspace, caseId),
+      queryFn: () => orpcClient.entityChanges.getBulk({ params: { workspace, proposalId: caseId } }),
+      enabled: !!workspace
+    }))
+  });
+  const bulkProposalsByCaseId = new Map(
+    bulkCaseIds.map((caseId, index) => [caseId, bulkProposalQueries[index]?.data])
+  );
   const entityIds = [
     ...new Set([
       ...tasks.filter(task => task.case.subjectType === 'entity').map(task => task.case.subjectId),
       ...rawSubmissions
         .filter(submission => submission.case.subjectType === 'entity')
-        .map(submission => submission.case.subjectId)
+        .map(submission => submission.case.subjectId),
+      ...[...bulkProposalsByCaseId.values()].flatMap(proposal => proposal?.entityIds ?? [])
     ])
   ];
   const entityQueries = useQueries({
@@ -229,12 +254,18 @@ export const GovernanceInboxScreen = () => {
       { assignmentId: requestChangesTask.assignment.id, decision: 'request_changes', reason },
       {
         onSuccess: async () => {
-          await queryClient.invalidateQueries({
-            queryKey: entityChangeKeys.current(workspace, requestChangesTask.case.subjectId)
-          });
-          await queryClient.invalidateQueries({
-            queryKey: entityKeys.detail(workspace, requestChangesTask.case.subjectId)
-          });
+          if (requestChangesTask.case.caseKind === 'entity.change.bulk') {
+            await queryClient.invalidateQueries({
+              queryKey: bulkEntityChangeKeys.detail(workspace, requestChangesTask.case.subjectId)
+            });
+          } else {
+            await queryClient.invalidateQueries({
+              queryKey: entityChangeKeys.current(workspace, requestChangesTask.case.subjectId)
+            });
+            await queryClient.invalidateQueries({
+              queryKey: entityKeys.detail(workspace, requestChangesTask.case.subjectId)
+            });
+          }
           setRequestChangesTask(null);
           setRequestChangesReason('');
         }
@@ -339,6 +370,15 @@ export const GovernanceInboxScreen = () => {
         ) : (
           <ul className={styles.list} aria-label="Submitted governance cases">
             {submissions.map((submission: GovernanceSubmission) => {
+              const isBulk = submission.case.caseKind === 'entity.change.bulk';
+              const bulkProposal = isBulk
+                ? bulkProposalsByCaseId.get(submission.case.subjectId)
+                : undefined;
+              const bulkMemberEntities = (bulkProposal?.entityIds ?? [])
+                .map(entityId => entitiesById.get(entityId))
+                .filter((memberEntity): memberEntity is NonNullable<typeof memberEntity> =>
+                  memberEntity != null
+                );
               const subjectEntity =
                 submission.case.subjectType === 'entity'
                   ? entitiesById.get(submission.case.subjectId)
@@ -347,10 +387,13 @@ export const GovernanceInboxScreen = () => {
                 submission.case.subjectType === 'document'
                   ? documentsById.get(submission.case.subjectId)
                   : undefined;
-              const subjectLabel =
-                subjectEntity?._name ?? subjectDocument?.name ?? submission.case.subjectId;
+              const subjectLabel = isBulk
+                ? `${bulkProposal?.entityIds.length ?? 0} entities`
+                : (subjectEntity?._name ?? subjectDocument?.name ?? submission.case.subjectId);
               const proposal = proposalsByEntityId.get(submission.case.subjectId);
-              const latestRevision = proposal?.revisions.at(-1);
+              const latestRevision = isBulk
+                ? bulkProposal?.revisions.at(-1)
+                : proposal?.revisions.at(-1);
               const proposalNote = latestRevision?.message;
               const viewSubject = () => {
                 if (subjectEntity?._publicId) {
@@ -376,19 +419,51 @@ export const GovernanceInboxScreen = () => {
               const canWithdraw =
                 !isEntityChangeProposalWithdrawn(submission) &&
                 (submission.case.status === 'open' ||
-                  (submission.case.caseKind === 'entity.change' &&
+                  ((submission.case.caseKind === 'entity.change' ||
+                    submission.case.caseKind === 'entity.change.bulk') &&
                     submission.case.outcome === 'request_changes'));
               return (
                 <li className={styles.task} key={submission.case.id}>
                   <div className={styles.taskMain}>
-                    <div className={styles.taskTitle}>{humanize(submission.case.caseKind)}</div>
+                    <div className={styles.taskTitle}>
+                      {isBulk
+                        ? `${subjectLabel} · ${humanize(submission.case.caseKind)}`
+                        : humanize(submission.case.caseKind)}
+                    </div>
                     <div className={styles.taskMeta}>
-                      <span>{humanize(submission.case.subjectType)}</span>
+                      <span>{isBulk ? 'Entities' : humanize(submission.case.subjectType)}</span>
                       <span>·</span>
                       <span>{subjectLabel}</span>
                       <span>·</span>
                       <span>Submitted {new Date(submission.case.createdAt).toLocaleString()}</span>
                     </div>
+                    {isBulk && bulkMemberEntities.length > 0 && (
+                      <div className={styles.taskMeta}>
+                        {bulkMemberEntities.map((memberEntity, index) => (
+                          <span key={memberEntity._uid}>
+                            {index > 0 && <span>, </span>}
+                            {memberEntity._publicId ? (
+                              <a
+                                href="#"
+                                onClick={event => {
+                                  event.preventDefault();
+                                  navigate(
+                                    entityDetailRoute(
+                                      workspace,
+                                      asEntityPublicId(memberEntity._publicId)
+                                    )
+                                  );
+                                }}
+                              >
+                                {memberEntity._name}
+                              </a>
+                            ) : (
+                              memberEntity._name
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <div className={styles.taskProposalMeta}>
                       {isEntityChangeProposalWithdrawn(submission)
                         ? 'Status: Withdrawn'
@@ -463,6 +538,16 @@ export const GovernanceInboxScreen = () => {
                 : task.assignment.action === 'acknowledge'
                   ? 'acknowledge'
                   : null;
+            const isBulk = task.case.caseKind === 'entity.change.bulk';
+            const bulkProposal = isBulk
+              ? bulkProposalsByCaseId.get(task.case.subjectId)
+              : undefined;
+            const bulkMemberEntities = (bulkProposal?.entityIds ?? [])
+              .map(entityId => entitiesById.get(entityId))
+              .filter(
+                (memberEntity): memberEntity is NonNullable<typeof memberEntity> =>
+                  memberEntity != null
+              );
             const subjectEntity =
               task.case.subjectType === 'entity'
                 ? entitiesById.get(task.case.subjectId)
@@ -471,10 +556,13 @@ export const GovernanceInboxScreen = () => {
               task.case.subjectType === 'document'
                 ? documentsById.get(task.case.subjectId)
                 : undefined;
-            const subjectLabel =
-              subjectEntity?._name ?? subjectDocument?.name ?? task.case.subjectId;
+            const subjectLabel = isBulk
+              ? `${bulkProposal?.entityIds.length ?? 0} entities`
+              : (subjectEntity?._name ?? subjectDocument?.name ?? task.case.subjectId);
             const proposal = proposalsByEntityId.get(task.case.subjectId);
-            const latestRevision = proposal?.revisions.at(-1);
+            const latestRevision = isBulk
+              ? bulkProposal?.revisions.at(-1)
+              : proposal?.revisions.at(-1);
             const proposalNote = latestRevision?.message;
             const viewSubject = () => {
               if (subjectEntity?._publicId) {
@@ -489,8 +577,38 @@ export const GovernanceInboxScreen = () => {
               <li className={styles.task} key={task.assignment.id}>
                 <div className={styles.taskMain}>
                   <div className={styles.taskTitle}>
-                    {humanize(task.case.caseKind)} · {actionLabel}
+                    {isBulk
+                      ? `${subjectLabel} · ${humanize(task.case.caseKind)}`
+                      : humanize(task.case.caseKind)}{' '}
+                    · {actionLabel}
                   </div>
+                  {isBulk && bulkMemberEntities.length > 0 && (
+                    <div className={styles.taskMeta}>
+                      {bulkMemberEntities.map((memberEntity, index) => (
+                        <span key={memberEntity._uid}>
+                          {index > 0 && <span>, </span>}
+                          {memberEntity._publicId ? (
+                            <a
+                              href="#"
+                              onClick={event => {
+                                event.preventDefault();
+                                navigate(
+                                  entityDetailRoute(
+                                    workspace,
+                                    asEntityPublicId(memberEntity._publicId)
+                                  )
+                                );
+                              }}
+                            >
+                              {memberEntity._name}
+                            </a>
+                          ) : (
+                            memberEntity._name
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className={styles.taskMeta}>
                     <span>{humanize(task.case.subjectType)}</span>
                     <span>·</span>
@@ -533,6 +651,7 @@ export const GovernanceInboxScreen = () => {
                   {task.requiresAction &&
                     decision === 'approve' &&
                     (task.case.caseKind === 'entity.change' ||
+                      task.case.caseKind === 'entity.change.bulk' ||
                       task.case.caseKind === 'document.status') && (
                       <Button
                         disabled={decide.isPending}

@@ -21,11 +21,15 @@ import { computeEntityCompleteness } from '../../utils/completeness';
 import type {
   EntityChangeProposal,
   EntityChangeProposalBody,
-  EntityChangeRevision
+  EntityChangeRevision,
+  EntityChangeBulkProposal,
+  EntityChangeBulkProposalBody,
+  EntityChangeBulkRevision
 } from '@arch-register/api-types/entityChangeContract';
 import type {
   EntityChangeProposalDbResult,
-  EntityChangeRevisionDbResult
+  EntityChangeRevisionDbResult,
+  EntityChangeRevisionMemberDbResult
 } from './db/entityChangeDatabase';
 import {
   createGovernanceCaseInTransaction,
@@ -39,6 +43,7 @@ import { PermissionChecker } from '@arch-register/permissions';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change';
+export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change.bulk';
 
 const permissionChecker = new PermissionChecker();
 
@@ -336,6 +341,86 @@ const toApiProposal = async (
   };
 };
 
+const toApiBulkRevision = (
+  members: EntityChangeRevisionMemberDbResult[],
+  caseId: string | null,
+  createdByName: string | null
+): EntityChangeBulkRevision => {
+  const first = members[0]!;
+  return {
+    id: first.id,
+    proposalId: first.proposal_id,
+    revisionNumber: first.revision_number,
+    members: members.map(member => ({
+      entityId: member.entity_id,
+      baseVersion: member.base_version,
+      baseState: member.base_state,
+      proposedState: member.proposed_state,
+      diff: member.diff
+    })),
+    policyVersion: first.policy_version,
+    resolvedPolicy: first.resolved_policy,
+    message: first.message,
+    createdBy: first.created_by,
+    createdByName,
+    status: first.status,
+    createdAt: first.created_at.toISOString(),
+    resolvedAt: first.resolved_at?.toISOString() ?? null,
+    caseId
+  };
+};
+
+const findCaseForBulkRevision = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  caseId: string,
+  revisionId: string
+): Promise<GovernanceCaseDbResult | null> => {
+  const cases = await db.governance.listCases(workspace, {
+    caseKind: ENTITY_CHANGE_CASE_BULK_KIND,
+    subjectId: caseId
+  });
+  return cases.find(candidate => candidate.subject_version === revisionId) ?? null;
+};
+
+const toApiBulkProposal = async (
+  db: DatabaseAdapter,
+  proposal: EntityChangeProposalDbResult
+): Promise<EntityChangeBulkProposal> => {
+  const revisions = await db.entityChange.listRevisions(proposal.workspace, proposal.id);
+  const revisionNumbers = [...new Set(revisions.map(revision => revision.revision_number))].sort(
+    (a, b) => b - a
+  );
+  const apiRevisions = await Promise.all(
+    revisionNumbers.map(async revisionNumber => {
+      const revision = revisions.find(candidate => candidate.revision_number === revisionNumber)!;
+      const members = await db.entityChange.getRevisionMembers(proposal.workspace, revision.id);
+      const caseRow = await findCaseForBulkRevision(
+        db,
+        proposal.workspace,
+        proposal.id,
+        revision.id
+      );
+      const creator = revision.created_by ? await db.auth.getUser(revision.created_by) : null;
+      return toApiBulkRevision(members, caseRow?.id ?? null, creator?.display_name ?? null);
+    })
+  );
+  const entityIds = [
+    ...new Set(apiRevisions.flatMap(revision => revision.members.map(member => member.entityId)))
+  ];
+  return {
+    id: proposal.id,
+    workspace: proposal.workspace,
+    entityIds,
+    status: proposal.status,
+    initiatorUserId: proposal.initiator_user_id,
+    createdAt: proposal.created_at.toISOString(),
+    updatedAt: proposal.updated_at.toISOString(),
+    closedAt: proposal.closed_at?.toISOString() ?? null,
+    revisions: apiRevisions
+  };
+};
+
 const assertCanPropose = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -364,6 +449,176 @@ export const getEntityChangeProposal = async (
   requireEntityAction(authCtx, entity, 'view_entity');
   const proposal = await db.entityChange.getOpenProposal(workspace, entity.id);
   return proposal ? await toApiProposal(db, proposal) : null;
+};
+
+export const getBulkEntityChangeProposal = async (
+  db: DatabaseAdapter,
+  workspaceName: string,
+  proposalId: string,
+  event: AuthenticatedEvent
+) => {
+  const workspace = await resolveWorkspace(db.catalog, workspaceName);
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  const proposal = await db.entityChange.getProposal(workspace, proposalId);
+  if (!proposal) return null;
+  const apiProposal = await toApiBulkProposal(db, proposal);
+  for (const entityId of apiProposal.entityIds) {
+    const entity = await db.catalog.getEntity(workspace, entityId);
+    if (entity) requireEntityAction(authCtx, entity, 'view_entity');
+  }
+  return apiProposal;
+};
+
+export const submitBulkEntityChangeProposal = async (
+  db: DatabaseAdapter,
+  workspaceName: string,
+  event: AuthenticatedEvent,
+  body: EntityChangeBulkProposalBody
+): Promise<EntityChangeBulkProposal> => {
+  const workspace = await resolveWorkspace(db.catalog, workspaceName);
+  httpAssert.true(body.members.length >= 2, {
+    status: 400,
+    message: 'A bulk entity change proposal requires at least two entities'
+  });
+
+  const userId = event.context.user.id;
+  const now = new Date();
+
+  type PreparedMember = {
+    entity: Entity;
+    baseState: Record<string, unknown>;
+    proposedState: Record<string, unknown>;
+    diff: Record<string, unknown>;
+    policy: ResolvedEntityApprovalPolicy;
+  };
+
+  const prepared: PreparedMember[] = [];
+  for (const member of body.members) {
+    const { authCtx, entity } = await assertCanPropose(db, workspace, member.entityId, event);
+    requireWorkspaceCapability(authCtx, 'ent.propose');
+    const schema = await db.catalog.getSchema(workspace, entity.schema_id);
+    httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
+    const policy = policyFor(schema, entity);
+    httpAssert.true(policy.required, {
+      status: 409,
+      statusText: 'Conflict',
+      message: `Entity ${entity.name} does not require an approval proposal`
+    });
+    const { state: proposedState, update } = await buildProposedEntity(
+      db,
+      workspace,
+      entity,
+      member.proposedState
+    );
+    const baseState = entityState(entity);
+    const diff = buildDiff(baseState, proposedState);
+    if (Object.keys(diff).length === 0) continue;
+    httpAssert.true(member.baseVersion === (entity.version ?? 1), {
+      status: 409,
+      statusText: 'Conflict',
+      message: `Entity ${entity.name} changed while this proposal was being prepared`
+    });
+    if (update.owner !== entity.owner || update.project_id !== entity.project_id) {
+      requireEntityAction(authCtx, entity, 'admin_entity');
+    }
+    prepared.push({ entity, baseState, proposedState, diff, policy });
+  }
+
+  httpAssert.true(prepared.length >= 2, {
+    status: 400,
+    message: 'A bulk entity change proposal requires at least two entities with actual changes'
+  });
+
+  const ownerTeamIds = await getTeamIds(db, workspace);
+  const distinctOwnerTeams = [
+    ...new Set(
+      prepared
+        .map(member => member.entity.owner)
+        .filter((owner): owner is string => owner != null && ownerTeamIds.has(owner))
+    )
+  ];
+  const assignments = [
+    ...distinctOwnerTeams.map(teamId => ({
+      action: 'approve' as const,
+      target: { type: 'team_role' as const, teamId, teamRole: 'team_admin' as const }
+    })),
+    {
+      action: 'approve' as const,
+      target: { type: 'capability' as const, capability: 'ent.approve' as const }
+    }
+  ];
+
+  const eligibleApproverIdSets = await Promise.all([
+    listEligibleApproverIds(db, workspace, null),
+    ...distinctOwnerTeams.map(teamId => listEligibleApproverIds(db, workspace, teamId))
+  ]);
+  const eligibleApproverIds = new Set<string>();
+  for (const set of eligibleApproverIdSets) {
+    for (const id of set) eligibleApproverIds.add(id);
+  }
+  const selfApprovalAllowed = isSoleApprover(eligibleApproverIds, userId);
+  const policyVersion = prepared
+    .map(member => member.policy.policyVersion)
+    .sort()
+    .join('|');
+
+  const proposal = await db.core.transaction(async tx => {
+    const caseId = randomUUID();
+    const root = await tx.entityChange.createProposal({
+      id: caseId,
+      workspace,
+      entity_id: prepared[0]!.entity.id,
+      status: 'open',
+      initiator_user_id: userId,
+      created_at: now,
+      updated_at: now,
+      closed_at: null
+    });
+    const revisionId = randomUUID();
+    await tx.entityChange.createBulkRevision({
+      id: revisionId,
+      proposal_id: root.id,
+      workspace,
+      revision_number: 1,
+      policy_version: policyVersion,
+      resolved_policy: { selfApprovalAllowed },
+      message: body.message ?? null,
+      created_by: userId,
+      status: 'submitted',
+      created_at: now,
+      resolved_at: null,
+      members: prepared.map(member => ({
+        entity_id: member.entity.id,
+        base_version: member.entity.version ?? 1,
+        base_state: member.baseState,
+        proposed_state: member.proposedState,
+        diff: member.diff
+      }))
+    });
+
+    await createGovernanceCaseInTransaction(
+      tx,
+      workspace,
+      userId,
+      {
+        caseKind: ENTITY_CHANGE_CASE_BULK_KIND,
+        subjectType: 'entity_change_case',
+        subjectId: root.id,
+        subjectVersion: revisionId,
+        policyVersion,
+        selfApprovalAllowed,
+        payload: {
+          proposalId: root.id,
+          revisionId,
+          entityIds: prepared.map(member => member.entity.id)
+        },
+        assignments
+      },
+      now
+    );
+    return root;
+  });
+  return await toApiBulkProposal(db, proposal);
 };
 
 const submitProposal = async (
@@ -813,6 +1068,213 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             resultingStatus: caseRow.status,
             reason: null,
             metadata: { entityId, proposalId, revisionId, entityVersion: updated.version ?? 1 }
+          });
+        }
+      }
+    ],
+    [
+      ENTITY_CHANGE_CASE_BULK_KIND,
+      {
+        subjectVisible: async (
+          db,
+          authCtx: AuthorizationContext,
+          workspace: string,
+          subjectId: string
+        ) => {
+          const revision = await db.entityChange.getLatestRevision(workspace, subjectId);
+          if (!revision) return false;
+          const members = await db.entityChange.getRevisionMembers(workspace, revision.id);
+          if (members.length === 0) return false;
+          for (const member of members) {
+            const entity = await db.catalog.getEntity(workspace, member.entity_id);
+            if (!entity || !permissionChecker.hasEntityPermission(authCtx, entity, 'view_entity')) {
+              return false;
+            }
+          }
+          return true;
+        },
+        beforeDecision: async (tx, { case: caseRow, decision }) => {
+          if (decision !== 'approve') return 'proceed';
+          const revisionId = String(caseRow.payload['revisionId']);
+          const members = await tx.entityChange.getRevisionMembers(caseRow.workspace, revisionId);
+          if (members.length === 0) return 'proceed';
+          let anyConflicting = false;
+          for (const member of members) {
+            const entity = await tx.catalog.getEntity(caseRow.workspace, member.entity_id);
+            if (!entity) continue;
+            const currentState = entityState(entity);
+            const conflicting = Object.keys(member.diff).some(
+              key =>
+                !equalValue(member.base_state[key], currentState[key]) &&
+                !equalValue(currentState[key], member.proposed_state[key])
+            );
+            if (conflicting) {
+              anyConflicting = true;
+              break;
+            }
+          }
+          if (!anyConflicting) return 'proceed';
+          await tx.entityChange.updateRevisionStatus(
+            caseRow.workspace,
+            revisionId,
+            'stale',
+            new Date()
+          );
+          return 'stale';
+        },
+        handleDecision: async (tx, { case: caseRow, decision }) => {
+          const payload = caseRow.payload;
+          const revisionId = String(payload['revisionId']);
+          const proposalId = String(payload['proposalId']);
+          if (decision === 'request_changes') {
+            await tx.entityChange.updateRevisionStatus(
+              caseRow.workspace,
+              revisionId,
+              'changes_requested'
+            );
+          } else if (decision === 'reject') {
+            await tx.entityChange.updateRevisionStatus(
+              caseRow.workspace,
+              revisionId,
+              'rejected',
+              new Date()
+            );
+            await tx.entityChange.updateProposalStatus(
+              caseRow.workspace,
+              proposalId,
+              'rejected',
+              new Date(),
+              new Date()
+            );
+          }
+        },
+        applyDomainEffect: async (tx, { case: caseRow, event }) => {
+          const payload = caseRow.payload;
+          const revisionId = String(payload['revisionId']);
+          const proposalId = String(payload['proposalId']);
+          const members = await tx.entityChange.getRevisionMembers(caseRow.workspace, revisionId);
+          httpAssert.true(members.length > 0, {
+            status: 409,
+            message: 'The proposal revision no longer exists'
+          });
+
+          const resolvedMembers: {
+            entity: Entity;
+            next: Record<string, unknown>;
+            nextSchema: NonNullable<Awaited<ReturnType<DatabaseAdapter['catalog']['getSchema']>>>;
+          }[] = [];
+          for (const member of members) {
+            const entity = await tx.catalog.getEntity(caseRow.workspace, member.entity_id);
+            httpAssert.present(entity, {
+              status: 409,
+              message: 'The governed entity no longer exists'
+            });
+            const currentState = entityState(entity);
+            const touchedKeys = Object.keys(member.diff);
+            const conflictingKeys = touchedKeys.filter(
+              key =>
+                !equalValue(member.base_state[key], currentState[key]) &&
+                !equalValue(currentState[key], member.proposed_state[key])
+            );
+            httpAssert.true(conflictingKeys.length === 0, {
+              status: 409,
+              statusText: 'Conflict',
+              message: `The proposal is stale because ${entity.name} changed in: ${conflictingKeys.join(', ')}`
+            });
+            const next = { ...member.proposed_state };
+            for (const key of mutableStateKeys) {
+              if (!touchedKeys.includes(key)) next[key] = currentState[key];
+            }
+            const nextSchemaId = String(next['schema_id']);
+            const nextSchema = await tx.catalog.getSchema(caseRow.workspace, nextSchemaId);
+            httpAssert.present(nextSchema, {
+              status: 409,
+              message: 'The entity schema no longer exists'
+            });
+            resolvedMembers.push({ entity, next, nextSchema });
+          }
+
+          const actor = event.actor_user_id ? await tx.auth.getUser(event.actor_user_id) : null;
+          const appliedVersions: { entityId: string; version: number }[] = [];
+          for (const { entity, next, nextSchema } of resolvedMembers) {
+            const nextDescription = String(next['description'] ?? '');
+            const nextOwner = (next['owner'] as string | null) ?? null;
+            const nextLifecycle = (next['lifecycle'] as string | null) ?? null;
+            const nextData = (next['data'] as Record<string, unknown>) ?? {};
+            const nextSchemaId = String(next['schema_id']);
+            const updated = await updateEntityWithAuditIfVersion(tx, {
+              workspace: caseRow.workspace,
+              entityId: entity.id,
+              previous: entity,
+              next: {
+                slug: String(next['slug']),
+                namespace: String(next['namespace']),
+                name: String(next['name']),
+                description: nextDescription,
+                owner: nextOwner,
+                lifecycle: nextLifecycle,
+                target_lifecycle: (next['target_lifecycle'] as string | null) ?? null,
+                target_lifecycle_date: (next['target_lifecycle_date'] as string | null) ?? null,
+                tags: Array.isArray(next['tags'])
+                  ? next['tags'].filter((value): value is string => typeof value === 'string')
+                  : [],
+                links: Array.isArray(next['links']) ? next['links'] : [],
+                schema_id: nextSchemaId,
+                data: nextData,
+                project_id: (next['project_id'] as string | null) ?? null,
+                updated_at: new Date(),
+                completeness: computeEntityCompleteness(
+                  {
+                    description: nextDescription,
+                    owner: nextOwner,
+                    lifecycle: nextLifecycle,
+                    data: nextData
+                  },
+                  nextSchema
+                )
+              },
+              expectedVersion: entity.version ?? 1,
+              actor: {
+                id: event.actor_user_id ?? caseRow.initiator_user_id ?? 'system',
+                displayName: actor?.display_name ?? null
+              },
+              auditMetadata: { governanceCaseId: caseRow.id, proposalId, revisionId },
+              versionKind: 'case_applied',
+              appliedCaseRevisionId: revisionId
+            });
+            httpAssert.present(updated, {
+              status: 409,
+              statusText: 'Conflict',
+              message: `${entity.name} changed after this proposal was submitted`
+            });
+            appliedVersions.push({ entityId: entity.id, version: updated.version ?? 1 });
+          }
+
+          await tx.entityChange.updateRevisionStatus(
+            caseRow.workspace,
+            revisionId,
+            'approved',
+            new Date()
+          );
+          await tx.entityChange.updateProposalStatus(
+            caseRow.workspace,
+            proposalId,
+            'approved',
+            new Date(),
+            new Date()
+          );
+          await recordGovernanceEvent(tx, caseRow, {
+            eventType: 'domain_effect_applied',
+            actorUserId: event.actor_user_id,
+            previousStatus: caseRow.status,
+            resultingStatus: caseRow.status,
+            reason: null,
+            metadata: {
+              proposalId,
+              revisionId,
+              entityIds: appliedVersions.map(entry => entry.entityId),
+              appliedVersions
+            }
           });
         }
       }
