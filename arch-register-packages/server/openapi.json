@@ -6135,7 +6135,8 @@
                     "project",
                     "all"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                 },
                 "asOf": {
                   "type": "string"
@@ -6949,7 +6950,7 @@
                 "all"
               ],
               "type": "string",
-              "description": "Project scope filter"
+              "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -8289,7 +8290,8 @@
                     "project",
                     "all"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                 },
                 "asOf": {
                   "type": "string"
@@ -9103,7 +9105,7 @@
                 "all"
               ],
               "type": "string",
-              "description": "Project scope filter"
+              "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -9522,7 +9524,8 @@
                     "project",
                     "all"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                 },
                 "asOf": {
                   "type": "string"
@@ -10336,7 +10339,7 @@
                 "all"
               ],
               "type": "string",
-              "description": "Project scope filter"
+              "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -14526,7 +14529,8 @@
                     "project",
                     "all"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                 },
                 "asOf": {
                   "type": "string"
@@ -15340,7 +15344,7 @@
                 "all"
               ],
               "type": "string",
-              "description": "Project scope filter"
+              "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -16952,7 +16956,7 @@
                             "type": "null"
                           }
                         ],
-                        "description": "Project entity browser scope filter"
+                        "description": "Project entity browser scope: project-owned or linked entities, or global plus project-owned entities"
                       },
                       "name": {
                         "type": "string",
@@ -17107,7 +17111,8 @@
                                   "project",
                                   "all"
                                 ],
-                                "type": "string"
+                                "type": "string",
+                                "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                               },
                               "asOf": {
                                 "type": "string"
@@ -18308,7 +18313,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Saved project entity browser scope"
+                    "description": "Saved project entity browser scope with project membership semantics"
                   },
                   "name": {
                     "type": "string",
@@ -18463,7 +18468,8 @@
                               "project",
                               "all"
                             ],
-                            "type": "string"
+                            "type": "string",
+                            "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                           },
                           "asOf": {
                             "type": "string"
@@ -19550,7 +19556,7 @@
                           "type": "null"
                         }
                       ],
-                      "description": "Project entity browser scope filter"
+                      "description": "Project entity browser scope: project-owned or linked entities, or global plus project-owned entities"
                     },
                     "name": {
                       "type": "string",
@@ -19705,7 +19711,8 @@
                                 "project",
                                 "all"
                               ],
-                              "type": "string"
+                              "type": "string",
+                              "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                             },
                             "asOf": {
                               "type": "string"
@@ -21079,7 +21086,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Saved project entity browser scope"
+                    "description": "Saved project entity browser scope with project membership semantics"
                   },
                   "name": {
                     "type": "string",
@@ -21234,7 +21241,8 @@
                               "project",
                               "all"
                             ],
-                            "type": "string"
+                            "type": "string",
+                            "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                           },
                           "asOf": {
                             "type": "string"
@@ -22316,7 +22324,7 @@
                           "type": "null"
                         }
                       ],
-                      "description": "Project entity browser scope filter"
+                      "description": "Project entity browser scope: project-owned or linked entities, or global plus project-owned entities"
                     },
                     "name": {
                       "type": "string",
@@ -22471,7 +22479,8 @@
                                 "project",
                                 "all"
                               ],
-                              "type": "string"
+                              "type": "string",
+                              "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                             },
                             "asOf": {
                               "type": "string"
