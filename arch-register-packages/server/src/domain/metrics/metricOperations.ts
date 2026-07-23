@@ -4,19 +4,20 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type {
   MetricConfig,
   MetricDistributionEntry,
   MetricRollupResponse
 } from '@arch-register/api-types/metricContract';
-import {
-  splitAssessmentConditions,
-  matchesAssessmentConditions
-} from '@arch-register/api-types/assessmentFilter';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterVisibleEntities } from '../auth/authorization';
-import { filterEntities, matchesFilterCondition } from '../catalog/dataHelpers';
-import { resolveJoinedAssessment } from '../catalog/entityQueryOperations';
+import {
+  resolveJoinedAssessment,
+  collectEntitiesFromIR,
+  normalizeEntityQueryOptions
+} from '../catalog/entityQueryOperations';
+import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
 
@@ -331,6 +332,7 @@ export const getBoxMetrics = async (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    entityQuery?: EntityQuery | null;
     assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
@@ -344,6 +346,7 @@ export const getBoxMetrics = async (
     lifecycle = null,
     q = '',
     conditions = [],
+    entityQuery = null,
     assessmentId = null,
     projectId = null,
     projectScope = 'all'
@@ -362,18 +365,32 @@ export const getBoxMetrics = async (
     });
   }
 
-  const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
-  const needsAssessment =
-    assessmentConditions.length > 0 ||
-    metric.source.kind === 'assessmentRating' ||
-    metric.source.kind === 'assessmentEnum';
+  const requestParams = {
+    entityQuery: entityQuery ?? undefined,
+    _schemaId: schemaId ?? undefined,
+    owner: owner ?? undefined,
+    lifecycle: lifecycle ?? undefined,
+    q: q ?? undefined,
+    conditions,
+    assessmentId: assessmentId ?? undefined,
+    projectId: projectId ?? undefined,
+    projectScope
+  };
+  const parsed = parseEntityQuery(requestParams);
+  const query = buildEntityQueryForExecution(requestParams, parsed);
+  httpAssert.present(query, { status: 400, message: 'Unable to build entity query' });
 
-  const [schemas, allEntities, lifecycleStates, joinedAssessment] = await Promise.all([
-    db.catalog.listSchemas(workspace),
-    listAllCatalogEntities(db, workspace, projectId ? { projectId, projectScope } : undefined),
-    db.workspace.listLifecycleStates(workspace),
-    resolveJoinedAssessment(db, workspace, authCtx, assessmentId, needsAssessment)
-  ]);
+  const needsAssessment =
+    metric.source.kind === 'assessmentRating' || metric.source.kind === 'assessmentEnum';
+
+  const [schemas, allEntities, lifecycleStates, joinedAssessment, projectEntities] =
+    await Promise.all([
+      db.catalog.listSchemas(workspace),
+      listAllCatalogEntities(db, workspace, projectId ? { projectId, projectScope } : undefined),
+      db.workspace.listLifecycleStates(workspace),
+      resolveJoinedAssessment(db, workspace, authCtx, parsed.assessmentId, needsAssessment),
+      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+    ]);
 
   if (metric.source.kind === 'assessmentRating') {
     httpAssert.present(joinedAssessment, {
@@ -387,29 +404,21 @@ export const getBoxMetrics = async (
   const visibleEntities = filterVisibleEntities(authCtx, allEntities);
   const scopedEntities = visibleEntities;
 
-  const quickFilterMatchIds = new Set(
-    filterEntities(scopedEntities, { schemaId, owner, lifecycle, q: q ?? '' }).map(e => e.id)
+  const matchIds = new Set(
+    (
+      await collectEntitiesFromIR(
+        db,
+        workspace,
+        authCtx,
+        normalizeEntityQueryOptions({ entityQuery: query, projectId, projectScope, view: 'summary' }),
+        schemas,
+        projectEntities,
+        null
+      )
+    ).map(row => row.entity._uid)
   );
 
-  const isFilterMatch = (entity: EntityDbResult): boolean => {
-    if (!quickFilterMatchIds.has(entity.id)) return false;
-    if (otherConditions.length > 0) {
-      if (!otherConditions.every(c => matchesFilterCondition(entity, c, entity.completeness)))
-        return false;
-    }
-    if (
-      joinedAssessment &&
-      assessmentConditions.length > 0 &&
-      !matchesAssessmentConditions(
-        joinedAssessment.responsesByEntity.get(entity.id),
-        assessmentConditions,
-        joinedAssessment.assessment.fields
-      )
-    ) {
-      return false;
-    }
-    return true;
-  };
+  const isFilterMatch = (entity: EntityDbResult): boolean => matchIds.has(entity.id);
 
   return computeBoxMetrics(
     boxEntityIds,

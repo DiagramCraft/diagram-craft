@@ -47,6 +47,7 @@ export const workspaceMetricORPCRouter = metricRouter.router({
         lifecycle: body.lifecycle,
         q: body.q,
         conditions: body.conditions,
+        entityQuery: body.entityQuery,
         assessmentId: body.assessmentId,
         projectId: body.projectId,
         projectScope: body.projectScope

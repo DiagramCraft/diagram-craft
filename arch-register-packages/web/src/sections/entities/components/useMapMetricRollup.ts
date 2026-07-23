@@ -22,6 +22,7 @@ export const useMapMetricRollup = ({
   lifecycle,
   q,
   conditions,
+  entityQuery,
   assessmentId,
   projectId,
   projectScope
@@ -37,6 +38,7 @@ export const useMapMetricRollup = ({
       lifecycle: lifecycle ?? undefined,
       q: q ?? undefined,
       conditions: conditions?.length ? conditions : undefined,
+      entityQuery: entityQuery ?? undefined,
       assessmentId: assessmentId ?? undefined,
       projectId: projectId ?? undefined,
       projectScope: projectScope ?? undefined
@@ -49,6 +51,7 @@ export const useMapMetricRollup = ({
       lifecycle,
       q,
       conditions,
+      entityQuery,
       assessmentId,
       projectId,
       projectScope

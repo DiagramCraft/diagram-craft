@@ -12,7 +12,8 @@ import type {
   MetricLegend as MetricLegendData,
   MetricResult
 } from '@arch-register/api-types/metricContract';
-import { mapViewConfigSchema } from '@arch-register/api-types/viewContract';
+import { mapViewConfigSchema, type FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import { EmptyState } from '../../../components/EmptyState';
 import {
@@ -73,6 +74,8 @@ type MapViewProps = {
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
+  conditions?: FilterCondition[];
+  entityQuery?: EntityQuery | null;
   onEntityClick: (entityId: string) => void;
   config: unknown;
   onConfigChange: (cfg: MapConfig) => void;
@@ -281,6 +284,8 @@ export const MapView = ({
   typeFilter,
   ownerFilter,
   statusFilter,
+  conditions,
+  entityQuery,
   onEntityClick,
   config,
   onConfigChange,
@@ -424,6 +429,8 @@ export const MapView = ({
     owner: ownerFilter,
     lifecycle: statusFilter,
     q,
+    conditions,
+    entityQuery,
     assessmentId: joinAssessmentId,
     projectId,
     projectScope
