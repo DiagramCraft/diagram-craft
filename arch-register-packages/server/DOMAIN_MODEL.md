@@ -141,8 +141,10 @@ kept unchanged as migration history.
 
 The current server still exposes snapshot/proposal-shaped repository and API compatibility methods
 for the existing single-entity UI. Those methods write to and read from the target tables. The
-multi-entity case API, atomic application flow, and removal of the compatibility API surface are
-tracked in [issue #1740](https://github.com/DiagramCraft/diagram-craft/issues/1740) and
+multi-entity case API and atomic application flow are tracked in
+[issue #2364](https://github.com/DiagramCraft/diagram-craft/issues/2364) (planning) and
+[issue #2365](https://github.com/DiagramCraft/diagram-craft/issues/2365) (approval proposals);
+removal of the compatibility API surface is tracked in
 [issue #2341](https://github.com/DiagramCraft/diagram-craft/issues/2341).
 
 Bootstrap assumes a clean database. Seeded entities receive an initial `entity_version`; no legacy
@@ -150,6 +152,7 @@ data backfill is performed.
 
 ## Related follow-up
 
-- [#1740 — Group snapshots / atomic multi-entity planned changes](https://github.com/DiagramCraft/diagram-craft/issues/1740)
+- [#2364 — Plan a change across multiple entities](https://github.com/DiagramCraft/diagram-craft/issues/2364)
+- [#2365 — Propose a change across multiple entities](https://github.com/DiagramCraft/diagram-craft/issues/2365)
 - [#2340 — Evaluate redundant workspace columns](https://github.com/DiagramCraft/diagram-craft/issues/2340)
 - [#2341 — Replace snapshot and proposal compatibility APIs](https://github.com/DiagramCraft/diagram-craft/issues/2341)
