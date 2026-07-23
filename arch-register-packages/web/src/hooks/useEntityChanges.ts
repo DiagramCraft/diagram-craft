@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 import { entityKeys } from '../queries/entities';
+import type { EntityChangeBulkProposalBody } from '@arch-register/api-types/entityChangeContract';
 
 export const entityChangeKeys = {
   current: (workspace: string, entityId: string) => ['entity-change', workspace, entityId] as const
@@ -44,6 +45,33 @@ export const useWithdrawEntityChangeProposal = (workspace: string) => {
           queryKey: entityChangeKeys.current(workspace, input.entityId)
         }),
         queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, input.entityId) }),
+        queryClient.invalidateQueries({ queryKey: ['governance'] })
+      ]);
+    }
+  });
+};
+
+export const bulkEntityChangeKeys = {
+  detail: (workspace: string, proposalId: string) =>
+    ['entity-change-bulk', workspace, proposalId] as const
+};
+
+export const useBulkEntityChangeProposal = (workspace: string, proposalId: string | null) =>
+  useQuery({
+    queryKey: bulkEntityChangeKeys.detail(workspace, proposalId ?? ''),
+    queryFn: () =>
+      orpcClient.entityChanges.getBulk({ params: { workspace, proposalId: proposalId! } }),
+    enabled: !!workspace && !!proposalId
+  });
+
+export const useSubmitBulkEntityChangeProposal = (workspace: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: EntityChangeBulkProposalBody) =>
+      orpcClient.entityChanges.submitBulk({ params: { workspace }, body }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: entityKeys.workspaceLists(workspace) }),
         queryClient.invalidateQueries({ queryKey: ['governance'] })
       ]);
     }

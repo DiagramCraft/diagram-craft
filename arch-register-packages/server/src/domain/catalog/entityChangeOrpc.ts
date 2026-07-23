@@ -8,8 +8,10 @@ import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErro
 import {
   bypassEntityApproval,
   getEntityChangeProposal,
+  getBulkEntityChangeProposal,
   resubmitEntityChangeProposal,
   submitEntityChangeProposal,
+  submitBulkEntityChangeProposal,
   withdrawEntityChangeProposal
 } from './entityChangeOperations';
 
@@ -59,6 +61,22 @@ export const createEntityChangeORPCRouter = () =>
           input.params.id,
           context.event,
           input.body
+        )
+      ),
+      submitBulk: router.entityChanges.submitBulk.handler(({ input, context }) =>
+        submitBulkEntityChangeProposal(
+          context.db,
+          input.params.workspace,
+          context.event,
+          input.body
+        )
+      ),
+      getBulk: router.entityChanges.getBulk.handler(({ input, context }) =>
+        getBulkEntityChangeProposal(
+          context.db,
+          input.params.workspace,
+          input.params.proposalId,
+          context.event
         )
       )
     }

@@ -99,4 +99,66 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
     expect((await db.entityChange.getLatestRevision(workspace, proposalId))!.id).toBe(revision.id);
     expect(await db.entityChange.listRevisions(workspace, proposalId)).toHaveLength(1);
   });
+
+  it('stores a bulk revision spanning multiple entities', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schemaId = await createFixtureSchema(db, workspace);
+    const entityA = await createFixtureCatalogEntity(db, workspace, schemaId);
+    const entityB = await createFixtureCatalogEntity(db, workspace, schemaId);
+
+    const bulkProposalId = randomUUID();
+    const now = new Date();
+    await db.entityChange.createProposal({
+      id: bulkProposalId,
+      workspace,
+      entity_id: entityA.id,
+      status: 'open',
+      initiator_user_id: null,
+      created_at: now,
+      updated_at: now,
+      closed_at: null
+    });
+    const revisionId = randomUUID();
+    const members = await db.entityChange.createBulkRevision({
+      id: revisionId,
+      proposal_id: bulkProposalId,
+      workspace,
+      revision_number: 1,
+      policy_version: `${schemaId}:1:inherit`,
+      resolved_policy: { selfApprovalAllowed: false },
+      message: null,
+      created_by: null,
+      status: 'submitted',
+      created_at: now,
+      resolved_at: null,
+      members: [
+        {
+          entity_id: entityA.id,
+          base_version: 1,
+          base_state: { name: entityA.name },
+          proposed_state: { name: 'Updated A' },
+          diff: { name: { before: entityA.name, after: 'Updated A' } }
+        },
+        {
+          entity_id: entityB.id,
+          base_version: 1,
+          base_state: { name: entityB.name },
+          proposed_state: { name: 'Updated B' },
+          diff: { name: { before: entityB.name, after: 'Updated B' } }
+        }
+      ]
+    });
+
+    expect(members).toHaveLength(2);
+    expect(new Set(members.map(member => member.entity_id))).toEqual(
+      new Set([entityA.id, entityB.id])
+    );
+    expect(new Set(members.map(member => member.member_id)).size).toBe(2);
+    members.forEach(member => expect(member.id).toBe(revisionId));
+
+    const fetchedMembers = await db.entityChange.getRevisionMembers(workspace, revisionId);
+    expect(fetchedMembers).toHaveLength(2);
+    expect((await db.entityChange.getRevision(workspace, revisionId))!.id).toBe(revisionId);
+  });
 });

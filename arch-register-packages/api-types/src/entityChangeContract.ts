@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { wsAndId } from '@arch-register/api-types/common';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 const entityChangeStatusSchema = z.enum(['open', 'approved', 'rejected', 'withdrawn']);
 const entityChangeRevisionStatusSchema = z.enum([
@@ -48,6 +48,53 @@ const proposalBodySchema = z.object({
   baseVersion: z.number().int().min(1),
   proposedState: z.record(z.string(), z.unknown()),
   message: z.string().optional()
+});
+
+const entityChangeBulkProposalMemberSchema = z.object({
+  entityId: z.string(),
+  baseVersion: z.number().int().min(1),
+  proposedState: z.record(z.string(), z.unknown())
+});
+
+const bulkProposalBodySchema = z.object({
+  members: z.array(entityChangeBulkProposalMemberSchema).min(2),
+  message: z.string().optional()
+});
+
+const entityChangeBulkRevisionMemberSchema = z.object({
+  entityId: z.string(),
+  baseVersion: z.number().int(),
+  baseState: z.record(z.string(), z.unknown()),
+  proposedState: z.record(z.string(), z.unknown()),
+  diff: z.record(z.string(), z.unknown())
+});
+
+const entityChangeBulkRevisionSchema = z.object({
+  id: z.string(),
+  proposalId: z.string(),
+  revisionNumber: z.number().int(),
+  members: z.array(entityChangeBulkRevisionMemberSchema),
+  policyVersion: z.string(),
+  resolvedPolicy: z.record(z.string(), z.unknown()),
+  message: z.string().nullable(),
+  createdBy: z.string().nullable(),
+  createdByName: z.string().nullable(),
+  status: entityChangeRevisionStatusSchema,
+  createdAt: z.string(),
+  resolvedAt: z.string().nullable(),
+  caseId: z.string().nullable()
+});
+
+const entityChangeBulkProposalSchema = z.object({
+  id: z.string(),
+  workspace: z.string(),
+  entityIds: z.array(z.string()),
+  status: entityChangeStatusSchema,
+  initiatorUserId: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  closedAt: z.string().nullable(),
+  revisions: z.array(entityChangeBulkRevisionSchema)
 });
 
 export const entityChangeContract = oc.tag('Entity change approval').router({
@@ -118,10 +165,34 @@ export const entityChangeContract = oc.tag('Entity change approval').router({
       )
       .output(
         z.object({ entityId: z.string(), version: z.number().int(), bypassed: z.literal(true) })
-      )
+      ),
+    submitBulk: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entity-changes/bulk',
+        inputStructure: 'detailed',
+        summary: 'Submit a bulk entity change proposal spanning multiple entities',
+        tags: ['Entity changes']
+      })
+      .input(z.object({ params: ws, body: bulkProposalBodySchema }))
+      .output(entityChangeBulkProposalSchema),
+    getBulk: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entity-changes/bulk/{proposalId}',
+        inputStructure: 'detailed',
+        summary: 'Get a bulk entity change proposal',
+        tags: ['Entity changes']
+      })
+      .input(z.object({ params: ws.extend({ proposalId: z.string() }) }))
+      .output(entityChangeBulkProposalSchema.nullable())
   }
 });
 
 export type EntityChangeProposal = z.infer<typeof entityChangeProposalSchema>;
 export type EntityChangeRevision = z.infer<typeof entityChangeRevisionSchema>;
 export type EntityChangeProposalBody = z.infer<typeof proposalBodySchema>;
+export type EntityChangeBulkProposal = z.infer<typeof entityChangeBulkProposalSchema>;
+export type EntityChangeBulkRevision = z.infer<typeof entityChangeBulkRevisionSchema>;
+export type EntityChangeBulkProposalBody = z.infer<typeof bulkProposalBodySchema>;
+export type EntityChangeBulkProposalMember = z.infer<typeof entityChangeBulkProposalMemberSchema>;

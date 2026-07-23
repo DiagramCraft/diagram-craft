@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { TbCheck, TbEraser, TbPlus, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { BulkFieldInput } from './BulkFieldInput';
@@ -16,6 +19,7 @@ export type BulkEditToolbarProps = {
   workspaceId: string;
   count: number;
   selectedEntities: EntityRecord[];
+  approvalRequiredCount: number;
   fieldRows: BulkFieldRow[];
   availableFields: BulkEditableField[];
   step: BulkEditStep;
@@ -27,13 +31,14 @@ export type BulkEditToolbarProps = {
   removeFieldRow: (rowId: string) => void;
   setStep: (step: BulkEditStep) => void;
   onClear: () => void;
-  onConfirm: () => void;
+  onConfirm: (proposalMessage?: string) => void;
 };
 
 export const BulkEditToolbar = ({
   workspaceId,
   count,
   selectedEntities,
+  approvalRequiredCount,
   fieldRows,
   availableFields,
   step,
@@ -47,6 +52,8 @@ export const BulkEditToolbar = ({
   onClear,
   onConfirm
 }: BulkEditToolbarProps) => {
+  const [approvalNoteOpen, setApprovalNoteOpen] = useState(false);
+  const [approvalNote, setApprovalNote] = useState('');
   const usedFieldIds = new Set(fieldRows.map(row => row.fieldId));
   const remainingFields = availableFields.filter(field => !usedFieldIds.has(field.id));
   const activeRows = fieldRows.filter(row => row.clearing || row.value !== '');
@@ -164,14 +171,24 @@ export const BulkEditToolbar = ({
                   {permSkipped.length} skipped — no edit permission
                 </span>
               )}
+              {approvalRequiredCount > 0 && (
+                <span className={styles.bulkPermWarn}>
+                  {' · '}
+                  {approvalRequiredCount} require approval and will be submitted as one proposal
+                </span>
+              )}
             </span>
           </div>
           <div style={{ flex: 1 }} />
           <Button size="sm" variant="secondary" onClick={() => setStep('edit')}>
             Back
           </Button>
-          <Button size="sm" variant="primary" onClick={onConfirm}>
-            Confirm
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => (approvalRequiredCount > 0 ? setApprovalNoteOpen(true) : onConfirm())}
+          >
+            {approvalRequiredCount > 0 ? 'Request approval' : 'Confirm'}
           </Button>
         </>
       )}
@@ -180,7 +197,7 @@ export const BulkEditToolbar = ({
         <>
           <div className={styles.bulkSep} />
           <div className={styles.bulkConfirmMsg}>
-            {result.skipped.length === 0 ? (
+            {result.skipped.length === 0 && !result.proposed ? (
               <>
                 <span className={styles.bulkDoneIcon}>
                   <TbCheck size={11} />
@@ -193,17 +210,26 @@ export const BulkEditToolbar = ({
                 <span className={styles.bulkDoneIcon}>
                   <TbCheck size={11} />
                 </span>{' '}
-                Applied to <b>{result.applied.length}</b> of <b>{count}</b>{' '}
-                {count === 1 ? 'entity' : 'entities'}
-                <span className={styles.bulkSkipInfo}>
-                  <span className={styles.bulkDim}>Skipped:</span>
-                  {result.skipped.map(s => (
-                    <span key={s.entity._uid} className={styles.bulkSkipItem} title={s.reason}>
-                      {entityName(s.entity)}
-                    </span>
-                  ))}
-                  <span className={styles.bulkDim}>— {result.skipped[0]!.reason}</span>
-                </span>
+                Applied to <b>{result.applied.length}</b>
+                {result.proposed && (
+                  <>
+                    {' '}
+                    · Submitted <b>{result.proposed.entities.length}</b> for approval as one
+                    proposal
+                  </>
+                )}{' '}
+                of <b>{count}</b> {count === 1 ? 'entity' : 'entities'}
+                {result.skipped.length > 0 && (
+                  <span className={styles.bulkSkipInfo}>
+                    <span className={styles.bulkDim}>Skipped:</span>
+                    {result.skipped.map(s => (
+                      <span key={s.entity._uid} className={styles.bulkSkipItem} title={s.reason}>
+                        {entityName(s.entity)}
+                      </span>
+                    ))}
+                    <span className={styles.bulkDim}>— {result.skipped[0]!.reason}</span>
+                  </span>
+                )}
               </>
             )}
           </div>
@@ -214,6 +240,37 @@ export const BulkEditToolbar = ({
           </Button>
         </>
       )}
+
+      <Dialog
+        open={approvalNoteOpen}
+        onClose={() => setApprovalNoteOpen(false)}
+        title="Request approval"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setApprovalNoteOpen(false) },
+          {
+            label: 'Request approval',
+            type: 'default',
+            onClick: () => {
+              setApprovalNoteOpen(false);
+              onConfirm(approvalNote);
+            }
+          }
+        ]}
+      >
+        <p>
+          {approvalRequiredCount}{' '}
+          {approvalRequiredCount === 1 ? 'entity requires' : 'entities require'} approval. These
+          changes will be submitted as a single proposal for review instead of applied directly.
+        </p>
+        <FormElement label="Note">
+          <TextInput
+            value={approvalNote}
+            onChange={value => setApprovalNote(value ?? '')}
+            placeholder="Describe what changed"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
     </div>
   );
 };
