@@ -391,6 +391,25 @@ const entityTransferHandlers = {
   exportCsv: entityRouter.entities.exportCsv.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const query = parseEntityQuery(input.query);
+    assertCompatibleEntityQueryRequest(input.query);
+    query.entityQuery = buildEntityQueryForExecution(input.query, query);
+    if (query.collectionId) {
+      const collection = await context.db.view.getCollection(
+        authCtx.userId,
+        workspace,
+        query.collectionId
+      );
+      httpAssert.present(collection, { status: 404, message: 'Collection not found' });
+    }
+    const projectId = input.query.entityQuery?.projectId ?? input.query.projectId;
+    if (projectId) {
+      const project = await context.db.project.getProject(workspace, projectId);
+      httpAssert.present(project, {
+        status: 404,
+        message: `Project '${projectId}' not found`
+      });
+      requireProjectAccess(authCtx, project.owner);
+    }
     return exportEntitiesCsv(context.db, workspace, authCtx, query);
   }),
 

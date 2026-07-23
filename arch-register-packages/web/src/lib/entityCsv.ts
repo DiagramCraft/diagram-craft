@@ -1,26 +1,13 @@
-type FetchEntitiesOptions = {
-  schemaId?: string | null;
-  owner?: string | null;
-  lifecycle?: string | null;
-  q?: string | null;
-  view?: 'summary' | 'full';
-  limit?: number | null;
-  offset?: number | null;
-};
+import { toEntityListQuery, type EntityListOptions } from '../hooks/entityListQuery';
 
 export const exportEntitiesToCSV = async (
   workspace: string,
-  options: FetchEntitiesOptions = {}
+  options: EntityListOptions = {}
 ): Promise<Blob> => {
   const { orpcClient } = await import('./orpcClient');
   const result = await orpcClient.entities.exportCsv({
     params: { workspace },
-    query: {
-      _schemaId: options.schemaId ?? undefined,
-      owner: options.owner ?? undefined,
-      lifecycle: options.lifecycle ?? undefined,
-      q: options.q ?? undefined
-    }
+    query: toEntityListQuery(options)
   });
   return result.body;
 };
