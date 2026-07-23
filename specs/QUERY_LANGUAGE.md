@@ -1,8 +1,8 @@
 # Entity Query Language — Design Spec (#2317)
 
-Status: draft, not implemented. This document proposes a grammar and intermediate representation (IR) for
-relation-traversal entity queries in Arch Register, grounded in the seeded workspace data model. It does not prescribe
-an implementation plan — see [Execution notes](#execution-notes) for direction only.
+Status: v1 implemented. This document describes the grammar and intermediate representation (IR) for relation-traversal
+entity queries in Arch Register, grounded in the seeded workspace data model. The implementation is wired into entity
+listing, counting, saved views, the text-query API, and the Advanced query UI.
 
 ## 1. Problem recap
 
@@ -683,37 +683,22 @@ case (a *filter* traversal path where some middle hop is invisible must terminat
 through a hidden hop must return absent/null, not error or leak data) — it's just no longer the *default* path every
 query takes.
 
-## 9. Migration path
+## 9. Implementation status
 
-- Phase 0 (this spec): no code changes.
-- Phase 1: structured IR + validator + compile-time bound checks, land alongside the existing flat
-  `filterConditionSchema` (additive, unused by any endpoint yet). Then execution: compile IR to SQL joins for
-  traversal + pushable predicates (no recursion — §7). `_completeness` (#2346) is a materialized column on `entity`,
-  kept in sync at write time, so it compiles like any other builtin field rather than needing an in-memory fallback;
-  assessment-joined values (`_assessment`/`_assessment:<fieldId>`) are likewise fully SQL-native via the
-  `assessment_response` join.
-- Phase 2: projection (§4.6) — extend the IR with `projections: ProjectionField[]`, implement join reuse against
-  `root`'s existing joins, the array-aggregation default for multi-valued paths, and the same hop-count/permission
-  handling as filtering (§7, §8). Lands on top of Phase 1's execution engine, before views are wired up to it, so that
-  when views gain query support (Phase 3) they get both filtering and projection together — otherwise #2300 and #2315
-  (Phase 3) would close as "filtering-only," not full reporting.
-- Phase 3: wire the *existing* entity-listing/view execution path (not a new bespoke endpoint) to accept an
-  `EntityQuery` — whatever endpoint already backs saved views and ad hoc browsing runs one of these instead of, or
-  alongside, the flat browser request shape. This is the phase that actually matters for #2300 and #2315: once it lands,
-  neither needs separate implementation. #2300 is the query `schema:Component
-  technology_releases.eol_date < date(...)` run through a normal view (§6); #2315 is the identity-anchored
-  forward-then-containment pattern (§6) run the same way. Both close as *subsumed* by this capability rather than built
-  on top of it — and #2315's stated role as "a prerequisite for #2300" (both issues ride the same generic mechanism
-  instead of one being built on the other) dissolves along with them. The one piece of residual, non-backend work worth
-  calling out: a user still has to know the query to write, so a pre-built/pinned default view using one of these
-  patterns is worth doing for discoverability — that's content, not new capability.
-- Phase 4: text parser + round-trip (text ⇄ IR) for the search box; visual filter builder generates/reads the same IR.
-- Phase 5: saved-view storage. No production data exists yet, so this is a straight schema change, not a migration:
-  replace the legacy saved-view filter envelope with the strict canonical `EntityQuery` shape directly on
-  `savedViewSchema` / `createViewBodySchema` / `updateViewBodySchema` (`viewContract.ts`). Saved-view display sorting
-  remains generic view configuration. There is no dual-field, reader precedence, or backfill: update the seed data
-  (`seedData.ts` / `seedFixtures.ts`) to the new shape in the same change, and replace existing rows by re-running
-  bootstrap.
+The v1 design described here is implemented in the repository:
+
+- The structured IR, validator, hop bound, projections, and legacy flat-filter mapping are implemented.
+- Forward and backward relation paths compile to SQL for both PostgreSQL and SQLite, with permission and project-scope
+  handling covered by contract tests.
+- The text compiler supports parsing and canonical printing, and is exposed through the entity-query API.
+- Entity list/count endpoints, saved views, and the Advanced query UI use the same `EntityQuery` representation.
+
+This implementation subsumes the original use cases in #2300 and #2315. #2300 uses a linked Technology Release EOL
+predicate, while #2315 uses the identity-anchored forward-then-containment pattern described in §6. Neither issue
+requires a separate endpoint or bespoke traversal implementation.
+
+Generic recursive `ancestors(...)`/`descendants(...)` traversal remains deliberately deferred as described in §11; v1
+uses bounded, explicitly named relation hops.
 
 ## 10. Open questions (carried over from the issue, not resolved here)
 
