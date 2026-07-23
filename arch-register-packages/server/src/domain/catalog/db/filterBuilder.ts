@@ -11,7 +11,8 @@ export const ENTITY_BUILTIN_COLUMNS: Record<string, string> = {
   _lifecycle: 'e.lifecycle',
   _owner: 'e.owner',
   _updatedAt: 'e.updated_at',
-  _projectId: 'e.project_id'
+  _projectId: 'e.project_id',
+  _completeness: 'e.completeness'
 };
 
 // Maps built-in FilterCondition fieldIds backed by a JSON array column, where

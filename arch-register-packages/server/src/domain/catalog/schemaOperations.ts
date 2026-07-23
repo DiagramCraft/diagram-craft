@@ -8,6 +8,13 @@ import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { countEntities } from './entityQueryOperations';
 import { listAllCatalogEntities } from './entityLoader';
+import { enqueueOneOffJobRun } from '../jobs/jobOperations';
+import {
+  ENTITY_COMPLETENESS_JOB_TYPE,
+  ENTITY_COMPLETENESS_SYSTEM_IDENTITY,
+  ensureEntityCompletenessScanScheduleExists
+} from './entityCompletenessJob';
+import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import {
   toApiSchema,
   toApiSchemaVersion,
@@ -31,6 +38,23 @@ const dbErrorMessages = {
   unique: 'A schema with that name already exists in this workspace',
   foreign: 'Cannot delete schema: entities still reference it'
 } as const;
+
+// computeEntityCompleteness only depends on which fields are 'required'/'expected' (not their
+// other properties), so completeness is stale only when that specific set changes.
+const completenessExpectedFieldIds = (fields: SchemaField[]): string[] =>
+  fields
+    .filter(f => f.requirementLevel === 'required' || f.requirementLevel === 'expected')
+    .map(f => f.id)
+    .sort();
+
+const completenessRelevantFieldsChanged = (
+  oldFields: SchemaField[],
+  newFields: SchemaField[]
+): boolean => {
+  const before = completenessExpectedFieldIds(oldFields);
+  const after = completenessExpectedFieldIds(newFields);
+  return before.length !== after.length || before.some((id, index) => id !== after[index]);
+};
 
 export const listWorkspaceSchemas = async (
   db: DatabaseAdapter,
@@ -308,6 +332,20 @@ export const updateWorkspaceSchema = async (
 
         return updated;
       });
+
+      if (entityCount > 0 && completenessRelevantFieldsChanged(oldRow.fields, row.fields)) {
+        await ensureEntityCompletenessScanScheduleExists(db, ws, next.updated_at);
+        await enqueueOneOffJobRun(
+          db,
+          {
+            workspace: ws,
+            jobType: ENTITY_COMPLETENESS_JOB_TYPE,
+            systemIdentity: ENTITY_COMPLETENESS_SYSTEM_IDENTITY,
+            payload: { schemaId: id }
+          },
+          next.updated_at
+        );
+      }
 
       const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 

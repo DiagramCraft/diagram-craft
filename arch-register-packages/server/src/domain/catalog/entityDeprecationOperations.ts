@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
-import type { Entity, EntityDbUpdate } from './db/catalogDatabase';
+import type { Entity, EntityDbUpdate, SchemaDbResult } from './db/catalogDatabase';
+import { computeEntityCompleteness } from '../../utils/completeness';
 import {
   buildApiEntityAuthCtx as buildApiAuthCtx,
   requireEntityAction,
@@ -105,23 +106,36 @@ export const getDeprecatedLifecycleStateId = async (
 
 // ── Entity mutation helper ──────────────────────────────────────
 
-const fullEntityUpdate = (entity: Entity, overrides: Partial<EntityDbUpdate>): EntityDbUpdate => ({
-  slug: entity.slug,
-  namespace: entity.namespace,
-  name: entity.name,
-  description: entity.description,
-  owner: entity.owner,
-  lifecycle: entity.lifecycle,
-  target_lifecycle: entity.target_lifecycle,
-  target_lifecycle_date: entity.target_lifecycle_date,
-  tags: entity.tags,
-  links: entity.links,
-  schema_id: entity.schema_id,
-  data: entity.data,
-  project_id: entity.project_id,
-  updated_at: new Date(),
-  ...overrides
-});
+const fullEntityUpdate = (
+  entity: Entity,
+  schema: SchemaDbResult,
+  overrides: Partial<EntityDbUpdate>
+): EntityDbUpdate => {
+  const merged = {
+    slug: entity.slug,
+    namespace: entity.namespace,
+    name: entity.name,
+    description: entity.description,
+    owner: entity.owner,
+    lifecycle: entity.lifecycle,
+    target_lifecycle: entity.target_lifecycle,
+    target_lifecycle_date: entity.target_lifecycle_date,
+    tags: entity.tags,
+    links: entity.links,
+    schema_id: entity.schema_id,
+    data: entity.data,
+    project_id: entity.project_id,
+    updated_at: new Date(),
+    ...overrides
+  };
+  // Deprecation flows only ever override target_lifecycle/target_lifecycle_date, but `lifecycle`
+  // itself changes on finalization — recompute rather than carry the entity's stale completeness
+  // forward, since `lifecycle` is one of computeEntityCompleteness's built-in inputs.
+  return {
+    ...merged,
+    completeness: computeEntityCompleteness(merged, schema)
+  };
+};
 
 // ── Eligibility ──────────────────────────────────────────────────
 
@@ -416,11 +430,16 @@ export const createDeprecationGovernanceRegistry = (
           const deprecatedStateId = await getDeprecatedLifecycleStateId(tx, caseRow.workspace);
           const targetDate = String(caseRow.payload['targetDate']);
           const actor = event.actor_user_id ? await tx.auth.getUser(event.actor_user_id) : null;
+          const schema = await tx.catalog.getSchema(caseRow.workspace, entity.schema_id);
+          httpAssert.present(schema, {
+            status: 409,
+            message: 'The entity schema no longer exists'
+          });
           const updated = await updateEntityWithAuditIfVersion(tx, {
             workspace: caseRow.workspace,
             entityId,
             previous: entity,
-            next: fullEntityUpdate(entity, {
+            next: fullEntityUpdate(entity, schema, {
               target_lifecycle: deprecatedStateId,
               target_lifecycle_date: targetDate
             }),
@@ -670,11 +689,13 @@ export const postponeEntityDeprecation = async (
   await db.core.transaction(async tx => {
     const current = await tx.catalog.getEntity(workspace, entityId);
     httpAssert.present(current, { status: 404, message: 'Entity not found' });
+    const schema = await tx.catalog.getSchema(workspace, current.schema_id);
+    httpAssert.present(schema, { status: 409, message: 'The entity schema no longer exists' });
     const updated = await updateEntityWithAuditIfVersion(tx, {
       workspace,
       entityId,
       previous: current,
-      next: fullEntityUpdate(current, { target_lifecycle_date: body.targetDate }),
+      next: fullEntityUpdate(current, schema, { target_lifecycle_date: body.targetDate }),
       expectedVersion: current.version ?? 1,
       actor: { id: userId, displayName: event.context.user.display_name },
       auditMetadata: { governanceCaseId: caseRow.id, deprecationPostponed: true }
@@ -763,11 +784,13 @@ export const finalizeEntityDeprecation = async (
     const current = await tx.catalog.getEntity(workspace, entityId);
     httpAssert.present(current, { status: 404, message: 'Entity not found' });
     const deprecatedStateId = await getDeprecatedLifecycleStateId(tx, workspace);
+    const schema = await tx.catalog.getSchema(workspace, current.schema_id);
+    httpAssert.present(schema, { status: 409, message: 'The entity schema no longer exists' });
     const updated = await updateEntityWithAuditIfVersion(tx, {
       workspace,
       entityId,
       previous: current,
-      next: fullEntityUpdate(current, {
+      next: fullEntityUpdate(current, schema, {
         lifecycle: deprecatedStateId,
         target_lifecycle: null,
         target_lifecycle_date: null
@@ -854,11 +877,16 @@ export const cancelEntityDeprecation = async (
     const current = await tx.catalog.getEntity(workspace, entityId);
     httpAssert.present(current, { status: 404, message: 'Entity not found' });
     if (current.target_lifecycle != null || current.target_lifecycle_date != null) {
+      const schema = await tx.catalog.getSchema(workspace, current.schema_id);
+      httpAssert.present(schema, { status: 409, message: 'The entity schema no longer exists' });
       await updateEntityWithAuditIfVersion(tx, {
         workspace,
         entityId,
         previous: current,
-        next: fullEntityUpdate(current, { target_lifecycle: null, target_lifecycle_date: null }),
+        next: fullEntityUpdate(current, schema, {
+          target_lifecycle: null,
+          target_lifecycle_date: null
+        }),
         expectedVersion: current.version ?? 1,
         actor: { id: userId, displayName: event.context.user.display_name },
         auditMetadata: { governanceCaseId: caseRow.id, deprecationCancelled: true }

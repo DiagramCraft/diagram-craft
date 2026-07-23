@@ -41,7 +41,8 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         schema_id: customerPortal.schema_id,
         data: customerPortal.data,
         project_id: null,
-        updated_at: now
+        updated_at: now,
+        completeness: customerPortal.completeness
       });
 
       await server.db.project.upsertContentMetadata({

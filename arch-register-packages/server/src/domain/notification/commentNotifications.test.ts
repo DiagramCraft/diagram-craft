@@ -42,6 +42,7 @@ const makeEntity = (overrides: Record<string, unknown> = {}) => ({
   project_id: null,
   created_at: new Date(),
   updated_at: new Date(),
+  completeness: 0,
   ...overrides
 });
 

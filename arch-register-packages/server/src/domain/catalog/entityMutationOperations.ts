@@ -26,6 +26,7 @@ import {
   relationFields
 } from './dataHelpers';
 import { formatPublicId } from '../../utils/publicIds';
+import { computeEntityCompleteness } from '../../utils/completeness';
 
 import { EntityRecord } from '@arch-register/api-types/entityContract';
 
@@ -150,7 +151,11 @@ export const createEntity = async (
         data: normalizedFields,
         project_id: payload.projectId,
         created_at: timestamp,
-        updated_at: timestamp
+        updated_at: timestamp,
+        completeness: computeEntityCompleteness(
+          { description: payload.description, owner, lifecycle, data: normalizedFields },
+          schema
+        )
       }
     });
 
@@ -316,7 +321,10 @@ export const bulkCreateEntities = async (
             data: canonicalizeBulkRelationFields(payload.fields, schema, nameToId),
             project_id: payload.projectId,
             created_at: timestamp,
-            updated_at: timestamp
+            updated_at: timestamp,
+            // Placeholder — recomputed below once owner resolution and relation-field
+            // normalization (which run after this draft is built) have settled.
+            completeness: 0
           }
         };
       });
@@ -364,6 +372,7 @@ export const bulkCreateEntities = async (
 
       const created: EntityRecord[] = [];
       for (const draft of drafts) {
+        draft.entity.completeness = computeEntityCompleteness(draft.entity, draft.schema);
         const row = await createEntityWithAudit(tx, {
           workspace,
           actor,
@@ -563,6 +572,10 @@ export const updateEntity = async (
         data: normalizedFields,
         project_id: payload.projectId,
         updated_at: timestamp,
+        completeness: computeEntityCompleteness(
+          { description: payload.description, owner, lifecycle, data: normalizedFields },
+          schema
+        ),
         ...(nextGeneratedMetadata !== undefined
           ? { generated_metadata: nextGeneratedMetadata }
           : {})
@@ -618,7 +631,8 @@ export const cloneEntity = async (
       data: source.data,
       project_id: source.project_id,
       created_at: timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      completeness: source.completeness
     });
 
     await logAudit(db, {

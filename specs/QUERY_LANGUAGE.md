@@ -680,9 +680,10 @@ query takes.
 - Phase 0 (this spec): no code changes.
 - Phase 1: structured IR + validator + compile-time bound checks, land alongside the existing flat
   `filterConditionSchema` (additive, unused by any endpoint yet). Then execution: compile IR to SQL joins for
-  traversal + pushable predicates (no recursion — §7), falling back to in-memory evaluation only for predicates that
-  already fall back today (completeness, assessment-joined values) — same hybrid seam as `entityQueryOperations.ts`,
-  just centralized instead of duplicated per report.
+  traversal + pushable predicates (no recursion — §7). `_completeness` (#2346) is a materialized column on `entity`,
+  kept in sync at write time, so it compiles like any other builtin field rather than needing an in-memory fallback;
+  assessment-joined values (`_assessment`/`_assessment:<fieldId>`) are likewise fully SQL-native via the
+  `assessment_response` join.
 - Phase 2: projection (§4.6) — extend the IR with `projections: ProjectionField[]`, implement join reuse against
   `root`'s existing joins, the array-aggregation default for multi-valued paths, and the same hop-count/permission
   handling as filtering (§7, §8). Lands on top of Phase 1's execution engine, before views are wired up to it, so that

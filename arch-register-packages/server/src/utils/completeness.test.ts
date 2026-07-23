@@ -28,7 +28,8 @@ describe('computeEntityCompleteness', () => {
       },
       project_id: null,
       created_at: now,
-      updated_at: now
+      updated_at: now,
+      completeness: 0
     };
 
     const schema: SchemaDbResult = {

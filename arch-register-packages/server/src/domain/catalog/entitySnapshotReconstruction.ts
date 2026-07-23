@@ -54,6 +54,7 @@ const entityToState = (entity: EntityDbResult): Record<string, unknown> => ({
   data: entity.data,
   project_id: entity.project_id,
   version: entity.version ?? 1,
+  completeness: entity.completeness,
   created_at: entity.created_at,
   updated_at: entity.updated_at
 });
@@ -197,6 +198,9 @@ export const reconstructEntitiesAsOf = async (
       created_at: createdAt,
       updated_at: updatedAt,
       version: Number(state['version'] ?? 1),
+      // Frozen at write time (see entityMutations.ts) — snapshots predating #2346 have no
+      // completeness in their state JSON, so default rather than surface undefined.
+      completeness: Number(state['completeness'] ?? 0),
       owner_name: ownerId ? (ownerNameMap.get(ownerId) ?? ownerId) : null,
       lifecycle_label: lifecycleId ? (lifecycleLabelMap.get(lifecycleId) ?? lifecycleId) : null,
       target_lifecycle_label: targetLifecycleId

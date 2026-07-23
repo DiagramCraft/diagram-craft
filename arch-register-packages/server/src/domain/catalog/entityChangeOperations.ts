@@ -17,6 +17,7 @@ import {
 } from './dataHelpers';
 import { listAllCatalogEntities } from './entityLoader';
 import { updateEntityWithAuditIfVersion } from './entityMutations';
+import { computeEntityCompleteness } from '../../utils/completeness';
 import type {
   EntityChangeProposal,
   EntityChangeProposalBody,
@@ -249,7 +250,16 @@ const buildProposedEntity = async (
     schema_id: payload.schemaId,
     data,
     project_id: payload.projectId,
-    updated_at: new Date()
+    updated_at: new Date(),
+    completeness: computeEntityCompleteness(
+      {
+        description: payload.description,
+        owner: payload.requestedOwner,
+        lifecycle: payload.requestedLifecycle,
+        data
+      },
+      schema
+    )
   };
   const state = {
     ...entityState(entity),
@@ -725,6 +735,19 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             if (!touchedKeys.includes(key)) next[key] = currentState[key];
           }
           const actor = event.actor_user_id ? await tx.auth.getUser(event.actor_user_id) : null;
+          const nextDescription = String(next['description'] ?? '');
+          const nextOwner = (next['owner'] as string | null) ?? null;
+          const nextLifecycle = (next['lifecycle'] as string | null) ?? null;
+          const nextData = (next['data'] as Record<string, unknown>) ?? {};
+          const nextSchemaId = String(next['schema_id']);
+          // Recompute rather than trust the frozen value on `revision.proposed_state` — untouched
+          // fields above were just reconciled against the entity's current state, so the
+          // completeness score must reflect that same merged state, not the state at proposal time.
+          const nextSchema = await tx.catalog.getSchema(caseRow.workspace, nextSchemaId);
+          httpAssert.present(nextSchema, {
+            status: 409,
+            message: 'The entity schema no longer exists'
+          });
           const updated = await updateEntityWithAuditIfVersion(tx, {
             workspace: caseRow.workspace,
             entityId,
@@ -733,19 +756,28 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
               slug: String(next['slug']),
               namespace: String(next['namespace']),
               name: String(next['name']),
-              description: String(next['description'] ?? ''),
-              owner: (next['owner'] as string | null) ?? null,
-              lifecycle: (next['lifecycle'] as string | null) ?? null,
+              description: nextDescription,
+              owner: nextOwner,
+              lifecycle: nextLifecycle,
               target_lifecycle: (next['target_lifecycle'] as string | null) ?? null,
               target_lifecycle_date: (next['target_lifecycle_date'] as string | null) ?? null,
               tags: Array.isArray(next['tags'])
                 ? next['tags'].filter((value): value is string => typeof value === 'string')
                 : [],
               links: Array.isArray(next['links']) ? next['links'] : [],
-              schema_id: String(next['schema_id']),
-              data: (next['data'] as Record<string, unknown>) ?? {},
+              schema_id: nextSchemaId,
+              data: nextData,
               project_id: (next['project_id'] as string | null) ?? null,
-              updated_at: new Date()
+              updated_at: new Date(),
+              completeness: computeEntityCompleteness(
+                {
+                  description: nextDescription,
+                  owner: nextOwner,
+                  lifecycle: nextLifecycle,
+                  data: nextData
+                },
+                nextSchema
+              )
             },
             expectedVersion: entity.version ?? 1,
             actor: {

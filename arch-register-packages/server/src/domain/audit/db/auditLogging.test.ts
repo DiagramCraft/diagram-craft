@@ -33,6 +33,7 @@ const makeEntity = (overrides: Partial<EntityDbCreate> = {}): EntityDbCreate => 
   project_id: null,
   created_at: now,
   updated_at: now,
+  completeness: 0,
   ...overrides
 });
 

@@ -57,7 +57,8 @@ test.describe('workspace API tokens', () => {
       data: { repository: 'owner/repo', latest_release: 'v1.0.0' },
       project_id: null,
       created_at: now,
-      updated_at: now
+      updated_at: now,
+      completeness: 0
     });
 
     const created = await orpc.authProtected.apiTokens.create({

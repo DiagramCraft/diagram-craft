@@ -15,14 +15,15 @@ const now = new Date('2026-06-01T12:00:00.000Z');
 const enriched = (
   e: Omit<
     EntityDbResult,
-    'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'
+    'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name' | 'completeness'
   >
 ): EntityDbResult => ({
   ...e,
   owner_name: null,
   lifecycle_label: null,
   target_lifecycle_label: null,
-  schema_name: ''
+  schema_name: '',
+  completeness: 0
 });
 
 const domainSchema: SchemaDbResult = {

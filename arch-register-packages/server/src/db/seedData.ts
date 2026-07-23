@@ -25,6 +25,11 @@ import {
   WorkspaceEnumDbResult,
   EntitySnapshotDbCreate
 } from '../domain/catalog/db/catalogDatabase';
+import { computeEntityCompleteness } from '../utils/completeness';
+
+// Seed fixtures list entity data without a completeness score — it's derived from `data` +
+// `seedSchemas` once, below, rather than kept in sync by hand across ~150 fixture entries.
+type SeedEntityInput = Omit<Entity, 'completeness'>;
 import {
   ProjectDbCreate,
   ContentNodeDbResult,
@@ -942,7 +947,7 @@ export const seedSchemas: SchemaDbResult[] = [
   }
 ];
 
-const seedTechnologies: Entity[] = [
+const seedTechnologies: SeedEntityInput[] = [
   {
     id: TECHNOLOGY_IDS.nodejs,
     workspace: WORKSPACE_ID,
@@ -1199,7 +1204,7 @@ const seedTechnologies: Entity[] = [
   }
 ];
 
-const seedTechnologyReleases: Entity[] = [
+const seedTechnologyReleases: SeedEntityInput[] = [
   {
     id: TECHNOLOGY_RELEASE_IDS.nodejs20,
     workspace: WORKSPACE_ID,
@@ -1538,7 +1543,7 @@ const seedTechnologyReleases: Entity[] = [
   }
 ];
 
-export const seedEntities: Entity[] = [
+const seedEntitiesRaw: SeedEntityInput[] = [
   ...seedTechnologies,
   ...seedTechnologyReleases,
   {
@@ -2617,6 +2622,15 @@ export const seedEntities: Entity[] = [
     updated_at: now
   }
 ];
+
+const seedSchemaById = new Map(seedSchemas.map(schema => [schema.id, schema]));
+
+export const seedEntities: Entity[] = seedEntitiesRaw.map(entity => {
+  const schema = seedSchemaById.get(entity.schema_id);
+  if (!schema)
+    throw new Error(`Seed entity '${entity.id}' references unknown schema '${entity.schema_id}'`);
+  return { ...entity, completeness: computeEntityCompleteness(entity, schema) };
+});
 
 export const seedProjects: ProjectDbCreate[] = [
   {

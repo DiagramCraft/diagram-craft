@@ -15,6 +15,7 @@ import { formatPublicId } from '../../utils/publicIds';
 import { httpAssert } from '../../utils/httpAssert';
 
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
+import { computeEntityCompleteness } from '../../utils/completeness';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import type {
   ExportConfig,
@@ -334,6 +335,19 @@ export const importEntities = async (
       } while (usedPublicIds.has(publicId));
     }
     usedPublicIds.add(publicId);
+    const mappedOwner = resolveMappedId(idMapping.teams, entity.owner);
+    const mappedLifecycle = resolveMappedId(idMapping.lifecycle_states, entity.lifecycle);
+    const completeness = schema
+      ? computeEntityCompleteness(
+          {
+            description: entity.description,
+            owner: mappedOwner,
+            lifecycle: mappedLifecycle,
+            data: entity.data
+          },
+          schema
+        )
+      : 0;
     const input: EntityDbCreate = {
       id: nextId,
       workspace,
@@ -343,8 +357,8 @@ export const importEntities = async (
       slug: entity.slug,
       namespace: entity.namespace,
       description: entity.description,
-      owner: resolveMappedId(idMapping.teams, entity.owner),
-      lifecycle: resolveMappedId(idMapping.lifecycle_states, entity.lifecycle),
+      owner: mappedOwner,
+      lifecycle: mappedLifecycle,
       target_lifecycle: resolveMappedId(idMapping.lifecycle_states, entity.target_lifecycle),
       target_lifecycle_date: entity.target_lifecycle_date,
       tags: entity.tags,
@@ -352,7 +366,8 @@ export const importEntities = async (
       data: entity.data,
       project_id: entity.project_id,
       created_at: existing?.created_at ?? now,
-      updated_at: now
+      updated_at: now,
+      completeness
     };
 
     if (existing) {
@@ -370,7 +385,8 @@ export const importEntities = async (
         links: input.links,
         data: input.data,
         project_id: input.project_id,
-        updated_at: now
+        updated_at: now,
+        completeness: input.completeness
       });
       updated++;
     } else {

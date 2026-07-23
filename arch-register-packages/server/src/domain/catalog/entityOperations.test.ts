@@ -29,7 +29,8 @@ const makeEntity = (index: number): EntityDbResult => ({
   owner_name: null,
   lifecycle_label: null,
   target_lifecycle_label: null,
-  schema_name: 'Service'
+  schema_name: 'Service',
+  completeness: 0
 });
 
 const schema: SchemaDbResult = {

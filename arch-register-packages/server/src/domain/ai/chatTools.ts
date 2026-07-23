@@ -14,6 +14,7 @@ import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
+import { computeEntityCompleteness } from '../../utils/completeness';
 import type { DocumentAiToolId } from '@arch-register/api-types/documentContract';
 
 const checker = new PermissionChecker();
@@ -580,7 +581,16 @@ export const createAiChatTools = (
         data: args.fields ?? {},
         project_id: null,
         created_at: timestamp,
-        updated_at: timestamp
+        updated_at: timestamp,
+        completeness: computeEntityCompleteness(
+          {
+            description: typeof args.description === 'string' ? args.description : '',
+            owner,
+            lifecycle,
+            data: args.fields ?? {}
+          },
+          schema
+        )
       }
     });
 
@@ -630,6 +640,13 @@ export const createAiChatTools = (
           ? args.lifecycle
           : null;
 
+    const nextDescription =
+      typeof args.description === 'string' ? args.description : current.description;
+    const nextData = {
+      ...current.data,
+      ...(args.fields ?? {})
+    };
+
     const entity = await updateEntityWithAudit(db, {
       workspace: workspaceId,
       entityId: current.id,
@@ -648,7 +665,7 @@ export const createAiChatTools = (
           typeof args.name === 'string' && args.name.trim().length > 0
             ? args.name.trim()
             : current.name,
-        description: typeof args.description === 'string' ? args.description : current.description,
+        description: nextDescription,
         owner: nextOwner,
         lifecycle: nextLifecycle,
         target_lifecycle: current.target_lifecycle,
@@ -656,12 +673,20 @@ export const createAiChatTools = (
         tags: args.tags === undefined ? current.tags : filterStringArray(args.tags),
         links: current.links,
         schema_id: current.schema_id,
-        data: {
-          ...current.data,
-          ...(args.fields ?? {})
-        },
+        data: nextData,
         project_id: current.project_id,
-        updated_at: new Date()
+        updated_at: new Date(),
+        completeness: schema
+          ? computeEntityCompleteness(
+              {
+                description: nextDescription,
+                owner: nextOwner,
+                lifecycle: nextLifecycle,
+                data: nextData
+              },
+              schema
+            )
+          : current.completeness
       }
     });
     if (!entity) throw new Error(`Failed to update entity '${current.id}'`);

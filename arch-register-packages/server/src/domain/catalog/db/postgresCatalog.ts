@@ -320,7 +320,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEntity(input: EntityDbCreate) {
     try {
       await this.sql`
-        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, created_at, updated_at)
+        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, completeness, created_at, updated_at)
         VALUES (
           ${input.id},
           ${input.workspace},
@@ -341,6 +341,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
           ${input.project_id},
           ${input.version ?? 1},
           ${input.approval_policy_override ?? null},
+          ${input.completeness},
           ${input.created_at},
           ${input.updated_at}
         )
@@ -371,6 +372,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             project_id = ${input.project_id},
             version = version + 1,
             approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
+            completeness = ${input.completeness},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
       `;
@@ -406,6 +408,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             project_id = ${input.project_id},
             version = version + 1,
             approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
+            completeness = ${input.completeness},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id} AND version = ${expectedVersion}
       `;
@@ -431,6 +434,17 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  // System-maintained recompute only (schema requirementLevel changes, backfill/scan jobs) — does
+  // not bump `version` or `updated_at`, since it isn't a user edit and must not trip optimistic
+  // concurrency checks on a concurrent user update, or create a new entity_version snapshot.
+  async updateEntityCompleteness(workspace: string, id: string, completeness: number) {
+    await this.sql`
+      UPDATE entity
+      SET completeness = ${completeness}
+      WHERE workspace = ${workspace} AND id = ${id} AND completeness != ${completeness}
+    `;
   }
 
   async deleteEntity(workspace: string, id: string) {

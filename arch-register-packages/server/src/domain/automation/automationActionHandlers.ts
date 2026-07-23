@@ -11,6 +11,7 @@ import { assertNoExternalEntityFieldWrites } from '../catalog/entityValidation';
 import { normalizeEntityRelationFields, relationFields } from '../catalog/dataHelpers';
 import { updateEntityWithAudit, type EntityMutationActor } from '../catalog/entityMutations';
 import { RetryableJobError } from '../jobs/jobRetry';
+import { computeEntityCompleteness } from '../../utils/completeness';
 
 const checker = new PermissionChecker();
 
@@ -204,7 +205,16 @@ const handleSetFieldValue: AutomationActionHandler = async context => {
       schema_id: entity.schema_id,
       data: nextData,
       project_id: entity.project_id,
-      updated_at: new Date()
+      updated_at: new Date(),
+      completeness: computeEntityCompleteness(
+        {
+          description: entity.description,
+          owner: entity.owner,
+          lifecycle: entity.lifecycle,
+          data: nextData
+        },
+        schema
+      )
     }
   });
 };

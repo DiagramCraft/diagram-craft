@@ -31,7 +31,8 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         schema_id: customerPortal.schema_id,
         data: customerPortal.data,
         project_id: null,
-        updated_at: new Date('2026-02-02T00:00:00.000Z')
+        updated_at: new Date('2026-02-02T00:00:00.000Z'),
+        completeness: customerPortal.completeness
       });
 
       await server.db.catalog.updateEntity(resources.workspaceId, identityPlatform.id, {
@@ -48,7 +49,8 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         schema_id: identityPlatform.schema_id,
         data: identityPlatform.data,
         project_id: null,
-        updated_at: new Date('2026-02-02T00:00:00.000Z')
+        updated_at: new Date('2026-02-02T00:00:00.000Z'),
+        completeness: identityPlatform.completeness
       });
 
       await use(true);
