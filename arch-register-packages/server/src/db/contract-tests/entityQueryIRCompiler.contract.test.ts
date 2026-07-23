@@ -127,7 +127,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
 
     const [platformTeam, dataTeam] = await db.workspace.replaceTeams(workspace, [
       {
-        id: 'team-platform',
+        id: randomUUID(),
         workspace,
         name: 'Platform',
         sort_order: 0,
@@ -136,7 +136,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         created_at: now
       },
       {
-        id: 'team-data',
+        id: randomUUID(),
         workspace,
         name: 'Data',
         sort_order: 1,
@@ -147,7 +147,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     ]);
     const [activeState, deprecatedState] = await db.workspace.replaceLifecycleStates(workspace, [
       {
-        id: 'active',
+        id: randomUUID(),
         workspace,
         label: 'Active',
         color: '#000000',
@@ -155,7 +155,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         created_at: now
       },
       {
-        id: 'deprecated',
+        id: randomUUID(),
         workspace,
         label: 'Deprecated',
         color: '#000000',
