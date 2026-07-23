@@ -85,7 +85,9 @@ const MemberStep = ({ workspaceId, member, schemas, stale, onResolved }: MemberS
                 checked={(conflictChoices[c.key] ?? 'proposed') === 'proposed'}
                 onChange={() => setConflictChoices(prev => ({ ...prev, [c.key]: 'proposed' }))}
               />
-              <span className={styles.conflictOptionLabel}>Planned: {formatVal(c.proposedVal)}</span>
+              <span className={styles.conflictOptionLabel}>
+                Planned: {formatVal(c.proposedVal)}
+              </span>
             </label>
             <label className={styles.conflictOption}>
               <input
@@ -112,7 +114,12 @@ export const ApplyChangeCaseDialog = ({
   onClose
 }: Props) => {
   const { data: changeCase } = useChangeCase(workspaceId, projectId, caseId, open);
-  const { data: conflicts = [] } = useChangeCaseApplyConflicts(workspaceId, projectId, caseId, open);
+  const { data: conflicts = [] } = useChangeCaseApplyConflicts(
+    workspaceId,
+    projectId,
+    caseId,
+    open
+  );
   const applyMutation = useApplyChangeCase(workspaceId, projectId);
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -125,9 +132,7 @@ export const ApplyChangeCaseDialog = ({
   }, [open]);
 
   const members = changeCase?.members ?? [];
-  const staleByMemberId = new Set(
-    conflicts.filter(c => c.stale).map(c => c.memberId)
-  );
+  const staleByMemberId = new Set(conflicts.filter(c => c.stale).map(c => c.memberId));
 
   if (!open) return null;
 

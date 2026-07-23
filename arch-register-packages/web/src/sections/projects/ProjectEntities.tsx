@@ -674,7 +674,9 @@ const FutureChangesTab = ({
                         <span className={styles.futureCasePanelName}>
                           {changeCase?.name ?? fallbackTitle}
                         </span>
-                        {caseSnaps.length > 1 && <Chip tone="ghost">{caseSnaps.length} entities</Chip>}
+                        {caseSnaps.length > 1 && (
+                          <Chip tone="ghost">{caseSnaps.length} entities</Chip>
+                        )}
                         <div style={{ flex: 1 }} />
                         {project.canEdit && (
                           <DropdownMenu

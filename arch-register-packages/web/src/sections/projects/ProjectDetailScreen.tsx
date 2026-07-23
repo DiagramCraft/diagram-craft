@@ -593,7 +593,9 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onPlanFutureChange={entityId => setPlanDialog({ mode: 'create', entityId })}
           onPlanChange={() => setPlanDialog({ mode: 'create' })}
           onApplySnapshot={snap => snap.case_id && setApplyCaseId(snap.case_id)}
-          onEditSnapshot={snap => snap.case_id && setPlanDialog({ mode: 'edit', caseId: snap.case_id })}
+          onEditSnapshot={snap =>
+            snap.case_id && setPlanDialog({ mode: 'edit', caseId: snap.case_id })
+          }
         />
       ) : contentFolderFilter ? (
         <ProjectContent

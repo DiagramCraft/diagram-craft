@@ -11,7 +11,12 @@ export const useChangeCasesByProject = (workspaceId: string, projectId: string, 
     enabled: !!workspaceId && !!projectId && enabled
   });
 
-export const useChangeCase = (workspaceId: string, projectId: string, caseId: string, enabled = true) =>
+export const useChangeCase = (
+  workspaceId: string,
+  projectId: string,
+  caseId: string,
+  enabled = true
+) =>
   useQuery({
     queryKey: changeCaseKeys.detail(workspaceId, caseId),
     queryFn: () =>

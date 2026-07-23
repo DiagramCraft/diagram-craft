@@ -18,7 +18,9 @@ import type { ProjectSearchParams } from '../../routes/searchParams';
 
 // A "plan change" dialog either creates a new case (optionally seeded with one entity, when
 // opened from a single entity row) or edits an existing not-yet-applied case.
-export type PlanDialogState = { mode: 'create'; entityId?: string } | { mode: 'edit'; caseId: string };
+export type PlanDialogState =
+  | { mode: 'create'; entityId?: string }
+  | { mode: 'edit'; caseId: string };
 
 export const useProjectDetailController = (folder?: string) => {
   const navigate = useNavigate();

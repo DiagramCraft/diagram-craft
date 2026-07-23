@@ -8,10 +8,7 @@ import type {
 } from './changeCaseDatabase';
 import { changeCaseMappers } from './changeCaseDatabase';
 
-export class PostgresChangeCaseDatabase
-  extends PostgresDatabaseBase
-  implements ChangeCaseDatabase
-{
+export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements ChangeCaseDatabase {
   async createCase(input: ChangeCaseDbCreate) {
     try {
       const caseId = input.id;

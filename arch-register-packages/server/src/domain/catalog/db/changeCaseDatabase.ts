@@ -93,8 +93,7 @@ export const changeCaseMappers = {
     description: row['description'] == null ? null : String(row['description']),
     effective_date: row['effective_date'] == null ? null : String(row['effective_date']),
     milestone_id: row['milestone_id'] == null ? null : String(row['milestone_id']),
-    initiator_user_id:
-      row['initiator_user_id'] == null ? null : String(row['initiator_user_id']),
+    initiator_user_id: row['initiator_user_id'] == null ? null : String(row['initiator_user_id']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at']),
     closed_at: row['closed_at'] == null ? null : databaseDate(row['closed_at'])
@@ -117,15 +116,18 @@ export const changeCaseMappers = {
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
     base_version: Number(row['base_version']),
-    base_state: parseDatabaseJson(row['base_state'], {}, 'entity_change_case_entity_version.base_state'),
+    base_state: parseDatabaseJson(
+      row['base_state'],
+      {},
+      'entity_change_case_entity_version.base_state'
+    ),
     proposed_state: parseDatabaseJson(
       row['proposed_state'],
       {},
       'entity_change_case_entity_version.proposed_state'
     ),
     diff: parseDatabaseJson(row['diff'], {}, 'entity_change_case_entity_version.diff'),
-    applied_version_id:
-      row['applied_version_id'] == null ? null : String(row['applied_version_id'])
+    applied_version_id: row['applied_version_id'] == null ? null : String(row['applied_version_id'])
   })
 };
 
@@ -133,14 +135,8 @@ export type ChangeCaseDatabase = {
   createCase(input: ChangeCaseDbCreate): Promise<ChangeCaseDbResult>;
   getCase(workspace: string, caseId: string): Promise<ChangeCaseDbResult | null>;
   listCasesByProject(workspace: string, projectId: string): Promise<ChangeCaseDbResult[]>;
-  getActiveRevision(
-    workspace: string,
-    caseId: string
-  ): Promise<ChangeCaseRevisionDbResult | null>;
-  getLatestRevision(
-    workspace: string,
-    caseId: string
-  ): Promise<ChangeCaseRevisionDbResult | null>;
+  getActiveRevision(workspace: string, caseId: string): Promise<ChangeCaseRevisionDbResult | null>;
+  getLatestRevision(workspace: string, caseId: string): Promise<ChangeCaseRevisionDbResult | null>;
   listMembers(workspace: string, revisionId: string): Promise<ChangeCaseMemberDbResult[]>;
   addMember(
     workspace: string,
@@ -164,11 +160,7 @@ export type ChangeCaseDatabase = {
       message?: string | null;
     }
   ): Promise<ChangeCaseDbResult | null>;
-  markMemberApplied(
-    workspace: string,
-    memberId: string,
-    appliedVersionId: string
-  ): Promise<void>;
+  markMemberApplied(workspace: string, memberId: string, appliedVersionId: string): Promise<void>;
   markRevisionApplied(workspace: string, revisionId: string, resolvedAt: Date): Promise<void>;
   markCaseApplied(workspace: string, caseId: string, closedAt: Date): Promise<void>;
   withdrawCase(workspace: string, caseId: string): Promise<ChangeCaseDbResult | null>;

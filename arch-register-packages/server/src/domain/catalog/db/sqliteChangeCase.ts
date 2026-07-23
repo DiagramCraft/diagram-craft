@@ -32,7 +32,14 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
       `INSERT INTO entity_change_case_revision
        (id, case_id, workspace, revision_number, message, created_by, status, is_active, created_at, resolved_at)
        VALUES (?, ?, ?, 1, ?, ?, 'draft', 1, ?, NULL)`,
-      [revisionId, caseId, input.workspace, input.message, input.created_by, input.created_at.toISOString()]
+      [
+        revisionId,
+        caseId,
+        input.workspace,
+        input.message,
+        input.created_by,
+        input.created_at.toISOString()
+      ]
     );
     for (const member of input.members) {
       this.run(

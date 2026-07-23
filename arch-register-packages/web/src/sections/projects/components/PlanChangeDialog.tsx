@@ -63,11 +63,7 @@ const computeChangedLabels = (
   };
   check('Name', entity['_name'] ?? '', planState['_name'] ?? '');
   check('Description', entity['_description'] ?? '', planState['_description'] ?? '');
-  check(
-    'Owner',
-    (entity['_owner'] as { id: string } | null)?.id ?? '',
-    planState['_owner'] ?? ''
-  );
+  check('Owner', (entity['_owner'] as { id: string } | null)?.id ?? '', planState['_owner'] ?? '');
   check(
     'Lifecycle',
     (entity['_lifecycle'] as { id: string } | null)?.id ?? '',
@@ -301,7 +297,7 @@ export const PlanChangeDialog = ({
         }));
         await createChangeCase.mutateAsync({
           name,
-          targetDate: milestoneId ? null : (targetDate || null),
+          targetDate: milestoneId ? null : targetDate || null,
           milestoneId: milestoneId || null,
           commitMessage: commitMessage || null,
           members
@@ -315,7 +311,7 @@ export const PlanChangeDialog = ({
         await updateChangeCase.mutateAsync({
           caseId,
           name,
-          targetDate: milestoneId ? null : (targetDate || null),
+          targetDate: milestoneId ? null : targetDate || null,
           milestoneId: milestoneId || null,
           commitMessage: commitMessage || null
         });

@@ -3,7 +3,11 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import { defineEntityOperation } from '../operation';
-import { requireEntityAction, requireProjectAccess, requireProjectAction } from '../auth/authorization';
+import {
+  requireEntityAction,
+  requireProjectAccess,
+  requireProjectAction
+} from '../auth/authorization';
 import { updateEntity } from './entityMutationOperations';
 import { entityToBaseState } from './entityMutations';
 import type { Entity, EntityVersionDbResult } from './db/catalogDatabase';
@@ -68,10 +72,7 @@ const getActiveRevisionOrThrow = async (db: DatabaseAdapter, ws: string, caseId:
   return revision;
 };
 
-const requireCaseEditAccess = (
-  authCtx: AuthorizationContext,
-  project: { owner: string | null }
-) =>
+const requireCaseEditAccess = (authCtx: AuthorizationContext, project: { owner: string | null }) =>
   requireProjectAction(
     authCtx,
     project.owner,
@@ -215,7 +216,9 @@ export const createChangeCase = async (
         message: body.commitMessage ?? null,
         created_by: event.context.user.id,
         created_at: new Date(),
-        members: entities.map(({ entity, proposedState }) => buildMemberInput(entity, proposedState))
+        members: entities.map(({ entity, proposedState }) =>
+          buildMemberInput(entity, proposedState)
+        )
       });
 
       return toApiChangeCase(db, ws, changeCase);
@@ -258,10 +261,10 @@ export const addEntityToChangeCase = async (
       await assertEntityBelongsToProject(db, ws, project.id, entity);
 
       const existingMembers = await db.changeCase.listMembers(ws, revision.id);
-      httpAssert.true(
-        !existingMembers.some(member => member.entity_id === entity.id),
-        { status: 409, message: 'This entity is already part of the change case' }
-      );
+      httpAssert.true(!existingMembers.some(member => member.entity_id === entity.id), {
+        status: 409,
+        message: 'This entity is already part of the change case'
+      });
 
       await db.changeCase.addMember(ws, revision.id, buildMemberInput(entity, body.proposedState));
 
@@ -290,10 +293,13 @@ export const removeEntityFromChangeCase = async (
       const changeCase = await getCaseOrThrow(db, ws, caseId);
       const revision = await getActiveRevisionOrThrow(db, ws, caseId);
       const members = await db.changeCase.listMembers(ws, revision.id);
-      httpAssert.true(members.some(member => member.id === memberId), {
-        status: 404,
-        message: 'Change case member not found'
-      });
+      httpAssert.true(
+        members.some(member => member.id === memberId),
+        {
+          status: 404,
+          message: 'Change case member not found'
+        }
+      );
       httpAssert.true(members.length > 1, {
         status: 400,
         message: 'A change case must retain at least one entity'

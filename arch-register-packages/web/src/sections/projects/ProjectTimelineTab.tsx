@@ -535,9 +535,9 @@ const SnapDetail = ({
                     ? schemaMap.get(pe.entity_schema.id)
                     : undefined;
                   const siblingSchemaId =
-                    ((sibling.proposed_state as Record<string, unknown> | null)?.[
-                      'schema_id'
-                    ] as string | undefined) ?? pe?.entity_schema?.id;
+                    ((sibling.proposed_state as Record<string, unknown> | null)?.['schema_id'] as
+                      | string
+                      | undefined) ?? pe?.entity_schema?.id;
                   const siblingSchema = siblingSchemaId
                     ? (schemas.find(s => s.id === siblingSchemaId) ?? null)
                     : null;
