@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { filterOpSchema } from '@arch-register/api-types/viewContract';
+import { filterOpSchema, type FilterOp } from '@arch-register/api-types/filterOp';
+
+export type { FilterOp } from '@arch-register/api-types/filterOp';
 
 // Structured intermediate representation for the entity query language (specs/QUERY_LANGUAGE.md, §5).
 // The text grammar (not implemented yet) compiles to/from this shape; today's flat `FilterCondition[]`
@@ -19,8 +21,6 @@ export type QueryNode =
   | { kind: 'not'; child: QueryNode }
   | { kind: 'predicate'; path: PathStep[]; fieldId: string; op: FilterOp; value: unknown }
   | { kind: 'relationExists'; path: PathStep[] };
-
-export type FilterOp = z.infer<typeof filterOpSchema>;
 
 export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
   z.discriminatedUnion('kind', [

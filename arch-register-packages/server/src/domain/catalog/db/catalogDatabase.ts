@@ -1,12 +1,16 @@
 import {
   BrowserView,
+  BubbleViewConfig,
+  CardsViewConfig,
   EntityFilters,
   ExploreViewConfig,
   FilterCondition,
   MapViewConfig,
   MatrixViewConfig,
   RadarViewConfig,
-  TimelineViewConfig
+  TableViewConfig,
+  TimelineViewConfig,
+  TreeViewConfig
 } from '@arch-register/api-types/viewContract';
 import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
@@ -461,7 +465,11 @@ export const catalogMappers = {
     is_admin_view:
       row['is_admin_view'] === true || row['is_admin_view'] === 1 || row['is_admin_view'] === '1',
     view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'],
-    filters: parseDatabaseJson(row['filters'], {}, 'saved_view.filters'),
+    filters: parseDatabaseJson(
+      row['filters'],
+      { entityQuery: { root: { kind: 'and', children: [] } } },
+      'saved_view.filters'
+    ),
     config: parseDatabaseJson(row['config'], null, 'saved_view.config'),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
@@ -614,10 +622,14 @@ export type SavedViewDbResult = {
   view_mode: BrowserView;
   filters: EntityFilters;
   config: {
+    table?: TableViewConfig;
+    cards?: CardsViewConfig;
+    tree?: TreeViewConfig;
     radar?: RadarViewConfig;
     timeline?: TimelineViewConfig;
     matrix?: MatrixViewConfig;
     explore?: ExploreViewConfig;
+    bubble?: BubbleViewConfig;
     map?: MapViewConfig;
   } | null;
   created_at: Date;

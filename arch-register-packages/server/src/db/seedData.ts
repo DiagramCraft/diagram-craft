@@ -3283,7 +3283,11 @@ export const seedSavedViews: SavedViewDbResult[] = [
     view_mode: 'table',
     filters: {
       status: LIFECYCLE_IDS.production,
-      schemaId: '00000000-0000-0000-0000-000000000002'
+      schemaId: '00000000-0000-0000-0000-000000000002',
+      entityQuery: {
+        schemaId: '00000000-0000-0000-0000-000000000002',
+        root: { kind: 'and', children: [] }
+      }
     },
     config: null,
     created_at: now,
@@ -3298,7 +3302,9 @@ export const seedSavedViews: SavedViewDbResult[] = [
     description: 'Radar view of security-related components',
     is_admin_view: false,
     view_mode: 'radar',
-    filters: {},
+    filters: {
+      entityQuery: { root: { kind: 'and', children: [] } }
+    },
     config: {
       radar: {
         schemaId: '00000000-0000-0000-0000-000000000003',
@@ -3326,7 +3332,11 @@ export const seedSavedViews: SavedViewDbResult[] = [
     view_mode: 'cards',
     filters: {
       owner: TEAM_IDS.platform,
-      schemaId: '00000000-0000-0000-0000-000000000003'
+      schemaId: '00000000-0000-0000-0000-000000000003',
+      entityQuery: {
+        schemaId: '00000000-0000-0000-0000-000000000003',
+        root: { kind: 'and', children: [] }
+      }
     },
     config: null,
     created_at: now,
@@ -3341,7 +3351,13 @@ export const seedSavedViews: SavedViewDbResult[] = [
     description: 'Technology releases positioned by category and radar governance status.',
     is_admin_view: false,
     view_mode: 'radar',
-    filters: { schemaId: '00000000-0000-0000-0000-000000000006' },
+    filters: {
+      schemaId: '00000000-0000-0000-0000-000000000006',
+      entityQuery: {
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        root: { kind: 'and', children: [] }
+      }
+    },
     config: {
       radar: {
         schemaId: '00000000-0000-0000-0000-000000000006',
@@ -3362,7 +3378,13 @@ export const seedSavedViews: SavedViewDbResult[] = [
     description: 'Release dates and end-of-life dates for tracked technology releases.',
     is_admin_view: false,
     view_mode: 'timeline',
-    filters: { schemaId: '00000000-0000-0000-0000-000000000006' },
+    filters: {
+      schemaId: '00000000-0000-0000-0000-000000000006',
+      entityQuery: {
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        root: { kind: 'and', children: [] }
+      }
+    },
     config: {
       timeline: {
         startFieldId: 'release_date',
@@ -3385,9 +3407,53 @@ export const seedSavedViews: SavedViewDbResult[] = [
     view_mode: 'table',
     filters: {
       schemaId: '00000000-0000-0000-0000-000000000006',
-      conditions: [{ fieldId: 'eol_date', op: 'not_empty', value: null }]
+      entityQuery: {
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        root: {
+          kind: 'predicate',
+          path: [],
+          fieldId: 'eol_date',
+          op: 'not_empty',
+          value: null
+        }
+      }
     },
     config: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000007',
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
+    name: 'Components With At-Risk Technology Releases',
+    description:
+      'Components linked to technology releases reaching end of life before the next planning cycle.',
+    is_admin_view: true,
+    view_mode: 'table',
+    filters: {
+      entityQuery: {
+        schemaId: '00000000-0000-0000-0000-000000000003',
+        root: {
+          kind: 'predicate',
+          path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+          fieldId: 'eol_date',
+          op: 'before',
+          value: '2026-06-30'
+        },
+        projections: [
+          {
+            path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+            fieldId: 'eol_date',
+            alias: 'technology_release_eol'
+          }
+        ]
+      }
+    },
+    config: {
+      table: { fieldIds: ['_projection:technology_release_eol'] }
+    },
     created_at: now,
     updated_at: now
   }

@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useEntities, useEntityFacets } from '../../../hooks/useEntities';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { parseDateValue } from './entityBrowserState';
 
@@ -13,6 +14,7 @@ type UseEntityBrowserDataProps = {
   schemas: EntitySchema[];
   q: string;
   conditions: FilterCondition[];
+  entityQuery?: EntityQuery | null;
   joinAssessmentId?: string | null;
   typeFilter: string | null;
   ownerFilter: string | null;
@@ -36,6 +38,7 @@ export const useEntityBrowserData = ({
   schemas,
   q,
   conditions,
+  entityQuery,
   joinAssessmentId,
   typeFilter,
   ownerFilter,
@@ -68,8 +71,9 @@ export const useEntityBrowserData = ({
       owner: ownerFilter,
       lifecycle: statusFilter,
       q,
-      conditions,
-      assessmentId: joinAssessmentId,
+      conditions: entityQuery ? undefined : conditions,
+      entityQuery,
+      assessmentId: entityQuery?.assessmentId ?? joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
       collectionId: collectionId ?? undefined,
@@ -94,8 +98,9 @@ export const useEntityBrowserData = ({
       owner: ownerFilter,
       lifecycle: statusFilter,
       q,
-      conditions,
-      assessmentId: joinAssessmentId,
+      conditions: entityQuery ? undefined : conditions,
+      entityQuery,
+      assessmentId: entityQuery?.assessmentId ?? joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
       collectionId: collectionId ?? undefined,

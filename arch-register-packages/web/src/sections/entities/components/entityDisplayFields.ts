@@ -1,4 +1,5 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
@@ -29,6 +30,8 @@ export type EntityDisplayField = {
   };
 };
 
+export const PROJECTION_FIELD_PREFIX = '_projection:';
+
 const STANDARD_FIELDS: EntityDisplayField[] = [
   { id: '_description', label: 'Description', group: 'General' },
   { id: '_owner', label: 'Owner', group: 'General' },
@@ -57,7 +60,8 @@ const SCALAR_TYPES = new Set(['text', 'longtext', 'boolean', 'date', 'number', '
 export const buildEntityDisplayFields = (
   schemas: EntitySchema[],
   projectContext: boolean,
-  joined?: { assessment: Assessment; enums: WorkspaceEnum[] } | null
+  joined?: { assessment: Assessment; enums: WorkspaceEnum[] } | null,
+  projections: ProjectionField[] = []
 ): EntityDisplayField[] => {
   const fields = STANDARD_FIELDS.filter(field => projectContext || field.group !== 'Project');
   const seen = new Set(fields.map(field => field.id));
@@ -83,6 +87,15 @@ export const buildEntityDisplayFields = (
         assessmentField: { type: field.type, options }
       });
     }
+  }
+  for (const projection of projections) {
+    const alias =
+      projection.alias ??
+      [...projection.path.map(step => step.fieldId), projection.fieldId].join('.');
+    const id = `${PROJECTION_FIELD_PREFIX}${alias}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    fields.push({ id, label: alias, group: 'Query projections' });
   }
   return fields;
 };
@@ -158,6 +171,11 @@ export const formatEntityDisplayValue = (
   if (field.id === '_projectRole') return entity._projectLink?.entityType?.name ?? null;
   if (field.id === '_projectStatus')
     return entity._projectLink?.linked ? (entity._projectLink.isDone ? 'Done' : 'Open') : null;
+  if (field.id.startsWith(PROJECTION_FIELD_PREFIX)) {
+    const value = entity._projections?.[field.id.slice(PROJECTION_FIELD_PREFIX.length)];
+    if (value == null || value === '') return null;
+    return Array.isArray(value) ? value.map(item => String(item)).join(', ') : String(value);
+  }
   const value = entity[field.id];
   if (value == null || value === '') return null;
   if (field.schemaField?.type === 'boolean') return value ? 'Yes' : 'No';

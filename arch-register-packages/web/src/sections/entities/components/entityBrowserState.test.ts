@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildSavedViewPayload,
+  buildEntityQueryFromBrowserFilters,
   parseJsonConfig,
+  parseEntityQueryFromSearch,
   parseViewConfigs,
   pruneAssessmentReferences,
   serializeViewConfigs,
-  toSavedViewConfig
+  toSavedViewConfig,
+  toSavedViewSearch
 } from './entityBrowserState';
 
 describe('entity browser view field persistence', () => {
@@ -142,5 +146,120 @@ describe('pruneAssessmentReferences', () => {
     };
     const { viewConfigs } = pruneAssessmentReferences([], configs);
     expect(viewConfigs).toEqual(configs);
+  });
+});
+
+describe('structured entity query view persistence', () => {
+  const entityQuery = {
+    schemaId: 'component',
+    root: {
+      kind: 'predicate' as const,
+      path: [{ kind: 'forward' as const, fieldId: 'technology_releases' }],
+      fieldId: 'eol_date',
+      op: 'before' as const,
+      value: '2026-06-30'
+    }
+  };
+
+  it('round trips an entity query through saved-view URL state', () => {
+    const search = toSavedViewSearch({
+      id: 'view-1',
+      workspaceId: 'workspace-1',
+      scope: 'workspace',
+      projectId: null,
+      projectScope: null,
+      name: 'At risk',
+      description: null,
+      isAdminView: false,
+      viewMode: 'table',
+      filters: { entityQuery },
+      config: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    });
+
+    expect(parseEntityQueryFromSearch(search)).toEqual(entityQuery);
+  });
+
+  it('includes the query in newly saved view payloads without changing legacy fields', () => {
+    const payload = buildSavedViewPayload({
+      scope: 'workspace',
+      name: 'At risk',
+      description: '',
+      view: 'table',
+      typeFilter: 'component',
+      statusFilter: null,
+      ownerFilter: null,
+      q: '',
+      sort: 'name',
+      conditions: [],
+      viewConfigs: {},
+      entityQuery
+    });
+
+    expect(payload.filters).toMatchObject({ schemaId: 'component', entityQuery });
+    expect(payload.filters.conditions).toBeUndefined();
+  });
+
+  it('builds an IR query when saving a flat browser filter', () => {
+    expect(
+      buildEntityQueryFromBrowserFilters({
+        typeFilter: 'component',
+        conditions: [
+          { fieldId: '_schemaId', op: 'equals', value: 'component' },
+          { fieldId: 'status', op: 'equals', value: 'active' }
+        ]
+      })
+    ).toEqual({
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+        ]
+      }
+    });
+  });
+
+  it('keeps a canonical query envelope for completeness fallback filters', () => {
+    const conditions = [{ fieldId: '_completeness', op: 'lt' as const, value: 50 }];
+    const payload = buildSavedViewPayload({
+      scope: 'workspace',
+      name: 'Incomplete components',
+      description: '',
+      view: 'table',
+      typeFilter: 'component',
+      statusFilter: null,
+      ownerFilter: null,
+      q: '',
+      sort: 'name',
+      conditions,
+      viewConfigs: {}
+    });
+
+    expect(payload.filters.entityQuery).toEqual({
+      schemaId: 'component',
+      root: { kind: 'and', children: [] }
+    });
+    expect(payload.filters.conditions).toEqual(conditions);
+
+    const search = toSavedViewSearch({
+      id: 'view-2',
+      workspaceId: 'workspace-1',
+      scope: 'workspace',
+      projectId: null,
+      projectScope: null,
+      name: 'Incomplete components',
+      description: null,
+      isAdminView: false,
+      viewMode: 'table',
+      filters: payload.filters,
+      config: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    });
+
+    expect(search.entityQuery).toBeUndefined();
+    expect(JSON.parse(search.filters!)).toEqual(conditions);
   });
 });

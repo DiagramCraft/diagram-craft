@@ -25,4 +25,22 @@ describe('entityListFiltersSchema', () => {
       includeProjectSnapshots: true
     });
   });
+
+  it('accepts a structured EntityQuery as a JSON query parameter', () => {
+    const query = {
+      schemaId: 'schema-component',
+      root: {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: '_name',
+        op: 'contains' as const,
+        value: 'API'
+      },
+      projections: [{ path: [], fieldId: '_slug', alias: 'slug' }]
+    };
+
+    expect(
+      entityListFiltersSchema.parse({ entityQuery: JSON.stringify(query) }).entityQuery
+    ).toEqual(query);
+  });
 });

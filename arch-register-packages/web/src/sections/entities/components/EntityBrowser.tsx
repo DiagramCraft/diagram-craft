@@ -164,6 +164,7 @@ export const EntityBrowser = ({
     clearAsOf,
     setIncludeProjectSnapshots,
     conditions,
+    entityQuery,
     activeViewConfig,
     collectionId,
     joinAssessmentId,
@@ -217,6 +218,7 @@ export const EntityBrowser = ({
       isPagedBrowse,
       q,
       conditions,
+      entityQuery,
       typeFilter,
       ownerFilter,
       statusFilter,
@@ -241,6 +243,7 @@ export const EntityBrowser = ({
     schemas,
     q,
     conditions,
+    entityQuery,
     joinAssessmentId: effectiveJoinAssessmentId,
     typeFilter,
     ownerFilter,
@@ -325,8 +328,14 @@ export const EntityBrowser = ({
     [joined, enums]
   );
   const displayFields = useMemo(
-    () => buildEntityDisplayFields(displayFieldSchemas, !!projectContext, joinedAssessmentContext),
-    [displayFieldSchemas, projectContext, joinedAssessmentContext]
+    () =>
+      buildEntityDisplayFields(
+        displayFieldSchemas,
+        !!projectContext,
+        joinedAssessmentContext,
+        entityQuery?.projections ?? []
+      ),
+    [displayFieldSchemas, entityQuery?.projections, projectContext, joinedAssessmentContext]
   );
   const displayView = DISPLAY_FIELD_VIEWS.has(view)
     ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')

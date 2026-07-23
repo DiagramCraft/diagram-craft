@@ -38,6 +38,7 @@ import {
   buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
+  parseEntityQueryFromSearch,
   parseViewConfigs
 } from '../entities/components/entityBrowserState';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
@@ -139,7 +140,11 @@ export const ProjectEntities = ({
   const createSavedViewMutation = useCreateSavedView(workspaceSlug);
   const updateSavedViewMutation = useUpdateSavedView(workspaceSlug);
   const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
-  const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
+  const entityQuery = useMemo(() => parseEntityQueryFromSearch(search), [search]);
+  const typeFilter = useMemo(
+    () => entityQuery?.schemaId ?? getFilterValue(conditions, '_schemaId'),
+    [conditions, entityQuery]
+  );
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
   const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
   const view = (search.viewMode ?? 'table') as BrowserView;
@@ -185,6 +190,7 @@ export const ProjectEntities = ({
           q,
           sort,
           conditions,
+          entityQuery,
           viewConfigs,
           joinAssessmentId: search.joinAssessmentId ?? null
         })
@@ -197,6 +203,24 @@ export const ProjectEntities = ({
   const handleUpdateSavedView = useCallback(async () => {
     if (activeSavedView == null) return;
     if (activeSavedView.scope !== 'project' || !project.canEdit) return;
+    const savedViewPayload = buildSavedViewPayload({
+      scope: activeSavedView.scope,
+      projectId: project.id,
+      projectScope,
+      name: activeSavedView.name,
+      description: activeSavedView.description ?? '',
+      isAdminView: activeSavedView.isAdminView,
+      view,
+      typeFilter,
+      statusFilter,
+      ownerFilter,
+      q,
+      sort,
+      conditions,
+      entityQuery,
+      viewConfigs,
+      joinAssessmentId: search.joinAssessmentId ?? null
+    });
 
     try {
       await updateSavedViewMutation.mutateAsync({
@@ -204,31 +228,8 @@ export const ProjectEntities = ({
         body: {
           projectScope: activeSavedView.scope === 'project' ? projectScope : null,
           viewMode: view,
-          filters: {
-            schemaId: typeFilter,
-            status: statusFilter,
-            owner: ownerFilter,
-            q,
-            sort,
-            conditions,
-            assessmentId: search.joinAssessmentId ?? null
-          },
-          config: buildSavedViewPayload({
-            scope: activeSavedView.scope,
-            projectId: project.id,
-            projectScope,
-            name: activeSavedView.name,
-            description: activeSavedView.description ?? '',
-            view,
-            typeFilter,
-            statusFilter,
-            ownerFilter,
-            q,
-            sort,
-            conditions,
-            viewConfigs,
-            joinAssessmentId: search.joinAssessmentId ?? null
-          }).config
+          filters: savedViewPayload.filters,
+          config: savedViewPayload.config
         }
       });
     } catch {
@@ -246,6 +247,7 @@ export const ProjectEntities = ({
     q,
     sort,
     conditions,
+    entityQuery,
     viewConfigs,
     search.joinAssessmentId,
     updateSavedViewMutation

@@ -42,7 +42,8 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
       owner: filters?.owner ?? undefined,
       lifecycle: filters?.status ?? undefined,
       q: filters?.q ?? undefined,
-      conditions: filters?.conditions ?? undefined,
+      conditions: filters?.entityQuery ? undefined : (filters?.conditions ?? undefined),
+      entityQuery: filters?.entityQuery ?? undefined,
       view: 'full',
       limit: 100
     },
@@ -89,7 +90,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
 
   const rows = entities as BrowserEntityRecord[];
   const viewConfig = getSavedViewConfig(savedView);
-  const typeFilter = savedView.filters.schemaId ?? null;
+  const typeFilter = savedView.filters.entityQuery?.schemaId ?? savedView.filters.schemaId ?? null;
   const ownerFilter = savedView.filters.owner ?? null;
   const statusFilter = savedView.filters.status ?? null;
   const q = savedView.filters.q ?? '';
@@ -97,7 +98,9 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   const projectScope = savedView.projectScope ?? 'all';
   const displayFields = buildEntityDisplayFields(
     typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
-    !!resolvedProjectId
+    !!resolvedProjectId,
+    null,
+    savedView.filters.entityQuery?.projections ?? []
   );
 
   return (

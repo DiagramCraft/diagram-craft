@@ -42,7 +42,11 @@ import {
 } from './entityMutationOperations';
 import { listAllCatalogEntities } from './entityLoader';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
-import { parseEntityQuery } from './entityQuery';
+import {
+  buildEntityQueryForExecution,
+  findEntityQueryRequestConflicts,
+  parseEntityQuery
+} from './entityQuery';
 import { downloadEntityImportTemplate, exportEntitiesCsv } from './entityCsvOperations';
 import { assertSnapshotCanBeRestored, serializeEntitySnapshot } from './entitySnapshotOperations';
 import { entityRequiresApproval } from './entityChangeOperations';
@@ -58,10 +62,20 @@ const entityRouter = implement(workspaceEntityContract)
   .use(workspaceScoped)
   .use(entityScoped);
 
+const assertCompatibleEntityQueryRequest = (query: Parameters<typeof parseEntityQuery>[0]) => {
+  const conflicts = findEntityQueryRequestConflicts(query);
+  httpAssert.true(conflicts.length === 0, {
+    status: 400,
+    message: `EntityQuery conflicts with request field(s): ${conflicts.join(', ')}`
+  });
+};
+
 const entityHandlers = {
   list: entityRouter.entities.list.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const query = parseEntityQuery(input.query);
+    assertCompatibleEntityQueryRequest(input.query);
+    query.entityQuery = buildEntityQueryForExecution(input.query, query);
     if (query.collectionId) {
       const collection = await context.db.view.getCollection(
         authCtx.userId,
@@ -70,11 +84,12 @@ const entityHandlers = {
       );
       httpAssert.present(collection, { status: 404, message: 'Collection not found' });
     }
-    if (input.query.projectId) {
-      const project = await context.db.project.getProject(workspace, input.query.projectId);
+    const projectId = input.query.entityQuery?.projectId ?? input.query.projectId;
+    if (projectId) {
+      const project = await context.db.project.getProject(workspace, projectId);
       httpAssert.present(project, {
         status: 404,
-        message: `Project '${input.query.projectId}' not found`
+        message: `Project '${projectId}' not found`
       });
       requireProjectAccess(authCtx, project.owner);
     }
@@ -84,6 +99,8 @@ const entityHandlers = {
   count: entityRouter.entities.count.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const query = parseEntityQuery(input.query);
+    assertCompatibleEntityQueryRequest(input.query);
+    query.entityQuery = buildEntityQueryForExecution(input.query, query);
     if (query.collectionId) {
       const collection = await context.db.view.getCollection(
         authCtx.userId,
@@ -92,11 +109,12 @@ const entityHandlers = {
       );
       httpAssert.present(collection, { status: 404, message: 'Collection not found' });
     }
-    if (input.query.projectId) {
-      const project = await context.db.project.getProject(workspace, input.query.projectId);
+    const projectId = input.query.entityQuery?.projectId ?? input.query.projectId;
+    if (projectId) {
+      const project = await context.db.project.getProject(workspace, projectId);
       httpAssert.present(project, {
         status: 404,
-        message: `Project '${input.query.projectId}' not found`
+        message: `Project '${projectId}' not found`
       });
       requireProjectAccess(authCtx, project.owner);
     }
@@ -116,20 +134,24 @@ const entityHandlers = {
 
   tree: entityRouter.entities.tree.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
-    if (input.query.projectId) {
-      const project = await context.db.project.getProject(workspace, input.query.projectId);
+    const projectId = input.query.entityQuery?.projectId ?? input.query.projectId;
+    if (projectId) {
+      const project = await context.db.project.getProject(workspace, projectId);
       httpAssert.present(project, {
         status: 404,
-        message: `Project '${input.query.projectId}' not found`
+        message: `Project '${projectId}' not found`
       });
       requireProjectAccess(authCtx, project.owner);
     }
     const query = parseEntityQuery(input.query);
+    assertCompatibleEntityQueryRequest(input.query);
+    query.entityQuery = buildEntityQueryForExecution(input.query, query);
     httpAssert.true(!query.collectionId, {
       status: 400,
       message: 'Collections support table and cards views only'
     });
     return await getEntityTree(context.db, workspace, authCtx, {
+      entityQuery: query.entityQuery,
       schemaId: query.schemaId,
       owner: query.owner,
       lifecycle: query.lifecycle,

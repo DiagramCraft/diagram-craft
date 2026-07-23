@@ -109,7 +109,8 @@
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
-          display modes, and joined data such as assessment fields.
+          display modes, and joined data such as assessment fields. Saved views may also use relationship-aware
+          structured queries with projected fields.
 
         - @id:ar.entity-views.technology-lifecycle Users can use saved table, radar, and timeline views to review
           technology release lifecycles, radar governance status, and end-of-life planning dates.

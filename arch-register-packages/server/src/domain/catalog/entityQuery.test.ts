@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { parseEntityQuery } from './entityQuery';
+import {
+  buildEntityQueryForExecution,
+  findEntityQueryRequestConflicts,
+  parseEntityQuery
+} from './entityQuery';
 
 describe('parseEntityQuery', () => {
   it('supplies domain defaults', () => {
     expect(parseEntityQuery({})).toEqual({
+      entityQuery: null,
       schemaId: null,
       owner: null,
       lifecycle: null,
@@ -42,5 +47,59 @@ describe('parseEntityQuery', () => {
       conditions: [],
       asOf: null
     });
+  });
+
+  it('maps legacy flat conditions to structured execution when SQL-compatible', () => {
+    const parsed = parseEntityQuery({
+      _schemaId: 'schema-component',
+      conditions: [{ fieldId: '_name', op: 'contains', value: 'API' }]
+    });
+
+    expect(buildEntityQueryForExecution({ conditions: parsed.conditions }, parsed)).toEqual({
+      schemaId: 'schema-component',
+      root: {
+        kind: 'and',
+        children: [{ kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'API' }]
+      },
+      projectScope: 'all'
+    });
+  });
+
+  it('keeps completeness and assessment conditions on the legacy fallback path', () => {
+    const parsed = parseEntityQuery({
+      conditions: [{ fieldId: '_completeness', op: 'lt', value: 50 }]
+    });
+    expect(buildEntityQueryForExecution({ conditions: parsed.conditions }, parsed)).toBeNull();
+  });
+});
+
+describe('findEntityQueryRequestConflicts', () => {
+  const entityQuery = {
+    schemaId: 'schema-1',
+    projectId: 'project-1',
+    root: { kind: 'and' as const, children: [] }
+  };
+
+  it('allows matching duplicate scope fields and non-overlapping legacy filters', () => {
+    expect(
+      findEntityQueryRequestConflicts({
+        entityQuery,
+        _schemaId: 'schema-1',
+        projectId: 'project-1',
+        owner: 'team-1',
+        q: 'search'
+      })
+    ).toEqual([]);
+  });
+
+  it('reports conflicting duplicate fields and legacy conditions', () => {
+    expect(
+      findEntityQueryRequestConflicts({
+        entityQuery,
+        _schemaId: 'schema-2',
+        projectId: 'project-2',
+        conditions: []
+      })
+    ).toEqual(['conditions', '_schemaId', 'projectId']);
   });
 });

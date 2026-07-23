@@ -4,6 +4,7 @@ import { runContractSuiteAgainstBothDrivers } from './harness';
 import { createFixtureWorkspace, createFixtureProject } from './projectFixtures';
 import { createFixtureCatalogEntity } from './catalogFixtures';
 import { createFixtureUser } from './authFixtures';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter, DbDriver } from '../database';
 import type { SchemaDbResult } from '../../domain/catalog/db/catalogDatabase';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
@@ -18,6 +19,7 @@ import {
 import { filterConditionsToEntityQueryIR } from '../../domain/catalog/entityQueryIRMapping';
 import { matchesFilterCondition } from '../../domain/catalog/dataHelpers';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { countEntities, listEntitiesWithCount } from '../../domain/catalog/entityQueryOperations';
 
 const createSchema = async (
   db: DatabaseAdapter,
@@ -753,5 +755,156 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     };
 
     expect(() => compileEntityQueryIR(query, schemas, driver, workspace)).toThrow('ambiguous');
+  });
+
+  it('executes EntityQuery through the existing list/count path', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const technologySchema = await createSchema(db, workspace, { name: 'Technology' });
+    const releaseSchema = await createSchema(db, workspace, {
+      name: 'Technology Release',
+      fields: [
+        { id: 'eol_date', name: 'EOL Date', type: 'date' },
+        {
+          id: 'technology',
+          name: 'Technology',
+          type: 'containment',
+          schemaId: technologySchema.id,
+          minCount: 1,
+          maxCount: 1
+        }
+      ]
+    });
+    const componentSchema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          schemaId: releaseSchema.id,
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    });
+    const go = await createFixtureCatalogEntity(db, workspace, technologySchema.id, {
+      slug: 'go'
+    });
+    const release = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+      data: { eol_date: '2026-01-01', technology: [go.id] }
+    });
+    const component = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+      data: { technology_releases: [release.id] }
+    });
+
+    const query: EntityQuery = {
+      schemaId: componentSchema.id,
+      root: {
+        kind: 'predicate',
+        path: [
+          { kind: 'forward', fieldId: 'technology_releases' },
+          { kind: 'forward', fieldId: 'technology' }
+        ],
+        fieldId: '_id',
+        op: 'equals',
+        value: go.id
+      },
+      projections: [
+        {
+          path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+          fieldId: 'eol_date',
+          alias: 'release_eol'
+        }
+      ]
+    };
+
+    const page = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery: query,
+      view: 'full',
+      limit: 1,
+      offset: 0
+    });
+
+    expect(page.total).toBe(1);
+    expect(page.items.map(item => item._uid)).toEqual([component.id]);
+    expect(page.items[0]?._projections).toEqual({ release_eol: ['2026-01-01'] });
+    expect(await countEntities(db, workspace, null, { entityQuery: query })).toBe(1);
+  });
+
+  it('preserves project scope and pagination through the IR list/count path', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const otherProject = await createFixtureProject(db, workspace);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+    const globalEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'A global'
+    });
+    const projectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      project_id: project.id,
+      name: 'B project'
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, {
+      project_id: otherProject.id,
+      name: 'C other project'
+    });
+
+    const query: EntityQuery = {
+      projectId: project.id,
+      projectScope: 'project',
+      schemaId: schema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'not_empty', value: null }
+    };
+    const page = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery: query,
+      view: 'summary',
+      limit: 1,
+      offset: 1
+    });
+
+    expect(page.total).toBe(2);
+    expect(page.items.map(item => item._uid)).toEqual([projectEntity.id]);
+    expect(await countEntities(db, workspace, null, { entityQuery: query })).toBe(2);
+    expect(page.items.map(item => item._uid)).not.toContain(globalEntity.id);
+  });
+
+  it('applies entity visibility before IR traversal results are returned', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+    const user = await createFixtureUser(db);
+    const allowed = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const denied = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const grants = await db.catalog.replaceEntityGrants(workspace, allowed.id, [
+      {
+        id: randomUUID(),
+        workspace,
+        entity_id: allowed.id,
+        principal_type: 'user',
+        principal_id: user.id,
+        role: 'editor',
+        applies_to: 'self',
+        created_at: new Date()
+      }
+    ]);
+    const authCtx = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: null,
+      schemas: [schema],
+      entities: [allowed, denied],
+      grants
+    });
+
+    const page = await listEntitiesWithCount(db, workspace, authCtx, {
+      entityQuery: {
+        schemaId: schema.id,
+        root: { kind: 'predicate', path: [], fieldId: '_id', op: 'not_empty', value: null }
+      }
+    });
+
+    expect(page.items.map(item => item._uid)).toEqual([allowed.id]);
+    expect(page.items.map(item => item._uid)).not.toContain(denied.id);
   });
 });

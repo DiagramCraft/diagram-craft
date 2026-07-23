@@ -20,6 +20,7 @@ export type SharedEntityBrowserSearchParams = {
   sidebarTab?: 'filters' | 'views' | 'bookmarks';
   collectionId?: string;
   filters?: string; // JSON string of FilterCondition[]
+  entityQuery?: string; // JSON string of structured EntityQuery IR
   asOf?: string; // ISO 8601 date — when set, browser enters read-only point-in-time snapshot mode
   asOfIncludeProjects?: 'true' | 'false'; // whether asOf reconstruction applies project future_update snapshots; defaults to 'true'
   joinAssessmentId?: string; // joined assessment identifier for display, filtering, and view attributes
@@ -57,6 +58,7 @@ const validateSharedEntityBrowserSearch = (
         : undefined,
   collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
+  entityQuery: typeof raw.entityQuery === 'string' ? raw.entityQuery : undefined,
   asOf: typeof raw.asOf === 'string' ? raw.asOf : undefined,
   asOfIncludeProjects:
     raw.asOfIncludeProjects === 'true' || raw.asOfIncludeProjects === 'false'
