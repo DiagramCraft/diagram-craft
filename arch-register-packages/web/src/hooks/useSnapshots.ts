@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { entityKeys, invalidateEntityDetails, invalidateEntityQueries } from '../queries/entities';
+import { entityKeys, invalidateEntityDetails } from '../queries/entities';
 import { snapshotKeys, invalidateSnapshotQueries } from '../queries/snapshots';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -33,68 +33,6 @@ export const usePromoteSnapshot = (workspaceId: string, entityId: string) => {
   });
 };
 
-export const useCreateFutureUpdate = (workspaceId: string, entityId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (params: {
-      projectId: string;
-      targetDate?: string | null;
-      milestoneId?: string | null;
-      commitMessage?: string | null;
-      proposedState: Record<string, unknown>;
-    }) =>
-      orpcClient.entities.snapshots.create({
-        params: { workspace: workspaceId, id: entityId },
-        body: params
-      }),
-    onSuccess: (_, variables) => {
-      invalidateSnapshotQueries(queryClient, workspaceId, entityId, variables.projectId);
-    }
-  });
-};
-
-export const useUpdateSnapshot = (workspaceId: string, entityId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (params: {
-      snapshotId: string;
-      projectId?: string | null;
-      proposedState?: Record<string, unknown>;
-      targetDate?: string | null;
-      milestoneId?: string | null;
-      commitMessage?: string | null;
-    }) =>
-      orpcClient.entities.snapshots.update({
-        params: { workspace: workspaceId, id: entityId, snapshotId: params.snapshotId },
-        body: {
-          proposedState: params.proposedState,
-          targetDate: params.targetDate,
-          milestoneId: params.milestoneId,
-          commitMessage: params.commitMessage
-        }
-      }),
-    onSuccess: (_, variables) => {
-      invalidateSnapshotQueries(queryClient, workspaceId, entityId, variables.projectId);
-    }
-  });
-};
-
-export const useDeleteSnapshot = (workspaceId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (params: { entityId: string; snapshotId: string; projectId?: string | null }) =>
-      orpcClient.entities.snapshots.remove({
-        params: { workspace: workspaceId, id: params.entityId, snapshotId: params.snapshotId }
-      }),
-    onSuccess: (_, variables) => {
-      invalidateSnapshotQueries(queryClient, workspaceId, variables.entityId, variables.projectId);
-    }
-  });
-};
-
 export const useRestoreSnapshot = (workspaceId: string, entityId: string) => {
   const queryClient = useQueryClient();
 
@@ -107,23 +45,6 @@ export const useRestoreSnapshot = (workspaceId: string, entityId: string) => {
     onSuccess: () => {
       invalidateEntityDetails(queryClient, workspaceId, entityId);
       invalidateSnapshotQueries(queryClient, workspaceId, entityId);
-    }
-  });
-};
-
-export const useApplySnapshot = (workspaceId: string, entityId: string, projectId?: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (params: { snapshotId: string; resolvedEntityData: Record<string, unknown> }) =>
-      orpcClient.entities.snapshots.apply({
-        params: { workspace: workspaceId, id: entityId, snapshotId: params.snapshotId },
-        body: { resolvedEntityData: params.resolvedEntityData }
-      }),
-    onSuccess: () => {
-      invalidateSnapshotQueries(queryClient, workspaceId, entityId, projectId);
-      invalidateEntityDetails(queryClient, workspaceId, entityId);
-      invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };

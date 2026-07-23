@@ -13,6 +13,7 @@ import { workspaceEntityContract } from '@arch-register/api-types/entityContract
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
 import { milestoneContract } from '@arch-register/api-types/milestoneContract';
+import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
@@ -78,6 +79,7 @@ const webContracts = {
   ...workspaceConfigContract,
   ...projectContract,
   ...milestoneContract,
+  ...changeCaseContract,
   ...assessmentContract,
   ...assessmentResponseContract,
   ...auditContract,

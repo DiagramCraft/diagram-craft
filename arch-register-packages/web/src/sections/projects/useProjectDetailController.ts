@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
@@ -16,6 +15,12 @@ import { useContentScopeOperations, type ContentScope } from '../../hooks/useCon
 import { useToggleTemplateStatus } from '../../hooks/useTemplates';
 import type { MenuTarget as ProjectMenuTarget } from '../../lib/contentNode';
 import type { ProjectSearchParams } from '../../routes/searchParams';
+
+// A "plan change" dialog either creates a new case (optionally seeded with one entity, when
+// opened from a single entity row) or edits an existing not-yet-applied case.
+export type PlanDialogState =
+  | { mode: 'create'; entityId?: string }
+  | { mode: 'edit'; caseId: string };
 
 export const useProjectDetailController = (folder?: string) => {
   const navigate = useNavigate();
@@ -46,9 +51,8 @@ export const useProjectDetailController = (folder?: string) => {
   const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
   const [pinError, setPinError] = useState('');
   const [addEntityOpen, setAddEntityOpen] = useState(false);
-  const [planEntityId, setPlanEntityId] = useState<string | null>(null);
-  const [editSnapshot, setEditSnapshot] = useState<EntitySnapshot | null>(null);
-  const [applySnapshot, setApplySnapshot] = useState<EntitySnapshot | null>(null);
+  const [planDialog, setPlanDialog] = useState<PlanDialogState | null>(null);
+  const [applyCaseId, setApplyCaseId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; target: ProjectMenuTarget } | null>(
     null
   );
@@ -145,12 +149,10 @@ export const useProjectDetailController = (folder?: string) => {
     setPinError,
     addEntityOpen,
     setAddEntityOpen,
-    planEntityId,
-    setPlanEntityId,
-    editSnapshot,
-    setEditSnapshot,
-    applySnapshot,
-    setApplySnapshot,
+    planDialog,
+    setPlanDialog,
+    applyCaseId,
+    setApplyCaseId,
     menu,
     setMenu,
     renameTarget,

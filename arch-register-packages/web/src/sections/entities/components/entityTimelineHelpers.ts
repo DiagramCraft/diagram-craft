@@ -57,28 +57,25 @@ export function diffSnapshotState(
   if (!proposed) return [];
   const changes: ChangeRow[] = [];
 
+  // Compare the resolved display strings, not the raw values — otherwise equivalent "empty"
+  // representations (null vs '' vs undefined vs []) show up as a change even though both sides
+  // render identically (e.g. as "—").
   for (const { key, label } of BUILT_IN) {
-    const from = base?.[key];
-    const to = proposed[key];
-    if (JSON.stringify(from) === JSON.stringify(to)) continue;
-    changes.push({
-      label,
-      from: resolveBuiltIn(key, from, lifecycleStates, teams),
-      to: resolveBuiltIn(key, to, lifecycleStates, teams)
-    });
+    const from = resolveBuiltIn(key, base?.[key], lifecycleStates, teams);
+    const to = resolveBuiltIn(key, proposed[key], lifecycleStates, teams);
+    if (from === to) continue;
+    changes.push({ label, from, to });
   }
 
   const baseData = (base?.data ?? {}) as Record<string, unknown>;
   const proposedData = (proposed.data ?? {}) as Record<string, unknown>;
   for (const [fieldId, toVal] of Object.entries(proposedData)) {
     const fromVal = baseData[fieldId];
-    if (JSON.stringify(fromVal) === JSON.stringify(toVal)) continue;
     const field = schema?.fields.find(f => f.id === fieldId);
-    changes.push({
-      label: field?.name ?? fieldId,
-      from: resolveFieldVal(field, fromVal),
-      to: resolveFieldVal(field, toVal)
-    });
+    const from = resolveFieldVal(field, fromVal);
+    const to = resolveFieldVal(field, toVal);
+    if (from === to) continue;
+    changes.push({ label: field?.name ?? fieldId, from, to });
   }
 
   return changes;

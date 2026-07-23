@@ -33,6 +33,21 @@ describe('diffSnapshotState', () => {
     );
     expect(changes).toContainEqual({ label: 'Lifecycle', from: 'Active', to: 'Deprecated' });
   });
+
+  it('does not report a change when both sides are differently-shaped empty values', () => {
+    const changes = diffSnapshotState(
+      { target_lifecycle: null, target_lifecycle_date: undefined, data: { apis: [] } },
+      { target_lifecycle: '', target_lifecycle_date: null, data: { apis: null } },
+      {
+        id: 's',
+        name: 'Service',
+        fields: [{ id: 'apis', name: 'Provided APIs', type: 'text' }]
+      } as never,
+      [],
+      []
+    );
+    expect(changes).toEqual([]);
+  });
 });
 
 describe('detectConflicts', () => {

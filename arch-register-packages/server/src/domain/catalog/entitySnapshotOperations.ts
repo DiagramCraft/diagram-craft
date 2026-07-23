@@ -3,6 +3,7 @@ import type { EntitySnapshotDbResult } from './db/catalogDatabase';
 
 export const serializeEntitySnapshot = (snapshot: EntitySnapshotDbResult) => ({
   ...snapshot,
+  case_id: snapshot.case_id ?? null,
   created_at: snapshot.created_at.toISOString(),
   created_by_name: snapshot.created_by_name
 });

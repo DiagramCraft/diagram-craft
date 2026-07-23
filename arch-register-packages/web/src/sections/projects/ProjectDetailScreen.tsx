@@ -41,10 +41,10 @@ import {
 } from '../../lib/contentNode';
 import { RenameDialog } from '../../components/RenameDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { ApplySnapshotDialog } from './components/ApplySnapshotDialog';
 import { AddEntityToProjectDialog } from './components/AddEntityToProjectDialog';
 import { ProjectSettingsForm } from './components/ProjectSettingsForm';
-import { PlanFutureChangeDialog } from './components/PlanFutureChangeDialog';
+import { PlanChangeDialog } from './components/PlanChangeDialog';
+import { ApplyChangeCaseDialog } from './components/ApplyChangeCaseDialog';
 import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
@@ -85,12 +85,10 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
     setPinError,
     addEntityOpen,
     setAddEntityOpen,
-    planEntityId,
-    setPlanEntityId,
-    editSnapshot,
-    setEditSnapshot,
-    applySnapshot,
-    setApplySnapshot,
+    planDialog,
+    setPlanDialog,
+    applyCaseId,
+    setApplyCaseId,
     menu,
     setMenu,
     renameTarget,
@@ -592,9 +590,12 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             updateEntityMutation.mutate({ entityId, is_done: !isDone })
           }
           onRemoveEntity={entityId => removeEntityMutation.mutate(entityId)}
-          onPlanFutureChange={entityId => setPlanEntityId(entityId)}
-          onApplySnapshot={snap => setApplySnapshot(snap)}
-          onEditSnapshot={snap => setEditSnapshot(snap)}
+          onPlanFutureChange={entityId => setPlanDialog({ mode: 'create', entityId })}
+          onPlanChange={() => setPlanDialog({ mode: 'create' })}
+          onApplySnapshot={snap => snap.case_id && setApplyCaseId(snap.case_id)}
+          onEditSnapshot={snap =>
+            snap.case_id && setPlanDialog({ mode: 'edit', caseId: snap.case_id })
+          }
         />
       ) : contentFolderFilter ? (
         <ProjectContent
@@ -790,41 +791,28 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
         </ContextMenu.Imperative>
       )}
 
-      {planEntityId && (
-        <PlanFutureChangeDialog
-          open={!!planEntityId}
+      {planDialog && (
+        <PlanChangeDialog
+          open={!!planDialog}
           workspaceId={workspaceId}
           projectId={projectId}
-          entityId={planEntityId}
           schemas={schemas}
           teams={teams}
           lifecycleStates={lifecycleStates}
-          onClose={() => setPlanEntityId(null)}
+          initialEntityId={planDialog.mode === 'create' ? planDialog.entityId : undefined}
+          editCaseId={planDialog.mode === 'edit' ? planDialog.caseId : undefined}
+          onClose={() => setPlanDialog(null)}
         />
       )}
 
-      {editSnapshot && (
-        <PlanFutureChangeDialog
-          open={!!editSnapshot}
-          snapshot={editSnapshot}
+      {applyCaseId && (
+        <ApplyChangeCaseDialog
+          open={!!applyCaseId}
           workspaceId={workspaceId}
           projectId={projectId}
-          entityId={editSnapshot.entity_id}
+          caseId={applyCaseId}
           schemas={schemas}
-          teams={teams}
-          lifecycleStates={lifecycleStates}
-          onClose={() => setEditSnapshot(null)}
-        />
-      )}
-
-      {applySnapshot && (
-        <ApplySnapshotDialog
-          open={!!applySnapshot}
-          snapshot={applySnapshot}
-          workspaceId={workspaceId}
-          projectId={projectId}
-          schemas={schemas}
-          onClose={() => setApplySnapshot(null)}
+          onClose={() => setApplyCaseId(null)}
         />
       )}
 

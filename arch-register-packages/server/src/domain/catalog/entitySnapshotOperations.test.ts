@@ -30,6 +30,13 @@ describe('entity snapshot operations', () => {
     });
   });
 
+  it('defaults case_id to null when the DB row omitted it', () => {
+    expect(serializeEntitySnapshot(snapshot())).toMatchObject({ case_id: null });
+    expect(serializeEntitySnapshot(snapshot({ case_id: 'case-1' }))).toMatchObject({
+      case_id: 'case-1'
+    });
+  });
+
   it('allows only snapshots belonging to the entity in a restorable state', () => {
     expect(() => assertSnapshotCanBeRestored(snapshot(), 'entity-1')).not.toThrow();
     expect(() => assertSnapshotCanBeRestored(snapshot(), 'entity-2')).toThrow(ORPCError);

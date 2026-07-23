@@ -885,6 +885,62 @@
   color: var(--base-fg-more-dim);
 }
 
+.futureRowAlsoIncludes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  margin-bottom: 4px;
+}
+
+/* Nested change-case panel (group-by-date view) */
+.futureCasePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  margin-bottom: 4px;
+
+  .futureRow {
+    background-color: var(--base-bg);
+  }
+}
+
+.futureCasePanelHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--cmp-border);
+}
+
+.futureCasePanelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.futureCasePanelName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.futureCasePanelDescription {
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.futureCasePanelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 /* ── Project Timeline (ptl) ────────────────────────────────── */
 .ptl {
   display: flex;
@@ -1469,6 +1525,71 @@
   flex-wrap: wrap;
   justify-content: flex-start;
   padding-top: 6px;
+}
+
+.ptlDetailCaseHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.ptlDetailCaseName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.ptlDetailSiblings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--panel-border);
+  padding-top: 6px;
+}
+
+.ptlDetailSiblingsToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--base-fg-dim);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.ptlDetailSiblingsToggle:hover {
+  color: var(--base-fg);
+}
+
+.ptlDetailSiblingsBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 4px;
+}
+
+.ptlDetailSiblingItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ptlDetailSiblingHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.ptlDetailSiblingNoChanges {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
 }
 
 /* Empty state */

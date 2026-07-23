@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { TbPencil, TbTrash, TbX } from 'react-icons/tb';
+import { TbChevronDown, TbChevronRight, TbPencil, TbTrash, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import type {
   ProjectDetail as ProjectDetailData,
@@ -8,6 +8,7 @@ import type {
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
+import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import {
@@ -44,6 +45,7 @@ export const ProjectTimelineTab = ({
   lifecycleStates,
   teams,
   milestonesById,
+  changeCaseById,
   canEdit,
   onApplySnapshot,
   onEditSnapshot,
@@ -58,6 +60,7 @@ export const ProjectTimelineTab = ({
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   milestonesById: Map<string, Milestone>;
+  changeCaseById: Map<string, ChangeCase>;
   canEdit: boolean;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
   onEditSnapshot: (snapshot: EntitySnapshot) => void;
@@ -87,7 +90,8 @@ export const ProjectTimelineTab = ({
     [projectSnapshots, milestonesById]
   );
 
-  // Snapshots per entity
+  // Snapshots per entity — every entity change gets its own row and marker; change cases are
+  // never collapsed into a single lane here (see the Future Changes tab for case-level grouping).
   const snapsByEntity = useMemo(() => {
     const m = new Map<string, EntitySnapshot[]>();
     for (const s of projectSnapshots) {
@@ -362,6 +366,14 @@ export const ProjectTimelineTab = ({
                 | string
                 | undefined) ?? pe?.entity_schema?.id;
             const entitySchema = schemaId ? (schemas.find(s => s.id === schemaId) ?? null) : null;
+            const changeCase = selectedSnap.case_id
+              ? changeCaseById.get(selectedSnap.case_id)
+              : undefined;
+            const siblingSnapshots = selectedSnap.case_id
+              ? projectSnapshots.filter(
+                  s => s.case_id === selectedSnap.case_id && s.entity_id !== selectedSnap.entity_id
+                )
+              : [];
             return (
               <SnapDetail
                 snapshot={selectedSnap}
@@ -373,6 +385,11 @@ export const ProjectTimelineTab = ({
                 lifecycleStates={lifecycleStates}
                 teams={teams}
                 canEdit={canEdit}
+                changeCase={changeCase}
+                siblingSnapshots={siblingSnapshots}
+                entityMap={entityMap}
+                schemaMap={schemaMap}
+                schemas={schemas}
                 onApplySnapshot={onApplySnapshot}
                 onEditSnapshot={onEditSnapshot}
                 onDeleteSnapshot={onDeleteSnapshot}
@@ -396,6 +413,11 @@ const SnapDetail = ({
   lifecycleStates,
   teams,
   canEdit,
+  changeCase,
+  siblingSnapshots,
+  entityMap,
+  schemaMap,
+  schemas,
   onApplySnapshot,
   onEditSnapshot,
   onDeleteSnapshot,
@@ -410,11 +432,17 @@ const SnapDetail = ({
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   canEdit: boolean;
+  changeCase: ChangeCase | undefined;
+  siblingSnapshots: EntitySnapshot[];
+  entityMap: Map<string, ProjectEntity>;
+  schemaMap: Map<string, SchemaInfo>;
+  schemas: EntitySchema[];
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
   onEditSnapshot: (snapshot: EntitySnapshot) => void;
   onDeleteSnapshot: (snapshot: EntitySnapshot) => void;
   onClose: () => void;
 }) => {
+  const [siblingsExpanded, setSiblingsExpanded] = useState(false);
   const statusLabel = snapshot.status === 'applied' ? 'Applied' : 'Planned';
   const canManage = canEdit && snapshot.status === 'future_update';
 
@@ -441,6 +469,12 @@ const SnapDetail = ({
       </div>
 
       <div className={styles.ptlDetailBody}>
+        {changeCase?.name && (
+          <div className={styles.ptlDetailCaseHead}>
+            <div className={styles.ptlDetailCaseName}>{changeCase.name}</div>
+          </div>
+        )}
+
         <div className={styles.ptlDetailStatusRow}>
           <span
             className={styles.ptlDetailBadge}
@@ -479,6 +513,74 @@ const SnapDetail = ({
             {formatTimelineDate(snapshot.created_at, { month: 'short', year: 'numeric' })}
           </span>
         </div>
+
+        {siblingSnapshots.length > 0 && (
+          <div className={styles.ptlDetailSiblings}>
+            <button
+              type="button"
+              className={styles.ptlDetailSiblingsToggle}
+              onClick={() => setSiblingsExpanded(v => !v)}
+            >
+              {siblingsExpanded ? <TbChevronDown size={13} /> : <TbChevronRight size={13} />}
+              <span>
+                Also changes {siblingSnapshots.length} other{' '}
+                {siblingSnapshots.length === 1 ? 'entity' : 'entities'}
+              </span>
+            </button>
+            {siblingsExpanded && (
+              <div className={styles.ptlDetailSiblingsBody}>
+                {siblingSnapshots.map(sibling => {
+                  const pe = entityMap.get(sibling.entity_id);
+                  const siblingSchemaInfo = pe?.entity_schema
+                    ? schemaMap.get(pe.entity_schema.id)
+                    : undefined;
+                  const siblingSchemaId =
+                    ((sibling.proposed_state as Record<string, unknown> | null)?.['schema_id'] as
+                      | string
+                      | undefined) ?? pe?.entity_schema?.id;
+                  const siblingSchema = siblingSchemaId
+                    ? (schemas.find(s => s.id === siblingSchemaId) ?? null)
+                    : null;
+                  const siblingChanges = diffSnapshotState(
+                    sibling.base_state as Record<string, unknown> | undefined,
+                    sibling.proposed_state as Record<string, unknown> | undefined,
+                    siblingSchema,
+                    lifecycleStates,
+                    teams
+                  );
+                  return (
+                    <div key={sibling.id} className={styles.ptlDetailSiblingItem}>
+                      <div className={styles.ptlDetailSiblingHead}>
+                        {siblingSchemaInfo && (
+                          <TypeBadge
+                            color={siblingSchemaInfo.color}
+                            icon={siblingSchemaInfo.icon}
+                            size={14}
+                          />
+                        )}
+                        <span className={styles.ptlName}>
+                          {pe?.entity_name ?? sibling.entity_id}
+                        </span>
+                      </div>
+                      {siblingChanges.length > 0 ? (
+                        siblingChanges.map(change => (
+                          <div key={change.label} className={styles.ptlChgRow}>
+                            <span className={styles.ptlChgField}>{change.label}</span>
+                            <span className={styles.ptlChgFrom}>{change.from}</span>
+                            <span className={styles.ptlChgArrow}>→</span>
+                            <span className={styles.ptlChgTo}>{change.to}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className={styles.ptlDetailSiblingNoChanges}>No field changes</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {canManage && (
           <div className={styles.ptlDetailActions}>

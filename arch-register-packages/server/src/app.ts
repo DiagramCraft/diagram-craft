@@ -22,6 +22,7 @@ import { createProjectFileRoutesHandler } from './domain/project/projectFileRout
 import { createAssessmentORPCHandler } from './domain/project/assessmentOrpc';
 import { createAssessmentResponseORPCHandler } from './domain/project/assessmentResponseOrpc';
 import { createMilestoneORPCHandler } from './domain/project/projectMilestoneOrpc';
+import { createChangeCaseORPCHandler } from './domain/project/projectChangeCaseOrpc';
 import { createAuditORPCHandler } from './domain/audit/auditOrpc';
 import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createNotificationPreferencesORPCHandler } from './domain/notification/notificationPreferenceOrpc';
@@ -159,6 +160,7 @@ export const createApp = (
   app.use(createAssessmentORPCHandler(db));
   app.use(createAssessmentResponseORPCHandler(db));
   app.use(createMilestoneORPCHandler(db));
+  app.use(createChangeCaseORPCHandler(db));
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
   app.use(createNotificationPreferencesORPCHandler(db));
