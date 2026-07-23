@@ -37,12 +37,6 @@ export const ENTITY_SELECT_SQL = `
   JOIN entity_schema es ON es.id = e.schema_id
 `;
 
-export const ENTITY_SNAPSHOT_SELECT_SQL = `
-  SELECT s.*, u.display_name as created_by_name
-  FROM entity_snapshot s
-  LEFT JOIN users u ON u.id = s.created_by
-`;
-
 export type EntityListDbFilters = {
   schemaId?: string | null;
   owner?: string | null;
@@ -275,11 +269,6 @@ export type EntitySnapshotDbResult = {
   /** Target-model identity for future/applied compatibility projections. */
   case_id?: string | null;
   case_revision_id?: string | null;
-};
-
-export type EntitySnapshotDbCreate = EntitySnapshotDbResult & {
-  version_kind?: EntityVersionKind;
-  applied_case_revision_id?: string | null;
 };
 
 export type TimelineMarkerDbResult = {
@@ -540,6 +529,7 @@ export type CatalogDatabase = {
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
 
   createEntityVersion(input: EntityVersionDbCreate): Promise<EntityVersionDbResult>;
+  getEntityVersionById(ws: string, id: string): Promise<EntityVersionDbResult | null>;
   listEntityVersions(ws: string, entityId: string): Promise<EntityVersionDbResult[]>;
   listEntityVersionsAsOf(
     ws: string,
@@ -574,10 +564,6 @@ export type CatalogDatabase = {
     entityId: string
   ): Promise<PinnedEntityDbResult | null>;
 
-  createSnapshot(input: EntitySnapshotDbCreate): Promise<EntitySnapshotDbResult>;
-  getSnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
-  listSnapshots(ws: string, entityId: string): Promise<EntitySnapshotDbResult[]>;
-  listSnapshotsByProject(ws: string, projectId: string): Promise<EntitySnapshotDbResult[]>;
   listSnapshotsAsOf(
     ws: string,
     asOf: Date,
@@ -585,24 +571,7 @@ export type CatalogDatabase = {
   ): Promise<EntitySnapshotDbResult[]>;
   listTimelineMarkers(ws: string): Promise<TimelineMarkerDbResult[]>;
   listEntityIdsWithAnySnapshot(ws: string, entityIds?: string[]): Promise<string[]>;
-  pruneAutosaveSnapshots(ws: string, entityId: string, keepCount: number): Promise<void>;
-  promoteSnapshot(
-    ws: string,
-    snapshotId: string,
-    commitMessage: string | null
-  ): Promise<EntitySnapshotDbResult | null>;
-  updateSnapshot(
-    ws: string,
-    snapshotId: string,
-    updates: {
-      proposed_state?: Record<string, unknown>;
-      target_date?: string | null;
-      milestone_id?: string | null;
-      commit_message?: string | null;
-    }
-  ): Promise<EntitySnapshotDbResult | null>;
-  deleteSnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
-  applySnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
+  pruneAutosaveVersions(ws: string, entityId: string, keepCount: number): Promise<void>;
   reassignSnapshotsFromMilestone(
     ws: string,
     milestoneId: string,

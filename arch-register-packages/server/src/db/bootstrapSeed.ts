@@ -14,7 +14,7 @@ import {
   seedAdrDocuments,
   seedProjects,
   seedMilestones,
-  seedEntitySnapshots,
+  seedChangeCases,
   seedProjectEntities,
   seedSavedViews,
   seedEnums,
@@ -459,8 +459,8 @@ export const seedBootstrapData = async (
     }
   }
 
-  for (const snapshot of seedEntitySnapshots) {
-    await db.catalog.createSnapshot(snapshot);
+  for (const changeCase of seedChangeCases) {
+    await db.changeCase.createCase(changeCase);
   }
 
   await seedBootstrapCollections(db);

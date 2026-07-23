@@ -675,20 +675,20 @@ export const deleteEntity = async (
     const watcherUserIds = await db.watch.listWatcherUserIds(workspace, row.id);
     await db.catalog.deleteEntity(workspace, row.id);
 
-    await db.catalog.createSnapshot({
+    const existingVersions = await db.catalog.listEntityVersions(workspace, row.id);
+    const nextVersionNumber =
+      existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
+    await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
       entity_id: row.id,
-      status: 'deleted',
-      project_id: null,
-      target_date: null,
-      milestone_id: null,
+      version_number: nextVersionNumber,
+      kind: 'deleted',
       commit_message: null,
       created_at: new Date(),
       created_by: actor.id,
-      created_by_name: actor.displayName,
-      base_state: entityToBaseState(row),
-      proposed_state: null
+      state: entityToBaseState(row),
+      applied_case_revision_id: null
     });
 
     await logAudit(db, {

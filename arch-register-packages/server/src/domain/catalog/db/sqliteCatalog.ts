@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type {
   CatalogDatabase,
   EntityGrantDbCretae,
@@ -12,7 +11,6 @@ import type {
   SchemaDbUpdate,
   SchemaVersionDbCreate,
   PinnedEntityDbCreate,
-  EntitySnapshotDbCreate,
   EntitySnapshotDbResult,
   EntityVersionDbCreate,
   EntityVersionDbResult,
@@ -656,127 +654,6 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async createSnapshot(input: EntitySnapshotDbCreate) {
-    if (input.status === 'future_update' || input.status === 'applied') {
-      if (input.target_date != null && input.milestone_id != null) {
-        throw new Error('A snapshot cannot specify both target_date and milestone_id');
-      }
-      const caseId = randomUUID();
-      const revisionId = randomUUID();
-      this.run(
-        `INSERT INTO entity_change_case
-         (id, workspace, project_id, status, purpose, name, description, effective_date, milestone_id, initiator_user_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'planned_change', ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          caseId,
-          input.workspace,
-          input.project_id,
-          input.status === 'applied' ? 'applied' : 'planned',
-          input.commit_message,
-          input.commit_message,
-          input.target_date,
-          input.milestone_id,
-          input.created_by,
-          input.created_at.toISOString(),
-          input.created_at.toISOString()
-        ]
-      );
-      if (input.milestone_id != null) {
-        this.run(
-          `UPDATE entity_change_case
-           SET effective_date = (
-             SELECT target_date FROM project_milestone
-             WHERE id = ? AND project_id = entity_change_case.project_id
-           )
-           WHERE id = ?`,
-          [input.milestone_id, caseId]
-        );
-      }
-      this.run(
-        `INSERT INTO entity_change_case_revision
-         (id, case_id, workspace, revision_number, message, created_by, status, is_active, created_at, resolved_at)
-         VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?)`,
-        [
-          revisionId,
-          caseId,
-          input.workspace,
-          input.commit_message,
-          input.created_by,
-          input.status === 'applied' ? 'applied' : 'draft',
-          input.status === 'applied' ? 0 : 1,
-          input.created_at.toISOString(),
-          input.status === 'applied' ? input.created_at.toISOString() : null
-        ]
-      );
-      this.run(
-        `INSERT INTO entity_change_case_entity_version
-         (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          input.id,
-          revisionId,
-          input.workspace,
-          input.entity_id,
-          Number(input.base_state['version'] ?? 1),
-          JSON.stringify(input.base_state),
-          JSON.stringify(input.proposed_state ?? input.base_state),
-          JSON.stringify({})
-        ]
-      );
-      return (await this.getSnapshot(input.workspace, input.id))!;
-    }
-    const state = input.proposed_state ?? input.base_state;
-    const existing = this.get<{ max: number | null }>(
-      'SELECT MAX(version_number) AS max FROM entity_version WHERE workspace = ? AND entity_id = ?',
-      [input.workspace, input.entity_id]
-    );
-    const versionNumber =
-      input.status === 'deleted'
-        ? (existing?.max ?? 0) + 1
-        : Number(state['version'] ?? (existing?.max ?? 0) + 1);
-    await this.createEntityVersion({
-      id: input.id,
-      workspace: input.workspace,
-      entity_id: input.entity_id,
-      version_number: versionNumber,
-      kind: input.version_kind ?? input.status,
-      commit_message: input.commit_message,
-      created_at: input.created_at,
-      created_by: input.created_by,
-      state,
-      applied_case_revision_id: input.applied_case_revision_id ?? null
-    });
-    return (await this.getSnapshot(input.workspace, input.id))!;
-  }
-
-  async getSnapshot(workspace: string, snapshotId: string) {
-    const version = await this.getEntityVersionById(workspace, snapshotId);
-    if (version) return this.snapshotFromVersion(version);
-    return this.caseSnapshotRows(workspace).find(row => row.id === snapshotId) ?? null;
-  }
-
-  async listSnapshots(workspace: string, entityId: string) {
-    const versions = (await this.listEntityVersions(workspace, entityId)).map(v =>
-      this.snapshotFromVersion(v)
-    );
-    const appliedRevisionIds = new Set(
-      versions.map(snapshot => snapshot.case_revision_id).filter((id): id is string => id != null)
-    );
-    const cases = this.caseSnapshotRows(workspace, entityId).filter(
-      snapshot =>
-        snapshot.status !== 'applied' || !appliedRevisionIds.has(snapshot.case_revision_id ?? '')
-    );
-    return [...versions, ...cases].sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-  }
-
-  async listSnapshotsByProject(workspace: string, projectId: string) {
-    const project = this.get<{ id: string }>(
-      'SELECT id FROM project WHERE workspace = ? AND (id = ? OR public_id = ?)',
-      [workspace, projectId, projectId]
-    );
-    return project ? this.caseSnapshotRows(workspace, undefined, project.id) : [];
-  }
-
   async listSnapshotsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const versions = (await this.listEntityVersionsAsOf(workspace, asOf, entityIds)).map(v =>
@@ -837,7 +714,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async pruneAutosaveSnapshots(workspace: string, entityId: string, keepCount: number) {
+  async pruneAutosaveVersions(workspace: string, entityId: string, keepCount: number) {
     this.run(
       `DELETE FROM entity_version
        WHERE workspace = ? AND entity_id = ? AND kind = 'autosave'
@@ -849,81 +726,6 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
          )`,
       [workspace, entityId, workspace, entityId, keepCount]
     );
-  }
-
-  async promoteSnapshot(workspace: string, snapshotId: string, commitMessage: string | null) {
-    const existing = await this.getEntityVersionById(workspace, snapshotId);
-    if (existing?.kind !== 'autosave') return null;
-    const updated = await this.updateEntityVersionKind(
-      workspace,
-      snapshotId,
-      'saved_version',
-      commitMessage
-    );
-    return updated ? this.snapshotFromVersion(updated) : null;
-  }
-
-  async updateSnapshot(
-    workspace: string,
-    snapshotId: string,
-    updates: {
-      proposed_state?: Record<string, unknown>;
-      target_date?: string | null;
-      milestone_id?: string | null;
-      commit_message?: string | null;
-    }
-  ) {
-    const existing = await this.getSnapshot(workspace, snapshotId);
-    if (existing?.status !== 'future_update') return null;
-
-    if (existing == null || existing.status !== 'future_update') return null;
-    const member = this.get<{ revision_id: string; case_id: string }>(
-      `SELECT m.revision_id, r.case_id FROM entity_change_case_entity_version m JOIN entity_change_case_revision r ON r.id = m.revision_id WHERE m.id = ? AND m.workspace = ?`,
-      [snapshotId, workspace]
-    );
-    if (!member) return null;
-    if (updates.proposed_state !== undefined)
-      this.run('UPDATE entity_change_case_entity_version SET proposed_state = ? WHERE id = ?', [
-        JSON.stringify(updates.proposed_state),
-        snapshotId
-      ]);
-    if (updates.target_date !== undefined || updates.milestone_id !== undefined)
-      this.run(
-        `UPDATE entity_change_case
-         SET effective_date = CASE
-               WHEN ? IS NULL THEN ?
-               ELSE (
-                 SELECT target_date FROM project_milestone
-                 WHERE id = ? AND project_id = entity_change_case.project_id
-               )
-             END,
-             milestone_id = ?
-         WHERE id = ?`,
-        [
-          updates.milestone_id ?? null,
-          updates.target_date ?? null,
-          updates.milestone_id ?? null,
-          updates.milestone_id ?? null,
-          member.case_id
-        ]
-      );
-    if (updates.commit_message !== undefined)
-      this.run('UPDATE entity_change_case_revision SET message = ? WHERE id = ?', [
-        updates.commit_message,
-        member.revision_id
-      ]);
-    return this.getSnapshot(workspace, snapshotId);
-  }
-
-  async deleteSnapshot(workspace: string, snapshotId: string) {
-    const existing = await this.getSnapshot(workspace, snapshotId);
-    if (existing?.status !== 'future_update') return null;
-
-    this.run(
-      `DELETE FROM entity_change_case WHERE id = (SELECT r.case_id FROM entity_change_case_entity_version m JOIN entity_change_case_revision r ON r.id = m.revision_id WHERE m.workspace = ? AND m.id = ?)`,
-      [workspace, snapshotId]
-    );
-    return existing;
   }
 
   async reassignSnapshotsFromMilestone(
@@ -948,27 +750,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async applySnapshot(workspace: string, snapshotId: string) {
-    const existing = await this.getSnapshot(workspace, snapshotId);
-    if (existing?.status !== 'future_update') return null;
-
-    const member = this.get<{ revision_id: string; case_id: string }>(
-      `SELECT m.revision_id, r.case_id FROM entity_change_case_entity_version m JOIN entity_change_case_revision r ON r.id = m.revision_id WHERE m.id = ? AND m.workspace = ?`,
-      [snapshotId, workspace]
-    );
-    if (!member) return null;
-    this.run(
-      `UPDATE entity_change_case_revision SET status = 'applied', is_active = 0, resolved_at = ? WHERE id = ?`,
-      [new Date().toISOString(), member.revision_id]
-    );
-    this.run(
-      `UPDATE entity_change_case SET status = 'applied', closed_at = ?, updated_at = ? WHERE id = ?`,
-      [new Date().toISOString(), new Date().toISOString(), member.case_id]
-    );
-    return this.getSnapshot(workspace, snapshotId);
-  }
-
-  private getEntityVersionById(workspace: string, id: string) {
+  async getEntityVersionById(workspace: string, id: string) {
     return this.get(
       `SELECT v.*, u.display_name AS created_by_name FROM entity_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ? AND v.id = ?`,
       [workspace, id],

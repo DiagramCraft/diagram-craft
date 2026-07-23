@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useUpdateEntity } from '../../../hooks/useEntities';
-import { useSubmitBulkEntityChangeProposal } from '../../../hooks/useEntityChanges';
+import { useSubmitBulkEntityChangeApproval } from '../../../hooks/useEntityChanges';
 import { orpcClient } from '../../../lib/orpcClient';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -105,7 +105,7 @@ export const useEntityBrowserSelection = ({
   schemaMap
 }: UseEntityBrowserSelectionProps) => {
   const updateEntityMutation = useUpdateEntity(workspaceId);
-  const submitBulkProposalMutation = useSubmitBulkEntityChangeProposal(workspaceId);
+  const submitBulkProposalMutation = useSubmitBulkEntityChangeApproval(workspaceId);
   const previousFilteredCountRef = useRef(0);
   const { cancel, schedule } = useCancellableTimeout();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());

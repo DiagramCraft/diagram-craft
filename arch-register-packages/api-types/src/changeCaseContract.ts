@@ -2,6 +2,11 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { wsAndId } from '@arch-register/api-types/common';
 
+const deleteChangeCaseResponseSchema = z.object({
+  success: z.literal(true),
+  message: z.string()
+});
+
 const wsProjectAndCaseId = wsAndId.extend({
   caseId: z.string().describe('Change case identifier')
 });
@@ -97,6 +102,18 @@ export const changeCaseContract = oc.tag('ChangeCases').router({
         inputStructure: 'detailed',
         summary: 'List project change cases',
         description: 'Retrieves all multi-entity planned change cases for the project.',
+        tags: ['ChangeCases']
+      })
+      .input(z.object({ params: wsAndId }))
+      .output(z.array(changeCaseSchema)),
+    listByEntity: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/data/{id}/change-cases',
+        inputStructure: 'detailed',
+        summary: 'List planned change cases touching an entity',
+        description:
+          'Retrieves all not-yet-superseded planned change cases that include this entity.',
         tags: ['ChangeCases']
       })
       .input(z.object({ params: wsAndId }))
@@ -209,7 +226,20 @@ export const changeCaseContract = oc.tag('ChangeCases').router({
         tags: ['ChangeCases']
       })
       .input(z.object({ params: wsProjectAndCaseId }))
-      .output(changeCaseSchema)
+      .output(changeCaseSchema),
+    remove: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/projects/{id}/change-cases/{caseId}',
+        inputStructure: 'detailed',
+        summary: 'Delete a still-planned change case',
+        description:
+          'Permanently deletes a change case that has not yet been applied. Use withdraw instead ' +
+          'once a case has moved past planning.',
+        tags: ['ChangeCases']
+      })
+      .input(z.object({ params: wsProjectAndCaseId }))
+      .output(deleteChangeCaseResponseSchema)
   }
 });
 

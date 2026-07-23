@@ -29,10 +29,8 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { useEntitySnapshots } from '../../../hooks/useSnapshots';
+import { useEntitySnapshots, legacySnapshotQuery } from '../../../hooks/useSnapshots';
 import { useMilestonesForProjects } from '../../../hooks/useMilestones';
-import { snapshotKeys } from '../../../queries/snapshots';
-import { orpcClient } from '../../../lib/orpcClient';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import {
   getSnapshotDateLabel,
@@ -666,14 +664,7 @@ export const TimelineView = ({
   const snapshotQueries = useQueries({
     queries:
       cfg.groupBy === 'project'
-        ? rows.map(entity => ({
-            queryKey: snapshotKeys.list(workspaceId, entity._uid),
-            queryFn: () =>
-              orpcClient.entities.snapshots.list({
-                params: { workspace: workspaceId, id: entity._uid }
-              }),
-            enabled: !!workspaceId && !!entity._uid
-          }))
+        ? rows.map(entity => legacySnapshotQuery(workspaceId, entity._uid))
         : []
   });
 

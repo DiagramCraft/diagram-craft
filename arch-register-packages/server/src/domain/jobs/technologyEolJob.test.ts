@@ -92,8 +92,8 @@ describe('technology EOL job', () => {
           updatedEntity = { ...updatedEntity, ...input };
           return updatedEntity;
         }),
-        createSnapshot: vi.fn(),
-        pruneAutosaveSnapshots: vi.fn()
+        createEntityVersion: vi.fn(),
+        pruneAutosaveVersions: vi.fn()
       },
       audit: { createAuditLog: vi.fn(async input => ({ id: 'audit-1', ...input })) },
       watch: { createNotificationsFromAudit: vi.fn() }

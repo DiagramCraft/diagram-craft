@@ -587,38 +587,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     });
   });
 
-  describe('entity snapshots', () => {
-    it('creates snapshots and lists them for an entity', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const user = await createFixtureUser(db);
-
-      const created = await db.catalog.createSnapshot({
-        id: randomUUID(),
-        workspace,
-        entity_id: entity.id,
-        status: 'autosave',
-        project_id: null,
-        target_date: null,
-        milestone_id: null,
-        commit_message: null,
-        created_at: new Date(),
-        created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: { name: entity.name },
-        proposed_state: null
-      });
-
-      expect(created.created_by_name).toBe(user.display_name);
-      expect(created.base_state).toEqual({ name: entity.name });
-
-      const listed = await db.catalog.listSnapshots(workspace, entity.id);
-      expect(listed.map(s => s.id)).toContain(created.id);
-    });
-
-    it('prunes autosave snapshots, keeping only the N most recent', async () => {
+  describe('entity version history', () => {
+    it('prunes autosave versions, keeping only the N most recent', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
@@ -627,157 +597,69 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
 
       const ids: string[] = [];
       for (let i = 0; i < 5; i++) {
-        const snapshot = await db.catalog.createSnapshot({
+        const version = await db.catalog.createEntityVersion({
           id: randomUUID(),
           workspace,
           entity_id: entity.id,
-          status: 'autosave',
-          project_id: null,
-          target_date: null,
-          milestone_id: null,
+          version_number: i + 1,
+          kind: 'autosave',
           commit_message: null,
           created_at: new Date(Date.now() + i * 1000),
           created_by: user.id,
-          created_by_name: user.display_name,
-          base_state: {},
-          proposed_state: null
+          state: {},
+          applied_case_revision_id: null
         });
-        ids.push(snapshot.id);
+        ids.push(version.id);
       }
 
-      await db.catalog.pruneAutosaveSnapshots(workspace, entity.id, 2);
+      await db.catalog.pruneAutosaveVersions(workspace, entity.id, 2);
 
-      const remaining = await db.catalog.listSnapshots(workspace, entity.id);
+      const remaining = await db.catalog.listEntityVersions(workspace, entity.id);
       expect(remaining).toHaveLength(2);
-      expect(remaining.map(s => s.id).sort()).toEqual(ids.slice(-2).sort());
+      expect(remaining.map(v => v.id).sort()).toEqual(ids.slice(-2).sort());
     });
 
-    it('promotes an autosave snapshot to a saved version', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const user = await createFixtureUser(db);
-
-      const snapshot = await db.catalog.createSnapshot({
-        id: randomUUID(),
-        workspace,
-        entity_id: entity.id,
-        status: 'autosave',
-        project_id: null,
-        target_date: null,
-        milestone_id: null,
-        commit_message: null,
-        created_at: new Date(),
-        created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: null
-      });
-
-      const promoted = await db.catalog.promoteSnapshot(workspace, snapshot.id, 'v1 release');
-      expect(promoted!.status).toBe('saved_version');
-      expect(promoted!.commit_message).toBe('v1 release');
-
-      expect(await db.catalog.promoteSnapshot(workspace, snapshot.id, 'again')).toBeNull();
-    });
-
-    it('updates, then applies, a future_update snapshot', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const project = await createFixtureProject(db, workspace);
-      const user = await createFixtureUser(db);
-
-      const snapshot = await db.catalog.createSnapshot({
-        id: randomUUID(),
-        workspace,
-        entity_id: entity.id,
-        status: 'future_update',
-        project_id: project.id,
-        target_date: '2030-01-01',
-        milestone_id: null,
-        commit_message: null,
-        created_at: new Date(),
-        created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: { name: 'future name' }
-      });
-
-      const updated = await db.catalog.updateSnapshot(workspace, snapshot.id, {
-        commit_message: 'planned change'
-      });
-      expect(updated!.commit_message).toBe('planned change');
-      expect(updated!.proposed_state).toEqual({ name: 'future name' });
-
-      const deletedSnapshot = await db.catalog.createSnapshot({
-        id: randomUUID(),
-        workspace,
-        entity_id: entity.id,
-        status: 'future_update',
-        project_id: project.id,
-        target_date: '2031-01-01',
-        milestone_id: null,
-        commit_message: 'remove this plan',
-        created_at: new Date(),
-        created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: { name: 'another future name' }
-      });
-
-      expect((await db.catalog.deleteSnapshot(workspace, deletedSnapshot.id))!.id).toBe(
-        deletedSnapshot.id
-      );
-      expect(await db.catalog.getSnapshot(workspace, deletedSnapshot.id)).toBeNull();
-      expect(await db.catalog.deleteSnapshot(workspace, deletedSnapshot.id)).toBeNull();
-
-      const byProject = await db.catalog.listSnapshotsByProject(workspace, project.id);
-      expect(byProject.map(s => s.id)).toEqual([snapshot.id]);
-
-      const applied = await db.catalog.applySnapshot(workspace, snapshot.id);
-      expect(applied!.status).toBe('applied');
-    });
-
-    it('lists entity ids with any real (non future-only) snapshot history', async () => {
+    it('lists entity ids with any real (non future-only) version history', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
       const entityWithHistory = await createFixtureCatalogEntity(db, workspace, schema);
       const entityFutureOnly = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
 
-      await db.catalog.createSnapshot({
+      await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
         entity_id: entityWithHistory.id,
-        status: 'autosave',
-        project_id: null,
-        target_date: null,
-        milestone_id: null,
+        version_number: 1,
+        kind: 'autosave',
         commit_message: null,
         created_at: new Date(),
         created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: null
+        state: {},
+        applied_case_revision_id: null
       });
-      await db.catalog.createSnapshot({
+      await db.changeCase.createCase({
         id: randomUUID(),
         workspace,
-        entity_id: entityFutureOnly.id,
-        status: 'future_update',
-        project_id: null,
-        target_date: '2030-01-01',
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: '2030-01-01',
         milestone_id: null,
-        commit_message: null,
-        created_at: new Date(),
+        message: null,
         created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: {}
+        created_at: new Date(),
+        members: [
+          {
+            entity_id: entityFutureOnly.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: {},
+            diff: {}
+          }
+        ]
       });
 
       const withHistory = await db.catalog.listEntityIdsWithAnySnapshot(workspace, [
@@ -792,22 +674,23 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
       const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
 
-      await db.catalog.createSnapshot({
+      await db.changeCase.createCase({
         id: randomUUID(),
         workspace,
-        entity_id: entity.id,
-        status: 'future_update',
-        project_id: null,
-        target_date: '2030-06-15',
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: '2030-06-15',
         milestone_id: null,
-        commit_message: null,
-        created_at: new Date(),
+        message: null,
         created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: {}
+        created_at: new Date(),
+        members: [
+          { entity_id: entity.id, base_version: 1, base_state: {}, proposed_state: {}, diff: {} }
+        ]
       });
 
       const markers = await db.catalog.listTimelineMarkers(workspace);
@@ -817,88 +700,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(markers[0]!.date).toContain('2030-06-15');
     });
 
-    it('creates a future_update snapshot targeting a milestone instead of a raw target_date', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const project = await createFixtureProject(db, workspace);
-      const user = await createFixtureUser(db);
-      const now = new Date();
-
-      const milestone = await db.project.createMilestone({
-        id: randomUUID(),
-        workspace,
-        project_id: project.id,
-        name: 'Q3 migration',
-        target_date: '2030-09-01',
-        status: 'planned',
-        sort_order: 0,
-        created_at: now,
-        updated_at: now
-      });
-
-      const snapshot = await db.catalog.createSnapshot({
-        id: randomUUID(),
-        workspace,
-        entity_id: entity.id,
-        status: 'future_update',
-        project_id: project.id,
-        target_date: null,
-        milestone_id: milestone.id,
-        commit_message: null,
-        created_at: now,
-        created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: { name: 'future name' }
-      });
-
-      expect(snapshot.milestone_id).toBe(milestone.id);
-      expect(snapshot.target_date).toBeNull();
-    });
-
-    it('rejects a snapshot with both target_date and milestone_id set', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const project = await createFixtureProject(db, workspace);
-      const user = await createFixtureUser(db);
-      const now = new Date();
-
-      const milestone = await db.project.createMilestone({
-        id: randomUUID(),
-        workspace,
-        project_id: project.id,
-        name: 'Q4 migration',
-        target_date: '2030-10-01',
-        status: 'planned',
-        sort_order: 0,
-        created_at: now,
-        updated_at: now
-      });
-
-      await expect(
-        db.catalog.createSnapshot({
-          id: randomUUID(),
-          workspace,
-          entity_id: entity.id,
-          status: 'future_update',
-          project_id: project.id,
-          target_date: '2030-10-01',
-          milestone_id: milestone.id,
-          commit_message: null,
-          created_at: now,
-          created_by: user.id,
-          created_by_name: user.display_name,
-          base_state: {},
-          proposed_state: {}
-        })
-      ).rejects.toBeDefined();
-    });
-
-    it('reassigns snapshots off a milestone, backfilling target_date', async () => {
+    it('reassigns cases off a milestone, backfilling the effective date', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
@@ -919,20 +721,20 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         updated_at: now
       });
 
-      const snapshot = await db.catalog.createSnapshot({
+      const changeCase = await db.changeCase.createCase({
         id: randomUUID(),
         workspace,
-        entity_id: entity.id,
-        status: 'future_update',
         project_id: project.id,
-        target_date: null,
+        name: null,
+        description: null,
+        effective_date: null,
         milestone_id: milestone.id,
-        commit_message: null,
-        created_at: now,
+        message: null,
         created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: {}
+        created_at: now,
+        members: [
+          { entity_id: entity.id, base_version: 1, base_state: {}, proposed_state: {}, diff: {} }
+        ]
       });
 
       await db.catalog.reassignSnapshotsFromMilestone(
@@ -941,9 +743,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         milestone.target_date
       );
 
-      const reloaded = await db.catalog.getSnapshot(workspace, snapshot.id);
+      const reloaded = await db.changeCase.getCase(workspace, changeCase.id);
       expect(reloaded!.milestone_id).toBeNull();
-      expect(reloaded!.target_date).toBe('2031-01-01');
+      expect(reloaded!.effective_date).toBe('2031-01-01');
     });
   });
 

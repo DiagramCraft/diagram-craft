@@ -79,6 +79,18 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
     );
   }
 
+  async listCasesByEntity(workspace: string, entityId: string) {
+    return this.all(
+      `SELECT DISTINCT c.* FROM entity_change_case c
+       JOIN entity_change_case_revision r ON r.case_id = c.id
+       JOIN entity_change_case_entity_version m ON m.revision_id = r.id
+       WHERE c.workspace = ? AND c.purpose = 'planned_change' AND m.entity_id = ?
+       ORDER BY c.updated_at DESC`,
+      [workspace, entityId],
+      changeCaseMappers.case
+    );
+  }
+
   async getActiveRevision(workspace: string, caseId: string) {
     return this.get(
       `SELECT * FROM entity_change_case_revision
@@ -230,5 +242,16 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
     );
     if (result.changes === 0) return null;
     return this.getCase(workspace, caseId);
+  }
+
+  async deleteCase(workspace: string, caseId: string) {
+    const existing = await this.getCase(workspace, caseId);
+    if (existing?.status !== 'planned') return null;
+    const result = this.run(
+      "DELETE FROM entity_change_case WHERE workspace = ? AND id = ? AND status = 'planned'",
+      [workspace, caseId]
+    );
+    if (result.changes === 0) return null;
+    return existing;
   }
 }

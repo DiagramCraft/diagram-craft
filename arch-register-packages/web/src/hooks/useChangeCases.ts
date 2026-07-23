@@ -11,6 +11,14 @@ export const useChangeCasesByProject = (workspaceId: string, projectId: string, 
     enabled: !!workspaceId && !!projectId && enabled
   });
 
+export const useChangeCasesByEntity = (workspaceId: string, entityId: string, enabled = true) =>
+  useQuery({
+    queryKey: changeCaseKeys.byEntity(workspaceId, entityId),
+    queryFn: () =>
+      orpcClient.changeCases.listByEntity({ params: { workspace: workspaceId, id: entityId } }),
+    enabled: !!workspaceId && !!entityId && enabled
+  });
+
 export const useChangeCase = (
   workspaceId: string,
   projectId: string,
@@ -77,7 +85,13 @@ export const useAddChangeCaseMember = (workspaceId: string, projectId: string) =
         body: { entityId: params.entityId, proposedState: params.proposedState }
       }),
     onSuccess: (_, variables) => {
-      invalidateChangeCaseQueries(queryClient, workspaceId, projectId, variables.caseId);
+      invalidateChangeCaseQueries(
+        queryClient,
+        workspaceId,
+        projectId,
+        variables.caseId,
+        variables.entityId
+      );
     }
   });
 };

@@ -1,20 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 import { entityKeys } from '../queries/entities';
-import type { EntityChangeBulkProposalBody } from '@arch-register/api-types/entityChangeContract';
+import type { EntityChangeBulkApprovalRequestBody } from '@arch-register/api-types/entityChangeContract';
 
 export const entityChangeKeys = {
   current: (workspace: string, entityId: string) => ['entity-change', workspace, entityId] as const
 };
 
-export const useEntityChangeProposal = (workspace: string, entityId: string) =>
+export const useEntityChangeApproval = (workspace: string, entityId: string) =>
   useQuery({
     queryKey: entityChangeKeys.current(workspace, entityId),
     queryFn: () => orpcClient.entityChanges.get({ params: { workspace, id: entityId } }),
     enabled: !!workspace && !!entityId
   });
 
-export const useSubmitEntityChangeProposal = (workspace: string, entityId: string) => {
+export const useSubmitEntityChangeApproval = (workspace: string, entityId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: {
@@ -31,12 +31,12 @@ export const useSubmitEntityChangeProposal = (workspace: string, entityId: strin
   });
 };
 
-export const useWithdrawEntityChangeProposal = (workspace: string) => {
+export const useWithdrawEntityChangeApproval = (workspace: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { entityId: string; proposalId: string; reason?: string }) =>
+    mutationFn: (input: { entityId: string; approvalId: string; reason?: string }) =>
       orpcClient.entityChanges.withdraw({
-        params: { workspace, id: input.entityId, proposalId: input.proposalId },
+        params: { workspace, id: input.entityId, approvalId: input.approvalId },
         body: { reason: input.reason }
       }),
     onSuccess: async (_data, input) => {
@@ -52,22 +52,22 @@ export const useWithdrawEntityChangeProposal = (workspace: string) => {
 };
 
 export const bulkEntityChangeKeys = {
-  detail: (workspace: string, proposalId: string) =>
-    ['entity-change-bulk', workspace, proposalId] as const
+  detail: (workspace: string, approvalId: string) =>
+    ['entity-change-bulk', workspace, approvalId] as const
 };
 
-export const useBulkEntityChangeProposal = (workspace: string, proposalId: string | null) =>
+export const useBulkEntityChangeApproval = (workspace: string, approvalId: string | null) =>
   useQuery({
-    queryKey: bulkEntityChangeKeys.detail(workspace, proposalId ?? ''),
+    queryKey: bulkEntityChangeKeys.detail(workspace, approvalId ?? ''),
     queryFn: () =>
-      orpcClient.entityChanges.getBulk({ params: { workspace, proposalId: proposalId! } }),
-    enabled: !!workspace && !!proposalId
+      orpcClient.entityChanges.getBulk({ params: { workspace, approvalId: approvalId! } }),
+    enabled: !!workspace && !!approvalId
   });
 
-export const useSubmitBulkEntityChangeProposal = (workspace: string) => {
+export const useSubmitBulkEntityChangeApproval = (workspace: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: EntityChangeBulkProposalBody) =>
+    mutationFn: (body: EntityChangeBulkApprovalRequestBody) =>
       orpcClient.entityChanges.submitBulk({ params: { workspace }, body }),
     onSuccess: async () => {
       await Promise.all([

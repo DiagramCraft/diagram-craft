@@ -8,8 +8,8 @@ import {
   type EntityEditState
 } from '../lib/entityEditState';
 import { useDeleteEntity, useUpdateEntity } from './useEntities';
-import { usePromoteSnapshot } from './useSnapshots';
-import { useBypassEntityApproval, useSubmitEntityChangeProposal } from './useEntityChanges';
+import { usePromoteEntityVersion } from './useEntityVersions';
+import { useBypassEntityApproval, useSubmitEntityChangeApproval } from './useEntityChanges';
 
 type Params = {
   workspaceId: string;
@@ -32,8 +32,8 @@ export const useEntityEditController = ({
 }: Params) => {
   const updateEntity = useUpdateEntity(workspaceId);
   const deleteEntity = useDeleteEntity(workspaceId);
-  const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
-  const submitProposal = useSubmitEntityChangeProposal(workspaceId, entityId);
+  const promoteEntityVersion = usePromoteEntityVersion(workspaceId, entityId);
+  const submitProposal = useSubmitEntityChangeApproval(workspaceId, entityId);
   const bypassApproval = useBypassEntityApproval(workspaceId, entityId);
 
   const [editing, setEditing] = useState(false);
@@ -104,7 +104,7 @@ export const useEntityEditController = ({
       {
         onSuccess: () => {
           if (saveConfirmSignificant) {
-            promoteSnapshot.mutate({ commitMessage: saveConfirmMessage ?? undefined });
+            promoteEntityVersion.mutate({ commitMessage: saveConfirmMessage ?? undefined });
           }
           setEditing(false);
           setEditState({});

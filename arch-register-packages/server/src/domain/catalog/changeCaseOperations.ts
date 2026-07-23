@@ -141,6 +141,33 @@ export const listChangeCasesByProject = async (
   );
 };
 
+export const listChangeCasesByEntity = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  event: AuthenticatedEvent
+): Promise<ChangeCase[]> => {
+  return defineEntityOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to retrieve change cases' },
+    async ({ ws, authCtx }) => {
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: `Data record '${entityId}' not found` });
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to view this entity'
+      );
+
+      const rows = await db.changeCase.listCasesByEntity(ws, entity.id);
+      return Promise.all(rows.map(row => toApiChangeCase(db, ws, row)));
+    }
+  );
+};
+
 export const getChangeCase = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -429,6 +456,35 @@ export const withdrawChangeCase = async (
       httpAssert.present(withdrawn, { status: 404, message: `Change case '${caseId}' not found` });
 
       return toApiChangeCase(db, ws, withdrawn);
+    }
+  );
+};
+
+export const deleteChangeCase = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  caseId: string,
+  event: AuthenticatedEvent
+): Promise<{ success: true; message: string }> => {
+  return defineEntityOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to delete change case' },
+    async ({ ws, authCtx }) => {
+      const project = await getProjectOrThrow(db, ws, projectId);
+      requireCaseEditAccess(authCtx, project);
+
+      await getCaseOrThrow(db, ws, caseId);
+
+      const deleted = await db.changeCase.deleteCase(ws, caseId);
+      httpAssert.present(deleted, {
+        status: 409,
+        message: 'Only a still-planned change case can be deleted; withdraw it instead'
+      });
+
+      return { success: true as const, message: 'Change case deleted' };
     }
   );
 };

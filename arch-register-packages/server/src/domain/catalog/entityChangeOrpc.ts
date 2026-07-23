@@ -7,12 +7,12 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   bypassEntityApproval,
-  getEntityChangeProposal,
-  getBulkEntityChangeProposal,
-  resubmitEntityChangeProposal,
-  submitEntityChangeProposal,
-  submitBulkEntityChangeProposal,
-  withdrawEntityChangeProposal
+  getEntityChangeApproval,
+  getBulkEntityChangeApproval,
+  resubmitEntityChangeApproval,
+  submitEntityChangeApproval,
+  submitBulkEntityChangeApproval,
+  withdrawEntityChangeApproval
 } from './entityChangeOperations';
 
 type ORPCContext = { db: DatabaseAdapter; event: AuthenticatedEvent };
@@ -23,10 +23,10 @@ export const createEntityChangeORPCRouter = () =>
   router.router({
     entityChanges: {
       get: router.entityChanges.get.handler(({ input, context }) =>
-        getEntityChangeProposal(context.db, input.params.workspace, input.params.id, context.event)
+        getEntityChangeApproval(context.db, input.params.workspace, input.params.id, context.event)
       ),
       submit: router.entityChanges.submit.handler(({ input, context }) =>
-        submitEntityChangeProposal(
+        submitEntityChangeApproval(
           context.db,
           input.params.workspace,
           input.params.id,
@@ -35,21 +35,21 @@ export const createEntityChangeORPCRouter = () =>
         )
       ),
       resubmit: router.entityChanges.resubmit.handler(({ input, context }) =>
-        resubmitEntityChangeProposal(
+        resubmitEntityChangeApproval(
           context.db,
           input.params.workspace,
           input.params.id,
-          input.params.proposalId,
+          input.params.approvalId,
           context.event,
           input.body
         )
       ),
       withdraw: router.entityChanges.withdraw.handler(({ input, context }) =>
-        withdrawEntityChangeProposal(
+        withdrawEntityChangeApproval(
           context.db,
           input.params.workspace,
           input.params.id,
-          input.params.proposalId,
+          input.params.approvalId,
           context.event,
           input.body.reason
         )
@@ -64,7 +64,7 @@ export const createEntityChangeORPCRouter = () =>
         )
       ),
       submitBulk: router.entityChanges.submitBulk.handler(({ input, context }) =>
-        submitBulkEntityChangeProposal(
+        submitBulkEntityChangeApproval(
           context.db,
           input.params.workspace,
           context.event,
@@ -72,10 +72,10 @@ export const createEntityChangeORPCRouter = () =>
         )
       ),
       getBulk: router.entityChanges.getBulk.handler(({ input, context }) =>
-        getBulkEntityChangeProposal(
+        getBulkEntityChangeApproval(
           context.db,
           input.params.workspace,
-          input.params.proposalId,
+          input.params.approvalId,
           context.event
         )
       )
