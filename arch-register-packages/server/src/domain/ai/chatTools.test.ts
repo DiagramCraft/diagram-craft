@@ -203,12 +203,8 @@ const db = {
       updatedEntities.push(updated);
       return updated;
     }),
-    createSnapshot: vi.fn(async () => {}),
-    pruneAutosaveSnapshots: vi.fn(async () => {}),
-    listSnapshotsByProject: vi.fn(async () => []),
-    promoteSnapshot: vi.fn(async () => null),
-    updateSnapshot: vi.fn(async () => null),
-    applySnapshot: vi.fn(async () => null)
+    createEntityVersion: vi.fn(async () => {}),
+    pruneAutosaveVersions: vi.fn(async () => {})
   },
   workspace: {
     listTeams: async () => [

@@ -203,6 +203,82 @@ runContractSuiteAgainstBothDrivers('ChangeCaseDatabase', getDb => {
     expect(cases.map(c => c.id)).toEqual([second.id, first.id]);
   });
 
+  it('lists planned cases touching a given entity across projects', async () => {
+    const { db, workspace, project, entityA, entityB } = await setup();
+
+    const touchingA = await db.changeCase.createCase({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'Touches A',
+      description: null,
+      effective_date: '2026-09-01',
+      milestone_id: null,
+      message: null,
+      created_by: null,
+      created_at: new Date(),
+      members: [member(entityA.id)]
+    });
+    await db.changeCase.createCase({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'Touches B only',
+      description: null,
+      effective_date: '2026-09-01',
+      milestone_id: null,
+      message: null,
+      created_by: null,
+      created_at: new Date(),
+      members: [member(entityB.id)]
+    });
+
+    const cases = await db.changeCase.listCasesByEntity(workspace, entityA.id);
+    expect(cases.map(c => c.id)).toEqual([touchingA.id]);
+  });
+
+  it('deletes a still-planned case but refuses once applied', async () => {
+    const { db, workspace, project, entityA } = await setup();
+
+    const planned = await db.changeCase.createCase({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: null,
+      description: null,
+      effective_date: '2026-09-01',
+      milestone_id: null,
+      message: null,
+      created_by: null,
+      created_at: new Date(),
+      members: [member(entityA.id)]
+    });
+
+    const deleted = await db.changeCase.deleteCase(workspace, planned.id);
+    expect(deleted?.id).toBe(planned.id);
+    expect(await db.changeCase.getCase(workspace, planned.id)).toBeNull();
+
+    const applied = await db.changeCase.createCase({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: null,
+      description: null,
+      effective_date: '2026-09-01',
+      milestone_id: null,
+      message: null,
+      created_by: null,
+      created_at: new Date(),
+      members: [member(entityA.id)]
+    });
+    const revision = await db.changeCase.getActiveRevision(workspace, applied.id);
+    await db.changeCase.markRevisionApplied(workspace, revision!.id, new Date());
+    await db.changeCase.markCaseApplied(workspace, applied.id, new Date());
+
+    expect(await db.changeCase.deleteCase(workspace, applied.id)).toBeNull();
+    expect(await db.changeCase.getCase(workspace, applied.id)).not.toBeNull();
+  });
+
   describe('updateCaseFields', () => {
     it('updates the shared target date and commit message on the active revision', async () => {
       const { db, workspace, project, entityA } = await setup();

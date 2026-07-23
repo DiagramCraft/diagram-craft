@@ -173,8 +173,8 @@ describe('set_field_value action', () => {
         getEntity: vi.fn(async () => entity),
         getSchema: vi.fn(async () => schema),
         updateEntity,
-        createSnapshot: vi.fn(async () => undefined),
-        pruneAutosaveSnapshots: vi.fn(async () => undefined)
+        createEntityVersion: vi.fn(async () => undefined),
+        pruneAutosaveVersions: vi.fn(async () => undefined)
       },
       audit: { createAuditLog },
       watch: { createNotificationsFromAudit: vi.fn(async () => undefined) }

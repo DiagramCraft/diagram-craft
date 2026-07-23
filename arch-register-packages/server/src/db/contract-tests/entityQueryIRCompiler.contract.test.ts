@@ -706,20 +706,26 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       },
       applied_case_revision_id: null
     });
-    await db.catalog.createSnapshot({
+    await db.changeCase.createCase({
       id: randomUUID(),
       workspace,
-      entity_id: entity.id,
-      status: 'future_update',
       project_id: project.id,
-      target_date: '2030-01-01',
+      name: 'planned rename',
+      description: null,
+      effective_date: '2030-01-01',
       milestone_id: null,
-      commit_message: 'planned rename',
-      created_at: new Date('2026-01-02T00:00:00.000Z'),
+      message: 'planned rename',
       created_by: user.id,
-      created_by_name: null,
-      base_state: { name: entity.name },
-      proposed_state: { name: 'Future name' }
+      created_at: new Date('2026-01-02T00:00:00.000Z'),
+      members: [
+        {
+          entity_id: entity.id,
+          base_version: 1,
+          base_state: { name: entity.name },
+          proposed_state: { name: 'Future name' },
+          diff: {}
+        }
+      ]
     });
     await db.project.addProjectEntity({
       workspace,

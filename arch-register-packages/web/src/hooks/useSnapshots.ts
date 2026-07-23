@@ -1,50 +1,42 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { entityKeys, invalidateEntityDetails } from '../queries/entities';
 import { snapshotKeys, invalidateSnapshotQueries } from '../queries/snapshots';
+import { changeCaseKeys } from '../queries/changeCases';
 import { orpcClient } from '../lib/orpcClient';
+import { toLegacyEntitySnapshots, toLegacyProjectSnapshots } from '../lib/legacySnapshotAdapter';
+
+// Bridges the split entityVersions/changeCases APIs into the merged EntitySnapshot shape that
+// the timeline UI (TimelineView, EntityChangeHistoryTab, snapshotDisplay, timelineViewState)
+// still renders — see legacySnapshotAdapter.ts. A follow-up issue tracks rewriting those
+// components to consume the split shapes natively instead of through this adapter.
+export const fetchLegacyEntitySnapshots = async (workspaceId: string, entityId: string) => {
+  const [versions, cases] = await Promise.all([
+    orpcClient.entityVersions.list({ params: { workspace: workspaceId, id: entityId } }),
+    orpcClient.changeCases.listByEntity({ params: { workspace: workspaceId, id: entityId } })
+  ]);
+  return toLegacyEntitySnapshots(workspaceId, entityId, versions, cases);
+};
 
 export const useEntitySnapshots = (workspaceId: string, entityId: string, enabled = false) =>
   useQuery({
     queryKey: snapshotKeys.list(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.entities.snapshots.list({ params: { workspace: workspaceId, id: entityId } }),
+    queryFn: () => fetchLegacyEntitySnapshots(workspaceId, entityId),
     enabled: !!workspaceId && !!entityId && enabled
   });
-
-export const usePromoteSnapshot = (workspaceId: string, entityId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ commitMessage }: { commitMessage?: string }) => {
-      const snapshots = await orpcClient.entities.snapshots.list({
-        params: { workspace: workspaceId, id: entityId }
-      });
-      const latestAutosave = snapshots.find(s => s.status === 'autosave');
-      if (!latestAutosave) throw new Error('No autosave snapshot found to promote');
-      return orpcClient.entities.snapshots.promote({
-        params: { workspace: workspaceId, id: entityId, snapshotId: latestAutosave.id },
-        body: { commitMessage }
-      });
-    },
-    onSuccess: () => {
-      invalidateSnapshotQueries(queryClient, workspaceId, entityId);
-      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) });
-    }
-  });
-};
 
 export const useRestoreSnapshot = (workspaceId: string, entityId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (params: { snapshotId: string; commitMessage?: string }) =>
-      orpcClient.entities.snapshots.restore({
-        params: { workspace: workspaceId, id: entityId, snapshotId: params.snapshotId },
+      orpcClient.entityVersions.restore({
+        params: { workspace: workspaceId, id: entityId, versionId: params.snapshotId },
         body: { commitMessage: params.commitMessage }
       }),
     onSuccess: () => {
       invalidateEntityDetails(queryClient, workspaceId, entityId);
       invalidateSnapshotQueries(queryClient, workspaceId, entityId);
+      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) });
     }
   });
 };
@@ -52,9 +44,21 @@ export const useRestoreSnapshot = (workspaceId: string, entityId: string) => {
 export const useProjectFutureSnapshots = (workspaceId: string, projectId: string) =>
   useQuery({
     queryKey: snapshotKeys.byProject(workspaceId, projectId),
-    queryFn: () =>
-      orpcClient.entities.snapshots.listByProject({
-        params: { workspace: workspaceId, projectId }
-      }),
+    queryFn: async () => {
+      const cases = await orpcClient.changeCases.listByProject({
+        params: { workspace: workspaceId, id: projectId }
+      });
+      return toLegacyProjectSnapshots(workspaceId, cases);
+    },
     enabled: !!workspaceId && !!projectId
   });
+
+// Used by TimelineView's per-entity batch fetch (useQueries) in "group by project" mode.
+export const legacySnapshotQuery = (workspaceId: string, entityId: string) => ({
+  queryKey: [
+    ...snapshotKeys.list(workspaceId, entityId),
+    ...changeCaseKeys.byEntity(workspaceId, entityId)
+  ],
+  queryFn: () => fetchLegacyEntitySnapshots(workspaceId, entityId),
+  enabled: !!workspaceId && !!entityId
+});

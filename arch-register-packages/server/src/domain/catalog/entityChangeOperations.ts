@@ -19,12 +19,12 @@ import { listAllCatalogEntities } from './entityLoader';
 import { updateEntityWithAuditIfVersion } from './entityMutations';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import type {
-  EntityChangeProposal,
-  EntityChangeProposalBody,
-  EntityChangeRevision,
-  EntityChangeBulkProposal,
-  EntityChangeBulkProposalBody,
-  EntityChangeBulkRevision
+  EntityChangeApproval,
+  EntityChangeApprovalRequestBody,
+  EntityChangeApprovalRevision,
+  EntityChangeBulkApproval,
+  EntityChangeBulkApprovalRequestBody,
+  EntityChangeBulkApprovalRevision
 } from '@arch-register/api-types/entityChangeContract';
 import type {
   EntityChangeProposalDbResult,
@@ -278,9 +278,9 @@ const toApiRevision = (
   revision: EntityChangeRevisionDbResult,
   caseId: string | null,
   createdByName: string | null
-): EntityChangeRevision => ({
+): EntityChangeApprovalRevision => ({
   id: revision.id,
-  proposalId: revision.proposal_id,
+  approvalId: revision.proposal_id,
   entityId: revision.entity_id,
   revisionNumber: revision.revision_number,
   baseVersion: revision.base_version,
@@ -314,7 +314,7 @@ const findCaseForRevision = async (
 const toApiProposal = async (
   db: DatabaseAdapter,
   proposal: EntityChangeProposalDbResult
-): Promise<EntityChangeProposal> => {
+): Promise<EntityChangeApproval> => {
   const revisions = await db.entityChange.listRevisions(proposal.workspace, proposal.id);
   const apiRevisions = await Promise.all(
     revisions.map(async revision => {
@@ -345,11 +345,11 @@ const toApiBulkRevision = (
   members: EntityChangeRevisionMemberDbResult[],
   caseId: string | null,
   createdByName: string | null
-): EntityChangeBulkRevision => {
+): EntityChangeBulkApprovalRevision => {
   const first = members[0]!;
   return {
     id: first.id,
-    proposalId: first.proposal_id,
+    approvalId: first.proposal_id,
     revisionNumber: first.revision_number,
     members: members.map(member => ({
       entityId: member.entity_id,
@@ -386,7 +386,7 @@ const findCaseForBulkRevision = async (
 const toApiBulkProposal = async (
   db: DatabaseAdapter,
   proposal: EntityChangeProposalDbResult
-): Promise<EntityChangeBulkProposal> => {
+): Promise<EntityChangeBulkApproval> => {
   const revisions = await db.entityChange.listRevisions(proposal.workspace, proposal.id);
   const revisionNumbers = [...new Set(revisions.map(revision => revision.revision_number))].sort(
     (a, b) => b - a
@@ -436,7 +436,7 @@ const assertCanPropose = async (
   return { authCtx, entity };
 };
 
-export const getEntityChangeProposal = async (
+export const getEntityChangeApproval = async (
   db: DatabaseAdapter,
   workspaceName: string,
   entityId: string,
@@ -451,7 +451,7 @@ export const getEntityChangeProposal = async (
   return proposal ? await toApiProposal(db, proposal) : null;
 };
 
-export const getBulkEntityChangeProposal = async (
+export const getBulkEntityChangeApproval = async (
   db: DatabaseAdapter,
   workspaceName: string,
   proposalId: string,
@@ -469,12 +469,12 @@ export const getBulkEntityChangeProposal = async (
   return apiProposal;
 };
 
-export const submitBulkEntityChangeProposal = async (
+export const submitBulkEntityChangeApproval = async (
   db: DatabaseAdapter,
   workspaceName: string,
   event: AuthenticatedEvent,
-  body: EntityChangeBulkProposalBody
-): Promise<EntityChangeBulkProposal> => {
+  body: EntityChangeBulkApprovalRequestBody
+): Promise<EntityChangeBulkApproval> => {
   const workspace = await resolveWorkspace(db.catalog, workspaceName);
   httpAssert.true(body.members.length >= 2, {
     status: 400,
@@ -626,7 +626,7 @@ const submitProposal = async (
   workspaceName: string,
   entityId: string,
   event: AuthenticatedEvent,
-  body: EntityChangeProposalBody,
+  body: EntityChangeApprovalRequestBody,
   expectedProposalId?: string
 ) => {
   const workspace = await resolveWorkspace(db.catalog, workspaceName);
@@ -764,24 +764,24 @@ const submitProposal = async (
   return await toApiProposal(db, proposal);
 };
 
-export const submitEntityChangeProposal = (
+export const submitEntityChangeApproval = (
   db: DatabaseAdapter,
   workspace: string,
   entityId: string,
   event: AuthenticatedEvent,
-  body: EntityChangeProposalBody
+  body: EntityChangeApprovalRequestBody
 ) => submitProposal(db, workspace, entityId, event, body);
 
-export const resubmitEntityChangeProposal = (
+export const resubmitEntityChangeApproval = (
   db: DatabaseAdapter,
   workspace: string,
   entityId: string,
   proposalId: string,
   event: AuthenticatedEvent,
-  body: EntityChangeProposalBody
+  body: EntityChangeApprovalRequestBody
 ) => submitProposal(db, workspace, entityId, event, body, proposalId);
 
-export const withdrawEntityChangeProposal = async (
+export const withdrawEntityChangeApproval = async (
   db: DatabaseAdapter,
   workspaceName: string,
   entityId: string,
@@ -832,7 +832,7 @@ export const bypassEntityApproval = async (
   workspaceName: string,
   entityId: string,
   event: AuthenticatedEvent,
-  body: EntityChangeProposalBody & { reason: string }
+  body: EntityChangeApprovalRequestBody & { reason: string }
 ) => {
   const workspace = await resolveWorkspace(db.catalog, workspaceName);
   const { authCtx, entity } = await assertCanPropose(db, workspace, entityId, event);

@@ -22,9 +22,9 @@ import {
   CollectionEntityDbResult,
   SchemaDbResult,
   SavedViewDbResult,
-  WorkspaceEnumDbResult,
-  EntitySnapshotDbCreate
+  WorkspaceEnumDbResult
 } from '../domain/catalog/db/catalogDatabase';
+import { ChangeCaseDbCreate } from '../domain/catalog/db/changeCaseDatabase';
 import { computeEntityCompleteness } from '../utils/completeness';
 
 // Seed fixtures list entity data without a completeness score — it's derived from `data` +
@@ -2813,216 +2813,266 @@ export const seedMilestones: ProjectMilestoneDbCreate[] = [
   }
 ];
 
-export const seedEntitySnapshots: EntitySnapshotDbCreate[] = [
+const seedChangeCaseMember = (
+  entityId: string,
+  baseState: Record<string, unknown>,
+  proposedState: Record<string, unknown>
+) => ({
+  entity_id: entityId,
+  base_version: 1,
+  base_state: baseState,
+  proposed_state: proposedState,
+  diff: {}
+});
+
+export const seedChangeCases: ChangeCaseDbCreate[] = [
   {
     id: '00000000-0000-0000-0041-000000000001',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0002-000000000001', // Customer Portal
-    status: 'future_update',
     project_id: seededProjects.portalRedesign.id,
-    target_date: null,
+    name: 'Modernized navigation and IA',
+    description: null,
+    effective_date: null,
     milestone_id: MILESTONE_IDS.portalRedesign.frontendRollout,
-    commit_message: 'Modernized navigation and IA',
+    message: 'Modernized navigation and IA',
     created_at: new Date('2026-01-10T09:00:00.000Z'),
     created_by: USER_IDS.designteamadmin,
-    created_by_name: seededUsers.designTeamAdmin.displayName,
-    base_state: {
-      description: 'Public-facing portal for customer self-service.'
-    },
-    proposed_state: {
-      description:
-        'Public-facing portal for customer self-service with a modernized reactive frontend and consolidated navigation.'
-    }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0002-000000000001', // Customer Portal
+        { description: 'Public-facing portal for customer self-service.' },
+        {
+          description:
+            'Public-facing portal for customer self-service with a modernized reactive frontend and consolidated navigation.'
+        }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-000000000002',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-000000000002', // Frontend App
-    status: 'future_update',
     project_id: seededProjects.portalRedesign.id,
-    target_date: null,
+    name: 'Upgrade to React 19 as part of the redesign',
+    description: null,
+    effective_date: null,
     milestone_id: MILESTONE_IDS.portalRedesign.frontendRollout,
-    commit_message: 'Upgrade to React 19 as part of the redesign',
+    message: 'Upgrade to React 19 as part of the redesign',
     created_at: new Date('2026-01-10T09:05:00.000Z'),
     created_by: USER_IDS.designteamadmin,
-    created_by_name: seededUsers.designTeamAdmin.displayName,
-    base_state: { technology: 'React', tags: ['react', 'frontend'] },
-    proposed_state: { technology: 'React 19', tags: ['react', 'frontend', 'modernized'] }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-000000000002', // Frontend App
+        { technology: 'React', tags: ['react', 'frontend'] },
+        { technology: 'React 19', tags: ['react', 'frontend', 'modernized'] }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-000000000003',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-000000000001', // API Gateway
-    status: 'future_update',
     project_id: seededProjects.portalRedesign.id,
-    target_date: '2026-03-15',
+    name: 'Runtime upgrade ahead of frontend rollout',
+    description: null,
+    effective_date: '2026-03-15',
     milestone_id: null,
-    commit_message: 'Runtime upgrade ahead of frontend rollout',
+    message: 'Runtime upgrade ahead of frontend rollout',
     created_at: new Date('2026-01-10T09:10:00.000Z'),
     created_by: USER_IDS.platformteamadmin,
-    created_by_name: seededUsers.platformTeamAdmin.displayName,
-    base_state: { technology: 'Node' },
-    proposed_state: { technology: 'Node 22' }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-000000000001', // API Gateway
+        { technology: 'Node' },
+        { technology: 'Node 22' }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-000000000004',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0002-000000000002', // Identity Platform
-    status: 'future_update',
     project_id: seededProjects.authMigration.id,
-    target_date: null,
+    name: 'Cutover complete, legacy auth fully retired',
+    description: null,
+    effective_date: null,
     milestone_id: MILESTONE_IDS.authMigration.identityCutover,
-    commit_message: 'Cutover complete, legacy auth fully retired',
+    message: 'Cutover complete, legacy auth fully retired',
     created_at: new Date('2026-01-11T10:00:00.000Z'),
     created_by: USER_IDS.securityteamadmin,
-    created_by_name: seededUsers.securityTeamAdmin.displayName,
-    base_state: { description: 'Centralised authentication and authorisation service.' },
-    proposed_state: {
-      description:
-        'Centralised authentication and authorisation service, now the sole identity provider.'
-    }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0002-000000000002', // Identity Platform
+        { description: 'Centralised authentication and authorisation service.' },
+        {
+          description:
+            'Centralised authentication and authorisation service, now the sole identity provider.'
+        }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-000000000005',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-000000000003', // Auth Service
-    status: 'future_update',
     project_id: seededProjects.authMigration.id,
-    target_date: null,
+    name: 'Promote to production once cutover completes',
+    description: null,
+    effective_date: null,
     milestone_id: MILESTONE_IDS.authMigration.identityCutover,
-    commit_message: 'Promote to production once cutover completes',
+    message: 'Promote to production once cutover completes',
     created_at: new Date('2026-01-11T10:05:00.000Z'),
     created_by: USER_IDS.securityteamadmin,
-    created_by_name: seededUsers.securityTeamAdmin.displayName,
-    base_state: { tags: ['go', 'security'] },
-    proposed_state: { tags: ['go', 'security', 'primary-idp'] }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-000000000003', // Auth Service
+        { tags: ['go', 'security'] },
+        { tags: ['go', 'security', 'primary-idp'] }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-000000000006',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0004-000000000002', // Auth API
-    status: 'future_update',
     project_id: seededProjects.authMigration.id,
-    target_date: '2026-08-01',
+    name: 'Add refresh-token rotation ahead of legacy decommission',
+    description: null,
+    effective_date: '2026-08-01',
     milestone_id: null,
-    commit_message: 'Add refresh-token rotation ahead of legacy decommission',
+    message: 'Add refresh-token rotation ahead of legacy decommission',
     created_at: new Date('2026-01-11T10:10:00.000Z'),
     created_by: USER_IDS.securityteamadmin,
-    created_by_name: seededUsers.securityTeamAdmin.displayName,
-    base_state: { description: 'gRPC API for token issuance and validation.' },
-    proposed_state: {
-      description: 'gRPC API for token issuance and validation, with refresh-token rotation.'
-    }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0004-000000000002', // Auth API
+        { description: 'gRPC API for token issuance and validation.' },
+        { description: 'gRPC API for token issuance and validation, with refresh-token rotation.' }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-000000000007',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-000000000004', // Payment Service
-    status: 'future_update',
     project_id: seededProjects.checkoutRevamp.id,
-    target_date: null,
+    name: 'Integrate new gateway provider',
+    description: null,
+    effective_date: null,
     milestone_id: MILESTONE_IDS.checkoutRevamp.paymentGatewayIntegration,
-    commit_message: 'Integrate new gateway provider',
+    message: 'Integrate new gateway provider',
     created_at: new Date('2026-01-12T11:00:00.000Z'),
     created_by: USER_IDS.workspaceowner,
-    created_by_name: seededUsers.workspaceOwner.displayName,
-    base_state: {
-      description: 'Orchestrates payment authorization and capture against external providers.'
-    },
-    proposed_state: {
-      description:
-        'Orchestrates payment authorization and capture against the new gateway provider.'
-    }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-000000000004', // Payment Service
+        {
+          description: 'Orchestrates payment authorization and capture against external providers.'
+        },
+        {
+          description:
+            'Orchestrates payment authorization and capture against the new gateway provider.'
+        }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-000000000008',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-000000000006', // Fraud Detection Service
-    status: 'future_update',
     project_id: seededProjects.checkoutRevamp.id,
-    target_date: null,
+    name: 'Promote to production with new ML risk model',
+    description: null,
+    effective_date: null,
     milestone_id: MILESTONE_IDS.checkoutRevamp.fraudDetectionRollout,
-    commit_message: 'Promote to production with new ML risk model',
+    message: 'Promote to production with new ML risk model',
     created_at: new Date('2026-01-12T11:05:00.000Z'),
     created_by: USER_IDS.workspaceowner,
-    created_by_name: seededUsers.workspaceOwner.displayName,
-    base_state: {
-      description: 'Scores transactions for fraud risk before payment capture.'
-    },
-    proposed_state: {
-      description:
-        'Scores transactions for fraud risk before payment capture, using the new ML risk model.'
-    }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-000000000006', // Fraud Detection Service
+        { description: 'Scores transactions for fraud risk before payment capture.' },
+        {
+          description:
+            'Scores transactions for fraud risk before payment capture, using the new ML risk model.'
+        }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-000000000009',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-000000000005', // Ledger Service
-    status: 'future_update',
     project_id: seededProjects.checkoutRevamp.id,
-    target_date: '2026-05-01',
+    name: 'Runtime upgrade ahead of gateway integration',
+    description: null,
+    effective_date: '2026-05-01',
     milestone_id: null,
-    commit_message: 'Runtime upgrade ahead of gateway integration',
+    message: 'Runtime upgrade ahead of gateway integration',
     created_at: new Date('2026-01-12T11:10:00.000Z'),
     created_by: USER_IDS.workspaceeditor,
-    created_by_name: seededUsers.workspaceEditor.displayName,
-    base_state: { technology: 'Java' },
-    proposed_state: { technology: 'Java 21' }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-000000000005', // Ledger Service
+        { technology: 'Java' },
+        { technology: 'Java 21' }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-00000000000a',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-00000000000b', // Search Service
-    status: 'future_update',
     project_id: seededProjects.searchAnalytics.id,
-    target_date: null,
+    name: 'GA readiness: typo-tolerant search',
+    description: null,
+    effective_date: null,
     milestone_id: MILESTONE_IDS.searchAnalytics.searchPlatformGa,
-    commit_message: 'GA readiness: typo-tolerant search',
+    message: 'GA readiness: typo-tolerant search',
     created_at: new Date('2026-01-13T12:00:00.000Z'),
     created_by: USER_IDS.workspaceeditor,
-    created_by_name: seededUsers.workspaceEditor.displayName,
-    base_state: {
-      description: 'Serves full-text search queries backed by the Elasticsearch cluster.'
-    },
-    proposed_state: {
-      description:
-        'Serves full-text search queries backed by the Elasticsearch cluster, now with typo-tolerant matching.'
-    }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-00000000000b', // Search Service
+        { description: 'Serves full-text search queries backed by the Elasticsearch cluster.' },
+        {
+          description:
+            'Serves full-text search queries backed by the Elasticsearch cluster, now with typo-tolerant matching.'
+        }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-00000000000b',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-000000000007', // Analytics Ingestion Worker
-    status: 'future_update',
     project_id: seededProjects.searchAnalytics.id,
-    target_date: null,
+    name: 'Runtime upgrade for warehouse migration',
+    description: null,
+    effective_date: null,
     milestone_id: MILESTONE_IDS.searchAnalytics.analyticsWarehouseMigration,
-    commit_message: 'Runtime upgrade for warehouse migration',
+    message: 'Runtime upgrade for warehouse migration',
     created_at: new Date('2026-01-13T12:05:00.000Z'),
     created_by: USER_IDS.workspaceeditor,
-    created_by_name: seededUsers.workspaceEditor.displayName,
-    base_state: { technology: 'Python' },
-    proposed_state: { technology: 'Python 3.13' }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-000000000007', // Analytics Ingestion Worker
+        { technology: 'Python' },
+        { technology: 'Python 3.13' }
+      )
+    ]
   },
   {
     id: '00000000-0000-0000-0041-00000000000c',
     workspace: WORKSPACE_ID,
-    entity_id: '00000000-0000-0000-0003-000000000008', // Reporting Dashboard
-    status: 'future_update',
     project_id: seededProjects.searchAnalytics.id,
-    target_date: '2026-09-15',
+    name: 'Rebuild on the new analytics warehouse',
+    description: null,
+    effective_date: '2026-09-15',
     milestone_id: null,
-    commit_message: 'Rebuild on the new analytics warehouse',
+    message: 'Rebuild on the new analytics warehouse',
     created_at: new Date('2026-01-13T12:10:00.000Z'),
     created_by: USER_IDS.workspaceeditor,
-    created_by_name: seededUsers.workspaceEditor.displayName,
-    base_state: {
-      description: 'Internal dashboard surfacing revenue and product analytics.'
-    },
-    proposed_state: {
-      description:
-        'Internal dashboard surfacing revenue and product analytics, rebuilt on the new analytics warehouse.'
-    }
+    members: [
+      seedChangeCaseMember(
+        '00000000-0000-0000-0003-000000000008', // Reporting Dashboard
+        { description: 'Internal dashboard surfacing revenue and product analytics.' },
+        {
+          description:
+            'Internal dashboard surfacing revenue and product analytics, rebuilt on the new analytics warehouse.'
+        }
+      )
+    ]
   }
 ];
 

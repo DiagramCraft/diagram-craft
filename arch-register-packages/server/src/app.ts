@@ -11,6 +11,7 @@ import { createSecurityHeadersMiddleware } from './middleware/securityHeaders';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
 import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
+import { createEntityVersionORPCHandler } from './domain/catalog/entityVersionOrpc';
 import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
@@ -142,6 +143,7 @@ export const createApp = (
   app.use(createWorkspaceEnumORPCHandler(db));
   app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
+  app.use(createEntityVersionORPCHandler(db));
   app.use(createEntityChangeORPCHandler(db));
   app.use(createEntityDeprecationORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));

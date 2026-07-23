@@ -48,6 +48,17 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
     return mapDatabaseRows(rows as DatabaseRow[], changeCaseMappers.case);
   }
 
+  async listCasesByEntity(workspace: string, entityId: string) {
+    const rows = await this.sql`
+      SELECT DISTINCT c.* FROM entity_change_case c
+      JOIN entity_change_case_revision r ON r.case_id = c.id
+      JOIN entity_change_case_entity_version m ON m.revision_id = r.id
+      WHERE c.workspace = ${workspace} AND c.purpose = 'planned_change' AND m.entity_id = ${entityId}
+      ORDER BY c.updated_at DESC
+    `;
+    return mapDatabaseRows(rows as DatabaseRow[], changeCaseMappers.case);
+  }
+
   async getActiveRevision(workspace: string, caseId: string) {
     const rows = await this.sql`
       SELECT * FROM entity_change_case_revision
@@ -183,6 +194,15 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
       UPDATE entity_change_case
       SET status = 'withdrawn', closed_at = ${now}, updated_at = ${now}
       WHERE workspace = ${workspace} AND id = ${caseId}
+      RETURNING *
+    `;
+    return rows[0] ? changeCaseMappers.case(rows[0] as DatabaseRow) : null;
+  }
+
+  async deleteCase(workspace: string, caseId: string) {
+    const rows = await this.sql`
+      DELETE FROM entity_change_case
+      WHERE workspace = ${workspace} AND id = ${caseId} AND status = 'planned'
       RETURNING *
     `;
     return rows[0] ? changeCaseMappers.case(rows[0] as DatabaseRow) : null;

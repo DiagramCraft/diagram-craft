@@ -29,7 +29,7 @@ import { projectFileKeys } from '../../queries/content';
 import {
   bulkEntityChangeKeys,
   entityChangeKeys,
-  useWithdrawEntityChangeProposal
+  useWithdrawEntityChangeApproval
 } from '../../hooks/useEntityChanges';
 
 const humanize = (value: string) =>
@@ -117,7 +117,7 @@ export const GovernanceInboxScreen = () => {
     queries: bulkCaseIds.map(caseId => ({
       queryKey: bulkEntityChangeKeys.detail(workspace, caseId),
       queryFn: () =>
-        orpcClient.entityChanges.getBulk({ params: { workspace, proposalId: caseId } }),
+        orpcClient.entityChanges.getBulk({ params: { workspace, approvalId: caseId } }),
       enabled: !!workspace
     }))
   });
@@ -188,7 +188,7 @@ export const GovernanceInboxScreen = () => {
   const proposalsByEntityId = new Map(
     entityChangeIds.map((entityId, index) => [entityId, proposalQueries[index]?.data])
   );
-  const withdrawEntityChangeProposal = useWithdrawEntityChangeProposal(workspace);
+  const withdrawEntityChangeApproval = useWithdrawEntityChangeApproval(workspace);
   // Withdrawing an entity-change proposal whose case had already completed (e.g. after a
   // 'request_changes' decision) updates the proposal, not the case — `cancelCaseIfOpen` is a
   // no-op on a case that's no longer open, so `submission.case.status`/`outcome` alone can't
@@ -237,9 +237,9 @@ export const GovernanceInboxScreen = () => {
     if (submission.case.caseKind === 'entity.change' && submission.case.subjectType === 'entity') {
       const proposal = proposalsByEntityId.get(submission.case.subjectId);
       if (proposal) {
-        withdrawEntityChangeProposal.mutate({
+        withdrawEntityChangeApproval.mutate({
           entityId: submission.case.subjectId,
-          proposalId: proposal.id
+          approvalId: proposal.id
         });
       }
       return;
@@ -410,7 +410,7 @@ export const GovernanceInboxScreen = () => {
               };
               const withdrawPending =
                 submission.case.caseKind === 'entity.change'
-                  ? withdrawEntityChangeProposal.isPending
+                  ? withdrawEntityChangeApproval.isPending
                   : withdrawCase.isPending;
               const requestChangesReason = requestChangesReasonByCaseId.get(submission.case.id);
               // A case being cancelled requires it to still be open (`cancelGovernanceCase`),

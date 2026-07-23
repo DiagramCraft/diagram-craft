@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   updateEntity: vi.fn(),
   useUpdateEntity: vi.fn(),
   submitBulkProposal: vi.fn(),
-  useSubmitBulkEntityChangeProposal: vi.fn()
+  useSubmitBulkEntityChangeApproval: vi.fn()
 }));
 
 vi.mock('../../../hooks/useEntities', () => ({
@@ -19,7 +19,7 @@ vi.mock('../../../hooks/useEntities', () => ({
 }));
 
 vi.mock('../../../hooks/useEntityChanges', () => ({
-  useSubmitBulkEntityChangeProposal: mocks.useSubmitBulkEntityChangeProposal
+  useSubmitBulkEntityChangeApproval: mocks.useSubmitBulkEntityChangeApproval
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -99,7 +99,7 @@ describe('useEntityBrowserSelection delayed clearing', () => {
     mocks.updateEntity.mockResolvedValue(entity);
     mocks.useUpdateEntity.mockReturnValue({ mutateAsync: mocks.updateEntity });
     mocks.submitBulkProposal.mockResolvedValue({ id: 'bulk-case-1' });
-    mocks.useSubmitBulkEntityChangeProposal.mockReturnValue({
+    mocks.useSubmitBulkEntityChangeApproval.mockReturnValue({
       mutateAsync: mocks.submitBulkProposal
     });
     container = document.createElement('div');
@@ -173,7 +173,7 @@ describe('useEntityBrowserSelection approval-gated entities', () => {
     mocks.updateEntity.mockResolvedValue(entity);
     mocks.useUpdateEntity.mockReturnValue({ mutateAsync: mocks.updateEntity });
     mocks.submitBulkProposal.mockResolvedValue({ id: 'bulk-case-1' });
-    mocks.useSubmitBulkEntityChangeProposal.mockReturnValue({
+    mocks.useSubmitBulkEntityChangeApproval.mockReturnValue({
       mutateAsync: mocks.submitBulkProposal
     });
     container = document.createElement('div');

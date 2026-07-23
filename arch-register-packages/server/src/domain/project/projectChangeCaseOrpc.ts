@@ -6,6 +6,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listChangeCasesByProject,
+  listChangeCasesByEntity,
   getChangeCase,
   createChangeCase,
   addEntityToChangeCase,
@@ -14,7 +15,8 @@ import {
   updateChangeCaseFields,
   checkChangeCaseApplyConflicts,
   applyChangeCase,
-  withdrawChangeCase
+  withdrawChangeCase,
+  deleteChangeCase
 } from '../catalog/changeCaseOperations';
 import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
 
@@ -39,6 +41,14 @@ export const changeCaseORPCRouter = changeCaseRouter.router({
         );
       }
     ),
+    listByEntity: changeCaseRouter.changeCases.listByEntity.handler(async ({ input, context }) => {
+      return await listChangeCasesByEntity(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        context.event
+      );
+    }),
     get: changeCaseRouter.changeCases.get.handler(async ({ input, context }) => {
       return await getChangeCase(
         context.db,
@@ -121,6 +131,15 @@ export const changeCaseORPCRouter = changeCaseRouter.router({
     }),
     withdraw: changeCaseRouter.changeCases.withdraw.handler(async ({ input, context }) => {
       return await withdrawChangeCase(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        input.params.caseId,
+        context.event
+      );
+    }),
+    remove: changeCaseRouter.changeCases.remove.handler(async ({ input, context }) => {
+      return await deleteChangeCase(
         context.db,
         input.params.workspace,
         input.params.id,

@@ -78,22 +78,19 @@ export const createEntityWithAudit = async (
     }
   });
 
-  await db.catalog.createSnapshot({
+  await db.catalog.createEntityVersion({
     id: crypto.randomUUID(),
     workspace: params.workspace,
     entity_id: row.id,
-    status: 'autosave',
-    project_id: null,
-    target_date: null,
-    milestone_id: null,
+    version_number: row.version ?? 1,
+    kind: 'autosave',
     commit_message: null,
     created_at: new Date(),
     created_by: params.actor.id,
-    created_by_name: params.actor.displayName,
-    base_state: entityToBaseState(row),
-    proposed_state: null
+    state: entityToBaseState(row),
+    applied_case_revision_id: null
   });
-  await db.catalog.pruneAutosaveSnapshots(params.workspace, row.id, AUTOSAVE_KEEP_COUNT);
+  await db.catalog.pruneAutosaveVersions(params.workspace, row.id, AUTOSAVE_KEEP_COUNT);
 
   return row;
 };
@@ -140,24 +137,19 @@ export const updateEntityWithAudit = async (
     metadata: params.auditMetadata
   });
 
-  await db.catalog.createSnapshot({
+  await db.catalog.createEntityVersion({
     id: crypto.randomUUID(),
     workspace: params.workspace,
     entity_id: params.entityId,
-    status: 'autosave',
-    project_id: null,
-    target_date: null,
-    milestone_id: null,
+    version_number: row.version ?? 1,
+    kind: params.versionKind ?? 'autosave',
     commit_message: null,
     created_at: new Date(),
     created_by: params.actor.id,
-    created_by_name: params.actor.displayName,
-    base_state: entityToBaseState(params.previous),
-    proposed_state: entityToBaseState(row),
-    version_kind: params.versionKind ?? 'autosave',
+    state: entityToBaseState(row),
     applied_case_revision_id: params.appliedCaseRevisionId ?? null
   });
-  await db.catalog.pruneAutosaveSnapshots(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
+  await db.catalog.pruneAutosaveVersions(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
 
   return row;
 };
@@ -193,24 +185,19 @@ export const updateEntityWithAuditIfVersion = async (
     metadata: params.auditMetadata
   });
 
-  await db.catalog.createSnapshot({
+  await db.catalog.createEntityVersion({
     id: crypto.randomUUID(),
     workspace: params.workspace,
     entity_id: params.entityId,
-    status: 'autosave',
-    project_id: null,
-    target_date: null,
-    milestone_id: null,
+    version_number: row.version ?? 1,
+    kind: params.versionKind ?? 'autosave',
     commit_message: null,
     created_at: new Date(),
     created_by: params.actor.id,
-    created_by_name: params.actor.displayName,
-    base_state: entityToBaseState(params.previous),
-    proposed_state: entityToBaseState(row),
-    version_kind: params.versionKind ?? 'autosave',
+    state: entityToBaseState(row),
     applied_case_revision_id: params.appliedCaseRevisionId ?? null
   });
-  await db.catalog.pruneAutosaveSnapshots(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
+  await db.catalog.pruneAutosaveVersions(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
 
   return row;
 };

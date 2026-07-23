@@ -140,6 +140,7 @@ export type ChangeCaseDatabase = {
   createCase(input: ChangeCaseDbCreate): Promise<ChangeCaseDbResult>;
   getCase(workspace: string, caseId: string): Promise<ChangeCaseDbResult | null>;
   listCasesByProject(workspace: string, projectId: string): Promise<ChangeCaseDbResult[]>;
+  listCasesByEntity(workspace: string, entityId: string): Promise<ChangeCaseDbResult[]>;
   getActiveRevision(workspace: string, caseId: string): Promise<ChangeCaseRevisionDbResult | null>;
   getLatestRevision(workspace: string, caseId: string): Promise<ChangeCaseRevisionDbResult | null>;
   listMembers(workspace: string, revisionId: string): Promise<ChangeCaseMemberDbResult[]>;
@@ -169,4 +170,8 @@ export type ChangeCaseDatabase = {
   markRevisionApplied(workspace: string, revisionId: string, resolvedAt: Date): Promise<void>;
   markCaseApplied(workspace: string, caseId: string, closedAt: Date): Promise<void>;
   withdrawCase(workspace: string, caseId: string): Promise<ChangeCaseDbResult | null>;
+  // Hard-deletes a still-planned case (and its revisions/members via cascade). Returns null if the
+  // case doesn't exist or has already left the 'planned' status (use withdrawCase instead once a
+  // case has moved past planning).
+  deleteCase(workspace: string, caseId: string): Promise<ChangeCaseDbResult | null>;
 };

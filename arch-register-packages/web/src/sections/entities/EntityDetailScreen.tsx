@@ -28,7 +28,7 @@ import {
   useEntitiesBySchema
 } from '../../hooks/useEntities';
 import { useEntitySnapshots } from '../../hooks/useSnapshots';
-import { useBypassEntityApproval, useEntityChangeProposal } from '../../hooks/useEntityChanges';
+import { useBypassEntityApproval, useEntityChangeApproval } from '../../hooks/useEntityChanges';
 import { useEntityDeprecation } from '../../hooks/useEntityDeprecation';
 import {
   EntityDeprecationPanel,
@@ -72,7 +72,7 @@ import {
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
 import { CollectionPickerDialog } from './components/CollectionPickerDialog';
-import type { EntityChangeRevision } from '@arch-register/api-types/entityChangeContract';
+import type { EntityChangeApprovalRevision } from '@arch-register/api-types/entityChangeContract';
 import { useAuth } from '../../auth/AuthContext';
 import {
   useDecideGovernanceAssignment,
@@ -82,7 +82,7 @@ import {
 import { entityChangeKeys } from '../../hooks/useEntityChanges';
 import { entityKeys } from '../../queries/entities';
 
-const proposalFieldLabels: Record<string, string> = {
+const changeApprovalFieldLabels: Record<string, string> = {
   slug: 'Slug',
   namespace: 'Namespace',
   name: 'Name',
@@ -98,7 +98,7 @@ const proposalFieldLabels: Record<string, string> = {
   project_id: 'Project'
 };
 
-const proposalStatusLabels: Record<EntityChangeRevision['status'], string> = {
+const changeApprovalStatusLabels: Record<EntityChangeApprovalRevision['status'], string> = {
   submitted: 'Awaiting approval',
   changes_requested: 'Changes requested',
   stale: 'Stale · resubmit required',
@@ -107,14 +107,14 @@ const proposalStatusLabels: Record<EntityChangeRevision['status'], string> = {
   withdrawn: 'Withdrawn'
 };
 
-const humanizeProposalKey = (key: string) =>
+const humanizeChangeApprovalKey = (key: string) =>
   key.replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
 
-const formatProposalValue = (value: unknown): string => {
+const formatChangeApprovalValue = (value: unknown): string => {
   if (value == null || value === '') return 'Empty';
   if (Array.isArray(value)) {
     if (value.length === 0) return 'Empty';
-    return value.map(formatProposalValue).join(', ');
+    return value.map(formatChangeApprovalValue).join(', ');
   }
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
@@ -122,30 +122,31 @@ const formatProposalValue = (value: unknown): string => {
     if (typeof record['label'] === 'string') return record['label'];
     return Object.entries(record)
       .map(
-        ([key, nestedValue]) => `${humanizeProposalKey(key)}: ${formatProposalValue(nestedValue)}`
+        ([key, nestedValue]) =>
+          `${humanizeChangeApprovalKey(key)}: ${formatChangeApprovalValue(nestedValue)}`
       )
       .join(' · ');
   }
   return String(value);
 };
 
-const proposalValuesEqual = (left: unknown, right: unknown): boolean => {
+const changeApprovalValuesEqual = (left: unknown, right: unknown): boolean => {
   if (left === right) return true;
   if (left == null || right == null || typeof left !== typeof right) return false;
   if (Array.isArray(left) || Array.isArray(right)) {
     if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
-    return left.every((value, index) => proposalValuesEqual(value, right[index]));
+    return left.every((value, index) => changeApprovalValuesEqual(value, right[index]));
   }
   if (typeof left === 'object' && typeof right === 'object') {
     const leftRecord = left as Record<string, unknown>;
     const rightRecord = right as Record<string, unknown>;
     const keys = new Set([...Object.keys(leftRecord), ...Object.keys(rightRecord)]);
-    return [...keys].every(key => proposalValuesEqual(leftRecord[key], rightRecord[key]));
+    return [...keys].every(key => changeApprovalValuesEqual(leftRecord[key], rightRecord[key]));
   }
   return false;
 };
 
-const proposalDiffRows = (revision: EntityChangeRevision) =>
+const changeApprovalDiffRows = (revision: EntityChangeApprovalRevision) =>
   Object.entries(revision.diff).flatMap(([key, change]) => {
     const values = change as { before?: unknown; after?: unknown };
     if (
@@ -160,29 +161,29 @@ const proposalDiffRows = (revision: EntityChangeRevision) =>
       const before = values.before as Record<string, unknown>;
       const after = values.after as Record<string, unknown>;
       return [...new Set([...Object.keys(before), ...Object.keys(after)])]
-        .filter(field => !proposalValuesEqual(before[field], after[field]))
+        .filter(field => !changeApprovalValuesEqual(before[field], after[field]))
         .map(field => ({
-          field: `Entity field · ${humanizeProposalKey(field)}`,
+          field: `Entity field · ${humanizeChangeApprovalKey(field)}`,
           before: before[field],
           after: after[field]
         }));
     }
     return [
       {
-        field: proposalFieldLabels[key] ?? humanizeProposalKey(key),
+        field: changeApprovalFieldLabels[key] ?? humanizeChangeApprovalKey(key),
         before: values.before,
         after: values.after
       }
     ];
   });
 
-const EntityChangeProposalPanel = ({
+const EntityChangeApprovalPanel = ({
   revision,
   workspaceId,
   entityId,
   canOverrideApproval
 }: {
-  revision: EntityChangeRevision;
+  revision: EntityChangeApprovalRevision;
   workspaceId: string;
   entityId: string;
   canOverrideApproval: boolean;
@@ -210,8 +211,8 @@ const EntityChangeProposalPanel = ({
       task.requiresAction &&
       (task.case.initiatorUserId !== user?.id || task.case.selfApprovalAllowed)
   );
-  const status = proposalStatusLabels[revision.status];
-  const rows = proposalDiffRows(revision);
+  const status = changeApprovalStatusLabels[revision.status];
+  const rows = changeApprovalDiffRows(revision);
   const requestedChangesReason = [...caseEvents]
     .reverse()
     .find(caseEvent => caseEvent.eventType === 'changes_requested')?.reason;
@@ -316,8 +317,8 @@ const EntityChangeProposalPanel = ({
           {rows.map(row => (
             <div className={styles.proposalDiffRow} key={row.field}>
               <strong className={styles.proposalField}>{row.field}</strong>
-              <span className={styles.proposalBefore}>{formatProposalValue(row.before)}</span>
-              <span className={styles.proposalAfter}>{formatProposalValue(row.after)}</span>
+              <span className={styles.proposalBefore}>{formatChangeApprovalValue(row.before)}</span>
+              <span className={styles.proposalAfter}>{formatChangeApprovalValue(row.after)}</span>
             </div>
           ))}
         </div>
@@ -416,7 +417,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   );
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
-  const { data: changeProposal, isLoading: changeProposalLoading } = useEntityChangeProposal(
+  const { data: changeApproval, isLoading: changeApprovalLoading } = useEntityChangeApproval(
     workspaceId,
     entityId
   );
@@ -535,8 +536,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     canBypassApproval:
       approvalRequired &&
       canOverrideEntityApproval &&
-      !changeProposalLoading &&
-      changeProposal == null,
+      !changeApprovalLoading &&
+      changeApproval == null,
     onDeleted: navigateToEntities
   });
 
@@ -565,7 +566,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   }
 
   const entityName = entity._name ?? entity._slug;
-  const latestProposalRevision = changeProposal?.revisions.at(-1);
+  const latestApprovalRevision = changeApproval?.revisions.at(-1);
   const menuItems: MenuItem[] = [
     {
       label: 'Collections…',
@@ -600,7 +601,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             eyebrow={schema?.name ?? 'Entity'}
             title={entityName}
             chips={
-              entity._lifecycle || changeProposal || deprecation ? (
+              entity._lifecycle || changeApproval || deprecation ? (
                 <>
                   {entity._lifecycle && (
                     <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
@@ -616,9 +617,9 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                         />
                       </>
                     )}
-                  {changeProposal && (
+                  {changeApproval && (
                     <span>
-                      {changeProposal.revisions.at(-1)?.status === 'changes_requested'
+                      {changeApproval.revisions.at(-1)?.status === 'changes_requested'
                         ? 'Changes requested'
                         : 'Approval pending'}
                     </span>
@@ -718,9 +719,9 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
       )}
 
       {/* Content folder view */}
-      {!contentFolder && latestProposalRevision && (
-        <EntityChangeProposalPanel
-          revision={latestProposalRevision}
+      {!contentFolder && latestApprovalRevision && (
+        <EntityChangeApprovalPanel
+          revision={latestApprovalRevision}
           workspaceId={workspaceId}
           entityId={entityId}
           canOverrideApproval={canOverrideEntityApproval}
@@ -853,8 +854,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           },
           ...(approvalRequired &&
           canOverrideEntityApproval &&
-          !changeProposalLoading &&
-          changeProposal == null
+          !changeApprovalLoading &&
+          changeApproval == null
             ? [
                 {
                   label: isSaving ? 'Bypassing...' : 'Bypass approval',

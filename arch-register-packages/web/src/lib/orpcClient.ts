@@ -10,6 +10,7 @@ import { authProtectedContract, authPublicContract } from '@arch-register/api-ty
 import { devContract } from '@arch-register/api-types/devContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
+import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
 import { milestoneContract } from '@arch-register/api-types/milestoneContract';
@@ -73,6 +74,7 @@ const webContracts = {
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceEntityContract,
+  ...entityVersionContract,
   ...workspaceViewContract,
   ...workspaceCollectionContract,
   ...workspaceManagementContract,
