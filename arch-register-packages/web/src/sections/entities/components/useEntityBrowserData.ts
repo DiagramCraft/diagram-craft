@@ -4,7 +4,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import { addFreeTextQuery, parseDateValue } from './entityBrowserState';
+import { parseDateValue, withLiveSearchText } from './entityBrowserState';
 
 type UseEntityBrowserDataProps = {
   workspaceId: string;
@@ -59,7 +59,7 @@ export const useEntityBrowserData = ({
   // project — only project-linked entities are ever shown.
   const effectiveProjectScope = asOf && projectId ? 'project' : projectScope;
   const executionEntityQuery = entityQuery
-    ? addFreeTextQuery(
+    ? withLiveSearchText(
         {
           ...entityQuery,
           ...(projectId ? { projectId, projectScope: effectiveProjectScope } : {})

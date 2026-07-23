@@ -122,7 +122,11 @@
         - @id:ar.search.workspace Users can search across the current workspace and navigate to matching records and
           content.
 
-        - @id:ar.search.filters Users can combine search terms and structured filters to narrow results.
+        - @id:ar.search.filters Users can combine search terms and structured filters to narrow results. Entity
+          browser views offer Basic (free-text search plus a visual filter popover) and Advanced (a single text
+          query parsed against the entity query language) modes, switchable without losing the underlying query;
+          switching from Advanced to Basic warns first if the query uses grouping, negation, or relation traversal
+          that Basic mode can't represent.
 
         - @id:ar.search.navigation Search results provide context and links into the relevant entity, project, document,
           or workspace surface.

@@ -11,6 +11,18 @@ import {
 import { conditionsQuerySchema } from '@arch-register/api-types/viewContract';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
+// ── Query text ⇄ IR (specs/QUERY_LANGUAGE.md §4) ───────────────
+
+const entityQueryParseErrorSchema = z.object({
+  offset: z.number().int().describe('Character offset in the input text where parsing failed'),
+  message: z.string().describe('Human-readable parse error message')
+});
+
+const entityQueryParseResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), query: entityQuerySchema }),
+  z.object({ ok: z.literal(false), errors: z.array(entityQueryParseErrorSchema) })
+]);
+
 // ── Shared sub-schemas ────────────────────────────────────────
 
 const entityLinkSchema = z.object({
@@ -396,6 +408,32 @@ const importCommitResponseSchema = z.object({
 // ── Contract ──────────────────────────────────────────────────
 
 export const workspaceEntityContract = oc.tag('Entities').router({
+  entityQueryText: {
+    parseText: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/query/parse-text',
+        inputStructure: 'detailed',
+        summary: 'Parse a text query into EntityQuery IR',
+        description:
+          'Parses the qualifier-style text query grammar (specs/QUERY_LANGUAGE.md §4) into the structured ' +
+          'EntityQuery IR, or returns structured parse errors.',
+        tags: ['Entities']
+      })
+      .input(z.object({ params: ws, query: z.object({ text: z.string() }) }))
+      .output(entityQueryParseResultSchema),
+    printText: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/query/print-text',
+        inputStructure: 'detailed',
+        summary: 'Print EntityQuery IR as text',
+        description: 'Renders a structured EntityQuery IR back into its canonical text-query form.',
+        tags: ['Entities']
+      })
+      .input(z.object({ params: ws, body: z.object({ query: entityQuerySchema }) }))
+      .output(z.object({ text: z.string() }))
+  },
   entities: {
     list: oc
       .route({
@@ -971,3 +1009,5 @@ export type TreeNode = TreeResponse['nodes'][number];
 export type TreeEdge = TreeResponse['edges'][number];
 export type EntitySnapshot = z.infer<typeof entitySnapshotSchema>;
 export type TimelineMarker = z.infer<typeof timelineMarkerSchema>;
+export type EntityQueryParseError = z.infer<typeof entityQueryParseErrorSchema>;
+export type EntityQueryParseResult = z.infer<typeof entityQueryParseResultSchema>;

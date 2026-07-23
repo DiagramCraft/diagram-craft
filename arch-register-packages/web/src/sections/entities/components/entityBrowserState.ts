@@ -143,9 +143,84 @@ export const addFreeTextQuery = (query: EntityQuery, value: string): EntityQuery
   };
 };
 
+/**
+ * Merges the live search-box text into `query`'s free-text clause for execution — but only when
+ * there IS live search-box text. An empty `q` means "the search box is empty", not "clear
+ * whatever free-text clause the query already carries": `query` may own a freeText node that
+ * didn't come from this search box at all (an Advanced-mode `text:"..."` predicate, or a saved
+ * view's own free-text clause), and blindly running it through `addFreeTextQuery(query, '')`
+ * would strip that node via `withoutFreeTextQuery`, silently dropping the filter.
+ */
+export const withLiveSearchText = (query: EntityQuery, q: string): EntityQuery =>
+  q.trim() ? addFreeTextQuery(query, q) : query;
+
 const freeTextFromEntityQuery = (query: EntityQuery): string | undefined => {
   const node = rootChildren(query).find(child => isFreeTextQueryNode(child));
   return node ? freeTextValueFromNode(node) : undefined;
+};
+
+/**
+ * `printEntityQueryText` (specs/QUERY_LANGUAGE.md §4.4) only ever renders `query.root` — the
+ * top-level `EntityQuery.schemaId` field is deliberately out of scope for the text grammar,
+ * the same way `assessmentId` is (both are supplied out-of-band, not written into query text).
+ * `buildEntityQueryFromBrowserFilters` puts Basic mode's "Type" selection there, though, so
+ * printing a Basic-derived query as-is silently drops the type filter from the displayed text.
+ * This folds `schemaId` into an equivalent root `_schemaId equals ...` predicate — the same
+ * shape a `schema:` qualifier compiles to — purely so `printEntityQueryText` has something to
+ * render; it's not meant to replace `schemaId` in the query actually sent for execution.
+ */
+export const withSchemaIdAsPredicate = (query: EntityQuery): EntityQuery => {
+  if (!query.schemaId) return query;
+  const schemaPredicate: Extract<EntityQuery['root'], { kind: 'predicate' }> = {
+    kind: 'predicate',
+    path: [],
+    fieldId: '_schemaId',
+    op: 'equals',
+    value: query.schemaId
+  };
+  return {
+    ...query,
+    root:
+      query.root.kind === 'and'
+        ? { ...query.root, children: [schemaPredicate, ...query.root.children] }
+        : { kind: 'and', children: [schemaPredicate, query.root] }
+  };
+};
+
+/**
+ * True when `query` can be represented exactly by Basic mode's flat condition list + free-text
+ * box — every top-level node is either a flat predicate (no relation traversal) or the free-text
+ * node, and there's no projection. Used to decide whether switching from Advanced to Basic mode
+ * is lossless, or needs a confirmation before dropping the rest (grouping, NOT, traversal,
+ * relationExists, projections).
+ */
+export const isBasicRepresentable = (query: EntityQuery): boolean =>
+  !query.projections?.length &&
+  rootChildren(query).every(
+    node => isFreeTextQueryNode(node) || (node.kind === 'predicate' && node.path.length === 0)
+  );
+
+/**
+ * Best-effort Advanced → Basic conversion: flat top-level predicates become conditions (a
+ * `schemaId` set at the query's top level — e.g. via `schema:` text — becomes a `_schemaId`
+ * condition, matching how Basic mode expresses "Type" through `FilterBuilder` rather than a
+ * separate control), and the free-text node becomes `q`. When `isBasicRepresentable` is false
+ * this silently drops whatever Basic can't express (grouping, NOT, traversal, relationExists,
+ * projections) — callers should confirm with the user first in that case.
+ */
+export const entityQueryToBrowserFilters = (
+  query: EntityQuery
+): { conditions: FilterCondition[]; q: string } => {
+  const conditions: FilterCondition[] = rootChildren(query)
+    .filter(
+      (node): node is Extract<EntityQuery['root'], { kind: 'predicate' }> =>
+        node.kind === 'predicate' && node.path.length === 0
+    )
+    .map(({ fieldId, op, value }) => ({ fieldId, op, value }));
+  if (query.schemaId && !conditions.some(c => c.fieldId === '_schemaId')) {
+    conditions.push({ fieldId: '_schemaId', op: 'equals', value: query.schemaId });
+  }
+  return { conditions, q: freeTextFromEntityQuery(query) ?? '' };
 };
 
 export const parseJsonConfig = <T>(value: string | undefined): T | null => {

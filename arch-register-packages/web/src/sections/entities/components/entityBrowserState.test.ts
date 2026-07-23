@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
   addFreeTextQuery,
   buildSavedViewPayload,
   buildEntityQueryFromBrowserFilters,
+  entityQueryToBrowserFilters,
+  isBasicRepresentable,
   isEntityInProject,
   parseJsonConfig,
   parseEntityQueryFromSearch,
@@ -10,7 +13,9 @@ import {
   pruneAssessmentReferences,
   serializeViewConfigs,
   toSavedViewConfig,
-  toSavedViewSearch
+  toSavedViewSearch,
+  withLiveSearchText,
+  withSchemaIdAsPredicate
 } from './entityBrowserState';
 
 describe('project entity membership highlighting', () => {
@@ -378,5 +383,235 @@ describe('structured entity query view persistence', () => {
 
     expect(JSON.parse(search.entityQuery!)).toEqual(payload.filters);
     expect(search.filters).toBeUndefined();
+  });
+});
+
+describe('Basic/Advanced query mode representability', () => {
+  it('treats a flat browser-built query as representable', () => {
+    const query = buildEntityQueryFromBrowserFilters({
+      typeFilter: 'component',
+      conditions: [
+        { fieldId: '_schemaId', op: 'equals', value: 'component' },
+        { fieldId: '_lifecycle', op: 'equals', value: 'active' }
+      ],
+      q: 'platform'
+    });
+
+    expect(isBasicRepresentable(query)).toBe(true);
+    expect(entityQueryToBrowserFilters(query)).toEqual({
+      conditions: [
+        { fieldId: '_lifecycle', op: 'equals', value: 'active' },
+        { fieldId: '_schemaId', op: 'equals', value: 'component' }
+      ],
+      q: 'platform'
+    });
+  });
+
+  it('treats a bare single top-level predicate (no AND wrapper) as representable', () => {
+    const query: EntityQuery = {
+      root: { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' }
+    };
+
+    expect(isBasicRepresentable(query)).toBe(true);
+    expect(entityQueryToBrowserFilters(query)).toEqual({
+      conditions: [{ fieldId: '_lifecycle', op: 'equals', value: 'active' }],
+      q: ''
+    });
+  });
+
+  it('rejects OR grouping', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'or',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' },
+          { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'deprecated' }
+        ]
+      }
+    };
+
+    expect(isBasicRepresentable(query)).toBe(false);
+  });
+
+  it('rejects NOT', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'and',
+        children: [{ kind: 'not', child: { kind: 'freeText', value: 'legacy' } }]
+      }
+    };
+
+    expect(isBasicRepresentable(query)).toBe(false);
+  });
+
+  it('rejects relation traversal (non-empty path)', () => {
+    const query: EntityQuery = {
+      schemaId: 'component',
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+        fieldId: 'eol_date',
+        op: 'before',
+        value: '2026-06-30'
+      }
+    };
+
+    expect(isBasicRepresentable(query)).toBe(false);
+  });
+
+  it('rejects relationExists', () => {
+    const query: EntityQuery = {
+      root: { kind: 'relationExists', path: [{ kind: 'forward', fieldId: 'technology_releases' }] }
+    };
+
+    expect(isBasicRepresentable(query)).toBe(false);
+  });
+
+  it('rejects projections', () => {
+    const query: EntityQuery = {
+      root: { kind: 'and', children: [] },
+      projections: [{ path: [], fieldId: '_name' }]
+    };
+
+    expect(isBasicRepresentable(query)).toBe(false);
+  });
+
+  it('carries a top-level schemaId into a _schemaId condition on conversion', () => {
+    const query: EntityQuery = {
+      schemaId: 'component',
+      root: { kind: 'and', children: [] }
+    };
+
+    expect(isBasicRepresentable(query)).toBe(true);
+    expect(entityQueryToBrowserFilters(query)).toEqual({
+      conditions: [{ fieldId: '_schemaId', op: 'equals', value: 'component' }],
+      q: ''
+    });
+  });
+});
+
+describe('withLiveSearchText', () => {
+  it('leaves an Advanced-mode freeText query untouched when the search box is empty', () => {
+    // Regression: text:"analytics" in Advanced mode compiles to a bare freeText root node, and
+    // the search box's own `q` stays '' since Advanced mode doesn't use it. Merging via
+    // addFreeTextQuery(query, '') used to strip that node (query.root -> { kind: 'and',
+    // children: [] }), silently discarding the filter and showing all entities.
+    const query: EntityQuery = { root: { kind: 'freeText', value: 'analytics' } };
+
+    expect(withLiveSearchText(query, '')).toEqual(query);
+  });
+
+  it('still merges live search-box text into the query when q is non-empty', () => {
+    const query: EntityQuery = {
+      schemaId: 'component',
+      root: { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' }
+    };
+
+    expect(withLiveSearchText(query, 'platform')).toEqual({
+      ...query,
+      root: {
+        kind: 'and',
+        children: [query.root, { kind: 'freeText', value: 'platform' }]
+      }
+    });
+  });
+
+  it('leaves an existing freeText clause alone (not just an empty query) when q is empty', () => {
+    // `q` never writes into the query's own URL-persisted freeText node (only a live merge for
+    // the executed request) — so an empty search box means "nothing new to merge", not "revert
+    // to no freeText", whether or not the query already carries one (e.g. a saved view's own
+    // free-text term).
+    const withOwnFreeText: EntityQuery = {
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' },
+          { kind: 'freeText', value: 'platform' }
+        ]
+      }
+    };
+
+    expect(withLiveSearchText(withOwnFreeText, '')).toEqual(withOwnFreeText);
+  });
+});
+
+describe('withSchemaIdAsPredicate', () => {
+  it('folds a top-level schemaId into a root _schemaId predicate', () => {
+    // Regression: printEntityQueryText only ever renders `root`, so a Basic-mode "Type" filter
+    // (which buildEntityQueryFromBrowserFilters puts on the top-level `schemaId` field, not a
+    // root predicate) printed as empty text in Advanced mode with no other conditions set.
+    const query: EntityQuery = {
+      schemaId: 'component-schema',
+      root: { kind: 'and', children: [] }
+    };
+
+    expect(withSchemaIdAsPredicate(query)).toEqual({
+      schemaId: 'component-schema',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: '_schemaId',
+            op: 'equals',
+            value: 'component-schema'
+          }
+        ]
+      }
+    });
+  });
+
+  it('prepends the schema predicate ahead of existing root children', () => {
+    const query: EntityQuery = {
+      schemaId: 'component-schema',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' }
+        ]
+      }
+    };
+
+    expect(withSchemaIdAsPredicate(query).root).toEqual({
+      kind: 'and',
+      children: [
+        {
+          kind: 'predicate',
+          path: [],
+          fieldId: '_schemaId',
+          op: 'equals',
+          value: 'component-schema'
+        },
+        { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' }
+      ]
+    });
+  });
+
+  it('wraps a non-and root (e.g. a bare freeText node) in an and alongside the schema predicate', () => {
+    const query: EntityQuery = {
+      schemaId: 'component-schema',
+      root: { kind: 'freeText', value: 'analytics' }
+    };
+
+    expect(withSchemaIdAsPredicate(query).root).toEqual({
+      kind: 'and',
+      children: [
+        {
+          kind: 'predicate',
+          path: [],
+          fieldId: '_schemaId',
+          op: 'equals',
+          value: 'component-schema'
+        },
+        { kind: 'freeText', value: 'analytics' }
+      ]
+    });
+  });
+
+  it('leaves the query untouched when schemaId is absent', () => {
+    const query: EntityQuery = { root: { kind: 'and', children: [] } };
+
+    expect(withSchemaIdAsPredicate(query)).toBe(query);
   });
 });

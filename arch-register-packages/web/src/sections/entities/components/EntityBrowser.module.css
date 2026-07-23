@@ -39,6 +39,30 @@
   border: 1px solid var(--panel-border);
 }
 
+.advancedQuery {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 320px;
+  max-width: 640px;
+}
+
+/* SearchInput's "sm" size caps max-width at 280px for the short Basic search box — Advanced
+   queries are longer, so let this instance fill its .advancedQuery wrapper instead. */
+.advancedSearchInput {
+  max-width: none !important;
+  width: 100%;
+}
+
+.advancedQueryError {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--error-fg, #e05252);
+}
+
 .pagination {
   display: flex;
   align-items: center;
