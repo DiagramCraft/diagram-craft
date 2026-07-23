@@ -46,7 +46,7 @@
     "lib0": "^0.2.117",
     "openid-client": "^6.8.4",
     "postgres": "^3.4.5",
-    "nodemailer": "^8.0.9",
+    "nodemailer": "^9.0.1",
     "resend": "^6.0.0",
     "ws": "^8.21.0",
     "y-protocols": "^1.0.7",
