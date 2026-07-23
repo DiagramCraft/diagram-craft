@@ -30,7 +30,7 @@ runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
     const workspace = seededWorkspaces.default.id;
 
     const eolView = await db.view.getSavedView(workspace, '00000000-0000-0000-0020-000000000007');
-    const eolQuery = eolView?.filters.entityQuery;
+    const eolQuery = eolView?.filters;
     expect(eolQuery).toBeDefined();
     expect(eolView?.is_admin_view).toBe(true);
     const eolResults = await listEntitiesWithCount(db, workspace, null, {

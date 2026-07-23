@@ -31,7 +31,7 @@ import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
 import { UserDbCreate } from './database';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
-import { entityFiltersSchema } from '@arch-register/api-types/viewContract';
+import { savedViewQuerySchema } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
 import { entityToBaseState } from '../domain/catalog/entityMutations';
 import type { StorageAdapter } from '../storage/storage.types';
@@ -134,7 +134,7 @@ export const validateBootstrapSeed = async (db: Database) => {
   for (const workspace of workspaces) {
     const views = await db.view.listSavedViews(workspace.id);
     for (const view of views) {
-      const result = entityFiltersSchema.safeParse(view.filters);
+      const result = savedViewQuerySchema.safeParse(view.filters);
       if (!result.success) {
         console.error(
           `  [view:${view.id}] has invalid canonical filters: ${result.error.issues

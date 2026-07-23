@@ -963,8 +963,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         view_mode: 'table',
         filters: {
           schemaId: 's1',
-          q: 'search',
-          entityQuery: { schemaId: 's1', root: { kind: 'and', children: [] } }
+          root: { kind: 'and', children: [] }
         },
         config: null,
         created_at: new Date(),
@@ -973,23 +972,22 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
 
       expect(created.filters).toEqual({
         schemaId: 's1',
-        q: 'search',
-        entityQuery: { schemaId: 's1', root: { kind: 'and', children: [] } }
+        root: { kind: 'and', children: [] }
       });
       expect(created.is_admin_view).toBe(false);
 
       const updated = await db.view.updateSavedView(workspace, created.id, {
         name: 'Renamed view',
         filters: {
-          q: 'new search',
-          entityQuery: { schemaId: 's1', root: { kind: 'and', children: [] } }
+          schemaId: 's1',
+          root: { kind: 'and', children: [] }
         },
         updated_at: new Date()
       });
       expect(updated!.name).toBe('Renamed view');
       expect(updated!.filters).toEqual({
-        q: 'new search',
-        entityQuery: { schemaId: 's1', root: { kind: 'and', children: [] } }
+        schemaId: 's1',
+        root: { kind: 'and', children: [] }
       });
 
       const deleted = await db.view.deleteSavedView(workspace, created.id);
@@ -1011,7 +1009,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         description: null,
         is_admin_view: false,
         view_mode: 'table',
-        filters: { entityQuery: { root: { kind: 'and', children: [] } } },
+        filters: { root: { kind: 'and', children: [] } },
         config: null,
         created_at: new Date(),
         updated_at: new Date()
@@ -1025,7 +1023,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         description: null,
         is_admin_view: false,
         view_mode: 'table',
-        filters: { entityQuery: { root: { kind: 'and', children: [] } } },
+        filters: { root: { kind: 'and', children: [] } },
         config: null,
         created_at: new Date(),
         updated_at: new Date()

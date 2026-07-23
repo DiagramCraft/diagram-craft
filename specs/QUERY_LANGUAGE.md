@@ -40,7 +40,7 @@ Resource behaves like Component: has technology_releases (reference) and system 
 ```
 
 Assessment fields are not schema fields — they come from a single *joined* assessment
-(`entityFiltersSchema.assessmentId` in `viewContract.ts`), addressed today as pseudo-field-ids
+(`EntityQuery.assessmentId` in `entityQueryIR.ts`), addressed today as pseudo-field-ids
 `_assessment` (presence) and `_assessment:<fieldId>` (`ASSESSMENT_FIELD_PREFIX` in
 `api-types/src/assessmentFilter.ts`). The grammar keeps this addressing scheme rather than inventing a new one.
 
@@ -263,10 +263,10 @@ with different meaning (e.g., a hypothetical second `category` enum with a diffe
 `schema:` at that traversal position pins down which definition applies. Seed data doesn't currently have such a
 collision, but schema authors aren't prevented from creating one.
 
-The existing `entityFiltersSchema.schemaId` (top-level, sibling to `conditions`, in `viewContract.ts`) is a separate,
-coarser mechanism — "which schema is this browser view showing" — and stays independent of whether the query text
-happens to mention `schema:` anywhere. A saved view can combine both: a view pinned to the `Component`
-schema whose query text additionally traverses into other schemas via relation steps.
+The legacy browser request's `schemaId` (top-level and separate from the query tree) is a separate, coarser mechanism —
+"which schema is this browser view showing" — and stays independent of whether the query text happens to mention
+`schema:` anywhere. Saved views now carry that restriction in `EntityQuery.schemaId`, while ad hoc browser requests may
+still supply the legacy request field when being normalized.
 
 ### 4.5 Assessment selection: query execution context, not query syntax
 
@@ -275,9 +275,9 @@ execution context** supplies — there is no `assessment:` qualifier in the gram
 v1 scope decision, not an oversight: unlike `schema:`, which is a genuine filter that narrows the candidate set and can
 be dropped or repeated (§4.4), "which assessment" doesn't affect matching semantics so much as which data source
 `_assessment:` fields read from, and that source is already supplied out-of-band today via
-`entityFiltersSchema.assessmentId` (`viewContract.ts`) — sibling to `conditions`, resolved once per request by
-`resolveJoinedAssessment` in `entityQueryOperations.ts` ("never per-entity", per its own comment). The IR keeps that
-shape:
+the legacy request's `assessmentId` (`viewContract.ts`) — supplied separately from flat conditions and resolved once
+per request by `resolveJoinedAssessment` in `entityQueryOperations.ts` ("never per-entity", per its own comment). The
+IR keeps that shape, and saved views now persist it as `EntityQuery.assessmentId`:
 
 ```
 schema:Component technology_releases.eol_date < date("2026-06-30") AND technology_releases._assessment:riskLevel >= 3
@@ -442,7 +442,7 @@ must satisfy; `relationExists` with no `filter` on its last step is plain "at le
 
 `{ kind: 'predicate', path: [], fieldId, op, value }` (empty path) is exactly today's flat `FilterCondition` — i.e.
 today's `filterConditionSchema` is the degenerate case of this IR with `path: []` and an implicit top-level
-`and`. This gives a direct, mechanical migration: today's `EntityFilters` maps to
+`and`. This gives a direct, mechanical migration: the legacy flat browser filter shape maps to
 `{ schemaId, assessmentId, root: { kind: 'and', children: conditions.map(c => ({ kind: 'predicate', path: [], ...c })) } }`
 — `schemaId` and `assessmentId` carry straight across as the same top-level, non-tree fields they already are.
 
@@ -691,7 +691,7 @@ query takes.
   (Phase 3) would close as "filtering-only," not full reporting.
 - Phase 3: wire the *existing* entity-listing/view execution path (not a new bespoke endpoint) to accept an
   `EntityQuery` — whatever endpoint already backs saved views and ad hoc browsing runs one of these instead of, or
-  alongside, the flat `entityFiltersSchema`. This is the phase that actually matters for #2300 and #2315: once it lands,
+  alongside, the flat browser request shape. This is the phase that actually matters for #2300 and #2315: once it lands,
   neither needs separate implementation. #2300 is the query `schema:Component
   technology_releases.eol_date < date(...)` run through a normal view (§6); #2315 is the identity-anchored
   forward-then-containment pattern (§6) run the same way. Both close as *subsumed* by this capability rather than built
@@ -701,12 +701,11 @@ query takes.
   patterns is worth doing for discoverability — that's content, not new capability.
 - Phase 4: text parser + round-trip (text ⇄ IR) for the search box; visual filter builder generates/reads the same IR.
 - Phase 5: saved-view storage. No production data exists yet, so this is a straight schema change, not a migration:
-  replace `filters: entityFiltersSchema` with the new query shape directly on `savedViewSchema` /
-  `createViewBodySchema` / `updateViewBodySchema` (`viewContract.ts`) — e.g. `filters: entityQuerySchema` in place of
-  today's field, keeping the name if that's the least churn for callers, or renaming to `query` if that reads better
-  once it's a tree rather than a flat array. No dual-field, no reader precedence, no backfill: update the seed data
-  (`seedData.ts` / `seedFixtures.ts`) to the new shape in the same change, and that's the only "existing row" that needs
-  to change.
+  replace the legacy saved-view filter envelope with the strict canonical `EntityQuery` shape directly on
+  `savedViewSchema` / `createViewBodySchema` / `updateViewBodySchema` (`viewContract.ts`). Saved-view display sorting
+  remains generic view configuration. There is no dual-field, reader precedence, or backfill: update the seed data
+  (`seedData.ts` / `seedFixtures.ts`) to the new shape in the same change, and replace existing rows by re-running
+  bootstrap.
 
 ## 10. Open questions (carried over from the issue, not resolved here)
 

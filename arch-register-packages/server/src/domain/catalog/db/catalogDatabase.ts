@@ -2,7 +2,6 @@ import {
   BrowserView,
   BubbleViewConfig,
   CardsViewConfig,
-  EntityFilters,
   ExploreViewConfig,
   FilterCondition,
   MapViewConfig,
@@ -12,6 +11,7 @@ import {
   TimelineViewConfig,
   TreeViewConfig
 } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { EntityRole } from '@arch-register/permissions';
@@ -472,7 +472,7 @@ export const catalogMappers = {
     view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'],
     filters: parseDatabaseJson(
       row['filters'],
-      { entityQuery: { root: { kind: 'and', children: [] } } },
+      { root: { kind: 'and', children: [] } },
       'saved_view.filters'
     ),
     config: parseDatabaseJson(row['config'], null, 'saved_view.config'),
@@ -626,8 +626,9 @@ export type SavedViewDbResult = {
   description: string | null;
   is_admin_view: boolean;
   view_mode: BrowserView;
-  filters: EntityFilters;
+  filters: EntityQuery;
   config: {
+    sort?: string;
     table?: TableViewConfig;
     cards?: CardsViewConfig;
     tree?: TreeViewConfig;

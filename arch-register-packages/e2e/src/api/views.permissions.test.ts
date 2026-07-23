@@ -9,9 +9,13 @@ const viewData = {
   description: 'A view created by permission tests',
   viewMode: 'table' as const,
   filters: {
-    status: seedIds.lifecycle.production,
-    q: 'test',
-    entityQuery: { root: { kind: 'and', children: [] } }
+    root: {
+      kind: 'predicate' as const,
+      path: [],
+      fieldId: '_lifecycle',
+      op: 'equals' as const,
+      value: seedIds.lifecycle.production
+    }
   },
   config: null
 };
