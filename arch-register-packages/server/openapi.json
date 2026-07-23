@@ -17990,6 +17990,17 @@
                           }
                         ],
                         "description": "Proposed changes (for future updates)"
+                      },
+                      "case_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a case_id were planned/applied together as one coordinated multi-entity change."
                       }
                     },
                     "required": [
@@ -18005,7 +18016,8 @@
                       "created_by",
                       "created_by_name",
                       "base_state",
-                      "proposed_state"
+                      "proposed_state",
+                      "case_id"
                     ]
                   }
                 }
@@ -18217,6 +18229,17 @@
                         }
                       ],
                       "description": "Proposed changes (for future updates)"
+                    },
+                    "case_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a case_id were planned/applied together as one coordinated multi-entity change."
                     }
                   },
                   "required": [
@@ -18232,7 +18255,8 @@
                     "created_by",
                     "created_by_name",
                     "base_state",
-                    "proposed_state"
+                    "proposed_state",
+                    "case_id"
                   ]
                 }
               }
@@ -18386,6 +18410,17 @@
                           }
                         ],
                         "description": "Proposed changes (for future updates)"
+                      },
+                      "case_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a case_id were planned/applied together as one coordinated multi-entity change."
                       }
                     },
                     "required": [
@@ -18401,7 +18436,8 @@
                       "created_by",
                       "created_by_name",
                       "base_state",
-                      "proposed_state"
+                      "proposed_state",
+                      "case_id"
                     ]
                   }
                 }
@@ -18617,6 +18653,17 @@
                         }
                       ],
                       "description": "Proposed changes (for future updates)"
+                    },
+                    "case_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a case_id were planned/applied together as one coordinated multi-entity change."
                     }
                   },
                   "required": [
@@ -18632,7 +18679,8 @@
                     "created_by",
                     "created_by_name",
                     "base_state",
-                    "proposed_state"
+                    "proposed_state",
+                    "case_id"
                   ]
                 }
               }
@@ -18872,6 +18920,17 @@
                         }
                       ],
                       "description": "Proposed changes (for future updates)"
+                    },
+                    "case_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a case_id were planned/applied together as one coordinated multi-entity change."
                     }
                   },
                   "required": [
@@ -18887,7 +18946,8 @@
                     "created_by",
                     "created_by_name",
                     "base_state",
-                    "proposed_state"
+                    "proposed_state",
+                    "case_id"
                   ]
                 }
               }
@@ -19071,6 +19131,17 @@
                         }
                       ],
                       "description": "Proposed changes (for future updates)"
+                    },
+                    "case_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a case_id were planned/applied together as one coordinated multi-entity change."
                     }
                   },
                   "required": [
@@ -19086,7 +19157,8 @@
                     "created_by",
                     "created_by_name",
                     "base_state",
-                    "proposed_state"
+                    "proposed_state",
+                    "case_id"
                   ]
                 }
               }
@@ -19263,6 +19335,17 @@
                         }
                       ],
                       "description": "Proposed changes (for future updates)"
+                    },
+                    "case_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a case_id were planned/applied together as one coordinated multi-entity change."
                     }
                   },
                   "required": [
@@ -19278,7 +19361,8 @@
                     "created_by",
                     "created_by_name",
                     "base_state",
-                    "proposed_state"
+                    "proposed_state",
+                    "case_id"
                   ]
                 }
               }
