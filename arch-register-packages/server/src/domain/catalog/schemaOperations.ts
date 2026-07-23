@@ -7,6 +7,7 @@ import { defineOperation } from '../operation';
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { countEntities } from './entityQueryOperations';
+import { parseEntityQuery, buildEntityQueryForExecution } from './entityQuery';
 import { listAllCatalogEntities } from './entityLoader';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import {
@@ -38,6 +39,13 @@ const dbErrorMessages = {
   unique: 'A schema with that name already exists in this workspace',
   foreign: 'Cannot delete schema: entities still reference it'
 } as const;
+
+const countEntitiesForSchema = (db: DatabaseAdapter, ws: string, schemaId: string) => {
+  const parsed = parseEntityQuery({ _schemaId: schemaId });
+  return countEntities(db, ws, null, {
+    entityQuery: buildEntityQueryForExecution({ _schemaId: schemaId }, parsed)
+  });
+};
 
 // computeEntityCompleteness only depends on which fields are 'required'/'expected' (not their
 // other properties), so completeness is stale only when that specific set changes.
@@ -106,9 +114,7 @@ export const getWorkspaceSchema = async (
         db.catalog.listEnums(ws)
       ]);
       httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
-      const entityCount = await countEntities(db, ws, null, {
-        schemaId: id
-      });
+      const entityCount = await countEntitiesForSchema(db, ws, id);
       return toApiSchema(row, entityCount, enums);
     }
   );
@@ -197,9 +203,7 @@ export const updateWorkspaceSchema = async (
       const next = buildUpdateSchemaInput(body, oldRow, teamIds, new Date());
       const fieldMigrations = body.fieldMigrations as FieldMigrations | undefined;
 
-      const entityCount = await countEntities(db, ws, null, {
-        schemaId: id
-      });
+      const entityCount = await countEntitiesForSchema(db, ws, id);
 
       const finalFields = [...next.fields];
       const dataMigrations: Array<{
@@ -412,9 +416,7 @@ export const deleteWorkspaceSchema = async (
       const schema = await db.catalog.getSchema(ws, id);
       httpAssert.present(schema, { status: 404, message: `Schema '${id}' not found` });
 
-      const entityCount = await countEntities(db, ws, null, {
-        schemaId: id
-      });
+      const entityCount = await countEntitiesForSchema(db, ws, id);
       httpAssert.true(entityCount === 0, {
         status: 409,
         message: 'Cannot delete schema: entities still reference it'

@@ -119,6 +119,103 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(page.total).toBe(1);
   });
 
+  it('folds owner/lifecycle filters into the IR for auditOperations-style entity lookups', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+    const now = new Date();
+
+    const [platformTeam, dataTeam] = await db.workspace.replaceTeams(workspace, [
+      {
+        id: 'team-platform',
+        workspace,
+        name: 'Platform',
+        sort_order: 0,
+        color: null,
+        description: '',
+        created_at: now
+      },
+      {
+        id: 'team-data',
+        workspace,
+        name: 'Data',
+        sort_order: 1,
+        color: null,
+        description: '',
+        created_at: now
+      }
+    ]);
+    const [activeState, deprecatedState] = await db.workspace.replaceLifecycleStates(workspace, [
+      {
+        id: 'active',
+        workspace,
+        label: 'Active',
+        color: '#000000',
+        sort_order: 0,
+        created_at: now
+      },
+      {
+        id: 'deprecated',
+        workspace,
+        label: 'Deprecated',
+        color: '#000000',
+        sort_order: 1,
+        created_at: now
+      }
+    ]);
+
+    const match = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      owner: platformTeam!.id,
+      lifecycle: activeState!.id
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, {
+      owner: platformTeam!.id,
+      lifecycle: deprecatedState!.id
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, {
+      owner: dataTeam!.id,
+      lifecycle: activeState!.id
+    });
+
+    // Mirrors auditOperations.listAuditLog's entity-id resolution for the owner/lifecycle
+    // filters (issue #2356): synthesize an entityQuery instead of passing schemaId/owner/
+    // lifecycle straight through, so the lookup runs via the SQL IR path.
+    const input = { _schemaId: schema.id, owner: platformTeam!.id, lifecycle: activeState!.id };
+    const parsed = parseEntityQuery(input);
+    const entityQuery = buildEntityQueryForExecution(input, parsed);
+
+    const matches = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery,
+      view: 'summary',
+      limit: null,
+      offset: 0
+    });
+
+    expect(matches.items.map(item => item._uid)).toEqual([match.id]);
+    expect(matches.total).toBe(1);
+  });
+
+  it('folds a schemaId-only filter into the IR for schemaOperations-style entity counts', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const referencedSchema = await createSchema(db, workspace, { name: 'Referenced' });
+    const unreferencedSchema = await createSchema(db, workspace, { name: 'Unreferenced' });
+
+    await createFixtureCatalogEntity(db, workspace, referencedSchema.id);
+    await createFixtureCatalogEntity(db, workspace, referencedSchema.id);
+
+    // Mirrors schemaOperations.ts's countEntities({ schemaId }) call sites (issue #2356).
+    const countFor = async (schemaId: string) => {
+      const input = { _schemaId: schemaId };
+      const parsed = parseEntityQuery(input);
+      const entityQuery = buildEntityQueryForExecution(input, parsed);
+      return countEntities(db, workspace, null, { entityQuery });
+    };
+
+    expect(await countFor(referencedSchema.id)).toBe(2);
+    expect(await countFor(unreferencedSchema.id)).toBe(0);
+  });
+
   it('resolves a forward single-hop reference predicate', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
