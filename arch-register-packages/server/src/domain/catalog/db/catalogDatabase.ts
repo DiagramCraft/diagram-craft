@@ -49,9 +49,9 @@ export type EntityListDbFilters = {
   lifecycle?: string | null;
   q?: string | null;
   conditions?: FilterCondition[];
-  // Scopes results by entity.project_id (entities created solely for one project). 'all' (the
-  // default) excludes project-exclusive entities entirely — matching global-query semantics.
-  // 'project' includes only entities whose project_id matches `projectId`.
+  // With a projectId, 'project' returns project-owned or project_entity-linked entities, while
+  // 'all' returns global entities plus entities owned by the selected project. Without a projectId,
+  // both modes retain global-listing semantics and return only project_id IS NULL rows.
   projectId?: string | null;
   projectScope?: 'project' | 'all';
 };

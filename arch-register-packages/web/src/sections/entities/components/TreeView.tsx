@@ -9,7 +9,11 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { entityMenuItems, projectEntityMenuItems } from './entityBrowserViewShared';
-import type { ProjectBrowserContext, ProjectLinkState } from './entityBrowserState';
+import {
+  isEntityInProject,
+  type ProjectBrowserContext,
+  type ProjectLinkState
+} from './entityBrowserState';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import styles from '../EntityBrowserScreen.module.css';
 import {
@@ -222,7 +226,7 @@ const TreeNodeRow = ({
             )
           }
           title={item._name ?? item._slug}
-          titleMuted={!!(projectContext && item._projectLink?.linked === false)}
+          titleMuted={projectContext != null && !isEntityInProject(item, projectContext.project.id)}
           subtitle={
             columns.some(c => c.id === '_description') && item._description
               ? item._description

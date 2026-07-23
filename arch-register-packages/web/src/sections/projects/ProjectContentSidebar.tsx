@@ -31,6 +31,7 @@ import { RenameDialog } from '../../components/RenameDialog';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { useAssessments } from '../../hooks/useAssessments';
+import { useEntityCount } from '../../hooks/useEntities';
 import { useMilestones } from '../../hooks/useMilestones';
 import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import {
@@ -38,7 +39,7 @@ import {
   useContentScopeOperations,
   type ContentScope
 } from '../../hooks/useContentScope';
-import { useProject, useProjectEntities } from '../../hooks/useProjects';
+import { useProject } from '../../hooks/useProjects';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   asProjectPublicId,
@@ -69,7 +70,14 @@ export const ProjectContentSidebar = ({
   const operations = useContentScopeOperations(scope);
   const { permissions } = useWorkspaceContext();
   const { data: project } = useProject(workspaceSlug, projectId);
-  const { data: projectEntities = [] } = useProjectEntities(workspaceSlug, projectId);
+  const { data: entityCount } = useEntityCount(
+    workspaceSlug,
+    {
+      projectId: project?.id,
+      projectScope: 'project'
+    },
+    { enabled: project != null }
+  );
   const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
   const { data: milestones = [] } = useMilestones(workspaceSlug, projectId);
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, { projectId });
@@ -197,7 +205,7 @@ export const ProjectContentSidebar = ({
       />
       <TreeRow
         testId="project-secondary-entities"
-        label={`Entities (${projectEntities.length})`}
+        label={`Entities (${entityCount?.total ?? 0})`}
         icon={<TbBinaryTree2 size={13} />}
         active={section === 'entities'}
         onClick={() => navigateProject({ section: 'entities' })}

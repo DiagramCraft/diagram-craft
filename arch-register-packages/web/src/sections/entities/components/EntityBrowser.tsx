@@ -14,7 +14,11 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { BulkEditToolbar } from './BulkEditToolbar';
-import { type ProjectBrowserContext } from './entityBrowserState';
+import {
+  isEntityInProject,
+  type BrowserEntityRecord,
+  type ProjectBrowserContext
+} from './entityBrowserState';
 import { EntityBrowserView } from './EntityBrowserView';
 import { EntityBrowserToolbar } from './EntityBrowserToolbar';
 import { useEntityBrowserData } from './useEntityBrowserData';
@@ -33,7 +37,6 @@ import {
   withDisplayFieldIds,
   withoutDisplayFieldIds
 } from './entityDisplayFields';
-import type { BrowserEntityRecord } from './entityBrowserState';
 import { CollectionPickerDialog } from './CollectionPickerDialog';
 
 type EntityBrowserProps = {
@@ -315,7 +318,9 @@ export const EntityBrowser = ({
   const linkedEntityIds = useMemo(
     () =>
       projectContext
-        ? filtered.filter(entity => entity._projectLink?.linked).map(entity => entity._uid)
+        ? filtered
+            .filter(entity => isEntityInProject(entity, projectContext.project.id))
+            .map(entity => entity._uid)
         : undefined,
     [filtered, projectContext]
   );

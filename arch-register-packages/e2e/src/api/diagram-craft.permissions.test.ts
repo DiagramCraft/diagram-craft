@@ -30,7 +30,7 @@ test.describe('diagram craft permission routes', () => {
     expect(dataRes.status).toBe(200);
     const body = (await dataRes.json()) as Array<{ _name: string }>;
     const expectedNames = seedEntities
-      .filter(entity => entity.workspace === seedIds.workspace.default)
+      .filter(entity => entity.workspace === seedIds.workspace.default && entity.project_id == null)
       .map(entity => entity.name)
       .sort();
     expect(body.map(entity => entity._name).sort()).toEqual(expectedNames);

@@ -159,7 +159,12 @@ export const entityListFiltersSchema = z.object({
       'Joined assessment identifier — required when conditions reference assessment fields'
     ),
   projectId: z.string().optional().describe('Filter by project identifier'),
-  projectScope: z.enum(['project', 'all']).optional().describe('Project scope filter'),
+  projectScope: z
+    .enum(['project', 'all'])
+    .optional()
+    .describe(
+      'Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project'
+    ),
   collectionId: z
     .string()
     .optional()

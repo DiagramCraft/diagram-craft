@@ -77,7 +77,12 @@ export const entityQuerySchema = z.object({
   schemaId: z.string().optional(),
   assessmentId: z.string().optional(),
   projectId: z.string().optional(),
-  projectScope: z.enum(['project', 'all']).optional(),
+  projectScope: z
+    .enum(['project', 'all'])
+    .optional()
+    .describe(
+      'Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project'
+    ),
   asOf: z
     .string()
     .refine(value => !Number.isNaN(Date.parse(value)), 'Invalid asOf date')

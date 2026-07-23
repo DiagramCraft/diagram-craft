@@ -20,7 +20,7 @@ const componentId = '00000000-0000-0000-0003-000000000002';
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
 const defaultWorkspaceEntityCount = seedEntities.filter(
-  entity => entity.workspace === seedIds.workspace.default
+  entity => entity.workspace === seedIds.workspace.default && entity.project_id == null
 ).length;
 
 const createEntity = async (orpc: TestORPCClient, body: Record<string, unknown>) => {
@@ -707,6 +707,7 @@ test.describe('data routes', () => {
       .filter(
         entity =>
           entity.workspace === seedIds.workspace.default &&
+          entity.project_id == null &&
           entity.schema_id === componentSchemaId &&
           entity.lifecycle === seedIds.lifecycle.experimental
       )

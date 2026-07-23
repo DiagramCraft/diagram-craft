@@ -17,6 +17,7 @@ import {
   getDisplayFieldIds,
   type EntityDisplayField
 } from './entityDisplayFields';
+import { isEntityInProject } from './entityBrowserState';
 
 type DateField = Extract<EntitySchema['fields'][number], { type: 'date' }>;
 
@@ -115,7 +116,9 @@ export const TableView = ({
                   )
                 }
                 title={entityName(entity)}
-                titleMuted={projectContext && entity._projectLink?.linked === false}
+                titleMuted={
+                  projectContext != null && !isEntityInProject(entity, projectContext.project.id)
+                }
                 subtitle={
                   fieldIds.includes('_description') && entity._description
                     ? entity._description

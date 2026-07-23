@@ -531,19 +531,33 @@ const compileProjectionObject = (
 };
 
 const projectScopeClause = (
-  column: string,
-  state: CompileState,
-  allowProjectScope: boolean
+  entityIdColumn: string,
+  workspaceColumn: string,
+  projectColumn: string,
+  state: CompileState
 ): string => {
-  if (state.projectScope !== 'project') return `${column} IS NULL`;
   if (!state.projectId) {
-    throw new UnsupportedEntityQueryIRError(
-      "projectScope 'project' requires EntityQuery.projectId to be set"
+    if (state.projectScope === 'project') {
+      throw new UnsupportedEntityQueryIRError(
+        "projectScope 'project' requires EntityQuery.projectId to be set"
+      );
+    }
+    return `${projectColumn} IS NULL`;
+  }
+
+  const ownedProjectParam = addParam(state, state.projectId);
+  if (state.projectScope === 'project') {
+    const linkedProjectParam = addParam(state, state.projectId);
+    return (
+      `(${projectColumn} = ${ownedProjectParam} OR EXISTS (` +
+      `SELECT 1 FROM project_entity pe ` +
+      `WHERE pe.workspace = ${workspaceColumn} ` +
+      `AND pe.project_id = ${linkedProjectParam} ` +
+      `AND pe.entity_id = ${entityIdColumn}))`
     );
   }
-  return allowProjectScope
-    ? `(${column} IS NULL OR ${column} = ${addParam(state, state.projectId)})`
-    : `${column} IS NULL`;
+
+  return `(${projectColumn} IS NULL OR ${projectColumn} = ${ownedProjectParam})`;
 };
 
 const stateText = (stateColumn: string, fieldId: string, dialect: EntityQueryDialect): string => {
@@ -646,9 +660,10 @@ const buildTemporalSource = (state: CompileState): string => {
   const workspaceParam = addParam(state, state.workspace);
   const asOfParam = addParam(state, asOf.toISOString());
   const projectClause = projectScopeClause(
+    'v.entity_id',
+    'v.workspace',
     stateText('v.state', 'project_id', state.dialect),
-    state,
-    true
+    state
   );
   const mergeStates =
     state.dialect === 'postgres'
@@ -666,7 +681,7 @@ const buildTemporalSource = (state: CompileState): string => {
 
   const fallbackWorkspaceParam = addParam(state, state.workspace);
   const fallbackCreatedParam = addParam(state, asOf.toISOString());
-  const fallbackProjectClause = projectScopeClause('e.project_id', state, true);
+  const fallbackProjectClause = projectScopeClause('e.id', 'e.workspace', 'e.project_id', state);
   const eventWorkspaceParam = addParam(state, state.workspace);
   const eventCreatedParam = addParam(state, asOf.toISOString());
   const eventDateParam = addParam(state, asOf.toISOString().slice(0, 10));
@@ -674,13 +689,19 @@ const buildTemporalSource = (state: CompileState): string => {
     state.projectScope === 'project' && state.projectId && state.includeProjectSnapshots
       ? `(c.project_id IS NULL OR c.project_id = ${addParam(state, state.projectId)})`
       : 'c.project_id IS NULL';
+  const temporalScopeClause = projectScopeClause(
+    'final_state.entity_id',
+    'final_state.workspace',
+    stateProjectColumn('final_state.state'),
+    state
+  );
   const visibleClause =
     state.visibleEntityIds == null
       ? ''
       : state.visibleEntityIds.length === 0
         ? '1=0'
         : `final_state.entity_id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
-  const temporalScopeClause = `${projectScopeClause(stateProjectColumn('final_state.state'), state, true)} AND ${visibleClause || '1=1'}`;
+  const temporalScope = `${temporalScopeClause} AND ${visibleClause || '1=1'}`;
 
   return `
     latest_entity_version AS (
@@ -761,7 +782,7 @@ const buildTemporalSource = (state: CompileState): string => {
       SELECT ${temporalProjection}
       FROM final_state
       WHERE final_state.row_number = 1
-        AND ${temporalScopeClause}
+        AND ${temporalScope}
     )`;
 };
 
@@ -784,14 +805,15 @@ const buildScopeCte = (state: CompileState): string => {
 
   const assessmentParam = hasAssessment ? addParam(state, state.assessmentId) : null;
   const workspaceParam = addParam(state, state.workspace);
+  const scopeClause = projectScopeClause('e.id', 'e.workspace', 'e.project_id', state);
   const visibleClause =
     state.visibleEntityIds == null
       ? ''
       : state.visibleEntityIds.length === 0
         ? '1=0'
         : `e.id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
-  const scopeClause = `${projectScopeClause('e.project_id', state, true)} AND ${visibleClause || '1=1'}`;
-  return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM entity e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopeClause}\n    )`;
+  const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'}`;
+  return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM entity e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 
 // Compiles a validated EntityQuery into a full `WITH scoped_entity AS (...) SELECT ...` statement,

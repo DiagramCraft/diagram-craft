@@ -173,7 +173,9 @@ export const savedViewSchema = z.object({
   projectScope: z
     .enum(['project', 'all'])
     .nullable()
-    .describe('Project entity browser scope filter'),
+    .describe(
+      'Project entity browser scope: project-owned or linked entities, or global plus project-owned entities'
+    ),
   name: z.string().describe('View name'),
   description: z.string().nullable().describe('View description'),
   isAdminView: z
@@ -208,7 +210,7 @@ export const createViewBodySchema = z.object({
     .enum(['project', 'all'])
     .nullable()
     .optional()
-    .describe('Saved project entity browser scope'),
+    .describe('Saved project entity browser scope with project membership semantics'),
   name: z.string().describe('View name'),
   description: z.string().nullable().optional().describe('View description'),
   isAdminView: z
@@ -225,7 +227,7 @@ export const updateViewBodySchema = z.object({
     .enum(['project', 'all'])
     .nullable()
     .optional()
-    .describe('Saved project entity browser scope'),
+    .describe('Saved project entity browser scope with project membership semantics'),
   name: z.string().optional().describe('View name'),
   description: z.string().nullable().optional().describe('View description'),
   isAdminView: z

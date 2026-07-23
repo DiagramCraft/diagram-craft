@@ -153,7 +153,7 @@ test.describe('EntityQuery HTTP routes', () => {
       items: Array<{ _uid: string }>;
       total: number;
     }>('');
-    expect(list.total).toBe(15);
+    expect(list.total).toBe(2);
     expect(list.items.map(entity => entity._uid)).toEqual(
       expect.arrayContaining(['00000000-0000-0000-0003-000000000001', frontendAppId])
     );

@@ -486,7 +486,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const schema = await createFixtureSchema(db, workspace);
       const project = (await createFixtureProject(db, workspace)).id;
       const otherProject = (await createFixtureProject(db, workspace)).id;
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Global entity' });
+      const globalEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Global entity'
+      });
       const exclusiveEntity = await createFixtureCatalogEntity(db, workspace, schema, {
         name: 'Project-exclusive entity',
         project_id: project
@@ -513,6 +515,15 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       );
       expect(scopedResult.map(e => e.id).sort()).toEqual(
         [exclusiveEntity.id, linkedEntity.id].sort()
+      );
+
+      const allProjectResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { projectId: project, projectScope: 'all' },
+        { limit: 10, offset: 0 }
+      );
+      expect(allProjectResult.map(e => e.id).sort()).toEqual(
+        [globalEntity.id, exclusiveEntity.id, linkedEntity.id].sort()
       );
     });
   });

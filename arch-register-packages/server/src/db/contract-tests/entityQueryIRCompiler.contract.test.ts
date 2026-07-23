@@ -424,6 +424,14 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const projectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
       project_id: project.id
     });
+    const linkedEntity = await createFixtureCatalogEntity(db, workspace, schema.id);
+    await db.project.addProjectEntity({
+      workspace,
+      project_id: project.id,
+      entity_id: linkedEntity.id,
+      entity_type_id: null,
+      created_at: new Date()
+    });
     const otherProject = await createFixtureProject(db, workspace);
     const otherProjectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
       project_id: otherProject.id
@@ -438,9 +446,19 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
 
     const matches = await runQuery(db, driver, workspace, schemas, query);
     expect(matches.map(entity => entity.id)).toEqual(
-      expect.arrayContaining([globalEntity.id, projectEntity.id])
+      expect.arrayContaining([projectEntity.id, linkedEntity.id])
     );
+    expect(matches.map(entity => entity.id)).not.toContain(globalEntity.id);
     expect(matches.map(entity => entity.id)).not.toContain(otherProjectEntity.id);
+
+    const allMatches = await runQuery(db, driver, workspace, schemas, {
+      ...query,
+      projectScope: 'all'
+    });
+    expect(allMatches.map(entity => entity.id).sort()).toEqual(
+      [globalEntity.id, projectEntity.id, linkedEntity.id].sort()
+    );
+    expect(allMatches.map(entity => entity.id)).not.toContain(otherProjectEntity.id);
   });
 
   it('reconstructs historical state from entity_version in SQL', async () => {
@@ -564,6 +582,13 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       created_by_name: null,
       base_state: { name: entity.name },
       proposed_state: { name: 'Future name' }
+    });
+    await db.project.addProjectEntity({
+      workspace,
+      project_id: project.id,
+      entity_id: entity.id,
+      entity_type_id: null,
+      created_at: new Date('2026-01-02T00:00:00.000Z')
     });
     const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
     const query: EntityQuery = {
@@ -860,12 +885,12 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       entityQuery: query,
       view: 'summary',
       limit: 1,
-      offset: 1
+      offset: 0
     });
 
-    expect(page.total).toBe(2);
+    expect(page.total).toBe(1);
     expect(page.items.map(item => item._uid)).toEqual([projectEntity.id]);
-    expect(await countEntities(db, workspace, null, { entityQuery: query })).toBe(2);
+    expect(await countEntities(db, workspace, null, { entityQuery: query })).toBe(1);
     expect(page.items.map(item => item._uid)).not.toContain(globalEntity.id);
   });
 

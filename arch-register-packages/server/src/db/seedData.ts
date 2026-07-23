@@ -2246,6 +2246,29 @@ export const seedEntities: Entity[] = [
     created_at: now,
     updated_at: now
   },
+  {
+    id: '00000000-0000-0000-0003-000000000010',
+    workspace: WORKSPACE_ID,
+    public_id: 'CMP-16',
+    slug: 'auth-migration-adapter',
+    namespace: 'default',
+    name: 'Auth Migration Adapter',
+    description: 'Project-specific adapter used while migrating from legacy authentication.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle_date: '2026-09-30',
+    tags: ['go', 'security', 'migration'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    data: {
+      technology_releases: [TECHNOLOGY_RELEASE_IDS.go122],
+      system: ['00000000-0000-0000-0002-000000000002']
+    },
+    project_id: seededProjects.authMigration.id,
+    created_at: now,
+    updated_at: now
+  },
   // Additional resources
   {
     id: '00000000-0000-0000-0005-000000000002',
