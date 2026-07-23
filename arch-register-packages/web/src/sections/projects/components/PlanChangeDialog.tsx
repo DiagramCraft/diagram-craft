@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { TbPlus, TbX } from 'react-icons/tb';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
@@ -7,6 +8,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { useEntity } from '../../../hooks/useEntities';
 import { useProjectEntities } from '../../../hooks/useProjects';
 import { useMilestones } from '../../../hooks/useMilestones';
+import { useAutoFocus } from '../../../hooks/useAutoFocus';
 import {
   useChangeCase,
   useCreateChangeCase,
@@ -31,35 +33,85 @@ type Props = {
   schemas: EntitySchema[];
   teams: WorkspaceTeam[];
   lifecycleStates: WorkspaceLifecycleState[];
-  // Seeds the entity picker with one entity, for "plan a change" opened from a single entity row.
+  // Seeds the entity list with one entity, for "plan a change" opened from a single entity row.
   initialEntityId?: string | null;
   // When set, loads and edits this existing not-yet-applied case instead of creating a new one.
   editCaseId?: string | null;
   onClose: () => void;
 };
 
+const isReferenceField = (f: EntitySchema['fields'][number]) =>
+  f.type === 'reference' || f.type === 'containment';
+
+const normalize = (value: unknown): string => {
+  if (value == null) return '';
+  if (Array.isArray(value)) return JSON.stringify(value);
+  return String(value);
+};
+
+const computeChangedLabels = (
+  entity: { _name?: string; _description?: string; _owner?: { id: string } | null } & Record<
+    string,
+    unknown
+  >,
+  schema: EntitySchema,
+  planState: EntityEditState
+): string[] => {
+  const labels: string[] = [];
+  const check = (label: string, current: unknown, next: unknown) => {
+    if (normalize(current) !== normalize(next)) labels.push(label);
+  };
+  check('Name', entity['_name'] ?? '', planState['_name'] ?? '');
+  check('Description', entity['_description'] ?? '', planState['_description'] ?? '');
+  check(
+    'Owner',
+    (entity['_owner'] as { id: string } | null)?.id ?? '',
+    planState['_owner'] ?? ''
+  );
+  check(
+    'Lifecycle',
+    (entity['_lifecycle'] as { id: string } | null)?.id ?? '',
+    planState['_lifecycle'] ?? ''
+  );
+  check(
+    'Target Lifecycle',
+    (entity['_targetLifecycle'] as { id: string } | null)?.id ?? '',
+    planState['_targetLifecycle'] ?? ''
+  );
+  check(
+    'Target Lifecycle Date',
+    entity['_targetLifecycleDate'] ?? '',
+    planState['_targetLifecycleDate'] ?? ''
+  );
+  for (const field of schema.fields) {
+    if (isReferenceField(field)) continue;
+    check(field.name, entity[field.id], planState[field.id]);
+  }
+  return labels;
+};
+
 type MemberEditorProps = {
   workspaceId: string;
   entityId: string;
-  entityName: string;
+  isActive: boolean;
   schemas: EntitySchema[];
   teams: WorkspaceTeam[];
   lifecycleStates: WorkspaceLifecycleState[];
   existingProposedState?: Record<string, unknown> | null;
-  onRemove: () => void;
   onProposedStateChange: (entityId: string, proposedState: Record<string, unknown>) => void;
+  onChangedLabelsChange: (entityId: string, labels: string[]) => void;
 };
 
 const MemberEditor = ({
   workspaceId,
   entityId,
-  entityName,
+  isActive,
   schemas,
   teams,
   lifecycleStates,
   existingProposedState,
-  onRemove,
-  onProposedStateChange
+  onProposedStateChange,
+  onChangedLabelsChange
 }: MemberEditorProps) => {
   const { data: entity } = useEntity(workspaceId, entityId);
   const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
@@ -85,34 +137,30 @@ const MemberEditor = ({
     setPlanState(state);
   }, [entity, schema, planState]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: onProposedStateChange is a fresh callback each render; including it would create a render loop
+  // biome-ignore lint/correctness/useExhaustiveDependencies: onProposedStateChange/onChangedLabelsChange are fresh callbacks each render; including them would create a render loop
   useEffect(() => {
-    if (entity && schema && planState) {
-      onProposedStateChange(
-        entityId,
-        buildProposedState(entity, schema, planState, existingProposedState)
-      );
-    }
+    if (!entity || !schema || !planState) return;
+    onProposedStateChange(
+      entityId,
+      buildProposedState(entity, schema, planState, existingProposedState)
+    );
+    onChangedLabelsChange(entityId, computeChangedLabels(entity, schema, planState));
   }, [entity, schema, planState, entityId]);
 
   return (
-    <div className={styles.memberSection}>
-      <div className={styles.memberSectionHeader}>
-        <span>{entityName}</span>
-        <button type="button" className={styles.removeMemberButton} onClick={onRemove}>
-          Remove
-        </button>
-      </div>
+    <div style={{ display: isActive ? undefined : 'none' }}>
       {!entity || !schema || !planState ? (
         <LoadingState text="Loading..." size="sm" />
       ) : (
-        <EntityProposedStateFields
-          schema={schema}
-          planState={planState}
-          setPlanState={updater => setPlanState(prev => (prev ? updater(prev) : prev))}
-          teams={teams}
-          lifecycleStates={lifecycleStates}
-        />
+        <div className={styles.editorPaneContent}>
+          <EntityProposedStateFields
+            schema={schema}
+            planState={planState}
+            setPlanState={updater => setPlanState(prev => (prev ? updater(prev) : prev))}
+            teams={teams}
+            lifecycleStates={lifecycleStates}
+          />
+        </div>
       )}
     </div>
   );
@@ -144,16 +192,20 @@ export const PlanChangeDialog = ({
   const removeMember = useRemoveChangeCaseMember(workspaceId, projectId);
   const updateMember = useUpdateChangeCaseMember(workspaceId, projectId);
 
-  const [step, setStep] = useState<'select' | 'edit'>('select');
-  const [search, setSearch] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [memberIds, setMemberIds] = useState<string[]>([]);
+  const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
   const [proposedStates, setProposedStates] = useState<Record<string, Record<string, unknown>>>({});
+  const [changedLabels, setChangedLabels] = useState<Record<string, string[]>>({});
+  const [isAddingEntity, setIsAddingEntity] = useState(false);
+  const [addEntitySearch, setAddEntitySearch] = useState('');
   const [name, setName] = useState('');
   const [targetDate, setTargetDate] = useState('');
   const [milestoneId, setMilestoneId] = useState('');
   const [commitMessage, setCommitMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const addEntitySearchRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(addEntitySearchRef, { enabled: isAddingEntity, delay: 40 });
 
   useEffect(() => {
     if (!open) {
@@ -161,10 +213,13 @@ export const PlanChangeDialog = ({
       return;
     }
     if (isEditing) return; // wait for existingCase to load, handled below
-    setStep('select');
-    setSearch('');
-    setSelectedIds(new Set(initialEntityId ? [initialEntityId] : []));
+    const initialIds = initialEntityId ? [initialEntityId] : [];
+    setMemberIds(initialIds);
+    setActiveEntityId(initialIds[0] ?? null);
+    setIsAddingEntity(false);
+    setAddEntitySearch('');
     setProposedStates({});
+    setChangedLabels({});
     setName('');
     setTargetDate('');
     setMilestoneId('');
@@ -173,10 +228,13 @@ export const PlanChangeDialog = ({
 
   useEffect(() => {
     if (!open || !isEditing || !existingCase || initialized) return;
-    setStep('edit');
-    setSearch('');
-    setSelectedIds(new Set(existingCase.members.map(m => m.entity_id)));
+    const ids = existingCase.members.map(m => m.entity_id);
+    setMemberIds(ids);
+    setActiveEntityId(ids[0] ?? null);
+    setIsAddingEntity(false);
+    setAddEntitySearch('');
     setProposedStates({});
+    setChangedLabels({});
     setName(existingCase.name ?? '');
     setTargetDate(existingCase.target_date ?? '');
     setMilestoneId(existingCase.milestone_id ?? '');
@@ -184,28 +242,30 @@ export const PlanChangeDialog = ({
     setInitialized(true);
   }, [open, isEditing, existingCase, initialized]);
 
-  const filteredEntities = projectEntities.filter(e => {
-    if (!search.trim()) return true;
-    const lower = search.toLowerCase();
+  const entityById = new Map(projectEntities.map(e => [e.entity_id, e]));
+  const candidateEntities = projectEntities.filter(e => {
+    if (memberIds.includes(e.entity_id)) return false;
+    if (!addEntitySearch.trim()) return true;
+    const lower = addEntitySearch.toLowerCase();
     return `${e.entity_name} ${e.entity_slug}`.toLowerCase().includes(lower);
   });
 
-  const toggleEntity = (entityId: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(entityId)) next.delete(entityId);
-      else next.add(entityId);
-      return next;
-    });
+  const addEntity = (entityId: string) => {
+    setMemberIds(prev => [...prev, entityId]);
+    setActiveEntityId(entityId);
+    setIsAddingEntity(false);
+    setAddEntitySearch('');
   };
 
-  const removeSelected = (entityId: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.delete(entityId);
-      return next;
-    });
+  const removeEntity = (entityId: string) => {
+    const next = memberIds.filter(id => id !== entityId);
+    setMemberIds(next);
+    if (activeEntityId === entityId) setActiveEntityId(next[0] ?? null);
     setProposedStates(prev => {
+      const { [entityId]: _removed, ...rest } = prev;
+      return rest;
+    });
+    setChangedLabels(prev => {
       const { [entityId]: _removed, ...rest } = prev;
       return rest;
     });
@@ -221,20 +281,23 @@ export const PlanChangeDialog = ({
     if (value) setTargetDate('');
   };
 
-  const selectedEntities = projectEntities.filter(e => selectedIds.has(e.entity_id));
-  const allStatesReady = selectedEntities.every(e => proposedStates[e.entity_id] !== undefined);
+  const allStatesReady = memberIds.every(id => proposedStates[id] !== undefined);
   const nameIsValid = name.trim().length > 0;
   const canSave =
-    !isSaving && allStatesReady && selectedEntities.length > 0 && nameIsValid && (!isEditing || !!existingCase);
+    !isSaving &&
+    allStatesReady &&
+    memberIds.length > 0 &&
+    nameIsValid &&
+    (!isEditing || !!existingCase);
 
   const handleSubmit = async () => {
     if (!canSave) return;
     setIsSaving(true);
     try {
       if (!isEditing) {
-        const members = selectedEntities.map(({ entity_id }) => ({
-          entityId: entity_id,
-          proposedState: proposedStates[entity_id]!
+        const members = memberIds.map(entityId => ({
+          entityId,
+          proposedState: proposedStates[entityId]!
         }));
         await createChangeCase.mutateAsync({
           name,
@@ -258,17 +321,17 @@ export const PlanChangeDialog = ({
         });
 
         for (const [entityId, memberId] of originalMemberIds) {
-          if (!selectedIds.has(entityId)) {
+          if (!memberIds.includes(entityId)) {
             await removeMember.mutateAsync({ caseId, memberId });
           }
         }
-        for (const entity of selectedEntities) {
-          const proposedState = proposedStates[entity.entity_id]!;
-          const existingMemberId = originalMemberIds.get(entity.entity_id);
+        for (const entityId of memberIds) {
+          const proposedState = proposedStates[entityId]!;
+          const existingMemberId = originalMemberIds.get(entityId);
           if (existingMemberId) {
             await updateMember.mutateAsync({ caseId, memberId: existingMemberId, proposedState });
           } else {
-            await addMember.mutateAsync({ caseId, entityId: entity.entity_id, proposedState });
+            await addMember.mutateAsync({ caseId, entityId, proposedState });
           }
         }
       }
@@ -283,122 +346,185 @@ export const PlanChangeDialog = ({
       open={open}
       onClose={onClose}
       title="Plan change"
-      width={step === 'edit' ? 640 : 500}
-      buttons={
-        step === 'select'
-          ? [
-              { label: 'Cancel', type: 'cancel', onClick: onClose },
-              {
-                label: 'Next',
-                type: 'default',
-                disabled: selectedIds.size === 0,
-                onClick: () => setStep('edit')
-              }
-            ]
-          : [
-              { label: 'Back', type: 'cancel', onClick: () => setStep('select') },
-              {
-                label: isSaving ? 'Saving...' : 'Save plan',
-                type: 'default',
-                disabled: !canSave,
-                onClick: () => void handleSubmit()
-              }
-            ]
-      }
+      width={820}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: isSaving ? 'Saving...' : 'Save plan',
+          type: 'default',
+          disabled: !canSave,
+          onClick: () => void handleSubmit()
+        }
+      ]}
     >
       {isEditing && !existingCase ? (
         <LoadingState text="Loading..." size="sm" />
-      ) : step === 'select' ? (
+      ) : (
         <div className={styles.body}>
-          <FormElement label="Search entities" required={false}>
-            <TextInput
-              variant="search"
-              value={search}
-              placeholder="Type to search entities in this project…"
-              onChange={v => setSearch(v ?? '')}
-              onClear={() => setSearch('')}
-              style={{ width: '100%' }}
-            />
-          </FormElement>
-          <div>
-            <div className={styles.label}>Entities</div>
-            <div className={styles.entityList}>
-              {filteredEntities.length === 0 ? (
-                <div className={styles.emptyList}>
-                  {search ? 'No entities match that search.' : 'This project has no entities yet.'}
+          <div className={styles.sharedFields}>
+            <FormElement label="Case name" required>
+              <TextInput value={name} onChange={v => setName(v ?? '')} style={{ width: '100%' }} />
+            </FormElement>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <FormElement label="Target date" required style={{ flex: 1 }}>
+                <DateInput
+                  value={targetDate}
+                  onChange={v => handleTargetDateChange(v ?? '')}
+                  style={{ width: '100%' }}
+                />
+              </FormElement>
+              <div className={styles.dateMilestoneOr}>or</div>
+              <FormElement label="Milestone" required style={{ flex: 1 }}>
+                <Select.Root
+                  value={milestoneId}
+                  placeholder="Select milestone…"
+                  onChange={v => handleMilestoneChange(v ?? '')}
+                >
+                  {milestones.map(m => (
+                    <Select.Item key={m.id} value={m.id}>
+                      {m.name} ({m.target_date})
+                    </Select.Item>
+                  ))}
+                </Select.Root>
+              </FormElement>
+            </div>
+            <FormElement label="Note" required={false} hint="Describe what is planned to change">
+              <TextInput
+                value={commitMessage}
+                onChange={v => setCommitMessage(v ?? '')}
+                placeholder="e.g. Split this service into two"
+                style={{ width: '100%' }}
+              />
+            </FormElement>
+          </div>
+
+          <div className={styles.layout}>
+            <div className={styles.entityPane}>
+              {isAddingEntity ? (
+                <div className={styles.addEntityPanel}>
+                  <div className={styles.addEntitySearch}>
+                    <TextInput
+                      ref={addEntitySearchRef}
+                      variant="search"
+                      value={addEntitySearch}
+                      placeholder="Search entities…"
+                      onChange={v => setAddEntitySearch(v ?? '')}
+                      onClear={() => setAddEntitySearch('')}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div className={styles.addEntityList}>
+                    {candidateEntities.length === 0 ? (
+                      <div className={styles.emptyList}>No matching entities.</div>
+                    ) : (
+                      candidateEntities.map(e => (
+                        <button
+                          key={e.entity_id}
+                          type="button"
+                          className={styles.addEntityItem}
+                          onClick={() => addEntity(e.entity_id)}
+                        >
+                          {e.entity_name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <div className={styles.entityPaneFooter}>
+                    <button
+                      type="button"
+                      className={styles.addEntityButton}
+                      onClick={() => setIsAddingEntity(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
-                filteredEntities.map(e => (
-                  <label key={e.entity_id} className={styles.entityRow}>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(e.entity_id)}
-                      onChange={() => toggleEntity(e.entity_id)}
-                    />
-                    <span className={styles.entityRowLabel}>{e.entity_name}</span>
-                    {e.entity_schema && (
-                      <span className={styles.entityRowType}>{e.entity_schema.name}</span>
+                <>
+                  <div className={styles.entityPaneList}>
+                    {memberIds.length === 0 ? (
+                      <div className={styles.emptyList}>No entities added yet.</div>
+                    ) : (
+                      memberIds.map(entityId => {
+                        const entity = entityById.get(entityId);
+                        const labels = changedLabels[entityId] ?? [];
+                        return (
+                          <div
+                            key={entityId}
+                            className={`${styles.entityPaneRow} ${activeEntityId === entityId ? styles.entityPaneRowActive : ''}`}
+                            onClick={() => setActiveEntityId(entityId)}
+                          >
+                            <button
+                              type="button"
+                              className={styles.entityPaneRowBody}
+                              onClick={() => setActiveEntityId(entityId)}
+                            >
+                              <div className={styles.entityPaneRowName}>
+                                {entity?.entity_name ?? entityId}
+                              </div>
+                              <div className={styles.entityPaneRowChanges}>
+                                {labels.length > 0 ? labels.join(', ') : 'No changes yet'}
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.entityPaneRowRemove}
+                              aria-label={`Remove ${entity?.entity_name ?? entityId}`}
+                              onClick={e => {
+                                e.stopPropagation();
+                                removeEntity(entityId);
+                              }}
+                            >
+                              <TbX size={13} />
+                            </button>
+                          </div>
+                        );
+                      })
                     )}
-                  </label>
+                  </div>
+                  <div className={styles.entityPaneFooter}>
+                    <button
+                      type="button"
+                      className={styles.addEntityButton}
+                      onClick={() => setIsAddingEntity(true)}
+                    >
+                      <TbPlus size={13} />
+                      Add entity
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className={styles.editorPane}>
+              {memberIds.length === 0 ? (
+                <div className={styles.editorPaneEmpty}>
+                  Add an entity on the left to describe its planned change.
+                </div>
+              ) : (
+                memberIds.map(entityId => (
+                  <MemberEditor
+                    key={entityId}
+                    workspaceId={workspaceId}
+                    entityId={entityId}
+                    isActive={activeEntityId === entityId}
+                    schemas={schemas}
+                    teams={teams}
+                    lifecycleStates={lifecycleStates}
+                    existingProposedState={
+                      existingCase?.members.find(m => m.entity_id === entityId)?.proposed_state
+                    }
+                    onProposedStateChange={(id, proposedState) =>
+                      setProposedStates(prev => ({ ...prev, [id]: proposedState }))
+                    }
+                    onChangedLabelsChange={(id, labels) =>
+                      setChangedLabels(prev => ({ ...prev, [id]: labels }))
+                    }
+                  />
                 ))
               )}
             </div>
           </div>
-        </div>
-      ) : (
-        <div className={styles.body}>
-          <FormElement label="Case name" required>
-            <TextInput value={name} onChange={v => setName(v ?? '')} style={{ width: '100%' }} />
-          </FormElement>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <FormElement label="Target date" required style={{ flex: 1 }}>
-              <DateInput
-                value={targetDate}
-                onChange={v => handleTargetDateChange(v ?? '')}
-                style={{ width: '100%' }}
-              />
-            </FormElement>
-            <div className={styles.dateMilestoneOr}>or</div>
-            <FormElement label="Milestone" required style={{ flex: 1 }}>
-              <Select.Root
-                value={milestoneId}
-                placeholder="Select milestone…"
-                onChange={v => handleMilestoneChange(v ?? '')}
-              >
-                {milestones.map(m => (
-                  <Select.Item key={m.id} value={m.id}>
-                    {m.name} ({m.target_date})
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </FormElement>
-          </div>
-          <FormElement label="Note" required={false} hint="Describe what is planned to change">
-            <TextInput
-              value={commitMessage}
-              onChange={v => setCommitMessage(v ?? '')}
-              placeholder="e.g. Split this service into two"
-              style={{ width: '100%' }}
-            />
-          </FormElement>
-
-          {selectedEntities.map(e => (
-            <MemberEditor
-              key={e.entity_id}
-              workspaceId={workspaceId}
-              entityId={e.entity_id}
-              entityName={e.entity_name}
-              schemas={schemas}
-              teams={teams}
-              lifecycleStates={lifecycleStates}
-              existingProposedState={existingCase?.members.find(m => m.entity_id === e.entity_id)
-                ?.proposed_state}
-              onProposedStateChange={(entityId, proposedState) =>
-                setProposedStates(prev => ({ ...prev, [entityId]: proposedState }))
-              }
-              onRemove={() => removeSelected(e.entity_id)}
-            />
-          ))}
         </div>
       )}
     </Dialog>
