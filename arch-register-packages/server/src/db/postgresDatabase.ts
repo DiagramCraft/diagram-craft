@@ -27,6 +27,7 @@ import { PostgresNotificationPreferenceDatabase } from '../domain/notification/d
 import { PostgresNotificationDeliveryDatabase } from '../domain/notification/db/postgresNotificationDelivery';
 import { PostgresEntityChangeDatabase } from '../domain/catalog/db/postgresEntityChange';
 import { PostgresEntityDeprecationDatabase } from '../domain/catalog/db/postgresEntityDeprecation';
+import { PostgresChangeCaseDatabase } from '../domain/catalog/db/postgresChangeCase';
 import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,6 +59,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly notificationDelivery: PostgresNotificationDeliveryDatabase;
   readonly entityChange: PostgresEntityChangeDatabase;
   readonly entityDeprecation: PostgresEntityDeprecationDatabase;
+  readonly changeCase: PostgresChangeCaseDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -82,7 +84,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       notificationPreference: new PostgresNotificationPreferenceDatabase(sql),
       notificationDelivery: new PostgresNotificationDeliveryDatabase(sql),
       entityChange: new PostgresEntityChangeDatabase(sql),
-      entityDeprecation: new PostgresEntityDeprecationDatabase(sql)
+      entityDeprecation: new PostgresEntityDeprecationDatabase(sql),
+      changeCase: new PostgresChangeCaseDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -140,6 +143,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.notificationDelivery = new PostgresNotificationDeliveryDatabase(this.sql);
     this.entityChange = new PostgresEntityChangeDatabase(this.sql);
     this.entityDeprecation = new PostgresEntityDeprecationDatabase(this.sql);
+    this.changeCase = new PostgresChangeCaseDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

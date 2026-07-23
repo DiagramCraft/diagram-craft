@@ -18,6 +18,7 @@ import type { NotificationPreferenceDatabase } from '../domain/notification/db/n
 import type { NotificationDeliveryDatabase } from '../domain/notification/db/notificationDeliveryDatabase';
 import type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
+import type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -55,6 +56,7 @@ export type DatabaseAdapter = {
   notificationDelivery: NotificationDeliveryDatabase;
   entityChange: EntityChangeDatabase;
   entityDeprecation: EntityDeprecationDatabase;
+  changeCase: ChangeCaseDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -169,6 +171,7 @@ export type {
 } from '../domain/notification/db/notificationDeliveryDatabase';
 export type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 export type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
+export type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

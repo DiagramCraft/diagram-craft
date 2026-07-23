@@ -66,6 +66,7 @@ export const ProjectTimelineTab = ({
   const [zoom, setZoom] = useState<TimelineZoom>('quarter');
   const [groupByRole, setGroupByRole] = useState(false);
   const [selectedSnap, setSelectedSnap] = useState<EntitySnapshot | null>(null);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const TODAY = useMemo(() => new Date(), []);
   const plannedSnapshots = useMemo(
     () => projectSnapshots.filter(snapshot => snapshot.status === 'future_update'),
@@ -87,21 +88,52 @@ export const ProjectTimelineTab = ({
     [projectSnapshots, milestonesById]
   );
 
-  // Snapshots per entity
+  // A change case's members all share one case_id — group dated snapshots by case_id and keep
+  // only the groups spanning more than one distinct entity. Those render as a single banded
+  // marker instead of one row per member entity.
+  const multiEntityCaseGroups = useMemo(() => {
+    const groups = new Map<string, EntitySnapshot[]>();
+    for (const s of datedSnapshots) {
+      if (!s.case_id) continue;
+      const list = groups.get(s.case_id);
+      if (list) list.push(s);
+      else groups.set(s.case_id, [s]);
+    }
+    for (const [caseId, group] of groups) {
+      if (new Set(group.map(s => s.entity_id)).size <= 1) groups.delete(caseId);
+    }
+    return groups;
+  }, [datedSnapshots]);
+
+  const multiEntitySnapshotIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const group of multiEntityCaseGroups.values()) {
+      for (const s of group) ids.add(s.id);
+    }
+    return ids;
+  }, [multiEntityCaseGroups]);
+
+  const soloDatedSnapshots = useMemo(
+    () => datedSnapshots.filter(s => !multiEntitySnapshotIds.has(s.id)),
+    [datedSnapshots, multiEntitySnapshotIds]
+  );
+
+  // Snapshots per entity (solo — excludes members of banded multi-entity cases)
   const snapsByEntity = useMemo(() => {
     const m = new Map<string, EntitySnapshot[]>();
     for (const s of projectSnapshots) {
+      if (multiEntitySnapshotIds.has(s.id)) continue;
       const list = m.get(s.entity_id);
       if (list) list.push(s);
       else m.set(s.entity_id, [s]);
     }
     return m;
-  }, [projectSnapshots]);
+  }, [projectSnapshots, multiEntitySnapshotIds]);
 
-  // Entities that appear on the timeline (have at least one dated snapshot)
+  // Entities that appear on the timeline (have at least one solo dated snapshot)
   const datedEntityIds = useMemo(
-    () => new Set(datedSnapshots.map(s => s.entity_id)),
-    [datedSnapshots]
+    () => new Set(soloDatedSnapshots.map(s => s.entity_id)),
+    [soloDatedSnapshots]
   );
 
   // Entities on the timeline, preserving project order for the ungrouped view.
@@ -146,11 +178,60 @@ export const ProjectTimelineTab = ({
   });
 
   const handleSelect = (snap: EntitySnapshot | null) => {
+    setSelectedCaseId(null);
     setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));
+  };
+
+  const handleSelectCase = (caseId: string | null) => {
+    setSelectedSnap(null);
+    setSelectedCaseId(prev => (caseId === prev ? null : caseId));
   };
 
   const totalEntities = projectEntities.length;
   const markerColor = project.color ?? 'var(--accent-fg)';
+
+  const renderCaseBandRow = (caseId: string, group: EntitySnapshot[]) => {
+    const first = group[0]!;
+    const isRowActive = selectedCaseId === caseId;
+    const effectiveDate = getSnapshotEffectiveDate(first, milestonesById);
+    const px = stringDateToTimelinePx(
+      effectiveDate,
+      timeline.rangeStart,
+      timeline.rangeEnd,
+      timeline.totalWidth
+    );
+    const snapColor = first.status === 'applied' ? 'var(--green)' : markerColor;
+    const dateLabel = getSnapshotDateLabel(first, milestonesById);
+    const label = first.commit_message
+      ? `${group.length} entities · ${first.commit_message}`
+      : `${group.length} entities`;
+
+    return (
+      <div
+        key={caseId}
+        className={`${styles.ptlRow} ${isRowActive ? styles.ptlRowActive : ''}`}
+      >
+        <div className={styles.ptlLabel}>
+          <span className={styles.ptlName}>{label}</span>
+        </div>
+        <div className={styles.ptlTrack} style={{ width: timeline.totalWidth }}>
+          {px !== null && (
+            <div
+              className={`${styles.ptlMarker} ${isRowActive ? styles.ptlMarkerSelected : ''}`}
+              style={{ left: px }}
+              onClick={() => handleSelectCase(caseId)}
+              title={dateLabel ? `${label} (${dateLabel})` : label}
+            >
+              <span
+                className={first.status === 'applied' ? styles.ptlMarkerDot : styles.ptlMarkerDiamond}
+                style={{ background: snapColor }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderEntityRow = (entity: ProjectEntity) => {
     const schema = entity.entity_schema ? schemaMap.get(entity.entity_schema.id) : undefined;
@@ -308,6 +389,20 @@ export const ProjectTimelineTab = ({
             </div>
           )}
 
+          {multiEntityCaseGroups.size > 0 && (
+            <div>
+              <div className={styles.ptlGrpRow}>
+                <div className={styles.ptlGrpLabel}>
+                  <span>Multi-entity changes</span>
+                  <span className={styles.ptlGrpCount}>({multiEntityCaseGroups.size})</span>
+                </div>
+              </div>
+              {[...multiEntityCaseGroups.entries()].map(([caseId, group]) =>
+                renderCaseBandRow(caseId, group)
+              )}
+            </div>
+          )}
+
           {datedSnapshots.length > 0 &&
             (groupByRole
               ? [...entityGroups.entries()].map(([typeId, entities]) => {
@@ -380,6 +475,144 @@ export const ProjectTimelineTab = ({
               />
             );
           })()}
+
+        {selectedCaseId &&
+          (() => {
+            const group = multiEntityCaseGroups.get(selectedCaseId);
+            if (!group) return null;
+            const first = group[0]!;
+            return (
+              <CaseBandDetail
+                group={group}
+                entityMap={entityMap}
+                schemaMap={schemaMap}
+                schemas={schemas}
+                lifecycleStates={lifecycleStates}
+                teams={teams}
+                markerColor={first.status === 'applied' ? 'var(--green)' : markerColor}
+                canEdit={canEdit}
+                onApplySnapshot={onApplySnapshot}
+                onEditSnapshot={onEditSnapshot}
+                onDeleteSnapshot={onDeleteSnapshot}
+                onClose={() => setSelectedCaseId(null)}
+              />
+            );
+          })()}
+      </div>
+    </div>
+  );
+};
+
+// ── Multi-entity case band detail panel ────────────────────────────────────────
+const CaseBandDetail = ({
+  group,
+  entityMap,
+  schemaMap,
+  schemas,
+  lifecycleStates,
+  teams,
+  markerColor,
+  canEdit,
+  onApplySnapshot,
+  onEditSnapshot,
+  onDeleteSnapshot,
+  onClose
+}: {
+  group: EntitySnapshot[];
+  entityMap: Map<string, ProjectEntity>;
+  schemaMap: Map<string, SchemaInfo>;
+  schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  teams: WorkspaceTeam[];
+  markerColor: string;
+  canEdit: boolean;
+  onApplySnapshot: (snapshot: EntitySnapshot) => void;
+  onEditSnapshot: (snapshot: EntitySnapshot) => void;
+  onDeleteSnapshot: (snapshot: EntitySnapshot) => void;
+  onClose: () => void;
+}) => {
+  const first = group[0]!;
+  const statusLabel = first.status === 'applied' ? 'Applied' : 'Planned';
+  const canManage = canEdit && first.status === 'future_update';
+
+  return (
+    <div className={styles.ptlDetail}>
+      <div className={styles.ptlDetailHead}>
+        <div className={styles.ptlDetailEntity}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className={styles.ptlDetailName}>{group.length} entities</div>
+          </div>
+        </div>
+        <button type="button" className={styles.ptlDetailCloseBtn} onClick={onClose}>
+          <TbX size={12} />
+        </button>
+      </div>
+
+      <div className={styles.ptlDetailBody}>
+        <div className={styles.ptlDetailStatusRow}>
+          <span
+            className={styles.ptlDetailBadge}
+            style={{ color: markerColor, borderColor: markerColor }}
+          >
+            {statusLabel}
+          </span>
+        </div>
+
+        {first.commit_message && <div className={styles.ptlDetailMsg}>"{first.commit_message}"</div>}
+
+        <div className={styles.ptlDetailChanges}>
+          <div className={styles.ptlDetailSectionLabel}>Entities</div>
+          {group.map(snap => {
+            const pe = entityMap.get(snap.entity_id);
+            const schemaInfo = pe?.entity_schema ? schemaMap.get(pe.entity_schema.id) : undefined;
+            const schemaId =
+              ((snap.proposed_state as Record<string, unknown> | null)?.['schema_id'] as
+                | string
+                | undefined) ?? pe?.entity_schema?.id;
+            const entitySchema = schemaId ? (schemas.find(s => s.id === schemaId) ?? null) : null;
+            const changes = diffSnapshotState(
+              snap.base_state as Record<string, unknown> | undefined,
+              snap.proposed_state as Record<string, unknown> | undefined,
+              entitySchema,
+              lifecycleStates,
+              teams
+            );
+            return (
+              <div key={snap.id} style={{ marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {schemaInfo && (
+                    <TypeBadge color={schemaInfo.color} icon={schemaInfo.icon} size={14} />
+                  )}
+                  <span className={styles.ptlName}>{pe?.entity_name ?? snap.entity_id}</span>
+                </div>
+                {changes.map(change => (
+                  <div key={change.label} className={styles.ptlChgRow}>
+                    <span className={styles.ptlChgField}>{change.label}</span>
+                    <span className={styles.ptlChgFrom}>{change.from}</span>
+                    <span className={styles.ptlChgArrow}>→</span>
+                    <span className={styles.ptlChgTo}>{change.to}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+
+        {canManage && (
+          <div className={styles.ptlDetailActions}>
+            <Button onClick={() => onApplySnapshot(first)}>Apply</Button>
+            <Button icon={<TbPencil size={12} />} onClick={() => onEditSnapshot(first)}>
+              Edit
+            </Button>
+            <Button
+              variant="danger"
+              icon={<TbTrash size={12} />}
+              onClick={() => onDeleteSnapshot(first)}
+            >
+              Remove
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

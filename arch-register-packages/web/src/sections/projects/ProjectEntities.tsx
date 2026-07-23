@@ -32,7 +32,7 @@ import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
-import { useDeleteSnapshot } from '../../hooks/useSnapshots';
+import { useWithdrawChangeCase } from '../../hooks/useChangeCases';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
@@ -70,6 +70,7 @@ export const ProjectEntities = ({
   onToggleDone,
   onRemoveEntity,
   onPlanFutureChange,
+  onPlanChange,
   onApplySnapshot,
   onEditSnapshot
 }: {
@@ -88,6 +89,7 @@ export const ProjectEntities = ({
   onToggleDone: (entityId: string, isDone: boolean) => void;
   onRemoveEntity: (entityId: string) => void;
   onPlanFutureChange: (entityId: string) => void;
+  onPlanChange: () => void;
   onApplySnapshot: (snapshot: EntitySnapshot) => void;
   onEditSnapshot: (snapshot: EntitySnapshot) => void;
 }) => {
@@ -99,7 +101,7 @@ export const ProjectEntities = ({
   const pendingCount = futureSnapshots.length;
   const navigate = routeApi.useNavigate();
   const { workspaceSlug, permissions } = useWorkspaceContext();
-  const deleteSnapshotMutation = useDeleteSnapshot(workspaceSlug);
+  const withdrawChangeCaseMutation = useWithdrawChangeCase(workspaceSlug, project.id);
   const { data: milestones = [] } = useMilestones(workspaceSlug, project.id);
   const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
   const search = routeApi.useSearch();
@@ -107,12 +109,8 @@ export const ProjectEntities = ({
   const readOnly = !!asOf;
 
   const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
-    await deleteSnapshotMutation.mutateAsync({
-      entityId: deleteTarget.entity_id,
-      snapshotId: deleteTarget.id,
-      projectId: project.id
-    });
+    if (!deleteTarget?.case_id) return;
+    await withdrawChangeCaseMutation.mutateAsync({ caseId: deleteTarget.case_id });
     setDeleteTarget(null);
   };
 
@@ -285,6 +283,22 @@ export const ProjectEntities = ({
     readOnly
   ]);
 
+  const entityMenuItems = useMemo<MenuItem[]>(() => {
+    if (readOnly || !project.canEdit) return [];
+    return [
+      {
+        label: 'Plan change',
+        icon: <TbCalendarEvent size={14} />,
+        onClick: onPlanChange
+      }
+    ];
+  }, [readOnly, project.canEdit, onPlanChange]);
+
+  const dotsMenuItems = useMemo<MenuItem[]>(
+    () => [...entityMenuItems, ...viewMenuItems],
+    [entityMenuItems, viewMenuItems]
+  );
+
   return (
     <ProjectScreenLayout
       breadcrumbs={[
@@ -304,12 +318,12 @@ export const ProjectEntities = ({
         ) : undefined
       }
       menu={
-        viewMenuItems.length > 0 ? (
+        dotsMenuItems.length > 0 ? (
           <DropdownMenu
             trigger={
               <Button aria-label="Project entity view actions" icon={<TbDots size={14} />} />
             }
-            items={viewMenuItems}
+            items={dotsMenuItems}
           />
         ) : undefined
       }
@@ -425,7 +439,7 @@ export const ProjectEntities = ({
         title="Delete future change"
         message={deleteTarget ? 'Delete this planned future change?' : ''}
         detail="This removes the planned change without modifying the current entity."
-        confirmLabel={deleteSnapshotMutation.isPending ? 'Deleting...' : 'Delete change'}
+        confirmLabel={withdrawChangeCaseMutation.isPending ? 'Deleting...' : 'Delete change'}
         onConfirm={() => void handleConfirmDelete()}
         onCancel={() => setDeleteTarget(null)}
       />

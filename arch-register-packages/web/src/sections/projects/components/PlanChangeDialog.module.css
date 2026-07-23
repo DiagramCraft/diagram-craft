@@ -1,0 +1,92 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.label {
+  font-size: 10.5px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--base-fg-more-dim);
+  font-weight: 500;
+}
+
+.entityList {
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.entityRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 13px;
+}
+
+.entityRow:last-child {
+  border-bottom: none;
+}
+
+.entityRowLabel {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.entityRowType {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+}
+
+.emptyList {
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+}
+
+.memberSection {
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.memberSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.removeMemberButton {
+  background: none;
+  border: none;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.removeMemberButton:hover {
+  color: var(--error-fg);
+}
+
+.dateMilestoneOr {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 18px;
+  font-size: 11px;
+  color: var(--cmp-fg-dim);
+}

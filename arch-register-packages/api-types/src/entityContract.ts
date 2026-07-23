@@ -355,7 +355,14 @@ const entitySnapshotSchema = z.object({
   proposed_state: z
     .record(z.string(), z.unknown())
     .nullable()
-    .describe('Proposed changes (for future updates)')
+    .describe('Proposed changes (for future updates)'),
+  case_id: z
+    .string()
+    .nullable()
+    .describe(
+      'Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a ' +
+        'case_id were planned/applied together as one coordinated multi-entity change.'
+    )
 });
 
 // ── Import ────────────────────────────────────────────────────
