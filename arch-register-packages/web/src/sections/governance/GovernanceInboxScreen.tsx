@@ -116,7 +116,8 @@ export const GovernanceInboxScreen = () => {
   const bulkProposalQueries = useQueries({
     queries: bulkCaseIds.map(caseId => ({
       queryKey: bulkEntityChangeKeys.detail(workspace, caseId),
-      queryFn: () => orpcClient.entityChanges.getBulk({ params: { workspace, proposalId: caseId } }),
+      queryFn: () =>
+        orpcClient.entityChanges.getBulk({ params: { workspace, proposalId: caseId } }),
       enabled: !!workspace
     }))
   });
@@ -376,8 +377,9 @@ export const GovernanceInboxScreen = () => {
                 : undefined;
               const bulkMemberEntities = (bulkProposal?.entityIds ?? [])
                 .map(entityId => entitiesById.get(entityId))
-                .filter((memberEntity): memberEntity is NonNullable<typeof memberEntity> =>
-                  memberEntity != null
+                .filter(
+                  (memberEntity): memberEntity is NonNullable<typeof memberEntity> =>
+                    memberEntity != null
                 );
               const subjectEntity =
                 submission.case.subjectType === 'entity'

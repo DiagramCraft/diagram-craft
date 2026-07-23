@@ -258,9 +258,9 @@ export const BulkEditToolbar = ({
         ]}
       >
         <p>
-          {approvalRequiredCount} {approvalRequiredCount === 1 ? 'entity requires' : 'entities require'}{' '}
-          approval. These changes will be submitted as a single proposal for review instead of
-          applied directly.
+          {approvalRequiredCount}{' '}
+          {approvalRequiredCount === 1 ? 'entity requires' : 'entities require'} approval. These
+          changes will be submitted as a single proposal for review instead of applied directly.
         </p>
         <FormElement label="Note">
           <TextInput

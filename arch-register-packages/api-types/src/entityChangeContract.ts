@@ -195,6 +195,4 @@ export type EntityChangeProposalBody = z.infer<typeof proposalBodySchema>;
 export type EntityChangeBulkProposal = z.infer<typeof entityChangeBulkProposalSchema>;
 export type EntityChangeBulkRevision = z.infer<typeof entityChangeBulkRevisionSchema>;
 export type EntityChangeBulkProposalBody = z.infer<typeof bulkProposalBodySchema>;
-export type EntityChangeBulkProposalMember = z.infer<
-  typeof entityChangeBulkProposalMemberSchema
->;
+export type EntityChangeBulkProposalMember = z.infer<typeof entityChangeBulkProposalMemberSchema>;

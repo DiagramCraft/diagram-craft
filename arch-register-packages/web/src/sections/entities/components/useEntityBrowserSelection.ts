@@ -178,105 +178,108 @@ export const useEntityBrowserSelection = ({
     setFieldRows(prev => prev.filter(row => row.rowId !== rowId));
   }, []);
 
-  const handleConfirm = useCallback(async (proposalMessage?: string) => {
-    cancel();
+  const handleConfirm = useCallback(
+    async (proposalMessage?: string) => {
+      cancel();
 
-    const permSkipped: BulkEditSkip[] = selectedEntities
-      .filter(entity => entity.canEdit === false)
-      .map(entity => ({ entity, reason: 'No edit permission' }));
-    const editable = selectedEntities.filter(entity => entity.canEdit !== false);
-    const needsApproval = editable.filter(entity => entityRequiresApproval(entity, schemaMap));
-    const direct = editable.filter(entity => !entityRequiresApproval(entity, schemaMap));
+      const permSkipped: BulkEditSkip[] = selectedEntities
+        .filter(entity => entity.canEdit === false)
+        .map(entity => ({ entity, reason: 'No edit permission' }));
+      const editable = selectedEntities.filter(entity => entity.canEdit !== false);
+      const needsApproval = editable.filter(entity => entityRequiresApproval(entity, schemaMap));
+      const direct = editable.filter(entity => !entityRequiresApproval(entity, schemaMap));
 
-    const applied: EntityRecord[] = [];
-    const skipped: BulkEditSkip[] = [...permSkipped];
-    let proposed: BulkEditResult['proposed'] = null;
+      const applied: EntityRecord[] = [];
+      const skipped: BulkEditSkip[] = [...permSkipped];
+      let proposed: BulkEditResult['proposed'] = null;
 
-    for (const entity of direct) {
-      try {
-        const schema = schemaMap.get(entity._schema.id)?.schema;
-        const fullEntity = await orpcClient.entities.get({
-          params: { workspace: workspaceId, id: entity._uid }
-        });
-        const body = buildBaseMutationBody(fullEntity, schema);
-        for (const row of fieldRows) {
-          if (!row.clearing && row.value === '') continue;
-          const field = availableFields.find(f => f.id === row.fieldId);
-          if (!field) continue;
-          applyFieldRowToBody(body, row, field);
-        }
-        const updated = await updateEntityMutation.mutateAsync({
-          entityId: entity._uid,
-          data: body
-        });
-        applied.push(updated);
-      } catch (error) {
-        skipped.push({
-          entity,
-          reason: error instanceof Error ? error.message : 'Failed to update entity'
-        });
-      }
-    }
-
-    if (needsApproval.length === 1) {
-      skipped.push({
-        entity: needsApproval[0]!,
-        reason: 'This entity requires an approved change proposal before it can be edited'
-      });
-    } else if (needsApproval.length > 1) {
-      try {
-        const members = await Promise.all(
-          needsApproval.map(async entity => {
-            const schema = schemaMap.get(entity._schema.id)?.schema;
-            const fullEntity = await orpcClient.entities.get({
-              params: { workspace: workspaceId, id: entity._uid }
-            });
-            const body = buildBaseMutationBody(fullEntity, schema);
-            for (const row of fieldRows) {
-              if (!row.clearing && row.value === '') continue;
-              const field = availableFields.find(f => f.id === row.fieldId);
-              if (!field) continue;
-              applyFieldRowToBody(body, row, field);
-            }
-            return {
-              entityId: entity._uid,
-              baseVersion: fullEntity._version ?? 1,
-              proposedState: body
-            };
-          })
-        );
-        const result = await submitBulkProposalMutation.mutateAsync({
-          members,
-          message: proposalMessage?.trim() || undefined
-        });
-        proposed = { entities: needsApproval, caseId: result.id };
-      } catch (error) {
-        for (const entity of needsApproval) {
+      for (const entity of direct) {
+        try {
+          const schema = schemaMap.get(entity._schema.id)?.schema;
+          const fullEntity = await orpcClient.entities.get({
+            params: { workspace: workspaceId, id: entity._uid }
+          });
+          const body = buildBaseMutationBody(fullEntity, schema);
+          for (const row of fieldRows) {
+            if (!row.clearing && row.value === '') continue;
+            const field = availableFields.find(f => f.id === row.fieldId);
+            if (!field) continue;
+            applyFieldRowToBody(body, row, field);
+          }
+          const updated = await updateEntityMutation.mutateAsync({
+            entityId: entity._uid,
+            data: body
+          });
+          applied.push(updated);
+        } catch (error) {
           skipped.push({
             entity,
-            reason: error instanceof Error ? error.message : 'Failed to submit change proposal'
+            reason: error instanceof Error ? error.message : 'Failed to update entity'
           });
         }
       }
-    }
 
-    setResult({ applied, skipped, proposed });
-    setStep('done');
-    if (skipped.length === 0) {
-      schedule(clearSelection, 1800);
-    }
-  }, [
-    selectedEntities,
-    schemaMap,
-    fieldRows,
-    availableFields,
-    updateEntityMutation,
-    submitBulkProposalMutation,
-    workspaceId,
-    clearSelection,
-    cancel,
-    schedule
-  ]);
+      if (needsApproval.length === 1) {
+        skipped.push({
+          entity: needsApproval[0]!,
+          reason: 'This entity requires an approved change proposal before it can be edited'
+        });
+      } else if (needsApproval.length > 1) {
+        try {
+          const members = await Promise.all(
+            needsApproval.map(async entity => {
+              const schema = schemaMap.get(entity._schema.id)?.schema;
+              const fullEntity = await orpcClient.entities.get({
+                params: { workspace: workspaceId, id: entity._uid }
+              });
+              const body = buildBaseMutationBody(fullEntity, schema);
+              for (const row of fieldRows) {
+                if (!row.clearing && row.value === '') continue;
+                const field = availableFields.find(f => f.id === row.fieldId);
+                if (!field) continue;
+                applyFieldRowToBody(body, row, field);
+              }
+              return {
+                entityId: entity._uid,
+                baseVersion: fullEntity._version ?? 1,
+                proposedState: body
+              };
+            })
+          );
+          const result = await submitBulkProposalMutation.mutateAsync({
+            members,
+            message: proposalMessage?.trim() || undefined
+          });
+          proposed = { entities: needsApproval, caseId: result.id };
+        } catch (error) {
+          for (const entity of needsApproval) {
+            skipped.push({
+              entity,
+              reason: error instanceof Error ? error.message : 'Failed to submit change proposal'
+            });
+          }
+        }
+      }
+
+      setResult({ applied, skipped, proposed });
+      setStep('done');
+      if (skipped.length === 0) {
+        schedule(clearSelection, 1800);
+      }
+    },
+    [
+      selectedEntities,
+      schemaMap,
+      fieldRows,
+      availableFields,
+      updateEntityMutation,
+      submitBulkProposalMutation,
+      workspaceId,
+      clearSelection,
+      cancel,
+      schedule
+    ]
+  );
 
   return {
     addFieldRow,
