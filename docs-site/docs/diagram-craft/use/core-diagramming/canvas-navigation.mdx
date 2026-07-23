@@ -1,20 +1,19 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: First Diagram
+    to: /diagram-craft/diagram-craft/getting-started/first-diagram
+  - label: Selection and Manipulation
+    to: /diagram-craft/diagram-craft/use/core-diagramming/selection-manipulation
+  - label: Manual Refinement
+    to: /diagram-craft/diagram-craft/use/layout/manual-refinement
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Canvas Navigation
 
-Canvas navigation is what keeps the editing loop fluid. You should be able to zoom out to regain context, pan to the next area you want to refine, and then zoom back in without losing your place in the diagram.
-
-<ThemedImage
-  alt="Diagram Craft editor showing a small workflow diagram framed in the canvas"
-  sources={{
-    light: require('/img/diagram-craft/core-diagramming/canvas-navigation-light.png').default,
-    dark: require('/img/diagram-craft/core-diagramming/canvas-navigation-dark.png').default,
-  }}
-/>
+You should be able to zoom out to regain context, pan to the next area you want to refine, and then zoom back in without losing your place in the diagram.
 
 ## Start With Zoom And Pan
 
@@ -27,40 +26,44 @@ Use zoom when the current level is wrong for the task. Zoom out to check the ove
 
 Use pan when the scale is already right and you just need to move to another part of the canvas.
 
-## A Reliable Navigation Workflow
+## Use Mouse Or Touchpad
 
-When a diagram starts to spread out, this pattern keeps you oriented:
+If you are navigating directly on the canvas:
 
-1. Zoom out until the current area and the next target area are both visible.
-2. Pan toward the part of the diagram you want to edit next.
-3. Zoom back in only when you need more precision.
-4. Make the edit, then zoom out again to verify that it still fits the larger layout.
+- scroll vertically or horizontally to pan across the canvas
+- use `Ctrl` + scroll to zoom in or out around the pointer position
+- hold `Space`, then click and drag to pan
+- on a touchpad, use the platform gesture that maps to scroll for panning and the gesture that maps to `Ctrl` + scroll for zooming
 
-This is usually faster than staying zoomed in and dragging the viewport around one screen at a time.
+This is the fastest way to move around a large diagram without switching tools.
 
-## Regain Context When You Feel Lost
+## Use Keyboard Shortcuts
 
-If the diagram no longer fits comfortably in view:
+If you want precise, repeatable viewport control:
 
-- zoom out until the main structure is visible again
-- use the canvas frame and rulers to understand where the current work sits
-- return to a comfortable zoom level before continuing detailed edits
+- `Command+=` zooms in
+- `Command+-` zooms out
+- `Command+0` zooms to fit
 
-Treat zooming out as a quick orientation step, not as a sign that something went wrong. It is a normal part of working on larger diagrams.
+These are useful when you want to stay on the keyboard while editing or reviewing.
 
-## Use Navigation To Check Readability
+## Use Toolbar Controls
 
-Navigation is also a review tool. Before exporting or sharing a diagram:
+The toolbar also exposes the main view controls:
 
-- zoom out to see whether the main flow is still obvious
-- pan across the diagram looking for cramped labels or awkward crossings
-- zoom back in to correct the places that feel dense
+<ThemedImage
+  alt="Diagram Craft toolbar with the zoom controls on the far right"
+  sources={{
+    light: require('/img/diagram-craft/core-diagramming/canvas-navigation-toolbar-controls-light.png').default,
+    dark: require('/img/diagram-craft/core-diagramming/canvas-navigation-toolbar-controls-dark.png').default,
+  }}
+/>
 
-If the diagram reads clearly at more than one zoom level, it is usually in good shape.
+The zoom controls are grouped on the far right of the top toolbar.
 
-## Related Reading
+- zoom out
+- zoom in
+- zoom tool
+- zoom to fit
 
-- [First Diagram](../../getting-started/first-diagram)
-- [Selection and Manipulation](selection-manipulation)
-- [Manual Refinement](../layout/manual-refinement)
-
+Use the toolbar when you want explicit controls instead of gestures or shortcuts.

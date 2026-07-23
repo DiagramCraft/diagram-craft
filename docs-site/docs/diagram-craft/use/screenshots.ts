@@ -20,6 +20,15 @@ export const screenshots: DiagramCraftScreenshotConfig[] = [
   {
     product: 'diagram-craft',
     category: 'core-diagramming',
+    name: 'canvas-navigation-toolbar-controls',
+    clip: { x: 0, y: 0, width: 1280, height: 100 },
+    setup: async ({ page }) => {
+      await loadDiagramCraftSample(page, 'core-diagramming.json');
+    }
+  },
+  {
+    product: 'diagram-craft',
+    category: 'core-diagramming',
     name: 'shapes-elements',
     clip: { x: 0, y: 72, width: 1040, height: 520 },
     setup: async ({ page }) => {

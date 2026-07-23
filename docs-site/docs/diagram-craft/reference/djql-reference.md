@@ -1,5 +1,10 @@
 ---
 sidebar_position: 3
+related_reading:
+  - label: Query Language (DJQL)
+    to: /diagram-craft/diagram-craft/use/data-integration/query-language
+  - label: File Format Reference
+    to: /diagram-craft/diagram-craft/reference/file-format-reference
 ---
 
 # Query Language (DJQL) Reference
@@ -117,8 +122,3 @@ Because this scope starts from the current selection instead of the whole diagra
 - Available properties depend on the queried diagram or document model.
 - Broad document-scoped queries can return a large amount of data.
 - The tool highlights matching elements when the returned objects map cleanly to diagram elements, but non-element results are still returned as plain data.
-
-## Related Reading
-
-- [Query Language (DJQL)](../use/data-integration/query-language)
-- [File Format Reference](./file-format-reference)

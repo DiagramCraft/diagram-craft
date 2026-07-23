@@ -26,7 +26,7 @@ The current app exposes a **Toggle Dark Mode** action. Once you toggle it, the s
 
 That is useful when you want predictable appearance for presentations, screenshots, or long editing sessions.
 
-## Why Use Dark Mode
+## Choose A Theme For The Current Context
 
 Dark mode is especially helpful when:
 

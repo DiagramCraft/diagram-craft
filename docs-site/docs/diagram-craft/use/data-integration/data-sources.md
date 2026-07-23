@@ -1,5 +1,12 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: Data Binding
+    to: /diagram-craft/diagram-craft/use/data-integration/data-binding
+  - label: Query Language (DJQL)
+    to: /diagram-craft/diagram-craft/use/data-integration/query-language
+  - label: Dynamic Updates
+    to: /diagram-craft/diagram-craft/use/data-integration/dynamic-updates
 ---
 
 # Data Sources
@@ -75,27 +82,9 @@ Diagram Craft does not assume that every external source is pushing live changes
 
 If you need continuously current views, document that operational expectation for your team instead of assuming all external providers are live by default.
 
-## Practical Example
-
-A common architecture workflow looks like this:
-
-1. create a REST provider that points at a shared service catalog
-2. import the service schema into the document
-3. review records in **Model Center > Data**
-4. drag or link records onto the canvas
-5. refresh the provider when the source catalog changes
-
-That keeps the diagram tied to shared data without forcing all edits to happen inside the diagram file.
-
 ## Prerequisites And Limits
 
 - REST-backed workflows require a server that exposes compatible schema and data endpoints
 - URL-backed workflows depend on the data being reachable from the client environment
 - authentication and deployment details are handled by the provider/server setup, not by the page-level diagram workflow itself
 - provider refresh updates available data, but it does not automatically redesign the diagram for you when the source structure changes
-
-## Related Reading
-
-- [Data Binding](data-binding)
-- [Query Language (DJQL)](query-language)
-- [Dynamic Updates](dynamic-updates)

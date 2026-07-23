@@ -1,12 +1,17 @@
 ---
 sidebar_position: 2
+related_reading:
+  - label: Document Structure
+    to: /diagram-craft/diagram-craft/use/organization/document-structure
+  - label: Layers
+    to: /diagram-craft/diagram-craft/use/organization/layers
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Tabs and Documents
 
-Tabs are the main tool for splitting a large subject into multiple readable diagrams. When one canvas starts carrying too many concerns, create another diagram instead of forcing everything into one view.
+Each Diagram Craft document can contain multiple diagrams. The tab strip provides quick access to them, while the **Document** tab in the **Structure** window exposes their complete hierarchy.
 
 <ThemedImage
   alt="Diagram Craft tab strip showing multiple top-level diagrams and an active nested subpage"
@@ -16,50 +21,16 @@ Tabs are the main tool for splitting a large subject into multiple readable diag
   }}
 />
 
-## Use Tabs To Change Scope
+## Add And Select Diagrams
 
-Create a new tab when you need a different viewpoint, such as:
+Use the add action beside the tab strip to create a diagram. Select its tab to make it active; the canvas, active layer, and relevant tool windows update to the selected diagram.
 
-- overview vs implementation detail
-- one team-facing view and one operations-facing view
-- separate scenarios or phases of the same system
-
-This is the cleanest way to keep diagrams readable as they grow.
-
-## Use Subpages For Hierarchies
+## Create Nested Diagrams
 
 Diagram Craft supports nested diagrams. That is useful when one top-level diagram owns a small family of supporting views.
 
-For example:
+Open a diagram's context menu and choose **Add subpage** to create a nested diagram. Nested diagrams remain independent canvases; nesting changes document navigation rather than grouping their elements.
 
-1. Keep the top-level tab as the summary view.
-2. Add subpages for detailed flows, exception handling, or focused subsystems.
-3. Keep the naming consistent so the parent-child relationship is obvious.
+## Manage The Document Tree
 
-That lets the document stay navigable without flattening every diagram into a long row of unrelated tabs.
-
-## When A New Tab Is Better Than A New Layer
-
-Choose a new tab when:
-
-- readers should not have to toggle visibility to understand the main message
-- the detailed content changes the story rather than just adding optional context
-- the canvas would still be crowded even with careful layer usage
-
-If the answer is "this is really a different view", make a new tab.
-
-## Maintenance Tips
-
-- rename tabs early so the document starts making sense before it grows
-- reorder tabs to match how people consume the story
-- keep top-level tabs few enough that the strip still works as navigation
-- use subpages for families of related detail instead of creating dozens of unrelated roots
-
-## A Good Rule Of Thumb
-
-If someone reviewing the diagram needs a spoken explanation of which parts to ignore, the diagram probably wants another tab.
-
-## Related Reading
-
-- [Document Structure](document-structure)
-- [Layers](layers)
+Use the **Document** tab in the Structure window to navigate, rename, delete, and reorder diagrams. Drag-and-drop reordering works between diagrams with the same parent. The tree exposes nested diagrams even when the tab strip cannot show the full hierarchy at once.

@@ -1,5 +1,10 @@
 ---
 sidebar_position: 3
+related_reading:
+  - label: Real-time Editing
+    to: /diagram-craft/diagram-craft/use/collaboration/real-time-editing
+  - label: Comments and Review
+    to: /diagram-craft/diagram-craft/use/collaboration/comments-review
 ---
 
 # Presence Awareness
@@ -65,8 +70,3 @@ This is a small feature, but it removes a surprising amount of friction from sha
 - presence awareness depends on a live collaboration backend
 - current docs should not promise separate “viewer versus editor” indicators unless the host product adds them
 - current docs should not promise configurable privacy controls unless that behavior exists in the deployed product
-
-## Related Reading
-
-- [Real-time Editing](real-time-editing)
-- [Comments and Review](comments-review)

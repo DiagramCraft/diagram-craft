@@ -1,58 +1,30 @@
 ---
 sidebar_position: 3
+related_reading:
+  - label: Layers
+    to: /diagram-craft/diagram-craft/use/organization/layers
+  - label: Manual Refinement
+    to: /diagram-craft/diagram-craft/use/layout/manual-refinement
+  - label: Alignment and Distribution
+    to: /diagram-craft/diagram-craft/use/advanced-editing/alignment-distribution
 ---
 
 # Groups
 
-Groups are local organization tools. Use them when several elements should move, resize, or stay together as one working unit inside a larger diagram.
+Groups combine selected elements into one node that can be selected and moved as a unit.
 
-## When To Group
+## Create A Group
 
-Grouping works best for small clusters that belong together structurally:
+Select at least two compatible elements, open the selection context menu, and choose **Group**. Diagram Craft creates a group node and moves the selected elements into it while preserving their canvas positions.
 
-- a repeated callout card with icons and labels
-- a local subprocess inside a larger flow
-- a boundary of shapes you want to move as one block during cleanup
+## Select And Move A Group
 
-If the entire diagram is hard to understand, groups are not the first fix. Start with tabs, layers, or a better document structure instead.
+Click grouped content to select the group itself. Moving the group updates the grouped contents together. The group and its children are also visible in the active layer's element tree.
 
-## Groups Vs Layers Vs Tabs
+## Edit Group Contents
 
-- Use a **group** for one movable cluster inside a diagram.
-- Use a **layer** for visibility and lock control across the same diagram.
-- Use a **tab or subpage** when the content deserves its own viewpoint.
+Select within the group when you need to change an individual child. Alignment and distribution commands can operate on the children of a single selected group when it contains enough elements.
 
-That keeps groups from becoming a substitute for real decomposition.
+## Nest Or Ungroup
 
-## A Practical Grouping Workflow
-
-1. Draft the local cluster normally.
-2. Group it once the internal relationships are stable.
-3. Move or align the grouped cluster as part of the larger composition.
-4. Ungroup only when you need to edit internals heavily again.
-
-This works especially well during manual refinement, where you want to clean up spacing without rebuilding the same cluster repeatedly.
-
-## Nested Groups
-
-Nested groups are useful when a large area contains smaller reusable chunks. Keep that nesting shallow enough that the document structure still reads clearly. If you need many levels just to keep the diagram workable, split the diagram into subpages instead.
-
-## What Groups Are Good At
-
-- preserving local composition during bigger layout changes
-- simplifying selection on crowded canvases
-- making alignment and distribution easier on repeated blocks
-
-## What Groups Are Bad At
-
-- replacing a proper document hierarchy
-- hiding or locking content for different audiences
-- carrying unrelated content just because it sits near each other
-
-Use groups to reduce handling friction, not to solve every scaling problem.
-
-## Related Reading
-
-- [Layers](layers)
-- [Manual Refinement](../layout/manual-refinement)
-- [Alignment and Distribution](../advanced-editing/alignment-distribution)
+Groups can contain other groups. To remove a group container, select it and choose **Ungroup** from the context menu. The children return to the parent layer while keeping their current positions.

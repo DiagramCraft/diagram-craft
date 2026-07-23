@@ -8,15 +8,11 @@ After the first diagram, the best next page depends on what you want to do more 
 
 ## If You Want To Draw Faster
 
-Start here:
-
 - [Canvas Navigation](../use/core-diagramming/canvas-navigation)
 - [Selection and Manipulation](../use/core-diagramming/selection-manipulation)
 - [Text and Labels](../use/core-diagramming/text-labels)
 
 ## If You Want Better Visual Polish
-
-Start here:
 
 - [Styling System](../use/styling/styling-system)
 - [Colors and Gradients](../use/styling/colors-gradients)
@@ -24,23 +20,17 @@ Start here:
 
 ## If You Want More Diagram Building Blocks
 
-Start here:
-
 - [Built-in Stencils](../stencils-templates/built-in-stencils)
 - [Diagram Templates](../stencils-templates/diagram-templates)
 - [Layers](../use/organization/layers)
 
 ## If You Want To Import Or Export
 
-Start here:
-
 - [Drawio Import](../use/import-export/drawio-import)
 - [Image Export](../use/import-export/image-export)
 - [File Formats](../use/import-export/file-formats)
 
 ## If You Are Developing Or Hosting Diagram Craft
-
-Start here:
 
 - [Custom Development](../developing/custom-development)
 - [Self-hosting](../developing/self-hosting)

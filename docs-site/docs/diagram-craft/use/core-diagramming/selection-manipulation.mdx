@@ -1,5 +1,12 @@
 ---
 sidebar_position: 5
+related_reading:
+  - label: Canvas Navigation
+    to: /diagram-craft/diagram-craft/use/core-diagramming/canvas-navigation
+  - label: Connectors and Edges
+    to: /diagram-craft/diagram-craft/use/core-diagramming/connectors-edges
+  - label: Alignment and Distribution
+    to: /diagram-craft/diagram-craft/use/advanced-editing/alignment-distribution
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -16,49 +23,60 @@ Selection is the entry point to most editing work. Once the right shapes or conn
   }}
 />
 
-## Select The Smallest Useful Unit
+## Select Elements
 
-When you are making a change, start by selecting only what needs to move together:
+Diagram Craft supports both direct selection and area selection.
 
-- a single shape for label or size adjustments
-- a small group when you want to preserve spacing between related items
-- one connector when the path itself needs refinement
+- click an element to select it directly
+- click-drag on empty background to create a marquee selection
+- hold `Shift` while clicking to add or remove elements from the current selection
+- hold `Shift` while marquee-dragging to add that marquee result to the current selection
+- use `Command+A` to select everything
 
-Selecting too much at once makes alignment harder and increases the chance of moving unrelated elements.
+This lets you work with a single element, a local cluster, or the whole diagram depending on the edit you are making.
 
-## A Simple Refinement Workflow
+## Move A Selection
 
-For most cleanup passes:
+Once an element or group is selected, drag it to reposition it.
 
-1. Select one shape or a small group.
-2. Move the selection into a clearer position.
-3. Resize only if the label or spacing requires it.
-4. Recheck the nearby connectors after the move.
+- drag normally for a snapped move
+- hold `Shift` while dragging to constrain movement to a horizontal or vertical axis based on the initial drag direction
+- hold `Option` while dragging to disable snapping
+- hold `Command` while dragging to duplicate the current selection and move the duplicate
 
-This keeps the structure stable while you improve readability.
+You can also move the selection from the keyboard:
 
-## Use Multi-Selection For Related Edits
+- `Arrow keys` move the selection by one step
+- `Shift+Arrow keys` move the selection by the grid step
 
-Multi-selection is useful when several elements belong to the same local adjustment, such as:
+## Resize A Selection
 
-- nudging a small cluster to create more space
-- resizing a pair of related boxes to similar proportions
-- duplicating a repeated pattern before relabeling it
+Resize handles appear on the selection when the current element type supports resizing.
 
-The key is to select elements that truly belong together for that edit. If the group is too broad, break the work into smaller passes.
+- drag a resize handle to change width or height
+- hold `Shift` while resizing to constrain the aspect ratio
+- hold `Option` while resizing to disable snapping
 
-## Treat Delete And Duplicate As Layout Tools
+Keyboard resizing is also available:
 
-Deleting and duplicating are not only structural actions. They are also part of fast iteration:
+- `Command+Arrow keys` resizes by one step
+- `Command+Shift+Arrow keys` resizes by the grid step
 
-- duplicate a shape cluster when a pattern repeats
-- remove placeholder items once the real structure is clear
-- copy before heavy edits when you want to try an alternative arrangement
+## Rotate A Selection
 
-This is often faster than rebuilding common sections from scratch.
+When the selected element supports rotation, use the rotation handle to change its angle.
 
-## Related Reading
+- drag the rotation handle for free rotation with angle snapping
+- hold `Option` while rotating to disable snapping
 
-- [Canvas Navigation](canvas-navigation)
-- [Connectors and Edges](connectors-edges)
-- [Alignment and Distribution](../advanced-editing/alignment-distribution)
+By default, rotation snaps to 5-degree increments.
+
+## Duplicate And Delete
+
+Selection also controls quick structural edits:
+
+- `Command`-drag duplicates the current selection as part of a move
+- `Command+D` duplicates the current selection without dragging
+- `Backspace` deletes the selection
+
+These commands work for single elements and multi-selection alike.

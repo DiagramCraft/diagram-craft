@@ -1,5 +1,10 @@
 ---
 sidebar_position: 3
+related_reading:
+  - label: Image Export
+    to: /diagram-craft/diagram-craft/use/import-export/image-export
+  - label: File Formats
+    to: /diagram-craft/diagram-craft/use/import-export/file-formats
 ---
 
 # SVG Export
@@ -33,8 +38,3 @@ If your main concern is future editing in Diagram Craft, prefer the native docum
 - SVG is usually easier to embed in docs and web pages.
 - SVG is not the best source of truth when your main workflow is continued editing in Diagram Craft.
 - Downstream tools may render some details differently than Diagram Craft itself, so spot-check the result when fidelity matters.
-
-## Related Reading
-
-- [Image Export](image-export)
-- [File Formats](file-formats)

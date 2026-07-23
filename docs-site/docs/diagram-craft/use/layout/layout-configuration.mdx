@@ -1,10 +1,15 @@
 ---
 sidebar_position: 2
+related_reading:
+  - label: Automatic Layouts
+    to: /diagram-craft/diagram-craft/use/layout/automatic-layouts
+  - label: Manual Refinement
+    to: /diagram-craft/diagram-craft/use/layout/manual-refinement
 ---
 
 # Layout Configuration
 
-The layout dialogs in Diagram Craft are intentionally small. The goal is not to expose every algorithm detail. The goal is to give you the two or three controls that most obviously change readability.
+Each layout command opens a dialog with the parameters supported by that algorithm. Parameter changes update the canvas preview before you apply the result.
 
 ## Tree, Layered, Orthogonal, And Series-Parallel
 
@@ -13,13 +18,7 @@ These layouts expose the same core controls:
 - **Gap** controls how much space Diagram Craft leaves between nodes or levels.
 - **Direction** controls whether the result reads down, up, left, or right.
 
-Use them like this:
-
-- increase **Gap** when labels, edge labels, or connector crossings feel cramped
-- decrease **Gap** when the structure is clear but too spread out
-- change **Direction** to match how the audience naturally reads the process or hierarchy
-
-For example, a process diagram often reads better left-to-right or top-to-bottom, while a system dependency view may work better with the flow rotated.
+Changing **Gap** adjusts separation between nodes or levels. **Direction** supports down, up, left, and right.
 
 ## Force-Directed
 
@@ -29,33 +28,8 @@ Force-Directed exposes three different controls:
 - **Repulsion** changes how strongly nodes push away from each other
 - **Length** changes the target edge length
 
-In practice:
+Adjusting these values updates the preview so you can compare the result before applying it.
 
-- raise **Repulsion** when the result feels too dense
-- raise **Length** when edges need more room for labels or crossing avoidance
-- lower **Spring** when the layout is over-tightening around clusters
+## Apply The Configuration
 
-Treat these as exploration controls. Force-directed layout is usually the least deterministic-looking of the available tools, which is useful during discovery but less useful for polished directional flows.
-
-## Configure For Readability, Not Geometry
-
-The correct setting is the one that makes the diagram easier to explain:
-
-- can you follow the main flow without tracing every edge?
-- do repeated branches look intentional?
-- is there room for labels and local annotations?
-
-If not, adjust the layout settings or reduce the scope of the selection before rerunning the layout.
-
-## A Reliable Workflow
-
-1. Select only the region that needs restructuring.
-2. Run the most likely layout once.
-3. Adjust gap or direction before trying a completely different algorithm.
-4. Stop when the structure is readable.
-5. Finish with manual cleanup instead of chasing a perfect fully automatic result.
-
-## Related Reading
-
-- [Automatic Layouts](automatic-layouts)
-- [Manual Refinement](manual-refinement)
+Choose **Ok** to commit the previewed positions as one undoable edit. Choose **Cancel** to discard the preview.

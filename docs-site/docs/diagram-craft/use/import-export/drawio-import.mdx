@@ -1,5 +1,12 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: File Formats
+    to: /diagram-craft/diagram-craft/use/import-export/file-formats
+  - label: Image Export
+    to: /diagram-craft/diagram-craft/use/import-export/image-export
+  - label: SVG Export
+    to: /diagram-craft/diagram-craft/use/import-export/svg-export
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -36,25 +43,11 @@ Treat the import as a conversion, not a pixel-perfect clone. After opening the f
 - containers, swimlanes, or layout-driven regions
 - imported Draw.io stencil shapes that should be checked visually
 
-## A Good Migration Loop
+## Import A Draw.io File
 
 1. Import the `.drawio` file.
 2. Review the overall structure before changing styling.
 3. Fix any layout or labeling issues that affect readability.
 4. Convert the result into your normal Diagram Craft editing workflow.
 
-## When It Is A Good Fit
-
-- you want to keep the logical structure of an existing Draw.io diagram
-- the source diagram is large enough that redrawing it is wasteful
-- the imported file is a starting point for further editing, not the final deliverable
-
-## When It Is Not
-
-If the original diagram depends heavily on exact visual fidelity or very tool-specific behavior, expect more manual cleanup. In those cases, import still saves time, but it should be treated as assisted migration rather than a finished result.
-
-## Related Reading
-
-- [File Formats](file-formats)
-- [Image Export](image-export)
-- [SVG Export](svg-export)
+If the source depends on tool-specific behavior or exact visual fidelity, inspect the converted result before using it as a deliverable.

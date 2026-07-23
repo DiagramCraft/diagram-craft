@@ -220,8 +220,57 @@ When adding new documentation:
 1. Follow the existing structure and naming conventions
 2. Use clear, concise language
 3. Include code examples where appropriate
-4. Add screenshots for UI-related documentation by adding a config to `scripts/generate-screenshots.ts`
+4. Add screenshots for UI-related documentation through a colocated `screenshots.ts` manifest
 5. Test locally before committing
+
+### Authoring Practices
+
+These practices apply to all authored Diagram Craft and Arch Register documentation. Generated API documentation may
+follow the conventions of its generator instead.
+
+- Write for someone using the product. Identify the relevant page, panel, menu, or control; state any required
+  selection, permission, or configuration; then explain the action and its result.
+- Describe behavior that exists in the current application. Verify feature names, control labels, prerequisites,
+  permissions, and product-specific differences against the implementation before documenting them.
+- Prefer concrete product guidance over general advice about diagramming, architecture, or process design. A short
+  example is useful when it clarifies a feature, but it should not replace instructions for using that feature.
+- Use task- or capability-oriented headings. Avoid motivational headings, generic “best practices,” and repeated
+  navigation sections at the bottom of a page.
+- Use bold text for visible UI labels, such as **Style** or **Export**, and code formatting for file names, commands,
+  shortcuts, identifiers, and literal values.
+- Keep technical references and developer guides factual and concise. They can be more comprehensive and
+  implementation-oriented than user guides, but should still distinguish implemented behavior from planned work.
+
+#### Related Topics
+
+Put supplementary navigation in the page frontmatter so it appears beside the table of contents. Use two or three
+high-value destinations and keep contextual links in the body only when they help the reader complete the current
+task.
+
+```yaml
+related_reading:
+  - label: Selection and Manipulation
+    to: /diagram-craft/diagram-craft/use/core-diagramming/selection-manipulation
+  - label: Keyboard Shortcuts
+    to: /diagram-craft/diagram-craft/user-interface/keyboard-shortcuts
+```
+
+Use the destination's complete route, including the documentation product route. Do not add a trailing `Related
+Reading`, `Next Steps`, or `Next:` section that duplicates this navigation.
+
+#### Screenshots
+
+- Define screenshots in the nearest `screenshots.ts` manifest and reuse the shared screenshot helpers.
+- Capture the smallest stable area that shows the documented behavior. Set up the required application state and add
+  assertions before capture so UI changes fail clearly instead of producing misleading images.
+- Provide useful alt text. Use `ThemedImage` with light and dark captures when the surrounding UI changes by theme.
+- Regenerate only affected images with `SCREENSHOT_ONLY`, for example:
+
+```bash
+SCREENSHOT_ONLY=canvas-navigation-toolbar-controls pnpm docs:screenshots
+```
+
+See [Screenshot Manifests](./SCREENSHOT_MANIFESTS.md) for manifest options and additional examples.
 
 ## Troubleshooting
 

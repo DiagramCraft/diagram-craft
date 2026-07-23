@@ -1,5 +1,12 @@
 ---
 sidebar_position: 2
+related_reading:
+  - label: Data Sources
+    to: /diagram-craft/diagram-craft/use/data-integration/data-sources
+  - label: Query Language (DJQL)
+    to: /diagram-craft/diagram-craft/use/data-integration/query-language
+  - label: Dynamic Updates
+    to: /diagram-craft/diagram-craft/use/data-integration/dynamic-updates
 ---
 
 # Data Binding
@@ -73,26 +80,8 @@ When an element already has external data, the current UI gives you two distinct
 
 Use **Unlink** when you want to keep the structure and possibly replace the record later. Use **Unlink & Clear** when the element should stop participating in that schema entirely.
 
-## Practical Example
-
-For an application inventory diagram:
-
-1. define an `Application` schema with fields like name, owner, and lifecycle
-2. add or import application records
-3. link each application node to one record
-4. use `%name%` for the label
-5. keep owner and lifecycle available in the element data for search, queries, or rules
-
-This gives you readable labels without losing the richer record behind the node.
-
 ## Limits To Call Out
 
 - binding in Diagram Craft is schema- and metadata-driven, not a generic spreadsheet-style formula system
 - if an upstream record changes shape, you may need to refresh providers and review affected elements
 - bindings do not automatically guarantee style or layout updates unless another feature, such as rules or templates, uses that data
-
-## Related Reading
-
-- [Data Sources](data-sources)
-- [Query Language (DJQL)](query-language)
-- [Dynamic Updates](dynamic-updates)

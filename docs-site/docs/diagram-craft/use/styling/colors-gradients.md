@@ -1,5 +1,12 @@
 ---
 sidebar_position: 2
+related_reading:
+  - label: Styling System
+    to: /diagram-craft/diagram-craft/use/styling/styling-system
+  - label: Effects
+    to: /diagram-craft/diagram-craft/use/styling/effects
+  - label: Shapes and Elements
+    to: /diagram-craft/diagram-craft/use/core-diagramming/shapes-elements
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -27,29 +34,13 @@ For most diagrams, a simple workflow is enough:
 
 Use fill color to group related elements, and stroke changes to make exceptions stand out. If everything gets a thick outline or a saturated fill, the diagram becomes harder to read.
 
-## Use A Small Color System
+## Set Fill And Stroke Independently
 
-A practical diagram palette usually includes:
+The fill and stroke controls are independent. A node can have no fill while retaining an outline, or no visible stroke while retaining its fill. Use the color controls in each section to choose a color and adjust opacity where available.
 
-- one neutral fill for default shapes
-- one accent color for important steps or systems
-- one warning or attention color for risks, manual steps, or external dependencies
-
-When two shapes mean the same thing, style them the same way. Readers should be able to identify the category before they read the label.
-
-## Add Gradients Only When They Clarify Emphasis
+## Configure A Gradient
 
 Gradients are available in the **Fill** panel by switching the fill type to **Gradient**. Diagram Craft supports both **Linear** and **Radial** gradients.
-
-Use a gradient when you want:
-
-- a title card or callout to feel more prominent
-- a background container to read as a separate layer
-- a small amount of visual depth without switching to a more decorative effect
-
-For most node shapes, keep the contrast between the two gradient colors fairly small. Large shifts can make labels harder to read and can distract from the structure of the diagram.
-
-## Apply A Gradient Step By Step
 
 1. Select the node.
 2. In **Fill**, change **Type** to **Gradient**.
@@ -57,27 +48,12 @@ For most node shapes, keep the contrast between the two gradient colors fairly s
 4. Set the gradient **Type** to **Linear** or **Radial**.
 5. If you use a linear gradient, adjust the **Direction** until the shading supports the layout instead of fighting it.
 
-In left-to-right process diagrams, subtle top-to-bottom or diagonal gradients usually work better than dramatic horizontal blends.
+## Use Pattern, Texture, Or Image Fills
 
-## Patterns, Textures, And Images Are Secondary Tools
-
-The fill panel also supports **Pattern**, **Texture**, and **Image** fills. These are best used sparingly:
+The fill panel also supports **Pattern**, **Texture**, and **Image** fills:
 
 - patterns can differentiate regions when color alone is not enough
 - textures can make title or background panels feel distinct
 - image fills work best for illustrative nodes, posters, or mockups inside a diagram
 
-If a diagram is primarily technical, these options should usually stay in supporting roles. Let layout and labeling carry the meaning.
-
-## Real Diagram Examples
-
-- Use a pale accent fill on external systems so they read differently from internal services.
-- Give grouped ownership areas a softer container fill than the nodes inside them.
-- Apply a subtle gradient to a title or legend box when it needs to anchor the page.
-- Use a patterned background only when the reader needs to distinguish overlapping regions quickly.
-
-## Related Reading
-
-- [Styling System](styling-system)
-- [Effects](effects)
-- [Shapes and Elements](../core-diagramming/shapes-elements)
+The available configuration fields change with the selected fill type.

@@ -1,5 +1,12 @@
 ---
 sidebar_position: 4
+related_reading:
+  - label: Boolean Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/boolean-operations
+  - label: Geometry Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
+  - label: Shapes and Elements
+    to: /diagram-craft/diagram-craft/use/core-diagramming/shapes-elements
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -16,7 +23,7 @@ Custom shapes are where styling turns into editing. Instead of changing how a bu
   }}
 />
 
-## Start With Simple Primitives
+## Build From Existing Nodes
 
 The fastest way to create a custom shape is to begin with a few basic shapes that already approximate what you want:
 
@@ -50,24 +57,4 @@ Once a built-in shape is close but not quite right:
 
 After that point, you are no longer just styling the shape. You are editing its geometry directly.
 
-## When To Use A Custom Shape
-
-Move beyond built-in shapes when:
-
-- the diagram repeats a distinctive visual motif
-- a notch, cutout, or merged silhouette adds real meaning
-- the shape must match an established notation or brand treatment
-
-Stay with standard shapes when a label can explain the difference more cheaply. A custom outline should earn its complexity.
-
-## Real Diagram Examples
-
-- Merge a rectangle and a small circle to create a card with a status badge built into the outline.
-- Subtract a smaller rectangle from a larger one to create a folder-like tab shape.
-- Convert a merged shape to curves when you need to soften one corner or adjust the silhouette manually.
-
-## Related Reading
-
-- [Boolean Operations](../advanced-editing/boolean-operations)
-- [Geometry Operations](../advanced-editing/geometry-operations)
-- [Shapes and Elements](../core-diagramming/shapes-elements)
+Boolean commands replace the selected source nodes with the resulting geometry. Duplicate the source nodes first if you need to preserve an editable copy of the original construction.

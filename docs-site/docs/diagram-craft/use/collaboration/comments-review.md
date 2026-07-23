@@ -1,5 +1,12 @@
 ---
 sidebar_position: 2
+related_reading:
+  - label: Real-time Editing
+    to: /diagram-craft/diagram-craft/use/collaboration/real-time-editing
+  - label: Presence Awareness
+    to: /diagram-craft/diagram-craft/use/collaboration/presence-awareness
+  - label: Query Language (DJQL)
+    to: /diagram-craft/diagram-craft/use/data-integration/query-language
 ---
 
 # Comments and Review
@@ -67,25 +74,8 @@ This is useful because:
 - teams can still understand what was discussed
 - you can decide whether to resolve, delete, or rewrite the thread
 
-## Practical Example
-
-During a design review:
-
-1. a reviewer selects one service node and adds an element comment about ownership
-2. another reviewer replies with the proposed owner
-3. the author updates the node text or linked data
-4. the original thread is resolved
-
-At the same time, the team can keep a separate diagram-level thread for broader concerns such as naming consistency or missing legend items.
-
 ## Limits To Call Out
 
 - current docs should not promise freeform canvas-position comments
 - current docs should not promise mention workflows unless that behavior is added later
 - comment resolution tracks discussion state, not approval gates or formal sign-off
-
-## Related Reading
-
-- [Real-time Editing](real-time-editing)
-- [Presence Awareness](presence-awareness)
-- [Query Language (DJQL)](../data-integration/query-language)

@@ -1,12 +1,19 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: Layout Configuration
+    to: /diagram-craft/diagram-craft/use/layout/layout-configuration
+  - label: Manual Refinement
+    to: /diagram-craft/diagram-craft/use/layout/manual-refinement
+  - label: Alignment and Distribution
+    to: /diagram-craft/diagram-craft/use/advanced-editing/alignment-distribution
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Automatic Layouts
 
-Automatic layout is best used as a drafting and restructuring tool. It gives you a readable starting point quickly, then you refine the result for communication quality.
+Diagram Craft provides five automatic layout commands in the selection context menu under **Layout**. Each command opens a dialog where you can preview and configure the result before applying it.
 
 <ThemedImage
   alt="Diagram Craft layout submenu open over a larger workflow diagram"
@@ -28,7 +35,7 @@ Diagram Craft currently exposes five graph layouts from the selection context me
 | Force-Directed | relationship maps and networks without one obvious top-to-bottom flow | the nodes in the connected area you want to explore |
 | Series-Parallel | structured branching flows that are mostly sequential with controlled splits | the nodes you want arranged |
 
-## Which One To Start With
+## Choose A Layout
 
 - Start with **Tree** when the diagram has one obvious root and levels matter.
 - Start with **Layered** when the diagram is mostly directional and should read left-to-right or top-to-bottom.
@@ -46,22 +53,6 @@ The tools are not interchangeable:
 
 That means selection is part of the workflow. Before invoking layout, decide whether you want to reorganize the whole working area or just one local region.
 
-## What Automatic Layout Is Good At
+## Apply Or Cancel The Preview
 
-- getting a messy draft into a readable baseline quickly
-- reworking one section after a major structural change
-- helping you compare alternate ways to present the same graph
-
-## What It Is Not Good At
-
-- producing final presentation-quality spacing every time
-- understanding your narrative priorities
-- replacing decomposition with tabs, layers, or grouping
-
-Use automatic layout to recover structure quickly, then finish with manual refinement.
-
-## Related Reading
-
-- [Layout Configuration](layout-configuration)
-- [Manual Refinement](manual-refinement)
-- [Alignment and Distribution](../advanced-editing/alignment-distribution)
+Changing a layout option updates the preview. Choose **Ok** to keep the new positions, or **Cancel** to restore the elements to their previous positions. Connector routes update with the arranged nodes.

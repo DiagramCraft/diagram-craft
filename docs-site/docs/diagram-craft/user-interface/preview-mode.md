@@ -2,6 +2,11 @@
 sidebar_position: 6
 title: Preview Mode
 sidebar_label: Preview Mode
+related_reading:
+  - label: Tool Windows
+    to: /diagram-craft/diagram-craft/user-interface/tool-windows
+  - label: Command Palette
+    to: /diagram-craft/diagram-craft/user-interface/command-palette
 ---
 
 ![Diagram Craft preview mode with diagram-only presentation controls](/img/diagram-craft/user-interface/preview-mode.png)
@@ -25,14 +30,6 @@ Preview mode replaces the main editor chrome with:
 
 The result is a cleaner viewing surface that is easier to use during walkthroughs, reviews, or screenshot capture.
 
-## Good Uses
-
-Preview mode is useful when you want to:
-
-- present a diagram without distracting sidebars
-- check readability at audience scale
-- capture cleaner screenshots than the full editor layout would allow
-
 ## Fullscreen
 
 Preview mode can request fullscreen directly from its own controls. That is the best option when you want a presentation-like view without browser chrome or surrounding UI.
@@ -42,8 +39,3 @@ Preview mode can request fullscreen directly from its own controls. That is the 
 - use the close button in preview
 - leave fullscreen from the preview controls
 - press `Escape`
-
-## Related Reading
-
-- [Tool Windows](./tool-windows)
-- [Command Palette](./command-palette)
