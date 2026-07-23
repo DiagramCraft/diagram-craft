@@ -1,7 +1,5 @@
-import { useRef } from 'react';
-import { TbFilter, TbHistory } from 'react-icons/tb';
+import { TbHistory } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
   WorkspaceLifecycleState,
@@ -9,21 +7,24 @@ import type {
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import { FilterBuilder } from '../../../components/FilterBuilder';
 import { FilterDropdown } from '../../../components/FilterDropdown';
-import { SearchInput } from '../../../components/SearchInput';
 import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
+import { QueryModeControls } from './QueryModeControls';
 import type { EntityDisplayField } from './entityDisplayFields';
 import type { AssessmentJoinOption } from './useJoinedAssessment';
 
 type EntityBrowserToolbarProps = {
+  workspaceId: string;
   q: string;
   setQ: (q: string) => void;
   conditions: FilterCondition[];
   setConditions: (conditions: FilterCondition[]) => void;
+  entityQuery?: EntityQuery | null;
+  setEntityQuery?: (query: EntityQuery | null) => void;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   owners: WorkspaceOwnerOption[];
@@ -53,10 +54,13 @@ type EntityBrowserToolbarProps = {
 };
 
 export const EntityBrowserToolbar = ({
+  workspaceId,
   q,
   setQ,
   conditions,
   setConditions,
+  entityQuery,
+  setEntityQuery,
   schemas,
   lifecycleStates,
   owners,
@@ -84,54 +88,24 @@ export const EntityBrowserToolbar = ({
   joinedAssessment,
   allowedViews
 }: EntityBrowserToolbarProps) => {
-  const filterPopoverRef = useRef<PopoverActions | null>(null);
-
   return (
     <div className={styles.toolbar}>
-      <SearchInput
-        size="sm"
-        className={styles.searchInline}
-        placeholder="Search by name, owner…"
-        value={q}
-        onChange={setQ}
-        onClear={() => setQ('')}
+      <QueryModeControls
+        workspaceId={workspaceId}
+        q={q}
+        setQ={setQ}
+        conditions={conditions}
+        setConditions={setConditions}
+        entityQuery={entityQuery}
+        setEntityQuery={setEntityQuery}
+        typeFilter={typeFilter}
+        joinAssessmentId={joinAssessmentId}
+        schemas={schemas}
+        lifecycleStates={lifecycleStates}
+        owners={owners}
+        enums={enums}
+        joinedAssessment={joinedAssessment}
       />
-      <Popover.Root actionsRef={filterPopoverRef}>
-        <Popover.Trigger
-          element={
-            <Button
-              size="sm"
-              variant={conditions.length > 0 ? 'primary' : 'secondary'}
-              icon={<TbFilter size={12} />}
-              aria-label="Filter"
-              title="Filter"
-            >
-              {conditions.length > 0 && (
-                <span className={styles.filterCount}>{conditions.length}</span>
-              )}
-            </Button>
-          }
-        />
-        <Popover.Content
-          sideOffset={4}
-          align="start"
-          arrow={false}
-          closeButton={false}
-          className={styles.filterPopover}
-        >
-          <FilterBuilder
-            conditions={conditions}
-            onChange={setConditions}
-            onClose={() => filterPopoverRef.current?.close()}
-            schemas={schemas}
-            lifecycleStates={lifecycleStates}
-            owners={owners}
-            enums={enums}
-            selectedSchemaId={typeFilter}
-            joinedAssessment={joinedAssessment}
-          />
-        </Popover.Content>
-      </Popover.Root>
       {joinOptions && onJoinAssessmentChange && !readOnly && (
         <AssessmentJoinPicker
           options={joinOptions}

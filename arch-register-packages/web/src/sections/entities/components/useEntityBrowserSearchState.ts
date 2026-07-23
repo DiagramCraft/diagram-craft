@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import type { BrowserSearch, BrowserViewConfigMap } from './entityBrowserState';
 import {
@@ -94,6 +95,21 @@ export const useEntityBrowserSearchState = ({
       }),
     [navigateBrowser]
   );
+  // Advanced-mode text field writes the canonical EntityQuery directly, superseding the
+  // Basic-mode `filters`/`q`/`type`/`status`/`owner` params it was derived from (or replaces).
+  const setEntityQuery = useCallback(
+    (next: EntityQuery | null) =>
+      navigateBrowser({
+        entityQuery: next ? JSON.stringify(next) : undefined,
+        filters: undefined,
+        q: undefined,
+        type: undefined,
+        status: undefined,
+        owner: undefined,
+        viewId: undefined
+      }),
+    [navigateBrowser]
+  );
   const setProjectScope = useCallback(
     (next: 'project' | 'all') =>
       navigateBrowser({ projectScope: next === 'project' ? undefined : next, viewId: undefined }),
@@ -170,6 +186,7 @@ export const useEntityBrowserSearchState = ({
     search,
     setConditions,
     setActiveViewConfig,
+    setEntityQuery,
     setJoinAssessmentId,
     setProjectScope,
     setQ,

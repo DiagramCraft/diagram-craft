@@ -178,6 +178,7 @@ export const EntityBrowserEmbedDialog = ({
     >
       <div className={styles.body}>
         <EntityBrowserToolbar
+          workspaceId={workspaceSlug}
           q={q}
           setQ={setQ}
           conditions={conditions}

@@ -176,6 +176,7 @@ export const EntityBrowser = ({
     q,
     setConditions,
     setActiveViewConfig,
+    setEntityQuery,
     setJoinAssessmentId,
     setProjectScope,
     setQ,
@@ -356,10 +357,13 @@ export const EntityBrowser = ({
   return (
     <>
       <EntityBrowserToolbar
+        workspaceId={workspaceId}
         q={q}
         setQ={setQ}
         conditions={conditions}
         setConditions={setConditions}
+        entityQuery={entityQuery ?? null}
+        setEntityQuery={setEntityQuery}
         schemas={schemas}
         lifecycleStates={lifecycleStates}
         owners={owners}

@@ -50,6 +50,12 @@ import {
 import { downloadEntityImportTemplate, exportEntitiesCsv } from './entityCsvOperations';
 import { assertSnapshotCanBeRestored, serializeEntitySnapshot } from './entitySnapshotOperations';
 import { entityRequiresApproval } from './entityChangeOperations';
+import {
+  parseEntityQueryText,
+  printEntityQueryText,
+  type EnumCatalog
+} from './entityQueryTextCompiler';
+import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -318,6 +324,46 @@ const entityHandlers = {
       approval_policy_override: current.approval_policy_override ?? null,
       grants: grants.map(g => ({ ...g, created_at: g.created_at.toISOString() }))
     };
+  })
+};
+
+const buildQueryCatalogs = async (
+  db: DatabaseAdapter,
+  workspace: string
+): Promise<{ schemas: SchemaCatalog; enums: EnumCatalog }> => {
+  const [schemas, enums] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    db.catalog.listEnums(workspace)
+  ]);
+  return {
+    schemas: new Map(schemas.map(schema => [schema.id, schema])),
+    enums: new Map(enums.map(en => [en.id, en]))
+  };
+};
+
+const entityQueryTextHandlers = {
+  parseText: entityRouter.entityQueryText.parseText.handler(async ({ input, context }) => {
+    const { workspace } = context;
+    const { schemas, enums } = await buildQueryCatalogs(context.db, workspace);
+    const result = parseEntityQueryText(input.query.text, schemas, enums);
+    if (!result.ok) return result;
+    const validation = validateEntityQueryIR(result.query, schemas);
+    if (!validation.ok) {
+      return {
+        ok: false,
+        errors: validation.errors.map(error => ({
+          offset: 0,
+          message: `${error.path.join('.')}: ${error.message}`
+        }))
+      };
+    }
+    return result;
+  }),
+
+  printText: entityRouter.entityQueryText.printText.handler(async ({ input, context }) => {
+    const { workspace } = context;
+    const { schemas } = await buildQueryCatalogs(context.db, workspace);
+    return { text: printEntityQueryText(input.body.query, schemas) };
   })
 };
 
@@ -677,6 +723,7 @@ const snapshotHandlers = {
 };
 
 export const workspaceEntityORPCRouter = entityRouter.router({
+  entityQueryText: entityQueryTextHandlers,
   entities: {
     ...entityHandlers,
     ...entityTransferHandlers,

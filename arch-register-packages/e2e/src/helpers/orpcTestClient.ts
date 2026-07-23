@@ -48,6 +48,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     authProtected: make(authProtectedContract).authProtected,
     dev: make(devContract).dev,
     entities: make(workspaceEntityContract).entities,
+    entityQueryText: make(workspaceEntityContract).entityQueryText,
     enums: make(workspaceEnumContract).enums,
     schemas: make(workspaceSchemaContract).schemas,
     search: make(searchContract).search,
