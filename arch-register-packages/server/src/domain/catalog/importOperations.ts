@@ -21,6 +21,7 @@ import {
 } from './dataHelpers';
 import { listAllCatalogEntities } from './entityLoader';
 import { entityRequiresApproval } from './entityChangeOperations';
+import { computeEntityCompleteness } from '../../utils/completeness';
 
 const checker = new PermissionChecker();
 
@@ -329,7 +330,16 @@ export const importCommit = async (
         schema_id: existingEntity.schema_id,
         data: extractEntityFields(normalizedRelationFields),
         project_id: existingEntity.project_id,
-        updated_at: new Date()
+        updated_at: new Date(),
+        completeness: computeEntityCompleteness(
+          {
+            description: (resolvedData._description as string) ?? existingEntity.description,
+            owner,
+            lifecycle,
+            data: extractEntityFields(normalizedRelationFields)
+          },
+          schema
+        )
       };
 
       const updatedEntity = await db.catalog.updateEntity(workspace, existingId, updateInput);
@@ -379,7 +389,16 @@ export const importCommit = async (
         data: extractEntityFields(normalizedRelationFields),
         project_id: null,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
+        completeness: computeEntityCompleteness(
+          {
+            description: (resolvedData._description as string) ?? '',
+            owner,
+            lifecycle,
+            data: extractEntityFields(normalizedRelationFields)
+          },
+          schema
+        )
       };
 
       const entity = await db.catalog.createEntity(createInput);

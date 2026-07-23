@@ -253,7 +253,8 @@ test.describe('schema routes', () => {
       data: {},
       project_id: null,
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
+      completeness: 0
     });
 
     await expect(

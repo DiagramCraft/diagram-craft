@@ -26,7 +26,8 @@ const baseEntity: EntityDbResult = {
   owner_name: 'Team A',
   lifecycle_label: 'Production',
   target_lifecycle_label: null,
-  schema_name: 'Service'
+  schema_name: 'Service',
+  completeness: 0
 };
 
 // ── toApiEntity ───────────────────────────────────────────────

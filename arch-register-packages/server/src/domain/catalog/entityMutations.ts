@@ -23,6 +23,10 @@ export const entityToBaseState = (row: Entity): Record<string, unknown> => ({
   data: row.data,
   project_id: row.project_id,
   version: row.version ?? 1,
+  // Frozen at the time this version was written — see computeEntityCompleteness callers in
+  // entityMutationOperations.ts. Intentionally never recomputed against a later schema edit, so
+  // historical versions keep reading the score as it was when the entity looked that way (#2346).
+  completeness: row.completeness,
   created_at: row.created_at,
   updated_at: row.updated_at
 });

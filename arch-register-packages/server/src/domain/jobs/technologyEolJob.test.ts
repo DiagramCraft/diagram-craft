@@ -54,7 +54,8 @@ const entity: EntityDbResult = {
   owner_name: null,
   lifecycle_label: null,
   target_lifecycle_label: null,
-  schema_name: schema.name
+  schema_name: schema.name,
+  completeness: 0
 };
 
 afterEach(() => vi.unstubAllGlobals());

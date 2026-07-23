@@ -656,6 +656,12 @@ const snapshotHandlers = {
       previous: entity,
       next: {
         ...snapshot.base_state,
+        // Older snapshots predating #2346 have no frozen completeness in base_state; fall back to
+        // the entity's current value rather than writing an undefined column.
+        completeness:
+          typeof snapshot.base_state['completeness'] === 'number'
+            ? snapshot.base_state['completeness']
+            : entity.completeness,
         updated_at: new Date()
       } as EntityDbUpdate,
       actor: { id: auditUser.id, displayName: auditUser.display_name },

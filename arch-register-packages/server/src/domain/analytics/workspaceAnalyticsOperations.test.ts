@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeActivityTrend, computeWorkspaceAnalytics } from './workspaceAnalyticsOperations';
+import { computeEntityCompleteness } from '../../utils/completeness';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import type { AuditLogDbResult } from '../audit/db/auditDatabase';
@@ -54,31 +55,37 @@ const lifecycleStates: LifecycleStateDbResult[] = [
   }
 ];
 
-const makeEntity = (overrides: Partial<EntityDbResult>): EntityDbResult => ({
-  id: 'e-1',
-  workspace: 'default',
-  public_id: 'SRV-1',
-  slug: 'entity-1',
-  namespace: '',
-  name: 'Entity 1',
-  description: 'desc',
-  owner: 'team-a',
-  lifecycle: 'production',
-  target_lifecycle: null,
-  target_lifecycle_date: null,
-  tags: [],
-  links: [],
-  schema_id: 'schema-service',
-  data: { runbook: 'https://runbook' },
-  project_id: null,
-  created_at: now,
-  updated_at: now,
-  owner_name: 'Platform',
-  lifecycle_label: 'Production',
-  target_lifecycle_label: null,
-  schema_name: 'Service',
-  ...overrides
-});
+const makeEntity = (overrides: Partial<EntityDbResult>): EntityDbResult => {
+  const merged = {
+    id: 'e-1',
+    workspace: 'default',
+    public_id: 'SRV-1',
+    slug: 'entity-1',
+    namespace: '',
+    name: 'Entity 1',
+    description: 'desc',
+    owner: 'team-a',
+    lifecycle: 'production',
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: 'schema-service',
+    data: { runbook: 'https://runbook' },
+    project_id: null,
+    created_at: now,
+    updated_at: now,
+    owner_name: 'Platform',
+    lifecycle_label: 'Production',
+    target_lifecycle_label: null,
+    schema_name: 'Service',
+    ...overrides
+  };
+  // Analytics now reads the materialized `completeness` column rather than recomputing it, so the
+  // fixture must carry a value consistent with the merged fields above (same logic production
+  // write paths run at entity-write time).
+  return { ...merged, completeness: computeEntityCompleteness(merged, schemas[0]!) };
+};
 
 const makeAuditRow = (overrides: Partial<AuditLogDbResult>): AuditLogDbResult => ({
   id: 'audit-1',

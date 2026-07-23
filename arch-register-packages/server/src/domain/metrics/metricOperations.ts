@@ -14,7 +14,6 @@ import {
   matchesAssessmentConditions
 } from '@arch-register/api-types/assessmentFilter';
 import { httpAssert } from '../../utils/httpAssert';
-import { computeEntityCompleteness } from '../../utils/completeness';
 import { filterVisibleEntities } from '../auth/authorization';
 import { filterEntities, matchesFilterCondition } from '../catalog/dataHelpers';
 import { resolveJoinedAssessment } from '../catalog/entityQueryOperations';
@@ -388,8 +387,6 @@ export const getBoxMetrics = async (
   const visibleEntities = filterVisibleEntities(authCtx, allEntities);
   const scopedEntities = visibleEntities;
 
-  const schemaMap = new Map(schemas.map(s => [s.id, s]));
-  const hasCompletenessCondition = otherConditions.some(c => c.fieldId === '_completeness');
   const quickFilterMatchIds = new Set(
     filterEntities(scopedEntities, { schemaId, owner, lifecycle, q: q ?? '' }).map(e => e.id)
   );
@@ -397,9 +394,7 @@ export const getBoxMetrics = async (
   const isFilterMatch = (entity: EntityDbResult): boolean => {
     if (!quickFilterMatchIds.has(entity.id)) return false;
     if (otherConditions.length > 0) {
-      const schema = hasCompletenessCondition ? (schemaMap.get(entity.schema_id) ?? null) : null;
-      const completeness = schema != null ? computeEntityCompleteness(entity, schema) : null;
-      if (!otherConditions.every(c => matchesFilterCondition(entity, c, completeness)))
+      if (!otherConditions.every(c => matchesFilterCondition(entity, c, entity.completeness)))
         return false;
     }
     if (

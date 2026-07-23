@@ -291,7 +291,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         schema_id: schema,
         data: {},
         project_id: null,
-        updated_at: new Date()
+        updated_at: new Date(),
+        completeness: 0
       });
 
       const fetched = await db.catalog.getEntity(workspace, created.id);

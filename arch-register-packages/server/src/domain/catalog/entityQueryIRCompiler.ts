@@ -25,13 +25,12 @@ export type CompiledEntityQueryOptions = {
   visibleEntityIds?: readonly string[];
 };
 
-// Raised for a fieldId/op combination that has no SQL translation in this dialect today —
-// `_completeness` (computed post-fetch from schema + data) is the same hybrid-seam fallback
-// category `entityQueryOperations.ts` already has for flat conditions (specs/QUERY_LANGUAGE.md §9);
-// wiring that fallback into this compiler's caller is follow-up work, not something this compiler
-// should silently paper over. `_assessment`/`_assessment:<fieldId>` ARE supported in SQL (below),
-// unlike completeness — `assessment_response` is a real, normalized, entity_id-keyed table, not an
-// in-memory-only computation.
+// Raised for a fieldId/op combination that has no SQL translation in this dialect today. As of
+// #2346, `_completeness` is a materialized column on `entity` (kept in sync at write time, see
+// entityMutations.ts) rather than an in-memory-only computation, so it resolves like any other
+// builtin column below — it is no longer a case this error covers. `_assessment`/
+// `_assessment:<fieldId>` are likewise fully SQL-native, backed by the normalized, entity_id-keyed
+// `assessment_response` table.
 export class UnsupportedEntityQueryIRError extends Error {}
 
 // Every alias (root and every hop) is drawn from this CTE rather than the raw `entity` table, so
@@ -155,7 +154,6 @@ const resolveColumn = (
   if (Object.hasOwn(ENTITY_ARRAY_COLUMNS, fieldId)) {
     return { col: `${alias}.${ENTITY_ARRAY_COLUMNS[fieldId]!.slice('e.'.length)}`, kind: 'array' };
   }
-  if (fieldId === '_completeness') return null;
   if (!isValidFieldId(fieldId)) return null;
   return {
     col:
@@ -233,9 +231,7 @@ const compilePredicateTerminal =
         }
       : resolveColumn(alias, fieldId, dialect);
     if (!resolved) {
-      throw new UnsupportedEntityQueryIRError(
-        `Field '${fieldId}' has no SQL translation (completeness fields require in-memory evaluation)`
-      );
+      throw new UnsupportedEntityQueryIRError(`Field '${fieldId}' has no SQL translation`);
     }
     const clause = buildConditionClause(
       resolved.col,
@@ -436,11 +432,6 @@ const projectionRawValue = (
   fieldId: string,
   dialect: EntityQueryDialect
 ): string => {
-  if (fieldId === '_completeness') {
-    throw new UnsupportedEntityQueryIRError(
-      "Projection field '_completeness' requires in-memory evaluation"
-    );
-  }
   if (fieldId === ASSESSMENT_PRESENCE_FIELD_ID) {
     return dialect === 'postgres'
       ? `to_jsonb(${alias}.assessment_values IS NOT NULL)`
@@ -592,6 +583,7 @@ const liveEntityState = (dialect: EntityQueryDialect): string =>
         'data', e.data,
         'project_id', e.project_id,
         'version', e.version,
+        'completeness', e.completeness,
         'created_at', e.created_at,
         'updated_at', e.updated_at
       )`
@@ -612,6 +604,7 @@ const liveEntityState = (dialect: EntityQueryDialect): string =>
         'data', json(e.data),
         'project_id', e.project_id,
         'version', e.version,
+        'completeness', e.completeness,
         'created_at', e.created_at,
         'updated_at', e.updated_at
       )`;
@@ -650,6 +643,9 @@ const temporalEntityProjection = (
     `${text('created_at')} AS created_at`,
     `${text('updated_at')} AS updated_at`,
     `COALESCE(${text('version')}, '1') AS version`,
+    // Versions written before #2346 have no frozen completeness in their state JSON; default to 0
+    // rather than surface NULL through a column callers otherwise treat as always-present.
+    `COALESCE(${text('completeness')}, '0') AS completeness`,
     `COALESCE(${json('generated_metadata')}, ${emptyObject}) AS generated_metadata`,
     `${text('approval_policy_override')} AS approval_policy_override`
   ].join(',\n      ');

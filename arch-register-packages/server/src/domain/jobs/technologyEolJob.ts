@@ -11,6 +11,7 @@ import {
 } from '../externalMetadata/externalMetadataHelpers';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { getSystemUserId } from '../auth/systemUsers';
+import { computeEntityCompleteness } from '../../utils/completeness';
 
 export const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
 export const TECHNOLOGY_EOL_SYSTEM_IDENTITY = 'technology-eol';
@@ -202,7 +203,16 @@ const applyRelease = async (
       links: entity.links,
       schema_id: entity.schema_id,
       project_id: entity.project_id,
-      approval_policy_override: entity.approval_policy_override
+      approval_policy_override: entity.approval_policy_override,
+      completeness: computeEntityCompleteness(
+        {
+          description: entity.description,
+          owner: entity.owner,
+          lifecycle: entity.lifecycle,
+          data: nextData
+        },
+        schema
+      )
     },
     auditMetadata: {
       external_kind: 'integration',

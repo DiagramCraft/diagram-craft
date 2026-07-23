@@ -111,6 +111,7 @@ const makeService = (
   lifecycle_label: null,
   target_lifecycle_label: null,
   schema_name: 'Service',
+  completeness: 0,
   ...overrides
 });
 
@@ -137,6 +138,7 @@ const makeDomain = (id: string, overrides: Partial<EntityDbResult> = {}): Entity
   lifecycle_label: null,
   target_lifecycle_label: null,
   schema_name: 'Domain',
+  completeness: 0,
   ...overrides
 });
 

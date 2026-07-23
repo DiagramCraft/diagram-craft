@@ -12,6 +12,11 @@ import { AUTOMATION_RULE_JOB_TYPE } from '@arch-register/server/domain/automatio
 import { createGovernanceNotificationJobHandler } from '@arch-register/server/domain/governance/governanceNotifications';
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
 import { createTechnologyEolJobHandler } from '@arch-register/server/domain/jobs/technologyEolJob';
+import {
+  createEntityCompletenessJobHandler,
+  ENTITY_COMPLETENESS_JOB_TYPE,
+  ENTITY_COMPLETENESS_SCAN_JOB_TYPE
+} from '@arch-register/server/domain/catalog/entityCompletenessJob';
 import { METADATA_GENERATION_SCAN_JOB_TYPE } from '@arch-register/server/domain/document/aiMetadataGenerationConstants';
 import {
   createEmailDeliveryConfigFromEnv,
@@ -63,6 +68,9 @@ const main = async () => {
     createDocumentMetadataGenerationScanJobHandler(db, storage)
   );
   handlers.set('technology-eol', createTechnologyEolJobHandler(db));
+  const entityCompletenessJobHandler = createEntityCompletenessJobHandler(db);
+  handlers.set(ENTITY_COMPLETENESS_JOB_TYPE, entityCompletenessJobHandler);
+  handlers.set(ENTITY_COMPLETENESS_SCAN_JOB_TYPE, entityCompletenessJobHandler);
   handlers.set(
     NOTIFICATION_DELIVERY_JOB_TYPE,
     createNotificationDeliveryJobHandler(db, createEmailDeliveryConfigFromEnv())

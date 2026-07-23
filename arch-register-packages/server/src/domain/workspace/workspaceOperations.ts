@@ -15,6 +15,7 @@ import { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
 import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
+import { computeEntityCompleteness } from '../../utils/completeness';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -573,6 +574,10 @@ export const createWorkspace = async (
                   .filter((targetId): targetId is string => !!targetId);
                 data[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
               }
+              const mappedOwner = entity.owner ? (teamMap.get(entity.owner) ?? null) : null;
+              const mappedLifecycle = entity.lifecycle
+                ? (lifecycleMap.get(entity.lifecycle) ?? null)
+                : null;
               await db.catalog.createEntity({
                 ...entity,
                 id,
@@ -583,14 +588,25 @@ export const createWorkspace = async (
                 ),
                 slug: `${entity.slug}-${id.slice(0, 8)}`,
                 schema_id: schemaId,
-                owner: entity.owner ? (teamMap.get(entity.owner) ?? null) : null,
-                lifecycle: entity.lifecycle ? (lifecycleMap.get(entity.lifecycle) ?? null) : null,
+                owner: mappedOwner,
+                lifecycle: mappedLifecycle,
                 target_lifecycle: entity.target_lifecycle
                   ? (lifecycleMap.get(entity.target_lifecycle) ?? null)
                   : null,
                 data,
                 created_at: timestamp,
-                updated_at: timestamp
+                updated_at: timestamp,
+                // Owner/lifecycle mapping can drop a value to null if the target workspace has no
+                // equivalent, so recompute rather than carry the source workspace's score forward.
+                completeness: computeEntityCompleteness(
+                  {
+                    description: entity.description,
+                    owner: mappedOwner,
+                    lifecycle: mappedLifecycle,
+                    data
+                  },
+                  targetSchema
+                )
               });
             }
           }

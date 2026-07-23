@@ -6,7 +6,15 @@ const isNonEmpty = (value: unknown): boolean => {
   return true;
 };
 
-export const computeEntityCompleteness = (entity: Entity, schema: SchemaDbResult): number => {
+// Only the fields actually read below are required, so callers computing completeness for an
+// entity that hasn't been persisted yet (e.g. mid-create, before an id/timestamps exist) don't
+// need to construct a full Entity.
+type CompletenessInput = Pick<Entity, 'description' | 'owner' | 'lifecycle' | 'data'>;
+
+export const computeEntityCompleteness = (
+  entity: CompletenessInput,
+  schema: SchemaDbResult
+): number => {
   const expectedFields = schema.fields.filter(
     f => f.requirementLevel === 'required' || f.requirementLevel === 'expected'
   );

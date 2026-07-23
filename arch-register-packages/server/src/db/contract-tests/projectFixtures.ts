@@ -63,7 +63,8 @@ export const createFixtureEntity = async (
     data: {},
     project_id: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    completeness: 0
   });
 };
 

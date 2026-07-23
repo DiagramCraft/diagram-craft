@@ -59,6 +59,7 @@ const makeEntity = (
   lifecycle_label: null,
   target_lifecycle_label: null,
   schema_name: schemaId,
+  completeness: 0,
   ...overrides
 });
 

@@ -108,6 +108,7 @@ const makeEntity = (overrides: Partial<EntityDbResult> = {}): EntityDbResult => 
   lifecycle_label: null,
   target_lifecycle_label: null,
   schema_name: 'Service',
+  completeness: 0,
   ...overrides
 });
 

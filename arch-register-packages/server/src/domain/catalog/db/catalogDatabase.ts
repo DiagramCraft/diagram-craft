@@ -193,6 +193,10 @@ export type Entity = {
   updated_at: Date;
   version?: number;
   approval_policy_override?: 'required' | 'disabled' | null;
+  // System-maintained score (0-100) derived from computeEntityCompleteness(entity, schema),
+  // recomputed at write time and kept alongside the entity so it's queryable in SQL without a
+  // per-row schema lookup (see #2346).
+  completeness: number;
 };
 
 // Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
@@ -319,7 +323,8 @@ export const catalogMappers = {
     approval_policy_override:
       row['approval_policy_override'] == null
         ? null
-        : (String(row['approval_policy_override']) as Entity['approval_policy_override'])
+        : (String(row['approval_policy_override']) as Entity['approval_policy_override']),
+    completeness: Number(row['completeness'] ?? 0)
   }),
   entityQuery: (row: DatabaseRow): EntityQueryDbResult => ({
     ...catalogMappers.enrichedEntity(row),
@@ -531,6 +536,7 @@ export type CatalogDatabase = {
     id: string,
     override: 'required' | 'disabled' | null
   ): Promise<EntityDbResult | null>;
+  updateEntityCompleteness(ws: string, id: string, completeness: number): Promise<void>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
 
   createEntityVersion(input: EntityVersionDbCreate): Promise<EntityVersionDbResult>;

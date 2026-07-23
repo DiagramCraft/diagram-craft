@@ -76,7 +76,8 @@ const entities: Entity[] = [
     },
     project_id: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    completeness: 0
   },
   {
     id: 'entity-app-2',
@@ -99,7 +100,8 @@ const entities: Entity[] = [
     },
     project_id: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    completeness: 0
   },
   {
     id: 'entity-cap-1',
@@ -122,7 +124,8 @@ const entities: Entity[] = [
     },
     project_id: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    completeness: 0
   },
   {
     id: 'entity-cap-2',
@@ -144,7 +147,8 @@ const entities: Entity[] = [
     },
     project_id: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    completeness: 0
   },
   {
     id: 'entity-app-3',
@@ -164,7 +168,8 @@ const entities: Entity[] = [
     data: {},
     project_id: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    completeness: 0
   }
 ];
 

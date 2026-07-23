@@ -3,7 +3,6 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 
 import { httpAssert } from '../../utils/httpAssert';
-import { computeEntityCompleteness } from '../../utils/completeness';
 import { requireEntityAction, requireProjectAccess } from '../auth/authorization';
 import {
   splitAssessmentConditions,
@@ -228,8 +227,7 @@ const collectEntitiesFromIR = async (
   });
 
   return filteredRows.map((row: EntityQueryDbResult) => {
-    const schema = schemaCatalog.get(row.schema_id);
-    const completeness = schema == null ? null : computeEntityCompleteness(row, schema);
+    const completeness = row.completeness;
     const apiEntity =
       options.view === 'summary'
         ? (attachProjectLink(
@@ -314,11 +312,9 @@ const collectEntities = async (
     asOf,
     includeProjectSnapshots
   } = normalizeEntityQueryOptions(options);
-  // _completeness is computed post-fetch; assessment conditions are evaluated against the
-  // joined assessment's bulk response map; all remaining conditions can be evaluated in SQL
+  // Assessment conditions are evaluated against the joined assessment's bulk response map;
+  // everything else, including `_completeness` (a materialized column, #2346), is evaluated in SQL.
   const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
-  const sqlConditions = otherConditions.filter(c => c.fieldId !== '_completeness');
-  const completenessConditions = otherConditions.filter(c => c.fieldId === '_completeness');
   const [schemas, projectEntities, joinedAssessment, collectionEntityIds] = await Promise.all([
     db.catalog.listSchemas(workspace),
     projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
@@ -339,7 +335,6 @@ const collectEntities = async (
     );
   }
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
-  const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const rows: CollectedEntity[] = [];
 
@@ -354,8 +349,7 @@ const collectEntities = async (
       return;
     if (collectionEntityIdSet && !collectionEntityIdSet.has(entity.id)) return;
 
-    const schema = schemaMap.get(entity.schema_id);
-    const completeness = schema != null ? computeEntityCompleteness(entity, schema) : null;
+    const completeness = entity.completeness;
     if (
       extraConditions.length > 0 &&
       !extraConditions.every(c => matchesFilterCondition(entity, c, completeness))
@@ -448,7 +442,7 @@ const collectEntities = async (
         owner,
         lifecycle,
         q: q ?? '',
-        conditions: sqlConditions,
+        conditions: otherConditions,
         projectId,
         projectScope
       },
@@ -461,7 +455,7 @@ const collectEntities = async (
     if (page.length === 0) break;
 
     for (const entity of page) {
-      processEntity(entity, completenessConditions);
+      processEntity(entity, []);
     }
 
     if (page.length < dbPageSize) break;
@@ -485,11 +479,7 @@ export const getEntityFacets = async (
   authCtx: AuthorizationContext | null
 ): Promise<EntityFacets> => {
   try {
-    const [allEntities, schemas] = await Promise.all([
-      listAllCatalogEntities(db, workspace),
-      db.catalog.listSchemas(workspace)
-    ]);
-    const schemaMap = new Map(schemas.map(s => [s.id, s]));
+    const allEntities = await listAllCatalogEntities(db, workspace);
     const entities =
       authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
         ? allEntities
@@ -504,11 +494,7 @@ export const getEntityFacets = async (
         .map(([value, count]) => ({ value, count }))
         .sort((a, b) => b.count - a.count || String(a.value).localeCompare(String(b.value)));
 
-    const completenessScores = entities.map(entity => {
-      const schema = schemaMap.get(entity.schema_id);
-      return schema ? computeEntityCompleteness(entity, schema) : null;
-    });
-    const scored = completenessScores.filter((s): s is number => s !== null);
+    const scored = entities.map(entity => entity.completeness);
     const completeness = {
       below50: scored.filter(s => s < 50).length,
       below80: scored.filter(s => s >= 50 && s < 80).length,
@@ -620,9 +606,6 @@ export const getEntityTree = async (
       if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);
     }
 
-    const schemaMap = new Map(schemas.map(s => [s.id, s]));
-    const hasCompletenessCondition = otherConditions.some(c => c.fieldId === '_completeness');
-
     const matchRows = (
       structuredMatchIds
         ? scopedEntities.filter(entity => structuredMatchIds.has(entity.id))
@@ -635,12 +618,7 @@ export const getEntityTree = async (
     )
       .filter(entity => {
         if (otherConditions.length === 0 && !joinedAssessment) return true;
-        const schema = schemaMap.get(entity.schema_id) ?? null;
-        const completeness =
-          hasCompletenessCondition && schema != null
-            ? computeEntityCompleteness(entity, schema)
-            : null;
-        if (!otherConditions.every(c => matchesFilterCondition(entity, c, completeness)))
+        if (!otherConditions.every(c => matchesFilterCondition(entity, c, entity.completeness)))
           return false;
         if (
           joinedAssessment &&
@@ -698,10 +676,7 @@ export const getEntity = async (
   authCtx: AuthorizationContext | null
 ): Promise<EntityRecord> => {
   try {
-    const [row, schemas] = await Promise.all([
-      db.catalog.getEntity(workspace, id),
-      db.catalog.listSchemas(workspace)
-    ]);
+    const row = await db.catalog.getEntity(workspace, id);
     httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
     if (authCtx)
       requireEntityAction(
@@ -710,12 +685,7 @@ export const getEntity = async (
         'view_entity',
         'You do not have access to view this entity'
       );
-    const schema = schemas.find(s => s.id === row.schema_id);
-    return toApiEntity(
-      row,
-      authCtx,
-      schema != null ? computeEntityCompleteness(row, schema) : null
-    );
+    return toApiEntity(row, authCtx, row.completeness);
   } catch (error) {
     return handleError(error, 'Failed to retrieve data record');
   }
