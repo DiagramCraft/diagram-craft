@@ -235,12 +235,7 @@ describe('structured entity query view persistence', () => {
 
     expect(payload.filters.root.kind).toBe('and');
     const textNode = payload.filters.root.kind === 'and' ? payload.filters.root.children[0] : null;
-    expect(textNode?.kind).toBe('or');
-    expect(
-      textNode?.kind === 'or'
-        ? textNode.children.map(child => child.kind === 'predicate' && child.fieldId)
-        : []
-    ).toEqual(['_name', '_slug', '_description']);
+    expect(textNode).toEqual({ kind: 'freeText', value: 'platform' });
     expect(payload.config).toEqual({ sort: 'owner' });
 
     const search = toSavedViewSearch({
@@ -271,18 +266,46 @@ describe('structured entity query view persistence', () => {
     });
 
     const updated = addFreeTextQuery(query, 'new');
-    const textValues =
-      updated.root.kind === 'and'
-        ? updated.root.children
-            .filter(child => child.kind === 'or')
-            .flatMap(child =>
-              child.children
-                .filter(grandchild => grandchild.kind === 'predicate')
-                .map(grandchild => grandchild.value)
-            )
-        : [];
+    expect(updated.root.kind === 'and' ? updated.root.children : []).toContainEqual({
+      kind: 'freeText',
+      value: 'new'
+    });
+  });
 
-    expect(textValues).toEqual(['new', 'new', 'new']);
+  it('migrates the legacy three-field free-text clause when the search changes', () => {
+    const query = {
+      schemaId: 'component',
+      root: {
+        kind: 'and' as const,
+        children: [
+          {
+            kind: 'or' as const,
+            children: (['_name', '_slug', '_description'] as const).map(fieldId => ({
+              kind: 'predicate' as const,
+              path: [],
+              fieldId,
+              op: 'contains' as const,
+              value: 'old'
+            }))
+          }
+        ]
+      }
+    };
+
+    expect(addFreeTextQuery(query, 'new').root).toEqual({
+      kind: 'and',
+      children: [{ kind: 'freeText', value: 'new' }]
+    });
+  });
+
+  it('removes the free-text node for an empty browser search', () => {
+    const query = buildEntityQueryFromBrowserFilters({
+      typeFilter: 'component',
+      conditions: [],
+      q: 'old'
+    });
+
+    expect(addFreeTextQuery(query, '  ').root).toEqual({ kind: 'and', children: [] });
   });
 
   it('builds an IR query when saving a flat browser filter', () => {

@@ -91,27 +91,29 @@ const filterConditionsFromEntityQuery = (query: EntityQuery): FilterCondition[] 
     .map(({ fieldId, op, value }) => ({ fieldId, op, value }));
 
 const freeTextQueryNode = (value: string): EntityQuery['root'] => ({
-  kind: 'or',
-  children: ['_name', '_slug', '_description'].map(fieldId => ({
-    kind: 'predicate' as const,
-    path: [],
-    fieldId,
-    op: 'contains' as const,
-    value
-  }))
+  kind: 'freeText',
+  value
 });
 
 const isFreeTextQueryNode = (node: EntityQuery['root']) =>
-  node.kind === 'or' &&
-  node.children.length === 3 &&
-  node.children.every(
-    child =>
-      child.kind === 'predicate' &&
-      child.path.length === 0 &&
-      child.op === 'contains' &&
-      typeof child.value === 'string' &&
-      ['_name', '_slug', '_description'].includes(child.fieldId)
-  );
+  (node.kind === 'freeText' && typeof node.value === 'string') ||
+  (node.kind === 'or' &&
+    node.children.length === 3 &&
+    node.children.every(
+      child =>
+        child.kind === 'predicate' &&
+        child.path.length === 0 &&
+        child.op === 'contains' &&
+        typeof child.value === 'string' &&
+        ['_name', '_slug', '_description'].includes(child.fieldId)
+    ));
+
+const freeTextValueFromNode = (node: EntityQuery['root']): string | undefined => {
+  if (node.kind === 'freeText') return node.value;
+  if (!isFreeTextQueryNode(node) || node.kind !== 'or') return undefined;
+  const value = node.children[0];
+  return value?.kind === 'predicate' && typeof value.value === 'string' ? value.value : undefined;
+};
 
 const withoutFreeTextQuery = (query: EntityQuery): EntityQuery => {
   if (query.root.kind !== 'and') {
@@ -143,8 +145,7 @@ export const addFreeTextQuery = (query: EntityQuery, value: string): EntityQuery
 
 const freeTextFromEntityQuery = (query: EntityQuery): string | undefined => {
   const node = rootChildren(query).find(child => isFreeTextQueryNode(child));
-  const value = node?.kind === 'or' ? node.children[0] : undefined;
-  return value?.kind === 'predicate' && typeof value.value === 'string' ? value.value : undefined;
+  return node ? freeTextValueFromNode(node) : undefined;
 };
 
 export const parseJsonConfig = <T>(value: string | undefined): T | null => {

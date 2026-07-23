@@ -52,6 +52,23 @@ const identityAnchoredQuery: EntityQuery = {
 };
 
 test.describe('EntityQuery HTTP routes', () => {
+  test('executes root free-text search through list and count', async ({ orpc }) => {
+    const query: EntityQuery = {
+      root: { kind: 'freeText', value: 'AUTH' }
+    };
+
+    const [list, count] = await Promise.all([
+      orpc.entities.list({
+        params: { workspace: 'default' },
+        query: { entityQuery: query, view: 'summary' }
+      }),
+      orpc.entities.count({ params: { workspace: 'default' }, query: { entityQuery: query } })
+    ]);
+
+    expect(count.total).toBe(list.total);
+    expect(list.items.map(entity => entity._uid)).toContain(authServiceId);
+  });
+
   test('executes the seeded #2300 query through list and count with projections', async ({
     orpc
   }) => {

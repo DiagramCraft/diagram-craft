@@ -90,7 +90,14 @@ const validatePathSteps = (
     }
 
     if (step.filter) {
-      hopsUsed = validateNode(step.filter, schemas, [...stepPath, 'filter'], hopsUsed, errors);
+      hopsUsed = validateNode(
+        step.filter,
+        schemas,
+        [...stepPath, 'filter'],
+        hopsUsed,
+        false,
+        errors
+      );
     }
   });
   return hopsUsed;
@@ -101,6 +108,7 @@ const validateNode = (
   schemas: SchemaCatalog,
   path: (string | number)[],
   hopsUsedBefore: number,
+  allowFreeText: boolean,
   errors: ValidationError[]
 ): number => {
   switch (node.kind) {
@@ -116,6 +124,7 @@ const validateNode = (
           schemas,
           [...path, 'children', index],
           hopsUsedBefore,
+          allowFreeText,
           errors
         );
         maxHops = Math.max(maxHops, childHops);
@@ -123,7 +132,25 @@ const validateNode = (
       return maxHops;
     }
     case 'not':
-      return validateNode(node.child, schemas, [...path, 'child'], hopsUsedBefore, errors);
+      return validateNode(
+        node.child,
+        schemas,
+        [...path, 'child'],
+        hopsUsedBefore,
+        allowFreeText,
+        errors
+      );
+    case 'freeText':
+      if (!allowFreeText) {
+        errors.push({
+          path,
+          message: "'freeText' is only valid for the starting entity list"
+        });
+      }
+      if (node.value.trim() === '') {
+        errors.push({ path: [...path, 'value'], message: "'freeText' value must not be empty" });
+      }
+      return hopsUsedBefore;
     case 'predicate': {
       const hopsAfterPath = validatePathSteps(
         node.path,
@@ -171,6 +198,8 @@ const nodeUsesAssessmentField = (node: QueryNode): boolean => {
       );
     case 'relationExists':
       return pathUsesAssessmentField(node.path);
+    case 'freeText':
+      return false;
   }
 };
 
@@ -213,7 +242,7 @@ export const validateEntityQueryIR = (
   if (query.asOf != null && Number.isNaN(Date.parse(query.asOf))) {
     errors.push({ path: ['asOf'], message: `Invalid asOf date '${query.asOf}'` });
   }
-  validateNode(query.root, schemas, ['root'], 0, errors);
+  validateNode(query.root, schemas, ['root'], 0, true, errors);
 
   const aliases = new Set<string>();
   for (const [index, projection] of (query.projections ?? []).entries()) {
