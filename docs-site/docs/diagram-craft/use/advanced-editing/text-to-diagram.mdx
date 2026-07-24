@@ -1,5 +1,12 @@
 ---
-sidebar_position: 1
+sidebar_position: 8
+related_reading:
+  - label: Diagram-to-Text
+    to: /diagram-craft/diagram-craft/use/advanced-editing/diagram-to-text
+  - label: Geometry Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
+  - label: Automatic Layouts
+    to: /diagram-craft/diagram-craft/use/layout/automatic-layouts
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -25,11 +32,11 @@ Use the text workflow when you want to draft or refactor a diagram faster than d
 
 ## How It Works
 
-Diagram Craft currently exposes its own built-in text format through the `Text` panel. The panel serializes the active regular layer into text, validates edits as you type, and applies the result back into the diagram.
+Diagram Craft exposes its built-in text format through the **Text** panel. The panel serializes the active regular layer into text, validates edits as you type, and applies the result back into the diagram.
 
 A typical loop looks like this:
 
-1. Open the `Text` panel from the left sidebar.
+1. Open the **Text** panel from the left sidebar.
 2. Start from the serialized diagram text already shown for the active layer.
 3. Edit node labels, edge definitions, or small structures directly.
 4. Fix any parse errors the panel reports.
@@ -50,21 +57,15 @@ flow2: edge review --> decision
 flow3: edge decision --> done "Yes"
 ```
 
-That gives you the structure quickly. After that, use the canvas for visual cleanup.
+The text creates the structure; the canvas remains available for visual cleanup.
 
 ## Practical Constraints
 
-- The current format is Diagram Craft specific. It is not Mermaid or PlantUML.
+- The format is Diagram Craft specific, not Mermaid or PlantUML.
 - The panel works on the active regular layer, so layer choice is part of the workflow.
 - The text form is best for structure and bulk edits, not final presentation polish.
 - Complex layout intent is still easier to finish visually after applying the text changes.
 
 ## When Not To Use It
 
-Skip the text workflow when you are making small visual adjustments such as spacing, alignment, edge routing, or style tweaks. Those are usually faster on the canvas.
-
-## Related Reading
-
-- [Diagram-to-Text](diagram-to-text)
-- [AI Assistant](ai-assistant)
-- [Automatic Layouts](../layout/automatic-layouts)
+Use direct canvas editing for small visual adjustments such as spacing, alignment, edge routing, or style tweaks.

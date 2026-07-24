@@ -121,10 +121,6 @@ const config: Config = {
     image: 'img/social-card.jpg',
     navbar: {
       title: 'Docs',
-      logo: {
-        alt: 'Arch Register & Diagram Craft',
-        src: 'img/logo.svg'
-      },
       items: [
         {
           type: 'docSidebar',

@@ -1,12 +1,19 @@
 ---
 sidebar_position: 4
+related_reading:
+  - label: First Diagram
+    to: /diagram-craft/diagram-craft/getting-started/first-diagram
+  - label: Styling Basics
+    to: /diagram-craft/diagram-craft/getting-started/styling-basics
+  - label: Styling System
+    to: /diagram-craft/diagram-craft/use/styling/styling-system
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Text and Labels
 
-Text gives the diagram its meaning. Shapes and connectors establish structure, but the labels are what let another person understand the subject without guessing.
+Diagram Craft supports two common text workflows: standalone text placed directly on the canvas, and labels attached to other elements such as edges.
 
 <ThemedImage
   alt="Diagram Craft diagram with labeled shapes and a standalone text note"
@@ -16,51 +23,44 @@ Text gives the diagram its meaning. Shapes and connectors establish structure, b
   }}
 />
 
-## Label Shapes As You Place Them
+## Use Standalone Text
 
-A good default habit is to name a shape immediately after adding it to the canvas. This keeps the diagram understandable even while the layout is still rough.
+Standalone text is the free text you place directly on the canvas.
 
-Short labels work best:
+- use the **Text tool** from the main toolbar when you want to place text directly
+- use the default shortcut `Command+4` to switch to the text tool from the keyboard
+- click on the canvas to place a standalone text element
+- you can also drag a text-capable shape from the shape browser when that fits your workflow better
 
-- prefer `API Service` over a full sentence
-- use consistent naming for similar elements
-- keep enough space inside the shape so the text is easy to scan
+This is the right path for titles, notes, section headings, and other text that does not belong to a single connector or node.
 
-If a label starts to wrap awkwardly, resize the shape or shorten the wording before adding more detail elsewhere.
+## Add And Edit Edge Labels
 
-## Use Standalone Text For Context
+Edge labels are attached to a connector rather than floating independently on the canvas.
 
-Standalone text is useful when the information does not belong to a single shape. Common examples include:
+- double-click an edge when you want to edit its text in place
+- use the edge context menu when you want to add text explicitly through the **Add text** action
+- use **Edit Text** from the context menu when the selected element already exposes editable text fields
 
-- a short diagram title
-- a note about assumptions
-- a section heading for part of a larger canvas
+This is useful for relationship names, flow conditions, protocol labels, or short annotations that belong to a connector itself.
 
-Use standalone text sparingly. It should add context, not compete with the main flow.
+## Edit Text In Place
 
-## Edit Text In Place, Then Refine
+Most text editing in Diagram Craft happens directly on the canvas.
 
-A practical text workflow is:
+- double-click the target text when you want to edit it without leaving the canvas
+- use the context menu when the element exposes multiple text fields or a text-specific action
+- reposition or resize the surrounding element after editing if the text no longer fits cleanly
 
-1. Enter the shortest useful label first.
-2. Adjust the element size or position so the label sits comfortably.
-3. Refine text styling only after the wording and layout are stable.
+This keeps text editing close to the diagram structure you are already working on.
 
-This keeps the diagram readable early and avoids redoing formatting while labels are still changing.
+## Refine Text After Placement
 
-## Keep Text Readable At A Glance
+After the wording is correct, refine the visual fit:
 
-Before you move on:
+- resize the containing shape if a label wraps awkwardly
+- move standalone text when it overlaps the main flow
+- use the styling panels after placement when you need stronger visual distinction
 
-- zoom out once to check whether the labels still read clearly
-- make sure note text does not overpower the main diagram
-- keep similar labels similar in tone and length
-
-If the reader has to decode the wording, the diagram is carrying too much text.
-
-## Related Reading
-
-- [First Diagram](../../getting-started/first-diagram)
-- [Styling Basics](../../getting-started/styling-basics)
-- [Styling System](../styling/styling-system)
+The current screenshot shows both labeled shapes and a standalone text note on the canvas.
 

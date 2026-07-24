@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Key Features
 
-Diagram Craft starts as a fast canvas editor, but its feature set is aimed at diagrams that evolve beyond a quick sketch. You can move from basic boxes and arrows to richer notation systems, structured multi-tab documents, automated layouts, collaboration, and data-driven diagrams without switching to another tool.
+Diagram Craft starts as a simple canvas editor, but its feature set is aimed at diagrams that evolve beyond a quick sketch. You can move from basic boxes and arrows to richer notation systems, structured multi-tab documents, automated layouts, collaboration, and data-driven diagrams without switching to another tool.
 
 ## Interactive Diagram Editing
 

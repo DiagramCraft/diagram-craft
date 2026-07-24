@@ -1,5 +1,12 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: Presence Awareness
+    to: /diagram-craft/diagram-craft/use/collaboration/presence-awareness
+  - label: Comments and Review
+    to: /diagram-craft/diagram-craft/use/collaboration/comments-review
+  - label: Version History
+    to: /diagram-craft/diagram-craft/use/collaboration/version-history
 ---
 
 # Real-time Editing
@@ -9,12 +16,6 @@ Real-time editing lets multiple people work in the same diagram without taking t
 ## Know The Prerequisite
 
 Real-time editing only exists when Diagram Craft is configured with a collaboration backend.
-
-In the current codebase, that means:
-
-- the app uses the **Yjs** collaboration backend rather than the no-op backend
-- a websocket collaboration server is available
-- users connect to the same document or room
 
 If collaboration is disabled, Diagram Craft still works as an editor, but not as a shared live session.
 
@@ -83,15 +84,3 @@ A common architecture-review workflow looks like this:
 4. everyone watches the canvas converge on one agreed version
 
 That is where real-time editing is strongest: fast alignment without duplicate offline edits.
-
-## Limits To Call Out
-
-- collaboration requires explicit backend/server configuration
-- “same file name” does not guarantee “same session”; users must open the same shared document context
-- real-time editing does not replace versioning policy, review discipline, or diagram decomposition for very large canvases
-
-## Related Reading
-
-- [Presence Awareness](presence-awareness)
-- [Comments and Review](comments-review)
-- [Version History](version-history)

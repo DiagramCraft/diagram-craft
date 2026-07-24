@@ -1,5 +1,10 @@
 ---
 sidebar_position: 2
+related_reading:
+  - label: SVG Export
+    to: /diagram-craft/diagram-craft/use/import-export/svg-export
+  - label: File Formats
+    to: /diagram-craft/diagram-craft/use/import-export/file-formats
 ---
 
 # Image Export
@@ -36,12 +41,7 @@ That makes it a presentation artifact, not a working source file.
 3. Export the PNG for sharing.
 4. Keep the editable source separately.
 
-## When To Choose Something Else
+## Choose Another Format
 
 - Choose [SVG Export](svg-export) when you need scaling without raster blur.
 - Choose [File Formats](file-formats) when you are deciding what to keep as the editable source of truth.
-
-## Related Reading
-
-- [SVG Export](svg-export)
-- [File Formats](file-formats)

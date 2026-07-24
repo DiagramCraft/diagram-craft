@@ -1,0 +1,53 @@
+---
+sidebar_position: 9
+related_reading:
+  - label: Text-to-Diagram
+    to: /diagram-craft/diagram-craft/use/advanced-editing/text-to-diagram
+  - label: File Formats
+    to: /diagram-craft/diagram-craft/use/import-export/file-formats
+  - label: Image Export
+    to: /diagram-craft/diagram-craft/use/import-export/image-export
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Diagram-to-Text
+
+Diagram-to-Text is the reverse side of the **Text** workflow. Use it as a compact representation of the active layer to inspect structure, make bulk edits, and reason about the diagram without scanning the whole canvas.
+
+<ThemedImage
+  alt="Diagram Craft text panel showing an editable text view of the active diagram layer"
+  sources={{
+    light: require('/img/diagram-craft/ai-features/text-workflow-light.png').default,
+    dark: require('/img/diagram-craft/ai-features/text-workflow-dark.png').default,
+  }}
+/>
+
+## When It Helps
+
+- a dense diagram area needs direct inspection of node and edge relationships
+- a set of elements needs consistent renaming
+- a lightweight structural review artifact is useful
+- a diagram needs to be round-tripped through the text panel for cleanup
+
+## What You Get
+
+The panel serializes the current regular layer into Diagram Craft text. The representation captures enough structure for editing and reapplication, while remaining specific to Diagram Craft.
+
+## A Reliable Round-Trip Loop
+
+1. Open the **Text** panel.
+2. Review the generated text for the active layer.
+3. Make structural edits in text where that is faster than direct manipulation.
+4. Apply the changes.
+5. Return to the canvas for layout, spacing, and styling refinement.
+
+This is especially effective for straightforward flows and diagrams with many repeated labels or similar edges.
+
+## Limits To Keep In Mind
+
+- The exported text is not intended as a broad sharing format for other tools.
+- It is not a substitute for PNG or SVG when you need a presentation artifact.
+- It should not be treated as a stable external standard for long-term interoperability.
+
+Use it as an editing aid inside Diagram Craft, not as a publication target.

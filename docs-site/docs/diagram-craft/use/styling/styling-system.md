@@ -1,12 +1,19 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: Colors and Gradients
+    to: /diagram-craft/diagram-craft/use/styling/colors-gradients
+  - label: Effects
+    to: /diagram-craft/diagram-craft/use/styling/effects
+  - label: Geometry Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Styling System
 
-Diagram Craft styling works best when you treat it as a system instead of a sequence of isolated tweaks. The goal is to make related elements look related, exceptions look intentional, and the whole diagram feel readable before it feels decorative.
+Diagram Craft collects visual properties for the current selection in the **Style** window on the right sidebar. The available tabs and controls change with the selected element type, so nodes and edges expose the controls that apply to them.
 
 <ThemedImage
   alt="Diagram Craft style controls in the right sidebar for consistent diagram styling"
@@ -16,63 +23,20 @@ Diagram Craft styling works best when you treat it as a system instead of a sequ
   }}
 />
 
-## Start With Structure, Then Style
+## Open The Style Window
 
-A reliable workflow is:
+Select a node, edge, or text element, then open **Style** from the right sidebar. The stylesheet selector at the top shows the applicable stylesheet for the selection. The controls below it expose the properties supported by that element:
 
-1. place the shapes and connectors
-2. label them clearly
-3. align and distribute the layout
-4. apply consistent fill, stroke, and text choices
-5. add effects only where they improve emphasis
+- For **nodes**, the main groups are **Fill**, **Shadow**, **Stroke**, **Effects**, and node-specific properties.
+- For **edges**, the main groups are **Line**, **Shadow**, and **Effects**, along with endpoint and edge-specific properties.
+- **Text** controls are available for labels and standalone text, while **Arrange** controls cover position, size, rotation, and stacking when supported.
 
-This keeps styling in service of the diagram instead of letting visual tweaks hide layout problems.
+When several compatible elements are selected, a change is applied to the whole selection.
 
-## Think In Categories
+## Use Stylesheets
 
-Before changing colors or effects, decide which categories exist in the diagram. For example:
+Stylesheets provide consistent formatting that can be reused across multiple elements. The stylesheet selector in the contextual toolbar and Style window lists all styles applicable to the current selection; choose one to apply it instead of maintaining the same properties on each element.
 
-- default internal components
-- external systems
-- data stores
-- warnings, risks, or manual steps
+Use the **...** menu beside the selector to modify the selected stylesheet, update it from the current element, or create a new stylesheet. You can also use **Copy Style** and **Paste Style** to transfer direct styling between compatible selections, and open **Style Overview** to inspect and manage reusable document styles.
 
-Once those categories are clear, give each one a stable visual treatment. The reader should not have to guess whether two similar shapes mean the same thing.
-
-## Use The Style Panels As A Stack
-
-The right sidebar breaks styling into a few practical layers:
-
-- **Fill** for color, gradients, patterns, textures, and images
-- **Stroke** for outline weight and separation
-- **Text** for label readability
-- **Shadow** and **Effects** for polish
-
-Use them in that order. Fill and text usually carry most of the meaning. Effects are supporting tools, not the foundation.
-
-## Prefer Repetition Over Novelty
-
-Good styling systems repeat a small number of decisions:
-
-- the same fill for the same type of node
-- the same stroke width across similar objects
-- the same text treatment for headings, labels, and notes
-
-If every element gets its own treatment, the diagram stops communicating structure and starts communicating noise.
-
-## Keep Styling Changes Cheap
-
-Routine diagram maintenance should not require rebuilding shapes or editing geometry. If a visual distinction can be made with fill, stroke, text, or a light effect, use that first. Move into boolean operations or curve editing only when the shape itself needs to carry meaning.
-
-## Real Diagram Examples
-
-- Give all internal services one fill color, then use a contrasting fill for third-party dependencies.
-- Use a slightly heavier stroke on boundary containers so sections stay legible when zoomed out.
-- Apply the same heading text style across title cards, legends, and section labels.
-- Reserve effects such as sketch or reflection for cases where the tone of the diagram should change.
-
-## Related Reading
-
-- [Colors and Gradients](colors-gradients)
-- [Effects](effects)
-- [Custom Shapes](custom-shapes)
+Direct property changes override the inherited stylesheet values for that element.
