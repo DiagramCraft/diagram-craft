@@ -12,16 +12,15 @@ import { useAutoFocus } from '../../../hooks/useAutoFocus';
 import {
   useChangeCase,
   useCreateChangeCase,
-  useUpdateChangeCase,
-  useAddChangeCaseMember,
-  useRemoveChangeCaseMember,
-  useUpdateChangeCaseMember
+  useSaveChangeCaseDraft
 } from '../../../hooks/useChangeCases';
+import { AddEntityDialog } from '../../../dialogs/AddEntityDialog';
 import { createEntityEditState, type EntityEditState } from '../../../lib/entityEditState';
 import { buildProposedState } from '../../../lib/entityProposedStateBuilder';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
+import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import { LoadingState } from '../../../components/LoadingState';
 import { EntityProposedStateFields } from './EntityProposedStateFields';
 import styles from './PlanChangeDialog.module.css';
@@ -39,6 +38,16 @@ type Props = {
   editCaseId?: string | null;
   onClose: () => void;
 };
+
+type DraftEntity = {
+  draftId: string;
+  state: Record<string, unknown>;
+  entity: EntityRecord;
+};
+
+const draftKey = (draftId: string) => `draft:${draftId}`;
+const isDraftKey = (key: string) => key.startsWith('draft:');
+const draftIdFromKey = (key: string) => key.slice('draft:'.length);
 
 const isReferenceField = (f: EntitySchema['fields'][number]) =>
   f.type === 'reference' || f.type === 'containment';
@@ -88,7 +97,10 @@ const computeChangedLabels = (
 
 type MemberEditorProps = {
   workspaceId: string;
+  projectId: string;
+  memberKey: string;
   entityId: string;
+  draftEntity?: EntityRecord;
   isActive: boolean;
   schemas: EntitySchema[];
   teams: WorkspaceTeam[];
@@ -100,7 +112,10 @@ type MemberEditorProps = {
 
 const MemberEditor = ({
   workspaceId,
+  projectId,
+  memberKey,
   entityId,
+  draftEntity,
   isActive,
   schemas,
   teams,
@@ -109,7 +124,8 @@ const MemberEditor = ({
   onProposedStateChange,
   onChangedLabelsChange
 }: MemberEditorProps) => {
-  const { data: entity } = useEntity(workspaceId, entityId);
+  const { data: loadedEntity } = useEntity(workspaceId, draftEntity ? '' : entityId);
+  const entity = draftEntity ?? loadedEntity;
   const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
   const [planState, setPlanState] = useState<EntityEditState | null>(null);
 
@@ -136,12 +152,11 @@ const MemberEditor = ({
   // biome-ignore lint/correctness/useExhaustiveDependencies: onProposedStateChange/onChangedLabelsChange are fresh callbacks each render; including them would create a render loop
   useEffect(() => {
     if (!entity || !schema || !planState) return;
-    onProposedStateChange(
-      entityId,
-      buildProposedState(entity, schema, planState, existingProposedState)
-    );
-    onChangedLabelsChange(entityId, computeChangedLabels(entity, schema, planState));
-  }, [entity, schema, planState, entityId]);
+    const proposedState = buildProposedState(entity, schema, planState, existingProposedState);
+    if (entity._projectId === projectId) proposedState.project_id = null;
+    onProposedStateChange(memberKey, proposedState);
+    onChangedLabelsChange(memberKey, computeChangedLabels(entity, schema, planState));
+  }, [entity, schema, planState, memberKey, projectId]);
 
   return (
     <div style={{ display: isActive ? undefined : 'none' }}>
@@ -183,16 +198,15 @@ export const PlanChangeDialog = ({
     open && isEditing
   );
   const createChangeCase = useCreateChangeCase(workspaceId, projectId);
-  const updateChangeCase = useUpdateChangeCase(workspaceId, projectId);
-  const addMember = useAddChangeCaseMember(workspaceId, projectId);
-  const removeMember = useRemoveChangeCaseMember(workspaceId, projectId);
-  const updateMember = useUpdateChangeCaseMember(workspaceId, projectId);
+  const saveChangeCaseDraft = useSaveChangeCaseDraft(workspaceId, projectId);
 
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
   const [proposedStates, setProposedStates] = useState<Record<string, Record<string, unknown>>>({});
   const [changedLabels, setChangedLabels] = useState<Record<string, string[]>>({});
+  const [draftEntities, setDraftEntities] = useState<Record<string, DraftEntity>>({});
   const [isAddingEntity, setIsAddingEntity] = useState(false);
+  const [isCreatingEntity, setIsCreatingEntity] = useState(false);
   const [addEntitySearch, setAddEntitySearch] = useState('');
   const [name, setName] = useState('');
   const [targetDate, setTargetDate] = useState('');
@@ -213,7 +227,9 @@ export const PlanChangeDialog = ({
     setMemberIds(initialIds);
     setActiveEntityId(initialIds[0] ?? null);
     setIsAddingEntity(false);
+    setIsCreatingEntity(false);
     setAddEntitySearch('');
+    setDraftEntities({});
     setProposedStates({});
     setChangedLabels({});
     setName('');
@@ -228,7 +244,9 @@ export const PlanChangeDialog = ({
     setMemberIds(ids);
     setActiveEntityId(ids[0] ?? null);
     setIsAddingEntity(false);
+    setIsCreatingEntity(false);
     setAddEntitySearch('');
+    setDraftEntities({});
     setProposedStates({});
     setChangedLabels({});
     setName(existingCase.name ?? '');
@@ -239,6 +257,49 @@ export const PlanChangeDialog = ({
   }, [open, isEditing, existingCase, initialized]);
 
   const entityById = new Map(projectEntities.map(e => [e.entity_id, e]));
+  const referenceOptionsExtra = Object.fromEntries(
+    [
+      ...projectEntities.map(entity => ({
+        entity_id: entity.entity_id,
+        entity_name: entity.entity_name,
+        entity_slug: entity.entity_slug,
+        entity_schema_id: entity.entity_schema?.id ?? null,
+        entity_schema_name: entity.entity_schema?.name ?? null
+      })),
+      ...Object.values(draftEntities).map(draft => ({
+        entity_id: draft.draftId,
+        entity_name: draft.entity._name,
+        entity_slug: draft.entity._slug,
+        entity_schema_id: draft.entity._schema.id,
+        entity_schema_name: draft.entity._schema.name
+      }))
+    ].reduce(
+      (entries, entity) => {
+        const schemaId = entity.entity_schema_id;
+        if (!schemaId) return entries;
+        const summary = {
+          _uid: entity.entity_id,
+          _publicId: entity.entity_id,
+          _schema: { id: schemaId, name: entity.entity_schema_name ?? schemaId },
+          _name: entity.entity_name,
+          _slug: entity.entity_slug,
+          _namespace: 'default',
+          _description: '',
+          _owner: null,
+          _lifecycle: null,
+          _targetLifecycle: null,
+          _targetLifecycleDate: null,
+          _tags: [],
+          _links: [],
+          _projectId: projectId,
+          _completeness: null
+        } as unknown as EntitySummary;
+        entries.set(schemaId, [...(entries.get(schemaId) ?? []), summary]);
+        return entries;
+      },
+      new Map<string, EntitySummary[]>() as Map<string, EntitySummary[]>
+    )
+  );
   const candidateEntities = projectEntities.filter(e => {
     if (memberIds.includes(e.entity_id)) return false;
     if (!addEntitySearch.trim()) return true;
@@ -253,6 +314,44 @@ export const PlanChangeDialog = ({
     setAddEntitySearch('');
   };
 
+  const addDraftEntity = (state: Record<string, unknown>) => {
+    const id = globalThis.crypto.randomUUID();
+    const schemaId = String(state['schema_id']);
+    const schema = schemas.find(item => item.id === schemaId);
+    const entity = {
+      _uid: id,
+      _publicId: id,
+      _schema: { id: schemaId, name: schema?.name ?? schemaId },
+      _name: String(state['name'] ?? ''),
+      _slug: String(state['slug'] ?? ''),
+      _namespace: String(state['namespace'] ?? 'default'),
+      _description: String(state['description'] ?? ''),
+      _owner: state['owner'] ? { id: String(state['owner']), name: String(state['owner']) } : null,
+      _lifecycle: state['lifecycle']
+        ? { id: String(state['lifecycle']), name: String(state['lifecycle']) }
+        : null,
+      _targetLifecycle: state['target_lifecycle']
+        ? { id: String(state['target_lifecycle']), name: String(state['target_lifecycle']) }
+        : null,
+      _targetLifecycleDate: (state['target_lifecycle_date'] as string | null) ?? null,
+      _tags: Array.isArray(state['tags'])
+        ? state['tags'].filter((v): v is string => typeof v === 'string')
+        : [],
+      _links: Array.isArray(state['links']) ? state['links'] : [],
+      _updatedAt: new Date().toISOString(),
+      _version: 1,
+      _projectId: projectId,
+      _completeness: null,
+      ...(state['data'] as Record<string, unknown>)
+    } as unknown as EntityRecord;
+    const draft = { draftId: id, state, entity };
+    setDraftEntities(prev => ({ ...prev, [id]: draft }));
+    const key = draftKey(id);
+    setMemberIds(prev => [...prev, key]);
+    setActiveEntityId(key);
+    setIsCreatingEntity(false);
+  };
+
   const removeEntity = (entityId: string) => {
     const next = memberIds.filter(id => id !== entityId);
     setMemberIds(next);
@@ -265,6 +364,13 @@ export const PlanChangeDialog = ({
       const { [entityId]: _removed, ...rest } = prev;
       return rest;
     });
+    if (isDraftKey(entityId)) {
+      const id = draftIdFromKey(entityId);
+      setDraftEntities(prev => {
+        const { [id]: _removed, ...rest } = prev;
+        return rest;
+      });
+    }
   };
 
   const handleTargetDateChange = (value: string) => {
@@ -290,46 +396,40 @@ export const PlanChangeDialog = ({
     if (!canSave) return;
     setIsSaving(true);
     try {
+      const members = memberIds.map(memberKey =>
+        isDraftKey(memberKey)
+          ? {
+              draftId: draftIdFromKey(memberKey),
+              proposedState: proposedStates[memberKey]!
+            }
+          : { entityId: memberKey, proposedState: proposedStates[memberKey]! }
+      );
+      const newEntities = Object.values(draftEntities).map(draft => ({
+        draftId: draft.draftId,
+        state: draft.state
+      }));
       if (!isEditing) {
-        const members = memberIds.map(entityId => ({
-          entityId,
-          proposedState: proposedStates[entityId]!
-        }));
         await createChangeCase.mutateAsync({
           name,
           targetDate: milestoneId ? null : targetDate || null,
           milestoneId: milestoneId || null,
           commitMessage: commitMessage || null,
-          members
+          members,
+          newEntities
         });
       } else {
         const caseId = editCaseId!;
-        const originalMemberIds = new Map(
-          (existingCase?.members ?? []).map(m => [m.entity_id, m.id])
-        );
-
-        await updateChangeCase.mutateAsync({
+        await saveChangeCaseDraft.mutateAsync({
           caseId,
-          name,
-          targetDate: milestoneId ? null : targetDate || null,
-          milestoneId: milestoneId || null,
-          commitMessage: commitMessage || null
+          draft: {
+            name,
+            targetDate: milestoneId ? null : targetDate || null,
+            milestoneId: milestoneId || null,
+            commitMessage: commitMessage || null,
+            members,
+            newEntities
+          }
         });
-
-        for (const [entityId, memberId] of originalMemberIds) {
-          if (!memberIds.includes(entityId)) {
-            await removeMember.mutateAsync({ caseId, memberId });
-          }
-        }
-        for (const entityId of memberIds) {
-          const proposedState = proposedStates[entityId]!;
-          const existingMemberId = originalMemberIds.get(entityId);
-          if (existingMemberId) {
-            await updateMember.mutateAsync({ caseId, memberId: existingMemberId, proposedState });
-          } else {
-            await addMember.mutateAsync({ caseId, entityId, proposedState });
-          }
-        }
       }
       onClose();
     } finally {
@@ -441,22 +541,28 @@ export const PlanChangeDialog = ({
                     {memberIds.length === 0 ? (
                       <div className={styles.emptyList}>No entities added yet.</div>
                     ) : (
-                      memberIds.map(entityId => {
-                        const entity = entityById.get(entityId);
-                        const labels = changedLabels[entityId] ?? [];
+                      memberIds.map(memberKey => {
+                        const draft = isDraftKey(memberKey)
+                          ? draftEntities[draftIdFromKey(memberKey)]
+                          : undefined;
+                        const entity = draft?.entity ?? entityById.get(memberKey);
+                        const labels = changedLabels[memberKey] ?? [];
                         return (
                           <div
-                            key={entityId}
-                            className={`${styles.entityPaneRow} ${activeEntityId === entityId ? styles.entityPaneRowActive : ''}`}
-                            onClick={() => setActiveEntityId(entityId)}
+                            key={memberKey}
+                            className={`${styles.entityPaneRow} ${activeEntityId === memberKey ? styles.entityPaneRowActive : ''}`}
+                            onClick={() => setActiveEntityId(memberKey)}
                           >
                             <button
                               type="button"
                               className={styles.entityPaneRowBody}
-                              onClick={() => setActiveEntityId(entityId)}
+                              onClick={() => setActiveEntityId(memberKey)}
                             >
                               <div className={styles.entityPaneRowName}>
-                                {entity?.entity_name ?? entityId}
+                                {(entity as { entity_name?: string; _name?: string } | undefined)
+                                  ?.entity_name ??
+                                  (entity as { _name?: string } | undefined)?._name ??
+                                  memberKey}
                               </div>
                               <div className={styles.entityPaneRowChanges}>
                                 {labels.length > 0 ? labels.join(', ') : 'No changes yet'}
@@ -465,10 +571,15 @@ export const PlanChangeDialog = ({
                             <button
                               type="button"
                               className={styles.entityPaneRowRemove}
-                              aria-label={`Remove ${entity?.entity_name ?? entityId}`}
+                              aria-label={`Remove ${
+                                (entity as { entity_name?: string; _name?: string } | undefined)
+                                  ?.entity_name ??
+                                (entity as { _name?: string } | undefined)?._name ??
+                                memberKey
+                              }`}
                               onClick={e => {
                                 e.stopPropagation();
-                                removeEntity(entityId);
+                                removeEntity(memberKey);
                               }}
                             >
                               <TbX size={13} />
@@ -487,6 +598,14 @@ export const PlanChangeDialog = ({
                       <TbPlus size={13} />
                       Add entity
                     </button>
+                    <button
+                      type="button"
+                      className={styles.addEntityButton}
+                      onClick={() => setIsCreatingEntity(true)}
+                    >
+                      <TbPlus size={13} />
+                      New entity
+                    </button>
                   </div>
                 </>
               )}
@@ -498,31 +617,53 @@ export const PlanChangeDialog = ({
                   Add an entity on the left to describe its planned change.
                 </div>
               ) : (
-                memberIds.map(entityId => (
-                  <MemberEditor
-                    key={entityId}
-                    workspaceId={workspaceId}
-                    entityId={entityId}
-                    isActive={activeEntityId === entityId}
-                    schemas={schemas}
-                    teams={teams}
-                    lifecycleStates={lifecycleStates}
-                    existingProposedState={
-                      existingCase?.members.find(m => m.entity_id === entityId)?.proposed_state
-                    }
-                    onProposedStateChange={(id, proposedState) =>
-                      setProposedStates(prev => ({ ...prev, [id]: proposedState }))
-                    }
-                    onChangedLabelsChange={(id, labels) =>
-                      setChangedLabels(prev => ({ ...prev, [id]: labels }))
-                    }
-                  />
-                ))
+                memberIds.map(memberKey => {
+                  const draft = isDraftKey(memberKey)
+                    ? draftEntities[draftIdFromKey(memberKey)]
+                    : undefined;
+                  const entityId = draft ? '' : memberKey;
+                  return (
+                    <MemberEditor
+                      key={memberKey}
+                      workspaceId={workspaceId}
+                      projectId={projectId}
+                      memberKey={memberKey}
+                      entityId={entityId}
+                      draftEntity={draft?.entity}
+                      isActive={activeEntityId === memberKey}
+                      schemas={schemas}
+                      teams={teams}
+                      lifecycleStates={lifecycleStates}
+                      existingProposedState={
+                        draft?.state ??
+                        existingCase?.members.find(m => m.entity_id === memberKey)?.proposed_state
+                      }
+                      onProposedStateChange={(id, proposedState) =>
+                        setProposedStates(prev => ({ ...prev, [id]: proposedState }))
+                      }
+                      onChangedLabelsChange={(id, labels) =>
+                        setChangedLabels(prev => ({ ...prev, [id]: labels }))
+                      }
+                    />
+                  );
+                })
               )}
             </div>
           </div>
         </div>
       )}
+      <AddEntityDialog
+        open={isCreatingEntity}
+        onClose={() => setIsCreatingEntity(false)}
+        onCreated={() => undefined}
+        draftMode
+        onDraftCreated={addDraftEntity}
+        referenceOptionsExtra={referenceOptionsExtra}
+        workspaceId={workspaceId}
+        schemas={schemas}
+        lifecycleStates={lifecycleStates}
+        teams={teams}
+      />
     </Dialog>
   );
 };

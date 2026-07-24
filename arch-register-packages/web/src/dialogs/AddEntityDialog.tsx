@@ -33,6 +33,9 @@ type AddEntityDialogProps = {
   open: boolean;
   onClose: () => void;
   onCreated: (entity: EntityApiResponse) => void;
+  onDraftCreated?: (state: Record<string, unknown>) => void;
+  draftMode?: boolean;
+  referenceOptionsExtra?: Record<string, EntitySummary[]>;
   workspaceId: string;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
@@ -44,6 +47,9 @@ export const AddEntityDialog = ({
   open,
   onClose,
   onCreated,
+  onDraftCreated,
+  draftMode = false,
+  referenceOptionsExtra,
   workspaceId,
   schemas,
   lifecycleStates,
@@ -116,8 +122,11 @@ export const AddEntityDialog = ({
         nextOptions[targetSchemaIds[index]!] = query.data;
       }
     });
+    for (const [schemaId, extra] of Object.entries(referenceOptionsExtra ?? {})) {
+      nextOptions[schemaId] = [...(nextOptions[schemaId] ?? []), ...extra];
+    }
     return nextOptions;
-  }, [open, targetSchemaIds, entitiesQueries]);
+  }, [open, targetSchemaIds, entitiesQueries, referenceOptionsExtra]);
 
   useEffect(() => {
     if (!templateId || !selectedSchema || entitiesQueries.some(query => query.isPending)) return;
@@ -245,6 +254,29 @@ export const AddEntityDialog = ({
       _links: [],
       ...dataFields
     };
+
+    if (draftMode) {
+      onDraftCreated?.({
+        schema_id: schemaId,
+        name: entityName.trim(),
+        slug: entityName
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-'),
+        namespace: body._namespace,
+        description: body._description,
+        owner: body._owner,
+        lifecycle: body._lifecycle,
+        target_lifecycle: null,
+        target_lifecycle_date: null,
+        tags,
+        links: body._links,
+        data: dataFields
+      });
+      onClose();
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const entity = await orpcClient.entities.create({

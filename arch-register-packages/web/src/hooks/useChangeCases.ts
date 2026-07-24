@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invalidateEntityQueries } from '../queries/entities';
 import { changeCaseKeys, invalidateChangeCaseQueries } from '../queries/changeCases';
 import { orpcClient } from '../lib/orpcClient';
+import type { SaveChangeCaseDraftRequest } from '@arch-register/api-types/changeCaseContract';
 
 export const useChangeCasesByProject = (workspaceId: string, projectId: string, enabled = true) =>
   useQuery({
@@ -67,7 +68,12 @@ export const useCreateChangeCase = (workspaceId: string, projectId: string) => {
       targetDate?: string | null;
       milestoneId?: string | null;
       commitMessage?: string | null;
-      members: { entityId: string; proposedState: Record<string, unknown> }[];
+      members: {
+        entityId?: string;
+        draftId?: string;
+        proposedState: Record<string, unknown>;
+      }[];
+      newEntities: { draftId: string; state: Record<string, unknown> }[];
     }) =>
       orpcClient.changeCases.create({
         params: { workspace: workspaceId, id: projectId },
@@ -169,6 +175,22 @@ export const useUpdateChangeCase = (workspaceId: string, projectId: string) => {
       }),
     onSuccess: (_, variables) => {
       invalidateChangeCaseQueries(queryClient, workspaceId, projectId, variables.caseId);
+    }
+  });
+};
+
+export const useSaveChangeCaseDraft = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: { caseId: string; draft: SaveChangeCaseDraftRequest }) =>
+      orpcClient.changeCases.saveDraft({
+        params: { workspace: workspaceId, id: projectId, caseId: params.caseId },
+        body: params.draft
+      }),
+    onSuccess: (_, variables) => {
+      invalidateChangeCaseQueries(queryClient, workspaceId, projectId, variables.caseId);
+      invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };

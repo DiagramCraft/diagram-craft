@@ -13,6 +13,7 @@ import {
   removeEntityFromChangeCase,
   updateChangeCaseMemberProposedState,
   updateChangeCaseFields,
+  saveChangeCaseDraft,
   checkChangeCaseApplyConflicts,
   applyChangeCase,
   withdrawChangeCase,
@@ -100,6 +101,16 @@ export const changeCaseORPCRouter = changeCaseRouter.router({
     }),
     update: changeCaseRouter.changeCases.update.handler(async ({ input, context }) => {
       return await updateChangeCaseFields(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        input.params.caseId,
+        context.event,
+        input.body
+      );
+    }),
+    saveDraft: changeCaseRouter.changeCases.saveDraft.handler(async ({ input, context }) => {
+      return await saveChangeCaseDraft(
         context.db,
         input.params.workspace,
         input.params.id,

@@ -46,9 +46,28 @@ const changeCaseSchema = z.object({
   members: z.array(changeCaseMemberSchema).describe('Entities affected by this case')
 });
 
-const changeCaseMemberBodySchema = z.object({
-  entityId: z.string().describe('Entity to include in the case'),
+const changeCaseMemberBodySchema = z
+  .object({
+    entityId: z.string().optional().describe('Existing entity to include in the case'),
+    draftId: z.string().optional().describe('Temporary client-side entity identifier'),
+    proposedState: z
+      .record(z.string(), z.unknown())
+      .describe('Proposed future state for the entity')
+  })
+  .refine(member => (member.entityId != null) !== (member.draftId != null), {
+    message: 'A change case member must reference either an entity or a draft entity'
+  });
+
+const existingChangeCaseMemberBodySchema = z.object({
+  entityId: z.string().describe('Existing entity to include in the case'),
   proposedState: z.record(z.string(), z.unknown()).describe('Proposed future state for the entity')
+});
+
+const newEntityDraftSchema = z.object({
+  draftId: z.string().min(1).describe('Temporary client-side entity identifier'),
+  state: z
+    .record(z.string(), z.unknown())
+    .describe('Initial project-scoped entity state; relations may contain draft IDs')
 });
 
 const createChangeCaseBodySchema = z
@@ -58,7 +77,12 @@ const createChangeCaseBodySchema = z
     targetDate: z.string().nullable().optional().describe('Target date (ISO 8601)'),
     milestoneId: z.string().nullable().optional().describe('Milestone identifier'),
     commitMessage: z.string().nullable().optional().describe('Commit message'),
-    members: z.array(changeCaseMemberBodySchema).min(1).describe('Entities included in the case')
+    members: z.array(changeCaseMemberBodySchema).min(1).describe('Entities included in the case'),
+    newEntities: z
+      .array(newEntityDraftSchema)
+      .optional()
+      .default([])
+      .describe('New project-scoped entities to create as part of saving the case')
   })
   .refine(body => !(body.targetDate != null && body.milestoneId != null), {
     message: 'A change case cannot specify both a target date and a milestone'
@@ -70,6 +94,19 @@ const updateChangeCaseBodySchema = z.object({
   milestoneId: z.string().nullable().optional().describe('Milestone identifier'),
   commitMessage: z.string().nullable().optional().describe('Commit message')
 });
+
+const saveChangeCaseDraftBodySchema = updateChangeCaseBodySchema
+  .extend({
+    members: z.array(changeCaseMemberBodySchema).min(1).describe('Entities included in the case'),
+    newEntities: z
+      .array(newEntityDraftSchema)
+      .optional()
+      .default([])
+      .describe('New project-scoped entities to create as part of saving the case')
+  })
+  .refine(body => !(body.targetDate != null && body.milestoneId != null), {
+    message: 'A change case cannot specify both a target date and a milestone'
+  });
 
 const changeCaseApplyConflictSchema = z.object({
   memberId: z.string().describe('Member identifier'),
@@ -149,7 +186,7 @@ export const changeCaseContract = oc.tag('ChangeCases').router({
         description: 'Adds a new member entity to a not-yet-applied change case.',
         tags: ['ChangeCases']
       })
-      .input(z.object({ params: wsProjectAndCaseId, body: changeCaseMemberBodySchema }))
+      .input(z.object({ params: wsProjectAndCaseId, body: existingChangeCaseMemberBodySchema }))
       .output(changeCaseSchema),
     removeMember: oc
       .route({
@@ -190,6 +227,17 @@ export const changeCaseContract = oc.tag('ChangeCases').router({
         tags: ['ChangeCases']
       })
       .input(z.object({ params: wsProjectAndCaseId, body: updateChangeCaseBodySchema }))
+      .output(changeCaseSchema),
+    saveDraft: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/change-cases/{caseId}/draft',
+        inputStructure: 'detailed',
+        summary: 'Save a planned change case draft',
+        description: 'Atomically saves case members and creates any new project-scoped entities.',
+        tags: ['ChangeCases']
+      })
+      .input(z.object({ params: wsProjectAndCaseId, body: saveChangeCaseDraftBodySchema }))
       .output(changeCaseSchema),
     checkApplyConflicts: oc
       .route({
@@ -247,5 +295,6 @@ export type ChangeCase = z.infer<typeof changeCaseSchema>;
 export type ChangeCaseMember = z.infer<typeof changeCaseMemberSchema>;
 export type CreateChangeCaseRequest = z.infer<typeof createChangeCaseBodySchema>;
 export type UpdateChangeCaseRequest = z.infer<typeof updateChangeCaseBodySchema>;
+export type SaveChangeCaseDraftRequest = z.infer<typeof saveChangeCaseDraftBodySchema>;
 export type ChangeCaseApplyConflict = z.infer<typeof changeCaseApplyConflictSchema>;
 export type ApplyChangeCaseRequest = z.infer<typeof applyChangeCaseBodySchema>;
