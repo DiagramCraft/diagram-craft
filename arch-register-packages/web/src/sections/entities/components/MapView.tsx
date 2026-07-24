@@ -311,10 +311,7 @@ export const MapView = ({
     () => normalizeViewConfig(mapViewConfigSchema, config, DEFAULT_CONFIG),
     [config]
   );
-  const schemaIds = useMemo(
-    () => getMapSchemaIds(cfg),
-    [cfg.levels, cfg.level1SchemaId, cfg.level2SchemaId, cfg.level3SchemaId]
-  );
+  const schemaIds = useMemo(() => getMapSchemaIds(cfg), [cfg]);
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
     projectId,
