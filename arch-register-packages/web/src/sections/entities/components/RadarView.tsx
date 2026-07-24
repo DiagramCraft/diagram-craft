@@ -30,7 +30,10 @@ import {
   type Quadrant,
   type Ring
 } from './radarViewState';
-import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
+import {
+  filterEntityRowsBySchema,
+  useHydratedEntityRows
+} from '../../../hooks/useHydratedEntityRows';
 import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -121,7 +124,11 @@ export const RadarView = ({
   // Rows arrive in 'summary' view (no custom select field values), but the quadrant/ring
   // axes are often custom Select fields — fetch the full-view records for the radar's
   // schema and use those in place of the summary rows wherever available.
-  const entities = useHydratedEntityRows(workspaceSlug, rows, !!config?.schemaId);
+  const radarRows = useMemo(
+    () => filterEntityRowsBySchema(rows, config?.schemaId),
+    [config?.schemaId, rows]
+  );
+  const entities = useHydratedEntityRows(workspaceSlug, radarRows, !!config?.schemaId);
 
   const schema = config ? (schemas.find(s => s.id === config.schemaId) ?? null) : null;
 
