@@ -22,6 +22,7 @@ import {
   getEntityTree,
   getEntity
 } from './entityQueryOperations';
+import { getTimelineViewData } from './entityTimelineOperations';
 import {
   getEntityRelations,
   getBatchEntityRelations,
@@ -127,6 +128,15 @@ const entityHandlers = {
   timelineMarkers: entityRouter.entities.timelineMarkers.handler(async ({ context }) => {
     const { workspace } = context;
     return await getTimelineMarkers(context.db, workspace);
+  }),
+
+  timelineView: entityRouter.entities.timelineView.handler(async ({ input, context }) => {
+    return await getTimelineViewData(
+      context.db,
+      input.params.workspace,
+      input.body.ids,
+      context.event
+    );
   }),
 
   tree: entityRouter.entities.tree.handler(async ({ input, context }) => {

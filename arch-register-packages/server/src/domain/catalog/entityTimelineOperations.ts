@@ -1,0 +1,80 @@
+import type { TimelineViewData } from '@arch-register/api-types/entityContract';
+import type { DatabaseAdapter } from '../../db/database';
+import type { AuthenticatedEvent } from '../../middleware/auth';
+import { defineEntityOperation } from '../operation';
+import { PermissionChecker } from '@arch-register/permissions';
+import { serializeEntityVersion } from './entityVersionOperations';
+
+const checker = new PermissionChecker();
+
+export const getTimelineViewData = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  ids: string[],
+  event: AuthenticatedEvent
+): Promise<Record<string, TimelineViewData>> =>
+  defineEntityOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to retrieve timeline view data' },
+    async ({ ws, authCtx }) => {
+      const requestedIds = [...new Set(ids)];
+      if (requestedIds.length === 0) return {};
+
+      const entities = await db.catalog.listEntities(ws);
+      const visibleIds = new Set(
+        entities
+          .filter(
+            entity => authCtx == null || checker.hasEntityPermission(authCtx, entity, 'view_entity')
+          )
+          .map(entity => entity.id)
+      );
+      const entityIds = requestedIds.filter(id => visibleIds.has(id));
+      if (entityIds.length === 0) return {};
+
+      const [versions, changes] = await Promise.all([
+        db.catalog.listEntityVersionsByIds(ws, entityIds),
+        db.changeCase.listTimelineMembersByEntities(ws, entityIds)
+      ]);
+
+      const result: Record<string, TimelineViewData> = {};
+      for (const entityId of entityIds) {
+        result[entityId] = { versions: [], projectChanges: [] };
+      }
+
+      for (const version of versions) {
+        result[version.entity_id]?.versions.push(serializeEntityVersion(version));
+      }
+
+      for (const change of changes) {
+        const data = result[change.member.entity_id];
+        if (!data) continue;
+        data.projectChanges.push({
+          changeCase: {
+            id: change.changeCase.id,
+            workspace: change.changeCase.workspace,
+            project_id: change.changeCase.project_id,
+            status: change.changeCase.status,
+            name: change.changeCase.name,
+            description: change.changeCase.description,
+            target_date: change.changeCase.effective_date,
+            milestone_id: change.changeCase.milestone_id,
+            commit_message: change.revisionMessage,
+            created_at: change.changeCase.created_at.toISOString(),
+            updated_at: change.changeCase.updated_at.toISOString()
+          },
+          member: {
+            id: change.member.id,
+            entity_id: change.member.entity_id,
+            base_version: change.member.base_version,
+            base_state: change.member.base_state,
+            proposed_state: change.member.proposed_state,
+            applied_version_id: change.member.applied_version_id
+          }
+        });
+      }
+
+      return result;
+    }
+  );

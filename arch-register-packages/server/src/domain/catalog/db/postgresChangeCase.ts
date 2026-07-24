@@ -59,6 +59,36 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
     return mapDatabaseRows(rows as DatabaseRow[], changeCaseMappers.case);
   }
 
+  async listTimelineMembersByEntities(workspace: string, entityIds: string[]) {
+    if (entityIds.length === 0) return [];
+    const rows = await this.sql`
+      SELECT
+        c.id AS case_id, c.workspace AS case_workspace, c.project_id AS case_project_id,
+        c.status AS case_status, c.purpose AS case_purpose, c.name AS case_name,
+        c.description AS case_description, c.effective_date AS case_effective_date,
+        c.milestone_id AS case_milestone_id, c.initiator_user_id AS case_initiator_user_id,
+        c.created_at AS case_created_at, c.updated_at AS case_updated_at,
+        c.closed_at AS case_closed_at, r.message AS revision_message,
+        m.id AS member_id, m.revision_id AS member_revision_id,
+        m.workspace AS member_workspace, m.entity_id AS member_entity_id,
+        m.base_version AS member_base_version, m.base_state AS member_base_state,
+        m.proposed_state AS member_proposed_state, m.diff AS member_diff,
+        m.applied_version_id AS member_applied_version_id
+      FROM entity_change_case c
+      JOIN entity_change_case_revision r ON r.case_id = c.id
+        AND r.revision_number = (
+          SELECT MAX(latest.revision_number)
+          FROM entity_change_case_revision latest
+          WHERE latest.workspace = c.workspace AND latest.case_id = c.id
+        )
+      JOIN entity_change_case_entity_version m ON m.revision_id = r.id
+      WHERE c.workspace = ${workspace} AND c.purpose = 'planned_change'
+        AND m.entity_id = ANY(${entityIds})
+      ORDER BY m.entity_id, c.updated_at DESC
+    `;
+    return mapDatabaseRows(rows as DatabaseRow[], changeCaseMappers.timelineMember);
+  }
+
   async getActiveRevision(workspace: string, caseId: string) {
     const rows = await this.sql`
       SELECT * FROM entity_change_case_revision

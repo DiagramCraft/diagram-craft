@@ -19,7 +19,7 @@ const changeCaseStatusSchema = z
   .enum(['planned', 'in_approval', 'applied', 'rejected', 'withdrawn', 'cancelled', 'superseded'])
   .describe('Change case lifecycle status');
 
-const changeCaseMemberSchema = z.object({
+export const changeCaseMemberSchema = z.object({
   id: z.string().describe('Member identifier'),
   entity_id: z.string().describe('Affected entity identifier'),
   base_version: z.number().describe('Entity version this member was planned against'),
@@ -31,7 +31,7 @@ const changeCaseMemberSchema = z.object({
     .describe('Resulting entity_version id once this member has been applied')
 });
 
-const changeCaseSchema = z.object({
+export const changeCaseSummarySchema = z.object({
   id: z.string().describe('Change case identifier'),
   workspace: z.string().describe('Workspace identifier'),
   project_id: z.string().nullable().describe('Associated project identifier'),
@@ -42,7 +42,10 @@ const changeCaseSchema = z.object({
   milestone_id: z.string().nullable().describe('Associated milestone identifier'),
   commit_message: z.string().nullable().describe('Commit message describing the changes'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
-  updated_at: z.string().describe('ISO 8601 last update timestamp'),
+  updated_at: z.string().describe('ISO 8601 last update timestamp')
+});
+
+export const changeCaseSchema = changeCaseSummarySchema.extend({
   members: z.array(changeCaseMemberSchema).describe('Entities affected by this case')
 });
 

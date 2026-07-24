@@ -73,6 +73,12 @@ export type ChangeCaseMemberInput = {
   diff: Record<string, unknown>;
 };
 
+export type ChangeCaseTimelineMemberDbResult = {
+  changeCase: ChangeCaseDbResult;
+  member: ChangeCaseMemberDbResult;
+  revisionMessage: string | null;
+};
+
 export type ChangeCaseDbCreate = {
   id: string;
   workspace: string;
@@ -133,6 +139,42 @@ export const changeCaseMappers = {
     ),
     diff: parseDatabaseJson(row['diff'], {}, 'entity_change_case_entity_version.diff'),
     applied_version_id: row['applied_version_id'] == null ? null : String(row['applied_version_id'])
+  }),
+  timelineMember: (row: DatabaseRow): ChangeCaseTimelineMemberDbResult => ({
+    changeCase: {
+      id: String(row['case_id']),
+      workspace: String(row['case_workspace']),
+      project_id: row['case_project_id'] == null ? null : String(row['case_project_id']),
+      status: row['case_status'] as ChangeCaseStatus,
+      purpose: row['case_purpose'] as 'planned_change' | 'requested_change',
+      name: row['case_name'] == null ? null : String(row['case_name']),
+      description: row['case_description'] == null ? null : String(row['case_description']),
+      effective_date:
+        row['case_effective_date'] == null ? null : databaseDateOnly(row['case_effective_date']),
+      milestone_id: row['case_milestone_id'] == null ? null : String(row['case_milestone_id']),
+      initiator_user_id:
+        row['case_initiator_user_id'] == null ? null : String(row['case_initiator_user_id']),
+      created_at: databaseDate(row['case_created_at']),
+      updated_at: databaseDate(row['case_updated_at']),
+      closed_at: row['case_closed_at'] == null ? null : databaseDate(row['case_closed_at'])
+    },
+    member: {
+      id: String(row['member_id']),
+      revision_id: String(row['member_revision_id']),
+      workspace: String(row['member_workspace']),
+      entity_id: String(row['member_entity_id']),
+      base_version: Number(row['member_base_version']),
+      base_state: parseDatabaseJson(row['member_base_state'], {}, 'timeline.base_state'),
+      proposed_state: parseDatabaseJson(
+        row['member_proposed_state'],
+        {},
+        'timeline.proposed_state'
+      ),
+      diff: parseDatabaseJson(row['member_diff'], {}, 'timeline.diff'),
+      applied_version_id:
+        row['member_applied_version_id'] == null ? null : String(row['member_applied_version_id'])
+    },
+    revisionMessage: row['revision_message'] == null ? null : String(row['revision_message'])
   })
 };
 
@@ -141,6 +183,10 @@ export type ChangeCaseDatabase = {
   getCase(workspace: string, caseId: string): Promise<ChangeCaseDbResult | null>;
   listCasesByProject(workspace: string, projectId: string): Promise<ChangeCaseDbResult[]>;
   listCasesByEntity(workspace: string, entityId: string): Promise<ChangeCaseDbResult[]>;
+  listTimelineMembersByEntities(
+    workspace: string,
+    entityIds: string[]
+  ): Promise<ChangeCaseTimelineMemberDbResult[]>;
   getActiveRevision(workspace: string, caseId: string): Promise<ChangeCaseRevisionDbResult | null>;
   getLatestRevision(workspace: string, caseId: string): Promise<ChangeCaseRevisionDbResult | null>;
   listMembers(workspace: string, revisionId: string): Promise<ChangeCaseMemberDbResult[]>;
