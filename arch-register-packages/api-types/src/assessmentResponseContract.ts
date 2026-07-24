@@ -1,12 +1,12 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { wsAndId } from '@arch-register/api-types/common';
+import { ws } from '@arch-register/api-types/common';
 
-const wsProjectAndAssessmentId = wsAndId.extend({
+const wsAndAssessmentId = ws.extend({
   assessmentId: z.string().describe('Assessment identifier')
 });
 
-const wsProjectAssessmentAndEntityId = wsProjectAndAssessmentId.extend({
+const wsAssessmentAndEntityId = wsAndAssessmentId.extend({
   entityId: z.string().describe('Entity identifier')
 });
 
@@ -40,18 +40,18 @@ export const assessmentResponseContract = oc.tag('Assessments').router({
     list: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/projects/{id}/assessments/{assessmentId}/responses',
+        path: '/{workspace}/assessments/{assessmentId}/responses',
         inputStructure: 'detailed',
         summary: 'List assessment responses',
         description: 'Retrieves all recorded responses for the assessment, one per entity.',
         tags: ['Assessments']
       })
-      .input(z.object({ params: wsProjectAndAssessmentId }))
+      .input(z.object({ params: wsAndAssessmentId }))
       .output(z.array(assessmentResponseSchema)),
     upsert: oc
       .route({
         method: 'PUT',
-        path: '/{workspace}/projects/{id}/assessments/{assessmentId}/responses/{entityId}',
+        path: '/{workspace}/assessments/{assessmentId}/responses/{entityId}',
         inputStructure: 'detailed',
         summary: 'Record an assessment response',
         description:
@@ -60,7 +60,7 @@ export const assessmentResponseContract = oc.tag('Assessments').router({
       })
       .input(
         z.object({
-          params: wsProjectAssessmentAndEntityId,
+          params: wsAssessmentAndEntityId,
           body: upsertAssessmentResponseBodySchema
         })
       )
@@ -68,7 +68,7 @@ export const assessmentResponseContract = oc.tag('Assessments').router({
     exportCsv: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/projects/{id}/assessments/{assessmentId}/responses/export',
+        path: '/{workspace}/assessments/{assessmentId}/responses/export',
         inputStructure: 'detailed',
         outputStructure: 'detailed',
         summary: 'Export assessment results to CSV',
@@ -76,7 +76,7 @@ export const assessmentResponseContract = oc.tag('Assessments').router({
           'Exports the full results table for the assessment to a CSV file: one row per in-scope entity, one column per assessment field, plus standard entity columns.',
         tags: ['Assessments']
       })
-      .input(z.object({ params: wsProjectAndAssessmentId }))
+      .input(z.object({ params: wsAndAssessmentId }))
       .output(
         z.object({
           headers: z

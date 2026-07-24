@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import type { Project } from '@arch-register/api-types/projectContract';
 import { useProjects } from '../../../hooks/useProjects';
-import { useAssessmentsForProjects } from '../../../hooks/useAssessments';
+import { useAssessments } from '../../../hooks/useAssessments';
 import { useAssessmentResponses } from '../../../hooks/useAssessmentResponses';
 
 export type AssessmentJoinOption = {
@@ -14,7 +13,7 @@ export type AssessmentJoinOption = {
 export const isJoinableAssessment = (assessment: Pick<Assessment, 'status'>) =>
   assessment.status === 'open' || assessment.status === 'closed';
 
-export const getAssessmentProjectIds = (projects: Pick<Project, 'id'>[], projectId?: string) =>
+export const getAssessmentProjectIds = (projects: Array<{ id: string }>, projectId?: string) =>
   projectId ? [projectId] : projects.map(project => project.id);
 
 export const resolveJoinAssessmentId = (
@@ -28,45 +27,25 @@ export const resolveJoinAssessmentId = (
     : null;
 };
 
-/**
- * Resolves the entity browser's single joined assessment: the picker's candidate list
- * (open/closed assessments across every project the user can read in workspace context, or
- * only the active project in project context) plus, when joined, the bulk entity_id -> values
- * response map for display. Fetches responses once via the existing assessmentResponses.list
- * endpoint — never per-entity.
- */
 export const useJoinedAssessment = (
   workspaceId: string,
   joinAssessmentId: string | null | undefined,
   projectId?: string
 ) => {
   const { data: projects = [] } = useProjects(workspaceId);
-  const projectIds = useMemo(
-    () => getAssessmentProjectIds(projects, projectId),
-    [projectId, projects]
-  );
-  const assessmentQueries = useAssessmentsForProjects(workspaceId, projectIds);
+  const { data: assessments = [], isSuccess } = useAssessments(workspaceId);
 
   const options = useMemo<AssessmentJoinOption[]>(() => {
-    const result: AssessmentJoinOption[] = [];
-    assessmentQueries.forEach((q, i) => {
-      const assessmentProjectId = projectIds[i];
-      const project = projects.find(
-        candidate =>
-          candidate.id === assessmentProjectId || candidate.public_id === assessmentProjectId
-      );
-      (q.data ?? []).forEach(assessment => {
-        if (isJoinableAssessment(assessment)) {
-          result.push({
-            assessment,
-            projectId: assessmentProjectId!,
-            projectName: project?.name ?? ''
-          });
-        }
-      });
-    });
-    return result;
-  }, [assessmentQueries, projectIds, projects]);
+    const activeProject = projects.find(project => project.public_id === projectId);
+    return assessments
+      .filter(assessment => isJoinableAssessment(assessment))
+      .filter(assessment => !projectId || assessment.project_id === activeProject?.id)
+      .map(assessment => ({
+        assessment,
+        projectId: assessment.project_id,
+        projectName: projects.find(project => project.id === assessment.project_id)?.name ?? ''
+      }));
+  }, [assessments, projectId, projects]);
 
   const joined = useMemo(
     () =>
@@ -76,21 +55,12 @@ export const useJoinedAssessment = (
     [options, joinAssessmentId, projectId]
   );
 
-  const { data: responses = [] } = useAssessmentResponses(
-    workspaceId,
-    joined?.projectId ?? '',
-    joined?.assessment.id ?? ''
-  );
+  const { data: responses = [] } = useAssessmentResponses(workspaceId, joined?.assessment.id ?? '');
 
   const responsesByEntity = useMemo(
     () => new Map(responses.map(r => [r.entity_id, r.values])),
     [responses]
   );
 
-  return {
-    options,
-    joined,
-    responsesByEntity,
-    isReady: projectIds.length === 0 || assessmentQueries.every(query => query.isSuccess)
-  };
+  return { options, joined, responsesByEntity, isReady: isSuccess };
 };

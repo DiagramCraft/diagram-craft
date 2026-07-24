@@ -30,7 +30,7 @@ import { ContentFolderDialog } from '../../components/ContentFolderDialog';
 import { RenameDialog } from '../../components/RenameDialog';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
-import { useAssessments } from '../../hooks/useAssessments';
+import { useProjectAssessments } from '../../hooks/useAssessments';
 import { useEntityCount } from '../../hooks/useEntities';
 import { useMilestones } from '../../hooks/useMilestones';
 import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
@@ -78,7 +78,7 @@ export const ProjectContentSidebar = ({
     },
     { enabled: project != null }
   );
-  const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
+  const { data: assessments = [] } = useProjectAssessments(workspaceSlug, projectId);
   const { data: milestones = [] } = useMilestones(workspaceSlug, projectId);
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, { projectId });
   const projectViews = savedViews.filter(view => view.scope === 'project');

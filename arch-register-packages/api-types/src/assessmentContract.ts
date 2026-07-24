@@ -1,9 +1,9 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { wsAndId } from '@arch-register/api-types/common';
+import { ws } from '@arch-register/api-types/common';
 import { filterConditionSchema } from '@arch-register/api-types/viewContract';
 
-const wsProjectAndAssessmentId = wsAndId.extend({
+const wsAndAssessmentId = ws.extend({
   assessmentId: z.string().describe('Assessment identifier')
 });
 
@@ -41,7 +41,7 @@ const assessmentFieldSchema = z
 const assessmentSchema = z.object({
   id: z.string().describe('Unique assessment identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
-  project_id: z.string().describe('Parent project identifier'),
+  project_id: z.string().describe('Owning project identifier'),
   name: z.string().describe('Assessment name (must be unique within the project)'),
   description: z.string().describe('Assessment description'),
   status: z.enum(['draft', 'open', 'closed', 'archived']).describe('Assessment status'),
@@ -61,6 +61,7 @@ const assessmentSchema = z.object({
 });
 
 const assessmentBodySchema = z.object({
+  project_id: z.string().describe('Owning project identifier'),
   name: z.string().describe('Assessment name (must be unique within the project)'),
   description: z.preprocess(
     value => (value === undefined ? undefined : typeof value === 'string' ? value : ''),
@@ -92,70 +93,70 @@ export const assessmentContract = oc.tag('Assessments').router({
     list: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/projects/{id}/assessments',
+        path: '/{workspace}/assessments',
         inputStructure: 'detailed',
         summary: 'List project assessments',
         description: 'Retrieves all assessment templates defined for the project.',
         tags: ['Assessments']
       })
-      .input(z.object({ params: wsAndId }))
+      .input(z.object({ params: ws }))
       .output(z.array(assessmentSchema)),
     get: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/projects/{id}/assessments/{assessmentId}',
+        path: '/{workspace}/assessments/{assessmentId}',
         inputStructure: 'detailed',
         summary: 'Get assessment details',
         description: 'Retrieves a specific assessment template by ID.',
         tags: ['Assessments']
       })
-      .input(z.object({ params: wsProjectAndAssessmentId }))
+      .input(z.object({ params: wsAndAssessmentId }))
       .output(assessmentSchema),
     create: oc
       .route({
         method: 'POST',
-        path: '/{workspace}/projects/{id}/assessments',
+        path: '/{workspace}/assessments',
         inputStructure: 'detailed',
         summary: 'Create assessment',
         description: 'Creates a new assessment template within the project.',
         tags: ['Assessments']
       })
-      .input(z.object({ params: wsAndId, body: assessmentBodySchema }))
+      .input(z.object({ params: ws, body: assessmentBodySchema }))
       .output(assessmentSchema),
     update: oc
       .route({
         method: 'PUT',
-        path: '/{workspace}/projects/{id}/assessments/{assessmentId}',
+        path: '/{workspace}/assessments/{assessmentId}',
         inputStructure: 'detailed',
         summary: 'Update assessment',
         description: 'Updates an existing assessment template.',
         tags: ['Assessments']
       })
-      .input(z.object({ params: wsProjectAndAssessmentId, body: assessmentBodySchema }))
+      .input(z.object({ params: wsAndAssessmentId, body: assessmentBodySchema }))
       .output(assessmentSchema),
     updateStatus: oc
       .route({
         method: 'PUT',
-        path: '/{workspace}/projects/{id}/assessments/{assessmentId}/status',
+        path: '/{workspace}/assessments/{assessmentId}/status',
         inputStructure: 'detailed',
         summary: 'Update assessment status',
         description:
           'Sets the assessment status to draft, open, closed, or archived without deleting its data.',
         tags: ['Assessments']
       })
-      .input(z.object({ params: wsProjectAndAssessmentId, body: updateAssessmentStatusBodySchema }))
+      .input(z.object({ params: wsAndAssessmentId, body: updateAssessmentStatusBodySchema }))
       .output(assessmentSchema),
     remove: oc
       .route({
         method: 'DELETE',
-        path: '/{workspace}/projects/{id}/assessments/{assessmentId}',
+        path: '/{workspace}/assessments/{assessmentId}',
         inputStructure: 'detailed',
         summary: 'Delete assessment',
         description:
           'Permanently deletes an assessment template. Fails if it has any recorded responses.',
         tags: ['Assessments']
       })
-      .input(z.object({ params: wsProjectAndAssessmentId }))
+      .input(z.object({ params: wsAndAssessmentId }))
       .output(
         z.object({
           success: z.boolean().describe('Whether the deletion was successful'),

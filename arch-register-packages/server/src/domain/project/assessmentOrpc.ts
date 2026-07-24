@@ -26,36 +26,23 @@ const assessmentRouter = implement(assessmentContract)
 export const assessmentORPCRouter = assessmentRouter.router({
   assessments: {
     list: assessmentRouter.assessments.list.handler(async ({ input, context }) => {
-      return await listAssessments(
-        context.db,
-        input.params.workspace,
-        input.params.id,
-        context.event
-      );
+      return await listAssessments(context.db, input.params.workspace, context.event);
     }),
     get: assessmentRouter.assessments.get.handler(async ({ input, context }) => {
       return await getAssessment(
         context.db,
         input.params.workspace,
-        input.params.id,
         input.params.assessmentId,
         context.event
       );
     }),
     create: assessmentRouter.assessments.create.handler(async ({ input, context }) => {
-      return await createAssessment(
-        context.db,
-        input.params.workspace,
-        input.params.id,
-        input.body,
-        context.event
-      );
+      return await createAssessment(context.db, input.params.workspace, input.body, context.event);
     }),
     update: assessmentRouter.assessments.update.handler(async ({ input, context }) => {
       return await updateAssessment(
         context.db,
         input.params.workspace,
-        input.params.id,
         input.params.assessmentId,
         input.body,
         context.event
@@ -65,7 +52,6 @@ export const assessmentORPCRouter = assessmentRouter.router({
       return await updateAssessmentStatus(
         context.db,
         input.params.workspace,
-        input.params.id,
         input.params.assessmentId,
         input.body,
         context.event
@@ -75,7 +61,6 @@ export const assessmentORPCRouter = assessmentRouter.router({
       return await deleteAssessment(
         context.db,
         input.params.workspace,
-        input.params.id,
         input.params.assessmentId,
         context.event
       );

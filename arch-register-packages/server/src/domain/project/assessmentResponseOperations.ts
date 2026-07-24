@@ -21,13 +21,8 @@ const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: str
   return project;
 };
 
-const getAssessmentOrThrow = async (
-  db: DatabaseAdapter,
-  ws: string,
-  projectId: string,
-  assessmentId: string
-) => {
-  const assessment = await db.project.getAssessment(ws, projectId, assessmentId);
+const getAssessmentOrThrow = async (db: DatabaseAdapter, ws: string, assessmentId: string) => {
+  const assessment = await db.project.getAssessmentById(ws, assessmentId);
   httpAssert.present(assessment, {
     status: 404,
     message: `Assessment '${assessmentId}' not found`
@@ -38,7 +33,6 @@ const getAssessmentOrThrow = async (
 export const listAssessmentResponses = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   assessmentId: string,
   event: AuthenticatedEvent
 ): Promise<AssessmentResponse[]> => {
@@ -48,10 +42,9 @@ export const listAssessmentResponses = async (
     event,
     { fallback: 'Failed to retrieve assessment responses' },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
+      const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAccess(authCtx, project.owner);
-
-      const assessment = await getAssessmentOrThrow(db, ws, project.id, assessmentId);
       const rows = await db.project.listAssessmentResponses(ws, assessmentId);
       return rows.map(row => toApiAssessmentResponse(row, assessment));
     }
@@ -61,7 +54,6 @@ export const listAssessmentResponses = async (
 export const upsertAssessmentResponse = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   assessmentId: string,
   entityId: string,
   body: UpsertAssessmentResponseRequest,
@@ -73,7 +65,8 @@ export const upsertAssessmentResponse = async (
     event,
     { fallback: 'Failed to record assessment response' },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
+      const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAction(
         authCtx,
         project.owner,
@@ -81,7 +74,6 @@ export const upsertAssessmentResponse = async (
         'You do not have permission to record assessment responses in this project'
       );
 
-      const assessment = await getAssessmentOrThrow(db, ws, project.id, assessmentId);
       httpAssert.true(assessment.status === 'open', {
         status: 409,
         message: 'Cannot record responses: assessment is not open'
@@ -124,7 +116,6 @@ export const upsertAssessmentResponse = async (
 export const exportAssessmentResponsesCsv = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   assessmentId: string,
   event: AuthenticatedEvent
 ): Promise<{ headers: Record<string, string>; body: Blob }> => {
@@ -134,10 +125,9 @@ export const exportAssessmentResponsesCsv = async (
     event,
     { fallback: 'Failed to export assessment results' },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
+      const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAccess(authCtx, project.owner);
-
-      const assessment = await getAssessmentOrThrow(db, ws, project.id, assessmentId);
       const [allEntities, responses, enums] = await Promise.all([
         listAllCatalogEntities(db, ws),
         db.project.listAssessmentResponses(ws, assessmentId),

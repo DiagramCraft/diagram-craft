@@ -873,9 +873,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     return mapDatabaseRows(rows, projectMappers.diagramEntityFile);
   }
 
-  async listAssessments(workspace: string, projectId: string) {
+  async listAssessments(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT * FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} ORDER BY name
+      SELECT * FROM assessment WHERE workspace = ${workspace} ORDER BY name
     `;
     return mapDatabaseRows(rows, projectMappers.assessment);
   }

@@ -1,6 +1,10 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { requireProjectAccess, requireProjectAction } from '../auth/authorization';
+import {
+  canAccessProject,
+  requireProjectAccess,
+  requireProjectAction
+} from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { httpAssert } from '../../utils/httpAssert';
 import { defineOperation } from '../operation';
@@ -49,7 +53,6 @@ const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: str
 export const listAssessments = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   event: AuthenticatedEvent
 ): Promise<Assessment[]> => {
   return defineOperation(
@@ -63,15 +66,22 @@ export const listAssessments = async (
       }
     },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
-      requireProjectAccess(authCtx, project.owner);
-
-      const [rows, entities] = await Promise.all([
-        db.project.listAssessments(ws, project.id),
+      const [rows, projects, entities] = await Promise.all([
+        db.project.listAssessments(ws),
+        db.project.listProjects(ws),
         listAllCatalogEntities(db, ws)
       ]);
+      const visibleProjects = new Map(
+        projects
+          .filter(project => canAccessProject(authCtx, project.owner))
+          .map(project => [project.id, project])
+      );
       return await Promise.all(
-        rows.map(async row => toApiAssessment(row, await getAssessmentStats(db, ws, row, entities)))
+        rows
+          .filter(row => visibleProjects.has(row.project_id))
+          .map(async row =>
+            toApiAssessment(row, await getAssessmentStats(db, ws, row, entities), row.project_id)
+          )
       );
     }
   );
@@ -80,7 +90,6 @@ export const listAssessments = async (
 export const getAssessment = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   id: string,
   event: AuthenticatedEvent
 ): Promise<Assessment> => {
@@ -95,12 +104,11 @@ export const getAssessment = async (
       }
     },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
-      requireProjectAccess(authCtx, project.owner);
-
-      const row = await db.project.getAssessment(ws, project.id, id);
+      const row = await db.project.getAssessmentById(ws, id);
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
-      return toApiAssessment(row, await getAssessmentStats(db, ws, row));
+      const project = await getProjectOrThrow(db, ws, row.project_id);
+      requireProjectAccess(authCtx, project.owner);
+      return toApiAssessment(row, await getAssessmentStats(db, ws, row), project.id);
     }
   );
 };
@@ -108,7 +116,6 @@ export const getAssessment = async (
 export const createAssessment = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   body: CreateAssessmentRequest,
   event: AuthenticatedEvent
 ): Promise<Assessment> => {
@@ -123,7 +130,7 @@ export const createAssessment = async (
       }
     },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const project = await getProjectOrThrow(db, ws, body.project_id);
       requireProjectAction(
         authCtx,
         project.owner,
@@ -133,7 +140,7 @@ export const createAssessment = async (
 
       const timestamp = new Date();
       const row = await db.project.createAssessment(
-        buildCreateAssessmentInput(ws, project.id, body, timestamp)
+        buildCreateAssessmentInput(ws, { ...body, project_id: project.id }, timestamp)
       );
 
       await logAudit(db, {
@@ -146,7 +153,7 @@ export const createAssessment = async (
         changes: { new: extractEntityFields(row) }
       });
 
-      return toApiAssessment(row, { response_count: 0, completed_entity_count: 0 });
+      return toApiAssessment(row, { response_count: 0, completed_entity_count: 0 }, project.id);
     }
   );
 };
@@ -154,7 +161,6 @@ export const createAssessment = async (
 export const updateAssessment = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   id: string,
   body: UpdateAssessmentRequest,
   event: AuthenticatedEvent
@@ -170,7 +176,14 @@ export const updateAssessment = async (
       }
     },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const existing = await db.project.getAssessmentById(ws, id);
+      httpAssert.present(existing, { status: 404, message: `Assessment '${id}' not found` });
+      const project = await getProjectOrThrow(db, ws, existing.project_id);
+      const requestedProject = await getProjectOrThrow(db, ws, body.project_id);
+      httpAssert.true(requestedProject.id === project.id, {
+        status: 400,
+        message: 'Assessment project ownership cannot be changed'
+      });
       requireProjectAction(
         authCtx,
         project.owner,
@@ -178,18 +191,15 @@ export const updateAssessment = async (
         'You do not have permission to edit assessments in this project'
       );
 
-      const oldRow = await db.project.getAssessment(ws, project.id, id);
-      httpAssert.present(oldRow, { status: 404, message: `Assessment '${id}' not found` });
-
       const row = await db.project.updateAssessment(
         ws,
         project.id,
         id,
-        buildUpdateAssessmentInput(body, oldRow, new Date())
+        buildUpdateAssessmentInput(body, existing, new Date())
       );
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
 
-      const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
+      const changes = computeChanges(extractEntityFields(existing), extractEntityFields(row));
       await logAudit(db, {
         userId: authCtx.userId,
         workspace: ws,
@@ -200,7 +210,7 @@ export const updateAssessment = async (
         changes
       });
 
-      return toApiAssessment(row, await getAssessmentStats(db, ws, row));
+      return toApiAssessment(row, await getAssessmentStats(db, ws, row), project.id);
     }
   );
 };
@@ -208,7 +218,6 @@ export const updateAssessment = async (
 export const updateAssessmentStatus = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   id: string,
   body: UpdateAssessmentStatusRequest,
   event: AuthenticatedEvent
@@ -224,16 +233,15 @@ export const updateAssessmentStatus = async (
       }
     },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const oldRow = await db.project.getAssessmentById(ws, id);
+      httpAssert.present(oldRow, { status: 404, message: `Assessment '${id}' not found` });
+      const project = await getProjectOrThrow(db, ws, oldRow.project_id);
       requireProjectAction(
         authCtx,
         project.owner,
         'edit_project',
         'You do not have permission to change assessment status in this project'
       );
-
-      const oldRow = await db.project.getAssessment(ws, project.id, id);
-      httpAssert.present(oldRow, { status: 404, message: `Assessment '${id}' not found` });
 
       const row = await db.project.updateAssessment(ws, project.id, id, {
         name: oldRow.name,
@@ -256,7 +264,7 @@ export const updateAssessmentStatus = async (
         changes: computeChanges(extractEntityFields(oldRow), extractEntityFields(row))
       });
 
-      return toApiAssessment(row, await getAssessmentStats(db, ws, row));
+      return toApiAssessment(row, await getAssessmentStats(db, ws, row), project.id);
     }
   );
 };
@@ -264,7 +272,6 @@ export const updateAssessmentStatus = async (
 export const deleteAssessment = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   id: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
@@ -279,16 +286,15 @@ export const deleteAssessment = async (
       }
     },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const row = await db.project.getAssessmentById(ws, id);
+      httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
+      const project = await getProjectOrThrow(db, ws, row.project_id);
       requireProjectAction(
         authCtx,
         project.owner,
         'edit_project',
         'You do not have permission to delete assessments in this project'
       );
-
-      const row = await db.project.getAssessment(ws, project.id, id);
-      httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
 
       await db.project.deleteAssessment(ws, project.id, id);
 

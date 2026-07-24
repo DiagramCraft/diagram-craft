@@ -24,7 +24,7 @@ import { MemberAvatar } from '../../components/MemberAvatar';
 import { AssessmentResponseHistory } from './components/AssessmentResponseHistory';
 import { DiscussionThread } from '../discussions/DiscussionThread';
 import {
-  useAssessments,
+  useProjectAssessments,
   useUpdateAssessment,
   useUpdateAssessmentStatus,
   useDeleteAssessment
@@ -81,6 +81,7 @@ const STATUS_ORDER: Record<AssessmentEntityStatus, number> = {
   in_progress: 1,
   complete: 2
 };
+type AssessmentFormData = Omit<CreateAssessmentRequest, 'project_id'>;
 
 export const AssessmentDetailsScreen = ({
   project,
@@ -102,9 +103,9 @@ export const AssessmentDetailsScreen = ({
   const navigate = useNavigate();
   const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
 
-  const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
+  const { data: assessments = [] } = useProjectAssessments(workspaceSlug, projectId);
   const assessment = assessments.find(a => a.id === assessmentId);
-  const updateMutation = useUpdateAssessment(workspaceSlug, projectId);
+  const updateMutation = useUpdateAssessment(workspaceSlug, project.id);
   const statusMutation = useUpdateAssessmentStatus(workspaceSlug, projectId);
   const deleteMutation = useDeleteAssessment(workspaceSlug, projectId);
   const [editing, setEditing] = useState(false);
@@ -120,10 +121,9 @@ export const AssessmentDetailsScreen = ({
     [scopeQueries]
   );
 
-  const { data: responses = [] } = useAssessmentResponses(workspaceSlug, projectId, assessmentId);
+  const { data: responses = [] } = useAssessmentResponses(workspaceSlug, assessmentId);
   const upsertResponse = useUpsertAssessmentResponse(
     workspaceSlug,
-    projectId,
     assessmentId,
     assessment?.fields ?? []
   );
@@ -184,7 +184,7 @@ export const AssessmentDetailsScreen = ({
 
   const handleExport = async () => {
     try {
-      const blob = await exportAssessmentResponsesToCSV(workspaceSlug, projectId, assessmentId);
+      const blob = await exportAssessmentResponsesToCSV(workspaceSlug, assessmentId);
       downloadBlob(
         blob,
         `${assessment?.name ?? 'assessment'}-results-${new Date().toISOString().split('T')[0]}.csv`
@@ -224,7 +224,7 @@ export const AssessmentDetailsScreen = ({
 
   const breadcrumbs = [...baseBreadcrumbs, { label: assessment.name }];
 
-  const handleSave = async (data: CreateAssessmentRequest, status: Assessment['status']) => {
+  const handleSave = async (data: AssessmentFormData, status: Assessment['status']) => {
     await updateMutation.mutateAsync({ assessmentId: assessment.id, data });
     if (status !== assessment.status) {
       await statusMutation.mutateAsync({ assessmentId: assessment.id, status });

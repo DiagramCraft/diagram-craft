@@ -29,7 +29,7 @@ import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
 import {
-  useAssessments,
+  useProjectAssessments,
   useCreateAssessment,
   useUpdateAssessmentStatus
 } from '../../hooks/useAssessments';
@@ -40,6 +40,7 @@ import { EmptyState } from '../../components/EmptyState';
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
 type StatusFilter = 'default' | 'draft' | 'archived' | 'all';
+type AssessmentFormData = Omit<CreateAssessmentRequest, 'project_id'>;
 
 const STATUS_LABEL: Record<Assessment['status'], string> = {
   draft: 'Draft',
@@ -74,7 +75,7 @@ export const ProjectAssessments = ({
   const navigate = routeApi.useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
 
-  const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
+  const { data: assessments = [] } = useProjectAssessments(workspaceSlug, projectId);
   const createMutation = useCreateAssessment(workspaceSlug, projectId);
   const statusMutation = useUpdateAssessmentStatus(workspaceSlug, projectId);
 
@@ -102,7 +103,7 @@ export const ProjectAssessments = ({
     return a.status === statusFilter;
   });
 
-  const handleSave = async (data: CreateAssessmentRequest, status: Assessment['status']) => {
+  const handleSave = async (data: AssessmentFormData, status: Assessment['status']) => {
     const created = await createMutation.mutateAsync(data);
     if (status !== created.status) {
       await statusMutation.mutateAsync({ assessmentId: created.id, status });
@@ -314,7 +315,7 @@ export const AssessmentEditorDialog = ({
   assessment: Assessment | null;
   schemas: EntitySchema[];
   isSaving: boolean;
-  onSave: (data: CreateAssessmentRequest, status: Assessment['status']) => void;
+  onSave: (data: AssessmentFormData, status: Assessment['status']) => void;
   onCancel: () => void;
 }) => {
   const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
