@@ -8098,6 +8098,21 @@
             "allowReserved": true
           },
           {
+            "name": "_schemaIds",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by multiple schema identifiers (OR'd together)"
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "owner",
             "in": "query",
             "schema": {
@@ -10343,6 +10358,21 @@
             "allowReserved": true
           },
           {
+            "name": "_schemaIds",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by multiple schema identifiers (OR'd together)"
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "owner",
             "in": "query",
             "schema": {
@@ -12002,6 +12032,21 @@
               "type": "string",
               "description": "Filter by schema identifier"
             },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "_schemaIds",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by multiple schema identifiers (OR'd together)"
+            },
+            "style": "deepObject",
+            "explode": true,
             "allowEmptyValue": true,
             "allowReserved": true
           },
@@ -17097,6 +17142,21 @@
               "type": "string",
               "description": "Filter by schema identifier"
             },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "_schemaIds",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by multiple schema identifiers (OR'd together)"
+            },
+            "style": "deepObject",
+            "explode": true,
             "allowEmptyValue": true,
             "allowReserved": true
           },
