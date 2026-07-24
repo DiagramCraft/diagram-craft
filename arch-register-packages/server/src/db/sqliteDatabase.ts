@@ -26,6 +26,7 @@ import { SqliteNotificationDeliveryDatabase } from '../domain/notification/db/sq
 import { SqliteEntityChangeDatabase } from '../domain/catalog/db/sqliteEntityChange';
 import { SqliteEntityDeprecationDatabase } from '../domain/catalog/db/sqliteEntityDeprecation';
 import { SqliteChangeCaseDatabase } from '../domain/catalog/db/sqliteChangeCase';
+import { SqliteExternalIdentityDatabase } from '../domain/externalIdentity/db/sqliteExternalIdentity';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -54,6 +55,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly entityChange;
   readonly entityDeprecation;
   readonly changeCase;
+  readonly externalIdentity;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -84,6 +86,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.entityChange = new SqliteEntityChangeDatabase(() => this.db);
     this.entityDeprecation = new SqliteEntityDeprecationDatabase(() => this.db);
     this.changeCase = new SqliteChangeCaseDatabase(() => this.db);
+    this.externalIdentity = new SqliteExternalIdentityDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -160,7 +163,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       notificationDelivery: this.notificationDelivery,
       entityChange: this.entityChange,
       entityDeprecation: this.entityDeprecation,
-      changeCase: this.changeCase
+      changeCase: this.changeCase,
+      externalIdentity: this.externalIdentity
     };
   }
 

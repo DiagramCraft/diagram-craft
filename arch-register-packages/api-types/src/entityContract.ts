@@ -91,7 +91,7 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
 });
 
 // EntityRecord = EntitySummary + dynamic schema fields
-const entityRecordSchema = entitySummarySchema
+export const entityRecordSchema = entitySummarySchema
   .catchall(z.unknown())
   .describe('Complete entity record with schema-specific fields');
 
@@ -103,7 +103,7 @@ const ownerOrIdSchema = z
   .optional()
   .describe('Owner reference (ID string or object with id)');
 
-const entityMutationBodySchema = z
+export const entityMutationBodySchema = z
   .object({
     _schemaId: z.string().optional().describe('Schema identifier'),
     _schema: z.object({ id: z.string(), name: z.string() }).optional().describe('Schema reference'),
