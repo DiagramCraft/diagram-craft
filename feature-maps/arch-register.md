@@ -297,6 +297,11 @@
           system user, restricted to a chosen subset of role capabilities, with an optional expiry date, in addition
           to the personal API tokens available from account settings.
 
+        - @id:ar.integrations.entity-sync External integrations holding the external-update capability can
+          idempotently create or update an entity by a durable (source, external key) identity, distinct from the
+          entity's internal id, so repeated submissions from a catalog importer converge on the same entity instead
+          of creating duplicates.
+
         - @id:ar.integrations.mcp External AI or automation clients can use the MCP server’s supported discovery and
           mutation tools.
 

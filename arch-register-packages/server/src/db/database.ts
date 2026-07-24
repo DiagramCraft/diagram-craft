@@ -19,6 +19,7 @@ import type { NotificationDeliveryDatabase } from '../domain/notification/db/not
 import type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 import type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
+import type { EntityExternalIdentityDatabase } from '../domain/externalIdentity/db/externalIdentityDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -57,6 +58,7 @@ export type DatabaseAdapter = {
   entityChange: EntityChangeDatabase;
   entityDeprecation: EntityDeprecationDatabase;
   changeCase: ChangeCaseDatabase;
+  externalIdentity: EntityExternalIdentityDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -163,6 +165,11 @@ export type {
   NotificationPreferenceDbResult,
   NotificationPreferenceOverride
 } from '../domain/notification/db/notificationPreferenceDatabase';
+export type {
+  EntityExternalIdentityDatabase,
+  EntityExternalIdentityRow,
+  EntityExternalIdentityDbCreate
+} from '../domain/externalIdentity/db/externalIdentityDatabase';
 export type {
   NotificationDeliveryDatabase,
   NotificationDeliveryDbCreate,

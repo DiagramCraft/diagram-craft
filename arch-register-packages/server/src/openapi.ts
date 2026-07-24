@@ -4,6 +4,7 @@ import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
+import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
@@ -23,11 +24,24 @@ import { jobsContract } from '@arch-register/api-types/jobsContract';
 import { externalContentContract } from '@arch-register/api-types/externalContentContract';
 import { webhookContract } from '@arch-register/api-types/webhookContract';
 import { documentContract } from '@arch-register/api-types/documentContract';
+import { assessmentContract } from '@arch-register/api-types/assessmentContract';
+import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
+import { automationRuleContract } from '@arch-register/api-types/automationRuleContract';
+import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
+import { discussionContract } from '@arch-register/api-types/discussionContract';
+import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
+import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
+import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
+import { governanceContract } from '@arch-register/api-types/governanceContract';
+import { milestoneContract } from '@arch-register/api-types/milestoneContract';
+import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
+import { devContract } from '@arch-register/api-types/devContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceEntityContract,
+  ...entitySyncContract,
   ...workspaceViewContract,
   ...workspaceCollectionContract,
   ...workspaceManagementContract,
@@ -47,7 +61,19 @@ export const allContracts = {
   ...jobsContract,
   ...externalContentContract,
   ...webhookContract,
-  ...documentContract
+  ...documentContract,
+  ...assessmentContract,
+  ...assessmentResponseContract,
+  ...automationRuleContract,
+  ...changeCaseContract,
+  ...discussionContract,
+  ...entityChangeContract,
+  ...entityDeprecationContract,
+  ...entityVersionContract,
+  ...governanceContract,
+  ...milestoneContract,
+  ...wikiCommentContract,
+  ...devContract
 };
 
 let generatedUnifiedSpec: Promise<object> | null = null;
