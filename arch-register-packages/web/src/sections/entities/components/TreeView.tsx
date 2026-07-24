@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
@@ -44,6 +44,7 @@ export type TreeViewProps = {
   displayFields: EntityDisplayField[];
   joinAssessmentId?: string | null;
   responsesByEntity?: Map<string, Record<string, string | number>>;
+  onCountChange?: (count: number) => void;
 };
 
 type TreeItem = (TreeNode & {
@@ -71,7 +72,8 @@ export const TreeView = ({
   config,
   displayFields,
   joinAssessmentId,
-  responsesByEntity
+  responsesByEntity,
+  onCountChange
 }: TreeViewProps) => {
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
@@ -83,6 +85,10 @@ export const TreeView = ({
     statusFilter,
     joinAssessmentId
   });
+
+  useEffect(() => {
+    onCountChange?.(nodes.filter(node => node._isMatch).length);
+  }, [nodes, onCountChange]);
 
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();

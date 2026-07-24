@@ -47,6 +47,7 @@ type EntityBrowserViewData = {
   joinAssessmentId?: string | null;
   joinedAssessment?: JoinedAssessmentContext | null;
   responsesByEntity?: Map<string, Record<string, string | number>>;
+  onCountChange?: (count: number) => void;
 };
 
 type EntityBrowserViewMode =
@@ -104,6 +105,7 @@ export const EntityBrowserView = ({
   joinAssessmentId,
   joinedAssessment,
   responsesByEntity,
+  onCountChange,
   mode
 }: EntityBrowserViewProps) => {
   const readOnly = mode.kind !== 'interactive';
@@ -138,6 +140,7 @@ export const EntityBrowserView = ({
           lifecycleStates={lifecycleStates}
           joinAssessmentId={joinAssessmentId}
           joinedAssessment={joinedAssessment}
+          onCountChange={onCountChange}
         />
       );
     case 'explore':
@@ -225,6 +228,7 @@ export const EntityBrowserView = ({
           displayFields={displayFields}
           joinAssessmentId={joinAssessmentId}
           responsesByEntity={responsesByEntity}
+          onCountChange={onCountChange}
         />
       );
     case 'cards':

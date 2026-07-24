@@ -4,7 +4,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import { parseDateValue, withLiveSearchText } from './entityBrowserState';
+import { isTreeBasedView, parseDateValue, withLiveSearchText } from './entityBrowserState';
 
 type UseEntityBrowserDataProps = {
   workspaceId: string;
@@ -54,6 +54,7 @@ export const useEntityBrowserData = ({
   onCountChange
 }: UseEntityBrowserDataProps) => {
   const isPagedBrowse = !disablePaging && (view === 'table' || view === 'cards') && sort === 'name';
+  const shouldLoadEntityList = enabled && !isTreeBasedView(view) && !!workspaceId;
   const pagedOffset = pageIndex * pageSize;
   // While browsing a snapshot date, the "show all entities" toggle has no effect within a
   // project — only project-linked entities are ever shown.
@@ -92,7 +93,7 @@ export const useEntityBrowserData = ({
       asOf,
       includePlannedChanges
     },
-    { enabled: enabled && isPagedBrowse && !!workspaceId }
+    { enabled: shouldLoadEntityList && isPagedBrowse }
   );
 
   const {
@@ -117,7 +118,7 @@ export const useEntityBrowserData = ({
       asOf,
       includePlannedChanges
     },
-    { enabled: enabled && !isPagedBrowse && !!workspaceId }
+    { enabled: shouldLoadEntityList && !isPagedBrowse }
   );
 
   const entities = isPagedBrowse ? pagedEntities : fullEntities;
@@ -217,8 +218,8 @@ export const useEntityBrowserData = ({
     : isFullLoading || isFullFetching;
 
   useEffect(() => {
-    onCountChange?.(totalCount);
-  }, [onCountChange, totalCount]);
+    if (!isTreeBasedView(view)) onCountChange?.(totalCount);
+  }, [onCountChange, totalCount, view]);
 
   return {
     activeDateField,
