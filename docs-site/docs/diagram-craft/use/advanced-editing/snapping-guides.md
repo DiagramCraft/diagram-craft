@@ -5,8 +5,8 @@ related_reading:
     to: /diagram-craft/diagram-craft/use/advanced-editing/alignment-distribution
   - label: Canvas Navigation
     to: /diagram-craft/diagram-craft/use/core-diagramming/canvas-navigation
-  - label: Document Structure
-    to: /diagram-craft/diagram-craft/use/organization/document-structure
+  - label: Tabs and Documents
+    to: /diagram-craft/diagram-craft/use/organization/tabs-documents
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -54,12 +54,6 @@ You can also drag guides from the rulers when rulers are visible.
 
 ## Turn On Rulers When Precision Matters
 
-The ruler toggle is useful when you need to place elements at specific positions or maintain alignment across a larger canvas. That is usually worth enabling for:
-
-- poster-style diagrams
-- dashboards or UI mockups
-- architecture overviews with strict columns
-
-For smaller flowcharts, rulers are optional. Guides and object snapping are often enough.
+The ruler toggle is useful when you need to place elements at specific positions or maintain alignment across a larger canvas.
 
 If snapping pulls an element to an unwanted target, temporarily disable that magnet type or reduce the threshold in the **Snap** panel.

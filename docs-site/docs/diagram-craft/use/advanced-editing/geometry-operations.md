@@ -7,6 +7,10 @@ related_reading:
     to: /diagram-craft/diagram-craft/use/advanced-editing/alignment-distribution
   - label: Connectors and Edges
     to: /diagram-craft/diagram-craft/use/core-diagramming/connectors-edges
+  - label: Curve Editing
+    to: /diagram-craft/diagram-craft/use/advanced-editing/curve-editing
+  - label: Edge Routing
+    to: /diagram-craft/diagram-craft/use/advanced-editing/edge-routing
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -45,22 +49,4 @@ For a selected node, the **Arrange** tab gives you direct control over:
 
 This is useful when a shape must line up with a precise layout, when grouped elements need mirrored orientation, or when a visual motif repeats across the page.
 
-## Convert To Curves Only When Needed
-
-**Convert to curves** is the point where a normal shape becomes an editable path. Use it when:
-
-- the built-in shape is close but not exact
-- a boolean result still needs manual refinement
-- the outline itself carries meaning that styling cannot express
-
-Do not convert too early. Standard shapes remain easier to resize and reuse cleanly.
-
-## Edge Geometry Counts Too
-
-Advanced editing also includes connector geometry:
-
-- changing the edge type between straight, orthogonal, curved, bezier, or axis-aligned
-- adding waypoints to control the route
-- refining bezier handles when a connection path needs to flow around nearby elements
-
-That is often the difference between a readable diagram and one where lines feel accidental.
+Curve editing and edge routing are covered in their own pages: [Curve Editing](./curve-editing) and [Edge Routing](./edge-routing).

@@ -4,7 +4,7 @@ related_reading:
   - label: Data Sources
     to: /diagram-craft/diagram-craft/use/data-integration/data-sources
   - label: Query Language (DJQL)
-    to: /diagram-craft/diagram-craft/use/data-integration/query-language
+    to: /diagram-craft/diagram-craft/use/organization/query-language
   - label: Dynamic Updates
     to: /diagram-craft/diagram-craft/use/data-integration/dynamic-updates
 ---
@@ -79,9 +79,3 @@ When an element already has external data, the current UI gives you two distinct
 - **Unlink & Clear** removes the schema data from the element
 
 Use **Unlink** when you want to keep the structure and possibly replace the record later. Use **Unlink & Clear** when the element should stop participating in that schema entirely.
-
-## Limits To Call Out
-
-- binding in Diagram Craft is schema- and metadata-driven, not a generic spreadsheet-style formula system
-- if an upstream record changes shape, you may need to refresh providers and review affected elements
-- bindings do not automatically guarantee style or layout updates unless another feature, such as rules or templates, uses that data

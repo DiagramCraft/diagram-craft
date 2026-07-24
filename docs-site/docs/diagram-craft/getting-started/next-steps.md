@@ -21,7 +21,7 @@ After the first diagram, the best next page depends on what you want to do more 
 ## If You Want More Diagram Building Blocks
 
 - [Built-in Stencils](../stencils-templates/built-in-stencils)
-- [Diagram Templates](../stencils-templates/diagram-templates)
+- [Diagram Templates](../use/data-integration/diagram-templates)
 - [Layers](../use/organization/layers)
 
 ## If You Want To Import Or Export

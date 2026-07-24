@@ -64,9 +64,3 @@ In a live modeling session:
 4. another user edits that section while the rest of the team follows the movement
 
 This is a small feature, but it removes a surprising amount of friction from shared editing.
-
-## Limits To Call Out
-
-- presence awareness depends on a live collaboration backend
-- current docs should not promise separate “viewer versus editor” indicators unless the host product adds them
-- current docs should not promise configurable privacy controls unless that behavior exists in the deployed product

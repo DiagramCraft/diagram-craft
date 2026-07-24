@@ -72,9 +72,3 @@ After trying an automatic layout that did not read well:
 4. reapply a different layout or continue with manual refinement
 
 This is a strong use case for working history because the goal is immediate recovery, not archival restoration.
-
-## Limits To Call Out
-
-- current docs should not promise full version snapshots or named restore points
-- current docs should not describe the placeholder **Document History** tab as a complete feature
-- undo history is an editing aid, not a substitute for external versioning or review process

@@ -1,8 +1,8 @@
 ---
-sidebar_position: 2
+sidebar_position: 9
 related_reading:
   - label: Text-to-Diagram
-    to: /diagram-craft/diagram-craft/use/ai-features/text-to-diagram
+    to: /diagram-craft/diagram-craft/use/advanced-editing/text-to-diagram
   - label: File Formats
     to: /diagram-craft/diagram-craft/use/import-export/file-formats
   - label: Image Export
@@ -13,7 +13,7 @@ import ThemedImage from '@theme/ThemedImage';
 
 # Diagram-to-Text
 
-Diagram-to-text is the reverse side of the same `Text` workflow. Instead of treating the panel only as an input surface, use it as a compact export of the active layer so you can inspect structure, make bulk edits, and reason about the diagram without scanning the whole canvas.
+Diagram-to-Text is the reverse side of the **Text** workflow. Use it as a compact representation of the active layer to inspect structure, make bulk edits, and reason about the diagram without scanning the whole canvas.
 
 <ThemedImage
   alt="Diagram Craft text panel showing an editable text view of the active diagram layer"
@@ -25,18 +25,18 @@ Diagram-to-text is the reverse side of the same `Text` workflow. Instead of trea
 
 ## When It Helps
 
-- a diagram area is dense and you want to inspect node and edge relationships directly
-- you need to rename a set of elements consistently
-- you want a lightweight review artifact for structure, not presentation
-- you plan to round-trip a diagram through the text panel for cleanup
+- a dense diagram area needs direct inspection of node and edge relationships
+- a set of elements needs consistent renaming
+- a lightweight structural review artifact is useful
+- a diagram needs to be round-tripped through the text panel for cleanup
 
 ## What You Get
 
-The panel serializes the current regular layer into Diagram Craft text. That text captures the structure well enough for editing and reapplication, but it is still a Diagram Craft-specific representation rather than a general interchange format.
+The panel serializes the current regular layer into Diagram Craft text. The representation captures enough structure for editing and reapplication, while remaining specific to Diagram Craft.
 
 ## A Reliable Round-Trip Loop
 
-1. Open the `Text` panel.
+1. Open the **Text** panel.
 2. Review the generated text for the active layer.
 3. Make structural edits in text where that is faster than direct manipulation.
 4. Apply the changes.
@@ -46,7 +46,7 @@ This is especially effective for straightforward flows and diagrams with many re
 
 ## Limits To Keep In Mind
 
-- The exported text is not meant as a broad sharing format for other tools.
+- The exported text is not intended as a broad sharing format for other tools.
 - It is not a substitute for PNG or SVG when you need a presentation artifact.
 - It should not be treated as a stable external standard for long-term interoperability.
 

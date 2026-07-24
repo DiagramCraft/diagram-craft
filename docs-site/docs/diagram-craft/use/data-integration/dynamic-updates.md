@@ -6,7 +6,7 @@ related_reading:
   - label: Data Binding
     to: /diagram-craft/diagram-craft/use/data-integration/data-binding
   - label: Query Language (DJQL)
-    to: /diagram-craft/diagram-craft/use/data-integration/query-language
+    to: /diagram-craft/diagram-craft/use/organization/query-language
 ---
 
 # Dynamic Updates
@@ -85,9 +85,3 @@ Plan for:
 - refreshes surfacing data changes that make saved searches or rules behave differently
 
 A small validation pass after significant schema changes is worth the time.
-
-## Limits To Call Out
-
-- “real-time” depends on the provider and deployment setup; not every data source pushes changes automatically
-- provider refresh updates data availability, not presentation quality
-- diagram behavior can be data-driven without being continuously synchronized every second

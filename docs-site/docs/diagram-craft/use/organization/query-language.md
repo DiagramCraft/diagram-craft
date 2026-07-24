@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 related_reading:
   - label: DJQL Reference
     to: /diagram-craft/diagram-craft/reference/djql-reference
@@ -65,36 +65,16 @@ Queries can inspect element types, text, styles, metadata, attached schemas, and
 
 If a query is part of your normal workflow, save it from the tool window instead of rewriting it each time.
 
-Good candidates for saved queries:
-
-- release-readiness checks
-- ownership or lifecycle reviews
-- “show me all linked service nodes”
-- “show me elements with unresolved comments”
-
-Saved queries are most valuable when the team agrees on what the query is meant to answer.
-
 ## Export When The Result Is The Deliverable
 
-Use **Export** when the result set itself is useful outside the canvas, such as:
-
-- handing a filtered list to another tool
-- attaching findings to a review
-- comparing query outputs before and after a cleanup pass
-
-Treat exported results as snapshots. They reflect the current document state at the moment you ran the query.
+Use **Export** when the result set is useful outside the canvas, such as handing a filtered list to another tool or attaching findings to a review. Treat exported results as snapshots of the current document state.
 
 ## DJQL Versus Provider Search
 
-Use **provider search** in model/data pickers when you are trying to locate records inside one schema. Use **DJQL** when you are asking broader questions about the diagram, selection, document, or attached metadata.
-
-That distinction keeps the tool choice simple:
-
-- provider search answers “which data record do I want?”
-- DJQL answers “which diagram objects match this condition?”
+Use **provider search** in model/data pickers to locate records inside one schema. Use **DJQL** for broader questions about the diagram, selection, document, or attached metadata.
 
 ## Limits And Expectations
 
-- DJQL is powerful, but it is still only as good as the underlying document structure and attached data
-- broad document-scoped queries can return noisy results if your document mixes many diagram types
+- DJQL is only as good as the underlying document structure and attached data
+- broad document-scoped queries can return noisy results when a document mixes many diagram types
 - this page focuses on workflow; use the reference page for syntax details

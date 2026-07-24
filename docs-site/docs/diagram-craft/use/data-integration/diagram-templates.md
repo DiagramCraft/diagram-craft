@@ -1,10 +1,12 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 related_reading:
   - label: Data Binding
     to: /diagram-craft/diagram-craft/use/data-integration/data-binding
   - label: Dynamic Updates
     to: /diagram-craft/diagram-craft/use/data-integration/dynamic-updates
+  - label: Data Sources
+    to: /diagram-craft/diagram-craft/use/data-integration/data-sources
 ---
 
 # Diagram Templates

@@ -84,8 +84,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'use/styling/styling-system',
             'use/styling/colors-gradients',
-            'use/styling/effects',
-            'use/styling/custom-shapes'
+            'use/styling/effects'
           ]
         },
         {
@@ -95,7 +94,7 @@ const sidebars: SidebarsConfig = {
             'use/organization/layers',
             'use/organization/tabs-documents',
             'use/organization/groups',
-            'use/organization/document-structure'
+            'use/organization/query-language'
           ]
         },
         {
@@ -105,7 +104,11 @@ const sidebars: SidebarsConfig = {
             'use/advanced-editing/alignment-distribution',
             'use/advanced-editing/snapping-guides',
             'use/advanced-editing/boolean-operations',
-            'use/advanced-editing/geometry-operations'
+            'use/advanced-editing/geometry-operations',
+            'use/advanced-editing/curve-editing',
+            'use/advanced-editing/edge-routing',
+            'use/advanced-editing/text-to-diagram',
+            'use/advanced-editing/diagram-to-text'
           ]
         },
         {
@@ -113,8 +116,7 @@ const sidebars: SidebarsConfig = {
           label: 'Layout and Automation',
           items: [
             'use/layout/automatic-layouts',
-            'use/layout/layout-configuration',
-            'use/layout/manual-refinement'
+            'use/layout/layout-configuration'
           ]
         },
         {
@@ -123,8 +125,8 @@ const sidebars: SidebarsConfig = {
           items: [
             'use/data-integration/data-sources',
             'use/data-integration/data-binding',
-            'use/data-integration/query-language',
-            'use/data-integration/dynamic-updates'
+            'use/data-integration/dynamic-updates',
+            'use/data-integration/diagram-templates'
           ]
         },
         {
@@ -141,8 +143,6 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'AI Features',
           items: [
-            'use/ai-features/text-to-diagram',
-            'use/ai-features/diagram-to-text',
             'use/ai-features/ai-assistant'
           ]
         },
@@ -162,8 +162,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Stencils and Templates',
       items: [
-        'stencils-templates/built-in-stencils',
-        'stencils-templates/diagram-templates'
+        'stencils-templates/built-in-stencils'
       ]
     },
     {

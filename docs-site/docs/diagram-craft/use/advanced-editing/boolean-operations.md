@@ -1,8 +1,8 @@
 ---
 sidebar_position: 3
 related_reading:
-  - label: Custom Shapes
-    to: /diagram-craft/diagram-craft/use/styling/custom-shapes
+  - label: Geometry Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
   - label: Geometry Operations
     to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
   - label: Effects

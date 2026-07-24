@@ -30,30 +30,32 @@ Based on the Arch Register documentation template and Diagram Craft's feature se
 - **Styling System**: Understanding styles and presets
 - **Colors and Gradients**: Working with fills and strokes
 - **Effects**: Shadows, reflections, glass effects, hand-drawn styles
-- **Custom Shapes**: Creating shapes with boolean operations
 
 #### Organization
 - **Layers**: Managing layers, locking, hiding, and grouping
 - **Tabs and Documents**: Working with nested tabs and multiple diagrams
 - **Groups**: Grouping elements for easier manipulation
-- **Document Structure**: Using the structure panel
+- **Query Language (DJQL)**: Inspecting and filtering document content
 
 #### Advanced Editing
 - **Alignment and Distribution**: Precise positioning tools
 - **Snapping and Guides**: Grid, guide, and element snapping
 - **Boolean Operations**: Union, intersection, difference, exclusion
-- **Geometry Operations**: Advanced transformations and path editing
+- **Geometry Operations**: Advanced transformations
+- **Curve Editing**: Direct editing of converted paths
+- **Edge Routing**: Connector types, waypoints, and curve handles
+- **Text-to-Diagram**: Editing diagram structure as text
+- **Diagram-to-Text**: Inspecting and exporting diagram structure as text
 
 #### Layout and Automation
 - **Automatic Layouts**: Tree, force-directed, layered, orthogonal layouts
 - **Layout Configuration**: Tuning layout algorithm parameters
-- **Manual Refinement**: Adjusting auto-generated layouts
 
 #### Data and Integration
 - **Data Sources**: Connecting to external data
 - **Data Binding**: Binding element properties to data
-- **Query Language (DJQL)**: Filtering and transforming data
 - **Dynamic Updates**: Creating data-driven diagrams
+- **Diagram Templates**: Reusing data-linked element designs
 
 #### Collaboration
 - **Real-time Editing**: Working with multiple users
@@ -62,8 +64,6 @@ Based on the Arch Register documentation template and Diagram Craft's feature se
 - **Version History**: Tracking and restoring changes
 
 #### AI Features
-- **Text-to-Diagram**: Generating diagrams from text
-- **Diagram-to-Text**: Exporting diagrams as text
 - **AI Assistant**: Using the AI tool window
 
 #### Import and Export
@@ -75,7 +75,6 @@ Based on the Arch Register documentation template and Diagram Craft's feature se
 ### 4. Stencils and Templates
 - **Built-in Stencils**: C4, ArchiMate, BPMN, UML, Data Modeling
 - **Custom Stencils**: Creating and sharing custom stencil libraries
-- **Diagram Templates**: Using and creating templates
 
 ### 5. User Interface
 - **Tool Windows**: Overview of all tool windows

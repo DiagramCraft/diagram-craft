@@ -6,7 +6,7 @@ related_reading:
   - label: Presence Awareness
     to: /diagram-craft/diagram-craft/use/collaboration/presence-awareness
   - label: Query Language (DJQL)
-    to: /diagram-craft/diagram-craft/use/data-integration/query-language
+    to: /diagram-craft/diagram-craft/use/organization/query-language
 ---
 
 # Comments and Review
@@ -73,9 +73,3 @@ This is useful because:
 - review context is not silently lost
 - teams can still understand what was discussed
 - you can decide whether to resolve, delete, or rewrite the thread
-
-## Limits To Call Out
-
-- current docs should not promise freeform canvas-position comments
-- current docs should not promise mention workflows unless that behavior is added later
-- comment resolution tracks discussion state, not approval gates or formal sign-off

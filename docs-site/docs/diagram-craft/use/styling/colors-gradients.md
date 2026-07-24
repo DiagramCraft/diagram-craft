@@ -13,7 +13,7 @@ import ThemedImage from '@theme/ThemedImage';
 
 # Colors and Gradients
 
-Color is the fastest way to make a diagram easier to scan, but it works best when it reinforces structure instead of competing with it. In Diagram Craft, routine styling starts in the **Style** tab with fill and stroke changes, then moves into gradients, patterns, or images only when the diagram needs extra emphasis.
+Diagram Craft provides color controls in the **Style** tab. Select a node, edge, or text element, then use the relevant **Fill**, **Stroke**, or **Text** controls in the right sidebar.
 
 <ThemedImage
   alt="Diagram Craft style panel showing fill and effects controls for a selected shape"
@@ -23,37 +23,22 @@ Color is the fastest way to make a diagram easier to scan, but it works best whe
   }}
 />
 
-## Start With Fill And Stroke
+## Fill Types
 
-For most diagrams, a simple workflow is enough:
+In the **Fill** panel, choose a value from **Type**. The available controls change with the selected type.
 
-1. Select the shape you want to adjust.
-2. Open the **Style** tab in the right sidebar.
-3. In **Fill**, choose a solid color first.
-4. In **Stroke**, adjust the outline color or width only if the shape needs stronger separation.
+- **Solid** — choose a single **Color**.
+- **Gradient** — choose the two colors, then set **Type** to **Linear** or **Radial**. Linear gradients also provide a **Direction** control.
+- **Pattern** — choose a pattern preview and set its foreground and background colors.
+- **Texture** — choose a built-in texture. Adjust its **Scale**, **Contrast**, **Brightness**, and **Saturation**, and optionally apply a **Tint** with a **Strength** value.
+- **Image** — use **Upload** to select an image, then choose its **Fit** mode: **Fill**, **Contain**, **Cover**, **Keep**, or **Tile**. Tiled images also expose **Scale**; all image fills provide **Contrast**, **Brightness**, **Saturation**, and optional **Tint** controls.
 
-Use fill color to group related elements, and stroke changes to make exceptions stand out. If everything gets a thick outline or a saturated fill, the diagram becomes harder to read.
+The panel can also expose **Additional** fills when the selected node supports them.
 
-## Set Fill And Stroke Independently
+## Stroke Color
 
-The fill and stroke controls are independent. A node can have no fill while retaining an outline, or no visible stroke while retaining its fill. Use the color controls in each section to choose a color and adjust opacity where available.
+In the **Stroke** panel, use **Color** to choose the outline color. The **Style** controls set the stroke width and dash pattern; the additional stroke options include size, spacing, cap, join, and miter settings where supported.
 
-## Configure A Gradient
+## Text Color
 
-Gradients are available in the **Fill** panel by switching the fill type to **Gradient**. Diagram Craft supports both **Linear** and **Radial** gradients.
-
-1. Select the node.
-2. In **Fill**, change **Type** to **Gradient**.
-3. Choose the primary and secondary colors.
-4. Set the gradient **Type** to **Linear** or **Radial**.
-5. If you use a linear gradient, adjust the **Direction** until the shading supports the layout instead of fighting it.
-
-## Use Pattern, Texture, Or Image Fills
-
-The fill panel also supports **Pattern**, **Texture**, and **Image** fills:
-
-- patterns can differentiate regions when color alone is not enough
-- textures can make title or background panels feel distinct
-- image fills work best for illustrative nodes, posters, or mockups inside a diagram
-
-The available configuration fields change with the selected fill type.
+In the **Text** panel, use **Color** to set the color of a label or standalone text element. The color picker also provides stylesheet and foreground color options when they are available for the selection.

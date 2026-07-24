@@ -4,7 +4,7 @@ related_reading:
   - label: Data Binding
     to: /diagram-craft/diagram-craft/use/data-integration/data-binding
   - label: Query Language (DJQL)
-    to: /diagram-craft/diagram-craft/use/data-integration/query-language
+    to: /diagram-craft/diagram-craft/use/organization/query-language
   - label: Dynamic Updates
     to: /diagram-craft/diagram-craft/use/data-integration/dynamic-updates
 ---

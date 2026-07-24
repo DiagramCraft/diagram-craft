@@ -3,8 +3,8 @@ sidebar_position: 3
 related_reading:
   - label: Colors and Gradients
     to: /diagram-craft/diagram-craft/use/styling/colors-gradients
-  - label: Custom Shapes
-    to: /diagram-craft/diagram-craft/use/styling/custom-shapes
+  - label: Geometry Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
   - label: Alignment and Distribution
     to: /diagram-craft/diagram-craft/use/advanced-editing/alignment-distribution
 ---
@@ -31,12 +31,10 @@ Diagram Craft provides shadow and effect controls in the **Style** window for se
 - **Rounding** for shapes that should feel less mechanical
 - **Reflection** for presentation-style callouts or polished cards
 - **Glass** for decorative emphasis
-- **Blur** for softening an element, usually in mockups or layered compositions
-- **Isometric** when a diagram benefits from a stylized projection
+- **Blur** for softening an element
+- **Isometric** to draw isometric, quasi-3D diagrams
 
 ## Configure A Shadow
-
-Shadows are usually the best first effect:
 
 1. Select the node.
 2. Open **Style**.

@@ -5,15 +5,15 @@ related_reading:
     to: /diagram-craft/diagram-craft/use/styling/colors-gradients
   - label: Effects
     to: /diagram-craft/diagram-craft/use/styling/effects
-  - label: Custom Shapes
-    to: /diagram-craft/diagram-craft/use/styling/custom-shapes
+  - label: Geometry Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Styling System
 
-Diagram Craft collects visual properties for the current selection in the **Style** window on the right sidebar. The available tabs and controls change with the selected element type.
+Diagram Craft collects visual properties for the current selection in the **Style** window on the right sidebar. The available tabs and controls change with the selected element type, so nodes and edges expose the controls that apply to them.
 
 <ThemedImage
   alt="Diagram Craft style controls in the right sidebar for consistent diagram styling"
@@ -25,33 +25,18 @@ Diagram Craft collects visual properties for the current selection in the **Styl
 
 ## Open The Style Window
 
-Select a node, edge, or text element, then open **Style** from the right sidebar. The window exposes the properties supported by that selection, including:
+Select a node, edge, or text element, then open **Style** from the right sidebar. The stylesheet selector at the top shows the applicable stylesheet for the selection. The controls below it expose the properties supported by that element:
 
-- **Fill** and **Stroke** for node appearance
-- **Line** and endpoint properties for edges
-- **Text** for labels and standalone text
-- **Shadow** and other effect controls when the element supports them
-- **Arrange** for position, size, rotation, and stacking
+- For **nodes**, the main groups are **Fill**, **Shadow**, **Stroke**, **Effects**, and node-specific properties.
+- For **edges**, the main groups are **Line**, **Shadow**, and **Effects**, along with endpoint and edge-specific properties.
+- **Text** controls are available for labels and standalone text, while **Arrange** controls cover position, size, rotation, and stacking when supported.
 
 When several compatible elements are selected, a change is applied to the whole selection.
 
 ## Use Stylesheets
 
-The style selectors in the contextual toolbar and Style window apply document stylesheets. Use them when several elements should share a maintained style rather than a one-off set of properties.
+Stylesheets provide consistent formatting that can be reused across multiple elements. The stylesheet selector in the contextual toolbar and Style window lists all styles applicable to the current selection; choose one to apply it instead of maintaining the same properties on each element.
 
-- choose a node, edge, or text stylesheet for the selected element
-- use **Copy Style** and **Paste Style** to transfer direct styling between compatible selections
-- manage document style assets from **Style Overview** when you need to inspect or change reusable styles
+Use the **...** menu beside the selector to modify the selected stylesheet, update it from the current element, or create a new stylesheet. You can also use **Copy Style** and **Paste Style** to transfer direct styling between compatible selections, and open **Style Overview** to inspect and manage reusable document styles.
 
 Direct property changes override the inherited stylesheet values for that element.
-
-## Apply Properties By Element Type
-
-The right sidebar breaks styling into a few practical layers:
-
-- **Fill** for color, gradients, patterns, textures, and images
-- **Stroke** for outline weight and separation
-- **Text** for label readability
-- **Shadow** and **Effects** for polish
-
-Node, edge, and text selections do not expose identical controls. If a property is missing, confirm that the intended element is selected and that the active tab applies to that element type.

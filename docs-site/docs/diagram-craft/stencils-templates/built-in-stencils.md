@@ -3,8 +3,8 @@ sidebar_position: 1
 title: Built-in Stencils
 sidebar_label: Built-in Stencils
 related_reading:
-  - label: Diagram Templates
-    to: /diagram-craft/diagram-craft/stencils-templates/diagram-templates
+  - label: Data Sources
+    to: /diagram-craft/diagram-craft/use/data-integration/data-sources
   - label: Stencil Reference
     to: /diagram-craft/diagram-craft/reference/stencil-reference
 ---

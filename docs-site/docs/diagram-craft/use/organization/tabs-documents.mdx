@@ -1,8 +1,6 @@
 ---
 sidebar_position: 2
 related_reading:
-  - label: Document Structure
-    to: /diagram-craft/diagram-craft/use/organization/document-structure
   - label: Layers
     to: /diagram-craft/diagram-craft/use/organization/layers
 ---
@@ -34,3 +32,22 @@ Open a diagram's context menu and choose **Add subpage** to create a nested diag
 ## Manage The Document Tree
 
 Use the **Document** tab in the Structure window to navigate, rename, delete, and reorder diagrams. Drag-and-drop reordering works between diagrams with the same parent. The tree exposes nested diagrams even when the tab strip cannot show the full hierarchy at once.
+
+## Use The Structure Window
+
+The Structure window provides two views for managing a document:
+
+- **Layer** shows the active diagram's layer stack and element tree.
+- **Document** shows the hierarchy of diagrams and subpages across the document.
+
+Expand tree items to inspect nested diagrams, layers, groups, and elements. Selecting an entry navigates to or selects the corresponding document object, which is useful when it is difficult to locate directly on the canvas.
+
+Use the **Document** view when you need to move between overview and detail pages, turn a diagram into a subpage, or reorder diagrams to match the document's story. Use the **Layer** view when a crowded diagram makes direct selection difficult or when you need to lock, hide, or inspect elements in the active diagram.
+
+<ThemedImage
+  alt="Diagram Craft structure panel showing the document hierarchy for multiple diagrams and subpages"
+  sources={{
+    light: require('/img/diagram-craft/organization/document-structure-light.png').default,
+    dark: require('/img/diagram-craft/organization/document-structure-dark.png').default,
+  }}
+/>
