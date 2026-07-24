@@ -190,12 +190,20 @@ export const EntityBrowser = ({
     workspaceSlug,
     projectId
   });
+  const [assessmentPickerOpen, setAssessmentPickerOpen] = useState(false);
   const {
     options: joinOptions,
     joined,
     responsesByEntity,
+    isLoading: assessmentsLoading,
     isReady: assessmentsReady
-  } = useJoinedAssessment(workspaceId, joinAssessmentId, projectId);
+  } = useJoinedAssessment(
+    workspaceId,
+    joinAssessmentId,
+    projectId,
+    projects,
+    assessmentPickerOpen || joinAssessmentId != null
+  );
   const effectiveJoinAssessmentId = resolveJoinAssessmentId(
     joinAssessmentId,
     joinOptions,
@@ -406,6 +414,9 @@ export const EntityBrowser = ({
         joinAssessmentId={effectiveJoinAssessmentId}
         onJoinAssessmentChange={setJoinAssessmentId}
         joinedAssessment={joined?.assessment}
+        assessmentsLoading={assessmentsLoading}
+        assessmentsReady={assessmentsReady}
+        onAssessmentPickerOpenChange={setAssessmentPickerOpen}
       />
       {!collectionId && tlOpen && (
         <TimelineStrip

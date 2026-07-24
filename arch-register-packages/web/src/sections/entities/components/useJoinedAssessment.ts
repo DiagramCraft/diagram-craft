@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import { useProjects } from '../../../hooks/useProjects';
+import type { Project } from '@arch-register/api-types/projectContract';
 import { useAssessments } from '../../../hooks/useAssessments';
 import { useAssessmentResponses } from '../../../hooks/useAssessmentResponses';
 
@@ -30,10 +30,11 @@ export const resolveJoinAssessmentId = (
 export const useJoinedAssessment = (
   workspaceId: string,
   joinAssessmentId: string | null | undefined,
-  projectId?: string
+  projectId: string | undefined,
+  projects: Project[],
+  enabled: boolean
 ) => {
-  const { data: projects = [] } = useProjects(workspaceId);
-  const { data: assessments = [], isSuccess } = useAssessments(workspaceId);
+  const { data: assessments = [], isLoading, isSuccess } = useAssessments(workspaceId, enabled);
 
   const options = useMemo<AssessmentJoinOption[]>(() => {
     const activeProject = projects.find(project => project.public_id === projectId);
@@ -62,5 +63,5 @@ export const useJoinedAssessment = (
     [responses]
   );
 
-  return { options, joined, responsesByEntity, isReady: isSuccess };
+  return { options, joined, responsesByEntity, isLoading, isReady: isSuccess };
 };

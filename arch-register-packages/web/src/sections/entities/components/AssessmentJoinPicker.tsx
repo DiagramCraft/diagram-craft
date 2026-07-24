@@ -9,11 +9,17 @@ import styles from './EntityBrowser.module.css';
 export const AssessmentJoinPicker = ({
   options,
   value,
-  onChange
+  onChange,
+  isLoading,
+  isReady,
+  onOpenChange
 }: {
   options: AssessmentJoinOption[];
   value: string | null;
   onChange: (assessmentId: string | null) => void;
+  isLoading: boolean;
+  isReady: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) => {
   const actionsRef = useRef<PopoverActions | null>(null);
   const groups = new Map<string, AssessmentJoinOption[]>();
@@ -28,14 +34,20 @@ export const AssessmentJoinPicker = ({
   };
 
   return (
-    <Popover.Root actionsRef={actionsRef}>
+    <Popover.Root actionsRef={actionsRef} onOpenChange={onOpenChange}>
       <Popover.Trigger
         element={
           <Button
             size="sm"
             variant={value ? 'primary' : 'secondary'}
-            disabled={options.length === 0}
-            title={options.length === 0 ? 'No open or closed assessments found' : undefined}
+            disabled={isLoading || (isReady && options.length === 0)}
+            title={
+              isLoading
+                ? 'Loading assessments'
+                : isReady && options.length === 0
+                  ? 'No open or closed assessments found'
+                  : undefined
+            }
           >
             <TbStars size={12} style={{ marginRight: 4 }} />
             {selected ? selected.assessment.name : 'Assessment'}
@@ -59,26 +71,30 @@ export const AssessmentJoinPicker = ({
             )}
           </div>
           <div className={styles.assessmentList}>
-            {[...groups].map(([group, groupOptions]) => (
-              <div key={group} className={styles.fieldsGroup}>
-                <div className={styles.fieldsGroupLabel}>{group}</div>
-                {groupOptions.map(option => (
-                  <button
-                    key={option.assessment.id}
-                    type="button"
-                    className={`${styles.assessmentOption}${
-                      value === option.assessment.id ? ` ${styles.assessmentOptionActive}` : ''
-                    }`}
-                    onClick={() => select(option.assessment.id)}
-                  >
-                    <span className={styles.assessmentOptionCheck}>
-                      {value === option.assessment.id && <TbCheck size={12} />}
-                    </span>
-                    {option.assessment.name}
-                  </button>
-                ))}
-              </div>
-            ))}
+            {isLoading ? (
+              <div className="dim">Loading assessments…</div>
+            ) : (
+              [...groups].map(([group, groupOptions]) => (
+                <div key={group} className={styles.fieldsGroup}>
+                  <div className={styles.fieldsGroupLabel}>{group}</div>
+                  {groupOptions.map(option => (
+                    <button
+                      key={option.assessment.id}
+                      type="button"
+                      className={`${styles.assessmentOption}${
+                        value === option.assessment.id ? ` ${styles.assessmentOptionActive}` : ''
+                      }`}
+                      onClick={() => select(option.assessment.id)}
+                    >
+                      <span className={styles.assessmentOptionCheck}>
+                        {value === option.assessment.id && <TbCheck size={12} />}
+                      </span>
+                      {option.assessment.name}
+                    </button>
+                  ))}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </Popover.Content>

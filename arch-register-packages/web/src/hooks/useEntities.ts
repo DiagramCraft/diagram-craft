@@ -51,11 +51,11 @@ export const useEntity = (workspaceId: string, entityId: string) => {
 };
 
 // Hook for fetching entity facets (for filters)
-export const useEntityFacets = (workspaceId: string) => {
+export const useEntityFacets = (workspaceId: string, enabled = true) => {
   return useQuery({
     queryKey: entityKeys.facets(workspaceId),
     queryFn: () => orpcClient.entities.facets({ params: { workspace: workspaceId } }),
-    enabled: !!workspaceId
+    enabled: enabled && !!workspaceId
   });
 };
 

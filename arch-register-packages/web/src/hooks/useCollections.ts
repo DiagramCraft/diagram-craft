@@ -4,7 +4,11 @@ import { invalidateEntityQueries } from '../queries/entities';
 import { collectionKeys, invalidateCollectionQueries } from '../queries/collections';
 import { orpcClient } from '../lib/orpcClient';
 
-export const useCollections = (workspaceId: string, entityId?: string | null) =>
+export const useCollections = (
+  workspaceId: string,
+  entityId?: string | null,
+  options?: { enabled?: boolean }
+) =>
   useQuery({
     queryKey: collectionKeys.list(workspaceId, entityId ?? undefined),
     queryFn: () =>
@@ -12,7 +16,7 @@ export const useCollections = (workspaceId: string, entityId?: string | null) =>
         params: { workspace: workspaceId },
         query: entityId ? { entityId } : undefined
       }),
-    enabled: !!workspaceId
+    enabled: (options?.enabled ?? true) && !!workspaceId
   });
 
 export const useCreateCollection = (workspaceId: string) => {
