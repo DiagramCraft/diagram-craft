@@ -6,11 +6,11 @@ describe('entityListFiltersSchema', () => {
     expect(
       entityListFiltersSchema.parse({
         conditions: [{ fieldId: '_name', op: 'contains', value: 'Auth' }],
-        includeProjectSnapshots: false
+        includePlannedChanges: false
       })
     ).toEqual({
       conditions: [{ fieldId: '_name', op: 'contains', value: 'Auth' }],
-      includeProjectSnapshots: false
+      includePlannedChanges: false
     });
   });
 
@@ -18,11 +18,11 @@ describe('entityListFiltersSchema', () => {
     expect(
       entityListFiltersSchema.parse({
         conditions: JSON.stringify([{ fieldId: '_name', op: 'contains', value: 'Auth' }]),
-        includeProjectSnapshots: 'true'
+        includePlannedChanges: 'true'
       })
     ).toEqual({
       conditions: [{ fieldId: '_name', op: 'contains', value: 'Auth' }],
-      includeProjectSnapshots: true
+      includePlannedChanges: true
     });
   });
 

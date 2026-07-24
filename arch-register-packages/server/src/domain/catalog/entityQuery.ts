@@ -23,7 +23,7 @@ export type EntityListQueryParams = {
   limit?: number;
   offset?: number;
   asOf?: string;
-  includeProjectSnapshots?: boolean;
+  includePlannedChanges?: boolean;
 };
 
 const parseAsOf = (value: string | undefined): Date | null => {
@@ -48,8 +48,7 @@ export const parseEntityQuery = (query: EntityListQueryParams): NormalizedEntity
     limit: query.limit,
     offset: query.offset,
     asOf: parseAsOf(query.entityQuery?.asOf ?? query.asOf),
-    includeProjectSnapshots:
-      query.entityQuery?.includeProjectSnapshots ?? query.includeProjectSnapshots
+    includePlannedChanges: query.entityQuery?.includePlannedChanges ?? query.includePlannedChanges
   });
 
 export type ParsedEntityQuery = ReturnType<typeof parseEntityQuery>;
@@ -72,11 +71,7 @@ export const findEntityQueryRequestConflicts = (input: EntityListQueryParams): s
   compare('projectId', input.projectId, entityQuery.projectId);
   compare('projectScope', input.projectScope, entityQuery.projectScope);
   compare('asOf', input.asOf, entityQuery.asOf);
-  compare(
-    'includeProjectSnapshots',
-    input.includeProjectSnapshots,
-    entityQuery.includeProjectSnapshots
-  );
+  compare('includePlannedChanges', input.includePlannedChanges, entityQuery.includePlannedChanges);
   return conflicts;
 };
 
@@ -96,7 +91,7 @@ export const buildEntityQueryForExecution = (
     ...(parsed.projectId ? { projectId: parsed.projectId } : {}),
     ...(parsed.projectScope ? { projectScope: parsed.projectScope } : {}),
     ...(parsed.asOf ? { asOf: parsed.asOf.toISOString() } : {}),
-    ...(parsed.asOf ? { includeProjectSnapshots: parsed.includeProjectSnapshots } : {})
+    ...(parsed.asOf ? { includePlannedChanges: parsed.includePlannedChanges } : {})
   };
 
   const extra: QueryNode[] = [];

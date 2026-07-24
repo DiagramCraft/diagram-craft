@@ -54,7 +54,7 @@ describe('exportEntitiesToCSV', () => {
         projectScope: undefined,
         collectionId: 'collection-1',
         asOf: undefined,
-        includeProjectSnapshots: undefined
+        includePlannedChanges: undefined
       }
     });
   });

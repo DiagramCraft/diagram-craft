@@ -662,11 +662,61 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         ]
       });
 
-      const withHistory = await db.catalog.listEntityIdsWithAnySnapshot(workspace, [
+      const withHistory = await db.catalog.listEntityIdsWithVersionHistory(workspace, [
         entityWithHistory.id,
         entityFutureOnly.id
       ]);
       expect(withHistory).toEqual([entityWithHistory.id]);
+    });
+
+    it('lists planned entity changes as of a date, scoped to active case revisions', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+
+      const futureCase = await db.changeCase.createCase({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: '2030-01-01',
+        milestone_id: null,
+        message: null,
+        created_by: user.id,
+        created_at: new Date(),
+        members: [
+          {
+            entity_id: entity.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: { name: 'Planned Name' },
+            diff: {}
+          }
+        ]
+      });
+
+      const beforeEffectiveDate = await db.catalog.listPlannedEntityChangesAsOf(
+        workspace,
+        new Date('2029-01-01T00:00:00.000Z'),
+        [entity.id]
+      );
+      expect(beforeEffectiveDate).toHaveLength(0);
+
+      const afterEffectiveDate = await db.catalog.listPlannedEntityChangesAsOf(
+        workspace,
+        new Date('2030-06-01T00:00:00.000Z'),
+        [entity.id]
+      );
+      expect(afterEffectiveDate).toHaveLength(1);
+      expect(afterEffectiveDate[0]?.entity_id).toBe(entity.id);
+      expect(afterEffectiveDate[0]?.project_id).toBe(project.id);
+      expect(afterEffectiveDate[0]?.target_date).toBe('2030-01-01');
+      expect(afterEffectiveDate[0]?.proposed_state).toEqual({ name: 'Planned Name' });
+      expect(afterEffectiveDate[0]?.case_id).toBe(futureCase.id);
     });
 
     it('lists timeline markers grouped by date and type', async () => {

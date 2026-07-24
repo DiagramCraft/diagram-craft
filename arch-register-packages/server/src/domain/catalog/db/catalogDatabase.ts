@@ -250,13 +250,15 @@ export type EntityVersionDbResult = {
 
 export type EntityVersionDbCreate = Omit<EntityVersionDbResult, 'created_by_name'>;
 
-export type SnapshotStatus = 'autosave' | 'saved_version' | 'future_update' | 'applied' | 'deleted';
-
-export type EntitySnapshotDbResult = {
+// A single member of an active (not yet applied) change-case revision, as of a point in time.
+// Represents a planned future edit to one entity, coordinated with other entities under the same
+// `case_revision_id`.
+export type PlannedEntityChangeDbResult = {
   id: string;
   workspace: string;
   entity_id: string;
-  status: SnapshotStatus;
+  case_id: string;
+  case_revision_id: string;
   project_id: string | null;
   target_date: string | null;
   milestone_id: string | null;
@@ -264,11 +266,7 @@ export type EntitySnapshotDbResult = {
   created_at: Date;
   created_by: string;
   created_by_name: string | null;
-  base_state: Record<string, unknown>;
-  proposed_state: Record<string, unknown> | null;
-  /** Target-model identity for future/applied compatibility projections. */
-  case_id?: string | null;
-  case_revision_id?: string | null;
+  proposed_state: Record<string, unknown>;
 };
 
 export type TimelineMarkerDbResult = {
@@ -323,11 +321,12 @@ export const catalogMappers = {
       'entity_query.projections'
     )
   }),
-  entitySnapshot: (row: DatabaseRow): EntitySnapshotDbResult => ({
+  plannedEntityChange: (row: DatabaseRow): PlannedEntityChangeDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
-    status: String(row['status']) as EntitySnapshotDbResult['status'],
+    case_id: String(row['case_id']),
+    case_revision_id: String(row['case_revision_id']),
     project_id: row['project_id'] == null ? null : String(row['project_id']),
     target_date: row['target_date'] == null ? null : databaseDateOnly(row['target_date']),
     milestone_id: row['milestone_id'] == null ? null : String(row['milestone_id']),
@@ -335,21 +334,11 @@ export const catalogMappers = {
     created_at: databaseDate(row['created_at']),
     created_by: String(row['created_by']),
     created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
-    base_state: parseDatabaseJson<Record<string, unknown>>(
-      row['base_state'],
+    proposed_state: parseDatabaseJson<Record<string, unknown>>(
+      row['proposed_state'],
       {},
-      'entity_snapshot.base_state'
-    ),
-    proposed_state:
-      row['proposed_state'] == null
-        ? null
-        : parseDatabaseJson<Record<string, unknown>>(
-            row['proposed_state'],
-            {},
-            'entity_snapshot.proposed_state'
-          ),
-    case_id: row['case_id'] == null ? null : String(row['case_id']),
-    case_revision_id: row['case_revision_id'] == null ? null : String(row['case_revision_id'])
+      'entity_change_case_entity_version.proposed_state'
+    )
   }),
   entityVersion: (row: DatabaseRow): EntityVersionDbResult => ({
     id: String(row['id']),
@@ -564,13 +553,13 @@ export type CatalogDatabase = {
     entityId: string
   ): Promise<PinnedEntityDbResult | null>;
 
-  listSnapshotsAsOf(
+  listPlannedEntityChangesAsOf(
     ws: string,
     asOf: Date,
     entityIds?: string[]
-  ): Promise<EntitySnapshotDbResult[]>;
+  ): Promise<PlannedEntityChangeDbResult[]>;
   listTimelineMarkers(ws: string): Promise<TimelineMarkerDbResult[]>;
-  listEntityIdsWithAnySnapshot(ws: string, entityIds?: string[]): Promise<string[]>;
+  listEntityIdsWithVersionHistory(ws: string, entityIds?: string[]): Promise<string[]>;
   pruneAutosaveVersions(ws: string, entityId: string, keepCount: number): Promise<void>;
   reassignSnapshotsFromMilestone(
     ws: string,

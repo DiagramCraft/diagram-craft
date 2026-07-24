@@ -6074,7 +6074,7 @@
                             "asOf": {
                               "type": "string"
                             },
-                            "includeProjectSnapshots": {
+                            "includePlannedChanges": {
                               "type": "boolean"
                             },
                             "projections": {
@@ -7175,7 +7175,7 @@
                       "asOf": {
                         "type": "string"
                       },
-                      "includeProjectSnapshots": {
+                      "includePlannedChanges": {
                         "type": "boolean"
                       },
                       "projections": {
@@ -8201,7 +8201,7 @@
                 "asOf": {
                   "type": "string"
                 },
-                "includeProjectSnapshots": {
+                "includePlannedChanges": {
                   "type": "boolean"
                 },
                 "projections": {
@@ -9126,11 +9126,11 @@
             "allowReserved": true
           },
           {
-            "name": "includeProjectSnapshots",
+            "name": "includePlannedChanges",
             "in": "query",
             "schema": {
               "type": "boolean",
-              "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
+              "description": "When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -10446,7 +10446,7 @@
                 "asOf": {
                   "type": "string"
                 },
-                "includeProjectSnapshots": {
+                "includePlannedChanges": {
                   "type": "boolean"
                 },
                 "projections": {
@@ -11371,11 +11371,11 @@
             "allowReserved": true
           },
           {
-            "name": "includeProjectSnapshots",
+            "name": "includePlannedChanges",
             "in": "query",
             "schema": {
               "type": "boolean",
-              "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
+              "description": "When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -11770,7 +11770,7 @@
                 "asOf": {
                   "type": "string"
                 },
-                "includeProjectSnapshots": {
+                "includePlannedChanges": {
                   "type": "boolean"
                 },
                 "projections": {
@@ -12695,11 +12695,11 @@
             "allowReserved": true
           },
           {
-            "name": "includeProjectSnapshots",
+            "name": "includePlannedChanges",
             "in": "query",
             "schema": {
               "type": "boolean",
-              "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
+              "description": "When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -16865,7 +16865,7 @@
                 "asOf": {
                   "type": "string"
                 },
-                "includeProjectSnapshots": {
+                "includePlannedChanges": {
                   "type": "boolean"
                 },
                 "projections": {
@@ -17790,11 +17790,11 @@
             "allowReserved": true
           },
           {
-            "name": "includeProjectSnapshots",
+            "name": "includePlannedChanges",
             "in": "query",
             "schema": {
               "type": "boolean",
-              "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
+              "description": "When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -17993,7 +17993,7 @@
                           "asOf": {
                             "type": "string"
                           },
-                          "includeProjectSnapshots": {
+                          "includePlannedChanges": {
                             "type": "boolean"
                           },
                           "projections": {
@@ -19508,7 +19508,7 @@
                       "asOf": {
                         "type": "string"
                       },
-                      "includeProjectSnapshots": {
+                      "includePlannedChanges": {
                         "type": "boolean"
                       },
                       "projections": {
@@ -20853,7 +20853,7 @@
                         "asOf": {
                           "type": "string"
                         },
-                        "includeProjectSnapshots": {
+                        "includePlannedChanges": {
                           "type": "boolean"
                         },
                         "projections": {
@@ -22359,7 +22359,7 @@
                       "asOf": {
                         "type": "string"
                       },
-                      "includeProjectSnapshots": {
+                      "includePlannedChanges": {
                         "type": "boolean"
                       },
                       "projections": {
@@ -23699,7 +23699,7 @@
                         "asOf": {
                           "type": "string"
                         },
-                        "includeProjectSnapshots": {
+                        "includePlannedChanges": {
                           "type": "boolean"
                         },
                         "projections": {
@@ -53316,7 +53316,7 @@
                       "asOf": {
                         "type": "string"
                       },
-                      "includeProjectSnapshots": {
+                      "includePlannedChanges": {
                         "type": "boolean"
                       },
                       "projections": {

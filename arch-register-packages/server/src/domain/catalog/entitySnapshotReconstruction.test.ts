@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthorizationContext } from '@arch-register/permissions';
-import type { EntityDbResult, EntitySnapshotDbResult, SchemaDbResult } from './db/catalogDatabase';
+import type {
+  EntityDbResult,
+  EntityVersionDbResult,
+  PlannedEntityChangeDbResult,
+  SchemaDbResult
+} from './db/catalogDatabase';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 
 vi.mock('@arch-register/permissions', async importOriginal => {
@@ -60,11 +65,29 @@ const schema: SchemaDbResult = {
   updated_at: new Date('2026-01-01T00:00:00.000Z')
 };
 
-const baseSnapshot = (overrides: Partial<EntitySnapshotDbResult>): EntitySnapshotDbResult => ({
-  id: 'snap-1',
+const baseVersion = (overrides: Partial<EntityVersionDbResult>): EntityVersionDbResult => ({
+  id: 'version-1',
   workspace: 'ws-1',
   entity_id: 'entity-1',
-  status: 'autosave',
+  version_number: 1,
+  kind: 'autosave',
+  commit_message: null,
+  created_at: new Date('2026-01-01T00:00:00.000Z'),
+  created_by: 'user-1',
+  created_by_name: 'User One',
+  state: {},
+  applied_case_revision_id: null,
+  ...overrides
+});
+
+const basePlannedChange = (
+  overrides: Partial<PlannedEntityChangeDbResult>
+): PlannedEntityChangeDbResult => ({
+  id: 'change-1',
+  workspace: 'ws-1',
+  entity_id: 'entity-1',
+  case_id: 'case-1',
+  case_revision_id: 'revision-1',
   project_id: null,
   target_date: null,
   milestone_id: null,
@@ -72,46 +95,50 @@ const baseSnapshot = (overrides: Partial<EntitySnapshotDbResult>): EntitySnapsho
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   created_by: 'user-1',
   created_by_name: 'User One',
-  base_state: {},
-  proposed_state: null,
+  proposed_state: {},
   ...overrides
 });
 
 const makeDb = (
-  snapshots: EntitySnapshotDbResult[],
+  versions: EntityVersionDbResult[],
+  plannedChanges: PlannedEntityChangeDbResult[] = [],
   liveEntities: EntityDbResult[] = [],
   projects: Array<{ id: string; owner: string | null }> = []
 ) => {
-  const listSnapshotsAsOf = vi.fn(async (_workspace: string, asOf: Date, entityIds?: string[]) =>
-    snapshots
-      .filter(s => {
-        if (entityIds != null && !entityIds.includes(s.entity_id)) return false;
-        if (s.status === 'future_update') {
-          return s.target_date != null && new Date(s.target_date) <= asOf && s.created_at <= asOf;
-        }
-        return s.created_at <= asOf;
-      })
-      .sort(
-        (a, b) =>
-          a.entity_id.localeCompare(b.entity_id) || a.created_at.getTime() - b.created_at.getTime()
-      )
+  const listEntityVersionsAsOf = vi.fn(
+    async (_workspace: string, asOf: Date, entityIds?: string[]) =>
+      versions
+        .filter(v => {
+          if (entityIds != null && !entityIds.includes(v.entity_id)) return false;
+          return v.created_at <= asOf;
+        })
+        .sort(
+          (a, b) =>
+            a.entity_id.localeCompare(b.entity_id) ||
+            a.created_at.getTime() - b.created_at.getTime()
+        )
   );
 
-  const listEntityIdsWithAnySnapshot = vi.fn(async (_workspace: string, entityIds?: string[]) => {
-    const ids = new Set(
-      snapshots
-        .filter(
-          s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'deleted'
-        )
-        .map(s => s.entity_id)
-    );
-    return [...ids].filter(id => entityIds == null || entityIds.includes(id));
-  });
+  const listPlannedEntityChangesAsOf = vi.fn(
+    async (_workspace: string, asOf: Date, entityIds?: string[]) =>
+      plannedChanges.filter(c => {
+        if (entityIds != null && !entityIds.includes(c.entity_id)) return false;
+        return c.target_date != null && new Date(c.target_date) <= asOf && c.created_at <= asOf;
+      })
+  );
+
+  const listEntityIdsWithVersionHistory = vi.fn(
+    async (_workspace: string, entityIds?: string[]) => {
+      const ids = new Set(versions.map(v => v.entity_id));
+      return [...ids].filter(id => entityIds == null || entityIds.includes(id));
+    }
+  );
 
   return {
     catalog: {
-      listSnapshotsAsOf,
-      listEntityIdsWithAnySnapshot,
+      listEntityVersionsAsOf,
+      listPlannedEntityChangesAsOf,
+      listEntityIdsWithVersionHistory,
       listSchemas: vi.fn(async () => [schema]),
       getEntity: vi.fn(
         async (_workspace: string, id: string) => liveEntities.find(e => e.id === id) ?? null
@@ -143,15 +170,14 @@ const makeDb = (
 
 describe('reconstructEntitiesAsOf', () => {
   it('excludes an entity created after asOf', async () => {
-    const snapshots = [
-      baseSnapshot({
+    const versions = [
+      baseVersion({
         entity_id: 'entity-1',
-        status: 'autosave',
         created_at: new Date('2026-03-01T00:00:00.000Z'),
-        base_state: { id: 'entity-1', name: 'Late Entity', schema_id: 'schema-1' }
+        state: { id: 'entity-1', name: 'Late Entity', schema_id: 'schema-1' }
       })
     ];
-    const db = makeDb(snapshots);
+    const db = makeDb(versions);
 
     const result = await reconstructEntitiesAsOf(
       db,
@@ -163,39 +189,26 @@ describe('reconstructEntitiesAsOf', () => {
     expect(result).toHaveLength(0);
   });
 
-  it('reconstructs the post-edit state at the latest autosave at or before asOf', async () => {
-    const snapshots = [
-      // create
-      baseSnapshot({
-        id: 'snap-create',
+  it('reconstructs the post-edit state at the latest version at or before asOf', async () => {
+    const versions = [
+      baseVersion({
+        id: 'version-create',
         entity_id: 'entity-1',
-        status: 'autosave',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
-        base_state: {
+        state: {
           id: 'entity-1',
           public_id: 'ENT-1',
           name: 'Original Name',
           slug: 'original-name',
           schema_id: 'schema-1',
           data: {}
-        },
-        proposed_state: null
+        }
       }),
-      // update: base_state = pre-edit, proposed_state = post-edit (full state)
-      baseSnapshot({
-        id: 'snap-update',
+      baseVersion({
+        id: 'version-update',
         entity_id: 'entity-1',
-        status: 'autosave',
         created_at: new Date('2026-02-01T00:00:00.000Z'),
-        base_state: {
-          id: 'entity-1',
-          public_id: 'ENT-1',
-          name: 'Original Name',
-          slug: 'original-name',
-          schema_id: 'schema-1',
-          data: {}
-        },
-        proposed_state: {
+        state: {
           id: 'entity-1',
           public_id: 'ENT-1',
           name: 'Updated Name',
@@ -205,7 +218,7 @@ describe('reconstructEntitiesAsOf', () => {
         }
       })
     ];
-    const db = makeDb(snapshots);
+    const db = makeDb(versions);
 
     const asOfBetween = await reconstructEntitiesAsOf(
       db,
@@ -226,24 +239,23 @@ describe('reconstructEntitiesAsOf', () => {
     expect(asOfAfterUpdate[0]?.name).toBe('Updated Name');
   });
 
-  it('excludes an entity whose latest baseline before asOf is a deleted snapshot', async () => {
-    const snapshots = [
-      baseSnapshot({
-        id: 'snap-create',
+  it('excludes an entity whose latest baseline before asOf is a deleted version', async () => {
+    const versions = [
+      baseVersion({
+        id: 'version-create',
         entity_id: 'entity-1',
-        status: 'autosave',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
-        base_state: { id: 'entity-1', name: 'Doomed Entity', schema_id: 'schema-1', data: {} }
+        state: { id: 'entity-1', name: 'Doomed Entity', schema_id: 'schema-1', data: {} }
       }),
-      baseSnapshot({
-        id: 'snap-deleted',
+      baseVersion({
+        id: 'version-deleted',
         entity_id: 'entity-1',
-        status: 'deleted',
+        kind: 'deleted',
         created_at: new Date('2026-02-01T00:00:00.000Z'),
-        base_state: { id: 'entity-1', name: 'Doomed Entity', schema_id: 'schema-1', data: {} }
+        state: { id: 'entity-1', name: 'Doomed Entity', schema_id: 'schema-1', data: {} }
       })
     ];
-    const db = makeDb(snapshots);
+    const db = makeDb(versions);
 
     const beforeDeletion = await reconstructEntitiesAsOf(
       db,
@@ -262,41 +274,40 @@ describe('reconstructEntitiesAsOf', () => {
     expect(afterDeletion).toHaveLength(0);
   });
 
-  it('applies future_update snapshots in ascending target_date order over the autosave baseline', async () => {
-    const snapshots = [
-      baseSnapshot({
-        id: 'snap-create',
+  it('applies planned changes in ascending target_date order over the version baseline', async () => {
+    const versions = [
+      baseVersion({
+        id: 'version-create',
         entity_id: 'entity-1',
-        status: 'autosave',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
-        base_state: {
+        state: {
           id: 'entity-1',
           name: 'Current Name',
           owner: 'owner-1',
           schema_id: 'schema-1',
           data: {}
         }
-      }),
-      baseSnapshot({
-        id: 'snap-future-1',
+      })
+    ];
+    const plannedChanges = [
+      basePlannedChange({
+        id: 'change-1',
+        case_revision_id: 'revision-1',
         entity_id: 'entity-1',
-        status: 'future_update',
         target_date: '2026-06-01',
         created_at: new Date('2026-01-10T00:00:00.000Z'),
-        base_state: { id: 'entity-1', name: 'Current Name', schema_id: 'schema-1' },
         proposed_state: { name: 'First Planned Name' }
       }),
-      baseSnapshot({
-        id: 'snap-future-2',
+      basePlannedChange({
+        id: 'change-2',
+        case_revision_id: 'revision-2',
         entity_id: 'entity-1',
-        status: 'future_update',
         target_date: '2026-09-01',
         created_at: new Date('2026-01-10T00:00:00.000Z'),
-        base_state: { id: 'entity-1', name: 'Current Name', schema_id: 'schema-1' },
         proposed_state: { lifecycle: 'lc-1' }
       })
     ];
-    const db = makeDb(snapshots);
+    const db = makeDb(versions, plannedChanges);
 
     const beforeAnyFutureUpdate = await reconstructEntitiesAsOf(
       db,
@@ -328,30 +339,30 @@ describe('reconstructEntitiesAsOf', () => {
     expect(afterBoth[0]?.owner_name).toBe('Team A');
   });
 
-  describe('project access control for future_update snapshots', () => {
-    const makeFutureUpdateSnapshots = () => [
-      baseSnapshot({
-        id: 'snap-create',
+  describe('project access control for planned changes', () => {
+    const makeVersions = () => [
+      baseVersion({
+        id: 'version-create',
         entity_id: 'entity-1',
-        status: 'autosave',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
-        base_state: { id: 'entity-1', name: 'Current Name', schema_id: 'schema-1', data: {} }
-      }),
-      baseSnapshot({
-        id: 'snap-future',
+        state: { id: 'entity-1', name: 'Current Name', schema_id: 'schema-1', data: {} }
+      })
+    ];
+    const makePlannedChanges = () => [
+      basePlannedChange({
+        id: 'change-future',
         entity_id: 'entity-1',
-        status: 'future_update',
         project_id: 'project-private',
         target_date: '2026-06-01',
         created_at: new Date('2026-01-10T00:00:00.000Z'),
-        base_state: { id: 'entity-1', name: 'Current Name', schema_id: 'schema-1' },
         proposed_state: { name: 'Leaked Planned Name' }
       })
     ];
 
-    it('does not apply a future_update from a project the user cannot access', async () => {
+    it('does not apply a planned change from a project the user cannot access', async () => {
       const db = makeDb(
-        makeFutureUpdateSnapshots(),
+        makeVersions(),
+        makePlannedChanges(),
         [],
         [{ id: 'project-private', owner: 'team-private' }]
       );
@@ -368,9 +379,10 @@ describe('reconstructEntitiesAsOf', () => {
       expect(result[0]?.name).toBe('Current Name');
     });
 
-    it('applies a future_update from a project the user can access', async () => {
+    it('applies a planned change from a project the user can access', async () => {
       const db = makeDb(
-        makeFutureUpdateSnapshots(),
+        makeVersions(),
+        makePlannedChanges(),
         [],
         [{ id: 'project-private', owner: 'team-private' }]
       );
@@ -387,9 +399,10 @@ describe('reconstructEntitiesAsOf', () => {
       expect(result[0]?.name).toBe('Leaked Planned Name');
     });
 
-    it('applies all future_update snapshots when authCtx is null (system/internal context)', async () => {
+    it('applies all planned changes when authCtx is null (system/internal context)', async () => {
       const db = makeDb(
-        makeFutureUpdateSnapshots(),
+        makeVersions(),
+        makePlannedChanges(),
         [],
         [{ id: 'project-private', owner: 'team-private' }]
       );
@@ -404,9 +417,10 @@ describe('reconstructEntitiesAsOf', () => {
       expect(result[0]?.name).toBe('Leaked Planned Name');
     });
 
-    it('does not apply any future_update snapshot when includeProjectSnapshots is false, even for an accessible project', async () => {
+    it('does not apply any planned change when includePlannedChanges is false, even for an accessible project', async () => {
       const db = makeDb(
-        makeFutureUpdateSnapshots(),
+        makeVersions(),
+        makePlannedChanges(),
         [],
         [{ id: 'project-private', owner: 'team-private' }]
       );
@@ -427,21 +441,19 @@ describe('reconstructEntitiesAsOf', () => {
   });
 
   it('respects candidateEntityIds to scope reconstruction to a project-linked entity set', async () => {
-    const snapshots = [
-      baseSnapshot({
+    const versions = [
+      baseVersion({
         entity_id: 'entity-1',
-        status: 'autosave',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
-        base_state: { id: 'entity-1', name: 'In Scope', schema_id: 'schema-1', data: {} }
+        state: { id: 'entity-1', name: 'In Scope', schema_id: 'schema-1', data: {} }
       }),
-      baseSnapshot({
+      baseVersion({
         entity_id: 'entity-2',
-        status: 'autosave',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
-        base_state: { id: 'entity-2', name: 'Out Of Scope', schema_id: 'schema-1', data: {} }
+        state: { id: 'entity-2', name: 'Out Of Scope', schema_id: 'schema-1', data: {} }
       })
     ];
-    const db = makeDb(snapshots);
+    const db = makeDb(versions);
 
     const result = await reconstructEntitiesAsOf(
       db,
@@ -455,14 +467,14 @@ describe('reconstructEntitiesAsOf', () => {
     expect(result[0]?.id).toBe('entity-1');
   });
 
-  describe('entities with no snapshot history at all (e.g. imported or seeded)', () => {
+  describe('entities with no version history at all (e.g. imported or seeded)', () => {
     it('falls back to the live entity for a past asOf on or after its created_at', async () => {
       const live = makeLiveEntity({
         id: 'entity-imported',
         name: 'Imported Entity',
         created_at: new Date('2026-01-01T00:00:00.000Z')
       });
-      const db = makeDb([], [live]);
+      const db = makeDb([], [], [live]);
 
       const result = await reconstructEntitiesAsOf(
         db,
@@ -481,7 +493,7 @@ describe('reconstructEntitiesAsOf', () => {
         id: 'entity-imported',
         created_at: new Date('2026-03-01T00:00:00.000Z')
       });
-      const db = makeDb([], [live]);
+      const db = makeDb([], [], [live]);
 
       const result = await reconstructEntitiesAsOf(
         db,
@@ -499,7 +511,7 @@ describe('reconstructEntitiesAsOf', () => {
         name: 'Imported Entity',
         created_at: new Date('2026-01-01T00:00:00.000Z')
       });
-      const db = makeDb([], [live]);
+      const db = makeDb([], [], [live]);
 
       const result = await reconstructEntitiesAsOf(
         db,
@@ -512,21 +524,19 @@ describe('reconstructEntitiesAsOf', () => {
       expect(result[0]?.name).toBe('Imported Entity');
     });
 
-    it('applies a future_update planned against it even though it has no autosave baseline', async () => {
+    it('applies a planned change against it even though it has no version baseline', async () => {
       const live = makeLiveEntity({
         id: 'entity-imported',
         name: 'Imported Entity',
         created_at: new Date('2026-01-01T00:00:00.000Z')
       });
-      const futureUpdate = baseSnapshot({
+      const futureUpdate = basePlannedChange({
         entity_id: 'entity-imported',
-        status: 'future_update',
         target_date: '2026-06-01',
         created_at: new Date('2026-01-10T00:00:00.000Z'),
-        base_state: { id: 'entity-imported', name: 'Imported Entity', schema_id: 'schema-1' },
         proposed_state: { name: 'Renamed After Import' }
       });
-      const db = makeDb([futureUpdate], [live]);
+      const db = makeDb([], [futureUpdate], [live]);
 
       const result = await reconstructEntitiesAsOf(
         db,
@@ -539,17 +549,17 @@ describe('reconstructEntitiesAsOf', () => {
       expect(result[0]?.name).toBe('Renamed After Import');
     });
 
-    it('does not fall back for an entity whose latest real snapshot is a deleted marker', async () => {
-      const deleted = baseSnapshot({
+    it('does not fall back for an entity whose latest real version is a deleted marker', async () => {
+      const deleted = baseVersion({
         entity_id: 'entity-gone',
-        status: 'deleted',
+        kind: 'deleted',
         created_at: new Date('2026-01-15T00:00:00.000Z'),
-        base_state: { id: 'entity-gone', name: 'Gone Entity', schema_id: 'schema-1', data: {} }
+        state: { id: 'entity-gone', name: 'Gone Entity', schema_id: 'schema-1', data: {} }
       });
       // Entity still exists live in this contrived test setup, but that must not matter —
-      // the real 'deleted' snapshot takes precedence over any live-entity fallback.
+      // the real 'deleted' version takes precedence over any live-entity fallback.
       const live = makeLiveEntity({ id: 'entity-gone', name: 'Gone Entity' });
-      const db = makeDb([deleted], [live]);
+      const db = makeDb([deleted], [], [live]);
 
       const result = await reconstructEntitiesAsOf(
         db,
@@ -564,7 +574,7 @@ describe('reconstructEntitiesAsOf', () => {
     it('respects candidateEntityIds when falling back (project scope)', async () => {
       const liveA = makeLiveEntity({ id: 'entity-a', name: 'A' });
       const liveB = makeLiveEntity({ id: 'entity-b', name: 'B' });
-      const db = makeDb([], [liveA, liveB]);
+      const db = makeDb([], [], [liveA, liveB]);
 
       const result = await reconstructEntitiesAsOf(
         db,
@@ -578,24 +588,22 @@ describe('reconstructEntitiesAsOf', () => {
       expect(result[0]?.id).toBe('entity-a');
     });
 
-    it('does NOT fall back to live state when the entity has snapshot history that merely starts after asOf', async () => {
-      // Regression test: an entity whose *first-ever* snapshot happens to be dated after the
+    it('does NOT fall back to live state when the entity has version history that merely starts after asOf', async () => {
+      // Regression test: an entity whose *first-ever* version happens to be dated after the
       // requested asOf (e.g. its first edit under the audited path was today) must not be
-      // confused with an entity that has literally zero snapshot history. The former should be
+      // confused with an entity that has literally zero version history. The former should be
       // excluded (we have no data for that date); only the latter should fall back to live state.
-      const firstEverEdit = baseSnapshot({
+      const firstEverEdit = baseVersion({
         entity_id: 'entity-1',
-        status: 'autosave',
         created_at: new Date('2026-02-10T00:00:00.000Z'), // "today"
-        base_state: { id: 'entity-1', name: 'Old Name', schema_id: 'schema-1', data: {} },
-        proposed_state: { id: 'entity-1', name: 'New Name', schema_id: 'schema-1', data: {} }
+        state: { id: 'entity-1', name: 'New Name', schema_id: 'schema-1', data: {} }
       });
       const live = makeLiveEntity({
         id: 'entity-1',
         name: 'New Name',
         created_at: new Date('2026-01-01T00:00:00.000Z') // entity has existed for a while
       });
-      const db = makeDb([firstEverEdit], [live]);
+      const db = makeDb([firstEverEdit], [], [live]);
 
       const yesterday = await reconstructEntitiesAsOf(
         db,

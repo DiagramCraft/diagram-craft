@@ -91,7 +91,7 @@ export const entityQuerySchema = z.object({
     .string()
     .refine(value => !Number.isNaN(Date.parse(value)), 'Invalid asOf date')
     .optional(),
-  includeProjectSnapshots: z.boolean().optional(),
+  includePlannedChanges: z.boolean().optional(),
   projections: z.array(projectionFieldSchema).optional(),
   root: queryNodeSchema
 });

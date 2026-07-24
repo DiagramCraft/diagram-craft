@@ -22,7 +22,7 @@ describe('parseEntityQuery', () => {
       limit: null,
       offset: 0,
       asOf: null,
-      includeProjectSnapshots: true
+      includePlannedChanges: true
     });
   });
 
@@ -30,12 +30,12 @@ describe('parseEntityQuery', () => {
     const result = parseEntityQuery({
       conditions: [{ fieldId: 'name', op: 'equals', value: 'API' }],
       asOf: '2026-07-05T12:00:00Z',
-      includeProjectSnapshots: false
+      includePlannedChanges: false
     });
 
     expect(result.conditions).toHaveLength(1);
     expect(result.asOf?.toISOString()).toBe('2026-07-05T12:00:00.000Z');
-    expect(result.includeProjectSnapshots).toBe(false);
+    expect(result.includePlannedChanges).toBe(false);
   });
 
   it('parses a collection filter', () => {

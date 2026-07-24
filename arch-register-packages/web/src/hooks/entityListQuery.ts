@@ -16,7 +16,7 @@ export type EntityListOptions = {
   limit?: number | null;
   offset?: number | null;
   asOf?: string | null;
-  includeProjectSnapshots?: boolean | null;
+  includePlannedChanges?: boolean | null;
 };
 
 export const toEntityListQuery = (options: EntityListOptions) => ({
@@ -31,5 +31,5 @@ export const toEntityListQuery = (options: EntityListOptions) => ({
   projectScope: options.projectScope ?? undefined,
   collectionId: options.collectionId ?? undefined,
   asOf: options.asOf ?? undefined,
-  includeProjectSnapshots: options.includeProjectSnapshots ?? undefined
+  includePlannedChanges: options.includePlannedChanges ?? undefined
 });
