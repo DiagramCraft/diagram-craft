@@ -1,7 +1,8 @@
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { BrowserView } from '@arch-register/api-types/viewContract';
+import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { ReactNode } from 'react';
 import { BubbleView } from './BubbleView';
@@ -35,6 +36,8 @@ type EntityBrowserViewData = {
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
+  conditions?: FilterCondition[];
+  entityQuery?: EntityQuery | null;
   activeViewConfig: unknown;
   displayFields: EntityDisplayField[];
   projectContext?: ProjectBrowserContext;
@@ -90,6 +93,8 @@ export const EntityBrowserView = ({
   typeFilter,
   ownerFilter,
   statusFilter,
+  conditions,
+  entityQuery,
   activeViewConfig,
   displayFields,
   projectContext,
@@ -122,6 +127,8 @@ export const EntityBrowserView = ({
           typeFilter={typeFilter}
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
+          conditions={conditions}
+          entityQuery={entityQuery}
           onEntityClick={onEntityClick}
           config={activeViewConfig}
           onConfigChange={onConfigChange}

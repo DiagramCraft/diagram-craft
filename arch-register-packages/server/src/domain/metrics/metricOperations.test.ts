@@ -700,9 +700,18 @@ describe('getBoxMetrics', () => {
         )
     );
     return {
+      core: { driver: 'sqlite' },
       catalog: {
         listSchemas: vi.fn(async () => schemas),
         listEntitiesPaginated,
+        // Real filtering is exercised end-to-end by the contract-test suite
+        // (`entityQueryIRCompiler.contract.test.ts`/`seededEntityQuery.contract.test.ts`); here
+        // this stands in for the compiled-SQL result set, returning every entity by default and
+        // overridden per test (via `vi.mocked(db.catalog.runCompiledEntityQuery).mockResolvedValue`)
+        // wherever a test asserts on which entities the query actually matched.
+        runCompiledEntityQuery: vi.fn(async () =>
+          entities.map(entity => ({ ...entity, projections: {} }))
+        ),
         getEnum: vi.fn(async (_workspace: string, id: string) => {
           const enumOptions = options.enums?.[id];
           return enumOptions
@@ -789,11 +798,91 @@ describe('getBoxMetrics', () => {
       })
     ];
     const db = makeDb(entities);
+    // The legacy `owner` filter is now folded into the compiled EntityQuery (see
+    // `buildEntityQueryForExecution`) rather than applied in JS, so the compiled-SQL result set
+    // is what determines the match set here — simulate what real SQL would return for `owner:
+    // 'team-a'`.
+    vi.mocked(db.catalog.runCompiledEntityQuery).mockResolvedValue(
+      entities
+        .filter(entity => entity.owner === 'team-a')
+        .map(entity => ({ ...entity, projections: {} }))
+    );
 
     const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
       boxEntityIds: ['d1'],
       metric: numericMetric,
       owner: 'team-a'
+    });
+
+    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
+  });
+
+  it('routes an explicit entityQuery through the IR compiler', async () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', score: 10, tier: 'gold' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', score: 20, tier: 'silver' } })
+    ];
+    const db = makeDb(entities);
+    vi.mocked(db.catalog.runCompiledEntityQuery).mockResolvedValue(
+      entities
+        .filter(entity => entity.data.tier === 'gold')
+        .map(entity => ({ ...entity, projections: {} }))
+    );
+
+    const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+      boxEntityIds: ['d1'],
+      metric: numericMetric,
+      entityQuery: {
+        root: { kind: 'predicate', path: [], fieldId: 'tier', op: 'equals', value: 'gold' }
+      }
+    });
+
+    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
+  });
+
+  it('rejects an entityQuery with an unknown fieldId with a 400', async () => {
+    const db = makeDb([makeDomain('d1'), makeService('s1', 'd1', { data: { parent: 'd1' } })]);
+
+    await expect(
+      getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+        boxEntityIds: ['d1'],
+        metric: numericMetric,
+        entityQuery: {
+          root: { kind: 'predicate', path: [], fieldId: 'notAField', op: 'equals', value: 'x' }
+        }
+      })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('combines an explicit entityQuery with legacy owner/conditions as an additional AND-gate', async () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', {
+        data: { parent: 'd1', score: 10, tier: 'gold' },
+        owner: 'team-a'
+      }),
+      makeService('s2', 'd1', {
+        data: { parent: 'd1', score: 20, tier: 'gold' },
+        owner: 'team-b'
+      })
+    ];
+    const db = makeDb(entities);
+    // buildEntityQueryForExecution ANDs the explicit entityQuery with owner/lifecycle/q, so the
+    // compiled SQL is expected to already reflect both — simulate that combined result here.
+    vi.mocked(db.catalog.runCompiledEntityQuery).mockResolvedValue(
+      entities
+        .filter(entity => entity.data.tier === 'gold' && entity.owner === 'team-a')
+        .map(entity => ({ ...entity, projections: {} }))
+    );
+
+    const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+      boxEntityIds: ['d1'],
+      metric: numericMetric,
+      owner: 'team-a',
+      entityQuery: {
+        root: { kind: 'predicate', path: [], fieldId: 'tier', op: 'equals', value: 'gold' }
+      }
     });
 
     expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });

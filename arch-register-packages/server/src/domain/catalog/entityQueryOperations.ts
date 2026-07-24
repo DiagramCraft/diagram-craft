@@ -174,7 +174,7 @@ const withQueryProjections = (
 ): EntityRecord =>
   Object.keys(projections).length > 0 ? { ...entity, _projections: projections } : entity;
 
-const collectEntitiesFromIR = async (
+export const collectEntitiesFromIR = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,

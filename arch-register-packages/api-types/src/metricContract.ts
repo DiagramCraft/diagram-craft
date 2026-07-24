@@ -2,6 +2,7 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 import { filterConditionSchema } from '@arch-register/api-types/viewContract';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 // ── Metric source & aggregation ──────────────────────────────────────────────
 
@@ -64,6 +65,11 @@ export const metricRollupRequestSchema = z.object({
   lifecycle: z.string().nullable().optional().describe('Filter by lifecycle state'),
   q: z.string().optional().describe('Search query string'),
   conditions: z.array(filterConditionSchema).optional().describe('Additional filter conditions'),
+  entityQuery: entityQuerySchema
+    .optional()
+    .describe(
+      'Structured EntityQuery IR; when present, routes filtering through the IR compiler alongside the legacy flat filters above'
+    ),
   assessmentId: z
     .string()
     .nullable()
