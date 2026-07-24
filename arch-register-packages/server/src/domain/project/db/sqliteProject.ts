@@ -858,10 +858,10 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
-  async listAssessments(workspace: string, projectId: string) {
+  async listAssessments(workspace: string) {
     return this.all(
-      'SELECT * FROM assessment WHERE workspace = ? AND project_id = ? ORDER BY name',
-      [workspace, projectId],
+      'SELECT * FROM assessment WHERE workspace = ? ORDER BY name',
+      [workspace],
       projectMappers.assessment
     );
   }

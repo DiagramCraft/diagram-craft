@@ -26,7 +26,6 @@ export const assessmentResponseORPCRouter = assessmentResponseRouter.router({
       return await listAssessmentResponses(
         context.db,
         input.params.workspace,
-        input.params.id,
         input.params.assessmentId,
         context.event
       );
@@ -36,7 +35,6 @@ export const assessmentResponseORPCRouter = assessmentResponseRouter.router({
         return await upsertAssessmentResponse(
           context.db,
           input.params.workspace,
-          input.params.id,
           input.params.assessmentId,
           input.params.entityId,
           input.body,
@@ -49,7 +47,6 @@ export const assessmentResponseORPCRouter = assessmentResponseRouter.router({
         return await exportAssessmentResponsesCsv(
           context.db,
           input.params.workspace,
-          input.params.id,
           input.params.assessmentId,
           context.event
         );

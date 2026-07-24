@@ -52,7 +52,7 @@ const makeDb = (assessment: AssessmentDbResult): DatabaseAdapter =>
   ({
     project: {
       getProject: vi.fn(async () => ({ id: 'proj-1', owner: null })),
-      getAssessment: vi.fn(async () => assessment),
+      getAssessmentById: vi.fn(async () => assessment),
       getAssessmentResponse: vi.fn(async () => null),
       upsertAssessmentResponse: vi.fn(async () => ({
         id: 'resp-1',
@@ -77,15 +77,7 @@ describe('upsertAssessmentResponse', () => {
     const db = makeDb(makeAssessment(status));
 
     await expect(
-      upsertAssessmentResponse(
-        db,
-        'ws-1',
-        'proj-1',
-        'asmnt-1',
-        'entity-1',
-        { values: { f1: 5 } },
-        event
-      )
+      upsertAssessmentResponse(db, 'ws-1', 'asmnt-1', 'entity-1', { values: { f1: 5 } }, event)
     ).rejects.toMatchObject({ status: 409 });
 
     expect(db.project.upsertAssessmentResponse).not.toHaveBeenCalled();
@@ -97,7 +89,6 @@ describe('upsertAssessmentResponse', () => {
     const result = await upsertAssessmentResponse(
       db,
       'ws-1',
-      'proj-1',
       'asmnt-1',
       'entity-1',
       { values: { f1: 5 } },

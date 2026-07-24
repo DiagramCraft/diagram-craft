@@ -7,30 +7,25 @@ import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStat
 import { orpcClient } from '../lib/orpcClient';
 import { useAuth } from '../auth/AuthContext';
 
-export const useAssessmentResponses = (
-  workspaceId: string,
-  projectId: string,
-  assessmentId: string
-) => {
+export const useAssessmentResponses = (workspaceId: string, assessmentId: string) => {
   return useQuery({
-    queryKey: assessmentResponseKeys.list(workspaceId, projectId, assessmentId),
+    queryKey: assessmentResponseKeys.list(workspaceId, assessmentId),
     queryFn: async () =>
       await orpcClient.assessmentResponses.list({
-        params: { workspace: workspaceId, id: projectId, assessmentId }
+        params: { workspace: workspaceId, assessmentId }
       }),
-    enabled: !!workspaceId && !!projectId && !!assessmentId
+    enabled: !!workspaceId && !!assessmentId
   });
 };
 
 export const useUpsertAssessmentResponse = (
   workspaceId: string,
-  projectId: string,
   assessmentId: string,
   fields: AssessmentField[]
 ) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const listKey = assessmentResponseKeys.list(workspaceId, projectId, assessmentId);
+  const listKey = assessmentResponseKeys.list(workspaceId, assessmentId);
 
   return useMutation({
     mutationFn: ({
@@ -41,7 +36,7 @@ export const useUpsertAssessmentResponse = (
       values: Record<string, string | number | null>;
     }) =>
       orpcClient.assessmentResponses.upsert({
-        params: { workspace: workspaceId, id: projectId, assessmentId, entityId },
+        params: { workspace: workspaceId, assessmentId, entityId },
         body: { values }
       }),
     onMutate: async ({ entityId, values }) => {
@@ -76,10 +71,10 @@ export const useUpsertAssessmentResponse = (
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: listKey });
       await queryClient.invalidateQueries({
-        queryKey: assessmentKeys.list(workspaceId, projectId)
+        queryKey: assessmentKeys.list(workspaceId)
       });
       await queryClient.invalidateQueries({
-        queryKey: assessmentKeys.detail(workspaceId, projectId, assessmentId)
+        queryKey: assessmentKeys.detail(workspaceId, assessmentId)
       });
       await invalidateAuditQueries(queryClient, workspaceId);
     }

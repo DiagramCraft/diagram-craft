@@ -6,7 +6,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
 import { useProjects } from '../../../hooks/useProjects';
-import { useAssessmentsForProjects } from '../../../hooks/useAssessments';
+import { useAssessments } from '../../../hooks/useAssessments';
 import {
   useAssessmentResponses,
   useUpsertAssessmentResponse
@@ -36,8 +36,7 @@ export const EntityAssessmentsTab = ({
   // (matches how the bulk fill grid resolves in-scope entities) — so candidate assessments
   // come from every project the user can access, not just projects this entity is linked to.
   const { data: projects = [] } = useProjects(workspaceId);
-  const projectIds = useMemo(() => projects.map(p => p.id), [projects]);
-  const assessmentQueries = useAssessmentsForProjects(workspaceId, projectIds);
+  const { data: assessments = [] } = useAssessments(workspaceId);
 
   const relevant = useMemo(() => {
     if (!schema) return [];
@@ -47,21 +46,24 @@ export const EntityAssessmentsTab = ({
       projectName: string;
       projectPublicId: string;
     }[] = [];
-    assessmentQueries.forEach((q, i) => {
-      const projectId = projectIds[i];
-      const projectName = projects[i]?.name ?? '';
-      const projectPublicId = projects[i]?.public_id ?? '';
-      (q.data ?? []).forEach(assessment => {
+    assessments.forEach(assessment => {
+      const project = projects.find(candidate => candidate.id === assessment.project_id);
+      if (project) {
         if (
           (assessment.status === 'open' || assessment.status === 'closed') &&
           assessment.scope.includes(schema.id)
         ) {
-          result.push({ assessment, projectId: projectId!, projectName, projectPublicId });
+          result.push({
+            assessment,
+            projectId: project.id,
+            projectName: project.name,
+            projectPublicId: project.public_id
+          });
         }
-      });
+      }
     });
     return result;
-  }, [assessmentQueries, projectIds, projects, schema]);
+  }, [assessments, projects, schema]);
 
   if (relevant.length === 0) {
     return (
@@ -74,11 +76,10 @@ export const EntityAssessmentsTab = ({
 
   return (
     <div className={styles.list}>
-      {relevant.map(({ assessment, projectId, projectName, projectPublicId }) => (
+      {relevant.map(({ assessment, projectName, projectPublicId }) => (
         <AssessmentFillCard
           key={assessment.id}
           workspaceId={workspaceId}
-          projectId={projectId}
           projectName={projectName}
           projectPublicId={projectPublicId}
           assessment={assessment}
@@ -91,27 +92,20 @@ export const EntityAssessmentsTab = ({
 
 const AssessmentFillCard = ({
   workspaceId,
-  projectId,
   projectName,
   projectPublicId,
   assessment,
   entityId
 }: {
   workspaceId: string;
-  projectId: string;
   projectName: string;
   projectPublicId: string;
   assessment: Assessment;
   entityId: string;
 }) => {
   const [open, setOpen] = useState(false);
-  const { data: responses = [] } = useAssessmentResponses(workspaceId, projectId, assessment.id);
-  const upsertResponse = useUpsertAssessmentResponse(
-    workspaceId,
-    projectId,
-    assessment.id,
-    assessment.fields
-  );
+  const { data: responses = [] } = useAssessmentResponses(workspaceId, assessment.id);
+  const upsertResponse = useUpsertAssessmentResponse(workspaceId, assessment.id, assessment.fields);
 
   const response = responses.find(r => r.entity_id === entityId);
   const status = response?.status ?? computeAssessmentStatus(assessment.fields, undefined);

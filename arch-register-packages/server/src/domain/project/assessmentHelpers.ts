@@ -19,17 +19,17 @@ const toScopeConditions = (value: unknown, fallback: FilterCondition[]) =>
 
 export const buildCreateAssessmentInput = (
   workspace: string,
-  projectId: string,
   body: Record<string, unknown>,
   timestamp: Date
 ): AssessmentDbCreate => {
-  const { name, description, scope, scope_conditions, fields } = body;
+  const { project_id, name, description, scope, scope_conditions, fields } = body;
+  httpAssert.string(project_id, { message: 'project_id is required and must be a string' });
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   return {
     id: randomUUID(),
     workspace,
-    project_id: projectId,
+    project_id,
     name,
     description: typeof description === 'string' ? description : '',
     status: 'draft',
@@ -62,11 +62,12 @@ export const buildUpdateAssessmentInput = (
 
 export const toApiAssessment = (
   row: AssessmentDbResult,
-  stats: { response_count: number; completed_entity_count: number }
+  stats: { response_count: number; completed_entity_count: number },
+  projectId: string
 ): Assessment => ({
   id: row.id,
   workspace: row.workspace,
-  project_id: row.project_id,
+  project_id: projectId,
   name: row.name,
   description: row.description,
   status: row.status,

@@ -34,7 +34,11 @@ const makeRow = (overrides: Partial<AssessmentDbResult> = {}): AssessmentDbResul
 
 describe('buildCreateAssessmentInput', () => {
   it('builds a create input with defaults for optional fields', () => {
-    const input = buildCreateAssessmentInput('ws-1', 'proj-1', { name: 'New assessment' }, now);
+    const input = buildCreateAssessmentInput(
+      'ws-1',
+      { project_id: 'proj-1', name: 'New assessment' },
+      now
+    );
     expect(input.workspace).toBe('ws-1');
     expect(input.project_id).toBe('proj-1');
     expect(input.name).toBe('New assessment');
@@ -52,8 +56,8 @@ describe('buildCreateAssessmentInput', () => {
     const scope_conditions = [{ fieldId: '_owner', op: 'equals' as const, value: 'team-a' }];
     const input = buildCreateAssessmentInput(
       'ws-1',
-      'proj-1',
       {
+        project_id: 'proj-1',
         name: 'API Fitness',
         description: 'Rate APIs',
         scope: ['schema-api'],
@@ -69,7 +73,7 @@ describe('buildCreateAssessmentInput', () => {
   });
 
   it('throws when name is missing', () => {
-    expect(() => buildCreateAssessmentInput('ws-1', 'proj-1', {}, now)).toThrow();
+    expect(() => buildCreateAssessmentInput('ws-1', {}, now)).toThrow();
   });
 });
 
@@ -109,7 +113,11 @@ describe('buildUpdateAssessmentInput', () => {
 
 describe('toApiAssessment', () => {
   it('maps a db row to the API shape and serializes dates to ISO strings', () => {
-    const result = toApiAssessment(makeRow(), { response_count: 3, completed_entity_count: 1 });
+    const result = toApiAssessment(
+      makeRow(),
+      { response_count: 3, completed_entity_count: 1 },
+      'proj-1'
+    );
     expect(result.id).toBe('asmnt-1');
     expect(result.project_id).toBe('proj-1');
     expect(result.scope).toEqual(['schema-service']);

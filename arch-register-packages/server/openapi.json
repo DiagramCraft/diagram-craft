@@ -61679,7 +61679,7 @@
         }
       }
     },
-    "/{workspace}/projects/{id}/assessments": {
+    "/{workspace}/assessments": {
       "get": {
         "operationId": "assessments.list",
         "summary": "List project assessments",
@@ -61691,14 +61691,6 @@
         "parameters": [
           {
             "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -61726,7 +61718,7 @@
                       },
                       "project_id": {
                         "type": "string",
-                        "description": "Parent project identifier"
+                        "description": "Owning project identifier"
                       },
                       "name": {
                         "type": "string",
@@ -61959,14 +61951,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -61976,6 +61960,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "project_id": {
+                    "type": "string",
+                    "description": "Owning project identifier"
+                  },
                   "name": {
                     "type": "string",
                     "description": "Assessment name (must be unique within the project)"
@@ -62140,6 +62128,7 @@
                   }
                 },
                 "required": [
+                  "project_id",
                   "name"
                 ]
               }
@@ -62164,7 +62153,7 @@
                     },
                     "project_id": {
                       "type": "string",
-                      "description": "Parent project identifier"
+                      "description": "Owning project identifier"
                     },
                     "name": {
                       "type": "string",
@@ -62381,7 +62370,7 @@
         }
       }
     },
-    "/{workspace}/projects/{id}/assessments/{assessmentId}": {
+    "/{workspace}/assessments/{assessmentId}": {
       "get": {
         "operationId": "assessments.get",
         "summary": "Get assessment details",
@@ -62393,14 +62382,6 @@
         "parameters": [
           {
             "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -62435,7 +62416,7 @@
                     },
                     "project_id": {
                       "type": "string",
-                      "description": "Parent project identifier"
+                      "description": "Owning project identifier"
                     },
                     "name": {
                       "type": "string",
@@ -62669,14 +62650,6 @@
             }
           },
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "assessmentId",
             "in": "path",
             "required": true,
@@ -62693,6 +62666,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "project_id": {
+                    "type": "string",
+                    "description": "Owning project identifier"
+                  },
                   "name": {
                     "type": "string",
                     "description": "Assessment name (must be unique within the project)"
@@ -62857,6 +62834,7 @@
                   }
                 },
                 "required": [
+                  "project_id",
                   "name"
                 ]
               }
@@ -62881,7 +62859,7 @@
                     },
                     "project_id": {
                       "type": "string",
-                      "description": "Parent project identifier"
+                      "description": "Owning project identifier"
                     },
                     "name": {
                       "type": "string",
@@ -63115,14 +63093,6 @@
             }
           },
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "assessmentId",
             "in": "path",
             "required": true,
@@ -63160,7 +63130,7 @@
         }
       }
     },
-    "/{workspace}/projects/{id}/assessments/{assessmentId}/status": {
+    "/{workspace}/assessments/{assessmentId}/status": {
       "put": {
         "operationId": "assessments.updateStatus",
         "summary": "Update assessment status",
@@ -63172,14 +63142,6 @@
         "parameters": [
           {
             "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -63239,7 +63201,7 @@
                     },
                     "project_id": {
                       "type": "string",
-                      "description": "Parent project identifier"
+                      "description": "Owning project identifier"
                     },
                     "name": {
                       "type": "string",
@@ -63456,7 +63418,7 @@
         }
       }
     },
-    "/{workspace}/projects/{id}/assessments/{assessmentId}/responses": {
+    "/{workspace}/assessments/{assessmentId}/responses": {
       "get": {
         "operationId": "assessmentResponses.list",
         "summary": "List assessment responses",
@@ -63468,14 +63430,6 @@
         "parameters": [
           {
             "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -63580,7 +63534,7 @@
         }
       }
     },
-    "/{workspace}/projects/{id}/assessments/{assessmentId}/responses/{entityId}": {
+    "/{workspace}/assessments/{assessmentId}/responses/{entityId}": {
       "put": {
         "operationId": "assessmentResponses.upsert",
         "summary": "Record an assessment response",
@@ -63592,14 +63546,6 @@
         "parameters": [
           {
             "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -63745,7 +63691,7 @@
         }
       }
     },
-    "/{workspace}/projects/{id}/assessments/{assessmentId}/responses/export": {
+    "/{workspace}/assessments/{assessmentId}/responses/export": {
       "get": {
         "operationId": "assessmentResponses.exportCsv",
         "summary": "Export assessment results to CSV",
@@ -63757,14 +63703,6 @@
         "parameters": [
           {
             "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
