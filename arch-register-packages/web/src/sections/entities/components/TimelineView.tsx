@@ -35,7 +35,7 @@ import {
   useChangeCasesByEntity,
   changeCasesByEntityQueryOptions
 } from '../../../hooks/useChangeCases';
-import { useMilestonesForProjects } from '../../../hooks/useMilestones';
+import { useMilestones } from '../../../hooks/useMilestones';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import {
   getSnapshotDateLabel,
@@ -712,12 +712,8 @@ export const TimelineView = ({
 }: TimelineViewProps) => {
   const dateFields = useDateFieldOptions(schemas);
   const TODAY = useMemo(() => new Date(), []);
-  const projectIds = useMemo(() => projects.map(p => p.id), [projects]);
-  const milestoneQueries = useMilestonesForProjects(workspaceId, projectIds);
-  const milestonesById = useMemo(
-    () => toMilestonesById(milestoneQueries.flatMap(q => q.data ?? [])),
-    [milestoneQueries]
-  );
+  const { data: milestones = [] } = useMilestones(workspaceId);
+  const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
   const cfg: TimelineConfig = useMemo(() => {
     const defaults: TimelineConfig = {

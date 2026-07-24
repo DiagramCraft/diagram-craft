@@ -121,14 +121,11 @@ export const reconstructEntitiesAsOf = async (
     )
   ];
   const milestoneTargetDates = new Map(
-    (
-      await Promise.all(
-        futureUpdateProjectIds.map(projectId => db.project.listMilestones(workspace, projectId))
-      )
-    )
-      .flat()
-      .filter(m => milestoneIds.includes(m.id))
-      .map(m => [m.id, m.target_date] as const)
+    milestoneIds.length === 0
+      ? []
+      : (await db.project.listMilestones(workspace))
+          .filter(m => milestoneIds.includes(m.id))
+          .map(m => [m.id, m.target_date] as const)
   );
 
   // `listEntityVersionsAsOf` returns rows ordered by (entity_id, created_at ASC), so the last

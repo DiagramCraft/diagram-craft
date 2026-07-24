@@ -940,10 +940,10 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return row;
   }
 
-  async listMilestones(workspace: string, projectId: string) {
+  async listMilestones(workspace: string) {
     return this.all(
-      'SELECT * FROM project_milestone WHERE workspace = ? AND project_id = ? ORDER BY sort_order, name',
-      [workspace, projectId],
+      'SELECT * FROM project_milestone WHERE workspace = ? ORDER BY sort_order, name',
+      [workspace],
       projectMappers.projectMilestone
     );
   }
@@ -952,6 +952,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       'SELECT * FROM project_milestone WHERE workspace = ? AND project_id = ? AND id = ?',
       [workspace, projectId, id],
+      projectMappers.projectMilestone
+    );
+  }
+
+  async getMilestoneById(workspace: string, id: string) {
+    return this.get(
+      'SELECT * FROM project_milestone WHERE workspace = ? AND id = ?',
+      [workspace, id],
       projectMappers.projectMilestone
     );
   }

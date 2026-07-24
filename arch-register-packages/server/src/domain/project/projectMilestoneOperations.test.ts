@@ -54,6 +54,7 @@ const makeDb = (milestone: ProjectMilestoneDbResult): DatabaseAdapter =>
     project: {
       getProject: vi.fn(async () => ({ id: 'proj-1', owner: null })),
       getMilestone: vi.fn(async () => milestone),
+      getMilestoneById: vi.fn(async () => milestone),
       createMilestone: vi.fn(async () => milestone),
       deleteMilestone: vi.fn(async () => milestone)
     },
@@ -70,8 +71,7 @@ describe('createMilestone', () => {
     const result = await createMilestone(
       db,
       'ws-1',
-      'proj-1',
-      { name: 'Q3 platform migration', target_date: '2030-07-01' },
+      { project_id: 'proj-1', name: 'Q3 platform migration', target_date: '2030-07-01' },
       event
     );
 
@@ -89,7 +89,7 @@ describe('deleteMilestone', () => {
     const milestone = makeMilestone({ target_date: '2030-07-01' });
     const db = makeDb(milestone);
 
-    const result = await deleteMilestone(db, 'ws-1', 'proj-1', 'ms-1', event);
+    const result = await deleteMilestone(db, 'ws-1', 'ms-1', event);
 
     expect(result.success).toBe(true);
     expect(db.catalog.reassignSnapshotsFromMilestone).toHaveBeenCalledWith(
@@ -114,9 +114,9 @@ describe('deleteMilestone', () => {
 
   it('throws a 404 when the milestone does not exist', async () => {
     const db = makeDb(makeMilestone());
-    db.project.getMilestone = vi.fn(async () => null);
+    db.project.getMilestoneById = vi.fn(async () => null);
 
-    await expect(deleteMilestone(db, 'ws-1', 'proj-1', 'missing', event)).rejects.toMatchObject({
+    await expect(deleteMilestone(db, 'ws-1', 'missing', event)).rejects.toMatchObject({
       status: 404
     });
     expect(db.catalog.reassignSnapshotsFromMilestone).not.toHaveBeenCalled();

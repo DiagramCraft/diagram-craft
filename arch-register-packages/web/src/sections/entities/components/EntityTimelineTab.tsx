@@ -19,7 +19,7 @@ import {
 import styles from '../EntityDetailScreen.module.css';
 import { detectConflicts, diffSnapshotState, type SnapshotState } from './entityTimelineHelpers';
 import { EmptyState } from '../../../components/EmptyState';
-import { useMilestonesForProjects } from '../../../hooks/useMilestones';
+import { useMilestones } from '../../../hooks/useMilestones';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import {
   getSnapshotDateLabel,
@@ -79,12 +79,8 @@ export const EntityTimelineTab = ({
   const [zoom, setZoom] = useState<TimelineZoom>('quarter');
   const [selectedSnap, setSelectedSnap] = useState<SnapEntry | null>(null);
   const TODAY = useMemo(() => new Date(), []);
-  const projectIds = useMemo(() => entityProjects.map(ep => ep.project.id), [entityProjects]);
-  const milestoneQueries = useMilestonesForProjects(workspaceId, projectIds);
-  const milestonesById = useMemo(
-    () => toMilestonesById(milestoneQueries.flatMap(q => q.data ?? [])),
-    [milestoneQueries]
-  );
+  const { data: milestones = [] } = useMilestones(workspaceId);
+  const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
 
   const ownSnaps = useMemo<SnapEntry[]>(
     () =>

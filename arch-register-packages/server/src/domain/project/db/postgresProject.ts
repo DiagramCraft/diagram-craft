@@ -941,9 +941,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     return row;
   }
 
-  async listMilestones(workspace: string, projectId: string) {
+  async listMilestones(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT * FROM project_milestone WHERE workspace = ${workspace} AND project_id = ${projectId} ORDER BY sort_order, name
+      SELECT * FROM project_milestone WHERE workspace = ${workspace} ORDER BY sort_order, name
     `;
     return mapDatabaseRows(rows, projectMappers.projectMilestone);
   }
@@ -951,6 +951,13 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async getMilestone(workspace: string, projectId: string, id: string) {
     const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM project_milestone WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+    `;
+    return row ? projectMappers.projectMilestone(row) : null;
+  }
+
+  async getMilestoneById(workspace: string, id: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM project_milestone WHERE workspace = ${workspace} AND id = ${id}
     `;
     return row ? projectMappers.projectMilestone(row) : null;
   }

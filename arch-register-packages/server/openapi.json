@@ -76069,11 +76069,11 @@
         }
       }
     },
-    "/{workspace}/projects/{id}/milestones": {
+    "/{workspace}/milestones": {
       "get": {
         "operationId": "milestones.list",
-        "summary": "List project milestones",
-        "description": "Retrieves all milestones defined for the project.",
+        "summary": "List workspace milestones",
+        "description": "Retrieves all milestones defined for projects in the workspace.",
         "tags": [
           "Milestones",
           "Milestones"
@@ -76088,12 +76088,13 @@
             }
           },
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
+            "name": "project_id",
+            "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -76185,14 +76186,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -76202,6 +76195,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "project_id": {
+                    "type": "string",
+                    "description": "Parent project identifier"
+                  },
                   "name": {
                     "type": "string",
                     "description": "Milestone name (must be unique within the project)"
@@ -76228,6 +76225,7 @@
                   }
                 },
                 "required": [
+                  "project_id",
                   "name",
                   "target_date"
                 ]
@@ -76306,7 +76304,7 @@
         }
       }
     },
-    "/{workspace}/projects/{id}/milestones/{milestoneId}": {
+    "/{workspace}/milestones/{milestoneId}": {
       "get": {
         "operationId": "milestones.get",
         "summary": "Get milestone details",
@@ -76318,14 +76316,6 @@
         "parameters": [
           {
             "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -76430,14 +76420,6 @@
             }
           },
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "milestoneId",
             "in": "path",
             "required": true,
@@ -76454,6 +76436,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "project_id": {
+                    "type": "string",
+                    "description": "Parent project identifier"
+                  },
                   "name": {
                     "type": "string",
                     "description": "Milestone name (must be unique within the project)"
@@ -76480,6 +76466,7 @@
                   }
                 },
                 "required": [
+                  "project_id",
                   "name",
                   "target_date"
                 ]
@@ -76568,14 +76555,6 @@
         "parameters": [
           {
             "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {

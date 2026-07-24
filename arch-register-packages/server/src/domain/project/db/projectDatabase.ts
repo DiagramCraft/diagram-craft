@@ -645,8 +645,9 @@ export type ProjectDatabase = {
   ): Promise<AssessmentDbResult | null>;
   deleteAssessment(ws: string, projectId: string, id: string): Promise<AssessmentDbResult | null>;
 
-  listMilestones(ws: string, projectId: string): Promise<ProjectMilestoneDbResult[]>;
+  listMilestones(ws: string): Promise<ProjectMilestoneDbResult[]>;
   getMilestone(ws: string, projectId: string, id: string): Promise<ProjectMilestoneDbResult | null>;
+  getMilestoneById(ws: string, id: string): Promise<ProjectMilestoneDbResult | null>;
   createMilestone(input: ProjectMilestoneDbCreate): Promise<ProjectMilestoneDbResult>;
   updateMilestone(
     ws: string,

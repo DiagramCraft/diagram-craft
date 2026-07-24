@@ -28,7 +28,7 @@ export const milestoneORPCRouter = milestoneRouter.router({
       return await listMilestones(
         context.db,
         input.params.workspace,
-        input.params.id,
+        input.query.project_id,
         context.event
       );
     }),
@@ -36,25 +36,17 @@ export const milestoneORPCRouter = milestoneRouter.router({
       return await getMilestone(
         context.db,
         input.params.workspace,
-        input.params.id,
         input.params.milestoneId,
         context.event
       );
     }),
     create: milestoneRouter.milestones.create.handler(async ({ input, context }) => {
-      return await createMilestone(
-        context.db,
-        input.params.workspace,
-        input.params.id,
-        input.body,
-        context.event
-      );
+      return await createMilestone(context.db, input.params.workspace, input.body, context.event);
     }),
     update: milestoneRouter.milestones.update.handler(async ({ input, context }) => {
       return await updateMilestone(
         context.db,
         input.params.workspace,
-        input.params.id,
         input.params.milestoneId,
         input.body,
         context.event
@@ -64,7 +56,6 @@ export const milestoneORPCRouter = milestoneRouter.router({
       return await deleteMilestone(
         context.db,
         input.params.workspace,
-        input.params.id,
         input.params.milestoneId,
         context.event
       );
