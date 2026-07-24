@@ -2,11 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import type {
   EntityChangeDatabase,
-  EntityChangeProposalDbCreate,
-  EntityChangeRevisionDbCreate,
-  EntityChangeBulkRevisionDbCreate,
-  EntityChangeProposalStatus,
-  EntityChangeRevisionStatus
+  EntityChangeApprovalDbCreate,
+  EntityChangeApprovalRevisionDbCreate,
+  EntityChangeBulkApprovalRevisionDbCreate,
+  EntityChangeApprovalStatus,
+  EntityChangeApprovalRevisionStatus
 } from './entityChangeDatabase';
 import { entityChangeMappers } from './entityChangeDatabase';
 
@@ -23,7 +23,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
     LEFT JOIN entity_change_case_revision r ON r.case_id = c.id
     LEFT JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
 
-  async createProposal(input: EntityChangeProposalDbCreate) {
+  async createApproval(input: EntityChangeApprovalDbCreate) {
     this.run(
       `INSERT INTO entity_change_case
        (id, workspace, status, purpose, initiator_user_id, created_at, updated_at, closed_at)
@@ -37,26 +37,26 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
         input.closed_at?.toISOString() ?? null
       ]
     );
-    return (await this.getProposal(input.workspace, input.id))!;
+    return (await this.getApproval(input.workspace, input.id))!;
   }
 
-  async getProposal(workspace: string, id: string) {
+  async getApproval(workspace: string, id: string) {
     return this.get(
       `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = ? AND c.id = ? ORDER BY r.revision_number DESC LIMIT 1`,
       [workspace, id],
-      entityChangeMappers.proposal
+      entityChangeMappers.approval
     );
   }
 
-  async getOpenProposal(workspace: string, entityId: string) {
+  async getOpenApproval(workspace: string, entityId: string) {
     return this.get(
       `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = ? AND m.entity_id = ? AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
       [workspace, entityId],
-      entityChangeMappers.proposal
+      entityChangeMappers.approval
     );
   }
 
-  async listProposals(workspace: string, status?: EntityChangeProposalStatus) {
+  async listApprovals(workspace: string, status?: EntityChangeApprovalStatus) {
     const target =
       status === 'open'
         ? "c.status IN ('planned', 'in_approval')"
@@ -72,14 +72,14 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
     return this.all(
       `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = ? ${target ? `AND ${target}` : ''} ORDER BY c.updated_at DESC`,
       params,
-      entityChangeMappers.proposal
+      entityChangeMappers.approval
     );
   }
 
-  async updateProposalStatus(
+  async updateApprovalStatus(
     workspace: string,
     id: string,
-    status: EntityChangeProposalStatus,
+    status: EntityChangeApprovalStatus,
     updatedAt: Date,
     closedAt: Date | null = null
   ) {
@@ -91,10 +91,10 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
       'UPDATE entity_change_case SET status = ?, updated_at = ?, closed_at = ? WHERE workspace = ? AND id = ?',
       [target, updatedAt.toISOString(), closedAt?.toISOString() ?? null, workspace, id]
     );
-    return result.changes === 0 ? null : await this.getProposal(workspace, id);
+    return result.changes === 0 ? null : await this.getApproval(workspace, id);
   }
 
-  async createRevision(input: EntityChangeRevisionDbCreate) {
+  async createApprovalRevision(input: EntityChangeApprovalRevisionDbCreate) {
     const targetStatus = input.status === 'approved' ? 'applied' : input.status;
     const isActive = ['draft', 'submitted', 'changes_requested'].includes(targetStatus) ? 1 : 0;
     this.run('UPDATE entity_change_case_revision SET is_active = 0 WHERE case_id = ?', [
@@ -138,7 +138,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
       input.created_at.toISOString(),
       input.proposal_id
     ]);
-    return (await this.getRevision(input.workspace, input.id))!;
+    return (await this.getApprovalRevision(input.workspace, input.id))!;
   }
 
   private revisionSelect = `
@@ -153,7 +153,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
     FROM entity_change_case_revision r
     JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
 
-  async createBulkRevision(input: EntityChangeBulkRevisionDbCreate) {
+  async createBulkApprovalRevision(input: EntityChangeBulkApprovalRevisionDbCreate) {
     const targetStatus = input.status === 'approved' ? 'applied' : input.status;
     const isActive = ['draft', 'submitted', 'changes_requested'].includes(targetStatus) ? 1 : 0;
     this.run('UPDATE entity_change_case_revision SET is_active = 0 WHERE case_id = ?', [
@@ -199,45 +199,45 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
       input.created_at.toISOString(),
       input.proposal_id
     ]);
-    return await this.getRevisionMembers(input.workspace, input.id);
+    return await this.getApprovalRevisionMembers(input.workspace, input.id);
   }
 
-  async getRevisionMembers(workspace: string, revisionId: string) {
+  async getApprovalRevisionMembers(workspace: string, revisionId: string) {
     return this.all(
       `${this.revisionMemberSelect} WHERE r.workspace = ? AND r.id = ? ORDER BY m.entity_id`,
       [workspace, revisionId],
-      entityChangeMappers.revisionMember
+      entityChangeMappers.approvalRevisionMember
     );
   }
 
-  async getRevision(workspace: string, id: string) {
+  async getApprovalRevision(workspace: string, id: string) {
     return this.get(
       `${this.revisionSelect} WHERE r.workspace = ? AND r.id = ?`,
       [workspace, id],
-      entityChangeMappers.revision
+      entityChangeMappers.approvalRevision
     );
   }
 
-  async getLatestRevision(workspace: string, proposalId: string) {
+  async getLatestApprovalRevision(workspace: string, approvalId: string) {
     return this.get(
       `${this.revisionSelect} WHERE r.workspace = ? AND r.case_id = ? ORDER BY r.revision_number DESC LIMIT 1`,
-      [workspace, proposalId],
-      entityChangeMappers.revision
+      [workspace, approvalId],
+      entityChangeMappers.approvalRevision
     );
   }
 
-  async listRevisions(workspace: string, proposalId: string) {
+  async listApprovalRevisions(workspace: string, approvalId: string) {
     return this.all(
       `${this.revisionSelect} WHERE r.workspace = ? AND r.case_id = ? ORDER BY r.revision_number DESC`,
-      [workspace, proposalId],
-      entityChangeMappers.revision
+      [workspace, approvalId],
+      entityChangeMappers.approvalRevision
     );
   }
 
-  async updateRevisionStatus(
+  async updateApprovalRevisionStatus(
     workspace: string,
     id: string,
-    status: EntityChangeRevisionStatus,
+    status: EntityChangeApprovalRevisionStatus,
     resolvedAt: Date | null = null
   ) {
     const target = status === 'approved' ? 'applied' : status;
@@ -246,6 +246,6 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
       'UPDATE entity_change_case_revision SET status = ?, is_active = ?, resolved_at = ? WHERE workspace = ? AND id = ?',
       [target, isActive, resolvedAt?.toISOString() ?? null, workspace, id]
     );
-    return result.changes === 0 ? null : await this.getRevision(workspace, id);
+    return result.changes === 0 ? null : await this.getApprovalRevision(workspace, id);
   }
 }

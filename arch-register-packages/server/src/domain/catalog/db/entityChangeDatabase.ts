@@ -1,7 +1,7 @@
 import { databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
 
-export type EntityChangeProposalStatus = 'open' | 'approved' | 'rejected' | 'withdrawn';
-export type EntityChangeRevisionStatus =
+export type EntityChangeApprovalStatus = 'open' | 'approved' | 'rejected' | 'withdrawn';
+export type EntityChangeApprovalRevisionStatus =
   | 'submitted'
   | 'changes_requested'
   | 'stale'
@@ -9,18 +9,18 @@ export type EntityChangeRevisionStatus =
   | 'rejected'
   | 'withdrawn';
 
-export type EntityChangeProposalDbResult = {
+export type EntityChangeApprovalDbResult = {
   id: string;
   workspace: string;
   entity_id: string;
-  status: EntityChangeProposalStatus;
+  status: EntityChangeApprovalStatus;
   initiator_user_id: string | null;
   created_at: Date;
   updated_at: Date;
   closed_at: Date | null;
 };
 
-export type EntityChangeRevisionDbResult = {
+export type EntityChangeApprovalRevisionDbResult = {
   id: string;
   proposal_id: string;
   workspace: string;
@@ -34,18 +34,18 @@ export type EntityChangeRevisionDbResult = {
   resolved_policy: Record<string, unknown>;
   message: string | null;
   created_by: string | null;
-  status: EntityChangeRevisionStatus;
+  status: EntityChangeApprovalRevisionStatus;
   created_at: Date;
   resolved_at: Date | null;
 };
 
-export type EntityChangeProposalDbCreate = Omit<
-  EntityChangeProposalDbResult,
+export type EntityChangeApprovalDbCreate = Omit<
+  EntityChangeApprovalDbResult,
   'created_at' | 'updated_at' | 'closed_at'
 > & { created_at: Date; updated_at: Date; closed_at?: Date | null };
 
-export type EntityChangeRevisionDbCreate = Omit<
-  EntityChangeRevisionDbResult,
+export type EntityChangeApprovalRevisionDbCreate = Omit<
+  EntityChangeApprovalRevisionDbResult,
   'created_at' | 'resolved_at'
 > & { created_at: Date; resolved_at?: Date | null };
 
@@ -54,7 +54,7 @@ export type EntityChangeRevisionDbCreate = Omit<
  * revisions back the multi-entity propose-a-change flow (#2365), where one revision spans several
  * entities instead of the single-entity `EntityChangeRevisionDbCreate` shape above.
  */
-export type EntityChangeRevisionMemberInput = {
+export type EntityChangeApprovalRevisionMemberInput = {
   entity_id: string;
   base_version: number;
   base_state: Record<string, unknown>;
@@ -62,7 +62,7 @@ export type EntityChangeRevisionMemberInput = {
   diff: Record<string, unknown>;
 };
 
-export type EntityChangeBulkRevisionDbCreate = {
+export type EntityChangeBulkApprovalRevisionDbCreate = {
   id: string;
   proposal_id: string;
   workspace: string;
@@ -71,29 +71,29 @@ export type EntityChangeBulkRevisionDbCreate = {
   resolved_policy: Record<string, unknown>;
   message: string | null;
   created_by: string | null;
-  status: EntityChangeRevisionStatus;
+  status: EntityChangeApprovalRevisionStatus;
   created_at: Date;
   resolved_at?: Date | null;
-  members: EntityChangeRevisionMemberInput[];
+  members: EntityChangeApprovalRevisionMemberInput[];
 };
 
 /** A member row of a bulk revision, carrying its own `entity_change_case_entity_version.id`. */
-export type EntityChangeRevisionMemberDbResult = EntityChangeRevisionDbResult & {
+export type EntityChangeApprovalRevisionMemberDbResult = EntityChangeApprovalRevisionDbResult & {
   member_id: string;
 };
 
 export const entityChangeMappers = {
-  proposal: (row: DatabaseRow): EntityChangeProposalDbResult => ({
+  approval: (row: DatabaseRow): EntityChangeApprovalDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
-    status: row['status'] as EntityChangeProposalStatus,
+    status: row['status'] as EntityChangeApprovalStatus,
     initiator_user_id: row['initiator_user_id'] == null ? null : String(row['initiator_user_id']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at']),
     closed_at: row['closed_at'] == null ? null : databaseDate(row['closed_at'])
   }),
-  revision: (row: DatabaseRow): EntityChangeRevisionDbResult => ({
+  approvalRevision: (row: DatabaseRow): EntityChangeApprovalRevisionDbResult => ({
     id: String(row['id']),
     proposal_id: String(row['proposal_id']),
     workspace: String(row['workspace']),
@@ -115,52 +115,60 @@ export const entityChangeMappers = {
     ),
     message: row['message'] == null ? null : String(row['message']),
     created_by: row['created_by'] == null ? null : String(row['created_by']),
-    status: row['status'] as EntityChangeRevisionStatus,
+    status: row['status'] as EntityChangeApprovalRevisionStatus,
     created_at: databaseDate(row['created_at']),
     resolved_at: row['resolved_at'] == null ? null : databaseDate(row['resolved_at'])
   }),
-  revisionMember: (row: DatabaseRow): EntityChangeRevisionMemberDbResult => ({
-    ...entityChangeMappers.revision(row),
+  approvalRevisionMember: (row: DatabaseRow): EntityChangeApprovalRevisionMemberDbResult => ({
+    ...entityChangeMappers.approvalRevision(row),
     member_id: String(row['member_id'])
   })
 };
 
 export type EntityChangeDatabase = {
-  createProposal(input: EntityChangeProposalDbCreate): Promise<EntityChangeProposalDbResult>;
-  getProposal(workspace: string, id: string): Promise<EntityChangeProposalDbResult | null>;
-  getOpenProposal(
+  createApproval(input: EntityChangeApprovalDbCreate): Promise<EntityChangeApprovalDbResult>;
+  getApproval(workspace: string, id: string): Promise<EntityChangeApprovalDbResult | null>;
+  getOpenApproval(
     workspace: string,
     entityId: string
-  ): Promise<EntityChangeProposalDbResult | null>;
-  listProposals(
+  ): Promise<EntityChangeApprovalDbResult | null>;
+  listApprovals(
     workspace: string,
-    status?: EntityChangeProposalStatus
-  ): Promise<EntityChangeProposalDbResult[]>;
-  updateProposalStatus(
+    status?: EntityChangeApprovalStatus
+  ): Promise<EntityChangeApprovalDbResult[]>;
+  updateApprovalStatus(
     workspace: string,
     id: string,
-    status: EntityChangeProposalStatus,
+    status: EntityChangeApprovalStatus,
     updatedAt: Date,
     closedAt?: Date | null
-  ): Promise<EntityChangeProposalDbResult | null>;
-  createRevision(input: EntityChangeRevisionDbCreate): Promise<EntityChangeRevisionDbResult>;
-  getRevision(workspace: string, id: string): Promise<EntityChangeRevisionDbResult | null>;
-  getLatestRevision(
+  ): Promise<EntityChangeApprovalDbResult | null>;
+  createApprovalRevision(
+    input: EntityChangeApprovalRevisionDbCreate
+  ): Promise<EntityChangeApprovalRevisionDbResult>;
+  getApprovalRevision(
     workspace: string,
-    proposalId: string
-  ): Promise<EntityChangeRevisionDbResult | null>;
-  listRevisions(workspace: string, proposalId: string): Promise<EntityChangeRevisionDbResult[]>;
-  updateRevisionStatus(
+    id: string
+  ): Promise<EntityChangeApprovalRevisionDbResult | null>;
+  getLatestApprovalRevision(
+    workspace: string,
+    approvalId: string
+  ): Promise<EntityChangeApprovalRevisionDbResult | null>;
+  listApprovalRevisions(
+    workspace: string,
+    approvalId: string
+  ): Promise<EntityChangeApprovalRevisionDbResult[]>;
+  updateApprovalRevisionStatus(
     workspace: string,
     id: string,
-    status: EntityChangeRevisionStatus,
+    status: EntityChangeApprovalRevisionStatus,
     resolvedAt?: Date | null
-  ): Promise<EntityChangeRevisionDbResult | null>;
-  createBulkRevision(
-    input: EntityChangeBulkRevisionDbCreate
-  ): Promise<EntityChangeRevisionMemberDbResult[]>;
-  getRevisionMembers(
+  ): Promise<EntityChangeApprovalRevisionDbResult | null>;
+  createBulkApprovalRevision(
+    input: EntityChangeBulkApprovalRevisionDbCreate
+  ): Promise<EntityChangeApprovalRevisionMemberDbResult[]>;
+  getApprovalRevisionMembers(
     workspace: string,
     revisionId: string
-  ): Promise<EntityChangeRevisionMemberDbResult[]>;
+  ): Promise<EntityChangeApprovalRevisionMemberDbResult[]>;
 };
