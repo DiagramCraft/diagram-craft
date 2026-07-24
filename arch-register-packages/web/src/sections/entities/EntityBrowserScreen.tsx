@@ -31,8 +31,12 @@ export const EntityBrowserScreen = () => {
   const collectionId = search.collectionId ?? null;
   const [count, setCount] = useState(0);
   const [isSavingView, setIsSavingView] = useState(false);
-  const { data: savedViews = [] } = useSavedViews(workspaceId);
-  const { data: collections = [] } = useCollections(workspaceId);
+  const { data: savedViews = [] } = useSavedViews(workspaceId, {
+    enabled: search.sidebarTab === 'views' || search.viewId != null
+  });
+  const { data: collections = [] } = useCollections(workspaceId, undefined, {
+    enabled: search.sidebarTab === 'bookmarks' || collectionId != null
+  });
   const { data: timelineMarkers = [] } = useTimelineMarkers(workspaceId);
   const createSavedViewMutation = useCreateSavedView(workspaceId);
   const updateSavedViewMutation = useUpdateSavedView(workspaceId);

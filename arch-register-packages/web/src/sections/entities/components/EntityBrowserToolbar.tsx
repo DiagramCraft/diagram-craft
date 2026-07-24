@@ -50,6 +50,9 @@ type EntityBrowserToolbarProps = {
   joinAssessmentId?: string | null;
   onJoinAssessmentChange?: (assessmentId: string | null) => void;
   joinedAssessment?: Assessment | null;
+  assessmentsLoading?: boolean;
+  assessmentsReady?: boolean;
+  onAssessmentPickerOpenChange?: (open: boolean) => void;
   allowedViews?: Array<{ value: BrowserView; label: string }>;
 };
 
@@ -86,6 +89,9 @@ export const EntityBrowserToolbar = ({
   joinAssessmentId,
   onJoinAssessmentChange,
   joinedAssessment,
+  assessmentsLoading,
+  assessmentsReady,
+  onAssessmentPickerOpenChange,
   allowedViews
 }: EntityBrowserToolbarProps) => {
   return (
@@ -111,6 +117,9 @@ export const EntityBrowserToolbar = ({
           options={joinOptions}
           value={joinAssessmentId ?? null}
           onChange={onJoinAssessmentChange}
+          isLoading={assessmentsLoading ?? false}
+          isReady={assessmentsReady ?? false}
+          onOpenChange={onAssessmentPickerOpenChange}
         />
       )}
       {projectId && !readOnly && (

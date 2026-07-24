@@ -8,17 +8,23 @@ import { orpcClient } from '../lib/orpcClient';
 
 export const useSavedViews = (
   workspaceId: string,
-  options?: { projectId?: string; includeWorkspace?: boolean }
-) =>
-  useQuery({
-    queryKey: viewKeys.list(workspaceId, options),
+  options?: { projectId?: string; includeWorkspace?: boolean; enabled?: boolean }
+) => {
+  const { enabled = true, ...queryOptions } = options ?? {};
+
+  return useQuery({
+    queryKey: viewKeys.list(workspaceId, queryOptions),
     queryFn: () =>
       orpcClient.views.list({
         params: { workspace: workspaceId },
-        query: { projectId: options?.projectId, includeWorkspace: options?.includeWorkspace }
+        query: {
+          projectId: queryOptions.projectId,
+          includeWorkspace: queryOptions.includeWorkspace
+        }
       }),
-    enabled: !!workspaceId
+    enabled: enabled && !!workspaceId
   });
+};
 
 export const useCreateSavedView = (workspaceId: string) => {
   const queryClient = useQueryClient();

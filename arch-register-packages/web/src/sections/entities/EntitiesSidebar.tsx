@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
@@ -22,13 +22,12 @@ import {
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand
 } from 'react-icons/tb';
-import type { EntityFacets } from '@arch-register/api-types/entityContract';
-import { fetchEntityFacets } from '../../lib/entityOperations';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { usePinnedEntities } from '../../hooks/useNotifications';
+import { useEntityFacets } from '../../hooks/useEntities';
 import {
   useCollections,
   useDeleteCollection,
@@ -92,11 +91,19 @@ export const EntitiesSidebar = ({
   const statusFilter = activeFilters.status;
   const ownerFilter = activeFilters.owner;
 
-  const [facets, setFacets] = useState<EntityFacets | null>(null);
-  const { data: savedViews = [] } = useSavedViews(workspaceSlug);
-  const { data: pinnedEntities = [], isLoading: isPinnedEntitiesLoading } =
-    usePinnedEntities(workspaceSlug);
-  const { data: collections = [], isLoading: isCollectionsLoading } = useCollections(workspaceSlug);
+  const { data: facets } = useEntityFacets(workspaceSlug, sidebarTab === 'filters');
+  const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
+    enabled: sidebarTab === 'views'
+  });
+  const { data: pinnedEntities = [], isLoading: isPinnedEntitiesLoading } = usePinnedEntities(
+    workspaceSlug,
+    sidebarTab === 'bookmarks'
+  );
+  const { data: collections = [], isLoading: isCollectionsLoading } = useCollections(
+    workspaceSlug,
+    undefined,
+    { enabled: sidebarTab === 'bookmarks' }
+  );
   const deleteViewMutation = useDeleteSavedView(workspaceSlug);
   const updateViewMutation = useUpdateSavedView(workspaceSlug);
   const updateCollectionMutation = useUpdateCollection(workspaceSlug);
@@ -111,16 +118,6 @@ export const EntitiesSidebar = ({
   } | null>(null);
   const [renameCollectionTarget, setRenameCollectionTarget] = useState<Collection | null>(null);
   const [deleteCollectionTarget, setDeleteCollectionTarget] = useState<Collection | null>(null);
-
-  useEffect(() => {
-    if (!workspaceSlug) {
-      setFacets(null);
-      return;
-    }
-    fetchEntityFacets(workspaceSlug)
-      .then(setFacets)
-      .catch(() => setFacets(null));
-  }, [workspaceSlug]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
