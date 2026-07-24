@@ -18,24 +18,31 @@ import {
 import {
   collectTimelineDates,
   getDatedTimelineRows,
-  getOwnTimelineSnapshots,
+  getOwnTimelineVersions,
+  getOwnVersionDisplayStatus,
   groupTimelineRows,
-  groupTimelineSnapshotsByProject
+  groupChangeCaseEntriesByProject
 } from './timelineViewState';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
+import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { useEntitySnapshots, legacySnapshotQuery } from '../../../hooks/useSnapshots';
+import { useEntityVersions } from '../../../hooks/useEntityVersions';
+import {
+  useChangeCasesByEntity,
+  changeCasesByEntityQueryOptions
+} from '../../../hooks/useChangeCases';
 import { useMilestonesForProjects } from '../../../hooks/useMilestones';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import {
   getSnapshotDateLabel,
   getSnapshotEffectiveDate,
-  toMilestonesById
+  toMilestonesById,
+  flattenChangeCaseMembers,
+  type ChangeCaseMemberEntry
 } from './snapshotDisplay';
 import { EmptyState } from '../../../components/EmptyState';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
@@ -98,6 +105,33 @@ const SNAP_STATUS_LABEL: Record<string, string> = {
   applied: 'Applied'
 };
 
+// ── Timeline dots ─────────────────────────────────────────────────────────────
+//
+// A dot on the timeline is either an own-history entry (from an EntityVersion) or a
+// project-scoped planned/applied entry (from a ChangeCase member). Both render as the same kind
+// of marker and share a selection/detail-panel UI, so this local union carries just what the UI
+// needs from either source — it isn't a shared "snapshot" API shape.
+
+type TimelineDot =
+  | { source: 'own'; id: string; version: EntityVersion }
+  | { source: 'project'; id: string; entry: ChangeCaseMemberEntry };
+
+const dotStatus = (dot: TimelineDot): string =>
+  dot.source === 'own'
+    ? getOwnVersionDisplayStatus(dot.version.kind)
+    : dot.entry.changeCase.status === 'applied'
+      ? 'applied'
+      : 'future_update';
+
+const dotCommitMessage = (dot: TimelineDot): string | null =>
+  dot.source === 'own' ? dot.version.commit_message : dot.entry.changeCase.commit_message;
+
+const dotCreatedAt = (dot: TimelineDot): string =>
+  dot.source === 'own' ? dot.version.created_at : dot.entry.changeCase.created_at;
+
+const dotProjectId = (dot: TimelineDot): string | null =>
+  dot.source === 'own' ? null : dot.entry.changeCase.project_id;
+
 // ── SnapBlock ─────────────────────────────────────────────────────────────────
 
 type SnapBlockProps = {
@@ -116,7 +150,7 @@ type SnapBlockProps = {
   TODAY: Date;
   lifecycleStates: WorkspaceLifecycleState[];
   selectedSnapId: string | null;
-  onSnapSelect: (snap: EntitySnapshot | null, entity: EntityRecord) => void;
+  onSnapSelect: (snap: TimelineDot | null, entity: EntityRecord) => void;
   onEntityClick: (entityId: string) => void;
   onBarClick: (entity: EntityRecord) => void;
 };
@@ -141,11 +175,28 @@ const SnapBlock = ({
   onEntityClick,
   onBarClick
 }: SnapBlockProps) => {
-  const { data: snaps = [] } = useEntitySnapshots(workspaceId, entity._uid, true);
+  const { data: versions = [] } = useEntityVersions(workspaceId, entity._uid, true);
+  const { data: changeCases = [] } = useChangeCasesByEntity(workspaceId, entity._uid, true);
 
-  const ownSnaps = useMemo(() => getOwnTimelineSnapshots(snaps), [snaps]);
+  const ownDots = useMemo<TimelineDot[]>(
+    () =>
+      getOwnTimelineVersions(versions).map(version => ({
+        source: 'own',
+        id: version.id,
+        version
+      })),
+    [versions]
+  );
 
-  const projectLanes = useMemo(() => groupTimelineSnapshotsByProject(snaps), [snaps]);
+  const projectLanes = useMemo(() => {
+    const lanes = groupChangeCaseEntriesByProject(flattenChangeCaseMembers(changeCases));
+    return lanes.map(lane => ({
+      projectId: lane.projectId,
+      dots: lane.entries.map(
+        (entry): TimelineDot => ({ source: 'project', id: entry.member.id, entry })
+      )
+    }));
+  }, [changeCases]);
   const visibleProjectLanes = useMemo(
     () =>
       projectFilterId == null
@@ -156,7 +207,7 @@ const SnapBlock = ({
 
   if (projectFilterId != null && visibleProjectLanes.length === 0) return null;
 
-  const projectSnapshots = visibleProjectLanes.flatMap(({ snaps: laneSnaps }) => laneSnaps);
+  const projectSnapshots = visibleProjectLanes.flatMap(({ dots }) => dots);
   const projectColor = projectFilterId
     ? (projects.find(project => project.id === projectFilterId)?.color ?? 'var(--accent-fg)')
     : undefined;
@@ -213,13 +264,19 @@ const SnapBlock = ({
             <>
               <div className={styles.snapBaseline} />
               {projectSnapshots.map(snap => {
-                const effectiveDate = getSnapshotEffectiveDate(snap, milestonesById);
+                if (snap.source !== 'project') return null;
+                const effectiveDate = getSnapshotEffectiveDate(
+                  snap.entry.changeCase,
+                  milestonesById
+                );
                 if (!effectiveDate) return null;
                 const px = toPx(new Date(`${effectiveDate}T00:00:00`));
                 const isSel = selectedSnapId === snap.id;
+                const status = dotStatus(snap);
                 const dotClass =
-                  snap.status === 'applied' ? styles.snapDotApplied : styles.snapDotFutureUpdate;
-                const dateLabel = getSnapshotDateLabel(snap, milestonesById);
+                  status === 'applied' ? styles.snapDotApplied : styles.snapDotFutureUpdate;
+                const dateLabel = getSnapshotDateLabel(snap.entry.changeCase, milestonesById);
+                const commitMessage = dotCommitMessage(snap);
                 return (
                   <div
                     key={snap.id}
@@ -230,9 +287,7 @@ const SnapBlock = ({
                       onSnapSelect(isSel ? null : snap, entity);
                     }}
                     title={
-                      snap.commit_message
-                        ? `${snap.commit_message} (${dateLabel})`
-                        : (dateLabel ?? snap.status)
+                      commitMessage ? `${commitMessage} (${dateLabel})` : (dateLabel ?? status)
                     }
                   />
                 );
@@ -261,7 +316,7 @@ const SnapBlock = ({
       </div>
 
       {/* Own history lane */}
-      {projectFilterId == null && ownSnaps.length > 0 && (
+      {projectFilterId == null && ownDots.length > 0 && (
         <div className={`${styles.snapLane} ${styles.snapLaneOwn}`}>
           <div className={`${styles.labelCol} ${styles.snapLaneLabel}`}>
             <TbGitBranch size={10} style={{ color: 'var(--base-fg-more-dim)', flexShrink: 0 }} />
@@ -269,13 +324,12 @@ const SnapBlock = ({
           </div>
           <div className={`${styles.barCell} ${styles.snapTrack}`} style={{ width: totalWidth }}>
             <div className={styles.snapBaseline} />
-            {ownSnaps.map(snap => {
-              const px = toPx(new Date(snap.created_at));
+            {ownDots.map(snap => {
+              const px = toPx(new Date(dotCreatedAt(snap)));
               const isSel = selectedSnapId === snap.id;
+              const status = dotStatus(snap);
               const dotClass =
-                snap.status === 'saved_version'
-                  ? styles.snapDotSavedVersion
-                  : styles.snapDotAutosave;
+                status === 'saved_version' ? styles.snapDotSavedVersion : styles.snapDotAutosave;
               return (
                 <div
                   key={snap.id}
@@ -285,7 +339,7 @@ const SnapBlock = ({
                     ev.stopPropagation();
                     onSnapSelect(isSel ? null : snap, entity);
                   }}
-                  title={snap.commit_message ?? snap.status}
+                  title={dotCommitMessage(snap) ?? status}
                 />
               );
             })}
@@ -295,7 +349,7 @@ const SnapBlock = ({
 
       {/* Project lanes */}
       {projectFilterId == null &&
-        visibleProjectLanes.map(({ projectId, snaps: laneSnaps }) => {
+        visibleProjectLanes.map(({ projectId, dots }) => {
           const project = projects.find(p => p.id === projectId);
           if (!project) return null;
           const projectColor = project.color ?? 'var(--accent-fg)';
@@ -310,14 +364,20 @@ const SnapBlock = ({
                 style={{ width: totalWidth }}
               >
                 <div className={styles.snapBaseline} />
-                {laneSnaps.map(snap => {
-                  const effectiveDate = getSnapshotEffectiveDate(snap, milestonesById);
+                {dots.map(snap => {
+                  if (snap.source !== 'project') return null;
+                  const effectiveDate = getSnapshotEffectiveDate(
+                    snap.entry.changeCase,
+                    milestonesById
+                  );
                   if (!effectiveDate) return null;
                   const px = toPx(new Date(`${effectiveDate}T00:00:00`));
                   const isSel = selectedSnapId === snap.id;
+                  const status = dotStatus(snap);
                   const dotClass =
-                    snap.status === 'applied' ? styles.snapDotApplied : styles.snapDotFutureUpdate;
-                  const dateLabel = getSnapshotDateLabel(snap, milestonesById);
+                    status === 'applied' ? styles.snapDotApplied : styles.snapDotFutureUpdate;
+                  const dateLabel = getSnapshotDateLabel(snap.entry.changeCase, milestonesById);
+                  const commitMessage = dotCommitMessage(snap);
                   return (
                     <div
                       key={snap.id}
@@ -328,9 +388,7 @@ const SnapBlock = ({
                         onSnapSelect(isSel ? null : snap, entity);
                       }}
                       title={
-                        snap.commit_message
-                          ? `${snap.commit_message} (${dateLabel})`
-                          : (dateLabel ?? snap.status)
+                        commitMessage ? `${commitMessage} (${dateLabel})` : (dateLabel ?? status)
                       }
                     />
                   );
@@ -355,7 +413,7 @@ const SnapDetailPanel = ({
   onEntityClick,
   onClose
 }: {
-  detail: { snap: EntitySnapshot; entity: EntityRecord } | null;
+  detail: { snap: TimelineDot; entity: EntityRecord } | null;
   isLinked: boolean;
   projects: Project[];
   milestonesById: Map<string, Milestone>;
@@ -366,7 +424,10 @@ const SnapDetailPanel = ({
 }) => {
   const { snap, entity } = detail ?? {};
   const s = entity ? schemaMap.get(entity._schema.id) : null;
-  const project = snap?.project_id ? projects.find(p => p.id === snap.project_id) : null;
+  const snapProjectId = snap ? dotProjectId(snap) : null;
+  const project = snapProjectId ? projects.find(p => p.id === snapProjectId) : null;
+  const snapStatus = snap ? dotStatus(snap) : null;
+  const snapCommitMessage = snap ? dotCommitMessage(snap) : null;
 
   return (
     <div className={`${styles.detail} ${detail ? styles.detailOpen : ''}`}>
@@ -398,8 +459,10 @@ const SnapDetailPanel = ({
           <div className={styles.detailBody}>
             <div className={styles.detailField}>
               <div className={styles.detailFieldLabel}>Snapshot type</div>
-              <span className={`${styles.snapStatusBadge} ${SNAP_STATUS_CLASS[snap.status] ?? ''}`}>
-                {SNAP_STATUS_LABEL[snap.status] ?? snap.status}
+              <span
+                className={`${styles.snapStatusBadge} ${(snapStatus && SNAP_STATUS_CLASS[snapStatus]) ?? ''}`}
+              >
+                {(snapStatus && SNAP_STATUS_LABEL[snapStatus]) ?? snapStatus}
               </span>
             </div>
 
@@ -423,19 +486,23 @@ const SnapDetailPanel = ({
 
             <div className={styles.detailField}>
               <div className={styles.detailFieldLabel}>
-                {snap.project_id ? (snap.milestone_id ? 'Milestone' : 'Target date') : 'Captured'}
+                {snap && snap.source === 'project'
+                  ? snap.entry.changeCase.milestone_id
+                    ? 'Milestone'
+                    : 'Target date'
+                  : 'Captured'}
               </div>
               <div className={styles.detailFieldValue}>
-                {snap.project_id
-                  ? (getSnapshotDateLabel(snap, milestonesById) ?? '—')
-                  : formatTimelineDate(snap.created_at)}
+                {snap && snap.source === 'project'
+                  ? (getSnapshotDateLabel(snap.entry.changeCase, milestonesById) ?? '—')
+                  : formatTimelineDate(snap ? dotCreatedAt(snap) : null)}
               </div>
             </div>
 
-            {snap.commit_message && (
+            {snapCommitMessage && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>Note</div>
-                <p className={styles.detailDesc}>{snap.commit_message}</p>
+                <p className={styles.detailDesc}>{snapCommitMessage}</p>
               </div>
             )}
 
@@ -661,17 +728,17 @@ export const TimelineView = ({
     };
     return normalizeViewConfig(timelineViewConfigSchema, config, defaults);
   }, [config, dateFields]);
-  const snapshotQueries = useQueries({
+  const changeCaseQueries = useQueries({
     queries:
       cfg.groupBy === 'project'
-        ? rows.map(entity => legacySnapshotQuery(workspaceId, entity._uid))
+        ? rows.map(entity => changeCasesByEntityQueryOptions(workspaceId, entity._uid))
         : []
   });
 
   const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
   const [timelineScrollLeft, setTimelineScrollLeft] = useState(0);
   const [snapDetail, setSnapDetail] = useState<{
-    snap: EntitySnapshot;
+    snap: TimelineDot;
     entity: EntityRecord;
   } | null>(null);
 
@@ -783,7 +850,7 @@ export const TimelineView = ({
     [cfg, onConfigChange]
   );
 
-  const handleSnapSelect = useCallback((snap: EntitySnapshot | null, entity: EntityRecord) => {
+  const handleSnapSelect = useCallback((snap: TimelineDot | null, entity: EntityRecord) => {
     setSnapDetail(snap ? { snap, entity } : null);
     setActiveEntityId(null);
   }, []);
@@ -799,9 +866,8 @@ export const TimelineView = ({
     const entitiesByProject = new Map<string, EntityRecord[]>();
     rows.forEach((entity, index) => {
       const projectIdsForEntity = new Set(
-        (snapshotQueries[index]?.data ?? [])
-          .filter(snapshot => snapshot.status === 'future_update' || snapshot.status === 'applied')
-          .map(snapshot => snapshot.project_id)
+        flattenChangeCaseMembers(changeCaseQueries[index]?.data ?? [])
+          .map(entry => entry.changeCase.project_id)
           .filter((projectId): projectId is string => projectId != null)
       );
       for (const projectId of projectIdsForEntity) {
@@ -814,7 +880,7 @@ export const TimelineView = ({
     return projects
       .map(project => ({ project, entities: entitiesByProject.get(project.id) ?? [] }))
       .filter(group => group.entities.length > 0);
-  }, [cfg.groupBy, projects, rows, snapshotQueries]);
+  }, [cfg.groupBy, projects, rows, changeCaseQueries]);
   const isEmpty = isSnapshotMode ? rows.length === 0 : datedRows.length === 0;
   const totalDated = isSnapshotMode ? rows.length : datedRows.length;
   const renderSnapBlock = (entity: EntityRecord, projectFilterId?: string) => (

@@ -7,15 +7,12 @@ import { DiagramMetadataPopover } from '../../../components/DiagramMetadataPopov
 import { asProjectPublicId, projectDiagramHref } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
 import { slugifyEntityName, relationIds } from '../../../lib/entityEditState';
-import type {
-  EntityRecord,
-  EntitySnapshot,
-  EntitySummary
-} from '@arch-register/api-types/entityContract';
+import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { ExternalMetadataResult } from '@arch-register/api-types/common';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
+import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type {
   Project,
   ProjectEntity,
@@ -26,7 +23,11 @@ import styles from './EntityOverviewTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { useMilestonesForProjects } from '../../../hooks/useMilestones';
-import { getSnapshotDateLabel, toMilestonesById } from './snapshotDisplay';
+import {
+  getSnapshotDateLabel,
+  toMilestonesById,
+  flattenChangeCaseMembers
+} from './snapshotDisplay';
 import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
@@ -47,7 +48,7 @@ type Props = {
   teams: WorkspaceTeam[];
   lifecycleStates: WorkspaceLifecycleState[];
   entityProjects: EntityProjectAssoc[];
-  futureSnapshots: EntitySnapshot[];
+  changeCases: ChangeCase[];
   entityDiagramFiles: DiagramEntityFile[];
 };
 
@@ -67,11 +68,18 @@ export const EntityOverviewTab = ({
   teams,
   lifecycleStates,
   entityProjects,
-  futureSnapshots,
+  changeCases,
   entityDiagramFiles
 }: Props) => {
+  const futureEntries = flattenChangeCaseMembers(changeCases).filter(
+    entry => entry.changeCase.status === 'planned'
+  );
   const futureSnapshotProjectIds = [
-    ...new Set(futureSnapshots.map(s => s.project_id).filter((id): id is string => id != null))
+    ...new Set(
+      futureEntries
+        .map(entry => entry.changeCase.project_id)
+        .filter((id): id is string => id != null)
+    )
   ];
   const milestoneQueries = useMilestonesForProjects(workspaceSlug, futureSnapshotProjectIds);
   const milestonesById = toMilestonesById(milestoneQueries.flatMap(q => q.data ?? []));
@@ -314,27 +322,27 @@ export const EntityOverviewTab = ({
           ))
         )}
 
-        {futureSnapshots.length > 0 && (
+        {futureEntries.length > 0 && (
           <>
             <hr className={styles.divider} />
             <div className={styles.sectionLabel}>Future plans</div>
-            {futureSnapshots.map(snap => {
+            {futureEntries.map(entry => {
               const projectName =
-                entityProjects.find(ep => ep.project.id === snap.project_id)?.project.name ??
-                snap.project_id;
-              const dateLabel = snap.milestone_id
-                ? getSnapshotDateLabel(snap, milestonesById)
-                : snap.target_date
-                  ? formatDate(snap.target_date)
+                entityProjects.find(ep => ep.project.id === entry.changeCase.project_id)?.project
+                  .name ?? entry.changeCase.project_id;
+              const dateLabel = entry.changeCase.milestone_id
+                ? getSnapshotDateLabel(entry.changeCase, milestonesById)
+                : entry.changeCase.target_date
+                  ? formatDate(entry.changeCase.target_date)
                   : null;
               return (
-                <div key={snap.id} className={styles.futurePlan}>
+                <div key={entry.member.id} className={styles.futurePlan}>
                   <div className={styles.futurePlanMeta}>
                     <span className={styles.futurePlanProject}>{projectName}</span>
                     {dateLabel && <span className={styles.futurePlanDate}>{dateLabel}</span>}
                   </div>
-                  {snap.commit_message && (
-                    <div className={styles.futurePlanNote}>{snap.commit_message}</div>
+                  {entry.changeCase.commit_message && (
+                    <div className={styles.futurePlanNote}>{entry.changeCase.commit_message}</div>
                   )}
                 </div>
               );

@@ -12,12 +12,20 @@ export const useChangeCasesByProject = (workspaceId: string, projectId: string, 
   });
 
 export const useChangeCasesByEntity = (workspaceId: string, entityId: string, enabled = true) =>
-  useQuery({
-    queryKey: changeCaseKeys.byEntity(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.changeCases.listByEntity({ params: { workspace: workspaceId, id: entityId } }),
-    enabled: !!workspaceId && !!entityId && enabled
-  });
+  useQuery(changeCasesByEntityQueryOptions(workspaceId, entityId, enabled));
+
+// Query-object form for batching entity-scoped change case lookups via `useQueries` — used by
+// TimelineView's per-entity batch fetch in "group by project" mode.
+export const changeCasesByEntityQueryOptions = (
+  workspaceId: string,
+  entityId: string,
+  enabled = true
+) => ({
+  queryKey: changeCaseKeys.byEntity(workspaceId, entityId),
+  queryFn: () =>
+    orpcClient.changeCases.listByEntity({ params: { workspace: workspaceId, id: entityId } }),
+  enabled: !!workspaceId && !!entityId && enabled
+});
 
 export const useChangeCase = (
   workspaceId: string,

@@ -27,7 +27,8 @@ import {
   useCloneEntity,
   useEntitiesBySchema
 } from '../../hooks/useEntities';
-import { useEntitySnapshots } from '../../hooks/useSnapshots';
+import { useEntityVersions } from '../../hooks/useEntityVersions';
+import { useChangeCasesByEntity } from '../../hooks/useChangeCases';
 import { useBypassEntityApproval, useEntityChangeApproval } from '../../hooks/useEntityChanges';
 import { useEntityDeprecation } from '../../hooks/useEntityDeprecation';
 import {
@@ -433,8 +434,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
   // Mutation hooks
   const cloneEntity = useCloneEntity(workspaceId);
-  const { data: allSnapshots = [] } = useEntitySnapshots(workspaceId, entityId, true);
-  const futureSnapshots = allSnapshots.filter(s => s.status === 'future_update');
+  const { data: entityVersions = [] } = useEntityVersions(workspaceId, entityId, true);
+  const { data: entityChangeCases = [] } = useChangeCasesByEntity(workspaceId, entityId, true);
   const createWatch = useCreateWatch(workspaceId);
   const deleteWatch = useDeleteWatch(workspaceId);
   const createPinnedEntity = useCreatePinnedEntity(workspaceId);
@@ -768,7 +769,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             teams,
             lifecycleStates,
             entityProjects,
-            futureSnapshots,
+            changeCases: entityChangeCases,
             entityDiagramFiles
           }}
           relationsProps={{ outgoing, incoming, schemas }}
@@ -777,7 +778,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             entityId,
             entity,
             schema,
-            snapshots: allSnapshots,
+            versions: entityVersions,
             lifecycleStates,
             teams,
             canViewAudit
@@ -831,7 +832,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           assessmentsProps={{ workspaceId, entity, schema }}
           timelineProps={{
             workspaceId,
-            allSnapshots,
+            versions: entityVersions,
+            changeCases: entityChangeCases,
             entityProjects,
             schema,
             lifecycleStates,

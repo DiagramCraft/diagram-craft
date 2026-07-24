@@ -334,36 +334,6 @@ const entityAccessSchema = z.object({
   grants: z.array(entityGrantSchema).describe('Permission grants for this entity')
 });
 
-// ── Snapshots ─────────────────────────────────────────────────
-
-const entitySnapshotSchema = z.object({
-  id: z.string().describe('Snapshot identifier'),
-  workspace: z.string().describe('Workspace identifier'),
-  entity_id: z.string().describe('Entity identifier'),
-  status: z
-    .enum(['autosave', 'saved_version', 'future_update', 'applied', 'deleted'])
-    .describe('Snapshot status'),
-  project_id: z.string().nullable().describe('Associated project identifier'),
-  target_date: z.string().nullable().describe('Target date for future update (ISO 8601)'),
-  milestone_id: z.string().nullable().describe('Associated milestone identifier'),
-  commit_message: z.string().nullable().describe('Commit message describing the changes'),
-  created_at: z.string().describe('ISO 8601 creation timestamp'),
-  created_by: z.string().describe('User who created the snapshot'),
-  created_by_name: z.string().nullable().describe('Display name of creator'),
-  base_state: z.record(z.string(), z.unknown()).describe('Entity state at snapshot creation'),
-  proposed_state: z
-    .record(z.string(), z.unknown())
-    .nullable()
-    .describe('Proposed changes (for future updates)'),
-  case_id: z
-    .string()
-    .nullable()
-    .describe(
-      'Identifier of the change case this snapshot belongs to, if any. Snapshots sharing a ' +
-        'case_id were planned/applied together as one coordinated multi-entity change.'
-    )
-});
-
 // ── Import ────────────────────────────────────────────────────
 
 const importNameMatchSchema = z.object({
@@ -821,7 +791,6 @@ export type EntityDependents = z.infer<typeof entityDependentsSchema>;
 export type TreeResponse = z.infer<typeof treeResponseSchema>;
 export type TreeNode = TreeResponse['nodes'][number];
 export type TreeEdge = TreeResponse['edges'][number];
-export type EntitySnapshot = z.infer<typeof entitySnapshotSchema>;
 export type TimelineMarker = z.infer<typeof timelineMarkerSchema>;
 export type EntityQueryParseError = z.infer<typeof entityQueryParseErrorSchema>;
 export type EntityQueryParseResult = z.infer<typeof entityQueryParseResultSchema>;

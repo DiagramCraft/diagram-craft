@@ -104,8 +104,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
     projectEntities,
     updateEntityMutation,
     removeEntityMutation,
-    projectSnapshots,
-    futureSnapshots,
+    changeCases,
     schemaMap,
     entityTypeColorMap,
     allFiles,
@@ -576,8 +575,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
         <ProjectEntities
           project={project}
           projectEntities={projectEntities}
-          projectSnapshots={projectSnapshots}
-          futureSnapshots={futureSnapshots}
+          changeCases={changeCases}
           schemaMap={schemaMap}
           entityTypeColorMap={entityTypeColorMap}
           schemas={schemas}
@@ -592,10 +590,8 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onRemoveEntity={entityId => removeEntityMutation.mutate(entityId)}
           onPlanFutureChange={entityId => setPlanDialog({ mode: 'create', entityId })}
           onPlanChange={() => setPlanDialog({ mode: 'create' })}
-          onApplySnapshot={snap => snap.case_id && setApplyCaseId(snap.case_id)}
-          onEditSnapshot={snap =>
-            snap.case_id && setPlanDialog({ mode: 'edit', caseId: snap.case_id })
-          }
+          onApplySnapshot={entry => setApplyCaseId(entry.changeCase.id)}
+          onEditSnapshot={entry => setPlanDialog({ mode: 'edit', caseId: entry.changeCase.id })}
         />
       ) : contentFolderFilter ? (
         <ProjectContent

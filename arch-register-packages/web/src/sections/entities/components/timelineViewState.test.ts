@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { EntityRecord, EntitySnapshot } from '@arch-register/api-types/entityContract';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
+import type { ChangeCase, ChangeCaseMember } from '@arch-register/api-types/changeCaseContract';
+import type { ChangeCaseMemberEntry } from './snapshotDisplay';
 import {
   collectTimelineDates,
   getDatedTimelineRows,
-  getOwnTimelineSnapshots,
+  getOwnTimelineVersions,
   groupTimelineRows,
-  groupTimelineSnapshotsByProject
+  groupChangeCaseEntriesByProject
 } from './timelineViewState';
 
 const entity = (id: string, start?: Date, end?: Date, owner?: string): EntityRecord =>
@@ -21,31 +24,36 @@ const entity = (id: string, start?: Date, end?: Date, owner?: string): EntityRec
     end
   }) as unknown as EntityRecord;
 
-const snapshot = (
+const version = (id: string, kind: EntityVersion['kind'], createdAt: string) =>
+  ({ id, kind, created_at: createdAt }) as unknown as EntityVersion;
+
+const changeCaseEntry = (
   id: string,
-  status: EntitySnapshot['status'],
   createdAt: string,
   projectId?: string
-) => ({ id, status, created_at: createdAt, project_id: projectId }) as unknown as EntitySnapshot;
+): ChangeCaseMemberEntry => ({
+  changeCase: { project_id: projectId ?? null, created_at: createdAt } as ChangeCase,
+  member: { id } as ChangeCaseMember
+});
 
 describe('timeline view state', () => {
-  it('filters and sorts own history snapshots', () => {
-    const snapshots = [
-      snapshot('saved', 'saved_version', '2024-02-01T00:00:00Z'),
-      snapshot('future', 'future_update', '2024-01-01T00:00:00Z'),
-      snapshot('auto', 'autosave', '2024-01-01T12:00:00Z')
+  it('filters and sorts own history versions', () => {
+    const versions = [
+      version('saved', 'saved_version', '2024-02-01T00:00:00Z'),
+      version('deleted', 'deleted', '2024-01-01T00:00:00Z'),
+      version('auto', 'autosave', '2024-01-01T12:00:00Z')
     ];
-    expect(getOwnTimelineSnapshots(snapshots).map(item => item.id)).toEqual(['auto', 'saved']);
+    expect(getOwnTimelineVersions(versions).map(item => item.id)).toEqual(['auto', 'saved']);
   });
 
-  it('groups project snapshots while preserving lane order', () => {
-    const snapshots = [
-      snapshot('a', 'future_update', '2024-01-01T00:00:00Z', 'p1'),
-      snapshot('b', 'future_update', '2024-01-02T00:00:00Z'),
-      snapshot('c', 'future_update', '2024-01-03T00:00:00Z', 'p1')
+  it('groups change case entries while preserving lane order', () => {
+    const entries = [
+      changeCaseEntry('a', '2024-01-01T00:00:00Z', 'p1'),
+      changeCaseEntry('b', '2024-01-02T00:00:00Z'),
+      changeCaseEntry('c', '2024-01-03T00:00:00Z', 'p1')
     ];
-    expect(groupTimelineSnapshotsByProject(snapshots)).toEqual([
-      { projectId: 'p1', snaps: [snapshots[0], snapshots[2]] }
+    expect(groupChangeCaseEntriesByProject(entries)).toEqual([
+      { projectId: 'p1', entries: [entries[0], entries[2]] }
     ]);
   });
 

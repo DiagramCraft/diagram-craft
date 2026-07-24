@@ -5,7 +5,6 @@ import type {
   ProjectDetail as ProjectDetailData,
   ProjectEntity
 } from '@arch-register/api-types/projectContract';
-import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
@@ -25,7 +24,9 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { diffSnapshotState } from '../entities/components/entityTimelineHelpers';
 import {
   getSnapshotDateLabel,
-  getSnapshotEffectiveDate
+  getSnapshotEffectiveDate,
+  flattenChangeCaseMembers,
+  type ChangeCaseMemberEntry
 } from '../entities/components/snapshotDisplay';
 import styles from './ProjectDetailScreen.module.css';
 
@@ -38,14 +39,13 @@ const COL_W: TimelineColumnWidths = { month: 72, quarter: 100, year: 136 };
 export const ProjectTimelineTab = ({
   project,
   projectEntities,
-  projectSnapshots,
+  changeCases,
   schemaMap,
   entityTypeColorMap,
   schemas,
   lifecycleStates,
   teams,
   milestonesById,
-  changeCaseById,
   canEdit,
   onApplySnapshot,
   onEditSnapshot,
@@ -53,58 +53,60 @@ export const ProjectTimelineTab = ({
 }: {
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
-  projectSnapshots: EntitySnapshot[];
+  changeCases: ChangeCase[];
   schemaMap: Map<string, SchemaInfo>;
   entityTypeColorMap: Map<string, string>;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   milestonesById: Map<string, Milestone>;
-  changeCaseById: Map<string, ChangeCase>;
   canEdit: boolean;
-  onApplySnapshot: (snapshot: EntitySnapshot) => void;
-  onEditSnapshot: (snapshot: EntitySnapshot) => void;
-  onDeleteSnapshot: (snapshot: EntitySnapshot) => void;
+  onApplySnapshot: (entry: ChangeCaseMemberEntry) => void;
+  onEditSnapshot: (entry: ChangeCaseMemberEntry) => void;
+  onDeleteSnapshot: (entry: ChangeCaseMemberEntry) => void;
 }) => {
   const [zoom, setZoom] = useState<TimelineZoom>('quarter');
   const [groupByRole, setGroupByRole] = useState(false);
-  const [selectedSnap, setSelectedSnap] = useState<EntitySnapshot | null>(null);
+  const [selectedSnap, setSelectedSnap] = useState<ChangeCaseMemberEntry | null>(null);
   const TODAY = useMemo(() => new Date(), []);
+  const projectEntries = useMemo(() => flattenChangeCaseMembers(changeCases), [changeCases]);
   const plannedSnapshots = useMemo(
-    () => projectSnapshots.filter(snapshot => snapshot.status === 'future_update'),
-    [projectSnapshots]
+    () => projectEntries.filter(entry => entry.changeCase.status === 'planned'),
+    [projectEntries]
   );
   const appliedSnapshots = useMemo(
-    () => projectSnapshots.filter(snapshot => snapshot.status === 'applied'),
-    [projectSnapshots]
+    () => projectEntries.filter(entry => entry.changeCase.status === 'applied'),
+    [projectEntries]
   );
 
-  // Only dated snapshots go on the timeline; undated shown below. A milestone-backed snapshot
-  // has no target_date of its own — its effective date comes from the milestone it targets.
+  // Only dated entries go on the timeline; undated shown below. A milestone-backed entry has no
+  // target_date of its own — its effective date comes from the milestone it targets.
   const datedSnapshots = useMemo(
-    () => projectSnapshots.filter(s => getSnapshotEffectiveDate(s, milestonesById)),
-    [projectSnapshots, milestonesById]
+    () =>
+      projectEntries.filter(entry => getSnapshotEffectiveDate(entry.changeCase, milestonesById)),
+    [projectEntries, milestonesById]
   );
   const undatedSnapshots = useMemo(
-    () => projectSnapshots.filter(s => !getSnapshotEffectiveDate(s, milestonesById)),
-    [projectSnapshots, milestonesById]
+    () =>
+      projectEntries.filter(entry => !getSnapshotEffectiveDate(entry.changeCase, milestonesById)),
+    [projectEntries, milestonesById]
   );
 
-  // Snapshots per entity — every entity change gets its own row and marker; change cases are
+  // Entries per entity — every entity change gets its own row and marker; change cases are
   // never collapsed into a single lane here (see the Future Changes tab for case-level grouping).
   const snapsByEntity = useMemo(() => {
-    const m = new Map<string, EntitySnapshot[]>();
-    for (const s of projectSnapshots) {
-      const list = m.get(s.entity_id);
-      if (list) list.push(s);
-      else m.set(s.entity_id, [s]);
+    const m = new Map<string, ChangeCaseMemberEntry[]>();
+    for (const entry of projectEntries) {
+      const list = m.get(entry.member.entity_id);
+      if (list) list.push(entry);
+      else m.set(entry.member.entity_id, [entry]);
     }
     return m;
-  }, [projectSnapshots]);
+  }, [projectEntries]);
 
-  // Entities that appear on the timeline (have at least one dated snapshot)
+  // Entities that appear on the timeline (have at least one dated entry)
   const datedEntityIds = useMemo(
-    () => new Set(datedSnapshots.map(s => s.entity_id)),
+    () => new Set(datedSnapshots.map(entry => entry.member.entity_id)),
     [datedSnapshots]
   );
 
@@ -134,8 +136,8 @@ export const ProjectTimelineTab = ({
 
   const timelineDates = useMemo(() => {
     const dates: Date[] = [];
-    for (const s of datedSnapshots) {
-      const effectiveDate = getSnapshotEffectiveDate(s, milestonesById);
+    for (const entry of datedSnapshots) {
+      const effectiveDate = getSnapshotEffectiveDate(entry.changeCase, milestonesById);
       if (effectiveDate) dates.push(new Date(`${effectiveDate}T00:00:00`));
     }
     return dates;
@@ -149,8 +151,8 @@ export const ProjectTimelineTab = ({
     today: TODAY
   });
 
-  const handleSelect = (snap: EntitySnapshot | null) => {
-    setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));
+  const handleSelect = (entry: ChangeCaseMemberEntry | null) => {
+    setSelectedSnap(prev => (entry?.member.id === prev?.member.id ? null : entry));
   };
 
   const totalEntities = projectEntities.length;
@@ -159,8 +161,10 @@ export const ProjectTimelineTab = ({
   const renderEntityRow = (entity: ProjectEntity) => {
     const schema = entity.entity_schema ? schemaMap.get(entity.entity_schema.id) : undefined;
     const entitySnaps = snapsByEntity.get(entity.entity_id) ?? [];
-    const datedEntitySnaps = entitySnaps.filter(s => getSnapshotEffectiveDate(s, milestonesById));
-    const isRowActive = datedEntitySnaps.some(s => s.id === selectedSnap?.id);
+    const datedEntitySnaps = entitySnaps.filter(entry =>
+      getSnapshotEffectiveDate(entry.changeCase, milestonesById)
+    );
+    const isRowActive = datedEntitySnaps.some(entry => entry.member.id === selectedSnap?.member.id);
 
     return (
       <div
@@ -172,8 +176,8 @@ export const ProjectTimelineTab = ({
           <span className={styles.ptlName}>{entity.entity_name}</span>
         </div>
         <div className={styles.ptlTrack} style={{ width: timeline.totalWidth }}>
-          {datedEntitySnaps.map(snap => {
-            const effectiveDate = getSnapshotEffectiveDate(snap, milestonesById);
+          {datedEntitySnaps.map(entry => {
+            const effectiveDate = getSnapshotEffectiveDate(entry.changeCase, milestonesById);
             const px = stringDateToTimelinePx(
               effectiveDate,
               timeline.rangeStart,
@@ -181,25 +185,25 @@ export const ProjectTimelineTab = ({
               timeline.totalWidth
             );
             if (px === null) return null;
-            const isSelected = selectedSnap?.id === snap.id;
-            const snapColor = snap.status === 'applied' ? 'var(--green)' : markerColor;
-            const dateLabel = getSnapshotDateLabel(snap, milestonesById);
+            const isSelected = selectedSnap?.member.id === entry.member.id;
+            const isApplied = entry.changeCase.status === 'applied';
+            const snapColor = isApplied ? 'var(--green)' : markerColor;
+            const dateLabel = getSnapshotDateLabel(entry.changeCase, milestonesById);
+            const commitMessage = entry.changeCase.commit_message;
             return (
               <div
-                key={snap.id}
+                key={entry.member.id}
                 className={`${styles.ptlMarker} ${isSelected ? styles.ptlMarkerSelected : ''}`}
                 style={{ left: px }}
-                onClick={() => handleSelect(isSelected ? null : snap)}
+                onClick={() => handleSelect(isSelected ? null : entry)}
                 title={
-                  snap.commit_message
-                    ? `${snap.commit_message} (${dateLabel})`
-                    : (dateLabel ?? snap.status)
+                  commitMessage
+                    ? `${commitMessage} (${dateLabel})`
+                    : (dateLabel ?? entry.changeCase.status)
                 }
               >
                 <span
-                  className={
-                    snap.status === 'applied' ? styles.ptlMarkerDot : styles.ptlMarkerDiamond
-                  }
+                  className={isApplied ? styles.ptlMarkerDot : styles.ptlMarkerDiamond}
                   style={{ background: snapColor }}
                 />
               </div>
@@ -210,7 +214,7 @@ export const ProjectTimelineTab = ({
     );
   };
 
-  if (projectSnapshots.length === 0) {
+  if (projectEntries.length === 0) {
     return (
       <div className={styles.ptEmpty}>
         <div className={styles.ptEmptyTitle}>No project updates yet</div>
@@ -338,15 +342,19 @@ export const ProjectTimelineTab = ({
           {undatedSnapshots.length > 0 && (
             <div className={styles.ptlUndated}>
               <div className={styles.ptlUndatedLabel}>No target date</div>
-              {undatedSnapshots.map(snap => {
-                const pe = entityMap.get(snap.entity_id);
+              {undatedSnapshots.map(entry => {
+                const pe = entityMap.get(entry.member.entity_id);
                 const schema = pe?.entity_schema ? schemaMap.get(pe.entity_schema.id) : undefined;
                 return (
-                  <div key={snap.id} className={styles.ptlUndatedRow}>
+                  <div key={entry.member.id} className={styles.ptlUndatedRow}>
                     {schema && <TypeBadge color={schema.color} icon={schema.icon} size={14} />}
-                    <span className={styles.ptlName}>{pe?.entity_name ?? snap.entity_id}</span>
-                    {snap.commit_message && (
-                      <span className={styles.ptlUndatedNote}>{snap.commit_message}</span>
+                    <span className={styles.ptlName}>
+                      {pe?.entity_name ?? entry.member.entity_id}
+                    </span>
+                    {entry.changeCase.commit_message && (
+                      <span className={styles.ptlUndatedNote}>
+                        {entry.changeCase.commit_message}
+                      </span>
                     )}
                   </div>
                 );
@@ -358,34 +366,32 @@ export const ProjectTimelineTab = ({
         {/* Detail panel */}
         {selectedSnap &&
           (() => {
-            const pe = entityMap.get(selectedSnap.entity_id);
+            const pe = entityMap.get(selectedSnap.member.entity_id);
             const schemaInfo = pe?.entity_schema ? schemaMap.get(pe.entity_schema.id) : undefined;
             // Find the full EntitySchema for field resolution (use proposed_state.schema_id or entity schema id)
             const schemaId =
-              ((selectedSnap.proposed_state as Record<string, unknown> | null)?.['schema_id'] as
-                | string
-                | undefined) ?? pe?.entity_schema?.id;
+              ((selectedSnap.member.proposed_state as Record<string, unknown> | null)?.[
+                'schema_id'
+              ] as string | undefined) ?? pe?.entity_schema?.id;
             const entitySchema = schemaId ? (schemas.find(s => s.id === schemaId) ?? null) : null;
-            const changeCase = selectedSnap.case_id
-              ? changeCaseById.get(selectedSnap.case_id)
-              : undefined;
-            const siblingSnapshots = selectedSnap.case_id
-              ? projectSnapshots.filter(
-                  s => s.case_id === selectedSnap.case_id && s.entity_id !== selectedSnap.entity_id
-                )
-              : [];
+            const siblingSnapshots = projectEntries.filter(
+              entry =>
+                entry.changeCase.id === selectedSnap.changeCase.id &&
+                entry.member.entity_id !== selectedSnap.member.entity_id
+            );
             return (
               <SnapDetail
-                snapshot={selectedSnap}
-                entityName={pe?.entity_name ?? selectedSnap.entity_id}
+                entry={selectedSnap}
+                entityName={pe?.entity_name ?? selectedSnap.member.entity_id}
                 schemaInfo={schemaInfo}
                 entitySchema={entitySchema}
-                markerColor={selectedSnap.status === 'applied' ? 'var(--green)' : markerColor}
+                markerColor={
+                  selectedSnap.changeCase.status === 'applied' ? 'var(--green)' : markerColor
+                }
                 milestonesById={milestonesById}
                 lifecycleStates={lifecycleStates}
                 teams={teams}
                 canEdit={canEdit}
-                changeCase={changeCase}
                 siblingSnapshots={siblingSnapshots}
                 entityMap={entityMap}
                 schemaMap={schemaMap}
@@ -404,7 +410,7 @@ export const ProjectTimelineTab = ({
 
 // ── Detail panel ───────────────────────────────────────────────────────────────
 const SnapDetail = ({
-  snapshot,
+  entry,
   entityName,
   schemaInfo,
   entitySchema,
@@ -413,7 +419,6 @@ const SnapDetail = ({
   lifecycleStates,
   teams,
   canEdit,
-  changeCase,
   siblingSnapshots,
   entityMap,
   schemaMap,
@@ -423,7 +428,7 @@ const SnapDetail = ({
   onDeleteSnapshot,
   onClose
 }: {
-  snapshot: EntitySnapshot;
+  entry: ChangeCaseMemberEntry;
   entityName: string;
   schemaInfo: SchemaInfo | undefined;
   entitySchema: EntitySchema | null;
@@ -432,23 +437,23 @@ const SnapDetail = ({
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   canEdit: boolean;
-  changeCase: ChangeCase | undefined;
-  siblingSnapshots: EntitySnapshot[];
+  siblingSnapshots: ChangeCaseMemberEntry[];
   entityMap: Map<string, ProjectEntity>;
   schemaMap: Map<string, SchemaInfo>;
   schemas: EntitySchema[];
-  onApplySnapshot: (snapshot: EntitySnapshot) => void;
-  onEditSnapshot: (snapshot: EntitySnapshot) => void;
-  onDeleteSnapshot: (snapshot: EntitySnapshot) => void;
+  onApplySnapshot: (entry: ChangeCaseMemberEntry) => void;
+  onEditSnapshot: (entry: ChangeCaseMemberEntry) => void;
+  onDeleteSnapshot: (entry: ChangeCaseMemberEntry) => void;
   onClose: () => void;
 }) => {
   const [siblingsExpanded, setSiblingsExpanded] = useState(false);
-  const statusLabel = snapshot.status === 'applied' ? 'Applied' : 'Planned';
-  const canManage = canEdit && snapshot.status === 'future_update';
+  const { changeCase, member } = entry;
+  const statusLabel = changeCase.status === 'applied' ? 'Applied' : 'Planned';
+  const canManage = canEdit && changeCase.status === 'planned';
 
   const changes = diffSnapshotState(
-    snapshot.base_state as Record<string, unknown> | undefined,
-    snapshot.proposed_state as Record<string, unknown> | undefined,
+    member.base_state as Record<string, unknown> | undefined,
+    member.proposed_state as Record<string, unknown> | undefined,
     entitySchema,
     lifecycleStates,
     teams
@@ -482,16 +487,16 @@ const SnapDetail = ({
           >
             {statusLabel}
           </span>
-          {getSnapshotDateLabel(snapshot, milestonesById) && (
+          {getSnapshotDateLabel(changeCase, milestonesById) && (
             <span className={styles.ptlDetailSub}>
-              {snapshot.milestone_id ? 'Milestone' : 'Target'}:{' '}
-              {getSnapshotDateLabel(snapshot, milestonesById)}
+              {changeCase.milestone_id ? 'Milestone' : 'Target'}:{' '}
+              {getSnapshotDateLabel(changeCase, milestonesById)}
             </span>
           )}
         </div>
 
-        {snapshot.commit_message && (
-          <div className={styles.ptlDetailMsg}>"{snapshot.commit_message}"</div>
+        {changeCase.commit_message && (
+          <div className={styles.ptlDetailMsg}>"{changeCase.commit_message}"</div>
         )}
 
         {changes.length > 0 && (
@@ -510,7 +515,7 @@ const SnapDetail = ({
 
         <div className={styles.ptlDetailMeta}>
           <span>
-            {formatTimelineDate(snapshot.created_at, { month: 'short', year: 'numeric' })}
+            {formatTimelineDate(changeCase.created_at, { month: 'short', year: 'numeric' })}
           </span>
         </div>
 
@@ -530,26 +535,26 @@ const SnapDetail = ({
             {siblingsExpanded && (
               <div className={styles.ptlDetailSiblingsBody}>
                 {siblingSnapshots.map(sibling => {
-                  const pe = entityMap.get(sibling.entity_id);
+                  const pe = entityMap.get(sibling.member.entity_id);
                   const siblingSchemaInfo = pe?.entity_schema
                     ? schemaMap.get(pe.entity_schema.id)
                     : undefined;
                   const siblingSchemaId =
-                    ((sibling.proposed_state as Record<string, unknown> | null)?.['schema_id'] as
-                      | string
-                      | undefined) ?? pe?.entity_schema?.id;
+                    ((sibling.member.proposed_state as Record<string, unknown> | null)?.[
+                      'schema_id'
+                    ] as string | undefined) ?? pe?.entity_schema?.id;
                   const siblingSchema = siblingSchemaId
                     ? (schemas.find(s => s.id === siblingSchemaId) ?? null)
                     : null;
                   const siblingChanges = diffSnapshotState(
-                    sibling.base_state as Record<string, unknown> | undefined,
-                    sibling.proposed_state as Record<string, unknown> | undefined,
+                    sibling.member.base_state as Record<string, unknown> | undefined,
+                    sibling.member.proposed_state as Record<string, unknown> | undefined,
                     siblingSchema,
                     lifecycleStates,
                     teams
                   );
                   return (
-                    <div key={sibling.id} className={styles.ptlDetailSiblingItem}>
+                    <div key={sibling.member.id} className={styles.ptlDetailSiblingItem}>
                       <div className={styles.ptlDetailSiblingHead}>
                         {siblingSchemaInfo && (
                           <TypeBadge
@@ -559,7 +564,7 @@ const SnapDetail = ({
                           />
                         )}
                         <span className={styles.ptlName}>
-                          {pe?.entity_name ?? sibling.entity_id}
+                          {pe?.entity_name ?? sibling.member.entity_id}
                         </span>
                       </div>
                       {siblingChanges.length > 0 ? (
@@ -584,14 +589,14 @@ const SnapDetail = ({
 
         {canManage && (
           <div className={styles.ptlDetailActions}>
-            <Button onClick={() => onApplySnapshot(snapshot)}>Apply</Button>
-            <Button icon={<TbPencil size={12} />} onClick={() => onEditSnapshot(snapshot)}>
+            <Button onClick={() => onApplySnapshot(entry)}>Apply</Button>
+            <Button icon={<TbPencil size={12} />} onClick={() => onEditSnapshot(entry)}>
               Edit
             </Button>
             <Button
               variant="danger"
               icon={<TbTrash size={12} />}
-              onClick={() => onDeleteSnapshot(snapshot)}
+              onClick={() => onDeleteSnapshot(entry)}
             >
               Remove
             </Button>

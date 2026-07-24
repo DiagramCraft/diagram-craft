@@ -3,7 +3,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
+import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
@@ -16,7 +16,7 @@ type RestoreSnapshotDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (commitMessage?: string) => void;
-  snapshot: EntitySnapshot;
+  version: EntityVersion;
   currentState: Record<string, unknown>;
   schema: EntitySchema | null;
   lifecycleStates: WorkspaceLifecycleState[];
@@ -28,7 +28,7 @@ export const RestoreSnapshotDialog = ({
   isOpen,
   onClose,
   onConfirm,
-  snapshot,
+  version,
   currentState,
   schema,
   lifecycleStates,
@@ -37,13 +37,7 @@ export const RestoreSnapshotDialog = ({
 }: RestoreSnapshotDialogProps) => {
   const [commitMessage, setCommitMessage] = useState('');
 
-  const changes = diffSnapshotState(
-    currentState,
-    snapshot.base_state,
-    schema,
-    lifecycleStates,
-    teams
-  );
+  const changes = diffSnapshotState(currentState, version.state, schema, lifecycleStates, teams);
 
   const handleConfirm = () => {
     onConfirm(commitMessage ?? undefined);
@@ -60,18 +54,18 @@ export const RestoreSnapshotDialog = ({
         <div className={styles.snapshotInfo}>
           <div className={styles.infoRow}>
             <span className={styles.label}>Snapshot Date:</span>
-            <span>{formatDateTime(snapshot.created_at)}</span>
+            <span>{formatDateTime(version.created_at)}</span>
           </div>
-          {snapshot.created_by_name && (
+          {version.created_by_name && (
             <div className={styles.infoRow}>
               <span className={styles.label}>Created By:</span>
-              <span>{snapshot.created_by_name}</span>
+              <span>{version.created_by_name}</span>
             </div>
           )}
-          {snapshot.commit_message && (
+          {version.commit_message && (
             <div className={styles.infoRow}>
               <span className={styles.label}>Message:</span>
-              <span>{snapshot.commit_message}</span>
+              <span>{version.commit_message}</span>
             </div>
           )}
         </div>

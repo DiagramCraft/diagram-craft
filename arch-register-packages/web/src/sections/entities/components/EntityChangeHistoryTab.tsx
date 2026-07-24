@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import type { EntityRecord, EntitySnapshot } from '@arch-register/api-types/entityContract';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useAuditLog } from '../../../hooks/useAudit';
-import { useRestoreSnapshot } from '../../../hooks/useSnapshots';
+import { useRestoreEntityVersion } from '../../../hooks/useEntityVersions';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { RestoreSnapshotDialog } from './RestoreSnapshotDialog';
 import styles from './EntityChangeHistoryTab.module.css';
@@ -18,18 +19,21 @@ type Props = {
   entityId: string;
   entity: EntityRecord | null;
   schema: EntitySchema | null;
-  snapshots: EntitySnapshot[];
+  versions: EntityVersion[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   canViewAudit: boolean;
 };
+
+const versionTypeLabel = (kind: EntityVersion['kind']): string =>
+  kind === 'saved_version' ? 'saved' : kind === 'case_applied' ? 'applied' : 'autosave';
 
 export const EntityChangeHistoryTab = ({
   workspaceId,
   entityId,
   entity,
   schema,
-  snapshots,
+  versions,
   lifecycleStates,
   teams,
   canViewAudit
@@ -40,23 +44,17 @@ export const EntityChangeHistoryTab = ({
     { entityId: auditEntityId, limit: 100 },
     { enabled: canViewAudit && !!auditEntityId }
   );
-  const restoreSnapshot = useRestoreSnapshot(workspaceId, entityId);
+  const restoreVersion = useRestoreEntityVersion(workspaceId, entityId);
 
-  const [restoreDialogSnapshot, setRestoreDialogSnapshot] = useState<EntitySnapshot | null>(null);
+  const [restoreDialogVersion, setRestoreDialogVersion] = useState<EntityVersion | null>(null);
 
-  const savedSnapshots = useMemo(
-    () =>
-      snapshots.filter(
-        s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'applied'
-      ),
-    [snapshots]
-  );
+  const savedVersions = useMemo(() => versions.filter(v => v.kind !== 'deleted'), [versions]);
 
   const handleRestore = async (commitMessage?: string) => {
-    if (restoreDialogSnapshot) {
+    if (restoreDialogVersion) {
       try {
-        await restoreSnapshot.mutateAsync({ snapshotId: restoreDialogSnapshot.id, commitMessage });
-        setRestoreDialogSnapshot(null);
+        await restoreVersion.mutateAsync({ versionId: restoreDialogVersion.id, commitMessage });
+        setRestoreDialogVersion(null);
       } catch {
         // keep dialog open so the user can retry
       }
@@ -67,7 +65,7 @@ export const EntityChangeHistoryTab = ({
     return <LoadingState text="Loading change history..." size="sm" />;
   }
 
-  if (savedSnapshots.length === 0) {
+  if (savedVersions.length === 0) {
     return (
       <EmptyState
         title="No change history yet"
@@ -79,7 +77,7 @@ export const EntityChangeHistoryTab = ({
   return (
     <>
       <div className={styles.changeHistory}>
-        {savedSnapshots.length > 0 && (
+        {savedVersions.length > 0 && (
           <Table.Root>
             <Table.Head>
               <Table.Row>
@@ -91,33 +89,27 @@ export const EntityChangeHistoryTab = ({
               </Table.Row>
             </Table.Head>
             <Table.Body>
-              {savedSnapshots.map(snapshot => (
-                <Table.Row key={snapshot.id}>
+              {savedVersions.map(version => (
+                <Table.Row key={version.id}>
                   <Table.Cell className={styles.chDim}>
-                    {formatDateTime(snapshot.created_at)}
+                    {formatDateTime(version.created_at)}
                   </Table.Cell>
                   <Table.Cell>
                     <span
-                      className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}
+                      className={`${styles.snapshotTypeBadge} ${version.kind !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}
                     >
-                      {snapshot.status === 'saved_version'
-                        ? 'saved'
-                        : snapshot.status === 'applied'
-                          ? 'applied'
-                          : 'autosave'}
+                      {versionTypeLabel(version.kind)}
                     </span>
                   </Table.Cell>
-                  <Table.Cell>{snapshot.created_by_name ?? '—'}</Table.Cell>
-                  <Table.Cell className={styles.chDim}>{snapshot.commit_message ?? '—'}</Table.Cell>
+                  <Table.Cell>{version.created_by_name ?? '—'}</Table.Cell>
+                  <Table.Cell className={styles.chDim}>{version.commit_message ?? '—'}</Table.Cell>
                   <Table.ActionsCell>
-                    {snapshot.status !== 'future_update' && (
-                      <DropdownMenu
-                        trigger={<Table.DotsButton />}
-                        items={[
-                          { label: 'Restore', onClick: () => setRestoreDialogSnapshot(snapshot) }
-                        ]}
-                      />
-                    )}
+                    <DropdownMenu
+                      trigger={<Table.DotsButton />}
+                      items={[
+                        { label: 'Restore', onClick: () => setRestoreDialogVersion(version) }
+                      ]}
+                    />
                   </Table.ActionsCell>
                 </Table.Row>
               ))}
@@ -126,12 +118,12 @@ export const EntityChangeHistoryTab = ({
         )}
       </div>
 
-      {restoreDialogSnapshot && entity && (
+      {restoreDialogVersion && entity && (
         <RestoreSnapshotDialog
           isOpen={true}
-          onClose={() => setRestoreDialogSnapshot(null)}
+          onClose={() => setRestoreDialogVersion(null)}
           onConfirm={handleRestore}
-          snapshot={restoreDialogSnapshot}
+          version={restoreDialogVersion}
           currentState={{
             name: entity._name,
             description: entity._description,
@@ -144,7 +136,7 @@ export const EntityChangeHistoryTab = ({
           schema={schema}
           lifecycleStates={lifecycleStates}
           teams={teams}
-          isRestoring={restoreSnapshot.isPending}
+          isRestoring={restoreVersion.isPending}
         />
       )}
     </>
