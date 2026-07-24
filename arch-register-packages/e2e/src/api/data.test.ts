@@ -98,6 +98,27 @@ test.describe('data routes', () => {
     );
   });
 
+  test('GET /api/:workspace/data/tree with _schemaIds excludes unrelated schemas', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const body = await orpc.entities.tree({
+      params: { workspace: 'default' },
+      query: { _schemaIds: [componentSchemaId] }
+    });
+    // componentId matches, systemId/domainId are its containment ancestors — all expected.
+    expect(body.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ _uid: componentId, _isMatch: true }),
+        expect.objectContaining({ _uid: systemId, _isMatch: false }),
+        expect.objectContaining({ _uid: domainId, _isMatch: false })
+      ])
+    );
+    // apiId is a sibling under the same system, not a component and not an ancestor of one —
+    // it must not be pulled in just because the tree is otherwise unscoped.
+    expect(body.nodes.map(node => node._uid)).not.toContain(apiId);
+  });
+
   test('GET /api/:workspace/data/export returns schema-specific CSV output', async ({
     server,
     auth,

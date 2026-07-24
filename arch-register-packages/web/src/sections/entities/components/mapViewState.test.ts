@@ -5,6 +5,7 @@ import {
   buildContainmentTreeIndex,
   getChildSchemas,
   getContainmentChildren,
+  getMapSchemaIds,
   sortContainmentNodes
 } from './mapViewState';
 
@@ -53,5 +54,49 @@ describe('map view state', () => {
     const index = buildContainmentTreeIndex(nodes, edges);
     expect(sortContainmentNodes(nodes, 'app').map(item => item._uid)).toEqual(['a', 'b']);
     expect(getContainmentChildren('root', 'app', index).map(item => item._uid)).toEqual(['a', 'b']);
+  });
+
+  it('collects the schema ids for the configured map levels', () => {
+    expect(
+      getMapSchemaIds({
+        levels: 3,
+        level1SchemaId: 'domain',
+        level2SchemaId: 'system',
+        level3SchemaId: 'component'
+      })
+    ).toEqual(['domain', 'system', 'component']);
+  });
+
+  it('truncates to the number of active levels', () => {
+    expect(
+      getMapSchemaIds({
+        levels: 1,
+        level1SchemaId: 'domain',
+        level2SchemaId: 'system',
+        level3SchemaId: 'component'
+      })
+    ).toEqual(['domain']);
+  });
+
+  it('filters out unset levels and dedupes repeated schema ids', () => {
+    expect(
+      getMapSchemaIds({
+        levels: 3,
+        level1SchemaId: 'domain',
+        level2SchemaId: null,
+        level3SchemaId: 'domain'
+      })
+    ).toEqual(['domain']);
+  });
+
+  it('returns an empty list when the map is unconfigured', () => {
+    expect(
+      getMapSchemaIds({
+        levels: 2,
+        level1SchemaId: null,
+        level2SchemaId: null,
+        level3SchemaId: null
+      })
+    ).toEqual([]);
   });
 });
