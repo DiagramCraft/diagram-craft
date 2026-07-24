@@ -10,6 +10,7 @@ import {
 // `EntityQuery` IR type in `@arch-register/api-types/entityQueryIR`.
 export type EntityListQueryParams = {
   _schemaId?: string;
+  _schemaIds?: string[];
   owner?: string;
   lifecycle?: string;
   q?: string;
@@ -36,6 +37,7 @@ export const parseEntityQuery = (query: EntityListQueryParams): NormalizedEntity
   normalizeEntityQueryOptions({
     entityQuery: query.entityQuery,
     schemaId: query.entityQuery?.schemaId ?? query._schemaId,
+    schemaIds: query._schemaIds,
     owner: query.owner,
     lifecycle: query.lifecycle,
     q: query.q,
@@ -115,6 +117,18 @@ export const buildEntityQueryForExecution = (
   }
   if (parsed.q) {
     extra.push({ kind: 'freeText', value: parsed.q });
+  }
+  if (parsed.schemaIds && parsed.schemaIds.length > 0) {
+    extra.push({
+      kind: 'or',
+      children: parsed.schemaIds.map(id => ({
+        kind: 'predicate',
+        path: [],
+        fieldId: '_schemaId',
+        op: 'equals',
+        value: id
+      }))
+    });
   }
   if (extra.length === 0) return base;
 

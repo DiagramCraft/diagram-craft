@@ -10,6 +10,7 @@ describe('parseEntityQuery', () => {
     expect(parseEntityQuery({})).toEqual({
       entityQuery: null,
       schemaId: null,
+      schemaIds: null,
       owner: null,
       lifecycle: null,
       q: '',
@@ -99,6 +100,33 @@ describe('parseEntityQuery', () => {
           { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'team-1' },
           { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' },
           { kind: 'freeText', value: 'search term' }
+        ]
+      },
+      projectScope: 'all'
+    });
+  });
+
+  it('folds schemaIds into an OR predicate in the structured execution root', () => {
+    const input = { _schemaIds: ['schema-a', 'schema-b'] };
+    const parsed = parseEntityQuery(input);
+    expect(buildEntityQueryForExecution(input, parsed)).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'and', children: [] },
+          {
+            kind: 'or',
+            children: [
+              {
+                kind: 'predicate',
+                path: [],
+                fieldId: '_schemaId',
+                op: 'equals',
+                value: 'schema-a'
+              },
+              { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: 'schema-b' }
+            ]
+          }
         ]
       },
       projectScope: 'all'

@@ -6,6 +6,19 @@ export type ContainmentTreeIndex = {
   childrenOf: Map<string, string[]>;
 };
 
+export const getMapSchemaIds = (cfg: {
+  levels: number;
+  level1SchemaId: string | null;
+  level2SchemaId?: string | null;
+  level3SchemaId?: string | null;
+}): string[] => [
+  ...new Set(
+    [cfg.level1SchemaId, cfg.level2SchemaId, cfg.level3SchemaId]
+      .slice(0, cfg.levels)
+      .filter((id): id is string => !!id)
+  )
+];
+
 export const getChildSchemas = (
   schemas: EntitySchema[],
   parentSchemaId: string | null

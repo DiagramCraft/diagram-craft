@@ -3,6 +3,7 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 
 export type EntityListOptions = {
   schemaId?: string | null;
+  schemaIds?: string[] | null;
   owner?: string | null;
   lifecycle?: string | null;
   q?: string | null;
@@ -21,6 +22,7 @@ export type EntityListOptions = {
 
 export const toEntityListQuery = (options: EntityListOptions) => ({
   _schemaId: options.schemaId ?? undefined,
+  _schemaIds: options.schemaIds?.length ? options.schemaIds : undefined,
   owner: options.owner ?? undefined,
   lifecycle: options.lifecycle ?? undefined,
   q: options.q ?? undefined,

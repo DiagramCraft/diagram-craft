@@ -39,6 +39,7 @@ import {
   buildContainmentTreeIndex,
   getChildSchemas,
   getContainmentChildren,
+  getMapSchemaIds,
   sortContainmentNodes
 } from './mapViewState';
 import type { JoinedAssessmentContext } from './entityFieldSources';
@@ -306,6 +307,11 @@ export const MapView = ({
   onCountChange
 }: MapViewProps) => {
   const { schemas } = useWorkspaceContext();
+  const cfg = useMemo(
+    () => normalizeViewConfig(mapViewConfigSchema, config, DEFAULT_CONFIG),
+    [config]
+  );
+  const schemaIds = useMemo(() => getMapSchemaIds(cfg), [cfg]);
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
     projectId,
@@ -313,15 +319,12 @@ export const MapView = ({
     q,
     typeFilter,
     ownerFilter,
-    statusFilter
+    statusFilter,
+    schemaIds
   });
   useEffect(() => {
     onCountChange?.(nodes.filter(node => node._isMatch).length);
   }, [nodes, onCountChange]);
-  const cfg = useMemo(
-    () => normalizeViewConfig(mapViewConfigSchema, config, DEFAULT_CONFIG),
-    [config]
-  );
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
   const selectedDisplayFields = getDisplayFieldIds('map', cfg).map(

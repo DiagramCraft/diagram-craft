@@ -33,6 +33,7 @@ type CollectedEntity = {
 export type EntityQueryOptions = {
   entityQuery?: EntityQuery | null;
   schemaId?: string | null;
+  schemaIds?: string[] | null;
   owner?: string | null;
   lifecycle?: string | null;
   q?: string | null;
@@ -56,6 +57,7 @@ export type EntityListPage = {
 export type NormalizedEntityQueryOptions = {
   entityQuery: EntityQuery | null;
   schemaId: string | null;
+  schemaIds: string[] | null;
   owner: string | null;
   lifecycle: string | null;
   q: string;
@@ -76,6 +78,7 @@ export const normalizeEntityQueryOptions = (
 ): NormalizedEntityQueryOptions => ({
   entityQuery: options.entityQuery ?? null,
   schemaId: options.schemaId ?? null,
+  schemaIds: options.schemaIds ?? null,
   owner: options.owner ?? null,
   lifecycle: options.lifecycle ?? null,
   q: options.q ?? '',

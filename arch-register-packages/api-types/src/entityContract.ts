@@ -161,6 +161,10 @@ const entityQueryRequestSchema = z.preprocess(value => {
 
 export const entityListFiltersSchema = z.object({
   _schemaId: z.string().optional().describe('Filter by schema identifier'),
+  _schemaIds: z
+    .array(z.string())
+    .optional()
+    .describe("Filter by multiple schema identifiers (OR'd together)"),
   owner: z.string().optional().describe('Filter by owner identifier'),
   lifecycle: z.string().optional().describe('Filter by lifecycle state'),
   q: z.string().optional().describe('Search query string'),
