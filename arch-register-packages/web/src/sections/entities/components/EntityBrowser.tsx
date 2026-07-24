@@ -467,6 +467,7 @@ export const EntityBrowser = ({
             joinAssessmentId={effectiveJoinAssessmentId}
             joinedAssessment={joinedAssessmentContext}
             responsesByEntity={responsesByEntity}
+            onCountChange={onCountChange}
             mode={
               readOnly
                 ? {

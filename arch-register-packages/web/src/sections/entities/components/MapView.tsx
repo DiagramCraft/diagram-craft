@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useMemo, useCallback, useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import styles from './MapView.module.css';
 import { TbChevronDown } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -85,6 +85,7 @@ type MapViewProps = {
   lifecycleStates: WorkspaceLifecycleState[];
   joinAssessmentId?: string | null;
   joinedAssessment?: JoinedAssessmentContext | null;
+  onCountChange?: (count: number) => void;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -294,7 +295,8 @@ export const MapView = ({
   displayFields,
   lifecycleStates,
   joinAssessmentId,
-  joinedAssessment
+  joinedAssessment,
+  onCountChange
 }: MapViewProps) => {
   const { schemas } = useWorkspaceContext();
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
@@ -306,6 +308,9 @@ export const MapView = ({
     ownerFilter,
     statusFilter
   });
+  useEffect(() => {
+    onCountChange?.(nodes.filter(node => node._isMatch).length);
+  }, [nodes, onCountChange]);
   const cfg = useMemo(
     () => normalizeViewConfig(mapViewConfigSchema, config, DEFAULT_CONFIG),
     [config]

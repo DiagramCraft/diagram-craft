@@ -67,6 +67,26 @@ test.describe('entities section', () => {
     await entitiesPage.expectLoaded();
   });
 
+  test('loads tree view without the redundant entity list request', async ({ page }) => {
+    const entityListRequests: string[] = [];
+    page.on('request', request => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === '/api/default/data') entityListRequests.push(pathname);
+    });
+
+    const treeResponse = page.waitForResponse(response => {
+      const pathname = new URL(response.url()).pathname;
+      return pathname === '/api/default/data/tree' && response.ok();
+    });
+
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+    await entitiesPage.goto({ viewMode: 'tree' });
+    await treeResponse;
+    await entitiesPage.expectLoaded();
+
+    expect(entityListRequests).toHaveLength(0);
+  });
+
   test('restores entity tabs through reload and browser history', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
