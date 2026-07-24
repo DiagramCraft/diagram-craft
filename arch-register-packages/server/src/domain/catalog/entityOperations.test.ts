@@ -225,47 +225,45 @@ describe('collection filtering', () => {
 
 describe('listEntities with asOf', () => {
   const makeAsOfDb = (
-    snapshots: Array<{
+    versionFixtures: Array<{
       entity_id: string;
-      status: 'autosave' | 'saved_version' | 'future_update' | 'applied' | 'deleted';
+      status: 'autosave' | 'saved_version' | 'deleted';
       created_at: Date;
-      target_date?: string | null;
       base_state: Record<string, unknown>;
-      proposed_state?: Record<string, unknown> | null;
     }>,
     projectLinks: Array<{ entity_id: string; created_at: Date }> = []
   ) => {
-    const listSnapshotsAsOf = vi.fn(async (_workspace: string, asOf: Date, entityIds?: string[]) =>
-      snapshots
-        .filter(s => (entityIds ? entityIds.includes(s.entity_id) : true))
-        .filter(s =>
-          s.status === 'future_update'
-            ? s.target_date != null && new Date(s.target_date) <= asOf && s.created_at <= asOf
-            : s.created_at <= asOf
-        )
-        .map((s, i) => ({
-          id: `snap-${i}`,
-          workspace: 'ws-1',
-          project_id: null,
-          commit_message: null,
-          created_by: 'user-1',
-          created_by_name: 'User',
-          target_date: s.target_date ?? null,
-          proposed_state: s.proposed_state ?? null,
-          ...s
-        }))
-        .sort(
-          (a, b) =>
-            a.entity_id.localeCompare(b.entity_id) ||
-            a.created_at.getTime() - b.created_at.getTime()
-        )
+    const listEntityVersionsAsOf = vi.fn(
+      async (_workspace: string, asOf: Date, entityIds?: string[]) =>
+        versionFixtures
+          .filter(v => (entityIds ? entityIds.includes(v.entity_id) : true))
+          .filter(v => v.created_at <= asOf)
+          .map((v, i) => ({
+            id: `version-${i}`,
+            workspace: 'ws-1',
+            entity_id: v.entity_id,
+            version_number: 1,
+            kind: v.status === 'autosave' || v.status === 'saved_version' ? v.status : 'deleted',
+            commit_message: null,
+            created_at: v.created_at,
+            created_by: 'user-1',
+            created_by_name: 'User',
+            state: v.base_state,
+            applied_case_revision_id: null
+          }))
+          .sort(
+            (a, b) =>
+              a.entity_id.localeCompare(b.entity_id) ||
+              a.created_at.getTime() - b.created_at.getTime()
+          )
     );
 
     return {
       catalog: {
         listSchemas: vi.fn(async () => [schema]),
-        listSnapshotsAsOf,
-        listEntityIdsWithAnySnapshot: vi.fn(async () => []),
+        listEntityVersionsAsOf,
+        listPlannedEntityChangesAsOf: vi.fn(async () => []),
+        listEntityIdsWithVersionHistory: vi.fn(async () => []),
         getEntity: vi.fn(async () => null),
         listEntitiesPaginated: vi.fn(async () => [])
       },

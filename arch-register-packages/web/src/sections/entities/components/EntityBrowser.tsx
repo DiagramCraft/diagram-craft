@@ -162,10 +162,10 @@ export const EntityBrowser = ({
   const projectId = projectContext?.project.id;
   const {
     asOf,
-    includeProjectSnapshots,
+    includePlannedChanges,
     setAsOf,
     clearAsOf,
-    setIncludeProjectSnapshots,
+    setIncludePlannedChanges,
     conditions,
     entityQuery,
     activeViewConfig,
@@ -257,7 +257,7 @@ export const EntityBrowser = ({
     pageIndex,
     pageSize,
     asOf,
-    includeProjectSnapshots: projectId ? true : includeProjectSnapshots,
+    includePlannedChanges: projectId ? true : includePlannedChanges,
     onCountChange
   });
 
@@ -414,8 +414,8 @@ export const EntityBrowser = ({
           onSelect={setAsOf}
           onClear={clearAsOf}
           onClose={() => setTlOpen(false)}
-          includeProjectSnapshots={projectId ? undefined : includeProjectSnapshots}
-          onToggleIncludeProjectSnapshots={projectId ? undefined : setIncludeProjectSnapshots}
+          includePlannedChanges={projectId ? undefined : includePlannedChanges}
+          onToggleIncludePlannedChanges={projectId ? undefined : setIncludePlannedChanges}
         />
       )}
 

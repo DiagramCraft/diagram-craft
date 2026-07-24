@@ -50,7 +50,7 @@ type CompileState = {
   projectId: string | undefined;
   projectScope: 'project' | 'all';
   asOf: Date | null;
-  includeProjectSnapshots: boolean;
+  includePlannedChanges: boolean;
   params: unknown[];
   nextAliasIndex: number;
   projectionBindings: ProjectionBinding[];
@@ -703,7 +703,7 @@ const buildTemporalSource = (state: CompileState): string => {
   const eventCreatedParam = addParam(state, asOf.toISOString());
   const eventDateParam = addParam(state, asOf.toISOString().slice(0, 10));
   const caseProjectClause =
-    state.projectScope === 'project' && state.projectId && state.includeProjectSnapshots
+    state.projectScope === 'project' && state.projectId && state.includePlannedChanges
       ? `(c.project_id IS NULL OR c.project_id = ${addParam(state, state.projectId)})`
       : 'c.project_id IS NULL';
   const temporalScopeClause = projectScopeClause(
@@ -852,7 +852,7 @@ export const compileEntityQueryIR = (
     projectId: query.projectId,
     projectScope: query.projectScope ?? 'all',
     asOf: query.asOf ? new Date(query.asOf) : null,
-    includeProjectSnapshots: query.includeProjectSnapshots ?? true,
+    includePlannedChanges: query.includePlannedChanges ?? true,
     params: [],
     nextAliasIndex: 1,
     projectionBindings: [],

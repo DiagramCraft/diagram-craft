@@ -11,9 +11,7 @@ import type {
   SchemaDbUpdate,
   SchemaVersionDbCreate,
   PinnedEntityDbCreate,
-  EntitySnapshotDbResult,
   EntityVersionDbCreate,
-  EntityVersionDbResult,
   EntityVersionKind,
   TimelineMarkerDbResult
 } from './catalogDatabase';
@@ -584,56 +582,6 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return row ? catalogMappers.entityVersion(row) : null;
   }
 
-  private snapshotFromVersion(version: EntityVersionDbResult): EntitySnapshotDbResult {
-    return {
-      id: version.id,
-      workspace: version.workspace,
-      entity_id: version.entity_id,
-      status:
-        version.kind === 'case_applied'
-          ? 'applied'
-          : version.kind === 'direct_edit' ||
-              version.kind === 'restored' ||
-              version.kind === 'bypass'
-            ? 'autosave'
-            : version.kind,
-      project_id: null,
-      target_date: null,
-      milestone_id: null,
-      commit_message: version.commit_message,
-      created_at: version.created_at,
-      created_by: version.created_by ?? '',
-      created_by_name: version.created_by_name,
-      base_state: version.state,
-      proposed_state: null,
-      case_revision_id: version.applied_case_revision_id
-    };
-  }
-
-  private async caseSnapshotRows(workspace: string, entityId?: string, projectId?: string) {
-    const rows = await this.sql<DatabaseRow[]>`
-      SELECT m.id, c.workspace, m.entity_id,
-             CASE WHEN r.status = 'applied' THEN 'applied' ELSE 'future_update' END AS status,
-             c.id AS case_id, r.id AS case_revision_id,
-             c.project_id,
-             CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
-             c.milestone_id,
-             COALESCE(r.message, c.description) AS commit_message,
-             r.created_at, r.created_by, u.display_name AS created_by_name,
-             m.base_state, m.proposed_state
-      FROM entity_change_case_entity_version m
-      JOIN entity_change_case_revision r ON r.id = m.revision_id
-      JOIN entity_change_case c ON c.id = r.case_id
-      LEFT JOIN users u ON u.id = r.created_by
-      WHERE c.workspace = ${workspace}
-        AND r.status IN ('draft', 'submitted', 'changes_requested', 'applied')
-        ${entityId != null ? this.sql`AND m.entity_id = ${entityId}` : this.sql``}
-        ${projectId != null ? this.sql`AND c.project_id = ${projectId}` : this.sql``}
-      ORDER BY r.created_at DESC
-    `;
-    return mapDatabaseRows(rows, catalogMappers.entitySnapshot);
-  }
-
   async getEntityVersionById(workspace: string, id: string) {
     const [row] = await this.sql<
       DatabaseRow[]
@@ -641,25 +589,32 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return row ? catalogMappers.entityVersion(row) : null;
   }
 
-  async listSnapshotsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
+  async listPlannedEntityChangesAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
-    const versions = (await this.listEntityVersionsAsOf(workspace, asOf, entityIds)).map(v =>
-      this.snapshotFromVersion(v)
-    );
-    const cases = (await this.caseSnapshotRows(workspace)).filter(
-      s =>
-        s.status === 'future_update' &&
-        (entityIds == null || entityIds.includes(s.entity_id)) &&
-        s.created_at <= asOf &&
-        (s.target_date == null || s.target_date <= asOf.toISOString().slice(0, 10))
-    );
-    return [...versions, ...cases].sort(
-      (a, b) =>
-        a.entity_id.localeCompare(b.entity_id) || a.created_at.getTime() - b.created_at.getTime()
-    );
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT m.id, c.workspace, m.entity_id,
+             c.id AS case_id, r.id AS case_revision_id,
+             c.project_id,
+             CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
+             c.milestone_id,
+             COALESCE(r.message, c.description) AS commit_message,
+             r.created_at, r.created_by, u.display_name AS created_by_name,
+             m.proposed_state
+      FROM entity_change_case_entity_version m
+      JOIN entity_change_case_revision r ON r.id = m.revision_id
+      JOIN entity_change_case c ON c.id = r.case_id
+      LEFT JOIN users u ON u.id = r.created_by
+      WHERE c.workspace = ${workspace}
+        AND r.status IN ('draft', 'submitted', 'changes_requested')
+        AND r.created_at <= ${asOf}
+        AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ${asOf.toISOString().slice(0, 10)})
+        ${entityIds != null ? this.sql`AND m.entity_id = ANY(${entityIds})` : this.sql``}
+      ORDER BY m.entity_id, r.created_at ASC
+    `;
+    return mapDatabaseRows(rows, catalogMappers.plannedEntityChange);
   }
 
-  async listEntityIdsWithAnySnapshot(workspace: string, entityIds?: string[]) {
+  async listEntityIdsWithVersionHistory(workspace: string, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const rows = await this.sql<
       { entity_id: string }[]

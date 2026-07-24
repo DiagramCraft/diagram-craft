@@ -26,7 +26,7 @@ type UseEntityBrowserDataProps = {
   disablePaging?: boolean;
   enabled?: boolean;
   asOf?: string;
-  includeProjectSnapshots?: boolean;
+  includePlannedChanges?: boolean;
   onCountChange?: (count: number) => void;
 };
 
@@ -50,7 +50,7 @@ export const useEntityBrowserData = ({
   disablePaging = false,
   enabled = true,
   asOf,
-  includeProjectSnapshots = true,
+  includePlannedChanges = true,
   onCountChange
 }: UseEntityBrowserDataProps) => {
   const isPagedBrowse = !disablePaging && (view === 'table' || view === 'cards') && sort === 'name';
@@ -90,7 +90,7 @@ export const useEntityBrowserData = ({
       limit: isPagedBrowse ? pageSize : undefined,
       offset: isPagedBrowse ? pagedOffset : undefined,
       asOf,
-      includeProjectSnapshots
+      includePlannedChanges
     },
     { enabled: enabled && isPagedBrowse && !!workspaceId }
   );
@@ -115,7 +115,7 @@ export const useEntityBrowserData = ({
       collectionId: collectionId ?? undefined,
       view: 'full',
       asOf,
-      includeProjectSnapshots
+      includePlannedChanges
     },
     { enabled: enabled && !isPagedBrowse && !!workspaceId }
   );

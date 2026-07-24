@@ -16,7 +16,7 @@ describe('toEntityListQuery', () => {
         projectId: 'project-1',
         projectScope: 'project',
         asOf: '2026-07-11T00:00:00Z',
-        includeProjectSnapshots: false
+        includePlannedChanges: false
       })
     ).toEqual({
       _schemaId: 'schema-1',
@@ -28,7 +28,7 @@ describe('toEntityListQuery', () => {
       projectId: 'project-1',
       projectScope: 'project',
       asOf: '2026-07-11T00:00:00Z',
-      includeProjectSnapshots: false
+      includePlannedChanges: false
     });
   });
 
@@ -43,7 +43,7 @@ describe('toEntityListQuery', () => {
         assessmentId: null,
         projectId: null,
         asOf: null,
-        includeProjectSnapshots: null
+        includePlannedChanges: null
       })
     ).toEqual({
       _schemaId: undefined,
@@ -55,13 +55,11 @@ describe('toEntityListQuery', () => {
       projectId: undefined,
       projectScope: undefined,
       asOf: undefined,
-      includeProjectSnapshots: undefined
+      includePlannedChanges: undefined
     });
   });
 
   it('preserves false boolean filters', () => {
-    expect(toEntityListQuery({ includeProjectSnapshots: false }).includeProjectSnapshots).toBe(
-      false
-    );
+    expect(toEntityListQuery({ includePlannedChanges: false }).includePlannedChanges).toBe(false);
   });
 });

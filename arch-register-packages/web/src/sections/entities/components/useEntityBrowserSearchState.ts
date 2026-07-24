@@ -149,7 +149,7 @@ export const useEntityBrowserSearchState = ({
 
   const setAsOf = useCallback((date: string) => navigateBrowser({ asOf: date }), [navigateBrowser]);
   const clearAsOf = useCallback(() => navigateBrowser({ asOf: undefined }), [navigateBrowser]);
-  const setIncludeProjectSnapshots = useCallback(
+  const setIncludePlannedChanges = useCallback(
     (include: boolean) => navigateBrowser({ asOfIncludeProjects: include ? undefined : 'false' }),
     [navigateBrowser]
   );
@@ -172,10 +172,10 @@ export const useEntityBrowserSearchState = ({
   return {
     activeViewConfig,
     asOf: search.asOf,
-    includeProjectSnapshots: search.asOfIncludeProjects !== 'false',
+    includePlannedChanges: search.asOfIncludeProjects !== 'false',
     setAsOf,
     clearAsOf,
-    setIncludeProjectSnapshots,
+    setIncludePlannedChanges,
     conditions,
     entityQuery,
     joinAssessmentId: search.joinAssessmentId ?? null,

@@ -45,7 +45,7 @@ export type EntityQueryOptions = {
   limit?: number | null;
   offset?: number | null;
   asOf?: Date | null;
-  includeProjectSnapshots?: boolean;
+  includePlannedChanges?: boolean;
 };
 
 export type EntityListPage = {
@@ -68,7 +68,7 @@ export type NormalizedEntityQueryOptions = {
   limit: number | null;
   offset: number;
   asOf: Date | null;
-  includeProjectSnapshots: boolean;
+  includePlannedChanges: boolean;
 };
 
 export const normalizeEntityQueryOptions = (
@@ -88,7 +88,7 @@ export const normalizeEntityQueryOptions = (
   limit: options.limit ?? null,
   offset: options.offset ?? 0,
   asOf: options.asOf ?? null,
-  includeProjectSnapshots: options.includeProjectSnapshots ?? true
+  includePlannedChanges: options.includePlannedChanges ?? true
 });
 
 const attachProjectLink = (
@@ -302,7 +302,7 @@ const collectEntities = async (
     collectionId,
     view,
     asOf,
-    includeProjectSnapshots
+    includePlannedChanges
   } = normalizeEntityQueryOptions(options);
   // Assessment conditions are evaluated against the joined assessment's bulk response map;
   // everything else, including `_completeness` (a materialized column, #2346), is evaluated in SQL.
@@ -403,7 +403,7 @@ const collectEntities = async (
       asOf,
       authCtx,
       candidateEntityIds,
-      includeProjectSnapshots
+      includePlannedChanges
     );
     const filtered = filterEntities(reconstructed, {
       schemaId,

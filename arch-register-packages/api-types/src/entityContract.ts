@@ -186,10 +186,10 @@ export const entityListFiltersSchema = z.object({
     .describe(
       'ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)'
     ),
-  includeProjectSnapshots: booleanQuerySchema
+  includePlannedChanges: booleanQuerySchema
     .optional()
     .describe(
-      'When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true.'
+      'When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true.'
     )
 });
 
