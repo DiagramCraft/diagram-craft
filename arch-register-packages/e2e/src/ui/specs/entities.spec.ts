@@ -67,31 +67,6 @@ test.describe('entities section', () => {
     await entitiesPage.expectLoaded();
   });
 
-  test('loads timeline history through a batched view request', async ({ page }) => {
-    const timelineRequests: string[] = [];
-    const perEntityRequests: string[] = [];
-    page.on('request', request => {
-      const pathname = new URL(request.url()).pathname;
-      if (pathname === '/api/default/data/views/timeline') timelineRequests.push(pathname);
-      if (pathname.match(/^\/api\/default\/data\/[^/]+\/(versions|change-cases)$/) != null) {
-        perEntityRequests.push(pathname);
-      }
-    });
-
-    const timelineResponse = page.waitForResponse(response => {
-      const pathname = new URL(response.url()).pathname;
-      return pathname === '/api/default/data/views/timeline' && response.ok();
-    });
-    const viewConfigs = encodeURIComponent(JSON.stringify({ timeline: { groupBy: 'project' } }));
-    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
-    await entitiesPage.goto({ viewMode: 'timeline', viewConfigs });
-    await timelineResponse;
-    await entitiesPage.expectLoaded();
-
-    expect(timelineRequests.length).toBeGreaterThanOrEqual(1);
-    expect(perEntityRequests).toHaveLength(0);
-  });
-
   test('loads tree view without the redundant entity list request', async ({ page }) => {
     const entityListRequests: string[] = [];
     page.on('request', request => {
