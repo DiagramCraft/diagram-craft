@@ -1,0 +1,21 @@
+{
+  "name": "@arch-register/job-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone recurring job scheduler and worker for Arch Register",
+  "scripts": {
+    "dev": "node --watch --import tsx --import ../server/src/serverSetup.mjs src/main.ts",
+    "start": "node --import tsx --import ../server/src/serverSetup.mjs src/main.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@arch-register/server": "workspace:*",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "vitest": "^4.1.9"
+  }
+}

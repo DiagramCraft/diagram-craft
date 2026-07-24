@@ -27,11 +27,13 @@ export const useHydratedEntityRows = <T extends SummaryRow>(
   const results = useQueries({
     queries: schemaIds.map(schemaId => ({
       queryKey: entityKeys.list(workspaceId, { schemaId, view: 'full' }),
-      queryFn: () =>
-        orpcClient.entities.list({
+      queryFn: async () => {
+        const page = await orpcClient.entities.list({
           params: { workspace: workspaceId },
           query: { ...toEntityListQuery({ schemaId }), view: 'full' }
-        }),
+        });
+        return page.items;
+      },
       enabled: enabled && !!workspaceId
     }))
   });

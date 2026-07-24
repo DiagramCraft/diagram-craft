@@ -13,7 +13,9 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       '**/e2e/**',
-      '**/db/contract-tests/**'
+      '**/db/contract-tests/**',
+      'examples/**',
+      '.pnpm-store/**'
     ],
     fakeTimers: {
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask']
@@ -25,7 +27,10 @@ export default defineConfig({
       reporter: ['text', 'json', 'json-summary'],
       reportsDirectory: './coverage'
     },
-    reporters: ['dot']
+    reporters: ['dot'],
+    // Keep application logging enabled while preventing expected test-time console output from
+    // obscuring the test result. Logs remain visible when the application or server is run normally.
+    onConsoleLog: () => false
   },
   resolve: {
     tsconfigPaths: true

@@ -3,7 +3,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import { listWorkspaceContentNodes } from './contentNodeOperations';
-import { getMarkdownContent } from './markdownOperations';
+import { getMarkdownContent } from './markdownDocumentOperations';
 import { uploadContentFile } from './fileTransferOperations';
 import { ENTITY_SCOPE } from './contentScope';
 
@@ -99,5 +99,35 @@ describe('entity/workspace content authorization', () => {
       expect.any(String)
     );
     expect(read).not.toHaveBeenCalled();
+  });
+
+  it('reads raw markdown content from an external mount', async () => {
+    const node = {
+      id: 'markdown-1',
+      project_id: null,
+      entity_id: null,
+      type: 'markdown'
+    };
+    const db = {
+      project: {
+        getAnyContentNodeById: vi.fn(async () => node),
+        listWorkspaceContentNodes: vi.fn(async () => [node])
+      }
+    } as unknown as DatabaseAdapter;
+    const storage = {
+      read: vi.fn(async () => Buffer.from('# Synced document\n'))
+    } as unknown as StorageAdapter;
+    requireWorkspaceCapability.mockImplementation(() => undefined);
+
+    await expect(getMarkdownContent(db, storage, 'ws-1', node.id, event)).resolves.toEqual({
+      body: '# Synced document\n',
+      attachments: [],
+      document_type: null,
+      document_type_id: null,
+      metadata: {},
+      generated_metadata: {},
+      available_fields: [],
+      retired_fields: []
+    });
   });
 });

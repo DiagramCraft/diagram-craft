@@ -1,9 +1,7 @@
 import { CollapsibleOverlayComponent } from '@diagram-craft/canvas/shape/collapsible';
 import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/layoutCapableShapeNodeDefinition';
-import {
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   BaseNodeComponent,
@@ -148,15 +146,21 @@ export class UMLCollaborationComponent extends BaseNodeComponent<UMLCollaboratio
       );
     }
 
-    builder.text(this, '1', node.getText(), nodeProps.text, { ...bounds, h: titleSize }, (size: Extent) =>
-      UnitOfWork.execute(node.diagram, uow => {
-        uow.metadata.nonDirty = true;
-        node.updateCustomProps('umlCollaboration', p => (p.size = size.h), uow);
-        const parent = node.parent;
-        if (isNode(parent)) {
-          parent.getDefinition().onChildChanged(parent, uow);
-        }
-      })
+    builder.text(
+      this,
+      '1',
+      node.getText(),
+      nodeProps.text,
+      { ...bounds, h: titleSize },
+      (size: Extent) =>
+        UnitOfWork.execute(node.diagram, uow => {
+          uow.metadata.nonDirty = true;
+          node.updateCustomProps('umlCollaboration', p => (p.size = size.h), uow);
+          const parent = node.parent;
+          if (isNode(parent)) {
+            parent.getDefinition().onChildChanged(parent, uow);
+          }
+        })
     );
 
     if (this.def.shouldRenderChildren(node)) {

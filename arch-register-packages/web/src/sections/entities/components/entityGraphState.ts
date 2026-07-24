@@ -1,8 +1,5 @@
 import type { EntityRelationData } from '../../../hooks/useEntities';
-import type {
-  DependencyGraphEdge,
-  DependencyGraphNode
-} from '../../../components/DependencyGraph';
+import type { DependencyGraphEdge, DependencyGraphNode } from '../../../components/DependencyGraph';
 import { getRelationDisplayLabel } from '../../../lib/entityRelations';
 
 export type EntityNodeData = {
@@ -12,12 +9,43 @@ export type EntityNodeData = {
   isRoot: boolean;
 };
 
+export type EntityGraphDirection = 'upstream' | 'downstream' | 'both';
+
+type DirectedRelation = {
+  from: string;
+  to: string;
+  relation: EntityRelationData['outgoing'][number];
+};
+
 type GraphTraversalOptions = {
   rootEntityId: string;
   relationsData: Map<string, EntityRelationData>;
   maxDepth: number;
   excludedIds: ReadonlySet<string>;
   manuallyExpanded: ReadonlySet<string>;
+  direction?: EntityGraphDirection;
+};
+
+const getDirectedRelations = (
+  entityId: string,
+  data: EntityRelationData,
+  direction: EntityGraphDirection = 'both'
+): DirectedRelation[] => {
+  const relations: DirectedRelation[] = [];
+
+  if (direction === 'upstream' || direction === 'both') {
+    for (const relation of data.outgoing) {
+      relations.push({ from: entityId, to: relation.entityId, relation });
+    }
+  }
+
+  if (direction === 'downstream' || direction === 'both') {
+    for (const relation of data.incoming) {
+      relations.push({ from: relation.entityId, to: entityId, relation });
+    }
+  }
+
+  return relations;
 };
 
 const collectVisibleNodes = ({
@@ -27,7 +55,8 @@ const collectVisibleNodes = ({
   relationsData,
   maxDepth,
   excludedIds,
-  manuallyExpanded
+  manuallyExpanded,
+  direction = 'both'
 }: GraphTraversalOptions & {
   rootEntityName: string;
   rootEntitySchemaId: string;
@@ -51,7 +80,8 @@ const collectVisibleNodes = ({
     const shouldExpand = depth < maxDepth || manuallyExpanded.has(id);
     if (!shouldExpand) continue;
 
-    for (const relation of [...data.outgoing, ...data.incoming]) {
+    for (const directedRelation of getDirectedRelations(id, data, direction)) {
+      const { relation } = directedRelation;
       if (excludedIds.has(relation.entityId) || visited.has(relation.entityId)) continue;
       visited.add(relation.entityId);
       visibleNodes.set(relation.entityId, {
@@ -83,7 +113,8 @@ export const buildEntityGraphData = ({
   relationsData,
   maxDepth,
   excludedIds,
-  manuallyExpanded
+  manuallyExpanded,
+  direction = 'both'
 }: GraphTraversalOptions & {
   rootEntityName: string;
   rootEntitySchemaId: string;
@@ -99,7 +130,8 @@ export const buildEntityGraphData = ({
     relationsData,
     maxDepth,
     excludedIds,
-    manuallyExpanded
+    manuallyExpanded,
+    direction
   });
 
   const edgeSet = new Set<string>();
@@ -114,15 +146,15 @@ export const buildEntityGraphData = ({
     }
 
     let hiddenCount = 0;
-    for (const relation of data.outgoing) {
+    for (const { from, to, relation } of getDirectedRelations(id, data, direction)) {
       if (visibleNodes.has(relation.entityId)) {
-        const edgeId = `${id}::${relation.entityId}::${relation.fieldName}`;
+        const edgeId = `${from}::${to}::${relation.fieldName}`;
         if (!edgeSet.has(edgeId)) {
           edgeSet.add(edgeId);
           edges.push({
             id: edgeId,
-            from: id,
-            to: relation.entityId,
+            from,
+            to,
             label: getRelationDisplayLabel(relation),
             kind: relation.kind
           });
@@ -130,9 +162,6 @@ export const buildEntityGraphData = ({
       } else {
         hiddenCount++;
       }
-    }
-    for (const relation of data.incoming) {
-      if (!visibleNodes.has(relation.entityId)) hiddenCount++;
     }
     hiddenCountMap.set(id, hiddenCount);
   }

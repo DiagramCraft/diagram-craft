@@ -393,9 +393,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         styles1.crdt.factory,
         styles1
       );
-      diagram1.undoManager.execute('add', uow =>
-        styles1.addStylesheet(id, customNodeStyle, uow)
-      );
+      diagram1.undoManager.execute('add', uow => styles1.addStylesheet(id, customNodeStyle, uow));
 
       // Verify
       const retrievedStyle = styles1.getNodeStyle(id);

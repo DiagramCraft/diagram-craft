@@ -24,6 +24,25 @@ SQLITE_PATH=./data/arch-register.sqlite
 
 If `DB_DRIVER` is omitted, the server defaults to `postgres`.
 
+## Job server
+
+Recurring schedules and durable job runs share this database through the standalone
+`@arch-register/job-server` package. Start it separately from the API server:
+
+```bash
+pnpm --filter @arch-register/job-server start
+```
+
+Production and multi-worker job deployments require PostgreSQL. SQLite is available only
+for explicitly enabled, single-worker local development with
+`JOB_SERVER_ALLOW_SQLITE=true`; it must not be used as the production job-server backend.
+
+The worker concurrency and lease settings are configured with
+`JOB_SERVER_ID`, `JOB_SERVER_NAME`, `JOB_SERVER_MAX_CONCURRENCY`,
+`JOB_SERVER_POLL_INTERVAL_MS`, `JOB_SERVER_LEASE_DURATION_MS`,
+`JOB_SERVER_HEARTBEAT_INTERVAL_MS`, `JOB_SERVER_PING_INTERVAL_MS`,
+`JOB_SERVER_JOB_TIMEOUT_MS`, and `JOB_SERVER_SHUTDOWN_TIMEOUT_MS`.
+
 ## Local PostgreSQL setup
 
 ### 1. Install PostgreSQL
@@ -126,6 +145,20 @@ This resets the selected database driver, recreates the schema, and loads seed d
 ```bash
 pnpm bootstrap
 ```
+
+To seed enabled AI configuration for all bootstrap workspaces, provide the dedicated bootstrap variables and use the
+explicit switch:
+
+```bash
+BOOTSTRAP_AI_PROVIDER=openrouter \
+BOOTSTRAP_AI_MODEL=anthropic/claude-sonnet-4-20250514 \
+BOOTSTRAP_AI_API_KEY=... \
+AI_ENCRYPTION_KEY=... \
+pnpm bootstrap -- --bootstrap-ai
+```
+
+The command fails before resetting the database if any required value is missing or the provider is unsupported.
+Without `--bootstrap-ai`, these variables have no effect and the seeded AI configuration remains disabled.
 
 You should see:
 

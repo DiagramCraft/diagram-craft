@@ -32,17 +32,14 @@ import {
 } from '@platejs/floating';
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
-import {
-  EditorBlock,
-  isListParagraph,
-  isTodoListParagraph,
-  getNodeText
-} from './EditorBlock';
+import { EditorBlock, isListParagraph, isTodoListParagraph, getNodeText } from './EditorBlock';
 import { MdxBlockRegistryProvider } from './MdxBlockRegistryContext';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
 import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
+import { ColumnsNormalizePlugin } from '../mdx-components/blocks/columns/ColumnsEditable';
+import { TabsNormalizePlugin } from '../mdx-components/blocks/tabs/TabsEditable';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -323,6 +320,18 @@ const insertOrReplaceBlock = (editor: ReturnType<typeof useEditorRef>, node: TEl
   }
 };
 
+// Inline void elements (mentions, links, labels, ...) leave the selection
+// inside the inserted node's own (non-editable) text child unless we move it
+// out explicitly — otherwise further typing silently goes nowhere.
+const insertOrReplaceInline = (editor: ReturnType<typeof useEditorRef>, node: TElement) => {
+  editor.tf.insertNodes(node);
+  const path = editor.api.findPath(node);
+  if (!path) return;
+  const parentPath = path.slice(0, -1);
+  const index = path[path.length - 1] as number;
+  editor.tf.select({ path: [...parentPath, index + 1], offset: 0 });
+};
+
 type SlashCommandItem = {
   key: string;
   label: string;
@@ -500,7 +509,7 @@ const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONENTS).fl
         icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
         keywords: cmd.keywords,
         onSelect: (editor: ReturnType<typeof useEditorRef>) =>
-          cmd.onSelect(editor, { insertOrReplaceBlock })
+          cmd.onSelect(editor, { insertOrReplaceBlock, insertOrReplaceInline })
       }
     ];
   }
@@ -523,7 +532,7 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
         if (!searchText) return true;
         const q = searchText.toLowerCase();
         return (
-          cmd.label.toLowerCase().includes(q) || (cmd.keywords?.some(k => k.includes(q)) ?? false)
+          cmd.label.toLowerCase().includes(q) ?? cmd.keywords?.some(k => k.includes(q)) ?? false
         );
       }),
     [searchText]
@@ -875,6 +884,8 @@ const editorPlugins = [
   createPlatePlugin({ key: 'th', node: { isElement: true } }).withComponent(TableHeaderCellElement),
   ...mdxElementPlugins,
   CaptionNormalizePlugin,
+  ColumnsNormalizePlugin,
+  TabsNormalizePlugin,
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),
   createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(InlineCodeLeaf),

@@ -17,17 +17,15 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const wrap =
-  (theme: 'light-theme' | 'dark-theme') =>
-  (args: Story['args']) => (
-    <div className={theme}>
-      <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
-        <PortalContextProvider>
-          <Dialog {...args}>{args!.children}</Dialog>
-        </PortalContextProvider>
-      </DialogContextProvider>
-    </div>
-  );
+const wrap = (theme: 'light-theme' | 'dark-theme') => (args: Story['args']) => (
+  <div className={theme}>
+    <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+      <PortalContextProvider>
+        <Dialog {...args}>{args!.children}</Dialog>
+      </PortalContextProvider>
+    </DialogContextProvider>
+  </div>
+);
 
 const renderLight = wrap('light-theme');
 const renderDark = wrap('dark-theme');
@@ -40,7 +38,8 @@ export const Basic: Story = {
   args: {
     open: true,
     title: 'Delete workspace?',
-    children: 'This will permanently remove the workspace and all its diagrams. This action cannot be undone.',
+    children:
+      'This will permanently remove the workspace and all its diagrams. This action cannot be undone.',
     onClose: () => {},
     buttons: [
       { label: 'Cancel', type: 'cancel', onClick: () => {} },
@@ -139,9 +138,7 @@ export const WithFooterLeft: Story = {
     children: 'Last pull was 4 minutes ago. No conflicts detected.',
     onClose: () => {},
     footerLeft: <span style={{ fontFamily: 'monospace', fontSize: 11 }}>Esc to close</span>,
-    buttons: [
-      { label: 'Got it', type: 'default', onClick: () => {} }
-    ]
+    buttons: [{ label: 'Got it', type: 'default', onClick: () => {} }]
   }
 };
 

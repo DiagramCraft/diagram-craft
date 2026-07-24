@@ -7,7 +7,8 @@ export const setAuthCookies = (
   event: H3Event,
   accessToken: string,
   refreshToken: string,
-  accessExpiresIn: number
+  accessExpiresIn: number,
+  refreshExpiresIn: number
 ) => {
   const secure = isProduction();
 
@@ -24,7 +25,7 @@ export const setAuthCookies = (
     secure,
     sameSite: 'lax',
     path: '/api/auth/refresh',
-    maxAge: 7 * 24 * 3600
+    maxAge: refreshExpiresIn
   });
 };
 

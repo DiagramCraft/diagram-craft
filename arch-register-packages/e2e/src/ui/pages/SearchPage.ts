@@ -3,7 +3,6 @@ import { workspaceSearchRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
 
 export class SearchPage extends WorkspacePage {
-
   goto = async () => {
     await this.page.goto(workspaceSearchRoute(this.workspaceSlug));
   };
@@ -17,7 +16,9 @@ export class SearchPage extends WorkspacePage {
     await this.workspaceShell.expectActiveNav('search');
     await expect(this.searchInput()).toBeVisible();
     if (options?.empty ?? true) {
-      await expect(this.page.getByText('Start typing to search across the workspace.')).toBeVisible();
+      await expect(
+        this.page.getByText('Start typing to search across the workspace.')
+      ).toBeVisible();
     }
   };
 

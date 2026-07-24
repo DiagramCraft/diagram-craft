@@ -12,10 +12,18 @@ export const LayerContextMenu = (props: Props) => {
       <ContextMenu.Trigger element={props.element} />
       <ContextMenu.Menu>
         <Menu.SubMenu label={'New'}>
-          <ActionMenuItem action={'LAYER_ADD'} leftSlot={<TbRectangle />}>Layer...</ActionMenuItem>
-          <ActionMenuItem action={'LAYER_ADD_REFERENCE'} leftSlot={<TbLink />}>Reference layer...</ActionMenuItem>
-          <ActionMenuItem action={'LAYER_ADD_RULE'} leftSlot={<TbAdjustments />}>Rule layer...</ActionMenuItem>
-          <ActionMenuItem action={'LAYER_ADD_MODIFICATION'} leftSlot={<TbLayersSelectedBottom />}>Modification layer...</ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD'} leftSlot={<TbRectangle />}>
+            Layer...
+          </ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_REFERENCE'} leftSlot={<TbLink />}>
+            Reference layer...
+          </ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_RULE'} leftSlot={<TbAdjustments />}>
+            Rule layer...
+          </ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_MODIFICATION'} leftSlot={<TbLayersSelectedBottom />}>
+            Modification layer...
+          </ActionMenuItem>
         </Menu.SubMenu>
 
         <Menu.Separator />

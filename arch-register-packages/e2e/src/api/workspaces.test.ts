@@ -33,10 +33,15 @@ test.describe('workspace routes', () => {
 
   test('GET /api/workspaces returns 401 without token', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
-    await expect(anonOrpc.workspaces.list(undefined)).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    await expect(anonOrpc.workspaces.list(undefined)).rejects.toMatchObject({
+      code: 'UNAUTHORIZED'
+    });
   });
 
-  test('POST /api/workspaces creates a workspace with default settings', async ({ server, orpc }) => {
+  test('POST /api/workspaces creates a workspace with default settings', async ({
+    server,
+    orpc
+  }) => {
     const created = await orpc.workspaces.create({ body: { name: 'Platform Strategy' } });
     expect(created).toMatchObject({
       id: expect.any(String),
@@ -55,6 +60,44 @@ test.describe('workspace routes', () => {
 
     const teams = await server.db.workspace.listTeams(created.id);
     expect(teams.map(team => team.name)).toEqual(['Platform Team', 'UX Team', 'Security Team']);
+  });
+
+  test('POST /api/workspaces materializes template enums and document types', async ({
+    server,
+    orpc
+  }) => {
+    const created = await orpc.workspaces.create({
+      body: { name: 'Security Template Workspace', template: 'security' }
+    });
+
+    const [schemas, enums, documentTypes, documentTemplates] = await Promise.all([
+      server.db.catalog.listSchemas(created.id),
+      server.db.catalog.listEnums(created.id),
+      server.db.document.listDocumentTypes(created.id),
+      server.db.document.listDocumentTemplates(created.id)
+    ]);
+    const enumIds = new Set(enums.map(enumeration => enumeration.id));
+    const selectFields = schemas.flatMap(schema =>
+      schema.fields.filter(field => field.type === 'select')
+    );
+
+    expect(enums).toHaveLength(6);
+    expect(enums.every(enumeration => enumeration.options.length > 0)).toBe(true);
+    expect(selectFields.every(field => enumIds.has(field.enumId))).toBe(true);
+    expect(documentTypes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'Architecture Decision Record', archived: false })
+      ])
+    );
+    const adrType = documentTypes.find(type => type.name === 'Architecture Decision Record');
+    expect(documentTemplates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Architecture Decision Record',
+          document_type_id: adrType?.id
+        })
+      ])
+    );
   });
 
   test('POST /api/workspaces applies slug and badge overrides', async ({ orpc }) => {
@@ -86,10 +129,15 @@ test.describe('workspace routes', () => {
   test('POST /api/workspaces returns 409 for a duplicate workspace name', async ({ orpc }) => {
     await expect(
       orpc.workspaces.create({ body: { name: 'Default Workspace' } })
-    ).rejects.toMatchObject({ code: 'CONFLICT', message: 'A workspace with that name already exists' });
+    ).rejects.toMatchObject({
+      code: 'CONFLICT',
+      message: 'A workspace with that name already exists'
+    });
   });
 
-  test('PUT /api/workspaces/:id updates a workspace and preserves omitted fields', async ({ orpc }) => {
+  test('PUT /api/workspaces/:id updates a workspace and preserves omitted fields', async ({
+    orpc
+  }) => {
     const created = await orpc.workspaces.create({
       body: { name: 'Workspace To Rename', color: '#123456', description: 'Original description' }
     });
@@ -140,7 +188,10 @@ test.describe('workspace routes', () => {
     const created = await orpc.workspaces.create({ body: { name: 'Workspace To Delete' } });
 
     const result = await orpc.workspaces.remove({ params: { workspace: created.id } });
-    expect(result).toMatchObject({ success: true, message: "Workspace 'Workspace To Delete' deleted" });
+    expect(result).toMatchObject({
+      success: true,
+      message: "Workspace 'Workspace To Delete' deleted"
+    });
   });
 
   test('DELETE /api/workspaces/:id returns 404 for an unknown workspace id', async ({ orpc }) => {

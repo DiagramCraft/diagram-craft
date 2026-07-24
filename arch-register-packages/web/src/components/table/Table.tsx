@@ -35,11 +35,12 @@ const withStickyOffsets = (children: ReactNode): ReactNode => {
   return Children.map(children, child => {
     if (!isValidElement<StickyCellProps>(child) || !child.props.sticky) return child;
     const offset = left;
-    const width = typeof child.props.width === 'number'
-      ? child.props.width
-      : child.type === CheckboxCell
-        ? CHECKBOX_CELL_WIDTH
-        : 0;
+    const width =
+      typeof child.props.width === 'number'
+        ? child.props.width
+        : child.type === CheckboxCell
+          ? CHECKBOX_CELL_WIDTH
+          : 0;
     left += width;
     return cloneElement(child as ReactElement<StickyCellProps>, {
       style: { ...child.props.style, left: offset }
@@ -55,7 +56,11 @@ const countHeaderCells = (children: ReactNode): number => {
   let count = 0;
   Children.forEach(children, child => {
     if (!isValidElement(child)) return;
-    if (child.type === HeaderCell || child.type === SortableHeaderCell || child.type === CheckboxCell) {
+    if (
+      child.type === HeaderCell ||
+      child.type === SortableHeaderCell ||
+      child.type === CheckboxCell
+    ) {
       count++;
     } else if ((child.props as { children?: ReactNode } | undefined)?.children) {
       count += countHeaderCells((child.props as { children?: ReactNode }).children);
@@ -233,7 +238,10 @@ const SortableHeaderCell = <K extends string = string>({
 }: SortableHeaderCellProps<K>) => {
   const active = sort?.key === sortKey;
   return (
-    <HeaderCell aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined} {...rest}>
+    <HeaderCell
+      aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+      {...rest}
+    >
       <button type="button" className={styles.sortButton} onClick={() => onSort(sortKey)}>
         {children}
         {active && (sort!.dir === 'asc' ? <TbChevronUp size={12} /> : <TbChevronDown size={12} />)}
@@ -257,13 +265,21 @@ const Checkbox = ({ indeterminate = false, className, ...rest }: TableCheckboxPr
   return <input ref={ref} type="checkbox" className={cx(styles.checkbox, className)} {...rest} />;
 };
 
-type CheckboxCellProps = TableCheckboxProps & { as?: 'td' | 'th'; sticky?: boolean; style?: CSSProperties };
+type CheckboxCellProps = TableCheckboxProps & {
+  as?: 'td' | 'th';
+  sticky?: boolean;
+  style?: CSSProperties;
+};
 
 const CheckboxCell = ({ as = 'td', sticky, style, ...rest }: CheckboxCellProps) => {
   const Tag = as;
   return (
     <Tag
-      className={cx(as === 'th' ? styles.th : styles.td, styles.checkboxCell, sticky && styles.stickyCol)}
+      className={cx(
+        as === 'th' ? styles.th : styles.td,
+        styles.checkboxCell,
+        sticky && styles.stickyCol
+      )}
       style={style}
       onClick={stopClick}
     >
@@ -303,7 +319,10 @@ const NameCell = ({
     style={cellStyle(width, style)}
     {...rest}
   >
-    <div className={styles.name} style={indentLevel ? { paddingLeft: indentLevel * 20 } : undefined}>
+    <div
+      className={styles.name}
+      style={indentLevel ? { paddingLeft: indentLevel * 20 } : undefined}
+    >
       {prefix}
       {icon}
       <div>
@@ -317,14 +336,24 @@ const NameCell = ({
 type ActionsCellProps = ComponentPropsWithoutRef<'td'>;
 
 const ActionsCell = ({ className, onClick, ...rest }: ActionsCellProps) => (
-  <td className={cx(styles.td, styles.actionsCell, className)} onClick={onClick ?? stopClick} {...rest} />
+  <td
+    className={cx(styles.td, styles.actionsCell, className)}
+    onClick={onClick ?? stopClick}
+    {...rest}
+  />
 );
 
 type DotsButtonProps = { 'aria-label'?: string } & ComponentPropsWithoutRef<'button'>;
 
 const DotsButton = forwardRef<HTMLButtonElement, DotsButtonProps>(
   ({ className, 'aria-label': ariaLabel = 'Actions', ...rest }, ref) => (
-    <button ref={ref} type="button" className={cx(styles.dotsBtn, className)} aria-label={ariaLabel} {...rest}>
+    <button
+      ref={ref}
+      type="button"
+      className={cx(styles.dotsBtn, className)}
+      aria-label={ariaLabel}
+      {...rest}
+    >
       <TbDots size={14} />
     </button>
   )

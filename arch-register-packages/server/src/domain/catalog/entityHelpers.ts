@@ -51,8 +51,11 @@ export const toApiEntity = (
   _tags: entity.tags,
   _links: entity.links,
   _updatedAt: entity.updated_at.toISOString(),
-  _visibilityMode: entity.visibility_mode,
+  _version: entity.version ?? 1,
+  _approvalPolicyOverride: entity.approval_policy_override ?? null,
+  _projectId: entity.project_id,
   _completeness: completeness,
+  _externalMetadata: entity.generated_metadata ?? {},
   ...getEntityCapabilities(authCtx, entity),
   ...entity.data
 });
@@ -83,7 +86,10 @@ export const toApiEntitySummary = (
   _tags: entity.tags,
   _links: entity.links,
   _updatedAt: entity.updated_at.toISOString(),
-  _visibilityMode: entity.visibility_mode,
+  _version: entity.version ?? 1,
+  _approvalPolicyOverride: entity.approval_policy_override ?? null,
+  _projectId: entity.project_id,
   _completeness: completeness,
+  _externalMetadata: entity.generated_metadata ?? {},
   ...getEntityCapabilities(authCtx, entity)
 });

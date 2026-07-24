@@ -22,7 +22,7 @@ export const Default: Story = {
   render: () => (
     <div style={{ minWidth: 360 }}>
       <FormSection step={1} title="Identity">
-        <FormElement label="Name">
+        <FormElement label="Name" required>
           <TextInput placeholder="e.g. Acme Platform" value="" onChange={() => {}} />
         </FormElement>
       </FormSection>
@@ -35,7 +35,7 @@ export const NoStep: Story = {
   render: () => (
     <div style={{ minWidth: 360 }}>
       <FormSection title="Details">
-        <FormElement label="Description">
+        <FormElement label="Description" required={false}>
           <TextInput placeholder="Optional description" value="" onChange={() => {}} />
         </FormElement>
       </FormSection>
@@ -48,12 +48,12 @@ export const Multiple: Story = {
   render: () => (
     <div style={{ minWidth: 360 }}>
       <FormSection step={1} title="Identity">
-        <FormElement label="Name">
+        <FormElement label="Name" required>
           <TextInput placeholder="e.g. Acme Platform" value="" onChange={() => {}} />
         </FormElement>
       </FormSection>
       <FormSection step={2} title="Schema setup">
-        <FormElement label="Template">
+        <FormElement label="Template" required={false}>
           <TextInput placeholder="Choose a template" value="" onChange={() => {}} />
         </FormElement>
       </FormSection>

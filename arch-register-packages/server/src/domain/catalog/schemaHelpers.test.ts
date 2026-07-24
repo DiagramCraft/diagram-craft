@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildCreateSchemaInput,
-  findIncompatibleFieldChanges,
+  classifyFieldChanges,
+  normalizeEntityTemplates,
   toApiEnum,
   toApiSchema
 } from './schemaHelpers';
@@ -56,10 +57,12 @@ describe('toApiSchema', () => {
       { id: 'go_live', name: 'Go Live', type: 'date' },
       { id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }
     ],
+    templates: [],
     color: null,
     icon: null,
     default_owner: null,
     key_prefix: 'APP',
+    version: 1,
     created_at: now,
     updated_at: now
   };
@@ -120,7 +123,9 @@ describe('buildCreateSchemaInput', () => {
       new Set(),
       now
     );
-    expect(result.fields).toEqual([{ id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }]);
+    expect(result.fields).toEqual([
+      { id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }
+    ]);
   });
 
   it('rejects a number field with min > max', () => {
@@ -138,83 +143,145 @@ describe('buildCreateSchemaInput', () => {
   });
 });
 
-// ── findIncompatibleFieldChanges ────────────────────────────────
+describe('normalizeEntityTemplates', () => {
+  const fields: SchemaField[] = [
+    { id: 'enabled', name: 'Enabled', type: 'boolean' },
+    { id: 'score', name: 'Score', type: 'number', min: 0, max: 10 },
+    {
+      id: 'parent',
+      name: 'Parent',
+      type: 'containment',
+      schemaId: 'parent-schema',
+      minCount: 0,
+      maxCount: 1
+    }
+  ];
 
-describe('findIncompatibleFieldChanges', () => {
-  const text = (id: string, name: string, requirementLevel?: SchemaField['requirementLevel']): SchemaField => ({
+  it('normalizes partial values while retaining false and relation ids', () => {
+    expect(
+      normalizeEntityTemplates(
+        [
+          {
+            id: 'default',
+            name: ' Default ',
+            values: {
+              owner: 'team-1',
+              tags: [' vendor ', 'vendor'],
+              fields: { enabled: false, score: 4, parent: ['entity-1'], removed: 'ignored' }
+            }
+          }
+        ],
+        fields
+      )
+    ).toEqual([
+      {
+        id: 'default',
+        name: 'Default',
+        values: {
+          owner: 'team-1',
+          tags: ['vendor'],
+          fields: { enabled: false, score: 4, parent: ['entity-1'] }
+        }
+      }
+    ]);
+  });
+
+  it('rejects duplicate names case-insensitively', () => {
+    expect(() =>
+      normalizeEntityTemplates(
+        [
+          { id: 'one', name: 'Vendor', values: { fields: {} } },
+          { id: 'two', name: 'vendor', values: { fields: {} } }
+        ],
+        fields
+      )
+    ).toThrow("Duplicate template name 'vendor'");
+  });
+});
+
+// ── classifyFieldChanges ────────────────────────────────
+
+describe('classifyFieldChanges', () => {
+  const text = (
+    id: string,
+    name: string,
+    requirementLevel?: SchemaField['requirementLevel']
+  ): SchemaField => ({
     id,
     name,
     type: 'text',
     requirementLevel
   });
 
-  it('allows adding a new optional field', () => {
+  it('reports no changes when adding a new optional field', () => {
     const oldFields = [text('notes', 'Notes')];
     const newFields = [text('notes', 'Notes'), text('owner', 'Owner', 'optional')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([]);
   });
 
-  it('blocks adding a new required field', () => {
+  it('flags a newly required field as newly-required', () => {
     const oldFields = [text('notes', 'Notes')];
     const newFields = [text('notes', 'Notes'), text('owner', 'Owner', 'required')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
-      'New field "Owner" cannot be required while entities exist'
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
+      { fieldId: 'owner', fieldName: 'Owner', kind: 'newly-required' }
     ]);
   });
 
-  it('allows removing a field', () => {
+  it('flags removing a field as removed', () => {
     const oldFields = [text('notes', 'Notes'), text('owner', 'Owner')];
     const newFields = [text('notes', 'Notes')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
+      { fieldId: 'owner', fieldName: 'Owner', kind: 'removed' }
+    ]);
   });
 
-  it('blocks changing a field id (matched by name)', () => {
+  it('flags changing a field id (matched by name) as renamed', () => {
     const oldFields = [text('notes', 'Notes')];
     const newFields = [text('note', 'Notes')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
-      'Field "Notes" cannot have its id changed (notes → note)'
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
+      { fieldId: 'notes', fieldName: 'Notes', kind: 'renamed', renamedToId: 'note' }
     ]);
   });
 
-  it('blocks making an optional field required', () => {
+  it('flags making an optional field required as newly-required', () => {
     const oldFields = [text('notes', 'Notes', 'optional')];
     const newFields = [text('notes', 'Notes', 'required')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
-      'Field "Notes" cannot be made required while entities exist'
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
+      { fieldId: 'notes', fieldName: 'Notes', kind: 'newly-required' }
     ]);
   });
 
-  it('blocks making an expected field required', () => {
+  it('flags making an expected field required as newly-required', () => {
     const oldFields = [text('notes', 'Notes', 'expected')];
     const newFields = [text('notes', 'Notes', 'required')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
-      'Field "Notes" cannot be made required while entities exist'
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
+      { fieldId: 'notes', fieldName: 'Notes', kind: 'newly-required' }
     ]);
   });
 
-  it('allows a required field staying required', () => {
+  it('reports no changes when a required field stays required', () => {
     const oldFields = [text('notes', 'Notes', 'required')];
     const newFields = [text('notes', 'Notes', 'required')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([]);
   });
 
-  it('blocks changing a field type', () => {
+  it('flags changing a field type as type-changed', () => {
     const oldFields = [text('notes', 'Notes')];
     const newFields: SchemaField[] = [{ id: 'notes', name: 'Notes', type: 'boolean' }];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
-      'Field "Notes" cannot change type (text → boolean)'
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
+      { fieldId: 'notes', fieldName: 'Notes', kind: 'type-changed' }
     ]);
   });
 
-  it('allows renaming a field name while keeping its id', () => {
+  it('reports no changes when renaming a field name while keeping its id', () => {
     const oldFields = [text('notes', 'Notes')];
     const newFields = [text('notes', 'Comments')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([]);
   });
 
-  it('allows reordering fields with no other changes', () => {
+  it('reports no changes when reordering fields with no other changes', () => {
     const oldFields = [text('a', 'A'), text('b', 'B')];
     const newFields = [text('b', 'B'), text('a', 'A')];
-    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+    expect(classifyFieldChanges(oldFields, newFields)).toEqual([]);
   });
 });

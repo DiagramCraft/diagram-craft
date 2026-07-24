@@ -6,8 +6,7 @@ import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { verifyPassword } from '../../utils/password';
-import { generateTokenPair, verifyToken } from '../../utils/jwt';
+import { generateTokenPair, getTokenExpirySeconds, verifyToken } from '../../utils/jwt';
 import { generateAuthUrl } from './oidcClient';
 import { clearAuthCookies, setAuthCookies } from '../../utils/cookies';
 import { getCookie } from 'h3';
@@ -17,12 +16,14 @@ import {
   buildAuthMeResponse,
   buildUserUpdateInput,
   parseRequestedGlobalRoles,
-  selectRefreshToken
+  selectRefreshToken,
+  verifyLoginPassword
 } from './authHelpers';
 import { resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
 import type { TeamRole } from '@arch-register/permissions';
 import type { UserDbResult } from './db/authDatabase';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
+import { createUserApiToken, listUserApiTokens, revokeUserApiToken } from './apiTokenOperations';
 
 const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
 
@@ -54,6 +55,7 @@ export const authPublicORPCRouter = publicRouter.router({
       if (!user && input.body.username.includes('@')) {
         user = await context.db.auth.getUserByEmail(input.body.username);
       }
+      const isValid = await verifyLoginPassword(user, input.body.password);
       orpcAssert.present(user, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
       orpcAssert.string(user.password_hash, {
         code: 'UNAUTHORIZED',
@@ -68,12 +70,17 @@ export const authPublicORPCRouter = publicRouter.router({
         message: 'User account is inactive'
       });
 
-      const isValid = await verifyPassword(user.password_hash, input.body.password);
       orpcAssert.true(isValid, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
 
       await context.db.auth.updateUserLastLogin(user.id, new Date());
       const tokens = generateTokenPair(user);
-      setAuthCookies(context.event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+      setAuthCookies(
+        context.event,
+        tokens.access_token,
+        tokens.refresh_token,
+        tokens.expires_in,
+        getTokenExpirySeconds('refresh')
+      );
       return tokens;
     }),
 
@@ -99,7 +106,8 @@ export const authPublicORPCRouter = publicRouter.router({
       const refreshToken = selectRefreshToken(cookieToken, input.body);
       orpcAssert.present(refreshToken, {
         code: 'UNAUTHORIZED',
-        message: 'Refresh token is required'
+        message: 'Refresh token is required',
+        data: { expected: true }
       });
 
       let payload: JWTPayload;
@@ -119,7 +127,13 @@ export const authPublicORPCRouter = publicRouter.router({
       orpcAssert.true(user.is_active, { code: 'FORBIDDEN', message: 'User account is inactive' });
 
       const tokens = generateTokenPair(user);
-      setAuthCookies(context.event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+      setAuthCookies(
+        context.event,
+        tokens.access_token,
+        tokens.refresh_token,
+        tokens.expires_in,
+        getTokenExpirySeconds('refresh')
+      );
       return tokens;
     }),
 
@@ -150,6 +164,13 @@ type ProtectedORPCContext = {
   event: AuthenticatedEvent;
 };
 
+const requireInteractiveSession = (event: AuthenticatedEvent) => {
+  orpcAssert.true(!event.context.apiToken, {
+    code: 'FORBIDDEN',
+    message: 'API tokens cannot access user account operations'
+  });
+};
+
 const protectedRouter = implement(authProtectedContract)
   .$context<ProtectedORPCContext>()
   .use(orpcErrorMiddleware);
@@ -157,6 +178,7 @@ const protectedRouter = implement(authProtectedContract)
 export const authProtectedORPCRouter = protectedRouter.router({
   authProtected: {
     me: protectedRouter.authProtected.me.handler(async ({ context }) => {
+      requireInteractiveSession(context.event);
       const user = context.event.context.user as UserDbResult;
       const [roleAssignments, workspaces] = await Promise.all([
         context.db.auth.listGlobalRoleAssignments(user.id),
@@ -188,6 +210,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
     }),
 
     updateUser: protectedRouter.authProtected.updateUser.handler(async ({ input, context }) => {
+      requireInteractiveSession(context.event);
       const authenticatedUser = context.event.context.user as UserDbResult;
       if (input.params.id !== authenticatedUser.id) {
         throw new ORPCError('FORBIDDEN', {
@@ -206,6 +229,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
         display_name: updatedUser.display_name,
         auth_provider: updatedUser.auth_provider,
         is_active: updatedUser.is_active,
+        is_system_actor: updatedUser.is_system_actor,
         color: updatedUser.color,
         created_at: updatedUser.created_at.toISOString(),
         updated_at: updatedUser.updated_at.toISOString(),
@@ -214,6 +238,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
     }),
 
     listUsers: protectedRouter.authProtected.listUsers.handler(async ({ context }) => {
+      requireInteractiveSession(context.event);
       const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
       requireGlobalPermission(authCtx, 'admin_platform');
       return (await context.db.auth.listUsers()).map(user => ({
@@ -223,12 +248,14 @@ export const authProtectedORPCRouter = protectedRouter.router({
         display_name: user.display_name,
         auth_provider: user.auth_provider,
         is_active: user.is_active,
+        is_system_actor: user.is_system_actor,
         color: user.color
       }));
     }),
 
     getGlobalRoles: protectedRouter.authProtected.getGlobalRoles.handler(
       async ({ input, context }) => {
+        requireInteractiveSession(context.event);
         const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
         requireGlobalPermission(authCtx, 'manage_workspace_roles');
         const assignments = await context.db.auth.listGlobalRoleAssignments(input.params.id);
@@ -242,8 +269,15 @@ export const authProtectedORPCRouter = protectedRouter.router({
 
     replaceGlobalRoles: protectedRouter.authProtected.replaceGlobalRoles.handler(
       async ({ input, context }) => {
+        requireInteractiveSession(context.event);
         const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
         requireGlobalPermission(authCtx, 'manage_workspace_roles');
+        const targetUser = await context.db.auth.getUser(input.params.id);
+        orpcAssert.present(targetUser, { code: 'NOT_FOUND', message: 'User not found' });
+        orpcAssert.true(!targetUser.is_system_actor, {
+          code: 'FORBIDDEN',
+          message: 'System users cannot be assigned roles'
+        });
         const roles = parseRequestedGlobalRoles(input.body.roles);
         const assignments = await context.db.auth.replaceGlobalRoleAssignments(
           input.params.id,
@@ -256,7 +290,22 @@ export const authProtectedORPCRouter = protectedRouter.router({
           created_at: a.created_at instanceof Date ? a.created_at.toISOString() : a.created_at
         }));
       }
-    )
+    ),
+
+    apiTokens: {
+      list: protectedRouter.authProtected.apiTokens.list.handler(async ({ context }) => {
+        requireInteractiveSession(context.event);
+        return listUserApiTokens(context.db, context.event);
+      }),
+      create: protectedRouter.authProtected.apiTokens.create.handler(async ({ input, context }) => {
+        requireInteractiveSession(context.event);
+        return createUserApiToken(context.db, input.body, context.event);
+      }),
+      revoke: protectedRouter.authProtected.apiTokens.revoke.handler(async ({ input, context }) => {
+        requireInteractiveSession(context.event);
+        return revokeUserApiToken(context.db, input.params.id, context.event);
+      })
+    }
   }
 });
 

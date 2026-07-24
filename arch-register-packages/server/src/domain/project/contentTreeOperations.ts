@@ -14,6 +14,26 @@ import {
   collectDescendantNodes,
   getAttachmentContainerForMarkdownNode
 } from './contentNodeRoleUtils';
+import {
+  assertContentPathWritable,
+  assertContentNodeWritable,
+  assertContentSubtreeWritable
+} from './projectOperationHelpers';
+
+const listNodesForReadOnlyCheck = async (
+  scope: ContentScopeResolver,
+  db: DatabaseAdapter,
+  ws: string,
+  resolved: Awaited<ReturnType<ContentScopeResolver['resolve']>>
+) => {
+  const hasListMethod =
+    scope.kind === 'project'
+      ? typeof db.project.listContentNodes === 'function'
+      : scope.kind === 'entity'
+        ? typeof db.project.listEntityContentNodes === 'function'
+        : typeof db.project.listWorkspaceContentNodes === 'function';
+  return hasListMethod ? resolved.listNodes(db, ws) : [];
+};
 
 export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
   const hiddenAttachmentNodeIds = collectHiddenAttachmentNodeIds(files);
@@ -28,7 +48,8 @@ export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
     .map(folder => ({
       path: folder.path,
       name: folder.name,
-      files: nonFolderNodes.filter(f => f.parent_id === folder.id).map(toApiProjectFile)
+      files: nonFolderNodes.filter(f => f.parent_id === folder.id).map(toApiProjectFile),
+      ...(folder.mount_id ? { read_only: true, mount_id: folder.mount_id } : {})
     }));
 
   return { folders, rootFiles };
@@ -68,7 +89,8 @@ export const deleteContentFolder = async (
     async ({ ws, authCtx }) => {
       const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
 
-      const nodes = await resolved.listNodes(db, ws);
+      const nodes = await listNodesForReadOnlyCheck(scope, db, ws, resolved);
+      assertContentSubtreeWritable(nodes, folderPath);
       const result = nodes.filter(
         node => node.path === folderPath || node.path.startsWith(`${folderPath}/`)
       );
@@ -144,6 +166,7 @@ export const deleteContentFile = async (
       const nodes = await resolved.listNodes(db, ws);
       const file = nodes.find(node => node.path === filePath);
       httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+      assertContentNodeWritable(file);
       const container =
         file.type === 'markdown'
           ? getAttachmentContainerForMarkdownNode(nodes, file.id)
@@ -224,6 +247,9 @@ export const renameContentFolder = async (
     },
     async ({ ws, authCtx }) => {
       const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
+      const nodes = await listNodesForReadOnlyCheck(scope, db, ws, resolved);
+      assertContentSubtreeWritable(nodes, oldPath);
+      assertContentPathWritable(nodes, newPath);
 
       const timestamp = new Date();
       let result: string[] = [];

@@ -34,14 +34,14 @@ export const Default: Story = {
 export const NoSelection: Story = {
   args: {
     value: null,
-    onChange: (color) => console.log('Selected color:', color)
+    onChange: color => console.log('Selected color:', color)
   }
 };
 
 export const SmallSize: Story = {
   args: {
     value: SCHEMA_COLORS[2],
-    onChange: (color) => console.log('Selected color:', color),
+    onChange: color => console.log('Selected color:', color),
     size: 'small'
   }
 };
@@ -49,18 +49,17 @@ export const SmallSize: Story = {
 export const Disabled: Story = {
   args: {
     value: SCHEMA_COLORS[1],
-    onChange: (color) => console.log('Selected color:', color),
+    onChange: color => console.log('Selected color:', color),
     disabled: true
   }
 };
-
 
 export const MultipleInstances = {
   render: () => {
     const [color1, setColor1] = useState<string | null>(SCHEMA_COLORS[0] ?? null);
     const [color2, setColor2] = useState<string | null>(SCHEMA_COLORS[4] ?? null);
     const [color3, setColor3] = useState<string | null>(null);
-    
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         <div>
@@ -72,7 +71,7 @@ export const MultipleInstances = {
             {color1 ?? 'No color selected'}
           </div>
         </div>
-        
+
         <div>
           <div style={{ fontSize: '12px', marginBottom: '0.5rem', fontWeight: 500 }}>
             Secondary Color
@@ -82,7 +81,7 @@ export const MultipleInstances = {
             {color2 ?? 'No color selected'}
           </div>
         </div>
-        
+
         <div>
           <div style={{ fontSize: '12px', marginBottom: '0.5rem', fontWeight: 500 }}>
             Accent Color
@@ -104,8 +103,14 @@ export const AllColors = {
         Available Colors ({SCHEMA_COLORS.length})
       </div>
       <ColorPicker value={null} onChange={() => {}} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
-        {SCHEMA_COLORS.map((color) => (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+          gap: '0.5rem'
+        }}
+      >
+        {SCHEMA_COLORS.map(color => (
           <div
             key={color}
             style={{
@@ -139,7 +144,7 @@ export const SizeComparison = {
   render: () => {
     const [defaultColor, setDefaultColor] = useState<string | null>(SCHEMA_COLORS[2] ?? null);
     const [smallColor, setSmallColor] = useState<string | null>(SCHEMA_COLORS[5] ?? null);
-    
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         <div>
@@ -148,7 +153,7 @@ export const SizeComparison = {
           </div>
           <ColorPicker value={defaultColor} onChange={setDefaultColor} />
         </div>
-        
+
         <div>
           <div style={{ fontSize: '12px', marginBottom: '0.5rem', fontWeight: 500 }}>
             Small Size

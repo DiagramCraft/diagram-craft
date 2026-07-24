@@ -4,7 +4,9 @@ export type FolderTreeNode = {
   children: FolderTreeNode[];
 };
 
-export const buildFolderTree = (folders: ReadonlyArray<{ path: string; name?: string }>): FolderTreeNode[] => {
+export const buildFolderTree = (
+  folders: ReadonlyArray<{ path: string; name?: string }>
+): FolderTreeNode[] => {
   const roots: FolderTreeNode[] = [];
   const nodes = new Map<string, FolderTreeNode>();
   for (const folder of [...folders].sort((a, b) => a.path.localeCompare(b.path))) {

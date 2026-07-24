@@ -1,6 +1,12 @@
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 
-export type ContentFolder = { path: string; name: string; files: ProjectFile[] };
+export type ContentFolder = {
+  path: string;
+  name: string;
+  files: ProjectFile[];
+  read_only?: boolean;
+  mount_id?: string | null;
+};
 
 export type ContentFolderNode = ContentFolder & { children: ContentFolderNode[] };
 
@@ -43,6 +49,15 @@ export const findContentFilePath = (
   fileId: string | null
 ): string | null =>
   fileId
-    ? [...rootFiles, ...folders.flatMap(folder => folder.files)].find(file => file.id === fileId)
-        ?.path ?? null
+    ? ([...rootFiles, ...folders.flatMap(folder => folder.files)].find(file => file.id === fileId)
+        ?.path ?? null)
     : null;
+
+export const findContentFile = (
+  rootFiles: ProjectFile[],
+  folders: ContentFolder[],
+  fileId: string | null
+): ProjectFile | undefined =>
+  fileId
+    ? [...rootFiles, ...folders.flatMap(folder => folder.files)].find(file => file.id === fileId)
+    : undefined;

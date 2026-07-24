@@ -76,17 +76,21 @@ export const buildAiConfigInput = (
   }
 
   if (body['model'] !== undefined) {
-    if (body['model'] !== null) {
+    if (body['model'] === null || body['model'] === '') {
+      input.model = null;
+    } else {
       httpAssert.string(body['model'], { message: 'model must be a string or null' });
+      input.model = body['model'] as string;
     }
-    input.model = body['model'] as string | null;
   }
 
   if (body['base_url'] !== undefined) {
-    if (body['base_url'] !== null) {
+    if (body['base_url'] === null || body['base_url'] === '') {
+      input.base_url = null;
+    } else {
       httpAssert.string(body['base_url'], { message: 'base_url must be a string or null' });
+      input.base_url = body['base_url'] as string;
     }
-    input.base_url = body['base_url'] as string | null;
   }
 
   if (body['temperature'] !== undefined) {
@@ -102,12 +106,14 @@ export const buildAiConfigInput = (
   }
 
   if (body['system_prompt'] !== undefined) {
-    if (body['system_prompt'] !== null) {
+    if (body['system_prompt'] === null || body['system_prompt'] === '') {
+      input.system_prompt = null;
+    } else {
       httpAssert.string(body['system_prompt'], {
         message: 'system_prompt must be a string or null'
       });
+      input.system_prompt = body['system_prompt'] as string;
     }
-    input.system_prompt = body['system_prompt'] as string | null;
   }
 
   if (body['enabled'] !== undefined) {

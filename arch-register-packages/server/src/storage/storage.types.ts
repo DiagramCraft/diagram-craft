@@ -15,9 +15,5 @@ export interface StorageAdapter {
     fileId: string,
     content: Buffer
   ): Promise<StagedStorageMutation>;
-  stageDelete(
-    workspace: string,
-    projectId: string,
-    fileId: string
-  ): Promise<StagedStorageMutation>;
+  stageDelete(workspace: string, projectId: string, fileId: string): Promise<StagedStorageMutation>;
 }

@@ -22,8 +22,8 @@ export const entityFieldSpec = defineMdxComponent<
       description: 'Embed a live entity field value',
       icon: <TbHash size={14} />,
       keywords: ['field', 'entity', 'value', 'embed', 'inline'],
-      onSelect: editor => {
-        editor.tf.insertNodes({
+      onSelect: (editor, { insertOrReplaceInline }) => {
+        insertOrReplaceInline(editor, {
           type: ENTITY_FIELD_TYPE,
           entityId: '',
           field: '',

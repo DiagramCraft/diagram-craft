@@ -1,0 +1,18 @@
+.rail {
+  position: relative;
+  align-self: start;
+  min-height: 40px;
+}
+
+@media (max-width: 1100px) {
+  .rail {
+    display: none;
+  }
+}
+
+.cardWrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  transition: top 120ms ease;
+}

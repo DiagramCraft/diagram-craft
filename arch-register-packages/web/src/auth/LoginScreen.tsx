@@ -71,7 +71,9 @@ export const LoginScreen = () => {
         <main className={styles.stage}>
           <div className={styles.card}>
             <div className={styles.head}>
-              <span className={styles.badge} aria-hidden="true">AR</span>
+              <span className={styles.badge} aria-hidden="true">
+                AR
+              </span>
               <div>
                 <div className={styles.brandName}>Arch Register</div>
               </div>
@@ -91,7 +93,9 @@ export const LoginScreen = () => {
       <main className={styles.stage}>
         <form className={styles.card} onSubmit={handleLocalLogin} autoComplete="on" noValidate>
           <header className={styles.head}>
-            <span className={styles.badge} aria-hidden="true">AR</span>
+            <span className={styles.badge} aria-hidden="true">
+              AR
+            </span>
             <div>
               <div className={styles.brandName}>Arch Register</div>
             </div>
@@ -108,10 +112,21 @@ export const LoginScreen = () => {
               {error && <Banner variant="error">{error}</Banner>}
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="lg-user">Username</label>
+                <label className={styles.label} htmlFor="lg-user">
+                  Username
+                </label>
                 <div className={styles.inputWrap}>
                   <span className={styles.inputIcon} aria-hidden="true">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <circle cx="8" cy="5.5" r="2.5" />
                       <path d="M3 14c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5" />
                     </svg>
@@ -129,7 +144,10 @@ export const LoginScreen = () => {
                     disabled={isSubmitting}
                     autoFocus
                     value={username}
-                    onChange={e => { setUsername(e.target.value); clearError(); }}
+                    onChange={e => {
+                      setUsername(e.target.value);
+                      clearError();
+                    }}
                   />
                 </div>
               </div>
@@ -140,7 +158,16 @@ export const LoginScreen = () => {
                 </label>
                 <div className={styles.inputWrap}>
                   <span className={styles.inputIcon} aria-hidden="true">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <rect x="3" y="7" width="10" height="7" rx="1" />
                       <path d="M5 7V5a3 3 0 0 1 6 0v2" />
                     </svg>
@@ -155,7 +182,10 @@ export const LoginScreen = () => {
                     required
                     disabled={isSubmitting}
                     value={password}
-                    onChange={e => { setPassword(e.target.value); clearError(); }}
+                    onChange={e => {
+                      setPassword(e.target.value);
+                      clearError();
+                    }}
                   />
                   <button
                     type="button"
@@ -164,7 +194,16 @@ export const LoginScreen = () => {
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     aria-pressed={showPassword}
                   >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" />
                       <circle cx="8" cy="8" r="1.75" />
                     </svg>
@@ -175,7 +214,17 @@ export const LoginScreen = () => {
               <button type="submit" className={styles.submit} disabled={isSubmitting}>
                 <span>{isSubmitting ? 'Signing in...' : 'Sign in'}</span>
                 {!isSubmitting && (
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
                     <path d="M3 8h9" />
                     <path d="M8.5 4.5L12 8l-3.5 3.5" />
                   </svg>
@@ -194,7 +243,17 @@ export const LoginScreen = () => {
               >
                 <span>{isSubmitting ? 'Redirecting...' : 'Sign in with SSO'}</span>
                 {!isSubmitting && (
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
                     <path d="M3 8h9" />
                     <path d="M8.5 4.5L12 8l-3.5 3.5" />
                   </svg>
@@ -202,7 +261,6 @@ export const LoginScreen = () => {
               </button>
             </div>
           )}
-
         </form>
       </main>
 
@@ -214,9 +272,7 @@ export const LoginScreen = () => {
           </span>
         </div>
         <div className={styles.statusbarR}>
-          {authMode === 'oidc' && (
-            <span className={styles.statusbarItem}>SSO available</span>
-          )}
+          {authMode === 'oidc' && <span className={styles.statusbarItem}>SSO available</span>}
         </div>
       </div>
     </div>

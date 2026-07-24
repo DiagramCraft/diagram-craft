@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { TbChevronRight, TbExternalLink } from 'react-icons/tb';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -7,7 +7,10 @@ import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
 import { useProjects } from '../../../hooks/useProjects';
 import { useAssessmentsForProjects } from '../../../hooks/useAssessments';
-import { useAssessmentResponses, useUpsertAssessmentResponse } from '../../../hooks/useAssessmentResponses';
+import {
+  useAssessmentResponses,
+  useUpsertAssessmentResponse
+} from '../../../hooks/useAssessmentResponses';
 import { AssessmentFieldCell } from '../../projects/components/AssessmentFieldCells';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { MemberAvatar } from '../../../components/MemberAvatar';
@@ -101,27 +104,25 @@ const AssessmentFillCard = ({
   assessment: Assessment;
   entityId: string;
 }) => {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const { data: responses = [] } = useAssessmentResponses(workspaceId, projectId, assessment.id);
-  const upsertResponse = useUpsertAssessmentResponse(workspaceId, projectId, assessment.id, assessment.fields);
+  const upsertResponse = useUpsertAssessmentResponse(
+    workspaceId,
+    projectId,
+    assessment.id,
+    assessment.fields
+  );
 
   const response = responses.find(r => r.entity_id === entityId);
   const status = response?.status ?? computeAssessmentStatus(assessment.fields, undefined);
 
-  const goToAssessment = () => {
-    if (!projectPublicId) return;
-    navigate(
-      projectDetailRoute(workspaceId, asProjectPublicId(projectPublicId), {
-        section: 'assessments',
-        assessmentId: assessment.id
-      })
-    );
-  };
-
   return (
     <div className={styles.card}>
-      <button type="button" className={`${styles.head} ${open ? styles.headOpen : ''}`} onClick={() => setOpen(o => !o)}>
+      <button
+        type="button"
+        className={`${styles.head} ${open ? styles.headOpen : ''}`}
+        onClick={() => setOpen(o => !o)}
+      >
         <div className={styles.headBody}>
           <div className={styles.name}>{assessment.name}</div>
           {projectName && <div className={styles.proj}>{projectName}</div>}
@@ -136,20 +137,33 @@ const AssessmentFillCard = ({
             size={16}
           />
         )}
-        <TbChevronRight size={12} className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} />
+        <TbChevronRight
+          size={12}
+          className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
+        />
       </button>
       {open && (
         <div className={styles.body}>
           <div className={styles.viewLinkRow}>
-            <button type="button" className={styles.viewLink} onClick={goToAssessment}>
-              <TbExternalLink size={11} /> View in Assessments
-            </button>
+            {projectPublicId && (
+              <Link
+                {...projectDetailRoute(workspaceId, asProjectPublicId(projectPublicId), {
+                  section: 'assessments',
+                  assessmentId: assessment.id
+                })}
+                className={styles.viewLink}
+              >
+                <TbExternalLink size={11} /> View in Assessments
+              </Link>
+            )}
           </div>
           {assessment.fields.map(field => (
             <div key={field.id} className={styles.row}>
               <div className={styles.label}>
                 {field.label}
-                {field.requirementLevel === 'required' && <span className={styles.req}> *</span>}
+                {field.requirementLevel === 'optional' && (
+                  <span className={styles.optionalLabel}> (optional)</span>
+                )}
               </div>
               <div className={styles.value}>
                 <AssessmentFieldCell

@@ -5,7 +5,7 @@ import { seededUser } from '../support/users';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('account settings', () => {
-  test('changes the display name and changes it back', async ({ page }) => {
+  test('changes the display name and changes it back @quick', async ({ page }) => {
     const accountSettingsPage = new AccountSettingsPage(page, defaultWorkspace.slug);
     const updatedDisplayName = `${seededUser.displayName} Test`;
 
@@ -28,23 +28,26 @@ test.describe('account settings', () => {
     );
   });
 
-  test('changes the avatar color and updates the topbar avatar color', async ({ page }) => {
+  test('changes the avatar color and updates the topbar avatar color @quick', async ({ page }) => {
     const accountSettingsPage = new AccountSettingsPage(page, defaultWorkspace.slug);
 
     await accountSettingsPage.goto('appearance');
     await accountSettingsPage.expectAppearanceLoaded();
 
-    const originalBackground = await accountSettingsPage.workspaceShell.topBar.accountMenuButton()
+    const originalBackground = await accountSettingsPage.workspaceShell.topBar
+      .accountMenuButton()
       .evaluate(element => getComputedStyle(element).backgroundImage);
 
-    const updatedColor = SCHEMA_COLORS.find(color => color !== seededUser.color) ?? SCHEMA_COLORS[0]!;
+    const updatedColor =
+      SCHEMA_COLORS.find(color => color !== seededUser.color) ?? SCHEMA_COLORS[0]!;
 
     await accountSettingsPage.selectColor(updatedColor);
     await accountSettingsPage.saveChanges();
 
     await expect
       .poll(async () =>
-        accountSettingsPage.workspaceShell.topBar.accountMenuButton()
+        accountSettingsPage.workspaceShell.topBar
+          .accountMenuButton()
           .evaluate(element => getComputedStyle(element).backgroundImage)
       )
       .not.toBe(originalBackground);
@@ -54,7 +57,8 @@ test.describe('account settings', () => {
 
     await expect
       .poll(async () =>
-        accountSettingsPage.workspaceShell.topBar.accountMenuButton()
+        accountSettingsPage.workspaceShell.topBar
+          .accountMenuButton()
           .evaluate(element => getComputedStyle(element).backgroundImage)
       )
       .toBe(originalBackground);

@@ -14,7 +14,11 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { BulkEditToolbar } from './BulkEditToolbar';
-import { type ProjectBrowserContext } from './entityBrowserState';
+import {
+  isEntityInProject,
+  type BrowserEntityRecord,
+  type ProjectBrowserContext
+} from './entityBrowserState';
 import { EntityBrowserView } from './EntityBrowserView';
 import { EntityBrowserToolbar } from './EntityBrowserToolbar';
 import { useEntityBrowserData } from './useEntityBrowserData';
@@ -22,12 +26,18 @@ import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
 import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
-import { useJoinedAssessment } from './useJoinedAssessment';
+import { resolveJoinAssessmentId, useJoinedAssessment } from './useJoinedAssessment';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
 import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityBrowser.module.css';
-import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from './entityDisplayFields';
-import type { BrowserEntityRecord } from './entityBrowserState';
+import {
+  buildEntityDisplayFields,
+  DISPLAY_FIELD_VIEWS,
+  getDisplayFieldIds,
+  withDisplayFieldIds,
+  withoutDisplayFieldIds
+} from './entityDisplayFields';
+import { CollectionPickerDialog } from './CollectionPickerDialog';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
@@ -91,7 +101,7 @@ export const SaveViewDialog = ({
       ]}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <FormElement label="Name">
+        <FormElement label="Name" required>
           <TextInput
             value={name}
             onChange={v => setName(v ?? '')}
@@ -99,7 +109,7 @@ export const SaveViewDialog = ({
             autoFocus
           />
         </FormElement>
-        <FormElement label="Description (optional)">
+        <FormElement label="Description" required={false}>
           <TextArea
             value={description}
             onChange={v => setDescription(v ?? '')}
@@ -107,7 +117,7 @@ export const SaveViewDialog = ({
           />
         </FormElement>
         {scopeOptions != null && scopeOptions.length > 1 && (
-          <FormElement label="Save to">
+          <FormElement label="Save to" required>
             <Select.Root
               value={scope}
               onChange={value =>
@@ -152,18 +162,21 @@ export const EntityBrowser = ({
   const projectId = projectContext?.project.id;
   const {
     asOf,
-    includeProjectSnapshots,
+    includePlannedChanges,
     setAsOf,
     clearAsOf,
-    setIncludeProjectSnapshots,
+    setIncludePlannedChanges,
     conditions,
+    entityQuery,
     activeViewConfig,
+    collectionId,
     joinAssessmentId,
     ownerFilter,
     projectScope,
     q,
     setConditions,
     setActiveViewConfig,
+    setEntityQuery,
     setJoinAssessmentId,
     setProjectScope,
     setQ,
@@ -177,22 +190,44 @@ export const EntityBrowser = ({
     workspaceSlug,
     projectId
   });
-  const { options: joinOptions, joined, responsesByEntity } = useJoinedAssessment(
-    workspaceId,
-    joinAssessmentId
+  const {
+    options: joinOptions,
+    joined,
+    responsesByEntity,
+    isReady: assessmentsReady
+  } = useJoinedAssessment(workspaceId, joinAssessmentId, projectId);
+  const effectiveJoinAssessmentId = resolveJoinAssessmentId(
+    joinAssessmentId,
+    joinOptions,
+    projectId
   );
-  const readOnly = !!asOf;
-  const [tlOpen, setTlOpen] = useState(!!asOf);
+
+  useEffect(() => {
+    if (projectId && assessmentsReady && joinAssessmentId && !effectiveJoinAssessmentId) {
+      setJoinAssessmentId(null);
+    }
+  }, [
+    assessmentsReady,
+    effectiveJoinAssessmentId,
+    joinAssessmentId,
+    projectId,
+    setJoinAssessmentId
+  ]);
+  const readOnly = !!asOf && !collectionId;
+  const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
+  const [collectionTarget, setCollectionTarget] = useState<BrowserEntityRecord | null>(null);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
     useEntityBrowserPagination({
       isPagedBrowse,
       q,
       conditions,
+      entityQuery,
       typeFilter,
       ownerFilter,
       statusFilter,
       projectId,
+      collectionId,
       projectScope
     });
   const {
@@ -207,11 +242,13 @@ export const EntityBrowser = ({
   } = useEntityBrowserData({
     workspaceId,
     projectId,
+    collectionId,
     projectScope,
     schemas,
     q,
     conditions,
-    joinAssessmentId,
+    entityQuery,
+    joinAssessmentId: effectiveJoinAssessmentId,
     typeFilter,
     ownerFilter,
     statusFilter,
@@ -220,7 +257,7 @@ export const EntityBrowser = ({
     pageIndex,
     pageSize,
     asOf,
-    includeProjectSnapshots: projectId ? true : includeProjectSnapshots,
+    includePlannedChanges: projectId ? true : includePlannedChanges,
     onCountChange
   });
 
@@ -243,6 +280,7 @@ export const EntityBrowser = ({
   });
   const {
     addFieldRow,
+    approvalRequiredCount,
     availableFields,
     clearSelection,
     fieldRows,
@@ -282,21 +320,36 @@ export const EntityBrowser = ({
   const linkedEntityIds = useMemo(
     () =>
       projectContext
-        ? filtered.filter(entity => entity._projectLink?.linked).map(entity => entity._uid)
+        ? filtered
+            .filter(entity => isEntityInProject(entity, projectContext.project.id))
+            .map(entity => entity._uid)
         : undefined,
     [filtered, projectContext]
   );
-  const displayFieldSchemas = useMemo(() => typeFilter ? schemas.filter(schema => schema.id === typeFilter) : schemas, [schemas, typeFilter]);
+  const displayFieldSchemas = useMemo(
+    () => (typeFilter ? schemas.filter(schema => schema.id === typeFilter) : schemas),
+    [schemas, typeFilter]
+  );
   const joinedAssessmentContext = useMemo(
     () => (joined ? { assessment: joined.assessment, enums } : null),
     [joined, enums]
   );
   const displayFields = useMemo(
-    () => buildEntityDisplayFields(displayFieldSchemas, !!projectContext, joinedAssessmentContext),
-    [displayFieldSchemas, projectContext, joinedAssessmentContext]
+    () =>
+      buildEntityDisplayFields(
+        displayFieldSchemas,
+        !!projectContext,
+        joinedAssessmentContext,
+        entityQuery?.projections ?? []
+      ),
+    [displayFieldSchemas, entityQuery?.projections, projectContext, joinedAssessmentContext]
   );
-  const displayView = DISPLAY_FIELD_VIEWS.has(view) ? view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore' : null;
-  const selectedDisplayFieldIds = displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined;
+  const displayView = DISPLAY_FIELD_VIEWS.has(view)
+    ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
+    : null;
+  const selectedDisplayFieldIds = displayView
+    ? getDisplayFieldIds(displayView, activeViewConfig)
+    : undefined;
   const joinedRows = useMemo<BrowserEntityRecord[]>(() => {
     if (!joined) return filtered;
     return filtered.map(row => ({ ...row, _assessment: responsesByEntity.get(row._uid) ?? null }));
@@ -305,10 +358,13 @@ export const EntityBrowser = ({
   return (
     <>
       <EntityBrowserToolbar
+        workspaceId={workspaceId}
         q={q}
         setQ={setQ}
         conditions={conditions}
         setConditions={setConditions}
+        entityQuery={entityQuery ?? null}
+        setEntityQuery={setEntityQuery}
         schemas={schemas}
         lifecycleStates={lifecycleStates}
         owners={owners}
@@ -324,34 +380,47 @@ export const EntityBrowser = ({
         setView={setView}
         readOnly={readOnly}
         tlOpen={tlOpen}
-        onToggleTimeline={() => setTlOpen(o => !o)}
-        asOf={asOf}
+        onToggleTimeline={collectionId ? undefined : () => setTlOpen(o => !o)}
+        asOf={collectionId ? undefined : asOf}
+        allowedViews={
+          collectionId
+            ? [
+                { value: 'table', label: 'Table' },
+                { value: 'cards', label: 'Cards' }
+              ]
+            : undefined
+        }
         displayFields={displayView && !readOnly ? displayFields : undefined}
         selectedDisplayFieldIds={!readOnly ? selectedDisplayFieldIds : undefined}
-        onDisplayFieldsChange={displayView && !readOnly ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds)) : undefined}
-        onDisplayFieldsReset={displayView && !readOnly ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
+        onDisplayFieldsChange={
+          displayView && !readOnly
+            ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds))
+            : undefined
+        }
+        onDisplayFieldsReset={
+          displayView && !readOnly
+            ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig))
+            : undefined
+        }
         joinOptions={joinOptions}
-        joinAssessmentId={joinAssessmentId}
+        joinAssessmentId={effectiveJoinAssessmentId}
         onJoinAssessmentChange={setJoinAssessmentId}
         joinedAssessment={joined?.assessment}
       />
-      {tlOpen && (
+      {!collectionId && tlOpen && (
         <TimelineStrip
           markers={timelineMarkers}
           selectedDate={asOf}
           onSelect={setAsOf}
           onClear={clearAsOf}
           onClose={() => setTlOpen(false)}
-          includeProjectSnapshots={projectId ? undefined : includeProjectSnapshots}
-          onToggleIncludeProjectSnapshots={projectId ? undefined : setIncludeProjectSnapshots}
+          includePlannedChanges={projectId ? undefined : includePlannedChanges}
+          onToggleIncludePlannedChanges={projectId ? undefined : setIncludePlannedChanges}
         />
       )}
 
       {(view === 'table' || view === 'cards') && filtered.length === 0 ? (
-        <EmptyState
-          title="No entities found"
-          subtitle="Try adjusting your search or filters."
-        />
+        <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
       ) : (
         <>
           {view === 'table' && !readOnly && selectedIds.size > 0 && (
@@ -359,6 +428,7 @@ export const EntityBrowser = ({
               workspaceId={workspaceId}
               count={selectedIds.size}
               selectedEntities={selectedEntities}
+              approvalRequiredCount={approvalRequiredCount}
               fieldRows={fieldRows}
               availableFields={availableFields}
               step={step}
@@ -387,12 +457,14 @@ export const EntityBrowser = ({
             typeFilter={typeFilter}
             ownerFilter={ownerFilter}
             statusFilter={statusFilter}
+            conditions={conditions}
+            entityQuery={entityQuery ?? null}
             activeViewConfig={activeViewConfig}
             displayFields={displayFields}
             projectContext={projectContext}
             linkedEntityIds={linkedEntityIds}
             activeDateField={dateBrowserEnabled ? activeDateField : null}
-            joinAssessmentId={joinAssessmentId}
+            joinAssessmentId={effectiveJoinAssessmentId}
             joinedAssessment={joinedAssessmentContext}
             responsesByEntity={responsesByEntity}
             mode={
@@ -408,6 +480,7 @@ export const EntityBrowser = ({
                     onEntityClick: navigateToEntity,
                     onDelete: handleDeleteEntity,
                     onClone: handleCloneEntity,
+                    onManageCollections: entity => setCollectionTarget(entity),
                     selectedIds,
                     onSelectAll: handleSelectAll,
                     onSelectRow: handleSelectRow
@@ -458,7 +531,7 @@ export const EntityBrowser = ({
         message={
           hookDeleteTarget ? (
             <>
-              The entity <b>{hookDeleteTarget._name || hookDeleteTarget._slug}</b> will be
+              The entity <b>{hookDeleteTarget._name ?? hookDeleteTarget._slug}</b> will be
               permanently deleted.
             </>
           ) : (
@@ -470,6 +543,15 @@ export const EntityBrowser = ({
         onConfirm={confirmDeleteEntity}
         onCancel={() => setHookDeleteTarget(null)}
       />
+      {collectionTarget && (
+        <CollectionPickerDialog
+          open={true}
+          workspaceId={workspaceId}
+          entityId={collectionTarget._uid}
+          entityName={collectionTarget._name ?? collectionTarget._slug}
+          onClose={() => setCollectionTarget(null)}
+        />
+      )}
     </>
   );
 };

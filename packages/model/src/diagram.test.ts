@@ -44,9 +44,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(() => {
         doc2 = TestModel.newDocument(root2);
       }).not.toThrow();
-      expect((doc2?.diagrams[0]?.layers.all[0] as RegularLayerType | undefined)?.elements).toHaveLength(
-        1
-      );
+      expect(
+        (doc2?.diagrams[0]?.layers.all[0] as RegularLayerType | undefined)?.elements
+      ).toHaveLength(1);
     });
   });
 
@@ -71,6 +71,33 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(documentDiagramChange[0]).toHaveBeenCalledTimes(1);
       if (doc2) {
         expect(doc2.diagrams[0]!.name).toBe('new');
+        expect(diagramChange[1]).toHaveBeenCalledTimes(1);
+        expect(documentDiagramChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('setLocked', () => {
+    it('should update the locked property correctly', () => {
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
+      const diagramChange = [vi.fn(), vi.fn()];
+      doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
+      doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
+
+      const documentDiagramChange = [vi.fn(), vi.fn()];
+      doc1.on('diagramChanged', documentDiagramChange[0]!);
+      doc2?.on?.('diagramChanged', documentDiagramChange[1]!);
+
+      // Act
+      UnitOfWork.executeSilently(doc1.diagrams[0]!, uow => doc1.diagrams[0]!.setLocked(true, uow));
+
+      // Verify
+      expect(doc1.diagrams[0]!.locked).toBe(true);
+      expect(diagramChange[0]).toHaveBeenCalledTimes(1);
+      expect(documentDiagramChange[0]).toHaveBeenCalledTimes(1);
+      if (doc2) {
+        expect(doc2.diagrams[0]!.locked).toBe(true);
         expect(diagramChange[1]).toHaveBeenCalledTimes(1);
         expect(documentDiagramChange[1]).toHaveBeenCalledTimes(1);
       }

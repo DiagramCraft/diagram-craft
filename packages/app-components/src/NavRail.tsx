@@ -24,7 +24,7 @@ export const NavRail = ({
   value,
   onChange,
   toggle = false,
-  side = 'left',
+  side = 'left'
 }: NavRailProps) => {
   return (
     <div className={styles.cNavRail} data-side={side}>

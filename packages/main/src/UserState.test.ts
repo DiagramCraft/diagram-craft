@@ -83,6 +83,19 @@ describe('UserState', () => {
     expect(new UserState().stencilPickerViewMode).toBe('list');
   });
 
+  test('persists the comment visibility mode', () => {
+    const userState = new UserState();
+
+    expect(userState.commentVisibility).toBe('all');
+
+    userState.commentVisibility = 'unresolved';
+
+    expect(JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}')).toMatchObject({
+      commentVisibility: 'unresolved'
+    });
+    expect(new UserState().commentVisibility).toBe('unresolved');
+  });
+
   test('only emits change when persisted state actually changes', () => {
     const userState = new UserState();
     const changeListener = vi.fn();
@@ -118,8 +131,9 @@ describe('UserState', () => {
       userState.setDocumentTab(`/tmp/${i}.diagram`, `diagram-${i}`);
     }
 
-    const documentTabs = JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}')
-      .documentTabs;
+    const documentTabs = JSON.parse(
+      localStorage.getItem('diagram-craft.user-state') ?? '{}'
+    ).documentTabs;
 
     expect(documentTabs).toHaveLength(10);
     expect(documentTabs[0]).toEqual({ documentKey: '/tmp/11.diagram', tabId: 'diagram-11' });

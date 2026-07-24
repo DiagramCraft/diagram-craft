@@ -9,8 +9,13 @@ const viewData = {
   description: 'A view created by permission tests',
   viewMode: 'table' as const,
   filters: {
-    status: seedIds.lifecycle.production,
-    q: 'test'
+    root: {
+      kind: 'predicate' as const,
+      path: [],
+      fieldId: '_lifecycle',
+      op: 'equals' as const,
+      value: seedIds.lifecycle.production
+    }
   },
   config: null
 };
@@ -18,9 +23,9 @@ const viewData = {
 test.describe('saved view permission routes', () => {
   test('authentication: views list returns 401 without auth', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
-    await expect(
-      anonOrpc.views.list({ params: { workspace: 'default' } })
-    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    await expect(anonOrpc.views.list({ params: { workspace: 'default' } })).rejects.toMatchObject({
+      code: 'UNAUTHORIZED'
+    });
   });
 
   test('authorization: viewer can list views but cannot create, update, or delete', async ({

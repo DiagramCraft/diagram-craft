@@ -352,6 +352,7 @@ export const makeEmbedFileLoaders = (
     deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory, {
       includedPackages: getIncludedPackages()
     }),
-  '.drawio': () => import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio),
+  '.drawio': () =>
+    import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio),
   '.diagramCraft.svg': fileLoaderDiagramCraftSvg
 });

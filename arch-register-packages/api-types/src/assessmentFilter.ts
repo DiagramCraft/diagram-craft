@@ -5,7 +5,8 @@ export const ASSESSMENT_PRESENCE_FIELD_ID = '_assessment';
 export const ASSESSMENT_FIELD_PREFIX = '_assessment:';
 
 export const isAssessmentCondition = (condition: FilterCondition): boolean =>
-  condition.fieldId === ASSESSMENT_PRESENCE_FIELD_ID || condition.fieldId.startsWith(ASSESSMENT_FIELD_PREFIX);
+  condition.fieldId === ASSESSMENT_PRESENCE_FIELD_ID ||
+  condition.fieldId.startsWith(ASSESSMENT_FIELD_PREFIX);
 
 export const assessmentFieldIdOf = (condition: FilterCondition): string =>
   condition.fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
@@ -75,7 +76,8 @@ export const matchesAssessmentConditions = (
       const str = value === undefined ? '' : String(value);
       if (condition.op === 'empty') return str === '';
       if (condition.op === 'not_empty') return str !== '';
-      if (condition.op === 'contains') return str.toLowerCase().includes(String(condition.value ?? '').toLowerCase());
+      if (condition.op === 'contains')
+        return str.toLowerCase().includes(String(condition.value ?? '').toLowerCase());
       return true;
     }
 

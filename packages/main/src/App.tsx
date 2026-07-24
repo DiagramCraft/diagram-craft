@@ -18,6 +18,7 @@ import { FullScreenProgress } from './react-app/components/FullScreenProgress';
 import { Autosave } from './react-app/autosave/Autosave';
 import { Application } from './application';
 import { UserState } from './UserState';
+import type { CollaborationAwareness } from './CollaborationAwareness';
 import { EmbeddableEditor, type FileActions, type DialogStackItem } from './EmbeddableEditor';
 import { updateApplicationModel } from './editorShared';
 import { assert } from '@diagram-craft/utils/assert';
@@ -32,12 +33,15 @@ export const App = (props: {
   doc: DiagramDocument;
   documentFactory: DocumentFactory;
   diagramFactory: DiagramFactory;
+  awareness: CollaborationAwareness;
 }) => {
   const userState = useRef(UserState.get());
-  const application = useRef(new Application(userState.current));
+  const application = useRef(new Application(userState.current, props.awareness));
 
   const [dirty, setDirty] = useState(false);
-  const [hash, setHash] = useState(application.current.model.activeDocument?.hash ?? props.doc.hash);
+  const [hash, setHash] = useState(
+    application.current.model.activeDocument?.hash ?? props.doc.hash
+  );
   const [progress, setProgress] = useState<Progress | undefined>(undefined);
 
   const progressCallback = useCallback<ProgressCallback>(
@@ -78,7 +82,7 @@ export const App = (props: {
     loadDocument: async (url: string) => {
       const doc = await loadFileFromUrl(
         url,
-        UserState.get().awarenessState,
+        props.awareness.state,
         progressCallback,
         props.documentFactory,
         props.diagramFactory
@@ -96,11 +100,7 @@ export const App = (props: {
     },
     newDocument: async (size?: Extent, offset?: Point) => {
       const doc = await props.documentFactory.createDocument(
-        await props.documentFactory.loadCRDT(
-          undefined,
-          UserState.get().awarenessState,
-          progressCallback
-        ),
+        await props.documentFactory.loadCRDT(undefined, props.awareness.state, progressCallback),
         undefined,
         progressCallback
       );

@@ -7,7 +7,8 @@ import {
   TeamMembershipDbCreate,
   RoleDefinitionDbCreate,
   RoleDefinitionDbUpdate,
-  ProjectEntityTypeDbCreate
+  ProjectEntityTypeDbCreate,
+  TeamListOptions
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
@@ -99,7 +100,10 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM workspace WHERE id = ${id}`;
       });
 
-      return { workspace: workspace ? workspaceMappers.workspace(workspace) : null, projectIds: projects.map(project => project.id) };
+      return {
+        workspace: workspace ? workspaceMappers.workspace(workspace) : null,
+        projectIds: projects.map(project => project.id)
+      };
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -107,7 +111,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async listLifecycleStates(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT id, workspace, label, color, sort_order, created_at
+      SELECT id, workspace, label, color, sort_order, created_at, is_deprecated_state
       FROM workspace_lifecycle_state
       WHERE workspace = ${workspace}
       ORDER BY sort_order, id
@@ -153,12 +157,13 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
         for (const state of states) {
           await tx`
-            INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at)
-            VALUES (${state.id}, ${workspace}, ${state.label}, ${state.color}, ${state.sort_order}, ${state.created_at})
+            INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at, is_deprecated_state)
+            VALUES (${state.id}, ${workspace}, ${state.label}, ${state.color}, ${state.sort_order}, ${state.created_at}, ${state.is_deprecated_state ?? false})
             ON CONFLICT (workspace, id) DO UPDATE SET
               label = EXCLUDED.label,
               color = EXCLUDED.color,
-              sort_order = EXCLUDED.sort_order
+              sort_order = EXCLUDED.sort_order,
+              is_deprecated_state = EXCLUDED.is_deprecated_state
           `;
         }
       });
@@ -195,12 +200,22 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     }
   }
 
-  async listTeams(workspace: string) {
+  async listTeams(workspace: string, options?: TeamListOptions) {
+    const query = options?.q?.trim();
+    const limit =
+      options?.limit == null
+        ? query
+          ? 50
+          : undefined
+        : Math.min(Math.max(Math.trunc(options.limit), 1), 100);
+    const pattern = query ? `%${query.replace(/[\\%_]/g, '\\$&')}%` : undefined;
     const rows = await this.sql<DatabaseRow[]>`
       SELECT id, workspace, name, sort_order, color, description, created_at
       FROM workspace_owner
       WHERE workspace = ${workspace}
+      AND ${pattern == null ? this.sql`TRUE` : this.sql`name ILIKE ${pattern} ESCAPE '\\'`}
       ORDER BY sort_order, id
+      ${limit == null ? this.sql`` : this.sql`LIMIT ${limit}`}
     `;
     return mapDatabaseRows(rows, workspaceMappers.owner);
   }

@@ -24,7 +24,11 @@ type MdxAstNode<Mode extends MdxMode> = Mode extends 'block'
 export type AllowedPropKey<P> = Exclude<Extract<keyof P, string>, 'children'>;
 
 export type MdxRuleDef<E extends TElement, Mode extends MdxMode> = {
-  deserialize: (mdastNode: MdxAstNode<Mode>, deco: MdDecoration, options: DeserializeMdOptions) => E;
+  deserialize: (
+    mdastNode: MdxAstNode<Mode>,
+    deco: MdDecoration,
+    options: DeserializeMdOptions
+  ) => E;
   serialize: (slateNode: E, options: SerializeMdOptions) => MdxAstNode<Mode>;
 };
 
@@ -36,7 +40,10 @@ export type SlashCommandDef<E extends TElement = TElement> = {
   keywords?: string[];
   onSelect: (
     editor: ReturnType<typeof useEditorRef>,
-    helpers: { insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: E) => void }
+    helpers: {
+      insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: E) => void;
+      insertOrReplaceInline: (editor: ReturnType<typeof useEditorRef>, node: E) => void;
+    }
   ) => void;
 };
 
@@ -68,12 +75,20 @@ export type MdxComponentDef<
   component: React.ComponentType<P>;
   mode: Mode;
   allowedProps: ReadonlyArray<AllowedPropKey<P>>;
+  /** Normalizes string props parsed from authored MDX. */
+  normalizeProps?: (props: Record<string, string>) => Record<string, string>;
   /**
    * Marks a block-level component as a wrapper that accepts exactly one other
    * block-level (non-wrapper) MDX component as its child, e.g. Caption. Depth is
    * capped at 1 — a wrapper cannot be nested inside another wrapper.
    */
   acceptsChildren?: boolean;
+  /**
+   * Marks a block-level component as accepting arbitrary rich markdown content
+   * (paragraphs, lists, etc.) between its open/close tags, e.g. Callout.
+   * Distinct from `acceptsChildren`'s single-MDX-component wrapper semantics.
+   */
+  acceptsRichContent?: boolean;
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: MdxEditorSpecDef<E, Mode>;
 };

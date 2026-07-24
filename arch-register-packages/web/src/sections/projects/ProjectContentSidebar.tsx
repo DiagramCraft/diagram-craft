@@ -14,11 +14,12 @@ import {
   TbClipboardList,
   TbColumns3,
   TbFileText,
+  TbFlag,
   TbFolderOpen,
   TbHome,
-  TbLayoutBoard,
   TbLayoutGrid,
   TbList,
+  TbMap,
   TbPencil,
   TbPlus,
   TbTrash,
@@ -30,20 +31,23 @@ import { RenameDialog } from '../../components/RenameDialog';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { useAssessments } from '../../hooks/useAssessments';
+import { useEntityCount } from '../../hooks/useEntities';
+import { useMilestones } from '../../hooks/useMilestones';
 import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import {
   contentDownloadUrl,
   useContentScopeOperations,
   type ContentScope
 } from '../../hooks/useContentScope';
-import { useProject, useProjectEntities } from '../../hooks/useProjects';
+import { useProject } from '../../hooks/useProjects';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   asProjectPublicId,
   projectContentFolderRoute,
   projectDetailRoute,
   projectDiagramRoute,
-  projectMarkdownRoute
+  projectMarkdownRoute,
+  projectMarkdownDraftRoute
 } from '../../routes/publicObjectRoutes';
 import type { ProjectSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
@@ -52,7 +56,7 @@ import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
 
-type ProjectSection = 'home' | 'entities' | 'assessments';
+type ProjectSection = 'home' | 'entities' | 'assessments' | 'milestones';
 type SidebarTab = 'content' | 'views';
 
 export const ProjectContentSidebar = ({
@@ -66,8 +70,16 @@ export const ProjectContentSidebar = ({
   const operations = useContentScopeOperations(scope);
   const { permissions } = useWorkspaceContext();
   const { data: project } = useProject(workspaceSlug, projectId);
-  const { data: projectEntities = [] } = useProjectEntities(workspaceSlug, projectId);
+  const { data: entityCount } = useEntityCount(
+    workspaceSlug,
+    {
+      projectId: project?.id,
+      projectScope: 'project'
+    },
+    { enabled: project != null }
+  );
   const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
+  const { data: milestones = [] } = useMilestones(workspaceSlug, projectId);
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, { projectId });
   const projectViews = savedViews.filter(view => view.scope === 'project');
   const deleteView = useDeleteSavedView(workspaceSlug);
@@ -87,7 +99,11 @@ export const ProjectContentSidebar = ({
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as ProjectSearchParams;
   const section: ProjectSection =
-    search.section === 'entities' || search.section === 'assessments' ? search.section : 'home';
+    search.section === 'entities' ||
+    search.section === 'assessments' ||
+    search.section === 'milestones'
+      ? search.section
+      : 'home';
   const contentFolder = section === 'home' ? (params._splat ?? null) : null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
 
@@ -139,10 +155,10 @@ export const ProjectContentSidebar = ({
         return <TbChartRadar size={12} />;
       case 'timeline':
         return <TbCalendarWeek size={12} />;
-      case 'hierarchy':
-        return <TbLayoutBoard size={12} />;
       case 'explore':
         return <TbColumns3 size={12} />;
+      case 'map':
+        return <TbMap size={12} />;
       default:
         return <TbHome size={12} />;
     }
@@ -189,7 +205,7 @@ export const ProjectContentSidebar = ({
       />
       <TreeRow
         testId="project-secondary-entities"
-        label={`Entities (${projectEntities.length})`}
+        label={`Entities (${entityCount?.total ?? 0})`}
         icon={<TbBinaryTree2 size={13} />}
         active={section === 'entities'}
         onClick={() => navigateProject({ section: 'entities' })}
@@ -200,6 +216,13 @@ export const ProjectContentSidebar = ({
         icon={<TbClipboardList size={13} />}
         active={section === 'assessments'}
         onClick={() => navigateProject({ section: 'assessments' })}
+      />
+      <TreeRow
+        testId="project-secondary-milestones"
+        label={`Milestones (${milestones.length})`}
+        icon={<TbFlag size={13} />}
+        active={section === 'milestones'}
+        onClick={() => navigateProject({ section: 'milestones' })}
       />
     </>
   );
@@ -387,10 +410,22 @@ export const ProjectContentSidebar = ({
         <AddMarkdownDialog
           open={markdownFolder !== undefined}
           onClose={() => setMarkdownFolder(undefined)}
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
           onCreated={file => {
             setMarkdownFolder(undefined);
             openFile(file);
           }}
+          onOpenDraft={draft =>
+            navigate(
+              projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), {
+                draftName: draft.name,
+                draftFolder: markdownFolder ?? undefined,
+                draftType: draft.documentTypeId ?? undefined,
+                draftTemplate: draft.templateId ?? undefined
+              })
+            )
+          }
           onCreate={name =>
             operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
           }

@@ -19,7 +19,12 @@ const entity = (id: string, x: number, y: number) =>
     _owner: null
   }) as unknown as EntityRecord;
 
-const config: BubbleConfig = { xFieldId: 'x', yFieldId: 'y', sizeFieldId: null, colorFieldId: null };
+const config: BubbleConfig = {
+  xFieldId: 'x',
+  yFieldId: 'y',
+  sizeFieldId: null,
+  colorFieldId: null
+};
 
 describe('bubble view state', () => {
   it('formats integer and fractional numeric values', () => {
@@ -28,9 +33,23 @@ describe('bubble view state', () => {
   });
 
   it('maps numeric values to clamped axis positions', () => {
-    expect(positionOnBubbleAxis(entity('middle', 5, 0), 'x', { min: 0, max: 10 }, null, 0, 100, false)).toBe(50);
-    expect(positionOnBubbleAxis(entity('outside', 20, 0), 'x', { min: 0, max: 10 }, null, 0, 100, false)).toBe(100);
-    expect(positionOnBubbleAxis(entity('missing', 0, 0), 'missing', { min: 0, max: 10 }, null, 0, 100, false)).toBeNull();
+    expect(
+      positionOnBubbleAxis(entity('middle', 5, 0), 'x', { min: 0, max: 10 }, null, 0, 100, false)
+    ).toBe(50);
+    expect(
+      positionOnBubbleAxis(entity('outside', 20, 0), 'x', { min: 0, max: 10 }, null, 0, 100, false)
+    ).toBe(100);
+    expect(
+      positionOnBubbleAxis(
+        entity('missing', 0, 0),
+        'missing',
+        { min: 0, max: 10 },
+        null,
+        0,
+        100,
+        false
+      )
+    ).toBeNull();
   });
 
   it('builds bubbles and deterministic overlap clusters', () => {

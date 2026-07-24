@@ -13,6 +13,7 @@ import { Banner } from '../components/Banner';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 
 type ApiWorkspace = {
   id: string;
@@ -88,7 +89,9 @@ const TEMPLATES = [
 
 const COPY_PARTS = [
   { id: 'schemas', label: 'Data model', default: true },
+  { id: 'entities', label: 'Entities', default: false },
   { id: 'projects', label: 'Projects & diagrams', default: false },
+  { id: 'documents', label: 'Typed documents', default: false },
   { id: 'members', label: 'Members & roles', default: false },
   { id: 'settings', label: 'Settings', default: true }
 ];
@@ -129,6 +132,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(nameRef, { enabled: open, delay: 30 });
 
   useEffect(() => {
     if (!open) return;
@@ -144,7 +148,6 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
     setCopyFrom('');
     setCopyParts(Object.fromEntries(COPY_PARTS.map(p => [p.id, p.default])));
     setError('');
-    setTimeout(() => nameRef.current?.focus(), 30);
   }, [open]);
 
   useEffect(() => {
@@ -154,7 +157,8 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
   useEffect(() => {
     if (mode === 'copy' && workspaces.length === 0) {
-      orpcClient.workspaces.list()
+      orpcClient.workspaces
+        .list()
         .then(ws => {
           setWorkspaces(ws);
           if (ws.length > 0) setCopyFrom(ws[0]!.id);
@@ -182,7 +186,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
       } = {
         name: name.trim(),
         slug,
-        badge: badge || initialsOf(name),
+        badge: badge ?? initialsOf(name),
         color,
         description: description.trim()
       };
@@ -260,7 +264,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                     : 'var(--cmp-bg-hover)'
                 }}
               >
-                {badge || '—'}
+                {badge ?? '—'}
               </div>
               <input
                 className={styles.badgeInput}
@@ -277,7 +281,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
             </div>
 
             <div className={styles.fields}>
-              <FormElement label="Workspace name">
+              <FormElement label="Workspace name" required>
                 <TextInput
                   ref={nameRef}
                   placeholder="e.g. Acme Payments Platform"
@@ -287,7 +291,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 />
               </FormElement>
 
-              <FormElement label="Color">
+              <FormElement label="Color" required={false}>
                 <ColorPicker
                   value={color}
                   onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)}
@@ -295,7 +299,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 />
               </FormElement>
 
-              <FormElement label="Description">
+              <FormElement label="Description" required={false}>
                 <TextArea
                   placeholder="What lives in this workspace? Who owns it?"
                   value={description}
@@ -358,9 +362,9 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
           {mode === 'copy' && (
             <div className={styles.copyPanel}>
-              <FormElement label="Copy from">
+              <FormElement label="Copy from" required>
                 <Select.Root
-                  value={copyFrom || undefined}
+                  value={copyFrom ?? undefined}
                   onChange={value => setCopyFrom(value ?? '')}
                   placeholder={workspaces.length === 0 ? 'Loading…' : 'Select workspace'}
                   style={{ width: '100%' }}
@@ -372,7 +376,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                   ))}
                 </Select.Root>
               </FormElement>
-              <FormElement label="Include">
+              <FormElement label="Include" required={false}>
                 <div className={styles.copyInclude}>
                   {COPY_PARTS.map(p => (
                     <label key={p.id} className={styles.checkbox}>

@@ -1,0 +1,189 @@
+/* Outer wrapper */
+.wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+/* ── Config bar ──────────────────────────────────────────────── */
+
+.config {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 42px;
+}
+
+.axisPill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  height: 28px;
+}
+
+.axisKicker {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+}
+
+.cross {
+  font-size: 13px;
+  color: var(--base-fg-more-dim);
+  font-weight: 300;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.selectWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 0 6px 0 8px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 11.5px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+/* ── Scroll area ─────────────────────────────────────────────── */
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+/* ── Level grids ─────────────────────────────────────────────── */
+
+.level1Grid {
+  display: grid;
+  gap: 12px;
+}
+
+.childGrid {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ── Level boxes ─────────────────────────────────────────────── */
+
+.level1Box {
+  min-width: 0;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 10px;
+}
+
+.level2Box {
+  min-width: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 8px;
+}
+
+.level3Box {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 5px;
+  background: var(--cmp-bg-hover);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 5px 8px;
+  min-height: 28px;
+}
+
+/* Applied alongside level1Box/level2Box/level3Box - a box is always focusable via click,
+   so this affordance is unconditional rather than a variant. Uses an outline rather than a
+   background change so it never fights the metric-driven inline fill color. */
+.focusable {
+  cursor: pointer;
+}
+
+.focusable:hover {
+  outline: 2px solid var(--accent-fg);
+  outline-offset: -2px;
+}
+
+.focusable:focus-visible {
+  outline: 2px solid var(--accent-fg);
+  outline-offset: -2px;
+}
+
+/* ── Level headers ───────────────────────────────────────────── */
+
+.levelHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 5px;
+  min-height: 22px;
+}
+
+.colorDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.entityLink {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--base-fg);
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entityLink:hover {
+  color: var(--accent-fg);
+}
+
+/* ── Entity tooltip ──────────────────────────────────────────── */
+
+.tooltipAnchor {
+  flex: 1 1 60px;
+  min-width: 60px;
+  overflow: hidden;
+}

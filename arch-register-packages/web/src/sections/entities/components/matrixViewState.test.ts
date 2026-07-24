@@ -32,7 +32,9 @@ describe('matrix view state', () => {
       ['r1', { outgoing: [relation('a', 'app')], incoming: [relation('b', 'team')] }],
       ['r2', { outgoing: [relation('c', 'app')], incoming: [] }]
     ]);
-    expect(autoPickColSchemaId(rows, relationsMap, new Set(['service']), ['service', 'app', 'team'])).toBe('app');
+    expect(
+      autoPickColSchemaId(rows, relationsMap, new Set(['service']), ['service', 'app', 'team'])
+    ).toBe('app');
   });
 
   it('builds and filters entity relation cells', () => {
@@ -64,7 +66,10 @@ describe('matrix view state', () => {
     const attrField: MatrixAttrField = {
       fieldId: 'tags',
       label: 'Tags',
-      options: [{ value: 'important', label: 'Important' }, { value: 'later', label: 'Later' }],
+      options: [
+        { value: 'important', label: 'Important' },
+        { value: 'later', label: 'Later' }
+      ],
       isMetadata: false
     };
     const summary = entity('r1');

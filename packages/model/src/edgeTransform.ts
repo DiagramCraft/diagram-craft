@@ -8,7 +8,8 @@ import { assert } from '@diagram-craft/utils/assert';
 
 type EdgeEndpoint = 'start' | 'end';
 
-const isFreeEndpoint = (edge: DiagramEdge, endpoint: EdgeEndpoint) => edge[endpoint] instanceof FreeEndpoint;
+const isFreeEndpoint = (edge: DiagramEdge, endpoint: EdgeEndpoint) =>
+  edge[endpoint] instanceof FreeEndpoint;
 
 const getWaypointControlPoints = (waypoint: Waypoint) => {
   if (!waypoint.controlPoints) return [];
@@ -82,12 +83,7 @@ export const getEdgeRotation = (edge: DiagramEdge) => {
   return Math.atan2(delta.y, delta.x);
 };
 
-export const applyEdgeTransform = (
-  edge: DiagramEdge,
-  before: Box,
-  after: Box,
-  uow: UnitOfWork
-) => {
+export const applyEdgeTransform = (edge: DiagramEdge, before: Box, after: Box, uow: UnitOfWork) => {
   const transforms = TransformFactory.fromTo(before, after);
   if (transforms.length === 0) return;
 
@@ -109,11 +105,17 @@ export const applyEdgeTransform = (
         ];
 
   if (isFreeEndpoint(edge, 'start')) {
-    edge.setStart(new FreeEndpoint(Transform.point(edge.start.position, ...compensatedTransforms)), uow);
+    edge.setStart(
+      new FreeEndpoint(Transform.point(edge.start.position, ...compensatedTransforms)),
+      uow
+    );
   }
 
   if (isFreeEndpoint(edge, 'end')) {
-    edge.setEnd(new FreeEndpoint(Transform.point(edge.end.position, ...compensatedTransforms)), uow);
+    edge.setEnd(
+      new FreeEndpoint(Transform.point(edge.end.position, ...compensatedTransforms)),
+      uow
+    );
   }
 
   const transformedWaypoints = edge.waypoints.map(waypoint =>

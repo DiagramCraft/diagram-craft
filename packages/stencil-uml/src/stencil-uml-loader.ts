@@ -1,4 +1,5 @@
-import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
 import { UMLClassTemplateNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClassTemplate.nodeType';

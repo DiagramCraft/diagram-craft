@@ -12,7 +12,7 @@ import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefini
 import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { adjustShape } from '@diagram-craft/canvas-drawio/drawioAdjustShape';
 
 declare global {

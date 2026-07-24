@@ -7,6 +7,7 @@ import {
   checkoutRevampProject
 } from '../../../../arch-register-packages/e2e/src/ui/support/projects';
 import { seededAssessments } from '../../../../arch-register-packages/server/src/db/seedFixtures';
+import { domainSchema, systemSchema, componentSchema } from '../../../../arch-register-packages/e2e/src/ui/support/schemas';
 import {
   openProjectNewDiagramDialog,
   createBlankProjectDiagram,
@@ -110,6 +111,37 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     fullPage: false,
     setup: async ({ entitiesPage }) => {
       await entitiesPage.goto({ viewMode: 'bubble' });
+      await entitiesPage.expectLoaded();
+      await expect(entitiesPage.browserTitle()).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'browser-map',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      // TanStack Router's default search codec JSON-parses every string query value on load, so a
+      // once-stringified `viewConfigs` value would decode straight into an object and get rejected
+      // by useEntityBrowserSearchState's `typeof === 'string'` guard. Stringifying twice mirrors
+      // what the app's own navigate() call produces, so it survives that round-trip as a string.
+      const viewConfigs = JSON.stringify(
+        JSON.stringify({
+          map: {
+            levels: 2,
+            level1SchemaId: domainSchema.id,
+            level1Columns: 3,
+            level2SchemaId: systemSchema.id,
+            level2Columns: 3,
+            metricConfig: {
+              sourceSchemaId: componentSchema.id,
+              source: { kind: 'lifecycle' },
+              aggregation: 'count'
+            }
+          }
+        })
+      );
+      await entitiesPage.goto({ viewMode: 'map', viewConfigs });
       await entitiesPage.expectLoaded();
       await expect(entitiesPage.browserTitle()).toBeVisible();
     }

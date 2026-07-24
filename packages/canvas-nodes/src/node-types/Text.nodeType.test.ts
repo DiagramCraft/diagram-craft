@@ -44,7 +44,9 @@ describe('TextNodeDefinition', () => {
       }
     });
 
-    const html = definition.getTextHandler(node).inline!.storedToHTML('left:one<div></div><div>right:two</div>');
+    const html = definition
+      .getTextHandler(node)
+      .inline!.storedToHTML('left:one<div></div><div>right:two</div>');
 
     expect(html).toContain('<div>left:</div><div>one</div>');
     expect(html).toContain('<div></div><div></div>');

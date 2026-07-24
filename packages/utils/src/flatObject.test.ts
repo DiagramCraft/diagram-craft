@@ -197,6 +197,16 @@ describe('FlatObjectMapProxy', () => {
       expect(map.get('user.age')).toBe(30);
     });
 
+    test('replaces nested object with an empty object', () => {
+      const map = new Map([['user.name', 'John']]);
+      const proxy = FlatObjectMapProxy.create<{ user: { name?: string } }>(DynamicValue.of(map));
+
+      proxy.user = {};
+
+      expect(map.has('user.name')).toBe(false);
+      expect(fromFlatObjectMap(map)).toEqual({ user: {} });
+    });
+
     test('deletes property when set to undefined', () => {
       const map = new Map<string, string | number>([
         ['user.name', 'John'],

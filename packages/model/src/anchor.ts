@@ -88,7 +88,7 @@ import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
 import { round } from '@diagram-craft/utils/math';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 /**
  * An attachment point on a node where edges can connect.

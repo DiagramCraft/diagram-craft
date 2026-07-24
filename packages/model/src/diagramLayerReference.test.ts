@@ -23,7 +23,8 @@ describe('ReferenceLayer', () => {
       expect(referenceLayer.name).toBe('Reference Layer');
       expect(referenceLayer.type).toBe('reference');
       expect(referenceLayer.reference).toEqual(reference);
-      expect(referenceLayer.isLocked()).toBe(true);
+      expect(referenceLayer.locked).toBe(true);
+      expect(referenceLayer.isEffectivelyLocked()).toBe(true);
     });
   });
 

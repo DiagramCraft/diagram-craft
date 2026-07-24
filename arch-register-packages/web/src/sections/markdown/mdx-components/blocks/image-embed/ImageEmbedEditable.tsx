@@ -52,13 +52,18 @@ export const ImageEmbedEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={!!fileId}
-      placeholder={<><TbPhoto size={16} /><span>Choose image…</span></>}
+      placeholder={
+        <>
+          <TbPhoto size={16} />
+          <span>Choose image…</span>
+        </>
+      }
       content={
         <ImageEmbed
           id={fileId}
-          alt={alt || undefined}
-          size={size || undefined}
-          align={align || undefined}
+          alt={alt ?? undefined}
+          size={size ?? undefined}
+          align={align ?? undefined}
         />
       }
       dialog={(open, onClose) => (

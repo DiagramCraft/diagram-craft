@@ -23,9 +23,7 @@ const vnode = (): VNode => ({
 });
 
 class EffectComponent extends Component<{ deps: unknown[] }> {
-  constructor(
-    private readonly effect: () => void | (() => void)
-  ) {
+  constructor(private readonly effect: () => void | (() => void)) {
     super();
   }
 

@@ -12,6 +12,8 @@ type ElementPreviewProps = {
   size?: number;
 };
 
+const staticCanvasFactory = () => new StaticCanvasComponent();
+
 export const ElementPreview = ({ element, size = 24 }: ElementPreviewProps) => {
   const application = useApplication();
 
@@ -30,7 +32,7 @@ export const ElementPreview = ({ element, size = 24 }: ElementPreviewProps) => {
       height={size}
       diagram={element.diagram}
       viewbox={viewBox}
-      canvasFactory={() => new StaticCanvasComponent()}
+      canvasFactory={staticCanvasFactory}
     />
   );
 };

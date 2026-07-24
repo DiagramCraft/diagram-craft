@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Banner } from '../../../../../components/Banner';
 import { TypeBadge } from '../../../../../components/TypeBadge';
@@ -7,6 +7,7 @@ import { useEntity } from '../../../../../hooks/useEntities';
 import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
+import { LoadingState } from '../../../../../components/LoadingState';
 import styles from './EntityCard.module.css';
 import { formatDate } from '../../../../../utils/dateFormat';
 
@@ -43,14 +44,13 @@ export const renderSchemaFieldValue = (
 export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
-  const navigate = useNavigate();
 
   if (!id) return null;
 
   if (isLoading) {
     return (
       <div className={styles.card}>
-        <div className={styles.loading}>Loading…</div>
+        <LoadingState text="Loading…" size="sm" />
       </div>
     );
   }
@@ -122,13 +122,9 @@ export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
         </dl>
       )}
 
-      <button
-        type="button"
-        className={styles.link}
-        onClick={() => navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)))}
-      >
+      <Link {...entityDetailRoute(workspaceSlug, asEntityPublicId(id))} className={styles.link}>
         View in catalog →
-      </button>
+      </Link>
     </div>
   );
 };

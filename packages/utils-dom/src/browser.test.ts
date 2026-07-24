@@ -59,7 +59,8 @@ describe('Browser', () => {
   describe('isFirefox', () => {
     test('returns true when userAgent contains Firefox', () => {
       vi.stubGlobal('navigator', {
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0'
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0'
       });
 
       expect(Browser.isFirefox()).toBe(true);

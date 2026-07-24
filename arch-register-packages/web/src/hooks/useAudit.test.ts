@@ -8,7 +8,7 @@ describe('auditKeys', () => {
       'audit',
       'log',
       'ws-1',
-      { entityId: 'e-1', limit: 100 },
+      { entityId: 'e-1', limit: 100 }
     ]);
   });
 });
@@ -24,13 +24,13 @@ describe('invalidateAuditQueries', () => {
 
     expect(invalidateQueries).toHaveBeenCalledTimes(3);
     expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
-      queryKey: auditKeys.workspaceLogs('ws-1'),
+      queryKey: auditKeys.workspaceLogs('ws-1')
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: auditKeys.stats('ws-1'),
+      queryKey: auditKeys.stats('ws-1')
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(3, {
-      queryKey: workspaceAnalyticsKeys.workspace('ws-1'),
+      queryKey: workspaceAnalyticsKeys.workspace('ws-1')
     });
   });
 });

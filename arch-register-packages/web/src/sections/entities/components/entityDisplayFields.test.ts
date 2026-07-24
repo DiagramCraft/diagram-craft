@@ -82,6 +82,23 @@ describe('entity display fields', () => {
       'Production'
     );
   });
+
+  it('exposes and formats structured query projections', () => {
+    const fields = buildEntityDisplayFields([schema], false, null, [
+      {
+        path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+        fieldId: 'eol_date',
+        alias: 'release_eol'
+      }
+    ]);
+    const entity = {
+      _projections: { release_eol: ['2026-04-30', '2027-01-01'] }
+    } as unknown as EntityRecord;
+    const projection = fields.find(field => field.id === '_projection:release_eol');
+
+    expect(projection?.label).toBe('release_eol');
+    expect(formatEntityDisplayValue(entity, projection!)).toBe('2026-04-30, 2027-01-01');
+  });
 });
 
 describe('joined assessment display fields', () => {
@@ -96,7 +113,13 @@ describe('joined assessment display fields', () => {
     scope_conditions: [],
     fields: [
       { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating' },
-      { id: 'enum1', label: 'Risk', requirementLevel: 'optional', type: 'enum', enumId: 'risk-enum' }
+      {
+        id: 'enum1',
+        label: 'Risk',
+        requirementLevel: 'optional',
+        type: 'enum',
+        enumId: 'risk-enum'
+      }
     ],
     response_count: 0,
     completed_entity_count: 0,

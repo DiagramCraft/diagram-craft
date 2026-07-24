@@ -1,0 +1,1176 @@
+import { randomUUID } from 'node:crypto';
+import { expect, it } from 'vitest';
+import { runContractSuiteAgainstBothDrivers } from './harness';
+import { createFixtureWorkspace, createFixtureProject } from './projectFixtures';
+import { createFixtureCatalogEntity } from './catalogFixtures';
+import { createFixtureUser } from './authFixtures';
+import { buildAuthorizationContext } from '@arch-register/permissions';
+import type { DatabaseAdapter, DbDriver } from '../database';
+import type { SchemaDbResult } from '../../domain/catalog/db/catalogDatabase';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import {
+  compileEntityQueryIR,
+  type CompiledEntityQueryOptions
+} from '../../domain/catalog/entityQueryIRCompiler';
+import {
+  validateEntityQueryIR,
+  type SchemaCatalog
+} from '../../domain/catalog/entityQueryIRValidator';
+import { filterConditionsToEntityQueryIR } from '../../domain/catalog/entityQueryIRMapping';
+import { matchesFilterCondition } from '../../domain/catalog/dataHelpers';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { countEntities, listEntitiesWithCount } from '../../domain/catalog/entityQueryOperations';
+import { buildEntityQueryForExecution, parseEntityQuery } from '../../domain/catalog/entityQuery';
+
+const createSchema = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  overrides: Partial<SchemaDbResult> & { name: string }
+): Promise<SchemaDbResult> => {
+  const id = overrides.id ?? randomUUID();
+  const now = new Date();
+  return db.catalog.createSchema({
+    id,
+    workspace,
+    name: overrides.name,
+    description: '',
+    fields: overrides.fields ?? [],
+    color: null,
+    icon: null,
+    default_owner: null,
+    key_prefix: id.slice(0, 8).toUpperCase(),
+    created_at: now,
+    updated_at: now
+  });
+};
+
+const runQuery = async (
+  db: DatabaseAdapter,
+  driver: DbDriver,
+  workspace: string,
+  schemas: SchemaCatalog,
+  query: EntityQuery,
+  options?: CompiledEntityQueryOptions
+) => {
+  const validation = validateEntityQueryIR(query, schemas);
+  expect(validation.ok, JSON.stringify(validation)).toBe(true);
+  const { sql, params } = compileEntityQueryIR(query, schemas, driver, workspace, options);
+  return db.catalog.runCompiledEntityQuery(sql, params);
+};
+
+runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
+  it('matches root free-text across name, slug, and description', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+
+    const nameMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'Platform Service'
+    });
+    const slugMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      slug: 'platform-api'
+    });
+    const descriptionMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      description: 'Owned by the platform team'
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'Unrelated Service',
+      slug: 'unrelated'
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const query: EntityQuery = {
+      schemaId: schema.id,
+      root: { kind: 'freeText', value: 'PLATFORM' }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches.map(entity => entity.id)).toEqual(
+      expect.arrayContaining([nameMatch.id, slugMatch.id, descriptionMatch.id])
+    );
+    expect(matches).toHaveLength(3);
+  });
+
+  it('folds legacy q into the IR and filters in SQL, without a second in-memory pass', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+
+    const nameMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'Platform Service'
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'Unrelated Service' });
+
+    // Simulates the full HTTP request path (entityOrpc.ts): parse -> fold q into the IR root ->
+    // execute. Exercises the fix for #2357, where `q` used to be applied as an always-on
+    // in-memory post-filter after the SQL query ran, rather than folded into the query itself.
+    const input = { _schemaId: schema.id, q: 'platform' };
+    const parsed = parseEntityQuery(input);
+    const entityQuery = buildEntityQueryForExecution(input, parsed);
+
+    const page = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery,
+      view: 'full',
+      limit: null,
+      offset: 0
+    });
+
+    expect(page.items.map(item => item._uid)).toEqual([nameMatch.id]);
+    expect(page.total).toBe(1);
+  });
+
+  it('folds owner/lifecycle filters into the IR for auditOperations-style entity lookups', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+    const now = new Date();
+
+    const [platformTeam, dataTeam] = await db.workspace.replaceTeams(workspace, [
+      {
+        id: randomUUID(),
+        workspace,
+        name: 'Platform',
+        sort_order: 0,
+        color: null,
+        description: '',
+        created_at: now
+      },
+      {
+        id: randomUUID(),
+        workspace,
+        name: 'Data',
+        sort_order: 1,
+        color: null,
+        description: '',
+        created_at: now
+      }
+    ]);
+    const [activeState, deprecatedState] = await db.workspace.replaceLifecycleStates(workspace, [
+      {
+        id: randomUUID(),
+        workspace,
+        label: 'Active',
+        color: '#000000',
+        sort_order: 0,
+        created_at: now
+      },
+      {
+        id: randomUUID(),
+        workspace,
+        label: 'Deprecated',
+        color: '#000000',
+        sort_order: 1,
+        created_at: now
+      }
+    ]);
+
+    const match = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      owner: platformTeam!.id,
+      lifecycle: activeState!.id
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, {
+      owner: platformTeam!.id,
+      lifecycle: deprecatedState!.id
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, {
+      owner: dataTeam!.id,
+      lifecycle: activeState!.id
+    });
+
+    // Mirrors auditOperations.listAuditLog's entity-id resolution for the owner/lifecycle
+    // filters (issue #2356): synthesize an entityQuery instead of passing schemaId/owner/
+    // lifecycle straight through, so the lookup runs via the SQL IR path.
+    const input = { _schemaId: schema.id, owner: platformTeam!.id, lifecycle: activeState!.id };
+    const parsed = parseEntityQuery(input);
+    const entityQuery = buildEntityQueryForExecution(input, parsed);
+
+    const matches = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery,
+      view: 'summary',
+      limit: null,
+      offset: 0
+    });
+
+    expect(matches.items.map(item => item._uid)).toEqual([match.id]);
+    expect(matches.total).toBe(1);
+  });
+
+  it('folds a schemaId-only filter into the IR for schemaOperations-style entity counts', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const referencedSchema = await createSchema(db, workspace, { name: 'Referenced' });
+    const unreferencedSchema = await createSchema(db, workspace, { name: 'Unreferenced' });
+
+    await createFixtureCatalogEntity(db, workspace, referencedSchema.id);
+    await createFixtureCatalogEntity(db, workspace, referencedSchema.id);
+
+    // Mirrors schemaOperations.ts's countEntities({ schemaId }) call sites (issue #2356).
+    const countFor = async (schemaId: string) => {
+      const input = { _schemaId: schemaId };
+      const parsed = parseEntityQuery(input);
+      const entityQuery = buildEntityQueryForExecution(input, parsed);
+      return countEntities(db, workspace, null, { entityQuery });
+    };
+
+    expect(await countFor(referencedSchema.id)).toBe(2);
+    expect(await countFor(unreferencedSchema.id)).toBe(0);
+  });
+
+  it('resolves a forward single-hop reference predicate', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+
+    const techReleaseSchema = await createSchema(db, workspace, {
+      name: 'Technology Release',
+      fields: [{ id: 'eol_date', name: 'EOL Date', type: 'date' }]
+    });
+    const componentSchema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          schemaId: techReleaseSchema.id,
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    });
+
+    const relEol = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+      data: { eol_date: '2026-01-01' }
+    });
+    const relFresh = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+      data: { eol_date: '2030-01-01' }
+    });
+    const componentAtRisk = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+      data: { technology_releases: [relEol.id] }
+    });
+    await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+      data: { technology_releases: [relFresh.id] }
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [componentSchema.id, componentSchema],
+      [techReleaseSchema.id, techReleaseSchema]
+    ]);
+
+    const query: EntityQuery = {
+      schemaId: componentSchema.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+        fieldId: 'eol_date',
+        op: 'before',
+        value: '2026-06-30'
+      }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches.map(e => e.id)).toEqual([componentAtRisk.id]);
+  });
+
+  it('resolves a backward single-hop with an explicit ownerSchemaId', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+
+    const domainSchema = await createSchema(db, workspace, { name: 'Domain' });
+    const systemSchema = await createSchema(db, workspace, {
+      name: 'System',
+      fields: [
+        {
+          id: 'domain',
+          name: 'Domain',
+          type: 'containment',
+          schemaId: domainSchema.id,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+
+    const domainMatch = await createFixtureCatalogEntity(db, workspace, domainSchema.id);
+    await createFixtureCatalogEntity(db, workspace, domainSchema.id);
+    const systemMatch = await createFixtureCatalogEntity(db, workspace, systemSchema.id, {
+      data: { domain: [domainMatch.id] }
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [domainSchema.id, domainSchema],
+      [systemSchema.id, systemSchema]
+    ]);
+
+    const query: EntityQuery = {
+      schemaId: domainSchema.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id }],
+        fieldId: '_id',
+        op: 'equals',
+        value: systemMatch.id
+      }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches.map(e => e.id)).toEqual([domainMatch.id]);
+  });
+
+  it('scopes a bracketed filter to the same existential witness (§4.3)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+
+    const technologySchema = await createSchema(db, workspace, { name: 'Technology' });
+    const techReleaseSchema = await createSchema(db, workspace, {
+      name: 'Technology Release',
+      fields: [
+        { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
+        {
+          id: 'technology',
+          name: 'Technology',
+          type: 'containment',
+          schemaId: technologySchema.id,
+          minCount: 1,
+          maxCount: 1
+        }
+      ]
+    });
+    const componentSchema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          schemaId: techReleaseSchema.id,
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    });
+
+    const go = await createFixtureCatalogEntity(db, workspace, technologySchema.id, { slug: 'go' });
+    const python = await createFixtureCatalogEntity(db, workspace, technologySchema.id, {
+      slug: 'python'
+    });
+
+    // A single release satisfying both conditions at once.
+    const relGoOld = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+      data: { release_cycle: '1.5', technology: [go.id] }
+    });
+    // Two releases that each satisfy exactly one condition, on different technologies.
+    const relGoNew = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+      data: { release_cycle: '4.0', technology: [go.id] }
+    });
+    const relPythonOld = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+      data: { release_cycle: '1.0', technology: [python.id] }
+    });
+
+    const singleWitnessComponent = await createFixtureCatalogEntity(
+      db,
+      workspace,
+      componentSchema.id,
+      {
+        data: { technology_releases: [relGoOld.id] }
+      }
+    );
+    const splitWitnessComponent = await createFixtureCatalogEntity(
+      db,
+      workspace,
+      componentSchema.id,
+      {
+        data: { technology_releases: [relGoNew.id, relPythonOld.id] }
+      }
+    );
+
+    const schemas: SchemaCatalog = new Map([
+      [technologySchema.id, technologySchema],
+      [techReleaseSchema.id, techReleaseSchema],
+      [componentSchema.id, componentSchema]
+    ]);
+
+    const independentQuery: EntityQuery = {
+      schemaId: componentSchema.id,
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+            fieldId: 'release_cycle',
+            op: 'lt',
+            value: 2
+          },
+          {
+            kind: 'predicate',
+            path: [
+              { kind: 'forward', fieldId: 'technology_releases' },
+              { kind: 'forward', fieldId: 'technology' }
+            ],
+            fieldId: '_slug',
+            op: 'equals',
+            value: 'go'
+          }
+        ]
+      }
+    };
+    const independentMatches = await runQuery(db, driver, workspace, schemas, independentQuery);
+    expect(new Set(independentMatches.map(e => e.id))).toEqual(
+      new Set([singleWitnessComponent.id, splitWitnessComponent.id])
+    );
+
+    const scopedQuery: EntityQuery = {
+      schemaId: componentSchema.id,
+      root: {
+        kind: 'relationExists',
+        path: [
+          {
+            kind: 'forward',
+            fieldId: 'technology_releases',
+            filter: {
+              kind: 'and',
+              children: [
+                {
+                  kind: 'predicate',
+                  path: [],
+                  fieldId: 'release_cycle',
+                  op: 'lt',
+                  value: 2
+                },
+                {
+                  kind: 'predicate',
+                  path: [{ kind: 'forward', fieldId: 'technology' }],
+                  fieldId: '_slug',
+                  op: 'equals',
+                  value: 'go'
+                }
+              ]
+            }
+          }
+        ]
+      }
+    };
+    const scopedMatches = await runQuery(db, driver, workspace, schemas, scopedQuery);
+    expect(scopedMatches.map(e => e.id)).toEqual([singleWitnessComponent.id]);
+  });
+
+  it('terminates a traversal branch that would otherwise exceed MAX_PATH_HOPS', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Lonely' });
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+
+    const tooDeep: EntityQuery = {
+      schemaId: schema.id,
+      root: {
+        kind: 'relationExists',
+        path: Array.from({ length: 7 }, () => ({ kind: 'forward' as const, fieldId: 'self' }))
+      }
+    };
+
+    const validation = validateEntityQueryIR(tooDeep, schemas);
+    expect(validation.ok).toBe(false);
+  });
+
+  it("matches today's flat FilterCondition[] evaluation via the degenerate mapping", async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, {
+      name: 'Technology',
+      fields: [{ id: 'category', name: 'Category', type: 'text' }]
+    });
+
+    const matching = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      data: { category: 'framework' }
+    });
+    const other = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      data: { category: 'library' }
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const conditions: FilterCondition[] = [
+      { fieldId: 'category', op: 'equals', value: 'framework' }
+    ];
+
+    const irQuery = filterConditionsToEntityQueryIR(schema.id, null, conditions);
+    const irMatches = await runQuery(db, driver, workspace, schemas, irQuery);
+
+    const flatMatches = [matching, other].filter(entity =>
+      conditions.every(c => matchesFilterCondition(entity, c, null))
+    );
+
+    expect(new Set(irMatches.map(e => e.id))).toEqual(new Set(flatMatches.map(e => e.id)));
+    expect(irMatches.map(e => e.id)).toEqual([matching.id]);
+  });
+
+  it('matches the legacy evaluator for _completeness predicates mapped through the legacy path', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Technology' });
+
+    const complete = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      completeness: 90
+    });
+    const incomplete = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      completeness: 30
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const conditions: FilterCondition[] = [{ fieldId: '_completeness', op: 'lt', value: 50 }];
+
+    const irQuery = filterConditionsToEntityQueryIR(schema.id, null, conditions);
+    const irMatches = await runQuery(db, driver, workspace, schemas, irQuery);
+
+    const flatMatches = [complete, incomplete].filter(entity =>
+      conditions.every(c => matchesFilterCondition(entity, c, entity.completeness))
+    );
+
+    expect(new Set(irMatches.map(e => e.id))).toEqual(new Set(flatMatches.map(e => e.id)));
+    expect(irMatches.map(e => e.id)).toEqual([incomplete.id]);
+  });
+
+  it('compiles _assessment:<fieldId> conditions mapped through the legacy path to a matching SQL filter', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const schema = await createSchema(db, workspace, { name: 'Technology' });
+
+    const highRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const lowRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+
+    const assessment = await db.project.createAssessment({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'Risk Assessment',
+      description: '',
+      status: 'open',
+      scope: [schema.id],
+      scope_conditions: [],
+      fields: [
+        { id: 'riskLevel', label: 'Risk Level', requirementLevel: 'required', type: 'rating' }
+      ],
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    await db.project.upsertAssessmentResponse({
+      workspace,
+      assessment_id: assessment.id,
+      entity_id: highRisk.id,
+      values: { riskLevel: 4 },
+      updated_by: null
+    });
+    await db.project.upsertAssessmentResponse({
+      workspace,
+      assessment_id: assessment.id,
+      entity_id: lowRisk.id,
+      values: { riskLevel: 1 },
+      updated_by: null
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const conditions: FilterCondition[] = [
+      { fieldId: '_assessment:riskLevel', op: 'gt', value: 2 }
+    ];
+
+    const irQuery = filterConditionsToEntityQueryIR(schema.id, assessment.id, conditions);
+    const irMatches = await runQuery(db, driver, workspace, schemas, irQuery);
+
+    expect(irMatches.map(e => e.id)).toEqual([highRisk.id]);
+  });
+
+  it('joins assessment_response for _assessment/_assessment:<fieldId> predicates', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const schema = await createSchema(db, workspace, {
+      name: 'Technology',
+      fields: [{ id: 'category', name: 'Category', type: 'text' }]
+    });
+
+    const highRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const lowRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const noResponse = await createFixtureCatalogEntity(db, workspace, schema.id);
+
+    const assessment = await db.project.createAssessment({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'Risk Assessment',
+      description: '',
+      status: 'open',
+      scope: [schema.id],
+      scope_conditions: [],
+      fields: [
+        { id: 'riskLevel', label: 'Risk Level', requirementLevel: 'required', type: 'rating' }
+      ],
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    await db.project.upsertAssessmentResponse({
+      workspace,
+      assessment_id: assessment.id,
+      entity_id: highRisk.id,
+      values: { riskLevel: 4 },
+      updated_by: null
+    });
+    await db.project.upsertAssessmentResponse({
+      workspace,
+      assessment_id: assessment.id,
+      entity_id: lowRisk.id,
+      values: { riskLevel: 1 },
+      updated_by: null
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+
+    const presenceQuery: EntityQuery = {
+      schemaId: schema.id,
+      assessmentId: assessment.id,
+      root: { kind: 'predicate', path: [], fieldId: '_assessment', op: 'not_empty', value: null }
+    };
+    const presenceMatches = await runQuery(db, driver, workspace, schemas, presenceQuery);
+    expect(new Set(presenceMatches.map(e => e.id))).toEqual(new Set([highRisk.id, lowRisk.id]));
+    expect(presenceMatches.some(e => e.id === noResponse.id)).toBe(false);
+
+    const fieldQuery: EntityQuery = {
+      schemaId: schema.id,
+      assessmentId: assessment.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_assessment:riskLevel',
+        op: 'gt',
+        value: 2
+      }
+    };
+    const fieldMatches = await runQuery(db, driver, workspace, schemas, fieldQuery);
+    expect(fieldMatches.map(e => e.id)).toEqual([highRisk.id]);
+  });
+
+  it('applies live project scope inside the compiler CTE', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const schema = await createSchema(db, workspace, { name: 'Technology' });
+    const globalEntity = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const projectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      project_id: project.id
+    });
+    const linkedEntity = await createFixtureCatalogEntity(db, workspace, schema.id);
+    await db.project.addProjectEntity({
+      workspace,
+      project_id: project.id,
+      entity_id: linkedEntity.id,
+      entity_type_id: null,
+      created_at: new Date()
+    });
+    const otherProject = await createFixtureProject(db, workspace);
+    const otherProjectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      project_id: otherProject.id
+    });
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const query: EntityQuery = {
+      projectId: project.id,
+      projectScope: 'project',
+      schemaId: schema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'not_empty', value: null }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches.map(entity => entity.id)).toEqual(
+      expect.arrayContaining([projectEntity.id, linkedEntity.id])
+    );
+    expect(matches.map(entity => entity.id)).not.toContain(globalEntity.id);
+    expect(matches.map(entity => entity.id)).not.toContain(otherProjectEntity.id);
+
+    const allMatches = await runQuery(db, driver, workspace, schemas, {
+      ...query,
+      projectScope: 'all'
+    });
+    expect(allMatches.map(entity => entity.id).sort()).toEqual(
+      [globalEntity.id, projectEntity.id, linkedEntity.id].sort()
+    );
+    expect(allMatches.map(entity => entity.id)).not.toContain(otherProjectEntity.id);
+  });
+
+  it('reconstructs historical state from entity_version in SQL', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, {
+      name: 'Technology',
+      fields: [{ id: 'category', name: 'Category', type: 'text' }]
+    });
+    const entity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'Live name'
+    });
+    const historicalDate = new Date('2026-01-02T00:00:00.000Z');
+    await db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: entity.id,
+      version_number: 1,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      created_by: null,
+      state: {
+        id: entity.id,
+        public_id: entity.public_id,
+        slug: entity.slug,
+        namespace: entity.namespace,
+        name: 'Historical name',
+        description: entity.description,
+        schema_id: schema.id,
+        data: { category: 'historical' },
+        tags: [],
+        links: [],
+        project_id: null,
+        version: 1,
+        created_at: entity.created_at.toISOString(),
+        updated_at: historicalDate.toISOString()
+      },
+      applied_case_revision_id: null
+    });
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const query: EntityQuery = {
+      asOf: historicalDate.toISOString(),
+      schemaId: schema.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'category',
+        op: 'equals',
+        value: 'historical'
+      }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches.map(result => result.name)).toEqual(['Historical name']);
+  });
+
+  it('uses the live row as an SQL baseline when no entity version exists', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Technology' });
+    const entity = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const query: EntityQuery = {
+      asOf: '2030-01-01T00:00:00.000Z',
+      schemaId: schema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: entity.id }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches.map(result => result.id)).toEqual([entity.id]);
+  });
+
+  it('applies active future changes and respects project case scope', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const user = await createFixtureUser(db);
+    const schema = await createSchema(db, workspace, { name: 'Technology' });
+    const entity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'Current name'
+    });
+    await db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: entity.id,
+      version_number: 1,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      created_by: null,
+      state: {
+        id: entity.id,
+        public_id: entity.public_id,
+        slug: entity.slug,
+        namespace: entity.namespace,
+        name: entity.name,
+        description: entity.description,
+        schema_id: schema.id,
+        data: {},
+        tags: [],
+        links: [],
+        project_id: null,
+        version: 1,
+        created_at: entity.created_at.toISOString(),
+        updated_at: entity.updated_at.toISOString()
+      },
+      applied_case_revision_id: null
+    });
+    await db.changeCase.createCase({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'planned rename',
+      description: null,
+      effective_date: '2030-01-01',
+      milestone_id: null,
+      message: 'planned rename',
+      created_by: user.id,
+      created_at: new Date('2026-01-02T00:00:00.000Z'),
+      members: [
+        {
+          entity_id: entity.id,
+          base_version: 1,
+          base_state: { name: entity.name },
+          proposed_state: { name: 'Future name' },
+          diff: {}
+        }
+      ]
+    });
+    await db.project.addProjectEntity({
+      workspace,
+      project_id: project.id,
+      entity_id: entity.id,
+      entity_type_id: null,
+      created_at: new Date('2026-01-02T00:00:00.000Z')
+    });
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const query: EntityQuery = {
+      asOf: '2030-02-01T00:00:00.000Z',
+      projectId: project.id,
+      projectScope: 'project',
+      schemaId: schema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_name', op: 'equals', value: 'Future name' }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches.map(result => result.id)).toEqual([entity.id]);
+  });
+
+  it('returns scalar projections and reuses the filtered relation path', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const releaseSchema = await createSchema(db, workspace, {
+      name: 'Technology Release',
+      fields: [
+        { id: 'eol_date', name: 'EOL Date', type: 'date' },
+        { id: 'latest_version', name: 'Latest Version', type: 'text' }
+      ]
+    });
+    const componentSchema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          schemaId: releaseSchema.id,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    const release = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+      data: { eol_date: '2026-01-01', latest_version: '1.2.3' }
+    });
+    const component = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+      data: { technology_releases: [release.id] }
+    });
+    const schemas: SchemaCatalog = new Map([
+      [releaseSchema.id, releaseSchema],
+      [componentSchema.id, componentSchema]
+    ]);
+    const query: EntityQuery = {
+      schemaId: componentSchema.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+        fieldId: 'eol_date',
+        op: 'before',
+        value: '2026-06-30'
+      },
+      projections: [
+        {
+          path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+          fieldId: 'eol_date',
+          alias: 'eol'
+        },
+        {
+          path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+          fieldId: 'latest_version'
+        }
+      ]
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches).toHaveLength(1);
+    expect(matches[0]!.id).toBe(component.id);
+    expect(matches[0]!.projections).toEqual({
+      eol: '2026-01-01',
+      'technology_releases.latest_version': '1.2.3'
+    });
+  });
+
+  it('aggregates multi-valued projections and hides invisible related entities', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const releaseSchema = await createSchema(db, workspace, {
+      name: 'Technology Release',
+      fields: [{ id: 'eol_date', name: 'EOL Date', type: 'date' }]
+    });
+    const componentSchema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          schemaId: releaseSchema.id,
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    });
+    const first = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+      data: { eol_date: '2026-01-01' }
+    });
+    const second = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+      data: { eol_date: '2027-01-01' }
+    });
+    const component = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+      data: { technology_releases: [first.id, second.id] }
+    });
+    const schemas: SchemaCatalog = new Map([
+      [releaseSchema.id, releaseSchema],
+      [componentSchema.id, componentSchema]
+    ]);
+    const query: EntityQuery = {
+      schemaId: componentSchema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: component.id },
+      projections: [
+        {
+          path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+          fieldId: 'eol_date'
+        }
+      ]
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches[0]!.projections['technology_releases.eol_date']).toEqual([
+      '2026-01-01',
+      '2027-01-01'
+    ]);
+
+    const hiddenMatches = await runQuery(db, driver, workspace, schemas, query, {
+      visibleEntityIds: [component.id]
+    });
+    expect(hiddenMatches[0]!.projections['technology_releases.eol_date']).toEqual([]);
+  });
+
+  it('rejects projection reuse when independent multi-valued witnesses are ambiguous', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const releaseSchema = await createSchema(db, workspace, {
+      name: 'Technology Release',
+      fields: [
+        { id: 'eol_date', name: 'EOL Date', type: 'date' },
+        { id: 'release_cycle', name: 'Release Cycle', type: 'number' }
+      ]
+    });
+    const componentSchema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          schemaId: releaseSchema.id,
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    });
+    const schemas: SchemaCatalog = new Map([
+      [releaseSchema.id, releaseSchema],
+      [componentSchema.id, componentSchema]
+    ]);
+    const query: EntityQuery = {
+      schemaId: componentSchema.id,
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+            fieldId: 'eol_date',
+            op: 'not_empty',
+            value: null
+          },
+          {
+            kind: 'predicate',
+            path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+            fieldId: 'release_cycle',
+            op: 'gt',
+            value: 1
+          }
+        ]
+      },
+      projections: [
+        {
+          path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+          fieldId: 'eol_date'
+        }
+      ]
+    };
+
+    expect(() => compileEntityQueryIR(query, schemas, driver, workspace)).toThrow('ambiguous');
+  });
+
+  it('executes EntityQuery through the existing list/count path', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const technologySchema = await createSchema(db, workspace, { name: 'Technology' });
+    const releaseSchema = await createSchema(db, workspace, {
+      name: 'Technology Release',
+      fields: [
+        { id: 'eol_date', name: 'EOL Date', type: 'date' },
+        {
+          id: 'technology',
+          name: 'Technology',
+          type: 'containment',
+          schemaId: technologySchema.id,
+          minCount: 1,
+          maxCount: 1
+        }
+      ]
+    });
+    const componentSchema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          schemaId: releaseSchema.id,
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    });
+    const go = await createFixtureCatalogEntity(db, workspace, technologySchema.id, {
+      slug: 'go'
+    });
+    const release = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+      data: { eol_date: '2026-01-01', technology: [go.id] }
+    });
+    const component = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+      data: { technology_releases: [release.id] }
+    });
+
+    const query: EntityQuery = {
+      schemaId: componentSchema.id,
+      root: {
+        kind: 'predicate',
+        path: [
+          { kind: 'forward', fieldId: 'technology_releases' },
+          { kind: 'forward', fieldId: 'technology' }
+        ],
+        fieldId: '_id',
+        op: 'equals',
+        value: go.id
+      },
+      projections: [
+        {
+          path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+          fieldId: 'eol_date',
+          alias: 'release_eol'
+        }
+      ]
+    };
+
+    const page = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery: query,
+      view: 'full',
+      limit: 1,
+      offset: 0
+    });
+
+    expect(page.total).toBe(1);
+    expect(page.items.map(item => item._uid)).toEqual([component.id]);
+    expect(page.items[0]?._projections).toEqual({ release_eol: ['2026-01-01'] });
+    expect(await countEntities(db, workspace, null, { entityQuery: query })).toBe(1);
+  });
+
+  it('preserves project scope and pagination through the IR list/count path', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const otherProject = await createFixtureProject(db, workspace);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+    const globalEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      name: 'A global'
+    });
+    const projectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+      project_id: project.id,
+      name: 'B project'
+    });
+    await createFixtureCatalogEntity(db, workspace, schema.id, {
+      project_id: otherProject.id,
+      name: 'C other project'
+    });
+
+    const query: EntityQuery = {
+      projectId: project.id,
+      projectScope: 'project',
+      schemaId: schema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'not_empty', value: null }
+    };
+    const page = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery: query,
+      view: 'summary',
+      limit: 1,
+      offset: 0
+    });
+
+    expect(page.total).toBe(1);
+    expect(page.items.map(item => item._uid)).toEqual([projectEntity.id]);
+    expect(await countEntities(db, workspace, null, { entityQuery: query })).toBe(1);
+    expect(page.items.map(item => item._uid)).not.toContain(globalEntity.id);
+  });
+
+  it('applies entity visibility before IR traversal results are returned', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Component' });
+    const user = await createFixtureUser(db);
+    const allowed = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const denied = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const grants = await db.catalog.replaceEntityGrants(workspace, allowed.id, [
+      {
+        id: randomUUID(),
+        workspace,
+        entity_id: allowed.id,
+        principal_type: 'user',
+        principal_id: user.id,
+        role: 'editor',
+        applies_to: 'self',
+        created_at: new Date()
+      }
+    ]);
+    const authCtx = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: null,
+      schemas: [schema],
+      entities: [allowed, denied],
+      grants
+    });
+
+    const page = await listEntitiesWithCount(db, workspace, authCtx, {
+      entityQuery: {
+        schemaId: schema.id,
+        root: { kind: 'predicate', path: [], fieldId: '_id', op: 'not_empty', value: null }
+      }
+    });
+
+    expect(page.items.map(item => item._uid)).toEqual([allowed.id]);
+    expect(page.items.map(item => item._uid)).not.toContain(denied.id);
+  });
+});

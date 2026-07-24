@@ -340,7 +340,11 @@ export const ShapeSelectDialog = (props: Props) => {
       <>
         <div style={{ marginBottom: '0.75rem' }}>
           <ModeSwitcher
-            modes={activeTabs.map(tab => ({ value: tab, label: TAB_LABELS[tab], icon: TAB_ICONS[tab] }))}
+            modes={activeTabs.map(tab => ({
+              value: tab,
+              label: TAB_LABELS[tab],
+              icon: TAB_ICONS[tab]
+            }))}
             value={mode}
             onChange={handleModeChange}
           />

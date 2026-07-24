@@ -23,8 +23,8 @@ type TimelineStripProps = {
   onSelect: (date: string) => void;
   onClear: () => void;
   onClose: () => void;
-  includeProjectSnapshots?: boolean;
-  onToggleIncludeProjectSnapshots?: (include: boolean) => void;
+  includePlannedChanges?: boolean;
+  onToggleIncludePlannedChanges?: (include: boolean) => void;
 };
 
 const markerTypeLabel = (type: AsOfMarker['type']) => {
@@ -65,8 +65,8 @@ export const TimelineStrip = ({
   onSelect,
   onClear,
   onClose,
-  includeProjectSnapshots,
-  onToggleIncludeProjectSnapshots
+  includePlannedChanges,
+  onToggleIncludePlannedChanges
 }: TimelineStripProps) => {
   const { todayMs, startMs, endMs, rangeMs } = useTimelineRange(markers);
   const todayIso = useMemo(() => toDateOnly(new Date(todayMs)), [todayMs]);
@@ -155,13 +155,13 @@ export const TimelineStrip = ({
         </div>
 
         <div className={styles.panelHeadR}>
-          {onToggleIncludeProjectSnapshots && (
+          {onToggleIncludePlannedChanges && (
             <label className={styles.toggleRow}>
               <Checkbox
-                value={includeProjectSnapshots ?? true}
-                onChange={v => onToggleIncludeProjectSnapshots(v ?? true)}
+                value={includePlannedChanges ?? true}
+                onChange={v => onToggleIncludePlannedChanges(v ?? true)}
               />
-              <span>Include project changes</span>
+              <span>Include planned changes</span>
             </label>
           )}
           {displayDate && (

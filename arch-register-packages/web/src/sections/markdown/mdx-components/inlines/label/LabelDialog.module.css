@@ -1,0 +1,19 @@
+.textInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  outline: none;
+}
+
+.textInput:focus {
+  border-color: var(--accent-fg);
+}
+
+.textInput::placeholder {
+  color: var(--cmp-fg-disabled);
+}

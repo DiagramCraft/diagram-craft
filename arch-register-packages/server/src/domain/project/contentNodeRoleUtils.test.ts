@@ -79,7 +79,9 @@ describe('contentNodeRoleUtils', () => {
   const nodes = [markdown, attachmentContainer, diagramAttachment, fileAttachment, ordinaryChild];
 
   it('finds the markdown attachment container', () => {
-    expect(getAttachmentContainerForMarkdownNode(nodes, markdown.id)?.id).toBe(attachmentContainer.id);
+    expect(getAttachmentContainerForMarkdownNode(nodes, markdown.id)?.id).toBe(
+      attachmentContainer.id
+    );
   });
 
   it('lists only attachment descendants for a markdown node', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { RectNodeDefinition } from '../node-types/Rect.nodeType';

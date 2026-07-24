@@ -204,7 +204,9 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
     it('should reject edge endpoint cycles', () => {
       expect(() =>
-        UnitOfWork.execute(model.diagram1, uow => edge1.setStart(new PointOnEdgeEndpoint(edge1, 0.5), uow))
+        UnitOfWork.execute(model.diagram1, uow =>
+          edge1.setStart(new PointOnEdgeEndpoint(edge1, 0.5), uow)
+        )
       ).toThrow();
     });
   });

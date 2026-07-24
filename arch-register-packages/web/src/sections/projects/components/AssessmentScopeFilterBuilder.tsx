@@ -24,10 +24,7 @@ const BASE_OPERATORS = [
   { value: 'not_empty', label: 'Is not empty' }
 ] as const;
 
-const TEXT_OPERATORS = [
-  { value: 'contains', label: 'Contains' },
-  ...BASE_OPERATORS
-] as const;
+const TEXT_OPERATORS = [{ value: 'contains', label: 'Contains' }, ...BASE_OPERATORS] as const;
 
 const defaultOpFor = (field: ScopeField): FilterCondition['op'] =>
   field.type === 'text' ? 'contains' : 'equals';
@@ -158,7 +155,12 @@ export const AssessmentScopeFilterBuilder = ({
               Clear all
             </button>
           )}
-          <button type="button" className={styles.addFilter} onClick={addCondition} disabled={fields.length === 0}>
+          <button
+            type="button"
+            className={styles.addFilter}
+            onClick={addCondition}
+            disabled={fields.length === 0}
+          >
             <TbPlus size={11} />
             Add filter
           </button>

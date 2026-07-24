@@ -63,7 +63,7 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
     if (actions.length === 0) return;
 
     if (actions.length === 1) {
-      executeNodeAction(this.context, actions[0]!);
+      executeNodeAction(this.context, actions[0]!, node);
       return;
     }
 
@@ -73,7 +73,7 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
           title: 'Choose Action',
           actions
         },
-        action => executeNodeAction(this.context, action)
+        action => executeNodeAction(this.context, action, node)
       )
     );
   }

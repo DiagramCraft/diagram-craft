@@ -77,7 +77,7 @@
     border-color: transparent;
   }
 
-  &[data-variant='search'] {
+  &[data-variant="search"] {
     height: 26px;
     padding: 0 10px;
     border-color: var(--panel-border);

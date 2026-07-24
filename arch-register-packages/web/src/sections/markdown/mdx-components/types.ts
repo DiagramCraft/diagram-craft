@@ -12,6 +12,7 @@ export type SlashCommandDef = {
     editor: ReturnType<typeof useEditorRef>,
     helpers: {
       insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: TElement) => void;
+      insertOrReplaceInline: (editor: ReturnType<typeof useEditorRef>, node: TElement) => void;
     }
   ) => void;
 };
@@ -41,12 +42,20 @@ export type MdxComponentSpec = {
   component: React.ComponentType<Record<string, string>>;
   mode: 'block' | 'inline';
   allowedProps: ReadonlyArray<string>;
+  /** Normalizes string props before they are exposed to the preview renderer. */
+  normalizeProps?: (props: Record<string, string>) => Record<string, string>;
   /**
    * Marks a block-level component as a wrapper that accepts exactly one other
    * block-level (non-wrapper) MDX component as its child, e.g. Caption. Depth is
    * capped at 1 — a wrapper cannot be nested inside another wrapper.
    */
   acceptsChildren?: boolean;
+  /**
+   * Marks a block-level component as accepting arbitrary rich markdown content
+   * (paragraphs, lists, etc.) between its open/close tags, e.g. Callout.
+   * Distinct from `acceptsChildren`'s single-MDX-component wrapper semantics.
+   */
+  acceptsRichContent?: boolean;
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: EditorSpec;
 };

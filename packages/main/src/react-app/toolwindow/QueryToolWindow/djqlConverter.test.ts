@@ -125,9 +125,7 @@ describe('convertAdvancedSearchToDJQL', () => {
     ]);
 
     const result = convertAdvancedSearchToDJQL(clauses);
-    expect(result).toBe(
-      '.elements[]\n  | select(any(.comments[]; .state == "unresolved"))'
-    );
+    expect(result).toBe('.elements[]\n  | select(any(.comments[]; .state == "unresolved"))');
   });
 
   test('converts comment clause without state', () => {

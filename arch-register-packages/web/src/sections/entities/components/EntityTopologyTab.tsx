@@ -195,7 +195,7 @@ export const EntityTopologyTab = ({
           <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={28} />
           <div className={styles.topoEntityMeta}>
             <div className={styles.topoEntityEyebrow}>{schema?.name ?? 'Entity'}</div>
-            <div className={styles.topoEntityName}>{entity._name || entity._slug}</div>
+            <div className={styles.topoEntityName}>{entity._name ?? entity._slug}</div>
           </div>
           {entity._lifecycle && (
             <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
@@ -233,7 +233,9 @@ export const EntityTopologyTab = ({
           </>
         ) : (
           !isEmpty && (
-            <div className={`${styles.topoEntityEmpty} ${sharedStyles.dim}`}>No contained entities</div>
+            <div className={`${styles.topoEntityEmpty} ${sharedStyles.dim}`}>
+              No contained entities
+            </div>
           )
         )}
       </div>
@@ -242,7 +244,9 @@ export const EntityTopologyTab = ({
         <div className={styles.topoRefsGrid}>
           <div className={`${styles.topoRefsCol} ${styles.topoRefsColIn}`}>
             {usedByRefs.length === 0 && (
-              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>No incoming references</div>
+              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
+                No incoming references
+              </div>
             )}
             {groupRelationsByField(usedByRefs).map(group => (
               <div key={group.key} className={styles.topoRefGroup}>
@@ -262,7 +266,9 @@ export const EntityTopologyTab = ({
                       <div className={styles.topoRefBody}>
                         <div className={styles.topoCardName}>{r.entityName}</div>
                         {rs && (
-                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>{rs.name}</div>
+                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>
+                            {rs.name}
+                          </div>
                         )}
                       </div>
                     </button>
@@ -273,7 +279,9 @@ export const EntityTopologyTab = ({
           </div>
           <div className={`${styles.topoRefsCol} ${styles.topoRefsColOut}`}>
             {consumesRefs.length === 0 && (
-              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>No outgoing references</div>
+              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
+                No outgoing references
+              </div>
             )}
             {groupRelationsByField(consumesRefs).map(group => (
               <div key={group.key} className={styles.topoRefGroup}>
@@ -293,7 +301,9 @@ export const EntityTopologyTab = ({
                       <div className={styles.topoRefBody}>
                         <div className={styles.topoCardName}>{r.entityName}</div>
                         {rs && (
-                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>{rs.name}</div>
+                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>
+                            {rs.name}
+                          </div>
                         )}
                       </div>
                     </button>

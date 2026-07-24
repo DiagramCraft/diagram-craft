@@ -135,6 +135,7 @@
   max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-decoration: none;
 }
 
 .entNameBtn:hover {
@@ -145,10 +146,6 @@
 .cell {
   min-width: 148px;
   max-width: 220px;
-}
-
-.req {
-  color: var(--danger, red);
 }
 
 .statusDot {

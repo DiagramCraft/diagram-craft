@@ -11,7 +11,13 @@ import {
   projectEntityMenuItems
 } from './entityBrowserViewShared';
 import { formatDate } from '../../../utils/dateFormat';
-import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
+import {
+  findEntityDisplayField,
+  formatEntityDisplayValue,
+  getDisplayFieldIds,
+  type EntityDisplayField
+} from './entityDisplayFields';
+import { isEntityInProject } from './entityBrowserState';
 
 type DateField = Extract<EntitySchema['fields'][number], { type: 'date' }>;
 
@@ -31,17 +37,22 @@ export const TableView = ({
   onEntityClick,
   onDelete,
   onClone,
+  onManageCollections,
   projectContext,
   selectedIds,
   onSelectAll,
   onSelectRow,
-  readOnly, config, displayFields
+  readOnly,
+  config,
+  displayFields
 }: TableViewProps) => {
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
   const someSelected =
     !readOnly && (selectedIds?.size ?? 0) > 0 && (selectedIds?.size ?? 0) < rows.length;
   const fieldIds = getDisplayFieldIds('table', config);
-  const columns = fieldIds.map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
+  const columns = fieldIds.map(
+    id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
+  );
 
   return (
     <Table.Root scroll>
@@ -58,9 +69,11 @@ export const TableView = ({
           )}
           <Table.HeaderCell style={{ minWidth: 200 }}>Name</Table.HeaderCell>
           <Table.HeaderCell>Type</Table.HeaderCell>
-          {columns.filter(c => c.id !== '_description').map(c => (
-            <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
-          ))}
+          {columns
+            .filter(c => c.id !== '_description')
+            .map(c => (
+              <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
+            ))}
           {activeDateField && !fieldIds.includes(activeDateField.id) && (
             <Table.HeaderCell>{activeDateField.name}</Table.HeaderCell>
           )}
@@ -73,7 +86,7 @@ export const TableView = ({
           const menuItems = readOnly
             ? []
             : [
-                ...entityMenuItems(entity, onClone, onDelete),
+                ...entityMenuItems(entity, onClone, onDelete, onManageCollections),
                 ...projectEntityMenuItems(entity, projectContext)
               ];
 
@@ -103,18 +116,29 @@ export const TableView = ({
                   )
                 }
                 title={entityName(entity)}
-                titleMuted={projectContext && entity._projectLink?.linked === false}
-                subtitle={fieldIds.includes('_description') && entity._description ? entity._description : undefined}
+                titleMuted={
+                  projectContext != null && !isEntityInProject(entity, projectContext.project.id)
+                }
+                subtitle={
+                  fieldIds.includes('_description') && entity._description
+                    ? entity._description
+                    : undefined
+                }
               />
-              <Table.Cell>{schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}</Table.Cell>
-              {columns.filter(c => c.id !== '_description').map(column => {
-                const field = findEntityDisplayField(column.id, entity, schemaMap, displayFields) ?? column;
-                return (
-                  <Table.Cell key={column.id}>
-                    <span className="dim">{formatEntityDisplayValue(entity, field) ?? '—'}</span>
-                  </Table.Cell>
-                );
-              })}
+              <Table.Cell>
+                {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
+              </Table.Cell>
+              {columns
+                .filter(c => c.id !== '_description')
+                .map(column => {
+                  const field =
+                    findEntityDisplayField(column.id, entity, schemaMap, displayFields) ?? column;
+                  return (
+                    <Table.Cell key={column.id}>
+                      <span className="dim">{formatEntityDisplayValue(entity, field) ?? '—'}</span>
+                    </Table.Cell>
+                  );
+                })}
               {activeDateField && !fieldIds.includes(activeDateField.id) && (
                 <Table.Cell>
                   <span className="dim">{formatDate(entity[activeDateField.id])}</span>

@@ -17,13 +17,6 @@
   border-color: var(--accent-fg);
 }
 
-.loading {
-  color: var(--cmp-fg-disabled);
-  font-style: italic;
-  font-size: 13px;
-  padding: 2px 0;
-}
-
 .svgWrapper {
   display: flex;
   align-items: center;

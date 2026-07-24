@@ -2,12 +2,9 @@ import { useMemo } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
-import { TbPalette, TbUser } from 'react-icons/tb';
+import { TbBell, TbKey, TbPalette, TbUser } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import {
-  SidebarGroupLabel,
-  SidebarTitleHeader
-} from '../../components/sidebar/SidebarPrimitives';
+import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 
 type AccountSettingsNavItem = {
   id: string;
@@ -19,6 +16,8 @@ type AccountSettingsNavItem = {
 const ACCOUNT_SETTINGS_SECTIONS: AccountSettingsNavItem[] = [
   { id: 'profile', label: 'Profile', icon: <TbUser size={12} />, group: 'Account' },
   { id: 'appearance', label: 'Appearance', icon: <TbPalette size={12} />, group: 'Account' },
+  { id: 'notifications', label: 'Notifications', icon: <TbBell size={12} />, group: 'Account' },
+  { id: 'api-tokens', label: 'API tokens', icon: <TbKey size={12} />, group: 'Account' }
 ];
 
 export const AccountSettingsSidebar = () => {
@@ -26,7 +25,8 @@ export const AccountSettingsSidebar = () => {
   const location = useLocation();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
-  const section = location.pathname.split('/').pop() || 'profile';
+  const rawSection = location.pathname.split('/').pop();
+  const section = rawSection == null || rawSection === '' ? 'profile' : rawSection;
 
   const groups = useMemo(() => {
     const g: Record<string, AccountSettingsNavItem[]> = {};
@@ -52,7 +52,7 @@ export const AccountSettingsSidebar = () => {
                 onClick={() =>
                   navigate({
                     to: '/$workspaceSlug/account/$section',
-                    params: { workspaceSlug, section: s.id },
+                    params: { workspaceSlug, section: s.id }
                   })
                 }
               />

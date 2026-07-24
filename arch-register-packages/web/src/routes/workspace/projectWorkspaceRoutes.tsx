@@ -99,11 +99,22 @@ export const createProjectWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     buildDetailShell
   );
 
+  const markdownDraftRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'projects/$projectId/wiki/new',
+      validateSearch: validateMarkdownSearch,
+      component: LazyMarkdownEditorScreen
+    }),
+    buildDetailShell
+  );
+
   return [
     projectsRoute,
     projectDetailRoute,
     projectContentFolderRoute,
     diagramRoute,
-    markdownRoute
+    markdownRoute,
+    markdownDraftRoute
   ] as const;
 };

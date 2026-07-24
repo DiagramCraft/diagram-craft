@@ -217,6 +217,7 @@
   color: var(--base-fg);
   text-align: left;
   transition: background 80ms;
+  cursor: pointer;
 }
 
 .notificationRow:last-child {

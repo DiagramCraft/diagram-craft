@@ -188,7 +188,7 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
   }
 
   toggle(element: DiagramElement) {
-    if (element.isLocked()) return;
+    if (element.isEffectivelyLocked()) return;
 
     this.#forcedRotation = false;
     const shouldRemove = this.#elements.includes(element);
@@ -203,7 +203,7 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
   }
 
   setElements(elements: ReadonlyArray<DiagramElement | undefined>, rebaseline = true) {
-    if (elements.some(e => e?.isLocked())) return;
+    if (elements.some(e => e?.isEffectivelyLocked())) return;
     this.#forcedRotation = false;
 
     const oldElements = [...this.#elements];

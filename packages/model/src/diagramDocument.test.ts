@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { TestDiagramBuilder, TestModel } from './test-support/testModel';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { standardTestModel } from './test-support/collaborationModelTestUtils';
+import { UnitOfWork } from './unitOfWork';
 
 describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
   describe('addDiagram', () => {
@@ -327,6 +329,20 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
       // Verify: root order unchanged
       expect(doc.diagrams.map(d => d.id)).toEqual(['r1', 'parent', 'r2']);
       expect(parent.diagrams.map(d => d.id)).toEqual(['c2', 'c1']);
+    });
+  });
+
+  describe('setLocked', () => {
+    it('should sync the locked state live to a remote collaborator', () => {
+      // Setup
+      const { doc1, doc2 } = standardTestModel(backend);
+
+      // Act
+      UnitOfWork.executeSilently(undefined, uow => doc1.setLocked(true, uow));
+
+      // Verify
+      expect(doc1.locked).toBe(true);
+      if (doc2) expect(doc2.locked).toBe(true);
     });
   });
 });

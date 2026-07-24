@@ -1,55 +1,40 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndUUID } from '@arch-register/api-types/common';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import { filterOpSchema } from '@arch-register/api-types/filterOp';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
 export const browserViewSchema = z
-  .enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix', 'hierarchy', 'explore', 'bubble'])
+  .enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix', 'explore', 'bubble', 'map'])
   .describe('Available view modes for displaying entities');
 
 export const filterConditionSchema = z.object({
   fieldId: z.string().describe('Field identifier to filter on'),
-  op: z
-    .enum([
-      'equals',
-      'not_equals',
-      'contains',
-      'starts_with',
-      'ends_with',
-      'empty',
-      'not_empty',
-      'before',
-      'after',
-      'on',
-      'gt',
-      'lt',
-      'gte',
-      'lte'
-    ])
-    .describe('Filter operation'),
+  op: filterOpSchema.describe('Filter operation'),
   value: z.unknown().describe('Filter value (type depends on field and operation)')
 });
 
-export const entityFiltersSchema = z.object({
-  schemaId: z.string().nullable().optional().describe('Filter by schema identifier'),
-  status: z.string().nullable().optional().describe('Filter by lifecycle status'),
-  owner: z.string().nullable().optional().describe('Filter by owner identifier'),
-  q: z.string().optional().describe('Search query string'),
-  dateFilterField: z.string().optional().describe('Field identifier for date filtering'),
-  dateFilterOperator: z
-    .enum(['on', 'before', 'after', 'empty'])
-    .optional()
-    .describe('Date filter operation'),
-  dateFilterValue: z.string().optional().describe('Date filter value (ISO 8601)'),
-  sort: z.string().optional().describe('Sort field and direction (e.g., "name:asc")'),
-  conditions: z.array(filterConditionSchema).optional().describe('Additional filter conditions'),
-  assessmentId: z
-    .string()
-    .nullable()
-    .optional()
-    .describe('Joined assessment identifier for display, filtering, and view attributes')
-});
+export const conditionsQuerySchema = z.preprocess(value => {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return undefined;
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}, z.array(filterConditionSchema).optional());
+
+/**
+ * Saved views persist the canonical query directly. Keeping this schema strict is intentional:
+ * legacy flat filter fields must not be silently stripped and accepted as a saved-view contract.
+ */
+export const savedViewQuerySchema = entityQuerySchema
+  .strict()
+  .describe('Canonical structured EntityQuery used by this saved view');
 
 export const radarViewConfigSchema = z.object({
   schemaId: z.string().describe('Schema identifier for radar view'),
@@ -61,7 +46,7 @@ export const radarViewConfigSchema = z.object({
 export const timelineViewConfigSchema = z.object({
   startFieldId: z.string().nullable().describe('Field identifier for timeline start date'),
   endFieldId: z.string().nullable().describe('Field identifier for timeline end date'),
-  groupBy: z.enum(['owner', 'type', 'snapshot']).describe('Timeline grouping mode'),
+  groupBy: z.enum(['owner', 'type', 'snapshot', 'project']).describe('Timeline grouping mode'),
   zoom: z.enum(['month', 'quarter', 'year']).describe('Timeline zoom level')
 });
 
@@ -94,9 +79,9 @@ export const tableViewConfigSchema = z.object(fieldDisplayConfigShape);
 export const cardsViewConfigSchema = z.object(fieldDisplayConfigShape);
 export const treeViewConfigSchema = z.object(fieldDisplayConfigShape);
 
-export const hierarchyViewConfigSchema = z.object({
+export const mapViewConfigSchema = z.object({
   ...fieldDisplayConfigShape,
-  levels: z.number().int().min(1).max(3).default(2).describe('Number of hierarchy levels (1-3)'),
+  levels: z.number().int().min(1).max(3).default(2).describe('Number of map levels (1-3)'),
   level1SchemaId: z.string().nullable().default(null).describe('Schema identifier for level 1'),
   level1Columns: z
     .number()
@@ -120,7 +105,12 @@ export const hierarchyViewConfigSchema = z.object({
     .min(1)
     .max(4)
     .optional()
-    .describe('Number of columns for level 3 (1-4)')
+    .describe('Number of columns for level 3 (1-4)'),
+  metricConfig: z
+    .unknown()
+    .nullable()
+    .optional()
+    .describe('Metric roll-up configuration applied to box coloring')
 });
 
 export const exploreViewConfigSchema = z.object({
@@ -145,15 +135,16 @@ export const exploreViewConfigSchema = z.object({
 
 const viewConfigSchema = z
   .object({
+    sort: z.string().optional().describe('Entity sort mode, defaulting to name'),
     table: tableViewConfigSchema.optional().describe('Configuration for table view'),
     cards: cardsViewConfigSchema.optional().describe('Configuration for cards view'),
     tree: treeViewConfigSchema.optional().describe('Configuration for tree view'),
     radar: radarViewConfigSchema.optional().describe('Configuration for radar view'),
     timeline: timelineViewConfigSchema.optional().describe('Configuration for timeline view'),
     matrix: matrixViewConfigSchema.optional().describe('Configuration for matrix view'),
-    hierarchy: hierarchyViewConfigSchema.optional().describe('Configuration for hierarchy view'),
     explore: exploreViewConfigSchema.optional().describe('Configuration for explore view'),
-    bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view')
+    bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view'),
+    map: mapViewConfigSchema.optional().describe('Configuration for map view')
   })
   .nullable()
   .describe('View-specific configuration (only one view type should be configured)');
@@ -168,14 +159,16 @@ export const savedViewSchema = z.object({
   projectScope: z
     .enum(['project', 'all'])
     .nullable()
-    .describe('Project entity browser scope filter'),
+    .describe(
+      'Project entity browser scope: project-owned or linked entities, or global plus project-owned entities'
+    ),
   name: z.string().describe('View name'),
   description: z.string().nullable().describe('View description'),
   isAdminView: z
     .boolean()
     .describe('Whether this view was pinned by a workspace admin for all members'),
   viewMode: browserViewSchema.describe('View display mode'),
-  filters: entityFiltersSchema.describe('Entity filters applied in this view'),
+  filters: savedViewQuerySchema.describe('Canonical EntityQuery applied in this view'),
   config: viewConfigSchema.describe('View-specific configuration'),
   createdAt: z.string().describe('ISO 8601 creation timestamp'),
   updatedAt: z.string().describe('ISO 8601 last update timestamp')
@@ -203,7 +196,7 @@ export const createViewBodySchema = z.object({
     .enum(['project', 'all'])
     .nullable()
     .optional()
-    .describe('Saved project entity browser scope'),
+    .describe('Saved project entity browser scope with project membership semantics'),
   name: z.string().describe('View name'),
   description: z.string().nullable().optional().describe('View description'),
   isAdminView: z
@@ -211,7 +204,7 @@ export const createViewBodySchema = z.object({
     .optional()
     .describe('Pin this view as a workspace admin view visible to all members'),
   viewMode: browserViewSchema.describe('View display mode'),
-  filters: entityFiltersSchema.describe('Entity filters to apply'),
+  filters: savedViewQuerySchema.describe('Canonical EntityQuery to apply'),
   config: viewConfigSchema.optional().describe('View-specific configuration')
 });
 
@@ -220,7 +213,7 @@ export const updateViewBodySchema = z.object({
     .enum(['project', 'all'])
     .nullable()
     .optional()
-    .describe('Saved project entity browser scope'),
+    .describe('Saved project entity browser scope with project membership semantics'),
   name: z.string().optional().describe('View name'),
   description: z.string().nullable().optional().describe('View description'),
   isAdminView: z
@@ -228,7 +221,7 @@ export const updateViewBodySchema = z.object({
     .optional()
     .describe('Pin this view as a workspace admin view visible to all members'),
   viewMode: browserViewSchema.optional().describe('View display mode'),
-  filters: entityFiltersSchema.optional().describe('Entity filters to apply'),
+  filters: savedViewQuerySchema.optional().describe('Canonical EntityQuery to apply'),
   config: viewConfigSchema.optional().describe('View-specific configuration')
 });
 
@@ -382,8 +375,6 @@ export type BrowserView = z.infer<typeof browserViewSchema>;
 
 export type FilterCondition = z.infer<typeof filterConditionSchema>;
 
-export type EntityFilters = z.infer<typeof entityFiltersSchema>;
-
 export type RadarViewConfig = z.infer<typeof radarViewConfigSchema>;
 
 export type TimelineViewConfig = z.infer<typeof timelineViewConfigSchema>;
@@ -393,11 +384,11 @@ export type TableViewConfig = z.infer<typeof tableViewConfigSchema>;
 export type CardsViewConfig = z.infer<typeof cardsViewConfigSchema>;
 export type TreeViewConfig = z.infer<typeof treeViewConfigSchema>;
 
-export type HierarchyViewConfig = z.infer<typeof hierarchyViewConfigSchema>;
-
 export type ExploreViewConfig = z.infer<typeof exploreViewConfigSchema>;
 
 export type BubbleViewConfig = z.infer<typeof bubbleViewConfigSchema>;
+
+export type MapViewConfig = z.infer<typeof mapViewConfigSchema>;
 
 export type SavedView = z.infer<typeof savedViewSchema>;
 

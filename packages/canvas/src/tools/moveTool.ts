@@ -14,7 +14,7 @@ import {
 } from '@diagram-craft/model/diagramElement';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 type DeferredMouseAction = {
   callback: () => void;

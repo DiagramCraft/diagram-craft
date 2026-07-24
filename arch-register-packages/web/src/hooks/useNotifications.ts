@@ -51,7 +51,8 @@ export const useNotificationCount = (workspaceId: string, enabled = true) =>
     queryKey: notificationKeys.count(workspaceId),
     queryFn: () => orpcClient.notifications.count({ params: { workspace: workspaceId } }),
     enabled: enabled && !!workspaceId,
-    staleTime: 60 * 1000
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000
   });
 
 export const useCreateWatch = (workspaceId: string) => {

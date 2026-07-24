@@ -13,10 +13,11 @@ describe('stencilLoaderDrawioXml', () => {
       </shapes>
     `);
 
-    const pkg = await stencilLoaderDrawioXml(
-      {} as never,
-      { url: '/tmp/arrows.xml', foreground: '#000000', background: '#ffffff' }
-    );
+    const pkg = await stencilLoaderDrawioXml({} as never, {
+      url: '/tmp/arrows.xml',
+      foreground: '#000000',
+      background: '#ffffff'
+    });
 
     expect(pkg.id).toBe('mxgraph.arrows');
     expect(pkg.stencils).toHaveLength(1);
@@ -31,10 +32,11 @@ describe('stencilLoaderDrawioXml', () => {
 
     const stencilRegistry = new StencilRegistry();
     stencilRegistry.preRegister('Arrows', 'Arrows', async () => {
-      const pkg = await stencilLoaderDrawioXml(
-        defaultRegistry(),
-        { url: '/tmp/arrows.xml', foreground: '#000000', background: '#ffffff' }
-      );
+      const pkg = await stencilLoaderDrawioXml(defaultRegistry(), {
+        url: '/tmp/arrows.xml',
+        foreground: '#000000',
+        background: '#ffffff'
+      });
       stencilRegistry.register(pkg.name ?? 'Arrows', pkg, ['Arrows']);
     });
 

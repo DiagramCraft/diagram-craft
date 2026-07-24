@@ -237,7 +237,7 @@ export const ExtractScreen = () => {
                         </button>
                       </Table.Cell>
                       <Table.CheckboxCell
-                        aria-label={`Include ${r.name || 'entity'}`}
+                        aria-label={`Include ${r.name ?? 'entity'}`}
                         checked={r.accepted}
                         onChange={() => toggleRow(r.id)}
                       />

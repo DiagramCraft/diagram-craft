@@ -1,13 +1,24 @@
 import { useMemo } from 'react';
 import { parseMarkdownPreview } from './mdxMarkdown';
-import { renderMarkdownPreview } from './mdxRenderNode';
+import {
+  renderMarkdownPreview,
+  type HighlightHandlers,
+  type HighlightRange
+} from './mdxRenderNode';
 
 type MdxPreviewProps = {
   body: string;
   withoutFirstHeading?: boolean;
+  highlightRanges?: HighlightRange[];
+  highlightHandlers?: HighlightHandlers;
 };
 
-export const MdxPreview = ({ body, withoutFirstHeading = false }: MdxPreviewProps) => {
+export const MdxPreview = ({
+  body,
+  withoutFirstHeading = false,
+  highlightRanges,
+  highlightHandlers
+}: MdxPreviewProps) => {
   const parsed = useMemo(() => {
     if (!body.trim()) return [];
     return parseMarkdownPreview(body, withoutFirstHeading);
@@ -15,5 +26,5 @@ export const MdxPreview = ({ body, withoutFirstHeading = false }: MdxPreviewProp
 
   if (!body.trim()) return null;
 
-  return renderMarkdownPreview(parsed);
+  return renderMarkdownPreview(parsed, highlightRanges, highlightHandlers);
 };

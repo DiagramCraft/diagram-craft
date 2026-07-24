@@ -5,13 +5,16 @@ import { AppLoader } from './AppLoader';
 import './index.css';
 import { DiagramRef } from './App';
 import { UserState } from './UserState';
+import { CollaborationAwareness } from './CollaborationAwareness';
 import { AppConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
 import { Autosave } from './react-app/autosave/Autosave';
 
+const awareness = new CollaborationAwareness();
+
 ELECTRON: {
   if (window.electronAPI) {
-    ElectronIntegration.init();
+    ElectronIntegration.init(awareness);
   }
 }
 
@@ -37,5 +40,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     diagramFactory={diagramFactory}
     documentFactory={documentFactory}
     nodeRegistry={nodes}
+    awareness={awareness}
   />
 );

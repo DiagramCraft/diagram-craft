@@ -436,12 +436,24 @@
   animation: aiBounce 1.1s infinite ease-in-out;
 }
 
-.typing span:nth-child(2) { animation-delay: 0.15s; }
-.typing span:nth-child(3) { animation-delay: 0.3s; }
+.typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
 
 @keyframes aiBounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-  30% { transform: translateY(-4px); opacity: 1; }
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
 }
 
 /* ── Suggestions ── */
@@ -567,7 +579,7 @@
 }
 
 .mdList li::before {
-  content: '•';
+  content: "•";
   position: absolute;
   left: 2px;
   color: var(--accent-fg-hover, var(--accent-fg));
@@ -582,7 +594,7 @@ ol.mdList li {
 }
 
 ol.mdList li::before {
-  content: counter(md-ol) '.';
+  content: counter(md-ol) ".";
   color: var(--cmp-fg-disabled);
   font-size: 11px;
   left: 0;
@@ -708,4 +720,3 @@ ol.mdList li::before {
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-

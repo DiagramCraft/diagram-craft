@@ -1,9 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest';
-import {
-  loadDrawioStencilPackage,
-  parseDrawioStencilPackage
-} from './drawioStencilLoader';
+import { loadDrawioStencilPackage, parseDrawioStencilPackage } from './drawioStencilLoader';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 
 describe('parseDrawioStencilPackage', () => {

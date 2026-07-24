@@ -7,6 +7,8 @@
     "test:api": "vitest run",
     "test:api:watch": "vitest watch",
     "test:ui": "playwright test",
+    "test:ui:quick": "playwright test --grep @quick",
+    "test:ui:full": "playwright test",
     "test:ui:headed": "playwright test --headed"
   },
   "dependencies": {

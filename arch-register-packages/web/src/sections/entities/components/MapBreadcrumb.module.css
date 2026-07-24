@@ -1,0 +1,48 @@
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.crumbGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sep {
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+  font-weight: 300;
+  padding: 0 2px;
+}
+
+.crumb {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  border-radius: var(--r);
+  font-family: inherit;
+  font-size: 11.5px;
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+
+.crumb:hover {
+  background: var(--cmp-bg-hover);
+}
+
+.crumbActive {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+  cursor: default;
+}

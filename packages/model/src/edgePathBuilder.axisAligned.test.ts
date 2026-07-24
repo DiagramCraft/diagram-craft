@@ -22,14 +22,8 @@ describe('buildAxisAlignedEdgePath', () => {
     const edge = layer.addEdge();
 
     UnitOfWork.execute(diagram, uow => {
-      edge.setStart(
-        new PointInNodeEndpoint(startNode, undefined, { x: 9, y: 5 }, 'absolute'),
-        uow
-      );
-      edge.setEnd(
-        new PointInNodeEndpoint(endNode, undefined, { x: 1, y: 5 }, 'absolute'),
-        uow
-      );
+      edge.setStart(new PointInNodeEndpoint(startNode, undefined, { x: 9, y: 5 }, 'absolute'), uow);
+      edge.setEnd(new PointInNodeEndpoint(endNode, undefined, { x: 1, y: 5 }, 'absolute'), uow);
     });
 
     const path = buildAxisAlignedEdgePath(edge);
@@ -48,10 +42,7 @@ describe('buildAxisAlignedEdgePath', () => {
         new PointInNodeEndpoint(startNode, undefined, { x: 75, y: 9 }, 'absolute'),
         uow
       );
-      edge.setEnd(
-        new PointInNodeEndpoint(endNode, undefined, { x: 25, y: 1 }, 'absolute'),
-        uow
-      );
+      edge.setEnd(new PointInNodeEndpoint(endNode, undefined, { x: 25, y: 1 }, 'absolute'), uow);
     });
 
     const path = buildAxisAlignedEdgePath(edge);
@@ -65,10 +56,7 @@ describe('buildAxisAlignedEdgePath', () => {
     const edge = layer.addEdge();
 
     UnitOfWork.execute(diagram, uow => {
-      edge.setStart(
-        new PointInNodeEndpoint(startNode, undefined, { x: 9, y: 5 }, 'absolute'),
-        uow
-      );
+      edge.setStart(new PointInNodeEndpoint(startNode, undefined, { x: 9, y: 5 }, 'absolute'), uow);
       edge.setEnd(new FreeEndpoint({ x: 30, y: 5 }), uow);
     });
 
@@ -88,10 +76,7 @@ describe('buildAxisAlignedEdgePath', () => {
         new PointInNodeEndpoint(startNode, undefined, { x: 9, y: 15 }, 'absolute'),
         uow
       );
-      edge.setEnd(
-        new PointInNodeEndpoint(endNode, undefined, { x: 1, y: 15 }, 'absolute'),
-        uow
-      );
+      edge.setEnd(new PointInNodeEndpoint(endNode, undefined, { x: 1, y: 15 }, 'absolute'), uow);
       edge.addWaypoint({ point: { x: 20, y: 15 } }, uow);
     });
 

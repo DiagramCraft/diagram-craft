@@ -29,6 +29,7 @@ import {
 } from './searchScreenHelpers';
 import { ResultRow } from './components/ResultRow';
 import { PreviewPane } from './components/PreviewPane';
+import { useAutoFocus } from '../../hooks/useAutoFocus';
 
 // ── Screen ───────────────────────────────────────────────────
 
@@ -46,6 +47,7 @@ export const SearchScreen = () => {
   const filter = routerSearch.category ?? 'all';
   const [selected, setSelected] = useState<RowId | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(inputRef, { delay: 60 });
 
   const trimmed = query.trim();
 
@@ -65,11 +67,6 @@ export const SearchScreen = () => {
   useEffect(() => {
     if (query !== localQ) setLocalQ(query);
   }, [query]);
-
-  // Auto-focus input on mount
-  useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 60);
-  }, []);
 
   const schemaMap = useMemo(() => {
     const map = new Map<string, { schema: EntitySchema; index: number }>();
@@ -148,16 +145,16 @@ export const SearchScreen = () => {
   const navigateToProjectFolder = useCallback(
     (projectId: string, folder: string | null) => {
       if (folder) {
-        routerNavigate(projectContentFolderRoute(
-          workspaceSlug,
-          asProjectPublicId(projectId),
-          folder
-        ));
+        routerNavigate(
+          projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folder)
+        );
       } else {
-        routerNavigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-          tab: 'projects' as const,
-          section: 'home' as const
-        }));
+        routerNavigate(
+          projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+            tab: 'projects' as const,
+            section: 'home' as const
+          })
+        );
       }
     },
     [routerNavigate, workspaceSlug]
@@ -177,11 +174,7 @@ export const SearchScreen = () => {
   const navigateToEntityFolder = useCallback(
     (entityId: string, folder: string | null) => {
       if (folder) {
-        routerNavigate(entityContentFolderRoute(
-          workspaceSlug,
-          asEntityPublicId(entityId),
-          folder
-        ));
+        routerNavigate(entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), folder));
       } else {
         routerNavigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
       }
@@ -220,7 +213,14 @@ export const SearchScreen = () => {
         navigateToSchema(row.id);
       }
     },
-    [navigateToEntity, navigateToProject, navigateToProjectFolder, navigateToSchema, navigateToEntityFolder, navigateToWorkspaceFolder]
+    [
+      navigateToEntity,
+      navigateToProject,
+      navigateToProjectFolder,
+      navigateToSchema,
+      navigateToEntityFolder,
+      navigateToWorkspaceFolder
+    ]
   );
 
   // Keyboard navigation

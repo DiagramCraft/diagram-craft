@@ -3,7 +3,13 @@ import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
-import { embedElementDefinitions, embedStencilConfig, embedStencilLoaders, makeEmbedFileLoaders } from './embed/defaults';
+import {
+  embedElementDefinitions,
+  embedStencilConfig,
+  embedStencilLoaders,
+  makeEmbedFileLoaders
+} from './embed/defaults';
+import { isStencilAssetUrl, resolveStencilAssetUrl } from './stencilUrl';
 
 const random = new Random(Date.now());
 
@@ -11,17 +17,15 @@ const random = new Random(Date.now());
 // embed/defaults.ts) — kept separate from the `/api/fs/` remote-filesystem routing below,
 // since these are static assets, not project files.
 const stencilRoot = import.meta.env.VITE_STENCIL_ROOT ?? '';
-const isStencilAssetUrl = (url: string) => url.startsWith(`${stencilRoot}/stencils/`);
 
 if (!window.electronAPI) {
   FileSystem.loadFromUrl = async (url: string) => {
     let resolvedUrl: string;
-    if (isStencilAssetUrl(url)) {
-      resolvedUrl = url;
+    if (isStencilAssetUrl(url, stencilRoot)) {
+      resolvedUrl = resolveStencilAssetUrl(url, stencilRoot);
     } else {
       const fsConfig = AppConfig.get().filesystem;
-      resolvedUrl =
-        fsConfig.provider === 'remote' ? `${fsConfig.endpoint}/api/fs/${url}` : url;
+      resolvedUrl = fsConfig.provider === 'remote' ? `${fsConfig.endpoint}/api/fs/${url}` : url;
     }
     const response = await fetch(resolvedUrl);
     if (!response.ok) {

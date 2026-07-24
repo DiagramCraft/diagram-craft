@@ -2,7 +2,7 @@ import type {
   AiDatabase,
   AiConversationDbCreate,
   AiMessageDbCreate,
-  AiConfigInputDbUpsert,
+  AiConfigInputDbUpsert
 } from './aiDatabase';
 import { aiMappers } from './aiDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
@@ -14,6 +14,15 @@ export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDataba
       SELECT * FROM workspace_ai_config WHERE workspace = ${ws}
     `;
     return row ? aiMappers.config(row) : null;
+  }
+
+  async listAiConfigs() {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM workspace_ai_config
+      WHERE api_key_enc IS NOT NULL
+      ORDER BY workspace
+    `;
+    return mapDatabaseRows(rows, aiMappers.config);
   }
 
   async upsertAiConfig(ws: string, input: AiConfigInputDbUpsert) {

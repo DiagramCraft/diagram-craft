@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
-import { useProjectFutureSnapshots } from '../../hooks/useSnapshots';
+import { useChangeCasesByProject } from '../../hooks/useChangeCases';
 import {
   useProject,
   useProjectEntities,
@@ -16,6 +15,12 @@ import { useContentScopeOperations, type ContentScope } from '../../hooks/useCon
 import { useToggleTemplateStatus } from '../../hooks/useTemplates';
 import type { MenuTarget as ProjectMenuTarget } from '../../lib/contentNode';
 import type { ProjectSearchParams } from '../../routes/searchParams';
+
+// A "plan change" dialog either creates a new case (optionally seeded with one entity, when
+// opened from a single entity row) or edits an existing not-yet-applied case.
+export type PlanDialogState =
+  | { mode: 'create'; entityId?: string }
+  | { mode: 'edit'; caseId: string };
 
 export const useProjectDetailController = (folder?: string) => {
   const navigate = useNavigate();
@@ -30,7 +35,9 @@ export const useProjectDetailController = (folder?: string) => {
       ? ('entities' as const)
       : search.section === 'assessments'
         ? ('assessments' as const)
-        : ('home' as const);
+        : search.section === 'milestones'
+          ? ('milestones' as const)
+          : ('home' as const);
   const pendingDialog = search.dialog;
   const contentFolderFilter = section === 'home' ? folderFilter : null;
   const filter = search.contentQuery ?? '';
@@ -44,8 +51,8 @@ export const useProjectDetailController = (folder?: string) => {
   const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
   const [pinError, setPinError] = useState('');
   const [addEntityOpen, setAddEntityOpen] = useState(false);
-  const [planEntityId, setPlanEntityId] = useState<string | null>(null);
-  const [applySnapshot, setApplySnapshot] = useState<EntitySnapshot | null>(null);
+  const [planDialog, setPlanDialog] = useState<PlanDialogState | null>(null);
+  const [applyCaseId, setApplyCaseId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; target: ProjectMenuTarget } | null>(
     null
   );
@@ -63,11 +70,7 @@ export const useProjectDetailController = (folder?: string) => {
   const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
   const updateEntityMutation = useUpdateProjectEntity(workspaceId, projectId);
   const removeEntityMutation = useRemoveProjectEntity(workspaceId, projectId);
-  const { data: projectSnapshots = [] } = useProjectFutureSnapshots(workspaceId, projectId);
-  const futureSnapshots = useMemo(
-    () => projectSnapshots.filter(snapshot => snapshot.status === 'future_update'),
-    [projectSnapshots]
-  );
+  const { data: changeCases = [] } = useChangeCasesByProject(workspaceId, projectId);
   const schemaMap = useMemo(
     () =>
       new Map(
@@ -142,10 +145,10 @@ export const useProjectDetailController = (folder?: string) => {
     setPinError,
     addEntityOpen,
     setAddEntityOpen,
-    planEntityId,
-    setPlanEntityId,
-    applySnapshot,
-    setApplySnapshot,
+    planDialog,
+    setPlanDialog,
+    applyCaseId,
+    setApplyCaseId,
     menu,
     setMenu,
     renameTarget,
@@ -162,8 +165,7 @@ export const useProjectDetailController = (folder?: string) => {
     projectEntities,
     updateEntityMutation,
     removeEntityMutation,
-    projectSnapshots,
-    futureSnapshots,
+    changeCases,
     schemaMap,
     entityTypeColorMap,
     activeFolder,

@@ -65,7 +65,7 @@ export const PreviewPane = ({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className={styles.previewEyebrow}>{e.schemaName}</div>
             <div className={styles.previewTitle}>
-              <Hi s={e._name || e._slug} q={q} />
+              <Hi s={e._name ?? e._slug} q={q} />
             </div>
           </div>
           {e._lifecycle && <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />}
@@ -248,7 +248,9 @@ export const PreviewPane = ({
               }
             }}
           >
-            Open {f.scope === 'project' ? 'in project' : f.scope === 'entity' ? 'entity' : 'workspace'} <TbArrowRight size={11} />
+            Open{' '}
+            {f.scope === 'project' ? 'in project' : f.scope === 'entity' ? 'entity' : 'workspace'}{' '}
+            <TbArrowRight size={11} />
           </button>
         </div>
       </div>

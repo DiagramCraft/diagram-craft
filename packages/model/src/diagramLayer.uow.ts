@@ -54,9 +54,9 @@ export class LayerUOWAdapter implements UOWAdapter<LayerSnapshot, Layer> {
   }
 }
 
-export class LayerChildUOWAdapter implements UOWChildAdapter<
-  DiagramNodeSnapshot | DiagramEdgeSnapshot
-> {
+export class LayerChildUOWAdapter
+  implements UOWChildAdapter<DiagramNodeSnapshot | DiagramEdgeSnapshot>
+{
   add(
     diagram: Diagram,
     parentId: string,

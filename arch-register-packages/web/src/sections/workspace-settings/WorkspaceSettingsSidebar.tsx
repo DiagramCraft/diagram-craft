@@ -12,7 +12,12 @@ import {
   TbCode,
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand,
-  TbFileExport
+  TbFileExport,
+  TbActivity,
+  TbWebhook,
+  TbFileDescription,
+  TbBolt,
+  TbKey
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -35,7 +40,13 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
   { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Workspace' },
   { id: 'model-overview', label: 'Model Overview', icon: <TbCode size={12} />, group: 'Model' },
-  { id: 'schemas', label: 'Schemas', icon: <TbCode size={12} />, group: 'Model' },
+  { id: 'schemas', label: 'Entity Types', icon: <TbCode size={12} />, group: 'Model' },
+  {
+    id: 'documents',
+    label: 'Document Types & Templates',
+    icon: <TbFileDescription size={12} />,
+    group: 'Model'
+  },
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
@@ -54,11 +65,15 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   },
   { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
+  { id: 'automation', label: 'Automation rules', icon: <TbBolt size={12} />, group: 'Workspace' },
+  { id: 'api-tokens', label: 'API Tokens', icon: <TbKey size={12} />, group: 'Administration' },
+  { id: 'webhooks', label: 'Webhooks', icon: <TbWebhook size={12} />, group: 'Administration' },
+  { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Administration' },
   {
     id: 'danger',
     label: 'Danger zone',
     icon: <TbTrash size={12} />,
-    group: 'Workspace',
+    group: 'Administration',
     tone: 'danger'
   }
 ];
@@ -82,7 +97,8 @@ export const WorkspaceSettingsSidebar = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const section = location.pathname.split('/').pop() || 'general';
+  const rawSection = location.pathname.split('/').pop();
+  const section = rawSection == null || rawSection === '' ? 'general' : rawSection;
 
   const groups = useMemo(() => {
     const g: Record<string, SettingsNavItem[]> = {};

@@ -14,9 +14,27 @@ const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
 const JSX_OPEN_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?>\s*$/;
 const jsxCloseRe = (name: string) => new RegExp(`^\\s*</${name}>\\s*$`);
 const SAFE_PROP_NAME = /^[a-zA-Z0-9_-]+$/;
-const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,\s]*$/;
+// Allows parens so CSS color functions (e.g. `oklch(0.62 0.13 145)`) survive as prop values.
+const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,()%\s]*$/;
 
 const isKnownComponent = (name: string): name is MdxComponentName => name in MDX_COMPONENTS;
+
+/**
+ * Strips the common leading whitespace the markdown serializer adds to a JSX
+ * flow element's children (e.g. `  ## Heading`) before re-parsing them as a
+ * nested document. Without this, indented ATX headings and other
+ * indent-sensitive constructs are misread as literal/paragraph text instead
+ * of their real block type.
+ */
+const dedent = (lines: string[]): string[] => {
+  const indents = lines
+    .filter(line => line.trim() !== '')
+    .map(line => line.match(/^ */)?.[0].length ?? 0);
+  if (indents.length === 0) return lines;
+  const minIndent = Math.min(...indents);
+  if (minIndent === 0) return lines;
+  return lines.map(line => (line.trim() === '' ? line : line.slice(minIndent)));
+};
 
 const validateProps = (
   name: MdxComponentName,
@@ -60,20 +78,28 @@ const makeComponentNode = (
   rawProps: string | undefined,
   source: string,
   children?: ASTNode[]
-): ASTNode => ({
-  type: 'component',
-  subtype,
-  name,
-  props: validateProps(name, parseJsxProps(rawProps ?? '', parser)),
-  source,
-  ...(children ? { children } : {})
-});
+): ASTNode => {
+  const props = validateProps(name, parseJsxProps(rawProps ?? '', parser));
+  return {
+    type: 'component',
+    subtype,
+    name,
+    props: MDX_COMPONENTS[name].normalizeProps?.(props) ?? props,
+    source,
+    ...(children ? { children } : {})
+  };
+};
 
 /**
- * Handles wrapper components (e.g. Caption) that accept exactly one other
- * block-level, non-wrapper MDX component as their child, using an open/close
- * tag pair rather than a self-closing tag. Registered ahead of
- * MdxComponentBlockHandler so it gets first refusal on non-self-closing tags.
+ * Handles block-level MDX components that use an open/close tag pair rather
+ * than a self-closing tag, since they carry markdown content between the
+ * tags. Registered ahead of MdxComponentBlockHandler so it gets first refusal
+ * on non-self-closing tags. Covers two distinct shapes:
+ *
+ * - `acceptsChildren` wrappers (e.g. Caption): accept exactly one other
+ *   block-level, non-wrapper MDX component as their child.
+ * - `acceptsRichContent` containers (e.g. Callout): accept arbitrary parsed
+ *   markdown content (paragraphs, lists, nested components, etc.) as-is.
  */
 class MdxComponentWrapperBlockHandler implements BlockParser {
   parse(parser: Parser, stream: Parameters<BlockParser['parse']>[1], ast: ASTNode[]): boolean {
@@ -84,7 +110,7 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     const name = match[1];
     if (!name || !isKnownComponent(name)) return false;
     const spec = getMdxSpec(name);
-    if (spec.mode !== 'block' || !spec.acceptsChildren) return false;
+    if (spec.mode !== 'block' || (!spec.acceptsChildren && !spec.acceptsRichContent)) return false;
 
     stream.consume();
 
@@ -106,7 +132,16 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     }
     stream.consume(); // consume the closing tag line
 
-    const innerAst = parseMarkdownWithComponents(innerLines.join('\n'));
+    const innerAst = parseMarkdownWithComponents(dedent(innerLines).join('\n'));
+
+    if (spec.acceptsRichContent) {
+      const children = innerAst.filter(n => !(n.type === 'literal' && n.value.trim() === ''));
+      ast.push(
+        makeComponentNode(parser, 'block', name, match[2], parser.unescape(openLine), children)
+      );
+      return true;
+    }
+
     const isComponentNode = (n: ASTNode): n is ASTNodeOfType<'component'> => n.type === 'component';
     const componentChildren = innerAst.filter(isComponentNode);
     const otherContent = innerAst.filter(

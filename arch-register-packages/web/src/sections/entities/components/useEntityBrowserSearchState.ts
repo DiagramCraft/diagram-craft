@@ -1,11 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import type { BrowserSearch, BrowserViewConfigMap } from './entityBrowserState';
 import {
   getFilterValue,
   parseConditionsFromSearch,
+  parseEntityQueryFromSearch,
   parseViewConfigs,
   pruneAssessmentReferences,
   serializeViewConfigs
@@ -33,10 +35,22 @@ export const useEntityBrowserSearchState = ({
       } as BrowserSearch),
     [search.filters, search.owner, search.status, search.type]
   );
+  const entityQuery = useMemo(
+    () =>
+      parseEntityQueryFromSearch({
+        entityQuery: search.entityQuery
+      } as BrowserSearch),
+    [search.entityQuery]
+  );
   const projectScope = projectId ? (search.projectScope ?? 'project') : 'all';
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
-  const view = search.viewMode ?? 'table';
+  const collectionId = search.collectionId ?? null;
+  const requestedView = search.viewMode ?? 'table';
+  const view =
+    collectionId && requestedView !== 'table' && requestedView !== 'cards'
+      ? 'table'
+      : requestedView;
   const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
   const activeViewConfig = viewConfigs[view] ?? null;
 
@@ -73,6 +87,22 @@ export const useEntityBrowserSearchState = ({
     (next: FilterCondition[]) =>
       navigateBrowser({
         filters: next.length > 0 ? JSON.stringify(next) : undefined,
+        entityQuery: undefined,
+        type: undefined,
+        status: undefined,
+        owner: undefined,
+        viewId: undefined
+      }),
+    [navigateBrowser]
+  );
+  // Advanced-mode text field writes the canonical EntityQuery directly, superseding the
+  // Basic-mode `filters`/`q`/`type`/`status`/`owner` params it was derived from (or replaces).
+  const setEntityQuery = useCallback(
+    (next: EntityQuery | null) =>
+      navigateBrowser({
+        entityQuery: next ? JSON.stringify(next) : undefined,
+        filters: undefined,
+        q: undefined,
         type: undefined,
         status: undefined,
         owner: undefined,
@@ -86,7 +116,8 @@ export const useEntityBrowserSearchState = ({
     [navigateBrowser]
   );
   const setQ = useCallback(
-    (next: string) => navigateBrowser({ q: next === '' ? undefined : next, viewId: undefined }, true),
+    (next: string) =>
+      navigateBrowser({ q: next === '' ? undefined : next, viewId: undefined }, true),
     [navigateBrowser]
   );
   const setSort = useCallback(
@@ -95,9 +126,11 @@ export const useEntityBrowserSearchState = ({
     [navigateBrowser]
   );
   const setView = useCallback(
-    (next: BrowserView) =>
-      navigateBrowser({ viewMode: next === 'table' ? undefined : next, viewId: undefined }),
-    [navigateBrowser]
+    (next: BrowserView) => {
+      if (collectionId && next !== 'table' && next !== 'cards') return;
+      navigateBrowser({ viewMode: next === 'table' ? undefined : next, viewId: undefined });
+    },
+    [collectionId, navigateBrowser]
   );
   const setViewConfigs = useCallback(
     (next: BrowserViewConfigMap) =>
@@ -114,29 +147,21 @@ export const useEntityBrowserSearchState = ({
     [setViewConfigs, view, viewConfigs]
   );
 
-  const setAsOf = useCallback(
-    (date: string) => navigateBrowser({ asOf: date }),
-    [navigateBrowser]
-  );
-  const clearAsOf = useCallback(
-    () => navigateBrowser({ asOf: undefined }),
-    [navigateBrowser]
-  );
-  const setIncludeProjectSnapshots = useCallback(
-    (include: boolean) =>
-      navigateBrowser({ asOfIncludeProjects: include ? undefined : 'false' }),
+  const setAsOf = useCallback((date: string) => navigateBrowser({ asOf: date }), [navigateBrowser]);
+  const clearAsOf = useCallback(() => navigateBrowser({ asOf: undefined }), [navigateBrowser]);
+  const setIncludePlannedChanges = useCallback(
+    (include: boolean) => navigateBrowser({ asOfIncludeProjects: include ? undefined : 'false' }),
     [navigateBrowser]
   );
 
   const setJoinAssessmentId = useCallback(
     (next: string | null) => {
-      const { conditions: prunedConditions, viewConfigs: prunedViewConfigs } = pruneAssessmentReferences(
-        conditions,
-        viewConfigs
-      );
+      const { conditions: prunedConditions, viewConfigs: prunedViewConfigs } =
+        pruneAssessmentReferences(conditions, viewConfigs);
       navigateBrowser({
         joinAssessmentId: next ?? undefined,
         filters: prunedConditions.length > 0 ? JSON.stringify(prunedConditions) : undefined,
+        entityQuery: undefined,
         viewConfigs: serializeViewConfigs(prunedViewConfigs),
         viewId: undefined
       });
@@ -147,18 +172,21 @@ export const useEntityBrowserSearchState = ({
   return {
     activeViewConfig,
     asOf: search.asOf,
-    includeProjectSnapshots: search.asOfIncludeProjects !== 'false',
+    includePlannedChanges: search.asOfIncludeProjects !== 'false',
     setAsOf,
     clearAsOf,
-    setIncludeProjectSnapshots,
+    setIncludePlannedChanges,
     conditions,
+    entityQuery,
     joinAssessmentId: search.joinAssessmentId ?? null,
+    collectionId,
     ownerFilter: getFilterValue(conditions, '_owner'),
     projectScope,
     q,
     search,
     setConditions,
     setActiveViewConfig,
+    setEntityQuery,
     setJoinAssessmentId,
     setProjectScope,
     setQ,
@@ -166,7 +194,7 @@ export const useEntityBrowserSearchState = ({
     setView,
     sort,
     statusFilter: getFilterValue(conditions, '_lifecycle'),
-    typeFilter: getFilterValue(conditions, '_schemaId'),
+    typeFilter: entityQuery?.schemaId ?? getFilterValue(conditions, '_schemaId'),
     view,
     viewConfigs
   };

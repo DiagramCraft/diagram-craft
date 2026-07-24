@@ -1,5 +1,5 @@
 import { type DiagramElementCRDT } from './diagramElement';
-import type { UnitOfWork, UOWTrackable } from './unitOfWork';
+import { getRemoteUnitOfWork, type UnitOfWork, type UOWTrackable } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import type { RuleLayer } from './diagramLayerRule';
@@ -37,12 +37,11 @@ export abstract class Layer<
     | RegularLayer
     | RuleLayer
     | ModificationLayer
->
-  implements UOWTrackable, AttachmentConsumer, Releasable, Detachable<LayerAttachParent>
+> implements UOWTrackable, AttachmentConsumer, Releasable, Detachable<LayerAttachParent>
 {
-  #locked = false;
   #id: CRDTProp<LayerCRDT, 'id'>;
   #name: CRDTProp<LayerCRDT, 'name'>;
+  #locked: CRDTProp<LayerCRDT, 'locked'>;
   protected _type: LayerType = 'regular';
   _isAttached = false;
 
@@ -73,6 +72,13 @@ export abstract class Layer<
       }
     });
     this.#id = new CRDTProp(this._crdt, 'id');
+    this.#locked = new CRDTProp(this._crdt, 'locked', {
+      onRemoteChange: () => {
+        getRemoteUnitOfWork(diagram).updateElement(this);
+        diagram.layers.emit('layerStructureChange', {});
+      },
+      initialValue: false
+    });
 
     this.diagram = diagram;
   }
@@ -97,18 +103,22 @@ export abstract class Layer<
     return this.#name.get()!;
   }
 
+  get locked() {
+    return this.#locked.getNonNull();
+  }
+
   setName(name: string, uow: UnitOfWork) {
     uow.executeUpdate(this, () => this.#name.set(name));
   }
 
-  isLocked() {
-    return this.#locked;
+  isEffectivelyLocked() {
+    return this.locked || this.diagram.isEffectivelyLocked();
   }
 
   setLocked(value: boolean, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      this.#locked = value;
-      this.diagram.layers.emit('layerStructureChange');
+      this.#locked.set(value);
+      this.diagram.layers.emit('layerStructureChange', {});
     });
   }
 
@@ -142,7 +152,7 @@ export abstract class Layer<
     return {
       _snapshotType: 'layer',
       name: this.name,
-      locked: this.isLocked(),
+      locked: this.locked,
       type: this.type
     };
   }
@@ -192,6 +202,7 @@ export type LayerCRDT = {
   id: string;
   name: string;
   type: LayerType;
+  locked: boolean;
 
   // Reference layer
   referenceLayerId: string;

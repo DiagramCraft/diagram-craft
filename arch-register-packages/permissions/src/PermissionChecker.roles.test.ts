@@ -1,25 +1,43 @@
 import { describe, expect, it } from 'vitest';
 import { PermissionChecker } from './PermissionChecker.js';
 import { buildAuthorizationContext } from './AuthorizationContextBuilder.js';
-import {
-  WORKSPACE_ROLE_CAPABILITIES,
-  TEAM_ROLE_PERMISSIONS,
-} from './constants.js';
+import { WORKSPACE_ROLE_CAPABILITIES, TEAM_ROLE_PERMISSIONS } from './constants.js';
 import type {
   BuiltinWorkspaceRole,
   Entity,
   EntitySchema,
   TeamRole,
-  WorkspaceCapability,
+  WorkspaceCapability
 } from './types.js';
 
-const ALL_WORKSPACE_ROLES: BuiltinWorkspaceRole[] = ['owner', 'admin', 'editor', 'reviewer', 'viewer'];
+const ALL_WORKSPACE_ROLES: BuiltinWorkspaceRole[] = [
+  'owner',
+  'admin',
+  'editor',
+  'reviewer',
+  'viewer'
+];
 
 const ALL_CAPABILITIES: WorkspaceCapability[] = [
-  'ws.view', 'ws.settings', 'ws.delete', 'ws.audit',
-  'people.invite', 'people.role', 'people.remove', 'people.teams',
-  'proj.create', 'proj.edit', 'proj.delete', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
-  'schema.edit', 'schema.publish',
+  'ws.view',
+  'ws.settings',
+  'ws.delete',
+  'ws.audit',
+  'people.invite',
+  'people.role',
+  'people.remove',
+  'people.teams',
+  'proj.create',
+  'proj.edit',
+  'proj.delete',
+  'content.view',
+  'content.edit',
+  'ent.edit',
+  'ent.propose',
+  'comments',
+  'export',
+  'schema.edit',
+  'schema.publish'
 ];
 
 const createSchema = (id: string): EntitySchema => ({
@@ -33,20 +51,20 @@ const createSchema = (id: string): EntitySchema => ({
       type: 'containment',
       schemaId: id,
       minCount: 0,
-      maxCount: 1,
-    },
+      maxCount: 1
+    }
   ],
   color: null,
   icon: null,
   default_owner: null,
   created_at: new Date(),
-  updated_at: new Date(),
+  updated_at: new Date()
 });
 
 const createEntity = (
   id: string,
   owner: string | null = null,
-  parentId: string | null = null,
+  parentId: string | null = null
 ): Entity => ({
   id,
   workspace: 'workspace-1',
@@ -60,9 +78,8 @@ const createEntity = (
   links: [],
   schema_id: 'schema-1',
   data: parentId ? { parent: parentId } : {},
-  visibility_mode: 'restricted',
   created_at: new Date(),
-  updated_at: new Date(),
+  updated_at: new Date()
 });
 
 // ── Workspace Role Capabilities ───────────────────────────────────
@@ -70,29 +87,24 @@ const createEntity = (
 describe('PermissionChecker - Workspace Role Capabilities', () => {
   const checker = new PermissionChecker();
 
-  it.each(ALL_WORKSPACE_ROLES)(
-    '%s role grants exactly the expected capabilities',
-    (role) => {
-      const context = buildAuthorizationContext({
-        userId: 'user-1',
-        globalRoles: [],
-        workspaceRole: role,
-        teamAssignments: [],
-        teams: [],
-        schemas: [],
-        entities: [],
-        grants: [],
-      });
+  it.each(ALL_WORKSPACE_ROLES)('%s role grants exactly the expected capabilities', role => {
+    const context = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: role,
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
 
-      const expected = new Set(WORKSPACE_ROLE_CAPABILITIES[role]);
+    const expected = new Set(WORKSPACE_ROLE_CAPABILITIES[role]);
 
-      for (const cap of ALL_CAPABILITIES) {
-        expect(checker.hasWorkspaceCapability(context, cap)).toBe(
-          expected.has(cap),
-        );
-      }
-    },
-  );
+    for (const cap of ALL_CAPABILITIES) {
+      expect(checker.hasWorkspaceCapability(context, cap)).toBe(expected.has(cap));
+    }
+  });
 
   it('global_admin implicitly has all workspace capabilities', () => {
     const context = buildAuthorizationContext({
@@ -103,12 +115,63 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     for (const cap of ALL_CAPABILITIES) {
       expect(checker.hasWorkspaceCapability(context, cap)).toBe(true);
     }
+  });
+
+  it('applies a token capability ceiling before global-admin shortcuts', () => {
+    const context = buildAuthorizationContext({
+      userId: 'token-owner',
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['ent.edit'],
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(checker.hasWorkspaceCapability(context, 'ent.edit')).toBe(true);
+    expect(checker.hasWorkspaceCapability(context, 'ws.settings')).toBe(false);
+    expect(checker.hasGlobalPermission(context, 'admin_platform')).toBe(false);
+  });
+
+  it('applies a token capability ceiling to team and entity-grant permissions', () => {
+    const entity = createEntity('token-entity', 'team-1');
+    const context = buildAuthorizationContext({
+      userId: 'token-owner',
+      globalRoles: [],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['content.view'],
+      teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
+      teams: [],
+      schemas: [],
+      entities: [entity],
+      grants: [
+        {
+          id: 'token-grant',
+          workspace: 'workspace-1',
+          entity_id: entity.id,
+          principal_type: 'user',
+          principal_id: 'token-owner',
+          role: 'entity_admin',
+          applies_to: 'self',
+          created_at: new Date()
+        }
+      ]
+    });
+
+    expect(checker.hasEntityPermission(context, entity, 'view_entity')).toBe(true);
+    expect(checker.hasEntityPermission(context, entity, 'edit_entity')).toBe(false);
+    expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(false);
+    expect(checker.hasEntityPermission(context, entity, 'admin_entity')).toBe(false);
+    expect(checker.hasProjectPermission(context, 'team-1', 'edit_project')).toBe(false);
+    expect(checker.hasProjectPermission(context, 'team-1', 'delete_project')).toBe(false);
   });
 
   it('user with no workspace role and no global role has no capabilities', () => {
@@ -120,7 +183,7 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     for (const cap of ALL_CAPABILITIES) {
@@ -137,7 +200,7 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     for (const cap of ALL_CAPABILITIES) {
@@ -154,7 +217,7 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasWorkspaceCapability(context, 'proj.edit')).toBe(true);
@@ -170,7 +233,7 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasWorkspaceCapability(context, 'proj.delete')).toBe(true);
@@ -185,7 +248,7 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasWorkspaceCapability(context, 'proj.delete')).toBe(true);
@@ -203,71 +266,70 @@ describe('PermissionChecker - Team Role Differentiation', () => {
     it.each<{ role: TeamRole; expected: string[] }>([
       {
         role: 'team_admin',
-        expected: ['view_entity', 'edit_entity', 'create_child', 'admin_entity'],
+        expected: ['view_entity', 'edit_entity', 'create_child', 'admin_entity']
       },
       {
         role: 'team_editor',
-        expected: ['view_entity', 'edit_entity', 'create_child'],
+        expected: ['view_entity', 'edit_entity', 'create_child']
       },
       {
         role: 'team_reviewer',
-        expected: ['view_entity'],
-      },
-    ])(
-      '$role on owner team grants direct actions: $expected',
-      ({ role, expected }) => {
-        const context = buildAuthorizationContext({
-          userId: 'user-1',
-          globalRoles: [],
-          workspaceRole: null,
-          teamAssignments: [{ teamId: 'team-1', role }],
-          teams: [],
-          schemas: [],
-          entities: [entity],
-          grants: [],
-        });
+        expected: ['view_entity']
+      }
+    ])('$role on owner team grants direct actions: $expected', ({ role, expected }) => {
+      const context = buildAuthorizationContext({
+        userId: 'user-1',
+        globalRoles: [],
+        workspaceRole: null,
+        teamAssignments: [{ teamId: 'team-1', role }],
+        teams: [],
+        schemas: [],
+        entities: [entity],
+        grants: []
+      });
 
-        const expectedSet = new Set(expected);
-        expect(checker.hasEntityPermission(context, entity, 'view_entity')).toBe(
-          expectedSet.has('view_entity'),
-        );
-        expect(checker.hasEntityPermission(context, entity, 'edit_entity')).toBe(
-          expectedSet.has('edit_entity'),
-        );
-        expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(
-          expectedSet.has('create_child'),
-        );
-        expect(checker.hasEntityPermission(context, entity, 'admin_entity')).toBe(
-          expectedSet.has('admin_entity'),
-        );
-      },
-    );
+      const expectedSet = new Set(expected);
+      expect(checker.hasEntityPermission(context, entity, 'view_entity')).toBe(
+        expectedSet.has('view_entity')
+      );
+      expect(checker.hasEntityPermission(context, entity, 'edit_entity')).toBe(
+        expectedSet.has('edit_entity')
+      );
+      expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(
+        expectedSet.has('create_child')
+      );
+      expect(checker.hasEntityPermission(context, entity, 'admin_entity')).toBe(
+        expectedSet.has('admin_entity')
+      );
+    });
   });
 
   describe('project permissions vary by team role', () => {
     it.each<{ role: TeamRole; edit: boolean; delete_: boolean; files: boolean }>([
       { role: 'team_admin', edit: true, delete_: true, files: true },
       { role: 'team_editor', edit: true, delete_: false, files: true },
-      { role: 'team_reviewer', edit: false, delete_: false, files: false },
-    ])(
-      '$role grants edit=$edit, delete=$delete_, manage_files=$files',
-      ({ role, edit, delete_, files }) => {
-        const context = buildAuthorizationContext({
-          userId: 'user-1',
-          globalRoles: [],
-          workspaceRole: null,
-          teamAssignments: [{ teamId: 'team-1', role }],
-          teams: [],
-          schemas: [],
-          entities: [],
-          grants: [],
-        });
+      { role: 'team_reviewer', edit: false, delete_: false, files: false }
+    ])('$role grants edit=$edit, delete=$delete_, manage_files=$files', ({
+      role,
+      edit,
+      delete_,
+      files
+    }) => {
+      const context = buildAuthorizationContext({
+        userId: 'user-1',
+        globalRoles: [],
+        workspaceRole: null,
+        teamAssignments: [{ teamId: 'team-1', role }],
+        teams: [],
+        schemas: [],
+        entities: [],
+        grants: []
+      });
 
-        expect(checker.hasProjectPermission(context, 'team-1', 'edit_project')).toBe(edit);
-        expect(checker.hasProjectPermission(context, 'team-1', 'delete_project')).toBe(delete_);
-        expect(checker.hasProjectPermission(context, 'team-1', 'manage_files')).toBe(files);
-      },
-    );
+      expect(checker.hasProjectPermission(context, 'team-1', 'edit_project')).toBe(edit);
+      expect(checker.hasProjectPermission(context, 'team-1', 'delete_project')).toBe(delete_);
+      expect(checker.hasProjectPermission(context, 'team-1', 'manage_files')).toBe(files);
+    });
   });
 
   it('user with multiple team roles on same team gets the union', () => {
@@ -278,12 +340,12 @@ describe('PermissionChecker - Team Role Differentiation', () => {
       workspaceRole: null,
       teamAssignments: [
         { teamId: 'team-1', role: 'team_reviewer' },
-        { teamId: 'team-1', role: 'team_editor' },
+        { teamId: 'team-1', role: 'team_editor' }
       ],
       teams: [],
       schemas: [],
       entities: [entity],
-      grants: [],
+      grants: []
     });
 
     // team_editor direct: view, edit, create_child
@@ -310,7 +372,7 @@ describe('PermissionChecker - Workspace Role Project Permissions', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasProjectPermission(context, null, 'edit_project')).toBe(true);
@@ -328,7 +390,7 @@ describe('PermissionChecker - Workspace Role Project Permissions', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasProjectPermission(context, null, 'edit_project')).toBe(true);
@@ -344,7 +406,7 @@ describe('PermissionChecker - Workspace Role Project Permissions', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasProjectPermission(context, null, 'edit_project')).toBe(true);
@@ -371,7 +433,7 @@ describe('PermissionChecker - Descendant Entity Actions', () => {
       teams: [],
       schemas: [schema],
       entities: [parent, child],
-      grants: [],
+      grants: []
     });
 
     const descendantActions = TEAM_ROLE_PERMISSIONS['team_admin'].descendantEntityActions;
@@ -398,7 +460,7 @@ describe('PermissionChecker - Descendant Entity Actions', () => {
       teams: [],
       schemas: [schema],
       entities: [parent, child],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasEntityPermission(context, child, 'view_entity')).toBe(true);
@@ -420,7 +482,7 @@ describe('PermissionChecker - Descendant Entity Actions', () => {
       teams: [],
       schemas: [schema],
       entities: [parent, child],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasEntityPermission(context, child, 'view_entity')).toBe(true);
@@ -442,7 +504,7 @@ describe('PermissionChecker - Descendant Entity Actions', () => {
       teams: [],
       schemas: [schema],
       entities: [root, mid, leaf],
-      grants: [],
+      grants: []
     });
 
     // root gets direct actions (entity_admin level)
@@ -473,7 +535,7 @@ describe('PermissionChecker - Descendant Entity Actions', () => {
       teams: [],
       schemas: [schema],
       entities: [parent, child],
-      grants: [],
+      grants: []
     });
 
     // child gets DIRECT actions (entity_admin), not just descendant (contributor)
@@ -490,12 +552,12 @@ describe('PermissionChecker - Descendant Entity Actions', () => {
       workspaceRole: null,
       teamAssignments: [
         { teamId: 'team-1', role: 'team_reviewer' },
-        { teamId: 'team-2', role: 'team_editor' },
+        { teamId: 'team-2', role: 'team_editor' }
       ],
       teams: [],
       schemas: [schema],
       entities: [parent, child],
-      grants: [],
+      grants: []
     });
 
     // child gets:
@@ -520,7 +582,7 @@ describe('PermissionChecker - Descendant Entity Actions', () => {
       teams: [],
       schemas: [schema],
       entities: [parent, child],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasEntityPermission(context, child, 'view_entity')).toBe(false);
@@ -541,7 +603,7 @@ describe('PermissionChecker - Multiple Global Roles', () => {
       teams: [],
       schemas: [],
       entities: [],
-      grants: [],
+      grants: []
     });
 
     expect(checker.hasGlobalPermission(context, 'admin_platform')).toBe(true);

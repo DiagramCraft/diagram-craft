@@ -24,7 +24,9 @@ export const CommentToolbarButton = () => {
     .getAll()
     .filter(c => !c.isReply())
     .filter(c => c.state !== 'resolved')
-    .filter(c => (selType === 'empty' ? c.type === 'diagram' : c.element === selElement)).length;
+    .filter(c =>
+      selType === 'empty' ? c.type === 'diagram' || c.type === 'point' : c.element === selElement
+    ).length;
 
   // Determine if button should be visible
   if (!(selType === 'empty' || selType === 'single-node' || selType === 'single-edge')) {

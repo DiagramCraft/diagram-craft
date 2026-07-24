@@ -91,6 +91,7 @@ export const aiMappers = {
 
 export type AiDatabase = {
   getAiConfig(ws: string): Promise<AiConfigDbResult | null>;
+  listAiConfigs(): Promise<AiConfigDbResult[]>;
   upsertAiConfig(ws: string, input: AiConfigInputDbUpsert): Promise<AiConfigDbResult>;
 
   listConversations(ws: string, userId: string): Promise<AiConversationDbResult[]>;
@@ -107,4 +108,9 @@ export type AiDatabase = {
   listMessages(conversationId: string): Promise<AiMessageDbResult[]>;
   createMessage(input: AiMessageDbCreate): Promise<AiMessageDbResult>;
 };
-import { databaseBoolean, databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
+import {
+  databaseBoolean,
+  databaseDate,
+  parseDatabaseJson,
+  type DatabaseRow
+} from '../../../db/rowMappers';

@@ -7,10 +7,8 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { _p } from '@diagram-craft/geometry/point';
 
 export class UMLPortNodeDefinition extends LayoutCapableShapeNodeDefinition {

@@ -1,0 +1,36 @@
+.container {
+  padding: 8px 0;
+}
+
+.skeleton {
+  height: 40px;
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  margin-bottom: 6px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.tableWrapper {
+  margin: 0 0 var(--article-block-gap);
+  overflow-x: auto;
+}
+
+.tableSurface {
+  min-width: 700px;
+}
+
+.typeCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

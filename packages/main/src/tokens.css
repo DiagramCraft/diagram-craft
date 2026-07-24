@@ -1,18 +1,18 @@
-@import '@radix-ui/colors/gray.css';
-@import '@radix-ui/colors/gray-dark.css';
-@import '@radix-ui/colors/gray-alpha.css';
-@import '@radix-ui/colors/gray-dark-alpha.css';
-@import '@radix-ui/colors/blue.css';
-@import '@radix-ui/colors/blue-dark.css';
-@import '@radix-ui/colors/red.css';
-@import '@radix-ui/colors/red-dark.css';
-@import '@radix-ui/colors/green.css';
-@import '@radix-ui/colors/green-dark.css';
-@import '@radix-ui/colors/crimson.css';
-@import '@radix-ui/colors/crimson-dark.css';
-@import '@radix-ui/colors/orange.css';
-@import '@radix-ui/colors/orange-dark.css';
-@import '@radix-ui/colors/black-alpha.css';
+@import "@radix-ui/colors/gray.css";
+@import "@radix-ui/colors/gray-dark.css";
+@import "@radix-ui/colors/gray-alpha.css";
+@import "@radix-ui/colors/gray-dark-alpha.css";
+@import "@radix-ui/colors/blue.css";
+@import "@radix-ui/colors/blue-dark.css";
+@import "@radix-ui/colors/red.css";
+@import "@radix-ui/colors/red-dark.css";
+@import "@radix-ui/colors/green.css";
+@import "@radix-ui/colors/green-dark.css";
+@import "@radix-ui/colors/crimson.css";
+@import "@radix-ui/colors/crimson-dark.css";
+@import "@radix-ui/colors/orange.css";
+@import "@radix-ui/colors/orange-dark.css";
+@import "@radix-ui/colors/black-alpha.css";
 
 :root {
   --r: 4px;
@@ -21,7 +21,7 @@
   --font-sans: var(--theme-font-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
 }
 
-[data-theme='dark'],
+[data-theme="dark"],
 .dark-theme {
   color-scheme: dark;
 
@@ -63,15 +63,15 @@
   --cmp-border: var(--theme-dark-cmp-border, var(--gray-6));
   --cmp-border-focus: var(--theme-dark-cmp-border-focus, var(--blue-5));
   --cmp-border-shadow-focus: var(
-      --theme-dark-cmp-border-shadow-focus,
-      0 0 0 2px var(--cmp-border-focus)
+    --theme-dark-cmp-border-shadow-focus,
+    0 0 0 2px var(--cmp-border-focus)
   );
 
   --popover-shadow: var(
-      --theme-dark-popover-shadow,
-      0 0 0 0.5px var(--cmp-border),
-      0 10px 60px rgba(0, 0, 0, 0.32),
-      0 10px 32px -16px rgba(0, 0, 0, 0.5)
+    --theme-dark-popover-shadow,
+    0 0 0 0.5px var(--cmp-border),
+    0 10px 60px rgba(0, 0, 0, 0.32),
+    0 10px 32px -16px rgba(0, 0, 0, 0.5)
   );
 
   --highlight-reverse-bg: var(--theme-dark-highlight-reverse-bg, var(--blue-9));
@@ -87,7 +87,7 @@
   --warning-fg: var(--theme-dark-warning-fg, var(--orange-9));
 }
 
-[data-theme='light'],
+[data-theme="light"],
 .light-theme {
   color-scheme: light;
 
@@ -129,15 +129,15 @@
   --cmp-border: var(--theme-light-cmp-border, var(--gray-6));
   --cmp-border-focus: var(--theme-light-cmp-border-focus, var(--blue-5));
   --cmp-border-shadow-focus: var(
-      --theme-light-cmp-border-shadow-focus,
-      0 0 0 2px var(--cmp-border-focus)
+    --theme-light-cmp-border-shadow-focus,
+    0 0 0 2px var(--cmp-border-focus)
   );
 
   --popover-shadow: var(
-      --theme-light-popover-shadow,
-      0 0 0 0.5px var(--cmp-border),
-      0 10px 60px rgba(0, 0, 0, 0.17),
-      0 10px 32px -16px rgba(0, 0, 0, 0.35)
+    --theme-light-popover-shadow,
+    0 0 0 0.5px var(--cmp-border),
+    0 10px 60px rgba(0, 0, 0, 0.17),
+    0 10px 32px -16px rgba(0, 0, 0, 0.35)
   );
 
   --highlight-reverse-bg: var(--theme-light-highlight-reverse-bg, var(--blue-9));
@@ -152,4 +152,3 @@
   --error-fg: var(--theme-light-error-fg, var(--red-9));
   --warning-fg: var(--theme-light-warning-fg, var(--orange-9));
 }
-

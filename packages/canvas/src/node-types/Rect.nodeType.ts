@@ -2,10 +2,7 @@ import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomProperty, CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Box } from '@diagram-craft/geometry/box';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';

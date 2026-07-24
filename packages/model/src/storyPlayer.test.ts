@@ -7,10 +7,15 @@ import type { StoryAction } from './documentStories';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
 
-const addStory = (document: DiagramDocument, name: string) => document.stories.addStory(newid(), name);
+const addStory = (document: DiagramDocument, name: string) =>
+  document.stories.addStory(newid(), name);
 
-const addStep = (document: DiagramDocument, story: { id: string }, title: string, description: string) =>
-  document.stories.addStep(document.stories.getStory(story.id)!, newid(), title, description);
+const addStep = (
+  document: DiagramDocument,
+  story: { id: string },
+  title: string,
+  description: string
+) => document.stories.addStep(document.stories.getStory(story.id)!, newid(), title, description);
 
 describe('StoryPlayer', () => {
   let document: DiagramDocument;

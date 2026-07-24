@@ -74,7 +74,15 @@ export const FolderPickerTree = ({ folders, selected, onSelect }: FolderPickerTr
   };
 
   return (
-    <div style={{ border: '1px solid var(--cmp-border)', borderRadius: 4, height: 196, overflowY: 'auto', background: 'var(--cmp-bg)' }}>
+    <div
+      style={{
+        border: '1px solid var(--cmp-border)',
+        borderRadius: 4,
+        height: 196,
+        overflowY: 'auto',
+        background: 'var(--cmp-bg)'
+      }}
+    >
       <TreeRow
         depth={0}
         icon={<TbHome size={14} />}

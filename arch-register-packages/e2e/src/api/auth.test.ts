@@ -51,7 +51,9 @@ test.describe('auth public routes', () => {
   });
 
   test('POST /api/auth/login accepts login by user id', async ({ orpc }) => {
-    const result = await orpc.auth.login({ body: { username: 'test-admin', password: 'TestPassword123!' } });
+    const result = await orpc.auth.login({
+      body: { username: 'test-admin', password: 'TestPassword123!' }
+    });
     expect(result).toMatchObject({
       token_type: 'Bearer',
       access_token: expect.any(String),
@@ -61,7 +63,9 @@ test.describe('auth public routes', () => {
   });
 
   test('POST /api/auth/login accepts login by email', async ({ orpc }) => {
-    const result = await orpc.auth.login({ body: { username: 'admin@e2e.test', password: 'TestPassword123!' } });
+    const result = await orpc.auth.login({
+      body: { username: 'admin@e2e.test', password: 'TestPassword123!' }
+    });
     expect(result).toMatchObject({ token_type: 'Bearer' });
   });
 
@@ -91,7 +95,10 @@ test.describe('auth public routes', () => {
     });
   });
 
-  test('POST /api/auth/refresh accepts refresh token from the request body', async ({ server, orpc }) => {
+  test('POST /api/auth/refresh accepts refresh token from the request body', async ({
+    server,
+    orpc
+  }) => {
     const user = await server.db.auth.getUser(TEST_ADMIN.id);
     expect(user).toBeTruthy();
 
@@ -135,7 +142,9 @@ test.describe('auth protected routes', () => {
 
   test('GET /api/auth/me returns 401 without authentication', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
-    await expect(anonOrpc.authProtected.me(undefined)).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    await expect(anonOrpc.authProtected.me(undefined)).rejects.toMatchObject({
+      code: 'UNAUTHORIZED'
+    });
   });
 
   test('PATCH /api/users/:id updates the current user settings', async ({ orpc }) => {
@@ -143,39 +152,67 @@ test.describe('auth protected routes', () => {
       params: { id: TEST_ADMIN.id },
       body: { display_name: 'Admin Renamed', color: '#336699' }
     });
-    expect(result).toMatchObject({ id: TEST_ADMIN.id, display_name: 'Admin Renamed', color: '#336699' });
+    expect(result).toMatchObject({
+      id: TEST_ADMIN.id,
+      display_name: 'Admin Renamed',
+      color: '#336699'
+    });
   });
 
   test('PATCH /api/users/:id rejects updates to a different user', async ({ orpc }) => {
     await expect(
-      orpc.authProtected.updateUser({ params: { id: NONEXISTENT_UUID }, body: { display_name: 'Nope' } })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN', message: 'You can only update your own account settings' });
+      orpc.authProtected.updateUser({
+        params: { id: NONEXISTENT_UUID },
+        body: { display_name: 'Nope' }
+      })
+    ).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'You can only update your own account settings'
+    });
   });
 
   test('GET /api/auth/users lists users for a global admin', async ({ orpc }) => {
     const users = await orpc.authProtected.listUsers(undefined);
     expect(users).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: TEST_ADMIN.id, email: 'admin@e2e.test', auth_provider: 'local', is_active: true })
+        expect.objectContaining({
+          id: TEST_ADMIN.id,
+          email: 'admin@e2e.test',
+          auth_provider: 'local',
+          is_active: true
+        })
       ])
     );
   });
 
-  test('GET and PUT /api/auth/users/:id/global-roles manage global role assignments', async ({ server, orpc }) => {
+  test('GET and PUT /api/auth/users/:id/global-roles manage global role assignments', async ({
+    server,
+    orpc
+  }) => {
     await createLocalUser(server.db, { id: ROLES_USER_ID, email: 'roles@e2e.test' });
 
     const putResult = await orpc.authProtected.replaceGlobalRoles({
       params: { id: ROLES_USER_ID },
       body: { roles: ['workspace_admin'] }
     });
-    expect(putResult).toEqual([expect.objectContaining({ user_id: ROLES_USER_ID, role: 'workspace_admin' })]);
+    expect(putResult).toEqual([
+      expect.objectContaining({ user_id: ROLES_USER_ID, role: 'workspace_admin' })
+    ]);
 
     const getResult = await orpc.authProtected.getGlobalRoles({ params: { id: ROLES_USER_ID } });
-    expect(getResult).toEqual([expect.objectContaining({ user_id: ROLES_USER_ID, role: 'workspace_admin' })]);
+    expect(getResult).toEqual([
+      expect.objectContaining({ user_id: ROLES_USER_ID, role: 'workspace_admin' })
+    ]);
   });
 
-  test('PUT /api/auth/users/:id/global-roles rejects invalid role values', async ({ server, orpc }) => {
-    await createLocalUser(server.db, { id: ROLES_INVALID_USER_ID, email: 'roles-invalid@e2e.test' });
+  test('PUT /api/auth/users/:id/global-roles rejects invalid role values', async ({
+    server,
+    orpc
+  }) => {
+    await createLocalUser(server.db, {
+      id: ROLES_INVALID_USER_ID,
+      email: 'roles-invalid@e2e.test'
+    });
 
     await expect(
       orpc.authProtected.replaceGlobalRoles({

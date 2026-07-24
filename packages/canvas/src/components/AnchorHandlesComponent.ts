@@ -15,7 +15,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 type State = 'background' | 'node' | 'handle';
 
@@ -121,7 +121,9 @@ const shouldRenderAnchorHandles = (
   node: DiagramNode,
   selectedNodes: ReadonlyArray<DiagramNode>
 ) => {
-  return node.getDefinition().hasFlag(NodeFlags.AnchorsVisibleOnHover) || selectedNodes.includes(node);
+  return (
+    node.getDefinition().hasFlag(NodeFlags.AnchorsVisibleOnHover) || selectedNodes.includes(node)
+  );
 };
 
 export class AnchorHandlesComponent extends Component<Props> {
@@ -208,7 +210,7 @@ export class AnchorHandlesComponent extends Component<Props> {
       return svg.g({});
     }
 
-    if (node.layer.type !== 'regular' || node.layer.isLocked()) {
+    if (node.layer.type !== 'regular' || node.isEffectivelyLocked()) {
       return svg.g({});
     }
 

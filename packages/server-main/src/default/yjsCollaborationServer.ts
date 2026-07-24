@@ -96,18 +96,12 @@ class WSSharedDoc extends Y.Doc {
   }
 }
 
-
-
 export class YjsCollaborationServer implements CollaborationServer {
   private readonly docs = new Map<string, WSSharedDoc>();
   private readonly autoSaves = new Map<string, DiagramAutoSave>();
   private readonly webSocketServer = new WebSocketServer({ noServer: true });
   private boundServer?: ReturnType<typeof createServer>;
-  private readonly upgradeHandler: (
-    request: IncomingMessage,
-    socket: Socket,
-    head: Buffer
-  ) => void;
+  private readonly upgradeHandler: (request: IncomingMessage, socket: Socket, head: Buffer) => void;
 
   constructor(
     private readonly basePath = YJS_WEBSOCKET_PATH,
@@ -121,9 +115,13 @@ export class YjsCollaborationServer implements CollaborationServer {
       if (!this.autoSaves.has(docName) && this.autoSaveWriter && docName.endsWith('.json')) {
         const doc = this.docs.get(docName);
         if (doc) {
-          const tempPath = this.tempPathResolver?.(docName) ?? docName.replace(/\.json$/, '.temp.json');
+          const tempPath =
+            this.tempPathResolver?.(docName) ?? docName.replace(/\.json$/, '.temp.json');
           log.debug(`Setting up auto-save on WebSocket connect: ${docName}`);
-          this.autoSaves.set(docName, new DiagramAutoSave(doc, docName, tempPath, this.autoSaveWriter));
+          this.autoSaves.set(
+            docName,
+            new DiagramAutoSave(doc, docName, tempPath, this.autoSaveWriter)
+          );
         }
       }
     });
@@ -157,12 +155,18 @@ export class YjsCollaborationServer implements CollaborationServer {
   ensureRoom(name: string) {
     const normalized = normalizeDocName(name);
     const doc = this.getOrCreateYDoc(normalized);
-    log.debug(`ensureRoom: name=${name} normalized=${normalized} hasWriter=${!!this.autoSaveWriter} hasAutoSave=${this.autoSaves.has(normalized)}`);
+    log.debug(
+      `ensureRoom: name=${name} normalized=${normalized} hasWriter=${!!this.autoSaveWriter} hasAutoSave=${this.autoSaves.has(normalized)}`
+    );
 
     if (!this.autoSaves.has(normalized) && this.autoSaveWriter && normalized.endsWith('.json')) {
-      const tempPath = this.tempPathResolver?.(normalized) ?? normalized.replace(/\.json$/, '.temp.json');
+      const tempPath =
+        this.tempPathResolver?.(normalized) ?? normalized.replace(/\.json$/, '.temp.json');
       log.debug(`Setting up auto-save for room: ${normalized}`);
-      this.autoSaves.set(normalized, new DiagramAutoSave(doc, normalized, tempPath, this.autoSaveWriter));
+      this.autoSaves.set(
+        normalized,
+        new DiagramAutoSave(doc, normalized, tempPath, this.autoSaveWriter)
+      );
     }
   }
 
@@ -209,7 +213,10 @@ export class YjsCollaborationServer implements CollaborationServer {
     return doc;
   }
 
-  private flushAutoSave(docName: string, reason: 'room-enter' | 'room-leave' | 'dispose'): Promise<void> {
+  private flushAutoSave(
+    docName: string,
+    reason: 'room-enter' | 'room-leave' | 'dispose'
+  ): Promise<void> {
     const autoSave = this.autoSaves.get(docName);
     return autoSave?.flushPrimaryIfDirty(reason) ?? Promise.resolve();
   }
@@ -291,7 +298,11 @@ export class YjsCollaborationServer implements CollaborationServer {
 
     conn.on('message', (message: Buffer | ArrayBuffer | Buffer[]) => {
       const raw =
-        message instanceof Buffer ? message : Array.isArray(message) ? Buffer.concat(message) : message;
+        message instanceof Buffer
+          ? message
+          : Array.isArray(message)
+            ? Buffer.concat(message)
+            : message;
       const data = new Uint8Array(raw);
       this.messageListener(conn, doc, data);
     });

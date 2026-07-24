@@ -20,7 +20,7 @@ const componentId = '00000000-0000-0000-0003-000000000002';
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
 const defaultWorkspaceEntityCount = seedEntities.filter(
-  entity => entity.workspace === seedIds.workspace.default
+  entity => entity.workspace === seedIds.workspace.default && entity.project_id == null
 ).length;
 
 const createEntity = async (orpc: TestORPCClient, body: Record<string, unknown>) => {
@@ -34,9 +34,14 @@ test.describe('data routes', () => {
   }) => {
     const body = await orpc.entities.list({
       params: { workspace: 'default' },
-      query: { view: 'summary', _schemaId: componentSchemaId, owner: seedIds.teams.design, q: 'react' }
+      query: {
+        view: 'summary',
+        _schemaId: componentSchemaId,
+        owner: seedIds.teams.design,
+        q: 'react'
+      }
     });
-    expect(body).toEqual([
+    expect(body.items).toEqual([
       expect.objectContaining({
         _uid: componentId,
         _name: 'Frontend App',
@@ -44,7 +49,8 @@ test.describe('data routes', () => {
         _schema: expect.objectContaining({ id: componentSchemaId })
       })
     ]);
-    expect(body[0]).not.toHaveProperty('technology');
+    expect(body.total).toBe(1);
+    expect(body.items[0]).not.toHaveProperty('technology');
   });
 
   test('GET /api/:workspace/data returns 401 without authentication', async ({ server }) => {
@@ -97,12 +103,9 @@ test.describe('data routes', () => {
     auth,
     seeded: _
   }) => {
-    const res = await fetch(
-      `${server.baseUrl}/api/default/data/export?_schemaId=${apiSchemaId}`,
-      {
-        headers: { Authorization: auth }
-      }
-    );
+    const res = await fetch(`${server.baseUrl}/api/default/data/export?_schemaId=${apiSchemaId}`, {
+      headers: { Authorization: auth }
+    });
 
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/csv');
@@ -127,7 +130,7 @@ test.describe('data routes', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('"Name"');
-    expect(body).toContain('"Technology"');
+    expect(body).toContain('"Technology Releases"');
     expect(body).toContain('"Depends On"');
   });
 
@@ -242,7 +245,8 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { q: 'Rollback Component', view: 'summary' }
     });
-    expect(matches).toEqual([]);
+    expect(matches.items).toEqual([]);
+    expect(matches.total).toBe(0);
   });
 
   test('POST /api/:workspace/data/bulk rejects unresolved symbolic references without writes', async ({
@@ -269,22 +273,17 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { q: 'Unresolved Component', view: 'summary' }
     });
-    expect(matches).toEqual([]);
+    expect(matches.items).toEqual([]);
+    expect(matches.total).toBe(0);
   });
 
-  test('GET /api/:workspace/data/:id returns entity detail', async ({
-    orpc,
-    seeded: _
-  }) => {
+  test('GET /api/:workspace/data/:id returns entity detail', async ({ orpc, seeded: _ }) => {
     const body = await orpc.entities.get({ params: { workspace: 'default', id: componentId } });
     expect(body).toMatchObject({
       _uid: componentId,
       _name: 'Frontend App',
-      technology: 'React',
-      depends_on: [
-        '00000000-0000-0000-0003-000000000001',
-        '00000000-0000-0000-0003-000000000003'
-      ]
+      technology_releases: ['00000000-0000-0000-0006-000000000002'],
+      depends_on: ['00000000-0000-0000-0003-000000000001', '00000000-0000-0000-0003-000000000003']
     });
   });
 
@@ -292,7 +291,9 @@ test.describe('data routes', () => {
     orpc,
     seeded: _
   }) => {
-    const body = await orpc.entities.relations({ params: { workspace: 'default', id: componentId } });
+    const body = await orpc.entities.relations({
+      params: { workspace: 'default', id: componentId }
+    });
     expect(body.outgoing).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -412,10 +413,12 @@ test.describe('data routes', () => {
     orpc,
     seeded: _
   }) => {
-    const getBody = await orpc.entities.getAccess({ params: { workspace: 'default', id: componentId } });
+    const getBody = await orpc.entities.getAccess({
+      params: { workspace: 'default', id: componentId }
+    });
     expect(getBody).toMatchObject({
       owner: seedIds.teams.design,
-      visibility_mode: null,
+      project_id: null,
       grants: []
     });
 
@@ -426,7 +429,7 @@ test.describe('data routes', () => {
           {
             principal_type: 'team',
             principal_id: seedIds.teams.platform,
-            role: 'viewer',
+            role: 'editor',
             applies_to: 'subtree'
           }
         ]
@@ -439,11 +442,32 @@ test.describe('data routes', () => {
         expect.objectContaining({
           principal_type: 'team',
           principal_id: seedIds.teams.platform,
-          role: 'viewer',
+          role: 'editor',
           applies_to: 'subtree'
         })
       ]
     });
+  });
+
+  test('PUT /api/:workspace/data/:id/access rejects a viewer role grant', async ({
+    orpc,
+    seeded: _
+  }) => {
+    await expect(
+      orpc.entities.updateAccess({
+        params: { workspace: 'default', id: componentId },
+        body: {
+          grants: [
+            {
+              principal_type: 'team',
+              principal_id: seedIds.teams.platform,
+              role: 'viewer' as never,
+              applies_to: 'subtree'
+            }
+          ]
+        }
+      })
+    ).rejects.toMatchObject({ status: 400 });
   });
 
   test('PUT /api/:workspace/data/:id updates an entity', async ({ orpc, seeded: _ }) => {
@@ -483,10 +507,7 @@ test.describe('data routes', () => {
     });
   });
 
-  test('POST /api/:workspace/data/:id/clone clones an entity', async ({
-    orpc,
-    seeded: _
-  }) => {
+  test('POST /api/:workspace/data/:id/clone clones an entity', async ({ orpc, seeded: _ }) => {
     const body = await orpc.entities.clone({ params: { workspace: 'default', id: apiId } });
     expect(body).toMatchObject({
       _name: 'Customer API (copy)',
@@ -571,7 +592,9 @@ test.describe('data routes', () => {
       system: [systemId]
     });
 
-    const result = await orpc.entities.remove({ params: { workspace: 'default', id: created._uid } });
+    const result = await orpc.entities.remove({
+      params: { workspace: 'default', id: created._uid }
+    });
     expect(result).toMatchObject({
       success: true,
       message: `Data record '${created._uid}' deleted`
@@ -606,10 +629,7 @@ test.describe('data routes', () => {
     });
   });
 
-  test('PUT /api/:workspace/data/:id updates target lifecycle', async ({
-    orpc,
-    seeded: _
-  }) => {
+  test('PUT /api/:workspace/data/:id updates target lifecycle', async ({ orpc, seeded: _ }) => {
     const created = await createEntity(orpc, {
       _schemaId: apiSchemaId,
       _name: 'Future API',
@@ -666,7 +686,7 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { conditions }
     });
-    const names = body.map(e => e._name);
+    const names = body.items.map(e => e._name);
     expect(names).toEqual(expect.arrayContaining(['Auth Service', 'Auth API']));
     expect(names).not.toContain('API Gateway');
     expect(names).not.toContain('Engineering');
@@ -683,8 +703,17 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { _schemaId: componentSchemaId, conditions }
     });
-    expect(body).toHaveLength(1);
-    expect(body[0]).toMatchObject({ _name: 'Auth Service' });
+    const expectedNames = seedEntities
+      .filter(
+        entity =>
+          entity.workspace === seedIds.workspace.default &&
+          entity.project_id == null &&
+          entity.schema_id === componentSchemaId &&
+          entity.lifecycle === seedIds.lifecycle.experimental
+      )
+      .map(entity => entity.name)
+      .sort();
+    expect(body.items.map(entity => entity._name).sort()).toEqual(expectedNames);
   });
 
   test('GET /api/:workspace/data filters by conditions _lifecycle empty', async ({
@@ -714,7 +743,7 @@ test.describe('data routes', () => {
       params: { workspace: 'default' },
       query: { _schemaId: componentSchemaId, conditions }
     });
-    const names = body.map(e => e._name);
+    const names = body.items.map(e => e._name);
     expect(names).toContain('No Lifecycle Component');
     expect(names).not.toContain('Has Lifecycle Component');
     expect(names).not.toContain('API Gateway');

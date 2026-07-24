@@ -15,6 +15,11 @@ import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
 import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
 import { RoutePendingComponent } from '../../routes/RoutePendingComponent';
+import { JobMonitoringSubSection } from './sub-sections/JobMonitoringSubSection';
+import { WebhooksSubSection } from './sub-sections/WebhooksSubSection';
+import { AutomationRulesSubSection } from './sub-sections/AutomationRulesSubSection';
+import { CreateJobDialog } from '../../components/jobs/CreateJobDialog';
+import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -40,6 +45,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
     title: 'Roles & permissions',
     sub: 'Manage built-in roles and create custom workspace roles.'
   },
+  'api-tokens': {
+    title: 'API Tokens',
+    sub: 'Manage API tokens owned by this workspace, independent of any individual member.'
+  },
   'teams': {
     title: 'Teams',
     sub: 'Manage owner teams and assign users a team role for owned entities and projects.'
@@ -64,6 +73,18 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
     title: 'Audit log',
     sub: 'Browse recent activity across the workspace with filters for object type and date range.'
   },
+  'jobs': {
+    title: 'Job monitoring',
+    sub: 'Configure recurring jobs, inspect their runs, and cancel queued work.'
+  },
+  'webhooks': {
+    title: 'Webhooks',
+    sub: 'Notify external systems when catalog entities change.'
+  },
+  'automation': {
+    title: 'Automation rules',
+    sub: 'Automatically take action when entities match a trigger and conditions.'
+  },
   'danger': {
     title: 'Danger zone',
     sub: "Operations that can't be undone. Read carefully before clicking."
@@ -86,6 +107,8 @@ export const WorkspaceSettingsScreen = () => {
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
   const [rolesAddDialogOpen, setRolesAddDialogOpen] = useState(false);
+  const [jobAddDialogOpen, setJobAddDialogOpen] = useState(false);
+  const [apiTokenAddDialogOpen, setApiTokenAddDialogOpen] = useState(false);
 
   useEffect(() => {
     if (sectionIsValid || !ctx.defaultSettingsSection) return;
@@ -149,6 +172,22 @@ export const WorkspaceSettingsScreen = () => {
       >
         New custom role
       </Button>
+    ) : section === 'jobs' ? (
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setJobAddDialogOpen(true)}
+      >
+        Add job
+      </Button>
+    ) : section === 'api-tokens' ? (
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setApiTokenAddDialogOpen(true)}
+      >
+        Create token
+      </Button>
     ) : undefined;
 
   return (
@@ -187,6 +226,13 @@ export const WorkspaceSettingsScreen = () => {
           onCloseAddDialog={() => setMembersAddDialogOpen(false)}
         />
       )}
+      {section === 'api-tokens' && (
+        <WorkspaceApiTokensSubSection
+          workspaceSlug={workspaceSlug}
+          createDialogOpen={apiTokenAddDialogOpen}
+          onCloseCreateDialog={() => setApiTokenAddDialogOpen(false)}
+        />
+      )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
       {section === 'export-import' && <ExportImportSubSection />}
       {section === 'analytics' && (
@@ -205,6 +251,24 @@ export const WorkspaceSettingsScreen = () => {
             startDate: search.auditStartDate,
             endDate: search.auditEndDate
           }}
+        />
+      )}
+      {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
+      {section === 'jobs' && (
+        <CreateJobDialog
+          open={jobAddDialogOpen}
+          workspaceSlug={workspaceSlug}
+          onClose={() => setJobAddDialogOpen(false)}
+        />
+      )}
+      {section === 'webhooks' && (
+        <WebhooksSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+      )}
+      {section === 'automation' && (
+        <AutomationRulesSubSection
+          workspaceSlug={workspaceSlug}
+          schemas={ctx.schemas}
+          lifecycleStates={lifecycleStates}
         />
       )}
       {section === 'danger' && <DangerZoneSubSection workspace={workspace} />}

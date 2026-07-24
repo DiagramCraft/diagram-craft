@@ -90,8 +90,12 @@ export const useMarkdownDiagramSessionTracking = (params: {
     async (diagramIds: string[]) => {
       await Promise.all(
         diagramIds.flatMap(diagramId => [
-          queryClient.invalidateQueries({ queryKey: projectFileKeys.detail(workspaceSlug, diagramId) }),
-          queryClient.invalidateQueries({ queryKey: projectFileKeys.content(workspaceSlug, diagramId) })
+          queryClient.invalidateQueries({
+            queryKey: projectFileKeys.detail(workspaceSlug, diagramId)
+          }),
+          queryClient.invalidateQueries({
+            queryKey: projectFileKeys.content(workspaceSlug, diagramId)
+          })
         ])
       );
     },

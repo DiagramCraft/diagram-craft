@@ -1,8 +1,14 @@
-import type { ActivityTrendBucket, WorkspaceAnalytics } from '@arch-register/api-types/analyticsContract';
+import type {
+  ActivityTrendBucket,
+  WorkspaceAnalytics
+} from '@arch-register/api-types/analyticsContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, filterVisibleEntities, requireWorkspaceCapability } from '../auth/authorization';
-import { computeEntityCompleteness } from '../../utils/completeness';
+import {
+  buildApiEntityAuthCtx as buildApiAuthCtx,
+  filterVisibleEntities,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
@@ -26,15 +32,13 @@ const makeLifecycleBucket = (
   percent: roundPercent(count, total)
 });
 
-const summarizeCompleteness = (entities: EntityDbResult[], schemaMap: Map<string, SchemaDbResult>) => {
+const summarizeCompleteness = (entities: EntityDbResult[]) => {
   let above80Count = 0;
   let below50Count = 0;
   let between50And79Count = 0;
 
   for (const entity of entities) {
-    const schema = schemaMap.get(entity.schema_id);
-    if (schema == null) continue;
-    const score = computeEntityCompleteness(entity, schema);
+    const score = entity.completeness;
     if (score < 50) below50Count++;
     else if (score < 80) between50And79Count++;
     else above80Count++;
@@ -68,7 +72,8 @@ export const computeActivityTrend = (
   const bucketByDate = new Map(buckets.map(bucket => [bucket.date, bucket]));
 
   for (const row of auditRows) {
-    if (row.entity_type !== 'entity' || (row.operation !== 'create' && row.operation !== 'update')) continue;
+    if (row.entity_type !== 'entity' || (row.operation !== 'create' && row.operation !== 'update'))
+      continue;
     const bucket = bucketByDate.get(row.timestamp.toISOString().slice(0, 10));
     if (bucket) bucket[row.operation === 'create' ? 'created' : 'updated']++;
   }
@@ -84,7 +89,6 @@ export const computeWorkspaceAnalytics = (
   auditRows: AuditLogDbResult[] = [],
   now = new Date()
 ): WorkspaceAnalytics => {
-  const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
   const totalEntities = entities.length;
   const lifecycleStatesSorted = [...lifecycleStates].sort((a, b) => a.sort_order - b.sort_order);
 
@@ -116,7 +120,7 @@ export const computeWorkspaceAnalytics = (
     makeLifecycleBucket(null, 'Unassigned', null, lifecycleCounts.get(null) ?? 0, totalEntities)
   ];
 
-  const summaryCompleteness = summarizeCompleteness(entities, schemaMap);
+  const summaryCompleteness = summarizeCompleteness(entities);
 
   const coverage = schemas
     .map(schema => {
@@ -180,7 +184,7 @@ export const computeWorkspaceAnalytics = (
         schemaId: schema.id,
         schemaName: schema.name,
         totalCount: schemaEntities.length,
-        ...summarizeCompleteness(schemaEntities, schemaMap)
+        ...summarizeCompleteness(schemaEntities)
       };
     })
     .sort((a, b) => b.totalCount - a.totalCount || a.schemaName.localeCompare(b.schemaName));

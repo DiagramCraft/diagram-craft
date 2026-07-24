@@ -6,10 +6,7 @@ import { round } from '@diagram-craft/utils/math';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButton } from '@diagram-craft/app-components/ToggleButton';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
-import {
-  transformOrigins,
-  type TransformOrigin
-} from './transformPanelUtils';
+import { transformOrigins, type TransformOrigin } from './transformPanelUtils';
 import styles from './TransformPanelForm.module.css';
 
 type Props = {

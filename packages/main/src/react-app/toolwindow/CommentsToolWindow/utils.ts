@@ -46,6 +46,11 @@ export const groupThreadsByAuthor = (threads: CommentThread[]): Array<Group> => 
 
 export const getElementNameFromComment = (comment: Comment) => {
   if (comment.type === 'diagram') return 'Diagram';
+  if (comment.type === 'point') {
+    return comment.position
+      ? `(${Math.round(comment.position.x)}, ${Math.round(comment.position.y)})`
+      : 'Canvas position';
+  }
   if (comment.element) return comment.element.name;
   return 'Unknown Element';
 };

@@ -6,8 +6,12 @@ import { newid } from '@diagram-craft/utils/id';
 
 const addStory = (stories: DocumentStories, name: string): Story => stories.addStory(newid(), name);
 
-const addStep = (stories: DocumentStories, story: Story, title: string, description: string): Step =>
-  stories.addStep(story, newid(), title, description);
+const addStep = (
+  stories: DocumentStories,
+  story: Story,
+  title: string,
+  description: string
+): Step => stories.addStep(story, newid(), title, description);
 
 describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
   test('should replicate story creation', () => {

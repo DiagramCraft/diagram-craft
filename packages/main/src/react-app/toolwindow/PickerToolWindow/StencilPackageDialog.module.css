@@ -43,7 +43,7 @@
       background: var(--cmp-bg);
     }
 
-    input[type='checkbox'] {
+    input[type="checkbox"] {
       accent-color: var(--cmp-border);
     }
 

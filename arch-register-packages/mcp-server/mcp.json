@@ -1,0 +1,22 @@
+{
+  "name": "arch-register",
+  "displayName": "Arch Register",
+  "description": "Query and, when explicitly enabled, update an Arch Register workspace through MCP.",
+  "transport": {
+    "stdio": {
+      "command": "pnpm",
+      "args": ["--filter", "@arch-register/mcp-server", "stdio"]
+    },
+    "streamableHttp": "/mcp",
+    "sse": {
+      "endpoint": "/sse",
+      "messagesEndpoint": "/messages"
+    }
+  },
+  "environment": [
+    "ARCH_REGISTER_URL",
+    "ARCH_REGISTER_WORKSPACE",
+    "ARCH_REGISTER_TOKEN",
+    "MCP_ENABLE_MUTATIONS"
+  ]
+}

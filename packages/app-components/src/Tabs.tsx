@@ -25,15 +25,20 @@ type RootProps = {
 
 const List = (props: ListProps) => {
   if (props.overflow) {
-    return <OverflowList>{props.children}</OverflowList>;
+    return <OverflowList aria-label={props['aria-label']}>{props.children}</OverflowList>;
   }
 
-  return <BaseUITabs.List className={styles.eList}>{props.children}</BaseUITabs.List>;
+  return (
+    <BaseUITabs.List className={styles.eList} aria-label={props['aria-label']}>
+      {props.children}
+    </BaseUITabs.List>
+  );
 };
 
 type ListProps = {
   children: React.ReactNode;
   overflow?: boolean;
+  'aria-label'?: string;
 };
 
 type ScrollState = {
@@ -48,7 +53,7 @@ const INITIAL_SCROLL_STATE: ScrollState = {
   canScrollRight: false
 };
 
-const OverflowList = (props: { children: React.ReactNode }) => {
+const OverflowList = (props: { children: React.ReactNode; 'aria-label'?: string }) => {
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
   const [scrollState, setScrollState] = React.useState(INITIAL_SCROLL_STATE);
@@ -121,7 +126,11 @@ const OverflowList = (props: { children: React.ReactNode }) => {
         </button>
       )}
       <div ref={viewportRef} className={styles.eOverflowViewport}>
-        <BaseUITabs.List ref={listRef} className={`${styles.eList} ${styles.eOverflowList}`}>
+        <BaseUITabs.List
+          ref={listRef}
+          className={`${styles.eList} ${styles.eOverflowList}`}
+          aria-label={props['aria-label']}
+        >
           {props.children}
         </BaseUITabs.List>
       </div>

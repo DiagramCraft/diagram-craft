@@ -2,6 +2,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
   buildApiAuthCtx,
+  buildApiEntityAuthCtx,
   requireEntityAction,
   requireProjectAccess,
   requireWorkspaceCapability
@@ -18,6 +19,7 @@ import type {
   DiscussionSummaryEntry,
   UpdateDiscussionPostRequest
 } from '@arch-register/api-types/discussionContract';
+import { createCommentNotifications } from '../notification/commentNotifications';
 
 const UNKNOWN_AUTHOR_NAME = 'Unknown user';
 
@@ -39,10 +41,17 @@ const resolveObjectContext = async (
 
     if (node.project_id) {
       const project = await db.project.getProject(ws, node.project_id);
-      httpAssert.present(project, { status: 404, message: `Project '${node.project_id}' not found` });
+      httpAssert.present(project, {
+        status: 404,
+        message: `Project '${node.project_id}' not found`
+      });
       requireProjectAccess(authCtx, project.owner, 'You do not have permission to view this page');
     } else {
-      requireWorkspaceCapability(authCtx, 'content.view', 'You do not have permission to view this page');
+      requireWorkspaceCapability(
+        authCtx,
+        'content.view',
+        'You do not have permission to view this page'
+      );
     }
 
     const entity = node.entity_id ? await db.catalog.getEntity(ws, node.entity_id) : null;
@@ -60,8 +69,15 @@ const resolveObjectContext = async (
     const assessment = await db.project.getAssessmentById(ws, objectId);
     httpAssert.present(assessment, { status: 404, message: `Assessment '${objectId}' not found` });
     const project = await db.project.getProject(ws, assessment.project_id);
-    httpAssert.present(project, { status: 404, message: `Project '${assessment.project_id}' not found` });
-    requireProjectAccess(authCtx, project.owner, 'You do not have permission to view this assessment');
+    httpAssert.present(project, {
+      status: 404,
+      message: `Project '${assessment.project_id}' not found`
+    });
+    requireProjectAccess(
+      authCtx,
+      project.owner,
+      'You do not have permission to view this assessment'
+    );
     return {
       title: assessment.name,
       nav: { type: 'assessment', projectPublicId: project.public_id ?? project.id }
@@ -70,21 +86,29 @@ const resolveObjectContext = async (
 
   const entity = await db.catalog.getEntity(ws, objectId);
   httpAssert.present(entity, { status: 404, message: `Entity '${objectId}' not found` });
-  requireEntityAction(authCtx, entity, 'view_entity', 'You do not have permission to view this entity');
+  requireEntityAction(
+    authCtx,
+    entity,
+    'view_entity',
+    'You do not have permission to view this entity'
+  );
   return {
     title: entity.name,
     nav: { type: 'entity', entityPublicId: entity.public_id ?? entity.id }
   };
 };
 
-const toApiPost = (row: DiscussionPostDbResult, authorNames: Map<string, string>): DiscussionPost => ({
+const toApiPost = (
+  row: DiscussionPostDbResult,
+  authorNames: Map<string, string>
+): DiscussionPost => ({
   id: row.id,
   workspace: row.workspace,
   objectType: row.object_type,
   objectId: row.object_id,
   parentPostId: row.parent_post_id,
   authorId: row.author_id,
-  authorName: (row.author_id && authorNames.get(row.author_id)) || UNKNOWN_AUTHOR_NAME,
+  authorName: (row.author_id && authorNames.get(row.author_id)) ?? UNKNOWN_AUTHOR_NAME,
   body: row.body,
   createdAt: row.created_at.toISOString(),
   updatedAt: row.updated_at.toISOString(),
@@ -104,7 +128,7 @@ export const listDiscussionPosts = async (
   event: AuthenticatedEvent
 ): Promise<DiscussionPost[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   await resolveObjectContext(db, ws, authCtx, objectType, objectId);
 
   const [rows, authorNames] = await Promise.all([
@@ -120,10 +144,13 @@ export const summarizeDiscussions = async (
   event: AuthenticatedEvent
 ): Promise<DiscussionSummaryEntry[]> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const [rows, authorNames] = await Promise.all([db.discussion.listAll(ws), buildAuthorNameMap(db)]);
+  const [rows, authorNames] = await Promise.all([
+    db.discussion.listAll(ws),
+    buildAuthorNameMap(db)
+  ]);
 
   const byObject = new Map<string, DiscussionPostDbResult[]>();
   for (const row of rows) {
@@ -143,7 +170,9 @@ export const summarizeDiscussions = async (
     } catch {
       continue;
     }
-    const lastPost = posts.reduce((latest, post) => (post.created_at > latest.created_at ? post : latest));
+    const lastPost = posts.reduce((latest, post) =>
+      post.created_at > latest.created_at ? post : latest
+    );
     entries.push({
       objectType: first.object_type,
       objectId: first.object_id,
@@ -164,10 +193,11 @@ export const createDiscussionPost = async (
   event: AuthenticatedEvent
 ): Promise<DiscussionPost> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   await resolveObjectContext(db, ws, authCtx, body.objectType, body.objectId);
   requireWorkspaceCapability(authCtx, 'comments', 'You do not have permission to post discussions');
 
+  let parentAuthorId: string | null = null;
   if (body.parentPostId) {
     const parent = await db.discussion.getPost(ws, body.parentPostId);
     httpAssert.present(parent, { status: 404, message: `Post '${body.parentPostId}' not found` });
@@ -179,20 +209,40 @@ export const createDiscussionPost = async (
       status: 400,
       message: 'Reply must target a root post, not another reply'
     });
+    parentAuthorId = parent.author_id;
   }
 
   const timestamp = new Date();
-  const row = await db.discussion.createPost({
-    id: randomUUID(),
-    workspace: ws,
-    object_type: body.objectType,
-    object_id: body.objectId,
-    parent_post_id: body.parentPostId ?? null,
-    author_id: event.context.user.id,
-    body: body.body,
-    created_at: timestamp,
-    updated_at: timestamp
-  });
+  const write = async (tx: DatabaseAdapter) => {
+    const row = await tx.discussion.createPost({
+      id: randomUUID(),
+      workspace: ws,
+      object_type: body.objectType,
+      object_id: body.objectId,
+      parent_post_id: body.parentPostId ?? null,
+      author_id: event.context.user.id,
+      body: body.body,
+      created_at: timestamp,
+      updated_at: timestamp
+    });
+
+    if (body.objectType !== 'assessment') {
+      await createCommentNotifications(tx, {
+        workspace: ws,
+        commentId: row.id,
+        objectType: body.objectType,
+        objectId: body.objectId,
+        commentSurface: 'discussion',
+        parentPostId: body.parentPostId ?? null,
+        parentAuthorId,
+        actorUserId: event.context.user.id,
+        occurredAt: timestamp
+      });
+    }
+    return row;
+  };
+  const row =
+    db.core && !db.core.isTransaction ? await db.core.transaction(write) : await write(db);
 
   const authorNames = await buildAuthorNameMap(db);
   return toApiPost(row, authorNames);

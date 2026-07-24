@@ -13,7 +13,11 @@ import { httpAssert } from '../../utils/httpAssert';
 import type { ContentScopeResolver } from './contentScope';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
-import { projectDbErrorMessages, requireNonProjectContentAccess } from './projectOperationHelpers';
+import {
+  projectDbErrorMessages,
+  requireNonProjectContentAccess,
+  assertContentPathWritable
+} from './projectOperationHelpers';
 
 export const uploadContentFile = async (
   scope: ContentScopeResolver,
@@ -31,6 +35,7 @@ export const uploadContentFile = async (
   const authCtx = await buildApiAuthCtx(db, ws, event);
   const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
   const nodes = await resolved.listNodes(db, ws);
+  assertContentPathWritable(nodes, filePath);
   const existingFile = nodes.find(node => node.path === filePath && node.type === 'file');
   const folderPath = folderFromPath(filePath);
   const parentId = folderPath

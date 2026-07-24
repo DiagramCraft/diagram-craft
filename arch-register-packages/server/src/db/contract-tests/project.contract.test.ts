@@ -462,6 +462,94 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
     });
   });
 
+  describe('project milestones', () => {
+    it('creates, updates, and deletes a milestone', async () => {
+      const db = getDb();
+      const { workspace, project } = await createFullFixtureSet(db);
+      const now = new Date();
+
+      const created = await db.project.createMilestone({
+        id: randomUUID(),
+        workspace,
+        project_id: project,
+        name: 'Q3 platform migration',
+        target_date: '2030-07-01',
+        status: 'planned',
+        sort_order: 0,
+        created_at: now,
+        updated_at: now
+      });
+
+      expect(created.status).toBe('planned');
+      expect(created.target_date).toBe('2030-07-01');
+
+      const updated = await db.project.updateMilestone(workspace, project, created.id, {
+        name: 'Q3 platform migration',
+        target_date: '2030-08-01',
+        status: 'active',
+        sort_order: 1,
+        updated_at: new Date()
+      });
+      expect(updated!.status).toBe('active');
+      expect(updated!.target_date).toBe('2030-08-01');
+      expect(updated!.sort_order).toBe(1);
+
+      const deleted = await db.project.deleteMilestone(workspace, project, created.id);
+      expect(deleted!.id).toBe(created.id);
+      expect(await db.project.getMilestone(workspace, project, created.id)).toBeNull();
+    });
+
+    it('rejects a duplicate milestone name within the same project as a unique DatabaseError', async () => {
+      const db = getDb();
+      const { workspace, project } = await createFullFixtureSet(db);
+      const now = new Date();
+
+      await db.project.createMilestone({
+        id: randomUUID(),
+        workspace,
+        project_id: project,
+        name: 'Launch',
+        target_date: '2030-01-01',
+        status: 'planned',
+        sort_order: 0,
+        created_at: now,
+        updated_at: now
+      });
+
+      await expect(
+        db.project.createMilestone({
+          id: randomUUID(),
+          workspace,
+          project_id: project,
+          name: 'Launch',
+          target_date: '2030-02-01',
+          status: 'planned',
+          sort_order: 0,
+          created_at: now,
+          updated_at: now
+        })
+      ).rejects.toMatchObject({ code: 'unique' } satisfies Partial<DatabaseError>);
+    });
+
+    it('reports whether an entity is linked to a project via project_entity', async () => {
+      const db = getDb();
+      const { workspace, project, entity } = await createFullFixtureSet(db);
+
+      expect(await db.project.isEntityLinkedToProject(workspace, project, entity)).toBe(false);
+
+      await db.project.addProjectEntity({
+        workspace,
+        project_id: project,
+        entity_id: entity,
+        entity_type_id: null,
+        is_done: false,
+        created_at: new Date()
+      });
+
+      expect(await db.project.isEntityLinkedToProject(workspace, project, entity)).toBe(true);
+    });
+  });
+
   describe('assessment responses', () => {
     it('upserts in place and keeps the count stable', async () => {
       const db = getDb();

@@ -57,17 +57,65 @@ describe('parseCSSColor', () => {
     });
 
     test('parses values above 1', () => {
-      expect(parseCSSColor('color(srgb 1.5 0.8 0.8)')).toEqual({ type: 'srgb', r: 1.5, g: 0.8, b: 0.8, alpha: 1 });
-      expect(parseCSSColor('color(srgb 1 1.1 0.8)')).toEqual({ type: 'srgb', r: 1, g: 1.1, b: 0.8, alpha: 1 });
-      expect(parseCSSColor('color(srgb 1 0.8 2)')).toEqual({ type: 'srgb', r: 1, g: 0.8, b: 2, alpha: 1 });
-      expect(parseCSSColor('color(srgb 1 0.8 0.8 / 1.5)')).toEqual({ type: 'srgb', r: 1, g: 0.8, b: 0.8, alpha: 1.5 });
+      expect(parseCSSColor('color(srgb 1.5 0.8 0.8)')).toEqual({
+        type: 'srgb',
+        r: 1.5,
+        g: 0.8,
+        b: 0.8,
+        alpha: 1
+      });
+      expect(parseCSSColor('color(srgb 1 1.1 0.8)')).toEqual({
+        type: 'srgb',
+        r: 1,
+        g: 1.1,
+        b: 0.8,
+        alpha: 1
+      });
+      expect(parseCSSColor('color(srgb 1 0.8 2)')).toEqual({
+        type: 'srgb',
+        r: 1,
+        g: 0.8,
+        b: 2,
+        alpha: 1
+      });
+      expect(parseCSSColor('color(srgb 1 0.8 0.8 / 1.5)')).toEqual({
+        type: 'srgb',
+        r: 1,
+        g: 0.8,
+        b: 0.8,
+        alpha: 1.5
+      });
     });
 
     test('parses negative values', () => {
-      expect(parseCSSColor('color(srgb -0.1 0.8 0.8)')).toEqual({ type: 'srgb', r: -0.1, g: 0.8, b: 0.8, alpha: 1 });
-      expect(parseCSSColor('color(srgb 1 -0.5 0.8)')).toEqual({ type: 'srgb', r: 1, g: -0.5, b: 0.8, alpha: 1 });
-      expect(parseCSSColor('color(srgb 1 0.8 -1)')).toEqual({ type: 'srgb', r: 1, g: 0.8, b: -1, alpha: 1 });
-      expect(parseCSSColor('color(srgb 1 0.8 0.8 / -0.2)')).toEqual({ type: 'srgb', r: 1, g: 0.8, b: 0.8, alpha: -0.2 });
+      expect(parseCSSColor('color(srgb -0.1 0.8 0.8)')).toEqual({
+        type: 'srgb',
+        r: -0.1,
+        g: 0.8,
+        b: 0.8,
+        alpha: 1
+      });
+      expect(parseCSSColor('color(srgb 1 -0.5 0.8)')).toEqual({
+        type: 'srgb',
+        r: 1,
+        g: -0.5,
+        b: 0.8,
+        alpha: 1
+      });
+      expect(parseCSSColor('color(srgb 1 0.8 -1)')).toEqual({
+        type: 'srgb',
+        r: 1,
+        g: 0.8,
+        b: -1,
+        alpha: 1
+      });
+      expect(parseCSSColor('color(srgb 1 0.8 0.8 / -0.2)')).toEqual({
+        type: 'srgb',
+        r: 1,
+        g: 0.8,
+        b: 0.8,
+        alpha: -0.2
+      });
     });
 
     test('returns undefined for non-numeric values', () => {
@@ -252,9 +300,9 @@ describe('convertColorTo', () => {
     const rgb = convertColorTo(srgb, 'rgb');
 
     expect(rgb.type).toBe('rgb');
-    expect(rgb.r).toBeCloseTo(0.2140, 4);
-    expect(rgb.g).toBeCloseTo(0.2140, 4);
-    expect(rgb.b).toBeCloseTo(0.2140, 4);
+    expect(rgb.r).toBeCloseTo(0.214, 4);
+    expect(rgb.g).toBeCloseTo(0.214, 4);
+    expect(rgb.b).toBeCloseTo(0.214, 4);
     expect(rgb.alpha).toBe(1);
   });
 

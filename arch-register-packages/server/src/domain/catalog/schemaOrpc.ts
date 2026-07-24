@@ -9,7 +9,8 @@ import {
   getWorkspaceSchema,
   createWorkspaceSchema,
   updateWorkspaceSchema,
-  deleteWorkspaceSchema
+  deleteWorkspaceSchema,
+  listWorkspaceSchemaVersions
 } from './schemaOperations';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 
@@ -54,6 +55,14 @@ export const workspaceSchemaORPCRouter = schemaRouter.router({
     }),
     remove: schemaRouter.schemas.remove.handler(async ({ input, context }) => {
       return await deleteWorkspaceSchema(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        context.event
+      );
+    }),
+    listVersions: schemaRouter.schemas.listVersions.handler(async ({ input, context }) => {
+      return await listWorkspaceSchemaVersions(
         context.db,
         input.params.workspace,
         input.params.id,

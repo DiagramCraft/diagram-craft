@@ -4,7 +4,12 @@ import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
-import { STANDARD_FIELD_OPTIONS, DEFAULT_FIELDS, STANDARD_FIELD_IDS, filterSchemaFields } from './EntityCard';
+import {
+  STANDARD_FIELD_OPTIONS,
+  DEFAULT_FIELDS,
+  STANDARD_FIELD_IDS,
+  filterSchemaFields
+} from './EntityCard';
 import { EntityPicker } from '../../../../../components/EntityPicker';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import type { EntityCardSlateElement } from './types';

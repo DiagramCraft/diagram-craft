@@ -16,7 +16,9 @@ const Root = (props: RootProps) => {
       value={asArray(props.value)}
       defaultValue={asArray(props.defaultValue)}
       onValueChange={v =>
-        props.type === 'single' ? props.onValueChange?.(v[0] ?? undefined) : props.onValueChange?.(v)
+        props.type === 'single'
+          ? props.onValueChange?.(v[0] ?? undefined)
+          : props.onValueChange?.(v)
       }
     >
       {props.children}

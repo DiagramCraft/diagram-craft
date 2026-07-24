@@ -9,17 +9,22 @@
  */
 export const escapeCsvValue = (value: unknown, delimiter: string = ';'): string => {
   if (value == null) return '';
-  
+
   const str = String(value);
-  
+  const safeStr = /^[=+\-@]/.test(str) ? `'${str}` : str;
+
   // Check if value needs quoting
-  const needsQuoting = str.includes(delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r');
-  
-  if (!needsQuoting) return str;
-  
+  const needsQuoting =
+    safeStr.includes(delimiter) ||
+    safeStr.includes('"') ||
+    safeStr.includes('\n') ||
+    safeStr.includes('\r');
+
+  if (!needsQuoting) return safeStr;
+
   // Escape internal quotes by doubling them
-  const escaped = str.replace(/"/g, '""');
-  
+  const escaped = safeStr.replace(/"/g, '""');
+
   return `"${escaped}"`;
 };
 
@@ -30,18 +35,22 @@ export const escapeCsvValue = (value: unknown, delimiter: string = ';'): string 
  * @param delimiter The delimiter to use (default: semicolon for Excel compatibility)
  * @returns CSV string with header row and data rows
  */
-export const generateCsv = (data: Record<string, unknown>[], columns: string[], delimiter: string = ';'): string => {
+export const generateCsv = (
+  data: Record<string, unknown>[],
+  columns: string[],
+  delimiter: string = ';'
+): string => {
   const rows: string[] = [];
-  
+
   // Header row
   rows.push(columns.map(col => escapeCsvValue(col, delimiter)).join(delimiter));
-  
+
   // Data rows
   for (const item of data) {
     const row = columns.map(col => escapeCsvValue(item[col], delimiter));
     rows.push(row.join(delimiter));
   }
-  
+
   return rows.join('\n');
 };
 

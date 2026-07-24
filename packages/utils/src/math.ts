@@ -137,5 +137,5 @@ export const mod = (n: number, modulo: number) => {
  */
 export const hasSameSign = (a: number, b: number) => {
   if (a === 0 && b === 0) return true;
-  return (a * b) > 0;
-}
+  return a * b > 0;
+};

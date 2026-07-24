@@ -11,7 +11,7 @@ A wrapper component that provides consistent label styling and layout for form i
 
 - ✅ Use `FormElement` for vertical form layouts (label above input)
 - ✅ Use when you need consistent label styling across forms
-- ✅ Use when you need required indicators, hints, or error messages
+- ✅ Use when you need optional labels, hints, or error messages
 - ❌ Don't use for horizontal layouts (use `KeyValueTable` instead)
 - ❌ Don't use when there's no label needed
 
@@ -19,11 +19,11 @@ A wrapper component that provides consistent label styling and layout for form i
 
 <Canvas of={FormElementStories.WithTextInput} />
 
-## With Required Indicator
+## Optional Fields
 
-Add the `required` prop to display an asterisk (*) next to the label.
+Set `required={false}` to display `(optional)` next to the label. Required fields have no visual indicator.
 
-<Canvas of={FormElementStories.WithRequired} />
+<Canvas of={FormElementStories.WithOptional} />
 
 ## With Hint Text
 
@@ -73,7 +73,7 @@ The component uses CSS variables for theming:
 
 - `--base-fg` - Label text color
 - `--base-fg-dim` - Hint text color
-- `--danger-fg` - Required indicator and error color
+- `--cmp-fg-disabled` - Optional indicator and disabled text color
 
 ## Migration from Custom Labels
 

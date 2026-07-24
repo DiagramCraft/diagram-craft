@@ -11,7 +11,9 @@
   font-size: 0.95em;
   vertical-align: baseline;
   cursor: pointer;
-  transition: border-color 80ms, background 80ms;
+  transition:
+    border-color 80ms,
+    background 80ms;
   text-decoration: none;
   font-family: inherit;
   line-height: inherit;

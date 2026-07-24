@@ -16,7 +16,9 @@ export const formatDate = (value: unknown, fallback = '—'): string => {
 
 export const formatDateTime = (value: unknown, fallback = '—'): string => {
   const date = toDate(value);
-  return date ? date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : fallback;
+  return date
+    ? date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+    : fallback;
 };
 
 export const formatRelativeTime = (value: unknown, fallback = '—'): string => {

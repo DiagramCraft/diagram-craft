@@ -5,14 +5,14 @@ import { componentSchema } from '../support/schemas';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('data model section', () => {
-  test('shows schema editor', async ({ page }) => {
+  test('shows schema editor @quick', async ({ page }) => {
     const dataModelPage = new DataModelPage(page, defaultWorkspace.slug);
 
     await dataModelPage.goto();
     await dataModelPage.expectLoaded();
   });
 
-  test('opens a schema type from the sidebar', async ({ page }) => {
+  test('opens a schema type from the sidebar @quick', async ({ page }) => {
     const dataModelPage = new DataModelPage(page, defaultWorkspace.slug);
 
     await dataModelPage.goto();
@@ -33,7 +33,9 @@ test.describe('data model section', () => {
     }
   });
 
-  test('restores model overview layout state through reload and browser history', async ({ page }) => {
+  test('restores model overview layout state through reload and browser history', async ({
+    page
+  }) => {
     const route = workspaceModelOverviewRoute(defaultWorkspace.slug);
     const layoutTrigger = page.getByTestId('model-overview-layout');
     const horizontalSpacingInput = page
@@ -99,9 +101,7 @@ test.describe('data model section', () => {
     const route = `${workspaceModelOverviewRoute(defaultWorkspace.slug)}?layout=force&iterations=5&springStrength=0.8`;
     const layoutTrigger = page.getByTestId('model-overview-layout');
     const iterationsInput = page.getByTestId('model-overview-iterations').locator('input');
-    const springStrengthInput = page
-      .getByTestId('model-overview-spring-strength')
-      .locator('input');
+    const springStrengthInput = page.getByTestId('model-overview-spring-strength').locator('input');
 
     await page.goto(route);
 

@@ -32,6 +32,8 @@ const sidebars: SidebarsConfig = {
         'use/projects',
         'use/assessments',
         'use/content',
+        'use/collaboration-notifications',
+        'use/governance',
         'use/ai-assistant-extract',
         'use/account-settings'
       ]
@@ -43,6 +45,7 @@ const sidebars: SidebarsConfig = {
         'admin/overview',
         'admin/workspace-settings',
         'admin/schemas-model-overview',
+        'admin/document-types-templates',
         'admin/teams-members',
         'admin/roles-permissions',
         'admin/ai-configuration',
@@ -57,7 +60,9 @@ const sidebars: SidebarsConfig = {
         'reference/permission-model',
         'reference/entity-screen-reference',
         'reference/project-content-screen-reference',
-        'reference/api-integrations'
+        'reference/mcp-server',
+        'reference/api-integrations',
+        'reference/external-integrations'
       ]
     },
     {

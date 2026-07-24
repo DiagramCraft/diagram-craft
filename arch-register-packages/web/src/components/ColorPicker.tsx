@@ -5,7 +5,7 @@ export const ColorPicker = ({
   value,
   onChange,
   disabled = false,
-  size = 'default',
+  size = 'default'
 }: {
   value: string | null | undefined;
   onChange: (color: string | null) => void;
@@ -15,7 +15,7 @@ export const ColorPicker = ({
   return (
     <div className={styles.colorPicker}>
       <div className={`${styles.swatches} ${size === 'small' ? styles.swatchesSmall : ''}`}>
-        {SCHEMA_COLORS.map((color) => (
+        {SCHEMA_COLORS.map(color => (
           <button
             key={color}
             type="button"

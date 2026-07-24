@@ -3,7 +3,7 @@ import { DiagramStyles } from './diagramStyles';
 import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { Registry } from './elementDefinitionRegistry';
+import { Registry } from './registry';
 import { getRemoteUnitOfWork, UnitOfWork, type UOWTrackable, UOWRegistry } from './unitOfWork';
 import { DiagramDocumentUOWAdapter, DocumentDiagramChildAdapter } from './diagramDocument.uow';
 import { DataProviderRegistry } from './dataProvider';
@@ -16,12 +16,13 @@ import { DataProviderPolicy, DiagramDocumentData } from './diagramDocumentData';
 import { DocumentProps } from './documentProps';
 import { DocumentTags } from './documentTags';
 import { DocumentStories } from './documentStories';
-import { watch } from '@diagram-craft/utils/watchableValue';
+import { watch, type WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { precondition } from '@diagram-craft/utils/assert';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
 import { CRDT, type CRDTMap, type CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
@@ -39,6 +40,10 @@ export type DocumentEvents = {
   diagramAdded: { diagram: Diagram };
   diagramRemoved: { diagram: Diagram };
   cleared: EmptyObject;
+};
+
+export type DiagramDocumentCRDT = {
+  locked: boolean;
 };
 
 export type DataTemplate = {
@@ -67,6 +72,8 @@ export class DiagramDocument
 
   // Shared properties
   readonly #diagrams: MappedCRDTOrderedMap<Diagram, DiagramCRDT>;
+  readonly #crdt: WatchableValue<CRDTMap<DiagramDocumentCRDT>>;
+  readonly #locked: CRDTProp<DiagramDocumentCRDT, 'locked'>;
 
   // Transient properties
   url: string | undefined;
@@ -105,6 +112,15 @@ export class DiagramDocument
       }
     );
 
+    this.#crdt = watch(this.root.getMap('document'));
+    this.#locked = new CRDTProp(this.#crdt, 'locked', {
+      onRemoteChange: () => {
+        const anyDiagram = this.diagrams[0];
+        if (anyDiagram) this.emit('diagramChanged', { diagram: anyDiagram });
+      },
+      initialValue: false
+    });
+
     this.#releasables.add(this.root.on('remoteClear', () => this.emit('cleared')));
   }
 
@@ -142,6 +158,22 @@ export class DiagramDocument
 
   get diagrams() {
     return this.#diagrams.values.filter(d => !d.parent);
+  }
+
+  get locked() {
+    return this.#locked.getNonNull();
+  }
+
+  isEffectivelyLocked() {
+    return this.locked;
+  }
+
+  setLocked(value: boolean, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#locked.set(value);
+    });
+    const anyDiagram = this.diagrams[0];
+    if (anyDiagram) this.emit('diagramChanged', { diagram: anyDiagram });
   }
 
   *diagramIterator(opts: DiagramIteratorOpts = {}) {

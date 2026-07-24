@@ -3,27 +3,33 @@
   --stroke-dash-zoom: 1;
   background: var(--canvas-bg);
 
-  &.tool-edge, &.tool-edge * {
+  &.tool-edge,
+  &.tool-edge * {
     cursor: crosshair !important;
   }
 
-  &.tool-text, &.tool-text * {
+  &.tool-text,
+  &.tool-text * {
     cursor: text !important;
   }
 
-  &.tool-freehand, &.tool-freehand * {
+  &.tool-freehand,
+  &.tool-freehand * {
     cursor: crosshair !important;
   }
 
-  &.tool-pen, &.tool-pen * {
+  &.tool-pen,
+  &.tool-pen * {
     cursor: default !important;
   }
 
-  &.tool-node, &.tool-node * {
+  &.tool-node,
+  &.tool-node * {
     cursor: default !important;
   }
 
-  &.tool-pan, &.tool-pan * {
+  &.tool-pan,
+  &.tool-pan * {
     cursor: move !important;
   }
 
@@ -31,11 +37,13 @@
     outline: 0 solid transparent;
     border-radius: 3px;
 
-    &::selection, *::selection {
+    &::selection,
+    *::selection {
       background: rgba(175, 210, 255, 0.5);
     }
 
-    &::-moz-selection, *::-moz-selection {
+    &::-moz-selection,
+    *::-moz-selection {
       background: rgba(175, 210, 255, 0.5);
     }
   }
@@ -47,7 +55,9 @@
   [contenteditable]:focus {
     outline: 3px solid #51a7e8;
     background: rgba(255, 255, 255, 0.2);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075), 0 0 5px rgba(81, 167, 232, 0.5);
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.075),
+      0 0 5px rgba(81, 167, 232, 0.5);
   }
 
   .svg-doc-bounds {
@@ -56,7 +66,6 @@
     stroke-width: 1;
     filter: drop-shadow(2px 2px 4px rgba(27, 25, 23, 0.05));
   }
-
 
   .svg-grid {
     stroke-width: calc(1 * var(--zoom));
@@ -292,12 +301,12 @@
   }
 
   .svg-node--highlight-node__drop-target {
-    > .svg-node__boundary, > .svg-node--container-outline {
+    > .svg-node__boundary,
+    > .svg-node--container-outline {
       stroke-width: 3px !important;
-      stroke: #30A46C !important;
+      stroke: #30a46c !important;
     }
   }
-
 
   .svg-shape-control-point {
     cursor: crosshair;
@@ -319,7 +328,8 @@
     stroke-width: calc(1 * var(--zoom));
   }
 
-  .svg-edge--highlight-search-match, .svg-node--highlight-search-match {
+  .svg-edge--highlight-search-match,
+  .svg-node--highlight-search-match {
     .svg-edge {
       animation: search-match 0.25s ease-in-out infinite;
       stroke-dasharray: none !important;

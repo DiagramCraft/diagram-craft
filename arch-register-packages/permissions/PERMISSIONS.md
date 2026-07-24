@@ -90,18 +90,22 @@ Virtual permissions are **computed dynamically** and don't exist in the database
 
 Entity permissions control access to individual entities and are granted through **entity roles**.
 
-| Action | Description | Granted By Role(s) |
+| Action | Description | Granted By |
 |--------|-------------|-------------------|
-| `view_entity` | View entity details | `viewer`, `editor`, `contributor`, `entity_admin`, `global_admin` |
+| `view_entity` | View entity details | Workspace `content.view` (any entity, workspace-wide), `ent.edit`/`ent.propose`, owner-team role, an `editor`/`contributor`/`entity_admin` grant, or `global_admin` |
 | `edit_entity` | Modify entity properties | `editor`, `contributor`, `entity_admin`, `global_admin` |
 | `create_child` | Create child entities | `contributor`, `entity_admin`, `global_admin` |
 | `admin_entity` | Full entity administration (delete, manage grants) | `entity_admin`, `global_admin` |
 
-**Entity Roles:**
-- `viewer`: Read-only access
+**Entity Roles (explicit grants):**
 - `editor`: Can view and edit
 - `contributor`: Can view, edit, and create children
 - `entity_admin`: Full control over entity and its subtree
+
+There is no independently-grantable `viewer` role — view access always comes from `content.view`
+(or ownership/an edit-capable grant), never from a standalone view-only grant. A grant exists to
+hand out *targeted non-view* access outside of team ownership; every grant role implies view as a
+side effect of the edit/admin actions it carries.
 
 **Grant Scope:**
 - `self`: Permission applies only to the specific entity
@@ -135,7 +139,11 @@ Built-in team roles:
 |------|---------------------------|-------------------------------|--------------------|
 | `team_admin` | `entity_admin` | `contributor` | `edit_project`, `delete_project`, `manage_files` |
 | `team_editor` | `contributor` | `editor` | `edit_project`, `manage_files` |
-| `team_reviewer` | `viewer` | `viewer` | none |
+| `team_reviewer` | `view_entity` only | `view_entity` only | none |
+
+`team_reviewer`'s entity actions are hardcoded to `view_entity` rather than referencing an
+`EntityRole` — team ownership grants view independently of any workspace-wide capability, so a
+`team_reviewer` with no other workspace role at all still sees their team's entities.
 
 ## Administration Surfaces
 
@@ -217,12 +225,7 @@ hasEntityPermission(entity, action)
 ├─ Does user have workspace capability that implies entity access?
 │  ├─ `ent.edit` → contributor actions
 │  ├─ `ent.propose` → editor actions
-│  └─ `ws.view` → view_entity
-├─ Is entity public?
-│  ├─ YES → Check if action is 'view_entity'
-│  │  └─ YES → ALLOW
-│  │  └─ NO → Continue to grant check
-│  └─ NO (restricted) → Continue to grant check
+│  └─ `content.view` → view_entity (workspace-wide; `ws.view` alone does NOT grant this)
 ├─ Apply direct owner-team permissions for entity.owner
 ├─ Apply descendant owner-team permissions from ancestor-owned entities
 ├─ Find applicable grants for user
@@ -245,18 +248,26 @@ hasEntityPermission(entity, action)
 **Key Operations:**
 - **Create Top-Level Entity**: Requires a team role in the specified owner team that grants entity creation
 - **Create Child Entity**: Requires `create_child` permission on parent
-- **View Entity**: Allowed if entity is public OR user has `view_entity` permission
+- **View Entity**: Allowed if the user has `content.view` (workspace-wide), owns the entity via
+  team role, or holds an applicable `editor`/`contributor`/`entity_admin` grant
 - **Edit Entity**: Requires `edit_entity` permission
 - **Delete Entity**: Requires `admin_entity` permission
 
-**Visibility Modes:**
-- `public`: Anyone can view (but not edit)
-- `restricted`: Only users with explicit grants can view
-
 **Grant Inheritance:**
 - Grants with `subtree` scope apply to all descendants
-- Child entities inherit visibility from ancestors (walks up tree until visibility found)
 - Multiple grants combine (union of permissions)
+
+There is no per-entity visibility flag anymore (`visibility_mode` was removed) and no
+containment-based inheritance of *view* access — `content.view` already covers the whole
+workspace, so there's nothing to inherit. Containment traversal still matters for two things: team
+ownership's *descendant* permissions, and `subtree`-scoped explicit grants.
+
+**Project scoping vs. permissions:** entities can carry a `project_id`, marking them as created
+solely for one project. This is a *query-scope* concept, not a permission — it controls whether an
+entity appears in global listings/search (excluded when `project_id` is set) versus project-scoped
+queries (included), independent of who can view it. It's distinct from `project_entity`, which
+merely associates an existing, otherwise-normal entity with a project without restricting its
+general visibility.
 
 ## Authorization Context
 
@@ -359,9 +370,9 @@ requireCanCreateProject(evaluator, context, requestedOwnerTeamId);
 
 **Pattern:** Walk up containment tree to find inherited properties
 
-`PermissionChecker` resolves inherited visibility and ancestor relationships internally when
-evaluating `hasEntityPermission(...)`. Callers should use the high-level check rather than
-re-implement containment traversal.
+`PermissionChecker` resolves ancestor relationships internally (for owner-team descendant
+permissions and `subtree`-scoped grants) when evaluating `hasEntityPermission(...)`. Callers
+should use the high-level check rather than re-implement containment traversal.
 
 ### Caching (Client-Side Only)
 
@@ -373,7 +384,9 @@ re-implement containment traversal.
 
 1. **Server is Authoritative**: Client-side checks are for UX only. Always validate on server.
 2. **Global Admin Bypass**: `global_admin` bypasses all permission checks.
-3. **Public Entities**: Public entities are viewable by anyone, but editing still requires grants.
+3. **content.view is workspace-wide**: Any role/token with `content.view` can view every entity in
+   the workspace (minus project-scoped-out entities in global queries); `ws.view` alone grants
+   neither entity view nor read access to any content.
 4. **Team Assignments**: Team-role assignments are workspace-scoped. Users can hold different team roles in different workspaces.
 5. **Grant Inheritance**: Subtree grants are powerful. Be careful when granting `entity_admin` with subtree scope.
 6. **Virtual Permissions**: Virtual permissions combine multiple checks. Ensure both client and server implement the same logic.

@@ -23,10 +23,10 @@ export const Default: Story = {
   render: () => (
     <div style={{ minWidth: 360 }}>
       <FormGroup label="Properties">
-        <FormElement label="Name">
+        <FormElement label="Name" required>
           <TextInput placeholder="e.g. my-service" value="" onChange={() => {}} />
         </FormElement>
-        <FormElement label="Description">
+        <FormElement label="Description" required={false}>
           <TextInput placeholder="Optional description" value="" onChange={() => {}} />
         </FormElement>
       </FormGroup>
@@ -39,10 +39,10 @@ export const WithIcon: Story = {
   render: () => (
     <div style={{ minWidth: 360 }}>
       <FormGroup label="Metadata" icon={<TbInfoCircle size={12} />}>
-        <FormElement label="Owner">
+        <FormElement label="Owner" required={false}>
           <TextInput placeholder="team-platform" value="" onChange={() => {}} />
         </FormElement>
-        <FormElement label="Tags">
+        <FormElement label="Tags" required={false}>
           <TextInput placeholder="comma-separated" value="" onChange={() => {}} />
         </FormElement>
       </FormGroup>
@@ -74,7 +74,7 @@ export const WithAction: Story = {
           </button>
         }
       >
-        <FormElement label="Member">
+        <FormElement label="Member" required>
           <TextInput placeholder="username" value="" onChange={() => {}} />
         </FormElement>
       </FormGroup>
@@ -87,15 +87,15 @@ export const Multiple: Story = {
   render: () => (
     <div style={{ minWidth: 360, display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <FormGroup label="Properties" icon={<TbAdjustments size={12} />}>
-        <FormElement label="Name">
+        <FormElement label="Name" required>
           <TextInput placeholder="e.g. my-service" value="" onChange={() => {}} />
         </FormElement>
       </FormGroup>
       <FormGroup label="Schema" icon={<TbDatabase size={12} />}>
-        <FormElement label="Type">
+        <FormElement label="Type" required>
           <TextInput placeholder="Select a type" value="" onChange={() => {}} />
         </FormElement>
-        <FormElement label="Version">
+        <FormElement label="Version" required={false}>
           <TextInput placeholder="1.0.0" value="" onChange={() => {}} />
         </FormElement>
       </FormGroup>

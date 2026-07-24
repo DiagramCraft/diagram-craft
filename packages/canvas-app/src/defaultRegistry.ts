@@ -9,11 +9,9 @@ import { TextNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Text.
 import { ContainerNodeDefinition } from '@diagram-craft/canvas/node-types/Container.nodeType';
 import { GenericPathNodeDefinition } from '@diagram-craft/canvas/node-types/GenericPath.nodeType';
 import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.nodeType';
-import {
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry,
-  LazyElementLoaderEntry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { EdgeDefinitionRegistry } from '@diagram-craft/model/edgeDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
+import { LazyElementLoaderEntry } from '@diagram-craft/model/lazyElementLoader';
 import { HexagonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Hexagon.nodeType';
 import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Triangle.nodeType';
 import { ProcessNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Process.nodeType';

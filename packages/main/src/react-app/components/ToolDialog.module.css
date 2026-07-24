@@ -9,7 +9,6 @@
   font-size: 12px;
   border-bottom: 1px solid var(--accent-border);
   z-index: 10;
-
 }
 
 .eContent {
@@ -29,7 +28,6 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
-
 
     :global(.cToggleButtonGroup) {
       border: 1px solid var(--accent-border);
@@ -51,7 +49,7 @@
       border: 1px solid var(--accent-border);
     }
   }
-  
+
   button[data-variant="primary"] {
     background: var(--accent-bg);
     border: 1px solid var(--accent-border);
@@ -64,5 +62,3 @@
     border: 1px solid var(--accent-border);
   }
 }
-
-

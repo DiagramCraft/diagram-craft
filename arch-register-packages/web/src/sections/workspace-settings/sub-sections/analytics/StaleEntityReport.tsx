@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useEntities } from '../../../../hooks/useEntities';
 import { useWorkspaceAnalytics } from '../../../../hooks/useWorkspaceAnalytics';
 import { asEntityPublicId, entityDetailRoute } from '../../../../routes/publicObjectRoutes';
@@ -8,6 +8,7 @@ import { AnalyticsTabs } from './AnalyticsTabs';
 import { formatDate } from '../../../../utils/dateFormat';
 import { Table } from '../../../../components/table/Table';
 import { EmptyState } from '../../../../components/EmptyState';
+import { LoadingState } from '../../../../components/LoadingState';
 
 export const StaleEntityReport = ({
   workspaceSlug,
@@ -16,12 +17,15 @@ export const StaleEntityReport = ({
   workspaceSlug: string;
   onSelectView: (view: 'overview' | 'stale') => void;
 }) => {
-  const navigate = useNavigate();
   const [thresholdInput, setThresholdInput] = useState('90');
   const [staleAfterDays, setStaleAfterDays] = useState(90);
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 25;
-  const { data: analytics, isLoading, isError } = useWorkspaceAnalytics(workspaceSlug, staleAfterDays);
+  const {
+    data: analytics,
+    isLoading,
+    isError
+  } = useWorkspaceAnalytics(workspaceSlug, staleAfterDays);
   const conditions = analytics
     ? [{ fieldId: '_updatedAt', op: 'before' as const, value: analytics.stale.cutoffAt }]
     : [];
@@ -40,8 +44,9 @@ export const StaleEntityReport = ({
     }
   };
 
-  if (isLoading) return <EmptyState compact title="Loading stale entities…" />;
-  if (isError || analytics == null) return <EmptyState compact title="Stale entities could not be loaded." />;
+  if (isLoading) return <LoadingState text="Loading stale entities…" size="sm" />;
+  if (isError || analytics == null)
+    return <EmptyState compact title="Stale entities could not be loaded." />;
 
   return (
     <div className={styles.stack}>
@@ -49,7 +54,8 @@ export const StaleEntityReport = ({
 
       <div className={styles.staleReportControls}>
         <div className={styles.reportSub}>
-          {analytics.stale.totalCount} entities not changed in the last {analytics.stale.thresholdDays} days.
+          {analytics.stale.totalCount} entities not changed in the last{' '}
+          {analytics.stale.thresholdDays} days.
         </div>
         <label className={styles.staleLabel}>
           Not changed in
@@ -73,7 +79,7 @@ export const StaleEntityReport = ({
       </div>
 
       {isLoadingEntities ? (
-        <EmptyState compact title="Loading entities…" />
+        <LoadingState text="Loading entities…" size="sm" />
       ) : entities.length === 0 ? (
         <EmptyState compact title="No entities match this age threshold." />
       ) : (
@@ -87,13 +93,15 @@ export const StaleEntityReport = ({
           </Table.Head>
           <Table.Body>
             {entities.map(entity => (
-              <Table.Row
-                key={entity._uid}
-                onClick={() =>
-                  navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
-                }
-              >
-                <Table.Cell>{entity._name}</Table.Cell>
+              <Table.Row key={entity._uid}>
+                <Table.Cell>
+                  <Link
+                    {...entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId))}
+                    className={styles.linkButton}
+                  >
+                    {entity._name}
+                  </Link>
+                </Table.Cell>
                 <Table.Cell>{entity._schema.name}</Table.Cell>
                 <Table.Cell>{formatDate(entity._updatedAt)}</Table.Cell>
               </Table.Row>
@@ -105,7 +113,8 @@ export const StaleEntityReport = ({
       {analytics.stale.totalCount > pageSize && (
         <div className={styles.pagination}>
           <span>
-            {pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, analytics.stale.totalCount)} of{' '}
+            {pageIndex * pageSize + 1}–
+            {Math.min((pageIndex + 1) * pageSize, analytics.stale.totalCount)} of{' '}
             {analytics.stale.totalCount}
           </span>
           <div>

@@ -34,11 +34,26 @@ export const useSearch = (
         query: {
           q: params.q,
           limitPerType: params.limitPerType ?? undefined,
-          types: params.types?.join(',') ?? undefined
+          types: params.types?.join(',') === '' ? undefined : params.types?.join(',')
         }
       }),
     enabled: queryOptions?.enabled ?? (!!workspaceId && !!params.q.trim()),
     // Search results can be cached for a shorter time
     staleTime: 2 * 60 * 1000 // 2 minutes
+  });
+};
+
+// Hook for searching Markdown documents across the workspace (for document-link pickers)
+export const useDocumentSearch = (workspaceId: string, query: string) => {
+  return useQuery({
+    queryKey: [...searchKeys.workspaceSearches(workspaceId), 'documents', query],
+    queryFn: () =>
+      orpcClient.search.query({
+        params: { workspace: workspaceId },
+        query: { q: query, limitPerType: 8, types: 'files' }
+      }),
+    enabled: !!workspaceId && !!query.trim(),
+    staleTime: 2 * 60 * 1000,
+    select: data => data.files.filter(file => file.type === 'markdown')
   });
 };

@@ -53,6 +53,7 @@ type FormProps = {
   position: Property<string>;
   width: Property<number>;
   palette?: string[];
+  enabled?: Property<boolean>;
 };
 
 class FormatProperty extends MultiProperty<string[]> {
@@ -132,7 +133,8 @@ export const NodeTextPanelForm = ({
   shrink,
   position,
   width,
-  palette
+  palette,
+  enabled
 }: FormProps) => {
   const fonts = $cfg.fonts;
 
@@ -141,6 +143,15 @@ export const NodeTextPanelForm = ({
   return (
     <>
       <KeyValueTable.Root>
+        {enabled && (
+          <>
+            <KeyValueTable.Label>Visible:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor property={enabled} render={props => <Checkbox {...props} />} />
+            </KeyValueTable.Value>
+          </>
+        )}
+
         <KeyValueTable.Label>Font:</KeyValueTable.Label>
         <KeyValueTable.Value stack={'horizontal'}>
           <PropertyEditor
@@ -407,9 +418,17 @@ export const NodeTextPanel = (props: Props) => {
   const shrink = useNodeProperty($d, 'text.shrink');
   const position = useNodeProperty($d, 'text.position');
   const width = useNodeProperty($d, 'text.width');
+  const enabled = useNodeProperty($d, 'text.enabled');
 
   return (
-    <ToolWindowPanel mode={props.mode ?? 'accordion'} title={$t('panel.text', 'Text')} id={'text'}>
+    <ToolWindowPanel
+      mode={props.mode ?? 'accordion'}
+      title={$t('panel.text', 'Text')}
+      id={'text'}
+      hasCheckbox={true}
+      value={enabled.val}
+      onChange={enabled.set}
+    >
       <NodeTextPanelForm
         diagram={$d}
         config={$cfg}

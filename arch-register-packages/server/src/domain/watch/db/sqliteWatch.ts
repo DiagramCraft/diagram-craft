@@ -55,68 +55,75 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
     return existing;
   }
 
-  async listNotifications(userId: string, workspace: string) {
-    return this.all(
-      'SELECT * FROM user_notification WHERE user_id = ? AND workspace = ? ORDER BY timestamp DESC, created_at DESC',
-      [userId, workspace],
-      watchMappers.notification
-    );
-  }
-
-  async deleteNotification(userId: string, workspace: string, notificationId: string) {
-    const existing = await this.get(
-      'SELECT * FROM user_notification WHERE id = ? AND user_id = ? AND workspace = ?',
-      [notificationId, userId, workspace],
-      watchMappers.notification
-    );
-    if (!existing) return null;
-    this.run('DELETE FROM user_notification WHERE id = ? AND user_id = ? AND workspace = ?', [
-      notificationId,
-      userId,
-      workspace
-    ]);
-    return existing;
-  }
-
-  async clearNotifications(userId: string, workspace: string) {
-    const result = this.run('DELETE FROM user_notification WHERE user_id = ? AND workspace = ?', [
-      userId,
-      workspace
-    ]);
-    return result.changes;
-  }
-
   async createNotificationsFromAudit(input: CreateNotificationsFromAuditInput) {
     const { auditLog, changedByDisplayName } = input;
-    const watcherIds = (
-      input.watcherUserIds ??
-      (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))
-    )
-      .filter(userId => userId !== auditLog.user_id)
-      .map(user_id => ({ user_id }));
+    const watcherRecipients =
+      input.watcherRecipients ??
+      (
+        input.watcherUserIds ??
+        (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))
+      ).map(userId => ({ userId, email: null, inAppEnabled: true, emailEnabled: false }));
 
-    for (const watcher of watcherIds) {
+    for (const recipient of watcherRecipients) {
+      if (recipient.userId === auditLog.user_id) continue;
+      if (!recipient.inAppEnabled && !recipient.emailEnabled) continue;
+      const entitySlug = auditLog.entity_slug ?? auditLog.entity_id;
+      const notificationId = newid();
+      const deliveryKey = `entity-watch:${auditLog.id}:user:${recipient.userId}`;
       this.run(
-        `INSERT OR IGNORE INTO user_notification (
-          id, user_id, workspace, entity_id, audit_log_id, operation, entity_name, entity_slug,
-          schema_id, changed_by_user_id, changed_by_display_name, timestamp, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR IGNORE INTO user_inbox_notification (
+          id, user_id, workspace, category, event_type, resource_type, resource_id,
+          case_id, assignment_id, actor_user_id, actor_display_name, title, message,
+          action_route, presentation_metadata, occurred_at, created_at, read_at, delivery_key,
+          in_app_enabled
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          newid(),
-          watcher.user_id,
+          notificationId,
+          recipient.userId,
           auditLog.workspace,
+          'information',
+          `entity.${auditLog.operation}`,
+          'entity',
           auditLog.entity_id,
-          auditLog.id,
-          auditLog.operation,
-          auditLog.entity_name,
-          auditLog.entity_slug ?? auditLog.entity_id,
-          auditLog.schema_id,
+          null,
+          null,
           auditLog.user_id,
           changedByDisplayName,
+          auditLog.entity_name,
+          `${changedByDisplayName} ${auditLog.operation}d this entity`,
+          null,
+          JSON.stringify({ entitySlug, schemaId: auditLog.schema_id }),
           auditLog.timestamp.toISOString(),
-          new Date().toISOString()
+          new Date().toISOString(),
+          null,
+          deliveryKey,
+          recipient.inAppEnabled ? 1 : 0
         ]
       );
+      if (recipient.emailEnabled && recipient.email) {
+        const notification = this.get<{ id: string }>(
+          'SELECT id FROM user_inbox_notification WHERE user_id = ? AND delivery_key = ?',
+          [recipient.userId, deliveryKey]
+        );
+        if (notification) {
+          this.run(
+            `INSERT OR IGNORE INTO notification_delivery (
+              id, notification_id, user_id, workspace, channel, status, recipient_email,
+              max_attempts, next_attempt_at, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, 'email', 'pending', ?, 5, ?, ?, ?)`,
+            [
+              newid(),
+              notification.id,
+              recipient.userId,
+              auditLog.workspace,
+              recipient.email,
+              new Date().toISOString(),
+              new Date().toISOString(),
+              new Date().toISOString()
+            ]
+          );
+        }
+      }
     }
   }
 }

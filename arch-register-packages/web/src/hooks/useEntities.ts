@@ -10,7 +10,7 @@ import {
   invalidateDeletedEntity
 } from '../queries/entities';
 import { schemaKeys } from '../queries/schemas';
-import { invalidateSnapshotQueries } from '../queries/snapshots';
+import { invalidateEntityVersionQueries } from '../queries/entityVersions';
 import { invalidateNotificationQueries } from './useNotifications';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -19,7 +19,7 @@ export const useEntities = (
   options: EntityListOptions = {},
   queryOptions?: { enabled?: boolean }
 ) => {
-  return useQuery({
+  const query = useQuery({
     queryKey: entityKeys.list(workspaceId, options),
     queryFn: () =>
       orpcClient.entities.list({
@@ -33,6 +33,12 @@ export const useEntities = (
       }),
     enabled: queryOptions?.enabled ?? !!workspaceId
   });
+
+  return {
+    ...query,
+    data: query.data?.items ?? [],
+    total: query.data?.total
+  };
 };
 
 // Hook for fetching a single entity
@@ -144,7 +150,7 @@ export const useUpdateEntity = (workspaceId: string) => {
     onSuccess: async (_, variables) => {
       await invalidateEntityDetails(queryClient, workspaceId, variables.entityId);
       await invalidateEntityQueries(queryClient, workspaceId);
-      await invalidateSnapshotQueries(queryClient, workspaceId, variables.entityId);
+      await invalidateEntityVersionQueries(queryClient, workspaceId, variables.entityId);
     }
   });
 };
@@ -209,11 +215,13 @@ export const useEntitiesBySchema = (
   return useQueries({
     queries: schemaIds.map(schemaId => ({
       queryKey: entityKeys.list(workspaceId, { schemaId, view: 'summary', conditions }),
-      queryFn: () =>
-        orpcClient.entities.list({
+      queryFn: async () => {
+        const page = await orpcClient.entities.list({
           params: { workspace: workspaceId },
           query: { ...toEntityListQuery({ schemaId, conditions }), view: 'summary' }
-        }),
+        });
+        return page.items;
+      },
       enabled: !!workspaceId && !!schemaId
     }))
   });

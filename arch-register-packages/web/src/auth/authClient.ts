@@ -5,10 +5,7 @@ type RefreshTokenResponse = {
   expires_in: number;
 };
 
-type SessionExpiredHandler = (opts: {
-  redirectTo: string;
-  reason: 'session-expired';
-}) => void;
+type SessionExpiredHandler = (opts: { redirectTo: string; reason: 'session-expired' }) => void;
 
 type AuthFetchOptions = {
   requiresAuth?: boolean;
@@ -94,12 +91,7 @@ export const fetchWithAuthResponse = async (
   const { requiresAuth = true, retryOnUnauthorized = true } = options;
   const response = await fetchWithCredentials(path, init);
 
-  if (
-    !requiresAuth ||
-    !retryOnUnauthorized ||
-    response.status !== 401 ||
-    isRefreshPath(path)
-  ) {
+  if (!requiresAuth || !retryOnUnauthorized || response.status !== 401 || isRefreshPath(path)) {
     return response;
   }
 

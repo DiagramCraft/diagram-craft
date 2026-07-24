@@ -37,12 +37,10 @@
       "!packages/main/public",
       "!**/*.png",
       "!**/eslintrc.cjs",
-      "!**/*.js",
       "!**/.storybook",
+      "!arch-register-packages/e2e/test-results",
+      "!arch-register-packages/e2e/.auth",
       "!.*",
-      "!**/*.html",
-      "!**/vite.config.ts",
-      "!**/vitest.config.ts",
       "!arch-register-packages/server/openapi.json"
     ]
   },
@@ -112,7 +110,15 @@
         "noBarrelFile": "error"
       }
     },
-    "includes": ["**", "!**/*.test.ts", "!**/*.stories.tsx"]
+    "includes": [
+      "**",
+      "!**/*.test.ts",
+      "!**/*.stories.tsx",
+      "!**/*.js",
+      "!**/*.html",
+      "!**/vite.config.ts",
+      "!**/vitest.config.ts"
+    ]
   },
   "assist": {
     "enabled": false

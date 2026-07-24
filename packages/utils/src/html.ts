@@ -177,7 +177,21 @@ export class HTMLParser {
 }
 
 export const htmlToText = (input: string) => {
-  const blocks = new Set(['br', 'div', 'p', 'li', 'tr', 'td', 'th', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+  const blocks = new Set([
+    'br',
+    'div',
+    'p',
+    'li',
+    'tr',
+    'td',
+    'th',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6'
+  ]);
   const parts: string[] = [];
   let needsSpacing = false;
 

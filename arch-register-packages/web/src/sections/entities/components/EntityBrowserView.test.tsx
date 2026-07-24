@@ -17,7 +17,7 @@ const renderLeaf = (name: string) => (props: Record<string, unknown>) => (
 vi.mock('./BubbleView', () => ({ BubbleView: renderLeaf('bubble') }));
 vi.mock('./CardsView', () => ({ CardsView: renderLeaf('cards') }));
 vi.mock('./ExploreView', () => ({ ExploreView: renderLeaf('explore') }));
-vi.mock('./HierarchyView', () => ({ HierarchyView: renderLeaf('hierarchy') }));
+vi.mock('./MapView', () => ({ MapView: renderLeaf('map') }));
 vi.mock('./MatrixView', () => ({ MatrixView: renderLeaf('matrix') }));
 vi.mock('./RadarView', () => ({ RadarView: renderLeaf('radar') }));
 vi.mock('./TableView', () => ({ TableView: renderLeaf('table') }));
@@ -93,7 +93,7 @@ const views = [
   'table',
   'cards',
   'tree',
-  'hierarchy',
+  'map',
   'explore',
   'matrix',
   'timeline',
@@ -101,14 +101,7 @@ const views = [
   'bubble'
 ] as const;
 const entityListViews = new Set(['table', 'cards', 'tree']);
-const configurableViews = new Set([
-  'hierarchy',
-  'explore',
-  'matrix',
-  'timeline',
-  'radar',
-  'bubble'
-]);
+const configurableViews = new Set(['map', 'explore', 'matrix', 'timeline', 'radar', 'bubble']);
 
 describe('EntityBrowserView', () => {
   it.each(

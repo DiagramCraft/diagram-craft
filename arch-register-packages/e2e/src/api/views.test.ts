@@ -13,8 +13,13 @@ test.describe('Saved Views API', () => {
     description: 'A view created by E2E tests',
     viewMode: 'table' as const,
     filters: {
-      status: seedIds.lifecycle.production,
-      q: 'test'
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_lifecycle',
+        op: 'equals' as const,
+        value: seedIds.lifecycle.production
+      }
     },
     config: null
   };
@@ -84,15 +89,15 @@ test.describe('Saved Views API', () => {
 
   test('returns 401 without auth', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
-    await expect(
-      anonOrpc.views.list({ params: { workspace: 'default' } })
-    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    await expect(anonOrpc.views.list({ params: { workspace: 'default' } })).rejects.toMatchObject({
+      code: 'UNAUTHORIZED'
+    });
   });
 
   test('returns 404 for unknown workspace', async ({ orpc }) => {
-    await expect(
-      orpc.views.list({ params: { workspace: 'nonexistent' } })
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(orpc.views.list({ params: { workspace: 'nonexistent' } })).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    });
   });
 
   test('validation: name is required', async ({ orpc }) => {
@@ -101,4 +106,18 @@ test.describe('Saved Views API', () => {
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
+  test('validation: legacy flat saved-view filters are rejected', async ({ orpc }) => {
+    await expect(
+      orpc.views.create({
+        params: { workspace: 'default' },
+        body: {
+          ...viewData,
+          filters: {
+            status: seedIds.lifecycle.production,
+            root: { kind: 'and', children: [] }
+          } as never
+        }
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
 });

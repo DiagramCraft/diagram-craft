@@ -59,6 +59,36 @@ Environment variable fallback:
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
 
+## Bootstrap AI Configuration
+
+The bootstrap seed only enables workspace AI configuration when explicitly requested:
+
+```bash
+BOOTSTRAP_AI_PROVIDER=openrouter \
+BOOTSTRAP_AI_MODEL=anthropic/claude-sonnet-4-20250514 \
+BOOTSTRAP_AI_API_KEY=... \
+AI_ENCRYPTION_KEY=... \
+pnpm --filter @arch-register/server bootstrap -- --bootstrap-ai
+```
+
+`BOOTSTRAP_AI_PROVIDER`, `BOOTSTRAP_AI_MODEL`, and `BOOTSTRAP_AI_API_KEY` are all required, and the provider must be
+`openrouter` or `openai`. The encrypted configuration is applied to every seeded workspace. The command validates these
+values before resetting the database; without `--bootstrap-ai`, the bootstrap AI variables are ignored.
+
+Workspace API-key storage:
+
+- `AI_ENCRYPTION_KEY` is required before workspace AI configuration can store an API key.
+- `AI_ENCRYPTION_SALT` is optional but should be set explicitly in production.
+- Stored workspace credentials use the versioned `v1:` format and are never written as new plaintext.
+- Existing unmarked values can be migrated with:
+
+  ```bash
+  AI_ENCRYPTION_KEY=... pnpm --filter @arch-register/server rotate:ai-keys -- --legacy-format=plaintext --check
+  AI_ENCRYPTION_KEY=... pnpm --filter @arch-register/server rotate:ai-keys -- --legacy-format=plaintext --apply
+  ```
+
+For key rotation, set `AI_ENCRYPTION_KEY` and `AI_ENCRYPTION_KEY_OLD` (and the corresponding current/old salts when changing salts). Run the command in `--check` mode first, then `--apply`, while the application is stopped or in a maintenance window. Remove the old-key variables after a successful migration. Use `--legacy-format=ciphertext` when unmarked values use the previous AES-GCM format; migration aborts without writes if any value cannot be decrypted.
+
 Important current caveat:
 
 - The adapter code supports both `openrouter` and `openai`.
@@ -398,13 +428,18 @@ The custom system prompt is appended after the generated workspace/system contex
 
 Current AI feature permissions:
 
-- chat requires `ws.view`
+- chat requires `ws.view` (feature-level access to the AI chat/extract endpoints)
 - extract requires `ws.view`
 - AI settings require `ws.settings`
-- entity read tools are filtered by entity visibility
+- entity read tools are filtered by `content.view` (the workspace capability that gates entity-level
+  `view_entity` — `ws.view` alone no longer implies entity read access, only `content.view`,
+  ownership/team roles, or explicit grants do)
 - create/update mutation tools enforce the same entity permission rules as normal server-side entity routes
 
 This is important: the model is not trusted with extra rights. Tools run through normal server permission checks.
+A token or role scoped to `ws.view` only can open the chat/extract endpoints but will not see any entity
+content unless it also has `content.view` (or ownership/grants) — the endpoints themselves stay gated by
+`ws.view`, while what entity data they can surface is gated separately by `content.view`.
 
 ## Current Limitations And Gaps
 

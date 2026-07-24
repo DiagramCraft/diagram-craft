@@ -1,6 +1,11 @@
 import { TeamRole, WorkspaceCapability } from '@arch-register/permissions';
 import type { ImportCacheEntry } from '../importCache';
-import { databaseBoolean, databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
+import {
+  databaseBoolean,
+  databaseDate,
+  parseDatabaseJson,
+  type DatabaseRow
+} from '../../../db/rowMappers';
 
 export type WorkspaceDbResult = {
   id: string;
@@ -24,6 +29,8 @@ export type LifecycleStateDbResult = {
   color: string;
   sort_order: number;
   created_at: Date;
+  /** Whether this is the workspace's configured "deprecated" lifecycle state (#1718). */
+  is_deprecated_state?: boolean;
 };
 
 export type LifecycleStateDbCreate = LifecycleStateDbResult;
@@ -49,6 +56,11 @@ export type OwnerDbResult = {
 };
 
 export type OwnerDbCreate = OwnerDbResult;
+
+export type TeamListOptions = {
+  q?: string;
+  limit?: number;
+};
 
 export type MemberDbResult = {
   workspace: string;
@@ -87,37 +99,68 @@ export type RoleDefinitionDbUpdate = Omit<
 
 export const workspaceMappers = {
   workspace: (row: DatabaseRow): WorkspaceDbResult => ({
-    id: String(row['id']), name: String(row['name']), url_slug: String(row['url_slug']),
-    short_code: String(row['short_code']), color: String(row['color'] ?? ''),
-    description: String(row['description']), created_at: databaseDate(row['created_at']),
+    id: String(row['id']),
+    name: String(row['name']),
+    url_slug: String(row['url_slug']),
+    short_code: String(row['short_code']),
+    color: String(row['color'] ?? ''),
+    description: String(row['description']),
+    created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
   lifecycleState: (row: DatabaseRow): LifecycleStateDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), label: String(row['label']),
-    color: String(row['color']), sort_order: Number(row['sort_order']), created_at: databaseDate(row['created_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    label: String(row['label']),
+    color: String(row['color']),
+    sort_order: Number(row['sort_order']),
+    created_at: databaseDate(row['created_at']),
+    is_deprecated_state:
+      row['is_deprecated_state'] == null ? false : databaseBoolean(row['is_deprecated_state'])
   }),
   projectEntityType: (row: DatabaseRow): ProjectEntityTypeDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), label: String(row['label']),
-    sort_order: Number(row['sort_order']), created_at: databaseDate(row['created_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    label: String(row['label']),
+    sort_order: Number(row['sort_order']),
+    created_at: databaseDate(row['created_at'])
   }),
   owner: (row: DatabaseRow): OwnerDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), name: String(row['name']),
-    sort_order: Number(row['sort_order']), color: row['color'] == null ? null : String(row['color']),
-    description: String(row['description']), created_at: databaseDate(row['created_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    sort_order: Number(row['sort_order']),
+    color: row['color'] == null ? null : String(row['color']),
+    description: String(row['description']),
+    created_at: databaseDate(row['created_at'])
   }),
   member: (row: DatabaseRow): MemberDbResult => ({
-    workspace: String(row['workspace']), user_id: String(row['user_id']), role: String(row['role']),
+    workspace: String(row['workspace']),
+    user_id: String(row['user_id']),
+    role: String(row['role']),
     created_at: databaseDate(row['created_at'])
   }),
   teamMembership: (row: DatabaseRow): TeamMembershipDbResult => ({
-    workspace: String(row['workspace']), team_id: String(row['team_id']), user_id: String(row['user_id']),
-    role: String(row['role']) as TeamMembershipDbResult['role'], created_at: databaseDate(row['created_at'])
+    workspace: String(row['workspace']),
+    team_id: String(row['team_id']),
+    user_id: String(row['user_id']),
+    role: String(row['role']) as TeamMembershipDbResult['role'],
+    created_at: databaseDate(row['created_at'])
   }),
   roleDefinition: (row: DatabaseRow): RoleDefinitionDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), name: String(row['name']),
-    description: String(row['description']), tone: String(row['tone']), builtin: databaseBoolean(row['builtin']),
-    capabilities: parseDatabaseJson<RoleDefinitionDbResult['capabilities']>(row['capabilities'], [], 'workspace_role.capabilities'),
-    created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    description: String(row['description']),
+    tone: String(row['tone']),
+    builtin: databaseBoolean(row['builtin']),
+    capabilities: parseDatabaseJson<RoleDefinitionDbResult['capabilities']>(
+      row['capabilities'],
+      [],
+      'workspace_role.capabilities'
+    ),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
   })
 };
 
@@ -142,7 +185,7 @@ export type WorkspaceDatabase = {
     types: ProjectEntityTypeDbCreate[]
   ): Promise<ProjectEntityTypeDbResult[]>;
 
-  listTeams(ws: string): Promise<OwnerDbResult[]>;
+  listTeams(ws: string, options?: TeamListOptions): Promise<OwnerDbResult[]>;
   replaceTeams(ws: string, teams: OwnerDbCreate[]): Promise<OwnerDbResult[]>;
 
   listTeamAssignments(ws: string): Promise<TeamMembershipDbResult[]>;

@@ -2,7 +2,7 @@ import { test } from '@playwright/test';
 import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { SearchPage } from '../pages/SearchPage';
-import { authApiEntity, customerApiEntity } from '../support/entities';
+import { authApiEntity, customerApiEntity, seededApiSearchResultCount } from '../support/entities';
 import { seededUser } from '../support/users';
 import { defaultWorkspace, secondWorkspace } from '../support/workspaces';
 
@@ -73,7 +73,7 @@ test.describe('topbar', () => {
     await homePage.workspaceShell.topBar.search('API');
     await searchPage.expectLoaded({ empty: false });
     await searchPage.expectSearchQuery('API');
-    await searchPage.expectEntityResultCount(3);
+    await searchPage.expectEntityResultCount(seededApiSearchResultCount);
     await searchPage.expectResultVisible(customerApiEntity.name);
     await searchPage.expectResultVisible(authApiEntity.name);
   });

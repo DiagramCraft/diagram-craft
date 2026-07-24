@@ -4,11 +4,7 @@ const encodeFilters = (filters: FilterCondition[]) =>
   filters.length > 0 ? JSON.stringify(filters) : undefined;
 
 export const analyticsEntitySearch = (
-  overrides: {
-    type?: string;
-    status?: string;
-    filters?: FilterCondition[];
-  } = {}
+  overrides: { type?: string; status?: string; filters?: FilterCondition[] } = {}
 ) => ({
   type: overrides.type,
   status: overrides.status,

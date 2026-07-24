@@ -1,7 +1,7 @@
 /**
  * FormElement - .cFormElement
  * | Label - .eLabel
- * | Required indicator - .eRequired
+ * | Optional indicator - .eOptional
  * | Hint text - .eHint
  * | Error message - .eError
  */
@@ -21,10 +21,9 @@
     gap: 6px;
   }
 
-  .eRequired {
-    color: var(--danger-fg);
-    font-weight: bold;
-    margin-left: -2px;
+  .eOptional {
+    color: var(--cmp-fg-disabled);
+    font-weight: 400;
   }
 
   .eHint {

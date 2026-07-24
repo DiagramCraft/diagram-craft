@@ -47,7 +47,13 @@ export const listLifecycleStates = async (
 export const replaceLifecycleStates = async (
   db: DatabaseAdapter,
   workspace: string,
-  states: Array<{ id?: string; label: string; color: string; sort_order?: number }>,
+  states: Array<{
+    id?: string;
+    label: string;
+    color: string;
+    sort_order?: number;
+    is_deprecated_state?: boolean;
+  }>,
   event: AuthenticatedEvent
 ): Promise<LifecycleStateDbResult[]> => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
@@ -60,6 +66,10 @@ export const replaceLifecycleStates = async (
   }));
   const ids = normalized.map(s => s.id);
   httpAssert.true(new Set(ids).size === ids.length, { message: 'Duplicate lifecycle state ids' });
+  httpAssert.true(normalized.filter(s => s.is_deprecated_state).length <= 1, {
+    status: 400,
+    message: 'Only one lifecycle state can be marked as the deprecated state'
+  });
 
   return await db.workspace.replaceLifecycleStates(
     workspace,
@@ -69,7 +79,8 @@ export const replaceLifecycleStates = async (
       label: s.label,
       color: s.color,
       sort_order: i,
-      created_at: now
+      created_at: now,
+      is_deprecated_state: s.is_deprecated_state ?? false
     }))
   );
 };
@@ -113,17 +124,24 @@ export const replaceProjectEntityTypes = async (
 export const listTeams = async (
   db: DatabaseAdapter,
   workspace: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  options?: { q?: string; limit?: number }
 ): Promise<OwnerDbResult[]> => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
-  return await db.workspace.listTeams(workspace);
+  return await db.workspace.listTeams(workspace, options);
 };
 
 export const replaceTeams = async (
   db: DatabaseAdapter,
   workspace: string,
-  teams: Array<{ id?: string; name: string; sort_order?: number; color?: string | null; description?: string }>,
+  teams: Array<{
+    id?: string;
+    name: string;
+    sort_order?: number;
+    color?: string | null;
+    description?: string;
+  }>,
   event: AuthenticatedEvent
 ): Promise<OwnerDbResult[]> => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
@@ -183,10 +201,9 @@ export const replaceTeamAssignments = async (
     httpAssert.true(typeof a.user_id === 'string' && users.has(a.user_id), {
       message: 'user_id must reference an existing user'
     });
-    httpAssert.true(
-      typeof a.role === 'string' && VALID_TEAM_ROLES.includes(a.role as TeamRole),
-      { message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}` }
-    );
+    httpAssert.true(typeof a.role === 'string' && VALID_TEAM_ROLES.includes(a.role as TeamRole), {
+      message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}`
+    });
     return {
       workspace,
       team_id: a.team_id,
@@ -218,10 +235,9 @@ const parseRoleInput = (input: {
   capabilities: string[];
 }) => {
   const capabilities = input.capabilities.map(cap => {
-    httpAssert.true(
-      VALID_WORKSPACE_CAPABILITIES.includes(cap as WorkspaceCapability),
-      { message: 'capabilities contains invalid values' }
-    );
+    httpAssert.true(VALID_WORKSPACE_CAPABILITIES.includes(cap as WorkspaceCapability), {
+      message: 'capabilities contains invalid values'
+    });
     return cap as WorkspaceCapability;
   });
 
@@ -390,12 +406,13 @@ export const removeMember = async (
 export const listUsers = async (
   db: DatabaseAdapter,
   workspace: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  options?: { q?: string; limit?: number }
 ) => {
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'people.invite');
 
-  const users = await db.auth.listUsers();
+  const users = await db.auth.listUsers(options);
   return users.map(user => ({
     id: user.id,
     email: user.email,

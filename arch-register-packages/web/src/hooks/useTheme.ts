@@ -11,7 +11,8 @@ const readDiagramCraftTheme = (): Theme | null => {
     const stored = localStorage.getItem(STORAGE_KEY_DC);
     if (!stored) return null;
     const state = JSON.parse(stored);
-    return state.themeMode === 'light' ? 'light' : 'dark';
+    if (state.themeMode === 'light' || state.themeMode === 'dark') return state.themeMode;
+    return null;
   } catch {
     return null;
   }
@@ -30,7 +31,7 @@ const writeDiagramCraftTheme = (theme: Theme) => {
 };
 
 // Migrate from old storage if needed
-const migrateTheme = (): Theme => {
+export const migrateTheme = (): Theme => {
   const dcTheme = readDiagramCraftTheme();
   if (dcTheme) return dcTheme;
 

@@ -1,9 +1,8 @@
-import { expect, } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { workspaceModelRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
 
 export class DataModelPage extends WorkspacePage {
-
   goto = async () => {
     await this.page.goto(workspaceModelRoute(this.workspaceSlug));
   };
@@ -15,11 +14,7 @@ export class DataModelPage extends WorkspacePage {
   expectLoaded = async () => {
     await this.workspaceShell.expectMainVisible();
     await expect(this.anySchemaTypeRow()).toBeVisible();
-    await expect(
-      this.page
-        .getByRole('main')
-        .getByText('No type selected')
-    ).toBeVisible();
+    await expect(this.page.getByRole('main').getByText('No type selected')).toBeVisible();
     await expect(
       this.page
         .getByRole('main')

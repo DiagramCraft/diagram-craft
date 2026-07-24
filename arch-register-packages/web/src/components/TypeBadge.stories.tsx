@@ -104,17 +104,35 @@ export const AllIcons = {
       '#6366f1'
     ];
     const icons = Object.keys(ICON_MAP);
-    
+
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '1rem', padding: '1rem' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(8, 1fr)',
+          gap: '1rem',
+          padding: '1rem'
+        }}
+      >
         {icons.map((icon, index) => (
-          <div key={icon} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-            <TypeBadge
-              color={colors[index % colors.length]!}
-              name={icon}
-              icon={icon}
-            />
-            <span style={{ fontSize: '10px', textAlign: 'center', maxWidth: '60px', wordBreak: 'break-word' }}>
+          <div
+            key={icon}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            <TypeBadge color={colors[index % colors.length]!} name={icon} icon={icon} />
+            <span
+              style={{
+                fontSize: '10px',
+                textAlign: 'center',
+                maxWidth: '60px',
+                wordBreak: 'break-word'
+              }}
+            >
               {icon}
             </span>
           </div>
@@ -136,11 +154,19 @@ export const ColorVariations = {
       { color: '#ec4899', name: 'Pink' },
       { color: '#6366f1', name: 'Indigo' }
     ];
-    
+
     return (
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         {colors.map(({ color, name }) => (
-          <div key={color} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+          <div
+            key={color}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+          >
             <TypeBadge color={color} name={name} icon="box" />
             <span style={{ fontSize: '11px' }}>{name}</span>
           </div>

@@ -15,22 +15,24 @@ import {
 import {
   listProjectFiles,
   createFolder,
+  updateTemplateStatus,
+  listEntityContentNodes,
+  createEntityFolder,
+  listWorkspaceContentNodes,
+  createWorkspaceFolder
+} from './contentNodeOperations';
+import {
   getFileContent,
   saveFile,
   cloneContentFile,
   relocateContentFile,
-  updateTemplateStatus,
-  listEntityContentNodes,
-  createEntityFolder,
   createEntityFile,
-  listWorkspaceContentNodes,
-  createWorkspaceFolder,
   createWorkspaceFile,
   getWorkspaceFileContent,
   saveWorkspaceFile,
   getProjectFile,
   getFileContentById
-} from './contentNodeOperations';
+} from './contentFileOperations';
 import {
   deleteContentFile,
   deleteContentFolder,
@@ -49,13 +51,23 @@ import {
   createProjectMarkdownDoc,
   createEntityMarkdownDoc,
   createWorkspaceMarkdownDoc,
+  saveNewMarkdownContent,
   getMarkdownContent,
   saveMarkdownContent,
+  migrateMarkdownContent,
   listMarkdownRevisions,
+  listMarkdownWorkflowHistory,
   getMarkdownRevision,
-  restoreMarkdownRevision,
-  createMarkdownDiagramAttachment
-} from './markdownOperations';
+  restoreMarkdownRevision
+} from './markdownDocumentOperations';
+import { overrideDocumentWorkflow } from '../document/documentWorkflowOperations';
+import {
+  listRelatedContent,
+  listDocumentBacklinks,
+  listDocuments
+} from './markdownListingOperations';
+import { createMarkdownDiagramAttachment } from './markdownAttachmentOperations';
+import { runDocumentAiAction, testDocumentAiAction } from './markdownAiOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
 type ORPCContext = {
@@ -277,6 +289,59 @@ const entityContentHandlers = {
         context.event
       );
     }
+  ),
+  listRelatedContent: projectRouter.projects.listRelatedContent.handler(
+    async ({ input, context }) =>
+      listRelatedContent(context.db, input.params.workspace, input.params.entityId, context.event)
+  ),
+  listDocumentBacklinks: projectRouter.projects.listDocumentBacklinks.handler(
+    async ({ input, context }) =>
+      listDocumentBacklinks(context.db, input.params.workspace, input.params.nodeId, context.event)
+  ),
+  runDocumentAiAction: projectRouter.projects.runDocumentAiAction.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await runDocumentAiAction(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.params.nodeId,
+        input.params.actionId,
+        context.event
+      );
+    }
+  ),
+  testDocumentAiAction: projectRouter.projects.testDocumentAiAction.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await testDocumentAiAction(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.params.nodeId,
+        input.body.documentTypeId,
+        input.body.action,
+        context.event
+      );
+    }
+  ),
+  listDocuments: projectRouter.projects.listDocuments.handler(async ({ input, context }) =>
+    listDocuments(
+      context.db,
+      input.params.workspace,
+      {
+        q: input.query.q,
+        scope: input.query.scope,
+        projectId: input.query.project_id,
+        entityId: input.query.entity_id,
+        documentTypeId: input.query.document_type_id,
+        conditions: input.query.conditions,
+        sort: input.query.sort,
+        sortDir: input.query.sort_dir,
+        limit: input.query.limit
+      },
+      context.event
+    )
   ),
   listEntityFiles: projectRouter.projects.listEntityFiles.handler(async ({ input, context }) => {
     return await listEntityContentNodes(
@@ -589,6 +654,40 @@ const markdownHandlers = {
         input.params.nodeId,
         input.body.body,
         input.body.name,
+        input.body.document_type_id,
+        input.body.metadata,
+        context.event,
+        input.body.external,
+        false,
+        input.body.change_kind
+      );
+    }
+  ),
+  migrateMarkdownContent: projectRouter.projects.migrateMarkdownContent.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await migrateMarkdownContent(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.params.nodeId,
+        input.body.body,
+        input.body.name,
+        input.body.document_type_id,
+        input.body.metadata,
+        context.event,
+        input.body.change_kind
+      );
+    }
+  ),
+  saveNewMarkdownContent: projectRouter.projects.saveNewMarkdownContent.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return await saveNewMarkdownContent(
+        context.db,
+        context.storage,
+        input.params.workspace,
+        input.body,
         context.event
       );
     }
@@ -602,6 +701,27 @@ const markdownHandlers = {
         context.event
       );
     }
+  ),
+  listMarkdownWorkflowHistory: projectRouter.projects.listMarkdownWorkflowHistory.handler(
+    async ({ input, context }) =>
+      listMarkdownWorkflowHistory(
+        context.db,
+        input.params.workspace,
+        input.params.nodeId,
+        context.event
+      )
+  ),
+  overrideMarkdownWorkflow: projectRouter.projects.overrideMarkdownWorkflow.handler(
+    async ({ input, context }) =>
+      overrideDocumentWorkflow(
+        context.db,
+        input.params.workspace,
+        input.params.nodeId,
+        input.body.field_id,
+        input.body.target_value,
+        input.body.reason,
+        context.event
+      )
   ),
   getMarkdownRevision: projectRouter.projects.getMarkdownRevision.handler(
     async ({ input, context }) => {
@@ -623,7 +743,8 @@ const markdownHandlers = {
         input.params.workspace,
         input.params.nodeId,
         input.params.revisionId,
-        context.event
+        context.event,
+        input.body?.change_kind ?? 'major'
       );
     }
   ),

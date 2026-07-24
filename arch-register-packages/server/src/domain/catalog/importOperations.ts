@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, EntityDbUpdate, EntityDbCreate } from '../../db/database';
 import { parseCsv, validateCsvData, csvRowToEntity } from '../../utils/csvImport';
-import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
+import {
+  computeChanges,
+  extractEntityFields,
+  flattenEntityAuditFields,
+  logAudit
+} from '../audit/db/auditLogging';
 import { slugify } from '../../utils/http';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
@@ -15,6 +20,8 @@ import {
   normalizeEntityRelationFields
 } from './dataHelpers';
 import { listAllCatalogEntities } from './entityLoader';
+import { entityRequiresApproval } from './entityChangeOperations';
+import { computeEntityCompleteness } from '../../utils/completeness';
 
 const checker = new PermissionChecker();
 
@@ -60,7 +67,9 @@ export const importParse = async (
   const entities = validatedRows.map(row => {
     const rowName = row.data['Name']?.toLowerCase().trim();
     const rowSlug = row.data['Slug']?.trim();
-    const rowNamespace = row.data['Namespace']?.trim() || 'default';
+    const rowNamespaceValue = row.data['Namespace']?.trim();
+    const rowNamespace =
+      rowNamespaceValue == null || rowNamespaceValue === '' ? 'default' : rowNamespaceValue;
 
     let existingEntity: (typeof allEntities)[0] | undefined;
     let matchType: 'id' | 'slug' | 'name' | 'none' = 'none';
@@ -107,7 +116,7 @@ export const importParse = async (
     }
 
     if (matchType === 'none' || matchType === 'name') {
-      const proposedSlug = rowSlug || (rowName ? slugify(rowName) : '');
+      const proposedSlug = rowSlug ?? (rowName ? slugify(rowName) : '');
       if (proposedSlug) {
         const wouldConflict = entitiesBySlug.has(`${rowNamespace}:${proposedSlug}`);
         if (wouldConflict) {
@@ -116,9 +125,7 @@ export const importParse = async (
             message: `Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`
           });
           if (matchType === 'none') {
-            row.errors.push(
-              `Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`
-            );
+            row.errors.push(`Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`);
           }
         }
       }
@@ -225,6 +232,16 @@ export const importCommit = async (
   for (const entityData of entityList) {
     const existingId = entityData._existingId as string | undefined;
     const existingEntity = existingId ? entitiesById.get(existingId) : undefined;
+    if (existingEntity && entityRequiresApproval(schema, existingEntity)) {
+      throw new Error(
+        `Entity ${existingEntity.id} requires an approved change proposal before it can be imported`
+      );
+    }
+  }
+
+  for (const entityData of entityList) {
+    const existingId = entityData._existingId as string | undefined;
+    const existingEntity = existingId ? entitiesById.get(existingId) : undefined;
 
     if (existingId) {
       if (!existingEntity) throw new Error(`Entity ${existingId} not found`);
@@ -234,8 +251,8 @@ export const importCommit = async (
         throw new Error(`Entity ${existingId} has different schema type`);
     } else {
       const proposedSlug =
-        (entityData._slug as string) || slugify((entityData._name as string) ?? '');
-      const proposedNamespace = (entityData._namespace as string) || 'default';
+        (entityData._slug as string) ?? slugify((entityData._name as string) ?? '');
+      const proposedNamespace = (entityData._namespace as string) ?? 'default';
       if (entitiesBySlug.has(`${proposedNamespace}:${proposedSlug}`)) {
         throw new Error(
           `Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`
@@ -262,10 +279,7 @@ export const importCommit = async (
 
     const resolvedData = { ...entityData };
     for (const field of schema.fields) {
-      if (
-        (field.type === 'reference' || field.type === 'containment') &&
-        resolvedData[field.id]
-      ) {
+      if ((field.type === 'reference' || field.type === 'containment') && resolvedData[field.id]) {
         const value = resolvedData[field.id];
         if (typeof value === 'string') {
           const refNames = value
@@ -286,7 +300,9 @@ export const importCommit = async (
 
     const normalizedRelationFields = normalizeEntityRelationFields({
       schema,
-      fields: Object.fromEntries(Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'))),
+      fields: Object.fromEntries(
+        Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'))
+      ),
       entities: allEntities
     });
 
@@ -313,8 +329,17 @@ export const importCommit = async (
         links: existingEntity.links,
         schema_id: existingEntity.schema_id,
         data: extractEntityFields(normalizedRelationFields),
-        visibility_mode: existingEntity.visibility_mode,
-        updated_at: new Date()
+        project_id: existingEntity.project_id,
+        updated_at: new Date(),
+        completeness: computeEntityCompleteness(
+          {
+            description: (resolvedData._description as string) ?? existingEntity.description,
+            owner,
+            lifecycle,
+            data: extractEntityFields(normalizedRelationFields)
+          },
+          schema
+        )
       };
 
       const updatedEntity = await db.catalog.updateEntity(workspace, existingId, updateInput);
@@ -339,7 +364,10 @@ export const importCommit = async (
       updatedIds.push(existingId);
       nameToId.set(updatedEntity.name.toLowerCase(), existingId);
     } else {
-      httpAssert.present(schema.key_prefix, { status: 409, message: `Schema '${schemaId}' is missing a key prefix` });
+      httpAssert.present(schema.key_prefix, {
+        status: 409,
+        message: `Schema '${schemaId}' is missing a key prefix`
+      });
       const createInput: EntityDbCreate = {
         public_id: formatPublicId(
           schema.key_prefix,
@@ -359,9 +387,18 @@ export const importCommit = async (
         tags: Array.isArray(resolvedData._tags) ? (resolvedData._tags as string[]) : [],
         links: [],
         data: extractEntityFields(normalizedRelationFields),
-        visibility_mode: null,
+        project_id: null,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
+        completeness: computeEntityCompleteness(
+          {
+            description: (resolvedData._description as string) ?? '',
+            owner,
+            lifecycle,
+            data: extractEntityFields(normalizedRelationFields)
+          },
+          schema
+        )
       };
 
       const entity = await db.catalog.createEntity(createInput);
@@ -383,5 +420,9 @@ export const importCommit = async (
     }
   }
 
-  return { created: createdIds.length, updated: updatedIds.length, ids: [...createdIds, ...updatedIds] };
+  return {
+    created: createdIds.length,
+    updated: updatedIds.length,
+    ids: [...createdIds, ...updatedIds]
+  };
 };

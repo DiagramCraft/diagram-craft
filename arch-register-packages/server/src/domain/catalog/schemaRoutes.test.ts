@@ -56,9 +56,12 @@ describe('schema route helpers', () => {
       key_prefix: 'SERVI',
       description: '',
       fields: [],
+      templates: [],
       color: null,
       icon: 'server',
       default_owner: null,
+      entity_approval_policy: 'disabled',
+      deprecation_policy: 'disabled',
       created_at: now,
       updated_at: now
     });
@@ -79,9 +82,12 @@ describe('schema route helpers', () => {
       key_prefix: 'COMP',
       description: 'Original',
       fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
+      templates: [],
       color: '#123456',
       icon: 'box',
       defaultOwner: 'Platform Engineering',
+      entityApprovalPolicy: 'disabled',
+      deprecationPolicy: 'disabled',
       updated_at: now
     });
   });
@@ -106,9 +112,12 @@ describe('schema route helpers', () => {
       key_prefix: 'COMP',
       description: '',
       fields: [{ id: 'lifecycle', name: 'Lifecycle', type: 'text' }],
+      templates: [],
       color: null,
       icon: null,
       defaultOwner: 'Design Systems',
+      entityApprovalPolicy: 'disabled',
+      deprecationPolicy: 'disabled',
       updated_at: now
     });
   });

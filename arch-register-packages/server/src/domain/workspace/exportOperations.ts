@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
@@ -11,7 +11,8 @@ import type {
   ExportSchema,
   ExportEntity,
   ExportProject,
-  ExportContentNode
+  ExportContentNode,
+  ExportDocumentData
 } from './exportTypes';
 
 const checker = new PermissionChecker();
@@ -19,7 +20,7 @@ const checker = new PermissionChecker();
 export const exportWorkspace = async (
   db: DatabaseAdapter,
   storage: StorageAdapter | undefined,
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   options: ExportOptions
 ): Promise<{
@@ -30,14 +31,15 @@ export const exportWorkspace = async (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   };
   contentFiles?: Map<string, Buffer>;
 }> => {
   // Check export permission
-  httpAssert.true(
-    checker.hasWorkspaceCapability(authCtx, 'ws.settings'),
-    { status: 403, message: 'You do not have permission to export this workspace' }
-  );
+  httpAssert.true(checker.hasWorkspaceCapability(authCtx, 'ws.settings'), {
+    status: 403,
+    message: 'You do not have permission to export this workspace'
+  });
 
   const workspaceData = await db.workspace.getWorkspace(workspace);
   httpAssert.present(workspaceData, { status: 404, message: 'Workspace not found' });
@@ -52,6 +54,7 @@ export const exportWorkspace = async (
     entities?: ExportEntity[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
+    documents?: ExportDocumentData;
   } = {};
 
   const statistics = {
@@ -59,7 +62,10 @@ export const exportWorkspace = async (
     project_count: 0,
     schema_count: 0,
     content_node_count: 0,
-    total_content_size_bytes: 0
+    total_content_size_bytes: 0,
+    document_type_count: 0,
+    document_template_count: 0,
+    document_revision_count: 0
   };
 
   // Export configuration
@@ -110,6 +116,13 @@ export const exportWorkspace = async (
     );
   }
 
+  if (options.include.includes('documents')) {
+    data.documents = await exportDocuments(db, workspace, options.project_ids);
+    statistics.document_type_count = data.documents.types.length;
+    statistics.document_template_count = data.documents.templates.length;
+    statistics.document_revision_count = data.documents.revisions.length;
+  }
+
   const manifest: ExportManifest = {
     version: '1.0',
     format: 'zip-multi-file',
@@ -127,6 +140,7 @@ export const exportWorkspace = async (
       ...(data.entities && { entities: 'entities.json' }),
       ...(data.projects && { projects: 'projects.json' }),
       ...(data.content_nodes && { content_nodes: 'content-nodes.json' }),
+      ...(data.documents && { documents: 'documents.json' }),
       ...(data.content_nodes && options.include_content && { content_directory: 'content/' })
     },
     statistics,
@@ -174,6 +188,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     id: schema.id,
     name: schema.name,
     fields: schema.fields,
+    templates: schema.templates ?? [],
     color: schema.color,
     icon: schema.icon,
     default_owner: schema.default_owner,
@@ -183,7 +198,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
 
 const exportEntities = async (
   db: DatabaseAdapter,
-  _authCtx: AuthorizationContext,
+  _authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   filters?: {
     schema_ids?: string[];
@@ -231,7 +246,7 @@ const exportEntities = async (
     tags: e.tags,
     links: e.links,
     data: e.data,
-    visibility_mode: e.visibility_mode as ExportEntity['visibility_mode'],
+    project_id: e.project_id,
     ...(includeGrants && {
       grants: (grantsMap.get(e.id) ?? []).map(g => ({
         id: g.id,
@@ -300,14 +315,15 @@ const exportContentNodes = async (
     };
 
     // Add content file references and read actual content if requested
-    if (includeContent && node.type !== 'folder' && storage && node.project_id) {
+    if (includeContent && node.type !== 'folder' && storage) {
       try {
         const fileExt = node.type === 'diagram' ? 'json' : node.type === 'markdown' ? 'md' : 'bin';
         const contentPath = `content/${node.type}s/${node.id}.${fileExt}`;
         exportNode.content_file = contentPath;
 
         // Read actual file content from storage
-        const content = await storage.read(workspace, node.project_id, node.id);
+        const storageScope = node.project_id ?? node.entity_id ?? workspace;
+        const content = await storage.read(workspace, storageScope, node.id);
         contentFiles.set(contentPath, content);
 
         // Handle preview SVG if available
@@ -326,6 +342,70 @@ const exportContentNodes = async (
   }
 
   return { nodes, contentFiles };
+};
+
+const exportDocuments = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectIds?: string[]
+): Promise<ExportDocumentData> => {
+  const nodes = await db.project.listAllContentNodes(workspace);
+  const includedNodes = projectIds?.length
+    ? nodes.filter(node => node.project_id != null && projectIds.includes(node.project_id))
+    : nodes;
+  const metadata = [] as ExportDocumentData['metadata'];
+  const revisions = [] as ExportDocumentData['revisions'];
+  for (const node of includedNodes.filter(item => item.type === 'markdown')) {
+    const state = await db.document.getDocumentMetadata(workspace, node.id);
+    if (state)
+      metadata.push({
+        node_id: node.id,
+        document_type_id: state.document_type_id,
+        values: state.values,
+        generated_metadata: state.generated_metadata,
+        links: (await db.document.listDocumentLinks(workspace, node.id)).map(link => ({
+          field_id: link.field_id,
+          target_type: link.target_type,
+          target_id: link.target_id,
+          position: link.position
+        }))
+      });
+    for (const revision of await db.project.listMarkdownRevisions(workspace, node.id)) {
+      revisions.push({
+        id: revision.id,
+        node_id: revision.node_id,
+        revision_number: revision.revision_number,
+        title: revision.title,
+        body: revision.body,
+        created_at: revision.created_at.toISOString(),
+        created_by: revision.created_by,
+        restored_from_revision_id: revision.restored_from_revision_id,
+        document_type_id: revision.document_type_id,
+        metadata: revision.metadata
+      });
+    }
+  }
+  return {
+    types: (await db.document.listDocumentTypes(workspace, true)).map(type => ({
+      ...type,
+      created_at: type.created_at.toISOString(),
+      updated_at: type.updated_at.toISOString()
+    })),
+    templates: (await db.document.listDocumentTemplates(workspace, undefined, true))
+      .filter(
+        template =>
+          !projectIds?.length ||
+          template.project_id == null ||
+          projectIds.includes(template.project_id)
+      )
+      .map(template => ({
+        ...template,
+        created_at: template.created_at.toISOString(),
+        updated_at: template.updated_at.toISOString()
+      })),
+    metadata,
+    revisions
+  };
 };
 
 export const calculateChecksum = (content: string): string => {

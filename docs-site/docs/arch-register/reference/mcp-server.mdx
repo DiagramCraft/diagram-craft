@@ -1,0 +1,107 @@
+# MCP Server
+
+The Arch Register MCP server lets compatible AI clients such as Claude Desktop, Cursor, and ChatGPT work
+with the live catalog in a workspace. The server is a standalone gateway: it authenticates with an Arch Register
+workspace API token and forwards tool requests to the Arch Register API, so results remain subject to the token's
+permissions.
+
+## Create an API token
+
+1. Open **Account Settings → API tokens**.
+2. Create a token for the workspace you want the AI client to use.
+3. Give it a descriptive name, such as `Claude architecture assistant`.
+4. Select **View workspace** (`ws.view`) for read-only access.
+5. Also select **Edit entities** (`ent.edit`) if the client should be allowed to create or update entities.
+6. Copy the token immediately. The complete `ar_pat_...` secret is shown only once.
+
+API tokens are limited to one workspace and can be revoked from the same screen. Use the smallest capability set
+that fits the integration. A token used for MCP reads needs `ws.view`; mutation access additionally needs `ent.edit`.
+
+## Available tools
+
+### Read and discovery tools
+
+| Tool | Use it to |
+| --- | --- |
+| `search_entities` | Search visible entities by text, schema, owner, lifecycle, and entity-browser filter conditions. Results include metadata and schema fields. |
+| `get_entity` | Fetch one entity by ID, exact name, or exact slug, including its schema fields and incoming/outgoing relations. |
+| `list_schemas` | List the workspace schemas and their field definitions. |
+| `get_entity_dependencies` | Follow outgoing references from an entity to a bounded depth. |
+| `get_entity_dependents` | Find entities that reference an entity, directly or transitively. |
+| `get_workspace_summary` | Get total entity counts grouped by schema and lifecycle state. |
+
+`search_entities` supports the same condition operators used by the entity browser. Use `limit` and `offset` for
+bounded pagination. Relation traversal is bounded to a maximum depth of five and has a result limit to prevent an
+unusually large catalog from overwhelming the client.
+
+### Mutation tools
+
+Mutation tools are not advertised unless the MCP process is explicitly started with
+`MCP_ENABLE_MUTATIONS=true`:
+
+- `create_entity` creates an entity from a schema ID and optional metadata and field values.
+- `update_entity_field` updates one schema field while preserving the entity's other values.
+- `update_entity` applies a metadata and/or field update while preserving unspecified values.
+
+The API token must also include `ent.edit`. The Arch Register API still applies entity-level and workspace-level
+authorization to every request.
+
+## Connect a local client
+
+Run the server over stdio from the Arch Register checkout:
+
+```bash
+ARCH_REGISTER_URL=https://arch-register.example.com \
+ARCH_REGISTER_WORKSPACE=default \
+ARCH_REGISTER_TOKEN=ar_pat_... \
+pnpm --filter @arch-register/mcp-server stdio
+```
+
+For Claude Desktop, Cursor, or another client that accepts an MCP server JSON configuration, use the equivalent
+entry below and replace the environment values:
+
+```json
+{
+  "mcpServers": {
+    "arch-register": {
+      "command": "pnpm",
+      "args": ["--filter", "@arch-register/mcp-server", "stdio"],
+      "env": {
+        "ARCH_REGISTER_URL": "https://arch-register.example.com",
+        "ARCH_REGISTER_WORKSPACE": "default",
+        "ARCH_REGISTER_TOKEN": "ar_pat_..."
+      }
+    }
+  }
+}
+```
+
+The package also includes an [`mcp.json`](https://github.com/DiagramCraft/diagram-craft/blob/main/arch-register-packages/mcp-server/mcp.json)
+tool manifest with the same stdio and hosted transport metadata.
+
+## Host the server remotely
+
+Start the hosted transports with:
+
+```bash
+MCP_HOST=127.0.0.1 MCP_PORT=3030 pnpm --filter @arch-register/mcp-server http
+```
+
+The recommended Streamable HTTP endpoint is `/mcp`. Legacy MCP clients can use the SSE endpoint `/sse` and send
+follow-up messages to `/messages`. Hosted clients must send the token on every request:
+
+```http
+Authorization: Bearer ar_pat_...
+```
+
+The server binds to localhost by default. If it is exposed beyond the local machine, put it behind TLS and set
+`MCP_CORS_ORIGIN` to the specific allowed client origin instead of relying on the default permissive CORS value.
+
+Keep `MCP_ENABLE_MUTATIONS` unset for a read-only integration. The process writes diagnostics to stderr so stdio
+remains a valid MCP JSON-RPC stream.
+
+## Related pages
+
+- [Account Settings](../use/account-settings)
+- [API and Integrations](api-integrations)
+- [API Reference](pathname:///arch-register/api.html)

@@ -13,6 +13,9 @@ import { Entity } from '../catalog/db/catalogDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+import { entityRequiresApproval } from '../catalog/entityChangeOperations';
+import { computeEntityCompleteness } from '../../utils/completeness';
+import type { DocumentAiToolId } from '@arch-register/api-types/documentContract';
 
 const checker = new PermissionChecker();
 
@@ -40,7 +43,6 @@ type CreateEntityArgs = {
   owner?: string | null;
   lifecycle?: string | null;
   tags?: string[];
-  visibilityMode?: 'public' | 'restricted' | null;
   fields?: Record<string, unknown>;
 };
 
@@ -53,7 +55,6 @@ type UpdateEntityArgs = {
   owner?: string | null;
   lifecycle?: string | null;
   tags?: string[];
-  visibilityMode?: 'public' | 'restricted' | null;
   fields?: Record<string, unknown>;
 };
 
@@ -165,7 +166,6 @@ const createEntityTool = toolDefinition({
       owner: { type: ['string', 'null'] },
       lifecycle: { type: ['string', 'null'] },
       tags: { type: 'array', items: { type: 'string' } },
-      visibilityMode: { type: ['string', 'null'], enum: ['public', 'restricted', null] },
       fields: { type: 'object', additionalProperties: true }
     },
     required: ['schemaId'],
@@ -198,7 +198,6 @@ const updateEntityTool = toolDefinition({
       owner: { type: ['string', 'null'] },
       lifecycle: { type: ['string', 'null'] },
       tags: { type: 'array', items: { type: 'string' } },
-      visibilityMode: { type: ['string', 'null'], enum: ['public', 'restricted', null] },
       fields: { type: 'object', additionalProperties: true }
     },
     required: ['entityId'],
@@ -276,7 +275,7 @@ const includesQuery = (value: unknown, query: string) =>
     .includes(query);
 
 const getVisibleEntities = (entities: Entity[], authCtx: AuthorizationContext | null) => {
-  if (authCtx === null) return entities;
+  if (authCtx === null || checker.hasWorkspaceWideEntityView(authCtx)) return entities;
   return entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
 };
 
@@ -360,9 +359,6 @@ const summarizeEntity = (entity: Entity, schemaName: string | undefined) => ({
 const filterStringArray = (values: unknown): string[] =>
   Array.isArray(values) ? values.filter((value): value is string => typeof value === 'string') : [];
 
-const normalizeVisibilityMode = (value: unknown): 'public' | 'restricted' | null =>
-  value === 'public' || value === 'restricted' ? value : null;
-
 const normalizeOwner = (value: unknown, teamIds: Set<string>, fallback: string | null) => {
   if (value === null) return null;
   if (typeof value === 'string' && teamIds.has(value)) return value;
@@ -373,7 +369,8 @@ export const createAiChatTools = (
   db: DatabaseAdapter,
   workspaceId: string,
   authCtx: AuthorizationContext | null,
-  actor: EntityMutationActor
+  actor: EntityMutationActor,
+  options: { readOnly?: boolean; toolIds?: readonly DocumentAiToolId[] } = {}
 ) => {
   const queryEntities = queryEntitiesTool.server(async rawArgs => {
     const args = rawArgs as QueryEntitiesArgs;
@@ -582,9 +579,18 @@ export const createAiChatTools = (
         links: [],
         schema_id: schema.id,
         data: args.fields ?? {},
-        visibility_mode: normalizeVisibilityMode(args.visibilityMode),
+        project_id: null,
         created_at: timestamp,
-        updated_at: timestamp
+        updated_at: timestamp,
+        completeness: computeEntityCompleteness(
+          {
+            description: typeof args.description === 'string' ? args.description : '',
+            owner,
+            lifecycle,
+            data: args.fields ?? {}
+          },
+          schema
+        )
       }
     });
 
@@ -598,6 +604,10 @@ export const createAiChatTools = (
     const args = rawArgs as UpdateEntityArgs;
     const current = await db.catalog.getEntity(workspaceId, args.entityId);
     if (!current) throw new Error(`Entity '${args.entityId}' not found`);
+    const schema = await db.catalog.getSchema(workspaceId, current.schema_id);
+    if (schema && entityRequiresApproval(schema, current)) {
+      throw new Error('This entity requires an approved change proposal before it can be edited');
+    }
 
     if (authCtx !== null) {
       requireEntityAction(
@@ -610,20 +620,13 @@ export const createAiChatTools = (
 
     const teamIds = new Set((await db.workspace.listTeams(workspaceId)).map(team => team.id));
     const nextOwner = normalizeOwner(args.owner, teamIds, current.owner);
-    const nextVisibilityMode =
-      args.visibilityMode === undefined
-        ? current.visibility_mode
-        : normalizeVisibilityMode(args.visibilityMode);
 
-    if (
-      authCtx !== null &&
-      (nextOwner !== current.owner || nextVisibilityMode !== current.visibility_mode)
-    ) {
+    if (authCtx !== null && nextOwner !== current.owner) {
       requireEntityAction(
         authCtx,
         current,
         'admin_entity',
-        'You do not have permission to change ownership or visibility'
+        'You do not have permission to change ownership'
       );
     }
 
@@ -636,6 +639,13 @@ export const createAiChatTools = (
         : typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle)
           ? args.lifecycle
           : null;
+
+    const nextDescription =
+      typeof args.description === 'string' ? args.description : current.description;
+    const nextData = {
+      ...current.data,
+      ...(args.fields ?? {})
+    };
 
     const entity = await updateEntityWithAudit(db, {
       workspace: workspaceId,
@@ -655,7 +665,7 @@ export const createAiChatTools = (
           typeof args.name === 'string' && args.name.trim().length > 0
             ? args.name.trim()
             : current.name,
-        description: typeof args.description === 'string' ? args.description : current.description,
+        description: nextDescription,
         owner: nextOwner,
         lifecycle: nextLifecycle,
         target_lifecycle: current.target_lifecycle,
@@ -663,12 +673,20 @@ export const createAiChatTools = (
         tags: args.tags === undefined ? current.tags : filterStringArray(args.tags),
         links: current.links,
         schema_id: current.schema_id,
-        data: {
-          ...current.data,
-          ...(args.fields ?? {})
-        },
-        visibility_mode: nextVisibilityMode,
-        updated_at: new Date()
+        data: nextData,
+        project_id: current.project_id,
+        updated_at: new Date(),
+        completeness: schema
+          ? computeEntityCompleteness(
+              {
+                description: nextDescription,
+                owner: nextOwner,
+                lifecycle: nextLifecycle,
+                data: nextData
+              },
+              schema
+            )
+          : current.completeness
       }
     });
     if (!entity) throw new Error(`Failed to update entity '${current.id}'`);
@@ -769,5 +787,11 @@ export const createAiChatTools = (
     };
   });
 
+  if (options.readOnly) {
+    const readOnlyTools = [queryEntities, getEntityDetails, traverseRelations];
+    if (options.toolIds === undefined) return readOnlyTools;
+    const allowedToolIds = new Set(options.toolIds);
+    return readOnlyTools.filter(tool => allowedToolIds.has(tool.name as DocumentAiToolId));
+  }
   return [queryEntities, getEntityDetails, createEntity, updateEntity, traverseRelations];
 };

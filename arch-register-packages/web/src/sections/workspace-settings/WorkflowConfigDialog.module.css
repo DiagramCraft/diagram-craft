@@ -1,0 +1,152 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.hint {
+  margin: 0;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.optionHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.optionName {
+  color: var(--base-fg);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.optionValue {
+  margin-top: 2px;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.optionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--cmp-border);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.fieldLeft {
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--base-fg);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.fieldHint {
+  margin-top: 4px;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.fieldRight {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sourceInfo {
+  margin: 0;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.pickedList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pickedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--cmp-border);
+  border-radius: 999px;
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  padding: 3px 6px 3px 3px;
+  font-size: 11.5px;
+}
+
+.pickedRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--cmp-fg-disabled);
+  cursor: pointer;
+  padding: 0;
+}
+
+.pickedRemove:hover {
+  background: color-mix(in oklch, var(--error-fg) 15%, transparent);
+  color: var(--error-fg);
+}
+
+.teamDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

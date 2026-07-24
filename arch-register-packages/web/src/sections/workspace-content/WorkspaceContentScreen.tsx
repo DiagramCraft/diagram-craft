@@ -21,7 +21,10 @@ import {
   DiagramBrowserView
 } from '../../components/diagram-browser/DiagramBrowserView';
 import type { WorkspaceContentSearchParams } from '../../routes/searchParams';
-import { workspaceContentFolderRoute } from '../../routes/publicObjectRoutes';
+import {
+  workspaceContentFolderRoute,
+  workspaceMarkdownDraftRoute
+} from '../../routes/publicObjectRoutes';
 import { downloadUrl } from '../../lib/browserDownload';
 
 type WorkspaceContentScreenProps = {
@@ -95,13 +98,14 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
-      contentOperations.upload.mutate({ file: f, folder: folder || null });
+      contentOperations.upload.mutate({ file: f, folder: folder ?? null });
     }
     e.target.value = '';
   };
 
   // If folder is set, show that folder's files; otherwise show root files
   const folderData = folder ? data?.folders.find(f => f.path === folder) : undefined;
+  const isReadOnly = folderData?.read_only ?? false;
   const files = folder ? (folderData?.files ?? []) : (data?.rootFiles ?? []);
 
   const lc = filter.toLowerCase();
@@ -119,38 +123,43 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           ]}
           title={workspace?.name ?? workspaceSlug}
           buttons={
-            <MenuButton.Root>
-              <MenuButton.Trigger
-                element={
-                  <Button variant="primary" icon={<TbPlus size={12} />}>
-                    New
-                  </Button>
-                }
-              />
-              <MenuButton.Menu align="end">
-                <Menu.Item
-                  leftSlot={<TbFolderOpen size={13} />}
-                  onClick={() => setAddFolderOpen(true)}
-                >
-                  New folder
-                </Menu.Item>
-                <Menu.Item
-                  leftSlot={<TbUpload size={13} />}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Upload file
-                </Menu.Item>
-                <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramOpen(true)}>
-                  New diagram
-                </Menu.Item>
-                <Menu.Item
-                  leftSlot={<TbFileText size={13} />}
-                  onClick={() => setAddMarkdownOpen(true)}
-                >
-                  New wiki page
-                </Menu.Item>
-              </MenuButton.Menu>
-            </MenuButton.Root>
+            !isReadOnly && (
+              <MenuButton.Root>
+                <MenuButton.Trigger
+                  element={
+                    <Button variant="primary" icon={<TbPlus size={12} />}>
+                      New
+                    </Button>
+                  }
+                />
+                <MenuButton.Menu align="end">
+                  <Menu.Item
+                    leftSlot={<TbFolderOpen size={13} />}
+                    onClick={() => setAddFolderOpen(true)}
+                  >
+                    New folder
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSlot={<TbUpload size={13} />}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Upload file
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSlot={<TbPlus size={13} />}
+                    onClick={() => setAddDiagramOpen(true)}
+                  >
+                    New diagram
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSlot={<TbFileText size={13} />}
+                    onClick={() => setAddMarkdownOpen(true)}
+                  >
+                    New wiki page
+                  </Menu.Item>
+                </MenuButton.Menu>
+              </MenuButton.Root>
+            )
           }
         />
       </div>
@@ -209,18 +218,29 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         }}
         workspaceId={workspaceSlug}
         context="workspace"
-        folder={folder || null}
+        folder={folder ?? null}
       />
 
       <AddMarkdownDialog
         open={addMarkdownOpen}
         onClose={() => setAddMarkdownOpen(false)}
+        workspaceSlug={workspaceSlug}
         onCreated={file => {
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
         }}
+        onOpenDraft={draft =>
+          navigate(
+            workspaceMarkdownDraftRoute(workspaceSlug, {
+              draftName: draft.name,
+              draftFolder: folder ?? undefined,
+              draftType: draft.documentTypeId ?? undefined,
+              draftTemplate: draft.templateId ?? undefined
+            })
+          )
+        }
         onCreate={name =>
-          contentOperations.createMarkdown.mutateAsync({ name, folder: folder || null })
+          contentOperations.createMarkdown.mutateAsync({ name, folder: folder ?? null })
         }
         isPending={contentOperations.createMarkdown.isPending}
       />
@@ -231,7 +251,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         onCreated={() => setAddFolderOpen(false)}
         onSubmit={path => contentOperations.createFolder.mutateAsync(path)}
         isPending={contentOperations.createFolder.isPending}
-        parentFolder={folder || undefined}
+        parentFolder={folder ?? undefined}
         placeholder="e.g. Architecture"
       />
     </div>

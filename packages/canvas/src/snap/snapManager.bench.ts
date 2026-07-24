@@ -3,10 +3,8 @@ import { bench, describe } from 'vitest';
 import { Random } from '@diagram-craft/utils/random';
 import { DocumentBuilder } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import {
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { EdgeDefinitionRegistry } from '@diagram-craft/model/edgeDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';

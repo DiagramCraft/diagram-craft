@@ -55,7 +55,12 @@ export const EntityMetricEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={hasValue}
-      placeholder={<><TbHash size={16} /><span>Configure entity metric…</span></>}
+      placeholder={
+        <>
+          <TbHash size={16} />
+          <span>Configure entity metric…</span>
+        </>
+      }
       content={
         <EntityMetric
           schema={schema === '' ? undefined : schema}

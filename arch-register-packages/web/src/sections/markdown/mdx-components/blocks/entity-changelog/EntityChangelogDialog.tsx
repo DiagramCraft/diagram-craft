@@ -53,7 +53,7 @@ export const EntityChangelogDialog = ({
     owner: el.owner ?? '',
     lifecycle: el.lifecycle ?? ''
   });
-  const [limit, setLimit] = useState(el.limit || '10');
+  const [limit, setLimit] = useState(el.limit ?? '10');
   const [since, setSince] = useState(el.since ?? '30d');
 
   const { data: selectedEntity } = useEntity(workspaceSlug, selectedEntityId);
@@ -98,8 +98,7 @@ export const EntityChangelogDialog = ({
   };
 
   const hasSingleEntity = mode === 'single' && !!selectedEntityId;
-  const hasFilter =
-    mode === 'filtered' && !!(filter.schemaId || filter.owner || filter.lifecycle);
+  const hasFilter = mode === 'filtered' && !!(filter.schemaId || filter.owner || filter.lifecycle);
   const canSave = hasSingleEntity || hasFilter;
 
   return (

@@ -14,7 +14,7 @@ import {
   type Endpoint
 } from '@diagram-craft/model/endpoint';
 import { RectNodeDefinition } from '../node-types/Rect.nodeType';
-import type { AttachEdgeContext } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { AttachEdgeContext } from '@diagram-craft/model/nodeDefinition';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -144,7 +144,8 @@ const createContext = (): Context =>
     tool: {} as Context['tool'],
     actions: {},
     marquee: {} as Context['marquee'],
-    actionState: {} as Context['actionState']
+    actionState: {} as Context['actionState'],
+    commentVisibility: {} as Context['commentVisibility']
   }) as Context;
 
 const mountDiagramElement = (diagramId: string) => {
@@ -503,9 +504,9 @@ describe('EdgeEndpointMoveDrag', () => {
     const createdEdge = layer.elements.find(
       element => element !== drag.edge && 'start' in element && 'end' in element
     ) as DiagramEdge | undefined;
-    const createdNode = layer.elements.find(
-      element => element !== node && 'nodeType' in element
-    ) as DiagramNode | undefined;
+    const createdNode = layer.elements.find(element => element !== node && 'nodeType' in element) as
+      | DiagramNode
+      | undefined;
 
     expect(createdEdge?.start).toBeInstanceOf(AnchorEndpoint);
     expect(createdNode?.bounds.y).toBeLessThan(node.bounds.y);
@@ -548,9 +549,9 @@ describe('EdgeEndpointMoveDrag', () => {
     const createdEdge = layer.elements.find(
       element => element !== drag.edge && 'start' in element && 'end' in element
     ) as DiagramEdge | undefined;
-    const createdNode = layer.elements.find(
-      element => element !== node && 'nodeType' in element
-    ) as DiagramNode | undefined;
+    const createdNode = layer.elements.find(element => element !== node && 'nodeType' in element) as
+      | DiagramNode
+      | undefined;
 
     expect(createdEdge?.start).toBeInstanceOf(PointInNodeEndpoint);
     expect(createdNode?.bounds.y).toBeLessThan(node.bounds.y);

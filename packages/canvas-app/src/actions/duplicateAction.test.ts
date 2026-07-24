@@ -209,7 +209,9 @@ describe('DuplicateAction', () => {
 
       new DuplicateAction(mkContext(diagram)).execute();
 
-      const duplicatedEdge = layer.elements.filter(isEdge).find(e => e.id !== edge.id && e.id !== target.id)!;
+      const duplicatedEdge = layer.elements
+        .filter(isEdge)
+        .find(e => e.id !== edge.id && e.id !== target.id)!;
       expect(duplicatedEdge.start).toBeInstanceOf(FreeEndpoint);
       expect(duplicatedEdge.start.position).toEqual({ x: 40, y: 10 });
     });
@@ -285,10 +287,14 @@ describe('DuplicateAction', () => {
 
       new DuplicateAction(mkContext(diagram)).execute();
 
-      const duplicatedEdges = layer.elements.filter(isEdge).filter(e => e.id !== target.id && e.id !== edge.id);
+      const duplicatedEdges = layer.elements
+        .filter(isEdge)
+        .filter(e => e.id !== target.id && e.id !== edge.id);
       expect(duplicatedEdges).toHaveLength(2);
 
-      const duplicatedTarget = duplicatedEdges.find(e => !(e.start instanceof PointOnEdgeEndpoint))!;
+      const duplicatedTarget = duplicatedEdges.find(
+        e => !(e.start instanceof PointOnEdgeEndpoint)
+      )!;
       const duplicatedEdge = duplicatedEdges.find(e => e.start instanceof PointOnEdgeEndpoint)!;
 
       expect(duplicatedEdge.start).toBeInstanceOf(PointOnEdgeEndpoint);

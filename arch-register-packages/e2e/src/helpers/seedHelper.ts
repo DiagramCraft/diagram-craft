@@ -79,13 +79,14 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
 
 export async function seedCatalogEntities(db: DatabaseAdapter): Promise<void> {
   const syncTimestamp = new Date();
+  const entities = seedEntities.filter(entity => entity.project_id == null);
 
-  for (const entity of seedEntities) {
+  for (const entity of entities) {
     await db.catalog.createEntity(entity);
   }
 
   const maxByPrefix = new Map<string, number>();
-  for (const entity of seedEntities) {
+  for (const entity of entities) {
     if (!entity.public_id) continue;
     const parts = entity.public_id.split('-');
     const prefix = parts.slice(0, -1).join('-');

@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import styles from '../shell/SidePanel.module.css';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 
 export const RenameDialog = ({
   open,
@@ -18,17 +19,14 @@ export const RenameDialog = ({
 }) => {
   const [name, setName] = useState(currentName);
   const inputRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(inputRef, {
+    enabled: open,
+    onFocused: element => element.select()
+  });
 
   useEffect(() => {
     if (!open) return;
     setName(currentName);
-    setTimeout(() => {
-      const el = inputRef.current;
-      if (el) {
-        el.focus();
-        el.select();
-      }
-    }, 0);
   }, [open, currentName]);
 
   const handleSubmit = (event: React.FormEvent) => {

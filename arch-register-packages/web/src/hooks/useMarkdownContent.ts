@@ -6,12 +6,15 @@ import {
 } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 import { invalidateContentScope, type ContentScope } from './useContentScope';
+import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
 
 export const markdownContentKeys = {
   detail: (workspaceId: string, nodeId: string) =>
     ['markdown-content', workspaceId, nodeId] as const,
   revisions: (workspaceId: string, nodeId: string) =>
     ['markdown-content', workspaceId, nodeId, 'revisions'] as const,
+  workflowHistory: (workspaceId: string, nodeId: string) =>
+    ['markdown-content', workspaceId, nodeId, 'workflow-history'] as const,
   revision: (workspaceId: string, nodeId: string, revisionId: string) =>
     ['markdown-content', workspaceId, nodeId, 'revisions', revisionId] as const
 };
@@ -45,12 +48,67 @@ export const useSaveMarkdownContent = (scope: ContentScope, nodeId: string) => {
   const queryClient = useQueryClient();
   const { workspaceId } = scope;
   return useMutation({
-    mutationFn: ({ body, name }: { body: string; name?: string }) =>
+    mutationFn: ({
+      body,
+      name,
+      document_type_id,
+      metadata,
+      change_kind
+    }: {
+      body: string;
+      name?: string;
+      document_type_id?: string | null;
+      metadata?: DocumentMetadata;
+      change_kind?: 'minor' | 'major';
+    }) =>
       orpcClient.projects.saveMarkdownContent({
         params: { workspace: workspaceId, nodeId },
-        body: { body, name }
+        body: { body, name, document_type_id, metadata, change_kind }
       }),
     onSuccess: () => invalidateMarkdownNode(queryClient, scope, nodeId)
+  });
+};
+
+export const useMigrateMarkdownContent = (scope: ContentScope, nodeId: string) => {
+  const queryClient = useQueryClient();
+  const { workspaceId } = scope;
+  return useMutation({
+    mutationFn: (input: {
+      body: string;
+      name?: string;
+      document_type_id: string | null;
+      metadata: DocumentMetadata;
+      change_kind?: 'minor' | 'major';
+    }) =>
+      orpcClient.projects.migrateMarkdownContent({
+        params: { workspace: workspaceId, nodeId },
+        body: input
+      }),
+    onSuccess: () => invalidateMarkdownNode(queryClient, scope, nodeId)
+  });
+};
+
+export const useSaveNewMarkdownContent = (scope: ContentScope) => {
+  const queryClient = useQueryClient();
+  const { workspaceId } = scope;
+  return useMutation({
+    mutationFn: (input: {
+      name: string;
+      folder?: string;
+      body: string;
+      document_type_id?: string | null;
+      metadata: DocumentMetadata;
+    }) =>
+      orpcClient.projects.saveNewMarkdownContent({
+        params: { workspace: workspaceId },
+        body: {
+          ...input,
+          scope: scope.kind,
+          ...(scope.kind === 'project' ? { project_id: scope.projectId } : {}),
+          ...(scope.kind === 'entity' ? { entity_id: scope.entityId } : {})
+        }
+      }),
+    onSuccess: () => invalidateContentScope(queryClient, scope)
   });
 };
 
@@ -82,10 +140,21 @@ export const useRestoreMarkdownRevision = (scope: ContentScope, nodeId: string) 
   const queryClient = useQueryClient();
   const { workspaceId } = scope;
   return useMutation({
-    mutationFn: (revisionId: string) =>
+    mutationFn: (input: { revisionId: string; change_kind?: 'minor' | 'major' }) =>
       orpcClient.projects.restoreMarkdownRevision({
-        params: { workspace: workspaceId, nodeId, revisionId }
+        params: { workspace: workspaceId, nodeId, revisionId: input.revisionId },
+        body: { change_kind: input.change_kind ?? 'major' }
       }),
     onSuccess: () => invalidateMarkdownNode(queryClient, scope, nodeId)
   });
 };
+
+export const useMarkdownWorkflowHistory = (workspaceId: string, nodeId: string) =>
+  useQuery({
+    queryKey: markdownContentKeys.workflowHistory(workspaceId, nodeId),
+    queryFn: () =>
+      orpcClient.projects.listMarkdownWorkflowHistory({
+        params: { workspace: workspaceId, nodeId }
+      }),
+    enabled: !!workspaceId && !!nodeId
+  });

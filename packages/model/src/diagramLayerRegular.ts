@@ -29,7 +29,9 @@ export class RegularLayer extends Layer<RegularLayer> {
     super(id, name, diagram, 'regular', crdt);
 
     this.#elements = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
-      this.watchCrdtField(crdt => crdt.get('elements', () => diagram.document.root.factory.makeMap())!),
+      this.watchCrdtField(
+        crdt => crdt.get('elements', () => diagram.document.root.factory.makeMap())!
+      ),
       makeElementMapper(this, undefined),
       {
         onRemoteAdd: e => {

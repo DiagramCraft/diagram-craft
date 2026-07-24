@@ -1,0 +1,148 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r-md);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 120ms,
+    background 120ms;
+}
+
+.card:hover {
+  border-color: var(--cmp-border-strong, var(--cmp-border));
+  background: var(--cmp-bg-hover, var(--cmp-bg));
+}
+
+.cardCancelled {
+  opacity: 0.6;
+}
+
+.cardBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cardName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--cmp-fg-disabled);
+}
+
+.status {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid;
+  line-height: 1.6;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statusPlanned {
+  color: var(--cmp-fg-dim);
+  border-color: var(--cmp-border-strong, var(--cmp-border));
+  background: transparent;
+}
+
+.statusActive {
+  color: var(--green);
+  border-color: color-mix(in oklch, var(--green) 35%, transparent);
+  background: color-mix(in oklch, var(--green) 10%, transparent);
+}
+
+.statusComplete {
+  color: var(--accent-fg);
+  border-color: color-mix(in oklch, var(--accent-fg) 35%, transparent);
+  background: color-mix(in oklch, var(--accent-fg) 10%, transparent);
+}
+
+.statusCancelled {
+  color: var(--cmp-fg-disabled);
+  border-color: var(--cmp-border);
+  background: transparent;
+}
+
+.cardActions {
+  flex-shrink: 0;
+}
+
+/* Editor dialog */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--cmp-border);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionLabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cmp-fg-disabled);
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dateInput {
+  box-sizing: border-box;
+  height: 25px;
+  padding: 1px 5px;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  font-family: inherit;
+  font-size: 11px;
+  width: 200px;
+}

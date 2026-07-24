@@ -14,7 +14,8 @@ type CellProps = {
 
 export const RatingCell = ({ value, onChange, disabled }: CellProps) => {
   const [hover, setHover] = useState<number | null>(null);
-  const current = typeof value === 'number' ? value : Number(value) || 0;
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  const current = Number.isNaN(numericValue) ? 0 : numericValue;
 
   return (
     <div className={styles.stars} onMouseLeave={() => setHover(null)}>
@@ -98,7 +99,8 @@ export const AssessmentFieldCell = ({
   onChange: (value: string | number | null) => void;
   disabled?: boolean;
 }) => {
-  if (field.type === 'rating') return <RatingCell value={value} onChange={onChange} disabled={disabled} />;
+  if (field.type === 'rating')
+    return <RatingCell value={value} onChange={onChange} disabled={disabled} />;
   if (field.type === 'enum')
     return <EnumCell field={field} value={value} onChange={onChange} disabled={disabled} />;
   return <TextCell value={value} onChange={onChange} disabled={disabled} />;

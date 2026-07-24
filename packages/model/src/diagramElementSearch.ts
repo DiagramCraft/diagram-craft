@@ -115,7 +115,8 @@ const normalizeQueryResult = (queryResult: unknown): Set<string> => {
   const ids = Array.isArray(queryResult)
     ? queryResult.flatMap(entry => {
         if (typeof entry === 'string') return [entry];
-        if (Array.isArray(entry)) return entry.filter((value): value is string => typeof value === 'string');
+        if (Array.isArray(entry))
+          return entry.filter((value): value is string => typeof value === 'string');
         return [];
       })
     : [];

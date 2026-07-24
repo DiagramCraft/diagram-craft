@@ -1,6 +1,7 @@
 import type { ProjectDbResult, ProjectEntityDbResult } from './db/projectDatabase';
 import type { ContentNodeDbResult as InternalProjectFile } from './db/projectDatabase';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import { fileNameFromPath, isMarkdownPath, stripMarkdownExtension } from './contentFileHelpers';
 import {
   ContentMetadata,
   FileTree,
@@ -11,7 +12,7 @@ import {
 } from '@arch-register/api-types/projectContract';
 
 const getProjectCapabilities = (
-  context: AuthorizationContext | null,
+  context: WorkspaceAuthorizationContext | null,
   _ownerTeamId: string | null
 ) => {
   if (!context) {
@@ -34,7 +35,7 @@ const getProjectCapabilities = (
 export const toApiProject = (
   project: ProjectDbResult,
   fileCount: number,
-  authCtx: AuthorizationContext | null
+  authCtx: WorkspaceAuthorizationContext | null
 ): Project => ({
   id: project.id,
   public_id: project.public_id ?? project.id,
@@ -88,9 +89,13 @@ const toApiContentMetadata = (file: InternalProjectFile): ContentMetadata | null
 export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   id: file.id,
   project_id: file.project_id,
+  entity_id: file.entity_id ?? null,
   project_public_id: file.project_public_id ?? null,
   path: file.path,
-  name: file.name,
+  name:
+    file.mount_id && file.type === 'file' && isMarkdownPath(file.path)
+      ? stripMarkdownExtension(fileNameFromPath(file.path))
+      : file.name,
   role: file.role ?? null,
   size_bytes: file.size_bytes,
   comment_count: file.comment_count,
@@ -100,18 +105,23 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   preview_svg: file.preview_svg,
   created_at: file.created_at.toISOString(),
   updated_at: file.updated_at.toISOString(),
-  type: file.type,
+  type: file.mount_id && file.type === 'file' && isMarkdownPath(file.path) ? 'markdown' : file.type,
   created_by: file.created_by ?? null,
   updated_by: file.updated_by ?? null,
   mime_type: file.mime_type ?? null,
-  original_filename: file.original_filename ?? null,
-  content_metadata: toApiContentMetadata(file)
+  original_filename:
+    file.mount_id && file.type === 'file' && isMarkdownPath(file.path)
+      ? null
+      : (file.original_filename ?? null),
+  content_metadata: toApiContentMetadata(file),
+  document_type_icon: file.document_type_icon ?? null,
+  ...(file.mount_id ? { read_only: true, mount_id: file.mount_id } : {})
 });
 
 export const toApiProjectDetail = (
   project: ProjectDbResult,
   files: FileTree,
-  authCtx: AuthorizationContext | null
+  authCtx: WorkspaceAuthorizationContext | null
 ): ProjectDetail => ({
   id: project.id,
   public_id: project.public_id ?? project.id,

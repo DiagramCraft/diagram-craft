@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { BlockArcNodeDefinition } from './BlockArc.nodeType';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import type { NumberCustomPropertyType } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { NumberCustomPropertyType } from '@diagram-craft/model/customProperty';
 import type { RawSegment } from '@diagram-craft/geometry/pathListBuilder';
 
 type ArcSegment = Extract<RawSegment, ['A', number, number, number, 0 | 1, 0 | 1, number, number]>;
@@ -34,9 +34,9 @@ const getNumberProp = (
 ) => {
   const property = definition
     .getCustomPropertyDefinitions(node)
-    .entries.find(
-      entry => entry.type === 'number' && 'label' in entry && entry.label === label
-    ) as NumberCustomPropertyType | undefined;
+    .entries.find(entry => entry.type === 'number' && 'label' in entry && entry.label === label) as
+    | NumberCustomPropertyType
+    | undefined;
 
   expect(property).toBeDefined();
   return property!;

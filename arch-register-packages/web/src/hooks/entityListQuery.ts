@@ -1,4 +1,5 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 
 export type EntityListOptions = {
   schemaId?: string | null;
@@ -6,14 +7,16 @@ export type EntityListOptions = {
   lifecycle?: string | null;
   q?: string | null;
   conditions?: FilterCondition[];
+  entityQuery?: EntityQuery | null;
   assessmentId?: string | null;
   projectId?: string | null;
   projectScope?: 'project' | 'all';
+  collectionId?: string | null;
   view?: 'summary' | 'full';
   limit?: number | null;
   offset?: number | null;
   asOf?: string | null;
-  includeProjectSnapshots?: boolean | null;
+  includePlannedChanges?: boolean | null;
 };
 
 export const toEntityListQuery = (options: EntityListOptions) => ({
@@ -22,9 +25,11 @@ export const toEntityListQuery = (options: EntityListOptions) => ({
   lifecycle: options.lifecycle ?? undefined,
   q: options.q ?? undefined,
   conditions: options.conditions?.length ? options.conditions : undefined,
+  entityQuery: options.entityQuery ? JSON.stringify(options.entityQuery) : undefined,
   assessmentId: options.assessmentId ?? undefined,
   projectId: options.projectId ?? undefined,
   projectScope: options.projectScope ?? undefined,
+  collectionId: options.collectionId ?? undefined,
   asOf: options.asOf ?? undefined,
-  includeProjectSnapshots: options.includeProjectSnapshots ?? undefined
+  includePlannedChanges: options.includePlannedChanges ?? undefined
 });

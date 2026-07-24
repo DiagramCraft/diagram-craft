@@ -11,6 +11,7 @@ import { ColorPicker } from '../components/ColorPicker';
 import { useCreateProject } from '../hooks/useProjects';
 import styles from './AddEntityDialog.module.css';
 import { Project } from '@arch-register/api-types/projectContract';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 
 const PROJECT_STATUSES = [
   { value: 'draft', label: 'Draft' },
@@ -43,6 +44,7 @@ export const AddProjectDialog = ({
   const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(nameRef, { enabled: open });
   const creatableTeams = useMemo(
     () => teams.filter(team => canCreateProject(workspaceId, team.id)),
     [canCreateProject, teams, workspaceId]
@@ -57,7 +59,6 @@ export const AddProjectDialog = ({
       setStatus('active');
       setColor(null);
       setError('');
-      setTimeout(() => nameRef.current?.focus(), 0);
     }
   }, [canCreateWithoutOwner, creatableTeams, open]);
 
@@ -72,7 +73,7 @@ export const AddProjectDialog = ({
       const project = await createProjectMutation.mutateAsync({
         name: trimmed,
         description: description.trim(),
-        owner: owner || null,
+        owner: owner ?? null,
         status,
         color
       });
@@ -112,7 +113,7 @@ export const AddProjectDialog = ({
         }}
       >
         <button type="submit" hidden />
-        <FormElement label="Name">
+        <FormElement label="Name" required>
           <TextInput
             ref={nameRef}
             value={name}
@@ -121,20 +122,22 @@ export const AddProjectDialog = ({
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="Description">
+        <FormElement label="Description" required={false}>
           <TextArea
             value={description}
             onChange={value => setDescription(value ?? '')}
-            placeholder="Optional — what is this project about?"
+            placeholder="What is this project about?"
             rows={3}
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="Status">
+        <FormElement label="Status" required>
           <Select.Root
             value={status}
             onChange={value =>
-              setStatus((value as 'draft' | 'active' | 'complete' | 'cancelled' | undefined) ?? 'active')
+              setStatus(
+                (value as 'draft' | 'active' | 'complete' | 'cancelled' | undefined) ?? 'active'
+              )
             }
             style={{ width: '100%' }}
           >
@@ -145,9 +148,9 @@ export const AddProjectDialog = ({
             ))}
           </Select.Root>
         </FormElement>
-        <FormElement label="Owner">
+        <FormElement label="Owner" required={false}>
           <Select.Root
-            value={owner || undefined}
+            value={owner ?? undefined}
             onChange={value => setOwner(value ?? '')}
             placeholder={canCreateWithoutOwner ? 'No owner' : 'Select owner'}
             style={{ width: '100%' }}
@@ -159,7 +162,7 @@ export const AddProjectDialog = ({
             ))}
           </Select.Root>
         </FormElement>
-        <FormElement label="Color">
+        <FormElement label="Color" required={false}>
           <ColorPicker value={color} onChange={setColor} size="small" />
         </FormElement>
         {error && <div className={styles.error}>{error}</div>}

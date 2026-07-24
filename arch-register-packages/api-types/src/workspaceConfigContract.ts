@@ -1,6 +1,16 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndUUID, teamRoleSchema, workspaceCapabilitySchema } from '@arch-register/api-types/common';
+import {
+  ws,
+  wsAndUUID,
+  teamRoleSchema,
+  workspaceCapabilitySchema
+} from '@arch-register/api-types/common';
+import {
+  apiTokenSchema,
+  apiTokenCreateSchema,
+  apiTokenCreatedSchema
+} from '@arch-register/api-types/apiTokenContract';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])
@@ -20,14 +30,22 @@ const lifecycleStateSchema = z.object({
   label: z.string().describe('Display label for the lifecycle state'),
   color: z.string().describe('Color code (hex format)'),
   sort_order: z.number().int().describe('Display order (0-based)'),
-  created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp')
+  created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp'),
+  is_deprecated_state: z
+    .boolean()
+    .default(false)
+    .describe('Whether this is the workspace configured "deprecated" lifecycle state (#1718)')
 });
 
 const lifecycleStateInputSchema = z.object({
   id: z.string().optional().describe('Optional ID for updating existing state'),
   label: z.string().describe('Display label for the lifecycle state'),
   color: z.string().describe('Color code (hex format)'),
-  sort_order: z.number().int().optional().describe('Display order (defaults to end of list)')
+  sort_order: z.number().int().optional().describe('Display order (defaults to end of list)'),
+  is_deprecated_state: z
+    .boolean()
+    .optional()
+    .describe('Mark this as the workspace\'s "deprecated" lifecycle state (at most one allowed)')
 });
 
 const teamSchema = z.object({
@@ -68,7 +86,9 @@ const roleDefinitionSchema = z.object({
   description: z.string().describe('Role description'),
   tone: z.string().describe('Role tone/style indicator'),
   builtin: z.boolean().describe('Whether this is a built-in system role'),
-  capabilities: z.array(workspaceCapabilitySchema).describe('List of capabilities granted by this role'),
+  capabilities: z
+    .array(workspaceCapabilitySchema)
+    .describe('List of capabilities granted by this role'),
   created_at: timestampOutputSchema.optional().describe('ISO 8601 creation timestamp'),
   updated_at: timestampOutputSchema.optional().describe('ISO 8601 last update timestamp')
 });
@@ -80,7 +100,9 @@ const roleDefinitionDbSchema = z.object({
   description: z.string().describe('Role description'),
   tone: z.string().describe('Role tone/style indicator'),
   builtin: z.boolean().describe('Whether this is a built-in system role'),
-  capabilities: z.array(workspaceCapabilitySchema).describe('List of capabilities granted by this role'),
+  capabilities: z
+    .array(workspaceCapabilitySchema)
+    .describe('List of capabilities granted by this role'),
   created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp'),
   updated_at: timestampOutputSchema.describe('ISO 8601 last update timestamp')
 });
@@ -117,245 +139,323 @@ const userInfoSchema = z.object({
   color: z.string().nullable().optional().describe('Optional user color (hex format)')
 });
 
+const pickerSearchQuerySchema = z.object({
+  q: z.string().optional().describe('Case-insensitive search query'),
+  limit: z
+    .preprocess(
+      value => (value === undefined ? undefined : Number(value)),
+      z.number().int().positive().max(100).optional()
+    )
+    .describe('Maximum number of results (default 50, maximum 100)')
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
-export const workspaceConfigContract = oc
-  .tag('Workspace Config')
-  .router({
-    config: {
-      lifecycleStates: {
-        list: oc
-          .route({
-            method: 'GET',
-            path: '/{workspace}/config/lifecycle-states',
-            inputStructure: 'detailed',
-            summary: 'List lifecycle states',
-            description: 'Retrieves all lifecycle states configured for the workspace. Lifecycle states represent the stages entities can be in.',
-            tags: ['Workspace Config']
-          })
-          .input(z.object({ params: ws }))
-          .output(z.array(lifecycleStateSchema)),
-        replace: oc
-          .route({
-            method: 'PUT',
-            path: '/{workspace}/config/lifecycle-states',
-            inputStructure: 'detailed',
-            summary: 'Replace lifecycle states',
-            description: 'Replaces all lifecycle states for the workspace. This is a full replacement operation - any states not included will be removed.',
-            tags: ['Workspace Config']
-          })
-          .input(
-            z.object({
-              params: ws,
-              body: z.object({ states: z.array(lifecycleStateInputSchema).describe('Complete list of lifecycle states') })
+export const workspaceConfigContract = oc.tag('Workspace Config').router({
+  config: {
+    lifecycleStates: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/lifecycle-states',
+          inputStructure: 'detailed',
+          summary: 'List lifecycle states',
+          description:
+            'Retrieves all lifecycle states configured for the workspace. Lifecycle states represent the stages entities can be in.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(lifecycleStateSchema)),
+      replace: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/lifecycle-states',
+          inputStructure: 'detailed',
+          summary: 'Replace lifecycle states',
+          description:
+            'Replaces all lifecycle states for the workspace. This is a full replacement operation - any states not included will be removed.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({
+              states: z
+                .array(lifecycleStateInputSchema)
+                .describe('Complete list of lifecycle states')
             })
-          )
-          .output(z.array(lifecycleStateSchema))
-      },
-      teams: {
-        list: oc
-          .route({
-            method: 'GET',
-            path: '/{workspace}/config/teams',
-            inputStructure: 'detailed',
-            summary: 'List teams',
-            description: 'Retrieves all teams configured for the workspace. Teams are used to organize users and assign permissions.',
-            tags: ['Workspace Config']
           })
-          .input(z.object({ params: ws }))
-          .output(z.array(teamSchema)),
-        replace: oc
-          .route({
-            method: 'PUT',
-            path: '/{workspace}/config/teams',
-            inputStructure: 'detailed',
-            summary: 'Replace teams',
-            description: 'Replaces all teams for the workspace. This is a full replacement operation - any teams not included will be removed.',
-            tags: ['Workspace Config']
+        )
+        .output(z.array(lifecycleStateSchema))
+    },
+    teams: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/teams',
+          inputStructure: 'detailed',
+          summary: 'List teams',
+          description:
+            'Retrieves all teams configured for the workspace. Teams are used to organize users and assign permissions.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws, query: pickerSearchQuerySchema.optional() }))
+        .output(z.array(teamSchema)),
+      replace: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/teams',
+          inputStructure: 'detailed',
+          summary: 'Replace teams',
+          description:
+            'Replaces all teams for the workspace. This is a full replacement operation - any teams not included will be removed.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({ teams: z.array(teamInputSchema).describe('Complete list of teams') })
           })
-          .input(
-            z.object({
-              params: ws,
-              body: z.object({ teams: z.array(teamInputSchema).describe('Complete list of teams') })
+        )
+        .output(z.array(teamSchema))
+    },
+    teamAssignments: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/team-assignments',
+          inputStructure: 'detailed',
+          summary: 'List team assignments',
+          description:
+            'Retrieves all user-to-team assignments for the workspace, including their roles within each team.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(teamAssignmentSchema)),
+      replace: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/team-assignments',
+          inputStructure: 'detailed',
+          summary: 'Replace team assignments',
+          description:
+            'Replaces all team assignments for the workspace. This is a full replacement operation - any assignments not included will be removed.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({
+              assignments: z
+                .array(teamAssignmentInputSchema)
+                .describe('Complete list of team assignments')
             })
-          )
-          .output(z.array(teamSchema))
-      },
-      teamAssignments: {
-        list: oc
-          .route({
-            method: 'GET',
-            path: '/{workspace}/config/team-assignments',
-            inputStructure: 'detailed',
-            summary: 'List team assignments',
-            description: 'Retrieves all user-to-team assignments for the workspace, including their roles within each team.',
-            tags: ['Workspace Config']
           })
-          .input(z.object({ params: ws }))
-          .output(z.array(teamAssignmentSchema)),
-        replace: oc
-          .route({
-            method: 'PUT',
-            path: '/{workspace}/config/team-assignments',
-            inputStructure: 'detailed',
-            summary: 'Replace team assignments',
-            description: 'Replaces all team assignments for the workspace. This is a full replacement operation - any assignments not included will be removed.',
-            tags: ['Workspace Config']
+        )
+        .output(z.array(teamAssignmentSchema))
+    },
+    roles: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/roles',
+          inputStructure: 'detailed',
+          summary: 'List workspace roles',
+          description:
+            'Retrieves all role definitions for the workspace, including both built-in and custom roles with their capabilities.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(roleDefinitionSchema)),
+      create: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/config/roles',
+          inputStructure: 'detailed',
+          summary: 'Create workspace role',
+          description:
+            'Creates a new custom role definition with the specified capabilities. Built-in roles cannot be created.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws, body: roleInputSchema }))
+        .output(roleDefinitionDbSchema),
+      update: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/roles/{id}',
+          inputStructure: 'detailed',
+          summary: 'Update workspace role',
+          description:
+            'Updates an existing custom role definition. Built-in roles cannot be modified.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: wsAndUUID,
+            body: roleInputSchema
           })
-          .input(
-            z.object({
-              params: ws,
-              body: z.object({
-                assignments: z.array(teamAssignmentInputSchema).describe('Complete list of team assignments')
-              })
+        )
+        .output(roleDefinitionDbSchema),
+      remove: oc
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/config/roles/{id}',
+          inputStructure: 'detailed',
+          summary: 'Delete workspace role',
+          description:
+            'Deletes a custom role definition. Built-in roles cannot be deleted. This operation will fail if the role is currently assigned to any users.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: wsAndUUID }))
+        .output(roleDefinitionDbSchema)
+    },
+    members: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/members',
+          inputStructure: 'detailed',
+          summary: 'List workspace members',
+          description:
+            'Retrieves all members of the workspace with their assigned roles and user information.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(memberInfoSchema)),
+      updateRole: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/members/{id}/role',
+          inputStructure: 'detailed',
+          summary: 'Update member role',
+          description:
+            'Updates the role assignment for a workspace member. Requires appropriate permissions.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: wsAndUUID,
+            body: z.object({ roleId: z.string().describe('New role identifier to assign') })
+          })
+        )
+        .output(memberDbSchema),
+      remove: oc
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/config/members/{id}',
+          inputStructure: 'detailed',
+          summary: 'Remove workspace member',
+          description:
+            'Removes a user from the workspace. This revokes all their permissions and access to workspace resources.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: wsAndUUID }))
+        .output(memberDbSchema)
+    },
+    users: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/users',
+          inputStructure: 'detailed',
+          summary: 'List available users',
+          description:
+            'Retrieves all users that can be added to the workspace, including their authentication provider and status.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws, query: pickerSearchQuerySchema.optional() }))
+        .output(z.array(userInfoSchema))
+    },
+    tokens: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/tokens',
+          inputStructure: 'detailed',
+          summary: 'List workspace API tokens',
+          description: 'Lists API tokens for the workspace without exposing token secrets.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(apiTokenSchema)),
+      create: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/config/tokens',
+          inputStructure: 'detailed',
+          summary: 'Create workspace API token',
+          description: 'Creates a workspace API token and returns its secret once.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws, body: apiTokenCreateSchema }))
+        .output(apiTokenCreatedSchema),
+      revoke: oc
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/config/tokens/{id}',
+          inputStructure: 'detailed',
+          summary: 'Revoke workspace API token',
+          description: 'Revokes a workspace API token.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: wsAndUUID }))
+        .output(apiTokenSchema)
+    },
+    projectEntityTypes: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/project-entity-types',
+          inputStructure: 'detailed',
+          summary: 'List project entity types',
+          description:
+            'Retrieves all entity type classifications available for project entities. These types help categorize entities within projects.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(projectEntityTypeSchema)),
+      replace: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/project-entity-types',
+          inputStructure: 'detailed',
+          summary: 'Replace project entity types',
+          description:
+            'Replaces all project entity types for the workspace. This is a full replacement operation - any types not included will be removed.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({
+              types: z
+                .array(
+                  z.object({
+                    id: z.string().optional().describe('Optional ID for updating existing type'),
+                    label: z.string().describe('Display label for the entity type'),
+                    sort_order: z
+                      .number()
+                      .int()
+                      .optional()
+                      .describe('Display order (defaults to end of list)')
+                  })
+                )
+                .describe('Complete list of project entity types')
             })
-          )
-          .output(z.array(teamAssignmentSchema))
-      },
-      roles: {
-        list: oc
-          .route({
-            method: 'GET',
-            path: '/{workspace}/config/roles',
-            inputStructure: 'detailed',
-            summary: 'List workspace roles',
-            description: 'Retrieves all role definitions for the workspace, including both built-in and custom roles with their capabilities.',
-            tags: ['Workspace Config']
           })
-          .input(z.object({ params: ws }))
-          .output(z.array(roleDefinitionSchema)),
-        create: oc
-          .route({
-            method: 'POST',
-            path: '/{workspace}/config/roles',
-            inputStructure: 'detailed',
-            summary: 'Create workspace role',
-            description: 'Creates a new custom role definition with the specified capabilities. Built-in roles cannot be created.',
-            tags: ['Workspace Config']
-          })
-          .input(z.object({ params: ws, body: roleInputSchema }))
-          .output(roleDefinitionDbSchema),
-        update: oc
-          .route({
-            method: 'PUT',
-            path: '/{workspace}/config/roles/{id}',
-            inputStructure: 'detailed',
-            summary: 'Update workspace role',
-            description: 'Updates an existing custom role definition. Built-in roles cannot be modified.',
-            tags: ['Workspace Config']
-          })
-          .input(
-            z.object({
-              params: wsAndUUID,
-              body: roleInputSchema
-            })
-          )
-          .output(roleDefinitionDbSchema),
-        remove: oc
-          .route({
-            method: 'DELETE',
-            path: '/{workspace}/config/roles/{id}',
-            inputStructure: 'detailed',
-            summary: 'Delete workspace role',
-            description: 'Deletes a custom role definition. Built-in roles cannot be deleted. This operation will fail if the role is currently assigned to any users.',
-            tags: ['Workspace Config']
-          })
-          .input(z.object({ params: wsAndUUID }))
-          .output(roleDefinitionDbSchema)
-      },
-      members: {
-        list: oc
-          .route({
-            method: 'GET',
-            path: '/{workspace}/config/members',
-            inputStructure: 'detailed',
-            summary: 'List workspace members',
-            description: 'Retrieves all members of the workspace with their assigned roles and user information.',
-            tags: ['Workspace Config']
-          })
-          .input(z.object({ params: ws }))
-          .output(z.array(memberInfoSchema)),
-        updateRole: oc
-          .route({
-            method: 'PUT',
-            path: '/{workspace}/config/members/{id}/role',
-            inputStructure: 'detailed',
-            summary: 'Update member role',
-            description: 'Updates the role assignment for a workspace member. Requires appropriate permissions.',
-            tags: ['Workspace Config']
-          })
-          .input(
-            z.object({
-              params: wsAndUUID,
-              body: z.object({ roleId: z.string().describe('New role identifier to assign') })
-            })
-          )
-          .output(memberDbSchema),
-        remove: oc
-          .route({
-            method: 'DELETE',
-            path: '/{workspace}/config/members/{id}',
-            inputStructure: 'detailed',
-            summary: 'Remove workspace member',
-            description: 'Removes a user from the workspace. This revokes all their permissions and access to workspace resources.',
-            tags: ['Workspace Config']
-          })
-          .input(z.object({ params: wsAndUUID }))
-          .output(memberDbSchema)
-      },
-      users: {
-        list: oc
-          .route({
-            method: 'GET',
-            path: '/{workspace}/config/users',
-            inputStructure: 'detailed',
-            summary: 'List available users',
-            description: 'Retrieves all users that can be added to the workspace, including their authentication provider and status.',
-            tags: ['Workspace Config']
-          })
-          .input(z.object({ params: ws }))
-          .output(z.array(userInfoSchema))
-      },
-      projectEntityTypes: {
-        list: oc
-          .route({
-            method: 'GET',
-            path: '/{workspace}/config/project-entity-types',
-            inputStructure: 'detailed',
-            summary: 'List project entity types',
-            description: 'Retrieves all entity type classifications available for project entities. These types help categorize entities within projects.',
-            tags: ['Workspace Config']
-          })
-          .input(z.object({ params: ws }))
-          .output(z.array(projectEntityTypeSchema)),
-        replace: oc
-          .route({
-            method: 'PUT',
-            path: '/{workspace}/config/project-entity-types',
-            inputStructure: 'detailed',
-            summary: 'Replace project entity types',
-            description: 'Replaces all project entity types for the workspace. This is a full replacement operation - any types not included will be removed.',
-            tags: ['Workspace Config']
-          })
-          .input(
-            z.object({
-              params: ws,
-              body: z.object({
-                types: z.array(z.object({
-                  id: z.string().optional().describe('Optional ID for updating existing type'),
-                  label: z.string().describe('Display label for the entity type'),
-                  sort_order: z.number().int().optional().describe('Display order (defaults to end of list)')
-                })).describe('Complete list of project entity types')
-              })
-            })
-          )
-          .output(z.array(projectEntityTypeSchema))
-      }
+        )
+        .output(z.array(projectEntityTypeSchema))
     }
-  });
+  }
+});
 
 export type WorkspaceMemberInfo = z.infer<typeof memberInfoSchema>;
 export type WorkspaceRoleCapability = z.infer<typeof workspaceCapabilitySchema>;
 export type WorkspaceTeam = z.infer<typeof teamSchema>;
 export type WorkspaceTeamInput = z.infer<typeof teamInputSchema>;
 export type TeamAssignmentInfo = z.infer<typeof teamAssignmentSchema>;
+export type {
+  WorkspaceApiToken,
+  WorkspaceApiTokenCreate,
+  WorkspaceApiTokenCreated
+} from '@arch-register/api-types/apiTokenContract';

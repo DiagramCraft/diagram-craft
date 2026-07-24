@@ -1,19 +1,40 @@
-import { useMemo, useCallback } from 'react';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { useMemo, useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../components/TypeBadge';
 import { StatusChip } from '../../components/StatusChip';
-import { TbChevronLeft, TbEdit, TbDots, TbTrash, TbCopy, TbBell, TbPinned } from 'react-icons/tb';
+import {
+  TbChevronLeft,
+  TbEdit,
+  TbDots,
+  TbTrash,
+  TbCopy,
+  TbBell,
+  TbPinned,
+  TbBookmark
+} from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { useEntity, useEntityRelations, useCloneEntity, useEntitiesBySchema } from '../../hooks/useEntities';
-import { useEntitySnapshots } from '../../hooks/useSnapshots';
+import {
+  useEntity,
+  useEntityRelations,
+  useCloneEntity,
+  useEntitiesBySchema
+} from '../../hooks/useEntities';
+import { useEntityVersions } from '../../hooks/useEntityVersions';
+import { useChangeCasesByEntity } from '../../hooks/useChangeCases';
+import { useBypassEntityApproval, useEntityChangeApproval } from '../../hooks/useEntityChanges';
+import { useEntityDeprecation } from '../../hooks/useEntityDeprecation';
+import {
+  EntityDeprecationPanel,
+  ProposeEntityDeprecationDialog
+} from './components/EntityDeprecationPanel';
 import { useEntityEditController } from '../../hooks/useEntityEditController';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import {
@@ -30,23 +51,333 @@ import {
   entityDetailRoute
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { EntityGraphView } from './components/EntityGraphView';
+import { useWorkspacePermissions } from '../../auth/useWorkspacePermissions';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
-import { EntityOverviewTab } from './components/EntityOverviewTab';
-import { EntityTopologyTab } from './components/EntityTopologyTab';
-import { EntityRelationsTab } from './components/EntityRelationsTab';
-import { EntityTimelineTab } from './components/EntityTimelineTab';
-import { EntityChangeHistoryTab } from './components/EntityChangeHistoryTab';
+import { EntityOverviewSection } from './components/EntityOverviewSection';
+import { EntityContextSection } from './components/EntityContextSection';
+import { EntityCollaborationSection } from './components/EntityCollaborationSection';
+import { EntityPlanningReviewSection } from './components/EntityPlanningReviewSection';
 import { Title } from '../../components/Title';
-import { EntityDependentsTab } from './components/EntityDependentsTab';
-import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
-import { DiscussionThread } from '../discussions/DiscussionThread';
 import { EmptyState } from '../../components/EmptyState';
-import type { TabId, Relation } from './types/entityDetailTypes';
+import { LoadingState } from '../../components/LoadingState';
+import {
+  HOME_TAB_IDS,
+  CONTEXT_TAB_IDS,
+  COLLABORATION_TAB_IDS,
+  PLANNING_TAB_IDS,
+  type TabId,
+  type Relation
+} from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
+import { CollectionPickerDialog } from './components/CollectionPickerDialog';
+import type { EntityChangeApprovalRevision } from '@arch-register/api-types/entityChangeContract';
+import { useAuth } from '../../auth/AuthContext';
+import {
+  useDecideGovernanceAssignment,
+  useGovernanceCaseEvents,
+  useGovernanceTasks
+} from '../../hooks/useGovernance';
+import { entityChangeKeys } from '../../hooks/useEntityChanges';
+import { entityKeys } from '../../queries/entities';
+
+const changeApprovalFieldLabels: Record<string, string> = {
+  slug: 'Slug',
+  namespace: 'Namespace',
+  name: 'Name',
+  description: 'Description',
+  owner: 'Owner',
+  lifecycle: 'Lifecycle',
+  target_lifecycle: 'Target lifecycle',
+  target_lifecycle_date: 'Target lifecycle date',
+  tags: 'Tags',
+  links: 'Links',
+  schema_id: 'Schema',
+  data: 'Entity fields',
+  project_id: 'Project'
+};
+
+const changeApprovalStatusLabels: Record<EntityChangeApprovalRevision['status'], string> = {
+  submitted: 'Awaiting approval',
+  changes_requested: 'Changes requested',
+  stale: 'Stale · resubmit required',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn'
+};
+
+const humanizeChangeApprovalKey = (key: string) =>
+  key.replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
+
+const formatChangeApprovalValue = (value: unknown): string => {
+  if (value == null || value === '') return 'Empty';
+  if (Array.isArray(value)) {
+    if (value.length === 0) return 'Empty';
+    return value.map(formatChangeApprovalValue).join(', ');
+  }
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    if (typeof record['name'] === 'string') return record['name'];
+    if (typeof record['label'] === 'string') return record['label'];
+    return Object.entries(record)
+      .map(
+        ([key, nestedValue]) =>
+          `${humanizeChangeApprovalKey(key)}: ${formatChangeApprovalValue(nestedValue)}`
+      )
+      .join(' · ');
+  }
+  return String(value);
+};
+
+const changeApprovalValuesEqual = (left: unknown, right: unknown): boolean => {
+  if (left === right) return true;
+  if (left == null || right == null || typeof left !== typeof right) return false;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+    return left.every((value, index) => changeApprovalValuesEqual(value, right[index]));
+  }
+  if (typeof left === 'object' && typeof right === 'object') {
+    const leftRecord = left as Record<string, unknown>;
+    const rightRecord = right as Record<string, unknown>;
+    const keys = new Set([...Object.keys(leftRecord), ...Object.keys(rightRecord)]);
+    return [...keys].every(key => changeApprovalValuesEqual(leftRecord[key], rightRecord[key]));
+  }
+  return false;
+};
+
+const changeApprovalDiffRows = (revision: EntityChangeApprovalRevision) =>
+  Object.entries(revision.diff).flatMap(([key, change]) => {
+    const values = change as { before?: unknown; after?: unknown };
+    if (
+      key === 'data' &&
+      values.before != null &&
+      typeof values.before === 'object' &&
+      !Array.isArray(values.before) &&
+      values.after != null &&
+      typeof values.after === 'object' &&
+      !Array.isArray(values.after)
+    ) {
+      const before = values.before as Record<string, unknown>;
+      const after = values.after as Record<string, unknown>;
+      return [...new Set([...Object.keys(before), ...Object.keys(after)])]
+        .filter(field => !changeApprovalValuesEqual(before[field], after[field]))
+        .map(field => ({
+          field: `Entity field · ${humanizeChangeApprovalKey(field)}`,
+          before: before[field],
+          after: after[field]
+        }));
+    }
+    return [
+      {
+        field: changeApprovalFieldLabels[key] ?? humanizeChangeApprovalKey(key),
+        before: values.before,
+        after: values.after
+      }
+    ];
+  });
+
+const EntityChangeApprovalPanel = ({
+  revision,
+  workspaceId,
+  entityId,
+  canOverrideApproval
+}: {
+  revision: EntityChangeApprovalRevision;
+  workspaceId: string;
+  entityId: string;
+  canOverrideApproval: boolean;
+}) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const bypass = useBypassEntityApproval(workspaceId, entityId);
+  const [bypassDialogOpen, setBypassDialogOpen] = useState(false);
+  const [bypassReason, setBypassReason] = useState('');
+  const [requestChangesDialogOpen, setRequestChangesDialogOpen] = useState(false);
+  const [requestChangesReason, setRequestChangesReason] = useState('');
+  const { data: governanceTasks = [] } = useGovernanceTasks(workspaceId, {
+    caseKind: 'entity.change',
+    state: 'open'
+  });
+  const { data: caseEvents = [] } = useGovernanceCaseEvents(
+    workspaceId,
+    revision.status === 'changes_requested' ? revision.caseId : null
+  );
+  const decide = useDecideGovernanceAssignment(workspaceId);
+  const approvalTask = governanceTasks.find(
+    task =>
+      task.case.id === revision.caseId &&
+      task.assignment.action === 'approve' &&
+      task.requiresAction &&
+      (task.case.initiatorUserId !== user?.id || task.case.selfApprovalAllowed)
+  );
+  const status = changeApprovalStatusLabels[revision.status];
+  const rows = changeApprovalDiffRows(revision);
+  const requestedChangesReason = [...caseEvents]
+    .reverse()
+    .find(caseEvent => caseEvent.eventType === 'changes_requested')?.reason;
+  const invalidateProposalQueries = () =>
+    Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: entityChangeKeys.current(workspaceId, entityId)
+      }),
+      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) })
+    ]);
+  const approve = () => {
+    if (!approvalTask) return;
+    decide.mutate(
+      { assignmentId: approvalTask.assignment.id, decision: 'approve' },
+      { onSuccess: invalidateProposalQueries }
+    );
+  };
+  const executeRequestChanges = () => {
+    if (!approvalTask) return;
+    const reason = requestChangesReason.trim();
+    if (reason === '') return;
+    decide.mutate(
+      { assignmentId: approvalTask.assignment.id, decision: 'request_changes', reason },
+      {
+        onSuccess: async () => {
+          await invalidateProposalQueries();
+          setRequestChangesDialogOpen(false);
+          setRequestChangesReason('');
+        }
+      }
+    );
+  };
+  const executeBypass = () => {
+    const reason = bypassReason.trim();
+    if (reason === '') return;
+    bypass.mutate(
+      {
+        baseVersion: revision.baseVersion,
+        proposedState: revision.proposedState,
+        reason
+      },
+      {
+        onSuccess: () => {
+          setBypassDialogOpen(false);
+          setBypassReason('');
+        }
+      }
+    );
+  };
+  return (
+    <>
+      <section className={styles.proposalPanel} aria-labelledby="entity-change-proposal-title">
+        <div className={styles.proposalHeader}>
+          <div>
+            <div className={styles.proposalEyebrow}>Entity change proposal</div>
+            <h2 id="entity-change-proposal-title" className={styles.proposalTitle}>
+              Revision {revision.revisionNumber}
+            </h2>
+            <div className={styles.proposalMeta}>
+              Proposed by {revision.createdByName ?? 'Unknown user'} ·{' '}
+              {new Date(revision.createdAt).toLocaleString()}
+            </div>
+          </div>
+          <div className={styles.proposalActions}>
+            <span className={styles.proposalStatus}>{status}</span>
+            {approvalTask && (
+              <>
+                <Button variant="primary" onClick={approve} disabled={decide.isPending}>
+                  {decide.isPending ? 'Approving…' : 'Approve change'}
+                </Button>
+                <Button
+                  onClick={() => setRequestChangesDialogOpen(true)}
+                  disabled={decide.isPending}
+                >
+                  Request changes
+                </Button>
+              </>
+            )}
+            {canOverrideApproval && (
+              <Button
+                variant="danger"
+                onClick={() => setBypassDialogOpen(true)}
+                disabled={bypass.isPending}
+              >
+                Bypass approval
+              </Button>
+            )}
+          </div>
+        </div>
+        {revision.message && <p className={styles.proposalMessage}>{revision.message}</p>}
+        {revision.status === 'changes_requested' && requestedChangesReason && (
+          <p className={styles.proposalMessage}>
+            <strong>Reviewer requested changes:</strong> {requestedChangesReason}
+          </p>
+        )}
+        <div className={styles.proposalDiff}>
+          <div className={styles.proposalDiffHeader}>
+            <span>Field</span>
+            <span>Current value</span>
+            <span>Proposed value</span>
+          </div>
+          {rows.map(row => (
+            <div className={styles.proposalDiffRow} key={row.field}>
+              <strong className={styles.proposalField}>{row.field}</strong>
+              <span className={styles.proposalBefore}>{formatChangeApprovalValue(row.before)}</span>
+              <span className={styles.proposalAfter}>{formatChangeApprovalValue(row.after)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+      <Dialog
+        open={bypassDialogOpen}
+        onClose={() => setBypassDialogOpen(false)}
+        title="Bypass approval?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setBypassDialogOpen(false) },
+          {
+            label: bypass.isPending ? 'Applying…' : 'Bypass approval',
+            type: 'danger',
+            disabled: bypass.isPending || bypassReason.trim() === '',
+            onClick: executeBypass
+          }
+        ]}
+      >
+        <p>
+          This applies the proposed changes immediately and closes the approval case. Enter a reason
+          for the audited override.
+        </p>
+        <FormElement label="Reason" required>
+          <TextInput
+            value={bypassReason}
+            onChange={value => setBypassReason(value ?? '')}
+            placeholder="Explain why approval is being bypassed"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
+      <Dialog
+        open={requestChangesDialogOpen}
+        onClose={() => setRequestChangesDialogOpen(false)}
+        title="Request changes?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setRequestChangesDialogOpen(false) },
+          {
+            label: decide.isPending ? 'Submitting…' : 'Request changes',
+            type: 'default',
+            disabled: decide.isPending || requestChangesReason.trim() === '',
+            onClick: executeRequestChanges
+          }
+        ]}
+      >
+        <p>The proposer will be notified and can revise and resubmit this proposal.</p>
+        <FormElement label="Reason" required>
+          <TextInput
+            value={requestChangesReason}
+            onChange={value => setRequestChangesReason(value ?? '')}
+            placeholder="Explain what needs to change"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
+    </>
+  );
+};
 
 export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigate = useNavigate();
@@ -55,6 +386,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
+  const { canOverrideEntityApproval } = useWorkspacePermissions(workspaceId);
   const canViewAudit = permissions.canViewAudit;
   const contentFolder = folder ?? null;
 
@@ -86,6 +418,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   );
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
+  const { data: changeApproval, isLoading: changeApprovalLoading } = useEntityChangeApproval(
+    workspaceId,
+    entityId
+  );
+  const { data: deprecation } = useEntityDeprecation(workspaceId, entityId);
   const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(
     workspaceId,
     entityId
@@ -97,8 +434,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
   // Mutation hooks
   const cloneEntity = useCloneEntity(workspaceId);
-  const { data: allSnapshots = [] } = useEntitySnapshots(workspaceId, entityId, true);
-  const futureSnapshots = allSnapshots.filter(s => s.status === 'future_update');
+  const { data: entityVersions = [] } = useEntityVersions(workspaceId, entityId, true);
+  const { data: entityChangeCases = [] } = useChangeCasesByEntity(workspaceId, entityId, true);
   const createWatch = useCreateWatch(workspaceId);
   const deleteWatch = useDeleteWatch(workspaceId);
   const createPinnedEntity = useCreatePinnedEntity(workspaceId);
@@ -117,8 +454,14 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   }, [entity, schemas]);
   const isWatched = watchedEntities.some(item => item.entity_public_id === entityId);
   const isPinned = pinnedEntities.some(item => item.entity_public_id === entityId);
+  const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+  const [proposeDeprecationOpen, setProposeDeprecationOpen] = useState(false);
 
   const schema = schemaEntry?.schema ?? null;
+  const approvalRequired =
+    entity?._approvalPolicyOverride === 'required' ||
+    (entity?._approvalPolicyOverride !== 'disabled' &&
+      (schema?.entity_approval_policy ?? 'disabled') === 'required');
   const color = schemaEntry
     ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index)
     : 'var(--accent-fg)';
@@ -180,6 +523,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     saveConfirmSignificant,
     setSaveConfirmSignificant,
     executeSave,
+    executeBypass,
     confirmDelete,
     setConfirmDelete,
     handleDelete,
@@ -189,6 +533,12 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     entityId,
     entity,
     schema,
+    approvalRequired,
+    canBypassApproval:
+      approvalRequired &&
+      canOverrideEntityApproval &&
+      !changeApprovalLoading &&
+      changeApproval == null,
     onDeleted: navigateToEntities
   });
 
@@ -199,7 +549,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   };
 
   if (loading) {
-    return <div className={styles.loading}>Loading...</div>;
+    return <LoadingState text="Loading..." />;
   }
 
   if (!entity) {
@@ -216,8 +566,17 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     );
   }
 
-  const entityName = entity._name || entity._slug;
+  const entityName = entity._name ?? entity._slug;
+  const latestApprovalRevision = changeApproval?.revisions.at(-1);
   const menuItems: MenuItem[] = [
+    {
+      label: 'Collections…',
+      icon: <TbBookmark size={14} />,
+      onClick: () => setCollectionPickerOpen(true)
+    },
+    ...(entity.canEdit && !deprecation && schema?.deprecation_policy === 'required'
+      ? [{ label: 'Propose deprecation…', onClick: () => setProposeDeprecationOpen(true) }]
+      : []),
     ...(entity.canCreateChild
       ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }]
       : []),
@@ -243,10 +602,13 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             eyebrow={schema?.name ?? 'Entity'}
             title={entityName}
             chips={
-              entity._lifecycle ? (
+              entity._lifecycle || changeApproval || deprecation ? (
                 <>
-                  <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+                  {entity._lifecycle && (
+                    <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+                  )}
                   {entity._targetLifecycle &&
+                    entity._lifecycle &&
                     entity._targetLifecycle.id !== entity._lifecycle.id && (
                       <>
                         <span>→</span>
@@ -256,6 +618,22 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                         />
                       </>
                     )}
+                  {changeApproval && (
+                    <span>
+                      {changeApproval.revisions.at(-1)?.status === 'changes_requested'
+                        ? 'Changes requested'
+                        : 'Approval pending'}
+                    </span>
+                  )}
+                  {deprecation && (
+                    <span>
+                      {deprecation.overdue
+                        ? `Deprecation overdue (${deprecation.targetDate})`
+                        : deprecation.phase === 'scheduled'
+                          ? `Scheduled for deprecation (${deprecation.targetDate})`
+                          : 'Deprecation proposed'}
+                    </span>
+                  )}
                 </>
               ) : undefined
             }
@@ -286,7 +664,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                         : createPinnedEntity.mutate({
                             entityId: entity?._uid ?? entityId,
                             entityPublicId: entity?._publicId ?? entityId,
-                            entityName: entity._name || entity._slug,
+                            entityName: entity._name ?? entity._slug,
                             entitySlug: entity._slug,
                             schemaId: entity._schema.id
                           })
@@ -320,7 +698,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                     onClick={saveEdit}
                     disabled={isSaving || saveConfirmOpen}
                   >
-                    {isSaving ? 'Saving...' : 'Save'}
+                    {isSaving ? 'Saving...' : approvalRequired ? 'Request approval' : 'Save'}
                   </Button>
                 </>
               )
@@ -341,30 +719,25 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         </div>
       )}
 
-      {/* Tabs */}
-      {!contentFolder && (
-        <div className={styles.tabBar}>
-          <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
-            <Tabs.List overflow>
-              <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-              <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
-              <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
-              <Tabs.Trigger value="relations">
-                Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
-              </Tabs.Trigger>
-              <Tabs.Trigger value="dependents">
-                Dependents{incoming.length > 0 ? ` (${incoming.length})` : ''}
-              </Tabs.Trigger>
-              <Tabs.Trigger value="assessments">Assessments</Tabs.Trigger>
-              <Tabs.Trigger value="discussions">Discussions</Tabs.Trigger>
-              {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
-              <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
-            </Tabs.List>
-          </Tabs.Root>
-        </div>
+      {/* Content folder view */}
+      {!contentFolder && latestApprovalRevision && (
+        <EntityChangeApprovalPanel
+          revision={latestApprovalRevision}
+          workspaceId={workspaceId}
+          entityId={entityId}
+          canOverrideApproval={canOverrideEntityApproval}
+        />
       )}
 
-      {/* Content folder view */}
+      {!contentFolder && deprecation && (
+        <EntityDeprecationPanel
+          deprecation={deprecation}
+          workspaceId={workspaceId}
+          entityId={entityId}
+          teams={teams}
+        />
+      )}
+
       {contentFolder && (
         <EntityContentView
           workspaceSlug={workspaceSlug}
@@ -373,113 +746,99 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Overview */}
-      {!contentFolder && tab === 'overview' && (
-        <EntityOverviewTab
-          workspaceSlug={workspaceSlug}
-          entity={entity}
-          schema={schema}
-          editing={editing}
-          editState={editState}
-          setEditState={setEditState}
-          editLinks={editLinks}
-          setEditLinks={setEditLinks}
-          validationErrors={validationErrors}
-          setValidationErrors={setValidationErrors}
-          refLookup={refLookup}
-          referenceOptions={referenceOptions}
-          onEntityClick={navigateToEntity}
-          teams={teams}
-          lifecycleStates={lifecycleStates}
-          entityProjects={entityProjects}
-          futureSnapshots={futureSnapshots}
-          entityDiagramFiles={entityDiagramFiles}
-        />
-      )}
-
-      {/* Topology */}
-      {!contentFolder && tab === 'topology' && (
-        <EntityTopologyTab
-          entity={entity}
-          schema={schema}
-          color={color}
-          outgoing={outgoing}
-          incoming={incoming}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          onEntityClick={navigateToEntity}
-        />
-      )}
-
-      {/* Graph */}
-      {!contentFolder && tab === 'graph' && entity && (
-        <div className={styles.graphPanel}>
-          <EntityGraphView
-            workspaceId={workspaceId}
-            rootEntityId={entity._uid}
-            rootEntityName={entity._name || entity._slug}
-            rootEntitySchemaId={entity._schema.id}
-            schemas={schemas}
-            onEntityClick={navigateToEntity}
-          />
-        </div>
-      )}
-
-      {/* Relationships */}
-      {!contentFolder && tab === 'relations' && (
-        <EntityRelationsTab
-          outgoing={outgoing}
-          incoming={incoming}
-          schemas={schemas}
-          onEntityClick={navigateToEntity}
-        />
-      )}
-
-      {/* Dependents (impact analysis) */}
-      {!contentFolder && tab === 'dependents' && (
-        <EntityDependentsTab
-          workspaceId={workspaceId}
-          entityId={entityId}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          onEntityClick={navigateToEntity}
-        />
-      )}
-
-      {/* Assessments */}
-      {!contentFolder && tab === 'assessments' && (
-        <EntityAssessmentsTab workspaceId={workspaceId} entity={entity} schema={schema} />
-      )}
-
-      {/* Discussions */}
-      {!contentFolder && tab === 'discussions' && (
-        <div className={styles.tabPane}>
-          <DiscussionThread workspaceId={workspaceId} objectType="entity" objectId={entity._uid} />
-        </div>
-      )}
-
-      {/* Change history */}
-      {!contentFolder && tab === 'changes' && (
-        <EntityChangeHistoryTab
-          workspaceId={workspaceId}
-          entityId={entityId}
-          entity={entity}
-          schema={schema}
-          snapshots={allSnapshots}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
+      {/* Overview / Relationships / Change history */}
+      {!contentFolder && HOME_TAB_IDS.includes(tab) && (
+        <EntityOverviewSection
+          tab={tab}
+          setTab={setTab}
+          relationCount={relationCount}
           canViewAudit={canViewAudit}
+          overviewProps={{
+            workspaceSlug,
+            entity,
+            schema,
+            editing,
+            editState,
+            setEditState,
+            editLinks,
+            setEditLinks,
+            validationErrors,
+            setValidationErrors,
+            refLookup,
+            referenceOptions,
+            teams,
+            lifecycleStates,
+            entityProjects,
+            changeCases: entityChangeCases,
+            entityDiagramFiles
+          }}
+          relationsProps={{ outgoing, incoming, schemas }}
+          changeHistoryProps={{
+            workspaceId,
+            entityId,
+            entity,
+            schema,
+            versions: entityVersions,
+            lifecycleStates,
+            teams,
+            canViewAudit
+          }}
         />
       )}
 
-      {/* Timeline */}
-      {!contentFolder && tab === 'timeline' && (
-        <EntityTimelineTab
-          allSnapshots={allSnapshots}
-          entityProjects={entityProjects}
-          schema={schema}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
+      {/* Context: Topology / Graph / Dependents / Related content */}
+      {!contentFolder && CONTEXT_TAB_IDS.includes(tab) && (
+        <EntityContextSection
+          tab={tab}
+          setTab={setTab}
+          dependentsCount={incoming.length}
+          topologyProps={{
+            entity,
+            schema,
+            color,
+            outgoing,
+            incoming,
+            schemas,
+            lifecycleStates,
+            onEntityClick: navigateToEntity
+          }}
+          graphProps={{
+            workspaceId,
+            rootEntityId: entity._uid,
+            rootEntityName: entity._name ?? entity._slug,
+            rootEntitySchemaId: entity._schema.id,
+            schemas,
+            onEntityClick: navigateToEntity
+          }}
+          dependentsProps={{ workspaceId, entityId, schemas, lifecycleStates }}
+          relatedContentProps={{ workspaceId, entityId }}
+        />
+      )}
+
+      {/* Collaboration: Discussion */}
+      {!contentFolder && COLLABORATION_TAB_IDS.includes(tab) && (
+        <EntityCollaborationSection
+          tab={tab}
+          setTab={setTab}
+          discussionProps={{ workspaceId, objectType: 'entity', objectId: entity._uid }}
+        />
+      )}
+
+      {/* Planning & review: Assessments / Timeline */}
+      {!contentFolder && PLANNING_TAB_IDS.includes(tab) && (
+        <EntityPlanningReviewSection
+          tab={tab}
+          setTab={setTab}
+          assessmentsProps={{ workspaceId, entity, schema }}
+          timelineProps={{
+            workspaceId,
+            versions: entityVersions,
+            changeCases: entityChangeCases,
+            entityProjects,
+            schema,
+            lifecycleStates,
+            teams
+          }}
         />
       )}
 
@@ -490,22 +849,38 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         buttons={[
           { label: 'Cancel', type: 'cancel', onClick: () => setSaveConfirmOpen(false) },
           {
-            label: isSaving ? 'Saving...' : 'Save',
+            label: isSaving ? 'Saving...' : approvalRequired ? 'Request approval' : 'Save',
             type: 'default',
             disabled: isSaving,
             onClick: executeSave
-          }
+          },
+          ...(approvalRequired &&
+          canOverrideEntityApproval &&
+          !changeApprovalLoading &&
+          changeApproval == null
+            ? [
+                {
+                  label: isSaving ? 'Bypassing...' : 'Bypass approval',
+                  type: 'danger' as const,
+                  disabled: isSaving || saveConfirmMessage.trim() === '',
+                  onClick: executeBypass
+                }
+              ]
+            : [])
         ]}
       >
-        <FormElement label="Note (optional)">
+        <FormElement
+          label={approvalRequired && canOverrideEntityApproval ? 'Note / bypass reason' : 'Note'}
+          required={approvalRequired && canOverrideEntityApproval}
+        >
           <TextInput
             value={saveConfirmMessage}
             onChange={v => setSaveConfirmMessage(v ?? '')}
-            placeholder="Describe what changed (optional)"
+            placeholder="Describe what changed"
             style={{ width: '100%' }}
           />
         </FormElement>
-        <FormElement label="">
+        <FormElement label="" required>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <input
               type="checkbox"
@@ -529,6 +904,22 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         confirmLabel="Delete entity"
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(false)}
+      />
+      {collectionPickerOpen && (
+        <CollectionPickerDialog
+          open={true}
+          workspaceId={workspaceId}
+          entityId={entity._uid}
+          entityName={entityName}
+          onClose={() => setCollectionPickerOpen(false)}
+        />
+      )}
+      <ProposeEntityDeprecationDialog
+        open={proposeDeprecationOpen}
+        onClose={() => setProposeDeprecationOpen(false)}
+        workspaceId={workspaceId}
+        entityId={entityId}
+        baseVersion={entity._version ?? 1}
       />
     </div>
   );

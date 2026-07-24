@@ -2,7 +2,10 @@ import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaCon
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
-import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
+import {
+  ASSESSMENT_FIELD_PREFIX,
+  resolveAssessmentValue
+} from '@arch-register/api-types/assessmentFilter';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
@@ -15,7 +18,10 @@ export type FieldOption = { id: string; label: string };
 
 export type JoinedAssessmentContext = { assessment: Assessment; enums: WorkspaceEnum[] };
 
-export const RATING_VALUES: FieldOption[] = ['1', '2', '3', '4', '5'].map(v => ({ id: v, label: v }));
+export const RATING_VALUES: FieldOption[] = ['1', '2', '3', '4', '5'].map(v => ({
+  id: v,
+  label: v
+}));
 
 /**
  * Fields are deduped by id across the given schemas (first occurrence wins), the same way
@@ -151,7 +157,10 @@ export const getNumericValue = (entity: EntityRecord, fieldId: string): number |
  * view-specific pseudo-fields (e.g. TimelineView's "Target Lifecycle Date") that aren't a
  * declared schema field.
  */
-export const getDateFields = (schemas: EntitySchema[], extraFields: FieldOption[] = []): FieldOption[] => {
+export const getDateFields = (
+  schemas: EntitySchema[],
+  extraFields: FieldOption[] = []
+): FieldOption[] => {
   const seen = new Set<string>();
   const dateFields: FieldOption[] = [];
   schemas.forEach(schema => {

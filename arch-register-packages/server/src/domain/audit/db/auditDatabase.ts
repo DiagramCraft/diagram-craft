@@ -30,7 +30,12 @@ export type AuditEntityType =
   | 'project'
   | 'content_node'
   | 'assessment'
-  | 'assessment_response';
+  | 'assessment_response'
+  | 'project_milestone'
+  // A note recorded by an automation rule's `create_audit_note` action. Written directly via
+  // `db.audit.createAuditLog`, never through `writeAudit`, so it does not re-trigger webhook
+  // delivery, watcher notifications, or another round of automation rule evaluation.
+  | 'automation_note';
 
 export const AUDIT_LOG_SELECT_SQL = `
   SELECT audit_log.*, users.display_name as user_display_name

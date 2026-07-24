@@ -1,6 +1,13 @@
-import type { AuthDatabase, UserDbCreate, GlobalRole, UserDbUpdate } from './authDatabase';
+import type {
+  ApiTokenDbCreate,
+  AuthDatabase,
+  GlobalRole,
+  UserDbCreate,
+  UserDbUpdate
+} from './authDatabase';
 import { authMappers } from './authDatabase';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
+import { DatabaseError } from '../../../db/database';
 
 export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
@@ -46,6 +53,10 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
   }
 
   async updateUser(id: string, input: UserDbUpdate) {
+    const existing = await this.getUser(id);
+    if (existing?.is_system_actor) {
+      throw new DatabaseError('check', 'System users cannot be modified', undefined, { id });
+    }
     const sets: string[] = [];
     const values: unknown[] = [];
 
@@ -82,8 +93,159 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     this.run('UPDATE users SET last_login_at = ? WHERE id = ?', [timestamp.toISOString(), id]);
   }
 
-  async listUsers() {
-    return this.all('SELECT * FROM users ORDER BY display_name', [], authMappers.user);
+  async listUsers(options?: { q?: string; limit?: number }) {
+    const query = options?.q?.trim();
+    const limit =
+      options?.limit == null
+        ? query
+          ? 50
+          : undefined
+        : Math.min(Math.max(Math.trunc(options.limit), 1), 100);
+    const pattern = query ? `%${query.replace(/[\\%_]/g, '\\$&')}%` : undefined;
+    const clauses = ['1 = 1'];
+    const params: unknown[] = [];
+    if (pattern != null) {
+      clauses.push(
+        "(LOWER(display_name) LIKE LOWER(?) ESCAPE '\\' OR LOWER(email) LIKE LOWER(?) ESCAPE '\\')"
+      );
+      params.push(pattern, pattern);
+    }
+    const limitClause = limit == null ? '' : ` LIMIT ${limit}`;
+    return this.all(
+      `SELECT * FROM users WHERE ${clauses.join(' AND ')} ORDER BY display_name, id${limitClause}`,
+      params,
+      authMappers.user
+    );
+  }
+
+  async createApiToken(input: ApiTokenDbCreate) {
+    this.run(
+      'INSERT INTO api_token (id, workspace, name, token_hash, capabilities, created_by, created_at, last_used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.name,
+        input.token_hash,
+        JSON.stringify(input.capabilities),
+        input.created_by,
+        input.created_at.toISOString(),
+        input.last_used_at?.toISOString() ?? null,
+        input.expires_at?.toISOString() ?? null
+      ]
+    );
+    return (await this.get(
+      'SELECT * FROM api_token WHERE id = ?',
+      [input.id],
+      authMappers.apiToken
+    ))!;
+  }
+
+  async listApiTokens(workspace: string, createdBy?: string) {
+    if (createdBy != null) {
+      return this.all(
+        'SELECT * FROM api_token WHERE workspace = ? AND created_by = ? ORDER BY created_at DESC, id DESC',
+        [workspace, createdBy],
+        authMappers.apiToken
+      );
+    }
+    return this.all(
+      'SELECT * FROM api_token WHERE workspace = ? ORDER BY created_at DESC, id DESC',
+      [workspace],
+      authMappers.apiToken
+    );
+  }
+
+  async countApiTokens(workspace: string, createdBy: string) {
+    const row = this.get<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM api_token WHERE workspace = ? AND created_by = ?',
+      [workspace, createdBy]
+    );
+    return Number(row?.count ?? 0);
+  }
+
+  async listApiTokensByCreator(createdBy: string) {
+    return this.all(
+      'SELECT * FROM api_token WHERE created_by = ? ORDER BY workspace, created_at DESC, id DESC',
+      [createdBy],
+      authMappers.apiToken
+    );
+  }
+
+  async getApiTokenByHash(tokenHash: string) {
+    return this.get(
+      'SELECT * FROM api_token WHERE token_hash = ?',
+      [tokenHash],
+      authMappers.apiToken
+    );
+  }
+
+  async deleteApiToken(workspace: string, id: string, createdBy?: string) {
+    if (createdBy != null) {
+      const existing = this.get(
+        'SELECT * FROM api_token WHERE workspace = ? AND id = ? AND created_by = ?',
+        [workspace, id, createdBy],
+        authMappers.apiToken
+      );
+      if (!existing) return null;
+      this.run('DELETE FROM api_token WHERE workspace = ? AND id = ? AND created_by = ?', [
+        workspace,
+        id,
+        createdBy
+      ]);
+      return existing;
+    }
+
+    const existing = this.get(
+      'SELECT * FROM api_token WHERE workspace = ? AND id = ?',
+      [workspace, id],
+      authMappers.apiToken
+    );
+    if (!existing) return null;
+    this.run('DELETE FROM api_token WHERE workspace = ? AND id = ?', [workspace, id]);
+    return existing;
+  }
+
+  async deleteApiTokenByCreator(createdBy: string, id: string) {
+    const existing = this.get(
+      'SELECT * FROM api_token WHERE created_by = ? AND id = ?',
+      [createdBy, id],
+      authMappers.apiToken
+    );
+    if (!existing) return null;
+    this.run('DELETE FROM api_token WHERE created_by = ? AND id = ?', [createdBy, id]);
+    return existing;
+  }
+
+  async updateApiTokenLastUsed(id: string, timestamp: Date) {
+    this.run('UPDATE api_token SET last_used_at = ? WHERE id = ?', [timestamp.toISOString(), id]);
+  }
+
+  async createApiTokenAudit(input: Parameters<AuthDatabase['createApiTokenAudit']>[0]) {
+    this.run(
+      'INSERT INTO api_token_audit (id, workspace, token_id, user_id, event, created_at, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.token_id,
+        input.user_id,
+        input.event,
+        input.created_at.toISOString(),
+        JSON.stringify(input.metadata)
+      ]
+    );
+    return (await this.get(
+      'SELECT * FROM api_token_audit WHERE id = ?',
+      [input.id],
+      authMappers.apiTokenAudit
+    ))!;
+  }
+
+  async listApiTokenAudit(workspace: string) {
+    return this.all(
+      'SELECT * FROM api_token_audit WHERE workspace = ? ORDER BY created_at DESC, id DESC',
+      [workspace],
+      authMappers.apiTokenAudit
+    );
   }
 
   async listGlobalRoleAssignments(userId?: string) {

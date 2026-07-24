@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import {
-  loadUMLStencils,
-  registerUMLNodes
-} from '@diagram-craft/stencil-uml/stencil-uml-loader';
+import { loadUMLStencils, registerUMLNodes } from '@diagram-craft/stencil-uml/stencil-uml-loader';
 import { UMLDurationConstraintNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLDurationConstraint.nodeType';
 
 describe('UMLDurationConstraint', () => {
@@ -36,16 +33,18 @@ describe('UMLDurationConstraint', () => {
       bounds: { x: 0, y: 0, w: 24, h: 64, r: 0 }
     });
 
-    const props = new UMLDurationConstraintNodeDefinition().getCustomPropertyDefinitions(node).entries;
+    const props = new UMLDurationConstraintNodeDefinition().getCustomPropertyDefinitions(
+      node
+    ).entries;
 
     expect(props.map(p => ('label' in p ? p.label : undefined)).filter(Boolean)).toEqual([
       'Alignment',
       'Top Line',
       'Bottom Line'
     ]);
-    expect(
-      props.find(p => 'label' in p && p.label === 'Alignment' && 'type' in p)?.type
-    ).toBe('select');
+    expect(props.find(p => 'label' in p && p.label === 'Alignment' && 'type' in p)?.type).toBe(
+      'select'
+    );
     expect(node.renderProps.custom.umlDurationConstraint.alignment).toBe('center');
     expect(node.renderProps.custom.umlDurationConstraint.topLine).toBe(false);
     expect(node.renderProps.custom.umlDurationConstraint.bottomLine).toBe(false);

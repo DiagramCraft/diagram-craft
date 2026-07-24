@@ -18,7 +18,7 @@ beforeEach(() => {
 
 describe('setAuthCookies', () => {
   it('sets access and refresh tokens with correct names and values', () => {
-    setAuthCookies(mockEvent, 'access-tok', 'refresh-tok', 900);
+    setAuthCookies(mockEvent, 'access-tok', 'refresh-tok', 900, 604800);
 
     expect(mockSetCookie).toHaveBeenCalledTimes(2);
     expect(mockSetCookie).toHaveBeenCalledWith(
@@ -36,7 +36,7 @@ describe('setAuthCookies', () => {
   });
 
   it('sets access token options correctly', () => {
-    setAuthCookies(mockEvent, 'access-tok', 'refresh-tok', 900);
+    setAuthCookies(mockEvent, 'access-tok', 'refresh-tok', 900, 604800);
 
     const accessCall = mockSetCookie.mock.calls[0];
     expect(accessCall).toBeDefined();
@@ -50,7 +50,7 @@ describe('setAuthCookies', () => {
   });
 
   it('sets refresh token with 7-day maxAge and scoped path', () => {
-    setAuthCookies(mockEvent, 'access-tok', 'refresh-tok', 900);
+    setAuthCookies(mockEvent, 'access-tok', 'refresh-tok', 900, 604800);
 
     const refreshCall = mockSetCookie.mock.calls[1];
     expect(refreshCall).toBeDefined();
@@ -65,7 +65,7 @@ describe('setAuthCookies', () => {
 
   it('sets secure=false outside production', () => {
     process.env['NODE_ENV'] = 'development';
-    setAuthCookies(mockEvent, 'a', 'r', 60);
+    setAuthCookies(mockEvent, 'a', 'r', 60, 604800);
 
     for (const call of mockSetCookie.mock.calls) {
       expect(call[3]).toMatchObject({ secure: false });
@@ -74,7 +74,7 @@ describe('setAuthCookies', () => {
 
   it('sets secure=true in production', () => {
     process.env['NODE_ENV'] = 'production';
-    setAuthCookies(mockEvent, 'a', 'r', 60);
+    setAuthCookies(mockEvent, 'a', 'r', 60, 604800);
 
     for (const call of mockSetCookie.mock.calls) {
       expect(call[3]).toMatchObject({ secure: true });

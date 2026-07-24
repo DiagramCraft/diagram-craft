@@ -1,4 +1,4 @@
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
@@ -97,7 +97,7 @@ export const storageScope = (
 ) => node.project_id ?? node.entity_id ?? ws;
 
 export const requireNonProjectContentAccess = (
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   action: 'read' | 'edit'
 ) =>
   requireWorkspaceCapability(
@@ -105,3 +105,38 @@ export const requireNonProjectContentAccess = (
     action === 'read' ? 'content.view' : 'content.edit',
     `You do not have permission to ${action === 'read' ? 'view' : 'modify'} workspace content`
   );
+
+export const assertContentPathWritable = (
+  nodes: readonly Pick<ContentNodeDbResult, 'path' | 'mount_id'>[],
+  path: string
+) => {
+  const mount = nodes.find(
+    node => node.mount_id && (path === node.path || path.startsWith(`${node.path}/`))
+  );
+  httpAssert.true(!mount, {
+    status: 403,
+    message: 'Mounted external content is read-only'
+  });
+};
+
+export const assertContentSubtreeWritable = (
+  nodes: readonly Pick<ContentNodeDbResult, 'path' | 'mount_id'>[],
+  path: string
+) => {
+  const mount = nodes.find(
+    node =>
+      node.mount_id &&
+      (path === node.path || path.startsWith(`${node.path}/`) || node.path.startsWith(`${path}/`))
+  );
+  httpAssert.true(!mount, {
+    status: 403,
+    message: 'Mounted external content is read-only'
+  });
+};
+
+export const assertContentNodeWritable = (node: Pick<ContentNodeDbResult, 'mount_id'>) => {
+  httpAssert.true(!node.mount_id, {
+    status: 403,
+    message: 'Mounted external content is read-only'
+  });
+};

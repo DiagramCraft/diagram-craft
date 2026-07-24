@@ -4,7 +4,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../../components/BaseNodeComponent';
 import { ShapeBuilder } from '../../shape/ShapeBuilder';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { getTableColumnsSorted, setBoundsAndTransformChildren } from './tableUtils';

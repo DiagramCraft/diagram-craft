@@ -31,9 +31,7 @@ describe('imageEmbedUtils', () => {
 
   it('filters to binary image attachments', () => {
     expect(isEmbeddableImageAttachment(makeFile())).toBe(true);
-    expect(
-      isEmbeddableImageAttachment(makeFile({ mime_type: 'application/pdf' }))
-    ).toBe(false);
+    expect(isEmbeddableImageAttachment(makeFile({ mime_type: 'application/pdf' }))).toBe(false);
     expect(isEmbeddableImageAttachment(makeFile({ type: 'diagram' }))).toBe(false);
   });
 
@@ -44,7 +42,9 @@ describe('imageEmbedUtils', () => {
         projectId: 'project-42',
         attachmentPath: 'docs/page/__attachments/image 1.png'
       })
-    ).toBe('/api/demo/projects/project-42/files/download?path=docs%2Fpage%2F__attachments%2Fimage%201.png');
+    ).toBe(
+      '/api/demo/projects/project-42/files/download?path=docs%2Fpage%2F__attachments%2Fimage%201.png'
+    );
   });
 
   it('builds entity and workspace scoped attachment download urls', () => {
@@ -54,7 +54,9 @@ describe('imageEmbedUtils', () => {
         entityId: 'entity-9',
         attachmentPath: 'docs/page/__attachments/image.png'
       })
-    ).toBe('/api/demo/entities/entity-9/content/files/download?path=docs%2Fpage%2F__attachments%2Fimage.png');
+    ).toBe(
+      '/api/demo/entities/entity-9/content/files/download?path=docs%2Fpage%2F__attachments%2Fimage.png'
+    );
 
     expect(
       getMarkdownAttachmentDownloadUrl({

@@ -1,0 +1,22 @@
+{
+  "name": "@arch-register/mcp-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP gateway for Arch Register workspaces",
+  "scripts": {
+    "stdio": "node --import tsx src/cli.ts",
+    "http": "node --import tsx src/cli.ts --http",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@arch-register/api-types": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "tsx": "^4.22.4",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "vitest": "^4.1.9"
+  }
+}

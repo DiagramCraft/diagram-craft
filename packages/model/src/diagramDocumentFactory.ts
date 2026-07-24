@@ -2,7 +2,7 @@ import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
 import { SerializedDiagram } from './serialization/serializedTypes';
 import { newid } from '@diagram-craft/utils/id';
-import { Registry } from './elementDefinitionRegistry';
+import { Registry } from './registry';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
 import { CRDT, type CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';

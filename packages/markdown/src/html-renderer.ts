@@ -155,14 +155,26 @@ export class HTMLRenderer {
 
       case 'table': {
         const rows = astNode.children ?? [];
-        const headerRows = rows.filter(r => r.type === 'table-row' && (r as { header?: boolean }).header);
-        const bodyRows = rows.filter(r => r.type === 'table-row' && !(r as { header?: boolean }).header);
+        const headerRows = rows.filter(
+          r => r.type === 'table-row' && (r as { header?: boolean }).header
+        );
+        const bodyRows = rows.filter(
+          r => r.type === 'table-row' && !(r as { header?: boolean }).header
+        );
         let html = '';
         if (headerRows.length > 0) {
-          html += this.makeTag('thead', headerRows.map(r => this.makeTag('tr', this.processNodeArray(r.children ?? []))).join(''));
+          html += this.makeTag(
+            'thead',
+            headerRows
+              .map(r => this.makeTag('tr', this.processNodeArray(r.children ?? [])))
+              .join('')
+          );
         }
         if (bodyRows.length > 0) {
-          html += this.makeTag('tbody', bodyRows.map(r => this.makeTag('tr', this.processNodeArray(r.children ?? []))).join(''));
+          html += this.makeTag(
+            'tbody',
+            bodyRows.map(r => this.makeTag('tr', this.processNodeArray(r.children ?? []))).join('')
+          );
         }
         return this.makeTag('table', html);
       }

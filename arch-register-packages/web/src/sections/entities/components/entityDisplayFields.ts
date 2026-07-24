@@ -1,9 +1,13 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
+import {
+  ASSESSMENT_FIELD_PREFIX,
+  resolveAssessmentValue
+} from '@arch-register/api-types/assessmentFilter';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { formatDate } from '../../../utils/dateFormat';
 
@@ -11,8 +15,8 @@ export const DISPLAY_FIELD_VIEWS = new Set<BrowserView>([
   'table',
   'cards',
   'tree',
-  'hierarchy',
-  'explore'
+  'explore',
+  'map'
 ]);
 
 export type EntityDisplayField = {
@@ -25,6 +29,8 @@ export type EntityDisplayField = {
     options?: { value: string; label: string }[];
   };
 };
+
+export const PROJECTION_FIELD_PREFIX = '_projection:';
 
 const STANDARD_FIELDS: EntityDisplayField[] = [
   { id: '_description', label: 'Description', group: 'General' },
@@ -39,14 +45,14 @@ const STANDARD_FIELDS: EntityDisplayField[] = [
 ];
 
 export const DEFAULT_DISPLAY_FIELDS: Record<
-  'table' | 'cards' | 'tree' | 'hierarchy' | 'explore',
+  'table' | 'cards' | 'tree' | 'explore' | 'map',
   string[]
 > = {
   table: ['_description', '_owner', '_lifecycle', '_projectRole', '_namespace', '_completeness'],
   cards: ['_lifecycle', '_description', '_owner', '_projectRole', '_projectStatus'],
   tree: ['_description', '_owner', '_lifecycle', '_namespace'],
-  hierarchy: ['_description', '_lifecycle', '_owner', '_tags'],
-  explore: ['_slug', '_owner']
+  explore: ['_slug', '_owner'],
+  map: ['_description', '_lifecycle', '_owner', '_tags']
 };
 
 const SCALAR_TYPES = new Set(['text', 'longtext', 'boolean', 'date', 'number', 'select']);
@@ -54,7 +60,8 @@ const SCALAR_TYPES = new Set(['text', 'longtext', 'boolean', 'date', 'number', '
 export const buildEntityDisplayFields = (
   schemas: EntitySchema[],
   projectContext: boolean,
-  joined?: { assessment: Assessment; enums: WorkspaceEnum[] } | null
+  joined?: { assessment: Assessment; enums: WorkspaceEnum[] } | null,
+  projections: ProjectionField[] = []
 ): EntityDisplayField[] => {
   const fields = STANDARD_FIELDS.filter(field => projectContext || field.group !== 'Project');
   const seen = new Set(fields.map(field => field.id));
@@ -73,14 +80,28 @@ export const buildEntityDisplayFields = (
       seen.add(id);
       const options =
         field.type === 'enum' ? joined.enums.find(e => e.id === field.enumId)?.options : undefined;
-      fields.push({ id, label: field.label, group, assessmentField: { type: field.type, options } });
+      fields.push({
+        id,
+        label: field.label,
+        group,
+        assessmentField: { type: field.type, options }
+      });
     }
+  }
+  for (const projection of projections) {
+    const alias =
+      projection.alias ??
+      [...projection.path.map(step => step.fieldId), projection.fieldId].join('.');
+    const id = `${PROJECTION_FIELD_PREFIX}${alias}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    fields.push({ id, label: alias, group: 'Query projections' });
   }
   return fields;
 };
 
 export const getDisplayFieldIds = (
-  view: 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore',
+  view: 'table' | 'cards' | 'tree' | 'explore' | 'map',
   config: unknown
 ): string[] => {
   if (
@@ -106,7 +127,10 @@ export const withDisplayFieldIds = (config: unknown, fieldIds: string[]) => ({
 
 export const withoutDisplayFieldIds = (config: unknown): unknown => {
   if (config == null || typeof config !== 'object') return null;
-  const { fieldIds: _fieldIds, ...rest } = config as { fieldIds?: unknown } & Record<string, unknown>;
+  const { fieldIds: _fieldIds, ...rest } = config as { fieldIds?: unknown } & Record<
+    string,
+    unknown
+  >;
   return Object.keys(rest).length === 0 ? null : rest;
 };
 
@@ -130,21 +154,28 @@ export const formatEntityDisplayValue = (
     const value = resolveAssessmentValue(entity as BrowserEntityRecord, field.id);
     if (value == null) return null;
     if (field.assessmentField.type === 'enum') {
-      return field.assessmentField.options?.find(o => o.value === String(value))?.label ?? String(value);
+      return (
+        field.assessmentField.options?.find(o => o.value === String(value))?.label ?? String(value)
+      );
     }
     return String(value);
   }
-  if (field.id === '_description') return entity._description || null;
+  if (field.id === '_description') return entity._description ?? null;
   if (field.id === '_owner') return entity._owner?.name ?? null;
   if (field.id === '_lifecycle') return entity._lifecycle?.name ?? null;
-  if (field.id === '_slug') return entity._slug || null;
-  if (field.id === '_namespace') return entity._namespace || null;
+  if (field.id === '_slug') return entity._slug ?? null;
+  if (field.id === '_namespace') return entity._namespace ?? null;
   if (field.id === '_tags') return entity._tags.length ? entity._tags.join(', ') : null;
   if (field.id === '_completeness')
     return entity._completeness == null ? null : `${entity._completeness}%`;
   if (field.id === '_projectRole') return entity._projectLink?.entityType?.name ?? null;
   if (field.id === '_projectStatus')
     return entity._projectLink?.linked ? (entity._projectLink.isDone ? 'Done' : 'Open') : null;
+  if (field.id.startsWith(PROJECTION_FIELD_PREFIX)) {
+    const value = entity._projections?.[field.id.slice(PROJECTION_FIELD_PREFIX.length)];
+    if (value == null || value === '') return null;
+    return Array.isArray(value) ? value.map(item => String(item)).join(', ') : String(value);
+  }
   const value = entity[field.id];
   if (value == null || value === '') return null;
   if (field.schemaField?.type === 'boolean') return value ? 'Yes' : 'No';

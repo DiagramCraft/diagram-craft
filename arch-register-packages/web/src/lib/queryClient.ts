@@ -11,7 +11,12 @@ export const createQueryClient = () =>
         gcTime: 10 * 60 * 1000,
         // Retry failed requests 3 times with exponential backoff
         retry: (failureCount, error) => {
-          if (error instanceof ApiError && error.status === 401) {
+          if (
+            error instanceof ApiError &&
+            error.status !== undefined &&
+            error.status >= 400 &&
+            error.status < 500
+          ) {
             return false;
           }
           return failureCount < 3;

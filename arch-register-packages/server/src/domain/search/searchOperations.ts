@@ -1,6 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, canAccessProject } from '../auth/authorization';
+import { buildApiEntityAuthCtx as buildApiAuthCtx, canAccessProject } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { SEARCH_DEFAULTS } from '../../constants';
 import { PermissionChecker } from '@arch-register/permissions';
@@ -61,7 +61,8 @@ const collectMatchedMetadata = (entity: EntityDbResult, query: string) => {
 const collectMatchedFields = (data: EntityDbResult['data'], query: string) =>
   Object.entries(data)
     .filter(([, value]) => includesQuery(value, query))
-    .map(([key]) => key);
+    .map(([key]) => key)
+    .sort();
 
 const collectFieldMatches = (fields: SchemaField[], query: string) =>
   fields
@@ -114,9 +115,10 @@ export const searchWorkspace = async (
       : Promise.resolve([])
   ]);
 
-  const visibleEntities = authCtx
-    ? entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'))
-    : entities;
+  const visibleEntities =
+    authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
+      ? entities
+      : entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
   const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
 
   const projectsResults = types.includes('projects')
@@ -139,6 +141,7 @@ export const searchWorkspace = async (
     entityPublicId: string | null;
     entityName: string | null;
     fileId: string;
+    type: 'diagram' | 'folder' | 'markdown' | 'file';
     path: string;
     name: string;
     comment_count: number;
@@ -179,6 +182,7 @@ export const searchWorkspace = async (
           entityPublicId: null,
           entityName: null,
           fileId: file.id,
+          type: file.type,
           path: file.path,
           name: file.name,
           comment_count: file.comment_count,
@@ -213,6 +217,7 @@ export const searchWorkspace = async (
           entityPublicId: entity.public_id ?? null,
           entityName: entity.name,
           fileId: file.id,
+          type: file.type,
           path: file.path,
           name: file.name,
           comment_count: file.comment_count,
@@ -246,6 +251,7 @@ export const searchWorkspace = async (
         entityPublicId: null,
         entityName: null,
         fileId: file.id,
+        type: file.type,
         path: file.path,
         name: file.name,
         comment_count: file.comment_count,

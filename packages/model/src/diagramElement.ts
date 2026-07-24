@@ -26,6 +26,7 @@ import {
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
+import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
@@ -45,6 +46,7 @@ export type DiagramElementCRDT = {
   metadata: FlatCRDTMap;
   children: CRDTMap<MappedCRDTOrderedMapMapType<DiagramElementCRDT>>;
   parentId: string;
+  locked: boolean;
 };
 
 type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
@@ -85,7 +87,9 @@ export interface DiagramElement extends Detachable<DiagramElement | Layer> {
 
   readonly crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
-  isLocked(): boolean;
+  readonly locked: boolean;
+  isEffectivelyLocked(): boolean;
+  setLocked(value: boolean, uow: UnitOfWork): void;
   isHidden(): boolean;
 
   _setLayer(layer: RegularLayer | ModificationLayer, diagram: Diagram): void;
@@ -190,6 +194,7 @@ export abstract class AbstractDiagramElement
     'parentId',
     DiagramElement | undefined
   >;
+  protected readonly _locked: CRDTProp<DiagramElementCRDT, 'locked'>;
 
   protected constructor(
     public readonly type: ElementType,
@@ -250,6 +255,14 @@ export abstract class AbstractDiagramElement
     );
     this._parent.init(undefined);
 
+    this._locked = new CRDTProp(this._crdt, 'locked', {
+      onRemoteChange: () => {
+        const uow = getRemoteUnitOfWork(this.diagram);
+        uow.updateElement(this);
+      },
+      initialValue: false
+    });
+
     const metadataMap = WatchableValue.from(
       ([parent]) => parent.get().get('metadata', () => layer.crdt.factory.makeMap())!,
       [this._crdt] as const
@@ -264,6 +277,7 @@ export abstract class AbstractDiagramElement
     this._releasables.add(this._children);
     this._releasables.add(childrenMap);
     this._releasables.add(this._parent);
+    this._releasables.add(this._locked);
     this._releasables.add(this._metadata);
     this._releasables.add(metadataMap);
   }
@@ -308,8 +322,18 @@ export abstract class AbstractDiagramElement
 
   /* Flags *************************************************************************************************** */
 
-  isLocked() {
-    return this.layer.isLocked();
+  get locked() {
+    return this._locked.getNonNull();
+  }
+
+  isEffectivelyLocked() {
+    return this.locked || this.layer.isEffectivelyLocked();
+  }
+
+  setLocked(value: boolean, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this._locked.set(value);
+    });
   }
 
   isHidden() {

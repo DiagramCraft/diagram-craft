@@ -24,6 +24,13 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         name: 'renamed schema',
         description: 'updated',
         fields: [],
+        templates: [
+          {
+            id: 'vendor',
+            name: 'Vendor',
+            values: { tags: ['third-party'], fields: {} }
+          }
+        ],
         color: '#ff0000',
         icon: null,
         default_owner: null,
@@ -31,6 +38,13 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         updated_at: new Date()
       });
       expect(updated!.name).toBe('renamed schema');
+      expect(updated!.templates).toEqual([
+        {
+          id: 'vendor',
+          name: 'Vendor',
+          values: { tags: ['third-party'], fields: {} }
+        }
+      ]);
 
       const byPrefix = await db.catalog.getSchemaByKeyPrefix(fetched!.key_prefix);
       expect(byPrefix!.id).toBe(id);
@@ -61,6 +75,139 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
           updated_at: new Date()
         })
       ).rejects.toMatchObject({ code: 'unique' } satisfies Partial<DatabaseError>);
+    });
+  });
+
+  describe('schema versioning and field migrations', () => {
+    it('bumps version on update and leaves it unchanged when omitted', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const id = await createFixtureSchema(db, workspace);
+      const created = (await db.catalog.getSchema(workspace, id))!;
+      expect(created.version).toBe(1);
+
+      const updatedNoVersion = await db.catalog.updateSchema(workspace, id, {
+        name: created.name,
+        description: created.description,
+        fields: [],
+        templates: [],
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: created.key_prefix,
+        updated_at: new Date()
+      });
+      expect(updatedNoVersion!.version).toBe(1);
+
+      const updatedWithVersion = await db.catalog.updateSchema(workspace, id, {
+        name: created.name,
+        description: created.description,
+        fields: [],
+        templates: [],
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: created.key_prefix,
+        version: 2,
+        updated_at: new Date()
+      });
+      expect(updatedWithVersion!.version).toBe(2);
+    });
+
+    it('creates and lists schema versions newest first', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const id = await createFixtureSchema(db, workspace);
+      const user = await createFixtureUser(db);
+
+      await db.catalog.createSchemaVersion({
+        id: randomUUID(),
+        workspace,
+        schema_id: id,
+        version: 1,
+        name: 'Component',
+        description: '',
+        fields: [],
+        templates: [],
+        color: null,
+        icon: null,
+        change_summary: { added: ['name'] },
+        created_by: user.id,
+        created_at: new Date('2026-01-01T00:00:00.000Z')
+      });
+      await db.catalog.createSchemaVersion({
+        id: randomUUID(),
+        workspace,
+        schema_id: id,
+        version: 2,
+        name: 'Component',
+        description: '',
+        fields: [{ id: 'owner', name: 'Owner', type: 'text' }],
+        templates: [],
+        color: null,
+        icon: null,
+        change_summary: { added: ['owner'] },
+        created_by: user.id,
+        created_at: new Date('2026-01-02T00:00:00.000Z')
+      });
+
+      const versions = await db.catalog.listSchemaVersions(workspace, id);
+      expect(versions.map(v => v.version)).toEqual([2, 1]);
+      expect(versions[0]!.change_summary).toEqual({ added: ['owner'] });
+      expect(versions[0]!.created_by).toBe(user.id);
+    });
+
+    it('renames a field across all entities for the schema atomically', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schemaId = await createFixtureSchema(db, workspace);
+      const otherSchemaId = await createFixtureSchema(db, workspace);
+
+      const entity1 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+        data: { old_field: 'a', other: 1 }
+      });
+      const entity2 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+        data: { other: 2 }
+      });
+      const entityOtherSchema = await createFixtureCatalogEntity(db, workspace, otherSchemaId, {
+        data: { old_field: 'should-not-change' }
+      });
+
+      const affected = await db.catalog.renameEntityDataField(
+        workspace,
+        schemaId,
+        'old_field',
+        'new_field'
+      );
+      expect(affected).toBe(1);
+
+      const updated1 = await db.catalog.getEntity(workspace, entity1.id);
+      expect(updated1!.data).toEqual({ new_field: 'a', other: 1 });
+
+      const updated2 = await db.catalog.getEntity(workspace, entity2.id);
+      expect(updated2!.data).toEqual({ other: 2 });
+
+      const untouched = await db.catalog.getEntity(workspace, entityOtherSchema.id);
+      expect(untouched!.data).toEqual({ old_field: 'should-not-change' });
+    });
+
+    it('removes a field from every entity data blob for the schema', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schemaId = await createFixtureSchema(db, workspace);
+
+      const entity1 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+        data: { doomed: 'x', keep: 1 }
+      });
+      const entity2 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+        data: { keep: 2 }
+      });
+
+      const affected = await db.catalog.removeEntityDataField(workspace, schemaId, 'doomed');
+      expect(affected).toBe(1);
+
+      expect((await db.catalog.getEntity(workspace, entity1.id))!.data).toEqual({ keep: 1 });
+      expect((await db.catalog.getEntity(workspace, entity2.id))!.data).toEqual({ keep: 2 });
     });
   });
 
@@ -143,8 +290,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         links: [],
         schema_id: schema,
         data: {},
-        visibility_mode: null,
-        updated_at: new Date()
+        project_id: null,
+        updated_at: new Date(),
+        completeness: 0
       });
 
       const fetched = await db.catalog.getEntity(workspace, created.id);
@@ -220,99 +368,166 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     });
   });
 
-    it('should ignore prototype property names in filter conditions', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Test Entity' });
+  it('should ignore prototype property names in filter conditions', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createFixtureSchema(db, workspace);
+    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Test Entity' });
 
-      // Test various prototype properties - should not cause SQL errors
-      const prototypeProps = ['toString', 'constructor', '__proto__', 'hasOwnProperty', 'valueOf'];
+    // Test various prototype properties - should not cause SQL errors
+    const prototypeProps = ['toString', 'constructor', '__proto__', 'hasOwnProperty', 'valueOf'];
 
-      for (const prop of prototypeProps) {
-        const result = await db.catalog.listEntitiesPaginated(
-          workspace,
-          { conditions: [{ fieldId: prop, op: 'equals', value: 'test' }] },
-          { limit: 10, offset: 0 }
-        );
-        // Should return all entities (condition ignored) without SQL error
-        expect(result).toHaveLength(1);
-      }
-    });
-
-    it('should handle mixed valid and prototype property filters', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Match' });
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'NoMatch' });
-
-      // Mix valid filter with prototype property - should only apply valid filter
+    for (const prop of prototypeProps) {
       const result = await db.catalog.listEntitiesPaginated(
         workspace,
-        {
-          conditions: [
-            { fieldId: '_name', op: 'equals', value: 'Match' },
-            { fieldId: 'toString', op: 'equals', value: 'ignored' }
-          ]
-        },
+        { conditions: [{ fieldId: prop, op: 'equals', value: 'test' }] },
         { limit: 10, offset: 0 }
       );
-
+      // Should return all entities (condition ignored) without SQL error
       expect(result).toHaveLength(1);
-      expect(result[0]?.name).toBe('Match');
-    });
+    }
+  });
 
-    it('filters entities by _tags conditions', async () => {
+  it('should handle mixed valid and prototype property filters', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createFixtureSchema(db, workspace);
+    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Match' });
+    await createFixtureCatalogEntity(db, workspace, schema, { name: 'NoMatch' });
+
+    // Mix valid filter with prototype property - should only apply valid filter
+    const result = await db.catalog.listEntitiesPaginated(
+      workspace,
+      {
+        conditions: [
+          { fieldId: '_name', op: 'equals', value: 'Match' },
+          { fieldId: 'toString', op: 'equals', value: 'ignored' }
+        ]
+      },
+      { limit: 10, offset: 0 }
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.name).toBe('Match');
+  });
+
+  it('filters entities by _tags conditions', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createFixtureSchema(db, workspace);
+    await createFixtureCatalogEntity(db, workspace, schema, {
+      name: 'React entity',
+      tags: ['react', 'frontend']
+    });
+    await createFixtureCatalogEntity(db, workspace, schema, {
+      name: 'Vue entity',
+      tags: ['vue', 'frontend']
+    });
+    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Untagged entity', tags: [] });
+
+    const equalsResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'equals', value: 'react' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(equalsResult.map(e => e.name)).toEqual(['React entity']);
+
+    const notEqualsResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'not_equals', value: 'react' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(notEqualsResult.map(e => e.name).sort()).toEqual(['Untagged entity', 'Vue entity']);
+
+    const containsResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'contains', value: 'ont' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(containsResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
+
+    const emptyResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'empty', value: '' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(emptyResult.map(e => e.name)).toEqual(['Untagged entity']);
+
+    const notEmptyResult = await db.catalog.listEntitiesPaginated(
+      workspace,
+      { conditions: [{ fieldId: '_tags', op: 'not_empty', value: '' }] },
+      { limit: 10, offset: 0 }
+    );
+    expect(notEmptyResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
+  });
+
+  describe('project_id scoping', () => {
+    it('excludes project-exclusive entities from global (unscoped) listings', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
+      const project = (await createFixtureProject(db, workspace)).id;
+      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Global entity' });
       await createFixtureCatalogEntity(db, workspace, schema, {
-        name: 'React entity',
-        tags: ['react', 'frontend']
+        name: 'Project-exclusive entity',
+        project_id: project
       });
-      await createFixtureCatalogEntity(db, workspace, schema, {
-        name: 'Vue entity',
-        tags: ['vue', 'frontend']
-      });
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Untagged entity', tags: [] });
 
-      const equalsResult = await db.catalog.listEntitiesPaginated(
+      const globalResult = await db.catalog.listEntitiesPaginated(
         workspace,
-        { conditions: [{ fieldId: '_tags', op: 'equals', value: 'react' }] },
+        {},
         { limit: 10, offset: 0 }
       );
-      expect(equalsResult.map(e => e.name)).toEqual(['React entity']);
-
-      const notEqualsResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'not_equals', value: 'react' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(notEqualsResult.map(e => e.name).sort()).toEqual(['Untagged entity', 'Vue entity']);
-
-      const containsResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'contains', value: 'ont' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(containsResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
-
-      const emptyResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'empty', value: '' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(emptyResult.map(e => e.name)).toEqual(['Untagged entity']);
-
-      const notEmptyResult = await db.catalog.listEntitiesPaginated(
-        workspace,
-        { conditions: [{ fieldId: '_tags', op: 'not_empty', value: '' }] },
-        { limit: 10, offset: 0 }
-      );
-      expect(notEmptyResult.map(e => e.name).sort()).toEqual(['React entity', 'Vue entity']);
+      expect(globalResult.map(e => e.name)).toEqual(['Global entity']);
     });
 
+    it('includes project-exclusive entities and project_entity-linked entities when scoped to that project', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const project = (await createFixtureProject(db, workspace)).id;
+      const otherProject = (await createFixtureProject(db, workspace)).id;
+      const globalEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Global entity'
+      });
+      const exclusiveEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Project-exclusive entity',
+        project_id: project
+      });
+      const linkedEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Linked entity'
+      });
+      await createFixtureCatalogEntity(db, workspace, schema, {
+        name: 'Other project entity',
+        project_id: otherProject
+      });
+      await db.project.addProjectEntity({
+        workspace,
+        project_id: project,
+        entity_id: linkedEntity.id,
+        entity_type_id: null,
+        created_at: new Date()
+      });
+
+      const scopedResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { projectId: project, projectScope: 'project' },
+        { limit: 10, offset: 0 }
+      );
+      expect(scopedResult.map(e => e.id).sort()).toEqual(
+        [exclusiveEntity.id, linkedEntity.id].sort()
+      );
+
+      const allProjectResult = await db.catalog.listEntitiesPaginated(
+        workspace,
+        { projectId: project, projectScope: 'all' },
+        { limit: 10, offset: 0 }
+      );
+      expect(allProjectResult.map(e => e.id).sort()).toEqual(
+        [globalEntity.id, exclusiveEntity.id, linkedEntity.id].sort()
+      );
+    });
+  });
 
   describe('entity grants', () => {
     it('replaces entity grants atomically', async () => {
@@ -329,7 +544,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
           entity_id: entity.id,
           principal_type: 'user',
           principal_id: user.id,
-          role: 'viewer',
+          role: 'editor',
           applies_to: 'self',
           created_at: new Date()
         }
@@ -372,37 +587,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     });
   });
 
-  describe('entity snapshots', () => {
-    it('creates snapshots and lists them for an entity', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const user = await createFixtureUser(db);
-
-      const created = await db.catalog.createSnapshot({
-        id: randomUUID(),
-        workspace,
-        entity_id: entity.id,
-        status: 'autosave',
-        project_id: null,
-        target_date: null,
-        commit_message: null,
-        created_at: new Date(),
-        created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: { name: entity.name },
-        proposed_state: null
-      });
-
-      expect(created.created_by_name).toBe(user.display_name);
-      expect(created.base_state).toEqual({ name: entity.name });
-
-      const listed = await db.catalog.listSnapshots(workspace, entity.id);
-      expect(listed.map(s => s.id)).toContain(created.id);
-    });
-
-    it('prunes autosave snapshots, keeping only the N most recent', async () => {
+  describe('entity version history', () => {
+    it('prunes autosave versions, keeping only the N most recent', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
@@ -411,60 +597,79 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
 
       const ids: string[] = [];
       for (let i = 0; i < 5; i++) {
-        const snapshot = await db.catalog.createSnapshot({
+        const version = await db.catalog.createEntityVersion({
           id: randomUUID(),
           workspace,
           entity_id: entity.id,
-          status: 'autosave',
-          project_id: null,
-          target_date: null,
+          version_number: i + 1,
+          kind: 'autosave',
           commit_message: null,
           created_at: new Date(Date.now() + i * 1000),
           created_by: user.id,
-          created_by_name: user.display_name,
-          base_state: {},
-          proposed_state: null
+          state: {},
+          applied_case_revision_id: null
         });
-        ids.push(snapshot.id);
+        ids.push(version.id);
       }
 
-      await db.catalog.pruneAutosaveSnapshots(workspace, entity.id, 2);
+      await db.catalog.pruneAutosaveVersions(workspace, entity.id, 2);
 
-      const remaining = await db.catalog.listSnapshots(workspace, entity.id);
+      const remaining = await db.catalog.listEntityVersions(workspace, entity.id);
       expect(remaining).toHaveLength(2);
-      expect(remaining.map(s => s.id).sort()).toEqual(ids.slice(-2).sort());
+      expect(remaining.map(v => v.id).sort()).toEqual(ids.slice(-2).sort());
     });
 
-    it('promotes an autosave snapshot to a saved version', async () => {
+    it('lists entity ids with any real (non future-only) version history', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entityWithHistory = await createFixtureCatalogEntity(db, workspace, schema);
+      const entityFutureOnly = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
 
-      const snapshot = await db.catalog.createSnapshot({
+      await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: entity.id,
-        status: 'autosave',
-        project_id: null,
-        target_date: null,
+        entity_id: entityWithHistory.id,
+        version_number: 1,
+        kind: 'autosave',
         commit_message: null,
         created_at: new Date(),
         created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: null
+        state: {},
+        applied_case_revision_id: null
+      });
+      await db.changeCase.createCase({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: '2030-01-01',
+        milestone_id: null,
+        message: null,
+        created_by: user.id,
+        created_at: new Date(),
+        members: [
+          {
+            entity_id: entityFutureOnly.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: {},
+            diff: {}
+          }
+        ]
       });
 
-      const promoted = await db.catalog.promoteSnapshot(workspace, snapshot.id, 'v1 release');
-      expect(promoted!.status).toBe('saved_version');
-      expect(promoted!.commit_message).toBe('v1 release');
-
-      expect(await db.catalog.promoteSnapshot(workspace, snapshot.id, 'again')).toBeNull();
+      const withHistory = await db.catalog.listEntityIdsWithVersionHistory(workspace, [
+        entityWithHistory.id,
+        entityFutureOnly.id
+      ]);
+      expect(withHistory).toEqual([entityWithHistory.id]);
     });
 
-    it('updates, then applies, a future_update snapshot', async () => {
+    it('lists planned entity changes as of a date, scoped to active case revisions', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
@@ -472,76 +677,46 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
 
-      const snapshot = await db.catalog.createSnapshot({
+      const futureCase = await db.changeCase.createCase({
         id: randomUUID(),
         workspace,
-        entity_id: entity.id,
-        status: 'future_update',
         project_id: project.id,
-        target_date: '2030-01-01',
-        commit_message: null,
-        created_at: new Date(),
+        name: null,
+        description: null,
+        effective_date: '2030-01-01',
+        milestone_id: null,
+        message: null,
         created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: { name: 'future name' }
+        created_at: new Date(),
+        members: [
+          {
+            entity_id: entity.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: { name: 'Planned Name' },
+            diff: {}
+          }
+        ]
       });
 
-      const updated = await db.catalog.updateSnapshot(workspace, snapshot.id, {
-        commit_message: 'planned change'
-      });
-      expect(updated!.commit_message).toBe('planned change');
-      expect(updated!.proposed_state).toEqual({ name: 'future name' });
-
-      const byProject = await db.catalog.listSnapshotsByProject(workspace, project.id);
-      expect(byProject.map(s => s.id)).toEqual([snapshot.id]);
-
-      const applied = await db.catalog.applySnapshot(workspace, snapshot.id);
-      expect(applied!.status).toBe('applied');
-    });
-
-    it('lists entity ids with any real (non future-only) snapshot history', async () => {
-      const db = getDb();
-      const workspace = await createFixtureWorkspace(db);
-      const schema = await createFixtureSchema(db, workspace);
-      const entityWithHistory = await createFixtureCatalogEntity(db, workspace, schema);
-      const entityFutureOnly = await createFixtureCatalogEntity(db, workspace, schema);
-      const user = await createFixtureUser(db);
-
-      await db.catalog.createSnapshot({
-        id: randomUUID(),
+      const beforeEffectiveDate = await db.catalog.listPlannedEntityChangesAsOf(
         workspace,
-        entity_id: entityWithHistory.id,
-        status: 'autosave',
-        project_id: null,
-        target_date: null,
-        commit_message: null,
-        created_at: new Date(),
-        created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: null
-      });
-      await db.catalog.createSnapshot({
-        id: randomUUID(),
-        workspace,
-        entity_id: entityFutureOnly.id,
-        status: 'future_update',
-        project_id: null,
-        target_date: '2030-01-01',
-        commit_message: null,
-        created_at: new Date(),
-        created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: {}
-      });
+        new Date('2029-01-01T00:00:00.000Z'),
+        [entity.id]
+      );
+      expect(beforeEffectiveDate).toHaveLength(0);
 
-      const withHistory = await db.catalog.listEntityIdsWithAnySnapshot(workspace, [
-        entityWithHistory.id,
-        entityFutureOnly.id
-      ]);
-      expect(withHistory).toEqual([entityWithHistory.id]);
+      const afterEffectiveDate = await db.catalog.listPlannedEntityChangesAsOf(
+        workspace,
+        new Date('2030-06-01T00:00:00.000Z'),
+        [entity.id]
+      );
+      expect(afterEffectiveDate).toHaveLength(1);
+      expect(afterEffectiveDate[0]?.entity_id).toBe(entity.id);
+      expect(afterEffectiveDate[0]?.project_id).toBe(project.id);
+      expect(afterEffectiveDate[0]?.target_date).toBe('2030-01-01');
+      expect(afterEffectiveDate[0]?.proposed_state).toEqual({ name: 'Planned Name' });
+      expect(afterEffectiveDate[0]?.case_id).toBe(futureCase.id);
     });
 
     it('lists timeline markers grouped by date and type', async () => {
@@ -549,21 +724,23 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
       const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
 
-      await db.catalog.createSnapshot({
+      await db.changeCase.createCase({
         id: randomUUID(),
         workspace,
-        entity_id: entity.id,
-        status: 'future_update',
-        project_id: null,
-        target_date: '2030-06-15',
-        commit_message: null,
-        created_at: new Date(),
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: '2030-06-15',
+        milestone_id: null,
+        message: null,
         created_by: user.id,
-        created_by_name: user.display_name,
-        base_state: {},
-        proposed_state: {}
+        created_at: new Date(),
+        members: [
+          { entity_id: entity.id, base_version: 1, base_state: {}, proposed_state: {}, diff: {} }
+        ]
       });
 
       const markers = await db.catalog.listTimelineMarkers(workspace);
@@ -571,6 +748,54 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(markers[0]!.type).toBe('future_update');
       expect(markers[0]!.count).toBe(1);
       expect(markers[0]!.date).toContain('2030-06-15');
+    });
+
+    it('reassigns cases off a milestone, backfilling the effective date', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+      const now = new Date();
+
+      const milestone = await db.project.createMilestone({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: 'Q1 migration',
+        target_date: '2031-01-01',
+        status: 'planned',
+        sort_order: 0,
+        created_at: now,
+        updated_at: now
+      });
+
+      const changeCase = await db.changeCase.createCase({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: null,
+        milestone_id: milestone.id,
+        message: null,
+        created_by: user.id,
+        created_at: now,
+        members: [
+          { entity_id: entity.id, base_version: 1, base_state: {}, proposed_state: {}, diff: {} }
+        ]
+      });
+
+      await db.catalog.reassignSnapshotsFromMilestone(
+        workspace,
+        milestone.id,
+        milestone.target_date
+      );
+
+      const reloaded = await db.changeCase.getCase(workspace, changeCase.id);
+      expect(reloaded!.milestone_id).toBeNull();
+      expect(reloaded!.effective_date).toBe('2031-01-01');
     });
   });
 
@@ -588,22 +813,34 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         description: null,
         is_admin_view: false,
         view_mode: 'table',
-        filters: { schemaId: 's1', q: 'search' },
+        filters: {
+          schemaId: 's1',
+          root: { kind: 'and', children: [] }
+        },
         config: null,
         created_at: new Date(),
         updated_at: new Date()
       });
 
-      expect(created.filters).toEqual({ schemaId: 's1', q: 'search' });
+      expect(created.filters).toEqual({
+        schemaId: 's1',
+        root: { kind: 'and', children: [] }
+      });
       expect(created.is_admin_view).toBe(false);
 
       const updated = await db.view.updateSavedView(workspace, created.id, {
         name: 'Renamed view',
-        filters: { q: 'new search' },
+        filters: {
+          schemaId: 's1',
+          root: { kind: 'and', children: [] }
+        },
         updated_at: new Date()
       });
       expect(updated!.name).toBe('Renamed view');
-      expect(updated!.filters).toEqual({ q: 'new search' });
+      expect(updated!.filters).toEqual({
+        schemaId: 's1',
+        root: { kind: 'and', children: [] }
+      });
 
       const deleted = await db.view.deleteSavedView(workspace, created.id);
       expect(deleted!.id).toBe(created.id);
@@ -624,7 +861,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         description: null,
         is_admin_view: false,
         view_mode: 'table',
-        filters: {},
+        filters: { root: { kind: 'and', children: [] } },
         config: null,
         created_at: new Date(),
         updated_at: new Date()
@@ -638,7 +875,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         description: null,
         is_admin_view: false,
         view_mode: 'table',
-        filters: {},
+        filters: { root: { kind: 'and', children: [] } },
         config: null,
         created_at: new Date(),
         updated_at: new Date()
@@ -654,6 +891,63 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(projectAndWorkspace.map(v => v.name).sort()).toEqual(
         ['Project view', 'Workspace view'].sort()
       );
+    });
+  });
+
+  describe('entity collections', () => {
+    it('supports private collections, multiple memberships and idempotent membership changes', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const firstUser = await createFixtureUser(db);
+      const secondUser = await createFixtureUser(db);
+      const now = new Date();
+
+      const first = await db.view.createCollection({
+        id: randomUUID(),
+        workspace,
+        user_id: firstUser.id,
+        name: 'Important systems',
+        created_at: now,
+        updated_at: now
+      });
+      const second = await db.view.createCollection({
+        id: randomUUID(),
+        workspace,
+        user_id: firstUser.id,
+        name: 'Important systems',
+        created_at: now,
+        updated_at: now
+      });
+
+      await db.view.addCollectionEntity(firstUser.id, workspace, first.id, entity.id, now);
+      await db.view.addCollectionEntity(firstUser.id, workspace, first.id, entity.id, now);
+      await db.view.addCollectionEntity(firstUser.id, workspace, second.id, entity.id, now);
+
+      const visibleToOwner = await db.view.listCollections(firstUser.id, workspace, entity.id);
+      expect(visibleToOwner.map(collection => collection.name)).toEqual([
+        'Important systems',
+        'Important systems'
+      ]);
+      expect(visibleToOwner.every(collection => collection.is_member)).toBe(true);
+      expect(visibleToOwner.every(collection => collection.entity_count === 1)).toBe(true);
+      expect(await db.view.listCollectionEntityIds(firstUser.id, workspace, first.id)).toEqual([
+        entity.id
+      ]);
+
+      expect(await db.view.listCollections(secondUser.id, workspace)).toEqual([]);
+      expect(
+        await db.view.removeCollectionEntity(firstUser.id, workspace, first.id, entity.id)
+      ).toMatchObject({
+        collection_id: first.id,
+        entity_id: entity.id
+      });
+      expect(await db.view.listCollectionEntityIds(firstUser.id, workspace, first.id)).toEqual([]);
+
+      await db.view.deleteCollection(firstUser.id, workspace, second.id);
+      expect(await db.view.getCollection(firstUser.id, workspace, second.id)).toBeNull();
+      expect(await db.catalog.getEntity(workspace, entity.id)).not.toBeNull();
     });
   });
 });

@@ -13,7 +13,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { Context } from '../context';
 import { mustExist } from '@diagram-craft/utils/assert';
 import type { LayoutCapableShapeNodeDefinition } from './layoutCapableShapeNodeDefinition';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 /**
  * Generic overlay component for collapsible nodes

@@ -19,7 +19,8 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ToolWindow } from '../ToolWindow';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
-import { UserState } from '../../../UserState';
+import { CommentsVisibilityMenu } from './CommentsVisibilityMenu';
+import type { CommentVisibility } from '@diagram-craft/canvas/components/commentVisibility';
 
 export const CommentsToolWindow = () => {
   const application = useApplication();
@@ -28,12 +29,27 @@ export const CommentsToolWindow = () => {
   const [sortBy, setSortBy] = useState<SortBy>('date-desc');
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
   const [hideResolved, setHideResolved] = useState<boolean>(false);
+  const [commentVisibility, setCommentVisibility] = useState<CommentVisibility>(
+    application.userState.commentVisibility
+  );
 
   useEventListener(diagram.commentManager, 'commentAdded', redraw);
   useEventListener(diagram.commentManager, 'commentUpdated', redraw);
   useEventListener(diagram.commentManager, 'commentRemoved', redraw);
   useEventListener(diagram.selection, 'add', redraw);
   useEventListener(diagram.selection, 'remove', redraw);
+  useEventListener(application.awareness, 'change', redraw);
+  useEventListener(application.userState, 'change', () => {
+    setCommentVisibility(application.userState.commentVisibility);
+  });
+
+  const handleCommentVisibilityChange = useCallback(
+    (visibility: CommentVisibility) => {
+      application.userState.commentVisibility = visibility;
+      setCommentVisibility(visibility);
+    },
+    [application]
+  );
 
   const handleResolveComment = useCallback(
     (comment: Comment) => {
@@ -105,7 +121,7 @@ export const CommentsToolWindow = () => {
         : groupThreadsByAuthor(commentThreads);
 
   // Get current user name for "My Threads" tab
-  const currentUserName = UserState.get().awarenessState.name;
+  const currentUserName = application.awareness.state.name;
 
   // Filter threads for "My Threads" tab
   const myThreads = filterThreadsByUserParticipation(commentThreads, currentUserName);
@@ -127,6 +143,10 @@ export const CommentsToolWindow = () => {
           >
             <TbPlus />
           </Button>
+          <CommentsVisibilityMenu
+            visibility={commentVisibility}
+            onVisibilityChange={handleCommentVisibilityChange}
+          />
           <CommentsSortMenu
             sortBy={sortBy}
             groupBy={groupBy}
@@ -156,6 +176,10 @@ export const CommentsToolWindow = () => {
           >
             <TbPlus />
           </Button>
+          <CommentsVisibilityMenu
+            visibility={commentVisibility}
+            onVisibilityChange={handleCommentVisibilityChange}
+          />
           <CommentsSortMenu
             sortBy={sortBy}
             groupBy={groupBy}

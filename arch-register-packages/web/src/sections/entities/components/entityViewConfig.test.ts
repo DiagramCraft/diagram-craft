@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  hierarchyViewConfigSchema,
+  mapViewConfigSchema,
   radarViewConfigSchema,
   tableViewConfigSchema,
   timelineViewConfigSchema
@@ -31,9 +31,9 @@ describe('normalizeViewConfig', () => {
   });
 
   it('returns the defaults unchanged when the raw config fails to parse', () => {
-    expect(normalizeViewConfig(timelineViewConfigSchema, { groupBy: 'nonsense' }, defaults)).toEqual(
-      defaults
-    );
+    expect(
+      normalizeViewConfig(timelineViewConfigSchema, { groupBy: 'nonsense' }, defaults)
+    ).toEqual(defaults);
     expect(normalizeViewConfig(timelineViewConfigSchema, null, defaults)).toEqual(defaults);
     expect(normalizeViewConfig(timelineViewConfigSchema, undefined, defaults)).toEqual(defaults);
   });
@@ -44,7 +44,7 @@ describe('normalizeViewConfig', () => {
   });
 
   it('passes through an optional field from the parsed config when defaults declares it as undefined', () => {
-    const hierarchyDefaults = {
+    const mapDefaults = {
       levels: 2,
       level1SchemaId: null as string | null,
       level1Columns: 3,
@@ -52,11 +52,12 @@ describe('normalizeViewConfig', () => {
       level2Columns: 3,
       level3SchemaId: null as string | null,
       level3Columns: 3,
-      fieldIds: undefined as string[] | undefined
+      fieldIds: undefined as string[] | undefined,
+      metricConfig: undefined as unknown
     };
     const raw = { levels: 1, level1SchemaId: 'service', level1Columns: 2, fieldIds: ['_owner'] };
-    expect(normalizeViewConfig(hierarchyViewConfigSchema, raw, hierarchyDefaults)).toEqual({
-      ...hierarchyDefaults,
+    expect(normalizeViewConfig(mapViewConfigSchema, raw, mapDefaults)).toEqual({
+      ...mapDefaults,
       levels: 1,
       level1SchemaId: 'service',
       level1Columns: 2,
@@ -65,7 +66,12 @@ describe('normalizeViewConfig', () => {
   });
 
   it('supports an empty-sentinel default for views with no natural default value (e.g. Radar)', () => {
-    const emptyRadarConfig = { schemaId: '', quadrantFieldId: '', ringFieldId: '', ringOrder: [] as string[] };
+    const emptyRadarConfig = {
+      schemaId: '',
+      quadrantFieldId: '',
+      ringFieldId: '',
+      ringOrder: [] as string[]
+    };
 
     // Invalid/missing config -> caller can treat the empty sentinel as "unconfigured".
     const unconfigured = normalizeViewConfig(radarViewConfigSchema, undefined, emptyRadarConfig);

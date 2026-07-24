@@ -67,7 +67,8 @@ export const DiagramEmbedDialog = ({
 
     let resolvedFileId = fileId;
     if (mode === 'new') {
-      const name = diagramName.trim() || 'Diagram';
+      const trimmedName = diagramName.trim();
+      const name = trimmedName === '' ? 'Diagram' : trimmedName;
       const file = await createDiagramAttachment.mutateAsync({
         name,
         content: emptyDiagram(name)
@@ -82,10 +83,7 @@ export const DiagramEmbedDialog = ({
       return;
     }
 
-    editor.tf.setNodes(
-      { fileId: resolvedFileId, caption: caption.trim() },
-      { at: path }
-    );
+    editor.tf.setNodes({ fileId: resolvedFileId, caption: caption.trim() }, { at: path });
     onClose();
   };
 
@@ -97,9 +95,7 @@ export const DiagramEmbedDialog = ({
     onClose();
   };
 
-  const isSaveDisabled =
-    createDiagramAttachment.isPending ||
-    (mode === 'existing' && !fileId);
+  const isSaveDisabled = createDiagramAttachment.isPending || (mode === 'existing' && !fileId);
 
   return (
     <Dialog
@@ -134,7 +130,7 @@ export const DiagramEmbedDialog = ({
             <DiagramPicker fileTree={fileTree} selectedId={fileId} onSelect={handleSelectFile} />
           </DialogSection>
         )}
-        <DialogSection label="Caption (optional)">
+        <DialogSection label="Caption" required={false}>
           <input
             className={styles.input}
             type="text"

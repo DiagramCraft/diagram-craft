@@ -11,7 +11,7 @@ import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { Box } from '@diagram-craft/geometry/box';
-import type { NodeDefinition } from './elementDefinitionRegistry';
+import type { NodeDefinition } from './nodeDefinition';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
@@ -42,7 +42,7 @@ export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
 };
 
 export class DelegatingDiagramNode extends DelegatingDiagramElement implements DiagramNode {
-  declare protected readonly delegate: DiagramNode;
+  protected declare readonly delegate: DiagramNode;
 
   readonly #localProps: CRDTObject<NodeProps>;
   readonly #localTexts: CRDTObject<NodeTexts>;

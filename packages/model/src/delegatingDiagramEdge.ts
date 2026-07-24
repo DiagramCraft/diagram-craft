@@ -45,7 +45,7 @@ type DelegatingDiagramEdgeCRDT = DiagramEdgeCRDT & {
 };
 
 export class DelegatingDiagramEdge extends DelegatingDiagramElement implements DiagramEdge {
-  declare protected readonly delegate: DiagramEdge;
+  protected declare readonly delegate: DiagramEdge;
 
   readonly #localProps: CRDTObject<EdgeProps>;
 

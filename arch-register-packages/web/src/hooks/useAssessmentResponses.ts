@@ -7,7 +7,11 @@ import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStat
 import { orpcClient } from '../lib/orpcClient';
 import { useAuth } from '../auth/AuthContext';
 
-export const useAssessmentResponses = (workspaceId: string, projectId: string, assessmentId: string) => {
+export const useAssessmentResponses = (
+  workspaceId: string,
+  projectId: string,
+  assessmentId: string
+) => {
   return useQuery({
     queryKey: assessmentResponseKeys.list(workspaceId, projectId, assessmentId),
     queryFn: async () =>
@@ -71,7 +75,9 @@ export const useUpsertAssessmentResponse = (
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: listKey });
-      await queryClient.invalidateQueries({ queryKey: assessmentKeys.list(workspaceId, projectId) });
+      await queryClient.invalidateQueries({
+        queryKey: assessmentKeys.list(workspaceId, projectId)
+      });
       await queryClient.invalidateQueries({
         queryKey: assessmentKeys.detail(workspaceId, projectId, assessmentId)
       });

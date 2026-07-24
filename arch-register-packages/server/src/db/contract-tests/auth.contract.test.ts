@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { DatabaseError } from '../database';
 import { createFixtureUser } from './authFixtures';
+import { getSystemUserId } from '../../domain/auth/systemUsers';
 
 runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
   describe('user CRUD', () => {
@@ -68,7 +69,9 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
 
       const found = await db.auth.getUserByOidc('https://issuer.example.com', 'subject-1');
       expect(found!.id).toBe(id);
-      expect(await db.auth.getUserByOidc('https://issuer.example.com', 'no-such-subject')).toBeNull();
+      expect(
+        await db.auth.getUserByOidc('https://issuer.example.com', 'no-such-subject')
+      ).toBeNull();
     });
 
     it('lists users ordered by display name', async () => {
@@ -79,6 +82,25 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
       const users = await db.auth.listUsers();
       const names = users.map(u => u.display_name);
       expect(names).toEqual([...names].sort());
+    });
+
+    it('searches users by display name or email and applies a limit', async () => {
+      const db = getDb();
+      const alpha = await createFixtureUser(db);
+      const beta = await createFixtureUser(db);
+      await db.auth.updateUser(alpha.id, {
+        display_name: 'Alpha Owner',
+        email: 'alpha@example.com',
+        updated_at: new Date()
+      });
+      await db.auth.updateUser(beta.id, {
+        display_name: 'Beta Owner',
+        email: 'beta@example.com',
+        updated_at: new Date()
+      });
+
+      expect((await db.auth.listUsers({ q: 'alpha' })).map(user => user.id)).toEqual([alpha.id]);
+      expect((await db.auth.listUsers({ q: 'EXAMPLE.COM', limit: 1 })).length).toBe(1);
     });
 
     it('normalizes a duplicate email to a unique DatabaseError', async () => {
@@ -127,6 +149,20 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
     });
   });
 
+  describe('system users', () => {
+    it('rejects updateUser against a seeded system-actor row', async () => {
+      const db = getDb();
+      const systemUserId = getSystemUserId('workspace-token-owner');
+
+      const seeded = await db.auth.getUser(systemUserId);
+      expect(seeded!.is_system_actor).toBe(true);
+
+      await expect(
+        db.auth.updateUser(systemUserId, { is_active: false, updated_at: new Date() })
+      ).rejects.toMatchObject({ code: 'check' } satisfies Partial<DatabaseError>);
+    });
+  });
+
   describe('global role assignments', () => {
     it('replaces role assignments atomically', async () => {
       const db = getDb();
@@ -162,12 +198,75 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
     });
   });
 
+  describe('API tokens', () => {
+    it('creates, finds, lists, updates, and deletes workspace tokens', async () => {
+      const db = getDb();
+      const user = await createFixtureUser(db);
+      const now = new Date();
+      const workspace = await db.workspace.createWorkspace({
+        id: randomUUID(),
+        name: `Token workspace ${randomUUID()}`,
+        url_slug: `token-workspace-${randomUUID()}`,
+        short_code: 'TOK',
+        color: '',
+        description: '',
+        created_at: now,
+        updated_at: now
+      });
+
+      const created = await db.auth.createApiToken({
+        id: randomUUID(),
+        workspace: workspace.id,
+        name: 'Release pipeline',
+        token_hash: 'hash-1',
+        capabilities: ['ent.edit', 'content.view'],
+        created_by: user.id,
+        created_at: now,
+        last_used_at: null,
+        expires_at: new Date(now.getTime() + 60_000)
+      });
+
+      expect(created.capabilities).toEqual(['ent.edit', 'content.view']);
+      expect(await db.auth.getApiTokenByHash('hash-1')).toMatchObject({ id: created.id });
+      expect(await db.auth.listApiTokens(workspace.id)).toEqual([created]);
+      expect(await db.auth.countApiTokens(workspace.id, user.id)).toBe(1);
+      expect(await db.auth.listApiTokensByCreator(user.id)).toEqual([created]);
+
+      const audit = await db.auth.createApiTokenAudit({
+        id: randomUUID(),
+        workspace: workspace.id,
+        token_id: created.id,
+        user_id: user.id,
+        event: 'created',
+        created_at: now,
+        metadata: { name: created.name }
+      });
+      expect(await db.auth.listApiTokenAudit(workspace.id)).toEqual([audit]);
+
+      const lastUsed = new Date(now.getTime() + 10_000);
+      await db.auth.updateApiTokenLastUsed(created.id, lastUsed);
+      expect((await db.auth.getApiTokenByHash('hash-1'))?.last_used_at).toEqual(lastUsed);
+
+      expect(await db.auth.deleteApiToken(workspace.id, created.id)).toMatchObject({
+        id: created.id
+      });
+      expect(await db.auth.getApiTokenByHash('hash-1')).toBeNull();
+      expect(await db.auth.deleteApiToken(workspace.id, created.id)).toBeNull();
+      expect(await db.auth.deleteApiTokenByCreator(user.id, created.id)).toBeNull();
+    });
+  });
+
   describe('oidc auth state', () => {
     it('stores, reads and deletes auth state', async () => {
       const db = getDb();
       const state = randomUUID();
 
-      await db.auth.storeOidcAuthState(state, 'nonce-1', 'verifier-1', new Date(Date.now() + 60_000));
+      await db.auth.storeOidcAuthState(
+        state,
+        'nonce-1',
+        'verifier-1',
+        new Date(Date.now() + 60_000)
+      );
 
       const found = await db.auth.getOidcAuthState(state);
       expect(found).toEqual({ nonce: 'nonce-1', code_verifier: 'verifier-1' });
@@ -181,12 +280,7 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
       const expiredState = randomUUID();
       const activeState = randomUUID();
 
-      await db.auth.storeOidcAuthState(
-        expiredState,
-        'n',
-        'v',
-        new Date(Date.now() - 60_000)
-      );
+      await db.auth.storeOidcAuthState(expiredState, 'n', 'v', new Date(Date.now() - 60_000));
       await db.auth.storeOidcAuthState(activeState, 'n', 'v', new Date(Date.now() + 60_000));
 
       await db.auth.cleanupExpiredOidcAuthStates();

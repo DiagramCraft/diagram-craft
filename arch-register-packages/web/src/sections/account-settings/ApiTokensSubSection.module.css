@@ -1,0 +1,107 @@
+.container {
+  padding: 0 24px 24px;
+}
+
+.intro {
+  max-width: 720px;
+  padding: 12px 0 18px;
+  color: var(--cmp-fg-disabled);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.workspaceGroup {
+  margin-bottom: 22px;
+}
+
+.workspaceHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cmp-border);
+}
+
+.workspaceName {
+  color: var(--base-fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.workspaceSlug {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dialog {
+  width: min(620px, calc(100vw - 32px));
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.label {
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hint {
+  grid-column: 2;
+  margin-top: -6px;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.capabilityField {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.capabilityGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 16px;
+}
+
+.capability {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--base-fg);
+  font-size: 12px;
+}
+
+.secretBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+}
+
+.secretBox code {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+
+.error {
+  color: var(--error-fg);
+  font-size: 12px;
+}

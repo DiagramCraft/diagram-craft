@@ -1,0 +1,69 @@
+.pickerInput {
+  width: 100%;
+  font-size: 13px;
+  padding: 5px 8px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--base-fg);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.pickerInput:focus {
+  border-color: var(--accent-fg);
+}
+
+.pickerResults {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: var(--r-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 8px;
+  color: var(--base-fg);
+}
+
+.pickerItem:hover {
+  background: var(--cmp-bg);
+}
+
+.teamDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pickerName {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickerEmail {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  white-space: nowrap;
+}
+
+.pickerHint {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  padding: 2px 8px;
+}

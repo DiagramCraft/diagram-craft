@@ -21,16 +21,13 @@ const countCommentsInDiagram = (diagram: SerializedDiagram): DiagramCommentCount
     { commentCount: 0, unresolvedCommentCount: 0 }
   );
 
-  return diagram.diagrams.reduce(
-    (acc, childDiagram) => {
-      const childCounts = countCommentsInDiagram(childDiagram);
-      return {
-        commentCount: acc.commentCount + childCounts.commentCount,
-        unresolvedCommentCount: acc.unresolvedCommentCount + childCounts.unresolvedCommentCount
-      };
-    },
-    ownCounts
-  );
+  return diagram.diagrams.reduce((acc, childDiagram) => {
+    const childCounts = countCommentsInDiagram(childDiagram);
+    return {
+      commentCount: acc.commentCount + childCounts.commentCount,
+      unresolvedCommentCount: acc.unresolvedCommentCount + childCounts.unresolvedCommentCount
+    };
+  }, ownCounts);
 };
 
 export const getDiagramCommentCounts = (
@@ -41,8 +38,7 @@ export const getDiagramCommentCounts = (
       const diagramCounts = countCommentsInDiagram(diagram);
       return {
         commentCount: acc.commentCount + diagramCounts.commentCount,
-        unresolvedCommentCount:
-          acc.unresolvedCommentCount + diagramCounts.unresolvedCommentCount
+        unresolvedCommentCount: acc.unresolvedCommentCount + diagramCounts.unresolvedCommentCount
       };
     },
     { commentCount: 0, unresolvedCommentCount: 0 }

@@ -1,7 +1,7 @@
-import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
+import type { ChangeCaseMemberEntry } from './snapshotDisplay';
 
 export type ChangeRow = { label: string; from: string; to: string };
 
@@ -13,7 +13,7 @@ const BUILT_IN: { key: string; label: string }[] = [
   { key: 'lifecycle', label: 'Lifecycle' },
   { key: 'target_lifecycle', label: 'Target lifecycle' },
   { key: 'target_lifecycle_date', label: 'Target date' },
-  { key: 'owner', label: 'Owner' },
+  { key: 'owner', label: 'Owner' }
 ];
 
 export function resolveBuiltIn(
@@ -57,51 +57,48 @@ export function diffSnapshotState(
   if (!proposed) return [];
   const changes: ChangeRow[] = [];
 
+  // Compare the resolved display strings, not the raw values — otherwise equivalent "empty"
+  // representations (null vs '' vs undefined vs []) show up as a change even though both sides
+  // render identically (e.g. as "—").
   for (const { key, label } of BUILT_IN) {
-    const from = base?.[key];
-    const to = proposed[key];
-    if (JSON.stringify(from) === JSON.stringify(to)) continue;
-    changes.push({
-      label,
-      from: resolveBuiltIn(key, from, lifecycleStates, teams),
-      to: resolveBuiltIn(key, to, lifecycleStates, teams)
-    });
+    const from = resolveBuiltIn(key, base?.[key], lifecycleStates, teams);
+    const to = resolveBuiltIn(key, proposed[key], lifecycleStates, teams);
+    if (from === to) continue;
+    changes.push({ label, from, to });
   }
 
   const baseData = (base?.data ?? {}) as Record<string, unknown>;
   const proposedData = (proposed.data ?? {}) as Record<string, unknown>;
   for (const [fieldId, toVal] of Object.entries(proposedData)) {
     const fromVal = baseData[fieldId];
-    if (JSON.stringify(fromVal) === JSON.stringify(toVal)) continue;
     const field = schema?.fields.find(f => f.id === fieldId);
-    changes.push({
-      label: field?.name ?? fieldId,
-      from: resolveFieldVal(field, fromVal),
-      to: resolveFieldVal(field, toVal)
-    });
+    const from = resolveFieldVal(field, fromVal);
+    const to = resolveFieldVal(field, toVal);
+    if (from === to) continue;
+    changes.push({ label: field?.name ?? fieldId, from, to });
   }
 
   return changes;
 }
 
-export function detectConflicts(snapshots: EntitySnapshot[]): {
+export function detectConflicts(entries: ChangeCaseMemberEntry[]): {
   conflictedProjectIds: Set<string>;
   conflictedSnapIds: Set<string>;
 } {
-  const futures = snapshots.filter(s => s.status === 'future_update');
+  const futures = entries.filter(entry => entry.changeCase.status === 'planned');
   const conflictedProjectIds = new Set<string>();
   const conflictedSnapIds = new Set<string>();
   for (let i = 0; i < futures.length; i++) {
     for (let j = i + 1; j < futures.length; j++) {
       const a = futures[i]!;
       const b = futures[j]!;
-      const aKeys = Object.keys(a.proposed_state ?? {});
-      const bKeys = new Set(Object.keys(b.proposed_state ?? {}));
+      const aKeys = Object.keys(a.member.proposed_state ?? {});
+      const bKeys = new Set(Object.keys(b.member.proposed_state ?? {}));
       if (aKeys.some(f => bKeys.has(f))) {
-        if (a.project_id) conflictedProjectIds.add(a.project_id);
-        if (b.project_id) conflictedProjectIds.add(b.project_id);
-        conflictedSnapIds.add(a.id);
-        conflictedSnapIds.add(b.id);
+        if (a.changeCase.project_id) conflictedProjectIds.add(a.changeCase.project_id);
+        if (b.changeCase.project_id) conflictedProjectIds.add(b.changeCase.project_id);
+        conflictedSnapIds.add(a.member.id);
+        conflictedSnapIds.add(b.member.id);
       }
     }
   }

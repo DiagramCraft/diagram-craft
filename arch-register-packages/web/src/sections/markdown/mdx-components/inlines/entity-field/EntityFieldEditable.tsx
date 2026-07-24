@@ -50,7 +50,12 @@ export const EntityFieldEditable = ({
     <PlateElement element={element} as="span" {...props}>
       <BaseInlineEditable
         hasValue={!!(entityId && field)}
-        placeholder={<><TbHash size={12} /><span>field…</span></>}
+        placeholder={
+          <>
+            <TbHash size={12} />
+            <span>field…</span>
+          </>
+        }
         dialog={(open, onClose) => (
           <EntityFieldDialog element={element} open={open} onClose={onClose} isNew={isNew} />
         )}

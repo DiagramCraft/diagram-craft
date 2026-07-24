@@ -186,7 +186,7 @@
 }
 
 .checkbox:checked::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 4px;
   top: 1px;
@@ -203,7 +203,7 @@
 }
 
 .checkbox:indeterminate::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 3px;
   top: 5px;

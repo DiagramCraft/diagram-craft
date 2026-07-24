@@ -39,7 +39,9 @@ export class QueryDiagram {
   }
 
   get parent(): QueryDiagram | undefined {
-    return this.diagram.parent ? new QueryDiagram(this.diagram.document.byId(this.diagram.parent)!) : undefined;
+    return this.diagram.parent
+      ? new QueryDiagram(this.diagram.document.byId(this.diagram.parent)!)
+      : undefined;
   }
 
   get selection() {

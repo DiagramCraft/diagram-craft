@@ -3,7 +3,7 @@
 // ── Core Permission Types ─────────────────────────────────────
 
 import { SchemaField } from '@arch-register/api-types/schemaContract';
-import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+import { EntityLink } from '@arch-register/api-types/entityContract';
 
 export type GlobalRole = 'global_admin' | 'workspace_admin';
 
@@ -41,12 +41,15 @@ export type WorkspaceCapability =
   | 'content.edit'
   | 'ent.edit'
   | 'ent.propose'
+  | 'ent.approve'
+  | 'ent.override'
+  | 'ent.external_update'
   | 'comments'
   | 'export'
   | 'schema.edit'
   | 'schema.publish';
 
-export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
+export type EntityRole = 'editor' | 'contributor' | 'entity_admin';
 
 export type EntityAction = 'view_entity' | 'edit_entity' | 'create_child' | 'admin_entity';
 
@@ -86,7 +89,6 @@ export type Entity = {
   links: EntityLink[];
   schema_id: string;
   data: Record<string, unknown>;
-  visibility_mode: VisibilityMode | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -138,6 +140,7 @@ export type WorkspaceAuthorizationContext = {
   teamAssignments: TeamAssignment[];
   teamRolesByTeam: Map<string, Set<TeamRole>>;
   teams: WorkspaceTeam[];
+  workspaceCapabilityCeiling?: Set<WorkspaceCapability>;
 };
 
 export type AuthorizationContext = WorkspaceAuthorizationContext & {

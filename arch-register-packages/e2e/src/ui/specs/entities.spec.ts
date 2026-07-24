@@ -1,25 +1,70 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { EntitiesPage } from '../pages/EntitiesPage';
-import { authApiEntity, customerApiEntity, frontendAppEntity } from '../support/entities';
+import {
+  authApiEntity,
+  customerApiEntity,
+  frontendAppEntity,
+  seededApiEntityCount
+} from '../support/entities';
 import { apiSchema } from '../support/schemas';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('entities section', () => {
-  test('shows entity browser', async ({ page }) => {
+  test('shows entity browser @quick', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
     await entitiesPage.goto();
     await entitiesPage.expectLoaded();
   });
 
-  test('filters entities by type in the sidebar', async ({ page }) => {
+  test('filters entities by type in the sidebar @quick', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
     await entitiesPage.goto();
     await entitiesPage.expectLoaded();
     await entitiesPage.filterByType(apiSchema.name);
-    await entitiesPage.expectFilteredResultCount(2);
+    await entitiesPage.expectFilteredResultCount(seededApiEntityCount);
+  });
+
+  test('opens an entity detail from the browser @quick', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.openEntity(authApiEntity.name);
+    await entitiesPage.expectEntityDetailLoaded(authApiEntity.name);
+  });
+
+  test('enters entity edit mode without saving', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.openEntity(authApiEntity.name);
+    await entitiesPage.startEditingEntity();
+  });
+
+  test('shows the entity browser in table view', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.switchView('table');
+    await expect(page).toHaveURL(/viewMode=table/);
+    await entitiesPage.expectLoaded();
+  });
+
+  test('shows the entity browser in cards view', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.switchView('cards');
+    await expect(page).toHaveURL(/viewMode=cards/);
+    await entitiesPage.expectLoaded();
+  });
+
+  test('shows the entity browser in tree view', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.switchView('tree');
+    await expect(page).toHaveURL(/viewMode=tree/);
+    await entitiesPage.expectLoaded();
   });
 
   test('restores entity tabs through reload and browser history', async ({ page }) => {
@@ -27,6 +72,9 @@ test.describe('entities section', () => {
 
     await entitiesPage.goto();
     await entitiesPage.openEntity(authApiEntity.name);
+    // The "Topology" tab lives inside the "Context" sidebar section — its tab
+    // bar (and the Topology trigger) only renders once that section is active.
+    await page.getByText('Context', { exact: true }).click();
     await page.getByRole('tab', { name: 'Topology' }).click();
     await expect(page).toHaveURL(/tab=topology/);
 
@@ -49,7 +97,7 @@ test.describe('entities section', () => {
     await entitiesPage.goto();
     await entitiesPage.filterByType(apiSchema.name);
     await page.reload();
-    await entitiesPage.expectFilteredResultCount(2);
+    await entitiesPage.expectFilteredResultCount(seededApiEntityCount);
 
     await page.goBack();
     await expect(entitiesPage.browserTitle()).toHaveText('All entities');
@@ -80,7 +128,9 @@ test.describe('entities section', () => {
     await entitiesPage.openNewEntityDialog();
   });
 
-  test('restores entity content filter and view mode through reload and browser history', async ({ page }) => {
+  test('restores entity content filter and view mode through reload and browser history', async ({
+    page
+  }) => {
     await page.goto(
       `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security`
     );

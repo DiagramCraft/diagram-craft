@@ -113,7 +113,9 @@ export class DuplicateAction extends AbstractSelectionAction {
       // Check if all selected elements have the same parent
       const selection = [...diagram.selection.elements];
       const selectedElements = new Set(selection);
-      const rootSelection = selection.filter(element => !hasSelectedAncestor(element, selectedElements));
+      const rootSelection = selection.filter(
+        element => !hasSelectedAncestor(element, selectedElements)
+      );
       const commonParent =
         selection.length > 0 && selection.every(e => e.parent === selection[0]?.parent)
           ? selection[0]?.parent

@@ -12,6 +12,7 @@ import { Observable } from '@diagram-craft/canvas/component/component';
 import { Marquee } from '@diagram-craft/canvas/marquee';
 import type { Context } from '@diagram-craft/canvas/context';
 import type { ToolType } from '@diagram-craft/canvas/tool';
+import type { CommentVisibility } from '@diagram-craft/canvas/components/commentVisibility';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useContentFile, useContentFileContent } from '../../../../../hooks/useContentScope';
 import { initializeDiagramCraft } from '../../../../../diagramcraft-initial-config';
@@ -24,6 +25,7 @@ import {
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
 import { Banner } from '../../../../../components/Banner';
 import { EmptyState } from '../../../../../components/EmptyState';
+import { LoadingState } from '../../../../../components/LoadingState';
 import styles from './DiagramEmbed.module.css';
 
 const boundsViewbox = (diagram: Diagram): string => {
@@ -42,7 +44,8 @@ const VIEWER_CONTEXT: Context = {
   tool: new Observable<ToolType>('move'),
   actions: {},
   marquee: new Marquee(),
-  actionState: new Observable<'enabled' | 'disabled'>('enabled')
+  actionState: new Observable<'enabled' | 'disabled'>('enabled'),
+  commentVisibility: new Observable<CommentVisibility>('all')
 };
 
 export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) => {
@@ -82,7 +85,12 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
 
     if (file.project_public_id) {
       void navigate(
-        projectDiagramRoute(workspaceSlug, asProjectPublicId(file.project_public_id), file.id, search)
+        projectDiagramRoute(
+          workspaceSlug,
+          asProjectPublicId(file.project_public_id),
+          file.id,
+          search
+        )
       );
     } else if (params.entityId) {
       void navigate(
@@ -100,7 +108,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   if (isLoading) {
     return (
       <figure className={styles.container}>
-        <div className={styles.loading}>Loading…</div>
+        <LoadingState text="Loading…" size="sm" />
       </figure>
     );
   }

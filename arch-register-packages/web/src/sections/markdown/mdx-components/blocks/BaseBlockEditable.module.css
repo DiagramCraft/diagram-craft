@@ -24,7 +24,9 @@
   color: var(--cmp-fg-disabled);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 80ms, color 80ms;
+  transition:
+    opacity 80ms,
+    color 80ms;
 }
 
 .wrapper:hover .editBtn {
@@ -48,7 +50,9 @@
   cursor: pointer;
   min-width: 200px;
   margin: 0 0 var(--article-block-gap);
-  transition: border-color 80ms, color 80ms;
+  transition:
+    border-color 80ms,
+    color 80ms;
 }
 
 .placeholder:hover {

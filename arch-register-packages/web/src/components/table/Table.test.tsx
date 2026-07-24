@@ -8,7 +8,11 @@ describe('Table.SortableHeaderCell', () => {
       <table>
         <thead>
           <tr>
-            <Table.SortableHeaderCell sortKey="name" sort={{ key: 'name', dir: 'asc' }} onSort={() => {}}>
+            <Table.SortableHeaderCell
+              sortKey="name"
+              sort={{ key: 'name', dir: 'asc' }}
+              onSort={() => {}}
+            >
               Name
             </Table.SortableHeaderCell>
           </tr>
@@ -23,7 +27,11 @@ describe('Table.SortableHeaderCell', () => {
       <table>
         <thead>
           <tr>
-            <Table.SortableHeaderCell sortKey="name" sort={{ key: 'name', dir: 'desc' }} onSort={() => {}}>
+            <Table.SortableHeaderCell
+              sortKey="name"
+              sort={{ key: 'name', dir: 'desc' }}
+              onSort={() => {}}
+            >
               Name
             </Table.SortableHeaderCell>
           </tr>
@@ -126,8 +134,12 @@ describe('Table.Row sticky offsets', () => {
       <table>
         <tbody>
           <Table.Row>
-            <Table.Cell sticky width={32}>a</Table.Cell>
-            <Table.Cell sticky width={160}>b</Table.Cell>
+            <Table.Cell sticky width={32}>
+              a
+            </Table.Cell>
+            <Table.Cell sticky width={160}>
+              b
+            </Table.Cell>
             <Table.Cell>c</Table.Cell>
           </Table.Row>
         </tbody>
@@ -155,8 +167,15 @@ describe('Table.Row sticky offsets', () => {
       <table>
         <tbody>
           <Table.Row>
-            <Table.CheckboxCell sticky aria-label="Select row" checked={false} onChange={() => {}} />
-            <Table.Cell sticky width={100}>b</Table.Cell>
+            <Table.CheckboxCell
+              sticky
+              aria-label="Select row"
+              checked={false}
+              onChange={() => {}}
+            />
+            <Table.Cell sticky width={100}>
+              b
+            </Table.Cell>
           </Table.Row>
         </tbody>
       </table>
@@ -198,7 +217,12 @@ describe('Table.CheckboxCell', () => {
       <table>
         <thead>
           <tr>
-            <Table.CheckboxCell as="th" aria-label="Select all" checked={false} onChange={() => {}} />
+            <Table.CheckboxCell
+              as="th"
+              aria-label="Select all"
+              checked={false}
+              onChange={() => {}}
+            />
           </tr>
         </thead>
       </table>

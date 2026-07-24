@@ -160,8 +160,17 @@ export class TextEditAction extends AbstractSelectionAction<Application, TextEdi
     super(application, MultipleType.SingleOnly, ElementType.Node);
   }
 
+  isEnabled(arg: Partial<TextEditArg>): boolean {
+    return (
+      super.isEnabled(arg) &&
+      !this.context.model.activeDiagram.selection.nodes[0]?.isEffectivelyLocked()
+    );
+  }
+
   execute(arg?: Partial<TextEditArg>): void {
     const selectedItem = this.context.model.activeDiagram.selection.nodes[0]!;
+    if (selectedItem.isEffectivelyLocked()) return;
+
     const textId = arg?.id ?? 'text';
 
     // Get the current HTML text content

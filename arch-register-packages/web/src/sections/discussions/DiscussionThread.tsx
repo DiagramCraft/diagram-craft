@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { TbMessage, TbPencil, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import type { DiscussionObjectType, DiscussionPost } from '@arch-register/api-types/discussionContract';
+import type {
+  DiscussionObjectType,
+  DiscussionPost
+} from '@arch-register/api-types/discussionContract';
 import { useAuth } from '../../auth/AuthContext';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import {
@@ -83,18 +86,34 @@ type PostProps = {
   onDelete: () => void;
 };
 
-const DiscussionPostItem = ({ post, reply, currentUserId, replying, onReply, onEdit, onDelete }: PostProps) => {
+const DiscussionPostItem = ({
+  post,
+  reply,
+  currentUserId,
+  replying,
+  onReply,
+  onEdit,
+  onDelete
+}: PostProps) => {
   const [editing, setEditing] = useState(false);
   const isAuthor = currentUserId != null && currentUserId === post.authorId;
 
   return (
     <div className={reply ? styles.postReply : styles.post}>
-      <MemberAvatar name={post.authorName} email={null} userId={post.authorId ?? 'unknown'} size={26} hideTooltip />
+      <MemberAvatar
+        name={post.authorName}
+        email={null}
+        userId={post.authorId ?? 'unknown'}
+        size={26}
+        hideTooltip
+      />
       <div className={styles.postBody}>
         <div className={styles.postHead}>
           <span className={styles.postAuthor}>{post.authorName}</span>
           <span className={styles.postWhen}>{formatDateTime(post.createdAt)}</span>
-          {post.editedAt && <span className={styles.postEdited}>edited {formatDateTime(post.editedAt)}</span>}
+          {post.editedAt && (
+            <span className={styles.postEdited}>edited {formatDateTime(post.editedAt)}</span>
+          )}
         </div>
 
         {editing ? (

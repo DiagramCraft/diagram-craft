@@ -3,12 +3,16 @@ import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasCon
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { GuideContextMenu } from './react-app/context-menu-dispatcher/GuideContextMenu';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
+import { LockedElementContextMenu } from './react-app/context-menu-dispatcher/LockedElementContextMenu';
 import { ContextSpecificToolbar } from './react-app/toolbar/ContextSpecificToolbar';
 import { useEventListener } from './react-app/hooks/useEventListener';
 import { useRedraw } from './react-app/hooks/useRedraw';
 import { DocumentTabs } from './react-app/DocumentTabs';
 import { Ruler } from './react-app/Ruler';
-import { ConfigurationContext, type ConfigurationContextType } from './react-app/context/ConfigurationContext';
+import {
+  ConfigurationContext,
+  type ConfigurationContextType
+} from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
 import { LayerIndicator } from './react-app/LayerIndicator';
 import {
@@ -48,6 +52,7 @@ import { RightSidebar } from './react-app/RightSidebar';
 import { LeftSidebar } from './react-app/LeftSidebar';
 import { Application, ApplicationContext, ApplicationUIActions } from './application';
 import { UserState } from './UserState';
+import { CollaborationAwareness } from './CollaborationAwareness';
 import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
 import { CanvasOutline } from './react-app/CanvasOutline';
@@ -168,9 +173,11 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
   } = props;
 
   const userState = useRef(UserState.get());
+  const awareness = useRef<CollaborationAwareness | null>(null);
   const internalApplication = useRef<Application | null>(null);
   if (!internalApplication.current && !props.application) {
-    internalApplication.current = new Application(userState.current);
+    awareness.current ??= new CollaborationAwareness();
+    internalApplication.current = new Application(userState.current, awareness.current);
   }
   const application = props.application ?? internalApplication.current!;
 
@@ -650,6 +657,12 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                               return (
                                 <SelectionContextMenu
                                   target={state as ContextMenuTarget<'selection'>}
+                                />
+                              );
+                            } else if (state.type === 'lockedElement') {
+                              return (
+                                <LockedElementContextMenu
+                                  target={state as ContextMenuTarget<'lockedElement'>}
                                 />
                               );
                             } else if (state.type === 'guide') {

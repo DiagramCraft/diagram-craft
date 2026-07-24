@@ -50,6 +50,20 @@ describe('serializer', () => {
     expect(result[3]).toBe('');
   });
 
+  test('converts node with text.enabled=false', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode({ id: '3b', type: 'rect' });
+    UnitOfWork.execute(layer.diagram, uow =>
+      node.updateProps(props => {
+        props.text = { enabled: false };
+      }, uow)
+    );
+
+    const result = serialize(layer);
+
+    expect(result[1]).toContain('props: "text.enabled=false"');
+  });
+
   test('converts node with metadata name', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '4', type: 'rect' });
@@ -154,7 +168,6 @@ describe('serializer', () => {
 
     // Add label node as child of edge
     UnitOfWork.execute(diagram, uow => edge.addChild(labelNode, uow));
-    edge.labelNodes.push(labelNode.asLabelNode());
 
     const result = serialize(layer);
 
@@ -388,7 +401,6 @@ describe('serializer', () => {
     UnitOfWork.execute(diagram, uow => edge.setEnd(new AnchorEndpoint(node2, 'c'), uow));
     UnitOfWork.execute(diagram, uow => labelNode.setText('says "hi"', uow));
     UnitOfWork.execute(diagram, uow => edge.addChild(labelNode, uow));
-    edge.labelNodes.push(labelNode.asLabelNode());
 
     const result = serialize(layer);
     const edgeLine = result.find(line => line.startsWith('"edge \\"1\\"":'));

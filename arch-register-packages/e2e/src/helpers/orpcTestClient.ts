@@ -4,17 +4,24 @@ import type { AnyContractRouter, ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { projectContract } from '@arch-register/api-types/projectContract';
 import { authPublicContract, authProtectedContract } from '@arch-register/api-types/authContract';
+import { devContract } from '@arch-register/api-types/devContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
+import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
+import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { aiContract } from '@arch-register/api-types/aiContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
+import { jobsContract } from '@arch-register/api-types/jobsContract';
+import { webhookContract } from '@arch-register/api-types/webhookContract';
+import { documentContract } from '@arch-register/api-types/documentContract';
+import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
 
 const makeFetch =
   (auth?: string) =>
@@ -34,22 +41,31 @@ const makeClient = <T extends AnyContractRouter>(contract: T, baseUrl: string, a
 
 export const createTestORPCClient = (baseUrl: string, auth?: string) => {
   const make = <T extends AnyContractRouter>(contract: T) => makeClient(contract, baseUrl, auth);
+  const documents = make(documentContract);
 
   return {
     projects: make(projectContract).projects,
+    changeCases: make(changeCaseContract).changeCases,
     auth: make(authPublicContract).auth,
     authProtected: make(authProtectedContract).authProtected,
+    dev: make(devContract).dev,
     entities: make(workspaceEntityContract).entities,
+    entityQueryText: make(workspaceEntityContract).entityQueryText,
     enums: make(workspaceEnumContract).enums,
     schemas: make(workspaceSchemaContract).schemas,
     search: make(searchContract).search,
     templates: make(workspaceTemplateContract).templates,
     views: make(workspaceViewContract).views,
+    collections: make(workspaceCollectionContract).collections,
     workspaces: make(workspaceManagementContract).workspaces,
     config: make(workspaceConfigContract).config,
     audit: make(auditContract).audit,
+    governance: make(governanceContract).governance,
     ai: make(aiContract).ai,
-    diagramCraft: make(diagramCraftContract).diagramCraft
+    diagramCraft: make(diagramCraftContract).diagramCraft,
+    jobs: make(jobsContract).jobs,
+    webhooks: make(webhookContract).webhooks,
+    documents
   };
 };
 

@@ -8,7 +8,8 @@ import type {
   WorkspaceAuthorizationContext,
   WorkspaceTeam,
   WorkspaceRole,
-  WorkspaceRoleDefinition
+  WorkspaceRoleDefinition,
+  WorkspaceCapability
 } from './types.js';
 import { getGlobalPermissionsForRoles, resolveWorkspaceRoleDefinitions } from './constants.js';
 
@@ -65,13 +66,17 @@ export type WorkspaceAuthorizationContextData = {
   workspaceRoles?: WorkspaceRoleDefinition[];
   teamAssignments?: TeamAssignment[];
   teams?: WorkspaceTeam[];
+  workspaceCapabilityCeiling?: WorkspaceCapability[];
 };
 
-export type AuthorizationContextData = WorkspaceAuthorizationContextData & {
+export type EntityAuthorizationContextData = {
   schemas: EntitySchema[];
   entities: Entity[];
   grants: EntityGrant[];
 };
+
+export type AuthorizationContextData = WorkspaceAuthorizationContextData &
+  EntityAuthorizationContextData;
 
 export const buildWorkspaceAuthorizationContext = ({
   userId,
@@ -79,7 +84,8 @@ export const buildWorkspaceAuthorizationContext = ({
   workspaceRole,
   workspaceRoles,
   teamAssignments,
-  teams
+  teams,
+  workspaceCapabilityCeiling
 }: WorkspaceAuthorizationContextData): WorkspaceAuthorizationContext => {
   const normalizedTeams = teams ?? [];
   const normalizedWorkspaceRoles = resolveWorkspaceRoleDefinitions(workspaceRoles ?? []);
@@ -102,7 +108,10 @@ export const buildWorkspaceAuthorizationContext = ({
     teamIds: new Set(normalizedAssignments.map(assignment => assignment.teamId)),
     teamAssignments: normalizedAssignments,
     teamRolesByTeam,
-    teams: normalizedTeams
+    teams: normalizedTeams,
+    ...(workspaceCapabilityCeiling
+      ? { workspaceCapabilityCeiling: new Set(workspaceCapabilityCeiling) }
+      : {})
   };
 };
 
@@ -120,29 +129,27 @@ export const buildAuthorizationContext = ({
   };
 };
 
-export const fetchAuthorizationContextData = async (
+export const buildEntityAuthorizationContext = (
+  workspaceContext: WorkspaceAuthorizationContext,
+  { schemas, entities, grants }: EntityAuthorizationContextData
+): AuthorizationContext => ({
+  ...workspaceContext,
+  schemas: new Map(schemas.map(schema => [schema.id, schema])),
+  entities: new Map(entities.map(entity => [entity.id, entity])),
+  grants
+});
+
+export const fetchWorkspaceAuthorizationContextData = async (
   dataProvider: PermissionDataProvider,
   workspaceId: string,
   userId: string
-): Promise<AuthorizationContextData> => {
-  const [
-    globalRoles,
-    workspaceRole,
-    workspaceRoles,
-    teamAssignments,
-    teams,
-    schemas,
-    entities,
-    grants
-  ] = await Promise.all([
+): Promise<WorkspaceAuthorizationContextData> => {
+  const [globalRoles, workspaceRole, workspaceRoles, teamAssignments, teams] = await Promise.all([
     dataProvider.getGlobalRoles(userId),
     dataProvider.getWorkspaceRole(workspaceId, userId),
     dataProvider.getWorkspaceRoles?.(workspaceId) ?? Promise.resolve([]),
     dataProvider.getTeamAssignments(workspaceId, userId),
-    dataProvider.getTeams(workspaceId),
-    dataProvider.getSchemas(workspaceId),
-    dataProvider.getEntities(workspaceId),
-    dataProvider.getEntityGrants(workspaceId)
+    dataProvider.getTeams(workspaceId)
   ]);
 
   return {
@@ -151,9 +158,32 @@ export const fetchAuthorizationContextData = async (
     workspaceRole,
     workspaceRoles,
     teamAssignments,
-    teams,
-    schemas,
-    entities,
-    grants
+    teams
   };
+};
+
+export const fetchEntityAuthorizationContextData = async (
+  dataProvider: PermissionDataProvider,
+  workspaceId: string
+): Promise<EntityAuthorizationContextData> => {
+  const [schemas, entities, grants] = await Promise.all([
+    dataProvider.getSchemas(workspaceId),
+    dataProvider.getEntities(workspaceId),
+    dataProvider.getEntityGrants(workspaceId)
+  ]);
+
+  return { schemas, entities, grants };
+};
+
+export const fetchAuthorizationContextData = async (
+  dataProvider: PermissionDataProvider,
+  workspaceId: string,
+  userId: string
+): Promise<AuthorizationContextData> => {
+  const [workspaceData, entityData] = await Promise.all([
+    fetchWorkspaceAuthorizationContextData(dataProvider, workspaceId, userId),
+    fetchEntityAuthorizationContextData(dataProvider, workspaceId)
+  ]);
+
+  return { ...workspaceData, ...entityData };
 };

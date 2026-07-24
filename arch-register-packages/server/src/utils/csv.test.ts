@@ -42,6 +42,10 @@ describe('escapeCsvValue', () => {
   it('converts booleans to strings', () => {
     expect(escapeCsvValue(true)).toBe('true');
   });
+
+  it.each(['=SUM(A1:A2)', '+1', '-1', '@username'])('prefixes formula-like values: %s', value => {
+    expect(escapeCsvValue(value)).toBe(`'${value}`);
+  });
 });
 
 describe('generateCsv', () => {

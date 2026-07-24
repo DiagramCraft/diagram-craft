@@ -30,6 +30,7 @@ const entity = (
     _tags: [],
     _links: [],
     _visibilityMode: 'public',
+    _projectId: null,
     _completeness: null,
     canView: true,
     canEdit: true,
@@ -60,7 +61,9 @@ describe('buildExploreGraph', () => {
       config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
     });
 
-    expect(graph.columns.find(column => column.index === 0)?.entities.map(entity => entity.entityId)).toEqual(['a', 'b']);
+    expect(
+      graph.columns.find(column => column.index === 0)?.entities.map(entity => entity.entityId)
+    ).toEqual(['a', 'b']);
   });
 
   it('uses incoming relations on the left and outgoing relations on the right', () => {
@@ -95,12 +98,26 @@ describe('buildExploreGraph', () => {
       config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
     });
 
-    expect(graph.columns.find(column => column.index === -1)?.entities.map(entity => entity.entityId)).toEqual(['left-1']);
-    expect(graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)).toEqual(['right-1']);
+    expect(
+      graph.columns.find(column => column.index === -1)?.entities.map(entity => entity.entityId)
+    ).toEqual(['left-1']);
+    expect(
+      graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)
+    ).toEqual(['right-1']);
     expect(graph.connectors).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ fromColumn: -1, fromEntityId: 'left-1', toColumn: 0, toEntityId: 'a' }),
-        expect.objectContaining({ fromColumn: 0, fromEntityId: 'a', toColumn: 1, toEntityId: 'right-1' })
+        expect.objectContaining({
+          fromColumn: -1,
+          fromEntityId: 'left-1',
+          toColumn: 0,
+          toEntityId: 'a'
+        }),
+        expect.objectContaining({
+          fromColumn: 0,
+          fromEntityId: 'a',
+          toColumn: 1,
+          toEntityId: 'right-1'
+        })
       ])
     );
   });
@@ -141,7 +158,9 @@ describe('buildExploreGraph', () => {
       config: { leftDepth: 2, rightDepth: 1, relationFieldNames: [] }
     });
 
-    expect(graph.columns.find(column => column.index === -2)?.entities.map(entity => entity.entityId)).toEqual(['left-2']);
+    expect(
+      graph.columns.find(column => column.index === -2)?.entities.map(entity => entity.entityId)
+    ).toEqual(['left-2']);
     expect(graph.columns.find(column => column.index === 2)).toBeUndefined();
   });
 
@@ -176,7 +195,9 @@ describe('buildExploreGraph', () => {
       config: { leftDepth: 1, rightDepth: 1, relationFieldNames: ['Depends On'] }
     });
 
-    expect(graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)).toEqual(['keep-me']);
+    expect(
+      graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)
+    ).toEqual(['keep-me']);
     expect(graph.connectors).toHaveLength(1);
     expect(graph.connectors[0]).toEqual(
       expect.objectContaining({ fieldName: 'Depends On', toEntityId: 'keep-me' })
@@ -214,7 +235,9 @@ describe('buildExploreGraph', () => {
       config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
     });
 
-    expect(graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)).toEqual(['reference-1']);
+    expect(
+      graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)
+    ).toEqual(['reference-1']);
     expect(graph.connectors).toHaveLength(1);
     expect(graph.connectors[0]).toEqual(
       expect.objectContaining({ toEntityId: 'reference-1', kind: 'reference' })
@@ -291,8 +314,24 @@ describe('buildDefaultRelationFieldNames', () => {
         description: '',
         key_prefix: 'APP',
         fields: [
-          { id: 'dependsOn', name: 'Depends On', type: 'reference', schemaId: 'service', minCount: 0, maxCount: -1, requirementLevel: null },
-          { id: 'parent', name: 'Parent', type: 'containment', schemaId: 'application', minCount: 0, maxCount: 1, requirementLevel: null }
+          {
+            id: 'dependsOn',
+            name: 'Depends On',
+            type: 'reference',
+            schemaId: 'service',
+            minCount: 0,
+            maxCount: -1,
+            requirementLevel: null
+          },
+          {
+            id: 'parent',
+            name: 'Parent',
+            type: 'containment',
+            schemaId: 'application',
+            minCount: 0,
+            maxCount: 1,
+            requirementLevel: null
+          }
         ],
         color: null,
         icon: null,

@@ -76,9 +76,7 @@ export class NodeTool extends AbstractTool {
               cancelLabel: $t('common.cancel', 'Cancel')
             },
             () => {
-              this.diagram.undoManager.execute('Convert to path', uow =>
-                el.convertToPath(uow)
-              );
+              this.diagram.undoManager.execute('Convert to path', uow => el.convertToPath(uow));
               this.diagram.selection.setElements([el]);
             }
           )

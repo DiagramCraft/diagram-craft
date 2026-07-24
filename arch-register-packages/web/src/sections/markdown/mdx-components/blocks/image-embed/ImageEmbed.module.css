@@ -8,12 +8,6 @@
   cursor: pointer;
 }
 
-.loading {
-  color: var(--cmp-fg-disabled);
-  font-style: italic;
-  font-size: 13px;
-}
-
 .image {
   display: block;
   max-width: 100%;

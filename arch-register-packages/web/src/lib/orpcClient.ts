@@ -7,19 +7,35 @@ import { assessmentContract } from '@arch-register/api-types/assessmentContract'
 import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
+import { devContract } from '@arch-register/api-types/devContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
+import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
+import { milestoneContract } from '@arch-register/api-types/milestoneContract';
+import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
+import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
+import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
 import { discussionContract } from '@arch-register/api-types/discussionContract';
+import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
+import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
+import { jobsContract } from '@arch-register/api-types/jobsContract';
+import { externalContentContract } from '@arch-register/api-types/externalContentContract';
+import { webhookContract } from '@arch-register/api-types/webhookContract';
+import { automationRuleContract } from '@arch-register/api-types/automationRuleContract';
+import { documentContract } from '@arch-register/api-types/documentContract';
+import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
+import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
+import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
@@ -43,20 +59,36 @@ const webContracts = {
   ...aiContract,
   ...authPublicContract,
   ...authProtectedContract,
+  ...devContract,
   ...workspaceAnalyticsContract,
+  ...workspaceMetricContract,
+  ...jobsContract,
+  ...externalContentContract,
+  ...webhookContract,
+  ...automationRuleContract,
+  ...documentContract,
+  ...entityChangeContract,
+  ...entityDeprecationContract,
+  ...governanceContract,
   ...diagramCraftContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceEntityContract,
+  ...entityVersionContract,
   ...workspaceViewContract,
+  ...workspaceCollectionContract,
   ...workspaceManagementContract,
   ...workspaceConfigContract,
   ...projectContract,
+  ...milestoneContract,
+  ...changeCaseContract,
   ...assessmentContract,
   ...assessmentResponseContract,
   ...auditContract,
   ...watchContract,
+  ...notificationPreferencesContract,
   ...discussionContract,
+  ...wikiCommentContract,
   ...searchContract,
   ...workspaceTemplateContract
 };

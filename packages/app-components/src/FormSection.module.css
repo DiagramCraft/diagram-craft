@@ -16,7 +16,7 @@
     margin-bottom: 9px;
 
     &::after {
-      content: '';
+      content: "";
       flex: 1;
       height: 1px;
       background: var(--panel-border);

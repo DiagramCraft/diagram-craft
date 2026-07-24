@@ -171,13 +171,15 @@ describe('sanitizeHtml', () => {
   });
 
   it('should remove link and style tags', () => {
-    const input = '<link rel="stylesheet" href="evil.css"><style>body { display: none; }</style><p>Content</p>';
+    const input =
+      '<link rel="stylesheet" href="evil.css"><style>body { display: none; }</style><p>Content</p>';
     const result = sanitizeHtml(input);
     expect(result).toBe('<p>Content</p>');
   });
 
   it('should remove form tags', () => {
-    const input = '<div>Before</div><form action="evil.com"><input type="text"></form><div>After</div>';
+    const input =
+      '<div>Before</div><form action="evil.com"><input type="text"></form><div>After</div>';
     const result = sanitizeHtml(input);
     expect(result).toBe('<div>Before</div><div>After</div>');
   });
@@ -207,13 +209,15 @@ describe('sanitizeHtml', () => {
   });
 
   it('should preserve safe HTML elements', () => {
-    const input = '<div><p>Paragraph</p><span>Span</span><strong>Bold</strong><em>Italic</em></div>';
+    const input =
+      '<div><p>Paragraph</p><span>Span</span><strong>Bold</strong><em>Italic</em></div>';
     const result = sanitizeHtml(input);
     expect(result).toBe(input);
   });
 
   it('should preserve safe attributes', () => {
-    const input = '<div class="container" id="main"><a href="https://example.com">Link</a><img src="image.jpg" alt="Description"></div>';
+    const input =
+      '<div class="container" id="main"><a href="https://example.com">Link</a><img src="image.jpg" alt="Description"></div>';
     const result = sanitizeHtml(input);
     expect(result).toBe(input);
   });

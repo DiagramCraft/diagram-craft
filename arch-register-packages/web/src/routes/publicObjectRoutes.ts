@@ -46,10 +46,26 @@ export const projectMarkdownRoute = <TSearch = undefined>(
   nodeId: string,
   search?: TSearch
 ) =>
-  withSearch({
-    to: '/$workspaceSlug/projects/$projectId/wiki/$nodeId' as const,
-    params: { workspaceSlug, projectId, nodeId }
-  }, search);
+  withSearch(
+    {
+      to: '/$workspaceSlug/projects/$projectId/wiki/$nodeId' as const,
+      params: { workspaceSlug, projectId, nodeId }
+    },
+    search
+  );
+
+export const projectMarkdownDraftRoute = (
+  workspaceSlug: string,
+  projectId: ProjectPublicId,
+  search?: { draftName?: string; draftFolder?: string; draftType?: string; draftTemplate?: string }
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/projects/$projectId/wiki/new' as const,
+      params: { workspaceSlug, projectId }
+    },
+    search
+  );
 
 export const projectContentFolderRoute = <TSearch = undefined>(
   workspaceSlug: string,
@@ -78,6 +94,18 @@ export const workspaceMarkdownRoute = <TSearch = undefined>(
     search
   );
 
+export const workspaceMarkdownDraftRoute = (
+  workspaceSlug: string,
+  search?: { draftName?: string; draftFolder?: string; draftType?: string; draftTemplate?: string }
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/content/wiki/new' as const,
+      params: { workspaceSlug }
+    },
+    search
+  );
+
 export const workspaceContentFolderRoute = <TSearch = undefined>(
   workspaceSlug: string,
   folderPath: string,
@@ -97,10 +125,26 @@ export const entityMarkdownRoute = <TSearch = undefined>(
   nodeId: string,
   search?: TSearch
 ) =>
-  withSearch({
-    to: '/$workspaceSlug/entities/$entityId/wiki/$nodeId' as const,
-    params: { workspaceSlug, entityId, nodeId }
-  }, search);
+  withSearch(
+    {
+      to: '/$workspaceSlug/entities/$entityId/wiki/$nodeId' as const,
+      params: { workspaceSlug, entityId, nodeId }
+    },
+    search
+  );
+
+export const entityMarkdownDraftRoute = (
+  workspaceSlug: string,
+  entityId: EntityPublicId,
+  search?: { draftName?: string; draftFolder?: string; draftType?: string; draftTemplate?: string }
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/entities/$entityId/wiki/new' as const,
+      params: { workspaceSlug, entityId }
+    },
+    search
+  );
 
 export const entityDetailRoute = <TSearch = undefined>(
   workspaceSlug: string,
@@ -147,4 +191,5 @@ export const projectDiagramHref = (
   workspaceSlug: string,
   projectId: ProjectPublicId,
   diagramId: string
-) => `/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/diagrams/${encodeURIComponent(diagramId)}`;
+) =>
+  `/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/diagrams/${encodeURIComponent(diagramId)}`;

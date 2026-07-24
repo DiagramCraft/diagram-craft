@@ -18,6 +18,7 @@ import {
 import { orpcClient } from '../../../lib/orpcClient';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 import styles from './GlobalPermissionsSubSection.module.css';
 
 type AuthUserInfo = {
@@ -27,6 +28,7 @@ type AuthUserInfo = {
   display_name: string | null;
   auth_provider: string;
   is_active: boolean;
+  is_system_actor: boolean;
   color: string | null;
 };
 
@@ -147,7 +149,7 @@ export const GlobalPermissionsSubSection = ({
   return (
     <div className={styles.container}>
       {isLoadingUsers || isLoadingRoles ? (
-        <EmptyState compact title="Loading global role assignments…" />
+        <LoadingState text="Loading global role assignments…" size="sm" />
       ) : assignedUsers.length === 0 ? (
         <EmptyState compact title="No users currently have global roles." />
       ) : (
@@ -191,12 +193,18 @@ export const GlobalPermissionsSubSection = ({
                     />
                   </Table.Cell>
                   <Table.Cell>
-                    <Chip
-                      tone="ghost"
-                      dot={assignedUser.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                    >
-                      {assignedUser.is_active ? 'Active' : 'Inactive'}
-                    </Chip>
+                    {assignedUser.is_system_actor ? (
+                      <Chip tone="ghost" dot="var(--cmp-fg-disabled)">
+                        System
+                      </Chip>
+                    ) : (
+                      <Chip
+                        tone="ghost"
+                        dot={assignedUser.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                      >
+                        {assignedUser.is_active ? 'Active' : 'Inactive'}
+                      </Chip>
+                    )}
                   </Table.Cell>
                 </Table.Row>
               );
@@ -347,7 +355,7 @@ const AddUserDialog = ({
               </div>
               <div className={styles.fieldRight}>
                 <Select.Root
-                  value={selectedUserId || undefined}
+                  value={selectedUserId ?? undefined}
                   onChange={value => setSelectedUserId(value ?? '')}
                   style={{ width: '100%' }}
                 >

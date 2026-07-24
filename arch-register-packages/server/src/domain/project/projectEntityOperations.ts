@@ -1,6 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { defineEntityOperation, defineOperation } from '../operation';
 import {
   canAccessProject,
   requireEntityAction,
@@ -161,7 +161,7 @@ export const getEntityProjects = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<EntityProject[]> => {
-  return defineOperation(
+  return defineEntityOperation(
     db,
     workspace,
     event,

@@ -1,4 +1,4 @@
-import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Diagram } from '@diagram-craft/model/diagram';

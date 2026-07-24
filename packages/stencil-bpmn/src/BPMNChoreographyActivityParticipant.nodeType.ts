@@ -7,7 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { getIcon, Markers, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
 import { linesVerticalIcon } from './icons/icons';
@@ -67,32 +67,33 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
     );
   }
 
-  static Shape = class extends BaseNodeComponent<BPMNChoreographyActivityParticipantNodeDefinition> {
-    private getData(node: DiagramNode): Data {
-      const data = node.metadata.data?.data?.find(
-        e => e.schema === 'bpmnChoreographyActivityParticipant'
-      );
-      return { ...(data?.data ?? {}) } as Data;
-    }
-
-    buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
-      builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
-      builder.text(this);
-
-      const data = this.getData(props.node);
-      const markers: Markers = { left: [], center: [], right: [] };
-
-      if (data.multiple) {
-        markers.center.push(getIcon(linesVerticalIcon));
+  static Shape =
+    class extends BaseNodeComponent<BPMNChoreographyActivityParticipantNodeDefinition> {
+      private getData(node: DiagramNode): Data {
+        const data = node.metadata.data?.data?.find(
+          e => e.schema === 'bpmnChoreographyActivityParticipant'
+        );
+        return { ...(data?.data ?? {}) } as Data;
       }
 
-      renderMarkers(props.node, markers, builder, {
-        size: ICON_SIZE,
-        bottomMargin: BOTTOM_MARGIN,
-        spacing: ICON_MARGIN
-      });
-    }
-  };
+      buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
+        builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
+        builder.text(this);
+
+        const data = this.getData(props.node);
+        const markers: Markers = { left: [], center: [], right: [] };
+
+        if (data.multiple) {
+          markers.center.push(getIcon(linesVerticalIcon));
+        }
+
+        renderMarkers(props.node, markers, builder, {
+          size: ICON_SIZE,
+          bottomMargin: BOTTOM_MARGIN,
+          spacing: ICON_MARGIN
+        });
+      }
+    };
 
   getBoundingPathBuilder(def: DiagramNode) {
     const position = def.renderProps.custom.bpmnChoreographyActivityParticipant?.position ?? 'top';

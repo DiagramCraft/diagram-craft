@@ -1,17 +1,20 @@
 import { useEffect, useMemo } from 'react';
-import { useEntities, useEntityCount, useEntityFacets } from '../../../hooks/useEntities';
+import { useEntities, useEntityFacets } from '../../../hooks/useEntities';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import { parseDateValue } from './entityBrowserState';
+import { parseDateValue, withLiveSearchText } from './entityBrowserState';
 
 type UseEntityBrowserDataProps = {
   workspaceId: string;
   projectId?: string;
+  collectionId?: string | null;
   projectScope: 'project' | 'all';
   schemas: EntitySchema[];
   q: string;
   conditions: FilterCondition[];
+  entityQuery?: EntityQuery | null;
   joinAssessmentId?: string | null;
   typeFilter: string | null;
   ownerFilter: string | null;
@@ -23,17 +26,19 @@ type UseEntityBrowserDataProps = {
   disablePaging?: boolean;
   enabled?: boolean;
   asOf?: string;
-  includeProjectSnapshots?: boolean;
+  includePlannedChanges?: boolean;
   onCountChange?: (count: number) => void;
 };
 
 export const useEntityBrowserData = ({
   workspaceId,
   projectId,
+  collectionId,
   projectScope,
   schemas,
   q,
   conditions,
+  entityQuery,
   joinAssessmentId,
   typeFilter,
   ownerFilter,
@@ -45,7 +50,7 @@ export const useEntityBrowserData = ({
   disablePaging = false,
   enabled = true,
   asOf,
-  includeProjectSnapshots = true,
+  includePlannedChanges = true,
   onCountChange
 }: UseEntityBrowserDataProps) => {
   const isPagedBrowse = !disablePaging && (view === 'table' || view === 'cards') && sort === 'name';
@@ -53,9 +58,19 @@ export const useEntityBrowserData = ({
   // While browsing a snapshot date, the "show all entities" toggle has no effect within a
   // project — only project-linked entities are ever shown.
   const effectiveProjectScope = asOf && projectId ? 'project' : projectScope;
+  const executionEntityQuery = entityQuery
+    ? withLiveSearchText(
+        {
+          ...entityQuery,
+          ...(projectId ? { projectId, projectScope: effectiveProjectScope } : {})
+        },
+        q
+      )
+    : null;
 
   const {
     data: pagedEntities = [],
+    total: pagedTotal,
     isLoading: isPagedLoading,
     isFetching: isPagedFetching
   } = useEntities(
@@ -64,22 +79,25 @@ export const useEntityBrowserData = ({
       schemaId: typeFilter,
       owner: ownerFilter,
       lifecycle: statusFilter,
-      q,
-      conditions,
-      assessmentId: joinAssessmentId,
+      q: executionEntityQuery ? undefined : q,
+      conditions: executionEntityQuery ? undefined : conditions,
+      entityQuery: executionEntityQuery,
+      assessmentId: executionEntityQuery?.assessmentId ?? joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
+      collectionId: collectionId ?? undefined,
       view: 'full',
       limit: isPagedBrowse ? pageSize : undefined,
       offset: isPagedBrowse ? pagedOffset : undefined,
       asOf,
-      includeProjectSnapshots
+      includePlannedChanges
     },
     { enabled: enabled && isPagedBrowse && !!workspaceId }
   );
 
   const {
     data: fullEntities = [],
+    total: fullTotal,
     isLoading: isFullLoading,
     isFetching: isFullFetching
   } = useEntities(
@@ -88,36 +106,22 @@ export const useEntityBrowserData = ({
       schemaId: typeFilter,
       owner: ownerFilter,
       lifecycle: statusFilter,
-      q,
-      conditions,
-      assessmentId: joinAssessmentId,
+      q: executionEntityQuery ? undefined : q,
+      conditions: executionEntityQuery ? undefined : conditions,
+      entityQuery: executionEntityQuery,
+      assessmentId: executionEntityQuery?.assessmentId ?? joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
+      collectionId: collectionId ?? undefined,
       view: 'full',
       asOf,
-      includeProjectSnapshots
+      includePlannedChanges
     },
     { enabled: enabled && !isPagedBrowse && !!workspaceId }
   );
 
   const entities = isPagedBrowse ? pagedEntities : fullEntities;
   const { data: facets } = useEntityFacets(workspaceId);
-  const { data: entityCount } = useEntityCount(
-    workspaceId,
-    {
-      schemaId: typeFilter,
-      owner: ownerFilter,
-      lifecycle: statusFilter,
-      q,
-      conditions,
-      assessmentId: joinAssessmentId,
-      projectId: projectId ?? undefined,
-      projectScope: projectId ? effectiveProjectScope : undefined,
-      asOf,
-      includeProjectSnapshots
-    },
-    { enabled: enabled && !!workspaceId }
-  );
   const schemaMap = useMemo(() => {
     const map = new Map<string, { schema: EntitySchema; index: number }>();
     schemas.forEach((schema, index) => map.set(schema.id, { schema, index }));
@@ -125,7 +129,7 @@ export const useEntityBrowserData = ({
   }, [schemas]);
 
   const owners = useMemo(() => {
-    if (projectId) {
+    if (projectId || collectionId) {
       return [
         ...new Map(
           entities
@@ -151,7 +155,7 @@ export const useEntityBrowserData = ({
         name: bucket.label ?? bucket.value,
         sort_order: index
       }));
-  }, [entities, facets, projectId]);
+  }, [collectionId, entities, facets, projectId]);
 
   const selectedSchema = typeFilter != null ? (schemaMap.get(typeFilter)?.schema ?? null) : null;
   const dateFields = useMemo(
@@ -207,8 +211,10 @@ export const useEntityBrowserData = ({
   }, [dateBrowserEnabled, entities, sort]);
 
   const filteredCount = filtered.length;
-  const totalCount = entityCount?.total ?? filteredCount;
-  const isLoading = isPagedBrowse ? isPagedLoading || isPagedFetching : isFullLoading || isFullFetching;
+  const totalCount = (isPagedBrowse ? pagedTotal : fullTotal) ?? filteredCount;
+  const isLoading = isPagedBrowse
+    ? isPagedLoading || isPagedFetching
+    : isFullLoading || isFullFetching;
 
   useEffect(() => {
     onCountChange?.(totalCount);

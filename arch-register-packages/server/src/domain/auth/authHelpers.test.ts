@@ -3,7 +3,8 @@ import {
   buildAuthMeResponse,
   buildUserUpdateInput,
   parseRequestedGlobalRoles,
-  selectRefreshToken
+  selectRefreshToken,
+  verifyLoginPassword
 } from './authHelpers';
 import { UserDbResult } from './db/authDatabase';
 
@@ -19,6 +20,7 @@ const user: UserDbResult = {
   oidc_issuer: null,
   oidc_subject: null,
   is_active: true,
+  is_system_actor: false,
   color: '#123456',
   created_at: now,
   updated_at: now,
@@ -34,6 +36,10 @@ describe('auth route helpers', () => {
 
   it('falls back to refresh token from request body', () => {
     expect(selectRefreshToken(null, { refresh_token: 'body-token' })).toBe('body-token');
+  });
+
+  it('performs a dummy password verification when the user is missing', async () => {
+    await expect(verifyLoginPassword(null, 'wrong-password')).resolves.toBe(false);
   });
 
   it('builds the auth me response maps and filters empty memberships', () => {

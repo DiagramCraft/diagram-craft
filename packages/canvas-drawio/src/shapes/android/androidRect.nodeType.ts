@@ -1,6 +1,6 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { RoundedRectComponent } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 export class AndroidRectNodeDefinition extends ShapeNodeDefinition {
   constructor() {

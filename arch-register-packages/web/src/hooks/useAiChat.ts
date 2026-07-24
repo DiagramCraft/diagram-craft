@@ -15,7 +15,7 @@ export const useAiChat = (
   const connection = useMemo(
     () =>
       fetchServerSentEvents(url, {
-        credentials: 'include' as RequestCredentials,
+        credentials: 'include' as RequestCredentials
       }),
     [url]
   );
@@ -24,6 +24,6 @@ export const useAiChat = (
     id: sessionId ?? 'new',
     connection,
     forwardedProps: conversationId ? { conversationId } : undefined,
-    initialMessages,
+    initialMessages
   });
 };

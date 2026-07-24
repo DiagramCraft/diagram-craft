@@ -24,7 +24,9 @@ type SaveDiagramFromGraphDialogProps = {
   workspaceId: string;
   diagramContent: SerializedDiagramDocument;
   defaultName: string;
-  initialDestination?: { type: 'entity'; entityId: string; entityName?: string } | { type: 'workspace' };
+  initialDestination?:
+    | { type: 'entity'; entityId: string; entityName?: string }
+    | { type: 'workspace' };
 };
 
 export const SaveDiagramFromGraphDialog = ({
@@ -59,17 +61,14 @@ export const SaveDiagramFromGraphDialog = ({
     if (!open) return;
     setDestType(defaultDestType);
     setSelectedProjectId('');
-    setSelectedEntityId(
-      initialDestination?.type === 'entity' ? initialDestination.entityId : ''
-    );
+    setSelectedEntityId(initialDestination?.type === 'entity' ? initialDestination.entityId : '');
     setSelectedFolder(null);
     setName(defaultName);
     setError('');
   }, [open, defaultDestType, initialDestination, defaultName]);
 
   // Determine if we're in a "fixed entity" mode (entity was passed in as initialDestination)
-  const fixedEntityId =
-    initialDestination?.type === 'entity' ? initialDestination.entityId : null;
+  const fixedEntityId = initialDestination?.type === 'entity' ? initialDestination.entityId : null;
   const fixedEntityName =
     initialDestination?.type === 'entity' ? initialDestination.entityName : null;
 
@@ -97,7 +96,8 @@ export const SaveDiagramFromGraphDialog = ({
   const isPending = contentOperations.createDiagram.isPending;
 
   const handleSubmit = async () => {
-    const finalName = name.trim() || defaultName;
+    const trimmedName = name.trim();
+    const finalName = trimmedName === '' ? defaultName : trimmedName;
     if (finalName.includes('/')) {
       setError('Name cannot contain /');
       return;
@@ -142,7 +142,12 @@ export const SaveDiagramFromGraphDialog = ({
       title="Choose destination"
       width={480}
       footerLeft={
-        <KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'create']]} />
+        <KbdHints
+          hints={[
+            ['Esc', 'cancel'],
+            ['⌘↵', 'create']
+          ]}
+        />
       }
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
@@ -150,12 +155,14 @@ export const SaveDiagramFromGraphDialog = ({
           label: isPending ? 'Creating...' : 'Create diagram',
           type: 'default',
           disabled: isPending,
-          onClick: () => { void handleSubmit(); }
+          onClick: () => {
+            void handleSubmit();
+          }
         }
       ]}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <FormElement label="Save to">
+        <FormElement label="Save to" required>
           <Select.Root
             value={destType}
             onChange={v => {
@@ -168,9 +175,7 @@ export const SaveDiagramFromGraphDialog = ({
             <Select.Item value="workspace">
               Workspace{workspace?.name ? ` (${workspace.name})` : ''}
             </Select.Item>
-            {!fixedEntityId && (
-              <Select.Item value="entity">Entity</Select.Item>
-            )}
+            {!fixedEntityId && <Select.Item value="entity">Entity</Select.Item>}
             {fixedEntityId && (
               <Select.Item value="entity">
                 Entity{fixedEntityName ? ` (${fixedEntityName})` : ''}
@@ -181,7 +186,7 @@ export const SaveDiagramFromGraphDialog = ({
         </FormElement>
 
         {showEntityPicker && (
-          <FormElement label="Entity">
+          <FormElement label="Entity" required>
             <Select.Root
               value={selectedEntityId}
               onChange={v => {
@@ -200,7 +205,7 @@ export const SaveDiagramFromGraphDialog = ({
         )}
 
         {showProjectPicker && (
-          <FormElement label="Project">
+          <FormElement label="Project" required>
             <Select.Root
               value={selectedProjectId}
               onChange={v => {
@@ -219,7 +224,7 @@ export const SaveDiagramFromGraphDialog = ({
         )}
 
         {folderPickerEnabled && (
-          <FormElement label="Folder">
+          <FormElement label="Folder" required={false}>
             <FolderPickerTree
               folders={activeFolders}
               selected={selectedFolder}
@@ -230,6 +235,7 @@ export const SaveDiagramFromGraphDialog = ({
 
         <FormElement
           label="Diagram name"
+          required={false}
           hint={selectedFolder ? `Will be created in ${selectedFolder}` : undefined}
           error={error}
         >

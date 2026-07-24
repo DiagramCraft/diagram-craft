@@ -20,7 +20,13 @@ export const getFileNodeIcon = (type: ContentNodeType, size = 13): React.ReactEl
 
 /** Human-readable label for rename / delete dialogs */
 export const entityTypeLabel = (type: ContentNodeType): string =>
-  type === 'folder' ? 'folder' : type === 'markdown' ? 'document' : type === 'file' ? 'file' : 'diagram';
+  type === 'folder'
+    ? 'folder'
+    : type === 'markdown'
+      ? 'document'
+      : type === 'file'
+        ? 'file'
+        : 'diagram';
 
 /** Delete dialog title */
 export const deleteTitle = (type: ContentNodeType): string => `Delete ${entityTypeLabel(type)}?`;
@@ -38,7 +44,11 @@ export const deleteMessage = (target: MenuTarget): React.ReactNode => {
       </>
     );
   if (target.type === 'markdown')
-    return <>The document <b>{target.file.name}</b> will be permanently deleted.</>;
+    return (
+      <>
+        The document <b>{target.file.name}</b> will be permanently deleted.
+      </>
+    );
   if (target.type === 'file')
     return (
       <>
@@ -46,5 +56,9 @@ export const deleteMessage = (target: MenuTarget): React.ReactNode => {
         deleted.
       </>
     );
-  return <>The diagram <b>{target.file.name}</b> will be permanently deleted.</>;
+  return (
+    <>
+      The diagram <b>{target.file.name}</b> will be permanently deleted.
+    </>
+  );
 };

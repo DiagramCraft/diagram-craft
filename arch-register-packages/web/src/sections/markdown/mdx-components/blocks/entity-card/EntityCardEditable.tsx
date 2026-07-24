@@ -50,7 +50,12 @@ export const EntityCardEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={!!entityId}
-      placeholder={<><TbId size={16} /><span>Choose entity…</span></>}
+      placeholder={
+        <>
+          <TbId size={16} />
+          <span>Choose entity…</span>
+        </>
+      }
       content={<EntityCard id={entityId} fields={fields} />}
       dialog={(open, onClose) => (
         <EntityCardDialog element={element} open={open} onClose={onClose} isNew={isNew} />

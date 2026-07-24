@@ -53,7 +53,13 @@ describe('import review state', () => {
       nameMatches: []
     });
     expect(
-      toImportReviewRow({ rowNumber: 2, errors: [], entity, isUpdate: true, existingEntity: entity })
+      toImportReviewRow({
+        rowNumber: 2,
+        errors: [],
+        entity,
+        isUpdate: true,
+        existingEntity: entity
+      })
     ).toMatchObject({ accepted: false, hasChanges: false });
     expect(
       toImportReviewRow({
@@ -100,7 +106,10 @@ describe('import review state', () => {
 
   it('prepares sorted detail entries and display formatting', () => {
     expect(getImportDetailEntries({ z: 1, _name: 'Name', empty: '', _owner: 'Owner' })).toEqual({
-      metadata: [['_name', 'Name'], ['_owner', 'Owner']],
+      metadata: [
+        ['_name', 'Name'],
+        ['_owner', 'Owner']
+      ],
       custom: [['z', 1]]
     });
     expect(formatImportFieldLabel('_owner')).toBe('Owner');

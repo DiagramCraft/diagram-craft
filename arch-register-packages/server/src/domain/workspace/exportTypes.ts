@@ -1,6 +1,19 @@
 // Export/Import type definitions for workspace data
 
-export type ExportDataType = 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes';
+import type {
+  DocumentAiAction,
+  DocumentField,
+  DocumentGeneratedMetadata,
+  DocumentMetadata
+} from '@arch-register/api-types/documentContract';
+
+export type ExportDataType =
+  | 'config'
+  | 'schemas'
+  | 'entities'
+  | 'projects'
+  | 'content_nodes'
+  | 'documents';
 
 export type ExportManifest = {
   version: string;
@@ -19,6 +32,7 @@ export type ExportManifest = {
     entities?: string;
     projects?: string;
     content_nodes?: string;
+    documents?: string;
     content_directory?: string;
   };
   statistics: {
@@ -27,6 +41,9 @@ export type ExportManifest = {
     schema_count: number;
     content_node_count: number;
     total_content_size_bytes: number;
+    document_type_count?: number;
+    document_template_count?: number;
+    document_revision_count?: number;
   };
   checksums: Record<string, string>;
 };
@@ -63,6 +80,7 @@ export type ExportSchema = {
   id: string;
   name: string;
   fields: unknown[];
+  templates?: import('@arch-register/api-types/schemaContract').EntityTemplate[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
@@ -84,7 +102,7 @@ export type ExportEntity = {
   tags: string[];
   links: unknown[];
   data: Record<string, unknown>;
-  visibility_mode: 'public' | 'restricted' | null;
+  project_id: string | null;
   grants?: Array<{
     id: string;
     principal_type: 'user' | 'team';
@@ -116,6 +134,58 @@ export type ExportContentNode = {
   is_workspace_template: boolean;
   content_file?: string;
   preview_file?: string;
+};
+
+export type ExportDocumentData = {
+  types: Array<{
+    id: string;
+    workspace: string;
+    name: string;
+    description: string;
+    fields: DocumentField[];
+    aiActions?: DocumentAiAction[];
+    color: string | null;
+    icon: string | null;
+    archived: boolean;
+    created_at: string;
+    updated_at: string;
+  }>;
+  templates: Array<{
+    id: string;
+    workspace: string;
+    project_id: string | null;
+    name: string;
+    body: string;
+    document_type_id: string;
+    metadata_defaults: DocumentMetadata;
+    archived: boolean;
+    created_at: string;
+    updated_at: string;
+  }>;
+  metadata: Array<{
+    node_id: string;
+    document_type_id: string | null;
+    values: DocumentMetadata;
+    generated_metadata?: DocumentGeneratedMetadata;
+    links: Array<{
+      field_id: string;
+      target_type: 'entity' | 'document';
+      target_id: string;
+      position: number;
+    }>;
+  }>;
+  revisions: Array<{
+    id: string;
+    node_id: string;
+    revision_number: number;
+    title: string | null;
+    body: string;
+    created_at: string;
+    created_by: string | null;
+    restored_from_revision_id: string | null;
+    document_type_id: string | null;
+    metadata: DocumentMetadata;
+  }>;
 };
 
 export type ExportOptions = {
@@ -194,6 +264,12 @@ export type ImportParseResult = {
       count: number;
       conflicts: number;
     };
+    documents?: {
+      count: number;
+      templates: number;
+      revisions: number;
+      conflicts: number;
+    };
   };
   conflicts: ImportConflict[];
   errors: string[];
@@ -238,6 +314,12 @@ export type ImportExecuteResult = {
     content_nodes?: {
       created: number;
       updated: number;
+    };
+    documents?: {
+      created: number;
+      templates: number;
+      metadata: number;
+      revisions: number;
     };
   };
   errors: string[];

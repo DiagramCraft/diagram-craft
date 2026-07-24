@@ -1,6 +1,6 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { CustomPropertyDefinition } from './elementDefinitionRegistry';
+import { CustomPropertyDefinition } from './customProperty';
 import { DiagramEdge } from './diagramEdge';
 import { DiagramElement, isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
@@ -84,12 +84,29 @@ export const EdgeFlags = {
 
 export type EdgeDropOperation = 'attach' | 'split';
 
+/**
+ * Contract implemented by every edge shape (simple line, block arrow, ...).
+ *
+ * An `EdgeDefinition` is a stateless, singleton-per-type description of an edge's
+ * behavior and editable properties. It is registered once (see `EdgeDefinitionRegistry`)
+ * and shared by every {@link DiagramEdge} of that `type`; per-instance state lives on
+ * the edge itself, not here. {@link AbstractEdgeDefinition} provides a base implementation
+ * with sensible drop-handling defaults.
+ */
 export interface EdgeDefinition {
+  /** Unique edge type id (e.g. `'simple'`, `'blockArrow'`), used as the registry key. */
   type: string;
+
+  /** Human-readable display name shown in pickers, tooltips, and panels. */
   name: string;
 
+  /** Whether this edge type supports the given {@link EdgeFlag} (see {@link EdgeFlags}). */
   hasFlag(flag: EdgeFlag): boolean;
 
+  /**
+   * Called when elements are dropped onto this edge, either attaching them as a
+   * label node or splitting the edge at the drop point (see {@link EdgeDropOperation}).
+   */
   onDrop(
     coord: Point,
     edge: DiagramEdge,
@@ -98,6 +115,7 @@ export interface EdgeDefinition {
     operation: EdgeDropOperation
   ): void;
 
+  /** Returns the custom (shape-specific) properties editable for this edge. */
   getCustomPropertyDefinitions(edge: DiagramEdge): CustomPropertyDefinition;
 }
 

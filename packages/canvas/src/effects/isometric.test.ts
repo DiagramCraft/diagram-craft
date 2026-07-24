@@ -27,9 +27,7 @@ const createProps = (
     }
   }) as NodePropsForRendering;
 
-const isElementVNode = (
-  node: string | VNode
-): node is Extract<VNode, { type: 's' | 'h' | 'c' }> =>
+const isElementVNode = (node: string | VNode): node is Extract<VNode, { type: 's' | 'h' | 'c' }> =>
   typeof node !== 'string' && node.type !== 't' && node.type !== 'r';
 
 describe('makeIsometricTransform', () => {
@@ -68,14 +66,7 @@ describe('makeIsometricTransform', () => {
       expect(valuesStr).toBeDefined();
       const values = valuesStr!.split(',').map(Number);
       expect(values).toHaveLength(6);
-      return [
-        values[0]!,
-        values[1]!,
-        values[2]!,
-        values[3]!,
-        values[4]!,
-        values[5]!
-      ];
+      return [values[0]!, values[1]!, values[2]!, values[3]!, values[4]!, values[5]!];
     };
 
     const applyMatrix = (
@@ -202,8 +193,8 @@ describe('isometricBaseShape', () => {
     const sideFaces = nodes[1]!;
     expect(baseRect.data.stroke).toBe('none');
     expect(sideFaces.children.every(isElementVNode)).toBe(true);
-    expect(sideFaces.children.filter(isElementVNode).every(child => child.data.stroke === 'none')).toBe(
-      true
-    );
+    expect(
+      sideFaces.children.filter(isElementVNode).every(child => child.data.stroke === 'none')
+    ).toBe(true);
   });
 });

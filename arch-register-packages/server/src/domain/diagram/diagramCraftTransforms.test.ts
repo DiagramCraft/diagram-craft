@@ -12,8 +12,20 @@ describe('diagram craft transforms', () => {
       id: 'schema-1',
       name: 'System',
       fields: [
-        { id: 'system', name: 'System', predicate: 'belongs to', type: 'containment', schemaId: 'schema-2' },
-        { id: 'depends_on', name: 'Depends on', predicate: 'depends on', type: 'reference', schemaId: 'schema-2' }
+        {
+          id: 'system',
+          name: 'System',
+          predicate: 'belongs to',
+          type: 'containment',
+          schemaId: 'schema-2'
+        },
+        {
+          id: 'depends_on',
+          name: 'Depends on',
+          predicate: 'depends on',
+          type: 'reference',
+          schemaId: 'schema-2'
+        }
       ]
     } as SchemaDbResult;
 
@@ -23,8 +35,20 @@ describe('diagram craft transforms', () => {
       fields: [
         { id: 'name', name: 'Name', type: 'text' },
         { id: 'description', name: 'Description', type: 'longtext' },
-        { id: 'system', name: 'System', predicate: 'belongs to', type: 'containment', schemaId: 'schema-2' },
-        { id: 'depends_on', name: 'Depends on', predicate: 'depends on', type: 'reference', schemaId: 'schema-2' }
+        {
+          id: 'system',
+          name: 'System',
+          predicate: 'belongs to',
+          type: 'containment',
+          schemaId: 'schema-2'
+        },
+        {
+          id: 'depends_on',
+          name: 'Depends on',
+          predicate: 'depends on',
+          type: 'reference',
+          schemaId: 'schema-2'
+        }
       ]
     });
   });
@@ -102,7 +126,7 @@ describe('diagram craft transforms', () => {
       lifecycle: 'production',
       tags: ['react'],
       links: [],
-      visibility_mode: 'workspace',
+      project_id: null,
       created_at: new Date('2026-06-06T00:00:00.000Z'),
       updated_at: new Date('2026-06-06T00:00:00.000Z'),
       data: {
@@ -123,7 +147,7 @@ describe('diagram craft transforms', () => {
       _lifecycle: 'production',
       _tags: ['react'],
       _links: [],
-      _visibilityMode: 'workspace',
+      _projectId: null,
       name: 'Frontend App',
       description: 'React SPA',
       technology: 'React',

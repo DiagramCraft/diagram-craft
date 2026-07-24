@@ -5,7 +5,7 @@ import {
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import type { TextHandler, TextHandlers } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 

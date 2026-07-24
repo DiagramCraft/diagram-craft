@@ -41,14 +41,12 @@ const SCALE = 2;
 
 export const prepareSvgForExport = async (context: ActionContext) => {
   const selection = context.model.activeDiagram.selection;
-  const bounds = Box.boundingBox(
-    [
-      ...context.model.activeDiagram.visibleElements().flatMap(e => {
-        return isEdge(e) ? [e.bounds, ...e.children.map(c => c.bounds)] : [e.bounds];
-      }),
-      ...(selection.isEmpty() ? [] : [selection.bounds])
-    ]
-  );
+  const bounds = Box.boundingBox([
+    ...context.model.activeDiagram.visibleElements().flatMap(e => {
+      return isEdge(e) ? [e.bounds, ...e.children.map(c => c.bounds)] : [e.bounds];
+    }),
+    ...(selection.isEmpty() ? [] : [selection.bounds])
+  ]);
 
   const clonedSvg = CanvasDomHelper.diagramElement(context.model.activeDiagram)!.cloneNode(
     true

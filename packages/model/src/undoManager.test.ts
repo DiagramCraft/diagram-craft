@@ -1,7 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import {
-  type UndoManager,
-} from './undoManager';
+import { type UndoManager } from './undoManager';
 import { createUndoManager } from './undoManager.factory';
 import { DefaultUndoManager } from './undoManager.default';
 import { CollaborationBackendUndoManager } from './undoManager.collaboration';

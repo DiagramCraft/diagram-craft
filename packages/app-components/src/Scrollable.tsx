@@ -7,7 +7,13 @@ type ScrollableProps = {
   maxHeight?: React.CSSProperties['maxHeight'];
 } & React.ComponentPropsWithoutRef<typeof ScrollArea.Root>;
 
-export const Scrollable = ({ children, className, style, maxHeight, ...props }: ScrollableProps) => {
+export const Scrollable = ({
+  children,
+  className,
+  style,
+  maxHeight,
+  ...props
+}: ScrollableProps) => {
   const rootStyle = maxHeight === undefined ? style : { ...style, maxHeight };
 
   return (

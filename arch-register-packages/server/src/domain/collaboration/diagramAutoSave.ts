@@ -2,11 +2,10 @@ import * as Y from 'yjs';
 import { debounce } from '@diagram-craft/utils/debounce';
 import { YJSRoot } from '@diagram-craft/collaboration/yjs/yjsCrdt';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import {
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry,
-  type Registry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { EdgeDefinitionRegistry } from '@diagram-craft/model/edgeDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
+import type { Registry } from '@diagram-craft/model/registry';
+import { NoopMissingDefinitionReporter } from '@diagram-craft/model/abstractDefinitionRegistry';
 import { AbstractEdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
@@ -24,8 +23,7 @@ class ServerEdgeDefinition extends AbstractEdgeDefinition {
 }
 
 const makeServerRegistry = (): Registry => {
-  const nodes = new NodeDefinitionRegistry();
-  nodes.logMissingShapes = false;
+  const nodes = new NodeDefinitionRegistry([], new NoopMissingDefinitionReporter());
   return {
     nodes,
     edges: new EdgeDefinitionRegistry(new ServerEdgeDefinition()),

@@ -279,7 +279,9 @@ export const ModelProvidersTab = () => {
               {providers.map(providerWithId => (
                 <tr
                   key={providerWithId.id}
-                  onClick={!providerWithId.isFirst ? () => handleEditProvider(providerWithId) : undefined}
+                  onClick={
+                    !providerWithId.isFirst ? () => handleEditProvider(providerWithId) : undefined
+                  }
                   style={!providerWithId.isFirst ? { cursor: 'pointer' } : undefined}
                 >
                   <td>{providerWithId.id}</td>
@@ -288,9 +290,21 @@ export const ModelProvidersTab = () => {
                   <td onClick={ev => ev.stopPropagation()}>
                     {!providerWithId.isFirst && (
                       <MenuButton.Root>
-                        <MenuButton.Trigger element={<button type="button" className={styles.eDotsBtn}><TbDots size={14} /></button>} />
+                        <MenuButton.Trigger
+                          element={
+                            <button type="button" className={styles.eDotsBtn}>
+                              <TbDots size={14} />
+                            </button>
+                          }
+                        />
                         <MenuButton.Menu>
-                          <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => handleDeleteProvider(providerWithId)}>Delete</Menu.Item>
+                          <Menu.Item
+                            type="danger"
+                            leftSlot={<TbTrash size={13} />}
+                            onClick={() => handleDeleteProvider(providerWithId)}
+                          >
+                            Delete
+                          </Menu.Item>
                         </MenuButton.Menu>
                       </MenuButton.Root>
                     )}

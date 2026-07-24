@@ -7,9 +7,10 @@ import { orpcClient } from '../../../lib/orpcClient';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import styles from './ExportImportSubSection.module.css';
 import { downloadBlob } from '../../../lib/browserDownload';
+import { DefinitionImportSubSection } from './DefinitionImportSubSection';
 
 type ImportConflict = {
-  type: 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes';
+  type: 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes' | 'documents';
   item_id: string;
   item_name: string;
   conflict_reason: 'duplicate_name' | 'duplicate_slug' | 'missing_dependency' | 'schema_mismatch';
@@ -29,6 +30,7 @@ type ImportParseResult = {
     entities?: { count: number; conflicts: number };
     projects?: { count: number; conflicts: number };
     content_nodes?: { count: number; conflicts: number };
+    documents?: { count: number; templates: number; revisions: number; conflicts: number };
   };
   conflicts: ImportConflict[];
   errors: string[];
@@ -42,6 +44,7 @@ type ExportOptions = {
   include_entities: boolean;
   include_projects: boolean;
   include_content_nodes: boolean;
+  include_documents: boolean;
   include_content: boolean;
 };
 
@@ -50,7 +53,7 @@ type ConflictResolution = { action: 'skip' | 'merge' | 'overwrite' | 'rename'; n
 
 export const ExportImportSubSection = () => {
   const { workspace } = useWorkspaceContext();
-  const [tab, setTab] = useState<'export' | 'import'>('export');
+  const [tab, setTab] = useState<'export' | 'import' | 'definitions'>('export');
 
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     include_config: true,
@@ -58,6 +61,7 @@ export const ExportImportSubSection = () => {
     include_entities: true,
     include_projects: true,
     include_content_nodes: true,
+    include_documents: true,
     include_content: true
   });
   const [isExporting, setIsExporting] = useState(false);
@@ -75,12 +79,15 @@ export const ExportImportSubSection = () => {
   const handleExport = async () => {
     if (!workspace) return;
 
-    const include: Array<'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes'> = [];
+    const include: Array<
+      'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes' | 'documents'
+    > = [];
     if (exportOptions.include_config) include.push('config');
     if (exportOptions.include_schemas) include.push('schemas');
     if (exportOptions.include_entities) include.push('entities');
     if (exportOptions.include_projects) include.push('projects');
     if (exportOptions.include_content_nodes) include.push('content_nodes');
+    if (exportOptions.include_documents) include.push('documents');
 
     if (include.length === 0) {
       setExportError('Please select at least one data type to export');
@@ -197,7 +204,7 @@ export const ExportImportSubSection = () => {
         params: { workspace: workspace.url_slug },
         body: {
           import_id: importId,
-          include: ['config', 'schemas', 'entities', 'projects', 'content_nodes'],
+          include: ['config', 'schemas', 'entities', 'projects', 'content_nodes', 'documents'],
           conflict_resolutions: conflictResolutions,
           options: { preserve_ids: false, update_references: true }
         }
@@ -244,10 +251,11 @@ export const ExportImportSubSection = () => {
 
   return (
     <div className={styles.blockList}>
-      <Tabs.Root value={tab} onValueChange={v => setTab(v as 'export' | 'import')}>
+      <Tabs.Root value={tab} onValueChange={v => setTab(v as 'export' | 'import' | 'definitions')}>
         <Tabs.List>
           <Tabs.Trigger value="export">Export</Tabs.Trigger>
           <Tabs.Trigger value="import">Import</Tabs.Trigger>
+          <Tabs.Trigger value="definitions">Definition import</Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
 
@@ -312,6 +320,16 @@ export const ExportImportSubSection = () => {
                     />
                     <span>Content nodes</span>
                     <span className={styles.checkboxHint}>diagrams and markdown</span>
+                  </label>
+                  <label className={styles.checkboxRow}>
+                    <Checkbox
+                      value={exportOptions.include_documents}
+                      onChange={v =>
+                        setExportOptions(prev => ({ ...prev, include_documents: v ?? false }))
+                      }
+                    />
+                    <span>Typed documents</span>
+                    <span className={styles.checkboxHint}>document types and templates</span>
                   </label>
                   {exportOptions.include_content_nodes && (
                     <label className={`${styles.checkboxRow} ${styles.checkboxRowNested}`}>
@@ -431,6 +449,14 @@ export const ExportImportSubSection = () => {
                         <span className={styles.summaryLabel}>content nodes</span>
                       </div>
                     )}
+                    {importSummary.summary.documents && (
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
+                          {importSummary.summary.documents.count}
+                        </span>
+                        <span className={styles.summaryLabel}>document types</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -531,6 +557,8 @@ export const ExportImportSubSection = () => {
           </div>
         </div>
       )}
+
+      {tab === 'definitions' && <DefinitionImportSubSection />}
     </div>
   );
 };

@@ -95,7 +95,11 @@ describe('buildLayoutTree', () => {
     // Grandchild relative to child1
     const grandchildLayout = child1Layout.children[0]!;
     const expectedGrandchildCenter = Point.subtract(
-      Point.rotateAround(Box.center(grandchild.bounds), -child1.bounds.r, Box.center(child1.bounds)),
+      Point.rotateAround(
+        Box.center(grandchild.bounds),
+        -child1.bounds.r,
+        Box.center(child1.bounds)
+      ),
       Point.of(child1.bounds.x, child1.bounds.y)
     );
     expect(grandchildLayout.bounds.x).toBeCloseTo(

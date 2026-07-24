@@ -51,8 +51,7 @@ export const ReferenceFieldEditor = ({
       <div style={{ fontSize: '0.8em', color: 'var(--cmp-fg-dim)' }}>
         {field.minCount > 0 && `Minimum ${field.minCount} required. `}
         {field.maxCount < Number.MAX_SAFE_INTEGER && `Maximum ${field.maxCount} allowed.`}
-        {normalizedSelectedValues.length > 0 &&
-          ` (${normalizedSelectedValues.length} selected)`}
+        {normalizedSelectedValues.length > 0 && ` (${normalizedSelectedValues.length} selected)`}
       </div>
     </div>
   );

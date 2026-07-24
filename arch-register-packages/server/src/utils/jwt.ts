@@ -19,8 +19,13 @@ const getExpiry = (type: 'access' | 'refresh'): string => {
 
 export const parseExpiryToSeconds = (expiry: string): number => {
   const match = expiry.match(/^(\d+)(s|m|h|d)$/);
-  if (!match?.[1] || !match[2]) return 3600;
+  if (!match?.[1] || !match[2]) {
+    throw new Error(`Invalid JWT expiry '${expiry}'; expected a value such as 15m, 1h, or 7d`);
+  }
   const value = parseInt(match[1], 10);
+  if (value <= 0) {
+    throw new Error(`Invalid JWT expiry '${expiry}'; duration must be greater than zero`);
+  }
   const unit = match[2];
   switch (unit) {
     case 's':
@@ -32,9 +37,12 @@ export const parseExpiryToSeconds = (expiry: string): number => {
     case 'd':
       return value * 86400;
     default:
-      return 3600;
+      throw new Error(`Invalid JWT expiry '${expiry}'`);
   }
 };
+
+export const getTokenExpirySeconds = (type: 'access' | 'refresh'): number =>
+  parseExpiryToSeconds(getExpiry(type));
 
 export const generateAccessToken = (user: UserDbResult): string => {
   const payload: Omit<JWTPayload, 'iat' | 'exp'> = {
@@ -46,7 +54,7 @@ export const generateAccessToken = (user: UserDbResult): string => {
   };
 
   return jwt.sign(payload, getSecret(), {
-    expiresIn: parseExpiryToSeconds(getExpiry('access'))
+    expiresIn: getTokenExpirySeconds('access')
   });
 };
 
@@ -60,13 +68,13 @@ export const generateRefreshToken = (user: UserDbResult): string => {
   };
 
   return jwt.sign(payload, getSecret(), {
-    expiresIn: parseExpiryToSeconds(getExpiry('refresh'))
+    expiresIn: getTokenExpirySeconds('refresh')
   });
 };
 
 export const verifyToken = (token: string): JWTPayload => {
   try {
-    return jwt.verify(token, getSecret()) as JWTPayload;
+    return jwt.verify(token, getSecret(), { algorithms: ['HS256'] }) as JWTPayload;
   } catch (_error) {
     throw new Error('Invalid or expired token');
   }
@@ -77,6 +85,6 @@ export const generateTokenPair = (user: UserDbResult) => {
     access_token: generateAccessToken(user),
     refresh_token: generateRefreshToken(user),
     token_type: 'Bearer',
-    expires_in: parseExpiryToSeconds(getExpiry('access'))
+    expires_in: getTokenExpirySeconds('access')
   };
 };

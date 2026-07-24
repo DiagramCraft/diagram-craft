@@ -54,7 +54,8 @@ export type ExploreGraph = {
 export const DEFAULT_EXPLORE_CONFIG: ExploreViewConfig = {
   leftDepth: 1,
   rightDepth: 1,
-  relationFieldNames: [], fieldIds: undefined
+  relationFieldNames: [],
+  fieldIds: undefined
 };
 
 export const normalizeExploreConfig = (
@@ -62,7 +63,9 @@ export const normalizeExploreConfig = (
 ): ExploreViewConfig => ({
   leftDepth: Math.max(0, Math.trunc(config?.leftDepth ?? DEFAULT_EXPLORE_CONFIG.leftDepth)),
   rightDepth: Math.max(0, Math.trunc(config?.rightDepth ?? DEFAULT_EXPLORE_CONFIG.rightDepth)),
-  relationFieldNames: [...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)],
+  relationFieldNames: [
+    ...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)
+  ],
   fieldIds: config?.fieldIds
 });
 
@@ -186,7 +189,7 @@ export const buildExploreGraph = ({
           fromEntityName: relation.entityName,
           toColumn: 1 - hop,
           toEntityId: entity.entityId,
-          toEntityName: entity.name || entity.slug,
+          toEntityName: entity.name ?? entity.slug,
           fieldName: relation.fieldName,
           fieldLabel: getRelationDisplayLabel(relation),
           kind: relation.kind
@@ -213,7 +216,7 @@ export const buildExploreGraph = ({
         connectors.push({
           fromColumn: hop - 1,
           fromEntityId: entity.entityId,
-          fromEntityName: entity.name || entity.slug,
+          fromEntityName: entity.name ?? entity.slug,
           toColumn: hop,
           toEntityId: relation.entityId,
           toEntityName: relation.entityName,
@@ -230,7 +233,9 @@ export const buildExploreGraph = ({
   }
 
   const orderedColumns = [...columns.values()].sort((a, b) => a.index - b.index);
-  const visibleEntityIds = orderedColumns.flatMap(column => column.entities.map(entity => entity.entityId));
+  const visibleEntityIds = orderedColumns.flatMap(column =>
+    column.entities.map(entity => entity.entityId)
+  );
 
   const counts = new Map<string, number>();
   for (const entityId of visibleEntityIds) {

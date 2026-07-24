@@ -3,6 +3,15 @@ import { ORPCError, ValidationError, onError, os } from '@orpc/server';
 import { z } from 'zod';
 import { createLogger } from './logger';
 import { OpenAPIHandlerOptions } from '@orpc/openapi/fetch';
+import { getORPCErrorLogLevel } from './errorLogging';
+import type {
+  AuthorizationContext,
+  WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
+import type { DatabaseAdapter } from '../db/database';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import { buildApiAuthCtx, buildApiEntityAuthCtx } from '../domain/auth/authorization';
+import { resolveWorkspace } from '../domain/workspace/resolveWorkspace';
 
 const orpcLogger = createLogger('orpc');
 
@@ -12,25 +21,28 @@ export const toORPCError = (error: unknown): never => {
   if (HTTPError.isError(error)) {
     switch (error.status) {
       case 400:
-        throw new ORPCError('BAD_REQUEST', { message: error.message });
+        throw new ORPCError('BAD_REQUEST', { message: error.message, data: error.data });
       case 401:
-        throw new ORPCError('UNAUTHORIZED', { message: error.message });
+        throw new ORPCError('UNAUTHORIZED', { message: error.message, data: error.data });
       case 403:
-        throw new ORPCError('FORBIDDEN', { message: error.message });
+        throw new ORPCError('FORBIDDEN', { message: error.message, data: error.data });
       case 404:
-        throw new ORPCError('NOT_FOUND', { message: error.message });
+        throw new ORPCError('NOT_FOUND', { message: error.message, data: error.data });
       case 409:
-        throw new ORPCError('CONFLICT', { message: error.message });
+        throw new ORPCError('CONFLICT', { message: error.message, data: error.data });
       case 413:
-        throw new ORPCError('PAYLOAD_TOO_LARGE', { message: error.message });
+        throw new ORPCError('PAYLOAD_TOO_LARGE', { message: error.message, data: error.data });
       case 415:
-        throw new ORPCError('UNSUPPORTED_MEDIA_TYPE', { message: error.message });
+        throw new ORPCError('UNSUPPORTED_MEDIA_TYPE', {
+          message: error.message,
+          data: error.data
+        });
       case 429:
-        throw new ORPCError('TOO_MANY_REQUESTS', { message: error.message });
+        throw new ORPCError('TOO_MANY_REQUESTS', { message: error.message, data: error.data });
       case 503:
-        throw new ORPCError('SERVICE_UNAVAILABLE', { message: error.message });
+        throw new ORPCError('SERVICE_UNAVAILABLE', { message: error.message, data: error.data });
       case 504:
-        throw new ORPCError('GATEWAY_TIMEOUT', { message: error.message });
+        throw new ORPCError('GATEWAY_TIMEOUT', { message: error.message, data: error.data });
       default:
         orpcLogger.error(`Unexpected HTTP error (${error.status}): ${error.message}`, error);
         throw new ORPCError('INTERNAL_SERVER_ERROR', { message: error.message });
@@ -57,6 +69,51 @@ export const orpcErrorMiddleware = os.middleware(async ({ next }) => {
   }
 });
 
+export type WorkspaceScopedContext = {
+  db: DatabaseAdapter;
+  event: AuthenticatedEvent;
+  workspace: string;
+  authCtx: WorkspaceAuthorizationContext;
+};
+
+type WorkspaceScopedBaseContext = Pick<WorkspaceScopedContext, 'db' | 'event'>;
+
+type WorkspaceScopedInput = {
+  params: {
+    workspace: string;
+  };
+};
+
+/**
+ * Resolves the workspace route parameter and prepares authorization context
+ * before a workspace-scoped procedure runs.
+ */
+export const workspaceScoped = os.middleware<
+  Pick<WorkspaceScopedContext, 'workspace' | 'authCtx'>,
+  unknown
+>(async ({ context, next }, input) => {
+  const { db, event } = context as WorkspaceScopedBaseContext;
+  const { params } = input as WorkspaceScopedInput;
+  const workspace = await resolveWorkspace(db.catalog, params.workspace);
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+
+  return next({ context: { workspace, authCtx } });
+});
+
+/**
+ * Upgrades a workspace-scoped request with entity schemas, entities, and
+ * grants for procedures that perform entity-level authorization.
+ */
+export const entityScoped = os.middleware<
+  Pick<WorkspaceScopedContext, 'authCtx'> & { authCtx: AuthorizationContext },
+  unknown
+>(async ({ context, next }) => {
+  const { db, event, workspace } = context as WorkspaceScopedContext;
+  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
+
+  return next({ context: { authCtx } });
+});
+
 // Shared clientInterceptors for all OpenAPIHandler instances.
 // Catches framework-level errors (e.g. output validation failures) that bypass
 // the per-handler try-catch and would otherwise go unlogged.
@@ -70,24 +127,23 @@ export const orpcErrorInterceptors = [
         orpcLogger.error(`Input validation failed:\n${z.prettifyError(zodError)}`);
       }
     } else if (error instanceof ORPCError) {
-      // Expected auth failures during initial page load - log as debug to reduce noise
-      if (error.code === 'UNAUTHORIZED' && error.message === 'Refresh token is required') {
-        orpcLogger.debug('Refresh token is required (expected for unauthenticated requests)');
-      } else if (error.code === 'UNAUTHORIZED' || error.code === 'NOT_FOUND') {
-        // Expected auth errors - log at info without stack trace
-        orpcLogger.info(`ORPC client error [${error.code}]: ${error.message}`);
-      } else if (
-        error.code === 'FORBIDDEN' ||
-        error.code === 'BAD_REQUEST' ||
-        error.code === 'CONFLICT'
-      ) {
-        // Client errors that may indicate misuse - log at warn without stack trace
-        orpcLogger.warn(`ORPC client error [${error.code}]: ${error.message}`);
-      } else {
-        orpcLogger.error(
-          'ORPC framework error',
-          error instanceof Error ? error : new Error(String(error))
-        );
+      const message = `ORPC client error [${error.code}]: ${error.message}`;
+      switch (getORPCErrorLogLevel(error)) {
+        case 'debug':
+          orpcLogger.debug(message);
+          break;
+        case 'info':
+          orpcLogger.info(message);
+          break;
+        case 'warn':
+          orpcLogger.warn(message);
+          break;
+        case 'error':
+          orpcLogger.error(
+            'ORPC framework error',
+            error instanceof Error ? error : new Error(String(error))
+          );
+          break;
       }
     } else {
       orpcLogger.error(

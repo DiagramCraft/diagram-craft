@@ -4,6 +4,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useEntities } from '../../../hooks/useEntities';
 import { useAddProjectEntity } from '../../../hooks/useProjects';
+import { useAutoFocus } from '../../../hooks/useAutoFocus';
 import { ApiError } from '../../../lib/http';
 import styles from './AddEntityToProjectDialog.module.css';
 
@@ -28,6 +29,7 @@ export const AddEntityToProjectDialog = ({
   const [entityType, setEntityType] = useState('');
   const [error, setError] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(searchRef, { enabled: open, delay: 40 });
 
   const { data: allResults = [] } = useEntities(workspaceId, {
     view: 'summary',
@@ -37,7 +39,7 @@ export const AddEntityToProjectDialog = ({
   const filtered = allResults.filter(e => {
     if (!q.trim()) return true;
     const lower = q.toLowerCase();
-    return (`${e._name} ${e._slug}`).toLowerCase().includes(lower);
+    return `${e._name} ${e._slug}`.toLowerCase().includes(lower);
   });
 
   // Auto-select first result
@@ -54,7 +56,6 @@ export const AddEntityToProjectDialog = ({
       setSelectedId('');
       setEntityType('');
       setError('');
-      setTimeout(() => searchRef.current?.focus(), 40);
     }
   }, [open]);
 
@@ -66,7 +67,7 @@ export const AddEntityToProjectDialog = ({
     try {
       await addEntityMutation.mutateAsync({
         entity_id: selectedId,
-        entity_type: entityType || null
+        entity_type: entityType ?? null
       });
       onClose();
     } catch (err) {
@@ -145,7 +146,7 @@ export const AddEntityToProjectDialog = ({
                   className={`${styles.aedItem} ${selectedId === e._uid ? styles.aedItemSelected : ''}`}
                   onClick={() => setSelectedId(e._uid)}
                 >
-                  <span className={styles.aedItemName}>{e._name || e._slug}</span>
+                  <span className={styles.aedItemName}>{e._name ?? e._slug}</span>
                   <span className={styles.aedItemType}>{e._schema?.name ?? ''}</span>
                 </button>
               ))

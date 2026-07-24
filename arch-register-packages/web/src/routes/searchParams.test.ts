@@ -11,11 +11,13 @@ import {
 
 describe('validateWorkspaceContentSearch', () => {
   it('accepts content filter state and excludes folder selection from search', () => {
-    expect(validateWorkspaceContentSearch({
-      contentFolder: 'docs/guides',
-      contentQuery: 'api',
-      contentView: 'list'
-    })).toEqual({ contentQuery: 'api', contentView: 'list' });
+    expect(
+      validateWorkspaceContentSearch({
+        contentFolder: 'docs/guides',
+        contentQuery: 'api',
+        contentView: 'list'
+      })
+    ).toEqual({ contentQuery: 'api', contentView: 'list' });
   });
 
   it('drops invalid content filter state', () => {
@@ -28,17 +30,21 @@ describe('validateWorkspaceContentSearch', () => {
 
 describe('validateEntityDetailSearch', () => {
   it('accepts reloadable entity tabs and rejects unknown tabs', () => {
-    expect(validateEntityDetailSearch({
-      tab: 'topology',
-      contentFolder: 'Operations',
-      contentQuery: 'guide',
-      contentView: 'list'
-    })).toEqual({
+    expect(
+      validateEntityDetailSearch({
+        tab: 'topology',
+        contentFolder: 'Operations',
+        contentQuery: 'guide',
+        contentView: 'list'
+      })
+    ).toEqual({
       tab: 'topology',
       contentQuery: 'guide',
       contentView: 'list'
     });
-    expect(validateEntityDetailSearch({ tab: 'unknown', contentFolder: 'legacy', contentView: 'kanban' })).toEqual({
+    expect(
+      validateEntityDetailSearch({ tab: 'unknown', contentFolder: 'legacy', contentView: 'kanban' })
+    ).toEqual({
       tab: undefined,
       contentQuery: undefined,
       contentView: undefined
@@ -65,6 +71,15 @@ describe('validateSearchSearch', () => {
 });
 
 describe('validateEntitySearch', () => {
+  it('preserves a structured entity query URL parameter', () => {
+    const entityQuery = JSON.stringify({
+      schemaId: 'component',
+      root: { kind: 'and', children: [] }
+    });
+
+    expect(validateEntitySearch({ entityQuery }).entityQuery).toBe(entityQuery);
+  });
+
   it('parses entity browser search params used by saved views', () => {
     expect(
       validateEntitySearch({
@@ -77,8 +92,8 @@ describe('validateEntitySearch', () => {
         sort: 'owner',
         projectScope: 'all',
         viewConfigs:
-          '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"hierarchy":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
-        sidebarTab: 'views',
+          '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"map":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
+        sidebarTab: 'views'
       })
     ).toEqual({
       type: 'application',
@@ -90,9 +105,9 @@ describe('validateEntitySearch', () => {
       sort: 'owner',
       projectScope: 'all',
       viewConfigs:
-        '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"hierarchy":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
+        '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"map":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
       sidebarTab: 'views',
-      filters: undefined,
+      filters: undefined
     });
   });
 
@@ -101,7 +116,7 @@ describe('validateEntitySearch', () => {
       validateEntitySearch({
         type: 123,
         viewMode: 'kanban',
-        sidebarTab: 'other',
+        sidebarTab: 'other'
       })
     ).toEqual({
       type: undefined,
@@ -114,7 +129,7 @@ describe('validateEntitySearch', () => {
       projectScope: undefined,
       viewConfigs: undefined,
       sidebarTab: undefined,
-      filters: undefined,
+      filters: undefined
     });
   });
 });
@@ -150,12 +165,14 @@ describe('validateProjectSearch', () => {
       sidebarTab: undefined,
       filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]',
       contentQuery: 'diagram',
-      contentView: 'list',
+      contentView: 'list'
     });
   });
 
   it('accepts a valid assessmentTab and rejects unknown ones', () => {
-    expect(validateProjectSearch({ assessmentId: 'a1', assessmentTab: 'discussion' })).toMatchObject({
+    expect(
+      validateProjectSearch({ assessmentId: 'a1', assessmentTab: 'discussion' })
+    ).toMatchObject({
       assessmentId: 'a1',
       assessmentTab: 'discussion'
     });
@@ -178,7 +195,7 @@ describe('validateMarkdownSearch', () => {
       panel: 'history',
       revisionId: 'rev-123',
       historyMode: undefined,
-      compareMode: undefined,
+      compareMode: undefined
     });
   });
 
@@ -188,14 +205,14 @@ describe('validateMarkdownSearch', () => {
         panel: 'history',
         revisionId: 'rev-3',
         historyMode: 'compare',
-        compareMode: 'to-current',
+        compareMode: 'to-current'
       })
     ).toEqual({
       mode: undefined,
       panel: 'history',
       revisionId: 'rev-3',
       historyMode: 'compare',
-      compareMode: 'to-current',
+      compareMode: 'to-current'
     });
   });
 
@@ -205,14 +222,14 @@ describe('validateMarkdownSearch', () => {
         panel: 'history',
         revisionId: 'rev-3',
         historyMode: 'compare',
-        compareMode: 'changes-in-version',
+        compareMode: 'changes-in-version'
       })
     ).toEqual({
       mode: undefined,
       panel: 'history',
       revisionId: 'rev-3',
       historyMode: 'compare',
-      compareMode: 'changes-in-version',
+      compareMode: 'changes-in-version'
     });
   });
 
@@ -220,14 +237,14 @@ describe('validateMarkdownSearch', () => {
     expect(
       validateMarkdownSearch({
         historyMode: 'audit',
-        compareMode: 'diff',
+        compareMode: 'diff'
       })
     ).toEqual({
       mode: undefined,
       panel: undefined,
       revisionId: undefined,
       historyMode: undefined,
-      compareMode: undefined,
+      compareMode: undefined
     });
   });
 });

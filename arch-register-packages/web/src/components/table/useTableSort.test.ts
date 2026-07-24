@@ -7,12 +7,21 @@ describe('nextSortState', () => {
   });
 
   it('flips direction when toggling the same key', () => {
-    expect(nextSortState({ key: 'name', dir: 'asc' }, 'name')).toEqual({ key: 'name', dir: 'desc' });
-    expect(nextSortState({ key: 'name', dir: 'desc' }, 'name')).toEqual({ key: 'name', dir: 'asc' });
+    expect(nextSortState({ key: 'name', dir: 'asc' }, 'name')).toEqual({
+      key: 'name',
+      dir: 'desc'
+    });
+    expect(nextSortState({ key: 'name', dir: 'desc' }, 'name')).toEqual({
+      key: 'name',
+      dir: 'asc'
+    });
   });
 
   it('resets to ascending when switching to a different key', () => {
-    expect(nextSortState({ key: 'name', dir: 'desc' }, 'date')).toEqual({ key: 'date', dir: 'asc' });
+    expect(nextSortState({ key: 'name', dir: 'desc' }, 'date')).toEqual({
+      key: 'date',
+      dir: 'asc'
+    });
   });
 });
 

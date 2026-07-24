@@ -1,7 +1,7 @@
 import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import type { Autosave } from './react-app/autosave/Autosave';
-import { LazyElementLoaderEntry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { LazyElementLoaderEntry } from '@diagram-craft/model/lazyElementLoader';
 import { StencilLoaderOpts, StencilLoaderRegistry } from '@diagram-craft/model/stencilRegistry';
 
 /**

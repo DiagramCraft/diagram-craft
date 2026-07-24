@@ -23,6 +23,7 @@ const authCtxMock = {
 
 vi.mock('../auth/authorization', () => ({
   buildApiAuthCtx: vi.fn(async () => authCtxMock),
+  buildApiEntityAuthCtx: vi.fn(async () => authCtxMock),
   requireWorkspaceCapability: vi.fn(),
   requireEntityAction: vi.fn(),
   requireProjectAccess: vi.fn()
@@ -36,7 +37,11 @@ vi.mock('node:crypto', () => ({
   randomUUID: () => 'new-post-id'
 }));
 
-import { requireEntityAction, requireProjectAccess, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  requireEntityAction,
+  requireProjectAccess,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 const later = new Date('2026-06-02T12:00:00.000Z');
@@ -93,7 +98,9 @@ const makeDb = (overrides: Record<string, unknown> = {}): DatabaseAdapter =>
       listAll: vi.fn(async () => [makePost()]),
       getPost: vi.fn(async () => makePost()),
       createPost: vi.fn(async () => makePost()),
-      updatePost: vi.fn(async () => makePost({ body: 'Updated', edited_at: later, updated_at: later })),
+      updatePost: vi.fn(async () =>
+        makePost({ body: 'Updated', edited_at: later, updated_at: later })
+      ),
       deletePost: vi.fn(async () => makePost())
     },
     ...overrides
@@ -148,9 +155,11 @@ describe('listDiscussionPosts', () => {
       catalog: { getEntity: vi.fn(async () => null) }
     });
 
-    await expect(listDiscussionPosts(db, 'ws-1', 'entity', 'missing', event)).rejects.toMatchObject({
-      status: 404
-    });
+    await expect(listDiscussionPosts(db, 'ws-1', 'entity', 'missing', event)).rejects.toMatchObject(
+      {
+        status: 404
+      }
+    );
   });
 
   it('falls back to a placeholder name when the author was deleted', async () => {
@@ -176,7 +185,11 @@ describe('createDiscussionPost', () => {
       event
     );
 
-    expect(requireWorkspaceCapability).toHaveBeenCalledWith(authCtxMock, 'comments', expect.any(String));
+    expect(requireWorkspaceCapability).toHaveBeenCalledWith(
+      authCtxMock,
+      'comments',
+      expect.any(String)
+    );
     expect(db.discussion.createPost).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'new-post-id',

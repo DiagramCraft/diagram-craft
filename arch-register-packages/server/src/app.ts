@@ -11,25 +11,46 @@ import { createSecurityHeadersMiddleware } from './middleware/securityHeaders';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
 import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
+import { createEntitySyncORPCHandler } from './domain/externalIdentity/entitySyncOrpc';
+import { createEntityVersionORPCHandler } from './domain/catalog/entityVersionOrpc';
+import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
+import { createWorkspaceCollectionORPCHandler } from './domain/catalog/collectionOrpc';
 import { createWorkspaceManagementORPCHandler } from './domain/workspace/workspaceOrpc';
 import { createWorkspaceConfigORPCHandler } from './domain/workspace/workspaceConfigOrpc';
 import { createProjectORPCHandler } from './domain/project/projectOrpc';
 import { createProjectFileRoutesHandler } from './domain/project/projectFileRoutes';
 import { createAssessmentORPCHandler } from './domain/project/assessmentOrpc';
 import { createAssessmentResponseORPCHandler } from './domain/project/assessmentResponseOrpc';
+import { createMilestoneORPCHandler } from './domain/project/projectMilestoneOrpc';
+import { createChangeCaseORPCHandler } from './domain/project/projectChangeCaseOrpc';
 import { createAuditORPCHandler } from './domain/audit/auditOrpc';
 import { createWatchORPCHandler } from './domain/watch/watchOrpc';
+import { createNotificationPreferencesORPCHandler } from './domain/notification/notificationPreferenceOrpc';
 import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
+import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
+import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
 import {
   createPublicAuthORPCHandler,
   createProtectedAuthORPCHandler
 } from './domain/auth/authOrpc';
+import { createDevORPCHandler } from './domain/dev/devOrpc';
 import { createAiORPCHandler } from './domain/ai/aiOrpc';
 import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
 import { createWorkspaceAnalyticsORPCHandler } from './domain/analytics/workspaceAnalyticsOrpc';
+import { createWorkspaceMetricORPCHandler } from './domain/metrics/metricOrpc';
+import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
+import { createExternalContentORPCHandler } from './domain/external-content/externalContentOrpc';
+import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
+import { createAutomationRuleORPCHandler } from './domain/automation/automationRuleOrpc';
+import { createDocumentORPCHandler } from './domain/document/documentOrpc';
+import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
+import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
+import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
+import { createDocumentGovernanceRegistry } from './domain/document/documentWorkflowOperations';
+import { getHttpErrorLogLevel } from './utils/errorLogging';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -50,22 +71,26 @@ export const createApp = (
     onError: (error, event) => {
       const method = getMethod(event);
       const path = getRequestPath(event);
-      if (error.status >= 500) {
-        const cause = error.cause instanceof Error ? error.cause : error;
-        httpLogger.error(`${error.status} ${method} ${path}: ${error.message}`, cause);
-      } else if (error.status === 404) {
-        httpLogger.info(`404 ${method} ${path}`);
-      } else if (
-        error.status === 401 &&
-        error.message === 'Missing or invalid authorization header'
-      ) {
-        // Expected auth failure during initial page load - log as debug to reduce noise
-        httpLogger.debug(`${error.status} ${method} ${path}: ${error.message}`);
-      } else {
-        httpLogger.warn(`${error.status} ${method} ${path}: ${error.message}`);
+      switch (getHttpErrorLogLevel(error)) {
+        case 'error': {
+          const cause = error.cause instanceof Error ? error.cause : error;
+          httpLogger.error(`${error.status} ${method} ${path}: ${error.message}`, cause);
+          break;
+        }
+        case 'debug':
+          httpLogger.debug(`${error.status} ${method} ${path}: ${error.message}`);
+          break;
+        case 'info':
+          httpLogger.info(`404 ${method} ${path}`);
+          break;
+        case 'warn':
+          httpLogger.warn(`${error.status} ${method} ${path}: ${error.message}`);
+          break;
       }
     }
   });
+
+  app.use(createSecurityHeadersMiddleware());
 
   const corsOriginEnv = process.env['CORS_ORIGIN'] ?? '*';
   const corsOrigin: '*' | string[] =
@@ -99,12 +124,15 @@ export const createApp = (
 
   app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
 
-  app.use(createSecurityHeadersMiddleware());
   app.use(createDevDelayMiddleware());
 
   // Public routes (no auth required)
   app.use(createPublicAuthORPCHandler(db));
-  app.use(createOidcCallbackRoute(db));
+  // Always mounted: dev.config must be reachable to report enabled/disabled, and
+  // dev.listUsers/dev.switchUser re-check isDevUserSwitcherEnabled() on every call.
+  app.use(createDevORPCHandler(db));
+  const oidcCallbackRoute = createOidcCallbackRoute(db);
+  app.use(oidcCallbackRoute.app);
 
   app.use(requireAuth(db.auth));
 
@@ -116,20 +144,48 @@ export const createApp = (
   app.use(createWorkspaceEnumORPCHandler(db));
   app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
+  app.use(createEntitySyncORPCHandler(db));
+  app.use(createEntityVersionORPCHandler(db));
+  app.use(createEntityChangeORPCHandler(db));
+  app.use(createEntityDeprecationORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
+  app.use(createWorkspaceCollectionORPCHandler(db));
   app.use(createWorkspaceConfigORPCHandler(db));
   app.use(createWorkspaceAnalyticsORPCHandler(db));
+  app.use(createWorkspaceMetricORPCHandler(db));
+  app.use(createJobsORPCHandler(db));
+  app.use(createExternalContentORPCHandler(db, storage));
+  app.use(createWebhookORPCHandler(db));
+  app.use(createAutomationRuleORPCHandler(db));
+  app.use(createDocumentORPCHandler(db));
   app.use(createProjectFileRoutesHandler(db, storage));
   app.use(createProjectORPCHandler(db, storage));
   app.use(createAssessmentORPCHandler(db));
   app.use(createAssessmentResponseORPCHandler(db));
+  app.use(createMilestoneORPCHandler(db));
+  app.use(createChangeCaseORPCHandler(db));
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
+  app.use(createNotificationPreferencesORPCHandler(db));
   app.use(createDiscussionORPCHandler(db));
+  app.use(
+    createGovernanceORPCHandler(
+      db,
+      new Map([
+        ...createEntityGovernanceRegistry(),
+        ...createDeprecationGovernanceRegistry(),
+        ...createDocumentGovernanceRegistry()
+      ])
+    )
+  );
+  app.use(createWikiCommentORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
   app.use(createDiagramCraftORPCHandler(db));
 
-  return app;
+  return {
+    app,
+    dispose: oidcCallbackRoute.dispose
+  };
 };

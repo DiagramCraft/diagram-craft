@@ -19,7 +19,13 @@ import {
   type EntityBrowserEmbedConfig
 } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbedDialog.module.css';
-import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from '../../../../entities/components/entityDisplayFields';
+import {
+  buildEntityDisplayFields,
+  DISPLAY_FIELD_VIEWS,
+  getDisplayFieldIds,
+  withDisplayFieldIds,
+  withoutDisplayFieldIds
+} from '../../../../entities/components/entityDisplayFields';
 
 export const EntityBrowserEmbedDialog = ({
   element,
@@ -70,8 +76,17 @@ export const EntityBrowserEmbedDialog = ({
         }
       : undefined
   });
-  const displayFields = useMemo(() => buildEntityDisplayFields(typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas, !!projectId), [schemas, typeFilter, projectId]);
-  const displayView = DISPLAY_FIELD_VIEWS.has(view) ? view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore' : null;
+  const displayFields = useMemo(
+    () =>
+      buildEntityDisplayFields(
+        typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
+        !!projectId
+      ),
+    [schemas, typeFilter, projectId]
+  );
+  const displayView = DISPLAY_FIELD_VIEWS.has(view)
+    ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
+    : null;
 
   useEffect(() => {
     if (!open) return;
@@ -163,6 +178,7 @@ export const EntityBrowserEmbedDialog = ({
     >
       <div className={styles.body}>
         <EntityBrowserToolbar
+          workspaceId={workspaceSlug}
           q={q}
           setQ={setQ}
           conditions={conditions}
@@ -181,9 +197,19 @@ export const EntityBrowserEmbedDialog = ({
           view={view}
           setView={setView}
           displayFields={displayView ? displayFields : undefined}
-          selectedDisplayFieldIds={displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined}
-          onDisplayFieldsChange={displayView ? ids => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, ids)) : undefined}
-          onDisplayFieldsReset={displayView ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
+          selectedDisplayFieldIds={
+            displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined
+          }
+          onDisplayFieldsChange={
+            displayView
+              ? ids => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, ids))
+              : undefined
+          }
+          onDisplayFieldsReset={
+            displayView
+              ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig))
+              : undefined
+          }
         />
         <div className={styles.viewArea}>
           <EntityBrowserView

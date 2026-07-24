@@ -15,14 +15,15 @@ const now = new Date('2026-06-01T12:00:00.000Z');
 const enriched = (
   e: Omit<
     EntityDbResult,
-    'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'
+    'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name' | 'completeness'
   >
 ): EntityDbResult => ({
   ...e,
   owner_name: null,
   lifecycle_label: null,
   target_lifecycle_label: null,
-  schema_name: ''
+  schema_name: '',
+  completeness: 0
 });
 
 const domainSchema: SchemaDbResult = {
@@ -112,7 +113,7 @@ const domain: EntityDbResult = enriched({
   links: [],
   schema_id: 'schema-domain',
   data: {},
-  visibility_mode: null,
+  project_id: null,
   created_at: now,
   updated_at: now
 });
@@ -133,7 +134,7 @@ const system: EntityDbResult = enriched({
   links: [],
   schema_id: 'schema-system',
   data: { domain: ['domain-1'] },
-  visibility_mode: null,
+  project_id: null,
   created_at: now,
   updated_at: now
 });
@@ -154,7 +155,7 @@ const component: EntityDbResult = enriched({
   links: [],
   schema_id: 'schema-component',
   data: { system: ['system-1'], depends_on: ['component-2'] },
-  visibility_mode: null,
+  project_id: null,
   created_at: now,
   updated_at: now
 });
@@ -175,7 +176,7 @@ const dependency: EntityDbResult = enriched({
   links: [],
   schema_id: 'schema-component',
   data: { system: ['system-1'] },
-  visibility_mode: null,
+  project_id: null,
   created_at: now,
   updated_at: now
 });
@@ -191,7 +192,7 @@ describe('data route helpers', () => {
         _lifecycle: 'production',
         _tags: ['react', 1],
         _links: 'invalid',
-        _visibilityMode: 'public',
+        _projectId: 'project-1',
         system: ['system-1']
       })
     ).toEqual({
@@ -206,8 +207,25 @@ describe('data route helpers', () => {
       requestedTargetLifecycleDate: null,
       tags: ['react'],
       links: [],
-      visibilityMode: 'public',
+      projectId: 'project-1',
+      external: null,
       fields: { system: ['system-1'] }
+    });
+  });
+
+  it('treats empty owner and lifecycle references as unset', () => {
+    expect(
+      parseEntityMutationPayload({
+        _schemaId: 'schema-component',
+        _name: 'Frontend App',
+        _owner: '',
+        _lifecycle: '  ',
+        _targetLifecycle: ''
+      })
+    ).toMatchObject({
+      requestedOwner: null,
+      requestedLifecycle: null,
+      requestedTargetLifecycle: null
     });
   });
 
@@ -257,7 +275,11 @@ describe('data route helpers', () => {
       matchesFilterCondition(component, { fieldId: '_tags', op: 'equals', value: 'frontend' }, null)
     ).toBe(false);
     expect(
-      matchesFilterCondition(component, { fieldId: '_tags', op: 'not_equals', value: 'react' }, null)
+      matchesFilterCondition(
+        component,
+        { fieldId: '_tags', op: 'not_equals', value: 'react' },
+        null
+      )
     ).toBe(false);
     expect(
       matchesFilterCondition(system, { fieldId: '_tags', op: 'not_equals', value: 'react' }, null)
@@ -272,7 +294,11 @@ describe('data route helpers', () => {
       matchesFilterCondition(component, { fieldId: '_tags', op: 'not_empty', value: '' }, null)
     ).toBe(true);
     expect(
-      matchesFilterCondition({ ...component, tags: [] }, { fieldId: '_tags', op: 'empty', value: '' }, null)
+      matchesFilterCondition(
+        { ...component, tags: [] },
+        { fieldId: '_tags', op: 'empty', value: '' },
+        null
+      )
     ).toBe(true);
   });
 

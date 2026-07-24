@@ -1,10 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
-import {
-  CustomPropertyDefinition,
-  type NodeDefinition,
-  type NodeDefinitionLoader
-} from './elementDefinitionRegistry';
+import { CustomPropertyDefinition } from './customProperty';
+import type { NodeDefinition } from './nodeDefinition';
+import type { NodeDefinitionLoader } from './lazyElementLoader';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import {
   defaultEdgeRegistry,

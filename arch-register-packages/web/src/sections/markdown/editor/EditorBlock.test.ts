@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { copyBlockToClipboard, pasteBlockFromClipboard, unnestBlock, wrapBlock } from './EditorBlock';
+import {
+  copyBlockToClipboard,
+  pasteBlockFromClipboard,
+  unnestBlock,
+  wrapBlock
+} from './EditorBlock';
 
 // The real mdxRegistry.tsx transitively imports packages/main's MultiWindowDetector,
 // which crashes on localStorage in the vitest/Node environment (a pre-existing,

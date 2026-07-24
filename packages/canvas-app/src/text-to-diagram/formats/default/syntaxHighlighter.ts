@@ -1,10 +1,7 @@
 import type { SyntaxHighlighter } from '../../types';
 
 const escapeHtml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+  value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 const STRING_PATTERN = /"(?:\\.|[^"\\])*"/g;
 

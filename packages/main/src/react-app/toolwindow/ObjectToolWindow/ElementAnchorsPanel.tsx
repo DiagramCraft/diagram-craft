@@ -23,7 +23,7 @@ import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import type { Property } from '@diagram-craft/model/property';
 import { assert } from '@diagram-craft/utils/assert';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type CustomAnchorsEditorProps = {
@@ -35,6 +35,8 @@ type CustomAnchorsEditorProps = {
   onChange: () => void;
   diagram: ReturnType<typeof useDiagram>;
 };
+
+const staticCanvasFactory = () => new StaticCanvasComponent();
 
 const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDiagram> }) => {
   const application = useApplication();
@@ -135,7 +137,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
         onClick={() => {}}
         diagram={previewDiagram}
         viewbox={previewDiagram.viewBox.svgViewboxString}
-        canvasFactory={() => new StaticCanvasComponent()}
+        canvasFactory={staticCanvasFactory}
       />
 
       {/* Anchor points overlay */}

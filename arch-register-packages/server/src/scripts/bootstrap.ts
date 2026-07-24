@@ -2,8 +2,13 @@ import 'dotenv/config';
 import { createDatabase } from '../db/factory';
 import { seedBootstrapData, validateBootstrapSeed } from '../db/bootstrapSeed';
 import { createStorage } from '../storage/storage';
+import { hasBootstrapAiFlag, resolveBootstrapAiConfig } from './bootstrapAi';
 
 async function main() {
+  const bootstrapAiConfig = hasBootstrapAiFlag(process.argv.slice(2))
+    ? resolveBootstrapAiConfig()
+    : undefined;
+
   console.log('Bootstrapping database...');
   const db = await createDatabase({ initialize: false });
   const storage = createStorage();
@@ -13,7 +18,7 @@ async function main() {
   console.log('Schema created.');
 
   console.log('Seeding data...');
-  await seedBootstrapData(db, storage);
+  await seedBootstrapData(db, storage, { aiConfig: bootstrapAiConfig });
   console.log('Seed data loaded.');
 
   console.log('Validating seed...');

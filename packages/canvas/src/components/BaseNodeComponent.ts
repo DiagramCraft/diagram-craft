@@ -22,7 +22,7 @@ import { makeIsometricTransform } from '../effects/isometric';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -57,8 +57,10 @@ export type BaseShapeBuildShapeProps = {
 };
 
 export class BaseNodeComponent<
-  T extends Pick<ShapeNodeDefinition, 'getBoundingPathBuilder' | 'getHitArea' | 'hasFlag'> =
-    ShapeNodeDefinition
+  T extends Pick<
+    ShapeNodeDefinition,
+    'getBoundingPathBuilder' | 'getHitArea' | 'hasFlag'
+  > = ShapeNodeDefinition
 > extends Component<NodeComponentProps> {
   constructor(protected readonly def: T) {
     super();

@@ -8,20 +8,33 @@ import {
   type EntityEditState
 } from '../lib/entityEditState';
 import { useDeleteEntity, useUpdateEntity } from './useEntities';
-import { usePromoteSnapshot } from './useSnapshots';
+import { usePromoteEntityVersion } from './useEntityVersions';
+import { useBypassEntityApproval, useSubmitEntityChangeApproval } from './useEntityChanges';
 
 type Params = {
   workspaceId: string;
   entityId: string;
   entity: EntityRecord | undefined;
   schema: EntitySchema | null;
+  approvalRequired: boolean;
+  canBypassApproval: boolean;
   onDeleted: () => void;
 };
 
-export const useEntityEditController = ({ workspaceId, entityId, entity, schema, onDeleted }: Params) => {
+export const useEntityEditController = ({
+  workspaceId,
+  entityId,
+  entity,
+  schema,
+  approvalRequired,
+  canBypassApproval,
+  onDeleted
+}: Params) => {
   const updateEntity = useUpdateEntity(workspaceId);
   const deleteEntity = useDeleteEntity(workspaceId);
-  const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
+  const promoteEntityVersion = usePromoteEntityVersion(workspaceId, entityId);
+  const submitProposal = useSubmitEntityChangeApproval(workspaceId, entityId);
+  const bypassApproval = useBypassEntityApproval(workspaceId, entityId);
 
   const [editing, setEditing] = useState(false);
   const [editState, setEditState] = useState<EntityEditState>({});
@@ -68,13 +81,52 @@ export const useEntityEditController = ({ workspaceId, entityId, entity, schema,
   const executeSave = () => {
     if (!pendingSaveBody) return;
     setSaveConfirmOpen(false);
+    if (approvalRequired) {
+      submitProposal.mutate(
+        {
+          baseVersion: entity?._version ?? 1,
+          proposedState: pendingSaveBody,
+          message: saveConfirmMessage ?? undefined
+        },
+        {
+          onSuccess: () => {
+            setEditing(false);
+            setEditState({});
+            setEditLinks([]);
+            setPendingSaveBody(null);
+          }
+        }
+      );
+      return;
+    }
     updateEntity.mutate(
       { entityId, data: pendingSaveBody },
       {
         onSuccess: () => {
           if (saveConfirmSignificant) {
-            promoteSnapshot.mutate({ commitMessage: saveConfirmMessage || undefined });
+            promoteEntityVersion.mutate({ commitMessage: saveConfirmMessage ?? undefined });
           }
+          setEditing(false);
+          setEditState({});
+          setEditLinks([]);
+          setPendingSaveBody(null);
+        }
+      }
+    );
+  };
+
+  const executeBypass = () => {
+    const reason = saveConfirmMessage.trim();
+    if (!canBypassApproval || !pendingSaveBody || reason === '') return;
+    setSaveConfirmOpen(false);
+    bypassApproval.mutate(
+      {
+        baseVersion: entity?._version ?? 1,
+        proposedState: pendingSaveBody,
+        reason
+      },
+      {
+        onSuccess: () => {
           setEditing(false);
           setEditState({});
           setEditLinks([]);
@@ -102,7 +154,7 @@ export const useEntityEditController = ({ workspaceId, entityId, entity, schema,
     startEdit,
     cancelEdit,
     saveEdit,
-    isSaving: updateEntity.isPending,
+    isSaving: updateEntity.isPending || submitProposal.isPending || bypassApproval.isPending,
     saveConfirmOpen,
     setSaveConfirmOpen,
     saveConfirmMessage,
@@ -110,6 +162,7 @@ export const useEntityEditController = ({ workspaceId, entityId, entity, schema,
     saveConfirmSignificant,
     setSaveConfirmSignificant,
     executeSave,
+    executeBypass,
     confirmDelete,
     setConfirmDelete,
     handleDelete,

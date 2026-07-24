@@ -1,10 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import {
-  loadUMLStencils,
-  registerUMLNodes
-} from '@diagram-craft/stencil-uml/stencil-uml-loader';
+import { loadUMLStencils, registerUMLNodes } from '@diagram-craft/stencil-uml/stencil-uml-loader';
 import { UMLLifelineNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLLifeline.nodeType';
 import { UMLLifelineExecutionNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLLifelineExecution.nodeType';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -174,7 +171,13 @@ describe('UMLLifeline', () => {
     });
 
     UnitOfWork.execute(diagram, uow => {
-      new UMLLifelineNodeDefinition().onDrop({ x: 160, y: 210 }, lifeline, [destroy], uow, 'default');
+      new UMLLifelineNodeDefinition().onDrop(
+        { x: 160, y: 210 },
+        lifeline,
+        [destroy],
+        uow,
+        'default'
+      );
     });
 
     expect(destroy.parent).toBe(lifeline);

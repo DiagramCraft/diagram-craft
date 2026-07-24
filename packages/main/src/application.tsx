@@ -4,6 +4,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { KeyMap } from '@diagram-craft/canvas/keyMap';
 import { UIActions } from '@diagram-craft/canvas/context';
 import { UserState } from './UserState';
+import { CollaborationAwareness } from './CollaborationAwareness';
 import { Extent } from '@diagram-craft/geometry/extent';
 import type { Point } from '@diagram-craft/geometry/point';
 
@@ -12,14 +13,20 @@ export interface ApplicationUIActions extends UIActions {
 }
 
 export class Application extends BaseApplication<ApplicationUIActions> {
-  constructor(userState: UserState) {
+  constructor(userState: UserState, awareness: CollaborationAwareness) {
     super();
     this.userState = userState;
+    this.awareness = awareness;
+    this.commentVisibility.set(userState.commentVisibility);
+    userState.on('change', ({ after }) => {
+      this.commentVisibility.set(after.commentVisibility);
+    });
   }
 
   ready: boolean = false;
   keyMap: KeyMap = {};
   userState: UserState;
+  awareness: CollaborationAwareness;
   #file: FileActions | undefined;
 
   set file(file: FileActions) {

@@ -68,6 +68,17 @@
     min-height: 0;
     overflow: hidden;
     padding: 0;
+    position: relative;
+  }
+
+  &.readOnly {
+    .eToolbar {
+      display: none;
+    }
+
+    .eCanvas {
+      min-height: 0;
+    }
   }
 
   .eNodeName {
@@ -104,5 +115,38 @@
     font-size: 14px;
     font-weight: 500;
     color: var(--base-fg-dim);
+  }
+
+  .eLoadingOverlay {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 10px;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    background: var(--panel-bg);
+    color: var(--base-fg-more-dim);
+    font-size: 11px;
+  }
+
+  .eReadOnlyFooter {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border-top: 1px solid var(--panel-border);
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+
+  .eReadOnlyFooter a {
+    color: var(--accent-fg);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }

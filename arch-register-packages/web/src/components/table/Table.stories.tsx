@@ -95,9 +95,7 @@ export const Selectable: Story = {
               aria-label="Select all"
               checked={allSelected}
               indeterminate={someSelected}
-              onChange={() =>
-                setSelected(allSelected ? new Set() : new Set(PEOPLE.map(p => p.id)))
-              }
+              onChange={() => setSelected(allSelected ? new Set() : new Set(PEOPLE.map(p => p.id)))}
             />
             <Table.HeaderCell>Name</Table.HeaderCell>
           </tr>
@@ -205,7 +203,12 @@ export const StickyColumns: Story = {
           <Table.Body>
             {PEOPLE.map(p => (
               <Table.Row key={p.id}>
-                <Table.CheckboxCell sticky aria-label={`Select ${p.name}`} checked={false} onChange={() => {}} />
+                <Table.CheckboxCell
+                  sticky
+                  aria-label={`Select ${p.name}`}
+                  checked={false}
+                  onChange={() => {}}
+                />
                 <Table.NameCell sticky width={160} title={p.name} />
                 {columns.map(c => (
                   <Table.Cell key={c}>{c} value</Table.Cell>

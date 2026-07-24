@@ -15,10 +15,26 @@ import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
 import { PostgresDiscussionDatabase } from '../domain/discussion/db/postgresDiscussion';
+import { PostgresWikiCommentDatabase } from '../domain/wikiComments/db/postgresWikiComment';
+import { PostgresJobDatabase } from '../domain/jobs/db/postgresJobs';
+import { PostgresExternalContentDatabase } from '../domain/external-content/db/postgresExternalContent';
+import { PostgresWebhookDatabase } from '../domain/webhook/db/postgresWebhook';
+import { PostgresAutomationRuleDatabase } from '../domain/automation/db/postgresAutomationRule';
+import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument';
+import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
+import { PostgresNotificationDatabase } from '../domain/notification/db/postgresNotification';
+import { PostgresNotificationPreferenceDatabase } from '../domain/notification/db/postgresNotificationPreference';
+import { PostgresNotificationDeliveryDatabase } from '../domain/notification/db/postgresNotificationDelivery';
+import { PostgresEntityChangeDatabase } from '../domain/catalog/db/postgresEntityChange';
+import { PostgresEntityDeprecationDatabase } from '../domain/catalog/db/postgresEntityDeprecation';
+import { PostgresChangeCaseDatabase } from '../domain/catalog/db/postgresChangeCase';
+import { PostgresExternalIdentityDatabase } from '../domain/externalIdentity/db/postgresExternalIdentity';
+import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
+const logger = createLogger('postgres');
 
 export class PostgresDatabase implements DatabaseAdapter {
   private readonly sql: PostgresSqlClient;
@@ -32,6 +48,20 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly auth: PostgresAuthDatabase;
   readonly ai: PostgresAiDatabase;
   readonly discussion: PostgresDiscussionDatabase;
+  readonly wikiComment: PostgresWikiCommentDatabase;
+  readonly jobs: PostgresJobDatabase;
+  readonly externalContent: PostgresExternalContentDatabase;
+  readonly webhook: PostgresWebhookDatabase;
+  readonly automationRule: PostgresAutomationRuleDatabase;
+  readonly document: PostgresDocumentDatabase;
+  readonly governance: PostgresGovernanceDatabase;
+  readonly notification: PostgresNotificationDatabase;
+  readonly notificationPreference: PostgresNotificationPreferenceDatabase;
+  readonly notificationDelivery: PostgresNotificationDeliveryDatabase;
+  readonly entityChange: PostgresEntityChangeDatabase;
+  readonly entityDeprecation: PostgresEntityDeprecationDatabase;
+  readonly changeCase: PostgresChangeCaseDatabase;
+  readonly externalIdentity: PostgresExternalIdentityDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -44,13 +74,28 @@ export class PostgresDatabase implements DatabaseAdapter {
       watch: new PostgresWatchDatabase(sql),
       auth: new PostgresAuthDatabase(sql),
       ai: new PostgresAiDatabase(sql),
-      discussion: new PostgresDiscussionDatabase(sql)
+      discussion: new PostgresDiscussionDatabase(sql),
+      wikiComment: new PostgresWikiCommentDatabase(sql),
+      jobs: new PostgresJobDatabase(sql),
+      externalContent: new PostgresExternalContentDatabase(sql),
+      webhook: new PostgresWebhookDatabase(sql),
+      automationRule: new PostgresAutomationRuleDatabase(sql),
+      document: new PostgresDocumentDatabase(sql),
+      governance: new PostgresGovernanceDatabase(sql),
+      notification: new PostgresNotificationDatabase(sql),
+      notificationPreference: new PostgresNotificationPreferenceDatabase(sql),
+      notificationDelivery: new PostgresNotificationDeliveryDatabase(sql),
+      entityChange: new PostgresEntityChangeDatabase(sql),
+      entityDeprecation: new PostgresEntityDeprecationDatabase(sql),
+      changeCase: new PostgresChangeCaseDatabase(sql),
+      externalIdentity: new PostgresExternalIdentityDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
       ...adapter,
       core: {
         driver: 'postgres',
+        isTransaction: true,
         close: async () => {},
         reset: async () => {
           throw new Error('Cannot reset a transaction-bound database adapter');
@@ -68,10 +113,15 @@ export class PostgresDatabase implements DatabaseAdapter {
       connect_timeout: SERVER_DEFAULTS.DB_CONNECT_TIMEOUT,
       ...(schema ? { connection: { search_path: schema } } : {}),
       onnotice: notice => {
-        if (notice.code === '42710' && notice.message === PGCRYPTO_EXISTS_NOTICE) {
+        const message = notice.message ?? '';
+        if (
+          (notice.code === '42710' && message === PGCRYPTO_EXISTS_NOTICE) ||
+          message.endsWith(' does not exist, skipping') ||
+          message.startsWith('drop cascades to ')
+        ) {
           return;
         }
-        console.log(notice);
+        logger.info(message ?? 'PostgreSQL notice', notice);
       }
     });
 
@@ -84,6 +134,20 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.auth = new PostgresAuthDatabase(this.sql);
     this.ai = new PostgresAiDatabase(this.sql);
     this.discussion = new PostgresDiscussionDatabase(this.sql);
+    this.wikiComment = new PostgresWikiCommentDatabase(this.sql);
+    this.jobs = new PostgresJobDatabase(this.sql);
+    this.externalContent = new PostgresExternalContentDatabase(this.sql);
+    this.webhook = new PostgresWebhookDatabase(this.sql);
+    this.automationRule = new PostgresAutomationRuleDatabase(this.sql);
+    this.document = new PostgresDocumentDatabase(this.sql);
+    this.governance = new PostgresGovernanceDatabase(this.sql);
+    this.notification = new PostgresNotificationDatabase(this.sql);
+    this.notificationPreference = new PostgresNotificationPreferenceDatabase(this.sql);
+    this.notificationDelivery = new PostgresNotificationDeliveryDatabase(this.sql);
+    this.entityChange = new PostgresEntityChangeDatabase(this.sql);
+    this.entityDeprecation = new PostgresEntityDeprecationDatabase(this.sql);
+    this.changeCase = new PostgresChangeCaseDatabase(this.sql);
+    this.externalIdentity = new PostgresExternalIdentityDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

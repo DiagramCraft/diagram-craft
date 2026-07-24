@@ -1,17 +1,24 @@
 import {
   BrowserView,
-  EntityFilters,
+  BubbleViewConfig,
+  CardsViewConfig,
   ExploreViewConfig,
   FilterCondition,
-  HierarchyViewConfig,
+  MapViewConfig,
   MatrixViewConfig,
   RadarViewConfig,
-  TimelineViewConfig
+  TableViewConfig,
+  TimelineViewConfig,
+  TreeViewConfig
 } from '@arch-register/api-types/viewContract';
-import { SchemaField } from '@arch-register/api-types/schemaContract';
-import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityLink } from '@arch-register/api-types/entityContract';
+import type { EntityRole } from '@arch-register/permissions';
+import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
   databaseDate,
+  databaseDateOnly,
   parseDatabaseJson,
   type DatabaseRow
 } from '../../../db/rowMappers';
@@ -30,18 +37,17 @@ export const ENTITY_SELECT_SQL = `
   JOIN entity_schema es ON es.id = e.schema_id
 `;
 
-export const ENTITY_SNAPSHOT_SELECT_SQL = `
-  SELECT s.*, u.display_name as created_by_name
-  FROM entity_snapshot s
-  LEFT JOIN users u ON u.id = s.created_by
-`;
-
 export type EntityListDbFilters = {
   schemaId?: string | null;
   owner?: string | null;
   lifecycle?: string | null;
   q?: string | null;
   conditions?: FilterCondition[];
+  // With a projectId, 'project' returns project-owned or project_entity-linked entities, while
+  // 'all' returns global entities plus entities owned by the selected project. Without a projectId,
+  // both modes retain global-listing semantics and return only project_id IS NULL rows.
+  projectId?: string | null;
+  projectScope?: 'project' | 'all';
 };
 
 export type EntityListDbPagination = {
@@ -69,10 +75,15 @@ export type SchemaDbResult = {
   name: string;
   description: string;
   fields: SchemaField[];
+  templates?: EntityTemplate[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
   key_prefix: string;
+  /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
+  version?: number;
+  entity_approval_policy?: 'required' | 'disabled';
+  deprecation_policy?: 'required' | 'disabled';
   created_at: Date;
   updated_at: Date;
 };
@@ -80,6 +91,26 @@ export type SchemaDbResult = {
 export type SchemaDbCreate = SchemaDbResult;
 
 export type SchemaDbUpdate = Omit<SchemaDbResult, 'id' | 'workspace' | 'created_at'>;
+
+// -- Entity Schema Version
+
+export type SchemaVersionDbResult = {
+  id: string;
+  workspace: string;
+  schema_id: string;
+  version: number;
+  name: string;
+  description: string;
+  fields: SchemaField[];
+  templates: EntityTemplate[];
+  color: string | null;
+  icon: string | null;
+  change_summary: Record<string, unknown>;
+  created_by: string | null;
+  created_at: Date;
+};
+
+export type SchemaVersionDbCreate = SchemaVersionDbResult;
 
 // -- Workspace Enum
 
@@ -109,8 +140,6 @@ export type EntityGrantDbResult = {
   applies_to: EntityGrantScope;
   created_at: Date;
 };
-
-type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 
 type EntityGrantScope = 'self' | 'subtree';
 
@@ -145,9 +174,23 @@ export type Entity = {
   links: EntityLink[];
   schema_id: string;
   data: Record<string, unknown>;
-  visibility_mode: VisibilityMode | null;
+  // Latest external-update result per field id, for fields whose schema definition carries
+  // `external_kind`. Keyed by field id; latest result only, no history. Always populated (as
+  // `{}` if empty) when read from the database; optional here mainly so existing in-memory
+  // fixtures/constructors that predate this field don't all need updating.
+  generated_metadata?: ExternalMetadata;
+  // Set only when this entity was created solely for one project — it should not appear outside
+  // that project's context. Distinct from project_entity, which associates an existing,
+  // otherwise-normal entity with a project without restricting its general visibility.
+  project_id: string | null;
   created_at: Date;
   updated_at: Date;
+  version?: number;
+  approval_policy_override?: 'required' | 'disabled' | null;
+  // System-maintained score (0-100) derived from computeEntityCompleteness(entity, schema),
+  // recomputed at write time and kept alongside the entity so it's queryable in SQL without a
+  // per-row schema lookup (see #2346).
+  completeness: number;
 };
 
 // Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
@@ -159,35 +202,72 @@ export type EntityDbResult = Entity & {
   schema_name: string;
 };
 
-export type EntityDbCreate = Entity;
+export type EntityQueryDbResult = EntityDbResult & {
+  projections: Record<string, unknown>;
+};
 
-export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'public_id' | 'created_at'>;
+export type EntityDbCreate = Omit<Entity, 'version' | 'approval_policy_override'> & {
+  version?: number;
+  approval_policy_override?: 'required' | 'disabled' | null;
+  // Defaults to {} (a newly created entity starts with no external metadata).
+  generated_metadata?: ExternalMetadata;
+};
 
-// -- Entity Snapshot
+export type EntityDbUpdate = Omit<
+  Entity,
+  'id' | 'workspace' | 'public_id' | 'created_at' | 'version'
+> & {
+  version?: number;
+  // Omit to leave the stored value untouched (the common case for a plain field update);
+  // pass explicitly to write a new value (e.g. when outdating or applying an external update).
+  generated_metadata?: ExternalMetadata;
+};
 
-export type SnapshotStatus =
+// -- Entity versions and compatibility projections
+
+export type EntityVersionKind =
   | 'autosave'
   | 'saved_version'
-  | 'future_update'
-  | 'applied'
-  | 'deleted';
+  | 'deleted'
+  | 'restored'
+  | 'direct_edit'
+  | 'case_applied'
+  | 'bypass';
 
-export type EntitySnapshotDbResult = {
+export type EntityVersionDbResult = {
   id: string;
   workspace: string;
   entity_id: string;
-  status: SnapshotStatus;
+  version_number: number;
+  kind: EntityVersionKind;
+  commit_message: string | null;
+  created_at: Date;
+  created_by: string | null;
+  created_by_name: string | null;
+  state: Record<string, unknown>;
+  applied_case_revision_id: string | null;
+};
+
+export type EntityVersionDbCreate = Omit<EntityVersionDbResult, 'created_by_name'>;
+
+// A single member of an active (not yet applied) change-case revision, as of a point in time.
+// Represents a planned future edit to one entity, coordinated with other entities under the same
+// `case_revision_id`.
+export type PlannedEntityChangeDbResult = {
+  id: string;
+  workspace: string;
+  entity_id: string;
+  case_id: string;
+  case_revision_id: string;
   project_id: string | null;
   target_date: string | null;
+  milestone_id: string | null;
   commit_message: string | null;
   created_at: Date;
   created_by: string;
   created_by_name: string | null;
-  base_state: Record<string, unknown>;
-  proposed_state: Record<string, unknown> | null;
+  proposed_state: Record<string, unknown>;
 };
-
-export type EntitySnapshotDbCreate = EntitySnapshotDbResult;
 
 export type TimelineMarkerDbResult = {
   date: string;
@@ -213,42 +293,66 @@ export const catalogMappers = {
     links: parseDatabaseJson<EntityLink[]>(row['links'], [], 'entity.links'),
     schema_id: String(row['schema_id']),
     data: parseDatabaseJson<Record<string, unknown>>(row['data'], {}, 'entity.data'),
-    visibility_mode:
-      row['visibility_mode'] == null
-        ? null
-        : (String(row['visibility_mode']) as Entity['visibility_mode']),
+    generated_metadata: parseDatabaseJson<ExternalMetadata>(
+      row['generated_metadata'],
+      {},
+      'entity.generated_metadata'
+    ),
+    project_id: row['project_id'] == null ? null : String(row['project_id']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at']),
     owner_name: row['owner_name'] == null ? null : String(row['owner_name']),
     lifecycle_label: row['lifecycle_label'] == null ? null : String(row['lifecycle_label']),
     target_lifecycle_label:
       row['target_lifecycle_label'] == null ? null : String(row['target_lifecycle_label']),
-    schema_name: String(row['schema_name'])
+    schema_name: String(row['schema_name']),
+    version: Number(row['version'] ?? 1),
+    approval_policy_override:
+      row['approval_policy_override'] == null
+        ? null
+        : (String(row['approval_policy_override']) as Entity['approval_policy_override']),
+    completeness: Number(row['completeness'] ?? 0)
   }),
-  entitySnapshot: (row: DatabaseRow): EntitySnapshotDbResult => ({
+  entityQuery: (row: DatabaseRow): EntityQueryDbResult => ({
+    ...catalogMappers.enrichedEntity(row),
+    projections: parseDatabaseJson<Record<string, unknown>>(
+      row['projections'],
+      {},
+      'entity_query.projections'
+    )
+  }),
+  plannedEntityChange: (row: DatabaseRow): PlannedEntityChangeDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
-    status: String(row['status']) as EntitySnapshotDbResult['status'],
+    case_id: String(row['case_id']),
+    case_revision_id: String(row['case_revision_id']),
     project_id: row['project_id'] == null ? null : String(row['project_id']),
-    target_date: row['target_date'] == null ? null : String(row['target_date']),
+    target_date: row['target_date'] == null ? null : databaseDateOnly(row['target_date']),
+    milestone_id: row['milestone_id'] == null ? null : String(row['milestone_id']),
     commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
     created_at: databaseDate(row['created_at']),
     created_by: String(row['created_by']),
     created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
-    base_state: parseDatabaseJson<Record<string, unknown>>(
-      row['base_state'],
+    proposed_state: parseDatabaseJson<Record<string, unknown>>(
+      row['proposed_state'],
       {},
-      'entity_snapshot.base_state'
-    ),
-    proposed_state:
-      row['proposed_state'] == null
-        ? null
-        : parseDatabaseJson<Record<string, unknown>>(
-            row['proposed_state'],
-            {},
-            'entity_snapshot.proposed_state'
-          )
+      'entity_change_case_entity_version.proposed_state'
+    )
+  }),
+  entityVersion: (row: DatabaseRow): EntityVersionDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    version_number: Number(row['version_number']),
+    kind: row['kind'] as EntityVersionKind,
+    commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
+    created_at: databaseDate(row['created_at']),
+    created_by: row['created_by'] == null ? null : String(row['created_by']),
+    created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
+    state: parseDatabaseJson<Record<string, unknown>>(row['state'], {}, 'entity_version.state'),
+    applied_case_revision_id:
+      row['applied_case_revision_id'] == null ? null : String(row['applied_case_revision_id'])
   }),
   pinnedEntity: (row: DatabaseRow): PinnedEntityDbResult => ({
     user_id: String(row['user_id']),
@@ -257,30 +361,101 @@ export const catalogMappers = {
     created_at: databaseDate(row['created_at'])
   }),
   schema: (row: DatabaseRow): SchemaDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), name: String(row['name']),
-    description: String(row['description'] ?? ''), fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
-    color: row['color'] == null ? null : String(row['color']), icon: row['icon'] == null ? null : String(row['icon']),
-    default_owner: row['default_owner'] == null ? null : String(row['default_owner']), key_prefix: String(row['key_prefix']),
-    created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    description: String(row['description'] ?? ''),
+    fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
+    templates: parseDatabaseJson(row['templates'], [], 'entity_schema.templates'),
+    color: row['color'] == null ? null : String(row['color']),
+    icon: row['icon'] == null ? null : String(row['icon']),
+    default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
+    key_prefix: String(row['key_prefix']),
+    version: Number(row['version'] ?? 1),
+    entity_approval_policy: String(
+      row['entity_approval_policy'] ?? 'disabled'
+    ) as SchemaDbResult['entity_approval_policy'],
+    deprecation_policy: String(
+      row['deprecation_policy'] ?? 'disabled'
+    ) as SchemaDbResult['deprecation_policy'],
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
+  schemaVersion: (row: DatabaseRow): SchemaVersionDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    schema_id: String(row['schema_id']),
+    version: Number(row['version']),
+    name: String(row['name']),
+    description: String(row['description'] ?? ''),
+    fields: parseDatabaseJson(row['fields'], [], 'entity_schema_version.fields'),
+    templates: parseDatabaseJson(row['templates'], [], 'entity_schema_version.templates'),
+    color: row['color'] == null ? null : String(row['color']),
+    icon: row['icon'] == null ? null : String(row['icon']),
+    change_summary: parseDatabaseJson(
+      row['change_summary'],
+      {},
+      'entity_schema_version.change_summary'
+    ),
+    created_by: row['created_by'] == null ? null : String(row['created_by']),
+    created_at: databaseDate(row['created_at'])
   }),
   workspaceEnum: (row: DatabaseRow): WorkspaceEnumDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), name: String(row['name']),
-    options: parseDatabaseJson(row['options'], [], 'workspace_enum.options'), sort_order: Number(row['sort_order'] ?? 0),
-    created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    options: parseDatabaseJson(row['options'], [], 'workspace_enum.options'),
+    sort_order: Number(row['sort_order'] ?? 0),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
   }),
   entityGrant: (row: DatabaseRow): EntityGrantDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), entity_id: String(row['entity_id']),
-    principal_type: String(row['principal_type']) as EntityGrantDbResult['principal_type'], principal_id: String(row['principal_id']),
-    role: String(row['role']) as EntityGrantDbResult['role'], applies_to: String(row['applies_to']) as EntityGrantDbResult['applies_to'],
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    principal_type: String(row['principal_type']) as EntityGrantDbResult['principal_type'],
+    principal_id: String(row['principal_id']),
+    role: String(row['role']) as EntityGrantDbResult['role'],
+    applies_to: String(row['applies_to']) as EntityGrantDbResult['applies_to'],
+    created_at: databaseDate(row['created_at'])
+  }),
+  collection: (row: DatabaseRow): CollectionDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    user_id: String(row['user_id']),
+    name: String(row['name']),
+    entity_count: Number(row['entity_count'] ?? 0),
+    is_member:
+      row['is_member'] == null
+        ? undefined
+        : row['is_member'] === true || row['is_member'] === 1 || row['is_member'] === '1',
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
+  collectionEntity: (row: DatabaseRow): CollectionEntityDbResult => ({
+    collection_id: String(row['collection_id']),
+    entity_id: String(row['entity_id']),
     created_at: databaseDate(row['created_at'])
   }),
   savedView: (row: DatabaseRow): SavedViewDbResult => ({
-    id: String(row['id']), workspace: String(row['workspace']), project_id: row['project_id'] == null ? null : String(row['project_id']),
-    project_scope: row['project_scope'] == null ? null : (String(row['project_scope']) as 'project' | 'all'),
-    name: String(row['name']), description: row['description'] == null ? null : String(row['description']),
-    is_admin_view: row['is_admin_view'] === true || row['is_admin_view'] === 1 || row['is_admin_view'] === '1',
-    view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'], filters: parseDatabaseJson(row['filters'], {}, 'saved_view.filters'),
-    config: parseDatabaseJson(row['config'], null, 'saved_view.config'), created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    project_id: row['project_id'] == null ? null : String(row['project_id']),
+    project_scope:
+      row['project_scope'] == null ? null : (String(row['project_scope']) as 'project' | 'all'),
+    name: String(row['name']),
+    description: row['description'] == null ? null : String(row['description']),
+    is_admin_view:
+      row['is_admin_view'] === true || row['is_admin_view'] === 1 || row['is_admin_view'] === '1',
+    view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'],
+    filters: parseDatabaseJson(
+      row['filters'],
+      { root: { kind: 'and', children: [] } },
+      'saved_view.filters'
+    ),
+    config: parseDatabaseJson(row['config'], null, 'saved_view.config'),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
   })
 };
 
@@ -293,6 +468,17 @@ export type CatalogDatabase = {
   createSchema(input: SchemaDbCreate): Promise<SchemaDbResult>;
   updateSchema(ws: string, id: string, input: SchemaDbUpdate): Promise<SchemaDbResult | null>;
   deleteSchema(ws: string, id: string): Promise<SchemaDbResult | null>;
+
+  listSchemaVersions(ws: string, schemaId: string): Promise<SchemaVersionDbResult[]>;
+  createSchemaVersion(input: SchemaVersionDbCreate): Promise<SchemaVersionDbResult>;
+
+  renameEntityDataField(
+    ws: string,
+    schemaId: string,
+    oldFieldId: string,
+    newFieldId: string
+  ): Promise<number>;
+  removeEntityDataField(ws: string, schemaId: string, fieldId: string): Promise<number>;
 
   listEnums(ws: string): Promise<WorkspaceEnumDbResult[]>;
   getEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
@@ -309,11 +495,42 @@ export type CatalogDatabase = {
     filters?: EntityListDbFilters,
     pagination?: EntityListDbPagination
   ): Promise<EntityDbResult[]>;
+  // Runs a pre-compiled structured EntityQuery (see entityQueryIRCompiler.ts), returning the
+  // matched entity plus any requested projection values. The method is also the cross-driver
+  // execution seam used by compiler contract tests before endpoint wiring lands.
+  runCompiledEntityQuery(sql: string, params: unknown[]): Promise<EntityQueryDbResult[]>;
   listEntities(ws: string): Promise<EntityDbResult[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
   updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;
+  updateEntityIfVersion(
+    ws: string,
+    id: string,
+    input: EntityDbUpdate,
+    expectedVersion: number
+  ): Promise<EntityDbResult | null>;
+  setEntityApprovalPolicyOverride(
+    ws: string,
+    id: string,
+    override: 'required' | 'disabled' | null
+  ): Promise<EntityDbResult | null>;
+  updateEntityCompleteness(ws: string, id: string, completeness: number): Promise<void>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
+
+  createEntityVersion(input: EntityVersionDbCreate): Promise<EntityVersionDbResult>;
+  getEntityVersionById(ws: string, id: string): Promise<EntityVersionDbResult | null>;
+  listEntityVersions(ws: string, entityId: string): Promise<EntityVersionDbResult[]>;
+  listEntityVersionsAsOf(
+    ws: string,
+    asOf: Date,
+    entityIds?: string[]
+  ): Promise<EntityVersionDbResult[]>;
+  updateEntityVersionKind(
+    ws: string,
+    versionId: string,
+    kind: EntityVersionKind,
+    commitMessage: string | null
+  ): Promise<EntityVersionDbResult | null>;
 
   listEntityGrants(ws: string): Promise<EntityGrantDbResult[]>;
   getEntityGrants(ws: string, entityId: string): Promise<EntityGrantDbResult[]>;
@@ -336,33 +553,24 @@ export type CatalogDatabase = {
     entityId: string
   ): Promise<PinnedEntityDbResult | null>;
 
-  createSnapshot(input: EntitySnapshotDbCreate): Promise<EntitySnapshotDbResult>;
-  getSnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
-  listSnapshots(ws: string, entityId: string): Promise<EntitySnapshotDbResult[]>;
-  listSnapshotsByProject(ws: string, projectId: string): Promise<EntitySnapshotDbResult[]>;
-  listSnapshotsAsOf(
+  listPlannedEntityChangesAsOf(
     ws: string,
     asOf: Date,
     entityIds?: string[]
-  ): Promise<EntitySnapshotDbResult[]>;
+  ): Promise<PlannedEntityChangeDbResult[]>;
   listTimelineMarkers(ws: string): Promise<TimelineMarkerDbResult[]>;
-  listEntityIdsWithAnySnapshot(ws: string, entityIds?: string[]): Promise<string[]>;
-  pruneAutosaveSnapshots(ws: string, entityId: string, keepCount: number): Promise<void>;
-  promoteSnapshot(
+  listEntityIdsWithVersionHistory(ws: string, entityIds?: string[]): Promise<string[]>;
+  pruneAutosaveVersions(ws: string, entityId: string, keepCount: number): Promise<void>;
+  reassignSnapshotsFromMilestone(
     ws: string,
-    snapshotId: string,
-    commitMessage: string | null
-  ): Promise<EntitySnapshotDbResult | null>;
-  updateSnapshot(
+    milestoneId: string,
+    backfillTargetDate: string | null
+  ): Promise<void>;
+  updateChangeCaseEffectiveDateForMilestone(
     ws: string,
-    snapshotId: string,
-    updates: {
-      proposed_state?: Record<string, unknown>;
-      target_date?: string | null;
-      commit_message?: string | null;
-    }
-  ): Promise<EntitySnapshotDbResult | null>;
-  applySnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
+    milestoneId: string,
+    effectiveDate: string | null
+  ): Promise<void>;
 };
 
 // -- Saved View
@@ -376,13 +584,18 @@ export type SavedViewDbResult = {
   description: string | null;
   is_admin_view: boolean;
   view_mode: BrowserView;
-  filters: EntityFilters;
+  filters: EntityQuery;
   config: {
+    sort?: string;
+    table?: TableViewConfig;
+    cards?: CardsViewConfig;
+    tree?: TreeViewConfig;
     radar?: RadarViewConfig;
     timeline?: TimelineViewConfig;
     matrix?: MatrixViewConfig;
-    hierarchy?: HierarchyViewConfig;
     explore?: ExploreViewConfig;
+    bubble?: BubbleViewConfig;
+    map?: MapViewConfig;
   } | null;
   created_at: Date;
   updated_at: Date;
@@ -394,6 +607,28 @@ export type SavedViewDbUpdate = Partial<
   Omit<SavedViewDbResult, 'id' | 'workspace' | 'created_at' | 'updated_at'>
 > & {
   updated_at: Date;
+};
+
+// -- Personal Collection
+
+export type CollectionDbResult = {
+  id: string;
+  workspace: string;
+  user_id: string;
+  name: string;
+  entity_count: number;
+  is_member?: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type CollectionDbCreate = Omit<CollectionDbResult, 'entity_count' | 'is_member'>;
+export type CollectionDbUpdate = { name: string; updated_at: Date };
+
+export type CollectionEntityDbResult = {
+  collection_id: string;
+  entity_id: string;
+  created_at: Date;
 };
 
 export type ViewDatabase = {
@@ -412,4 +647,29 @@ export type ViewDatabase = {
     input: SavedViewDbUpdate
   ): Promise<SavedViewDbResult | null>;
   deleteSavedView(ws: string, id: string): Promise<SavedViewDbResult | null>;
+
+  listCollections(userId: string, ws: string, entityId?: string): Promise<CollectionDbResult[]>;
+  getCollection(userId: string, ws: string, id: string): Promise<CollectionDbResult | null>;
+  createCollection(input: CollectionDbCreate): Promise<CollectionDbResult>;
+  updateCollection(
+    userId: string,
+    ws: string,
+    id: string,
+    input: CollectionDbUpdate
+  ): Promise<CollectionDbResult | null>;
+  deleteCollection(userId: string, ws: string, id: string): Promise<CollectionDbResult | null>;
+  addCollectionEntity(
+    userId: string,
+    ws: string,
+    collectionId: string,
+    entityId: string,
+    createdAt: Date
+  ): Promise<CollectionEntityDbResult>;
+  removeCollectionEntity(
+    userId: string,
+    ws: string,
+    collectionId: string,
+    entityId: string
+  ): Promise<CollectionEntityDbResult | null>;
+  listCollectionEntityIds(userId: string, ws: string, collectionId: string): Promise<string[]>;
 };

@@ -14,7 +14,12 @@ import type {
 const log = createLogger('LocalFileSystemServer');
 
 const MAX_REQUEST_SIZE = 500 * 1024 * 1024;
-const ALLOWED_CONTENT_TYPES = ['application/json', 'text/plain', 'application/octet-stream', 'image/svg+xml'];
+const ALLOWED_CONTENT_TYPES = [
+  'application/json',
+  'text/plain',
+  'application/octet-stream',
+  'image/svg+xml'
+];
 
 const SNAPSHOT_DIR = '.snapshot';
 const SNAPSHOT_AGE_MS = 60 * 60 * 1000; // 1 hour

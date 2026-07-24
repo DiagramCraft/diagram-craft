@@ -14,12 +14,6 @@
   position: relative;
 }
 
-.loading {
-  color: var(--cmp-fg-disabled);
-  font-style: italic;
-  padding: 2px 0;
-}
-
 .header {
   display: flex;
   align-items: center;
@@ -48,7 +42,6 @@
   gap: 6px;
   flex-wrap: wrap;
 }
-
 
 .link {
   display: inline-flex;

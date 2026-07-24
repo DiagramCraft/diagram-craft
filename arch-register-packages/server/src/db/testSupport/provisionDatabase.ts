@@ -37,7 +37,7 @@ export const provisionPostgresDatabase = async (): Promise<ProvisionedDatabase> 
 
   const schema = `db_test_${randomBytes(8).toString('hex')}`;
 
-  const adminSql = postgres(baseUrl, { max: 1 });
+  const adminSql = postgres(baseUrl, { max: 1, onnotice: () => undefined });
   await adminSql`CREATE SCHEMA ${adminSql(schema)}`;
   await adminSql.end();
 
@@ -52,7 +52,7 @@ export const provisionPostgresDatabase = async (): Promise<ProvisionedDatabase> 
     db,
     teardown: async () => {
       await db.core.close();
-      const cleanupSql = postgres(baseUrl, { max: 1 });
+      const cleanupSql = postgres(baseUrl, { max: 1, onnotice: () => undefined });
       await cleanupSql`DROP SCHEMA IF EXISTS ${cleanupSql(schema)} CASCADE`;
       await cleanupSql.end();
     }

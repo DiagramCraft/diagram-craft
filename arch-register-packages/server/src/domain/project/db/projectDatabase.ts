@@ -1,8 +1,10 @@
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
 import {
   databaseBoolean,
   databaseDate,
+  databaseDateOnly,
   parseDatabaseJson,
   type DatabaseRow
 } from '../../../db/rowMappers';
@@ -22,9 +24,12 @@ export const CONTENT_NODE_SELECT_SQL = `
     cm.description AS metadata_description,
     cm.company AS metadata_company,
     cm.category AS metadata_category,
-    cm.keywords AS metadata_keywords
+    cm.keywords AS metadata_keywords,
+    dt.icon AS document_type_icon
   FROM content_node cn
   LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
+  LEFT JOIN content_node_document cnd ON cnd.workspace = cn.workspace AND cnd.node_id = cn.id
+  LEFT JOIN document_type dt ON dt.workspace = cnd.workspace AND dt.id = cnd.document_type_id
 `;
 
 export const PROJECT_ENTITY_SELECT_SQL = `
@@ -109,11 +114,13 @@ export type ContentNodeDbResult = {
   updated_by: string | null;
   mime_type: string | null;
   original_filename: string | null;
+  mount_id?: string | null;
   metadata_title?: string | null;
   metadata_description?: string | null;
   metadata_company?: string | null;
   metadata_category?: string | null;
   metadata_keywords?: string[];
+  document_type_icon?: string | null;
 };
 
 export type ContentMetadataDbResult = {
@@ -157,6 +164,7 @@ export type ContentNodeDbUpsert = {
   updated_by?: string | null;
   mime_type?: string | null;
   original_filename?: string | null;
+  mount_id?: string | null;
 };
 
 export type MarkdownRevisionDbResult = {
@@ -170,6 +178,8 @@ export type MarkdownRevisionDbResult = {
   created_by: string | null;
   created_by_name: string | null;
   restored_from_revision_id: string | null;
+  document_type_id: string | null;
+  metadata: DocumentMetadata;
 };
 
 export type MarkdownRevisionDbCreate = {
@@ -182,6 +192,8 @@ export type MarkdownRevisionDbCreate = {
   created_at: Date;
   created_by: string | null;
   restored_from_revision_id?: string | null;
+  document_type_id?: string | null;
+  metadata?: DocumentMetadata;
 };
 
 // -- Project
@@ -311,6 +323,27 @@ export type AssessmentResponseDbUpsert = Omit<
   'id' | 'created_at' | 'updated_at' | 'updated_by_name'
 >;
 
+// -- Project Milestone
+
+export type ProjectMilestoneDbResult = {
+  id: string;
+  workspace: string;
+  project_id: string;
+  name: string;
+  target_date: string;
+  status: 'planned' | 'active' | 'complete' | 'cancelled';
+  sort_order: number;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type ProjectMilestoneDbCreate = ProjectMilestoneDbResult;
+
+export type ProjectMilestoneDbUpdate = Omit<
+  ProjectMilestoneDbResult,
+  'id' | 'workspace' | 'project_id' | 'created_at'
+>;
+
 export const projectMappers = {
   project: (row: DatabaseRow): ProjectDbResult => ({
     id: String(row['id']),
@@ -349,6 +382,7 @@ export const projectMappers = {
     updated_by: row['updated_by'] == null ? null : String(row['updated_by']),
     mime_type: row['mime_type'] == null ? null : String(row['mime_type']),
     original_filename: row['original_filename'] == null ? null : String(row['original_filename']),
+    mount_id: row['mount_id'] == null ? null : String(row['mount_id']),
     metadata_title: row['metadata_title'] == null ? null : String(row['metadata_title']),
     metadata_description:
       row['metadata_description'] == null ? null : String(row['metadata_description']),
@@ -358,7 +392,8 @@ export const projectMappers = {
       row['metadata_keywords'],
       [],
       'content_node.metadata_keywords'
-    )
+    ),
+    document_type_icon: row['document_type_icon'] == null ? null : String(row['document_type_icon'])
   }),
   markdownRevision: (row: DatabaseRow): MarkdownRevisionDbResult => ({
     id: String(row['id']),
@@ -371,7 +406,9 @@ export const projectMappers = {
     created_by: row['created_by'] == null ? null : String(row['created_by']),
     created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
     restored_from_revision_id:
-      row['restored_from_revision_id'] == null ? null : String(row['restored_from_revision_id'])
+      row['restored_from_revision_id'] == null ? null : String(row['restored_from_revision_id']),
+    document_type_id: row['document_type_id'] == null ? null : String(row['document_type_id']),
+    metadata: parseDatabaseJson(row['metadata'], {}, 'content_node_revision.metadata')
   }),
   projectEntity: (row: DatabaseRow): ProjectEntityDbResult => ({
     workspace: String(row['workspace']),
@@ -391,8 +428,7 @@ export const projectMappers = {
     project: projectMappers.project(row),
     file_count: Number(row['file_count'] ?? 0),
     entity_type_id: row['entity_type_id'] == null ? null : String(row['entity_type_id']),
-    entity_type_label:
-      row['entity_type_label'] == null ? null : String(row['entity_type_label'])
+    entity_type_label: row['entity_type_label'] == null ? null : String(row['entity_type_label'])
   }),
   diagramEntityFile: (row: DatabaseRow): DiagramEntityFileDbResult => ({
     file_id: String(row['file_id']),
@@ -430,12 +466,19 @@ export const projectMappers = {
     description: String(row['description'] ?? ''),
     status: row['status'] as AssessmentDbResult['status'],
     scope: parseDatabaseJson(row['scope'], [], 'assessment.scope'),
-    scope_conditions: parseDatabaseJson(
-      row['scope_conditions'],
-      [],
-      'assessment.scope_conditions'
-    ),
+    scope_conditions: parseDatabaseJson(row['scope_conditions'], [], 'assessment.scope_conditions'),
     fields: parseDatabaseJson(row['fields'], [], 'assessment.fields'),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
+  projectMilestone: (row: DatabaseRow): ProjectMilestoneDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    project_id: String(row['project_id']),
+    name: String(row['name']),
+    target_date: databaseDateOnly(row['target_date']),
+    status: row['status'] as ProjectMilestoneDbResult['status'],
+    sort_order: Number(row['sort_order'] ?? 0),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
@@ -465,6 +508,7 @@ export type ProjectDatabase = {
   listAllContentNodes(ws: string): Promise<ContentNodeDbResult[]>;
   listEntityContentNodes(ws: string, entityId: string): Promise<ContentNodeDbResult[]>;
   listWorkspaceContentNodes(ws: string): Promise<ContentNodeDbResult[]>;
+  listContentNodesByMount(ws: string, mountId: string): Promise<ContentNodeDbResult[]>;
   getContentNodeByPath(
     ws: string,
     projectId: string,
@@ -477,7 +521,11 @@ export type ProjectDatabase = {
   ): Promise<ContentNodeDbResult | null>;
   getAnyContentNodeById(ws: string, id: string): Promise<ContentNodeDbResult | null>;
   listMarkdownRevisions(ws: string, nodeId: string): Promise<MarkdownRevisionDbResult[]>;
-  getMarkdownRevision(ws: string, nodeId: string, revisionId: string): Promise<MarkdownRevisionDbResult | null>;
+  getMarkdownRevision(
+    ws: string,
+    nodeId: string,
+    revisionId: string
+  ): Promise<MarkdownRevisionDbResult | null>;
   createMarkdownRevision(input: MarkdownRevisionDbCreate): Promise<MarkdownRevisionDbResult>;
   getNextMarkdownRevisionNumber(ws: string, nodeId: string): Promise<number>;
   updateContentNodeSizeById(
@@ -524,6 +572,7 @@ export type ProjectDatabase = {
   deleteContentMetadata(ws: string, nodeId: string): Promise<void>;
   upsertContentNode(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult>;
   createContentNodeIfAbsent(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult | null>;
+  deleteContentNodesByIds(ws: string, nodeIds: readonly string[]): Promise<void>;
   deleteContentNodeByPath(
     ws: string,
     projectId: string,
@@ -566,10 +615,7 @@ export type ProjectDatabase = {
     newPath: string,
     updated_at: Date
   ): Promise<string[]>;
-  deleteWorkspaceContentNodeFolder(
-    ws: string,
-    folderPath: string
-  ): Promise<ContentNodeDbResult[]>;
+  deleteWorkspaceContentNodeFolder(ws: string, folderPath: string): Promise<ContentNodeDbResult[]>;
 
   listProjectEntities(ws: string, projectId: string): Promise<ProjectEntityDbResult[]>;
   listProjectEntityLinks(ws: string, projectId: string): Promise<ProjectEntityLinkDbResult[]>;
@@ -598,6 +644,22 @@ export type ProjectDatabase = {
     input: AssessmentDbUpdate
   ): Promise<AssessmentDbResult | null>;
   deleteAssessment(ws: string, projectId: string, id: string): Promise<AssessmentDbResult | null>;
+
+  listMilestones(ws: string, projectId: string): Promise<ProjectMilestoneDbResult[]>;
+  getMilestone(ws: string, projectId: string, id: string): Promise<ProjectMilestoneDbResult | null>;
+  createMilestone(input: ProjectMilestoneDbCreate): Promise<ProjectMilestoneDbResult>;
+  updateMilestone(
+    ws: string,
+    projectId: string,
+    id: string,
+    input: ProjectMilestoneDbUpdate
+  ): Promise<ProjectMilestoneDbResult | null>;
+  deleteMilestone(
+    ws: string,
+    projectId: string,
+    id: string
+  ): Promise<ProjectMilestoneDbResult | null>;
+  isEntityLinkedToProject(ws: string, projectId: string, entityId: string): Promise<boolean>;
 
   listAssessmentResponses(ws: string, assessmentId: string): Promise<AssessmentResponseDbResult[]>;
   getAssessmentResponse(

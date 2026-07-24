@@ -15,6 +15,7 @@ import {
 } from '../../hooks/useAiConversations';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import { hasRenderableParts, optimisticConversationTitle } from './assistantViewModel';
+import { formatAiActionSeedMessage, readAndClearAiActionSeed } from '../../lib/aiActionSeed';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/assistant');
 
@@ -43,6 +44,12 @@ export const useAssistantController = () => {
     }
     wasLoadingRef.current = chat.isLoading;
   });
+
+  useEffect(() => {
+    if (!conversationId) return;
+    const seed = readAndClearAiActionSeed();
+    if (seed) setDraft(formatAiActionSeedMessage(seed));
+  }, [conversationId]);
 
   const visibleMessages = useMemo(() => {
     if (chat.messages.length > 0) {

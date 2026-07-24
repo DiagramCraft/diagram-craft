@@ -64,5 +64,21 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     buildShell
   );
 
-  return [contentRoute, contentFolderRoute, contentDiagramRoute, contentMarkdownRoute] as const;
+  const contentMarkdownDraftRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'content/wiki/new',
+      validateSearch: validateMarkdownSearch,
+      component: LazyMarkdownEditorScreen
+    }),
+    buildShell
+  );
+
+  return [
+    contentRoute,
+    contentFolderRoute,
+    contentDiagramRoute,
+    contentMarkdownRoute,
+    contentMarkdownDraftRoute
+  ] as const;
 };

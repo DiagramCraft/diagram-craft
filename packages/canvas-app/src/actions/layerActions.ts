@@ -1,7 +1,4 @@
-import {
-  AbstractAction,
-  AbstractToggleAction
-} from '@diagram-craft/canvas/action';
+import { AbstractAction, AbstractToggleAction } from '@diagram-craft/canvas/action';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -164,7 +161,7 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
     if (!id) return false;
     const layer = this.context.model.activeDiagram.layers.byId(id);
     assert.present(layer);
-    return layer.isLocked();
+    return layer.locked;
   }
 
   execute({ id }: LayerActionArg): void {
@@ -175,7 +172,7 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
     assert.present(layer);
 
     diagram.undoManager.execute('Toggle layer locked', uow => {
-      layer.setLocked(!layer.isLocked(), uow);
+      layer.setLocked(!layer.locked, uow);
     });
   }
 }

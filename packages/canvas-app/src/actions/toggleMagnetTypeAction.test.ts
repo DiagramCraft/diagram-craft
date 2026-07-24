@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { ActionContext } from '@diagram-craft/canvas/action';
-import {
-  DEFAULT_SNAP_CONFIG,
-  getSnapConfig
-} from '@diagram-craft/canvas/snap/snapManager';
+import { DEFAULT_SNAP_CONFIG, getSnapConfig } from '@diagram-craft/canvas/snap/snapManager';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';

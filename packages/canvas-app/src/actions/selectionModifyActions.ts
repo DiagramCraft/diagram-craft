@@ -23,8 +23,27 @@ export const selectionModifyActions = (context: ActionContext) => ({
   SELECTION_SELECT_CONNECTED: new SelectionSelectConnectedAction(context),
   SELECTION_SELECT_TREE: new SelectionSelectTreeAction(context),
   SELECTION_SELECT_GROW: new SelectionSelectGrowAction(context),
-  SELECTION_SELECT_SHRINK: new SelectionSelectShrinkAction(context)
+  SELECTION_SELECT_SHRINK: new SelectionSelectShrinkAction(context),
+  SELECTION_TOGGLE_LOCK: new SelectionToggleLockAction(context)
 });
+
+export class SelectionToggleLockAction extends AbstractSelectionAction {
+  name = $tStr('action.SELECTION_TOGGLE_LOCK.name', 'Lock');
+
+  constructor(context: ActionContext) {
+    super(context, MultipleType.Both, ElementType.Both);
+  }
+
+  execute(): void {
+    const diagram = this.context.model.activeDiagram;
+    const elements = diagram.selection.elements;
+
+    diagram.undoManager.execute('Lock selection', uow => {
+      elements.forEach(e => e.setLocked(true, uow));
+    });
+    this.emit('actionTriggered', {});
+  }
+}
 
 export class SelectionSelectConnectedAction extends AbstractSelectionAction {
   name = $tStr('action.SELECTION_SELECT_CONNECTED.name', 'Select Connected');

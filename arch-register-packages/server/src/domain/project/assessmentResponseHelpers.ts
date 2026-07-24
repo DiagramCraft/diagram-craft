@@ -57,7 +57,7 @@ export const buildAssessmentResultsCsvData = (
       const response = responseByEntity.get(entity.id);
       const values = response?.values ?? {};
       const row: Record<string, unknown> = {
-        'Entity': entity.name || entity.slug,
+        'Entity': entity.name ?? entity.slug,
         'Owner': entity.owner_name ?? '',
         'Schema Type': entity.schema_name,
         'Status': response ? toApiAssessmentResponse(response, assessment).status : 'not_started'

@@ -139,8 +139,7 @@ reader.on('close', () => {
     const durationStddev = metrics[key].duration.stddev;
     console.log(
       `  Time:  \t\t\t${durationAvg.toFixed(2)}ms\t±${durationStddev.toFixed(2)}ms (±${(
-        (100 * durationStddev) /
-        durationAvg
+        (100 * durationStddev) / durationAvg
       ).toFixed(2)}%)`
     );
     for (const ref of reference) {

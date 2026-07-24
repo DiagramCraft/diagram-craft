@@ -10,7 +10,9 @@ declare module 'better-sqlite3' {
     run(...params: unknown[]): RunResult;
   }
 
-  type Transaction<TArgs extends unknown[] = [], TResult = unknown> = ((...params: TArgs) => TResult) & {
+  type Transaction<TArgs extends unknown[] = [], TResult = unknown> = ((
+    ...params: TArgs
+  ) => TResult) & {
     default: (...params: TArgs) => TResult;
     deferred: (...params: TArgs) => TResult;
     immediate: (...params: TArgs) => TResult;
@@ -23,7 +25,9 @@ declare module 'better-sqlite3' {
     close(): void;
     exec(source: string): this;
     prepare<TRow = unknown>(source: string): Statement<TRow>;
-    transaction<TArgs extends unknown[], TResult>(fn: (...params: TArgs) => TResult): Transaction<TArgs, TResult>;
+    transaction<TArgs extends unknown[], TResult>(
+      fn: (...params: TArgs) => TResult
+    ): Transaction<TArgs, TResult>;
   }
 
   export default Database;

@@ -23,9 +23,9 @@ test.describe('GET /api/:workspace/enums', () => {
   });
 
   test('returns 404 for unknown workspace', async ({ orpc }) => {
-    await expect(
-      orpc.enums.list({ params: { workspace: 'nonexistent' } })
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(orpc.enums.list({ params: { workspace: 'nonexistent' } })).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    });
   });
 
   test('returns 401 without authentication', async ({ server }) => {
@@ -57,7 +57,11 @@ test.describe('POST /api/:workspace/enums', () => {
   test('creates an enum with explicit options and sort order', async ({ orpc }) => {
     const result = await orpc.enums.create({
       params: { workspace: 'default' },
-      body: { name: 'Deployment Stage', options: [{ value: 'prod', label: 'Production' }], sort_order: 9 }
+      body: {
+        name: 'Deployment Stage',
+        options: [{ value: 'prod', label: 'Production' }],
+        sort_order: 9
+      }
     });
     expect(result).toMatchObject({
       workspace: seedIds.workspace.default,
@@ -78,7 +82,10 @@ test.describe('POST /api/:workspace/enums', () => {
 
   test('returns 400 for a non-object request body', async ({ orpc }) => {
     await expect(
-      orpc.enums.create({ params: { workspace: 'default' }, body: { name: undefined as unknown as string } })
+      orpc.enums.create({
+        params: { workspace: 'default' },
+        body: { name: undefined as unknown as string }
+      })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
@@ -101,7 +108,11 @@ test.describe('PUT /api/:workspace/enums/:id', () => {
 
     const updated = await orpc.enums.update({
       params: { workspace: 'default', id: created.id },
-      body: { name: 'Change Classification', options: [{ value: 'major', label: 'Major' }], sort_order: 4 }
+      body: {
+        name: 'Change Classification',
+        options: [{ value: 'major', label: 'Major' }],
+        sort_order: 4
+      }
     });
     expect(updated).toMatchObject({
       id: created.id,
@@ -131,7 +142,10 @@ test.describe('PUT /api/:workspace/enums/:id', () => {
 
   test('returns 404 for an unknown enum id', async ({ orpc }) => {
     await expect(
-      orpc.enums.update({ params: { workspace: 'default', id: NONEXISTENT_UUID }, body: { name: 'Nope' } })
+      orpc.enums.update({
+        params: { workspace: 'default', id: NONEXISTENT_UUID },
+        body: { name: 'Nope' }
+      })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

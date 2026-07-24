@@ -3,7 +3,8 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
-import { listEntities } from '../catalog/entityOperations';
+import { listEntities } from '../catalog/entityQueryOperations';
+import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
 const resolveAssessmentResponseEntityName = async (
@@ -53,7 +54,8 @@ const resolveAuditPublicIds = async (
   }
 
   if (entry.entity_type === 'content_node') {
-    const projectId = typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
+    const projectId =
+      typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
     if (!projectId) return entry;
     const project = await db.project.getProject(workspace, projectId);
     return {
@@ -95,10 +97,13 @@ export const listAuditLog = async (
 
   let entityIds: string[] | null = null;
   if (filters.owner || filters.lifecycle) {
-    const matchingEntities = await listEntities(db, ws, null, {
-      schemaId: filters.schemaId,
+    const queryInput = {
+      _schemaId: filters.schemaId,
       owner: filters.owner,
       lifecycle: filters.lifecycle
+    };
+    const matchingEntities = await listEntities(db, ws, null, {
+      entityQuery: buildEntityQueryForExecution(queryInput, parseEntityQuery(queryInput))
     });
     entityIds = matchingEntities.map(e => e._uid);
   }

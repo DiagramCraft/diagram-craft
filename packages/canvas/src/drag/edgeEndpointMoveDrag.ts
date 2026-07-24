@@ -24,10 +24,7 @@ import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Path } from '@diagram-craft/geometry/path';
 import { resolveEdgeEndpointTarget } from './edgeEndpointTarget';
-import type {
-  AttachEdgeContext,
-  AttachPhase
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import type { AttachEdgeContext, AttachPhase } from '@diagram-craft/model/nodeDefinition';
 
 export class EdgeEndpointMoveDrag extends Drag {
   readonly capture: UndoCapture;

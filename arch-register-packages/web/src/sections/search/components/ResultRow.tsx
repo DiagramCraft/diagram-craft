@@ -27,7 +27,15 @@ type Props = {
   lifecycleStates: WorkspaceLifecycleState[];
 };
 
-export const ResultRow = ({ row, q, isSelected, onSelect, onOpen, schemaMap, lifecycleStates }: Props) => {
+export const ResultRow = ({
+  row,
+  q,
+  isSelected,
+  onSelect,
+  onOpen,
+  schemaMap,
+  lifecycleStates
+}: Props) => {
   if (row.kind === 'entity') {
     const e = row.data as EntitySearchResult;
     const schemaMeta = schemaMap.get(e.schemaId);
@@ -55,13 +63,13 @@ export const ResultRow = ({ row, q, isSelected, onSelect, onOpen, schemaMap, lif
             <button
               type="button"
               className={styles.rowName}
-              aria-label={`Search result: ${e._name || e._slug}`}
+              aria-label={`Search result: ${e._name ?? e._slug}`}
               onClick={ev => {
                 ev.stopPropagation();
                 onOpen();
               }}
             >
-              <Hi s={e._name || e._slug} q={q} />
+              <Hi s={e._name ?? e._slug} q={q} />
             </button>
             <Chip tone="ghost">{e.schemaName}</Chip>
             {e._lifecycle && (

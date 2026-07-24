@@ -54,7 +54,7 @@ export const LayerIndicator = () => {
               element={<span>{diagram.activeLayer.name}</span>}
             />
 
-            {diagram.activeLayer.isLocked() && (
+            {diagram.activeLayer.locked && (
               <div className={styles.eLock}>
                 <TbLock />
               </div>
@@ -82,7 +82,7 @@ export const LayerIndicator = () => {
             leftSlot={diagram.activeLayer === layer ? <TbCheck /> : undefined}
             rightSlot={
               <>
-                {layer.isLocked() ? (
+                {layer.locked ? (
                   <span style={{ color: 'var(--error-fg)' }}>
                     <TbLock />
                   </span>

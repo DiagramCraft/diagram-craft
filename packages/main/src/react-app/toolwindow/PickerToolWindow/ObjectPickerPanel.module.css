@@ -22,7 +22,7 @@
           left: calc(anchor(right) + 7px);
           top: 9px;
           right: 18px;
-          content: '';
+          content: "";
           border-bottom: 1px solid var(--base-fg-more-dim);
         }
       }

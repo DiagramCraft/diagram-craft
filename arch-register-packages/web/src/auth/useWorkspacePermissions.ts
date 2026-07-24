@@ -6,6 +6,7 @@ import { buildWorkspaceAuthorizationContextFromAuthData } from './authorizationC
 
 type WorkspacePermissions = {
   canManageWorkspaces: boolean;
+  canAdministerWorkspace: boolean;
   canManageGlobalRoles: boolean;
   canViewSchemas: boolean;
   canEditSchemas: boolean;
@@ -14,8 +15,10 @@ type WorkspacePermissions = {
   canCreateProjects: boolean;
   canCreateEntities: boolean;
   canManageMembers: boolean;
+  canManageJobs: boolean;
   canManageViews: boolean;
   canManageAdminViews: boolean;
+  canOverrideEntityApproval: boolean;
 };
 
 const checker = new PermissionChecker();
@@ -36,6 +39,10 @@ export const useWorkspacePermissions = (
 
     const canManageWorkspaces =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.settings');
+    const canAdministerWorkspace =
+      hasWorkspaceContext &&
+      (checker.hasWorkspaceCapability(context, 'people.role') ||
+        checker.hasGlobalPermission(context, 'admin_platform'));
     const canManageGlobalRoles =
       context != null && checker.hasGlobalPermission(context, 'manage_workspace_roles');
     const canViewSchemas =
@@ -47,10 +54,16 @@ export const useWorkspacePermissions = (
     const canViewAudit = hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.audit');
     const canManageMembers =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'people.invite');
+    const canManageJobs =
+      hasWorkspaceContext &&
+      (checker.hasWorkspaceCapability(context, 'people.role') ||
+        checker.hasGlobalPermission(context, 'admin_platform'));
     const canManageViews =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.manage_views');
     const canManageAdminViews =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.settings');
+    const canOverrideEntityApproval =
+      hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ent.override');
     const canCreateProjects =
       hasWorkspaceContext &&
       (capabilities.canCreateProject(context, null) ||
@@ -62,6 +75,7 @@ export const useWorkspacePermissions = (
 
     return {
       canManageWorkspaces,
+      canAdministerWorkspace,
       canManageGlobalRoles,
       canViewSchemas,
       canEditSchemas,
@@ -70,8 +84,10 @@ export const useWorkspacePermissions = (
       canCreateProjects,
       canCreateEntities,
       canManageMembers,
+      canManageJobs,
       canManageViews,
-      canManageAdminViews
+      canManageAdminViews,
+      canOverrideEntityApproval
     };
   }, [authorizationData, user, workspaceId]);
 };

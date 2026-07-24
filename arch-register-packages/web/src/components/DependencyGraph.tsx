@@ -260,7 +260,10 @@ export const DependencyGraph = <T,>({
   const viewBox = useMemo(() => {
     if (positions.size === 0) return '0 0 400 300';
 
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
     for (const p of positions.values()) {
       if (p.x < minX) minX = p.x;
       if (p.y < minY) minY = p.y;
@@ -290,7 +293,12 @@ export const DependencyGraph = <T,>({
   }, [positions, nodeWidth, nodeHeight, layout, edges]);
 
   return (
-    <svg ref={svgRef} className={styles.cDependencyGraph} viewBox={viewBox} xmlns="http://www.w3.org/2000/svg">
+    <svg
+      ref={svgRef}
+      className={styles.cDependencyGraph}
+      viewBox={viewBox}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <defs>
         {/*
           fill="context-stroke" makes the arrowhead inherit the stroke color of
@@ -314,8 +322,13 @@ export const DependencyGraph = <T,>({
 
           if (edge.from === edge.to) {
             return renderSelfLoop(
-              edge, fromPos, nodeWidth, nodeHeight,
-              styles.eEdge!, connectedEdges.has(edge.id), true
+              edge,
+              fromPos,
+              nodeWidth,
+              nodeHeight,
+              styles.eEdge!,
+              connectedEdges.has(edge.id),
+              true
             );
           }
 
@@ -374,7 +387,14 @@ export const DependencyGraph = <T,>({
               data-node
               transform={`translate(${pos.x}, ${pos.y})`}
               onClick={() => onNodeClick?.(node.id)}
-              onContextMenu={onNodeContextMenu ? e => { e.preventDefault(); onNodeContextMenu(node.id, e); } : undefined}
+              onContextMenu={
+                onNodeContextMenu
+                  ? e => {
+                      e.preventDefault();
+                      onNodeContextMenu(node.id, e);
+                    }
+                  : undefined
+              }
               onMouseEnter={() => setHoveredNodeId(node.id)}
               onMouseLeave={() => setHoveredNodeId(null)}
               style={{ cursor: onNodeClick ? 'pointer' : 'default' }}
@@ -388,7 +408,12 @@ export const DependencyGraph = <T,>({
                 className={styles.eNodeRect}
                 data-selected={highlightedIds?.has(node.id) || undefined}
               />
-              <foreignObject x={-nodeWidth / 2} y={-nodeHeight / 2} width={nodeWidth} height={nodeHeight}>
+              <foreignObject
+                x={-nodeWidth / 2}
+                y={-nodeHeight / 2}
+                width={nodeWidth}
+                height={nodeHeight}
+              >
                 <div
                   // @ts-expect-error xmlns is required for foreignObject content in some renderers
                   xmlns="http://www.w3.org/1999/xhtml"
@@ -411,8 +436,13 @@ export const DependencyGraph = <T,>({
 
             if (edge.from === edge.to) {
               return renderSelfLoop(
-                edge, fromPos, nodeWidth, nodeHeight,
-                styles.eArcEdge!, connectedEdges.has(edge.id), false
+                edge,
+                fromPos,
+                nodeWidth,
+                nodeHeight,
+                styles.eArcEdge!,
+                connectedEdges.has(edge.id),
+                false
               );
             }
 

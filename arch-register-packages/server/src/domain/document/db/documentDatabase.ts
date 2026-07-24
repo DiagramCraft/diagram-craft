@@ -1,0 +1,256 @@
+import type {
+  DocumentAiAction,
+  DocumentField,
+  DocumentGeneratedMetadata,
+  DocumentMetadata,
+  DocumentTemplateWrite,
+  DocumentTypeWrite
+} from '@arch-register/api-types/documentContract';
+
+export type DocumentTypeDbResult = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string;
+  fields: DocumentField[];
+  color: string | null;
+  icon: string | null;
+  archived: boolean;
+  /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
+  version?: number;
+  aiActions: DocumentAiAction[];
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DocumentTypeDbCreate = DocumentTypeWrite & {
+  id: string;
+  workspace: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+// -- Document Type Version
+
+export type DocumentTypeVersionDbResult = {
+  id: string;
+  workspace: string;
+  document_type_id: string;
+  version: number;
+  name: string;
+  description: string;
+  fields: DocumentField[];
+  aiActions: DocumentAiAction[];
+  color: string | null;
+  icon: string | null;
+  change_summary: Record<string, unknown>;
+  created_by: string | null;
+  created_at: Date;
+};
+
+export type DocumentTypeVersionDbCreate = Omit<DocumentTypeVersionDbResult, 'aiActions'> & {
+  aiActions?: DocumentAiAction[];
+};
+
+export type DocumentTemplateDbResult = {
+  id: string;
+  workspace: string;
+  project_id: string | null;
+  name: string;
+  body: string;
+  document_type_id: string;
+  metadata_defaults: DocumentMetadata;
+  archived: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DocumentTemplateDbCreate = DocumentTemplateWrite & {
+  id: string;
+  workspace: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DocumentMetadataDbResult = {
+  workspace: string;
+  node_id: string;
+  document_type_id: string | null;
+  values: DocumentMetadata;
+  generated_metadata: DocumentGeneratedMetadata;
+  updated_at: Date;
+};
+
+export type DocumentMetadataDbUpsert = Omit<DocumentMetadataDbResult, 'generated_metadata'> & {
+  generated_metadata?: DocumentGeneratedMetadata;
+};
+
+export type DocumentWorkflowRequestStatus =
+  | 'pending'
+  | 'changes_requested'
+  | 'approved'
+  | 'rejected'
+  | 'superseded'
+  | 'blocked';
+
+export type DocumentWorkflowRequestDbResult = {
+  id: string;
+  workspace: string;
+  node_id: string;
+  field_id: string;
+  case_id: string;
+  previous_value: string;
+  target_value: string;
+  status: DocumentWorkflowRequestStatus;
+  required_approvals: number;
+  resolved_slots: Array<Record<string, unknown>>;
+  policy_snapshot: Record<string, unknown>;
+  source_revision: number | null;
+  initiator_user_id: string | null;
+  created_at: Date;
+  resolved_at: Date | null;
+};
+
+export type DocumentWorkflowRequestDbCreate = Omit<
+  DocumentWorkflowRequestDbResult,
+  'resolved_at'
+> & { resolved_at?: Date | null };
+
+export type DocumentLinkIndexDbResult = {
+  workspace: string;
+  node_id: string;
+  field_id: string;
+  target_type: 'entity' | 'document';
+  target_id: string;
+  position: number;
+};
+
+export type DocumentMetadataGenerationScheduleDbResult = {
+  workspace: string;
+  node_id: string;
+  action_id: string;
+  run_after_at: Date;
+  source_revision: number;
+  generator_version: number;
+  scheduled_by_user_id: string;
+  attempt_count: number;
+  updated_at: Date;
+};
+
+export type DocumentMetadataGenerationScheduleDbUpsert = {
+  workspace: string;
+  node_id: string;
+  action_id: string;
+  run_after_at: Date;
+  source_revision: number;
+  generator_version: number;
+  scheduled_by_user_id: string;
+  attempt_count?: number;
+  updated_at: Date;
+};
+
+export type DocumentDatabase = {
+  listDocumentTypes(workspace: string, includeArchived?: boolean): Promise<DocumentTypeDbResult[]>;
+  getDocumentType(workspace: string, id: string): Promise<DocumentTypeDbResult | null>;
+  createDocumentType(input: DocumentTypeDbCreate): Promise<DocumentTypeDbResult>;
+  updateDocumentType(
+    workspace: string,
+    id: string,
+    input: DocumentTypeWrite & { updated_at: Date; version?: number }
+  ): Promise<DocumentTypeDbResult | null>;
+  archiveDocumentType(
+    workspace: string,
+    id: string,
+    archived: boolean,
+    updated_at: Date
+  ): Promise<DocumentTypeDbResult | null>;
+  deleteDocumentType(workspace: string, id: string): Promise<void>;
+
+  listDocumentTypeVersions(
+    workspace: string,
+    documentTypeId: string
+  ): Promise<DocumentTypeVersionDbResult[]>;
+  createDocumentTypeVersion(
+    input: DocumentTypeVersionDbCreate
+  ): Promise<DocumentTypeVersionDbResult>;
+
+  renameDocumentMetadataField(
+    workspace: string,
+    documentTypeId: string,
+    oldFieldId: string,
+    newFieldId: string
+  ): Promise<number>;
+  removeDocumentMetadataField(
+    workspace: string,
+    documentTypeId: string,
+    fieldId: string
+  ): Promise<number>;
+  listDocumentTemplates(
+    workspace: string,
+    projectId?: string | null,
+    includeArchived?: boolean
+  ): Promise<DocumentTemplateDbResult[]>;
+  getDocumentTemplate(workspace: string, id: string): Promise<DocumentTemplateDbResult | null>;
+  createDocumentTemplate(input: DocumentTemplateDbCreate): Promise<DocumentTemplateDbResult>;
+  updateDocumentTemplate(
+    workspace: string,
+    id: string,
+    input: DocumentTemplateWrite & { updated_at: Date }
+  ): Promise<DocumentTemplateDbResult | null>;
+  archiveDocumentTemplate(
+    workspace: string,
+    id: string,
+    archived: boolean,
+    updated_at: Date
+  ): Promise<DocumentTemplateDbResult | null>;
+  deleteDocumentTemplate(workspace: string, id: string): Promise<void>;
+  getDocumentMetadata(workspace: string, nodeId: string): Promise<DocumentMetadataDbResult | null>;
+  upsertDocumentMetadata(input: DocumentMetadataDbUpsert): Promise<void>;
+  deleteDocumentMetadata(workspace: string, nodeId: string): Promise<void>;
+  getCurrentWorkflowRequests(
+    workspace: string,
+    nodeId: string
+  ): Promise<DocumentWorkflowRequestDbResult[]>;
+  getWorkflowRequestByCase(
+    workspace: string,
+    caseId: string
+  ): Promise<DocumentWorkflowRequestDbResult | null>;
+  createWorkflowRequest(
+    input: DocumentWorkflowRequestDbCreate
+  ): Promise<DocumentWorkflowRequestDbResult>;
+  updateWorkflowRequestStatus(
+    workspace: string,
+    id: string,
+    status: DocumentWorkflowRequestStatus,
+    resolvedAt?: Date | null
+  ): Promise<DocumentWorkflowRequestDbResult | null>;
+  listWorkflowRequests(
+    workspace: string,
+    nodeId: string
+  ): Promise<DocumentWorkflowRequestDbResult[]>;
+  listDocumentLinks(workspace: string, nodeId: string): Promise<DocumentLinkIndexDbResult[]>;
+  replaceDocumentLinks(
+    workspace: string,
+    nodeId: string,
+    links: Omit<DocumentLinkIndexDbResult, 'workspace' | 'node_id'>[]
+  ): Promise<void>;
+  listDocumentsLinkingEntity(
+    workspace: string,
+    entityId: string
+  ): Promise<DocumentLinkIndexDbResult[]>;
+  listDocumentsLinkingDocument(
+    workspace: string,
+    documentId: string
+  ): Promise<DocumentLinkIndexDbResult[]>;
+
+  markGeneratedMetadataOutdatedForDocumentType(
+    workspace: string,
+    documentTypeId: string
+  ): Promise<void>;
+
+  upsertPendingMetadataGeneration(input: DocumentMetadataGenerationScheduleDbUpsert): Promise<void>;
+  claimDueMetadataGenerations(
+    workspace: string,
+    now: Date
+  ): Promise<DocumentMetadataGenerationScheduleDbResult[]>;
+};

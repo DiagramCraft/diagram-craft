@@ -80,8 +80,8 @@ export const MarkdownCloseDialog = ({
           <section className={styles.section}>
             <div className={styles.sectionTitle}>Embedded diagrams</div>
             <div className={styles.sectionHelp}>
-              Select which existing embedded diagrams to revert. Unselected diagrams will keep
-              their current saved state.
+              Select which existing embedded diagrams to revert. Unselected diagrams will keep their
+              current saved state.
             </div>
             <ul className={styles.checklist}>
               {summary.revertableDiagrams.map(diagram => (

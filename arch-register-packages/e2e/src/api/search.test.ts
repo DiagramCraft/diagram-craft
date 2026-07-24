@@ -90,12 +90,21 @@ const test = baseTest.extend<{ seeded: true }>({
 });
 
 test.describe('search routes', () => {
-  test('GET /api/:workspace/search returns empty results when q is blank', async ({ orpc, seeded: _ }) => {
-    const result = await orpc.search.query({ params: { workspace: 'default' }, query: { q: '  ' } });
+  test('GET /api/:workspace/search returns empty results when q is blank', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: '  ' }
+    });
     expect(result).toEqual({ query: '', projects: [], files: [], entities: [], schemas: [] });
   });
 
-  test('GET /api/:workspace/search finds matching projects and files', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search finds matching projects and files', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'portal', types: 'projects,files' }
@@ -157,7 +166,10 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search finds files by metadata category', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search finds files by metadata category', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'security', types: 'files' }
@@ -177,7 +189,10 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search finds files by metadata keywords', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search finds files by metadata keywords', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'onboarding', types: 'files' }
@@ -213,13 +228,37 @@ test.describe('search routes', () => {
         entityId: '00000000-0000-0000-0003-000000000002',
         schemaName: 'Component',
         _name: 'Frontend App',
-        matchedFields: ['technology'],
+        matchedFields: [],
         matchedMetadata: expect.arrayContaining(['description', 'tags'])
+      }),
+      expect.objectContaining({
+        entityId: '00000000-0000-0000-0007-000000000002',
+        schemaName: 'Technology',
+        _name: 'React',
+        matchedFields: expect.arrayContaining(['product', 'provider_product']),
+        matchedMetadata: expect.arrayContaining(['name', 'slug', 'links'])
+      }),
+      expect.objectContaining({
+        entityId: '00000000-0000-0000-0006-000000000002',
+        schemaName: 'Technology Release',
+        _name: 'React 18',
+        matchedFields: ['provider_product', 'source_url'],
+        matchedMetadata: expect.arrayContaining(['name', 'slug', 'description', 'links'])
+      }),
+      expect.objectContaining({
+        entityId: '00000000-0000-0000-0003-000000000008',
+        schemaName: 'Component',
+        _name: 'Reporting Dashboard',
+        matchedFields: [],
+        matchedMetadata: ['tags']
       })
     ]);
   });
 
-  test('GET /api/:workspace/search finds matching schemas by field name', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search finds matching schemas by field name', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'technology', types: 'schemas' }
@@ -231,12 +270,30 @@ test.describe('search routes', () => {
       {
         schemaId: '00000000-0000-0000-0000-000000000003',
         name: 'Component',
+        fieldMatches: [{ fieldId: 'technology_releases', fieldName: 'Technology Releases' }]
+      },
+      {
+        schemaId: '00000000-0000-0000-0000-000000000005',
+        name: 'Resource',
+        fieldMatches: [{ fieldId: 'technology_releases', fieldName: 'Technology Releases' }]
+      },
+      {
+        schemaId: '00000000-0000-0000-0000-000000000007',
+        name: 'Technology',
+        fieldMatches: []
+      },
+      {
+        schemaId: '00000000-0000-0000-0000-000000000006',
+        name: 'Technology Release',
         fieldMatches: [{ fieldId: 'technology', fieldName: 'Technology' }]
       }
     ]);
   });
 
-  test('GET /api/:workspace/search applies limitPerType after sorting', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search applies limitPerType after sorting', async ({
+    orpc,
+    seeded: _
+  }) => {
     const result = await orpc.search.query({
       params: { workspace: 'default' },
       query: { q: 'diagram', types: 'files', limitPerType: 1 }
@@ -255,21 +312,30 @@ test.describe('search routes', () => {
 
   test('GET /api/:workspace/search returns 400 for invalid types', async ({ orpc, seeded: _ }) => {
     await expect(
-      orpc.search.query({ params: { workspace: 'default' }, query: { q: 'portal', types: 'files,invalid' } })
+      orpc.search.query({
+        params: { workspace: 'default' },
+        query: { q: 'portal', types: 'files,invalid' }
+      })
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
       message: 'types must be a comma-separated list of: projects, files, entities, schemas'
     });
   });
 
-  test('GET /api/:workspace/search returns 401 without authentication', async ({ server, seeded: _ }) => {
+  test('GET /api/:workspace/search returns 401 without authentication', async ({
+    server,
+    seeded: _
+  }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
     await expect(
       anonOrpc.search.query({ params: { workspace: 'default' }, query: { q: 'portal' } })
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('GET /api/:workspace/search returns 404 for an unknown workspace', async ({ orpc, seeded: _ }) => {
+  test('GET /api/:workspace/search returns 404 for an unknown workspace', async ({
+    orpc,
+    seeded: _
+  }) => {
     await expect(
       orpc.search.query({ params: { workspace: 'nonexistent' }, query: { q: 'portal' } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });

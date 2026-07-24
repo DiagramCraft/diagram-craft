@@ -50,7 +50,10 @@ export class HTMLToMarkdownConverter {
     if (element.nodeType === Node.TEXT_NODE) {
       let text = (element as Text).textContent ?? '';
       const prev = element.previousSibling;
-      if (prev?.nodeType === Node.ELEMENT_NODE && (prev as Element).tagName.toLowerCase() === 'br') {
+      if (
+        prev?.nodeType === Node.ELEMENT_NODE &&
+        (prev as Element).tagName.toLowerCase() === 'br'
+      ) {
         text = text.replace(/^\n/, '');
       }
       return this.escapeMarkdown(text);

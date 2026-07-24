@@ -1,7 +1,11 @@
 import { TbAt } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityMention } from './EntityMention';
-import { ENTITY_MENTION_TYPE, EntityMentionEditable, entityMentionMdxRule } from './EntityMentionEditable';
+import {
+  ENTITY_MENTION_TYPE,
+  EntityMentionEditable,
+  entityMentionMdxRule
+} from './EntityMentionEditable';
 import type { EntityMentionSlateElement } from './types';
 
 export const entityMentionSpec = defineMdxComponent<
@@ -22,8 +26,8 @@ export const entityMentionSpec = defineMdxComponent<
       description: 'Mention an entity with live name and status',
       icon: <TbAt size={14} />,
       keywords: ['mention', 'entity', '@', 'reference', 'link'],
-      onSelect: editor => {
-        editor.tf.insertNodes({
+      onSelect: (editor, { insertOrReplaceInline }) => {
+        insertOrReplaceInline(editor, {
           type: ENTITY_MENTION_TYPE,
           entityId: '',
           children: [{ text: '' }]

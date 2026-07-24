@@ -11,7 +11,6 @@ import { assert } from '@diagram-craft/utils/assert';
 import styles from './Dialog.module.css';
 import { AlertDialog as BaseUIAlertDialog } from '@base-ui/react/alert-dialog';
 
-
 type DialogContextType = {
   onDialogShow: () => void;
   onDialogHide: () => void;
@@ -45,7 +44,11 @@ export const DialogContextProvider = (props: DialogProviderProps) => {
 const DialogButton = (props: Button) => {
   if (props.type === 'cancel') {
     return (
-      <BaseUIAlertDialog.Close className={styles.eButton} data-variant={'ghost'} disabled={props.disabled}>
+      <BaseUIAlertDialog.Close
+        className={styles.eButton}
+        data-variant={'ghost'}
+        disabled={props.disabled}
+      >
         {props.label}
       </BaseUIAlertDialog.Close>
     );
@@ -64,7 +67,18 @@ const DialogButton = (props: Button) => {
   }
 };
 
-export const Dialog = ({ open, onClose, title, sup, sub, children, buttons = [], footerLeft, className, width }: Props) => {
+export const Dialog = ({
+  open,
+  onClose,
+  title,
+  sup,
+  sub,
+  children,
+  buttons = [],
+  footerLeft,
+  className,
+  width
+}: Props) => {
   const portal = usePortal();
   const dialogContext = useDialogContext();
   const isOpenRef = useRef(false);
@@ -117,7 +131,11 @@ export const Dialog = ({ open, onClose, title, sup, sub, children, buttons = [],
       <BaseUIAlertDialog.Portal container={portal}>
         <BaseUIAlertDialog.Backdrop className={styles.cDialogBackdrop} />
         <BaseUIAlertDialog.Viewport className={styles.cDialogViewport}>
-          <BaseUIAlertDialog.Popup className={`${styles.cDialog}${className ? ` ${className}` : ''}`} style={width != null ? { width } : undefined} initialFocus={true}>
+          <BaseUIAlertDialog.Popup
+            className={`${styles.cDialog}${className ? ` ${className}` : ''}`}
+            style={width != null ? { width } : undefined}
+            initialFocus={true}
+          >
             <div className={styles.eHeader}>
               <div className={styles.eHeaderLeft}>
                 {sup && <div className={styles.eSup}>{sup}</div>}
@@ -127,7 +145,6 @@ export const Dialog = ({ open, onClose, title, sup, sub, children, buttons = [],
                 />
                 {sub && <div className={styles.eSub}>{sub}</div>}
               </div>
-
             </div>
 
             <BaseUIAlertDialog.Description
@@ -174,7 +191,9 @@ export const Kbd = ({ children }: { children: ReactNode }) => (
 export const KbdHints = ({ hints }: { hints: [key: string, label: string][] }) => (
   <>
     {hints.map(([key, label]) => (
-      <span key={key}><Kbd>{key}</Kbd> {label}</span>
+      <span key={key}>
+        <Kbd>{key}</Kbd> {label}
+      </span>
     ))}
   </>
 );

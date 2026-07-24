@@ -8,6 +8,10 @@ import { httpAssert } from '../../utils/httpAssert';
 import { ContainmentField, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import {
+  externalUpdateEnvelopeSchema,
+  type ExternalUpdateEnvelope
+} from '@arch-register/api-types/common';
 
 export const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
@@ -52,25 +56,48 @@ export const matchesFilterCondition = (
     if (condition.op === 'not_empty') return tags.length > 0;
     const expected = String(condition.value ?? '');
     switch (condition.op) {
-      case 'equals': return tags.some(t => t === expected);
-      case 'not_equals': return !tags.some(t => t === expected);
-      case 'contains': return tags.some(t => t.toLowerCase().includes(expected.toLowerCase()));
-      default: return true;
+      case 'equals':
+        return tags.some(t => t === expected);
+      case 'not_equals':
+        return !tags.some(t => t === expected);
+      case 'contains':
+        return tags.some(t => t.toLowerCase().includes(expected.toLowerCase()));
+      default:
+        return true;
     }
   }
 
   let value: unknown;
   switch (condition.fieldId) {
-    case '_schemaId': value = entity.schema_id; break;
-    case '_lifecycle': value = entity.lifecycle; break;
-    case '_owner': value = entity.owner; break;
-    case '_name': value = entity.name; break;
-    case '_slug': value = entity.slug; break;
-    case '_description': value = entity.description; break;
-    case '_namespace': value = entity.namespace; break;
-    case '_completeness': value = completeness; break;
-    case '_updatedAt': value = entity.updated_at; break;
-    default: value = entity.data[condition.fieldId];
+    case '_schemaId':
+      value = entity.schema_id;
+      break;
+    case '_lifecycle':
+      value = entity.lifecycle;
+      break;
+    case '_owner':
+      value = entity.owner;
+      break;
+    case '_name':
+      value = entity.name;
+      break;
+    case '_slug':
+      value = entity.slug;
+      break;
+    case '_description':
+      value = entity.description;
+      break;
+    case '_namespace':
+      value = entity.namespace;
+      break;
+    case '_completeness':
+      value = completeness;
+      break;
+    case '_updatedAt':
+      value = entity.updated_at;
+      break;
+    default:
+      value = entity.data[condition.fieldId];
   }
 
   if (condition.op === 'empty') return value == null || value === '';
@@ -79,21 +106,31 @@ export const matchesFilterCondition = (
 
   const expected = condition.value;
   switch (condition.op) {
-    case 'equals': return String(value) === String(expected);
-    case 'not_equals': return String(value) !== String(expected);
-    case 'contains': return String(value).toLowerCase().includes(String(expected).toLowerCase());
-    case 'starts_with': return String(value).toLowerCase().startsWith(String(expected).toLowerCase());
-    case 'ends_with': return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
-    case 'gt': return Number(value) > Number(expected);
-    case 'lt': return Number(value) < Number(expected);
-    case 'gte': return Number(value) >= Number(expected);
-    case 'lte': return Number(value) <= Number(expected);
+    case 'equals':
+      return String(value) === String(expected);
+    case 'not_equals':
+      return String(value) !== String(expected);
+    case 'contains':
+      return String(value).toLowerCase().includes(String(expected).toLowerCase());
+    case 'starts_with':
+      return String(value).toLowerCase().startsWith(String(expected).toLowerCase());
+    case 'ends_with':
+      return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
+    case 'gt':
+      return Number(value) > Number(expected);
+    case 'lt':
+      return Number(value) < Number(expected);
+    case 'gte':
+      return Number(value) >= Number(expected);
+    case 'lte':
+      return Number(value) <= Number(expected);
     case 'before': {
       const valueTime = value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
       const expectedTime = new Date(String(expected)).getTime();
       return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime < expectedTime;
     }
-    default: return true;
+    default:
+      return true;
   }
 };
 
@@ -144,7 +181,8 @@ export type EntityMutationPayload = {
   requestedTargetLifecycleDate: string | null;
   tags: string[];
   links: EntityLink[];
-  visibilityMode: 'public' | 'restricted' | null;
+  projectId: string | null;
+  external: ExternalUpdateEnvelope | null;
   fields: Record<string, unknown>;
 };
 
@@ -154,7 +192,10 @@ export const relationFields = (fields: SchemaField[]) =>
       field.type === 'reference' || field.type === 'containment'
   );
 
-const normalizeRelationIds = (value: unknown, field: Extract<SchemaField, { type: 'reference' | 'containment' }>) => {
+const normalizeRelationIds = (
+  value: unknown,
+  field: Extract<SchemaField, { type: 'reference' | 'containment' }>
+) => {
   httpAssert.true(Array.isArray(value), {
     message: `${field.name} must be provided as an array of entity ids`
   });
@@ -196,10 +237,7 @@ export const normalizeEntityRelationFields = ({
     if (field.type === 'containment') validateContainmentField(field);
 
     const rawValue = normalizedFields[field.id];
-    const ids =
-      rawValue == null || rawValue === ''
-        ? []
-        : normalizeRelationIds(rawValue, field);
+    const ids = rawValue == null || rawValue === '' ? [] : normalizeRelationIds(rawValue, field);
 
     httpAssert.true(ids.length >= field.minCount, {
       message: `${field.name} requires at least ${field.minCount} relation(s)`
@@ -229,7 +267,7 @@ export const normalizeEntityRelationFields = ({
 };
 
 const extractId = (value: unknown): string | null => {
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return value.trim() === '' ? null : value;
   if (
     value != null &&
     typeof value === 'object' &&
@@ -257,9 +295,16 @@ export const parseEntityMutationPayload = (
     _targetLifecycleDate = null,
     _tags = [],
     _links = [],
-    _visibilityMode,
+    _projectId = null,
+    _external,
     ...fields
   } = body;
+
+  const externalParsed = _external ? externalUpdateEnvelopeSchema.safeParse(_external) : undefined;
+  httpAssert.true(_external === undefined || externalParsed?.success === true, {
+    status: 400,
+    message: '_external is not a valid external update envelope'
+  });
 
   const resolvedSchemaId = extractId(_schemaId) ?? extractId(_schema);
   httpAssert.string(resolvedSchemaId, {
@@ -288,8 +333,8 @@ export const parseEntityMutationPayload = (
       typeof _targetLifecycleDate === 'string' ? _targetLifecycleDate : null,
     tags: Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [],
     links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
-    visibilityMode:
-      _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null,
+    projectId: extractId(_projectId),
+    external: externalParsed?.success ? externalParsed.data : null,
     fields
   };
 };
@@ -367,7 +412,7 @@ export const buildEntityRelations = (
         entityId: row.id,
         publicId: row.public_id ?? row.id,
         entitySlug: row.slug,
-        entityName: row.name || row.slug,
+        entityName: row.name ?? row.slug,
         entitySchemaId: row.schema_id,
         fieldName: field.name,
         fieldPredicate: field.predicate,
@@ -404,14 +449,27 @@ export const buildEntityDependents = (
   const entityMap = new Map(entities.map(e => [e.id, e]));
 
   // Build inverse index: for each entity id, which entities reference it
-  const incomingIndex = new Map<string, Array<{ entity: Entity; fieldName: string; fieldPredicate?: string; kind: 'reference' | 'containment' }>>();
+  const incomingIndex = new Map<
+    string,
+    Array<{
+      entity: Entity;
+      fieldName: string;
+      fieldPredicate?: string;
+      kind: 'reference' | 'containment';
+    }>
+  >();
   for (const entity of entities) {
     const schema = schemaMap.get(entity.schema_id);
     if (!schema) continue;
     for (const field of relationFields(schema.fields)) {
       for (const refId of decodeRefs(entity.data[field.id])) {
         if (!incomingIndex.has(refId)) incomingIndex.set(refId, []);
-        incomingIndex.get(refId)!.push({ entity, fieldName: field.name, fieldPredicate: field.predicate, kind: field.type });
+        incomingIndex.get(refId)!.push({
+          entity,
+          fieldName: field.name,
+          fieldPredicate: field.predicate,
+          kind: field.type
+        });
       }
     }
   }
@@ -445,7 +503,7 @@ export const buildEntityDependents = (
         entityId: entity.id,
         publicId: entity.public_id ?? entity.id,
         entitySlug: entity.slug ?? entity.id,
-        entityName: entity.name || entity.slug || entity.id,
+        entityName: entity.name ?? entity.slug ?? entity.id,
         entitySchemaId: entity.schema_id,
         schemaName: schema?.name ?? entity.schema_id,
         lifecycleState: entity.lifecycle ?? null,
@@ -461,7 +519,13 @@ export const buildEntityDependents = (
         queue.push([
           entity.id,
           depth + 1,
-          [...viaPath, { entityId: currentId, entityName: currentEntity?.name || currentEntity?.slug || currentId }]
+          [
+            ...viaPath,
+            {
+              entityId: currentId,
+              entityName: currentEntity?.name ?? currentEntity?.slug ?? currentId
+            }
+          ]
         ]);
       }
     }
@@ -486,12 +550,9 @@ export const buildEntityGrantInputs = (
     httpAssert.string(typed['principal_id'], {
       message: 'principal_id must be a non-empty string'
     });
-    httpAssert.true(
-      ['viewer', 'editor', 'contributor', 'entity_admin'].includes(String(typed['role'])),
-      {
-        message: 'role must be viewer, editor, contributor, or entity_admin'
-      }
-    );
+    httpAssert.true(['editor', 'contributor', 'entity_admin'].includes(String(typed['role'])), {
+      message: 'role must be editor, contributor, or entity_admin'
+    });
     httpAssert.true(['self', 'subtree'].includes(String(typed['applies_to'])), {
       message: 'applies_to must be self or subtree'
     });
@@ -501,7 +562,7 @@ export const buildEntityGrantInputs = (
       entity_id: entityId,
       principal_type: typed['principal_type'] as 'user' | 'team',
       principal_id: typed['principal_id'] as string,
-      role: typed['role'] as 'viewer' | 'editor' | 'contributor' | 'entity_admin',
+      role: typed['role'] as 'editor' | 'contributor' | 'entity_admin',
       applies_to: typed['applies_to'] as 'self' | 'subtree',
       created_at: createdAt
     };

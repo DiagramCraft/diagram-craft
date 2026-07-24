@@ -15,6 +15,7 @@ import { useEnums } from '../hooks/useEnums';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
 import { useAiConfig } from '../hooks/useAiConfig';
+import { useGovernanceTaskCount } from '../hooks/useGovernance';
 import { useWorkspacePermissions } from '../auth/useWorkspacePermissions';
 import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
@@ -27,7 +28,8 @@ import {
   TbFiles,
   TbHome,
   TbMessageCircleStar,
-  TbSearch
+  TbSearch,
+  TbClipboardCheck
 } from 'react-icons/tb';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { navigateFromRailItem, resolveWorkspaceShellDescriptor } from './workspaceShellDescriptors';
@@ -47,6 +49,7 @@ const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'projects', icon: TbBriefcase2, tooltip: 'Projects' },
   { id: 'entities', icon: TbDatabase, tooltip: 'Entities' },
   { id: 'search', icon: TbSearch, tooltip: 'Search' },
+  { id: 'governance', icon: TbClipboardCheck, tooltip: 'My work' },
   { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
   { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' }
 ];
@@ -83,6 +86,7 @@ export const WorkspaceLayout = () => {
 
   const {
     canManageWorkspaces,
+    canAdministerWorkspace,
     canViewSchemas,
     canEditSchemas,
     canManageTeams,
@@ -90,6 +94,7 @@ export const WorkspaceLayout = () => {
     canCreateProjects,
     canCreateEntities,
     canManageMembers,
+    canManageJobs,
     canManageViews,
     canManageAdminViews
   } = useWorkspacePermissions(ws?.id);
@@ -101,14 +106,24 @@ export const WorkspaceLayout = () => {
 
   const availableSettingsSections = useMemo(
     () => [
-      ...(canManageWorkspaces ? ['general', 'danger', 'export-import'] : []),
+      ...(canManageWorkspaces ? ['general', 'danger', 'export-import', 'documents'] : []),
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
       ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
+      ...(canAdministerWorkspace ? ['api-tokens'] : []),
       ...(canManageWorkspaces ? ['ai'] : []),
+      ...(canManageJobs ? ['webhooks', 'automation', 'jobs'] : []),
       ...(canViewAudit ? ['analytics', 'audit'] : [])
     ],
-    [canManageWorkspaces, canManageTeams, canViewSchemas, canManageMembers, canViewAudit]
+    [
+      canManageWorkspaces,
+      canManageTeams,
+      canViewSchemas,
+      canManageMembers,
+      canAdministerWorkspace,
+      canViewAudit,
+      canManageJobs
+    ]
   );
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
@@ -157,12 +172,22 @@ export const WorkspaceLayout = () => {
     });
   }, [navigate, workspaceSlug]);
 
+  const { data: governanceTaskCount } = useGovernanceTaskCount(workspaceSlug, !!workspaceSlug);
+
   const visibleRailItems = useMemo(() => {
     const aiEnabled = aiConfig?.enabled === true;
+    const count = governanceTaskCount?.count ?? 0;
     return ALL_RAIL_ITEMS.filter(
       item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract')
+    ).map(item =>
+      item.id === 'governance' && count > 0
+        ? {
+            ...item,
+            extra: <span className={styles.railBadge}>{count > 9 ? '9+' : count}</span>
+          }
+        : item
     );
-  }, [aiConfig?.enabled]);
+  }, [aiConfig?.enabled, governanceTaskCount?.count]);
 
   const contextValue = useMemo(
     () => ({
@@ -176,6 +201,7 @@ export const WorkspaceLayout = () => {
       projectEntityTypes,
       permissions: {
         canManageWorkspaces,
+        canAdministerWorkspace,
         canViewSchemas,
         canEditSchemas,
         canManageTeams,
@@ -183,6 +209,7 @@ export const WorkspaceLayout = () => {
         canCreateProjects,
         canCreateEntities,
         canManageMembers,
+        canManageJobs,
         canManageViews,
         canManageAdminViews
       },
@@ -201,6 +228,7 @@ export const WorkspaceLayout = () => {
       teams,
       projectEntityTypes,
       canManageWorkspaces,
+      canAdministerWorkspace,
       canViewSchemas,
       canEditSchemas,
       canManageTeams,
@@ -208,6 +236,7 @@ export const WorkspaceLayout = () => {
       canCreateProjects,
       canCreateEntities,
       canManageMembers,
+      canManageJobs,
       canManageViews,
       canManageAdminViews,
       availableSettingsSections,

@@ -1,6 +1,8 @@
 import { createDatabase } from './factory';
 import {
   seedEntities,
+  seedCollectionEntities,
+  seedCollections,
   seedAiConfig,
   seedAssessments,
   seedGlobalRoleAssignments,
@@ -9,7 +11,11 @@ import {
   seedLocalUsers,
   seedOwners,
   seedProjectFiles,
+  seedAdrDocuments,
   seedProjects,
+  seedMilestones,
+  seedChangeCases,
+  seedProjectEntities,
   seedSavedViews,
   seedEnums,
   seedNotificationEvents,
@@ -20,15 +26,24 @@ import {
   seedWorkspaceMembers,
   seedWorkspaces
 } from './seedData';
-import { seededTestPassword } from './seedFixtures';
+import { seededTestPassword, seededWorkspaces } from './seedFixtures';
 import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
 import { UserDbCreate } from './database';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
+import { savedViewQuerySchema } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
+import { entityToBaseState } from '../domain/catalog/entityMutations';
 import type { StorageAdapter } from '../storage/storage.types';
+import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
+import { randomUUID } from 'node:crypto';
+import type { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
 
 type Database = Awaited<ReturnType<typeof createDatabase>>;
+
+export type BootstrapSeedOptions = {
+  aiConfig?: AiConfigInputDbUpsert;
+};
 
 export const validateBootstrapSeed = async (db: Database) => {
   const workspaces = await db.workspace.listWorkspaces();
@@ -74,7 +89,10 @@ export const validateBootstrapSeed = async (db: Database) => {
       const f = field as ReferenceField | ContainmentField;
       const refs = decodeRefs(entity.data[f.id]);
 
-      if (f.type === 'containment' && (f.maxCount !== 1 || (f.minCount !== 0 && f.minCount !== 1))) {
+      if (
+        f.type === 'containment' &&
+        (f.maxCount !== 1 || (f.minCount !== 0 && f.minCount !== 1))
+      ) {
         console.error(
           `  [schema:${schema.id}] containment field '${f.id}' must use minCount 0|1 and maxCount 1`
         );
@@ -109,6 +127,21 @@ export const validateBootstrapSeed = async (db: Database) => {
           );
           errors++;
         }
+      }
+    }
+  }
+
+  for (const workspace of workspaces) {
+    const views = await db.view.listSavedViews(workspace.id);
+    for (const view of views) {
+      const result = savedViewQuerySchema.safeParse(view.filters);
+      if (!result.success) {
+        console.error(
+          `  [view:${view.id}] has invalid canonical filters: ${result.error.issues
+            .map(issue => `${issue.path.join('.')}: ${issue.message}`)
+            .join('; ')}`
+        );
+        errors++;
       }
     }
   }
@@ -167,10 +200,6 @@ const seedBootstrapUsers = async (db: Database) => {
       member.created_at
     );
   }
-
-  console.log(
-    `  Created ${seedLocalUsers.length} test users with seeded team assignments, workspace roles and global roles (password: ${seededTestPassword})`
-  );
 };
 
 const seedBootstrapWatchesAndNotifications = async (db: Database) => {
@@ -203,13 +232,32 @@ const seedBootstrapWatchesAndNotifications = async (db: Database) => {
       changedByDisplayName: event.changed_by_display_name
     });
   }
-
-  console.log(
-    `  Seeded ${seedUserWatches.length} watches and ${seedNotificationEvents.length} notifications for demo users`
-  );
 };
 
-export const seedBootstrapData = async (db: Database, storage: StorageAdapter) => {
+const seedBootstrapCollections = async (db: Database) => {
+  for (const collection of seedCollections) {
+    await db.view.createCollection(collection);
+  }
+
+  for (const membership of seedCollectionEntities) {
+    const collection = seedCollections.find(item => item.id === membership.collection_id);
+    if (!collection) continue;
+    await db.view.addCollectionEntity(
+      collection.user_id,
+      collection.workspace,
+      membership.collection_id,
+      membership.entity_id,
+      membership.created_at
+    );
+  }
+};
+
+export const seedBootstrapData = async (
+  db: Database,
+  storage: StorageAdapter,
+  options: BootstrapSeedOptions = {}
+) => {
+  const aiConfig = options.aiConfig ?? seedAiConfig;
   const syncTimestamp = new Date();
   for (const workspace of seedWorkspaces) {
     await db.workspace.createWorkspace(workspace);
@@ -249,16 +297,22 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
     }
   }
   for (const workspace of seedWorkspaces) {
-    await db.ai.upsertAiConfig(workspace.id, seedAiConfig);
-  }
-  for (const entity of seedEntities) {
-    await db.catalog.createEntity(entity);
+    await db.ai.upsertAiConfig(workspace.id, aiConfig);
   }
   for (const project of seedProjects) {
     await db.project.createProject(project);
   }
+  for (const entity of seedEntities) {
+    await db.catalog.createEntity(entity);
+  }
   for (const assessment of seedAssessments) {
     await db.project.createAssessment(assessment);
+  }
+  for (const milestone of seedMilestones) {
+    await db.project.createMilestone(milestone);
+  }
+  for (const link of seedProjectEntities) {
+    await db.project.addProjectEntity(link);
   }
 
   const maxByPrefix = new Map<string, number>();
@@ -296,15 +350,119 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
 
     const body = seedWikiPageBodies[file.id];
     if (body !== undefined) {
+      const storageId = file.project_id ?? file.entity_id ?? file.workspace;
       await storage.write(
         file.workspace,
-        file.workspace,
+        storageId,
         file.id,
         Buffer.from(JSON.stringify({ body }), 'utf8')
       );
     }
   }
 
+  const adr = buildDefaultAdrDocuments(seededWorkspaces.default.id, syncTimestamp);
+  await db.document.createDocumentType(adr.documentType);
+  await db.document.createDocumentTemplate(adr.template);
+  const exampleNodeId = randomUUID();
+  const exampleBody =
+    '# Initial architecture decision\n\n## Context\n\nThis is a typed ADR seeded for development.\n\n## Decision drivers\n\n## Considered options\n\n## Decision\n\n## Consequences\n';
+  await db.project.upsertContentNode({
+    id: exampleNodeId,
+    workspace: seededWorkspaces.default.id,
+    project_id: null,
+    entity_id: null,
+    parent_id: null,
+    path: 'adr/initial-architecture-decision.md',
+    name: 'Initial architecture decision',
+    type: 'markdown',
+    size_bytes: Buffer.byteLength(JSON.stringify({ body: exampleBody }), 'utf8'),
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    created_atIfNew: syncTimestamp,
+    updated_at: syncTimestamp
+  });
+  await db.document.upsertDocumentMetadata({
+    workspace: seededWorkspaces.default.id,
+    node_id: exampleNodeId,
+    document_type_id: adr.documentType.id,
+    values: { status: 'Proposed' },
+    updated_at: syncTimestamp
+  });
+  await db.project.createMarkdownRevision({
+    workspace: seededWorkspaces.default.id,
+    node_id: exampleNodeId,
+    revision_number: 1,
+    title: 'Initial architecture decision',
+    body: exampleBody,
+    created_at: syncTimestamp,
+    created_by: null,
+    document_type_id: adr.documentType.id,
+    metadata: { status: 'Proposed' }
+  });
+  await storage.write(
+    seededWorkspaces.default.id,
+    seededWorkspaces.default.id,
+    exampleNodeId,
+    Buffer.from(JSON.stringify({ body: exampleBody }), 'utf8')
+  );
+
+  for (const seededAdr of seedAdrDocuments) {
+    const file = seedProjectFiles.find(item => item.id === seededAdr.id);
+    const body = file ? seedWikiPageBodies[file.id] : undefined;
+    if (!file || body === undefined) continue;
+
+    const metadata = {
+      status: seededAdr.status,
+      decision_date: seededAdr.decision_date
+    };
+    await db.document.upsertDocumentMetadata({
+      workspace: seededWorkspaces.default.id,
+      node_id: file.id,
+      document_type_id: adr.documentType.id,
+      values: metadata,
+      updated_at: syncTimestamp
+    });
+    await db.project.createMarkdownRevision({
+      workspace: seededWorkspaces.default.id,
+      node_id: file.id,
+      revision_number: 1,
+      title: file.name,
+      body,
+      created_at: syncTimestamp,
+      created_by: null,
+      document_type_id: adr.documentType.id,
+      metadata
+    });
+  }
+
   await seedBootstrapUsers(db);
+
+  // Seed the actual current state into the target historical version model before adding
+  // planned cases. Seed data is a clean bootstrap, so no legacy snapshot backfill is needed.
+  for (const workspace of Object.values(seededWorkspaces)) {
+    const entities = await listAllCatalogEntities(db, workspace.id);
+    for (const entity of entities) {
+      const versions = await db.catalog.listEntityVersions(workspace.id, entity.id);
+      if (versions.length > 0) continue;
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: workspace.id,
+        entity_id: entity.id,
+        version_number: entity.version ?? 1,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: entity.created_at,
+        created_by: null,
+        state: entityToBaseState(entity),
+        applied_case_revision_id: null
+      });
+    }
+  }
+
+  for (const changeCase of seedChangeCases) {
+    await db.changeCase.createCase(changeCase);
+  }
+
+  await seedBootstrapCollections(db);
   await seedBootstrapWatchesAndNotifications(db);
 };

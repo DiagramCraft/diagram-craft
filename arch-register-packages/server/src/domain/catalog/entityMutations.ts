@@ -1,6 +1,7 @@
 import type { EntityDbCreate, DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
-import { Entity } from './db/catalogDatabase';
+import { Entity, EntityVersionKind } from './db/catalogDatabase';
+import { outdateExternalMetadata, valueEquals } from '../externalMetadata/externalMetadataHelpers';
 
 const AUTOSAVE_KEEP_COUNT = 50;
 
@@ -20,7 +21,12 @@ export const entityToBaseState = (row: Entity): Record<string, unknown> => ({
   links: row.links,
   schema_id: row.schema_id,
   data: row.data,
-  visibility_mode: row.visibility_mode,
+  project_id: row.project_id,
+  version: row.version ?? 1,
+  // Frozen at the time this version was written — see computeEntityCompleteness callers in
+  // entityMutationOperations.ts. Intentionally never recomputed against a later schema edit, so
+  // historical versions keep reading the score as it was when the entity looked that way (#2346).
+  completeness: row.completeness,
   created_at: row.created_at,
   updated_at: row.updated_at
 });
@@ -43,6 +49,12 @@ type UpdateEntityWithAuditParams = {
   next: EntityDbUpdate;
   actor: EntityMutationActor;
   auditMetadata?: Record<string, unknown>;
+  versionKind?: EntityVersionKind;
+  appliedCaseRevisionId?: string | null;
+};
+
+type ConditionalUpdateEntityWithAuditParams = UpdateEntityWithAuditParams & {
+  expectedVersion: number;
 };
 
 export const createEntityWithAudit = async (
@@ -66,30 +78,45 @@ export const createEntityWithAudit = async (
     }
   });
 
-  await db.catalog.createSnapshot({
+  await db.catalog.createEntityVersion({
     id: crypto.randomUUID(),
     workspace: params.workspace,
     entity_id: row.id,
-    status: 'autosave',
-    project_id: null,
-    target_date: null,
+    version_number: row.version ?? 1,
+    kind: 'autosave',
     commit_message: null,
     created_at: new Date(),
     created_by: params.actor.id,
-    created_by_name: params.actor.displayName,
-    base_state: entityToBaseState(row),
-    proposed_state: null
+    state: entityToBaseState(row),
+    applied_case_revision_id: null
   });
-  await db.catalog.pruneAutosaveSnapshots(params.workspace, row.id, AUTOSAVE_KEEP_COUNT);
+  await db.catalog.pruneAutosaveVersions(params.workspace, row.id, AUTOSAVE_KEEP_COUNT);
 
   return row;
+};
+
+// A genuine user edit to any entity field marks all of that entity's external-field metadata
+// `outdated` — unless the caller already set `generated_metadata` explicitly (an external update
+// applying its own result, which must not outdate itself).
+const withOutdatedMetadataIfChanged = (previous: Entity, next: EntityDbUpdate): EntityDbUpdate => {
+  if (next.generated_metadata !== undefined) return next;
+  const currentMetadata = previous.generated_metadata ?? {};
+  if (Object.keys(currentMetadata).length === 0) return next;
+  const dataKeys = new Set([...Object.keys(previous.data), ...Object.keys(next.data)]);
+  const dataChanged = [...dataKeys].some(
+    key => !valueEquals(previous.data[key] ?? null, next.data[key] ?? null)
+  );
+  return dataChanged
+    ? { ...next, generated_metadata: outdateExternalMetadata(currentMetadata) }
+    : next;
 };
 
 export const updateEntityWithAudit = async (
   db: DatabaseAdapter,
   params: UpdateEntityWithAuditParams
 ) => {
-  const row = await db.catalog.updateEntity(params.workspace, params.entityId, params.next);
+  const next = withOutdatedMetadataIfChanged(params.previous, params.next);
+  const row = await db.catalog.updateEntity(params.workspace, params.entityId, next);
 
   if (row == null) return null;
 
@@ -110,21 +137,67 @@ export const updateEntityWithAudit = async (
     metadata: params.auditMetadata
   });
 
-  await db.catalog.createSnapshot({
+  await db.catalog.createEntityVersion({
     id: crypto.randomUUID(),
     workspace: params.workspace,
     entity_id: params.entityId,
-    status: 'autosave',
-    project_id: null,
-    target_date: null,
+    version_number: row.version ?? 1,
+    kind: params.versionKind ?? 'autosave',
     commit_message: null,
     created_at: new Date(),
     created_by: params.actor.id,
-    created_by_name: params.actor.displayName,
-    base_state: entityToBaseState(params.previous),
-    proposed_state: entityToBaseState(row)
+    state: entityToBaseState(row),
+    applied_case_revision_id: params.appliedCaseRevisionId ?? null
   });
-  await db.catalog.pruneAutosaveSnapshots(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
+  await db.catalog.pruneAutosaveVersions(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
+
+  return row;
+};
+
+export const updateEntityWithAuditIfVersion = async (
+  db: DatabaseAdapter,
+  params: ConditionalUpdateEntityWithAuditParams
+) => {
+  const next = withOutdatedMetadataIfChanged(params.previous, params.next);
+  const row = await db.catalog.updateEntityIfVersion(
+    params.workspace,
+    params.entityId,
+    next,
+    params.expectedVersion
+  );
+
+  if (row == null) return null;
+
+  await logAudit(db, {
+    workspace: params.workspace,
+    userId: params.actor.id,
+    userDisplayName: params.actor.displayName,
+    operation: 'update',
+    entityType: 'entity',
+    entityId: params.entityId,
+    entityName: row.name,
+    entitySlug: row.slug,
+    schemaId: row.schema_id,
+    changes: computeChanges(
+      flattenEntityAuditFields(params.previous),
+      flattenEntityAuditFields(row)
+    ),
+    metadata: params.auditMetadata
+  });
+
+  await db.catalog.createEntityVersion({
+    id: crypto.randomUUID(),
+    workspace: params.workspace,
+    entity_id: params.entityId,
+    version_number: row.version ?? 1,
+    kind: params.versionKind ?? 'autosave',
+    commit_message: null,
+    created_at: new Date(),
+    created_by: params.actor.id,
+    state: entityToBaseState(row),
+    applied_case_revision_id: params.appliedCaseRevisionId ?? null
+  });
+  await db.catalog.pruneAutosaveVersions(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
 
   return row;
 };

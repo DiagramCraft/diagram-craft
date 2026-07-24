@@ -32,7 +32,10 @@ export const BulkFieldInput = ({
 }: BulkFieldInputProps) => {
   const referenceSchemaId =
     field.kind === 'schema' && field.field.type === 'reference' ? field.field.schemaId : undefined;
-  const referenceQueries = useEntitiesBySchema(workspaceId, referenceSchemaId ? [referenceSchemaId] : []);
+  const referenceQueries = useEntitiesBySchema(
+    workspaceId,
+    referenceSchemaId ? [referenceSchemaId] : []
+  );
   const referenceCandidates = referenceQueries[0]?.data ?? [];
 
   if (clearing) {
@@ -94,7 +97,7 @@ export const BulkFieldInput = ({
       <Select.Root value={value} placeholder="No change" onChange={v => onValue(v ?? '')}>
         {referenceCandidates.map(entity => (
           <Select.Item key={entity._uid} value={entity._uid}>
-            {entity._name || entity._slug}
+            {entity._name ?? entity._slug}
           </Select.Item>
         ))}
       </Select.Root>

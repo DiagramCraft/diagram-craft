@@ -93,7 +93,11 @@ export const NodeActionPropertiesPanelForm = ({ actions }: { actions: ActionsPro
                 }
                 style={{ flex: 1 }}
               />
-              <Button variant={'icon-only'} onClick={() => removeAction(id)} title={'Remove action'}>
+              <Button
+                variant={'icon-only'}
+                onClick={() => removeAction(id)}
+                title={'Remove action'}
+              >
                 <TbTrash />
               </Button>
             </div>
@@ -114,12 +118,30 @@ export const NodeActionPropertiesPanelForm = ({ actions }: { actions: ActionsPro
               <Select.Item value={'url'}>URL</Select.Item>
               <Select.Item value={'diagram'}>Sheet</Select.Item>
               <Select.Item value={'layer'}>Toggle Layer</Select.Item>
+              <Select.Item value={'rest'}>REST Call</Select.Item>
             </Select.Root>
           </KeyValueTable.Value>
 
           {action.type === 'url' && (
             <>
               <KeyValueTable.Label>URL:</KeyValueTable.Label>
+              <KeyValueTable.Value>
+                <TextInput
+                  value={action.url ?? ''}
+                  onChange={value =>
+                    updateAction(id, current => ({
+                      ...current,
+                      url: value ?? ''
+                    }))
+                  }
+                />
+              </KeyValueTable.Value>
+            </>
+          )}
+
+          {action.type === 'rest' && (
+            <>
+              <KeyValueTable.Label>Endpoint URL:</KeyValueTable.Label>
               <KeyValueTable.Value>
                 <TextInput
                   value={action.url ?? ''}
@@ -190,7 +212,6 @@ export const NodeActionPropertiesPanelForm = ({ actions }: { actions: ActionsPro
           )}
         </React.Fragment>
       ))}
-
     </KeyValueTable.Root>
   );
 };

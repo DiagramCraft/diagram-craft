@@ -38,7 +38,10 @@ describe('resolveSelectionProjection', () => {
   test('returns a projection when all selected non-label nodes share the same projection', () => {
     const selection = makeSelection([
       { renderProps: createProps({ tilt: 0.6, rotation: 45 }), labelEdge: () => undefined },
-      { renderProps: createProps({ tilt: 0.6, rotation: 45, color: '#00ff00' }), labelEdge: () => undefined }
+      {
+        renderProps: createProps({ tilt: 0.6, rotation: 45, color: '#00ff00' }),
+        labelEdge: () => undefined
+      }
     ]);
 
     const projection = resolveSelectionProjection(selection);

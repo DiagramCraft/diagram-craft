@@ -1,5 +1,4 @@
 .icModelCenterDialog {
-
   :global(.cTabs) > [role="tabpanel"] {
     height: 100%;
     padding: 1rem;
@@ -7,7 +6,7 @@
     flex-direction: column;
     gap: 1rem;
 
-    &[data-state='inactive'] {
+    &[data-state="inactive"] {
       display: none;
     }
   }

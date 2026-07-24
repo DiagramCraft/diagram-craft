@@ -17,8 +17,19 @@ const minimalDiagramDocument = (name: string) => ({
 
 const createProject = async (
   orpc: TestORPCClient,
-  body: { name: string; description?: unknown; owner?: string | null; status?: 'draft' | 'active' | 'complete' | 'cancelled'; pinned?: boolean; color?: string | null | number }
-) => orpc.projects.create({ params: { workspace: 'default' }, body: body as Parameters<typeof orpc.projects.create>[0]['body'] });
+  body: {
+    name: string;
+    description?: unknown;
+    owner?: string | null;
+    status?: 'draft' | 'active' | 'complete' | 'cancelled';
+    pinned?: boolean;
+    color?: string | null | number;
+  }
+) =>
+  orpc.projects.create({
+    params: { workspace: 'default' },
+    body: body as Parameters<typeof orpc.projects.create>[0]['body']
+  });
 
 const uploadMarkdownAttachment = async (
   baseUrl: string,
@@ -44,16 +55,23 @@ const uploadMarkdownAttachment = async (
 
 test.describe('project routes', () => {
   test('GET /api/:workspace/projects lists created projects', async ({ orpc }) => {
-    await createProject(orpc, { name: 'Portal Redesign', owner: seedIds.teams.design, status: 'active' });
-    await createProject(orpc, { name: 'Auth Migration', owner: seedIds.teams.security, status: 'active', pinned: true });
+    await createProject(orpc, {
+      name: 'Portal Redesign',
+      owner: seedIds.teams.design,
+      status: 'active'
+    });
+    await createProject(orpc, {
+      name: 'Auth Migration',
+      owner: seedIds.teams.security,
+      status: 'active',
+      pinned: true
+    });
 
     const projects = await orpc.projects.list({ params: { workspace: 'default' } });
 
     expect(projects.length).toBeGreaterThanOrEqual(2);
     expect(projects).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: 'Auth Migration', pinned: true })
-      ])
+      expect.arrayContaining([expect.objectContaining({ name: 'Auth Migration', pinned: true })])
     );
   });
 
@@ -110,7 +128,9 @@ test.describe('project routes', () => {
     expect(project.files).toEqual({ folders: [], rootFiles: [] });
   });
 
-  test('POST /api/:workspace/projects creates a project with normalized optional fields', async ({ orpc }) => {
+  test('POST /api/:workspace/projects creates a project with normalized optional fields', async ({
+    orpc
+  }) => {
     const project = await orpc.projects.create({
       params: { workspace: 'default' },
       body: { name: 'Coverage Project', description: undefined, owner: undefined, color: undefined }
@@ -125,18 +145,25 @@ test.describe('project routes', () => {
     });
   });
 
-  test('POST /api/:workspace/projects returns 409 for duplicate project names', async ({ orpc }) => {
+  test('POST /api/:workspace/projects returns 409 for duplicate project names', async ({
+    orpc
+  }) => {
     await createProject(orpc, { name: 'Duplicate Project' });
 
     await expect(
-      orpc.projects.create({ params: { workspace: 'default' }, body: { name: 'Duplicate Project' } })
+      orpc.projects.create({
+        params: { workspace: 'default' },
+        body: { name: 'Duplicate Project' }
+      })
     ).rejects.toMatchObject({
       code: 'CONFLICT',
       message: 'A project with that name already exists in this workspace'
     });
   });
 
-  test('PUT /api/:workspace/projects/:id updates a project and preserves omitted fields', async ({ orpc }) => {
+  test('PUT /api/:workspace/projects/:id updates a project and preserves omitted fields', async ({
+    orpc
+  }) => {
     const created = await createProject(orpc, {
       name: 'Mutable Project',
       description: 'Original',
@@ -185,7 +212,9 @@ test.describe('project routes', () => {
       body: minimalDiagramDocument('Overview')
     });
 
-    const files = await orpc.projects.listFiles({ params: { workspace: 'default', id: projectId } });
+    const files = await orpc.projects.listFiles({
+      params: { workspace: 'default', id: projectId }
+    });
 
     expect(files.rootFiles).toEqual(
       expect.arrayContaining([expect.objectContaining({ path: 'overview.dgc' })])
@@ -302,7 +331,9 @@ test.describe('project routes', () => {
       name: 'Overview'
     });
 
-    const files = await orpc.projects.listFiles({ params: { workspace: 'default', id: projectId } });
+    const files = await orpc.projects.listFiles({
+      params: { workspace: 'default', id: projectId }
+    });
     expect(files.folders).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -316,7 +347,9 @@ test.describe('project routes', () => {
     );
   });
 
-  test('saving markdown updates the document name from the first h1 without renaming the path', async ({ orpc }) => {
+  test('saving markdown updates the document name from the first h1 without renaming the path', async ({
+    orpc
+  }) => {
     const created = await createProject(orpc, { name: 'Markdown Title Project' });
 
     const markdownResult = await orpc.projects.createProjectMarkdown({
@@ -349,7 +382,227 @@ test.describe('project routes', () => {
     });
   });
 
-  test('markdown revisions can be listed, fetched, and restored for project content', async ({ orpc }) => {
+  test('requires explicit migrations and preserves complete typed revision state', async ({
+    orpc
+  }) => {
+    const suffix = Date.now().toString();
+    const firstType = await orpc.documents.documentTypes.create({
+      params: { workspace: 'default' },
+      body: {
+        name: `Migration status ${suffix}`,
+        description: '',
+        fields: [
+          {
+            id: 'status',
+            name: 'Status',
+            type: 'enum',
+            requirement: 'required',
+            enumOptions: [{ value: 'proposed', label: 'Proposed' }],
+            retired: false
+          }
+        ]
+      }
+    });
+    const secondType = await orpc.documents.documentTypes.create({
+      params: { workspace: 'default' },
+      body: {
+        name: `Migration decision ${suffix}`,
+        description: '',
+        fields: [
+          {
+            id: 'decision',
+            name: 'Decision',
+            type: 'text',
+            requirement: 'required',
+            retired: false
+          }
+        ]
+      }
+    });
+    const project = await createProject(orpc, { name: `Typed migration ${suffix}` });
+    const document = await orpc.projects.createProjectMarkdown({
+      params: { workspace: 'default', id: project.public_id },
+      body: { name: 'Migration document' }
+    });
+
+    await expect(
+      orpc.projects.saveMarkdownContent({
+        params: { workspace: 'default', nodeId: document.id },
+        body: { body: '# Draft', document_type_id: firstType.id, metadata: { status: 'proposed' } }
+      })
+    ).rejects.toThrow('explicit migration');
+
+    await orpc.projects.migrateMarkdownContent({
+      params: { workspace: 'default', nodeId: document.id },
+      body: {
+        body: '# Draft',
+        name: 'Draft',
+        document_type_id: firstType.id,
+        metadata: { status: 'proposed' }
+      }
+    });
+
+    await expect(
+      orpc.projects.migrateMarkdownContent({
+        params: { workspace: 'default', nodeId: document.id },
+        body: {
+          body: '# Decision',
+          document_type_id: secondType.id,
+          metadata: { status: 'proposed' }
+        }
+      })
+    ).rejects.toThrow('not part of this document type');
+
+    await orpc.projects.migrateMarkdownContent({
+      params: { workspace: 'default', nodeId: document.id },
+      body: {
+        body: '# Decision',
+        name: 'Decision',
+        document_type_id: secondType.id,
+        metadata: { decision: 'Approved' }
+      }
+    });
+
+    await expect(
+      orpc.projects.migrateMarkdownContent({
+        params: { workspace: 'default', nodeId: document.id },
+        body: { body: '# Untyped', document_type_id: null, metadata: { decision: 'Approved' } }
+      })
+    ).rejects.toThrow('Remove all metadata');
+
+    await orpc.projects.migrateMarkdownContent({
+      params: { workspace: 'default', nodeId: document.id },
+      body: { body: '# Untyped', name: 'Untyped', document_type_id: null, metadata: {} }
+    });
+
+    const revisions = await orpc.projects.listMarkdownRevisions({
+      params: { workspace: 'default', nodeId: document.id }
+    });
+    expect(revisions).toHaveLength(3);
+    expect(revisions[0]).toMatchObject({
+      title: 'Untyped',
+      document_type_id: null,
+      metadata: {}
+    });
+    const typedRevision = await orpc.projects.getMarkdownRevision({
+      params: { workspace: 'default', nodeId: document.id, revisionId: revisions[1]!.id }
+    });
+    expect(typedRevision).toMatchObject({
+      title: 'Decision',
+      body: '# Decision',
+      document_type_id: secondType.id,
+      metadata: { decision: 'Approved' }
+    });
+  });
+
+  test('rejects orphaned metadata and records unchanged saves as revisions', async ({ orpc }) => {
+    const suffix = Date.now().toString();
+    const type = await orpc.documents.documentTypes.create({
+      params: { workspace: 'default' },
+      body: {
+        name: `Metadata validation ${suffix}`,
+        description: '',
+        fields: [
+          { id: 'status', name: 'Status', type: 'text', requirement: 'optional', retired: false }
+        ]
+      }
+    });
+    const project = await createProject(orpc, { name: `Metadata validation ${suffix}` });
+
+    await expect(
+      orpc.projects.saveNewMarkdownContent({
+        params: { workspace: 'default' },
+        body: {
+          scope: 'project',
+          project_id: project.id,
+          name: 'Invalid untyped document',
+          body: '# Invalid',
+          document_type_id: null,
+          metadata: { orphaned: 'value' }
+        }
+      })
+    ).rejects.toThrow("Metadata field 'orphaned' is not part of this document type");
+
+    const document = await orpc.projects.createProjectMarkdown({
+      params: { workspace: 'default', id: project.public_id },
+      body: { name: 'Metadata validation document' }
+    });
+    await orpc.projects.migrateMarkdownContent({
+      params: { workspace: 'default', nodeId: document.id },
+      body: {
+        body: '# Draft',
+        document_type_id: type.id,
+        metadata: { status: 'draft' }
+      }
+    });
+
+    await expect(
+      orpc.projects.saveMarkdownContent({
+        params: { workspace: 'default', nodeId: document.id },
+        body: {
+          body: '# Draft',
+          document_type_id: type.id,
+          metadata: { status: 'draft', orphaned: 'value' }
+        }
+      })
+    ).rejects.toThrow("Metadata field 'orphaned' is not part of this document type");
+
+    await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: document.id },
+      body: { body: '# Draft', document_type_id: type.id, metadata: { status: 'draft' } }
+    });
+    const revisions = await orpc.projects.listMarkdownRevisions({
+      params: { workspace: 'default', nodeId: document.id }
+    });
+    expect(revisions).toHaveLength(2);
+  });
+
+  test('blocks restoring a revision that fails the current type requirements', async ({ orpc }) => {
+    const suffix = Date.now().toString();
+    const type = await orpc.documents.documentTypes.create({
+      params: { workspace: 'default' },
+      body: {
+        name: `Restore review ${suffix}`,
+        description: '',
+        fields: [
+          { id: 'status', name: 'Status', type: 'text', requirement: 'optional', retired: false }
+        ]
+      }
+    });
+    const project = await createProject(orpc, { name: `Restore review ${suffix}` });
+    const document = await orpc.projects.createProjectMarkdown({
+      params: { workspace: 'default', id: project.public_id },
+      body: { name: 'Restore review' }
+    });
+    await orpc.projects.migrateMarkdownContent({
+      params: { workspace: 'default', nodeId: document.id },
+      body: { body: '# Old', document_type_id: type.id, metadata: {} }
+    });
+    const revisions = await orpc.projects.listMarkdownRevisions({
+      params: { workspace: 'default', nodeId: document.id }
+    });
+
+    await orpc.documents.documentTypes.update({
+      params: { workspace: 'default', id: type.id },
+      body: {
+        name: type.name,
+        description: type.description,
+        fields: [
+          { id: 'status', name: 'Status', type: 'text', requirement: 'required', retired: false }
+        ]
+      }
+    });
+
+    await expect(
+      orpc.projects.restoreMarkdownRevision({
+        params: { workspace: 'default', nodeId: document.id, revisionId: revisions[0]!.id }
+      })
+    ).rejects.toThrow('requires metadata review');
+  });
+
+  test('markdown revisions can be listed, fetched, and restored for project content', async ({
+    orpc
+  }) => {
     const created = await createProject(orpc, { name: 'Markdown History Project' });
     const markdownResult = await orpc.projects.createProjectMarkdown({
       params: { workspace: 'default', id: created.public_id },
@@ -523,7 +776,9 @@ entityTest.describe('entity content routes', () => {
       type: 'diagram'
     });
 
-    const files = await orpc.projects.listEntityFiles({ params: { workspace: 'default', entityId } });
+    const files = await orpc.projects.listEntityFiles({
+      params: { workspace: 'default', entityId }
+    });
     expect(files.folders).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

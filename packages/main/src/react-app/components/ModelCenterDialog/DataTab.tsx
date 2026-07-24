@@ -99,7 +99,9 @@ export const DataTab = () => {
     const buildItems = () => {
       const allItems: DataItemWithSchema[] = [];
       for (const schema of db.schemas) {
-        allItems.push(...db.getData(schema).map(item => ({ ...item, _schema: schema }) as DataItemWithSchema));
+        allItems.push(
+          ...db.getData(schema).map(item => ({ ...item, _schema: schema }) as DataItemWithSchema)
+        );
       }
       return allItems;
     };
@@ -242,10 +244,7 @@ export const DataTab = () => {
       <div className={styles.eHeader}>
         <p className={styles.eTitle}>Data</p>
         <div className={styles.eHeaderActions}>
-          <Button
-            onClick={handleApplySelectedOverrides}
-            disabled={!allSelectedHaveOverrides}
-          >
+          <Button onClick={handleApplySelectedOverrides} disabled={!allSelectedHaveOverrides}>
             Apply Overrides
           </Button>
           <Button
@@ -258,7 +257,7 @@ export const DataTab = () => {
           <MenuButton.Root>
             <MenuButton.Trigger
               variant="primary"
-              size={"md"}
+              size={'md'}
               disabled={!(canMutateData && hasSchemas)}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
@@ -305,7 +304,9 @@ export const DataTab = () => {
               >
                 <option value="all">All ({allDataItems.length})</option>
                 {db.schemas.map(schema => (
-                  <option key={schema.id} value={schema.id}>{schema.name}</option>
+                  <option key={schema.id} value={schema.id}>
+                    {schema.name}
+                  </option>
                 ))}
               </select>
               <TbChevronDown size={10} />
@@ -344,78 +345,94 @@ export const DataTab = () => {
           {filteredDataItems.length > 0 && (
             <div className={styles.eTableWrap}>
               <table className={styles.eTable}>
-              <thead>
-                <tr>
-                  <th className={styles.eCheckbox}>
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedItems.size === filteredDataItems.length &&
-                        filteredDataItems.length > 0
-                      }
-                      onChange={handleToggleSelectAll}
-                    />
-                  </th>
-                  <th>Name</th>
-                  <th>ID</th>
-                  <th>Schema</th>
-                  <th>Data</th>
-                  <th>Overridden</th>
-                  {canMutateData && <th style={{ width: 28 }} />}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDataItems.map(item => {
-                  const primaryField = item._schema.fields[0];
-                  const displayFields = item._schema.fields.slice(1, 3);
-                  const overrideStatus = getOverrideStatus(document, item);
+                <thead>
+                  <tr>
+                    <th className={styles.eCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={
+                          selectedItems.size === filteredDataItems.length &&
+                          filteredDataItems.length > 0
+                        }
+                        onChange={handleToggleSelectAll}
+                      />
+                    </th>
+                    <th>Name</th>
+                    <th>ID</th>
+                    <th>Schema</th>
+                    <th>Data</th>
+                    <th>Overridden</th>
+                    {canMutateData && <th style={{ width: 28 }} />}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDataItems.map(item => {
+                    const primaryField = item._schema.fields[0];
+                    const displayFields = item._schema.fields.slice(1, 3);
+                    const overrideStatus = getOverrideStatus(document, item);
 
-                  const isEditable = canMutateData && db.isDataEditable(item._schema);
-                  return (
-                    <tr
-                      key={item._uid}
-                      onClick={isEditable ? () => setEditItemDialog({ open: true, item, schema: item._schema }) : undefined}
-                      style={isEditable ? { cursor: 'pointer' } : undefined}
-                    >
-                      <td className={styles.eCheckbox} onClick={ev => ev.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(item._uid)}
-                          onChange={() => handleToggleSelection(item._uid)}
-                        />
-                      </td>
-                      <td>{primaryField ? getDisplayValue(item, primaryField) : '-'}</td>
-                      <td>{item._uid.substring(0, 8)}</td>
-                      <td>{item._schema.name}</td>
-                      <td>
-                        {displayFields.length > 0
-                          ? shorten(
-                              displayFields
-                                .map(field => `${field.name}: ${getDisplayValue(item, field)}`)
-                                .join(', '),
-                              40
-                            )
-                          : '-'}
-                      </td>
-                      <td data-status={overrideStatus.status} className={styles.eOverrideStatus}>
-                        {overrideStatus.text}
-                      </td>
-                      {canMutateData && (
-                        <td onClick={ev => ev.stopPropagation()}>
-                          {isEditable && (
-                            <MenuButton.Root>
-                              <MenuButton.Trigger element={<button type="button" className={styles.eDotsBtn}><TbDots size={14} /></button>} />
-                              <MenuButton.Menu>
-                                <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => handleDeleteItem(item)}>Delete</Menu.Item>
-                              </MenuButton.Menu>
-                            </MenuButton.Root>
-                          )}
+                    const isEditable = canMutateData && db.isDataEditable(item._schema);
+                    return (
+                      <tr
+                        key={item._uid}
+                        onClick={
+                          isEditable
+                            ? () => setEditItemDialog({ open: true, item, schema: item._schema })
+                            : undefined
+                        }
+                        style={isEditable ? { cursor: 'pointer' } : undefined}
+                      >
+                        <td className={styles.eCheckbox} onClick={ev => ev.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.has(item._uid)}
+                            onChange={() => handleToggleSelection(item._uid)}
+                          />
                         </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
+                        <td>{primaryField ? getDisplayValue(item, primaryField) : '-'}</td>
+                        <td>{item._uid.substring(0, 8)}</td>
+                        <td>{item._schema.name}</td>
+                        <td>
+                          {displayFields.length > 0
+                            ? shorten(
+                                displayFields
+                                  .map(field => `${field.name}: ${getDisplayValue(item, field)}`)
+                                  .join(', '),
+                                40
+                              )
+                            : '-'}
+                        </td>
+                        <td data-status={overrideStatus.status} className={styles.eOverrideStatus}>
+                          {overrideStatus.text}
+                        </td>
+                        {canMutateData && (
+                          <td onClick={ev => ev.stopPropagation()}>
+                            {isEditable && (
+                              <MenuButton.Root>
+                                <MenuButton.Trigger
+                                  element={
+                                    <button type="button" className={styles.eDotsBtn}>
+                                      <TbDots size={14} />
+                                    </button>
+                                  }
+                                />
+                                <MenuButton.Menu>
+                                  <Menu.Item
+                                    type="danger"
+                                    leftSlot={<TbTrash size={13} />}
+                                    onClick={() => handleDeleteItem(item)}
+                                  >
+                                    Delete
+                                  </Menu.Item>
+                                </MenuButton.Menu>
+                              </MenuButton.Root>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </div>
           )}

@@ -1,9 +1,5 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import {
-  getCategoricalValue,
-  getNumericValue,
-  type FieldOption
-} from './entityFieldSources';
+import { getCategoricalValue, getNumericValue, type FieldOption } from './entityFieldSources';
 import { stableHash } from './stableHash';
 
 export type BubbleConfig = {
@@ -215,8 +211,7 @@ export const buildBubbles = ({
       const angleHash = stableHash(`${bubble.id}~jitter-angle`);
       const radiusHash = stableHash(`${bubble.id}~jitter-radius`);
       const angle =
-        baseAngle +
-        ((angleHash % 1000) / 1000 - 0.5) * ((2 * Math.PI) / group.length) * 0.9;
+        baseAngle + ((angleHash % 1000) / 1000 - 0.5) * ((2 * Math.PI) / group.length) * 0.9;
       const radius = jitterRadius * (0.55 + ((radiusHash % 1000) / 1000) * 0.7);
       bubbles.push({
         ...bubble,

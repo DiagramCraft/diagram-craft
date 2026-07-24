@@ -2,7 +2,8 @@ import { mustExist } from '@diagram-craft/utils/assert';
 import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
-import { NodeDefinition, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinition } from '@diagram-craft/model/nodeDefinition';
+import { Registry } from '@diagram-craft/model/registry';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { safeSplit } from '@diagram-craft/utils/safe';
@@ -135,9 +136,7 @@ declare global {
 }
 
 export const stencilLoaderBasic: StencilLoader<'basic'> = async (registry, opts) => {
-  return await (
-    await opts.stencils()
-  )(registry);
+  return await (await opts.stencils())(registry);
 };
 
 /* Stencil Registry ***************************************************************** */

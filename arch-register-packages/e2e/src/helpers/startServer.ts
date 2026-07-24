@@ -24,7 +24,7 @@ await db.core.reset();
 const storage = createStorage();
 await seedBootstrapData(db, storage);
 
-const app = createApp(db, storage);
+const { app } = createApp(db, storage);
 
 const server = createServer(toNodeHandler(app));
 server.listen(PORT, () => {

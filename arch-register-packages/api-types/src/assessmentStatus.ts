@@ -2,7 +2,8 @@ import type { AssessmentField } from '@arch-register/api-types/assessmentContrac
 
 export type AssessmentEntityStatus = 'not_started' | 'in_progress' | 'complete';
 
-const isAnswered = (value: unknown): boolean => value !== undefined && value !== null && value !== '';
+const isAnswered = (value: unknown): boolean =>
+  value !== undefined && value !== null && value !== '';
 
 export const computeAssessmentStatus = (
   fields: AssessmentField[],

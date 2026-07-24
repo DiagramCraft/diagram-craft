@@ -10,7 +10,7 @@ export const CanvasContextMenu = (props: Props) => {
       <ActionMenuItem action={'UNDO'} />
       <ActionMenuItem action={'REDO'} />
       <Menu.Separator />
-      <ActionMenuItem action={'COMMENT_ADD'} />
+      <ActionMenuItem action={'COMMENT_ADD'} arg={{ point: props.target.pos }} />
       <Menu.Separator />
       <ActionMenuItem action={'SELECT_ALL'} />
       <ActionMenuItem action={'SELECT_ALL_NODES'} />

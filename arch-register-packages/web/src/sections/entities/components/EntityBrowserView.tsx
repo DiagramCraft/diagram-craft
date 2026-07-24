@@ -1,13 +1,14 @@
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { BrowserView } from '@arch-register/api-types/viewContract';
+import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { ReactNode } from 'react';
 import { BubbleView } from './BubbleView';
 import { CardsView } from './CardsView';
 import { ExploreView } from './ExploreView';
-import { HierarchyView } from './HierarchyView';
+import { MapView } from './MapView';
 import { MatrixView } from './MatrixView';
 import { RadarView } from './RadarView';
 import { TableView, type TableViewProps } from './TableView';
@@ -35,6 +36,8 @@ type EntityBrowserViewData = {
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
+  conditions?: FilterCondition[];
+  entityQuery?: EntityQuery | null;
   activeViewConfig: unknown;
   displayFields: EntityDisplayField[];
   projectContext?: ProjectBrowserContext;
@@ -53,6 +56,7 @@ type EntityBrowserViewMode =
       onEntityClick: (entityId: string) => void;
       onDelete: (entity: EntityRecord) => void;
       onClone: (entity: EntityRecord) => void;
+      onManageCollections?: (entity: EntityRecord) => void;
       selectedIds?: Set<string>;
       onSelectAll?: () => void;
       onSelectRow?: (uid: string) => void;
@@ -89,6 +93,8 @@ export const EntityBrowserView = ({
   typeFilter,
   ownerFilter,
   statusFilter,
+  conditions,
+  entityQuery,
   activeViewConfig,
   displayFields,
   projectContext,
@@ -106,13 +112,14 @@ export const EntityBrowserView = ({
   const onEntityClick = mode.kind === 'configure' ? noopEntityClick : mode.onEntityClick;
   const onDelete = mode.kind === 'interactive' ? mode.onDelete : noopEntityAction;
   const onClone = mode.kind === 'interactive' ? mode.onClone : noopEntityAction;
+  const onManageCollections = mode.kind === 'interactive' ? mode.onManageCollections : undefined;
   const selectedIds = mode.kind === 'interactive' ? mode.selectedIds : undefined;
   const onSelectAll = mode.kind === 'interactive' ? mode.onSelectAll : undefined;
   const onSelectRow = mode.kind === 'interactive' ? mode.onSelectRow : undefined;
   switch (view) {
-    case 'hierarchy':
+    case 'map':
       return (
-        <HierarchyView
+        <MapView
           workspaceId={workspaceId}
           projectId={projectId}
           projectScope={projectScope}
@@ -120,12 +127,17 @@ export const EntityBrowserView = ({
           typeFilter={typeFilter}
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
+          conditions={conditions}
+          entityQuery={entityQuery}
           onEntityClick={onEntityClick}
           config={activeViewConfig}
           onConfigChange={onConfigChange}
           linkedEntityIds={linkedEntityIds}
           hideToolbar={hideToolbar}
           displayFields={displayFields}
+          lifecycleStates={lifecycleStates}
+          joinAssessmentId={joinAssessmentId}
+          joinedAssessment={joinedAssessment}
         />
       );
     case 'explore':
@@ -223,6 +235,7 @@ export const EntityBrowserView = ({
           onEntityClick={onEntityClick}
           onDelete={onDelete}
           onClone={onClone}
+          onManageCollections={onManageCollections}
           lifecycleStates={lifecycleStates}
           projectContext={projectContext}
           readOnly={readOnly}
@@ -239,6 +252,7 @@ export const EntityBrowserView = ({
           onEntityClick={onEntityClick}
           onDelete={onDelete}
           onClone={onClone}
+          onManageCollections={onManageCollections}
           selectedIds={selectedIds}
           onSelectAll={onSelectAll}
           onSelectRow={onSelectRow}

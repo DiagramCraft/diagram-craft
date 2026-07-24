@@ -26,7 +26,10 @@
   border: 1px solid transparent;
   border-radius: var(--r);
   cursor: pointer;
-  transition: background 80ms, border-color 80ms, color 80ms;
+  transition:
+    background 80ms,
+    border-color 80ms,
+    color 80ms;
 }
 
 .pinBtn:hover:not(:disabled) {
@@ -127,7 +130,6 @@
   padding-bottom: 3px;
 }
 
-
 .iconBtn {
   width: 28px;
   height: 28px;
@@ -169,7 +171,9 @@
   color: var(--base-fg-dim);
   display: flex;
   flex-direction: column;
-  transition: border-color 80ms, background 80ms;
+  transition:
+    border-color 80ms,
+    background 80ms;
   cursor: pointer;
 }
 
@@ -188,8 +192,9 @@
 .diagramThumbGrid {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
-  linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
   background-size: 12px 12px;
 }
 
@@ -585,7 +590,10 @@
   color: var(--base-fg-more-dim);
   background: none;
   cursor: pointer;
-  transition: background 80ms, color 80ms, border-color 80ms;
+  transition:
+    background 80ms,
+    color 80ms,
+    border-color 80ms;
   flex-shrink: 0;
 }
 
@@ -817,22 +825,120 @@
   white-space: nowrap;
 }
 
-.futureRowApply {
+.futureRowActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: var(--r);
-  border: 1px solid var(--cmp-border);
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-  font-size: 11.5px;
-  cursor: pointer;
 }
 
-.futureRowApply:hover {
-  background: var(--accent-fg);
-  border-color: var(--accent-fg);
-  color: var(--accent-bg);
+.futureRowChanges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.futureRowChangesTitle {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.futureRowChange {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.futureRowChangeField {
+  color: var(--base-fg-dim);
+}
+
+.futureRowChangeFrom,
+.futureRowChangeTo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.futureRowChangeFrom {
+  color: var(--base-fg-more-dim);
+}
+
+.futureRowChangeArrow {
+  color: var(--base-fg-more-dim);
+}
+
+.futureRowChangeTo {
+  color: var(--base-fg);
+}
+
+.futureRowNoChanges {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+.futureRowAlsoIncludes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  margin-bottom: 4px;
+}
+
+/* Nested change-case panel (group-by-date view) */
+.futureCasePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  margin-bottom: 4px;
+
+  .futureRow {
+    background-color: var(--base-bg);
+  }
+}
+
+.futureCasePanelHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--cmp-border);
+}
+
+.futureCasePanelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.futureCasePanelName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.futureCasePanelDescription {
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.futureCasePanelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 /* ── Project Timeline (ptl) ────────────────────────────────── */
@@ -857,7 +963,11 @@
   background: var(--panel-bg);
 }
 
-.ptlLegend { display: flex; align-items: center; gap: 12px; }
+.ptlLegend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
 .ptlLegItem {
   display: flex;
@@ -894,6 +1004,12 @@
   color: var(--cmp-fg-disabled);
 }
 
+.ptlGrouping {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .ptlSegmented {
   display: flex;
   border: 1px solid var(--panel-border);
@@ -912,8 +1028,13 @@
   cursor: pointer;
 }
 
-.ptlSegmented button:last-child { border-right: 0; }
-.ptlSegmented button:hover { color: var(--base-fg); background: var(--cmp-bg); }
+.ptlSegmented button:last-child {
+  border-right: 0;
+}
+.ptlSegmented button:hover {
+  color: var(--base-fg);
+  background: var(--cmp-bg);
+}
 
 .ptlSegActive {
   color: var(--accent-fg) !important;
@@ -928,8 +1049,14 @@
   position: relative;
 }
 
-.ptlScroll { flex: 1; overflow: auto; min-width: 0; }
-.ptlInner  { position: relative; }
+.ptlScroll {
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+}
+.ptlInner {
+  position: relative;
+}
 
 .ptlHead {
   display: flex;
@@ -960,7 +1087,11 @@
   font-family: var(--font-mono);
 }
 
-.ptlCols { display: flex; align-items: stretch; flex-shrink: 0; }
+.ptlCols {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
 
 .ptlCol {
   flex-shrink: 0;
@@ -998,6 +1129,68 @@
   font-size: 9px;
   color: var(--accent-fg);
   padding-top: 2px;
+}
+
+.ptlMilestoneLane {
+  display: flex;
+  height: 30px;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.ptlMilestoneLaneCorner {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 248px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+}
+
+.ptlMilestoneLaneTrack {
+  flex-shrink: 0;
+}
+
+.ptlMilestoneLine {
+  position: absolute;
+  top: 34px;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed var(--warn, orange);
+  opacity: 0.7;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.ptlMilestoneLine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 11px;
+}
+
+.ptlMilestoneLabel {
+  position: absolute;
+  top: 7px;
+  left: 4px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--warn, orange);
+  background: var(--panel-bg);
+  padding: 1px 5px;
+  border-radius: var(--r);
+  border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  pointer-events: auto;
+  z-index: 4;
 }
 
 /* Role group header */
@@ -1049,8 +1242,13 @@
   transition: background 45ms;
 }
 
-.ptlRow:hover     { background: var(--cmp-bg); cursor: pointer; }
-.ptlRowActive     { background: color-mix(in oklch, var(--accent-fg) 6%, transparent); }
+.ptlRow:hover {
+  background: var(--cmp-bg);
+  cursor: pointer;
+}
+.ptlRowActive {
+  background: color-mix(in oklch, var(--accent-fg) 6%, transparent);
+}
 
 .ptlLabel {
   position: sticky;
@@ -1068,8 +1266,12 @@
   overflow: hidden;
 }
 
-.ptlRow:hover .ptlLabel   { background: var(--cmp-bg); }
-.ptlRowActive .ptlLabel   { background: color-mix(in oklch, var(--accent-fg) 6%, transparent); }
+.ptlRow:hover .ptlLabel {
+  background: var(--cmp-bg);
+}
+.ptlRowActive .ptlLabel {
+  background: color-mix(in oklch, var(--accent-fg) 6%, transparent);
+}
 
 .ptlName {
   flex: 1;
@@ -1116,8 +1318,12 @@
   transition: transform 80ms;
 }
 
-.ptlMarker:hover .ptlMarkerDiamond { transform: rotate(45deg) scale(1.3); }
-.ptlMarker:hover .ptlMarkerDot { transform: scale(1.3); }
+.ptlMarker:hover .ptlMarkerDiamond {
+  transform: rotate(45deg) scale(1.3);
+}
+.ptlMarker:hover .ptlMarkerDot {
+  transform: scale(1.3);
+}
 
 .ptlMarkerSelected .ptlMarkerDiamond {
   transform: rotate(45deg) scale(1.3);
@@ -1157,7 +1363,9 @@
   font-size: 12px;
 }
 
-.ptlUndatedRow:last-child { border-bottom: 0; }
+.ptlUndatedRow:last-child {
+  border-bottom: 0;
+}
 
 .ptlUndatedNote {
   font-size: 11px;
@@ -1222,7 +1430,10 @@
   color: var(--cmp-fg-disabled);
 }
 
-.ptlDetailCloseBtn:hover { background: var(--cmp-bg); color: var(--base-fg); }
+.ptlDetailCloseBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
 
 .ptlDetailBody {
   flex: 1;
@@ -1256,7 +1467,11 @@
   line-height: 1.45;
 }
 
-.ptlDetailChanges { display: flex; flex-direction: column; gap: 4px; }
+.ptlDetailChanges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .ptlDetailSectionLabel {
   font-size: 10.5px;
@@ -1278,10 +1493,21 @@
   background: var(--cmp-bg);
 }
 
-.ptlChgField { font-weight: 500; color: var(--base-fg-more-dim); }
-.ptlChgFrom  { font-size: 10.5px; color: var(--cmp-fg-disabled); }
-.ptlChgArrow { color: var(--cmp-fg-disabled); }
-.ptlChgTo    { font-weight: 500; color: var(--base-fg); }
+.ptlChgField {
+  font-weight: 500;
+  color: var(--base-fg-more-dim);
+}
+.ptlChgFrom {
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+}
+.ptlChgArrow {
+  color: var(--cmp-fg-disabled);
+}
+.ptlChgTo {
+  font-weight: 500;
+  color: var(--base-fg);
+}
 
 .ptlDetailMeta {
   display: flex;
@@ -1295,8 +1521,75 @@
 
 .ptlDetailActions {
   display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
   justify-content: flex-start;
   padding-top: 6px;
+}
+
+.ptlDetailCaseHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.ptlDetailCaseName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.ptlDetailSiblings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--panel-border);
+  padding-top: 6px;
+}
+
+.ptlDetailSiblingsToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--base-fg-dim);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.ptlDetailSiblingsToggle:hover {
+  color: var(--base-fg);
+}
+
+.ptlDetailSiblingsBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 4px;
+}
+
+.ptlDetailSiblingItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ptlDetailSiblingHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.ptlDetailSiblingNoChanges {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
 }
 
 /* Empty state */
@@ -1322,4 +1615,3 @@
   color: var(--cmp-fg-disabled);
   max-width: 320px;
 }
-

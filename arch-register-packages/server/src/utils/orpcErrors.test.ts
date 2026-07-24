@@ -21,6 +21,23 @@ describe('toORPCError', () => {
     }
   });
 
+  it('preserves HTTP error metadata when mapping to oRPC', () => {
+    const error = new HTTPError({
+      status: 401,
+      message: 'A different authorization message',
+      data: { expected: true }
+    });
+
+    try {
+      toORPCError(error);
+    } catch (mapped) {
+      expect(mapped).toMatchObject({
+        code: 'UNAUTHORIZED',
+        data: { expected: true }
+      });
+    }
+  });
+
   it('hides unexpected error details', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 

@@ -13,11 +13,7 @@ const getOidcConfig = async (): Promise<client.Configuration> => {
     throw new Error('OIDC configuration incomplete');
   }
 
-  cachedConfig = await client.discovery(
-    new URL(issuerUrl),
-    clientId,
-    clientSecret
-  );
+  cachedConfig = await client.discovery(new URL(issuerUrl), clientId, clientSecret);
 
   return cachedConfig;
 };
@@ -53,11 +49,11 @@ export const generateAuthUrl = async (): Promise<{
 
   const authUrl = client.buildAuthorizationUrl(config, parameters);
 
-  return { 
-    url: authUrl.href, 
-    state, 
-    nonce, 
-    codeVerifier 
+  return {
+    url: authUrl.href,
+    state,
+    nonce,
+    codeVerifier
   };
 };
 
@@ -69,15 +65,11 @@ export const handleCallback = async (
 ) => {
   const config = await getOidcConfig();
 
-  const tokens = await client.authorizationCodeGrant(
-    config,
-    new URL(callbackUrl),
-    {
-      pkceCodeVerifier: codeVerifier,
-      expectedState: state,
-      expectedNonce: nonce
-    }
-  );
+  const tokens = await client.authorizationCodeGrant(config, new URL(callbackUrl), {
+    pkceCodeVerifier: codeVerifier,
+    expectedState: state,
+    expectedNonce: nonce
+  });
 
   const claims = tokens.claims();
 

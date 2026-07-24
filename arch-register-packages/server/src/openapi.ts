@@ -4,36 +4,76 @@ import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
+import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
+import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
+import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 import { aiContract } from '@arch-register/api-types/aiContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
+import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
+import { jobsContract } from '@arch-register/api-types/jobsContract';
+import { externalContentContract } from '@arch-register/api-types/externalContentContract';
+import { webhookContract } from '@arch-register/api-types/webhookContract';
+import { documentContract } from '@arch-register/api-types/documentContract';
+import { assessmentContract } from '@arch-register/api-types/assessmentContract';
+import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
+import { automationRuleContract } from '@arch-register/api-types/automationRuleContract';
+import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
+import { discussionContract } from '@arch-register/api-types/discussionContract';
+import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
+import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
+import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
+import { governanceContract } from '@arch-register/api-types/governanceContract';
+import { milestoneContract } from '@arch-register/api-types/milestoneContract';
+import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
+import { devContract } from '@arch-register/api-types/devContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceEntityContract,
+  ...entitySyncContract,
   ...workspaceViewContract,
+  ...workspaceCollectionContract,
   ...workspaceManagementContract,
   ...workspaceConfigContract,
   ...projectContract,
   ...auditContract,
   ...watchContract,
+  ...notificationPreferencesContract,
   ...searchContract,
   ...workspaceTemplateContract,
   ...authPublicContract,
   ...authProtectedContract,
   ...aiContract,
   ...diagramCraftContract,
-  ...workspaceAnalyticsContract
+  ...workspaceAnalyticsContract,
+  ...workspaceMetricContract,
+  ...jobsContract,
+  ...externalContentContract,
+  ...webhookContract,
+  ...documentContract,
+  ...assessmentContract,
+  ...assessmentResponseContract,
+  ...automationRuleContract,
+  ...changeCaseContract,
+  ...discussionContract,
+  ...entityChangeContract,
+  ...entityDeprecationContract,
+  ...entityVersionContract,
+  ...governanceContract,
+  ...milestoneContract,
+  ...wikiCommentContract,
+  ...devContract
 };
 
 let generatedUnifiedSpec: Promise<object> | null = null;
@@ -53,4 +93,8 @@ export const getUnifiedOpenAPISpec = () => {
 };
 
 export const createUnifiedOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getUnifiedOpenAPISpec()));
+  defineHandler(async () => {
+    const spec = await getUnifiedOpenAPISpec();
+    // (spec as any).openapi = '3.1.0';
+    return Response.json(spec);
+  });

@@ -4,6 +4,7 @@ import { Observable } from '@diagram-craft/canvas/component/component';
 import { ToolType } from '@diagram-craft/canvas/tool';
 import { Marquee } from '@diagram-craft/canvas/marquee';
 import type { ActionMap } from '@diagram-craft/canvas/action';
+import type { CommentVisibility } from '@diagram-craft/canvas/components/commentVisibility';
 
 export interface BaseApplicationInterface<U extends UIActions = UIActions> extends Context {
   model: typeof model;
@@ -18,6 +19,7 @@ export class Application<U extends UIActions = UIActions> implements BaseApplica
   tool = new Observable<ToolType>('move');
   marquee = new Marquee();
   actionState = new Observable<'enabled' | 'disabled'>('enabled');
+  commentVisibility = new Observable<CommentVisibility>('all');
 
   get ui() {
     return this.#ui!;

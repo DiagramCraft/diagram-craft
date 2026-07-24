@@ -1,6 +1,6 @@
 import { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 import { type DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
-import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { newid } from '@diagram-craft/utils/id';

@@ -18,7 +18,15 @@ const makeRow = (overrides: Partial<AssessmentDbResult> = {}): AssessmentDbResul
   status: 'open',
   scope: ['schema-service'],
   scope_conditions: [],
-  fields: [{ id: 'f1', label: 'Auth maturity', type: 'enum', enumId: 'enum-maturity', requirementLevel: 'required' }],
+  fields: [
+    {
+      id: 'f1',
+      label: 'Auth maturity',
+      type: 'enum',
+      enumId: 'enum-maturity',
+      requirementLevel: 'required'
+    }
+  ],
   created_at: now,
   updated_at: now,
   ...overrides
@@ -45,7 +53,13 @@ describe('buildCreateAssessmentInput', () => {
     const input = buildCreateAssessmentInput(
       'ws-1',
       'proj-1',
-      { name: 'API Fitness', description: 'Rate APIs', scope: ['schema-api'], scope_conditions, fields },
+      {
+        name: 'API Fitness',
+        description: 'Rate APIs',
+        scope: ['schema-api'],
+        scope_conditions,
+        fields
+      },
       now
     );
     expect(input.description).toBe('Rate APIs');
@@ -74,7 +88,9 @@ describe('buildUpdateAssessmentInput', () => {
 
   it('overrides provided fields', () => {
     const existing = makeRow();
-    const scope_conditions = [{ fieldId: '_lifecycle', op: 'not_equals' as const, value: 'deprecated' }];
+    const scope_conditions = [
+      { fieldId: '_lifecycle', op: 'not_equals' as const, value: 'deprecated' }
+    ];
     const input = buildUpdateAssessmentInput(
       { name: 'Renamed', description: 'New desc', scope: [], scope_conditions, fields: [] },
       existing,

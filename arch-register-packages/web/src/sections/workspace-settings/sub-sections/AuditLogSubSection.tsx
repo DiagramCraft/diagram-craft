@@ -14,6 +14,7 @@ import {
 } from '../../../routes/publicObjectRoutes';
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 
 const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> = [
   { value: '', label: 'All object types' },
@@ -23,7 +24,8 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
   { value: 'project', label: 'Project' },
   { value: 'content_node', label: 'Diagram / folder' },
   { value: 'assessment', label: 'Assessment' },
-  { value: 'assessment_response', label: 'Assessment response' }
+  { value: 'assessment_response', label: 'Assessment response' },
+  { value: 'automation_note', label: 'Automation note' }
 ];
 
 const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
@@ -46,7 +48,9 @@ const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   entity_schema: 'schema',
   workspace: 'workspace',
   assessment: 'assessment',
-  assessment_response: 'assessment response'
+  assessment_response: 'assessment response',
+  project_milestone: 'milestone',
+  automation_note: 'automation note'
 };
 
 const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
@@ -56,7 +60,9 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   project: styles.typeProject ?? '',
   content_node: styles.typeFile ?? '',
   assessment: styles.typeAssessment ?? '',
-  assessment_response: styles.typeAssessment ?? ''
+  assessment_response: styles.typeAssessment ?? '',
+  project_milestone: styles.typeAssessment ?? '',
+  automation_note: styles.typeAssessment ?? ''
 };
 
 const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];
@@ -93,8 +99,8 @@ export const AuditLogSubSection = ({
 
   // Use TanStack Query for audit log fetching
   const { data: entries = [], isLoading: loading } = useAuditLog(workspace.url_slug, {
-    entityType: entityType || null,
-    operation: operation || null,
+    entityType: entityType ?? null,
+    operation: operation ?? null,
     startDate: startDate ? toStartOfDay(startDate) : null,
     endDate: endDate ? toEndOfDay(endDate) : null,
     limit: 100
@@ -103,7 +109,8 @@ export const AuditLogSubSection = ({
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        if (entry.public_id) navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
+        if (entry.public_id)
+          navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
         return;
       case 'project':
         if (entry.public_id) {
@@ -127,16 +134,16 @@ export const AuditLogSubSection = ({
         const folderFilter = path?.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
         if (projectId) {
           if (folderFilter) {
-            navigate(projectContentFolderRoute(
-              workspaceSlug,
-              asProjectPublicId(projectId),
-              folderFilter
-            ));
+            navigate(
+              projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folderFilter)
+            );
           } else {
-            navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-              tab: 'projects' as const,
-              section: 'home' as const
-            }));
+            navigate(
+              projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+                tab: 'projects' as const,
+                section: 'home' as const
+              })
+            );
           }
         }
       }
@@ -203,7 +210,7 @@ export const AuditLogSubSection = ({
         <div className={`${styles.sectionBody} ${styles.auditSectionBody}`}>
           <div className={styles.activityList}>
             {loading ? (
-              <EmptyState compact title="Loading activity..." />
+              <LoadingState text="Loading activity..." size="sm" />
             ) : entries.length > 0 ? (
               entries.map(entry => (
                 <button

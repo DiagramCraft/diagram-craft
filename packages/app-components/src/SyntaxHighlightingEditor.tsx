@@ -147,7 +147,9 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
     const highlightedLines = (props.highlighter ? props.highlighter(lines) : lines).map(
       (l, idx) => {
         const error = props.errors?.get(idx);
-        const lineClassName = error ? `${styles.eHighlightedLine} ${styles.syntaxError}` : styles.eHighlightedLine;
+        const lineClassName = error
+          ? `${styles.eHighlightedLine} ${styles.syntaxError}`
+          : styles.eHighlightedLine;
         return `<span class="${lineClassName}">${l || '&#8203;'}</span>`;
       }
     );

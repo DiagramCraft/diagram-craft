@@ -18,7 +18,7 @@ import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 
 // NodeDefinition and Shape *****************************************************
 

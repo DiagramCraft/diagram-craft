@@ -10,7 +10,18 @@ export type SnapshotConflict = {
   currentVal: unknown;
 };
 
-const differs = (left: unknown, right: unknown) => JSON.stringify(left) !== JSON.stringify(right);
+// Treats null/undefined/''/[] as the same "empty" value so equivalent-but-differently-shaped
+// empty representations (e.g. a field stored as null vs. later re-serialized as '') don't read as
+// a conflict or a planned change when nothing actually changed.
+const normalizeEmpty = (value: unknown): unknown => {
+  if (value == null) return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  if (Array.isArray(value) && value.length === 0) return null;
+  return value;
+};
+
+const differs = (left: unknown, right: unknown) =>
+  JSON.stringify(normalizeEmpty(left)) !== JSON.stringify(normalizeEmpty(right));
 
 export const findSnapshotConflicts = (
   entity: EntityRecord | undefined,
@@ -25,8 +36,18 @@ export const findSnapshotConflicts = (
     ['description', 'Description', proposed.description, entity._description],
     ['owner', 'Owner', proposed.owner, entity._owner?.id ?? null],
     ['lifecycle', 'Lifecycle', proposed.lifecycle, entity._lifecycle?.id ?? null],
-    ['target_lifecycle', 'Target Lifecycle', proposed.target_lifecycle, entity._targetLifecycle?.id ?? null],
-    ['target_lifecycle_date', 'Target Date', proposed.target_lifecycle_date, entity._targetLifecycleDate ?? null],
+    [
+      'target_lifecycle',
+      'Target Lifecycle',
+      proposed.target_lifecycle,
+      entity._targetLifecycle?.id ?? null
+    ],
+    [
+      'target_lifecycle_date',
+      'Target Date',
+      proposed.target_lifecycle_date,
+      entity._targetLifecycleDate ?? null
+    ],
     ['tags', 'Tags', proposed.tags, entity._tags]
   ];
   for (const [key, label, proposedVal, currentVal] of metaFields) {
@@ -73,7 +94,11 @@ export const resolveSnapshotEntityData = ({
     _description: choose('description', entity._description, proposed.description),
     _owner: choose('owner', entity._owner?.id ?? null, proposed.owner),
     _lifecycle: choose('lifecycle', entity._lifecycle?.id ?? null, proposed.lifecycle),
-    _targetLifecycle: choose('target_lifecycle', entity._targetLifecycle?.id ?? null, proposed.target_lifecycle),
+    _targetLifecycle: choose(
+      'target_lifecycle',
+      entity._targetLifecycle?.id ?? null,
+      proposed.target_lifecycle
+    ),
     _targetLifecycleDate: choose(
       'target_lifecycle_date',
       entity._targetLifecycleDate ?? null,
@@ -81,7 +106,7 @@ export const resolveSnapshotEntityData = ({
     ),
     _tags: choose('tags', entity._tags, proposed.tags),
     _links: entity._links,
-    _visibilityMode: entity._visibilityMode ?? null
+    _projectId: choose('project_id', entity._projectId ?? null, proposed.project_id)
   };
   if (!schema) return resolved;
   const proposedData = (proposed.data as SnapshotState | undefined) ?? {};

@@ -31,7 +31,7 @@ export const TreeRow = ({
   expanded,
   onExpand,
   tagColor,
-  className,
+  className
 }: TreeRowProps) => (
   <div
     className={`${styles.row} ${active ? styles.active : ''} ${className ?? ''}`}
@@ -53,7 +53,7 @@ export const TreeRow = ({
           size={10}
           style={{
             transform: expanded ? 'rotate(90deg)' : 'none',
-            transition: 'transform 80ms',
+            transition: 'transform 80ms'
           }}
         />
       </button>

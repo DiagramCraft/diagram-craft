@@ -2,7 +2,6 @@ import { type TeamRole } from '@arch-register/permissions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Banner } from '../../../components/Banner';
@@ -11,6 +10,7 @@ import { ColorPicker } from '../../../components/ColorPicker';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
+import { UserGroupPicker } from '../../../components/UserGroupPicker';
 import { getUserLabel } from '../../../utils/userLabel';
 import type {
   TeamAssignmentInfo,
@@ -25,7 +25,9 @@ import {
   useUpdateTeams
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './TeamsSubSection.module.css';
+import { useAutoFocus } from '../../../hooks/useAutoFocus';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 import { WorkspaceUserInfo } from '@arch-register/api-types/workspaceContract';
 
 type TeamDraft = {
@@ -218,7 +220,7 @@ export const TeamsSubSection = ({
   return (
     <div className={styles.container}>
       {isLoadingTeams || isLoadingAssignments ? (
-        <EmptyState compact title="Loading teams…" />
+        <LoadingState text="Loading teams…" size="sm" />
       ) : teamDrafts.length === 0 ? (
         <EmptyState compact title="No owner teams have been created for this workspace." />
       ) : (
@@ -456,13 +458,13 @@ const TeamDialog = ({
   const [color, setColor] = useState<string | null>(initialColor ?? null);
   const [description, setDescription] = useState(initialDescription ?? '');
   const teamInputRef = useRef<HTMLInputElement>(null);
+  useAutoFocus(teamInputRef, { enabled: open });
 
   useEffect(() => {
     if (!open) return;
     setTeamName(initialTeamName);
     setColor(initialColor ?? null);
     setDescription(initialDescription ?? '');
-    setTimeout(() => teamInputRef.current?.focus(), 0);
   }, [initialTeamName, initialColor, initialDescription, open]);
 
   if (!open) return null;
@@ -625,22 +627,12 @@ const AddMembersDialog = ({
             })}
 
             {availableUsers.length > 0 ? (
-              <Select.Root
-                value={undefined}
-                onChange={value => {
-                  if (value) pickUser(value);
-                }}
-                placeholder="Choose a person to add…"
-                style={{ width: '100%' }}
-              >
-                {availableUsers.map(user => (
-                  <Select.Item key={user.id} value={user.id}>
-                    {getUserLabel(user)}
-                    {user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
-                    {!user.is_active ? ' - inactive' : ''}
-                  </Select.Item>
-                ))}
-              </Select.Root>
+              <UserGroupPicker
+                kind="user"
+                excludeIds={[...existingUserIds, ...pickedUserIds]}
+                onSelect={item => pickUser(item.id)}
+                placeholder="Search people to add…"
+              />
             ) : assignments.length === 0 ? (
               <div className={styles.emptyInline}>
                 All workspace users are already in this team.

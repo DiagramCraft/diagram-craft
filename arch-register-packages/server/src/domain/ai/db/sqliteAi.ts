@@ -16,6 +16,14 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     );
   }
 
+  async listAiConfigs() {
+    return this.all(
+      'SELECT * FROM workspace_ai_config WHERE api_key_enc IS NOT NULL ORDER BY workspace',
+      [],
+      aiMappers.config
+    );
+  }
+
   async upsertAiConfig(ws: string, input: AiConfigInputDbUpsert) {
     const now = new Date().toISOString();
     const existing = await this.getAiConfig(ws);

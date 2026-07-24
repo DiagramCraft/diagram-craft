@@ -237,11 +237,11 @@ export const csvRowToEntity = (
       continue;
     }
     if (key === 'Owner') {
-      entity._owner = trimmedValue || null;
+      entity._owner = trimmedValue === '' ? null : trimmedValue;
       continue;
     }
     if (key === 'Lifecycle') {
-      entity._lifecycle = trimmedValue || null;
+      entity._lifecycle = trimmedValue === '' ? null : trimmedValue;
       continue;
     }
     if (key === 'Tags') {

@@ -10,7 +10,7 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr, $t } from '@diagram-craft/utils/localize';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { applyStencilToNode } from '@diagram-craft/model/stencilUtils';
 
 declare global {

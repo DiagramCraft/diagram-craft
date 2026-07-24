@@ -1,0 +1,1 @@
+ALTER TABLE entity ADD COLUMN IF NOT EXISTS generated_metadata JSONB NOT NULL DEFAULT '{}';

@@ -3,7 +3,10 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { buildBlips, buildQuadrants, buildRings, getBlipXY, MAX_R } from './radarViewState';
 
 const values = (prefix: string, count: number) =>
-  Array.from({ length: count }, (_, index) => ({ value: `${prefix}-${index}`, label: `${prefix} ${index}` }));
+  Array.from({ length: count }, (_, index) => ({
+    value: `${prefix}-${index}`,
+    label: `${prefix} ${index}`
+  }));
 
 const entity = (id: string, quadrant: string, ring: string, name = id) =>
   ({
@@ -33,14 +36,22 @@ describe('radar geometry', () => {
   it('filters invalid entities and sorts valid blips by quadrant, ring, and name', () => {
     const quadrants = buildQuadrants([{ value: 'q-0', label: 'Q0' }]);
     const rings = buildRings([{ value: 'r-0', label: 'R0' }]);
-    const entities = [entity('b', 'quadrant', 'ring', 'Beta'), entity('a', 'quadrant', 'ring', 'Alpha')];
+    const entities = [
+      entity('b', 'quadrant', 'ring', 'Beta'),
+      entity('a', 'quadrant', 'ring', 'Alpha')
+    ];
 
-    expect(buildBlips(entities, 'quadrant', 'ring', quadrants, rings).map(blip => blip.id)).toEqual([
-      'a',
-      'b'
-    ]);
+    expect(buildBlips(entities, 'quadrant', 'ring', quadrants, rings).map(blip => blip.id)).toEqual(
+      ['a', 'b']
+    );
     expect(
-      buildBlips([{ ...entities[0], quadrant: 'unknown' } as EntityRecord], 'quadrant', 'ring', quadrants, rings)
+      buildBlips(
+        [{ ...entities[0], quadrant: 'unknown' } as EntityRecord],
+        'quadrant',
+        'ring',
+        quadrants,
+        rings
+      )
     ).toEqual([]);
   });
 });

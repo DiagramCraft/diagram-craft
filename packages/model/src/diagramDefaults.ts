@@ -330,6 +330,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
   },
 
   text: {
+    enabled: true,
     color: 'var(--canvas-fg)',
     fontSize: 10,
     lineHeight: 1,
@@ -468,11 +469,9 @@ export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   nodeDefaults.add(`custom.${k}`, v as PropPathValue<NodeProps, `custom.${K}`>);
 
   return (d?: CustomNodeProps[K]) =>
-    deepMerge(
-      {},
-      v as Partial<NonNullable<CustomNodeProps[K]>>,
-      d ?? undefined
-    ) as DeepRequired<NonNullable<CustomNodeProps[K]>>;
+    deepMerge({}, v as Partial<NonNullable<CustomNodeProps[K]>>, d ?? undefined) as DeepRequired<
+      NonNullable<CustomNodeProps[K]>
+    >;
 }
 
 export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
@@ -482,9 +481,7 @@ export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   edgeDefaults.add(`custom.${k}`, v as PropPathValue<EdgeProps, `custom.${K}`>);
 
   return (d?: CustomEdgeProps[K]) =>
-    deepMerge(
-      {},
-      v as Partial<NonNullable<CustomEdgeProps[K]>>,
-      d ?? undefined
-    ) as DeepRequired<NonNullable<CustomEdgeProps[K]>>;
+    deepMerge({}, v as Partial<NonNullable<CustomEdgeProps[K]>>, d ?? undefined) as DeepRequired<
+      NonNullable<CustomEdgeProps[K]>
+    >;
 }

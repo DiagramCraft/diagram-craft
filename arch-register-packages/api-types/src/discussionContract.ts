@@ -20,13 +20,19 @@ const discussionPostSchema = z.object({
   workspace: z.string().describe('Parent workspace identifier'),
   objectType: discussionObjectTypeSchema,
   objectId: z.string().describe('Identifier of the object the thread is attached to'),
-  parentPostId: z.string().nullable().describe('Root post this is a reply to, or null for a root post'),
+  parentPostId: z
+    .string()
+    .nullable()
+    .describe('Root post this is a reply to, or null for a root post'),
   authorId: z.string().nullable().describe('Author user id, or null if the author was deleted'),
   authorName: z.string().describe('Author display name at read time'),
   body: z.string().describe('Post body (plain text)'),
   createdAt: z.string().describe('ISO 8601 creation timestamp'),
   updatedAt: z.string().describe('ISO 8601 last update timestamp'),
-  editedAt: z.string().nullable().describe('ISO 8601 timestamp of the last body edit, or null if never edited')
+  editedAt: z
+    .string()
+    .nullable()
+    .describe('ISO 8601 timestamp of the last body edit, or null if never edited')
 });
 
 const createDiscussionPostBodySchema = z.object({
@@ -101,7 +107,8 @@ export const discussionContract = oc.tag('Discussions').router({
         path: '/{workspace}/discussions/{postId}',
         inputStructure: 'detailed',
         summary: 'Edit a discussion post',
-        description: 'Updates the body of a post. Only the original author may edit their own post.',
+        description:
+          'Updates the body of a post. Only the original author may edit their own post.',
         tags: ['Discussions']
       })
       .input(z.object({ params: wsAndPostId, body: updateDiscussionPostBodySchema }))

@@ -26,8 +26,9 @@ export const createFixtureCatalogEntity = async (
     links: overrides.links ?? [],
     schema_id: schemaId,
     data: overrides.data ?? {},
-    visibility_mode: overrides.visibility_mode ?? null,
+    project_id: overrides.project_id ?? null,
     created_at: overrides.created_at ?? now,
-    updated_at: overrides.updated_at ?? now
+    updated_at: overrides.updated_at ?? now,
+    completeness: overrides.completeness ?? 0
   });
 };

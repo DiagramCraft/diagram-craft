@@ -29,12 +29,14 @@ test.describe('workspace export/import', () => {
       expect(response.headers['content-disposition']).toContain('attachment');
       expect(response.headers['content-disposition']).toContain('.zip');
       expect(response.body).toBeInstanceOf(Blob);
-      
+
       const blob = response.body as Blob;
       expect(blob.size).toBeGreaterThan(0);
     });
 
-    test('POST /api/:workspace/export exports workspace with selected data types', async ({ orpc }) => {
+    test('POST /api/:workspace/export exports workspace with selected data types', async ({
+      orpc
+    }) => {
       const response = await orpc.workspaces.export({
         params: { workspace: 'default' },
         body: {
@@ -47,7 +49,9 @@ test.describe('workspace export/import', () => {
       expect(response.body).toBeInstanceOf(Blob);
     });
 
-    test('POST /api/:workspace/export exports workspace without content files', async ({ orpc }) => {
+    test('POST /api/:workspace/export exports workspace without content files', async ({
+      orpc
+    }) => {
       const response = await orpc.workspaces.export({
         params: { workspace: 'default' },
         body: {
@@ -76,7 +80,7 @@ test.describe('workspace export/import', () => {
     test('POST /api/:workspace/export succeeds with proper permissions', async ({ orpc }) => {
       // Create a workspace
       const workspace = await orpc.workspaces.create({ body: { name: 'Export Test Workspace' } });
-      
+
       // Export with default user who has permissions
       const response = await orpc.workspaces.export({
         params: { workspace: workspace.url_slug },
@@ -105,15 +109,15 @@ test.describe('workspace export/import', () => {
       const exportFile = new File([exportBlob], 'export.zip', { type: 'application/zip' });
 
       // Create a new workspace to import into
-      const targetWorkspace = await orpc.workspaces.create({ 
-        body: { name: 'Import Target Workspace' } 
+      const targetWorkspace = await orpc.workspaces.create({
+        body: { name: 'Import Target Workspace' }
       });
 
       // Parse the import file
-      const parseResult = await orpc.workspaces.importParse({
+      const parseResult = (await orpc.workspaces.importParse({
         params: { workspace: targetWorkspace.url_slug },
         body: { file: exportFile }
-      }) as any;
+      })) as any;
 
       expect(parseResult).toMatchObject({
         valid: true,
@@ -140,8 +144,8 @@ test.describe('workspace export/import', () => {
     });
 
     test('POST /api/:workspace/import/parse rejects invalid file format', async ({ orpc }) => {
-      const targetWorkspace = await orpc.workspaces.create({ 
-        body: { name: 'Import Invalid File Test' } 
+      const targetWorkspace = await orpc.workspaces.create({
+        body: { name: 'Import Invalid File Test' }
       });
 
       // Create an invalid file (not a ZIP)
@@ -152,12 +156,14 @@ test.describe('workspace export/import', () => {
           params: { workspace: targetWorkspace.url_slug },
           body: { file: invalidFile }
         })
-      ).rejects.toMatchObject({ 
+      ).rejects.toMatchObject({
         code: expect.stringMatching(/BAD_REQUEST|INTERNAL_SERVER_ERROR/)
       });
     });
 
-    test('POST /api/:workspace/import/parse returns 404 for non-existent workspace', async ({ orpc }) => {
+    test('POST /api/:workspace/import/parse returns 404 for non-existent workspace', async ({
+      orpc
+    }) => {
       const dummyFile = new File(['dummy'], 'dummy.zip', { type: 'application/zip' });
 
       await expect(
@@ -170,7 +176,10 @@ test.describe('workspace export/import', () => {
   });
 
   test.describe('import execute', () => {
-    test('POST /api/:workspace/import/execute imports data successfully', async ({ orpc, server }) => {
+    test('POST /api/:workspace/import/execute imports data successfully', async ({
+      orpc,
+      server
+    }) => {
       // Export from source workspace
       const exportResponse = await orpc.workspaces.export({
         params: { workspace: 'default' },
@@ -184,8 +193,8 @@ test.describe('workspace export/import', () => {
       const exportFile = new File([exportBlob], 'export.zip', { type: 'application/zip' });
 
       // Create target workspace
-      const targetWorkspace = await orpc.workspaces.create({ 
-        body: { name: 'Import Execute Test Workspace' } 
+      const targetWorkspace = await orpc.workspaces.create({
+        body: { name: 'Import Execute Test Workspace' }
       });
 
       // Parse the import
@@ -225,9 +234,11 @@ test.describe('workspace export/import', () => {
       expect(lifecycleStates.length).toBeGreaterThan(0);
     });
 
-    test('POST /api/:workspace/import/execute returns 404 for expired/invalid import_id', async ({ orpc }) => {
-      const targetWorkspace = await orpc.workspaces.create({ 
-        body: { name: 'Import Expired Test' } 
+    test('POST /api/:workspace/import/execute returns 404 for expired/invalid import_id', async ({
+      orpc
+    }) => {
+      const targetWorkspace = await orpc.workspaces.create({
+        body: { name: 'Import Expired Test' }
       });
 
       await expect(
@@ -240,12 +251,14 @@ test.describe('workspace export/import', () => {
             options: {}
           }
         })
-      ).rejects.toMatchObject({ 
+      ).rejects.toMatchObject({
         code: expect.stringMatching(/NOT_FOUND|BAD_REQUEST/)
       });
     });
 
-    test('POST /api/:workspace/import/execute returns 404 for non-existent workspace', async ({ orpc }) => {
+    test('POST /api/:workspace/import/execute returns 404 for non-existent workspace', async ({
+      orpc
+    }) => {
       await expect(
         orpc.workspaces.importExecute({
           params: { workspace: NONEXISTENT_UUID },
@@ -263,11 +276,11 @@ test.describe('workspace export/import', () => {
   test.describe('full export/import flow', () => {
     test('complete export and import cycle preserves data', async ({ orpc, server }) => {
       // Create source workspace with custom data
-      const sourceWorkspace = await orpc.workspaces.create({ 
-        body: { 
+      const sourceWorkspace = await orpc.workspaces.create({
+        body: {
           name: 'Source Workspace for Full Test',
           description: 'Test workspace with custom data'
-        } 
+        }
       });
 
       // Export the source workspace
@@ -283,13 +296,13 @@ test.describe('workspace export/import', () => {
       expect(exportBlob.size).toBeGreaterThan(0);
 
       // Create target workspace
-      const targetWorkspace = await orpc.workspaces.create({ 
-        body: { name: 'Target Workspace for Full Test' } 
+      const targetWorkspace = await orpc.workspaces.create({
+        body: { name: 'Target Workspace for Full Test' }
       });
 
       // Import into target workspace
       const exportFile = new File([exportBlob], 'export.zip', { type: 'application/zip' });
-      
+
       const parseResult = await orpc.workspaces.importParse({
         params: { workspace: targetWorkspace.url_slug },
         body: { file: exportFile }
@@ -315,9 +328,13 @@ test.describe('workspace export/import', () => {
       expect(executeResult.errors).toHaveLength(0);
 
       // Verify imported data
-      const targetLifecycleStates = await server.db.workspace.listLifecycleStates(targetWorkspace.id);
-      const sourceLifecycleStates = await server.db.workspace.listLifecycleStates(sourceWorkspace.id);
-      
+      const targetLifecycleStates = await server.db.workspace.listLifecycleStates(
+        targetWorkspace.id
+      );
+      const sourceLifecycleStates = await server.db.workspace.listLifecycleStates(
+        sourceWorkspace.id
+      );
+
       expect(targetLifecycleStates.length).toBe(sourceLifecycleStates.length);
       expect(targetLifecycleStates.map(s => s.label)).toEqual(
         sourceLifecycleStates.map(s => s.label)

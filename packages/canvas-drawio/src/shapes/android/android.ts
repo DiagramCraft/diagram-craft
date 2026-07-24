@@ -4,7 +4,7 @@ import {
   loadDrawioStencils,
   toTypeName
 } from '../../drawioStencilLoader';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import type { ShapeParser } from '../../drawioShapeParserRegistry';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';

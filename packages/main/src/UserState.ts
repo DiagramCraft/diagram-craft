@@ -1,7 +1,6 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { AppConfig } from './appConfig';
-import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import type { CommentVisibility } from '@diagram-craft/canvas/components/commentVisibility';
 
 type UserStateEvents = {
   change: { after: UserState };
@@ -27,6 +26,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #panelRightWidth: number = 248;
   #showHelp: boolean = true;
   #showRulers: boolean = true;
+  #commentVisibility: CommentVisibility = 'all';
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
   #stencilPickerViewMode: PickerViewMode = 'grid';
   #stencilSearchAllPackages: boolean = true;
@@ -37,8 +37,6 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #mediaQueryList: MediaQueryList | undefined;
   #documentTabs: Array<{ documentKey: string; tabId: string }> = [];
   #persistedState: string;
-
-  private awarenessStateCache: AwarenessUserState | undefined;
 
   private static instance: UserState | undefined;
 
@@ -58,6 +56,10 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#panelRightWidth = state.panelRightWidth ?? 248;
     this.#showHelp = state.showHelp ?? true;
     this.#showRulers = state.showRulers ?? true;
+    this.#commentVisibility =
+      state.commentVisibility === 'unresolved' || state.commentVisibility === 'none'
+        ? state.commentVisibility
+        : 'all';
     this.#stencils =
       state.stencils?.map((stencil: { id: string; isOpen?: boolean }) => ({
         ...stencil,
@@ -66,7 +68,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#stencilPickerViewMode = state.stencilPickerViewMode === 'list' ? 'list' : 'grid';
     this.#stencilSearchAllPackages = state.stencilSearchAllPackages ?? true;
     this.#recentFiles = state.recentFiles ?? [];
-    
+
     // Handle theme preference with backward compatibility
     const storedTheme = state.themePreference ?? state.themeMode;
     if (storedTheme === 'light' || storedTheme === 'dark') {
@@ -74,11 +76,11 @@ export class UserState extends EventEmitter<UserStateEvents> {
     } else {
       this.#themePreference = 'system';
     }
-    
+
     // Compute effective theme and set up listener
     this.#effectiveTheme = this.computeEffectiveTheme();
     this.setupMediaQueryListener();
-    
+
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
     this.#documentTabs = state.documentTabs ?? [];
     this.#persistedState = this.serializeState();
@@ -89,22 +91,6 @@ export class UserState extends EventEmitter<UserStateEvents> {
       0,
       MAX_RECENT_FILES
     );
-  }
-
-  get awarenessState() {
-    const config = AppConfig.get();
-    if (!this.awarenessStateCache) {
-      this.awarenessStateCache = {
-        name: config.awareness.name(),
-        color: config.awareness.color()
-      };
-    }
-    return this.awarenessStateCache;
-  }
-
-  set awarenessState(state: AwarenessUserState) {
-    this.awarenessStateCache = state;
-    CollaborationConfig.Backend.awareness?.updateUser(state);
   }
 
   set recentFiles(recentFiles: Array<string>) {
@@ -129,12 +115,12 @@ export class UserState extends EventEmitter<UserStateEvents> {
   set themePreference(preference: ThemePreference) {
     if (this.#themePreference === preference) return;
     this.#themePreference = preference;
-    
+
     const newEffectiveTheme = this.computeEffectiveTheme();
     if (newEffectiveTheme !== this.#effectiveTheme) {
       this.#effectiveTheme = newEffectiveTheme;
     }
-    
+
     this.setupMediaQueryListener();
     this.triggerChange();
   }
@@ -276,6 +262,16 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.triggerChange();
   }
 
+  get commentVisibility(): CommentVisibility {
+    return this.#commentVisibility;
+  }
+
+  set commentVisibility(commentVisibility: CommentVisibility) {
+    if (this.#commentVisibility === commentVisibility) return;
+    this.#commentVisibility = commentVisibility;
+    this.triggerChange();
+  }
+
   getToolWindowTab(windowId: string): string | undefined {
     return this.#toolWindowTabs[windowId];
   }
@@ -315,6 +311,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
       panelRightWidth: this.#panelRightWidth,
       showHelp: this.#showHelp,
       showRulers: this.#showRulers,
+      commentVisibility: this.#commentVisibility,
       stencils: this.#stencils,
       stencilPickerViewMode: this.#stencilPickerViewMode,
       stencilSearchAllPackages: this.#stencilSearchAllPackages,

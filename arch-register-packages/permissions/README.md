@@ -405,8 +405,8 @@ A user can create a top-level entity if:
 ```typescript
 import { ROLE_ACTIONS, GLOBAL_ROLE_PERMISSIONS, getGlobalPermissionsForRoles } from '@arch-register/permissions';
 
-// Maps entity roles to actions
-ROLE_ACTIONS['viewer'] // ['view_entity']
+// Maps entity roles to actions (no independently-grantable 'viewer' role — view always
+// comes from content.view, ownership, or one of these edit-capable grants)
 ROLE_ACTIONS['editor'] // ['view_entity', 'edit_entity']
 ROLE_ACTIONS['contributor'] // ['view_entity', 'edit_entity', 'create_child']
 ROLE_ACTIONS['entity_admin'] // ['view_entity', 'edit_entity', 'create_child', 'admin_entity']

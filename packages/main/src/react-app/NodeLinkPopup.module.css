@@ -58,7 +58,7 @@
         background: var(--cmp-bg2);
       }
 
-      &[data-selected='true'] {
+      &[data-selected="true"] {
         background: var(--cmp-bg2);
         border-color: var(--accent-9, var(--cmp-fg));
       }

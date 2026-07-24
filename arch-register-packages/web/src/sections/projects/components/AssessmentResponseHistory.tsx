@@ -6,13 +6,13 @@ import type { AssessmentResponse } from '@arch-register/api-types/assessmentResp
 import styles from './AssessmentResponseHistory.module.css';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 
 const OPERATION_LABEL: Record<AuditLogEntry['operation'], string> = {
   create: 'recorded',
   update: 'updated',
   delete: 'deleted'
 };
-
 
 const changedFieldLabels = (entry: AuditLogEntry, assessment: Assessment): string[] => {
   if (entry.operation === 'create') return [];
@@ -49,7 +49,7 @@ export const AssessmentResponseHistory = ({
       buttons={[{ type: 'cancel', label: 'Close', onClick: onClose }]}
     >
       {isLoading ? (
-        <EmptyState compact title="Loading history..." />
+        <LoadingState text="Loading history..." size="sm" />
       ) : entries.length === 0 ? (
         <EmptyState compact title="No history recorded yet." />
       ) : (
@@ -64,7 +64,10 @@ export const AssessmentResponseHistory = ({
                 <span className={styles.entryTime}>{formatDateTime(entry.timestamp)}</span>
               </div>
               <div className={styles.entryFields}>
-                {changedFieldLabels(entry, assessment).join(', ') || '—'}
+                {(() => {
+                  const labels = changedFieldLabels(entry, assessment).join(', ');
+                  return labels === '' ? '—' : labels;
+                })()}
               </div>
             </div>
           ))}

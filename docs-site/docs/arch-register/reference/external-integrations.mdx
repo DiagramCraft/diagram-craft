@@ -1,0 +1,44 @@
+# External Integration Example
+
+Arch Register supports deployment-specific integrations without putting every provider-specific
+connector in the core application. A third-party service can subscribe to entity changes, fetch data
+from its preferred source, and write the result to a field owned by that integration.
+
+The repository includes a small, forkable [GitHub release hydration example](https://github.com/DiagramCraft/diagram-craft/tree/main/examples/arch-register-external-entity-field).
+It receives signed Arch Register webhooks, reads an entity's repository field, calls GitHub's latest
+release API, and writes the release tag back through the standard entity update endpoint.
+
+## Pattern
+
+The example connects these existing public capabilities:
+
+1. Create a workspace webhook for `entity.created` and `entity.updated` events.
+2. Verify `x-arch-register-signature-256` using the webhook secret and the raw request body.
+3. Read the complete entity from `GET /api/{workspace}/data/{id}`.
+4. Call an external data source.
+5. Send a complete entity update to `PUT /api/{workspace}/data/{id}` with an `_external` envelope.
+
+The target field must be defined with `external_kind: "integration"`. The envelope records the
+producer, status, request ID, source version, and failure information in the entity's external
+metadata.
+
+## Permissions
+
+The reference service uses an API token with:
+
+- `ws.view` to read entity data
+- `ent.external_update` to write only the declared external field
+
+Ordinary edits still require ordinary entity-edit permissions. The service also preserves all other
+entity fields in its update payload and ignores its own external-update webhook, preventing a write-back
+loop.
+
+## When to use this pattern
+
+Use an external integration when the source, credentials, refresh policy, or field mapping is specific
+to a deployment. Keep the service small and independently deployable, and use webhook retry behavior
+for transient failures. A core integration is a better fit when the data source and semantics are
+shared consistently by most Arch Register deployments.
+
+See the [API and Integrations](api-integrations) page for the API contract sources and the [API Reference](pathname:///arch-register/api.html)
+for endpoint details.

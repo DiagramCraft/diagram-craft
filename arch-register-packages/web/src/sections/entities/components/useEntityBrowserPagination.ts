@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 
 type UseEntityBrowserPaginationProps = {
   isPagedBrowse: boolean;
   q: string;
   conditions: FilterCondition[];
+  entityQuery?: EntityQuery | null;
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
   projectId?: string;
+  collectionId?: string | null;
   projectScope: 'project' | 'all';
 };
 
@@ -16,10 +19,12 @@ export const useEntityBrowserPagination = ({
   isPagedBrowse,
   q,
   conditions,
+  entityQuery,
   typeFilter,
   ownerFilter,
   statusFilter,
   projectId,
+  collectionId,
   projectScope
 }: UseEntityBrowserPaginationProps) => {
   const [pageSize, setPageSize] = useState(200);
@@ -29,7 +34,18 @@ export const useEntityBrowserPagination = ({
   useEffect(() => {
     if (!isPagedBrowse) return;
     setPageIndex(0);
-  }, [isPagedBrowse, q, conditions, typeFilter, ownerFilter, statusFilter, projectId, projectScope]);
+  }, [
+    isPagedBrowse,
+    q,
+    conditions,
+    entityQuery,
+    typeFilter,
+    ownerFilter,
+    statusFilter,
+    projectId,
+    collectionId,
+    projectScope
+  ]);
 
   const handlePageSizeChange = useCallback((value: string | undefined) => {
     const next = Number(value ?? 50);

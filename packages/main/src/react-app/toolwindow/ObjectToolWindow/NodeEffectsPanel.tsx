@@ -13,7 +13,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import type { Property } from '@diagram-craft/model/property';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 import type { ReflectionDirection } from '@diagram-craft/model/diagramProps';
 

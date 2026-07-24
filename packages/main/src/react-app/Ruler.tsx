@@ -217,7 +217,10 @@ export const Ruler = ({ orientation, id }: Props) => {
   if (orientation === 'horizontal') {
     return (
       <div id={id} className={`${styles.icRuler} dark-theme`} data-orientation={'horizontal'}>
-        <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        <canvas
+          ref={canvasRef}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        />
         <svg
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
           onMouseDown={handleMouseDown}
@@ -229,7 +232,10 @@ export const Ruler = ({ orientation, id }: Props) => {
   } else {
     return (
       <div id={id} className={`${styles.icRuler} dark-theme`} data-orientation={'vertical'}>
-        <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        <canvas
+          ref={canvasRef}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        />
         <svg
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
           onMouseDown={handleMouseDown}

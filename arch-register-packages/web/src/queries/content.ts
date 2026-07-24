@@ -1,6 +1,5 @@
 export const entityContentKeys = {
-  all: (workspaceId: string, entityId: string) =>
-    ['entity-content', workspaceId, entityId] as const
+  all: (workspaceId: string, entityId: string) => ['entity-content', workspaceId, entityId] as const
 };
 
 export const workspaceContentKeys = {

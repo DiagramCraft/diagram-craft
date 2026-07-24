@@ -7,7 +7,8 @@ import {
   WorkspaceDbUpdate,
   RoleDefinitionDbUpdate,
   WorkspaceDatabase,
-  ProjectEntityTypeDbCreate
+  ProjectEntityTypeDbCreate,
+  TeamListOptions
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
@@ -64,8 +65,14 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     ]).map(project => project.id);
 
     const tx = this.db.transaction((workspaceId: string) => {
-      this.run('DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id IN (SELECT id FROM entity_schema WHERE workspace = ?)', ['schema', workspaceId]);
-      this.run('DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id = ?', ['workspace', workspaceId]);
+      this.run(
+        'DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id IN (SELECT id FROM entity_schema WHERE workspace = ?)',
+        ['schema', workspaceId]
+      );
+      this.run('DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id = ?', [
+        'workspace',
+        workspaceId
+      ]);
       this.run('DELETE FROM content_node WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM project WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_grant WHERE workspace = ?', [workspaceId]);
@@ -86,7 +93,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
   async listLifecycleStates(workspace: string) {
     return this.all(
-      'SELECT id, workspace, label, color, sort_order, created_at FROM workspace_lifecycle_state WHERE workspace = ? ORDER BY sort_order, id',
+      'SELECT id, workspace, label, color, sort_order, created_at, is_deprecated_state FROM workspace_lifecycle_state WHERE workspace = ? ORDER BY sort_order, id',
       [workspace],
       workspaceMappers.lifecycleState
     );
@@ -97,9 +104,10 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       const stateIds = states.map(state => state.id);
 
       if (stateIds.length === 0) {
-        this.run('UPDATE entity SET lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ?', [
-          workspace
-        ]);
+        this.run(
+          'UPDATE entity SET lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ?',
+          [workspace]
+        );
         this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspace]);
         return;
       }
@@ -124,19 +132,21 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
       for (const state of states) {
         this.run(
-          `INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)
+          `INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at, is_deprecated_state)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(workspace, id) DO UPDATE SET
              label = excluded.label,
              color = excluded.color,
-             sort_order = excluded.sort_order`,
+             sort_order = excluded.sort_order,
+             is_deprecated_state = excluded.is_deprecated_state`,
           [
             state.id,
             workspace,
             state.label,
             state.color,
             state.sort_order,
-            state.created_at.toISOString()
+            state.created_at.toISOString(),
+            state.is_deprecated_state ? 1 : 0
           ]
         );
       }
@@ -160,7 +170,13 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       for (const type of types) {
         this.run(
           'INSERT INTO project_entity_type (id, workspace, label, sort_order, created_at) VALUES (?, ?, ?, ?, ?)',
-          [type.id, workspace, type.label, type.sort_order, type.created_at instanceof Date ? type.created_at.toISOString() : type.created_at]
+          [
+            type.id,
+            workspace,
+            type.label,
+            type.sort_order,
+            type.created_at instanceof Date ? type.created_at.toISOString() : type.created_at
+          ]
         );
       }
     });
@@ -168,10 +184,25 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return await this.listProjectEntityTypes(workspace);
   }
 
-  async listTeams(workspace: string) {
+  async listTeams(workspace: string, options?: TeamListOptions) {
+    const query = options?.q?.trim();
+    const limit =
+      options?.limit == null
+        ? query
+          ? 50
+          : undefined
+        : Math.min(Math.max(Math.trunc(options.limit), 1), 100);
+    const pattern = query ? `%${query.replace(/[\\%_]/g, '\\$&')}%` : undefined;
+    const clauses = ['workspace = ?'];
+    const params: unknown[] = [workspace];
+    if (pattern != null) {
+      clauses.push("LOWER(name) LIKE LOWER(?) ESCAPE '\\'");
+      params.push(pattern);
+    }
+    const limitClause = limit == null ? '' : ` LIMIT ${limit}`;
     return this.all(
-      'SELECT id, workspace, name, sort_order, color, description, created_at FROM workspace_owner WHERE workspace = ? ORDER BY sort_order, id',
-      [workspace],
+      `SELECT id, workspace, name, sort_order, color, description, created_at FROM workspace_owner WHERE ${clauses.join(' AND ')} ORDER BY sort_order, id${limitClause}`,
+      params,
       workspaceMappers.owner
     );
   }

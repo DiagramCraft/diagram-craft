@@ -1,12 +1,15 @@
 import type {
+  ApiTokenDbCreate,
   AuthDatabase,
   UserDbCreate,
   GlobalRole,
-  UserDbUpdate
+  UserDbUpdate,
+  UserListOptions
 } from './authDatabase';
 import { authMappers } from './authDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
+import { DatabaseError } from '../../../db/database';
 
 export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
@@ -68,6 +71,10 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
   }
 
   async updateUser(id: string, input: UserDbUpdate) {
+    const existing = await this.getUser(id);
+    if (existing?.is_system_actor) {
+      throw new DatabaseError('check', 'System users cannot be modified', undefined, { id });
+    }
     try {
       const sets: Record<string, unknown> = { updated_at: input.updated_at };
 
@@ -101,11 +108,154 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
     }
   }
 
-  async listUsers() {
+  async listUsers(options?: UserListOptions) {
+    const query = options?.q?.trim();
+    const limit =
+      options?.limit == null
+        ? query
+          ? 50
+          : undefined
+        : Math.min(Math.max(Math.trunc(options.limit), 1), 100);
+    const pattern = query ? `%${query.replace(/[\\%_]/g, '\\$&')}%` : undefined;
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT * FROM users ORDER BY display_name
+      SELECT * FROM users
+      WHERE ${
+        pattern == null
+          ? this.sql`TRUE`
+          : this.sql`(
+        display_name ILIKE ${pattern} ESCAPE '\\'
+        OR email ILIKE ${pattern} ESCAPE '\\'
+      )`
+      }
+      ORDER BY display_name, id
+      ${limit == null ? this.sql`` : this.sql`LIMIT ${limit}`}
     `;
     return mapDatabaseRows(rows, authMappers.user);
+  }
+
+  async createApiToken(input: ApiTokenDbCreate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO api_token (id, workspace, name, token_hash, capabilities, created_by, created_at, last_used_at, expires_at)
+        VALUES (
+          ${input.id},
+          ${input.workspace},
+          ${input.name},
+          ${input.token_hash},
+          ${this.json(input.capabilities)},
+          ${input.created_by},
+          ${input.created_at},
+          ${input.last_used_at ?? null},
+          ${input.expires_at ?? null}
+        )
+        RETURNING *
+      `;
+      return authMappers.apiToken(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listApiTokens(workspace: string, createdBy?: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM api_token
+      WHERE workspace = ${workspace}
+      ${createdBy != null ? this.sql`AND created_by = ${createdBy}` : this.sql``}
+      ORDER BY created_at DESC, id DESC
+    `;
+    return mapDatabaseRows(rows, authMappers.apiToken);
+  }
+
+  async countApiTokens(workspace: string, createdBy: string) {
+    const [row] = await this.sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count
+      FROM api_token
+      WHERE workspace = ${workspace} AND created_by = ${createdBy}
+    `;
+    return Number(row?.count ?? 0);
+  }
+
+  async listApiTokensByCreator(createdBy: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM api_token
+      WHERE created_by = ${createdBy}
+      ORDER BY workspace, created_at DESC, id DESC
+    `;
+    return mapDatabaseRows(rows, authMappers.apiToken);
+  }
+
+  async getApiTokenByHash(tokenHash: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM api_token WHERE token_hash = ${tokenHash}
+    `;
+    return row ? authMappers.apiToken(row) : null;
+  }
+
+  async deleteApiToken(workspace: string, id: string, createdBy?: string) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        DELETE FROM api_token
+        WHERE workspace = ${workspace} AND id = ${id}
+        ${createdBy != null ? this.sql`AND created_by = ${createdBy}` : this.sql``}
+        RETURNING *
+      `;
+      return row ? authMappers.apiToken(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteApiTokenByCreator(createdBy: string, id: string) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        DELETE FROM api_token
+        WHERE created_by = ${createdBy} AND id = ${id}
+        RETURNING *
+      `;
+      return row ? authMappers.apiToken(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateApiTokenLastUsed(id: string, timestamp: Date) {
+    try {
+      await this.sql`
+        UPDATE api_token SET last_used_at = ${timestamp} WHERE id = ${id}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async createApiTokenAudit(input: Parameters<AuthDatabase['createApiTokenAudit']>[0]) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO api_token_audit (id, workspace, token_id, user_id, event, created_at, metadata)
+        VALUES (
+          ${input.id},
+          ${input.workspace},
+          ${input.token_id},
+          ${input.user_id},
+          ${input.event},
+          ${input.created_at},
+          ${this.json(input.metadata)}
+        )
+        RETURNING *
+      `;
+      return authMappers.apiTokenAudit(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listApiTokenAudit(workspace: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM api_token_audit
+      WHERE workspace = ${workspace}
+      ORDER BY created_at DESC, id DESC
+    `;
+    return mapDatabaseRows(rows, authMappers.apiTokenAudit);
   }
 
   async listGlobalRoleAssignments(userId?: string) {

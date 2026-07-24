@@ -16,7 +16,9 @@
   border-radius: var(--r-md);
   text-align: left;
   cursor: pointer;
-  transition: border-color 120ms, background 120ms;
+  transition:
+    border-color 120ms,
+    background 120ms;
 }
 
 .card:hover {

@@ -51,7 +51,12 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         created_atIfNew: now
       });
       await server.db.project.updateContentNodeTemplateStatus(
-        seedIds.workspace.default, projectA.id, wsTemplateFile.id, true, true, now
+        seedIds.workspace.default,
+        projectA.id,
+        wsTemplateFile.id,
+        true,
+        true,
+        now
       );
 
       // Project-level template in project A
@@ -67,7 +72,12 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         created_atIfNew: now
       });
       await server.db.project.updateContentNodeTemplateStatus(
-        seedIds.workspace.default, projectA.id, projATemplateFile.id, true, false, now
+        seedIds.workspace.default,
+        projectA.id,
+        projATemplateFile.id,
+        true,
+        false,
+        now
       );
 
       // Plain (non-template) file in project A
@@ -96,7 +106,12 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         created_atIfNew: now
       });
       await server.db.project.updateContentNodeTemplateStatus(
-        seedIds.workspace.default, projectB.id, projBTemplateFile.id, true, false, now
+        seedIds.workspace.default,
+        projectB.id,
+        projBTemplateFile.id,
+        true,
+        false,
+        now
       );
 
       await use({ projectId: projectA.id, wsProjectId: projectA.id });
@@ -140,7 +155,10 @@ test.describe('GET /api/:workspace/templates', () => {
 });
 
 test.describe('GET /api/:workspace/projects/:projectId/templates', () => {
-  test('returns 200 with workspaceTemplates and projectTemplates arrays', async ({ orpc, seeded }) => {
+  test('returns 200 with workspaceTemplates and projectTemplates arrays', async ({
+    orpc,
+    seeded
+  }) => {
     const body = await orpc.templates.listForProject({
       params: { workspace: 'default', id: seeded.projectId }
     });
@@ -157,7 +175,10 @@ test.describe('GET /api/:workspace/projects/:projectId/templates', () => {
     expect(body.workspaceTemplates.every(t => t.is_workspace_template === true)).toBe(true);
   });
 
-  test('projectTemplates only includes templates belonging to the target project', async ({ orpc, seeded }) => {
+  test('projectTemplates only includes templates belonging to the target project', async ({
+    orpc,
+    seeded
+  }) => {
     const body = await orpc.templates.listForProject({
       params: { workspace: 'default', id: seeded.projectId }
     });
@@ -186,7 +207,11 @@ test.describe('GET /api/:workspace/projects/:projectId/templates', () => {
 });
 
 test.describe('PUT /api/:workspace/projects/:projectId/template-status/:path', () => {
-  test('marks a file as a project template and returns updated file', async ({ server, auth, seeded }) => {
+  test('marks a file as a project template and returns updated file', async ({
+    server,
+    auth,
+    seeded
+  }) => {
     const path = 'diagrams/plain.json';
     const res = await fetch(
       `${server.baseUrl}/api/default/projects/${seeded.projectId}/template-status/${encodeURIComponent(path)}`,

@@ -1,0 +1,1 @@
+ALTER TABLE document_type ADD COLUMN IF NOT EXISTS ai_actions JSONB NOT NULL DEFAULT '[]';

@@ -1,10 +1,4 @@
-import {
-  defineHandler,
-  EventHandlerRequest,
-  H3,
-  H3Event,
-  HTTPError
-} from 'h3';
+import { defineHandler, EventHandlerRequest, H3, H3Event, HTTPError } from 'h3';
 import type { ModelServer } from '../modelServer';
 import type { DataSchema, DataWithSchema } from '../types';
 

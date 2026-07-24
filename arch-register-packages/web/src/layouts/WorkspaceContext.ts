@@ -17,6 +17,7 @@ export type WorkspaceContextType = {
   projectEntityTypes: ProjectEntityType[];
   permissions: {
     canManageWorkspaces: boolean;
+    canAdministerWorkspace?: boolean;
     canViewSchemas: boolean;
     canEditSchemas: boolean;
     canManageTeams: boolean;
@@ -24,6 +25,7 @@ export type WorkspaceContextType = {
     canCreateProjects: boolean;
     canCreateEntities: boolean;
     canManageMembers: boolean;
+    canManageJobs: boolean;
     canManageViews: boolean;
     canManageAdminViews: boolean;
   };

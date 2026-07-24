@@ -174,7 +174,9 @@
   border-radius: var(--r);
   font-size: 12px;
   cursor: pointer;
-  transition: background 80ms, border-color 80ms;
+  transition:
+    background 80ms,
+    border-color 80ms;
 }
 
 .previewBtn:hover {

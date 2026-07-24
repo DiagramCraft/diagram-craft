@@ -1,0 +1,18 @@
+.options {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.optionLabel {
+  color: var(--base-fg-more-dim);
+  font-size: 12px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

@@ -9,7 +9,9 @@ import type {
   MarkdownRevisionDbCreate,
   AssessmentDbCreate,
   AssessmentDbUpdate,
-  AssessmentResponseDbUpsert
+  AssessmentResponseDbUpsert,
+  ProjectMilestoneDbCreate,
+  ProjectMilestoneDbUpdate
 } from './projectDatabase';
 import {
   CONTENT_NODE_SELECT_SQL,
@@ -130,6 +132,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async listContentNodesByMount(workspace: string, mountId: string) {
+    return this.all(
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.mount_id = ? ORDER BY cn.path`,
+      [workspace, mountId],
+      projectMappers.contentNode
+    );
+  }
+
   async getContentNodeByPath(workspace: string, projectId: string, path: string) {
     return this.get(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? AND cn.path = ?`,
@@ -177,8 +187,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     const id = input.id ?? newid();
     this.run(
       `INSERT INTO content_node_revision
-         (id, workspace, node_id, revision_number, title, body, created_at, created_by, restored_from_revision_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, workspace, node_id, revision_number, title, body, created_at, created_by, restored_from_revision_id, document_type_id, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.workspace,
@@ -188,7 +198,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         input.body,
         input.created_at.toISOString(),
         input.created_by,
-        input.restored_from_revision_id ?? null
+        input.restored_from_revision_id ?? null,
+        input.document_type_id ?? null,
+        JSON.stringify(input.metadata ?? {})
       ]
     );
     return (await this.getMarkdownRevision(input.workspace, input.node_id, id))!;
@@ -277,7 +289,15 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
            preview_svg = ?,
            updated_at = ?
        WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND id = ?`,
-      [sizeBytes, commentCount, unresolvedCommentCount, previewSvg, updated_at.toISOString(), workspace, fileId]
+      [
+        sizeBytes,
+        commentCount,
+        unresolvedCommentCount,
+        previewSvg,
+        updated_at.toISOString(),
+        workspace,
+        fileId
+      ]
     );
   }
 
@@ -350,36 +370,47 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       : input.entity_id != null
         ? 'entity_id = ?'
         : 'project_id = ?';
-    const ownerValue = isWorkspaceOwned ? null : (input.entity_id != null ? input.entity_id : input.project_id);
+    const ownerValue = isWorkspaceOwned
+      ? null
+      : input.entity_id != null
+        ? input.entity_id
+        : input.project_id;
 
     const tx = this.db.transaction(() => {
-      const existing = this.get<{ id: string; created_at: string }>(
+      const existing = this.get<{ id: string; created_at: string; mount_id: string | null }>(
         isWorkspaceOwned
-          ? `SELECT id, created_at FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ?`
-          : `SELECT id, created_at FROM content_node WHERE workspace = ? AND ${ownerClause} AND path = ?`,
+          ? `SELECT id, created_at, mount_id FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ?`
+          : `SELECT id, created_at, mount_id FROM content_node WHERE workspace = ? AND ${ownerClause} AND path = ?`,
         isWorkspaceOwned ? [input.workspace, input.path] : [input.workspace, ownerValue, input.path]
       );
 
       if (existing) {
+        if (existing.mount_id !== (input.mount_id ?? null)) {
+          throw new Error('Content node ownership conflict');
+        }
         this.run(
-          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), role = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = COALESCE(?, original_filename) WHERE id = ?',
+          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), role = ?, type = CASE WHEN ? IS NOT NULL THEN ? ELSE type END, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = CASE WHEN ? IS NOT NULL THEN ? ELSE original_filename END, mount_id = COALESCE(?, mount_id) WHERE id = ?',
           [
             input.name,
             input.parent_id ?? null,
             input.role ?? null,
+            input.mount_id ?? null,
+            input.type ?? null,
             input.size_bytes,
             input.comment_count,
             input.unresolved_comment_count,
             input.updated_at.toISOString(),
             input.updated_by ?? null,
             input.mime_type ?? null,
+            input.mount_id ?? null,
             input.original_filename ?? null,
+            input.mount_id ?? null,
             existing.id
           ]
         );
       } else {
         this.run(
-          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename, mount_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
@@ -400,7 +431,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
             input.created_byIfNew ?? null,
             input.updated_by ?? null,
             input.mime_type ?? null,
-            input.original_filename ?? null
+            input.original_filename ?? null,
+            input.mount_id ?? null
           ]
         );
       }
@@ -427,13 +459,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     if (input.project_id != null) {
       existing = await this.getContentNodeByPath(input.workspace, input.project_id, input.path);
     } else if (input.entity_id != null) {
-      existing = (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
-        n => n.path === input.path
-      ) ?? null;
+      existing =
+        (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
+          n => n.path === input.path
+        ) ?? null;
     } else {
-      existing = (await this.listWorkspaceContentNodes(input.workspace)).find(
-        n => n.path === input.path
-      ) ?? null;
+      existing =
+        (await this.listWorkspaceContentNodes(input.workspace)).find(n => n.path === input.path) ??
+        null;
     }
     if (existing) return null;
     return await this.upsertContentNode(input);
@@ -448,6 +481,15 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       path
     ]);
     return row;
+  }
+
+  async deleteContentNodesByIds(workspace: string, nodeIds: readonly string[]) {
+    if (nodeIds.length === 0) return;
+    const placeholders = nodeIds.map(() => '?').join(', ');
+    this.run(`DELETE FROM content_node WHERE workspace = ? AND id IN (${placeholders})`, [
+      workspace,
+      ...nodeIds
+    ]);
   }
 
   async renameContentNodeFolder(
@@ -519,10 +561,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
 
     const tx = this.db.transaction(() => {
-      this.run(
-        'DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND id = ?',
-        [workspace, projectId, folder.id]
-      );
+      this.run('DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND id = ?', [
+        workspace,
+        projectId,
+        folder.id
+      ]);
     });
 
     tx();
@@ -530,7 +573,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   }
 
   async deleteEntityContentNodeByPath(workspace: string, entityId: string, path: string) {
-    const row = (await this.listEntityContentNodes(workspace, entityId)).find(n => n.path === path) ?? null;
+    const row =
+      (await this.listEntityContentNodes(workspace, entityId)).find(n => n.path === path) ?? null;
     if (!row) return null;
     this.run('DELETE FROM content_node WHERE workspace = ? AND entity_id = ? AND path = ?', [
       workspace,
@@ -610,10 +654,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
 
     const tx = this.db.transaction(() => {
-      this.run(
-        'DELETE FROM content_node WHERE workspace = ? AND entity_id = ? AND id = ?',
-        [workspace, entityId, folder.id]
-      );
+      this.run('DELETE FROM content_node WHERE workspace = ? AND entity_id = ? AND id = ?', [
+        workspace,
+        entityId,
+        folder.id
+      ]);
     });
 
     tx();
@@ -621,7 +666,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   }
 
   async deleteWorkspaceContentNodeByPath(workspace: string, path: string) {
-    const row = (await this.listWorkspaceContentNodes(workspace)).find(n => n.path === path) ?? null;
+    const row =
+      (await this.listWorkspaceContentNodes(workspace)).find(n => n.path === path) ?? null;
     if (!row) return null;
     this.run(
       'DELETE FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ?',
@@ -662,13 +708,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
          SET path = ? || substr(path, ?),
              updated_at = ?
          WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path LIKE ?`,
-        [
-          newPathPrefix,
-          oldPathLength + 2,
-          updated_at.toISOString(),
-          workspace,
-          `${oldPathPrefix}%`
-        ]
+        [newPathPrefix, oldPathLength + 2, updated_at.toISOString(), workspace, `${oldPathPrefix}%`]
       );
     });
 
@@ -863,7 +903,12 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return (await this.getAssessment(input.workspace, input.project_id, input.id))!;
   }
 
-  async updateAssessment(workspace: string, projectId: string, id: string, input: AssessmentDbUpdate) {
+  async updateAssessment(
+    workspace: string,
+    projectId: string,
+    id: string,
+    input: AssessmentDbUpdate
+  ) {
     this.run(
       `UPDATE assessment
        SET name = ?, description = ?, status = ?, scope = ?, scope_conditions = ?, fields = ?, updated_at = ?
@@ -893,6 +938,85 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       id
     ]);
     return row;
+  }
+
+  async listMilestones(workspace: string, projectId: string) {
+    return this.all(
+      'SELECT * FROM project_milestone WHERE workspace = ? AND project_id = ? ORDER BY sort_order, name',
+      [workspace, projectId],
+      projectMappers.projectMilestone
+    );
+  }
+
+  async getMilestone(workspace: string, projectId: string, id: string) {
+    return this.get(
+      'SELECT * FROM project_milestone WHERE workspace = ? AND project_id = ? AND id = ?',
+      [workspace, projectId, id],
+      projectMappers.projectMilestone
+    );
+  }
+
+  async createMilestone(input: ProjectMilestoneDbCreate) {
+    this.run(
+      `INSERT INTO project_milestone (id, workspace, project_id, name, target_date, status, sort_order, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        input.id,
+        input.workspace,
+        input.project_id,
+        input.name,
+        input.target_date,
+        input.status,
+        input.sort_order,
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getMilestone(input.workspace, input.project_id, input.id))!;
+  }
+
+  async updateMilestone(
+    workspace: string,
+    projectId: string,
+    id: string,
+    input: ProjectMilestoneDbUpdate
+  ) {
+    this.run(
+      `UPDATE project_milestone
+       SET name = ?, target_date = ?, status = ?, sort_order = ?, updated_at = ?
+       WHERE workspace = ? AND project_id = ? AND id = ?`,
+      [
+        input.name,
+        input.target_date,
+        input.status,
+        input.sort_order,
+        input.updated_at.toISOString(),
+        workspace,
+        projectId,
+        id
+      ]
+    );
+    return await this.getMilestone(workspace, projectId, id);
+  }
+
+  async deleteMilestone(workspace: string, projectId: string, id: string) {
+    const row = await this.getMilestone(workspace, projectId, id);
+    if (!row) return null;
+    this.run('DELETE FROM project_milestone WHERE workspace = ? AND project_id = ? AND id = ?', [
+      workspace,
+      projectId,
+      id
+    ]);
+    return row;
+  }
+
+  async isEntityLinkedToProject(workspace: string, projectId: string, entityId: string) {
+    const row = this.get(
+      'SELECT 1 AS found FROM project_entity WHERE workspace = ? AND project_id = ? AND entity_id = ?',
+      [workspace, projectId, entityId],
+      (r: Record<string, unknown>) => Boolean(r['found'])
+    );
+    return Boolean(row);
   }
 
   async listAssessmentResponses(workspace: string, assessmentId: string) {
@@ -937,7 +1061,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         input.updated_by
       ]
     );
-    return (await this.getAssessmentResponse(input.workspace, input.assessment_id, input.entity_id))!;
+    return (await this.getAssessmentResponse(
+      input.workspace,
+      input.assessment_id,
+      input.entity_id
+    ))!;
   }
 
   async countAssessmentResponses(workspace: string, assessmentId: string) {

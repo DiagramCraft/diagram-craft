@@ -7,10 +7,8 @@ import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/layoutCapableShapeNodeDefinition';
 import { LayoutNode } from '@diagram-craft/canvas/layout/layoutTree';
-import {
-  CustomPropertyDefinition,
-  NodeFlags
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/customProperty';
+import { NodeFlags } from '@diagram-craft/model/nodeDefinition';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { roundedRectOutline } from '@diagram-craft/stencil-bpmn/utils';

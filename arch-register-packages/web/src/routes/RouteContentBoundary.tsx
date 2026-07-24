@@ -55,8 +55,6 @@ export const RouteContentBoundary = (props: { children: React.ReactNode }) => {
   const location = useLocation();
 
   return (
-    <RouteContentBoundaryInner resetKey={location.href}>
-      {props.children}
-    </RouteContentBoundaryInner>
+    <RouteContentBoundaryInner resetKey={location.href}>{props.children}</RouteContentBoundaryInner>
   );
 };

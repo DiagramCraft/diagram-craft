@@ -5,7 +5,21 @@ import type { CatalogDatabase, ViewDatabase } from '../domain/catalog/db/catalog
 import type { ProjectDatabase } from '../domain/project/db/projectDatabase';
 import type { WatchDatabase } from '../domain/watch/db/watchDatabase';
 import type { DiscussionDatabase } from '../domain/discussion/db/discussionDatabase';
+import type { WikiCommentDatabase } from '../domain/wikiComments/db/wikiCommentDatabase';
 import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase';
+import type { JobDatabase } from '../domain/jobs/jobsDatabase';
+import type { ExternalContentDatabase } from '../domain/external-content/db/externalContentDatabase';
+import type { WebhookDatabase } from '../domain/webhook/db/webhookDatabase';
+import type { AutomationRuleDatabase } from '../domain/automation/db/automationRuleDatabase';
+import type { DocumentDatabase } from '../domain/document/db/documentDatabase';
+import type { GovernanceDatabase } from '../domain/governance/db/governanceDatabase';
+import type { NotificationDatabase } from '../domain/notification/db/notificationDatabase';
+import type { NotificationPreferenceDatabase } from '../domain/notification/db/notificationPreferenceDatabase';
+import type { NotificationDeliveryDatabase } from '../domain/notification/db/notificationDeliveryDatabase';
+import type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
+import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
+import type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
+import type { EntityExternalIdentityDatabase } from '../domain/externalIdentity/db/externalIdentityDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -14,6 +28,7 @@ export type DbDriver = 'postgres' | 'sqlite';
 
 export type CoreDatabase = {
   driver: DbDriver;
+  isTransaction?: boolean;
   close(): Promise<void>;
   reset(): Promise<void>;
   transaction<T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T>;
@@ -30,6 +45,20 @@ export type DatabaseAdapter = {
   auth: AuthDatabase;
   ai: AiDatabase;
   discussion: DiscussionDatabase;
+  wikiComment: WikiCommentDatabase;
+  jobs: JobDatabase;
+  externalContent: ExternalContentDatabase;
+  webhook: WebhookDatabase;
+  automationRule: AutomationRuleDatabase;
+  document: DocumentDatabase;
+  governance: GovernanceDatabase;
+  notification: NotificationDatabase;
+  notificationPreference: NotificationPreferenceDatabase;
+  notificationDelivery: NotificationDeliveryDatabase;
+  entityChange: EntityChangeDatabase;
+  entityDeprecation: EntityDeprecationDatabase;
+  changeCase: ChangeCaseDatabase;
+  externalIdentity: EntityExternalIdentityDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -48,6 +77,11 @@ export type {
   DiscussionPostDbCreate,
   DiscussionPostDbResult
 } from '../domain/discussion/db/discussionDatabase';
+export type {
+  WikiCommentDatabase,
+  WikiCommentDbCreate,
+  WikiCommentDbResult
+} from '../domain/wikiComments/db/wikiCommentDatabase';
 export type {
   CatalogDatabase,
   ViewDatabase,
@@ -74,6 +108,77 @@ export type {
   WorkspaceDbCreate,
   WorkspaceDbUpdate
 } from '../domain/workspace/db/workspaceDatabase';
+export type {
+  JobDatabase,
+  JobRunClaim,
+  JobRunCompletion,
+  JobRunDbResult,
+  JobRunFailure,
+  JobRunListOptions,
+  JobRunRetry,
+  JobRunPage,
+  JobRunStatus,
+  JobServerDbRegistration,
+  JobServerDbResult,
+  JobServerStatus,
+  JobScheduleDbCreate,
+  JobScheduleDbResult,
+  JobScheduleDbUpdate,
+  JobScheduleRecurrence,
+  OneOffJobRunDbCreate
+} from '../domain/jobs/jobsDatabase';
+export type {
+  ExternalContentDatabase,
+  ExternalContentMountDbCreate,
+  ExternalContentMountDbResult,
+  ExternalContentSourceDbCreate,
+  ExternalContentSourceDbResult,
+  ExternalContentStatus,
+  GitSourceConfig
+} from '../domain/external-content/db/externalContentDatabase';
+export type {
+  WebhookDatabase,
+  WorkspaceWebhookDbCreate,
+  WorkspaceWebhookDbResult,
+  WorkspaceWebhookDbUpdate
+} from '../domain/webhook/db/webhookDatabase';
+export type {
+  AutomationRuleDatabase,
+  AutomationRuleDbCreate,
+  AutomationRuleDbResult,
+  AutomationRuleDbUpdate
+} from '../domain/automation/db/automationRuleDatabase';
+export type { DocumentDatabase } from '../domain/document/db/documentDatabase';
+export type {
+  GovernanceDatabase,
+  GovernanceAssignmentDbCreate,
+  GovernanceCaseDbCreate,
+  GovernanceEventDbCreate
+} from '../domain/governance/db/governanceDatabase';
+export type {
+  NotificationDatabase,
+  InboxNotificationDbCreate,
+  InboxNotificationDbResult
+} from '../domain/notification/db/notificationDatabase';
+export type {
+  NotificationPreferenceDatabase,
+  NotificationPreferenceDbResult,
+  NotificationPreferenceOverride
+} from '../domain/notification/db/notificationPreferenceDatabase';
+export type {
+  EntityExternalIdentityDatabase,
+  EntityExternalIdentityRow,
+  EntityExternalIdentityDbCreate
+} from '../domain/externalIdentity/db/externalIdentityDatabase';
+export type {
+  NotificationDeliveryDatabase,
+  NotificationDeliveryDbCreate,
+  NotificationDeliveryDbResult,
+  NotificationDeliveryClaim
+} from '../domain/notification/db/notificationDeliveryDatabase';
+export type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
+export type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
+export type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

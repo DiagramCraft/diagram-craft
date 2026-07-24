@@ -1,4 +1,5 @@
-import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/nodeDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/registry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
 import { shapeParsers } from '../../drawioShapeParserRegistry';

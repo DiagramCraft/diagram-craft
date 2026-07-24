@@ -100,6 +100,75 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
       expect(comment!.element).toBe(element);
       expect(comment!.diagram).toBe(diagram);
     });
+
+    it('should serialize point comment correctly', () => {
+      const { doc1 } = standardTestModel(backend);
+      const diagram = doc1.diagrams[0]!;
+      const date = new Date('2023-01-01T10:00:00Z');
+      const comment = new Comment(
+        diagram,
+        'point',
+        'comment-1',
+        'Point comment',
+        'Jane Doe',
+        date,
+        'unresolved',
+        undefined,
+        undefined,
+        undefined,
+        { x: 120, y: 340 }
+      );
+
+      const serialized = comment.serialize();
+
+      expect(serialized.type).toBe('point');
+      expect(serialized.x).toBe(120);
+      expect(serialized.y).toBe(340);
+      expect(serialized.diagramId).toBe(diagram.id);
+    });
+
+    it('should deserialize point comment correctly', () => {
+      const { doc1 } = standardTestModel(backend);
+      const diagram = doc1.diagrams[0]!;
+      const serialized = {
+        id: 'comment-1',
+        date: '2023-01-01T10:00:00.000Z',
+        author: 'Jane Doe',
+        message: 'Point comment',
+        state: 'unresolved' as const,
+        type: 'point' as const,
+        diagramId: diagram.id,
+        x: 120,
+        y: 340
+      };
+
+      const comment = Comment.deserialize(serialized, diagram);
+
+      expect(comment).not.toBeNull();
+      expect(comment!.type).toBe('point');
+      expect(comment!.position).toEqual({ x: 120, y: 340 });
+      expect(comment!.diagram).toBe(diagram);
+    });
+
+    it('point comments should never be stale', () => {
+      const { doc1 } = standardTestModel(backend);
+      const diagram = doc1.diagrams[0]!;
+      const comment = new Comment(
+        diagram,
+        'point',
+        '1',
+        'Test',
+        'Author',
+        new Date(),
+        'unresolved',
+        undefined,
+        undefined,
+        undefined,
+        { x: 0, y: 0 }
+      );
+
+      expect(comment.isStale()).toBe(false);
+    });
   });
 
   describe('CommentManager', () => {
@@ -189,6 +258,66 @@ describe.each(Backends.all())('Comment [%s]', (_name, backend) => {
 
       expect(diagramComments).toHaveLength(1);
       expect(diagramComments[0]!.id).toBe('1');
+    });
+
+    it('should get point comments', () => {
+      const diagramComment = new Comment(
+        diagram,
+        'diagram',
+        'diagram-1',
+        'Diagram comment',
+        'Author',
+        new Date()
+      );
+      const pointComment = new Comment(
+        diagram,
+        'point',
+        'point-1',
+        'Point comment',
+        'Author',
+        new Date(),
+        'unresolved',
+        undefined,
+        undefined,
+        undefined,
+        { x: 10, y: 20 }
+      );
+
+      commentManager.addComment(diagramComment);
+      commentManager.addComment(pointComment);
+
+      const pointComments = commentManager.getPointComments();
+      expect(pointComments).toHaveLength(1);
+      expect(pointComments[0]!.id).toBe('point-1');
+      expect(pointComments[0]!.position).toEqual({ x: 10, y: 20 });
+    });
+
+    it('should update and synchronize a point comment position', () => {
+      const pointComment = new Comment(
+        diagram,
+        'point',
+        'point-1',
+        'Point comment',
+        'Author',
+        new Date(),
+        'unresolved',
+        undefined,
+        undefined,
+        undefined,
+        { x: 10, y: 20 }
+      );
+      const eventSpy = vi.fn();
+      commentManager.on('commentUpdated', eventSpy);
+
+      commentManager.addComment(pointComment);
+
+      expect(commentManager.updatePointCommentPosition('point-1', { x: 30, y: 40 })).toBe(true);
+      expect(commentManager.getComment('point-1')!.position).toEqual({ x: 30, y: 40 });
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+
+      if (commentManager2) {
+        expect(commentManager2.getComment('point-1')!.position).toEqual({ x: 30, y: 40 });
+      }
     });
 
     it('should update existing comment', () => {

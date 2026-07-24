@@ -24,13 +24,16 @@
     font-family: inherit;
     font-size: 12px;
     cursor: pointer;
-    transition: background 70ms, border-color 70ms, color 70ms;
+    transition:
+      background 70ms,
+      border-color 70ms,
+      color 70ms;
 
     &:hover {
       background: var(--cmp-bg);
     }
 
-    &[data-selected='true'] {
+    &[data-selected="true"] {
       background: color-mix(in oklab, var(--accent-chroma) 10%, transparent);
       border-color: color-mix(in oklch, var(--accent-chroma) 45%, var(--cmp-border));
       color: var(--base-fg);

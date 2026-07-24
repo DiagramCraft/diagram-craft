@@ -1,0 +1,72 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+.intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  color: var(--cmp-fg-secondary);
+  font-size: 12px;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rowList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hint,
+.muted {
+  color: var(--cmp-fg-secondary);
+  font-size: 11px;
+}
+.error {
+  color: var(--error-fg);
+  font-size: 12px;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--cmp-border, var(--cmp-fg-disabled));
+  border-radius: 4px;
+}
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.summary {
+  overflow-wrap: anywhere;
+}
+.tableWrap {
+  overflow-x: auto;
+}

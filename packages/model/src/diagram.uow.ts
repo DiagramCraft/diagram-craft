@@ -13,6 +13,7 @@ export interface DiagramSnapshot extends Snapshot {
   props: DiagramProps;
   bounds: Omit<Box, 'r'>;
   guides: ReadonlyArray<Guide>;
+  locked: boolean;
 }
 
 export class DiagramUOWAdapter implements UOWAdapter<DiagramSnapshot, Diagram> {
@@ -23,6 +24,7 @@ export class DiagramUOWAdapter implements UOWAdapter<DiagramSnapshot, Diagram> {
     element.setName(snapshot.name, uow);
     element._setProps(snapshot.props, uow);
     element._restoreGuides(snapshot.guides, uow);
+    element.setLocked(snapshot.locked, uow);
   }
 
   snapshot(element: Diagram): DiagramSnapshot {
@@ -32,7 +34,8 @@ export class DiagramUOWAdapter implements UOWAdapter<DiagramSnapshot, Diagram> {
       name: element.name,
       props: deepClone(element.props),
       bounds: deepClone(element.bounds),
-      guides: deepClone(element.guides)
+      guides: deepClone(element.guides),
+      locked: element.locked
     };
   }
 

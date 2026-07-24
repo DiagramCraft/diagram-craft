@@ -466,9 +466,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const initialLayerCount = diagram1.layers.all.length;
 
       const layerId = layer1.id;
-      diagram1.undoManager.execute('Remove layer', uow =>
-        diagram1.layers.remove(layer1, uow)
-      );
+      diagram1.undoManager.execute('Remove layer', uow => diagram1.layers.remove(layer1, uow));
 
       expect(diagram1.layers.all).toHaveLength(initialLayerCount - 1);
       expect(diagram1.layers.all).not.toContain(layer1);
@@ -484,9 +482,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const layerId = layer1.id;
       const initialLayerCount = diagram1.layers.all.length;
 
-      diagram1.undoManager.execute('Remove layer', uow =>
-        diagram1.layers.remove(layer1, uow)
-      );
+      diagram1.undoManager.execute('Remove layer', uow => diagram1.layers.remove(layer1, uow));
 
       diagram1.undoManager.undo();
       expect(diagram1.layers.all).toHaveLength(initialLayerCount);

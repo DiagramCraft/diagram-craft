@@ -5,9 +5,7 @@ import type {
 
 const workspaceShellBuilderKey = Symbol('workspace-shell-builder');
 
-export type WorkspaceShellBuilder = (
-  ctx: WorkspaceShellContext
-) => WorkspaceShellDescriptor;
+export type WorkspaceShellBuilder = (ctx: WorkspaceShellContext) => WorkspaceShellDescriptor;
 
 type WorkspaceShellCarrier = {
   [workspaceShellBuilderKey]?: WorkspaceShellBuilder;

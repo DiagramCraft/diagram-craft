@@ -194,7 +194,9 @@ describe('filterBuilder', () => {
           'postgres',
           'array'
         );
-        expect(result).toBe('EXISTS (SELECT 1 FROM jsonb_array_elements_text(e.tags) t WHERE t = $react)');
+        expect(result).toBe(
+          'EXISTS (SELECT 1 FROM jsonb_array_elements_text(e.tags) t WHERE t = $react)'
+        );
       });
 
       it('should build not_equals condition with NOT EXISTS on postgres', () => {
@@ -225,7 +227,13 @@ describe('filterBuilder', () => {
 
       it('should build empty/not_empty using jsonb_array_length on postgres', () => {
         expect(
-          buildConditionClause('e.tags', { fieldId: '_tags', op: 'empty', value: '' }, mockAddParam, 'postgres', 'array')
+          buildConditionClause(
+            'e.tags',
+            { fieldId: '_tags', op: 'empty', value: '' },
+            mockAddParam,
+            'postgres',
+            'array'
+          )
         ).toBe('jsonb_array_length(e.tags) = 0');
         expect(
           buildConditionClause(
@@ -264,7 +272,13 @@ describe('filterBuilder', () => {
 
       it('should build empty/not_empty using json_array_length on sqlite', () => {
         expect(
-          buildConditionClause('e.tags', { fieldId: '_tags', op: 'empty', value: '' }, mockAddParam, 'sqlite', 'array')
+          buildConditionClause(
+            'e.tags',
+            { fieldId: '_tags', op: 'empty', value: '' },
+            mockAddParam,
+            'sqlite',
+            'array'
+          )
         ).toBe('json_array_length(e.tags) = 0');
         expect(
           buildConditionClause(

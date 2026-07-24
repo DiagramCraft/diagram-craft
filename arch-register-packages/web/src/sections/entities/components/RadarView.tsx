@@ -16,7 +16,7 @@ import {
   type JoinedAssessmentContext
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
-import { TooltipChip, TooltipChips } from './entityTooltipParts';
+import { TooltipChip, TooltipChips } from '../../../components/HoverCardParts';
 import {
   buildBlips,
   buildQuadrants,

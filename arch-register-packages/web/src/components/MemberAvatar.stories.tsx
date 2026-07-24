@@ -89,7 +89,7 @@ export const MultipleAvatars = {
       { name: 'Diana Davis', email: 'diana@example.com', userId: 'user-4' },
       { name: 'Eve Evans', email: 'eve@example.com', userId: 'user-5' }
     ];
-    
+
     return (
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         {users.map(user => (
@@ -103,7 +103,7 @@ export const MultipleAvatars = {
 export const DifferentSizes = {
   render: () => {
     const sizes = [16, 20, 24, 28, 32, 40, 48];
-    
+
     return (
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
         {sizes.map(size => (
@@ -132,7 +132,7 @@ export const CustomColors = {
       '#ec4899',
       '#6366f1'
     ];
-    
+
     return (
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         {colors.map((color, index) => (
@@ -152,7 +152,7 @@ export const CustomColors = {
 export const StableColors = {
   render: () => {
     const userIds = ['user-a', 'user-b', 'user-c', 'user-d', 'user-e', 'user-f'];
-    
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ fontSize: '12px', marginBottom: '0.5rem' }}>

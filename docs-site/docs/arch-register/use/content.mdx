@@ -34,10 +34,52 @@ Diagrams are part of the content model. They can live at workspace, project, or 
   }}
 />
 
+## Typed Markdown Documents
+
+Markdown documents can optionally use a [document type](../admin/document-types-templates). A document type adds
+structured properties such as workflow status (using an enum field), dates, numbers, and links to entities or other
+documents. Required properties are validated when the document is saved, while expected properties produce a warning.
+
+When creating a wiki page, select a document type and optionally a template. Templates can pre-fill the Markdown body
+and structured metadata, including the `{{title}}` placeholder for the new document name. Workspace templates are
+available across the workspace; project templates are available within their project.
+
+Untyped Markdown remains available for documents that do not need structured properties. Existing typed documents
+keep their metadata and type history when a document type is archived.
+
 ## Wiki Pages And Files
 
 Use wiki pages for lightweight documentation close to the thing it describes. Use uploaded files when the source
 material should stay intact rather than be rewritten into markdown.
+
+Wiki pages support links between documents with backlinks, attachments, and inline comments and discussion threads
+on supported content.
+
+## Rich Content Blocks
+
+The Markdown editor goes beyond plain text with embeddable blocks:
+
+- **Diagram and image embeds** for diagrams and uploaded images
+- **Live entity blocks** — entity cards, tables, charts, metrics, changelogs, browser and saved-view embeds — that
+  render current catalog data inside the page
+- **Entity graphs** for a compact, read-only dependency or impact graph:
+
+  ```mdx
+  <EntityGraph id="APP-001" depth="2" direction="both" />
+  ```
+
+  `id` accepts an entity public ID or UUID, `depth` is `1–3` (default `1`), and `direction` is `upstream`,
+  `downstream`, or `both` (the default). Nodes are clickable, and a truncated graph links to the entity's full
+  Graph tab.
+- **Inline references** — entity mentions, entity links, and live entity field values in running text
+- **Layout blocks** — callouts, foldable sections, columns, tabs, captions, and labels
+
+Because entity blocks read live data, wiki pages can act as lightweight, always-current reports.
+
+## Revisions And History
+
+Supported documents keep revision history. You can inspect earlier revisions, compare them, and restore a previous
+version. Typed documents also keep their metadata and type history over time.
 
 ## Choosing The Right Scope
 
@@ -50,5 +92,6 @@ Use:
 ## Related Pages
 
 - [Projects](projects)
+- [Document Types And Templates](../admin/document-types-templates)
 - [Scope Matrix](../reference/scope-matrix)
 - [Project and Content Screen Reference](../reference/project-content-screen-reference)

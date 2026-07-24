@@ -33,19 +33,26 @@ const escapeXml = (s: string): string =>
 // These replicate the getBoundingPathBuilder() logic from the actual node type definitions.
 
 const shapePaths: Record<string, (bounds: Box, props: Record<string, unknown>) => string> = {
-  rect: (b) =>
+  rect: b =>
     new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(0, 0)).lineTo(_p(1, 0)).lineTo(_p(1, 1)).lineTo(_p(0, 1)).close()
-      .getPaths().asSvgPath(),
+      .moveTo(_p(0, 0))
+      .lineTo(_p(1, 0))
+      .lineTo(_p(1, 1))
+      .lineTo(_p(0, 1))
+      .close()
+      .getPaths()
+      .asSvgPath(),
 
   'rounded-rect': (b, props) => {
-    const radius = (props?.['custom.roundedRect.radius'] as number) ?? Math.min(10, b.w / 4, b.h / 4);
+    const radius =
+      (props?.['custom.roundedRect.radius'] as number) ?? Math.min(10, b.w / 4, b.h / 4);
     const xr = Math.min(radius / b.w, 0.5);
     const yr = Math.min(radius / b.h, 0.5);
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(xr, 0)).lineTo(_p(1 - xr, 0))
+      .moveTo(_p(xr, 0))
+      .lineTo(_p(1 - xr, 0))
       .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
       .lineTo(_p(1, 1 - yr))
       .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
@@ -53,12 +60,13 @@ const shapePaths: Record<string, (bounds: Box, props: Record<string, unknown>) =
       .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
       .lineTo(_p(0, yr))
       .arcTo(_p(xr, 0), xr, yr, 0, 0, 1)
-      .getPaths().asSvgPath();
+      .getPaths()
+      .asSvgPath();
   },
 
   'icon-rounded-rect': (b, props) => shapePaths['rounded-rect']!(b, props),
 
-  circle: (b) =>
+  circle: b =>
     new PathListBuilder()
       .withTransform(fromUnitLCS(b))
       .moveTo(_p(0.5, 0))
@@ -66,26 +74,56 @@ const shapePaths: Record<string, (bounds: Box, props: Record<string, unknown>) =
       .arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 1)
       .arcTo(_p(0, 0.5), 0.5, 0.5, 0, 0, 1)
       .arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 1)
-      .getPaths().asSvgPath(),
+      .getPaths()
+      .asSvgPath(),
 
-  diamond: (b) =>
+  diamond: b =>
     new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(0.5, 0)).lineTo(_p(1, 0.5)).lineTo(_p(0.5, 1)).lineTo(_p(0, 0.5)).close()
-      .getPaths().asSvgPath(),
+      .moveTo(_p(0.5, 0))
+      .lineTo(_p(1, 0.5))
+      .lineTo(_p(0.5, 1))
+      .lineTo(_p(0, 0.5))
+      .close()
+      .getPaths()
+      .asSvgPath(),
 
   triangle: (b, props) => {
     const direction = (props?.['custom.triangle.direction'] as string) ?? 'south';
     const pb = new PathListBuilder().withTransform(fromUnitLCS(b));
     switch (direction) {
       case 'east':
-        return pb.moveTo(_p(1, 0.5)).lineTo(_p(0, 1)).lineTo(_p(0, 0)).close().getPaths().asSvgPath();
+        return pb
+          .moveTo(_p(1, 0.5))
+          .lineTo(_p(0, 1))
+          .lineTo(_p(0, 0))
+          .close()
+          .getPaths()
+          .asSvgPath();
       case 'west':
-        return pb.moveTo(_p(0, 0.5)).lineTo(_p(1, 1)).lineTo(_p(1, 0)).close().getPaths().asSvgPath();
+        return pb
+          .moveTo(_p(0, 0.5))
+          .lineTo(_p(1, 1))
+          .lineTo(_p(1, 0))
+          .close()
+          .getPaths()
+          .asSvgPath();
       case 'north':
-        return pb.moveTo(_p(0.5, 1)).lineTo(_p(0, 0)).lineTo(_p(1, 0)).close().getPaths().asSvgPath();
+        return pb
+          .moveTo(_p(0.5, 1))
+          .lineTo(_p(0, 0))
+          .lineTo(_p(1, 0))
+          .close()
+          .getPaths()
+          .asSvgPath();
       default: // south
-        return pb.moveTo(_p(0.5, 0)).lineTo(_p(0, 1)).lineTo(_p(1, 1)).close().getPaths().asSvgPath();
+        return pb
+          .moveTo(_p(0.5, 0))
+          .lineTo(_p(0, 1))
+          .lineTo(_p(1, 1))
+          .close()
+          .getPaths()
+          .asSvgPath();
     }
   },
 
@@ -93,17 +131,28 @@ const shapePaths: Record<string, (bounds: Box, props: Record<string, unknown>) =
     const sizePct = ((props?.['custom.hexagon.size'] as number) ?? 25) / 100;
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(sizePct, 0)).lineTo(_p(1 - sizePct, 0)).lineTo(_p(1, 0.5))
-      .lineTo(_p(1 - sizePct, 1)).lineTo(_p(sizePct, 1)).lineTo(_p(0, 0.5)).close()
-      .getPaths().asSvgPath();
+      .moveTo(_p(sizePct, 0))
+      .lineTo(_p(1 - sizePct, 0))
+      .lineTo(_p(1, 0.5))
+      .lineTo(_p(1 - sizePct, 1))
+      .lineTo(_p(sizePct, 1))
+      .lineTo(_p(0, 0.5))
+      .close()
+      .getPaths()
+      .asSvgPath();
   },
 
   parallelogram: (b, props) => {
     const slant = ((props?.['custom.parallelogram.slant'] as number) ?? 15) / b.w;
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(slant, 0)).lineTo(_p(1, 0)).lineTo(_p(1 - slant, 1)).lineTo(_p(0, 1)).close()
-      .getPaths().asSvgPath();
+      .moveTo(_p(slant, 0))
+      .lineTo(_p(1, 0))
+      .lineTo(_p(1 - slant, 1))
+      .lineTo(_p(0, 1))
+      .close()
+      .getPaths()
+      .asSvgPath();
   },
 
   trapezoid: (b, props) => {
@@ -111,8 +160,13 @@ const shapePaths: Record<string, (bounds: Box, props: Record<string, unknown>) =
     const slantRight = ((props?.['custom.trapezoid.slantRight'] as number) ?? 15) / b.w;
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(slantLeft, 0)).lineTo(_p(1 - slantRight, 0)).lineTo(_p(1, 1)).lineTo(_p(0, 1)).close()
-      .getPaths().asSvgPath();
+      .moveTo(_p(slantLeft, 0))
+      .lineTo(_p(1 - slantRight, 0))
+      .lineTo(_p(1, 1))
+      .lineTo(_p(0, 1))
+      .close()
+      .getPaths()
+      .asSvgPath();
   },
 
   star: (b, props) => {
@@ -142,37 +196,50 @@ const shapePaths: Record<string, (bounds: Box, props: Record<string, unknown>) =
     return pb.getPaths().asSvgPath();
   },
 
-  delay: (b) => {
+  delay: b => {
     const xr = (0.5 * b.h) / b.w;
     const yr = 0.5;
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(0, 0)).lineTo(_p(1 - xr, 0))
+      .moveTo(_p(0, 0))
+      .lineTo(_p(1 - xr, 0))
       .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
       .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
-      .lineTo(_p(0, 1)).close()
-      .getPaths().asSvgPath();
+      .lineTo(_p(0, 1))
+      .close()
+      .getPaths()
+      .asSvgPath();
   },
 
-  document: (b) => {
+  document: b => {
     const size = 0.3;
     const k = 1.5;
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(0, 0)).lineTo(_p(1, 0)).lineTo(_p(1, 1 - size / 2))
+      .moveTo(_p(0, 0))
+      .lineTo(_p(1, 0))
+      .lineTo(_p(1, 1 - size / 2))
       .quadTo(_p(0.5, 1 - size / 2), _p(3 / 4, 1 - size * k))
       .quadTo(_p(0, 1 - size / 2), _p(1 / 4, 1 - size * (1 - k)))
-      .lineTo(_p(0, size / 2)).close()
-      .getPaths().asSvgPath();
+      .lineTo(_p(0, size / 2))
+      .close()
+      .getPaths()
+      .asSvgPath();
   },
 
   step: (b, props) => {
     const sizePct = ((props?.['custom.step.size'] as number) ?? 20) / b.w;
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(0, 0)).lineTo(_p(1 - sizePct, 0)).lineTo(_p(1, 0.5))
-      .lineTo(_p(1 - sizePct, 1)).lineTo(_p(0, 1)).lineTo(_p(sizePct, 0.5)).close()
-      .getPaths().asSvgPath();
+      .moveTo(_p(0, 0))
+      .lineTo(_p(1 - sizePct, 0))
+      .lineTo(_p(1, 0.5))
+      .lineTo(_p(1 - sizePct, 1))
+      .lineTo(_p(0, 1))
+      .lineTo(_p(sizePct, 0.5))
+      .close()
+      .getPaths()
+      .asSvgPath();
   },
 
   cylinder: (b, props) => {
@@ -187,16 +254,23 @@ const shapePaths: Record<string, (bounds: Box, props: Record<string, unknown>) =
       .arcTo(_p(0.5, 1), 0.5, sizePct, 0, 0, 0)
       .arcTo(_p(0, 1 - sizePct), 0.5, sizePct, 0, 0, 0)
       .close()
-      .getPaths().asSvgPath();
+      .getPaths()
+      .asSvgPath();
   },
 
   cube: (b, props) => {
     const sizePct = ((props?.['custom.cube.size'] as number) ?? 20) / Math.min(b.w, b.h);
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(0, sizePct)).lineTo(_p(sizePct, 0)).lineTo(_p(1, 0))
-      .lineTo(_p(1, 1 - sizePct)).lineTo(_p(1 - sizePct, 1)).lineTo(_p(0, 1)).close()
-      .getPaths().asSvgPath();
+      .moveTo(_p(0, sizePct))
+      .lineTo(_p(sizePct, 0))
+      .lineTo(_p(1, 0))
+      .lineTo(_p(1, 1 - sizePct))
+      .lineTo(_p(1 - sizePct, 1))
+      .lineTo(_p(0, 1))
+      .close()
+      .getPaths()
+      .asSvgPath();
   },
 
   arrow: (b, props) => {
@@ -205,11 +279,18 @@ const shapePaths: Record<string, (bounds: Box, props: Record<string, unknown>) =
     const notch = ((props?.['custom.arrow.notch'] as number) ?? 0) / b.w;
     return new PathListBuilder()
       .withTransform(fromUnitLCS(b))
-      .moveTo(_p(1, 0.5)).lineTo(_p(1 - x, 1)).lineTo(_p(1 - x, 1 - y))
-      .lineTo(_p(0, 1 - y)).lineTo(_p(notch, 0.5)).lineTo(_p(0, y))
-      .lineTo(_p(1 - x, y)).lineTo(_p(1 - x, 0)).close()
-      .getPaths().asSvgPath();
-  },
+      .moveTo(_p(1, 0.5))
+      .lineTo(_p(1 - x, 1))
+      .lineTo(_p(1 - x, 1 - y))
+      .lineTo(_p(0, 1 - y))
+      .lineTo(_p(notch, 0.5))
+      .lineTo(_p(0, y))
+      .lineTo(_p(1 - x, y))
+      .lineTo(_p(1 - x, 0))
+      .close()
+      .getPaths()
+      .asSvgPath();
+  }
 };
 
 // Direction-specific arrow variants share the same arrow path with rotation
@@ -221,7 +302,9 @@ for (const dir of ['arrow-right', 'arrow-left', 'arrow-up', 'arrow-down']) {
 
 const extractCustomProps = (node: SerializedNode): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
-  const custom = (node.props as Record<string, unknown>)?.['custom'] as Record<string, unknown> | undefined;
+  const custom = (node.props as Record<string, unknown>)?.['custom'] as
+    | Record<string, unknown>
+    | undefined;
   if (!custom) return result;
 
   for (const [ns, values] of Object.entries(custom)) {
@@ -293,7 +376,9 @@ const renderNode = (node: SerializedNode, nodeMap: Map<string, SerializedNode>):
           .join('')
       : '';
 
-    const transform = r ? ` transform="rotate(${(r * 180) / Math.PI} ${x + w / 2} ${y + h / 2})"` : '';
+    const transform = r
+      ? ` transform="rotate(${(r * 180) / Math.PI} ${x + w / 2} ${y + h / 2})"`
+      : '';
     return `<g${transform}${opacityAttr}><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}"/>${childrenSvg}</g>`;
   }
 
@@ -305,11 +390,15 @@ const renderNode = (node: SerializedNode, nodeMap: Map<string, SerializedNode>):
   let shapeSvg: string;
   if (pathFn) {
     const pathData = pathFn(boundsNoRotation, customProps);
-    const transform = r ? ` transform="rotate(${(r * 180) / Math.PI} ${x + w / 2} ${y + h / 2})"` : '';
+    const transform = r
+      ? ` transform="rotate(${(r * 180) / Math.PI} ${x + w / 2} ${y + h / 2})"`
+      : '';
     shapeSvg = `<path d="${pathData}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}"${transform}${opacityAttr}/>`;
   } else {
     // Fallback: render as rectangle
-    const transform = r ? ` transform="rotate(${(r * 180) / Math.PI} ${x + w / 2} ${y + h / 2})"` : '';
+    const transform = r
+      ? ` transform="rotate(${(r * 180) / Math.PI} ${x + w / 2} ${y + h / 2})"`
+      : '';
     shapeSvg = `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}"${transform}${opacityAttr}/>`;
   }
 
@@ -326,10 +415,7 @@ const renderNode = (node: SerializedNode, nodeMap: Map<string, SerializedNode>):
 
 // ── Edge rendering ───────────────────────────────────────────
 
-const renderEdge = (
-  edge: SerializedEdge,
-  nodeMap: Map<string, SerializedNode>
-): string => {
+const renderEdge = (edge: SerializedEdge, nodeMap: Map<string, SerializedNode>): string => {
   if (edge.props?.hidden) return '';
 
   const startPos = getEndpointPosition(edge.start, nodeMap);
@@ -390,8 +476,14 @@ const computeBounds = (
       if (el.props?.hidden) continue;
       const startPos = getEndpointPosition(el.start, nodeMap);
       const endPos = getEndpointPosition(el.end, nodeMap);
-      if (startPos) { expandBounds(b, startPos.x, startPos.y); hasElements = true; }
-      if (endPos) { expandBounds(b, endPos.x, endPos.y); hasElements = true; }
+      if (startPos) {
+        expandBounds(b, startPos.x, startPos.y);
+        hasElements = true;
+      }
+      if (endPos) {
+        expandBounds(b, endPos.x, endPos.y);
+        hasElements = true;
+      }
       if (el.waypoints) {
         for (const wp of el.waypoints) {
           expandBounds(b, wp.point.x, wp.point.y);

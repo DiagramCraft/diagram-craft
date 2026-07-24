@@ -168,6 +168,6 @@ export const runPostgresMigrations = async (sql: PostgresSqlClient): Promise<voi
       await t.unsafe(migrationSql);
       await t`INSERT INTO schema_migrations (version, applied_at) VALUES (${version}, NOW())`;
     });
-    console.log(`[migrations] Applied: ${version}`);
+    migrationLogger.info(`Applied: ${version}`);
   }
 };

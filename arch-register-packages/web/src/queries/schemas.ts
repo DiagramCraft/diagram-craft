@@ -8,7 +8,9 @@ export const schemaKeys = {
   details: () => [...schemaKeys.all, 'detail'] as const,
   workspaceDetails: (workspaceId: string) => [...schemaKeys.details(), workspaceId] as const,
   detail: (workspaceId: string, schemaId: string) =>
-    [...schemaKeys.workspaceDetails(workspaceId), schemaId] as const
+    [...schemaKeys.workspaceDetails(workspaceId), schemaId] as const,
+  versions: (workspaceId: string, schemaId: string) =>
+    [...schemaKeys.detail(workspaceId, schemaId), 'versions'] as const
 };
 
 export const invalidateDeletedSchema = async (

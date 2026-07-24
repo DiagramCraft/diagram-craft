@@ -12,7 +12,6 @@ import type {
 } from './types.js';
 import { decodeRefs } from './utils.js';
 import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS } from './constants.js';
-import { VisibilityMode } from '@arch-register/api-types/entityContract';
 
 /**
  * Pure permission checker.
@@ -30,7 +29,7 @@ export class PermissionChecker {
    *
    * This checks:
    * - Global roles that grant entity permissions
-   * - Entity visibility (public entities are viewable by all)
+   * - Workspace-wide content.view (grants view_entity to any entity in the workspace)
    * - Owner team membership (grants entity_admin role)
    * - Explicit entity grants (direct or via subtree)
    *
@@ -68,7 +67,10 @@ export class PermissionChecker {
     action: ProjectAction
   ): boolean {
     if (context.globalPermissions.has('admin_platform')) {
-      return true;
+      if (!context.workspaceCapabilityCeiling) return true;
+      return action === 'delete_project'
+        ? context.workspaceCapabilityCeiling.has('proj.delete')
+        : context.workspaceCapabilityCeiling.has('proj.edit');
     }
 
     if (action === 'delete_project') {
@@ -81,7 +83,10 @@ export class PermissionChecker {
 
     if (ownerTeamId != null) {
       for (const role of this.getTeamRoles(context, ownerTeamId)) {
-        if (TEAM_ROLE_PERMISSIONS[role].projectActions.includes(action)) {
+        if (
+          this.isProjectActionAllowedByCeiling(context, action) &&
+          TEAM_ROLE_PERMISSIONS[role].projectActions.includes(action)
+        ) {
           return true;
         }
       }
@@ -99,8 +104,14 @@ export class PermissionChecker {
     context: WorkspaceAuthorizationContext,
     capability: WorkspaceCapability
   ): boolean {
+    if (context.workspaceCapabilityCeiling && !context.workspaceCapabilityCeiling.has(capability)) {
+      return false;
+    }
+
     if (context.globalPermissions.has('admin_platform')) {
-      return true;
+      return (
+        !context.workspaceCapabilityCeiling || context.workspaceCapabilityCeiling.has(capability)
+      );
     }
 
     if (context.workspaceRole == null) {
@@ -127,7 +138,31 @@ export class PermissionChecker {
     permission: GlobalPermission
   ): boolean {
     return (
-      context.globalPermissions.has(permission) || context.globalPermissions.has('admin_platform')
+      !context.workspaceCapabilityCeiling &&
+      (context.globalPermissions.has(permission) || context.globalPermissions.has('admin_platform'))
+    );
+  }
+
+  /**
+   * Check whether the user's workspace role alone (independent of any specific entity's
+   * ownership, ancestry, or grants) already grants `view_entity` workspace-wide.
+   *
+   * This is true for `content.view`, `ent.edit`, or `ent.propose`, and for global admins — the
+   * same conditions `getEntityActions` checks in its workspace-role branch. Callers doing
+   * bulk/list queries can use this to skip the per-entity `hasEntityPermission` check entirely
+   * (falling back to it only when this returns false, e.g. a token/role scoped to `ws.view` only).
+   */
+  hasWorkspaceWideEntityView(context: AuthorizationContext): boolean {
+    if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
+      return true;
+    }
+    if (context.workspaceRole == null && !context.globalPermissions.has('admin_platform')) {
+      return false;
+    }
+    return (
+      this.hasWorkspaceCapability(context, 'ent.edit') ||
+      this.hasWorkspaceCapability(context, 'ent.propose') ||
+      this.hasWorkspaceCapability(context, 'content.view')
     );
   }
 
@@ -145,24 +180,19 @@ export class PermissionChecker {
     const actions = new Set<EntityAction>();
 
     // Global admins get all entity actions
-    if (context.globalPermissions.has('admin_platform')) {
+    if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
       ROLE_ACTIONS['entity_admin'].forEach(action => actions.add(action));
     }
 
     // Workspace role grants entity actions
-    if (context.workspaceRole != null) {
+    if (context.workspaceRole != null || context.globalPermissions.has('admin_platform')) {
       if (this.hasWorkspaceCapability(context, 'ent.edit')) {
         ROLE_ACTIONS['contributor'].forEach(action => actions.add(action));
       } else if (this.hasWorkspaceCapability(context, 'ent.propose')) {
         ROLE_ACTIONS['editor'].forEach(action => actions.add(action));
-      } else if (this.hasWorkspaceCapability(context, 'ws.view')) {
+      } else if (this.hasWorkspaceCapability(context, 'content.view')) {
         actions.add('view_entity');
       }
-    }
-
-    // Public entities are viewable by all
-    if (this.resolveEntityVisibility(context, entity) === 'public') {
-      actions.add('view_entity');
     }
 
     const ancestorIds = this.collectAncestorIds(context, entity);
@@ -170,8 +200,10 @@ export class PermissionChecker {
     // Direct owner team permissions apply to the entity itself
     if (entity.owner) {
       for (const role of this.getTeamRoles(context, entity.owner)) {
-        TEAM_ROLE_PERMISSIONS[role].directEntityActions.forEach(teamAction =>
-          actions.add(teamAction)
+        this.addCappedEntityActions(
+          actions,
+          context,
+          TEAM_ROLE_PERMISSIONS[role].directEntityActions
         );
       }
     }
@@ -181,8 +213,10 @@ export class PermissionChecker {
       const ancestor = context.entities.get(ancestorId);
       if (!ancestor?.owner) continue;
       for (const role of this.getTeamRoles(context, ancestor.owner)) {
-        TEAM_ROLE_PERMISSIONS[role].descendantEntityActions.forEach(teamAction =>
-          actions.add(teamAction)
+        this.addCappedEntityActions(
+          actions,
+          context,
+          TEAM_ROLE_PERMISSIONS[role].descendantEntityActions
         );
       }
     }
@@ -196,42 +230,48 @@ export class PermissionChecker {
       if (!principalMatches) continue;
       if (!this.hasApplicableGrant(grant, entity.id, ancestorIds)) continue;
 
-      ROLE_ACTIONS[grant.role].forEach(action => actions.add(action));
+      this.addCappedEntityActions(actions, context, ROLE_ACTIONS[grant.role]);
     }
 
     return actions;
   }
 
-  /**
-   * Resolve the effective visibility mode for an entity by traversing up the containment hierarchy.
-   *
-   * If an entity doesn't have an explicit visibility mode, we traverse up through
-   * its parent entities until we find one with a visibility mode, or default to 'public'.
-   *
-   * @param context - Authorization context with entity data
-   * @param entity - The entity to resolve visibility for
-   * @returns The effective visibility mode ('public' or 'restricted')
-   */
-  protected resolveEntityVisibility(context: AuthorizationContext, entity: Entity): VisibilityMode {
-    if (entity.visibility_mode) return entity.visibility_mode;
+  private isProjectActionAllowedByCeiling(
+    context: WorkspaceAuthorizationContext,
+    action: ProjectAction
+  ): boolean {
+    const ceiling = context.workspaceCapabilityCeiling;
+    if (!ceiling) return true;
+    return ceiling.has(action === 'delete_project' ? 'proj.delete' : 'proj.edit');
+  }
 
-    const queue = [...this.getParentIds(entity, context.schemas.get(entity.schema_id))];
-    const visited = new Set<string>();
+  private isEntityActionAllowedByCeiling(
+    context: AuthorizationContext,
+    action: EntityAction
+  ): boolean {
+    const ceiling = context.workspaceCapabilityCeiling;
+    if (!ceiling) return true;
 
-    while (queue.length > 0) {
-      const currentId = queue.shift()!;
-      if (visited.has(currentId)) continue;
-      visited.add(currentId);
-
-      const current = context.entities.get(currentId);
-      if (!current) continue;
-
-      if (current.visibility_mode) return current.visibility_mode;
-
-      queue.push(...this.getParentIds(current, context.schemas.get(current.schema_id)));
+    switch (action) {
+      case 'view_entity':
+        return ceiling.has('content.view') || ceiling.has('ent.edit') || ceiling.has('ent.propose');
+      case 'edit_entity':
+        return ceiling.has('ent.edit') || ceiling.has('ent.propose');
+      case 'create_child':
+        return ceiling.has('ent.edit');
+      case 'admin_entity':
+        return false;
     }
+  }
 
-    return 'public';
+  private addCappedEntityActions(
+    actions: Set<EntityAction>,
+    context: AuthorizationContext,
+    candidateActions: EntityAction[]
+  ): void {
+    for (const action of candidateActions) {
+      if (this.isEntityActionAllowedByCeiling(context, action)) actions.add(action);
+    }
   }
 
   /**

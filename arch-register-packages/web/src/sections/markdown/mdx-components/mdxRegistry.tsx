@@ -16,14 +16,32 @@ import { ENTITY_TABLE_TYPE } from './blocks/entity-table/EntityTableEditable';
 import { entityTableSpec } from './blocks/entity-table/EntityTableRegistration';
 import { ENTITY_VIEW_EMBED_TYPE } from './blocks/entity-view-embed/EntityViewEmbedEditable';
 import { entityViewEmbedSpec } from './blocks/entity-view-embed/EntityViewEmbedRegistration';
+import { ENTITY_GRAPH_TYPE } from './blocks/entity-graph/EntityGraphEditable';
+import { entityGraphSpec } from './blocks/entity-graph/EntityGraphRegistration';
+import { DOCUMENT_BROWSER_EMBED_TYPE } from './blocks/document-browser-embed/DocumentBrowserEmbedEditable';
+import { documentBrowserEmbedSpec } from './blocks/document-browser-embed/DocumentBrowserEmbedRegistration';
 import { ENTITY_FIELD_TYPE } from './inlines/entity-field/EntityFieldEditable';
 import { entityFieldSpec } from './inlines/entity-field/EntityFieldRegistration';
 import { ENTITY_MENTION_TYPE } from './inlines/entity-mention/EntityMentionEditable';
 import { entityMentionSpec } from './inlines/entity-mention/EntityMentionRegistration';
 import { ENTITY_LINK_TYPE } from './inlines/entity-link/EntityLinkEditable';
 import { entityLinkSpec } from './inlines/entity-link/EntityLinkRegistration';
+import { LABEL_TYPE } from './inlines/label/LabelEditable';
+import { labelSpec } from './inlines/label/LabelRegistration';
 import { CAPTION_TYPE } from './blocks/caption/CaptionEditable';
 import { captionSpec } from './blocks/caption/CaptionRegistration';
+import { CALLOUT_TYPE } from './blocks/callout/CalloutEditable';
+import { calloutSpec } from './blocks/callout/CalloutRegistration';
+import { FOLDABLE_SECTION_TYPE } from './blocks/foldable-section/FoldableSectionEditable';
+import { foldableSectionSpec } from './blocks/foldable-section/FoldableSectionRegistration';
+import { COLUMNS_TYPE } from './blocks/columns/ColumnsEditable';
+import { columnsSpec } from './blocks/columns/ColumnsRegistration';
+import { COLUMN_TYPE } from './blocks/columns/ColumnEditable';
+import { columnSpec } from './blocks/columns/ColumnRegistration';
+import { TABS_TYPE } from './blocks/tabs/TabsEditable';
+import { tabsSpec } from './blocks/tabs/TabsRegistration';
+import { TAB_TYPE } from './blocks/tabs/TabEditable';
+import { tabSpec } from './blocks/tabs/TabRegistration';
 import type { MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
 
@@ -37,10 +55,19 @@ export const MDX_COMPONENTS = {
   [ENTITY_METRIC_TYPE]: entityMetricSpec,
   [ENTITY_TABLE_TYPE]: entityTableSpec,
   [ENTITY_VIEW_EMBED_TYPE]: entityViewEmbedSpec,
+  [ENTITY_GRAPH_TYPE]: entityGraphSpec,
+  [DOCUMENT_BROWSER_EMBED_TYPE]: documentBrowserEmbedSpec,
   [ENTITY_FIELD_TYPE]: entityFieldSpec,
   [ENTITY_MENTION_TYPE]: entityMentionSpec,
   [ENTITY_LINK_TYPE]: entityLinkSpec,
-  [CAPTION_TYPE]: captionSpec
+  [LABEL_TYPE]: labelSpec,
+  [CAPTION_TYPE]: captionSpec,
+  [CALLOUT_TYPE]: calloutSpec,
+  [FOLDABLE_SECTION_TYPE]: foldableSectionSpec,
+  [COLUMNS_TYPE]: columnsSpec,
+  [COLUMN_TYPE]: columnSpec,
+  [TABS_TYPE]: tabsSpec,
+  [TAB_TYPE]: tabSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;

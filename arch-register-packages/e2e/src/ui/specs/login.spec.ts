@@ -4,7 +4,7 @@ import { defaultWorkspace } from '../support/workspaces';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test('shows login form', async ({ page }) => {
+test('shows login form @quick', async ({ page }) => {
   const loginPage = new LoginPage(page);
 
   await loginPage.goto();
@@ -19,7 +19,7 @@ test('shows error on invalid credentials', async ({ page }) => {
   await loginPage.expectError();
 });
 
-test('redirects to workspace after successful login', async ({ page }) => {
+test('redirects to workspace after successful login @quick', async ({ page }) => {
   const loginPage = new LoginPage(page);
 
   await loginPage.goto();

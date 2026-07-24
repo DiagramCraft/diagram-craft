@@ -22,6 +22,14 @@ export const parseDatabaseJson = <T>(value: unknown, fallback: T, field: string)
 export const databaseDate = (value: unknown): Date =>
   value instanceof Date ? value : new Date(String(value));
 
+/**
+ * DATE columns are returned as plain "YYYY-MM-DD" strings by SQLite but as JS `Date` objects
+ * (UTC midnight) by postgres.js. Naively calling `String()` on a `Date` produces its localized
+ * `toString()` form, not an ISO date — this normalizes both drivers to "YYYY-MM-DD".
+ */
+export const databaseDateOnly = (value: unknown): string =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
+
 export const databaseBoolean = (value: unknown): boolean =>
   value === true || value === 1 || value === '1';
 

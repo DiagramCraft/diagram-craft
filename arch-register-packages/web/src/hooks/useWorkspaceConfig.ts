@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TeamAssignmentInfo, WorkspaceTeamInput } from '@arch-register/api-types/workspaceConfigContract';
+import type {
+  TeamAssignmentInfo,
+  WorkspaceTeamInput
+} from '@arch-register/api-types/workspaceConfigContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
 import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
@@ -9,7 +12,8 @@ export const workspaceConfigKeys = {
   all: ['workspace-config'] as const,
   lifecycleStates: (workspaceId: string) =>
     [...workspaceConfigKeys.all, 'lifecycle-states', workspaceId] as const,
-  teams: (workspaceId: string) => [...workspaceConfigKeys.all, 'teams', workspaceId] as const,
+  teams: (workspaceId: string, q?: string, limit?: number) =>
+    [...workspaceConfigKeys.all, 'teams', workspaceId, q ?? '', limit ?? null] as const,
   teamAssignments: (workspaceId: string) =>
     [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const,
   projectEntityTypes: (workspaceId: string) =>
@@ -26,10 +30,18 @@ export const useLifecycleStates = (workspaceSlug: string, enabled = true) => {
   });
 };
 
-export const useTeams = (workspaceSlug: string, enabled = true) => {
+export const useTeams = (
+  workspaceSlug: string,
+  enabled = true,
+  options: { q?: string; limit?: number } = {}
+) => {
   return useQuery({
-    queryKey: workspaceConfigKeys.teams(workspaceSlug),
-    queryFn: () => orpcClient.config.teams.list({ params: { workspace: workspaceSlug } }),
+    queryKey: workspaceConfigKeys.teams(workspaceSlug, options.q, options.limit),
+    queryFn: () =>
+      orpcClient.config.teams.list({
+        params: { workspace: workspaceSlug },
+        query: { q: options.q, limit: options.limit }
+      }),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
@@ -57,7 +69,9 @@ export const useUpdateLifecycleStates = (workspaceId: string) => {
     onSuccess: updatedStates => {
       // Update the cache with the new states
       queryClient.setQueryData(workspaceConfigKeys.lifecycleStates(workspaceId), updatedStates);
-      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceAnalyticsKeys.workspace(workspaceId)
+      });
     }
   });
 };
@@ -73,7 +87,9 @@ export const useUpdateTeams = (workspaceId: string) => {
       }),
     onSuccess: updatedTeams => {
       queryClient.setQueryData(workspaceConfigKeys.teams(workspaceId), updatedTeams);
-      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceAnalyticsKeys.workspace(workspaceId)
+      });
     }
   });
 };

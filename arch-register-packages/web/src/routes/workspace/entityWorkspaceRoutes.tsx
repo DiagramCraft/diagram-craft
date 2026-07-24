@@ -129,12 +129,23 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     buildDetailShell
   );
 
+  const entityMarkdownDraftRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'entities/$entityId/wiki/new',
+      validateSearch: validateMarkdownSearch,
+      component: LazyMarkdownEditorScreen
+    }),
+    buildDetailShell
+  );
+
   return [
     entityBrowserRoute,
     importRoute,
     entityDetailRoute,
     entityContentFolderRoute,
     entityDiagramRoute,
-    entityMarkdownRoute
+    entityMarkdownRoute,
+    entityMarkdownDraftRoute
   ] as const;
 };

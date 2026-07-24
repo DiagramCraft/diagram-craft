@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generateSvgPreview } from './svgPreviewGenerator';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 
-const makeDoc = (
-  elements: Array<Record<string, unknown>> = []
-): SerializedDiagramDocument =>
+const makeDoc = (elements: Array<Record<string, unknown>> = []): SerializedDiagramDocument =>
   ({
     diagrams: [
       {
@@ -30,7 +28,12 @@ const makeDoc = (
 
 describe('generateSvgPreview', () => {
   it('returns null for empty document', () => {
-    const doc = { diagrams: [], customPalette: [], styles: { edgeStyles: [], nodeStyles: [], textStyles: [] }, schemas: [] } as unknown as SerializedDiagramDocument;
+    const doc = {
+      diagrams: [],
+      customPalette: [],
+      styles: { edgeStyles: [], nodeStyles: [], textStyles: [] },
+      schemas: []
+    } as unknown as SerializedDiagramDocument;
     expect(generateSvgPreview(doc)).toBeNull();
   });
 

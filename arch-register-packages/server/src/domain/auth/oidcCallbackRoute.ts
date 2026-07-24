@@ -1,27 +1,22 @@
 import { defineHandler, getQuery, H3, redirect } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import { generateTokenPair } from '../../utils/jwt';
+import { generateTokenPair, getTokenExpirySeconds } from '../../utils/jwt';
 import { handleCallback } from './oidcClient';
 import { setAuthCookies } from '../../utils/cookies';
 import { httpAssert } from '../../utils/httpAssert';
 
-// Clean up expired OIDC states every 5 minutes
-const cleanupTimer = setInterval(
-  async () => {
-    if (cleanupDbAdapter) {
-      await cleanupDbAdapter.auth.cleanupExpiredOidcAuthStates();
-    }
-  },
-  5 * 60 * 1000
-);
-cleanupTimer.unref();
-
-let cleanupDbAdapter: DatabaseAdapter | null = null;
-
 // GET /api/auth/oidc/callback — browser-facing OAuth redirect, not a JSON API endpoint
 export const createOidcCallbackRoute = (db: DatabaseAdapter) => {
-  cleanupDbAdapter = db;
+  // Clean up expired OIDC states every 5 minutes. The timer is owned by this
+  // route instance so it cannot outlive the adapter it was created with.
+  const cleanupTimer = setInterval(
+    async () => {
+      await db.auth.cleanupExpiredOidcAuthStates();
+    },
+    5 * 60 * 1000
+  );
+  cleanupTimer.unref();
 
   const app = new H3();
 
@@ -90,12 +85,21 @@ export const createOidcCallbackRoute = (db: DatabaseAdapter) => {
       });
 
       const tokens = generateTokenPair(user);
-      setAuthCookies(event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+      setAuthCookies(
+        event,
+        tokens.access_token,
+        tokens.refresh_token,
+        tokens.expires_in,
+        getTokenExpirySeconds('refresh')
+      );
 
       const frontendUrl = process.env['OIDC_FRONTEND_REDIRECT_URI'] ?? '/';
       return redirect(frontendUrl, 302);
     })
   );
 
-  return app;
+  return {
+    app,
+    dispose: () => clearInterval(cleanupTimer)
+  };
 };

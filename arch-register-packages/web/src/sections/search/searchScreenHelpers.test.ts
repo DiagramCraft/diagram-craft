@@ -7,7 +7,10 @@ import {
   getSearchCategoryCounts,
   snippetAround
 } from './searchScreenHelpers';
-import type { ProjectFileSearchResult, SearchResponse } from '@arch-register/api-types/searchContract';
+import type {
+  ProjectFileSearchResult,
+  SearchResponse
+} from '@arch-register/api-types/searchContract';
 
 describe('snippetAround', () => {
   it('returns the full text untruncated when short and query empty', () => {
@@ -46,9 +49,9 @@ describe('getFileContextLabel', () => {
   const base = { scope: 'workspace' } as ProjectFileSearchResult;
 
   it('returns the project name for project-scoped files', () => {
-    expect(getFileContextLabel({ ...base, scope: 'project', projectName: 'Payments' } as never)).toBe(
-      'Payments'
-    );
+    expect(
+      getFileContextLabel({ ...base, scope: 'project', projectName: 'Payments' } as never)
+    ).toBe('Payments');
   });
 
   it('returns the entity name for entity-scoped files', () => {
@@ -79,7 +82,11 @@ describe('search result transformations', () => {
       'schemas'
     ]);
     expect(buildSearchGroups(results, 'files')).toEqual([
-      { id: 'files', label: 'Diagrams', rows: [{ kind: 'file', id: 'file-1', data: results.files[0] }] }
+      {
+        id: 'files',
+        label: 'Diagrams',
+        rows: [{ kind: 'file', id: 'file-1', data: results.files[0] }]
+      }
     ]);
   });
 

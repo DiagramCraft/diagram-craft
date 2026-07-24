@@ -7,7 +7,7 @@ import { deserializeDiagramElements } from '@diagram-craft/model/serialization/d
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useDocument } from '../application';
-import type { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { Registry } from '@diagram-craft/model/registry';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import styles from './ObjectPicker.module.css';

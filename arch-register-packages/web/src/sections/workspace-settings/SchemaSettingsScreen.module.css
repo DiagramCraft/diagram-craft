@@ -7,6 +7,10 @@
   overflow-y: auto;
 }
 
+.head {
+  margin-bottom: 20px;
+}
+
 .editor {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
@@ -84,7 +88,7 @@
 .fieldsTh,
 .fieldRow {
   display: grid;
-  grid-template-columns: 24px 160px 1fr 130px 1.2fr 80px 28px;
+  grid-template-columns: 24px 160px 1fr 130px 1.2fr 80px 110px 28px;
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
@@ -148,6 +152,48 @@
   align-items: center;
   gap: 8px;
   margin-top: 18px;
+}
+
+.templateList {
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.templateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.templateRow:last-child {
+  border-bottom: 0;
+}
+
+.templateName {
+  color: var(--base-fg);
+  font-size: 13px;
+}
+
+.templateSummary,
+.templateEmpty {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.templateEmpty {
+  padding: 16px;
+  text-align: center;
+}
+
+.templateActions {
+  display: flex;
+  gap: 4px;
 }
 
 .colorSwatches {
@@ -214,7 +260,7 @@
 }
 
 .checkbox:checked::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 4px;
   top: 1px;

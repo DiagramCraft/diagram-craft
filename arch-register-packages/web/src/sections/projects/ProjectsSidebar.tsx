@@ -1,7 +1,12 @@
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { useEffect, useState } from 'react';
 import { useNavigate, useMatches, useSearch } from '@tanstack/react-router';
-import { TbFolders, TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand, TbPlus } from 'react-icons/tb';
+import {
+  TbFolders,
+  TbLayoutSidebarLeftCollapse,
+  TbLayoutSidebarLeftExpand,
+  TbPlus
+} from 'react-icons/tb';
 import { Project } from '@arch-register/api-types/projectContract';
 import { TreeRow } from '../../components/TreeRow';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -68,20 +73,35 @@ export const ProjectsSidebar = ({
     if (nextTab !== projectSidebarTab) {
       const nextSearch = {
         tab: nextTab as 'projects' | 'archive',
-        section: search.section === 'entities' ? 'entities' as const : 'home' as const,
+        section: search.section === 'entities' ? ('entities' as const) : ('home' as const),
         contentQuery: search.contentQuery,
         contentView: search.contentView
       };
-      navigate(projectFolder
-        ? projectContentFolderRoute(
-            workspaceSlug,
-            asProjectPublicId(selectedProject.public_id),
-            projectFolder,
-            nextSearch
-          )
-        : projectDetailRoute(workspaceSlug, asProjectPublicId(selectedProject.public_id), nextSearch));
+      navigate(
+        projectFolder
+          ? projectContentFolderRoute(
+              workspaceSlug,
+              asProjectPublicId(selectedProject.public_id),
+              projectFolder,
+              nextSearch
+            )
+          : projectDetailRoute(
+              workspaceSlug,
+              asProjectPublicId(selectedProject.public_id),
+              nextSearch
+            )
+      );
     }
-  }, [selectedProject, projectSidebarTab, navigate, workspaceSlug, projectFolder, search.section, search.contentQuery, search.contentView]);
+  }, [
+    selectedProject,
+    projectSidebarTab,
+    navigate,
+    workspaceSlug,
+    projectFolder,
+    search.section,
+    search.contentQuery,
+    search.contentView
+  ]);
 
   const navigateToProject = (project: Project) => {
     navigate(
@@ -96,13 +116,22 @@ export const ProjectsSidebar = ({
   const activateTab = (tab: ProjectSidebarTab) => {
     const targetProjects =
       tab === 'archive'
-        ? projects.filter(project => project.status === 'complete' || project.status === 'cancelled')
-        : projects.filter(project => project.status !== 'complete' && project.status !== 'cancelled');
+        ? projects.filter(
+            project => project.status === 'complete' || project.status === 'cancelled'
+          )
+        : projects.filter(
+            project => project.status !== 'complete' && project.status !== 'cancelled'
+          );
 
     if (!selectedProject || !targetProjects.some(project => project.id === selectedProject.id)) {
       const target = targetProjects[0];
       if (target) {
-        navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(target.public_id), { tab, section: 'home' }));
+        navigate(
+          projectDetailRoute(workspaceSlug, asProjectPublicId(target.public_id), {
+            tab,
+            section: 'home'
+          })
+        );
       }
     } else {
       navigate(

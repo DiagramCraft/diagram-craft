@@ -16,7 +16,7 @@ import type { Extent } from '@diagram-craft/geometry/extent';
 export type LoadDocumentOpts = {
   /** File url, or CRDT room name. */
   url?: string;
-  userState: AwarenessUserState;
+  awareness: AwarenessUserState;
   documentFactory: DocumentFactory;
   diagramFactory: DiagramFactory;
   progress?: ProgressCallback;
@@ -45,10 +45,10 @@ const noopProgress: ProgressCallback = () => {};
  * observes the wrong provider set).
  */
 export const loadDocument = async (opts: LoadDocumentOpts): Promise<LoadedDocument> => {
-  const { documentFactory, diagramFactory, userState } = opts;
+  const { documentFactory, diagramFactory, awareness } = opts;
   const progress = opts.progress ?? noopProgress;
 
-  const root = await documentFactory.loadCRDT(opts.url, userState, progress);
+  const root = await documentFactory.loadCRDT(opts.url, awareness, progress);
 
   if (opts.forceClearServerState || AppConfig.get().collaboration.forceClearServerState()) {
     root.clear();
@@ -57,7 +57,7 @@ export const loadDocument = async (opts: LoadDocumentOpts): Promise<LoadedDocume
   const disconnect = () => {
     CollaborationConfig.Backend.disconnect(noopProgress);
   };
-  const awareness = CollaborationConfig.Backend.awareness;
+  const backendAwareness = CollaborationConfig.Backend.awareness;
 
   if (opts.url) {
     if (
@@ -71,7 +71,7 @@ export const loadDocument = async (opts: LoadDocumentOpts): Promise<LoadedDocume
       // Only seed content into an empty document — if collaborative state already
       // synced in diagrams, seeding again would clobber a collaborator's work.
       if (opts.seedContent && doc.diagrams.length === 0) await opts.seedContent(doc);
-      return { doc, url: opts.url, disconnect, awareness };
+      return { doc, url: opts.url, disconnect, awareness: backendAwareness };
     }
 
     const multiWindowAutosaved = await Autosave.get().load(
@@ -85,19 +85,24 @@ export const loadDocument = async (opts: LoadDocumentOpts): Promise<LoadedDocume
     if (multiWindowAutosaved) {
       const restoredUrl = multiWindowAutosaved.url ?? opts.url;
       multiWindowAutosaved.document.url = restoredUrl;
-      return { doc: multiWindowAutosaved.document, url: restoredUrl, disconnect, awareness };
+      return {
+        doc: multiWindowAutosaved.document,
+        url: restoredUrl,
+        disconnect,
+        awareness: backendAwareness
+      };
     }
 
     const defDiagram = await loadFileFromUrl(
       opts.url,
-      userState,
+      awareness,
       progress,
       documentFactory,
       diagramFactory,
       { root }
     );
     defDiagram.url = opts.url;
-    return { doc: defDiagram, url: opts.url, disconnect, awareness };
+    return { doc: defDiagram, url: opts.url, disconnect, awareness: backendAwareness };
   }
 
   const doc = await documentFactory.createDocument(root, undefined, progress, {
@@ -125,7 +130,7 @@ export const loadDocument = async (opts: LoadDocumentOpts): Promise<LoadedDocume
 
   progress('complete', {});
 
-  return { doc, url: undefined, disconnect, awareness };
+  return { doc, url: undefined, disconnect, awareness: backendAwareness };
 };
 
 const defaultDiagramSize = (): Extent => {

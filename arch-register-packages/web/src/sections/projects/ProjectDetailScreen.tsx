@@ -23,13 +23,15 @@ import {
   projectContentFolderRoute,
   projectDetailRoute,
   projectDiagramRoute,
-  projectMarkdownRoute
+  projectMarkdownRoute,
+  projectMarkdownDraftRoute
 } from '../../routes/publicObjectRoutes';
 import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
 import { ProjectAssessments } from './ProjectAssessments';
 import { AssessmentDetailsScreen } from './AssessmentDetailsScreen';
+import { ProjectMilestones } from './ProjectMilestones';
 import {
   deleteConfirmLabel,
   deleteMessage,
@@ -39,12 +41,13 @@ import {
 } from '../../lib/contentNode';
 import { RenameDialog } from '../../components/RenameDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { ApplySnapshotDialog } from './components/ApplySnapshotDialog';
 import { AddEntityToProjectDialog } from './components/AddEntityToProjectDialog';
 import { ProjectSettingsForm } from './components/ProjectSettingsForm';
-import { PlanFutureChangeDialog } from './components/PlanFutureChangeDialog';
+import { PlanChangeDialog } from './components/PlanChangeDialog';
+import { ApplyChangeCaseDialog } from './components/ApplyChangeCaseDialog';
 import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
 import { EmptyState } from '../../components/EmptyState';
+import { LoadingState } from '../../components/LoadingState';
 import { useProjectDetailController } from './useProjectDetailController';
 
 export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
@@ -82,10 +85,10 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
     setPinError,
     addEntityOpen,
     setAddEntityOpen,
-    planEntityId,
-    setPlanEntityId,
-    applySnapshot,
-    setApplySnapshot,
+    planDialog,
+    setPlanDialog,
+    applyCaseId,
+    setApplyCaseId,
     menu,
     setMenu,
     renameTarget,
@@ -101,8 +104,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
     projectEntities,
     updateEntityMutation,
     removeEntityMutation,
-    projectSnapshots,
-    futureSnapshots,
+    changeCases,
     schemaMap,
     entityTypeColorMap,
     allFiles,
@@ -112,7 +114,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
   if (isLoading) {
     return (
       <div className={styles.screen}>
-        <EmptyState framed title="Loading project..." />
+        <LoadingState text="Loading project..." />
       </div>
     );
   }
@@ -562,12 +564,18 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
         />
+      ) : section === 'milestones' ? (
+        <ProjectMilestones
+          project={project}
+          projectId={projectId}
+          onNavigateHome={handleNavigateHome}
+          onNavigateProject={handleNavigateProject}
+        />
       ) : section === 'entities' ? (
         <ProjectEntities
           project={project}
           projectEntities={projectEntities}
-          projectSnapshots={projectSnapshots}
-          futureSnapshots={futureSnapshots}
+          changeCases={changeCases}
           schemaMap={schemaMap}
           entityTypeColorMap={entityTypeColorMap}
           schemas={schemas}
@@ -580,8 +588,10 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             updateEntityMutation.mutate({ entityId, is_done: !isDone })
           }
           onRemoveEntity={entityId => removeEntityMutation.mutate(entityId)}
-          onPlanFutureChange={entityId => setPlanEntityId(entityId)}
-          onApplySnapshot={snap => setApplySnapshot(snap)}
+          onPlanFutureChange={entityId => setPlanDialog({ mode: 'create', entityId })}
+          onPlanChange={() => setPlanDialog({ mode: 'create' })}
+          onApplySnapshot={entry => setApplyCaseId(entry.changeCase.id)}
+          onEditSnapshot={entry => setPlanDialog({ mode: 'edit', caseId: entry.changeCase.id })}
         />
       ) : contentFolderFilter ? (
         <ProjectContent
@@ -720,7 +730,19 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             setAddMarkdownOpen(false);
             setAddMarkdownFolder(null);
           }}
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
           onCreated={file => handleNavigateMarkdown(file.id, 'edit')}
+          onOpenDraft={draft =>
+            navigate(
+              projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), {
+                draftName: draft.name,
+                draftFolder: addMarkdownFolder ?? undefined,
+                draftType: draft.documentTypeId ?? undefined,
+                draftTemplate: draft.templateId ?? undefined
+              })
+            )
+          }
           onCreate={name =>
             contentOperations.createMarkdown.mutateAsync({ name, folder: addMarkdownFolder })
           }
@@ -765,27 +787,28 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
         </ContextMenu.Imperative>
       )}
 
-      {planEntityId && (
-        <PlanFutureChangeDialog
-          open={!!planEntityId}
+      {planDialog && (
+        <PlanChangeDialog
+          open={!!planDialog}
           workspaceId={workspaceId}
           projectId={projectId}
-          entityId={planEntityId}
           schemas={schemas}
           teams={teams}
           lifecycleStates={lifecycleStates}
-          onClose={() => setPlanEntityId(null)}
+          initialEntityId={planDialog.mode === 'create' ? planDialog.entityId : undefined}
+          editCaseId={planDialog.mode === 'edit' ? planDialog.caseId : undefined}
+          onClose={() => setPlanDialog(null)}
         />
       )}
 
-      {applySnapshot && (
-        <ApplySnapshotDialog
-          open={!!applySnapshot}
-          snapshot={applySnapshot}
+      {applyCaseId && (
+        <ApplyChangeCaseDialog
+          open={!!applyCaseId}
           workspaceId={workspaceId}
           projectId={projectId}
+          caseId={applyCaseId}
           schemas={schemas}
-          onClose={() => setApplySnapshot(null)}
+          onClose={() => setApplyCaseId(null)}
         />
       )}
 

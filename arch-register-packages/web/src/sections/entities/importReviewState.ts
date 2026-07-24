@@ -80,12 +80,8 @@ export const getImportDetailEntries = (entity: Record<string, unknown>) => {
     ([_key, value]) => value !== undefined && value !== '' && value !== null
   );
   return {
-    metadata: entries
-      .filter(([key]) => key.startsWith('_'))
-      .sort(([a], [b]) => a.localeCompare(b)),
-    custom: entries
-      .filter(([key]) => !key.startsWith('_'))
-      .sort(([a], [b]) => a.localeCompare(b))
+    metadata: entries.filter(([key]) => key.startsWith('_')).sort(([a], [b]) => a.localeCompare(b)),
+    custom: entries.filter(([key]) => !key.startsWith('_')).sort(([a], [b]) => a.localeCompare(b))
   };
 };
 
@@ -111,10 +107,7 @@ export const toImportReviewRow = (input: ImportParseEntity): ImportReviewRow => 
     errors: input.errors,
     entity: input.entity,
     accepted:
-      input.errors.length === 0 &&
-      hasChanges &&
-      matchType !== 'name' &&
-      !hasConstraintViolations,
+      input.errors.length === 0 && hasChanges && matchType !== 'name' && !hasConstraintViolations,
     expanded: false,
     isUpdate: input.isUpdate,
     hasChanges,

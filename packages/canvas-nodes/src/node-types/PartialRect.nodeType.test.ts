@@ -74,10 +74,7 @@ describe('PartialRectNodeDefinition', () => {
     const component = new definition.component(definition);
     const shapeBuilder = makeShapeBuilderSpy();
 
-    component.buildShape(
-      makeBuildShapeProps(node),
-      shapeBuilder as unknown as ShapeBuilder
-    );
+    component.buildShape(makeBuildShapeProps(node), shapeBuilder as unknown as ShapeBuilder);
 
     expect(shapeBuilder.boundaryPath).toHaveBeenCalledTimes(1);
     expect(shapeBuilder.path).toHaveBeenCalledTimes(2);
