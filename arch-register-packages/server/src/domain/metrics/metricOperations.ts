@@ -410,7 +410,12 @@ export const getBoxMetrics = async (
         db,
         workspace,
         authCtx,
-        normalizeEntityQueryOptions({ entityQuery: query, projectId, projectScope, view: 'summary' }),
+        normalizeEntityQueryOptions({
+          entityQuery: query,
+          projectId,
+          projectScope,
+          view: 'summary'
+        }),
         schemas,
         projectEntities,
         null
