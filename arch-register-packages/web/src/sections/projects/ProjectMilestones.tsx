@@ -24,6 +24,7 @@ import { EmptyState } from '../../components/EmptyState';
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
 type StatusFilter = 'default' | 'complete' | 'cancelled' | 'all';
+type MilestoneFormData = Omit<CreateMilestoneRequest, 'project_id'>;
 
 const STATUS_LABEL: Record<Milestone['status'], string> = {
   planned: 'Planned',
@@ -41,22 +42,20 @@ const STATUS_BADGE_CLASS: Record<Milestone['status'], string> = {
 
 export const ProjectMilestones = ({
   project,
-  projectId,
   onNavigateHome,
   onNavigateProject
 }: {
   project: ProjectDetailData;
-  projectId: string;
   onNavigateHome: () => void;
   onNavigateProject: () => void;
 }) => {
   const navigate = routeApi.useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
 
-  const { data: milestones = [] } = useMilestones(workspaceSlug, projectId);
-  const createMutation = useCreateMilestone(workspaceSlug, projectId);
-  const updateMutation = useUpdateMilestone(workspaceSlug, projectId);
-  const deleteMutation = useDeleteMilestone(workspaceSlug, projectId);
+  const { data: milestones = [] } = useMilestones(workspaceSlug, project.id);
+  const createMutation = useCreateMilestone(workspaceSlug, project.id);
+  const updateMutation = useUpdateMilestone(workspaceSlug, project.id);
+  const deleteMutation = useDeleteMilestone(workspaceSlug, project.id);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('default');
   const [creating, setCreating] = useState(false);
@@ -76,12 +75,12 @@ export const ProjectMilestones = ({
     return m.status === statusFilter;
   });
 
-  const handleCreate = async (data: CreateMilestoneRequest) => {
+  const handleCreate = async (data: MilestoneFormData) => {
     await createMutation.mutateAsync(data);
     setCreating(false);
   };
 
-  const handleUpdate = async (data: CreateMilestoneRequest) => {
+  const handleUpdate = async (data: MilestoneFormData) => {
     if (!editing) return;
     await updateMutation.mutateAsync({ milestoneId: editing.id, data });
     setEditing(null);
@@ -274,7 +273,7 @@ export const MilestoneEditorDialog = ({
 }: {
   milestone: Milestone | null;
   isSaving: boolean;
-  onSave: (data: CreateMilestoneRequest) => void;
+  onSave: (data: MilestoneFormData) => void;
   onCancel: () => void;
 }) => {
   const isNew = !milestone;

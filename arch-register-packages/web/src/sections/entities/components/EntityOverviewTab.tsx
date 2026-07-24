@@ -22,7 +22,7 @@ import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityOverviewTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
-import { useMilestonesForProjects } from '../../../hooks/useMilestones';
+import { useMilestones } from '../../../hooks/useMilestones';
 import {
   getSnapshotDateLabel,
   toMilestonesById,
@@ -81,8 +81,10 @@ export const EntityOverviewTab = ({
         .filter((id): id is string => id != null)
     )
   ];
-  const milestoneQueries = useMilestonesForProjects(workspaceSlug, futureSnapshotProjectIds);
-  const milestonesById = toMilestonesById(milestoneQueries.flatMap(q => q.data ?? []));
+  const { data: milestones = [] } = useMilestones(workspaceSlug);
+  const milestonesById = toMilestonesById(
+    milestones.filter(milestone => futureSnapshotProjectIds.includes(milestone.project_id))
+  );
 
   return (
     <div className={styles.overviewGrid}>

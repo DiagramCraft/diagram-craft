@@ -1,6 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { requireProjectAccess, requireProjectAction } from '../auth/authorization';
+import { canAccessProject, requireProjectAction } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { httpAssert } from '../../utils/httpAssert';
 import { defineOperation } from '../operation';
@@ -28,7 +28,7 @@ const dbErrorMessages = {
 export const listMilestones = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
+  projectId: string | undefined,
   event: AuthenticatedEvent
 ): Promise<Milestone[]> => {
   return defineOperation(
@@ -37,11 +37,24 @@ export const listMilestones = async (
     event,
     { fallback: 'Failed to retrieve milestones', dbErrorMessages },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
-      requireProjectAccess(authCtx, project.owner);
-
-      const rows = await db.project.listMilestones(ws, project.id);
-      return rows.map(toApiMilestone);
+      const [rows, projects] = await Promise.all([
+        db.project.listMilestones(ws),
+        db.project.listProjects(ws)
+      ]);
+      const visibleProjects = new Map(
+        projects
+          .filter(project => canAccessProject(authCtx, project.owner))
+          .map(project => [project.id, project])
+      );
+      const requestedProjectIds = new Set(
+        projects
+          .filter(project => project.id === projectId || project.public_id === projectId)
+          .map(project => project.id)
+      );
+      return rows
+        .filter(row => projectId == null || requestedProjectIds.has(row.project_id))
+        .filter(row => visibleProjects.has(row.project_id))
+        .map(toApiMilestone);
     }
   );
 };
@@ -49,7 +62,6 @@ export const listMilestones = async (
 export const getMilestone = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   id: string,
   event: AuthenticatedEvent
 ): Promise<Milestone> => {
@@ -59,11 +71,12 @@ export const getMilestone = async (
     event,
     { fallback: 'Failed to retrieve milestone', dbErrorMessages },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
-      requireProjectAccess(authCtx, project.owner);
-
-      const row = await db.project.getMilestone(ws, project.id, id);
+      const row = await db.project.getMilestoneById(ws, id);
       httpAssert.present(row, { status: 404, message: `Milestone '${id}' not found` });
+      const project = await getProjectOrThrow(db, ws, row.project_id);
+      if (!canAccessProject(authCtx, project.owner)) {
+        httpAssert.true(false, { status: 404, message: `Milestone '${id}' not found` });
+      }
       return toApiMilestone(row);
     }
   );
@@ -72,7 +85,6 @@ export const getMilestone = async (
 export const createMilestone = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   body: CreateMilestoneRequest,
   event: AuthenticatedEvent
 ): Promise<Milestone> => {
@@ -82,7 +94,7 @@ export const createMilestone = async (
     event,
     { fallback: 'Failed to create milestone', dbErrorMessages },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const project = await getProjectOrThrow(db, ws, body.project_id);
       requireProjectAction(
         authCtx,
         project.owner,
@@ -113,7 +125,6 @@ export const createMilestone = async (
 export const updateMilestone = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   id: string,
   body: UpdateMilestoneRequest,
   event: AuthenticatedEvent
@@ -124,16 +135,19 @@ export const updateMilestone = async (
     event,
     { fallback: 'Failed to update milestone', dbErrorMessages },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const oldRow = await db.project.getMilestoneById(ws, id);
+      httpAssert.present(oldRow, { status: 404, message: `Milestone '${id}' not found` });
+      const project = await getProjectOrThrow(db, ws, oldRow.project_id);
+      httpAssert.true(body.project_id === oldRow.project_id, {
+        status: 400,
+        message: 'A milestone cannot be moved to another project'
+      });
       requireProjectAction(
         authCtx,
         project.owner,
         'edit_project',
         'You do not have permission to edit milestones in this project'
       );
-
-      const oldRow = await db.project.getMilestone(ws, project.id, id);
-      httpAssert.present(oldRow, { status: 404, message: `Milestone '${id}' not found` });
 
       const row = await db.project.updateMilestone(
         ws,
@@ -165,7 +179,6 @@ export const updateMilestone = async (
 export const deleteMilestone = async (
   db: DatabaseAdapter,
   workspace: string,
-  projectId: string,
   id: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
@@ -175,7 +188,9 @@ export const deleteMilestone = async (
     event,
     { fallback: 'Failed to delete milestone', dbErrorMessages },
     async ({ ws, authCtx }) => {
-      const project = await getProjectOrThrow(db, ws, projectId);
+      const row = await db.project.getMilestoneById(ws, id);
+      httpAssert.present(row, { status: 404, message: `Milestone '${id}' not found` });
+      const project = await getProjectOrThrow(db, ws, row.project_id);
       requireProjectAction(
         authCtx,
         project.owner,
@@ -183,13 +198,10 @@ export const deleteMilestone = async (
         'You do not have permission to delete milestones in this project'
       );
 
-      const row = await db.project.getMilestone(ws, project.id, id);
-      httpAssert.present(row, { status: 404, message: `Milestone '${id}' not found` });
-
       // Backfill any linked planned change cases before removing the milestone, so the
       // planned date isn't lost, only the named grouping (ON DELETE SET NULL is a backstop).
       await db.catalog.reassignSnapshotsFromMilestone(ws, id, row.target_date);
-      await db.project.deleteMilestone(ws, project.id, id);
+      await db.project.deleteMilestone(ws, row.project_id, id);
 
       await logAudit(db, {
         userId: authCtx.userId,

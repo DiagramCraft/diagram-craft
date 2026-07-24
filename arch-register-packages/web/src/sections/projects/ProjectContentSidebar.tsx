@@ -79,7 +79,7 @@ export const ProjectContentSidebar = ({
     { enabled: project != null }
   );
   const { data: assessments = [] } = useProjectAssessments(workspaceSlug, projectId);
-  const { data: milestones = [] } = useMilestones(workspaceSlug, projectId);
+  const { data: milestones = [] } = useMilestones(workspaceSlug, project?.id);
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, { projectId });
   const projectViews = savedViews.filter(view => view.scope === 'project');
   const deleteView = useDeleteSavedView(workspaceSlug);

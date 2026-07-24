@@ -567,7 +567,6 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
       ) : section === 'milestones' ? (
         <ProjectMilestones
           project={project}
-          projectId={projectId}
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
         />

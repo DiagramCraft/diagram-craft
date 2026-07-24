@@ -1,8 +1,8 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { wsAndId } from '@arch-register/api-types/common';
+import { ws } from '@arch-register/api-types/common';
 
-const wsProjectAndMilestoneId = wsAndId.extend({
+const wsAndMilestoneId = ws.extend({
   milestoneId: z.string().describe('Milestone identifier')
 });
 
@@ -23,6 +23,7 @@ const milestoneSchema = z.object({
 });
 
 const milestoneBodySchema = z.object({
+  project_id: z.string().describe('Parent project identifier'),
   name: z.string().describe('Milestone name (must be unique within the project)'),
   target_date: z.string().describe('Target date for this milestone (ISO 8601)'),
   status: milestoneStatusSchema.optional(),
@@ -37,51 +38,51 @@ export const milestoneContract = oc.tag('Milestones').router({
     list: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/projects/{id}/milestones',
+        path: '/{workspace}/milestones',
         inputStructure: 'detailed',
-        summary: 'List project milestones',
-        description: 'Retrieves all milestones defined for the project.',
+        summary: 'List workspace milestones',
+        description: 'Retrieves all milestones defined for projects in the workspace.',
         tags: ['Milestones']
       })
-      .input(z.object({ params: wsAndId }))
+      .input(z.object({ params: ws, query: z.object({ project_id: z.string().optional() }) }))
       .output(z.array(milestoneSchema)),
     get: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/projects/{id}/milestones/{milestoneId}',
+        path: '/{workspace}/milestones/{milestoneId}',
         inputStructure: 'detailed',
         summary: 'Get milestone details',
         description: 'Retrieves a specific milestone by ID.',
         tags: ['Milestones']
       })
-      .input(z.object({ params: wsProjectAndMilestoneId }))
+      .input(z.object({ params: wsAndMilestoneId }))
       .output(milestoneSchema),
     create: oc
       .route({
         method: 'POST',
-        path: '/{workspace}/projects/{id}/milestones',
+        path: '/{workspace}/milestones',
         inputStructure: 'detailed',
         summary: 'Create milestone',
         description: 'Creates a new milestone within the project.',
         tags: ['Milestones']
       })
-      .input(z.object({ params: wsAndId, body: milestoneBodySchema }))
+      .input(z.object({ params: ws, body: milestoneBodySchema }))
       .output(milestoneSchema),
     update: oc
       .route({
         method: 'PUT',
-        path: '/{workspace}/projects/{id}/milestones/{milestoneId}',
+        path: '/{workspace}/milestones/{milestoneId}',
         inputStructure: 'detailed',
         summary: 'Update milestone',
         description: 'Updates an existing milestone, including its status.',
         tags: ['Milestones']
       })
-      .input(z.object({ params: wsProjectAndMilestoneId, body: milestoneBodySchema }))
+      .input(z.object({ params: wsAndMilestoneId, body: milestoneBodySchema }))
       .output(milestoneSchema),
     remove: oc
       .route({
         method: 'DELETE',
-        path: '/{workspace}/projects/{id}/milestones/{milestoneId}',
+        path: '/{workspace}/milestones/{milestoneId}',
         inputStructure: 'detailed',
         summary: 'Delete milestone',
         description:
@@ -89,7 +90,7 @@ export const milestoneContract = oc.tag('Milestones').router({
           'cleared and its target date backfilled from the milestone target date.',
         tags: ['Milestones']
       })
-      .input(z.object({ params: wsProjectAndMilestoneId }))
+      .input(z.object({ params: wsAndMilestoneId }))
       .output(
         z.object({
           success: z.boolean().describe('Whether the deletion was successful'),
