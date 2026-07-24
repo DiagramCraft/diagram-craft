@@ -142,7 +142,7 @@ runContractSuiteAgainstBothDrivers('Entity deprecation database', getDb => {
       const other = await db.governance.createCase({
         id: randomUUID(),
         workspace,
-        case_kind: 'entity.change',
+        case_kind: 'entity.change-case',
         subject_type: 'entity',
         subject_id: subjectId,
         subject_version: null,

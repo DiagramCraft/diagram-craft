@@ -575,7 +575,7 @@ describe('listMySubmittedGovernanceCases', () => {
     const matching = makeCase({
       id: 'case-match',
       initiator_user_id: 'user-1',
-      case_kind: 'entity.change',
+      case_kind: 'entity.change-case',
       status: 'open'
     });
     const wrongKind = makeCase({
@@ -587,14 +587,14 @@ describe('listMySubmittedGovernanceCases', () => {
     const wrongStatus = makeCase({
       id: 'case-wrong-status',
       initiator_user_id: 'user-1',
-      case_kind: 'entity.change',
+      case_kind: 'entity.change-case',
       status: 'completed'
     });
     const assignment = makeAssignment({ case_id: 'case-match' });
     const db = makeDb(makeGovernanceDouble(matching, assignment, [], [wrongKind, wrongStatus]));
 
     const result = await listMySubmittedGovernanceCases(db, 'ws-1', event, {
-      caseKind: 'entity.change',
+      caseKind: 'entity.change-case',
       status: 'open'
     });
 

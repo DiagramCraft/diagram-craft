@@ -16,7 +16,7 @@ const now = new Date('2026-07-18T10:00:00.000Z');
 const makeCase = (): GovernanceCaseDbResult => ({
   id: 'case-1',
   workspace: 'workspace-1',
-  case_kind: 'entity.change',
+  case_kind: 'entity.change-case',
   subject_type: 'entity',
   subject_id: 'entity-1',
   subject_version: null,
