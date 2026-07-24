@@ -1,4 +1,6 @@
-import type { EntityRecord, EntitySnapshot } from '@arch-register/api-types/entityContract';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
+import type { ChangeCaseMemberEntry } from './snapshotDisplay';
 
 export type TimelineGroupBy = 'owner' | 'type' | 'snapshot';
 
@@ -9,22 +11,40 @@ export type TimelineSchemaEntry = {
 
 export type TimelineProjectLane = {
   projectId: string;
-  snaps: EntitySnapshot[];
+  entries: ChangeCaseMemberEntry[];
 };
 
-export const getOwnTimelineSnapshots = (snapshots: EntitySnapshot[]): EntitySnapshot[] =>
-  snapshots
-    .filter(snapshot => snapshot.status === 'autosave' || snapshot.status === 'saved_version')
+// 'case_applied' and 'deleted' versions aren't rendered on the own-history lane — they surface
+// via the project lanes (applied) or aren't shown at all (deleted).
+const OWN_HISTORY_KINDS = new Set<EntityVersion['kind']>([
+  'autosave',
+  'direct_edit',
+  'restored',
+  'bypass',
+  'saved_version'
+]);
+
+export type OwnVersionDisplayStatus = 'saved_version' | 'autosave';
+
+// 'direct_edit', 'restored', and 'bypass' all render as a plain autosave entry.
+export const getOwnVersionDisplayStatus = (kind: EntityVersion['kind']): OwnVersionDisplayStatus =>
+  kind === 'saved_version' ? 'saved_version' : 'autosave';
+
+export const getOwnTimelineVersions = (versions: EntityVersion[]): EntityVersion[] =>
+  versions
+    .filter(version => OWN_HISTORY_KINDS.has(version.kind))
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-export const groupTimelineSnapshotsByProject = (
-  snapshots: EntitySnapshot[]
+export const groupChangeCaseEntriesByProject = (
+  entries: ChangeCaseMemberEntry[]
 ): TimelineProjectLane[] => {
-  const byProject: Record<string, EntitySnapshot[]> = {};
-  for (const snapshot of snapshots) {
-    if (snapshot.project_id) (byProject[snapshot.project_id] ??= []).push(snapshot);
+  const byProject: Record<string, ChangeCaseMemberEntry[]> = {};
+  for (const entry of entries) {
+    if (entry.changeCase.project_id) {
+      (byProject[entry.changeCase.project_id] ??= []).push(entry);
+    }
   }
-  return Object.entries(byProject).map(([projectId, snaps]) => ({ projectId, snaps }));
+  return Object.entries(byProject).map(([projectId, entries]) => ({ projectId, entries }));
 };
 
 export const getDatedTimelineRows = (

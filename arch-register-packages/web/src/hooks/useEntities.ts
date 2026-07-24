@@ -10,7 +10,7 @@ import {
   invalidateDeletedEntity
 } from '../queries/entities';
 import { schemaKeys } from '../queries/schemas';
-import { invalidateSnapshotQueries } from '../queries/snapshots';
+import { invalidateEntityVersionQueries } from '../queries/entityVersions';
 import { invalidateNotificationQueries } from './useNotifications';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -150,7 +150,7 @@ export const useUpdateEntity = (workspaceId: string) => {
     onSuccess: async (_, variables) => {
       await invalidateEntityDetails(queryClient, workspaceId, variables.entityId);
       await invalidateEntityQueries(queryClient, workspaceId);
-      await invalidateSnapshotQueries(queryClient, workspaceId, variables.entityId);
+      await invalidateEntityVersionQueries(queryClient, workspaceId, variables.entityId);
     }
   });
 };

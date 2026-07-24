@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
-import { useProjectFutureSnapshots } from '../../hooks/useSnapshots';
+import { useChangeCasesByProject } from '../../hooks/useChangeCases';
 import {
   useProject,
   useProjectEntities,
@@ -70,11 +70,7 @@ export const useProjectDetailController = (folder?: string) => {
   const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
   const updateEntityMutation = useUpdateProjectEntity(workspaceId, projectId);
   const removeEntityMutation = useRemoveProjectEntity(workspaceId, projectId);
-  const { data: projectSnapshots = [] } = useProjectFutureSnapshots(workspaceId, projectId);
-  const futureSnapshots = useMemo(
-    () => projectSnapshots.filter(snapshot => snapshot.status === 'future_update'),
-    [projectSnapshots]
-  );
+  const { data: changeCases = [] } = useChangeCasesByProject(workspaceId, projectId);
   const schemaMap = useMemo(
     () =>
       new Map(
@@ -169,8 +165,7 @@ export const useProjectDetailController = (folder?: string) => {
     projectEntities,
     updateEntityMutation,
     removeEntityMutation,
-    projectSnapshots,
-    futureSnapshots,
+    changeCases,
     schemaMap,
     entityTypeColorMap,
     activeFolder,

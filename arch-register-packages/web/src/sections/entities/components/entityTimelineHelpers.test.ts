@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
+import type { ChangeCase, ChangeCaseMember } from '@arch-register/api-types/changeCaseContract';
+import type { ChangeCaseMemberEntry } from './snapshotDisplay';
 import { detectConflicts, diffSnapshotState } from './entityTimelineHelpers';
 
 describe('diffSnapshotState', () => {
@@ -51,26 +52,26 @@ describe('diffSnapshotState', () => {
 });
 
 describe('detectConflicts', () => {
-  const snap = (overrides: Partial<EntitySnapshot>): EntitySnapshot =>
-    ({
-      id: 'id',
-      status: 'future_update',
-      project_id: 'p1',
-      proposed_state: {},
-      ...overrides
-    }) as EntitySnapshot;
+  const entry = (
+    id: string,
+    projectId: string,
+    proposedState: Record<string, unknown>
+  ): ChangeCaseMemberEntry => ({
+    changeCase: { status: 'planned', project_id: projectId } as ChangeCase,
+    member: { id, proposed_state: proposedState } as ChangeCaseMember
+  });
 
-  it('flags future snapshots that touch overlapping fields', () => {
-    const a = snap({ id: 'a', project_id: 'p1', proposed_state: { name: 'A' } });
-    const b = snap({ id: 'b', project_id: 'p2', proposed_state: { name: 'B' } });
+  it('flags future entries that touch overlapping fields', () => {
+    const a = entry('a', 'p1', { name: 'A' });
+    const b = entry('b', 'p2', { name: 'B' });
     const { conflictedProjectIds, conflictedSnapIds } = detectConflicts([a, b]);
     expect(conflictedProjectIds).toEqual(new Set(['p1', 'p2']));
     expect(conflictedSnapIds).toEqual(new Set(['a', 'b']));
   });
 
-  it('does not flag snapshots touching disjoint fields', () => {
-    const a = snap({ id: 'a', project_id: 'p1', proposed_state: { name: 'A' } });
-    const b = snap({ id: 'b', project_id: 'p2', proposed_state: { description: 'B' } });
+  it('does not flag entries touching disjoint fields', () => {
+    const a = entry('a', 'p1', { name: 'A' });
+    const b = entry('b', 'p2', { description: 'B' });
     const { conflictedProjectIds, conflictedSnapIds } = detectConflicts([a, b]);
     expect(conflictedProjectIds.size).toBe(0);
     expect(conflictedSnapIds.size).toBe(0);
