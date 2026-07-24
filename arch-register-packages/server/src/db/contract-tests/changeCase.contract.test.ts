@@ -237,6 +237,34 @@ runContractSuiteAgainstBothDrivers('ChangeCaseDatabase', getDb => {
     expect(cases.map(c => c.id)).toEqual([touchingA.id]);
   });
 
+  it('lists the latest timeline member for every requested entity in one read', async () => {
+    const { db, workspace, project, entityA, entityB } = await setup();
+    const created = await db.changeCase.createCase({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'Timeline case',
+      description: null,
+      effective_date: '2026-09-01',
+      milestone_id: null,
+      message: 'timeline message',
+      created_by: null,
+      created_at: new Date(),
+      members: [member(entityA.id), member(entityB.id)]
+    });
+
+    const rows = await db.changeCase.listTimelineMembersByEntities(workspace, [
+      entityA.id,
+      entityB.id
+    ]);
+    expect(rows).toHaveLength(2);
+    expect(rows.map(row => row.member.entity_id)).toEqual(
+      expect.arrayContaining([entityA.id, entityB.id])
+    );
+    expect(rows.every(row => row.changeCase.id === created.id)).toBe(true);
+    expect(rows.every(row => row.revisionMessage === 'timeline message')).toBe(true);
+  });
+
   it('deletes a still-planned case but refuses once applied', async () => {
     const { db, workspace, project, entityA } = await setup();
 

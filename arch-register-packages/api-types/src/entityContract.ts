@@ -8,6 +8,11 @@ import {
   externalUpdateEnvelopeSchema
 } from '@arch-register/api-types/common';
 import { conditionsQuerySchema } from '@arch-register/api-types/viewContract';
+import { entityVersionSchema } from '@arch-register/api-types/entityVersionContract';
+import {
+  changeCaseMemberSchema,
+  changeCaseSummarySchema
+} from '@arch-register/api-types/changeCaseContract';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 // ── Query text ⇄ IR (specs/QUERY_LANGUAGE.md §4) ───────────────
@@ -219,6 +224,16 @@ const timelineMarkerSchema = z.object({
   date: z.string().describe('ISO 8601 date (YYYY-MM-DD)'),
   type: z.enum(['future_update', 'saved_version', 'applied']).describe('Marker event type'),
   count: z.number().int().describe('Number of events on this date')
+});
+
+const timelineProjectChangeSchema = z.object({
+  changeCase: changeCaseSummarySchema,
+  member: changeCaseMemberSchema
+});
+
+const timelineViewDataSchema = z.object({
+  versions: z.array(entityVersionSchema),
+  projectChanges: z.array(timelineProjectChangeSchema)
 });
 
 const entityFacetsSchema = z.object({
@@ -494,6 +509,23 @@ export const workspaceEntityContract = oc.tag('Entities').router({
       })
       .input(z.object({ params: ws }))
       .output(z.array(timelineMarkerSchema)),
+    timelineView: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/data/views/timeline',
+        inputStructure: 'detailed',
+        summary: 'Get batched timeline view data',
+        description:
+          'Retrieves version history and project change entries for multiple entities in one request.',
+        tags: ['Entities']
+      })
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({ ids: z.array(z.string()).max(200).describe('Entity identifiers') })
+        })
+      )
+      .output(z.record(z.string(), timelineViewDataSchema)),
     tree: oc
       .route({
         method: 'GET',
@@ -794,3 +826,5 @@ export type TreeEdge = TreeResponse['edges'][number];
 export type TimelineMarker = z.infer<typeof timelineMarkerSchema>;
 export type EntityQueryParseError = z.infer<typeof entityQueryParseErrorSchema>;
 export type EntityQueryParseResult = z.infer<typeof entityQueryParseResultSchema>;
+export type TimelineViewData = z.infer<typeof timelineViewDataSchema>;
+export type TimelineProjectChange = z.infer<typeof timelineProjectChangeSchema>;

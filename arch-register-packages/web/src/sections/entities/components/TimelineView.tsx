@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useQueries } from '@tanstack/react-query';
 import { TbX, TbChevronRight, TbCalendarWeek, TbGitBranch } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -24,24 +23,19 @@ import {
   groupChangeCaseEntriesByProject
 } from './timelineViewState';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityRecord, TimelineViewData } from '@arch-register/api-types/entityContract';
 import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { useEntityVersions } from '../../../hooks/useEntityVersions';
-import {
-  useChangeCasesByEntity,
-  changeCasesByEntityQueryOptions
-} from '../../../hooks/useChangeCases';
+import { useEntityTimeline } from '../../../hooks/useEntityTimeline';
 import { useMilestones } from '../../../hooks/useMilestones';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import {
   getSnapshotDateLabel,
   getSnapshotEffectiveDate,
   toMilestonesById,
-  flattenChangeCaseMembers,
   type ChangeCaseMemberEntry
 } from './snapshotDisplay';
 import { EmptyState } from '../../../components/EmptyState';
@@ -116,6 +110,12 @@ type TimelineDot =
   | { source: 'own'; id: string; version: EntityVersion }
   | { source: 'project'; id: string; entry: ChangeCaseMemberEntry };
 
+const toChangeCaseEntries = (timelineData: TimelineViewData | undefined): ChangeCaseMemberEntry[] =>
+  (timelineData?.projectChanges ?? []).map(({ changeCase, member }) => ({
+    changeCase: { ...changeCase, members: [member] },
+    member
+  }));
+
 const dotStatus = (dot: TimelineDot): string =>
   dot.source === 'own'
     ? getOwnVersionDisplayStatus(dot.version.kind)
@@ -137,7 +137,7 @@ const dotProjectId = (dot: TimelineDot): string | null =>
 type SnapBlockProps = {
   entity: EntityRecord;
   isLinked: boolean;
-  workspaceId: string;
+  timelineData?: TimelineViewData;
   projects: Project[];
   projectFilterId?: string;
   milestonesById: Map<string, Milestone>;
@@ -158,7 +158,7 @@ type SnapBlockProps = {
 const SnapBlock = ({
   entity,
   isLinked,
-  workspaceId,
+  timelineData,
   projects,
   milestonesById,
   projectFilterId,
@@ -175,8 +175,8 @@ const SnapBlock = ({
   onEntityClick,
   onBarClick
 }: SnapBlockProps) => {
-  const { data: versions = [] } = useEntityVersions(workspaceId, entity._uid, true);
-  const { data: changeCases = [] } = useChangeCasesByEntity(workspaceId, entity._uid, true);
+  const versions = timelineData?.versions ?? [];
+  const changeCaseEntries = useMemo(() => toChangeCaseEntries(timelineData), [timelineData]);
 
   const ownDots = useMemo<TimelineDot[]>(
     () =>
@@ -189,14 +189,14 @@ const SnapBlock = ({
   );
 
   const projectLanes = useMemo(() => {
-    const lanes = groupChangeCaseEntriesByProject(flattenChangeCaseMembers(changeCases));
+    const lanes = groupChangeCaseEntriesByProject(changeCaseEntries);
     return lanes.map(lane => ({
       projectId: lane.projectId,
       dots: lane.entries.map(
         (entry): TimelineDot => ({ source: 'project', id: entry.member.id, entry })
       )
     }));
-  }, [changeCases]);
+  }, [changeCaseEntries]);
   const visibleProjectLanes = useMemo(
     () =>
       projectFilterId == null
@@ -724,12 +724,12 @@ export const TimelineView = ({
     };
     return normalizeViewConfig(timelineViewConfigSchema, config, defaults);
   }, [config, dateFields]);
-  const changeCaseQueries = useQueries({
-    queries:
-      cfg.groupBy === 'project'
-        ? rows.map(entity => changeCasesByEntityQueryOptions(workspaceId, entity._uid))
-        : []
-  });
+  const isSnapshotMode = cfg.groupBy === 'snapshot' || cfg.groupBy === 'project';
+  const timelineEntityIds = useMemo(
+    () => (isSnapshotMode ? rows.map(entity => entity._uid) : []),
+    [isSnapshotMode, rows]
+  );
+  const { data: timelineData } = useEntityTimeline(workspaceId, timelineEntityIds, isSnapshotMode);
 
   const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
   const [timelineScrollLeft, setTimelineScrollLeft] = useState(0);
@@ -825,8 +825,6 @@ export const TimelineView = ({
   const handleTimelineScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
     setTimelineScrollLeft(event.currentTarget.scrollLeft);
   }, []);
-  const isSnapshotMode = cfg.groupBy === 'snapshot' || cfg.groupBy === 'project';
-
   const activeEntity = useMemo(
     () =>
       activeEntityId
@@ -860,9 +858,9 @@ export const TimelineView = ({
     if (cfg.groupBy !== 'project') return [];
 
     const entitiesByProject = new Map<string, EntityRecord[]>();
-    rows.forEach((entity, index) => {
+    rows.forEach(entity => {
       const projectIdsForEntity = new Set(
-        flattenChangeCaseMembers(changeCaseQueries[index]?.data ?? [])
+        toChangeCaseEntries(timelineData[entity._uid])
           .map(entry => entry.changeCase.project_id)
           .filter((projectId): projectId is string => projectId != null)
       );
@@ -876,14 +874,14 @@ export const TimelineView = ({
     return projects
       .map(project => ({ project, entities: entitiesByProject.get(project.id) ?? [] }))
       .filter(group => group.entities.length > 0);
-  }, [cfg.groupBy, projects, rows, changeCaseQueries]);
+  }, [cfg.groupBy, projects, rows, timelineData]);
   const isEmpty = isSnapshotMode ? rows.length === 0 : datedRows.length === 0;
   const totalDated = isSnapshotMode ? rows.length : datedRows.length;
   const renderSnapBlock = (entity: EntityRecord, projectFilterId?: string) => (
     <SnapBlock
       key={`${projectFilterId ?? 'all'}-${entity._uid}`}
       entity={entity}
-      workspaceId={workspaceId}
+      timelineData={timelineData[entity._uid]}
       projects={projects}
       projectFilterId={projectFilterId}
       milestonesById={milestonesById}

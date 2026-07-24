@@ -18,7 +18,7 @@ const entityVersionKindSchema = z
   ])
   .describe('How this version came to exist');
 
-const entityVersionSchema = z.object({
+export const entityVersionSchema = z.object({
   id: z.string().describe('Version identifier'),
   workspace: z.string().describe('Workspace identifier'),
   entity_id: z.string().describe('Entity identifier'),

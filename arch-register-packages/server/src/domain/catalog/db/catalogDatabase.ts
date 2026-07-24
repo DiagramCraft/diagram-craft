@@ -520,6 +520,7 @@ export type CatalogDatabase = {
   createEntityVersion(input: EntityVersionDbCreate): Promise<EntityVersionDbResult>;
   getEntityVersionById(ws: string, id: string): Promise<EntityVersionDbResult | null>;
   listEntityVersions(ws: string, entityId: string): Promise<EntityVersionDbResult[]>;
+  listEntityVersionsByIds(ws: string, entityIds: string[]): Promise<EntityVersionDbResult[]>;
   listEntityVersionsAsOf(
     ws: string,
     asOf: Date,

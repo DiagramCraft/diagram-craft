@@ -558,6 +558,18 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
+  async listEntityVersionsByIds(workspace: string, entityIds: string[]) {
+    if (entityIds.length === 0) return [];
+    return this.all(
+      `SELECT v.*, u.display_name AS created_by_name
+       FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
+       WHERE v.workspace = ? AND v.entity_id IN (${entityIds.map(() => '?').join(',')})
+       ORDER BY v.entity_id, v.created_at DESC`,
+      [workspace, ...entityIds],
+      catalogMappers.entityVersion
+    );
+  }
+
   async listEntityVersionsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const filter =

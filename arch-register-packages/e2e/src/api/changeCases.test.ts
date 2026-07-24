@@ -80,6 +80,23 @@ test.describe('planned new project entities', () => {
     expect(second?.proposed_state.project_id).toBeNull();
     expect(second?.proposed_state.data).toMatchObject({ depends_on: [first?.entity_id] });
 
+    const timeline = await orpc.entities.timelineView({
+      params: { workspace: 'default' },
+      body: { ids: [first!.entity_id, second!.entity_id] }
+    });
+    expect(timeline[first!.entity_id]?.projectChanges).toEqual([
+      expect.objectContaining({
+        changeCase: expect.objectContaining({ id: changeCase.id, project_id: project.id }),
+        member: expect.objectContaining({ entity_id: first!.entity_id })
+      })
+    ]);
+    expect(timeline[second!.entity_id]?.projectChanges).toEqual([
+      expect.objectContaining({
+        changeCase: expect.objectContaining({ id: changeCase.id, project_id: project.id }),
+        member: expect.objectContaining({ entity_id: second!.entity_id })
+      })
+    ]);
+
     const savedCase = await orpc.changeCases.saveDraft({
       params: { workspace: 'default', id: project.id, caseId: changeCase.id },
       body: {
