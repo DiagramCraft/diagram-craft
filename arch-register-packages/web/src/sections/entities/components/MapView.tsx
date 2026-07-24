@@ -1,4 +1,11 @@
-import { useMemo, useCallback, useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import {
+  useMemo,
+  useCallback,
+  useEffect,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent
+} from 'react';
 import styles from './MapView.module.css';
 import { TbChevronDown } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
