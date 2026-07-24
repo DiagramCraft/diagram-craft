@@ -7,6 +7,11 @@ import { toEntityListQuery } from './entityListQuery';
 
 type SummaryRow = EntityRecord & { _assessment?: unknown };
 
+export const filterEntityRowsBySchema = <T extends SummaryRow>(
+  rows: T[],
+  schemaId?: string | null
+): T[] => (schemaId == null ? rows : rows.filter(row => row._schema.id === schemaId));
+
 export const mergeHydratedEntityRows = <T extends SummaryRow>(
   rows: T[],
   fullEntities: EntityRecord[]
