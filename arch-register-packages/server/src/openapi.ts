@@ -67,4 +67,8 @@ export const getUnifiedOpenAPISpec = () => {
 };
 
 export const createUnifiedOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getUnifiedOpenAPISpec()));
+  defineHandler(async () => {
+    const spec = await getUnifiedOpenAPISpec();
+    // (spec as any).openapi = '3.1.0';
+    return Response.json(spec);
+  });

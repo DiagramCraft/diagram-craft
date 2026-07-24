@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { AuthorizationContext } from '@arch-register/permissions';
@@ -9,8 +10,18 @@ import {
   requireProjectAction
 } from '../auth/authorization';
 import { updateEntity } from './entityMutationOperations';
-import { entityToBaseState } from './entityMutations';
-import type { Entity, EntityVersionDbResult } from './db/catalogDatabase';
+import { allocateEntityPublicId } from './entityMutationOperations';
+import { createEntityWithAudit, entityToBaseState } from './entityMutations';
+import type { Entity, EntityDbCreate, EntityVersionDbResult } from './db/catalogDatabase';
+import { computeEntityCompleteness } from '../../utils/completeness';
+import {
+  getEntityParentsFromPayload,
+  getLifecycleValues,
+  getTeamIds,
+  normalizeEntityRelationFields,
+  resolveCreateOwner
+} from './dataHelpers';
+import { listAllCatalogEntities } from './entityLoader';
 import type {
   ChangeCaseDbResult,
   ChangeCaseMemberDbResult,
@@ -21,6 +32,7 @@ import type {
   ChangeCaseApplyConflict,
   ApplyChangeCaseRequest,
   CreateChangeCaseRequest,
+  SaveChangeCaseDraftRequest,
   UpdateChangeCaseRequest
 } from '@arch-register/api-types/changeCaseContract';
 
@@ -112,13 +124,243 @@ const toApiMember = (member: ChangeCaseMemberDbResult) => ({
   applied_version_id: member.applied_version_id
 });
 
-const buildMemberInput = (entity: Entity, proposedState: Record<string, unknown>) => ({
+const buildMemberInput = (
+  entity: Entity,
+  proposedState: Record<string, unknown>,
+  projectId?: string
+) => ({
   entity_id: entity.id,
   base_version: entity.version ?? 1,
   base_state: entityToBaseState(entity),
-  proposed_state: proposedState,
+  proposed_state:
+    projectId != null && entity.project_id === projectId
+      ? { ...proposedState, project_id: null }
+      : proposedState,
   diff: {}
 });
+
+type DraftEntitySaveResult = {
+  entities: Entity[];
+  draftEntities: Map<string, Entity>;
+  allEntities: Entity[];
+};
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value != null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+const resolveDraftRelationIds = (
+  schema: Awaited<ReturnType<DatabaseAdapter['catalog']['getSchema']>>,
+  state: Record<string, unknown>,
+  draftEntities: Map<string, Entity>
+) => {
+  const data = { ...asRecord(state['data']) };
+  for (const field of schema?.fields ?? []) {
+    if (field.type !== 'reference' && field.type !== 'containment') continue;
+    const values = data[field.id];
+    if (!Array.isArray(values)) continue;
+    data[field.id] = values.map(value => {
+      if (typeof value !== 'string') return value;
+      return draftEntities.get(value)?.id ?? value;
+    });
+  }
+  return data;
+};
+
+const normalizeCaseMemberState = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  entity: Entity,
+  state: Record<string, unknown>,
+  draftEntities: Map<string, Entity>,
+  allEntities: Entity[]
+) => {
+  const schemaId = String(state['schema_id'] ?? entity.schema_id);
+  const schema = await db.catalog.getSchema(workspace, schemaId);
+  httpAssert.present(schema, { status: 400, message: `Schema '${schemaId}' not found` });
+  const data = resolveDraftRelationIds(schema, state, draftEntities);
+  const normalizedData = normalizeEntityRelationFields({
+    schema,
+    fields: data,
+    entities: allEntities
+  });
+  return {
+    ...state,
+    schema_id: schemaId,
+    data: normalizedData,
+    project_id: entity.project_id === projectId ? null : (state['project_id'] ?? null)
+  };
+};
+
+const toEntityMutationPayload = (
+  entity: Entity,
+  state: Record<string, unknown>,
+  projectId: string
+) => {
+  if (state['_schemaId'] != null || state['_schema'] != null) {
+    return entity.project_id === projectId ? { ...state, _projectId: null } : state;
+  }
+  const data = asRecord(state['data']);
+  return {
+    _schemaId: state['schema_id'] ?? entity.schema_id,
+    _name: state['name'] ?? entity.name,
+    _slug: state['slug'] ?? entity.slug,
+    _namespace: state['namespace'] ?? entity.namespace,
+    _description: state['description'] ?? entity.description,
+    _owner: state['owner'] ?? null,
+    _lifecycle: state['lifecycle'] ?? null,
+    _targetLifecycle: state['target_lifecycle'] ?? null,
+    _targetLifecycleDate: state['target_lifecycle_date'] ?? null,
+    _tags: state['tags'] ?? entity.tags,
+    _links: state['links'] ?? entity.links,
+    _projectId: entity.project_id === projectId ? null : (state['project_id'] ?? null),
+    ...data
+  };
+};
+
+const createProjectScopedDraftEntities = async (
+  tx: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  drafts: CreateChangeCaseRequest['newEntities'],
+  projectOwner: string | null,
+  authCtx: AuthorizationContext,
+  actor: { id: string; displayName: string | null }
+): Promise<DraftEntitySaveResult> => {
+  const [globalEntities, projectEntities] = await Promise.all([
+    listAllCatalogEntities(tx, workspace),
+    listAllCatalogEntities(tx, workspace, { projectId, projectScope: 'project' })
+  ]);
+  const existingEntities = [
+    ...new Map([...globalEntities, ...projectEntities].map(entity => [entity.id, entity])).values()
+  ];
+  const schemas = await tx.catalog.listSchemas(workspace);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const draftIds = new Set<string>();
+  const draftEntities = new Map<string, Entity>();
+  const timestamp = new Date();
+
+  for (const draft of drafts) {
+    httpAssert.true(!draftIds.has(draft.draftId), {
+      status: 400,
+      message: `Duplicate draft entity '${draft.draftId}'`
+    });
+    draftIds.add(draft.draftId);
+    const schemaId = String(draft.state['schema_id'] ?? '');
+    const schema = schemaById.get(schemaId);
+    httpAssert.present(schema, { status: 400, message: `Schema '${schemaId}' not found` });
+    const state = draft.state;
+    const name = String(state['name'] ?? '').trim();
+    httpAssert.true(name.length > 0, { status: 400, message: 'New entity name is required' });
+    const entity: EntityDbCreate = {
+      id: randomUUID(),
+      workspace,
+      public_id: '',
+      slug: String(state['slug'] ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-')),
+      namespace: String(state['namespace'] ?? 'default'),
+      name,
+      description: String(state['description'] ?? ''),
+      owner: (state['owner'] as string | null) ?? null,
+      lifecycle: (state['lifecycle'] as string | null) ?? null,
+      target_lifecycle: (state['target_lifecycle'] as string | null) ?? null,
+      target_lifecycle_date: (state['target_lifecycle_date'] as string | null) ?? null,
+      tags: Array.isArray(state['tags'])
+        ? state['tags'].filter((v): v is string => typeof v === 'string')
+        : [],
+      links: Array.isArray(state['links']) ? state['links'] : [],
+      schema_id: schemaId,
+      data: asRecord(state['data']),
+      project_id: projectId,
+      created_at: timestamp,
+      updated_at: timestamp,
+      completeness: 0
+    };
+    draftEntities.set(draft.draftId, entity);
+  }
+
+  const allDrafts = [...draftEntities.values()];
+  const allEntities = [...existingEntities, ...allDrafts];
+  const entityLookup = new Map(allEntities.map(entity => [entity.id, entity]));
+  const lifecycleValues = await getLifecycleValues(tx, workspace);
+  const teamIds = await getTeamIds(tx, workspace);
+  const fallbackOwner = (await tx.workspace.listTeams(workspace))[0]?.id ?? null;
+
+  for (const [draftId, entity] of draftEntities) {
+    const schema = schemaById.get(entity.schema_id)!;
+    entity.data = normalizeEntityRelationFields({
+      schema,
+      fields: resolveDraftRelationIds(schema, { data: entity.data }, draftEntities),
+      entities: allEntities
+    });
+    const parents = getEntityParentsFromPayload(schema, entity.data, entityLookup);
+    entity.owner = resolveCreateOwner(entity.owner, parents, schema, teamIds, fallbackOwner);
+    if (entity.lifecycle && !lifecycleValues.has(entity.lifecycle)) entity.lifecycle = null;
+    if (entity.target_lifecycle && !lifecycleValues.has(entity.target_lifecycle)) {
+      entity.target_lifecycle = null;
+    }
+    if (authCtx) {
+      if (parents.length > 0) {
+        parents.forEach(parent =>
+          requireEntityAction(
+            authCtx,
+            parent,
+            'create_child',
+            'You do not have permission to add children under one or more parent entities'
+          )
+        );
+      } else {
+        requireProjectAction(
+          authCtx,
+          projectOwner,
+          'edit_project',
+          'You do not have permission to create project entities'
+        );
+      }
+    }
+    entity.public_id = await allocateEntityPublicId(tx, workspace, entity.schema_id, timestamp);
+    entity.completeness = computeEntityCompleteness(entity, schema);
+    const created = await createEntityWithAudit(tx, { workspace, entity, actor });
+    draftEntities.set(draftId, created);
+    await tx.project.addProjectEntity({
+      workspace,
+      project_id: projectId,
+      entity_id: created.id,
+      entity_type_id: null,
+      is_done: false,
+      created_at: timestamp
+    });
+  }
+
+  return {
+    entities: [...draftEntities.values()],
+    draftEntities,
+    allEntities: [...existingEntities, ...draftEntities.values()]
+  };
+};
+
+const assertDraftReferences = (
+  members: CreateChangeCaseRequest['members'],
+  drafts: CreateChangeCaseRequest['newEntities']
+) => {
+  const draftIds = new Set(drafts.map(draft => draft.draftId));
+  const referencedDraftIds = new Set(
+    members.flatMap(member => (member.draftId == null ? [] : [member.draftId]))
+  );
+  for (const draftId of referencedDraftIds) {
+    httpAssert.true(draftIds.has(draftId), {
+      status: 400,
+      message: `Draft entity '${draftId}' is not defined`
+    });
+  }
+  for (const draftId of draftIds) {
+    httpAssert.true(referencedDraftIds.has(draftId), {
+      status: 400,
+      message: `Draft entity '${draftId}' is not part of the change case`
+    });
+  }
+};
 
 export const listChangeCasesByProject = async (
   db: DatabaseAdapter,
@@ -205,24 +447,7 @@ export const createChangeCase = async (
     async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
-
-      const entities = await Promise.all(
-        body.members.map(async member => {
-          const entity = await db.catalog.getEntity(ws, member.entityId);
-          httpAssert.present(entity, {
-            status: 404,
-            message: `Entity '${member.entityId}' not found`
-          });
-          requireEntityAction(
-            authCtx,
-            entity,
-            'edit_entity',
-            `You do not have permission to edit entity '${entity.id}'`
-          );
-          await assertEntityBelongsToProject(db, ws, project.id, entity);
-          return { entity, proposedState: member.proposedState };
-        })
-      );
+      assertDraftReferences(body.members, body.newEntities);
 
       const { effectiveDate, milestoneId } = await resolveEffectiveDate(
         db,
@@ -232,20 +457,61 @@ export const createChangeCase = async (
         body.milestoneId
       );
 
-      const changeCase = await db.changeCase.createCase({
-        id: crypto.randomUUID(),
-        workspace: ws,
-        project_id: project.id,
-        name: body.name,
-        description: body.description ?? null,
-        effective_date: effectiveDate,
-        milestone_id: milestoneId,
-        message: body.commitMessage ?? null,
-        created_by: event.context.user.id,
-        created_at: new Date(),
-        members: entities.map(({ entity, proposedState }) =>
-          buildMemberInput(entity, proposedState)
-        )
+      const actor = {
+        id: event.context.user.id,
+        displayName: event.context.user.display_name
+      };
+      const changeCase = await db.core.transaction(async tx => {
+        const draftResult = await createProjectScopedDraftEntities(
+          tx,
+          ws,
+          project.id,
+          body.newEntities,
+          project.owner,
+          authCtx,
+          actor
+        );
+        const members = await Promise.all(
+          body.members.map(async member => {
+            const entity = member.draftId
+              ? draftResult.draftEntities.get(member.draftId)
+              : await tx.catalog.getEntity(ws, member.entityId!);
+            httpAssert.present(entity, {
+              status: 404,
+              message: `Entity '${member.entityId ?? member.draftId}' not found`
+            });
+            requireEntityAction(
+              authCtx,
+              entity,
+              'edit_entity',
+              `You do not have permission to edit entity '${entity.id}'`
+            );
+            await assertEntityBelongsToProject(tx, ws, project.id, entity);
+            const proposedState = await normalizeCaseMemberState(
+              tx,
+              ws,
+              project.id,
+              entity,
+              member.proposedState,
+              draftResult.draftEntities,
+              draftResult.allEntities
+            );
+            return buildMemberInput(entity, proposedState, project.id);
+          })
+        );
+        return tx.changeCase.createCase({
+          id: randomUUID(),
+          workspace: ws,
+          project_id: project.id,
+          name: body.name,
+          description: body.description ?? null,
+          effective_date: effectiveDate,
+          milestone_id: milestoneId,
+          message: body.commitMessage ?? null,
+          created_by: event.context.user.id,
+          created_at: new Date(),
+          members
+        });
       });
 
       return toApiChangeCase(db, ws, changeCase);
@@ -433,6 +699,138 @@ export const updateChangeCaseFields = async (
   );
 };
 
+export const saveChangeCaseDraft = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  caseId: string,
+  event: AuthenticatedEvent,
+  body: SaveChangeCaseDraftRequest
+): Promise<ChangeCase> => {
+  return defineEntityOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to save change case draft' },
+    async ({ ws, authCtx }) => {
+      const project = await getProjectOrThrow(db, ws, projectId);
+      requireCaseEditAccess(authCtx, project);
+      assertDraftReferences(body.members, body.newEntities);
+      const existingCase = await getCaseOrThrow(db, ws, caseId);
+      httpAssert.true(existingCase.project_id === project.id, {
+        status: 400,
+        message: 'Change case does not belong to this project'
+      });
+      httpAssert.true(existingCase.status === 'planned', {
+        status: 409,
+        message: 'Only planned change cases can be edited'
+      });
+      await getActiveRevisionOrThrow(db, ws, caseId);
+
+      let effectiveDate: string | null | undefined;
+      let milestoneId: string | null | undefined;
+      if (body.targetDate !== undefined || body.milestoneId !== undefined) {
+        const resolved = await resolveEffectiveDate(
+          db,
+          ws,
+          project.id,
+          body.targetDate,
+          body.milestoneId
+        );
+        effectiveDate = resolved.effectiveDate;
+        milestoneId = resolved.milestoneId;
+      }
+
+      const actor = {
+        id: event.context.user.id,
+        displayName: event.context.user.display_name
+      };
+      const updated = await db.core.transaction(async tx => {
+        const revision = await getActiveRevisionOrThrow(tx, ws, caseId);
+        const currentMembers = await tx.changeCase.listMembers(ws, revision.id);
+        const draftResult = await createProjectScopedDraftEntities(
+          tx,
+          ws,
+          project.id,
+          body.newEntities,
+          project.owner,
+          authCtx,
+          actor
+        );
+        const desired = await Promise.all(
+          body.members.map(async member => {
+            const entity = member.draftId
+              ? draftResult.draftEntities.get(member.draftId)
+              : await tx.catalog.getEntity(ws, member.entityId!);
+            httpAssert.present(entity, {
+              status: 404,
+              message: `Entity '${member.entityId ?? member.draftId}' not found`
+            });
+            requireEntityAction(
+              authCtx,
+              entity,
+              'edit_entity',
+              `You do not have permission to edit entity '${entity.id}'`
+            );
+            await assertEntityBelongsToProject(tx, ws, project.id, entity);
+            const proposedState = await normalizeCaseMemberState(
+              tx,
+              ws,
+              project.id,
+              entity,
+              member.proposedState,
+              draftResult.draftEntities,
+              draftResult.allEntities
+            );
+            return { entity, proposedState };
+          })
+        );
+        const desiredIds = new Set<string>();
+        for (const member of desired) {
+          httpAssert.true(!desiredIds.has(member.entity.id), {
+            status: 409,
+            message: `Entity '${member.entity.id}' is already part of the change case`
+          });
+          desiredIds.add(member.entity.id);
+        }
+
+        for (const member of currentMembers) {
+          if (!desiredIds.has(member.entity_id)) {
+            await tx.changeCase.removeMember(ws, member.id);
+          }
+        }
+        for (const member of desired) {
+          const existingMember = currentMembers.find(
+            candidate => candidate.entity_id === member.entity.id
+          );
+          if (existingMember) {
+            await tx.changeCase.updateMemberProposedState(
+              ws,
+              existingMember.id,
+              member.proposedState,
+              {}
+            );
+          } else {
+            await tx.changeCase.addMember(
+              ws,
+              revision.id,
+              buildMemberInput(member.entity, member.proposedState, project.id)
+            );
+          }
+        }
+        await tx.changeCase.updateCaseFields(ws, caseId, {
+          name: body.name,
+          target_date: effectiveDate,
+          milestone_id: milestoneId,
+          message: body.commitMessage
+        });
+        return (await tx.changeCase.getCase(ws, caseId))!;
+      });
+      return toApiChangeCase(db, ws, updated);
+    }
+  );
+};
+
 export const withdrawChangeCase = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -597,17 +995,23 @@ export const applyChangeCase = async (
         }
 
         for (const member of txMembers) {
+          const entity = await tx.catalog.getEntity(ws, member.entity_id);
+          httpAssert.present(entity, {
+            status: 404,
+            message: `Entity '${member.entity_id}' no longer exists`
+          });
           const resolution = body.resolutions.find(candidate => candidate.memberId === member.id)!;
 
-          await updateEntity(
-            tx,
-            ws,
-            member.entity_id,
+          const resolvedEntityData = toEntityMutationPayload(
+            entity,
             resolution.resolvedEntityData,
-            authCtx,
-            actor,
-            { versionKind: 'case_applied', appliedCaseRevisionId: revision.id }
+            project.id
           );
+          await updateEntity(tx, ws, member.entity_id, resolvedEntityData, authCtx, actor, {
+            versionKind: 'case_applied',
+            appliedCaseRevisionId: revision.id,
+            projectId: project.id
+          });
 
           const versions: EntityVersionDbResult[] = await tx.catalog.listEntityVersions(
             ws,

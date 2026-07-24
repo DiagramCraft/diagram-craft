@@ -48,7 +48,7 @@ import {
   assertValidExternalUpdateTarget
 } from '../externalMetadata/externalMetadataHelpers';
 
-const allocateEntityPublicId = async (
+export const allocateEntityPublicId = async (
   db: DatabaseAdapter,
   workspace: string,
   schemaId: string,
@@ -397,6 +397,7 @@ export const updateEntity = async (
   versionOptions?: {
     versionKind?: EntityVersionKind;
     appliedCaseRevisionId?: string | null;
+    projectId?: string;
   }
 ): Promise<EntityRecord> => {
   const payload = parseEntityMutationPayload(body);
@@ -415,11 +416,22 @@ export const updateEntity = async (
     payload.requestedOwner && teamIds.has(payload.requestedOwner) ? payload.requestedOwner : null;
 
   try {
-    const [oldRow, schema, entities] = await Promise.all([
+    const [oldRow, schema, globalEntities, projectEntities] = await Promise.all([
       db.catalog.getEntity(workspace, id),
       db.catalog.getSchema(workspace, payload.schemaId),
-      listAllCatalogEntities(db, workspace)
+      listAllCatalogEntities(db, workspace),
+      versionOptions?.projectId
+        ? listAllCatalogEntities(db, workspace, {
+            projectId: versionOptions.projectId,
+            projectScope: 'project'
+          })
+        : Promise.resolve([])
     ]);
+    const entities = [
+      ...new Map(
+        [...globalEntities, ...projectEntities].map(entity => [entity.id, entity])
+      ).values()
+    ];
     httpAssert.present(oldRow, { status: 404, message: `Data record '${id}' not found` });
     httpAssert.present(schema, {
       status: 404,
@@ -452,7 +464,15 @@ export const updateEntity = async (
         );
       }
     }
-    if (authCtx && (owner !== oldRow.owner || payload.projectId !== oldRow.project_id)) {
+    const isCasePromotion =
+      versionOptions?.versionKind === 'case_applied' &&
+      versionOptions.projectId != null &&
+      oldRow.project_id === versionOptions.projectId &&
+      payload.projectId == null;
+    if (
+      authCtx &&
+      (owner !== oldRow.owner || (payload.projectId !== oldRow.project_id && !isCasePromotion))
+    ) {
       requireEntityAction(
         authCtx,
         oldRow,

@@ -21,6 +21,7 @@ import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContr
 import { jobsContract } from '@arch-register/api-types/jobsContract';
 import { webhookContract } from '@arch-register/api-types/webhookContract';
 import { documentContract } from '@arch-register/api-types/documentContract';
+import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
 
 const makeFetch =
   (auth?: string) =>
@@ -44,6 +45,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
 
   return {
     projects: make(projectContract).projects,
+    changeCases: make(changeCaseContract).changeCases,
     auth: make(authPublicContract).auth,
     authProtected: make(authProtectedContract).authProtected,
     dev: make(devContract).dev,

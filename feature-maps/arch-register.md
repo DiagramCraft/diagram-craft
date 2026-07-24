@@ -152,7 +152,8 @@
           planned entity changes with milestones.
 
         - @id:ar.projects.planned-changes Users can record named, coordinated change cases for one or more entities
-          within or outside a project without changing the current live entity state.
+          within or outside a project without changing the current live entity state, including planning the
+          introduction of new project-scoped entities.
 
             - @id:ar.projects.planned-changes.schedule Users can target a planned entity change to a future date or
               associate it with a project milestone.
