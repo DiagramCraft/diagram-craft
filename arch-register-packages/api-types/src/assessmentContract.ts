@@ -121,9 +121,7 @@ const assessmentSchema = z.object({
           .describe('ISO 8601 timestamp the team acknowledged, if resolved')
       })
     )
-    .describe(
-      'Per-team acknowledge status for this assessment, derived from its governance case'
-    ),
+    .describe('Per-team acknowledge status for this assessment, derived from its governance case'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });

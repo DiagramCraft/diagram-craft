@@ -213,7 +213,10 @@ describe('getAssessment team_acknowledge_status', () => {
   });
 
   it('resolves per-team status and names from the latest governance case', async () => {
-    const row = { ...assessment('assessment-1', project.id), assigned_team_ids: ['team-a', 'team-b'] };
+    const row = {
+      ...assessment('assessment-1', project.id),
+      assigned_team_ids: ['team-a', 'team-b']
+    };
     const resolvedAt = new Date('2026-06-02T00:00:00.000Z');
     const db = {
       project: {
