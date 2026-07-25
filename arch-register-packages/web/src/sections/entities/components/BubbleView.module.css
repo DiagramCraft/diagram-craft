@@ -77,6 +77,69 @@
   color: var(--base-fg-more-dim);
 }
 
+.quadrantsPopover {
+  width: 320px;
+  padding: 12px;
+  font-family: var(--font-sans);
+
+  > button {
+    display: none;
+  }
+}
+
+.quadrantsHeader {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--base-fg);
+  margin-bottom: 10px;
+}
+
+.quadrantsToggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  margin-bottom: 12px;
+}
+
+.quadrantsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quadrantInput {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+}
+
+.quadrantInput input {
+  width: 100%;
+}
+
+.quadrantsOverlay {
+  pointer-events: none;
+
+  line {
+    stroke: var(--panel-border);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    opacity: 0.85;
+  }
+
+  text {
+    fill: var(--base-fg-more-dim);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    user-select: none;
+  }
+}
+
 /* Body: SVG + Legend */
 .body {
   display: flex;

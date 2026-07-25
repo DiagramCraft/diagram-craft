@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import {
   buildBubbles,
+  DEFAULT_BUBBLE_QUADRANTS,
   formatNumber,
   positionOnBubbleAxis,
   type BubbleConfig
@@ -23,7 +24,8 @@ const config: BubbleConfig = {
   xFieldId: 'x',
   yFieldId: 'y',
   sizeFieldId: null,
-  colorFieldId: null
+  colorFieldId: null,
+  quadrants: DEFAULT_BUBBLE_QUADRANTS
 };
 
 describe('bubble view state', () => {
@@ -70,5 +72,17 @@ describe('bubble view state', () => {
     expect(result.clusterBadges).toHaveLength(1);
     expect(result.clusterBadges[0]).toMatchObject({ cx: 444, count: 2 });
     expect(result.clusterBadges[0]!.cy).toBeCloseTo(240.34, 2);
+  });
+
+  it('provides editable positional quadrant defaults', () => {
+    expect(DEFAULT_BUBBLE_QUADRANTS).toEqual({
+      enabled: false,
+      labels: {
+        topLeft: 'Top left',
+        topRight: 'Top right',
+        bottomLeft: 'Bottom left',
+        bottomRight: 'Bottom right'
+      }
+    });
   });
 });
