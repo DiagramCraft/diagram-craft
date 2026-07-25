@@ -78,6 +78,10 @@ export const upsertAssessmentResponse = async (
         status: 409,
         message: 'Cannot record responses: assessment is not open'
       });
+      httpAssert.true(assessment.mode !== 'confirm' || Object.keys(body.values).length === 0, {
+        status: 400,
+        message: 'Confirm-only assessments do not accept field values'
+      });
       const existing = await db.project.getAssessmentResponse(ws, assessmentId, entityId);
       const existingValues = existing?.values ?? {};
 

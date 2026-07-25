@@ -247,6 +247,7 @@ export const updateAssessmentStatus = async (
         name: oldRow.name,
         description: oldRow.description,
         status: body.status,
+        mode: oldRow.mode,
         scope: oldRow.scope,
         scope_conditions: oldRow.scope_conditions,
         fields: oldRow.fields,

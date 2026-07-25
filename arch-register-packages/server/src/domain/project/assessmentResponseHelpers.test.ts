@@ -16,6 +16,7 @@ const makeAssessment = (overrides: Partial<AssessmentDbResult> = {}): Assessment
   name: 'Security Readiness',
   description: '',
   status: 'open',
+  mode: 'fields',
   scope: ['schema-service'],
   scope_conditions: [],
   fields: [
@@ -71,6 +72,12 @@ describe('toApiAssessmentResponse', () => {
     const row = makeResponse({ values: {} });
     expect(toApiAssessmentResponse(row, assessment).status).toBe('complete');
   });
+
+  it('is complete for a confirm-only assessment once a response row exists', () => {
+    const assessment = makeAssessment({ mode: 'confirm', fields: [] });
+    const row = makeResponse({ values: {} });
+    expect(toApiAssessmentResponse(row, assessment).status).toBe('complete');
+  });
 });
 
 describe('countCompletedEntities', () => {
@@ -82,6 +89,12 @@ describe('countCompletedEntities', () => {
       makeResponse({ entity_id: 'e3', values: { f1: 'Defined', f2: 'note' } })
     ];
     expect(countCompletedEntities(responses, assessment)).toBe(2);
+  });
+
+  it('counts any recorded response as complete for a confirm-only assessment', () => {
+    const assessment = makeAssessment({ mode: 'confirm', fields: [] });
+    const responses = [makeResponse({ entity_id: 'e1', values: {} })];
+    expect(countCompletedEntities(responses, assessment)).toBe(1);
   });
 });
 
@@ -194,5 +207,25 @@ describe('buildAssessmentResultsCsvData', () => {
     const { rows } = buildAssessmentResultsCsvData(entities, responses, assessment, [enumDef]);
 
     expect(rows[0]!['Auth maturity']).toBe('Defined');
+  });
+
+  it('resolves assessment-local enum values without workspace enums', () => {
+    const assessment = makeAssessment({
+      fields: [
+        {
+          id: 'f1',
+          label: 'Migration strategy',
+          type: 'enum',
+          options: [{ value: 'rehost', label: 'Rehost (Lift and Shift)' }],
+          requirementLevel: 'required'
+        }
+      ]
+    });
+    const entities = [makeEntity({ id: 'e1' })];
+    const responses = [makeResponse({ entity_id: 'e1', values: { f1: 'rehost' } })];
+
+    const { rows } = buildAssessmentResultsCsvData(entities, responses, assessment, []);
+
+    expect(rows[0]!['Migration strategy']).toBe('Rehost (Lift and Shift)');
   });
 });

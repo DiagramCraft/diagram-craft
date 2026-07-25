@@ -35,6 +35,7 @@ import {
   useUpsertAssessmentResponse
 } from '../../hooks/useAssessmentResponses';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { AssessmentEditorDialog } from './ProjectAssessments';
@@ -60,6 +61,12 @@ const STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
   not_started: 'Not started',
   in_progress: 'In progress',
   complete: 'Complete'
+};
+
+const CONFIRM_STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
+  not_started: 'Not confirmed',
+  in_progress: 'Not confirmed',
+  complete: 'Confirmed'
 };
 
 const ASSESSMENT_STATUS_LABEL: Record<Assessment['status'], string> = {
@@ -125,7 +132,8 @@ export const AssessmentDetailsScreen = ({
   const upsertResponse = useUpsertAssessmentResponse(
     workspaceSlug,
     assessmentId,
-    assessment?.fields ?? []
+    assessment?.fields ?? [],
+    assessment?.mode ?? 'fields'
   );
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -141,11 +149,12 @@ export const AssessmentDetailsScreen = ({
         entities,
         responses,
         fields: assessment?.fields ?? [],
+        mode: assessment?.mode ?? 'fields',
         statusFilter,
         search,
         conditions
       }),
-    [assessment?.fields, conditions, entities, responses, search, statusFilter]
+    [assessment?.fields, assessment?.mode, conditions, entities, responses, search, statusFilter]
   );
 
   const schemaNameFor = (entity: EntitySummary): string =>
@@ -162,9 +171,9 @@ export const AssessmentDetailsScreen = ({
 
       if (field.type === 'rating') return (aValue as number) - (bValue as number);
       if (field.type === 'enum') {
-        const enumDef = enums.find(e => e.id === field.enumId);
-        const aLabel = enumDef?.options.find(o => o.value === aValue)?.label ?? String(aValue);
-        const bLabel = enumDef?.options.find(o => o.value === bValue)?.label ?? String(bValue);
+        const options = getAssessmentEnumOptions(field, enums);
+        const aLabel = options.find(o => o.value === aValue)?.label ?? String(aValue);
+        const bLabel = options.find(o => o.value === bValue)?.label ?? String(bValue);
         return aLabel.localeCompare(bLabel);
       }
       return String(aValue).localeCompare(String(bValue));
@@ -367,7 +376,7 @@ export const AssessmentDetailsScreen = ({
                   />
                 </div>
 
-                <Table.Root scroll stickyHeader>
+                <Table.Root scroll scrollY stickyHeader wrapClassName={styles.tableWrap}>
                   <Table.Head>
                     <Table.Row>
                       <Table.SortableHeaderCell
@@ -470,8 +479,26 @@ export const AssessmentDetailsScreen = ({
                               </Table.Cell>
                             ))}
                             <Table.Cell align="right" className={styles.statusCol}>
-                              <span className={`${styles.statusDot} ${styles[`st-${status}`]}`} />
-                              {STATUS_LABEL[status]}
+                              {assessment.mode === 'confirm' &&
+                              status !== 'complete' &&
+                              assessment.status === 'open' ? (
+                                <Button
+                                  onClick={() =>
+                                    upsertResponse.mutate({ entityId: entity._uid, values: {} })
+                                  }
+                                >
+                                  Confirm accurate
+                                </Button>
+                              ) : (
+                                <>
+                                  <span
+                                    className={`${styles.statusDot} ${styles[`st-${status}`]}`}
+                                  />
+                                  {assessment.mode === 'confirm'
+                                    ? CONFIRM_STATUS_LABEL[status]
+                                    : STATUS_LABEL[status]}
+                                </>
+                              )}
                             </Table.Cell>
                             <Table.Cell className={styles.avatarCol}>
                               {response?.updated_by && (

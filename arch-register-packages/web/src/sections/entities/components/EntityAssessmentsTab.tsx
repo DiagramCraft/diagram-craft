@@ -5,6 +5,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
+import { Button } from '@diagram-craft/app-components/Button';
 import { useProjects } from '../../../hooks/useProjects';
 import { useAssessments } from '../../../hooks/useAssessments';
 import {
@@ -21,6 +22,12 @@ const STATUS_LABEL = {
   not_started: 'Not started',
   in_progress: 'In progress',
   complete: 'Complete'
+} as const;
+
+const CONFIRM_STATUS_LABEL = {
+  not_started: 'Not confirmed',
+  in_progress: 'Not confirmed',
+  complete: 'Confirmed'
 } as const;
 
 export const EntityAssessmentsTab = ({
@@ -105,10 +112,18 @@ const AssessmentFillCard = ({
 }) => {
   const [open, setOpen] = useState(false);
   const { data: responses = [] } = useAssessmentResponses(workspaceId, assessment.id);
-  const upsertResponse = useUpsertAssessmentResponse(workspaceId, assessment.id, assessment.fields);
+  const upsertResponse = useUpsertAssessmentResponse(
+    workspaceId,
+    assessment.id,
+    assessment.fields,
+    assessment.mode
+  );
 
   const response = responses.find(r => r.entity_id === entityId);
-  const status = response?.status ?? computeAssessmentStatus(assessment.fields, undefined);
+  const status =
+    response?.status ?? computeAssessmentStatus(assessment.fields, undefined, assessment.mode);
+  const statusLabel =
+    assessment.mode === 'confirm' ? CONFIRM_STATUS_LABEL[status] : STATUS_LABEL[status];
 
   return (
     <div className={styles.card}>
@@ -122,7 +137,7 @@ const AssessmentFillCard = ({
           {projectName && <div className={styles.proj}>{projectName}</div>}
         </div>
         <span className={`${styles.statusDot} ${styles[`st-${status}`]}`} />
-        {STATUS_LABEL[status]}
+        {statusLabel}
         {response?.updated_by && (
           <MemberAvatar
             userId={response.updated_by}
@@ -151,26 +166,35 @@ const AssessmentFillCard = ({
               </Link>
             )}
           </div>
-          {assessment.fields.map(field => (
-            <div key={field.id} className={styles.row}>
-              <div className={styles.label}>
-                {field.label}
-                {field.requirementLevel === 'optional' && (
-                  <span className={styles.optionalLabel}> (optional)</span>
-                )}
-              </div>
-              <div className={styles.value}>
-                <AssessmentFieldCell
-                  field={field}
-                  value={response?.values[field.id]}
+          {assessment.mode === 'confirm'
+            ? status !== 'complete' && (
+                <Button
                   disabled={assessment.status !== 'open'}
-                  onChange={value =>
-                    upsertResponse.mutate({ entityId, values: { [field.id]: value } })
-                  }
-                />
-              </div>
-            </div>
-          ))}
+                  onClick={() => upsertResponse.mutate({ entityId, values: {} })}
+                >
+                  Confirm accurate
+                </Button>
+              )
+            : assessment.fields.map(field => (
+                <div key={field.id} className={styles.row}>
+                  <div className={styles.label}>
+                    {field.label}
+                    {field.requirementLevel === 'optional' && (
+                      <span className={styles.optionalLabel}> (optional)</span>
+                    )}
+                  </div>
+                  <div className={styles.value}>
+                    <AssessmentFieldCell
+                      field={field}
+                      value={response?.values[field.id]}
+                      disabled={assessment.status !== 'open'}
+                      onChange={value =>
+                        upsertResponse.mutate({ entityId, values: { [field.id]: value } })
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
         </div>
       )}
     </div>

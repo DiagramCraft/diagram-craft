@@ -5,6 +5,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import {
   TbPlus,
   TbTrash,
@@ -12,11 +13,13 @@ import {
   TbDatabase,
   TbStar,
   TbListCheck,
-  TbAlignLeft
+  TbAlignLeft,
+  TbEdit
 } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type {
   Assessment,
+  AssessmentEnumOption,
   AssessmentField,
   CreateAssessmentRequest
 } from '@arch-register/api-types/assessmentContract';
@@ -36,6 +39,7 @@ import {
 import { useEntitiesBySchema, useEntityCountsBySchema } from '../../hooks/useEntities';
 import { AssessmentScopeFilterBuilder } from './components/AssessmentScopeFilterBuilder';
 import { EmptyState } from '../../components/EmptyState';
+import { assessmentTemplates, cloneAssessmentTemplateValues } from '../../lib/assessmentTemplates';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
@@ -57,6 +61,8 @@ const FIELD_TYPE_META: Record<
   enum: { icon: TbDatabase, hint: null },
   text: { icon: TbAlignLeft, hint: 'free text' }
 };
+
+const START_FROM_SCRATCH = '__start_from_scratch__';
 
 export const ProjectAssessments = ({
   project,
@@ -330,9 +336,17 @@ export const AssessmentEditorDialog = ({
     assessment?.fields.map(f => ({ ...f })) ?? []
   );
   const [status, setStatus] = useState<Assessment['status']>(assessment?.status ?? 'draft');
+  const [mode, setMode] = useState<Assessment['mode']>(assessment?.mode ?? 'fields');
+  const [selectedTemplateId, setSelectedTemplateId] = useState(isNew ? START_FROM_SCRATCH : '');
+  const [isDirty, setIsDirty] = useState(false);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
 
-  const toggleScope = (id: string) =>
+  const markDirty = () => setIsDirty(true);
+
+  const toggleScope = (id: string) => {
+    markDirty();
     setScope(prev => (prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]));
+  };
 
   const allowedScopeConditionFields = useMemo(() => {
     const result = new Set(['_owner', '_lifecycle', '_namespace']);
@@ -360,6 +374,7 @@ export const AssessmentEditorDialog = ({
   const showScopeWarning = !!assessment && assessment.response_count > 0 && hasScopeChanged;
 
   const addField = (type: AssessmentField['type']) => {
+    markDirty();
     const base = { id: `f${Date.now()}`, label: '', requirementLevel: 'required' as const };
     setFields(prev => [
       ...prev,
@@ -367,15 +382,69 @@ export const AssessmentEditorDialog = ({
     ]);
   };
 
-  const updateField = (id: string, changes: Partial<AssessmentField>) =>
-    setFields(prev => prev.map(f => (f.id === id ? ({ ...f, ...changes } as AssessmentField) : f)));
+  const updateField = (id: string, changes: Partial<AssessmentField>) => {
+    markDirty();
+    setFields(prev =>
+      prev.map(f => {
+        if (f.id !== id) return f;
+        const next = { ...f, ...changes } as Record<string, unknown>;
+        if ('enumId' in changes && changes.enumId === undefined) delete next.enumId;
+        if ('options' in changes && changes.options === undefined) delete next.options;
+        return next as AssessmentField;
+      })
+    );
+  };
 
-  const removeField = (id: string) => setFields(prev => prev.filter(f => f.id !== id));
+  const removeField = (id: string) => {
+    markDirty();
+    setFields(prev => prev.filter(f => f.id !== id));
+  };
+
+  const applyTemplate = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    setPendingTemplateId(null);
+
+    if (templateId === START_FROM_SCRATCH) {
+      setName('');
+      setDescription('');
+      setScope([]);
+      setScopeConditions([]);
+      setFields([]);
+      setStatus('draft');
+      setMode('fields');
+      setIsDirty(false);
+      return;
+    }
+
+    const template = assessmentTemplates.find(item => item.id === templateId);
+    if (!template) return;
+
+    const values = cloneAssessmentTemplateValues(template.values);
+    setName(values.name);
+    setDescription(values.description);
+    setScope(values.scope);
+    setScopeConditions(values.scope_conditions);
+    setFields(values.fields);
+    setStatus('draft');
+    setMode(values.mode);
+    setIsDirty(false);
+  };
+
+  const selectTemplate = (value: string | undefined) => {
+    const nextTemplateId = value ?? START_FROM_SCRATCH;
+    if (nextTemplateId === selectedTemplateId) return;
+    if (isDirty) {
+      setPendingTemplateId(nextTemplateId);
+      return;
+    }
+    applyTemplate(nextTemplateId);
+  };
 
   const canSave = name.trim().length > 0;
 
-  return (
+  return [
     <Dialog
+      key="assessment-editor"
       open
       onClose={onCancel}
       title={isNew ? 'New assessment' : 'Edit assessment'}
@@ -391,125 +460,217 @@ export const AssessmentEditorDialog = ({
               {
                 name: name.trim(),
                 description: description.trim(),
+                mode,
                 scope,
                 scope_conditions: scopeConditions,
-                fields
+                fields: mode === 'confirm' ? [] : fields
               },
               status
             )
         }
       ]}
     >
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Basic info</div>
-        <FormElement label="Name" required>
-          <TextInput
-            value={name}
-            onChange={v => setName(v ?? '')}
-            placeholder="e.g. Security Readiness"
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-        <FormElement label="Description" required={false}>
-          <TextInput
-            value={description}
-            onChange={v => setDescription(v ?? '')}
-            placeholder="Explain the purpose of this assessment"
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Status</div>
-        <div style={{ width: 160 }}>
-          <Select.Root
-            value={status}
-            onChange={v => setStatus((v ?? 'draft') as Assessment['status'])}
-          >
-            {(Object.keys(STATUS_LABEL) as Assessment['status'][]).map(s => (
-              <Select.Item key={s} value={s}>
-                {STATUS_LABEL[s]}
-              </Select.Item>
-            ))}
-          </Select.Root>
+      <div className={styles.editorTopSection}>
+        <div className={styles.editorTopRow}>
+          <FormElement label="Name" required>
+            <TextInput
+              value={name}
+              onChange={v => {
+                markDirty();
+                setName(v ?? '');
+              }}
+              placeholder="e.g. Security Readiness"
+              style={{ width: '100%' }}
+            />
+          </FormElement>
+          {isNew && (
+            <FormElement label="Start from template" required={false}>
+              <Select.Root value={selectedTemplateId} onChange={selectTemplate}>
+                <Select.Item value={START_FROM_SCRATCH}>Start from scratch</Select.Item>
+                {assessmentTemplates.map(template => (
+                  <Select.Item key={template.id} value={template.id}>
+                    {template.label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </FormElement>
+          )}
         </div>
       </div>
 
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Scope</div>
-        <div className={styles.sectionHint}>Which entity types does this assessment apply to?</div>
-        <div className={styles.scopeGrid}>
-          {schemas.map(schema => {
-            const on = scope.includes(schema.id);
-            return (
-              <button
-                key={schema.id}
-                type="button"
-                className={`${styles.scopeChip} ${on ? styles.scopeChipOn : ''}`}
-                onClick={() => toggleScope(schema.id)}
+      <Tabs.Root defaultValue="basic-info">
+        <Tabs.List aria-label="Assessment editor sections">
+          <Tabs.Trigger value="basic-info">Basic Info</Tabs.Trigger>
+          <Tabs.Trigger value="scope">Scope</Tabs.Trigger>
+          <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Content value="basic-info" style={{ height: 'auto' }}>
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Description</div>
+            <TextInput
+              value={description}
+              onChange={v => {
+                markDirty();
+                setDescription(v ?? '');
+              }}
+              placeholder="Explain the purpose of this assessment"
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Status</div>
+            <div style={{ width: 160 }}>
+              <Select.Root
+                value={status}
+                onChange={v => {
+                  markDirty();
+                  setStatus((v ?? 'draft') as Assessment['status']);
+                }}
               >
-                <TypeBadge color={schema.color ?? '#888'} icon={schema.icon} size={16} />
-                <span>{schema.name}</span>
-              </button>
-            );
-          })}
-        </div>
-        <AssessmentScopeFilterBuilder
-          conditions={scopeConditions}
-          onChange={setScopeConditions}
-          schemas={schemas}
-          scope={scope}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
-        />
-        <div className={styles.scopePreview}>
-          {scope.length === 0
-            ? 'No entity types selected.'
-            : previewLoading
-              ? 'Counting matching entities...'
-              : `${previewCount} matching entit${previewCount === 1 ? 'y' : 'ies'}`}
-        </div>
-        {showScopeWarning && (
-          <div className={styles.scopeWarning}>
-            Changing scope may add or remove entities from this assessment. Existing responses are
-            kept.
+                {(Object.keys(STATUS_LABEL) as Assessment['status'][]).map(s => (
+                  <Select.Item key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className={styles.section}>
-        <div className={styles.sectionRow}>
-          <div className={styles.sectionLabel}>
-            Fields{fields.length > 0 ? ` (${fields.length})` : ''}
-          </div>
-          <div className={styles.fieldAddButtons}>
-            {FIELD_TYPE_OPTIONS.map(([type, label]) => (
-              <Button key={type} icon={<TbPlus size={11} />} onClick={() => addField(type)}>
-                {label}
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Completion mode</div>
+            <div className={styles.sectionHint}>
+              Either fill in one or more fields per entity, or simply confirm the existing entity
+              data is accurate.
+            </div>
+            <div className={styles.fieldAddButtons}>
+              <Button
+                variant={mode === 'fields' ? 'primary' : 'secondary'}
+                onClick={() => {
+                  markDirty();
+                  setMode('fields');
+                }}
+              >
+                Fields
               </Button>
-            ))}
+              <Button
+                variant={mode === 'confirm' ? 'primary' : 'secondary'}
+                onClick={() => {
+                  markDirty();
+                  setMode('confirm');
+                }}
+              >
+                Confirm only
+              </Button>
+            </div>
           </div>
-        </div>
-        {fields.length === 0 ? (
-          <div className={styles.fieldsEmpty}>
-            No fields yet — add a Rating, Select, or Notes field above.
+        </Tabs.Content>
+
+        <Tabs.Content value="scope" style={{ height: 'auto' }}>
+          <div className={styles.section}>
+            <div className={styles.sectionHint}>
+              Which entity types does this assessment apply to?
+            </div>
+            <div className={styles.scopeGrid}>
+              {schemas.map(schema => {
+                const on = scope.includes(schema.id);
+                return (
+                  <button
+                    key={schema.id}
+                    type="button"
+                    className={`${styles.scopeChip} ${on ? styles.scopeChipOn : ''}`}
+                    onClick={() => toggleScope(schema.id)}
+                  >
+                    <TypeBadge color={schema.color ?? '#888'} icon={schema.icon} size={16} />
+                    <span>{schema.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <AssessmentScopeFilterBuilder
+              conditions={scopeConditions}
+              onChange={conditions => {
+                markDirty();
+                setScopeConditions(conditions);
+              }}
+              schemas={schemas}
+              scope={scope}
+              lifecycleStates={lifecycleStates}
+              teams={teams}
+            />
+            <div className={styles.scopePreview}>
+              {scope.length === 0
+                ? 'No entity types selected.'
+                : previewLoading
+                  ? 'Counting matching entities...'
+                  : `${previewCount} matching entit${previewCount === 1 ? 'y' : 'ies'}`}
+            </div>
+            {showScopeWarning && (
+              <div className={styles.scopeWarning}>
+                Changing scope may add or remove entities from this assessment. Existing responses
+                are kept.
+              </div>
+            )}
           </div>
-        ) : (
-          <div className={styles.fieldsList}>
-            {fields.map(field => (
-              <FieldRow
-                key={field.id}
-                field={field}
-                onUpdate={changes => updateField(field.id, changes)}
-                onRemove={() => removeField(field.id)}
-              />
-            ))}
+        </Tabs.Content>
+
+        <Tabs.Content value="fields" style={{ height: 'auto' }}>
+          <div className={styles.section}>
+            <div className={styles.sectionRow}>
+              <div className={styles.sectionLabel}>
+                Fields{fields.length > 0 ? ` (${fields.length})` : ''}
+              </div>
+              <div className={styles.fieldAddButtons}>
+                {FIELD_TYPE_OPTIONS.map(([type, label]) => (
+                  <Button key={type} icon={<TbPlus size={11} />} onClick={() => addField(type)}>
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {fields.length === 0 ? (
+              <div className={styles.fieldsEmpty}>
+                No fields yet — add a Rating, Select, or Notes field above.
+              </div>
+            ) : (
+              <div className={styles.fieldsList}>
+                {fields.map(field => (
+                  <FieldRow
+                    key={field.id}
+                    field={field}
+                    onUpdate={changes => updateField(field.id, changes)}
+                    onRemove={() => removeField(field.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </Tabs.Content>
+      </Tabs.Root>
+    </Dialog>,
+    <Dialog
+      key="template-replacement-confirmation"
+      open={pendingTemplateId !== null}
+      onClose={() => setPendingTemplateId(null)}
+      title="Replace assessment template?"
+      width={420}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: () => setPendingTemplateId(null) },
+        {
+          label: 'Replace values',
+          type: 'default',
+          onClick: () => {
+            if (pendingTemplateId) applyTemplate(pendingTemplateId);
+          }
+        }
+      ]}
+    >
+      <p>
+        Your current assessment values will be replaced by the selected template. This cannot be
+        undone.
+      </p>
     </Dialog>
-  );
+  ];
 };
 
 const FIELD_TYPE_OPTIONS: [AssessmentField['type'], string][] = [
@@ -528,6 +689,8 @@ const FieldRow = ({
   onRemove: () => void;
 }) => {
   const { enums } = useWorkspaceContext();
+  const [inlineOptionsOpen, setInlineOptionsOpen] = useState(false);
+  const [draftInlineOptions, setDraftInlineOptions] = useState<AssessmentEnumOption[]>([]);
   const meta = FIELD_TYPE_META[field.type];
   const Icon = meta.icon;
   const placeholders: Record<AssessmentField['type'], string> = {
@@ -549,17 +712,54 @@ const FieldRow = ({
       />
       {field.type === 'enum' && (
         <div className={styles.fieldEnum}>
-          <Select.Root
-            value={field.enumId}
-            placeholder="Choose enum…"
-            onChange={v => onUpdate({ enumId: v ?? '' } as Partial<AssessmentField>)}
-          >
-            {enums.map(en => (
-              <Select.Item key={en.id} value={en.id}>
-                {en.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
+          <div className={styles.enumSourceRow}>
+            <Select.Root
+              value={'options' in field ? 'inline' : 'workspace'}
+              onChange={v => {
+                if (v === 'inline') {
+                  onUpdate({
+                    options:
+                      'options' in field && field.options.length > 0
+                        ? field.options
+                        : [{ value: 'option_1', label: '' }],
+                    enumId: undefined
+                  } as Partial<AssessmentField>);
+                } else {
+                  onUpdate({
+                    enumId: ('enumId' in field ? field.enumId : undefined) ?? enums[0]?.id ?? '',
+                    options: undefined
+                  } as Partial<AssessmentField>);
+                }
+              }}
+            >
+              <Select.Item value="workspace">Existing enum</Select.Item>
+              <Select.Item value="inline">Inline values</Select.Item>
+            </Select.Root>
+            {'options' in field && (
+              <Button
+                variant="ghost"
+                icon={<TbEdit size={13} />}
+                onClick={() => {
+                  setDraftInlineOptions(field.options.map(option => ({ ...option })));
+                  setInlineOptionsOpen(true);
+                }}
+                title="Edit inline values"
+              />
+            )}
+          </div>
+          {'options' in field ? null : (
+            <Select.Root
+              value={field.enumId}
+              placeholder="Choose enum…"
+              onChange={v => onUpdate({ enumId: v ?? '' } as Partial<AssessmentField>)}
+            >
+              {enums.map(en => (
+                <Select.Item key={en.id} value={en.id}>
+                  {en.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          )}
         </div>
       )}
       {meta.hint && <span className={styles.fieldHint}>{meta.hint}</span>}
@@ -580,6 +780,76 @@ const FieldRow = ({
         onClick={onRemove}
         title="Remove field"
       />
+      {field.type === 'enum' && 'options' in field && (
+        <Dialog
+          open={inlineOptionsOpen}
+          onClose={() => setInlineOptionsOpen(false)}
+          title={`Edit values: ${field.label || 'Select field'}`}
+          width={520}
+          buttons={[
+            { label: 'Cancel', type: 'cancel', onClick: () => setInlineOptionsOpen(false) },
+            {
+              label: 'Save values',
+              type: 'default',
+              onClick: () => {
+                onUpdate({ options: draftInlineOptions } as Partial<AssessmentField>);
+                setInlineOptionsOpen(false);
+              }
+            }
+          ]}
+        >
+          <div className={styles.inlineEnumDialogOptions}>
+            {draftInlineOptions.map((option, index) => (
+              <div key={`${option.value}-${index}`} className={styles.inlineEnumDialogOption}>
+                <TextInput
+                  value={option.value}
+                  onChange={value =>
+                    setDraftInlineOptions(current =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, value: value ?? '' } : item
+                      )
+                    )
+                  }
+                  placeholder="Value"
+                />
+                <TextInput
+                  value={option.label}
+                  onChange={value =>
+                    setDraftInlineOptions(current =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, label: value ?? '' } : item
+                      )
+                    )
+                  }
+                  placeholder="Label"
+                />
+                <Button
+                  variant="ghost"
+                  icon={<TbTrash size={13} />}
+                  onClick={() =>
+                    setDraftInlineOptions(current =>
+                      current.filter((_, itemIndex) => itemIndex !== index)
+                    )
+                  }
+                  title="Remove option"
+                />
+              </div>
+            ))}
+            <Button
+              variant="ghost"
+              icon={<TbPlus size={13} />}
+              onClick={() =>
+                setDraftInlineOptions(current => [
+                  ...current,
+                  { value: `option_${current.length + 1}`, label: '' }
+                ])
+              }
+            >
+              Add option
+            </Button>
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 };

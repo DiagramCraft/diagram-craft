@@ -81,6 +81,11 @@
   flex-wrap: wrap;
 }
 
+.tableWrap {
+  flex: 1;
+  min-height: 0;
+}
+
 .filterGroup {
   display: inline-flex;
   background: var(--cmp-bg);

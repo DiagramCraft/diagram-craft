@@ -155,12 +155,31 @@
 }
 
 /* Editor dialog */
+.editorTopSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+}
+
+.editorTopRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
 .section {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 14px 0;
   border-bottom: 1px solid var(--cmp-border);
+}
+
+@media (max-width: 560px) {
+  .editorTopRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .section:last-child {
@@ -291,4 +310,23 @@
 .fieldEnum {
   width: 140px;
   flex-shrink: 0;
+}
+
+.enumSourceRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inlineEnumDialogOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inlineEnumDialogOption {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(100px, 1.5fr) auto;
+  gap: 6px;
+  align-items: center;
 }

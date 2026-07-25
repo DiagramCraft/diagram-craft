@@ -4,6 +4,7 @@ import type { WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
 import { matchesFilterCondition } from '../catalog/dataHelpers';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
 import { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
+import { getInlineAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 
 export const toApiAssessmentResponse = (
   row: AssessmentResponseDbResult,
@@ -12,7 +13,7 @@ export const toApiAssessmentResponse = (
   id: row.id,
   entity_id: row.entity_id,
   values: row.values,
-  status: computeAssessmentStatus(assessment.fields, row.values),
+  status: computeAssessmentStatus(assessment.fields, row.values, assessment.mode),
   updated_at: row.updated_at.toISOString(),
   updated_by: row.updated_by,
   updated_by_name: row.updated_by_name
@@ -22,7 +23,9 @@ export const countCompletedEntities = (
   responses: AssessmentResponseDbResult[],
   assessment: AssessmentDbResult
 ): number =>
-  responses.filter(r => computeAssessmentStatus(assessment.fields, r.values) === 'complete').length;
+  responses.filter(
+    r => computeAssessmentStatus(assessment.fields, r.values, assessment.mode) === 'complete'
+  ).length;
 
 const CSV_COLUMNS_STATIC_HEAD = ['Entity', 'Owner', 'Schema Type'];
 const CSV_COLUMNS_STATIC_TAIL = ['Status'];
@@ -41,8 +44,14 @@ export const buildAssessmentResultsCsvData = (
   enums: WorkspaceEnumDbResult[]
 ): { columns: string[]; rows: Record<string, unknown>[] } => {
   const responseByEntity = new Map(responses.map(r => [r.entity_id, r]));
-  const enumOptionLabel = (enumId: string, value: string) =>
-    enums.find(e => e.id === enumId)?.options.find(o => o.value === value)?.label ?? value;
+  const enumOptionLabel = (
+    field: Extract<AssessmentDbResult['fields'][number], { type: 'enum' }>,
+    value: string
+  ) =>
+    (
+      getInlineAssessmentEnumOptions(field) ??
+      ('enumId' in field ? enums.find(e => e.id === field.enumId)?.options : undefined)
+    )?.find(o => o.value === value)?.label ?? value;
 
   const columns = [
     ...CSV_COLUMNS_STATIC_HEAD,
@@ -67,7 +76,7 @@ export const buildAssessmentResultsCsvData = (
         if (value === undefined) {
           row[field.label] = '';
         } else if (field.type === 'enum') {
-          row[field.label] = enumOptionLabel(field.enumId, String(value));
+          row[field.label] = enumOptionLabel(field, String(value));
         } else {
           row[field.label] = value;
         }

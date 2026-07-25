@@ -16,6 +16,7 @@ const makeRow = (overrides: Partial<AssessmentDbResult> = {}): AssessmentDbResul
   name: 'Security Readiness',
   description: 'Assess security posture',
   status: 'open',
+  mode: 'fields',
   scope: ['schema-service'],
   scope_conditions: [],
   fields: [
@@ -44,11 +45,22 @@ describe('buildCreateAssessmentInput', () => {
     expect(input.name).toBe('New assessment');
     expect(input.description).toBe('');
     expect(input.status).toBe('draft');
+    expect(input.mode).toBe('fields');
     expect(input.scope).toEqual([]);
     expect(input.scope_conditions).toEqual([]);
     expect(input.fields).toEqual([]);
     expect(input.created_at).toBe(now);
     expect(input.id).toEqual(expect.any(String));
+  });
+
+  it('carries through a confirm mode', () => {
+    const input = buildCreateAssessmentInput(
+      'ws-1',
+      { project_id: 'proj-1', name: 'Data confirmation', mode: 'confirm' },
+      now
+    );
+    expect(input.mode).toBe('confirm');
+    expect(input.fields).toEqual([]);
   });
 
   it('carries through provided description, scope, and fields', () => {
@@ -84,6 +96,7 @@ describe('buildUpdateAssessmentInput', () => {
     expect(input.name).toBe('Renamed');
     expect(input.description).toBe(existing.description);
     expect(input.status).toBe(existing.status);
+    expect(input.mode).toBe(existing.mode);
     expect(input.scope).toEqual(existing.scope);
     expect(input.scope_conditions).toEqual(existing.scope_conditions);
     expect(input.fields).toEqual(existing.fields);
