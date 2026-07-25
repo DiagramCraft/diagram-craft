@@ -38,6 +38,7 @@ import {
   withoutDisplayFieldIds
 } from './entityDisplayFields';
 import { CollectionPickerDialog } from './CollectionPickerDialog';
+import { useTimelineMarkers } from '../../../hooks/useEntities';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
@@ -154,7 +155,7 @@ export const SaveViewDialog = ({
 export const EntityBrowser = ({
   projectContext,
   onCountChange,
-  timelineMarkers = []
+  timelineMarkers
 }: EntityBrowserProps) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas, enums, lifecycleStates, teams, projects } = useWorkspaceContext();
@@ -223,6 +224,11 @@ export const EntityBrowser = ({
   ]);
   const readOnly = !!asOf && !collectionId;
   const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
+  const { data: fetchedTimelineMarkers = [] } = useTimelineMarkers(
+    workspaceId,
+    !projectId && !collectionId && (tlOpen || !!asOf)
+  );
+  const resolvedTimelineMarkers = timelineMarkers ?? fetchedTimelineMarkers;
   const [collectionTarget, setCollectionTarget] = useState<BrowserEntityRecord | null>(null);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
@@ -420,7 +426,7 @@ export const EntityBrowser = ({
       />
       {!collectionId && tlOpen && (
         <TimelineStrip
-          markers={timelineMarkers}
+          markers={resolvedTimelineMarkers}
           selectedDate={asOf}
           onSelect={setAsOf}
           onClear={clearAsOf}

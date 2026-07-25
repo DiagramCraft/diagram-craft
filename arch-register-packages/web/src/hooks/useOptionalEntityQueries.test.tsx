@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAssessments } from './useAssessments';
 import { useAssessmentResponses } from './useAssessmentResponses';
 import { useCollections } from './useCollections';
-import { useEntityFacets } from './useEntities';
+import { useEntityFacets, useTimelineMarkers } from './useEntities';
 import { usePinnedEntities } from './useNotifications';
 import { useSavedViews } from './useSavedViews';
 import { useJoinedAssessment } from '../sections/entities/components/useJoinedAssessment';
@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   listCollections: vi.fn(),
   listPinnedEntities: vi.fn(),
   listFacets: vi.fn(),
+  listTimelineMarkers: vi.fn(),
   listAssessments: vi.fn(),
   listAssessmentResponses: vi.fn()
 }));
@@ -25,7 +26,7 @@ vi.mock('../lib/orpcClient', () => ({
     views: { list: mocks.listViews },
     collections: { list: mocks.listCollections },
     pinnedEntities: { list: mocks.listPinnedEntities },
-    entities: { facets: mocks.listFacets },
+    entities: { facets: mocks.listFacets, timelineMarkers: mocks.listTimelineMarkers },
     assessments: { list: mocks.listAssessments },
     assessmentResponses: { list: mocks.listAssessmentResponses }
   }
@@ -74,6 +75,7 @@ describe('optional entity queries', () => {
     mocks.listCollections.mockResolvedValue([]);
     mocks.listPinnedEntities.mockResolvedValue([]);
     mocks.listFacets.mockResolvedValue({ total: 0, schema: [], lifecycle: [], owner: [] });
+    mocks.listTimelineMarkers.mockResolvedValue([]);
     mocks.listAssessments.mockResolvedValue([]);
     mocks.listAssessmentResponses.mockResolvedValue([]);
   });
@@ -96,6 +98,7 @@ describe('optional entity queries', () => {
     });
 
     expect(mocks.listFacets).toHaveBeenCalledTimes(1);
+    expect(mocks.listTimelineMarkers).not.toHaveBeenCalled();
     expect(mocks.listViews).not.toHaveBeenCalled();
     expect(mocks.listCollections).not.toHaveBeenCalled();
     expect(mocks.listPinnedEntities).not.toHaveBeenCalled();
@@ -134,6 +137,38 @@ describe('optional entity queries', () => {
     expect(mocks.listCollections).toHaveBeenCalledTimes(1);
     expect(mocks.listPinnedEntities).toHaveBeenCalledTimes(1);
     expect(mocks.listAssessments).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts timeline marker requests when the timeline becomes enabled', async () => {
+    const TimelineHarness = () => {
+      const [enabled, setEnabled] = useState(false);
+      useTimelineMarkers('workspace', enabled);
+      return (
+        <>
+          <button type="button" onClick={() => setEnabled(true)}>
+            enable timeline
+          </button>
+        </>
+      );
+    };
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <TimelineHarness />
+        </QueryClientProvider>
+      );
+      await Promise.resolve();
+    });
+
+    expect(mocks.listTimelineMarkers).not.toHaveBeenCalled();
+
+    await act(async () => {
+      (container.querySelector('button') as HTMLButtonElement).click();
+      await Promise.resolve();
+    });
+
+    expect(mocks.listTimelineMarkers).toHaveBeenCalledTimes(1);
   });
 
   it('keeps assessment data disabled until the picker or URL enables it', async () => {
