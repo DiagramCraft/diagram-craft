@@ -131,9 +131,20 @@ export const buildUpdateAssessmentInput = (
   };
 };
 
+export type AssessmentTeamAcknowledgeStatus = {
+  team_id: string;
+  team_name: string;
+  status: 'open' | 'completed' | 'superseded';
+  resolved_at: string | null;
+};
+
 export const toApiAssessment = (
   row: AssessmentDbResult,
-  stats: { response_count: number; completed_entity_count: number },
+  stats: {
+    response_count: number;
+    completed_entity_count: number;
+    team_acknowledge_status?: AssessmentTeamAcknowledgeStatus[];
+  },
   projectId: string
 ): Assessment => ({
   id: row.id,
@@ -154,6 +165,7 @@ export const toApiAssessment = (
   next_occurrence_at: row.next_occurrence_at ? row.next_occurrence_at.toISOString() : null,
   response_count: stats.response_count,
   completed_entity_count: stats.completed_entity_count,
+  team_acknowledge_status: stats.team_acknowledge_status ?? [],
   created_at: row.created_at.toISOString(),
   updated_at: row.updated_at.toISOString()
 });

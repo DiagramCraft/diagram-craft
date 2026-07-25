@@ -4,6 +4,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { AssessmentDbResult } from './db/projectDatabase';
 import {
   ASSESSMENT_RESPONSE_CASE_KIND,
+  getAssessment,
   listAssessments,
   updateAssessmentStatus
 } from './assessmentOperations';
@@ -108,7 +109,8 @@ describe('updateAssessmentStatus', () => {
         outcome: string | null,
         at: Date
       ) => Promise<GovernanceCaseDbResult | null>,
-      supersedeAllOpenAssignmentsForCase: vi.fn(async () => [] as string[])
+      supersedeAllOpenAssignmentsForCase: vi.fn(async () => [] as string[]),
+      listAssignmentsForCase: vi.fn(async () => [])
     };
     const db = {
       project: {
@@ -119,6 +121,9 @@ describe('updateAssessmentStatus', () => {
           ...(patch as Record<string, unknown>)
         })),
         listAssessmentResponses: vi.fn(async () => [])
+      },
+      workspace: {
+        listTeams: vi.fn(async () => [])
       },
       governance: governance,
       notification: {
@@ -184,5 +189,80 @@ describe('updateAssessmentStatus', () => {
       'case-1',
       expect.any(Date)
     );
+  });
+});
+
+describe('getAssessment team_acknowledge_status', () => {
+  const project = { id: 'project-1', owner: 'allowed' };
+
+  it('is empty when no teams are assigned', async () => {
+    const row = assessment('assessment-1', project.id);
+    const db = {
+      project: {
+        getAssessmentById: vi.fn(async () => row),
+        getProject: vi.fn(async () => project),
+        listAssessmentResponses: vi.fn(async () => [])
+      },
+      governance: { listCases: vi.fn(async () => []) },
+      workspace: { listTeams: vi.fn(async () => []) }
+    } as unknown as DatabaseAdapter;
+
+    const result = await getAssessment(db, 'ws-1', 'assessment-1', event);
+
+    expect(result.team_acknowledge_status).toEqual([]);
+  });
+
+  it('resolves per-team status and names from the latest governance case', async () => {
+    const row = {
+      ...assessment('assessment-1', project.id),
+      assigned_team_ids: ['team-a', 'team-b']
+    };
+    const resolvedAt = new Date('2026-06-02T00:00:00.000Z');
+    const db = {
+      project: {
+        getAssessmentById: vi.fn(async () => row),
+        getProject: vi.fn(async () => project),
+        listAssessmentResponses: vi.fn(async () => [])
+      },
+      governance: {
+        listCases: vi.fn(async () => [
+          { id: 'case-1', created_at: new Date('2026-06-01T00:00:00.000Z') }
+        ]),
+        listAssignmentsForCase: vi.fn(async () => [
+          {
+            id: 'assign-a',
+            target_type: 'team',
+            target_team_id: 'team-a',
+            status: 'open',
+            resolved_at: null
+          },
+          {
+            id: 'assign-b',
+            target_type: 'team',
+            target_team_id: 'team-b',
+            status: 'completed',
+            resolved_at: resolvedAt
+          }
+        ])
+      },
+      workspace: {
+        listTeams: vi.fn(async () => [
+          { id: 'team-a', name: 'Team A' },
+          { id: 'team-b', name: 'Team B' }
+        ])
+      }
+    } as unknown as DatabaseAdapter;
+
+    const result = await getAssessment(db, 'ws-1', 'assessment-1', event);
+
+    expect(result.team_acknowledge_status).toEqual([
+      { team_id: 'team-a', team_name: 'Team A', status: 'open', resolved_at: null },
+      {
+        team_id: 'team-b',
+        team_name: 'Team B',
+        status: 'completed',
+        resolved_at: resolvedAt.toISOString()
+      }
+    ]);
   });
 });

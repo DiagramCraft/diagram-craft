@@ -178,7 +178,8 @@
           assessment grid or entity detail view, or, for confirm-only assessments, record a single "confirmed
           accurate" action per entity.
 
-        - @id:ar.assessments.progress Users can inspect assessment completion, status, summary, and aggregate results.
+        - @id:ar.assessments.progress Users can inspect assessment completion, status, summary, and aggregate results,
+          including a per-team acknowledgement breakdown when the assessment has assigned teams.
 
         - @id:ar.assessments.entity-views Users can join assessment data to entity views and use the assessment fields
           for filtering, sorting, and analysis.
