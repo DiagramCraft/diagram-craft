@@ -69,7 +69,7 @@ export const listRepos = async (org: string, token?: string): Promise<GitHubRepo
 
     // Check if there are more pages
     const linkHeader = response.headers.get('Link');
-    if (!linkHeader || !linkHeader.includes('rel="next"')) {
+    if (!linkHeader?.includes('rel="next"')) {
       break;
     }
 
@@ -161,7 +161,7 @@ const fetchWithRetry = async (
 
       // Handle server errors with exponential backoff
       if (response.status >= 500 && attempt < maxRetries - 1) {
-        const backoffTime = Math.min(1000 * Math.pow(2, attempt), 10000);
+        const backoffTime = Math.min(1000 * 2 ** attempt, 10000);
         console.warn(
           `GitHub API error ${response.status}. Retrying in ${backoffTime}ms... (attempt ${attempt + 1}/${maxRetries})`
         );
@@ -175,12 +175,11 @@ const fetchWithRetry = async (
 
       // Network errors - retry with exponential backoff
       if (attempt < maxRetries - 1) {
-        const backoffTime = Math.min(1000 * Math.pow(2, attempt), 10000);
+        const backoffTime = Math.min(1000 * 2 ** attempt, 10000);
         console.warn(
           `Network error: ${lastError.message}. Retrying in ${backoffTime}ms... (attempt ${attempt + 1}/${maxRetries})`
         );
         await sleep(backoffTime);
-        continue;
       }
     }
   }

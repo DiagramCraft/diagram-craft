@@ -8,7 +8,7 @@ import {
   type BackstageEntity
 } from './backstage.js';
 import { mapBackstageToArchRegister } from './mapper.js';
-import { syncEntity, discoverSchemas, type SyncResult } from './archRegister.js';
+import { syncEntity, discoverSchemas } from './archRegister.js';
 
 export interface SyncReport {
   totalRepos: number;
@@ -271,7 +271,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
  * Prints a summary report of the sync operation
  */
 export const printReport = (report: SyncReport): void => {
-  console.log('\n' + '='.repeat(60));
+  console.log(`\n${'='.repeat(60)}`);
   console.log('📊 Sync Report');
   console.log('='.repeat(60));
   console.log(`Repositories scanned: ${report.totalRepos}`);
@@ -294,5 +294,5 @@ export const printReport = (report: SyncReport): void => {
     }
   }
 
-  console.log('='.repeat(60) + '\n');
+  console.log(`${'='.repeat(60)}\n`);
 };

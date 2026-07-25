@@ -208,7 +208,7 @@ const mapResourceFields = (
 const mapSystemFields = (
   entity: BackstageEntity,
   archEntity: ArchRegisterEntity,
-  warnings: string[]
+  _warnings: string[]
 ): void => {
   // Map domain reference (containment relationship)
   if (entity.spec.domain && typeof entity.spec.domain === 'string') {
