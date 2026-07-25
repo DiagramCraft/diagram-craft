@@ -53,10 +53,7 @@ const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] 
 
       if (field.requirementLevel === 'required') {
         field.minCount = 1;
-      } else if (
-        field.requirementLevel === 'optional' ||
-        field.requirementLevel === 'expected'
-      ) {
+      } else if (field.requirementLevel === 'optional' || field.requirementLevel === 'expected') {
         field.minCount = 0;
       }
     }

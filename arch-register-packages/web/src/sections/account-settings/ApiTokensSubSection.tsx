@@ -25,10 +25,7 @@ import { useWorkspaces } from '../../hooks/useWorkspaces';
 import { formatDate } from '../../utils/dateFormat';
 import styles from './ApiTokensSubSection.module.css';
 
-const EDITOR_CAPABILITIES = [
-  ...WORKSPACE_ROLE_CAPABILITIES.editor,
-  'ent.external_update' as const
-];
+const EDITOR_CAPABILITIES = [...WORKSPACE_ROLE_CAPABILITIES.editor, 'ent.external_update' as const];
 
 const CAPABILITY_LABELS: Record<string, string> = {
   'ws.view': 'View workspace',

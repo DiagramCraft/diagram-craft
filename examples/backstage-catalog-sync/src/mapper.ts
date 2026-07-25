@@ -213,7 +213,7 @@ const mapResourceFields = (
  */
 const mapSystemFields = (
   entity: BackstageEntity,
-  archEntity: ArchRegisterEntity,
+  _archEntity: ArchRegisterEntity,
   _warnings: string[]
 ): void => {
   // Map domain reference (containment relationship)

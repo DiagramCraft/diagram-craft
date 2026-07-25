@@ -10,6 +10,8 @@ describe('workspace template creation', () => {
       second.schemas.map(schema => schema.key_prefix)
     );
     expect(new Set(first.schemas.map(schema => schema.key_prefix)).size).toBe(first.schemas.length);
-    expect(new Set(second.schemas.map(schema => schema.key_prefix)).size).toBe(second.schemas.length);
+    expect(new Set(second.schemas.map(schema => schema.key_prefix)).size).toBe(
+      second.schemas.length
+    );
   });
 });

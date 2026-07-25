@@ -31,7 +31,9 @@ const requestFailure = (url: string, error: unknown) => {
   ]
     .filter(Boolean)
     .join(', ');
-  return new Error(`Request to ${url} failed: ${message}${causeMessage ? ` (${causeMessage})` : ''}`);
+  return new Error(
+    `Request to ${url} failed: ${message}${causeMessage ? ` (${causeMessage})` : ''}`
+  );
 };
 
 /**
@@ -72,7 +74,9 @@ export const fetchSchemas = async (
   try {
     return (await response.json()) as Schema[];
   } catch (error) {
-    throw new Error(`Invalid schema response from ${url}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Invalid schema response from ${url}: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 };
 

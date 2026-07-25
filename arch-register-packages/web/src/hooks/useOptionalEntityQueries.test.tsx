@@ -144,11 +144,9 @@ describe('optional entity queries', () => {
       const [enabled, setEnabled] = useState(false);
       useTimelineMarkers('workspace', enabled);
       return (
-        <>
-          <button type="button" onClick={() => setEnabled(true)}>
-            enable timeline
-          </button>
-        </>
+        <button type="button" onClick={() => setEnabled(true)}>
+          enable timeline
+        </button>
       );
     };
 
