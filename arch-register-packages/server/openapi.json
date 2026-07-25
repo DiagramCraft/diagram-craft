@@ -62679,6 +62679,49 @@
                         "maximum": 9007199254740991,
                         "description": "Number of entities whose response has all required fields filled in"
                       },
+                      "team_acknowledge_status": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "team_id": {
+                              "type": "string",
+                              "description": "Assigned team identifier"
+                            },
+                            "team_name": {
+                              "type": "string",
+                              "description": "Assigned team display name"
+                            },
+                            "status": {
+                              "enum": [
+                                "open",
+                                "completed",
+                                "superseded"
+                              ],
+                              "type": "string",
+                              "description": "Whether the team has acknowledged this assessment"
+                            },
+                            "resolved_at": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "ISO 8601 timestamp the team acknowledged, if resolved"
+                            }
+                          },
+                          "required": [
+                            "team_id",
+                            "team_name",
+                            "status",
+                            "resolved_at"
+                          ]
+                        },
+                        "description": "Per-team acknowledge status for this assessment, derived from its governance case"
+                      },
                       "created_at": {
                         "type": "string",
                         "description": "ISO 8601 creation timestamp"
@@ -62707,6 +62750,7 @@
                       "next_occurrence_at",
                       "response_count",
                       "completed_entity_count",
+                      "team_acknowledge_status",
                       "created_at",
                       "updated_at"
                     ]
@@ -63440,6 +63484,49 @@
                       "maximum": 9007199254740991,
                       "description": "Number of entities whose response has all required fields filled in"
                     },
+                    "team_acknowledge_status": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "team_id": {
+                            "type": "string",
+                            "description": "Assigned team identifier"
+                          },
+                          "team_name": {
+                            "type": "string",
+                            "description": "Assigned team display name"
+                          },
+                          "status": {
+                            "enum": [
+                              "open",
+                              "completed",
+                              "superseded"
+                            ],
+                            "type": "string",
+                            "description": "Whether the team has acknowledged this assessment"
+                          },
+                          "resolved_at": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp the team acknowledged, if resolved"
+                          }
+                        },
+                        "required": [
+                          "team_id",
+                          "team_name",
+                          "status",
+                          "resolved_at"
+                        ]
+                      },
+                      "description": "Per-team acknowledge status for this assessment, derived from its governance case"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -63468,6 +63555,7 @@
                     "next_occurrence_at",
                     "response_count",
                     "completed_entity_count",
+                    "team_acknowledge_status",
                     "created_at",
                     "updated_at"
                   ]
@@ -63876,6 +63964,49 @@
                       "maximum": 9007199254740991,
                       "description": "Number of entities whose response has all required fields filled in"
                     },
+                    "team_acknowledge_status": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "team_id": {
+                            "type": "string",
+                            "description": "Assigned team identifier"
+                          },
+                          "team_name": {
+                            "type": "string",
+                            "description": "Assigned team display name"
+                          },
+                          "status": {
+                            "enum": [
+                              "open",
+                              "completed",
+                              "superseded"
+                            ],
+                            "type": "string",
+                            "description": "Whether the team has acknowledged this assessment"
+                          },
+                          "resolved_at": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp the team acknowledged, if resolved"
+                          }
+                        },
+                        "required": [
+                          "team_id",
+                          "team_name",
+                          "status",
+                          "resolved_at"
+                        ]
+                      },
+                      "description": "Per-team acknowledge status for this assessment, derived from its governance case"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -63904,6 +64035,7 @@
                     "next_occurrence_at",
                     "response_count",
                     "completed_entity_count",
+                    "team_acknowledge_status",
                     "created_at",
                     "updated_at"
                   ]
@@ -64645,6 +64777,49 @@
                       "maximum": 9007199254740991,
                       "description": "Number of entities whose response has all required fields filled in"
                     },
+                    "team_acknowledge_status": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "team_id": {
+                            "type": "string",
+                            "description": "Assigned team identifier"
+                          },
+                          "team_name": {
+                            "type": "string",
+                            "description": "Assigned team display name"
+                          },
+                          "status": {
+                            "enum": [
+                              "open",
+                              "completed",
+                              "superseded"
+                            ],
+                            "type": "string",
+                            "description": "Whether the team has acknowledged this assessment"
+                          },
+                          "resolved_at": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp the team acknowledged, if resolved"
+                          }
+                        },
+                        "required": [
+                          "team_id",
+                          "team_name",
+                          "status",
+                          "resolved_at"
+                        ]
+                      },
+                      "description": "Per-team acknowledge status for this assessment, derived from its governance case"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -64673,6 +64848,7 @@
                     "next_occurrence_at",
                     "response_count",
                     "completed_entity_count",
+                    "team_acknowledge_status",
                     "created_at",
                     "updated_at"
                   ]
@@ -65160,6 +65336,49 @@
                       "maximum": 9007199254740991,
                       "description": "Number of entities whose response has all required fields filled in"
                     },
+                    "team_acknowledge_status": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "team_id": {
+                            "type": "string",
+                            "description": "Assigned team identifier"
+                          },
+                          "team_name": {
+                            "type": "string",
+                            "description": "Assigned team display name"
+                          },
+                          "status": {
+                            "enum": [
+                              "open",
+                              "completed",
+                              "superseded"
+                            ],
+                            "type": "string",
+                            "description": "Whether the team has acknowledged this assessment"
+                          },
+                          "resolved_at": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp the team acknowledged, if resolved"
+                          }
+                        },
+                        "required": [
+                          "team_id",
+                          "team_name",
+                          "status",
+                          "resolved_at"
+                        ]
+                      },
+                      "description": "Per-team acknowledge status for this assessment, derived from its governance case"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -65188,6 +65407,7 @@
                     "next_occurrence_at",
                     "response_count",
                     "completed_entity_count",
+                    "team_acknowledge_status",
                     "created_at",
                     "updated_at"
                   ]
