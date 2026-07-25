@@ -20,7 +20,7 @@ export interface Config {
 export const readConfig = (args: string[]): Config => {
   // Parse command line arguments
   const parsedArgs = parseArgs(args);
-  
+
   // Required: GitHub organization
   const githubOrg = parsedArgs.org;
   if (!githubOrg) {
@@ -86,7 +86,7 @@ const parseArgs = (args: string[]): ParsedArgs => {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     if (arg === '--org' && i + 1 < args.length) {
       result.org = args[i + 1];
       i++;

@@ -45,7 +45,7 @@ export const listRepos = async (org: string, token?: string): Promise<GitHubRepo
       throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json() as Array<{
+    const data = (await response.json()) as Array<{
       name: string;
       full_name: string;
       default_branch: string;
@@ -113,7 +113,7 @@ export const fetchCatalogInfo = async (
     );
   }
 
-  const data = await response.json() as {
+  const data = (await response.json()) as {
     content?: string;
     encoding?: string;
     type?: string;
@@ -172,7 +172,7 @@ const fetchWithRetry = async (
       return response;
     } catch (error) {
       lastError = error as Error;
-      
+
       // Network errors - retry with exponential backoff
       if (attempt < maxRetries - 1) {
         const backoffTime = Math.min(1000 * Math.pow(2, attempt), 10000);

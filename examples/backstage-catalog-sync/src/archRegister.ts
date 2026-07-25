@@ -46,7 +46,7 @@ export const fetchSchemas = async (
     throw new Error(`Failed to fetch schemas: ${response.status} ${response.statusText}`);
   }
 
-  const schemas = await response.json() as Schema[];
+  const schemas = (await response.json()) as Schema[];
   return schemas;
 };
 
@@ -64,7 +64,7 @@ export const discoverSchemas = async (
 
   for (const schema of schemas) {
     const nameLower = schema.name.toLowerCase();
-    
+
     // Match by exact name (case-insensitive)
     if (nameLower === 'component') {
       mapping.component = schema.id;
@@ -110,7 +110,7 @@ export const syncEntity = async (
   if (!response.ok) {
     const errorText = await response.text();
     let errorDetails: unknown;
-    
+
     try {
       errorDetails = JSON.parse(errorText);
     } catch {
@@ -153,7 +153,7 @@ export const syncEntity = async (
     );
   }
 
-  const result = await response.json() as SyncResult;
+  const result = (await response.json()) as SyncResult;
   return result;
 };
 

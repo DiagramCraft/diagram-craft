@@ -58,7 +58,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
   // Auto-discover schemas if not provided
   const schemaMapping = { ...config.schemaMapping };
   const missingSchemas = Object.entries(schemaMapping).filter(([_, id]) => !id);
-  
+
   if (missingSchemas.length > 0) {
     console.log('🔎 Auto-discovering schema IDs...');
     try {
@@ -67,7 +67,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
         config.archRegisterToken,
         config.archRegisterUrl
       );
-      
+
       for (const [kind, id] of Object.entries(discovered)) {
         if (!schemaMapping[kind as keyof typeof schemaMapping]) {
           schemaMapping[kind as keyof typeof schemaMapping] = id;
@@ -75,7 +75,9 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
         }
       }
     } catch (error) {
-      console.error(`   ✗ Schema discovery failed: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `   ✗ Schema discovery failed: ${error instanceof Error ? error.message : String(error)}`
+      );
       report.errors.push({
         repo: 'schema-discovery',
         error: error instanceof Error ? error.message : String(error)
@@ -91,7 +93,9 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     report.totalRepos = repos.length;
     console.log(`\n📦 Found ${repos.length} repositories\n`);
   } catch (error) {
-    console.error(`✗ Failed to list repositories: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `✗ Failed to list repositories: ${error instanceof Error ? error.message : String(error)}`
+    );
     report.errors.push({
       repo: 'github-api',
       error: error instanceof Error ? error.message : String(error)
@@ -101,7 +105,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
 
   // Process each repository
   const source = `backstage-github-${org}`;
-  
+
   for (const repo of repos) {
     if (config.verbose) {
       console.log(`\n📂 Processing ${repo.fullName}...`);
@@ -111,7 +115,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     let catalogContent: string | null;
     try {
       catalogContent = await fetchCatalogInfo(repo, config.githubToken);
-      
+
       if (!catalogContent) {
         if (config.verbose) {
           console.log(`   ⊘ No catalog-info.yaml found`);
@@ -132,7 +136,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     let entities: BackstageEntity[];
     try {
       entities = parseBackstageYaml(catalogContent);
-      
+
       if (entities.length === 0) {
         if (config.verbose) {
           console.log(`   ⊘ No entities found in catalog-info.yaml`);
@@ -153,7 +157,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     for (const entity of entities) {
       report.totalEntities++;
       const entityRef = `${entity.kind}:${entity.metadata.namespace || 'default'}/${entity.metadata.name}`;
-      
+
       if (config.verbose) {
         console.log(`\n   📄 Entity: ${entityRef}`);
       }
@@ -182,7 +186,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
 
       // Map to Arch Register format
       const mappingResult = mapBackstageToArchRegister(entity, schemaMapping);
-      
+
       if (mappingResult.errors.length > 0) {
         console.error(`   ✗ Mapping failed: ${mappingResult.errors.join(', ')}`);
         report.failed++;

@@ -139,9 +139,7 @@ const mapComponentFields = (
 
   // Warn about unmapped fields
   if (entity.spec.dependsOn) {
-    warnings.push(
-      'Field spec.dependsOn is not mapped in the current Backstage template schema'
-    );
+    warnings.push('Field spec.dependsOn is not mapped in the current Backstage template schema');
   }
   if (entity.spec.subcomponentOf) {
     warnings.push(
@@ -197,14 +195,10 @@ const mapResourceFields = (
 
   // Warn about unmapped fields
   if (entity.spec.dependsOn) {
-    warnings.push(
-      'Field spec.dependsOn is not mapped in the current Backstage template schema'
-    );
+    warnings.push('Field spec.dependsOn is not mapped in the current Backstage template schema');
   }
   if (entity.spec.dependencyOf) {
-    warnings.push(
-      'Field spec.dependencyOf is not mapped in the current Backstage template schema'
-    );
+    warnings.push('Field spec.dependencyOf is not mapped in the current Backstage template schema');
   }
 };
 
@@ -227,7 +221,7 @@ const mapSystemFields = (
  */
 const getSchemaIdForKind = (kind: string, schemaMapping: SchemaMapping): string | undefined => {
   const kindLower = kind.toLowerCase();
-  
+
   switch (kindLower) {
     case 'component':
       return schemaMapping.component;
