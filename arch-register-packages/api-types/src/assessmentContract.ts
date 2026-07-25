@@ -21,21 +21,28 @@ const ratingAssessmentFieldSchema = baseAssessmentFieldSchema.extend({
   type: z.literal('rating').describe('Numeric score field (1-5)')
 });
 
-const enumAssessmentFieldSchema = baseAssessmentFieldSchema.extend({
-  type: z.literal('enum').describe('Single-select field'),
-  enumId: z.string().describe('Workspace enumeration identifier used for the option list')
+const assessmentEnumOptionSchema = z.object({
+  value: z.string().describe('Stored option value'),
+  label: z.string().describe('Displayed option label')
 });
+
+const enumAssessmentFieldSchema = z.union([
+  baseAssessmentFieldSchema.extend({
+    type: z.literal('enum').describe('Single-select field'),
+    enumId: z.string().describe('Workspace enumeration identifier used for the option list')
+  }),
+  baseAssessmentFieldSchema.extend({
+    type: z.literal('enum').describe('Single-select field'),
+    options: z.array(assessmentEnumOptionSchema).min(1).describe('Assessment-local option list')
+  })
+]);
 
 const textAssessmentFieldSchema = baseAssessmentFieldSchema.extend({
   type: z.literal('text').describe('Free-text notes field')
 });
 
 const assessmentFieldSchema = z
-  .discriminatedUnion('type', [
-    ratingAssessmentFieldSchema,
-    enumAssessmentFieldSchema,
-    textAssessmentFieldSchema
-  ])
+  .union([ratingAssessmentFieldSchema, enumAssessmentFieldSchema, textAssessmentFieldSchema])
   .describe('Assessment field definition');
 
 const assessmentModeSchema = z
@@ -180,6 +187,8 @@ export const assessmentContract = oc.tag('Assessments').router({
 });
 
 export type AssessmentField = z.infer<typeof assessmentFieldSchema>;
+export type AssessmentEnumOption = z.infer<typeof assessmentEnumOptionSchema>;
+export type AssessmentEnumField = z.infer<typeof enumAssessmentFieldSchema>;
 export type Assessment = z.infer<typeof assessmentSchema>;
 export type CreateAssessmentRequest = z.infer<typeof assessmentBodySchema>;
 export type UpdateAssessmentRequest = CreateAssessmentRequest;

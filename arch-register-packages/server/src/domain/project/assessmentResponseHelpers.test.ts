@@ -208,4 +208,24 @@ describe('buildAssessmentResultsCsvData', () => {
 
     expect(rows[0]!['Auth maturity']).toBe('Defined');
   });
+
+  it('resolves assessment-local enum values without workspace enums', () => {
+    const assessment = makeAssessment({
+      fields: [
+        {
+          id: 'f1',
+          label: 'Migration strategy',
+          type: 'enum',
+          options: [{ value: 'rehost', label: 'Rehost (Lift and Shift)' }],
+          requirementLevel: 'required'
+        }
+      ]
+    });
+    const entities = [makeEntity({ id: 'e1' })];
+    const responses = [makeResponse({ entity_id: 'e1', values: { f1: 'rehost' } })];
+
+    const { rows } = buildAssessmentResultsCsvData(entities, responses, assessment, []);
+
+    expect(rows[0]!['Migration strategy']).toBe('Rehost (Lift and Shift)');
+  });
 });

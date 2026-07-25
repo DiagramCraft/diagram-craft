@@ -3,6 +3,7 @@ import type { ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import {
   ASSESSMENT_FIELD_PREFIX,
@@ -79,7 +80,7 @@ export const buildEntityDisplayFields = (
       if (seen.has(id)) continue;
       seen.add(id);
       const options =
-        field.type === 'enum' ? joined.enums.find(e => e.id === field.enumId)?.options : undefined;
+        field.type === 'enum' ? getAssessmentEnumOptions(field, joined.enums) : undefined;
       fields.push({
         id,
         label: field.label,

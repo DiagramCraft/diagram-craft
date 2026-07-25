@@ -10,6 +10,7 @@ import type {
   MetricDistributionEntry,
   MetricRollupResponse
 } from '@arch-register/api-types/metricContract';
+import { getInlineAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterVisibleEntities } from '../auth/authorization';
 import {
@@ -285,7 +286,8 @@ const resolveEnumOptions = async (
   const source = metric.source;
   if (!isEnumSourceKind(source.kind)) return null;
 
-  let enumId: string;
+  let enumId: string | undefined;
+  let inlineOptions: EnumOption[] | undefined;
   if (source.kind === 'enum') {
     const fieldId = source.fieldId;
     const schema = schemas.find(s => s.id === metric.sourceSchemaId);
@@ -310,11 +312,17 @@ const resolveEnumOptions = async (
         message: `Assessment field '${fieldId}' is not an enum field`
       });
     }
-    enumId = field.enumId;
+    inlineOptions = getInlineAssessmentEnumOptions(field);
+    enumId = 'enumId' in field ? field.enumId : undefined;
   } else {
     return null;
   }
 
+  if (inlineOptions) return inlineOptions;
+  httpAssert.present(enumId, {
+    status: 400,
+    message: 'Assessment enum field has no option source'
+  });
   const enumDef = await db.catalog.getEnum(workspace, enumId);
   httpAssert.present(enumDef, { status: 404, message: `Enum '${enumId}' not found` });
   return enumDef.options;
