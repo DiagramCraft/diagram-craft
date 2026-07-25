@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  # Missing required 'name' field
+  description: Component without a name
+spec:
+  type: service
+  lifecycle: production
+  owner: team-a

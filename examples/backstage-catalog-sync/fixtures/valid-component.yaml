@@ -1,0 +1,29 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: artist-web
+  title: Artist Web Portal
+  description: The place to be, for great artists
+  namespace: default
+  tags:
+    - frontend
+    - react
+    - typescript
+  links:
+    - url: https://github.com/example/artist-web
+      title: Repository
+      type: repository
+    - url: https://artist-web.example.com
+      title: Production
+      type: website
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: website
+  lifecycle: production
+  owner: artist-relations-team
+  system: artist-engagement-portal
+  providesApis:
+    - artist-api
+  consumesApis:
+    - auth-api

@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: artists-db
+  title: Artists Database
+  description: Stores artist details and metadata
+  namespace: default
+  tags:
+    - postgresql
+    - database
+  links:
+    - url: https://console.aws.amazon.com/rds
+      title: AWS Console
+      type: admin
+spec:
+  type: database
+  owner: artist-relations-team
+  system: artist-engagement-portal

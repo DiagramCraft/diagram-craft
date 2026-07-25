@@ -549,6 +549,22 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
+  examples/backstage-catalog-sync:
+    dependencies:
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.14.2
+        version: 20.19.41
+      tsx:
+        specifier: ^4.22.4
+        version: 4.22.4
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/app-components:
     dependencies:
       '@base-ui/react':

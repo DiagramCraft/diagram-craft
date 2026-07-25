@@ -1,0 +1,25 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: artist-api
+  title: Artist API
+  description: Retrieve artist details
+  namespace: default
+  tags:
+    - rest
+    - openapi
+  links:
+    - url: https://api.example.com/docs
+      title: API Documentation
+      type: documentation
+spec:
+  type: openapi
+  lifecycle: production
+  owner: artist-relations-team
+  system: artist-engagement-portal
+  definition: |
+    openapi: "3.0.0"
+    info:
+      version: 1.0.0
+      title: Artist API
+      description: API for managing artist information
