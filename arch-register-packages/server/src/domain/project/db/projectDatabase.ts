@@ -1,4 +1,7 @@
-import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
+import type {
+  AssessmentField,
+  AssessmentRecurrence
+} from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
 import {
@@ -296,6 +299,11 @@ export type AssessmentDbResult = {
   fields: AssessmentField[];
   assigned_team_ids: string[];
   due_at: Date | null;
+  recurrence: AssessmentRecurrence;
+  response_window_days: number | null;
+  current_occurrence: number;
+  pending_occurrence_job_run_id: string | null;
+  next_occurrence_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -314,6 +322,7 @@ export type AssessmentResponseDbResult = {
   workspace: string;
   assessment_id: string;
   entity_id: string;
+  occurrence: number;
   values: Record<string, string | number>;
   created_at: Date;
   updated_at: Date;
@@ -478,6 +487,16 @@ export const projectMappers = {
       'assessment.assigned_team_ids'
     ),
     due_at: row['due_at'] == null ? null : databaseDate(row['due_at']),
+    recurrence: parseDatabaseJson(row['recurrence'], { type: 'none' }, 'assessment.recurrence'),
+    response_window_days:
+      row['response_window_days'] == null ? null : Number(row['response_window_days']),
+    current_occurrence: Number(row['current_occurrence'] ?? 1),
+    pending_occurrence_job_run_id:
+      row['pending_occurrence_job_run_id'] == null
+        ? null
+        : String(row['pending_occurrence_job_run_id']),
+    next_occurrence_at:
+      row['next_occurrence_at'] == null ? null : databaseDate(row['next_occurrence_at']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
@@ -497,6 +516,7 @@ export const projectMappers = {
     workspace: String(row['workspace']),
     assessment_id: String(row['assessment_id']),
     entity_id: String(row['entity_id']),
+    occurrence: Number(row['occurrence'] ?? 1),
     values: parseDatabaseJson(row['values'], {}, 'assessment_response.values'),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at']),
@@ -672,11 +692,16 @@ export type ProjectDatabase = {
   ): Promise<ProjectMilestoneDbResult | null>;
   isEntityLinkedToProject(ws: string, projectId: string, entityId: string): Promise<boolean>;
 
-  listAssessmentResponses(ws: string, assessmentId: string): Promise<AssessmentResponseDbResult[]>;
+  listAssessmentResponses(
+    ws: string,
+    assessmentId: string,
+    occurrence: number
+  ): Promise<AssessmentResponseDbResult[]>;
   getAssessmentResponse(
     ws: string,
     assessmentId: string,
-    entityId: string
+    entityId: string,
+    occurrence: number
   ): Promise<AssessmentResponseDbResult | null>;
   upsertAssessmentResponse(input: AssessmentResponseDbUpsert): Promise<AssessmentResponseDbResult>;
   countAssessmentResponses(ws: string, assessmentId: string): Promise<number>;

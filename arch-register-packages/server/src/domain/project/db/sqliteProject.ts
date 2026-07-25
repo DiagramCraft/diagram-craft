@@ -884,8 +884,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async createAssessment(input: AssessmentDbCreate) {
     this.run(
-      `INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, assigned_team_ids, due_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, assigned_team_ids, due_at, recurrence, response_window_days, current_occurrence, pending_occurrence_job_run_id, next_occurrence_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
@@ -899,6 +899,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         JSON.stringify(input.fields),
         JSON.stringify(input.assigned_team_ids),
         input.due_at ? input.due_at.toISOString() : null,
+        JSON.stringify(input.recurrence),
+        input.response_window_days,
+        input.current_occurrence,
+        input.pending_occurrence_job_run_id,
+        input.next_occurrence_at ? input.next_occurrence_at.toISOString() : null,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -914,7 +919,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   ) {
     this.run(
       `UPDATE assessment
-       SET name = ?, description = ?, status = ?, mode = ?, scope = ?, scope_conditions = ?, fields = ?, assigned_team_ids = ?, due_at = ?, updated_at = ?
+       SET name = ?, description = ?, status = ?, mode = ?, scope = ?, scope_conditions = ?, fields = ?, assigned_team_ids = ?, due_at = ?, recurrence = ?, response_window_days = ?, current_occurrence = ?, pending_occurrence_job_run_id = ?, next_occurrence_at = ?, updated_at = ?
        WHERE workspace = ? AND project_id = ? AND id = ?`,
       [
         input.name,
@@ -926,6 +931,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         JSON.stringify(input.fields),
         JSON.stringify(input.assigned_team_ids),
         input.due_at ? input.due_at.toISOString() : null,
+        JSON.stringify(input.recurrence),
+        input.response_window_days,
+        input.current_occurrence,
+        input.pending_occurrence_job_run_id,
+        input.next_occurrence_at ? input.next_occurrence_at.toISOString() : null,
         input.updated_at.toISOString(),
         workspace,
         projectId,
@@ -1033,20 +1043,25 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return Boolean(row);
   }
 
-  async listAssessmentResponses(workspace: string, assessmentId: string) {
+  async listAssessmentResponses(workspace: string, assessmentId: string, occurrence: number) {
     return this.all(
       `${ASSESSMENT_RESPONSE_SELECT_SQL}
-       WHERE ar.workspace = ? AND ar.assessment_id = ?`,
-      [workspace, assessmentId],
+       WHERE ar.workspace = ? AND ar.assessment_id = ? AND ar.occurrence = ?`,
+      [workspace, assessmentId, occurrence],
       projectMappers.assessmentResponse
     );
   }
 
-  async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
+  async getAssessmentResponse(
+    workspace: string,
+    assessmentId: string,
+    entityId: string,
+    occurrence: number
+  ) {
     return this.get(
       `${ASSESSMENT_RESPONSE_SELECT_SQL}
-       WHERE ar.workspace = ? AND ar.assessment_id = ? AND ar.entity_id = ?`,
-      [workspace, assessmentId, entityId],
+       WHERE ar.workspace = ? AND ar.assessment_id = ? AND ar.entity_id = ? AND ar.occurrence = ?`,
+      [workspace, assessmentId, entityId, occurrence],
       projectMappers.assessmentResponse
     );
   }
@@ -1056,19 +1071,21 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     const existing = await this.getAssessmentResponse(
       input.workspace,
       input.assessment_id,
-      input.entity_id
+      input.entity_id,
+      input.occurrence
     );
     const id = existing?.id ?? newid();
     this.run(
-      `INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, "values", created_at, updated_at, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (workspace, assessment_id, entity_id)
+      `INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, occurrence, "values", created_at, updated_at, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (workspace, assessment_id, entity_id, occurrence)
        DO UPDATE SET "values" = excluded."values", updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
       [
         id,
         input.workspace,
         input.assessment_id,
         input.entity_id,
+        input.occurrence,
         JSON.stringify(input.values),
         now,
         now,
@@ -1078,7 +1095,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return (await this.getAssessmentResponse(
       input.workspace,
       input.assessment_id,
-      input.entity_id
+      input.entity_id,
+      input.occurrence
     ))!;
   }
 

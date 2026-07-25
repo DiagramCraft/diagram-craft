@@ -451,6 +451,11 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         scope_conditions: [],
         assigned_team_ids: [],
         due_at: null,
+        recurrence: { type: 'none' },
+        response_window_days: null,
+        current_occurrence: 1,
+        pending_occurrence_job_run_id: null,
+        next_occurrence_at: null,
         fields: [],
         created_at: now,
         updated_at: now
@@ -481,6 +486,11 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         scope_conditions: [],
         assigned_team_ids: [],
         due_at: null,
+        recurrence: { type: 'none' },
+        response_window_days: null,
+        current_occurrence: 1,
+        pending_occurrence_job_run_id: null,
+        next_occurrence_at: null,
         fields: [],
         created_at: now,
         updated_at: now
@@ -599,6 +609,11 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         scope_conditions: [],
         assigned_team_ids: [],
         due_at: null,
+        recurrence: { type: 'none' },
+        response_window_days: null,
+        current_occurrence: 1,
+        pending_occurrence_job_run_id: null,
+        next_occurrence_at: null,
         fields: [],
         created_at: now,
         updated_at: now
@@ -608,6 +623,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         workspace,
         assessment_id: assessment.id,
         entity_id: entity,
+        occurrence: 1,
         values: { q1: 'yes' },
         updated_by: null
       });
@@ -615,6 +631,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         workspace,
         assessment_id: assessment.id,
         entity_id: entity,
+        occurrence: 1,
         values: { q1: 'no' },
         updated_by: null
       });
@@ -622,7 +639,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const count = await db.project.countAssessmentResponses(workspace, assessment.id);
       expect(count).toBe(1);
 
-      const response = await db.project.getAssessmentResponse(workspace, assessment.id, entity);
+      const response = await db.project.getAssessmentResponse(workspace, assessment.id, entity, 1);
       expect(response!.values).toEqual({ q1: 'no' });
     });
   });

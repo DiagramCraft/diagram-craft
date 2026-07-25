@@ -8,6 +8,7 @@
 export type SystemUserKey =
   | 'ai-metadata-generator'
   | 'technology-eol-job'
+  | 'assessment-recurrence-job'
   | 'workspace-token-owner';
 
 type SystemUserDefinition = {
@@ -32,6 +33,14 @@ const SYSTEM_USERS: Record<SystemUserKey, SystemUserDefinition> = {
     userId: 'system:ai-metadata-generator',
     displayName: 'AI Metadata Generator',
     description: 'Attributes technology EOL tracking job writes (migration 055).'
+  },
+  'assessment-recurrence-job': {
+    // Deliberately the same row as ai-metadata-generator, following the
+    // technology-eol-job precedent above rather than seeding a new user.
+    id: '00000000-0000-0000-0000-0000000000a1',
+    userId: 'system:ai-metadata-generator',
+    displayName: 'AI Metadata Generator',
+    description: 'Attributes recurring assessment occurrence reopen writes (migration 055).'
   },
   'workspace-token-owner': {
     id: '00000000-0000-0000-0000-0000000000a3',

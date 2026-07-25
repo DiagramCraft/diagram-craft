@@ -5,7 +5,11 @@ import type {
   AssessmentDbUpdate
 } from './db/projectDatabase';
 import { httpAssert } from '../../utils/httpAssert';
-import { Assessment, AssessmentField } from '@arch-register/api-types/assessmentContract';
+import {
+  Assessment,
+  AssessmentField,
+  AssessmentRecurrence
+} from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 const toAssessmentFields = (value: unknown, fallback: AssessmentField[]) =>
@@ -29,6 +33,22 @@ const toDueAt = (value: unknown, fallback: Date | null): Date | null => {
   return typeof value === 'string' ? new Date(value) : fallback;
 };
 
+const isAssessmentRecurrence = (value: unknown): value is AssessmentRecurrence =>
+  typeof value === 'object' &&
+  value !== null &&
+  ['none', 'weekly', 'monthly'].includes((value as { type?: unknown }).type as string);
+
+const toAssessmentRecurrence = (
+  value: unknown,
+  fallback: AssessmentRecurrence
+): AssessmentRecurrence => (isAssessmentRecurrence(value) ? value : fallback);
+
+const toResponseWindowDays = (value: unknown, fallback: number | null): number | null => {
+  if (value === undefined) return fallback;
+  if (value === null) return null;
+  return typeof value === 'number' ? value : fallback;
+};
+
 export const buildCreateAssessmentInput = (
   workspace: string,
   body: Record<string, unknown>,
@@ -43,7 +63,9 @@ export const buildCreateAssessmentInput = (
     scope_conditions,
     fields,
     assigned_team_ids,
-    due_at
+    due_at,
+    recurrence,
+    response_window_days
   } = body;
   httpAssert.string(project_id, { message: 'project_id is required and must be a string' });
   httpAssert.string(name, { message: 'name is required and must be a string' });
@@ -61,6 +83,11 @@ export const buildCreateAssessmentInput = (
     fields: toAssessmentFields(fields, []),
     assigned_team_ids: toAssignedTeamIds(assigned_team_ids, []),
     due_at: toDueAt(due_at, null),
+    recurrence: toAssessmentRecurrence(recurrence, { type: 'none' }),
+    response_window_days: toResponseWindowDays(response_window_days, null),
+    current_occurrence: 1,
+    pending_occurrence_job_run_id: null,
+    next_occurrence_at: null,
     created_at: timestamp,
     updated_at: timestamp
   };
@@ -71,8 +98,18 @@ export const buildUpdateAssessmentInput = (
   existing: AssessmentDbResult,
   updatedAt: Date
 ): AssessmentDbUpdate => {
-  const { name, description, mode, scope, scope_conditions, fields, assigned_team_ids, due_at } =
-    body;
+  const {
+    name,
+    description,
+    mode,
+    scope,
+    scope_conditions,
+    fields,
+    assigned_team_ids,
+    due_at,
+    recurrence,
+    response_window_days
+  } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   return {
@@ -85,6 +122,11 @@ export const buildUpdateAssessmentInput = (
     fields: toAssessmentFields(fields, existing.fields),
     assigned_team_ids: toAssignedTeamIds(assigned_team_ids, existing.assigned_team_ids),
     due_at: toDueAt(due_at, existing.due_at),
+    recurrence: toAssessmentRecurrence(recurrence, existing.recurrence),
+    response_window_days: toResponseWindowDays(response_window_days, existing.response_window_days),
+    current_occurrence: existing.current_occurrence,
+    pending_occurrence_job_run_id: existing.pending_occurrence_job_run_id,
+    next_occurrence_at: existing.next_occurrence_at,
     updated_at: updatedAt
   };
 };
@@ -106,6 +148,10 @@ export const toApiAssessment = (
   fields: row.fields,
   assigned_team_ids: row.assigned_team_ids,
   due_at: row.due_at ? row.due_at.toISOString() : null,
+  recurrence: row.recurrence,
+  response_window_days: row.response_window_days,
+  current_occurrence: row.current_occurrence,
+  next_occurrence_at: row.next_occurrence_at ? row.next_occurrence_at.toISOString() : null,
   response_count: stats.response_count,
   completed_entity_count: stats.completed_entity_count,
   created_at: row.created_at.toISOString(),

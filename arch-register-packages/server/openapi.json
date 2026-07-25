@@ -62585,6 +62585,88 @@
                         ],
                         "description": "Optional ISO 8601 due date applied when the assessment opens"
                       },
+                      "recurrence": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "none"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "weekly"
+                              },
+                              "intervalWeeks": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991,
+                                "description": "Number of weeks between occurrences"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "intervalWeeks"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "monthly"
+                              },
+                              "intervalMonths": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991,
+                                "description": "Number of months between occurrences"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "intervalMonths"
+                            ]
+                          }
+                        ],
+                        "description": "Recurrence rule; \"none\" means this is a one-off assessment"
+                      },
+                      "response_window_days": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Days each occurrence stays open before its due date; required when recurring"
+                      },
+                      "current_occurrence": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "The current recurrence cycle number, starting at 1"
+                      },
+                      "next_occurrence_at": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 timestamp when this assessment will next automatically reopen"
+                      },
                       "response_count": {
                         "type": "integer",
                         "minimum": 0,
@@ -62619,6 +62701,10 @@
                       "fields",
                       "assigned_team_ids",
                       "due_at",
+                      "recurrence",
+                      "response_window_days",
+                      "current_occurrence",
+                      "next_occurrence_at",
                       "response_count",
                       "completed_entity_count",
                       "created_at",
@@ -62906,6 +62992,74 @@
                       }
                     ],
                     "description": "Optional ISO 8601 due date applied when the assessment opens"
+                  },
+                  "recurrence": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "none"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "weekly"
+                          },
+                          "intervalWeeks": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "Number of weeks between occurrences"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "intervalWeeks"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "monthly"
+                          },
+                          "intervalMonths": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "Number of months between occurrences"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "intervalMonths"
+                        ]
+                      }
+                    ],
+                    "description": "Recurrence rule; \"none\" means this is a one-off assessment",
+                    "default": {
+                      "type": "none"
+                    }
+                  },
+                  "response_window_days": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Days each occurrence stays open before its due date; required when recurring"
                   }
                 },
                 "required": [
@@ -63192,6 +63346,88 @@
                       ],
                       "description": "Optional ISO 8601 due date applied when the assessment opens"
                     },
+                    "recurrence": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "none"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "weekly"
+                            },
+                            "intervalWeeks": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Number of weeks between occurrences"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalWeeks"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "monthly"
+                            },
+                            "intervalMonths": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Number of months between occurrences"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalMonths"
+                          ]
+                        }
+                      ],
+                      "description": "Recurrence rule; \"none\" means this is a one-off assessment"
+                    },
+                    "response_window_days": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Days each occurrence stays open before its due date; required when recurring"
+                    },
+                    "current_occurrence": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "The current recurrence cycle number, starting at 1"
+                    },
+                    "next_occurrence_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp when this assessment will next automatically reopen"
+                    },
                     "response_count": {
                       "type": "integer",
                       "minimum": 0,
@@ -63226,6 +63462,10 @@
                     "fields",
                     "assigned_team_ids",
                     "due_at",
+                    "recurrence",
+                    "response_window_days",
+                    "current_occurrence",
+                    "next_occurrence_at",
                     "response_count",
                     "completed_entity_count",
                     "created_at",
@@ -63542,6 +63782,88 @@
                       ],
                       "description": "Optional ISO 8601 due date applied when the assessment opens"
                     },
+                    "recurrence": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "none"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "weekly"
+                            },
+                            "intervalWeeks": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Number of weeks between occurrences"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalWeeks"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "monthly"
+                            },
+                            "intervalMonths": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Number of months between occurrences"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalMonths"
+                          ]
+                        }
+                      ],
+                      "description": "Recurrence rule; \"none\" means this is a one-off assessment"
+                    },
+                    "response_window_days": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Days each occurrence stays open before its due date; required when recurring"
+                    },
+                    "current_occurrence": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "The current recurrence cycle number, starting at 1"
+                    },
+                    "next_occurrence_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp when this assessment will next automatically reopen"
+                    },
                     "response_count": {
                       "type": "integer",
                       "minimum": 0,
@@ -63576,6 +63898,10 @@
                     "fields",
                     "assigned_team_ids",
                     "due_at",
+                    "recurrence",
+                    "response_window_days",
+                    "current_occurrence",
+                    "next_occurrence_at",
                     "response_count",
                     "completed_entity_count",
                     "created_at",
@@ -63871,6 +64197,74 @@
                       }
                     ],
                     "description": "Optional ISO 8601 due date applied when the assessment opens"
+                  },
+                  "recurrence": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "none"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "weekly"
+                          },
+                          "intervalWeeks": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "Number of weeks between occurrences"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "intervalWeeks"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "monthly"
+                          },
+                          "intervalMonths": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "Number of months between occurrences"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "intervalMonths"
+                        ]
+                      }
+                    ],
+                    "description": "Recurrence rule; \"none\" means this is a one-off assessment",
+                    "default": {
+                      "type": "none"
+                    }
+                  },
+                  "response_window_days": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Days each occurrence stays open before its due date; required when recurring"
                   }
                 },
                 "required": [
@@ -64157,6 +64551,88 @@
                       ],
                       "description": "Optional ISO 8601 due date applied when the assessment opens"
                     },
+                    "recurrence": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "none"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "weekly"
+                            },
+                            "intervalWeeks": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Number of weeks between occurrences"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalWeeks"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "monthly"
+                            },
+                            "intervalMonths": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Number of months between occurrences"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalMonths"
+                          ]
+                        }
+                      ],
+                      "description": "Recurrence rule; \"none\" means this is a one-off assessment"
+                    },
+                    "response_window_days": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Days each occurrence stays open before its due date; required when recurring"
+                    },
+                    "current_occurrence": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "The current recurrence cycle number, starting at 1"
+                    },
+                    "next_occurrence_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp when this assessment will next automatically reopen"
+                    },
                     "response_count": {
                       "type": "integer",
                       "minimum": 0,
@@ -64191,6 +64667,10 @@
                     "fields",
                     "assigned_team_ids",
                     "due_at",
+                    "recurrence",
+                    "response_window_days",
+                    "current_occurrence",
+                    "next_occurrence_at",
                     "response_count",
                     "completed_entity_count",
                     "created_at",
@@ -64586,6 +65066,88 @@
                       ],
                       "description": "Optional ISO 8601 due date applied when the assessment opens"
                     },
+                    "recurrence": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "none"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "weekly"
+                            },
+                            "intervalWeeks": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Number of weeks between occurrences"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalWeeks"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "monthly"
+                            },
+                            "intervalMonths": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Number of months between occurrences"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "intervalMonths"
+                          ]
+                        }
+                      ],
+                      "description": "Recurrence rule; \"none\" means this is a one-off assessment"
+                    },
+                    "response_window_days": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Days each occurrence stays open before its due date; required when recurring"
+                    },
+                    "current_occurrence": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "The current recurrence cycle number, starting at 1"
+                    },
+                    "next_occurrence_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp when this assessment will next automatically reopen"
+                    },
                     "response_count": {
                       "type": "integer",
                       "minimum": 0,
@@ -64620,6 +65182,10 @@
                     "fields",
                     "assigned_team_ids",
                     "due_at",
+                    "recurrence",
+                    "response_window_days",
+                    "current_occurrence",
+                    "next_occurrence_at",
                     "response_count",
                     "completed_entity_count",
                     "created_at",
