@@ -25,9 +25,9 @@ const teamStatusLabel: Record<Assessment['team_acknowledge_status'][number]['sta
 };
 
 const teamStatusClass: Record<Assessment['team_acknowledge_status'][number]['status'], string> = {
-  open: styles.teamStatusOpen,
-  completed: styles.teamStatusCompleted,
-  superseded: styles.teamStatusSuperseded
+  open: styles.teamStatusOpen ?? '',
+  completed: styles.teamStatusCompleted ?? '',
+  superseded: styles.teamStatusSuperseded ?? ''
 };
 
 export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums }: Props) => {
