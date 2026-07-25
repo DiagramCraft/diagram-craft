@@ -12,7 +12,7 @@ export const toApiAssessmentResponse = (
   id: row.id,
   entity_id: row.entity_id,
   values: row.values,
-  status: computeAssessmentStatus(assessment.fields, row.values),
+  status: computeAssessmentStatus(assessment.fields, row.values, assessment.mode),
   updated_at: row.updated_at.toISOString(),
   updated_by: row.updated_by,
   updated_by_name: row.updated_by_name
@@ -22,7 +22,9 @@ export const countCompletedEntities = (
   responses: AssessmentResponseDbResult[],
   assessment: AssessmentDbResult
 ): number =>
-  responses.filter(r => computeAssessmentStatus(assessment.fields, r.values) === 'complete').length;
+  responses.filter(
+    r => computeAssessmentStatus(assessment.fields, r.values, assessment.mode) === 'complete'
+  ).length;
 
 const CSV_COLUMNS_STATIC_HEAD = ['Entity', 'Owner', 'Schema Type'];
 const CSV_COLUMNS_STATIC_TAIL = ['Status'];

@@ -1,0 +1,2 @@
+ALTER TABLE assessment
+  ADD COLUMN mode TEXT NOT NULL DEFAULT 'fields';

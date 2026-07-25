@@ -545,6 +545,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       name: 'Risk Assessment',
       description: '',
       status: 'open',
+      mode: 'fields',
       scope: [schema.id],
       scope_conditions: [],
       fields: [
@@ -600,6 +601,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       name: 'Risk Assessment',
       description: '',
       status: 'open',
+      mode: 'fields',
       scope: [schema.id],
       scope_conditions: [],
       fields: [

@@ -446,6 +446,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         name: 'Security review',
         description: '',
         status: 'draft',
+        mode: 'fields',
         scope: ['entity-1', 'entity-2'],
         scope_conditions: [],
         fields: [],
@@ -459,6 +460,32 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
 
       const fetched = await db.project.getAssessmentById(workspace, created.id);
       expect(fetched!.scope).toEqual(['entity-1', 'entity-2']);
+    });
+
+    it('round-trips the confirm-only mode', async () => {
+      const db = getDb();
+      const { workspace, project } = await createFullFixtureSet(db);
+      const now = new Date();
+
+      const created = await db.project.createAssessment({
+        id: randomUUID(),
+        workspace,
+        project_id: project,
+        name: 'Data confirmation',
+        description: '',
+        status: 'draft',
+        mode: 'confirm',
+        scope: [],
+        scope_conditions: [],
+        fields: [],
+        created_at: now,
+        updated_at: now
+      });
+
+      expect(created.mode).toBe('confirm');
+
+      const fetched = await db.project.getAssessmentById(workspace, created.id);
+      expect(fetched!.mode).toBe('confirm');
     });
   });
 
@@ -563,6 +590,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         name: 'Responses assessment',
         description: '',
         status: 'open',
+        mode: 'fields',
         scope: [],
         scope_conditions: [],
         fields: [],

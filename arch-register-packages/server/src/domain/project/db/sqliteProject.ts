@@ -884,8 +884,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async createAssessment(input: AssessmentDbCreate) {
     this.run(
-      `INSERT INTO assessment (id, workspace, project_id, name, description, status, scope, scope_conditions, fields, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
@@ -893,6 +893,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         input.name,
         input.description,
         input.status,
+        input.mode,
         JSON.stringify(input.scope),
         JSON.stringify(input.scope_conditions),
         JSON.stringify(input.fields),
@@ -911,12 +912,13 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   ) {
     this.run(
       `UPDATE assessment
-       SET name = ?, description = ?, status = ?, scope = ?, scope_conditions = ?, fields = ?, updated_at = ?
+       SET name = ?, description = ?, status = ?, mode = ?, scope = ?, scope_conditions = ?, fields = ?, updated_at = ?
        WHERE workspace = ? AND project_id = ? AND id = ?`,
       [
         input.name,
         input.description,
         input.status,
+        input.mode,
         JSON.stringify(input.scope),
         JSON.stringify(input.scope_conditions),
         JSON.stringify(input.fields),

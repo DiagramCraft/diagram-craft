@@ -109,6 +109,7 @@ describe('joined assessment display fields', () => {
     name: 'Security review',
     description: '',
     status: 'open',
+    mode: 'fields',
     scope: ['service'],
     scope_conditions: [],
     fields: [

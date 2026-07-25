@@ -3,7 +3,10 @@ import { assessmentResponseKeys, assessmentKeys } from '../queries/assessments';
 import { invalidateAuditQueries } from '../queries/audit';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
-import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
+import {
+  computeAssessmentStatus,
+  type AssessmentMode
+} from '@arch-register/api-types/assessmentStatus';
 import { orpcClient } from '../lib/orpcClient';
 import { useAuth } from '../auth/AuthContext';
 
@@ -21,7 +24,8 @@ export const useAssessmentResponses = (workspaceId: string, assessmentId: string
 export const useUpsertAssessmentResponse = (
   workspaceId: string,
   assessmentId: string,
-  fields: AssessmentField[]
+  fields: AssessmentField[],
+  mode: AssessmentMode
 ) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -54,7 +58,7 @@ export const useUpsertAssessmentResponse = (
           id: existing?.id ?? entityId,
           entity_id: entityId,
           values: mergedValues,
-          status: computeAssessmentStatus(fields, mergedValues),
+          status: computeAssessmentStatus(fields, mergedValues, mode),
           updated_at: new Date().toISOString(),
           updated_by: user?.id ?? existing?.updated_by ?? null,
           updated_by_name: user?.display_name ?? existing?.updated_by_name ?? null

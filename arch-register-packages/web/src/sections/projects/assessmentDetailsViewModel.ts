@@ -1,6 +1,7 @@
 import {
   computeAssessmentStatus,
-  type AssessmentEntityStatus
+  type AssessmentEntityStatus,
+  type AssessmentMode
 } from '@arch-register/api-types/assessmentStatus';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
@@ -16,6 +17,7 @@ export const deriveAssessmentDetails = ({
   entities,
   responses,
   fields,
+  mode,
   statusFilter,
   search,
   conditions
@@ -23,13 +25,14 @@ export const deriveAssessmentDetails = ({
   entities: EntitySummary[];
   responses: AssessmentResponse[];
   fields: AssessmentField[];
+  mode: AssessmentMode;
   statusFilter: AssessmentStatusFilter;
   search: string;
   conditions: AssessmentFilterCondition[];
 }) => {
   const responseByEntity = new Map(responses.map(response => [response.entity_id, response]));
   const statusFor = (entityId: string) =>
-    responseByEntity.get(entityId)?.status ?? computeAssessmentStatus(fields, undefined);
+    responseByEntity.get(entityId)?.status ?? computeAssessmentStatus(fields, undefined, mode);
   const counts: Record<AssessmentStatusFilter, number> = {
     all: entities.length,
     not_started: 0,

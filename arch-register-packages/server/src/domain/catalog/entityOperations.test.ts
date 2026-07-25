@@ -318,6 +318,7 @@ describe('listEntities / countEntities with joined assessment', () => {
     name: 'Security review',
     description: '',
     status: 'open',
+    mode: 'fields',
     scope: ['schema-1'],
     scope_conditions: [],
     fields: [

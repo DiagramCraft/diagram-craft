@@ -17,12 +17,15 @@ const toScope = (value: unknown, fallback: string[]) =>
 const toScopeConditions = (value: unknown, fallback: FilterCondition[]) =>
   Array.isArray(value) ? (value as FilterCondition[]) : fallback;
 
+const toAssessmentMode = (value: unknown, fallback: AssessmentDbResult['mode']) =>
+  value === 'fields' || value === 'confirm' ? value : fallback;
+
 export const buildCreateAssessmentInput = (
   workspace: string,
   body: Record<string, unknown>,
   timestamp: Date
 ): AssessmentDbCreate => {
-  const { project_id, name, description, scope, scope_conditions, fields } = body;
+  const { project_id, name, description, mode, scope, scope_conditions, fields } = body;
   httpAssert.string(project_id, { message: 'project_id is required and must be a string' });
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
@@ -33,6 +36,7 @@ export const buildCreateAssessmentInput = (
     name,
     description: typeof description === 'string' ? description : '',
     status: 'draft',
+    mode: toAssessmentMode(mode, 'fields'),
     scope: toScope(scope, []),
     scope_conditions: toScopeConditions(scope_conditions, []),
     fields: toAssessmentFields(fields, []),
@@ -46,13 +50,14 @@ export const buildUpdateAssessmentInput = (
   existing: AssessmentDbResult,
   updatedAt: Date
 ): AssessmentDbUpdate => {
-  const { name, description, scope, scope_conditions, fields } = body;
+  const { name, description, mode, scope, scope_conditions, fields } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   return {
     name,
     description: typeof description === 'string' ? description : existing.description,
     status: existing.status,
+    mode: toAssessmentMode(mode, existing.mode),
     scope: toScope(scope, existing.scope),
     scope_conditions: toScopeConditions(scope_conditions, existing.scope_conditions),
     fields: toAssessmentFields(fields, existing.fields),
@@ -71,6 +76,7 @@ export const toApiAssessment = (
   name: row.name,
   description: row.description,
   status: row.status,
+  mode: row.mode,
   scope: row.scope,
   scope_conditions: row.scope_conditions,
   fields: row.fields,

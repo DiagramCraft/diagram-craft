@@ -62,6 +62,12 @@ const STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
   complete: 'Complete'
 };
 
+const CONFIRM_STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
+  not_started: 'Not confirmed',
+  in_progress: 'Not confirmed',
+  complete: 'Confirmed'
+};
+
 const ASSESSMENT_STATUS_LABEL: Record<Assessment['status'], string> = {
   draft: 'Draft',
   open: 'Open',
@@ -125,7 +131,8 @@ export const AssessmentDetailsScreen = ({
   const upsertResponse = useUpsertAssessmentResponse(
     workspaceSlug,
     assessmentId,
-    assessment?.fields ?? []
+    assessment?.fields ?? [],
+    assessment?.mode ?? 'fields'
   );
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -141,11 +148,12 @@ export const AssessmentDetailsScreen = ({
         entities,
         responses,
         fields: assessment?.fields ?? [],
+        mode: assessment?.mode ?? 'fields',
         statusFilter,
         search,
         conditions
       }),
-    [assessment?.fields, conditions, entities, responses, search, statusFilter]
+    [assessment?.fields, assessment?.mode, conditions, entities, responses, search, statusFilter]
   );
 
   const schemaNameFor = (entity: EntitySummary): string =>
@@ -367,7 +375,7 @@ export const AssessmentDetailsScreen = ({
                   />
                 </div>
 
-                <Table.Root scroll stickyHeader>
+                <Table.Root scroll scrollY stickyHeader wrapClassName={styles.tableWrap}>
                   <Table.Head>
                     <Table.Row>
                       <Table.SortableHeaderCell
@@ -470,8 +478,26 @@ export const AssessmentDetailsScreen = ({
                               </Table.Cell>
                             ))}
                             <Table.Cell align="right" className={styles.statusCol}>
-                              <span className={`${styles.statusDot} ${styles[`st-${status}`]}`} />
-                              {STATUS_LABEL[status]}
+                              {assessment.mode === 'confirm' &&
+                              status !== 'complete' &&
+                              assessment.status === 'open' ? (
+                                <Button
+                                  onClick={() =>
+                                    upsertResponse.mutate({ entityId: entity._uid, values: {} })
+                                  }
+                                >
+                                  Confirm accurate
+                                </Button>
+                              ) : (
+                                <>
+                                  <span
+                                    className={`${styles.statusDot} ${styles[`st-${status}`]}`}
+                                  />
+                                  {assessment.mode === 'confirm'
+                                    ? CONFIRM_STATUS_LABEL[status]
+                                    : STATUS_LABEL[status]}
+                                </>
+                              )}
                             </Table.Cell>
                             <Table.Cell className={styles.avatarCol}>
                               {response?.updated_by && (

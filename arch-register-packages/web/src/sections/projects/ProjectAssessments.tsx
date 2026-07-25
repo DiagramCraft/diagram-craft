@@ -330,6 +330,7 @@ export const AssessmentEditorDialog = ({
     assessment?.fields.map(f => ({ ...f })) ?? []
   );
   const [status, setStatus] = useState<Assessment['status']>(assessment?.status ?? 'draft');
+  const [mode, setMode] = useState<Assessment['mode']>(assessment?.mode ?? 'fields');
 
   const toggleScope = (id: string) =>
     setScope(prev => (prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]));
@@ -391,9 +392,10 @@ export const AssessmentEditorDialog = ({
               {
                 name: name.trim(),
                 description: description.trim(),
+                mode,
                 scope,
                 scope_conditions: scopeConditions,
-                fields
+                fields: mode === 'confirm' ? [] : fields
               },
               status
             )
@@ -433,6 +435,28 @@ export const AssessmentEditorDialog = ({
               </Select.Item>
             ))}
           </Select.Root>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <div className={styles.sectionLabel}>Completion mode</div>
+        <div className={styles.sectionHint}>
+          Either fill in one or more fields per entity, or simply confirm the existing entity data
+          is accurate.
+        </div>
+        <div className={styles.fieldAddButtons}>
+          <Button
+            variant={mode === 'fields' ? 'primary' : 'secondary'}
+            onClick={() => setMode('fields')}
+          >
+            Fields
+          </Button>
+          <Button
+            variant={mode === 'confirm' ? 'primary' : 'secondary'}
+            onClick={() => setMode('confirm')}
+          >
+            Confirm only
+          </Button>
         </div>
       </div>
 
@@ -478,7 +502,7 @@ export const AssessmentEditorDialog = ({
         )}
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} style={mode === 'confirm' ? { display: 'none' } : undefined}>
         <div className={styles.sectionRow}>
           <div className={styles.sectionLabel}>
             Fields{fields.length > 0 ? ` (${fields.length})` : ''}
