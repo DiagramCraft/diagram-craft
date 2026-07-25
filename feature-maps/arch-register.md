@@ -246,10 +246,11 @@
               see what or who is currently blocking it, and withdraw an open submission where permitted.
 
         - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity change
-          cases, while authorized users can submit immutable coordinated revisions, review before/after diffs across
-          all affected entities, resubmit after requested changes, and record an audited approval bypass. This covers
-          both a single entity's propose-a-change flow and a bulk-edit-originated proposal bundling several entities
-          into one case, the latter routed through governance without a resubmit path.
+          cases, while authorized users can submit immutable coordinated revisions with an optional due date, review
+          before/after diffs across all affected entities, resubmit after requested changes, and record an audited
+          approval bypass. This covers both a single entity's propose-a-change flow and a bulk-edit-originated
+          proposal bundling several entities into one case, the latter routed through governance without a resubmit
+          path.
 
         - @id:ar.collaboration.entity-deprecation Workspace administrators can require deprecation proposals for
           entities on schemas that opt in, while authorized users can propose a deprecation with a target date, reason,

@@ -21,6 +21,7 @@ export const useSubmitEntityChangeApproval = (workspace: string, entityId: strin
       baseVersion: number;
       proposedState: Record<string, unknown>;
       message?: string;
+      dueAt?: string;
     }) => orpcClient.entityChanges.submit({ params: { workspace, id: entityId }, body }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({

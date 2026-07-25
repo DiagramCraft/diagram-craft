@@ -610,6 +610,7 @@ export const submitBulkEntityChangeApproval = async (
         subjectVersion: revisionId,
         policyVersion,
         selfApprovalAllowed,
+        dueAt: body.dueAt ? new Date(body.dueAt) : null,
         payload: {
           proposalId: root.id,
           revisionId,
@@ -757,6 +758,7 @@ const submitProposal = async (
         subjectVersion: revision.id,
         policyVersion: policy.policyVersion,
         selfApprovalAllowed,
+        dueAt: body.dueAt ? new Date(body.dueAt) : null,
         payload: { proposalId: root.id, revisionId: revision.id, entityId: canonicalEntityId },
         assignments
       },

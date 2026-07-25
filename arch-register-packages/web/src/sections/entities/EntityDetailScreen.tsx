@@ -20,6 +20,7 @@ import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import {
   useEntity,
@@ -520,6 +521,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     setSaveConfirmOpen,
     saveConfirmMessage,
     setSaveConfirmMessage,
+    saveConfirmDueDate,
+    setSaveConfirmDueDate,
     saveConfirmSignificant,
     setSaveConfirmSignificant,
     executeSave,
@@ -880,6 +883,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             style={{ width: '100%' }}
           />
         </FormElement>
+        {approvalRequired && (
+          <FormElement label="Due date (optional)">
+            <DateInput value={saveConfirmDueDate} onChange={v => setSaveConfirmDueDate(v ?? '')} />
+          </FormElement>
+        )}
         <FormElement label="" required>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <input

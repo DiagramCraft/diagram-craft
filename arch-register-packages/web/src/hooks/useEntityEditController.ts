@@ -42,6 +42,7 @@ export const useEntityEditController = ({
   const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [saveConfirmMessage, setSaveConfirmMessage] = useState('');
+  const [saveConfirmDueDate, setSaveConfirmDueDate] = useState('');
   const [saveConfirmSignificant, setSaveConfirmSignificant] = useState(false);
   const [pendingSaveBody, setPendingSaveBody] = useState<Record<string, unknown> | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -74,6 +75,7 @@ export const useEntityEditController = ({
 
     setPendingSaveBody(body);
     setSaveConfirmMessage('');
+    setSaveConfirmDueDate('');
     setSaveConfirmSignificant(false);
     setSaveConfirmOpen(true);
   };
@@ -86,7 +88,8 @@ export const useEntityEditController = ({
         {
           baseVersion: entity?._version ?? 1,
           proposedState: pendingSaveBody,
-          message: saveConfirmMessage ?? undefined
+          message: saveConfirmMessage ?? undefined,
+          dueAt: saveConfirmDueDate || undefined
         },
         {
           onSuccess: () => {
@@ -159,6 +162,8 @@ export const useEntityEditController = ({
     setSaveConfirmOpen,
     saveConfirmMessage,
     setSaveConfirmMessage,
+    saveConfirmDueDate,
+    setSaveConfirmDueDate,
     saveConfirmSignificant,
     setSaveConfirmSignificant,
     executeSave,
