@@ -59,8 +59,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchema(input: SchemaDbCreate) {
     try {
       const rows = (await this.sql`
-        INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, entity_approval_policy, deprecation_policy, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.entity_approval_policy ?? 'disabled'}, ${input.deprecation_policy ?? 'disabled'}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO entity_schema (id, workspace, name, description, fields, templates, groups, color, icon, default_owner, key_prefix, entity_approval_policy, deprecation_policy, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${this.json(input.groups ?? [])}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.entity_approval_policy ?? 'disabled'}, ${input.deprecation_policy ?? 'disabled'}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -78,6 +78,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             description = ${input.description},
             fields = ${this.json(input.fields)},
             templates = ${this.json(input.templates ?? [])},
+            groups = ${this.json(input.groups ?? [])},
             color = ${input.color},
             icon = ${input.icon},
             default_owner = ${input.default_owner},
@@ -121,9 +122,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchemaVersion(input: SchemaVersionDbCreate) {
     const [row] = (await this.sql`
       INSERT INTO entity_schema_version
-        (id, workspace, schema_id, version, name, description, fields, templates, color, icon, change_summary, created_by, created_at)
+        (id, workspace, schema_id, version, name, description, fields, templates, groups, color, icon, change_summary, created_by, created_at)
       VALUES
-        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates)}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
+        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates)}, ${this.json(input.groups)}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
       RETURNING *
     `) as DatabaseRow[];
     return catalogMappers.schemaVersion(row!);

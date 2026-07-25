@@ -884,8 +884,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async createAssessment(input: AssessmentDbCreate) {
     this.run(
-      `INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, assigned_team_ids, due_at, recurrence, response_window_days, current_occurrence, pending_occurrence_job_run_id, next_occurrence_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, groups, assigned_team_ids, due_at, recurrence, response_window_days, current_occurrence, pending_occurrence_job_run_id, next_occurrence_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
@@ -897,6 +897,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         JSON.stringify(input.scope),
         JSON.stringify(input.scope_conditions),
         JSON.stringify(input.fields),
+        JSON.stringify(input.groups),
         JSON.stringify(input.assigned_team_ids),
         input.due_at ? input.due_at.toISOString() : null,
         JSON.stringify(input.recurrence),
@@ -919,7 +920,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   ) {
     this.run(
       `UPDATE assessment
-       SET name = ?, description = ?, status = ?, mode = ?, scope = ?, scope_conditions = ?, fields = ?, assigned_team_ids = ?, due_at = ?, recurrence = ?, response_window_days = ?, current_occurrence = ?, pending_occurrence_job_run_id = ?, next_occurrence_at = ?, updated_at = ?
+       SET name = ?, description = ?, status = ?, mode = ?, scope = ?, scope_conditions = ?, fields = ?, groups = ?, assigned_team_ids = ?, due_at = ?, recurrence = ?, response_window_days = ?, current_occurrence = ?, pending_occurrence_job_run_id = ?, next_occurrence_at = ?, updated_at = ?
        WHERE workspace = ? AND project_id = ? AND id = ?`,
       [
         input.name,
@@ -929,6 +930,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         JSON.stringify(input.scope),
         JSON.stringify(input.scope_conditions),
         JSON.stringify(input.fields),
+        JSON.stringify(input.groups),
         JSON.stringify(input.assigned_team_ids),
         input.due_at ? input.due_at.toISOString() : null,
         JSON.stringify(input.recurrence),

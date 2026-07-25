@@ -61,7 +61,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchema(input: SchemaDbCreate) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, color, icon, default_owner, key_prefix, entity_approval_policy, deprecation_policy, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, groups, color, icon, default_owner, key_prefix, entity_approval_policy, deprecation_policy, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -69,6 +69,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.description,
         JSON.stringify(input.fields),
         JSON.stringify(input.templates ?? []),
+        JSON.stringify(input.groups ?? []),
         input.color,
         input.icon,
         input.default_owner,
@@ -84,12 +85,13 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
-      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, entity_approval_policy = COALESCE(?, entity_approval_policy), deprecation_policy = COALESCE(?, deprecation_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, groups = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, entity_approval_policy = COALESCE(?, entity_approval_policy), deprecation_policy = COALESCE(?, deprecation_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
         JSON.stringify(input.fields),
         JSON.stringify(input.templates ?? []),
+        JSON.stringify(input.groups ?? []),
         input.color,
         input.icon,
         input.default_owner,
@@ -122,7 +124,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchemaVersion(input: SchemaVersionDbCreate) {
     this.run(
-      'INSERT INTO entity_schema_version (id, workspace, schema_id, version, name, description, fields, templates, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema_version (id, workspace, schema_id, version, name, description, fields, templates, groups, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -132,6 +134,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.description,
         JSON.stringify(input.fields),
         JSON.stringify(input.templates),
+        JSON.stringify(input.groups),
         input.color,
         input.icon,
         JSON.stringify(input.change_summary),

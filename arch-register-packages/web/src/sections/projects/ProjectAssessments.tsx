@@ -21,6 +21,7 @@ import type {
   Assessment,
   AssessmentEnumOption,
   AssessmentField,
+  AssessmentGroup,
   AssessmentRecurrence,
   CreateAssessmentRequest
 } from '@arch-register/api-types/assessmentContract';
@@ -29,6 +30,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TypeBadge } from '../../components/TypeBadge';
+import { GroupsEditor } from '../../components/GroupsEditor';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
@@ -378,6 +380,9 @@ export const AssessmentEditorDialog = ({
   const [fields, setFields] = useState<AssessmentField[]>(
     assessment?.fields.map(f => ({ ...f })) ?? []
   );
+  const [groups, setGroups] = useState<AssessmentGroup[]>(
+    assessment?.groups.map(g => ({ ...g })) ?? []
+  );
   const [assignedTeamIds, setAssignedTeamIds] = useState<string[]>(
     assessment?.assigned_team_ids ?? []
   );
@@ -458,6 +463,11 @@ export const AssessmentEditorDialog = ({
   const removeField = (id: string) => {
     markDirty();
     setFields(prev => prev.filter(f => f.id !== id));
+  };
+
+  const deleteGroup = (groupId: string) => {
+    markDirty();
+    setFields(prev => prev.map(f => (f.groupId === groupId ? { ...f, groupId: undefined } : f)));
   };
 
   const teamLabels = useMemo(() => new Map(teams.map(team => [team.id, team.name])), [teams]);
@@ -548,6 +558,7 @@ export const AssessmentEditorDialog = ({
                 scope,
                 scope_conditions: scopeConditions,
                 fields: mode === 'confirm' ? [] : fields,
+                groups: mode === 'confirm' ? [] : groups,
                 assigned_team_ids: assignedTeamIds,
                 due_at: dueAt.length > 0 ? dueAt : null,
                 recurrence,
@@ -805,6 +816,7 @@ export const AssessmentEditorDialog = ({
                   <FieldRow
                     key={field.id}
                     field={field}
+                    groups={groups}
                     onUpdate={changes => updateField(field.id, changes)}
                     onRemove={() => removeField(field.id)}
                   />
@@ -812,6 +824,15 @@ export const AssessmentEditorDialog = ({
               </div>
             )}
           </div>
+          <GroupsEditor
+            groups={groups}
+            onChange={next => {
+              markDirty();
+              setGroups(next);
+            }}
+            onDeleteGroup={deleteGroup}
+            canEdit={true}
+          />
         </Tabs.Content>
       </Tabs.Root>
     </Dialog>,
@@ -846,12 +867,16 @@ const FIELD_TYPE_OPTIONS: [AssessmentField['type'], string][] = [
   ['text', 'Notes']
 ];
 
+const NO_GROUP = '__no_group__';
+
 const FieldRow = ({
   field,
+  groups,
   onUpdate,
   onRemove
 }: {
   field: AssessmentField;
+  groups: AssessmentGroup[];
   onUpdate: (changes: Partial<AssessmentField>) => void;
   onRemove: () => void;
 }) => {
@@ -930,6 +955,17 @@ const FieldRow = ({
         </div>
       )}
       {meta.hint && <span className={styles.fieldHint}>{meta.hint}</span>}
+      <Select.Root
+        value={field.groupId ?? NO_GROUP}
+        onChange={v => onUpdate({ groupId: v === NO_GROUP || !v ? undefined : v })}
+      >
+        <Select.Item value={NO_GROUP}>(none)</Select.Item>
+        {groups.map(group => (
+          <Select.Item key={group.id} value={group.id}>
+            {group.name}
+          </Select.Item>
+        ))}
+      </Select.Root>
       <div className={styles.fieldRequirement}>
         <Select.Root
           value={field.requirementLevel}

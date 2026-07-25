@@ -35,7 +35,10 @@
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
               relationships, and schema-specific behavior, including marking a field as externally managed (by AI, an
-              integration, or an internal automation) with a refresh mode of on-change or scheduled.
+              integration, or an internal automation) with a refresh mode of on-change or scheduled. Fields can be
+              organized into named, presentation-only groups (with an optional description) that render as labeled
+              sections wherever fields appear as a form or list; this has no effect on validation, required-ness, or
+              completeness.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally
@@ -61,7 +64,8 @@
           lifecycle, links, references, and custom values. A schema field marked as externally managed (by AI, an
           integration, or an internal automation) is read-only to users; its current value stays visible alongside the
           latest update's source, timestamp, status, and any explanation or findings. A user edit to any other field on
-          the entity marks that entity's external field results outdated.
+          the entity marks that entity's external field results outdated. Fields belonging to a schema group render
+          under a labeled section in the entity's Properties panel, with ungrouped fields shown first.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records.
@@ -173,6 +177,9 @@
         - @id:ar.assessments.definitions Users can create and edit assessment definitions with status, scope, filters,
           and required or optional fields, start from built-in assessment templates, or configure a confirm-only mode
           with no fields. Enum fields can reference reusable workspace enums or define assessment-local option values.
+          Fields can be organized into named, presentation-only groups (with an optional description) that render as
+          labeled sections in the assessment editor and the per-entity assessment accordion; this is purely visual and
+          does not affect the assessment grid/results view, where fields remain flat table columns.
 
         - @id:ar.assessments.responses Reviewers can fill in assessment responses for in-scope entities from an
           assessment grid or entity detail view, or, for confirm-only assessments, record a single "confirmed

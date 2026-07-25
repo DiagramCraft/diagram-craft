@@ -27,10 +27,12 @@ import {
   EntityTemplate,
   FieldMigrations,
   PendingFieldChange,
-  SchemaField
+  SchemaField,
+  SchemaGroup
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { EmptyState } from '../../components/EmptyState';
+import { GroupsEditor } from '../../components/GroupsEditor';
 import { toFieldId } from '../../utils/fieldId';
 import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
@@ -59,6 +61,7 @@ export const SchemaSettingsScreen = () => {
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
   const [templates, setTemplates] = useState<EntityTemplate[]>([]);
+  const [groups, setGroups] = useState<SchemaGroup[]>([]);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
   const [entityApprovalPolicy, setEntityApprovalPolicy] = useState<'required' | 'disabled'>(
@@ -99,6 +102,7 @@ export const SchemaSettingsScreen = () => {
       setDescription(selected.description);
       setFields(selected.fields);
       setTemplates(selected.templates);
+      setGroups(selected.groups);
       setColor(selected.color);
       setIcon(selected.icon);
       setEntityApprovalPolicy(selected.entity_approval_policy ?? 'disabled');
@@ -123,6 +127,7 @@ export const SchemaSettingsScreen = () => {
             description,
             fields,
             templates,
+            groups,
             color,
             icon,
             entity_approval_policy: entityApprovalPolicy,
@@ -148,6 +153,7 @@ export const SchemaSettingsScreen = () => {
       description,
       fields,
       templates,
+      groups,
       color,
       icon,
       dirty,
@@ -301,6 +307,13 @@ export const SchemaSettingsScreen = () => {
     });
     setDirty(true);
     setTemplateDialogOpen(false);
+  };
+
+  const deleteGroup = (groupId: string) => {
+    setFields(current =>
+      current.map(f => (f.groupId === groupId ? { ...f, groupId: undefined } : f))
+    );
+    setDirty(true);
   };
 
   if (activeTab === 'enums') {
@@ -495,6 +508,7 @@ export const SchemaSettingsScreen = () => {
                     <span>Type</span>
                     <span>Options / Ref</span>
                     <span>Completeness</span>
+                    <span>Group</span>
                     <span>External</span>
                     <span />
                   </div>
@@ -508,6 +522,7 @@ export const SchemaSettingsScreen = () => {
                         field={f}
                         schemas={schemas}
                         enums={enums}
+                        groups={groups}
                         onUpdate={patch => updateField(f.id, patch)}
                         onChangeType={t => changeFieldType(f.id, t)}
                         onRemove={canEdit ? () => removeField(f.id) : undefined}
@@ -531,6 +546,16 @@ export const SchemaSettingsScreen = () => {
                   </div>
                 </div>
               )}
+
+              <GroupsEditor
+                groups={groups}
+                onChange={next => {
+                  setGroups(next);
+                  setDirty(true);
+                }}
+                onDeleteGroup={deleteGroup}
+                canEdit={canEdit}
+              />
 
               <div className={styles.fieldsHead}>
                 <div className={styles.sectionLabel}>Entity templates</div>
@@ -665,10 +690,13 @@ export const SchemaSettingsScreen = () => {
   );
 };
 
+const NO_GROUP = '__no_group__';
+
 const FieldRow = ({
   field,
   schemas,
   enums,
+  groups,
   onUpdate,
   onChangeType,
   onRemove,
@@ -678,6 +706,7 @@ const FieldRow = ({
   field: SchemaField;
   schemas: EntitySchema[];
   enums: WorkspaceEnum[];
+  groups: SchemaGroup[];
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
   onRemove?: () => void;
@@ -897,6 +926,19 @@ const FieldRow = ({
         <Select.Item value="optional">Optional</Select.Item>
         <Select.Item value="expected">Expected</Select.Item>
         <Select.Item value="required">Required</Select.Item>
+      </Select.Root>
+      <Select.Root
+        value={field.groupId ?? NO_GROUP}
+        disabled={!canEdit}
+        onChange={value => onUpdate({ groupId: value === NO_GROUP || !value ? undefined : value })}
+        style={{ width: '100%' }}
+      >
+        <Select.Item value={NO_GROUP}>(none)</Select.Item>
+        {groups.map(group => (
+          <Select.Item key={group.id} value={group.id}>
+            {group.name}
+          </Select.Item>
+        ))}
       </Select.Root>
       <div style={{ display: 'grid', gap: 4 }}>
         <Select.Root

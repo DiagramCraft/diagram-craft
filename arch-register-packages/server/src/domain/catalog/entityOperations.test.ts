@@ -321,6 +321,7 @@ describe('listEntities / countEntities with joined assessment', () => {
     mode: 'fields',
     scope: ['schema-1'],
     scope_conditions: [],
+    groups: [],
     assigned_team_ids: [],
     due_at: null,
     recurrence: { type: 'none' },

@@ -306,6 +306,7 @@ export const updateAssessmentStatus = async (
           scope: oldRow.scope,
           scope_conditions: oldRow.scope_conditions,
           fields: oldRow.fields,
+          groups: oldRow.groups,
           assigned_team_ids: oldRow.assigned_team_ids,
           due_at: oldRow.due_at,
           recurrence: oldRow.recurrence,

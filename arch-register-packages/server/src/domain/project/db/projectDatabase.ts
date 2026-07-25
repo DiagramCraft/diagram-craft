@@ -1,5 +1,6 @@
 import type {
   AssessmentField,
+  AssessmentGroup,
   AssessmentRecurrence
 } from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
@@ -297,6 +298,7 @@ export type AssessmentDbResult = {
   scope: string[];
   scope_conditions: FilterCondition[];
   fields: AssessmentField[];
+  groups: AssessmentGroup[];
   assigned_team_ids: string[];
   due_at: Date | null;
   recurrence: AssessmentRecurrence;
@@ -481,6 +483,7 @@ export const projectMappers = {
     scope: parseDatabaseJson(row['scope'], [], 'assessment.scope'),
     scope_conditions: parseDatabaseJson(row['scope_conditions'], [], 'assessment.scope_conditions'),
     fields: parseDatabaseJson(row['fields'], [], 'assessment.fields'),
+    groups: parseDatabaseJson(row['groups'], [], 'assessment.groups'),
     assigned_team_ids: parseDatabaseJson(
       row['assigned_team_ids'],
       [],

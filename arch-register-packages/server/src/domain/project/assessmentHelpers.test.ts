@@ -28,6 +28,7 @@ const makeRow = (overrides: Partial<AssessmentDbResult> = {}): AssessmentDbResul
       requirementLevel: 'required'
     }
   ],
+  groups: [],
   assigned_team_ids: [],
   due_at: null,
   recurrence: { type: 'none' },
@@ -94,6 +95,38 @@ describe('buildCreateAssessmentInput', () => {
   it('throws when name is missing', () => {
     expect(() => buildCreateAssessmentInput('ws-1', {}, now)).toThrow();
   });
+
+  it('defaults groups to an empty array when omitted', () => {
+    const input = buildCreateAssessmentInput(
+      'ws-1',
+      { project_id: 'proj-1', name: 'New assessment' },
+      now
+    );
+    expect(input.groups).toEqual([]);
+  });
+
+  it('passes through provided groups and clears orphaned field groupIds', () => {
+    const input = buildCreateAssessmentInput(
+      'ws-1',
+      {
+        project_id: 'proj-1',
+        name: 'New assessment',
+        fields: [
+          {
+            id: 'f1',
+            label: 'Notes',
+            type: 'text',
+            requirementLevel: 'optional',
+            groupId: 'missing'
+          }
+        ],
+        groups: [{ id: 'g1', name: 'Basics' }]
+      },
+      now
+    );
+    expect(input.groups).toEqual([{ id: 'g1', name: 'Basics' }]);
+    expect(input.fields[0]!.groupId).toBeUndefined();
+  });
 });
 
 describe('buildUpdateAssessmentInput', () => {
@@ -129,6 +162,24 @@ describe('buildUpdateAssessmentInput', () => {
   it('throws when name is missing', () => {
     expect(() => buildUpdateAssessmentInput({}, makeRow(), now)).toThrow();
   });
+
+  it('falls back to the existing groups when omitted', () => {
+    const existing = makeRow({ groups: [{ id: 'g1', name: 'Basics' }] });
+    const input = buildUpdateAssessmentInput({ name: 'Renamed' }, existing, now);
+    expect(input.groups).toEqual([{ id: 'g1', name: 'Basics' }]);
+  });
+
+  it('clears groupId on fields referencing a group removed from groups', () => {
+    const existing = makeRow({
+      groups: [{ id: 'g1', name: 'Basics' }],
+      fields: [
+        { id: 'f1', label: 'Notes', type: 'text', requirementLevel: 'optional', groupId: 'g1' }
+      ]
+    });
+    const input = buildUpdateAssessmentInput({ name: 'Renamed', groups: [] }, existing, now);
+    expect(input.groups).toEqual([]);
+    expect(input.fields[0]!.groupId).toBeUndefined();
+  });
 });
 
 describe('toApiAssessment', () => {
@@ -147,5 +198,14 @@ describe('toApiAssessment', () => {
     expect(result.completed_entity_count).toBe(1);
     expect(result.created_at).toBe(nowIso);
     expect(result.updated_at).toBe(nowIso);
+  });
+
+  it('passes through groups', () => {
+    const result = toApiAssessment(
+      makeRow({ groups: [{ id: 'g1', name: 'Basics' }] }),
+      { response_count: 0, completed_entity_count: 0 },
+      'proj-1'
+    );
+    expect(result.groups).toEqual([{ id: 'g1', name: 'Basics' }]);
   });
 });

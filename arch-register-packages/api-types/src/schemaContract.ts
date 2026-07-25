@@ -4,7 +4,8 @@ import {
   ws,
   wsAndUUID,
   externalFieldSchema,
-  assertRefreshModeRequiresExternalKind
+  assertRefreshModeRequiresExternalKind,
+  namedGroupSchema
 } from '@arch-register/api-types/common';
 
 const requirementLevelSchema = z
@@ -22,6 +23,10 @@ const baseFieldSchema = z.object({
     .boolean()
     .optional()
     .describe('Whether the field is archived (hidden, but data is retained)'),
+  groupId: z
+    .string()
+    .optional()
+    .describe('Id of the presentation-only group this field belongs to; omitted means ungrouped'),
   ...externalFieldSchema.shape
 });
 
@@ -145,6 +150,8 @@ const entityTemplateSchema = z
   })
   .describe('Named defaults for creating an entity of this schema');
 
+const schemaGroupSchema = namedGroupSchema;
+
 const entitySchemaSchema = z.object({
   id: z.string().describe('Unique schema identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
@@ -153,6 +160,9 @@ const entitySchemaSchema = z.object({
   key_prefix: z.string().describe('Prefix for entity public IDs (e.g., "APP" for APP-001)'),
   fields: z.array(schemaFieldResponseSchema).describe('Schema field definitions'),
   templates: z.array(entityTemplateSchema).describe('Named entity creation templates'),
+  groups: z
+    .array(schemaGroupSchema)
+    .describe('Named, presentation-only field groups, in display order'),
   color: z.string().nullable().describe('Schema color (hex format)'),
   icon: z.string().nullable().describe('Schema icon identifier'),
   entity_count: z.number().int().min(0).describe('Number of entities using this schema'),
@@ -182,6 +192,7 @@ const schemaVersionSchema = z.object({
   description: z.string().describe('Schema description at this version'),
   fields: z.array(schemaFieldResponseSchema).describe('Field definitions at this version'),
   templates: z.array(entityTemplateSchema).describe('Templates at this version'),
+  groups: z.array(schemaGroupSchema).describe('Field groups at this version'),
   color: z.string().nullable().describe('Schema color at this version'),
   icon: z.string().nullable().describe('Schema icon at this version'),
   changeSummary: z
@@ -208,6 +219,10 @@ const createSchemaBodySchema = z.object({
   templates: z.preprocess(
     v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
     z.array(entityTemplateSchema).optional().describe('Named entity creation templates')
+  ),
+  groups: z.preprocess(
+    v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
+    z.array(schemaGroupSchema).optional().describe('Named, presentation-only field groups')
   ),
   color: z.preprocess(
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
@@ -352,6 +367,7 @@ export type ContainmentField = Extract<SchemaField, { type: 'containment' }>;
 export type EntitySchema = z.infer<typeof entitySchemaSchema>;
 export type EntityTemplate = z.infer<typeof entityTemplateSchema>;
 export type EntityTemplateValues = EntityTemplate['values'];
+export type SchemaGroup = z.infer<typeof schemaGroupSchema>;
 
 // ── Schema Versioning & Field Migrations ─────────────────────
 

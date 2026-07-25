@@ -122,6 +122,7 @@ describe('joined assessment display fields', () => {
         enumId: 'risk-enum'
       }
     ],
+    groups: [],
     assigned_team_ids: [],
     due_at: null,
     recurrence: { type: 'none' },
