@@ -62228,39 +62228,97 @@
                               ]
                             },
                             {
-                              "type": "object",
-                              "properties": {
-                                "id": {
-                                  "type": "string",
-                                  "description": "Unique field identifier"
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Unique field identifier"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Field label shown to the person completing the assessment"
+                                    },
+                                    "requirementLevel": {
+                                      "enum": [
+                                        "required",
+                                        "optional"
+                                      ],
+                                      "type": "string",
+                                      "description": "Whether a response to this field is required or optional"
+                                    },
+                                    "type": {
+                                      "const": "enum",
+                                      "description": "Single-select field"
+                                    },
+                                    "enumId": {
+                                      "type": "string",
+                                      "description": "Workspace enumeration identifier used for the option list"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "label",
+                                    "requirementLevel",
+                                    "type",
+                                    "enumId"
+                                  ]
                                 },
-                                "label": {
-                                  "type": "string",
-                                  "description": "Field label shown to the person completing the assessment"
-                                },
-                                "requirementLevel": {
-                                  "enum": [
-                                    "required",
-                                    "optional"
-                                  ],
-                                  "type": "string",
-                                  "description": "Whether a response to this field is required or optional"
-                                },
-                                "type": {
-                                  "const": "enum",
-                                  "description": "Single-select field"
-                                },
-                                "enumId": {
-                                  "type": "string",
-                                  "description": "Workspace enumeration identifier used for the option list"
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Unique field identifier"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Field label shown to the person completing the assessment"
+                                    },
+                                    "requirementLevel": {
+                                      "enum": [
+                                        "required",
+                                        "optional"
+                                      ],
+                                      "type": "string",
+                                      "description": "Whether a response to this field is required or optional"
+                                    },
+                                    "type": {
+                                      "const": "enum",
+                                      "description": "Single-select field"
+                                    },
+                                    "options": {
+                                      "type": "array",
+                                      "minItems": 1,
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "string",
+                                            "description": "Stored option value"
+                                          },
+                                          "label": {
+                                            "type": "string",
+                                            "description": "Displayed option label"
+                                          }
+                                        },
+                                        "required": [
+                                          "value",
+                                          "label"
+                                        ]
+                                      },
+                                      "description": "Assessment-local option list"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "label",
+                                    "requirementLevel",
+                                    "type",
+                                    "options"
+                                  ]
                                 }
-                              },
-                              "required": [
-                                "id",
-                                "label",
-                                "requirementLevel",
-                                "type",
-                                "enumId"
                               ]
                             },
                             {
@@ -62472,39 +62530,97 @@
                           ]
                         },
                         {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                              "description": "Unique field identifier"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "description": "Field label shown to the person completing the assessment"
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string",
+                                  "description": "Whether a response to this field is required or optional"
+                                },
+                                "type": {
+                                  "const": "enum",
+                                  "description": "Single-select field"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Workspace enumeration identifier used for the option list"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "requirementLevel",
+                                "type",
+                                "enumId"
+                              ]
                             },
-                            "label": {
-                              "type": "string",
-                              "description": "Field label shown to the person completing the assessment"
-                            },
-                            "requirementLevel": {
-                              "enum": [
-                                "required",
-                                "optional"
-                              ],
-                              "type": "string",
-                              "description": "Whether a response to this field is required or optional"
-                            },
-                            "type": {
-                              "const": "enum",
-                              "description": "Single-select field"
-                            },
-                            "enumId": {
-                              "type": "string",
-                              "description": "Workspace enumeration identifier used for the option list"
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "description": "Field label shown to the person completing the assessment"
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string",
+                                  "description": "Whether a response to this field is required or optional"
+                                },
+                                "type": {
+                                  "const": "enum",
+                                  "description": "Single-select field"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Stored option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Displayed option label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Assessment-local option list"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "requirementLevel",
+                                "type",
+                                "options"
+                              ]
                             }
-                          },
-                          "required": [
-                            "id",
-                            "label",
-                            "requirementLevel",
-                            "type",
-                            "enumId"
                           ]
                         },
                         {
@@ -62681,39 +62797,97 @@
                             ]
                           },
                           {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "description": "Unique field identifier"
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique field identifier"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Field label shown to the person completing the assessment"
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string",
+                                    "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "type": {
+                                    "const": "enum",
+                                    "description": "Single-select field"
+                                  },
+                                  "enumId": {
+                                    "type": "string",
+                                    "description": "Workspace enumeration identifier used for the option list"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type",
+                                  "enumId"
+                                ]
                               },
-                              "label": {
-                                "type": "string",
-                                "description": "Field label shown to the person completing the assessment"
-                              },
-                              "requirementLevel": {
-                                "enum": [
-                                  "required",
-                                  "optional"
-                                ],
-                                "type": "string",
-                                "description": "Whether a response to this field is required or optional"
-                              },
-                              "type": {
-                                "const": "enum",
-                                "description": "Single-select field"
-                              },
-                              "enumId": {
-                                "type": "string",
-                                "description": "Workspace enumeration identifier used for the option list"
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique field identifier"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Field label shown to the person completing the assessment"
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string",
+                                    "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "type": {
+                                    "const": "enum",
+                                    "description": "Single-select field"
+                                  },
+                                  "options": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "string",
+                                          "description": "Stored option value"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "description": "Displayed option label"
+                                        }
+                                      },
+                                      "required": [
+                                        "value",
+                                        "label"
+                                      ]
+                                    },
+                                    "description": "Assessment-local option list"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type",
+                                  "options"
+                                ]
                               }
-                            },
-                            "required": [
-                              "id",
-                              "label",
-                              "requirementLevel",
-                              "type",
-                              "enumId"
                             ]
                           },
                           {
@@ -62953,39 +63127,97 @@
                             ]
                           },
                           {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "description": "Unique field identifier"
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique field identifier"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Field label shown to the person completing the assessment"
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string",
+                                    "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "type": {
+                                    "const": "enum",
+                                    "description": "Single-select field"
+                                  },
+                                  "enumId": {
+                                    "type": "string",
+                                    "description": "Workspace enumeration identifier used for the option list"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type",
+                                  "enumId"
+                                ]
                               },
-                              "label": {
-                                "type": "string",
-                                "description": "Field label shown to the person completing the assessment"
-                              },
-                              "requirementLevel": {
-                                "enum": [
-                                  "required",
-                                  "optional"
-                                ],
-                                "type": "string",
-                                "description": "Whether a response to this field is required or optional"
-                              },
-                              "type": {
-                                "const": "enum",
-                                "description": "Single-select field"
-                              },
-                              "enumId": {
-                                "type": "string",
-                                "description": "Workspace enumeration identifier used for the option list"
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique field identifier"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Field label shown to the person completing the assessment"
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string",
+                                    "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "type": {
+                                    "const": "enum",
+                                    "description": "Single-select field"
+                                  },
+                                  "options": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "string",
+                                          "description": "Stored option value"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "description": "Displayed option label"
+                                        }
+                                      },
+                                      "required": [
+                                        "value",
+                                        "label"
+                                      ]
+                                    },
+                                    "description": "Assessment-local option list"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type",
+                                  "options"
+                                ]
                               }
-                            },
-                            "required": [
-                              "id",
-                              "label",
-                              "requirementLevel",
-                              "type",
-                              "enumId"
                             ]
                           },
                           {
@@ -63205,39 +63437,97 @@
                           ]
                         },
                         {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                              "description": "Unique field identifier"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "description": "Field label shown to the person completing the assessment"
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string",
+                                  "description": "Whether a response to this field is required or optional"
+                                },
+                                "type": {
+                                  "const": "enum",
+                                  "description": "Single-select field"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Workspace enumeration identifier used for the option list"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "requirementLevel",
+                                "type",
+                                "enumId"
+                              ]
                             },
-                            "label": {
-                              "type": "string",
-                              "description": "Field label shown to the person completing the assessment"
-                            },
-                            "requirementLevel": {
-                              "enum": [
-                                "required",
-                                "optional"
-                              ],
-                              "type": "string",
-                              "description": "Whether a response to this field is required or optional"
-                            },
-                            "type": {
-                              "const": "enum",
-                              "description": "Single-select field"
-                            },
-                            "enumId": {
-                              "type": "string",
-                              "description": "Workspace enumeration identifier used for the option list"
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "description": "Field label shown to the person completing the assessment"
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string",
+                                  "description": "Whether a response to this field is required or optional"
+                                },
+                                "type": {
+                                  "const": "enum",
+                                  "description": "Single-select field"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Stored option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Displayed option label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Assessment-local option list"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "requirementLevel",
+                                "type",
+                                "options"
+                              ]
                             }
-                          },
-                          "required": [
-                            "id",
-                            "label",
-                            "requirementLevel",
-                            "type",
-                            "enumId"
                           ]
                         },
                         {
@@ -63414,39 +63704,97 @@
                             ]
                           },
                           {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "description": "Unique field identifier"
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique field identifier"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Field label shown to the person completing the assessment"
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string",
+                                    "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "type": {
+                                    "const": "enum",
+                                    "description": "Single-select field"
+                                  },
+                                  "enumId": {
+                                    "type": "string",
+                                    "description": "Workspace enumeration identifier used for the option list"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type",
+                                  "enumId"
+                                ]
                               },
-                              "label": {
-                                "type": "string",
-                                "description": "Field label shown to the person completing the assessment"
-                              },
-                              "requirementLevel": {
-                                "enum": [
-                                  "required",
-                                  "optional"
-                                ],
-                                "type": "string",
-                                "description": "Whether a response to this field is required or optional"
-                              },
-                              "type": {
-                                "const": "enum",
-                                "description": "Single-select field"
-                              },
-                              "enumId": {
-                                "type": "string",
-                                "description": "Workspace enumeration identifier used for the option list"
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique field identifier"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Field label shown to the person completing the assessment"
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string",
+                                    "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "type": {
+                                    "const": "enum",
+                                    "description": "Single-select field"
+                                  },
+                                  "options": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "string",
+                                          "description": "Stored option value"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "description": "Displayed option label"
+                                        }
+                                      },
+                                      "required": [
+                                        "value",
+                                        "label"
+                                      ]
+                                    },
+                                    "description": "Assessment-local option list"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type",
+                                  "options"
+                                ]
                               }
-                            },
-                            "required": [
-                              "id",
-                              "label",
-                              "requirementLevel",
-                              "type",
-                              "enumId"
                             ]
                           },
                           {
@@ -63765,39 +64113,97 @@
                             ]
                           },
                           {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "description": "Unique field identifier"
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique field identifier"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Field label shown to the person completing the assessment"
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string",
+                                    "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "type": {
+                                    "const": "enum",
+                                    "description": "Single-select field"
+                                  },
+                                  "enumId": {
+                                    "type": "string",
+                                    "description": "Workspace enumeration identifier used for the option list"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type",
+                                  "enumId"
+                                ]
                               },
-                              "label": {
-                                "type": "string",
-                                "description": "Field label shown to the person completing the assessment"
-                              },
-                              "requirementLevel": {
-                                "enum": [
-                                  "required",
-                                  "optional"
-                                ],
-                                "type": "string",
-                                "description": "Whether a response to this field is required or optional"
-                              },
-                              "type": {
-                                "const": "enum",
-                                "description": "Single-select field"
-                              },
-                              "enumId": {
-                                "type": "string",
-                                "description": "Workspace enumeration identifier used for the option list"
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique field identifier"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Field label shown to the person completing the assessment"
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string",
+                                    "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "type": {
+                                    "const": "enum",
+                                    "description": "Single-select field"
+                                  },
+                                  "options": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "string",
+                                          "description": "Stored option value"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "description": "Displayed option label"
+                                        }
+                                      },
+                                      "required": [
+                                        "value",
+                                        "label"
+                                      ]
+                                    },
+                                    "description": "Assessment-local option list"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type",
+                                  "options"
+                                ]
                               }
-                            },
-                            "required": [
-                              "id",
-                              "label",
-                              "requirementLevel",
-                              "type",
-                              "enumId"
                             ]
                           },
                           {
