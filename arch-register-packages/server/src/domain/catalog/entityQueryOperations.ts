@@ -154,7 +154,11 @@ export const resolveJoinedAssessment = async (
     });
     requireProjectAccess(authCtx, project.owner);
   }
-  const responses = await db.project.listAssessmentResponses(workspace, assessmentId);
+  const responses = await db.project.listAssessmentResponses(
+    workspace,
+    assessmentId,
+    assessment.current_occurrence
+  );
   const responsesByEntity = new Map(responses.map(r => [r.entity_id, r.values]));
   return { assessment, responsesByEntity };
 };

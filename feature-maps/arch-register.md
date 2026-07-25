@@ -190,6 +190,14 @@
           the governance inbox; closing the assessment resolves those tasks. Assigned teams and the due date are
           fixed while the assessment is open and can only be changed by returning it to draft.
 
+        - @id:ar.assessments.recurrence Users can configure an assessment to recur weekly or monthly (with a
+          configurable interval, so quarterly or annual cadences are just a monthly interval of 3 or 12) and set a
+          response window in days. Once open, a recurring assessment automatically reopens for a new response cycle
+          when its response window elapses: prior responses are preserved but no longer count toward completion, so
+          teams re-attest each cycle rather than seeing stale "complete" state, and the assigned teams' governance
+          inbox acknowledgement task is recreated for the new cycle. The assessment card shows the current cycle
+          number and when it next reopens.
+
     - @id:ar.content Users can maintain Markdown, diagram, and document content at workspace, project, and entity
       scopes.
 

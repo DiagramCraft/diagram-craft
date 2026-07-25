@@ -3333,6 +3333,11 @@ export const seedAssessments: AssessmentDbCreate[] = [
     ],
     assigned_team_ids: [],
     due_at: null,
+    recurrence: { type: 'none' },
+    response_window_days: null,
+    current_occurrence: 1,
+    pending_occurrence_job_run_id: null,
+    next_occurrence_at: null,
     created_at: now,
     updated_at: now
   },
@@ -3359,6 +3364,11 @@ export const seedAssessments: AssessmentDbCreate[] = [
     ],
     assigned_team_ids: [],
     due_at: null,
+    recurrence: { type: 'none' },
+    response_window_days: null,
+    current_occurrence: 1,
+    pending_occurrence_job_run_id: null,
+    next_occurrence_at: null,
     created_at: now,
     updated_at: now
   }

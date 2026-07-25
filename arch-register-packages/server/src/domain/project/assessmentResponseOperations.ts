@@ -45,7 +45,11 @@ export const listAssessmentResponses = async (
       const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
       const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAccess(authCtx, project.owner);
-      const rows = await db.project.listAssessmentResponses(ws, assessmentId);
+      const rows = await db.project.listAssessmentResponses(
+        ws,
+        assessmentId,
+        assessment.current_occurrence
+      );
       return rows.map(row => toApiAssessmentResponse(row, assessment));
     }
   );
@@ -82,7 +86,12 @@ export const upsertAssessmentResponse = async (
         status: 400,
         message: 'Confirm-only assessments do not accept field values'
       });
-      const existing = await db.project.getAssessmentResponse(ws, assessmentId, entityId);
+      const existing = await db.project.getAssessmentResponse(
+        ws,
+        assessmentId,
+        entityId,
+        assessment.current_occurrence
+      );
       const existingValues = existing?.values ?? {};
 
       const values: Record<string, string | number> = { ...existingValues };
@@ -95,6 +104,7 @@ export const upsertAssessmentResponse = async (
         workspace: ws,
         assessment_id: assessmentId,
         entity_id: entityId,
+        occurrence: assessment.current_occurrence,
         values,
         updated_by: authCtx.userId
       });
@@ -134,7 +144,7 @@ export const exportAssessmentResponsesCsv = async (
       requireProjectAccess(authCtx, project.owner);
       const [allEntities, responses, enums] = await Promise.all([
         listAllCatalogEntities(db, ws),
-        db.project.listAssessmentResponses(ws, assessmentId),
+        db.project.listAssessmentResponses(ws, assessmentId, assessment.current_occurrence),
         db.catalog.listEnums(ws)
       ]);
 

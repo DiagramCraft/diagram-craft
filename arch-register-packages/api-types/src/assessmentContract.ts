@@ -51,6 +51,20 @@ const assessmentModeSchema = z
     'Whether entities are assessed by filling in fields, or by a single "confirmed accurate" action'
   );
 
+const assessmentRecurrenceSchema = z
+  .union([
+    z.object({ type: z.literal('none') }),
+    z.object({
+      type: z.literal('weekly'),
+      intervalWeeks: z.number().int().min(1).describe('Number of weeks between occurrences')
+    }),
+    z.object({
+      type: z.literal('monthly'),
+      intervalMonths: z.number().int().min(1).describe('Number of months between occurrences')
+    })
+  ])
+  .describe('Recurrence rule; "none" means this is a one-off assessment');
+
 const assessmentSchema = z.object({
   id: z.string().describe('Unique assessment identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
@@ -71,6 +85,22 @@ const assessmentSchema = z.object({
     .string()
     .nullable()
     .describe('Optional ISO 8601 due date applied when the assessment opens'),
+  recurrence: assessmentRecurrenceSchema,
+  response_window_days: z
+    .number()
+    .int()
+    .min(1)
+    .nullable()
+    .describe('Days each occurrence stays open before its due date; required when recurring'),
+  current_occurrence: z
+    .number()
+    .int()
+    .min(1)
+    .describe('The current recurrence cycle number, starting at 1'),
+  next_occurrence_at: z
+    .string()
+    .nullable()
+    .describe('ISO 8601 timestamp when this assessment will next automatically reopen'),
   response_count: z.number().int().min(0).describe('Number of entities with a recorded response'),
   completed_entity_count: z
     .number()
@@ -116,12 +146,27 @@ const assessmentBodySchema = z
       .string()
       .nullable()
       .optional()
-      .describe('Optional ISO 8601 due date applied when the assessment opens')
+      .describe('Optional ISO 8601 due date applied when the assessment opens'),
+    recurrence: assessmentRecurrenceSchema.optional().default({ type: 'none' }),
+    response_window_days: z
+      .number()
+      .int()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe('Days each occurrence stays open before its due date; required when recurring')
   })
   .refine(body => body.mode !== 'confirm' || !body.fields || body.fields.length === 0, {
     message: 'Confirm-only assessments cannot define fields',
     path: ['fields']
-  });
+  })
+  .refine(
+    body => (body.recurrence?.type ?? 'none') === 'none' || (body.response_window_days ?? 0) > 0,
+    {
+      message: 'Recurring assessments require a positive response_window_days',
+      path: ['response_window_days']
+    }
+  );
 
 const updateAssessmentStatusBodySchema = z.object({
   status: z.enum(['draft', 'open', 'closed', 'archived']).describe('New assessment status')
@@ -205,6 +250,7 @@ export const assessmentContract = oc.tag('Assessments').router({
   }
 });
 
+export type AssessmentRecurrence = z.infer<typeof assessmentRecurrenceSchema>;
 export type AssessmentField = z.infer<typeof assessmentFieldSchema>;
 export type AssessmentEnumOption = z.infer<typeof assessmentEnumOptionSchema>;
 export type AssessmentEnumField = z.infer<typeof enumAssessmentFieldSchema>;

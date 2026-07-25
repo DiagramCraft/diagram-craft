@@ -24,81 +24,21 @@ import {
   UpdateAssessmentStatusRequest
 } from '@arch-register/api-types/assessmentContract';
 import {
-  createGovernanceCaseInTransaction,
-  recordGovernanceEvent,
-  resolveAssignmentNotifications,
-  resolveCaseNotifications
-} from '../governance/governanceOperations';
-import type { GovernanceRegistry } from '../governance/governanceRegistry';
+  scheduleNextAssessmentOccurrence,
+  cancelPendingAssessmentOccurrence
+} from './assessmentRecurrenceJob';
+import {
+  ASSESSMENT_RESPONSE_CASE_KIND,
+  createAssessmentGovernanceRegistry,
+  openAssessmentGovernanceCase,
+  closeAssessmentGovernanceCase
+} from './assessmentGovernance';
 
-export const ASSESSMENT_RESPONSE_CASE_KIND = 'assessment.response';
-
-export const createAssessmentGovernanceRegistry = (): GovernanceRegistry =>
-  new Map([
-    [
-      ASSESSMENT_RESPONSE_CASE_KIND,
-      {
-        subjectVisible: async (
-          db: DatabaseAdapter,
-          _authCtx,
-          workspace: string,
-          subjectId: string
-        ) => {
-          const assessment = await db.project.getAssessmentById(workspace, subjectId);
-          return assessment != null;
-        },
-        independentAssignmentActions: new Set(['acknowledge' as const])
-      }
-    ]
-  ]);
-
-const openAssessmentGovernanceCase = async (
-  tx: DatabaseAdapter,
-  workspace: string,
-  initiatorUserId: string,
-  row: AssessmentDbResult
-): Promise<void> => {
-  if (row.assigned_team_ids.length === 0) return;
-  await createGovernanceCaseInTransaction(tx, workspace, initiatorUserId, {
-    caseKind: ASSESSMENT_RESPONSE_CASE_KIND,
-    subjectType: 'assessment',
-    subjectId: row.id,
-    selfApprovalAllowed: true,
-    dueAt: row.due_at,
-    payload: { projectId: row.project_id, name: row.name },
-    assignments: row.assigned_team_ids.map(teamId => ({
-      action: 'acknowledge' as const,
-      target: { type: 'team' as const, teamId }
-    }))
-  });
-};
-
-const closeAssessmentGovernanceCase = async (
-  tx: DatabaseAdapter,
-  workspace: string,
-  assessmentId: string
-): Promise<void> => {
-  const openCases = await tx.governance.listCases(workspace, {
-    caseKind: ASSESSMENT_RESPONSE_CASE_KIND,
-    subjectId: assessmentId,
-    status: 'open'
-  });
-  const now = new Date();
-  for (const caseRow of openCases) {
-    const completed = await tx.governance.completeCaseIfOpen(caseRow.id, 'closed', now);
-    if (!completed) continue;
-    const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
-    await resolveAssignmentNotifications(tx, supersededIds, now);
-    await resolveCaseNotifications(tx, completed.id, now);
-    await recordGovernanceEvent(tx, completed, {
-      eventType: 'cancelled',
-      actorUserId: null,
-      previousStatus: 'open',
-      resultingStatus: 'completed',
-      reason: 'Assessment closed',
-      metadata: {}
-    });
-  }
+export {
+  ASSESSMENT_RESPONSE_CASE_KIND,
+  createAssessmentGovernanceRegistry,
+  openAssessmentGovernanceCase,
+  closeAssessmentGovernanceCase
 };
 
 const getAssessmentStats = async (
@@ -108,7 +48,7 @@ const getAssessmentStats = async (
   entities?: EntityDbResult[]
 ) => {
   const [responses, scopedEntities] = await Promise.all([
-    db.project.listAssessmentResponses(ws, row.id),
+    db.project.listAssessmentResponses(ws, row.id, row.current_occurrence),
     entities ? Promise.resolve(entities) : listAllCatalogEntities(db, ws)
   ]);
   const scopedEntityIds = new Set(
@@ -321,7 +261,8 @@ export const updateAssessmentStatus = async (
       );
 
       const row = await db.core.transaction(async tx => {
-        const updated = await tx.project.updateAssessment(ws, project.id, id, {
+        const now = new Date();
+        let updated = await tx.project.updateAssessment(ws, project.id, id, {
           name: oldRow.name,
           description: oldRow.description,
           status: body.status,
@@ -331,13 +272,20 @@ export const updateAssessmentStatus = async (
           fields: oldRow.fields,
           assigned_team_ids: oldRow.assigned_team_ids,
           due_at: oldRow.due_at,
-          updated_at: new Date()
+          recurrence: oldRow.recurrence,
+          response_window_days: oldRow.response_window_days,
+          current_occurrence: oldRow.current_occurrence,
+          pending_occurrence_job_run_id: oldRow.pending_occurrence_job_run_id,
+          next_occurrence_at: oldRow.next_occurrence_at,
+          updated_at: now
         });
         if (updated) {
           if (oldRow.status !== 'open' && body.status === 'open') {
             await openAssessmentGovernanceCase(tx, ws, authCtx.userId, updated);
+            updated = await scheduleNextAssessmentOccurrence(tx, ws, updated, now);
           } else if (oldRow.status === 'open' && body.status !== 'open') {
             await closeAssessmentGovernanceCase(tx, ws, updated.id);
+            updated = await cancelPendingAssessmentOccurrence(tx, ws, updated, now);
           }
         }
         return updated;

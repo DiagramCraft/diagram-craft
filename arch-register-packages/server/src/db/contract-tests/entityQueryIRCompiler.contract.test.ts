@@ -550,6 +550,11 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       scope_conditions: [],
       assigned_team_ids: [],
       due_at: null,
+      recurrence: { type: 'none' },
+      response_window_days: null,
+      current_occurrence: 1,
+      pending_occurrence_job_run_id: null,
+      next_occurrence_at: null,
       fields: [
         { id: 'riskLevel', label: 'Risk Level', requirementLevel: 'required', type: 'rating' }
       ],
@@ -561,6 +566,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       workspace,
       assessment_id: assessment.id,
       entity_id: highRisk.id,
+      occurrence: 1,
       values: { riskLevel: 4 },
       updated_by: null
     });
@@ -568,6 +574,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       workspace,
       assessment_id: assessment.id,
       entity_id: lowRisk.id,
+      occurrence: 1,
       values: { riskLevel: 1 },
       updated_by: null
     });
@@ -608,6 +615,11 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       scope_conditions: [],
       assigned_team_ids: [],
       due_at: null,
+      recurrence: { type: 'none' },
+      response_window_days: null,
+      current_occurrence: 1,
+      pending_occurrence_job_run_id: null,
+      next_occurrence_at: null,
       fields: [
         { id: 'riskLevel', label: 'Risk Level', requirementLevel: 'required', type: 'rating' }
       ],
@@ -619,6 +631,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       workspace,
       assessment_id: assessment.id,
       entity_id: highRisk.id,
+      occurrence: 1,
       values: { riskLevel: 4 },
       updated_by: null
     });
@@ -626,6 +639,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       workspace,
       assessment_id: assessment.id,
       entity_id: lowRisk.id,
+      occurrence: 1,
       values: { riskLevel: 1 },
       updated_by: null
     });

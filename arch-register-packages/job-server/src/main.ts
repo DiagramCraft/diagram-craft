@@ -13,6 +13,10 @@ import { createGovernanceNotificationJobHandler } from '@arch-register/server/do
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
 import { createTechnologyEolJobHandler } from '@arch-register/server/domain/jobs/technologyEolJob';
 import {
+  createAssessmentRecurrenceJobHandler,
+  ASSESSMENT_RECURRENCE_JOB_TYPE
+} from '@arch-register/server/domain/project/assessmentRecurrenceJob';
+import {
   createEntityCompletenessJobHandler,
   ENTITY_COMPLETENESS_JOB_TYPE,
   ENTITY_COMPLETENESS_SCAN_JOB_TYPE
@@ -68,6 +72,7 @@ const main = async () => {
     createDocumentMetadataGenerationScanJobHandler(db, storage)
   );
   handlers.set('technology-eol', createTechnologyEolJobHandler(db));
+  handlers.set(ASSESSMENT_RECURRENCE_JOB_TYPE, createAssessmentRecurrenceJobHandler(db));
   const entityCompletenessJobHandler = createEntityCompletenessJobHandler(db);
   handlers.set(ENTITY_COMPLETENESS_JOB_TYPE, entityCompletenessJobHandler);
   handlers.set(ENTITY_COMPLETENESS_SCAN_JOB_TYPE, entityCompletenessJobHandler);

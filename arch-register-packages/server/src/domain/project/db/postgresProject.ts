@@ -897,8 +897,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async createAssessment(input: AssessmentDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, assigned_team_ids, due_at, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.description}, ${input.status}, ${input.mode}, ${this.json(input.scope)}, ${this.json(input.scope_conditions)}, ${this.json(input.fields)}, ${this.json(input.assigned_team_ids)}, ${input.due_at}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, assigned_team_ids, due_at, recurrence, response_window_days, current_occurrence, pending_occurrence_job_run_id, next_occurrence_at, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.description}, ${input.status}, ${input.mode}, ${this.json(input.scope)}, ${this.json(input.scope_conditions)}, ${this.json(input.fields)}, ${this.json(input.assigned_team_ids)}, ${input.due_at}, ${this.json(input.recurrence)}, ${input.response_window_days}, ${input.current_occurrence}, ${input.pending_occurrence_job_run_id}, ${input.next_occurrence_at}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return projectMappers.assessment(row!);
@@ -925,6 +925,11 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             fields = ${this.json(input.fields)},
             assigned_team_ids = ${this.json(input.assigned_team_ids)},
             due_at = ${input.due_at},
+            recurrence = ${this.json(input.recurrence)},
+            response_window_days = ${input.response_window_days},
+            current_occurrence = ${input.current_occurrence},
+            pending_occurrence_job_run_id = ${input.pending_occurrence_job_run_id},
+            next_occurrence_at = ${input.next_occurrence_at},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
         RETURNING *
@@ -1020,20 +1025,25 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     return Boolean(row?.exists);
   }
 
-  async listAssessmentResponses(workspace: string, assessmentId: string) {
+  async listAssessmentResponses(workspace: string, assessmentId: string, occurrence: number) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${ASSESSMENT_RESPONSE_SELECT_SQL}
-       WHERE ar.workspace = $1 AND ar.assessment_id = $2`,
-      [workspace, assessmentId]
+       WHERE ar.workspace = $1 AND ar.assessment_id = $2 AND ar.occurrence = $3`,
+      [workspace, assessmentId, occurrence]
     );
     return mapDatabaseRows(rows, projectMappers.assessmentResponse);
   }
 
-  async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
+  async getAssessmentResponse(
+    workspace: string,
+    assessmentId: string,
+    entityId: string,
+    occurrence: number
+  ) {
     const [row] = await this.sql.unsafe<DatabaseRow[]>(
       `${ASSESSMENT_RESPONSE_SELECT_SQL}
-       WHERE ar.workspace = $1 AND ar.assessment_id = $2 AND ar.entity_id = $3`,
-      [workspace, assessmentId, entityId]
+       WHERE ar.workspace = $1 AND ar.assessment_id = $2 AND ar.entity_id = $3 AND ar.occurrence = $4`,
+      [workspace, assessmentId, entityId, occurrence]
     );
     return row ? projectMappers.assessmentResponse(row) : null;
   }
@@ -1041,15 +1051,16 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async upsertAssessmentResponse(input: AssessmentResponseDbUpsert) {
     try {
       await this.sql`
-        INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, "values", created_at, updated_at, updated_by)
-        VALUES (${randomUUID()}, ${input.workspace}, ${input.assessment_id}, ${input.entity_id}, ${this.json(input.values)}, now(), now(), ${input.updated_by})
-        ON CONFLICT (workspace, assessment_id, entity_id)
+        INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, occurrence, "values", created_at, updated_at, updated_by)
+        VALUES (${randomUUID()}, ${input.workspace}, ${input.assessment_id}, ${input.entity_id}, ${input.occurrence}, ${this.json(input.values)}, now(), now(), ${input.updated_by})
+        ON CONFLICT (workspace, assessment_id, entity_id, occurrence)
         DO UPDATE SET "values" = ${this.json(input.values)}, updated_at = now(), updated_by = ${input.updated_by}
       `;
       return (await this.getAssessmentResponse(
         input.workspace,
         input.assessment_id,
-        input.entity_id
+        input.entity_id,
+        input.occurrence
       ))!;
     } catch (error) {
       return normalizePostgresError(error);

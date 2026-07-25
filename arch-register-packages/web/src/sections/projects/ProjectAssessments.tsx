@@ -21,6 +21,7 @@ import type {
   Assessment,
   AssessmentEnumOption,
   AssessmentField,
+  AssessmentRecurrence,
   CreateAssessmentRequest
 } from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
@@ -308,6 +309,13 @@ const AssessmentCard = ({
             <span className={styles.completionPct}>{pct}%</span>
           </div>
         )}
+        {assessment.recurrence.type !== 'none' && (
+          <div className={styles.metaItem}>
+            Cycle {assessment.current_occurrence}
+            {assessment.next_occurrence_at &&
+              ` · next reopens ${new Date(assessment.next_occurrence_at).toLocaleDateString()}`}
+          </div>
+        )}
       </div>
     </button>
   );
@@ -374,6 +382,19 @@ export const AssessmentEditorDialog = ({
     assessment?.assigned_team_ids ?? []
   );
   const [dueAt, setDueAt] = useState<string>(assessment?.due_at?.slice(0, 10) ?? '');
+  const [recurrenceType, setRecurrenceType] = useState<AssessmentRecurrence['type']>(
+    assessment?.recurrence.type ?? 'none'
+  );
+  const [recurrenceInterval, setRecurrenceInterval] = useState<number>(
+    assessment?.recurrence.type === 'weekly'
+      ? assessment.recurrence.intervalWeeks
+      : assessment?.recurrence.type === 'monthly'
+        ? assessment.recurrence.intervalMonths
+        : 1
+  );
+  const [responseWindowDays, setResponseWindowDays] = useState<string>(
+    assessment?.response_window_days != null ? String(assessment.response_window_days) : ''
+  );
   const [status, setStatus] = useState<Assessment['status']>(assessment?.status ?? 'draft');
   const [mode, setMode] = useState<Assessment['mode']>(assessment?.mode ?? 'fields');
   const [selectedTemplateId, setSelectedTemplateId] = useState(isNew ? START_FROM_SCRATCH : '');
@@ -491,7 +512,19 @@ export const AssessmentEditorDialog = ({
     applyTemplate(nextTemplateId);
   };
 
-  const canSave = name.trim().length > 0;
+  const recurrence: AssessmentRecurrence =
+    recurrenceType === 'weekly'
+      ? { type: 'weekly', intervalWeeks: recurrenceInterval }
+      : recurrenceType === 'monthly'
+        ? { type: 'monthly', intervalMonths: recurrenceInterval }
+        : { type: 'none' };
+  const responseWindowDaysNumber =
+    responseWindowDays.trim().length > 0 ? Number(responseWindowDays) : null;
+
+  const canSave =
+    name.trim().length > 0 &&
+    (recurrenceType === 'none' ||
+      (responseWindowDaysNumber != null && responseWindowDaysNumber > 0));
 
   return [
     <Dialog
@@ -516,7 +549,9 @@ export const AssessmentEditorDialog = ({
                 scope_conditions: scopeConditions,
                 fields: mode === 'confirm' ? [] : fields,
                 assigned_team_ids: assignedTeamIds,
-                due_at: dueAt.length > 0 ? dueAt : null
+                due_at: dueAt.length > 0 ? dueAt : null,
+                recurrence,
+                response_window_days: responseWindowDaysNumber
               },
               status
             )
@@ -648,6 +683,53 @@ export const AssessmentEditorDialog = ({
                 setDueAt(e.target.value);
               }}
             />
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Recurrence</div>
+            <div className={styles.sectionHint}>
+              Recurring assessments automatically reopen for a new response cycle once the response
+              window elapses.
+            </div>
+            <div style={{ width: 160 }}>
+              <Select.Root
+                value={recurrenceType}
+                onChange={v => {
+                  markDirty();
+                  setRecurrenceType((v ?? 'none') as AssessmentRecurrence['type']);
+                }}
+              >
+                <Select.Item value="none">One-off (no recurrence)</Select.Item>
+                <Select.Item value="weekly">Weekly</Select.Item>
+                <Select.Item value="monthly">Monthly</Select.Item>
+              </Select.Root>
+            </div>
+            {recurrenceType !== 'none' && (
+              <div className={styles.editorTopRow}>
+                <FormElement
+                  label={recurrenceType === 'weekly' ? 'Every N weeks' : 'Every N months'}
+                >
+                  <TextInput
+                    value={String(recurrenceInterval)}
+                    onChange={v => {
+                      markDirty();
+                      const parsed = Number(v);
+                      setRecurrenceInterval(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
+                    }}
+                  />
+                </FormElement>
+                <FormElement label="Response window (days)" required>
+                  <TextInput
+                    value={responseWindowDays}
+                    onChange={v => {
+                      markDirty();
+                      setResponseWindowDays(v ?? '');
+                    }}
+                    placeholder="e.g. 14"
+                  />
+                </FormElement>
+              </div>
+            )}
           </div>
         </Tabs.Content>
 
