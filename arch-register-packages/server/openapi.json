@@ -62137,6 +62137,14 @@
                         "type": "string",
                         "description": "Assessment status"
                       },
+                      "mode": {
+                        "enum": [
+                          "fields",
+                          "confirm"
+                        ],
+                        "type": "string",
+                        "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
+                      },
                       "scope": {
                         "type": "array",
                         "items": {
@@ -62319,6 +62327,7 @@
                       "name",
                       "description",
                       "status",
+                      "mode",
                       "scope",
                       "scope_conditions",
                       "fields",
@@ -62370,6 +62379,15 @@
                   "description": {
                     "type": "string",
                     "description": "Assessment description"
+                  },
+                  "mode": {
+                    "enum": [
+                      "fields",
+                      "confirm"
+                    ],
+                    "type": "string",
+                    "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action",
+                    "default": "fields"
                   },
                   "scope": {
                     "type": "array",
@@ -62572,6 +62590,14 @@
                       "type": "string",
                       "description": "Assessment status"
                     },
+                    "mode": {
+                      "enum": [
+                        "fields",
+                        "confirm"
+                      ],
+                      "type": "string",
+                      "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
+                    },
                     "scope": {
                       "type": "array",
                       "items": {
@@ -62754,6 +62780,7 @@
                     "name",
                     "description",
                     "status",
+                    "mode",
                     "scope",
                     "scope_conditions",
                     "fields",
@@ -62835,6 +62862,14 @@
                       "type": "string",
                       "description": "Assessment status"
                     },
+                    "mode": {
+                      "enum": [
+                        "fields",
+                        "confirm"
+                      ],
+                      "type": "string",
+                      "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
+                    },
                     "scope": {
                       "type": "array",
                       "items": {
@@ -63017,6 +63052,7 @@
                     "name",
                     "description",
                     "status",
+                    "mode",
                     "scope",
                     "scope_conditions",
                     "fields",
@@ -63076,6 +63112,15 @@
                   "description": {
                     "type": "string",
                     "description": "Assessment description"
+                  },
+                  "mode": {
+                    "enum": [
+                      "fields",
+                      "confirm"
+                    ],
+                    "type": "string",
+                    "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action",
+                    "default": "fields"
                   },
                   "scope": {
                     "type": "array",
@@ -63278,6 +63323,14 @@
                       "type": "string",
                       "description": "Assessment status"
                     },
+                    "mode": {
+                      "enum": [
+                        "fields",
+                        "confirm"
+                      ],
+                      "type": "string",
+                      "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
+                    },
                     "scope": {
                       "type": "array",
                       "items": {
@@ -63460,6 +63513,7 @@
                     "name",
                     "description",
                     "status",
+                    "mode",
                     "scope",
                     "scope_conditions",
                     "fields",
@@ -63620,6 +63674,14 @@
                       "type": "string",
                       "description": "Assessment status"
                     },
+                    "mode": {
+                      "enum": [
+                        "fields",
+                        "confirm"
+                      ],
+                      "type": "string",
+                      "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
+                    },
                     "scope": {
                       "type": "array",
                       "items": {
@@ -63802,6 +63864,7 @@
                     "name",
                     "description",
                     "status",
+                    "mode",
                     "scope",
                     "scope_conditions",
                     "fields",
