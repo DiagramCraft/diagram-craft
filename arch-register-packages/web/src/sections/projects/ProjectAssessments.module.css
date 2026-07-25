@@ -311,3 +311,22 @@
   width: 140px;
   flex-shrink: 0;
 }
+
+.enumSourceRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inlineEnumDialogOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inlineEnumDialogOption {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(100px, 1.5fr) auto;
+  gap: 6px;
+  align-items: center;
+}

@@ -13,6 +13,7 @@ import {
 } from '@arch-register/api-types/workspaceContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import {
   ASSESSMENT_FIELD_PREFIX,
   ASSESSMENT_PRESENCE_FIELD_ID
@@ -153,7 +154,7 @@ export const FilterBuilder = ({
                 id,
                 name: f.label,
                 type: 'select',
-                options: enums.find(e => e.id === f.enumId)?.options ?? []
+                options: getAssessmentEnumOptions(f, enums)
               };
             }
             return { id, name: f.label, type: 'text' };

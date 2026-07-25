@@ -1,10 +1,23 @@
-import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
+import type {
+  AssessmentField,
+  AssessmentEnumOption
+} from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
-export const ASSESSMENT_TEMPLATE_ENUM_IDS = {
-  sixRs: '00000000-0000-0000-0000-e00000000005',
-  paceLayer: '00000000-0000-0000-0000-e00000000006'
-} as const;
+const SIX_RS_OPTIONS: AssessmentEnumOption[] = [
+  { value: 'rehost', label: 'Rehost (Lift and Shift)' },
+  { value: 'replatform', label: 'Replatform (Lift, Tinker, and Shift)' },
+  { value: 'refactor', label: 'Refactor / Rearchitect' },
+  { value: 'repurchase', label: 'Repurchase (Drop and Shop)' },
+  { value: 'retire', label: 'Retire' },
+  { value: 'retain', label: 'Retain (Revisit Later)' }
+];
+
+const PACE_LAYER_OPTIONS: AssessmentEnumOption[] = [
+  { value: 'record', label: 'Systems of Record' },
+  { value: 'differentiation', label: 'Systems of Differentiation' },
+  { value: 'innovation', label: 'Systems of Innovation' }
+];
 
 export type AssessmentTemplateValues = {
   name: string;
@@ -65,7 +78,7 @@ export const assessmentTemplates: AssessmentTemplate[] = [
           id: 'migration_strategy',
           label: 'Migration strategy',
           type: 'enum',
-          enumId: ASSESSMENT_TEMPLATE_ENUM_IDS.sixRs,
+          options: SIX_RS_OPTIONS,
           requirementLevel: 'required'
         }
       ]
@@ -87,7 +100,7 @@ export const assessmentTemplates: AssessmentTemplate[] = [
           id: 'pace_layer',
           label: 'Pace layer',
           type: 'enum',
-          enumId: ASSESSMENT_TEMPLATE_ENUM_IDS.paceLayer,
+          options: PACE_LAYER_OPTIONS,
           requirementLevel: 'required'
         }
       ]
@@ -101,5 +114,10 @@ export const cloneAssessmentTemplateValues = (
   ...values,
   scope: [...values.scope],
   scope_conditions: values.scope_conditions.map(condition => ({ ...condition })),
-  fields: values.fields.map(field => ({ ...field }))
+  fields: values.fields.map(field => ({
+    ...field,
+    ...(field.type === 'enum' && 'options' in field
+      ? { options: field.options.map(option => ({ ...option })) }
+      : {})
+  }))
 });

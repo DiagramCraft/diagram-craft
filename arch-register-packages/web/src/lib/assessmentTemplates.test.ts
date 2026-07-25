@@ -39,11 +39,26 @@ describe('assessment templates', () => {
     const sixRs = assessmentTemplates.find(template => template.id === 'six-rs');
     const paceLayering = assessmentTemplates.find(template => template.id === 'pace-layering');
 
-    expect(sixRs?.values.fields).toEqual([
-      expect.objectContaining({ id: 'migration_strategy', type: 'enum' })
-    ]);
-    expect(paceLayering?.values.fields).toEqual([
-      expect.objectContaining({ id: 'pace_layer', type: 'enum' })
-    ]);
+    expect(sixRs?.values.fields[0]).toMatchObject({
+      id: 'migration_strategy',
+      type: 'enum',
+      options: [
+        { value: 'rehost', label: 'Rehost (Lift and Shift)' },
+        { value: 'replatform', label: 'Replatform (Lift, Tinker, and Shift)' },
+        { value: 'refactor', label: 'Refactor / Rearchitect' },
+        { value: 'repurchase', label: 'Repurchase (Drop and Shop)' },
+        { value: 'retire', label: 'Retire' },
+        { value: 'retain', label: 'Retain (Revisit Later)' }
+      ]
+    });
+    expect(paceLayering?.values.fields[0]).toMatchObject({
+      id: 'pace_layer',
+      type: 'enum',
+      options: [
+        { value: 'record', label: 'Systems of Record' },
+        { value: 'differentiation', label: 'Systems of Differentiation' },
+        { value: 'innovation', label: 'Systems of Innovation' }
+      ]
+    });
   });
 });

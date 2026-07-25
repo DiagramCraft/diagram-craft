@@ -3,6 +3,7 @@ import { TbPlus, TbX } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
@@ -250,8 +251,7 @@ const AssessmentFilterRow = ({
           <Select.Root value={condition.value} onChange={v => onChange({ ...condition, value: v })}>
             {(() => {
               const field = fields.find(f => f.id === condition.fieldId);
-              const enumId = field && field.type === 'enum' ? field.enumId : undefined;
-              return enums.find(e => e.id === enumId)?.options ?? [];
+              return field?.type === 'enum' ? getAssessmentEnumOptions(field, enums) : [];
             })().map(o => (
               <Select.Item key={o.value} value={o.value}>
                 {o.label}

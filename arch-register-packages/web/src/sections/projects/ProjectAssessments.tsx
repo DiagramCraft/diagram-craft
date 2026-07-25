@@ -13,11 +13,13 @@ import {
   TbDatabase,
   TbStar,
   TbListCheck,
-  TbAlignLeft
+  TbAlignLeft,
+  TbEdit
 } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type {
   Assessment,
+  AssessmentEnumOption,
   AssessmentField,
   CreateAssessmentRequest
 } from '@arch-register/api-types/assessmentContract';
@@ -382,7 +384,15 @@ export const AssessmentEditorDialog = ({
 
   const updateField = (id: string, changes: Partial<AssessmentField>) => {
     markDirty();
-    setFields(prev => prev.map(f => (f.id === id ? ({ ...f, ...changes } as AssessmentField) : f)));
+    setFields(prev =>
+      prev.map(f => {
+        if (f.id !== id) return f;
+        const next = { ...f, ...changes } as Record<string, unknown>;
+        if ('enumId' in changes && changes.enumId === undefined) delete next.enumId;
+        if ('options' in changes && changes.options === undefined) delete next.options;
+        return next as AssessmentField;
+      })
+    );
   };
 
   const removeField = (id: string) => {
@@ -679,6 +689,8 @@ const FieldRow = ({
   onRemove: () => void;
 }) => {
   const { enums } = useWorkspaceContext();
+  const [inlineOptionsOpen, setInlineOptionsOpen] = useState(false);
+  const [draftInlineOptions, setDraftInlineOptions] = useState<AssessmentEnumOption[]>([]);
   const meta = FIELD_TYPE_META[field.type];
   const Icon = meta.icon;
   const placeholders: Record<AssessmentField['type'], string> = {
@@ -700,17 +712,54 @@ const FieldRow = ({
       />
       {field.type === 'enum' && (
         <div className={styles.fieldEnum}>
-          <Select.Root
-            value={field.enumId}
-            placeholder="Choose enum…"
-            onChange={v => onUpdate({ enumId: v ?? '' } as Partial<AssessmentField>)}
-          >
-            {enums.map(en => (
-              <Select.Item key={en.id} value={en.id}>
-                {en.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
+          <div className={styles.enumSourceRow}>
+            <Select.Root
+              value={'options' in field ? 'inline' : 'workspace'}
+              onChange={v => {
+                if (v === 'inline') {
+                  onUpdate({
+                    options:
+                      'options' in field && field.options.length > 0
+                        ? field.options
+                        : [{ value: 'option_1', label: '' }],
+                    enumId: undefined
+                  } as Partial<AssessmentField>);
+                } else {
+                  onUpdate({
+                    enumId: ('enumId' in field ? field.enumId : undefined) ?? enums[0]?.id ?? '',
+                    options: undefined
+                  } as Partial<AssessmentField>);
+                }
+              }}
+            >
+              <Select.Item value="workspace">Existing enum</Select.Item>
+              <Select.Item value="inline">Inline values</Select.Item>
+            </Select.Root>
+            {'options' in field && (
+              <Button
+                variant="ghost"
+                icon={<TbEdit size={13} />}
+                onClick={() => {
+                  setDraftInlineOptions(field.options.map(option => ({ ...option })));
+                  setInlineOptionsOpen(true);
+                }}
+                title="Edit inline values"
+              />
+            )}
+          </div>
+          {'options' in field ? null : (
+            <Select.Root
+              value={field.enumId}
+              placeholder="Choose enum…"
+              onChange={v => onUpdate({ enumId: v ?? '' } as Partial<AssessmentField>)}
+            >
+              {enums.map(en => (
+                <Select.Item key={en.id} value={en.id}>
+                  {en.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          )}
         </div>
       )}
       {meta.hint && <span className={styles.fieldHint}>{meta.hint}</span>}
@@ -731,6 +780,76 @@ const FieldRow = ({
         onClick={onRemove}
         title="Remove field"
       />
+      {field.type === 'enum' && 'options' in field && (
+        <Dialog
+          open={inlineOptionsOpen}
+          onClose={() => setInlineOptionsOpen(false)}
+          title={`Edit values: ${field.label || 'Select field'}`}
+          width={520}
+          buttons={[
+            { label: 'Cancel', type: 'cancel', onClick: () => setInlineOptionsOpen(false) },
+            {
+              label: 'Save values',
+              type: 'default',
+              onClick: () => {
+                onUpdate({ options: draftInlineOptions } as Partial<AssessmentField>);
+                setInlineOptionsOpen(false);
+              }
+            }
+          ]}
+        >
+          <div className={styles.inlineEnumDialogOptions}>
+            {draftInlineOptions.map((option, index) => (
+              <div key={`${option.value}-${index}`} className={styles.inlineEnumDialogOption}>
+                <TextInput
+                  value={option.value}
+                  onChange={value =>
+                    setDraftInlineOptions(current =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, value: value ?? '' } : item
+                      )
+                    )
+                  }
+                  placeholder="Value"
+                />
+                <TextInput
+                  value={option.label}
+                  onChange={value =>
+                    setDraftInlineOptions(current =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, label: value ?? '' } : item
+                      )
+                    )
+                  }
+                  placeholder="Label"
+                />
+                <Button
+                  variant="ghost"
+                  icon={<TbTrash size={13} />}
+                  onClick={() =>
+                    setDraftInlineOptions(current =>
+                      current.filter((_, itemIndex) => itemIndex !== index)
+                    )
+                  }
+                  title="Remove option"
+                />
+              </div>
+            ))}
+            <Button
+              variant="ghost"
+              icon={<TbPlus size={13} />}
+              onClick={() =>
+                setDraftInlineOptions(current => [
+                  ...current,
+                  { value: `option_${current.length + 1}`, label: '' }
+                ])
+              }
+            >
+              Add option
+            </Button>
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 };

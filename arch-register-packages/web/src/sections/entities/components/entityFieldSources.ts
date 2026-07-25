@@ -7,6 +7,7 @@ import {
   resolveAssessmentValue
 } from '@arch-register/api-types/assessmentFilter';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { parseTimelineDate } from '../../../components/timeline/timelineUtils';
@@ -122,7 +123,7 @@ export const getCategoricalFieldValues = (
     const field = joinedAssessment.assessment.fields.find(f => f.id === assessmentFieldId);
     if (field?.type === 'rating') return RATING_VALUES;
     if (field?.type === 'enum') {
-      const options = joinedAssessment.enums.find(e => e.id === field.enumId)?.options ?? [];
+      const options = getAssessmentEnumOptions(field, joinedAssessment.enums);
       return options.map(o => ({ id: o.value, label: o.label }));
     }
     return [];

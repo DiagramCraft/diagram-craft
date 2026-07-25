@@ -635,50 +635,6 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     created_at: now,
     updated_at: now
   },
-  {
-    id: '00000000-0000-0000-0000-e00000000005',
-    workspace: WORKSPACE_ID,
-    name: '6Rs Migration Strategy',
-    options: [
-      {
-        value: 'rehost',
-        label: 'Rehost (Lift and Shift)'
-      },
-      {
-        value: 'replatform',
-        label: 'Replatform (Lift, Tinker, and Shift)'
-      },
-      {
-        value: 'refactor',
-        label: 'Refactor / Rearchitect'
-      },
-      {
-        value: 'repurchase',
-        label: 'Repurchase (Drop and Shop)'
-      },
-      { value: 'retire', label: 'Retire' },
-      {
-        value: 'retain',
-        label: 'Retain (Revisit Later)'
-      }
-    ],
-    sort_order: 3,
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0000-e00000000006',
-    workspace: WORKSPACE_ID,
-    name: 'Pace Layer',
-    options: [
-      { value: 'record', label: 'Systems of Record' },
-      { value: 'differentiation', label: 'Systems of Differentiation' },
-      { value: 'innovation', label: 'Systems of Innovation' }
-    ],
-    sort_order: 4,
-    created_at: now,
-    updated_at: now
-  },
   // Second workspace enums
   {
     id: '00000000-0000-0000-0000-e00000000002',
