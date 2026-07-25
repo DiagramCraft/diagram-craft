@@ -62567,6 +62567,24 @@
                         },
                         "description": "Assessment field definitions"
                       },
+                      "assigned_team_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Teams assigned to this assessment; surfaced as governance inbox tasks when open"
+                      },
+                      "due_at": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Optional ISO 8601 due date applied when the assessment opens"
+                      },
                       "response_count": {
                         "type": "integer",
                         "minimum": 0,
@@ -62599,6 +62617,8 @@
                       "scope",
                       "scope_conditions",
                       "fields",
+                      "assigned_team_ids",
+                      "due_at",
                       "response_count",
                       "completed_entity_count",
                       "created_at",
@@ -62868,6 +62888,24 @@
                       "description": "Assessment field definition"
                     },
                     "description": "Assessment field definitions"
+                  },
+                  "assigned_team_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Teams assigned to this assessment; surfaced as governance inbox tasks when open"
+                  },
+                  "due_at": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional ISO 8601 due date applied when the assessment opens"
                   }
                 },
                 "required": [
@@ -63136,6 +63174,24 @@
                       },
                       "description": "Assessment field definitions"
                     },
+                    "assigned_team_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Teams assigned to this assessment; surfaced as governance inbox tasks when open"
+                    },
+                    "due_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional ISO 8601 due date applied when the assessment opens"
+                    },
                     "response_count": {
                       "type": "integer",
                       "minimum": 0,
@@ -63168,6 +63224,8 @@
                     "scope",
                     "scope_conditions",
                     "fields",
+                    "assigned_team_ids",
+                    "due_at",
                     "response_count",
                     "completed_entity_count",
                     "created_at",
@@ -63466,6 +63524,24 @@
                       },
                       "description": "Assessment field definitions"
                     },
+                    "assigned_team_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Teams assigned to this assessment; surfaced as governance inbox tasks when open"
+                    },
+                    "due_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional ISO 8601 due date applied when the assessment opens"
+                    },
                     "response_count": {
                       "type": "integer",
                       "minimum": 0,
@@ -63498,6 +63574,8 @@
                     "scope",
                     "scope_conditions",
                     "fields",
+                    "assigned_team_ids",
+                    "due_at",
                     "response_count",
                     "completed_entity_count",
                     "created_at",
@@ -63775,6 +63853,24 @@
                       "description": "Assessment field definition"
                     },
                     "description": "Assessment field definitions"
+                  },
+                  "assigned_team_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Teams assigned to this assessment; surfaced as governance inbox tasks when open"
+                  },
+                  "due_at": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional ISO 8601 due date applied when the assessment opens"
                   }
                 },
                 "required": [
@@ -64043,6 +64139,24 @@
                       },
                       "description": "Assessment field definitions"
                     },
+                    "assigned_team_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Teams assigned to this assessment; surfaced as governance inbox tasks when open"
+                    },
+                    "due_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional ISO 8601 due date applied when the assessment opens"
+                    },
                     "response_count": {
                       "type": "integer",
                       "minimum": 0,
@@ -64075,6 +64189,8 @@
                     "scope",
                     "scope_conditions",
                     "fields",
+                    "assigned_team_ids",
+                    "due_at",
                     "response_count",
                     "completed_entity_count",
                     "created_at",
@@ -64452,6 +64568,24 @@
                       },
                       "description": "Assessment field definitions"
                     },
+                    "assigned_team_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Teams assigned to this assessment; surfaced as governance inbox tasks when open"
+                    },
+                    "due_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional ISO 8601 due date applied when the assessment opens"
+                    },
                     "response_count": {
                       "type": "integer",
                       "minimum": 0,
@@ -64484,6 +64618,8 @@
                     "scope",
                     "scope_conditions",
                     "fields",
+                    "assigned_team_ids",
+                    "due_at",
                     "response_count",
                     "completed_entity_count",
                     "created_at",
