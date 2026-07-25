@@ -365,6 +365,7 @@ export const proposeEntityDeprecation = async (
         subjectVersion: null,
         policyVersion: DEPRECATION_POLICY_VERSION,
         selfApprovalAllowed,
+        dueAt: new Date(body.targetDate),
         payload: {
           reason: body.reason,
           targetDate: body.targetDate,

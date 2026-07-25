@@ -6,6 +6,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { BulkFieldInput } from './BulkFieldInput';
@@ -31,7 +32,7 @@ export type BulkEditToolbarProps = {
   removeFieldRow: (rowId: string) => void;
   setStep: (step: BulkEditStep) => void;
   onClear: () => void;
-  onConfirm: (proposalMessage?: string) => void;
+  onConfirm: (proposalMessage?: string, dueAt?: string) => void;
 };
 
 export const BulkEditToolbar = ({
@@ -54,6 +55,7 @@ export const BulkEditToolbar = ({
 }: BulkEditToolbarProps) => {
   const [approvalNoteOpen, setApprovalNoteOpen] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
+  const [approvalDueDate, setApprovalDueDate] = useState('');
   const usedFieldIds = new Set(fieldRows.map(row => row.fieldId));
   const remainingFields = availableFields.filter(field => !usedFieldIds.has(field.id));
   const activeRows = fieldRows.filter(row => row.clearing || row.value !== '');
@@ -252,7 +254,7 @@ export const BulkEditToolbar = ({
             type: 'default',
             onClick: () => {
               setApprovalNoteOpen(false);
-              onConfirm(approvalNote);
+              onConfirm(approvalNote, approvalDueDate || undefined);
             }
           }
         ]}
@@ -269,6 +271,9 @@ export const BulkEditToolbar = ({
             placeholder="Describe what changed"
             style={{ width: '100%' }}
           />
+        </FormElement>
+        <FormElement label="Due date (optional)">
+          <DateInput value={approvalDueDate} onChange={v => setApprovalDueDate(v ?? '')} />
         </FormElement>
       </Dialog>
     </div>
