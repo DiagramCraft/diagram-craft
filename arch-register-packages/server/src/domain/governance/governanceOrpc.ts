@@ -12,7 +12,8 @@ import {
   listGovernanceCases,
   listMyGovernanceAssignments,
   listMySubmittedGovernanceCases,
-  countMyGovernanceAssignments
+  countMyGovernanceAssignments,
+  sendGovernanceCaseReminder
 } from './governanceOperations';
 import { createGovernanceRegistry, type GovernanceRegistry } from './governanceRegistry';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
@@ -64,6 +65,15 @@ export const createGovernanceORPCRouter = (registry: GovernanceRegistry) =>
             input.params.id,
             context.event,
             input.body,
+            registry
+          );
+        }),
+        remind: governanceRouter.governance.cases.remind.handler(async ({ input, context }) => {
+          return await sendGovernanceCaseReminder(
+            context.db,
+            input.params.workspace,
+            input.params.id,
+            context.event,
             registry
           );
         })

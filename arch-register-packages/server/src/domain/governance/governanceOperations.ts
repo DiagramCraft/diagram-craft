@@ -596,6 +596,83 @@ export const cancelGovernanceCase = async (
   return toApiCase(cancelled);
 };
 
+// Basic anti-spam guard on manual reminders; #2418's scheduled scan is not subject to this since
+// it already tracks per-window "already reminded" state independently.
+const REMINDER_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+
+export const sendGovernanceCaseReminder = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  caseId: string,
+  event: AuthenticatedEvent,
+  registry: GovernanceRegistry = createGovernanceRegistry()
+): Promise<{ case: GovernanceCase; event: GovernanceEvent }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
+  requireWorkspaceCapability(authCtx, 'ws.view');
+
+  const notFound = { status: 404, message: `Governance case '${caseId}' not found` };
+  const caseRow = await db.governance.getCase(ws, caseId);
+  httpAssert.present(caseRow, notFound);
+
+  const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
+  const userId = event.context.user.id;
+  const visible = await isGovernanceCaseVisible(
+    db,
+    authCtx,
+    userId,
+    caseRow,
+    assignments,
+    registry
+  );
+  httpAssert.true(visible, notFound);
+
+  httpAssert.true(caseRow.initiator_user_id === userId, {
+    status: 403,
+    statusText: 'Forbidden',
+    message: 'Only the case initiator can send a reminder for this case'
+  });
+
+  httpAssert.true(caseRow.status === 'open', {
+    status: 409,
+    statusText: 'Conflict',
+    message: 'Only open cases can be reminded'
+  });
+
+  const openAssignments = assignments.filter(assignment => assignment.status === 'open');
+  httpAssert.true(openAssignments.length > 0, {
+    status: 409,
+    statusText: 'Conflict',
+    message: 'Nothing is outstanding on this case'
+  });
+
+  const events = await db.governance.listEvents(caseRow.id);
+  const lastReminder = events
+    .filter(candidate => candidate.event_type === 'reminder_sent')
+    .sort((a, b) => b.occurred_at.getTime() - a.occurred_at.getTime())[0];
+  if (lastReminder) {
+    const nextAllowedAt = new Date(lastReminder.occurred_at.getTime() + REMINDER_COOLDOWN_MS);
+    httpAssert.true(nextAllowedAt.getTime() <= Date.now(), {
+      status: 429,
+      statusText: 'Too Many Requests',
+      message: `A reminder was already sent recently; try again after ${nextAllowedAt.toISOString()}`
+    });
+  }
+
+  const reminderEvent = await db.core.transaction(async tx =>
+    recordGovernanceEvent(tx, caseRow, {
+      eventType: 'reminder_sent',
+      actorUserId: userId,
+      previousStatus: caseRow.status,
+      resultingStatus: caseRow.status,
+      reason: null,
+      metadata: { trigger: 'manual', actor_user_id: userId }
+    })
+  );
+
+  return { case: toApiCase(caseRow), event: toApiEvent(reminderEvent) };
+};
+
 export const decideGovernanceAssignment = async (
   db: DatabaseAdapter,
   workspace: string,

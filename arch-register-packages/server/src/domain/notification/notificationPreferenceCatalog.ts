@@ -22,6 +22,7 @@ export type NotificationType =
   | 'governance-task-assigned'
   | 'governance-case-activity'
   | 'governance-proposal-reminder'
+  | 'governance-deadline-reminder'
   | 'automation-rule';
 
 export type NotificationTypeCategory = 'normal' | 'reminder';
@@ -65,6 +66,12 @@ export const NOTIFICATION_TYPE_CATALOG: Record<
     category: 'reminder',
     defaultChannels: []
   },
+  'governance-deadline-reminder': {
+    label: 'Governance case reminders',
+    description: 'Reminders about outstanding governance tasks, sent manually or on a schedule.',
+    category: 'reminder',
+    defaultChannels: []
+  },
   'automation-rule': {
     label: 'Automation rule notifications',
     description: 'Notifications sent by workspace automation rules.',
@@ -98,7 +105,8 @@ const GOVERNANCE_EVENT_TYPE_TO_NOTIFICATION_TYPE: Record<GovernanceEventType, No
   scope_refreshed: 'governance-case-activity',
   postponed: 'governance-case-activity',
   finalized: 'governance-case-activity',
-  finalization_override: 'governance-case-activity'
+  finalization_override: 'governance-case-activity',
+  reminder_sent: 'governance-deadline-reminder'
 };
 
 export const notificationTypeForGovernanceEvent = (

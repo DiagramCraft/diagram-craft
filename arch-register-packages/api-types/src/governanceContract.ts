@@ -27,7 +27,8 @@ const governanceEventTypeSchema = z.enum([
   'scope_refreshed',
   'postponed',
   'finalized',
-  'finalization_override'
+  'finalization_override',
+  'reminder_sent'
 ]);
 
 const governanceDecisionActionSchema = z.enum([
@@ -140,6 +141,11 @@ const decideGovernanceAssignmentResponseSchema = z.object({
   event: governanceEventSchema
 });
 
+const sendGovernanceCaseReminderResponseSchema = z.object({
+  case: governanceCaseSchema,
+  event: governanceEventSchema
+});
+
 const governanceTaskSchema = z.object({
   assignment: governanceAssignmentSchema,
   case: governanceCaseSchema,
@@ -224,7 +230,19 @@ export const governanceContract = oc.tag('Governance').router({
             body: cancelGovernanceCaseBodySchema
           })
         )
-        .output(governanceCaseSchema)
+        .output(governanceCaseSchema),
+      remind: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/governance/cases/{id}/remind',
+          inputStructure: 'detailed',
+          summary: 'Send an out-of-band reminder for a governance case',
+          description:
+            'Notifies the outstanding assignees of an open case on demand. Only the case initiator may send a reminder, and only for open cases with outstanding assignments; rate-limited to prevent spamming assignees.',
+          tags: ['Governance']
+        })
+        .input(z.object({ params: wsAndId }))
+        .output(sendGovernanceCaseReminderResponseSchema)
     },
     assignments: {
       mine: oc
@@ -293,3 +311,6 @@ export type GovernanceTask = z.infer<typeof governanceTaskSchema>;
 export type ListGovernanceTasksQuery = z.infer<typeof listGovernanceTasksQuerySchema>;
 export type GovernanceSubmission = z.infer<typeof governanceSubmissionSchema>;
 export type ListGovernanceSubmissionsQuery = z.infer<typeof listGovernanceSubmissionsQuerySchema>;
+export type SendGovernanceCaseReminderResponse = z.infer<
+  typeof sendGovernanceCaseReminderResponseSchema
+>;
