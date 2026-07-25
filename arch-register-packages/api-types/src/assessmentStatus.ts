@@ -1,14 +1,18 @@
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 
 export type AssessmentEntityStatus = 'not_started' | 'in_progress' | 'complete';
+export type AssessmentMode = 'fields' | 'confirm';
 
 const isAnswered = (value: unknown): boolean =>
   value !== undefined && value !== null && value !== '';
 
 export const computeAssessmentStatus = (
   fields: AssessmentField[],
-  values: Record<string, unknown> | undefined
+  values: Record<string, unknown> | undefined,
+  mode: AssessmentMode = 'fields'
 ): AssessmentEntityStatus => {
+  if (mode === 'confirm') return values !== undefined ? 'complete' : 'not_started';
+
   const requiredFields = fields.filter(f => f.requirementLevel === 'required');
   if (requiredFields.length === 0) return 'complete';
 

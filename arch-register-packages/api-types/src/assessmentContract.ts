@@ -38,6 +38,12 @@ const assessmentFieldSchema = z
   ])
   .describe('Assessment field definition');
 
+const assessmentModeSchema = z
+  .enum(['fields', 'confirm'])
+  .describe(
+    'Whether entities are assessed by filling in fields, or by a single "confirmed accurate" action'
+  );
+
 const assessmentSchema = z.object({
   id: z.string().describe('Unique assessment identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
@@ -45,6 +51,7 @@ const assessmentSchema = z.object({
   name: z.string().describe('Assessment name (must be unique within the project)'),
   description: z.string().describe('Assessment description'),
   status: z.enum(['draft', 'open', 'closed', 'archived']).describe('Assessment status'),
+  mode: assessmentModeSchema,
   scope: z.array(z.string()).describe('Entity schema ids this assessment applies to'),
   scope_conditions: z
     .array(filterConditionSchema)
@@ -60,29 +67,35 @@ const assessmentSchema = z.object({
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });
 
-const assessmentBodySchema = z.object({
-  project_id: z.string().describe('Owning project identifier'),
-  name: z.string().describe('Assessment name (must be unique within the project)'),
-  description: z.preprocess(
-    value => (value === undefined ? undefined : typeof value === 'string' ? value : ''),
-    z.string().optional().describe('Assessment description')
-  ),
-  scope: z.preprocess(
-    value => (Array.isArray(value) ? value : undefined),
-    z.array(z.string()).optional().describe('Entity schema ids this assessment applies to')
-  ),
-  scope_conditions: z.preprocess(
-    value => (Array.isArray(value) ? value : undefined),
-    z
-      .array(filterConditionSchema)
-      .optional()
-      .describe('Additional AND-combined entity filters this assessment scope applies')
-  ),
-  fields: z.preprocess(
-    value => (Array.isArray(value) ? value : undefined),
-    z.array(assessmentFieldSchema).optional().describe('Assessment field definitions')
-  )
-});
+const assessmentBodySchema = z
+  .object({
+    project_id: z.string().describe('Owning project identifier'),
+    name: z.string().describe('Assessment name (must be unique within the project)'),
+    description: z.preprocess(
+      value => (value === undefined ? undefined : typeof value === 'string' ? value : ''),
+      z.string().optional().describe('Assessment description')
+    ),
+    mode: assessmentModeSchema.optional().default('fields'),
+    scope: z.preprocess(
+      value => (Array.isArray(value) ? value : undefined),
+      z.array(z.string()).optional().describe('Entity schema ids this assessment applies to')
+    ),
+    scope_conditions: z.preprocess(
+      value => (Array.isArray(value) ? value : undefined),
+      z
+        .array(filterConditionSchema)
+        .optional()
+        .describe('Additional AND-combined entity filters this assessment scope applies')
+    ),
+    fields: z.preprocess(
+      value => (Array.isArray(value) ? value : undefined),
+      z.array(assessmentFieldSchema).optional().describe('Assessment field definitions')
+    )
+  })
+  .refine(body => body.mode !== 'confirm' || !body.fields || body.fields.length === 0, {
+    message: 'Confirm-only assessments cannot define fields',
+    path: ['fields']
+  });
 
 const updateAssessmentStatusBodySchema = z.object({
   status: z.enum(['draft', 'open', 'closed', 'archived']).describe('New assessment status')

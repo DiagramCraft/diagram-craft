@@ -32,18 +32,23 @@ vi.mock('../audit/db/auditLogging', () => ({
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const makeAssessment = (status: AssessmentDbResult['status']): AssessmentDbResult => ({
+const makeAssessment = (
+  status: AssessmentDbResult['status'],
+  overrides: Partial<AssessmentDbResult> = {}
+): AssessmentDbResult => ({
   id: 'asmnt-1',
   workspace: 'ws-1',
   project_id: 'proj-1',
   name: 'Security Readiness',
   description: '',
   status,
+  mode: 'fields',
   scope: ['schema-service'],
   scope_conditions: [],
   fields: [{ id: 'f1', label: 'Rating', type: 'rating', requirementLevel: 'required' }],
   created_at: now,
-  updated_at: now
+  updated_at: now,
+  ...overrides
 });
 
 const event = { context: { user: { id: 'user-1' } } } as unknown as AuthenticatedEvent;
@@ -107,5 +112,31 @@ describe('upsertAssessmentResponse', () => {
         metadata: { subject_entity_id: 'entity-1' }
       })
     );
+  });
+
+  it('rejects field values for a confirm-only assessment', async () => {
+    const db = makeDb(makeAssessment('open', { mode: 'confirm', fields: [] }));
+
+    await expect(
+      upsertAssessmentResponse(db, 'ws-1', 'asmnt-1', 'entity-1', { values: { f1: 5 } }, event)
+    ).rejects.toMatchObject({ status: 400 });
+
+    expect(db.project.upsertAssessmentResponse).not.toHaveBeenCalled();
+  });
+
+  it('records a confirm action for a confirm-only assessment', async () => {
+    const db = makeDb(makeAssessment('open', { mode: 'confirm', fields: [] }));
+
+    const result = await upsertAssessmentResponse(
+      db,
+      'ws-1',
+      'asmnt-1',
+      'entity-1',
+      { values: {} },
+      event
+    );
+
+    expect(result.entity_id).toBe('entity-1');
+    expect(db.project.upsertAssessmentResponse).toHaveBeenCalledTimes(1);
   });
 });

@@ -3323,6 +3323,7 @@ export const seedAssessments: AssessmentDbCreate[] = [
     name: seededAssessments.checkoutRevamp.securityReadiness.name,
     description: "Assess each component's security posture ahead of the checkout launch.",
     status: 'open',
+    mode: 'fields',
     scope: [seededSchemas.default.component.id],
     scope_conditions: [],
     fields: [
@@ -3340,6 +3341,7 @@ export const seedAssessments: AssessmentDbCreate[] = [
     name: seededAssessments.checkoutRevamp.apiFitness.name,
     description: 'Rate the fitness of each API for the new checkout flow.',
     status: 'closed',
+    mode: 'fields',
     scope: [seededSchemas.default.api.id],
     scope_conditions: [],
     fields: [

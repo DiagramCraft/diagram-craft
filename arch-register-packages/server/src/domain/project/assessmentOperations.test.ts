@@ -28,6 +28,7 @@ const assessment = (id: string, projectId: string): AssessmentDbResult => ({
   name: id,
   description: '',
   status: 'open',
+  mode: 'fields',
   scope: [],
   scope_conditions: [],
   fields: [],

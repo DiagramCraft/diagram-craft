@@ -170,10 +170,11 @@
     - @id:ar.assessments Users can collect structured review data for entities within a project.
 
         - @id:ar.assessments.definitions Users can create and edit assessment definitions with status, scope, filters,
-          and required or optional fields.
+          and required or optional fields, or configure a confirm-only mode with no fields.
 
         - @id:ar.assessments.responses Reviewers can fill in assessment responses for in-scope entities from an
-          assessment grid or entity detail view.
+          assessment grid or entity detail view, or, for confirm-only assessments, record a single "confirmed
+          accurate" action per entity.
 
         - @id:ar.assessments.progress Users can inspect assessment completion, status, summary, and aggregate results.
 
