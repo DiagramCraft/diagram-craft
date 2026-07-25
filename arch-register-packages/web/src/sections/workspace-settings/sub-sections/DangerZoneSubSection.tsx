@@ -3,14 +3,18 @@ import { useNavigate } from '@tanstack/react-router';
 import styles from './DangerZoneSubSection.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { useDeleteWorkspace } from '../../../hooks/useWorkspaces';
+import { useDeleteWorkspace, useWorkspaces } from '../../../hooks/useWorkspaces';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
+
+export const firstAvailableWorkspace = (workspaces: Workspace[], deletedWorkspaceId: string) =>
+  workspaces.find(workspace => workspace.id !== deletedWorkspaceId);
 
 export const DangerZoneSubSection = ({ workspace }: { workspace: Workspace }) => {
   const navigate = useNavigate();
   const [confirm, setConfirm] = useState('');
 
   const deleteWorkspaceMutation = useDeleteWorkspace();
+  const { data: workspaces = [] } = useWorkspaces();
 
   const canDelete = confirm === workspace.name;
 
@@ -18,11 +22,16 @@ export const DangerZoneSubSection = ({ workspace }: { workspace: Workspace }) =>
     if (!canDelete) return;
     try {
       await deleteWorkspaceMutation.mutateAsync(workspace.id);
-      navigate({ to: '/' });
+      const nextWorkspace = firstAvailableWorkspace(workspaces, workspace.id);
+      navigate(
+        nextWorkspace
+          ? { to: '/$workspaceSlug', params: { workspaceSlug: nextWorkspace.url_slug } }
+          : { to: '/' }
+      );
     } catch {
       // Error handling could be improved
     }
-  }, [workspace.id, canDelete, deleteWorkspaceMutation, navigate]);
+  }, [workspace.id, canDelete, deleteWorkspaceMutation, navigate, workspaces]);
 
   return (
     <div className={styles.blockList}>

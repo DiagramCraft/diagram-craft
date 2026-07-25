@@ -120,20 +120,22 @@ const mapComponentFields = (
 
   // Map system reference (containment relationship)
   if (entity.spec.system && typeof entity.spec.system === 'string') {
-    archEntity.system = entity.spec.system;
+    warnings.push(
+      'Field spec.system is not synced because Backstage entity references are not Arch Register entity IDs'
+    );
   }
 
   // Map providesApis (reference field)
   if (entity.spec.providesApis && Array.isArray(entity.spec.providesApis)) {
-    archEntity.provides_apis = entity.spec.providesApis.filter(
-      (api): api is string => typeof api === 'string'
+    warnings.push(
+      'Field spec.providesApis is not synced because Backstage entity references are not Arch Register entity IDs'
     );
   }
 
   // Map consumesApis (reference field)
   if (entity.spec.consumesApis && Array.isArray(entity.spec.consumesApis)) {
-    archEntity.consumes_apis = entity.spec.consumesApis.filter(
-      (api): api is string => typeof api === 'string'
+    warnings.push(
+      'Field spec.consumesApis is not synced because Backstage entity references are not Arch Register entity IDs'
     );
   }
 
@@ -163,7 +165,9 @@ const mapApiFields = (
 
   // Map system reference (containment relationship)
   if (entity.spec.system && typeof entity.spec.system === 'string') {
-    archEntity.system = entity.spec.system;
+    warnings.push(
+      'Field spec.system is not synced because Backstage entity references are not Arch Register entity IDs'
+    );
   }
 
   // Note: spec.definition is not stored in the template by default
@@ -190,7 +194,9 @@ const mapResourceFields = (
 
   // Map system reference (optional containment relationship)
   if (entity.spec.system && typeof entity.spec.system === 'string') {
-    archEntity.system = entity.spec.system;
+    warnings.push(
+      'Field spec.system is not synced because Backstage entity references are not Arch Register entity IDs'
+    );
   }
 
   // Warn about unmapped fields
@@ -212,7 +218,9 @@ const mapSystemFields = (
 ): void => {
   // Map domain reference (containment relationship)
   if (entity.spec.domain && typeof entity.spec.domain === 'string') {
-    archEntity.domain = entity.spec.domain;
+    _warnings.push(
+      'Field spec.domain is not synced because Backstage entity references are not Arch Register entity IDs'
+    );
   }
 };
 

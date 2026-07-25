@@ -23,6 +23,7 @@ This tool scans all repositories in a GitHub organization, finds `catalog-info.y
 
 2. **API Token**: Generate an Arch Register API token with the following permissions:
    - `content.view` - Read entities through the public API
+   - `ws.view` - Read workspace schemas for schema auto-discovery
    - `ent.external_update` - Write to entities using external identity
 
 3. **GitHub Access** (optional): For private repositories or higher rate limits, create a GitHub personal access token with `repo` scope.

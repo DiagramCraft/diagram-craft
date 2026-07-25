@@ -396,8 +396,9 @@ export const createWorkspace = async (
       requireGlobalPermission(authCtx, 'admin_platform');
       const timestamp = new Date();
       const row = await db.workspace.createWorkspace(buildCreateInput(input, timestamp));
-      await ensureNotificationDeliverySchedule(db, row.id, timestamp);
-      await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
+      try {
+        await ensureNotificationDeliverySchedule(db, row.id, timestamp);
+        await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
 
       const { template, replicate_from, include } = input;
 
@@ -726,7 +727,11 @@ export const createWorkspace = async (
         changes: { new: extractEntityFields(row) }
       });
 
-      return toApiWorkspace(row);
+        return toApiWorkspace(row);
+      } catch (error) {
+        await db.workspace.deleteWorkspace(row.id).catch(() => undefined);
+        throw error;
+      }
     }
   );
 };

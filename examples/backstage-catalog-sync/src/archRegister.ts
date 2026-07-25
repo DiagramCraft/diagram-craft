@@ -9,9 +9,9 @@ export interface Schema {
 export interface SyncResult {
   status: 'created' | 'updated' | 'unchanged';
   entity: {
-    id: string;
-    publicId: string;
-    name: string;
+    _uid: string;
+    _publicId: string;
+    _name: string;
   };
 }
 
@@ -19,6 +19,21 @@ export interface SyncError extends Error {
   status?: number;
   details?: unknown;
 }
+
+const requestFailure = (url: string, error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  const cause = error instanceof Error ? error.cause : undefined;
+  const causeRecord = typeof cause === 'object' && cause !== null ? cause : undefined;
+  const causeMessage = [
+    cause instanceof Error ? cause.message : typeof cause === 'string' ? cause : undefined,
+    causeRecord && 'code' in causeRecord ? String(causeRecord.code) : undefined,
+    causeRecord && 'address' in causeRecord ? String(causeRecord.address) : undefined,
+    causeRecord && 'port' in causeRecord ? String(causeRecord.port) : undefined
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return new Error(`Request to ${url} failed: ${message}${causeMessage ? ` (${causeMessage})` : ''}`);
+};
 
 /**
  * Fetches all schemas from the workspace
@@ -29,25 +44,37 @@ export const fetchSchemas = async (
   baseUrl: string
 ): Promise<Schema[]> => {
   const url = `${baseUrl}/api/${workspace}/schemas`;
-  const response = await fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (error) {
+    throw requestFailure(url, error);
+  }
 
   if (!response.ok) {
+    const responseBody = await response.text();
     if (response.status === 401) {
       throw new Error('Authentication failed. Check your ARCH_REGISTER_TOKEN.');
     }
     if (response.status === 404) {
       throw new Error(`Workspace '${workspace}' not found.`);
     }
-    throw new Error(`Failed to fetch schemas: ${response.status} ${response.statusText}`);
+    const detail = responseBody.trim().slice(0, 500);
+    throw new Error(
+      `Failed to fetch schemas: ${response.status} ${response.statusText}${detail ? ` - ${detail}` : ''}`
+    );
   }
 
-  const schemas = (await response.json()) as Schema[];
-  return schemas;
+  try {
+    return (await response.json()) as Schema[];
+  } catch (error) {
+    throw new Error(`Invalid schema response from ${url}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 };
 
 /**
@@ -98,14 +125,19 @@ export const syncEntity = async (
   const encodedKey = encodeURIComponent(externalKey);
   const url = `${baseUrl}/api/integrations/v1/${workspace}/entities/byExternalKey/${encodedSource}/${encodedKey}`;
 
-  const response = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(entity)
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(entity)
+    });
+  } catch (error) {
+    throw createSyncError(requestFailure(url, error).message, undefined, error);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -125,8 +157,12 @@ export const syncEntity = async (
       );
     }
     if (response.status === 403) {
+      const detail =
+        typeof errorDetails === 'object' && errorDetails !== null && 'message' in errorDetails
+          ? String(errorDetails.message)
+          : undefined;
       throw createSyncError(
-        'Permission denied. Ensure your token has ent.external_update permission.',
+        `Permission denied${detail ? `: ${detail}` : '. Ensure your token has ent.external_update permission.'}`,
         response.status,
         errorDetails
       );

@@ -108,6 +108,13 @@ export class PermissionChecker {
       return false;
     }
 
+    // API-token capabilities are explicit grants. Workspace-scoped tokens use
+    // a system owner rather than a workspace role, so the selected capability
+    // must remain effective even when no underlying role is present.
+    if (context.workspaceCapabilityCeiling?.has(capability)) {
+      return true;
+    }
+
     if (context.globalPermissions.has('admin_platform')) {
       return (
         !context.workspaceCapabilityCeiling || context.workspaceCapabilityCeiling.has(capability)
@@ -156,7 +163,11 @@ export class PermissionChecker {
     if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
       return true;
     }
-    if (context.workspaceRole == null && !context.globalPermissions.has('admin_platform')) {
+    if (
+      context.workspaceRole == null &&
+      !context.workspaceCapabilityCeiling &&
+      !context.globalPermissions.has('admin_platform')
+    ) {
       return false;
     }
     return (
@@ -185,7 +196,11 @@ export class PermissionChecker {
     }
 
     // Workspace role grants entity actions
-    if (context.workspaceRole != null || context.globalPermissions.has('admin_platform')) {
+    if (
+      context.workspaceRole != null ||
+      context.workspaceCapabilityCeiling != null ||
+      context.globalPermissions.has('admin_platform')
+    ) {
       if (this.hasWorkspaceCapability(context, 'ent.edit')) {
         ROLE_ACTIONS['contributor'].forEach(action => actions.add(action));
       } else if (this.hasWorkspaceCapability(context, 'ent.propose')) {

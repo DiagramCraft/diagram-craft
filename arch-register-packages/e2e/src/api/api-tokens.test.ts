@@ -9,6 +9,23 @@ const test = createApiTest({
 });
 
 test.describe('workspace API tokens', () => {
+  test('workspace-scoped token uses its selected capabilities without a workspace role', async ({
+    orpc,
+    server
+  }) => {
+    const created = await orpc.config.tokens.create({
+      params: { workspace: 'default' },
+      body: {
+        name: 'Workspace catalog sync',
+        capabilities: ['ws.view', 'content.view', 'ent.external_update']
+      }
+    });
+    const tokenClient = createTestORPCClient(server.baseUrl, `Bearer ${created.token}`);
+    const schemas = await tokenClient.schemas.list({ params: { workspace: 'default' } });
+
+    expect(schemas.length).toBeGreaterThan(0);
+  });
+
   test('allows a view plus external-update token to change only an external field', async ({
     server,
     orpc
@@ -65,10 +82,12 @@ test.describe('workspace API tokens', () => {
       body: {
         workspace: 'default',
         name: 'External release integration',
-        capabilities: ['content.view', 'ent.external_update']
+        capabilities: ['ws.view', 'content.view', 'ent.external_update']
       }
     });
     const tokenClient = createTestORPCClient(server.baseUrl, `Bearer ${created.token}`);
+    const schemas = await tokenClient.schemas.list({ params: { workspace: 'default' } });
+    expect(schemas.length).toBeGreaterThan(0);
     const entity = await tokenClient.entities.get({
       params: { workspace: 'default', id: entityId }
     });

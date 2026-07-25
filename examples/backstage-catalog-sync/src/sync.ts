@@ -237,16 +237,16 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
 
         switch (result.status) {
           case 'created':
-            console.log(`   ✓ Created: ${result.entity.publicId} (${result.entity.name})`);
+            console.log(`   ✓ Created: ${result.entity._publicId} (${result.entity._name})`);
             report.created++;
             break;
           case 'updated':
-            console.log(`   ✓ Updated: ${result.entity.publicId} (${result.entity.name})`);
+            console.log(`   ✓ Updated: ${result.entity._publicId} (${result.entity._name})`);
             report.updated++;
             break;
           case 'unchanged':
             if (config.verbose) {
-              console.log(`   ✓ Unchanged: ${result.entity.publicId} (${result.entity.name})`);
+              console.log(`   ✓ Unchanged: ${result.entity._publicId} (${result.entity._name})`);
             }
             report.unchanged++;
             break;

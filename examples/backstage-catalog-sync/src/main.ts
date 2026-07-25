@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { readConfig } from './config.js';
 import { syncOrganization, printReport } from './sync.js';
 

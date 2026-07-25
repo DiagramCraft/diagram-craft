@@ -50,6 +50,15 @@ const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] 
       httpAssert.true(field.minCount === 0 || field.minCount === 1, {
         message: 'Containment fields must have minCount set to 0 or 1'
       });
+
+      if (field.requirementLevel === 'required') {
+        field.minCount = 1;
+      } else if (
+        field.requirementLevel === 'optional' ||
+        field.requirementLevel === 'expected'
+      ) {
+        field.minCount = 0;
+      }
     }
 
     if (field.type === 'number' && field.min !== undefined && field.max !== undefined) {
