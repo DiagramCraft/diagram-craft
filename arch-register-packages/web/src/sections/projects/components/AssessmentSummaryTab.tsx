@@ -1,4 +1,5 @@
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import styles from './AssessmentSummaryTab.module.css';
@@ -60,7 +61,7 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
             }
 
             if (field.type === 'enum') {
-              const enumDef = enums.find(e => e.id === field.enumId);
+              const options = getAssessmentEnumOptions(field, enums);
               const counts = new Map<string, number>();
               for (const r of responses) {
                 const value = r.values[field.id];
@@ -76,7 +77,7 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
                   ) : (
                     <div className={styles.distribution}>
                       {[...counts.entries()].map(([value, count]) => {
-                        const label = enumDef?.options.find(o => o.value === value)?.label ?? value;
+                        const label = options.find(o => o.value === value)?.label ?? value;
                         const pct = Math.round((count / total) * 100);
                         return (
                           <div key={value} className={styles.distRow}>

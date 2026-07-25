@@ -3,6 +3,7 @@ import { TbStar, TbStarFilled } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import styles from './AssessmentFieldCells.module.css';
 
@@ -46,8 +47,7 @@ export const EnumCell = ({
   disabled
 }: CellProps & { field: Extract<AssessmentField, { type: 'enum' }> }) => {
   const { enums } = useWorkspaceContext();
-  const enumDef = enums.find(e => e.id === field.enumId);
-  const options = enumDef?.options ?? [];
+  const options = getAssessmentEnumOptions(field, enums);
 
   return (
     <Select.Root

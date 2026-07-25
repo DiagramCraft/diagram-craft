@@ -35,6 +35,7 @@ import {
   useUpsertAssessmentResponse
 } from '../../hooks/useAssessmentResponses';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { AssessmentEditorDialog } from './ProjectAssessments';
@@ -170,9 +171,9 @@ export const AssessmentDetailsScreen = ({
 
       if (field.type === 'rating') return (aValue as number) - (bValue as number);
       if (field.type === 'enum') {
-        const enumDef = enums.find(e => e.id === field.enumId);
-        const aLabel = enumDef?.options.find(o => o.value === aValue)?.label ?? String(aValue);
-        const bLabel = enumDef?.options.find(o => o.value === bValue)?.label ?? String(bValue);
+        const options = getAssessmentEnumOptions(field, enums);
+        const aLabel = options.find(o => o.value === aValue)?.label ?? String(aValue);
+        const bLabel = options.find(o => o.value === bValue)?.label ?? String(bValue);
         return aLabel.localeCompare(bLabel);
       }
       return String(aValue).localeCompare(String(bValue));
