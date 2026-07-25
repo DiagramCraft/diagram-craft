@@ -18,6 +18,18 @@ const ProgressBar = ({ pct }: { pct: number }) => (
   </div>
 );
 
+const teamStatusLabel: Record<Assessment['team_acknowledge_status'][number]['status'], string> = {
+  open: 'Pending',
+  completed: 'Acknowledged',
+  superseded: 'Superseded'
+};
+
+const teamStatusClass: Record<Assessment['team_acknowledge_status'][number]['status'], string> = {
+  open: styles.teamStatusOpen,
+  completed: styles.teamStatusCompleted,
+  superseded: styles.teamStatusSuperseded
+};
+
 export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums }: Props) => {
   const total = responses.length;
   const pctAssessed = entityCount > 0 ? Math.round((total / entityCount) * 100) : 0;
@@ -35,6 +47,22 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
             {pctAssessed}% of in-scope entities have a recorded response
           </div>
         </div>
+
+        {assessment.team_acknowledge_status.length > 0 && (
+          <div className={styles.card}>
+            <div className={styles.cardTitle}>Team acknowledgement</div>
+            <div className={styles.teamList}>
+              {assessment.team_acknowledge_status.map(team => (
+                <div key={team.team_id} className={styles.teamRow}>
+                  <span className={styles.teamName}>{team.team_name}</span>
+                  <span className={`${styles.teamStatus} ${teamStatusClass[team.status]}`}>
+                    {teamStatusLabel[team.status]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {total === 0 ? (
           <div className={styles.empty}>

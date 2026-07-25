@@ -68,6 +68,7 @@ const assessment: Assessment = {
   next_occurrence_at: null,
   response_count: 0,
   completed_entity_count: 0,
+  team_acknowledge_status: [],
   created_at: '',
   updated_at: ''
 };

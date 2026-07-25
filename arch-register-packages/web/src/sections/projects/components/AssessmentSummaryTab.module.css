@@ -100,3 +100,47 @@
   text-align: right;
   flex-shrink: 0;
 }
+
+.teamList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.teamName {
+  font-size: 11.5px;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teamStatus {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--r-sm, 4px);
+  flex-shrink: 0;
+}
+
+.teamStatusOpen {
+  color: var(--cmp-fg-disabled);
+  background: var(--cmp-bg);
+}
+
+.teamStatusCompleted {
+  color: var(--green, var(--base-fg));
+  background: var(--panel-bg);
+}
+
+.teamStatusSuperseded {
+  color: var(--cmp-fg-disabled);
+  background: var(--cmp-bg);
+}

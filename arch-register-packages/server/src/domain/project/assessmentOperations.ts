@@ -11,7 +11,8 @@ import { defineOperation } from '../operation';
 import {
   buildCreateAssessmentInput,
   buildUpdateAssessmentInput,
-  toApiAssessment
+  toApiAssessment,
+  type AssessmentTeamAcknowledgeStatus
 } from './assessmentHelpers';
 import { countCompletedEntities, isEntityInAssessmentScope } from './assessmentResponseHelpers';
 import type { AssessmentDbResult } from './db/projectDatabase';
@@ -41,15 +42,49 @@ export {
   closeAssessmentGovernanceCase
 };
 
+const getTeamAcknowledgeStatus = async (
+  db: DatabaseAdapter,
+  ws: string,
+  row: AssessmentDbResult
+): Promise<AssessmentTeamAcknowledgeStatus[]> => {
+  if (row.assigned_team_ids.length === 0) return [];
+
+  const [cases, teams] = await Promise.all([
+    db.governance.listCases(ws, {
+      caseKind: ASSESSMENT_RESPONSE_CASE_KIND,
+      subjectType: 'assessment',
+      subjectId: row.id
+    }),
+    db.workspace.listTeams(ws)
+  ]);
+  if (cases.length === 0) return [];
+
+  const latestCase = cases.reduce((latest, current) =>
+    current.created_at > latest.created_at ? current : latest
+  );
+  const assignments = await db.governance.listAssignmentsForCase(latestCase.id);
+  const teamNames = new Map(teams.map(team => [team.id, team.name]));
+
+  return assignments
+    .filter(assignment => assignment.target_type === 'team' && assignment.target_team_id != null)
+    .map(assignment => ({
+      team_id: assignment.target_team_id!,
+      team_name: teamNames.get(assignment.target_team_id!) ?? assignment.target_team_id!,
+      status: assignment.status,
+      resolved_at: assignment.resolved_at ? assignment.resolved_at.toISOString() : null
+    }));
+};
+
 const getAssessmentStats = async (
   db: DatabaseAdapter,
   ws: string,
   row: AssessmentDbResult,
   entities?: EntityDbResult[]
 ) => {
-  const [responses, scopedEntities] = await Promise.all([
+  const [responses, scopedEntities, team_acknowledge_status] = await Promise.all([
     db.project.listAssessmentResponses(ws, row.id, row.current_occurrence),
-    entities ? Promise.resolve(entities) : listAllCatalogEntities(db, ws)
+    entities ? Promise.resolve(entities) : listAllCatalogEntities(db, ws),
+    getTeamAcknowledgeStatus(db, ws, row)
   ]);
   const scopedEntityIds = new Set(
     scopedEntities.filter(entity => isEntityInAssessmentScope(entity, row)).map(entity => entity.id)
@@ -57,7 +92,8 @@ const getAssessmentStats = async (
   const scopedResponses = responses.filter(response => scopedEntityIds.has(response.entity_id));
   return {
     response_count: responses.length,
-    completed_entity_count: countCompletedEntities(scopedResponses, row)
+    completed_entity_count: countCompletedEntities(scopedResponses, row),
+    team_acknowledge_status
   };
 };
 

@@ -107,6 +107,23 @@ const assessmentSchema = z.object({
     .int()
     .min(0)
     .describe('Number of entities whose response has all required fields filled in'),
+  team_acknowledge_status: z
+    .array(
+      z.object({
+        team_id: z.string().describe('Assigned team identifier'),
+        team_name: z.string().describe('Assigned team display name'),
+        status: z
+          .enum(['open', 'completed', 'superseded'])
+          .describe('Whether the team has acknowledged this assessment'),
+        resolved_at: z
+          .string()
+          .nullable()
+          .describe('ISO 8601 timestamp the team acknowledged, if resolved')
+      })
+    )
+    .describe(
+      'Per-team acknowledge status for this assessment, derived from its governance case'
+    ),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });
