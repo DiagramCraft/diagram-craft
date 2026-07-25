@@ -141,6 +141,41 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
     expect(checker.hasGlobalPermission(context, 'admin_platform')).toBe(false);
   });
 
+  it('treats selected token capabilities as grants without a workspace role', () => {
+    const context = buildAuthorizationContext({
+      userId: 'token-owner',
+      globalRoles: [],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['ws.view'],
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(checker.hasWorkspaceCapability(context, 'ws.view')).toBe(true);
+    expect(checker.hasWorkspaceCapability(context, 'content.view')).toBe(false);
+  });
+
+  it('uses selected token capabilities for entity access without a workspace role', () => {
+    const context = buildAuthorizationContext({
+      userId: 'token-owner',
+      globalRoles: [],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['content.view'],
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(checker.hasEntityPermission(context, createEntity('token-entity'), 'view_entity')).toBe(
+      true
+    );
+  });
+
   it('applies a token capability ceiling to team and entity-grant permissions', () => {
     const entity = createEntity('token-entity', 'team-1');
     const context = buildAuthorizationContext({

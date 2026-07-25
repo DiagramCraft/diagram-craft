@@ -883,11 +883,15 @@ const FieldRow = ({
       <Select.Root
         value={field.requirementLevel ?? 'optional'}
         disabled={!canEdit}
-        onChange={value =>
+        onChange={value => {
+          const requirementLevel = (value ?? 'optional') as SchemaField['requirementLevel'];
           onUpdate({
-            requirementLevel: (value ?? 'optional') as SchemaField['requirementLevel']
-          } as Partial<SchemaField>)
-        }
+            requirementLevel,
+            ...(field.type === 'containment'
+              ? { minCount: requirementLevel === 'required' ? 1 : 0 }
+              : {})
+          } as Partial<SchemaField>);
+        }}
         style={{ width: '100%' }}
       >
         <Select.Item value="optional">Optional</Select.Item>

@@ -2,6 +2,7 @@ packages:
   - './packages/**'
   - './submodules/**'
   - './arch-register-packages/**'
+  - './examples/**'
   - './docs-site'
 
 allowBuilds:

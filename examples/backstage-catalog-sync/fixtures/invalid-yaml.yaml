@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: broken-component
+  description: This YAML has syntax errors
+spec:
+  type: service
+  lifecycle: production
+  owner: team-a
+  # Missing closing bracket
+  system: [incomplete

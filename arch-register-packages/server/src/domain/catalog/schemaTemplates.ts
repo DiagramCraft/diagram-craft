@@ -6,7 +6,7 @@ import {
   AR_COLOR_YELLOW,
   AR_COLOR_RED
 } from '@arch-register/api-types/colors';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { SchemaDbCreate, WorkspaceEnumDbCreate } from '../../db/database';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
@@ -146,6 +146,16 @@ export const ADR_DOCUMENT_TEMPLATE_DEFINITION: SymbolicDocumentTemplate = {
 
 const commonDocumentTypes = [ADR_DOCUMENT_TYPE_DEFINITION];
 const commonDocumentTemplates = [ADR_DOCUMENT_TEMPLATE_DEFINITION];
+
+const generateTemplateSchemaKeyPrefix = (workspaceId: string, schemaId: string) => {
+  const bytes = createHash('sha1').update(`${workspaceId}:${schemaId}`).digest();
+  let prefix = '';
+  for (const byte of bytes) {
+    prefix += String.fromCharCode(65 + (byte % 26));
+    if (prefix.length === 5) break;
+  }
+  return prefix;
+};
 
 export const LADR_DOCUMENT_TYPE_NAME = 'Lightweight Architecture Decision Record';
 export const LADR_DOCUMENT_TEMPLATE_NAME = 'Lightweight Architecture Decision Record';
@@ -550,7 +560,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'domain',
-            minCount: 1,
+            minCount: 0,
             maxCount: 1
           }
         ]
@@ -569,7 +579,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
-            minCount: 1,
+            minCount: 0,
             maxCount: 1
           }
         ]
@@ -590,7 +600,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
-            minCount: 1,
+            minCount: 0,
             maxCount: 1
           },
           {
@@ -1330,7 +1340,8 @@ export const instantiateTemplateDefinitions = (
           type: 'reference',
           schemaId: resolvedId,
           minCount: field.minCount,
-          maxCount: field.maxCount
+          maxCount: field.maxCount,
+          requirementLevel: field.minCount > 0 ? 'required' : 'optional'
         };
       }
       if (field.type === 'containment') {
@@ -1342,7 +1353,8 @@ export const instantiateTemplateDefinitions = (
           type: 'containment',
           schemaId: resolvedId,
           minCount: field.minCount,
-          maxCount: field.maxCount
+          maxCount: field.maxCount,
+          requirementLevel: field.minCount > 0 ? 'required' : 'optional'
         };
       }
       if (field.type === 'select') {
@@ -1371,7 +1383,7 @@ export const instantiateTemplateDefinitions = (
       name: schema.name,
       description: schema.description,
       key_prefix: normalizePublicIdPrefix(
-        schema.symId.replace(/[^a-z]/gi, '').slice(0, 5) ?? schema.name.slice(0, 5)
+        generateTemplateSchemaKeyPrefix(workspaceId, schema.symId)
       ),
       color: schema.color,
       icon: schema.icon,

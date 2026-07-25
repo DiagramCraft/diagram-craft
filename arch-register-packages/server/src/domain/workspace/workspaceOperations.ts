@@ -396,54 +396,288 @@ export const createWorkspace = async (
       requireGlobalPermission(authCtx, 'admin_platform');
       const timestamp = new Date();
       const row = await db.workspace.createWorkspace(buildCreateInput(input, timestamp));
-      await ensureNotificationDeliverySchedule(db, row.id, timestamp);
-      await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
+      try {
+        await ensureNotificationDeliverySchedule(db, row.id, timestamp);
+        await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
 
-      const { template, replicate_from, include } = input;
+        const { template, replicate_from, include } = input;
 
-      if (typeof replicate_from === 'string' && replicate_from) {
-        const includeSet = normalizeInclude(include);
+        if (typeof replicate_from === 'string' && replicate_from) {
+          const includeSet = normalizeInclude(include);
 
-        const [srcLifecycle, srcTeams, srcRoles, srcSchemas] = await Promise.all([
-          db.workspace.listLifecycleStates(replicate_from),
-          db.workspace.listTeams(replicate_from),
-          db.workspace.listCustomWorkspaceRoles(replicate_from),
-          db.catalog.listSchemas(replicate_from)
-        ]);
+          const [srcLifecycle, srcTeams, srcRoles, srcSchemas] = await Promise.all([
+            db.workspace.listLifecycleStates(replicate_from),
+            db.workspace.listTeams(replicate_from),
+            db.workspace.listCustomWorkspaceRoles(replicate_from),
+            db.catalog.listSchemas(replicate_from)
+          ]);
 
-        const lifecycleMap = new Map<string, string>();
-        const teamMap = new Map<string, string>();
+          const lifecycleMap = new Map<string, string>();
+          const teamMap = new Map<string, string>();
 
-        if (includeSet.has('settings')) {
-          const lifecycleStates =
-            srcLifecycle.length > 0
-              ? srcLifecycle.map(s => {
-                  const id = randomUUID();
-                  lifecycleMap.set(s.id, id);
-                  return { ...s, id, workspace: row.id, created_at: timestamp };
-                })
-              : buildDefaultLifecycleStates(row.id, timestamp);
-          await db.workspace.replaceLifecycleStates(row.id, lifecycleStates);
-          await db.workspace.replaceProjectEntityTypes(
-            row.id,
-            buildDefaultProjectEntityTypes(row.id, timestamp)
-          );
-          await db.workspace.replaceTeams(
-            row.id,
-            srcTeams.map(t => {
-              const id = randomUUID();
-              teamMap.set(t.id, id);
-              return { ...t, id, workspace: row.id, created_at: timestamp };
-            })
-          );
-          for (const role of srcRoles) {
-            await db.workspace.createCustomWorkspaceRole({
-              ...role,
-              id: randomUUID(),
-              workspace: row.id,
-              created_at: timestamp,
-              updated_at: timestamp
-            });
+          if (includeSet.has('settings')) {
+            const lifecycleStates =
+              srcLifecycle.length > 0
+                ? srcLifecycle.map(s => {
+                    const id = randomUUID();
+                    lifecycleMap.set(s.id, id);
+                    return { ...s, id, workspace: row.id, created_at: timestamp };
+                  })
+                : buildDefaultLifecycleStates(row.id, timestamp);
+            await db.workspace.replaceLifecycleStates(row.id, lifecycleStates);
+            await db.workspace.replaceProjectEntityTypes(
+              row.id,
+              buildDefaultProjectEntityTypes(row.id, timestamp)
+            );
+            await db.workspace.replaceTeams(
+              row.id,
+              srcTeams.map(t => {
+                const id = randomUUID();
+                teamMap.set(t.id, id);
+                return { ...t, id, workspace: row.id, created_at: timestamp };
+              })
+            );
+            for (const role of srcRoles) {
+              await db.workspace.createCustomWorkspaceRole({
+                ...role,
+                id: randomUUID(),
+                workspace: row.id,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+            }
+          } else {
+            await db.workspace.replaceLifecycleStates(
+              row.id,
+              buildDefaultLifecycleStates(row.id, timestamp)
+            );
+            await db.workspace.replaceProjectEntityTypes(
+              row.id,
+              buildDefaultProjectEntityTypes(row.id, timestamp)
+            );
+            await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
+          }
+
+          const schemaMap = new Map<string, string>();
+          if (includeSet.has('schemas')) {
+            for (const schema of srcSchemas) schemaMap.set(schema.id, randomUUID());
+            for (const schema of srcSchemas) {
+              const remappedFields = schema.fields.map(field => {
+                if (field.type === 'reference' || field.type === 'containment') {
+                  return { ...field, schemaId: schemaMap.get(field.schemaId) ?? field.schemaId };
+                }
+                return field;
+              });
+              const relationshipFieldIds = new Set(
+                schema.fields
+                  .filter(field => field.type === 'reference' || field.type === 'containment')
+                  .map(field => field.id)
+              );
+              const templates = (schema.templates ?? []).map(template => {
+                const templateFields = Object.fromEntries(
+                  Object.entries(template.values.fields).filter(
+                    ([fieldId]) => !relationshipFieldIds.has(fieldId)
+                  )
+                );
+                return {
+                  ...template,
+                  values: {
+                    ...template.values,
+                    fields: templateFields,
+                    owner: template.values.owner
+                      ? (teamMap.get(template.values.owner) ?? undefined)
+                      : undefined,
+                    lifecycle: template.values.lifecycle
+                      ? (lifecycleMap.get(template.values.lifecycle) ?? undefined)
+                      : undefined
+                  }
+                };
+              });
+              const keyPrefix = generateCopiedSchemaKeyPrefix(`${row.id}:${schema.id}`);
+              await db.catalog.createSchema({
+                id: schemaMap.get(schema.id)!,
+                workspace: row.id,
+                name: schema.name,
+                description: schema.description,
+                key_prefix: keyPrefix,
+                color: schema.color,
+                icon: schema.icon,
+                fields: remappedFields,
+                templates,
+                default_owner: schema.default_owner
+                  ? (teamMap.get(schema.default_owner) ?? null)
+                  : null,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+              if (schema.key_prefix) {
+                await db.workspace.registerPublicIdPrefix(
+                  keyPrefix,
+                  'schema',
+                  schemaMap.get(schema.id)!,
+                  timestamp
+                );
+              }
+            }
+          }
+          if (
+            includeSet.has('projects') ||
+            includeSet.has('entities') ||
+            includeSet.has('documents')
+          ) {
+            const projectMap = new Map<string, string>();
+            if (includeSet.has('projects')) {
+              for (const project of await db.project.listProjects(replicate_from)) {
+                const id = randomUUID();
+                projectMap.set(project.id, id);
+                const publicId = formatPublicId(
+                  row.short_code,
+                  await db.workspace.allocatePublicId(row.short_code, timestamp)
+                );
+                await db.project.createProject({
+                  id,
+                  workspace: row.id,
+                  public_id: publicId,
+                  name: project.name,
+                  description: project.description,
+                  owner: project.owner ? (teamMap.get(project.owner) ?? null) : null,
+                  status: project.status,
+                  color: project.color,
+                  target_date: project.target_date,
+                  pinned: project.pinned,
+                  created_at: timestamp,
+                  updated_at: timestamp
+                });
+              }
+            }
+            const entityMap = new Map<string, string>();
+            if (includeSet.has('entities') && includeSet.has('schemas')) {
+              const sourceEntities = await db.catalog.listEntities(replicate_from);
+              for (const entity of sourceEntities) {
+                const schemaId = schemaMap.get(entity.schema_id);
+                if (!schemaId) continue;
+                entityMap.set(entity.id, randomUUID());
+              }
+              for (const entity of sourceEntities) {
+                const schemaId = schemaMap.get(entity.schema_id);
+                const id = entityMap.get(entity.id);
+                if (!schemaId || !id) continue;
+                const sourceSchema = srcSchemas.find(schema => schema.id === entity.schema_id);
+                const targetSchema = await db.catalog.getSchema(row.id, schemaId);
+                if (!targetSchema) continue;
+                const data = { ...entity.data };
+                for (const field of sourceSchema?.fields ?? []) {
+                  if (field.type !== 'reference' && field.type !== 'containment') continue;
+                  const raw = data[field.id];
+                  const linked = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
+                  const mapped = linked
+                    .map(targetId => entityMap.get(targetId))
+                    .filter((targetId): targetId is string => !!targetId);
+                  data[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
+                }
+                const mappedOwner = entity.owner ? (teamMap.get(entity.owner) ?? null) : null;
+                const mappedLifecycle = entity.lifecycle
+                  ? (lifecycleMap.get(entity.lifecycle) ?? null)
+                  : null;
+                await db.catalog.createEntity({
+                  ...entity,
+                  id,
+                  workspace: row.id,
+                  public_id: formatPublicId(
+                    targetSchema.key_prefix,
+                    await db.workspace.allocatePublicId(targetSchema.key_prefix, timestamp)
+                  ),
+                  slug: `${entity.slug}-${id.slice(0, 8)}`,
+                  schema_id: schemaId,
+                  owner: mappedOwner,
+                  lifecycle: mappedLifecycle,
+                  target_lifecycle: entity.target_lifecycle
+                    ? (lifecycleMap.get(entity.target_lifecycle) ?? null)
+                    : null,
+                  data,
+                  created_at: timestamp,
+                  updated_at: timestamp,
+                  // Owner/lifecycle mapping can drop a value to null if the target workspace has no
+                  // equivalent, so recompute rather than carry the source workspace's score forward.
+                  completeness: computeEntityCompleteness(
+                    {
+                      description: entity.description,
+                      owner: mappedOwner,
+                      lifecycle: mappedLifecycle,
+                      data
+                    },
+                    targetSchema
+                  )
+                });
+              }
+            }
+
+            if (includeSet.has('documents')) {
+              const sourceTypes = await db.document.listDocumentTypes(replicate_from, true);
+              const typeMap = new Map(sourceTypes.map(type => [type.id, randomUUID()]));
+              for (const type of sourceTypes) {
+                await db.document.createDocumentType({
+                  ...type,
+                  id: typeMap.get(type.id)!,
+                  workspace: row.id,
+                  created_at: timestamp,
+                  updated_at: timestamp
+                });
+                if (type.archived)
+                  await db.document.archiveDocumentType(
+                    row.id,
+                    typeMap.get(type.id)!,
+                    true,
+                    timestamp
+                  );
+              }
+              const { nodeMap, sourceEntityIdByIdentifier } = await copyTypedWorkspaceDocuments(
+                db,
+                storage,
+                replicate_from,
+                row.id,
+                typeMap,
+                projectMap,
+                entityMap,
+                timestamp
+              );
+              for (const template of await db.document.listDocumentTemplates(
+                replicate_from,
+                undefined,
+                true
+              )) {
+                const projectId =
+                  template.project_id == null ? null : projectMap.get(template.project_id);
+                if (template.project_id != null && !projectId) continue;
+                const documentTypeId = typeMap.get(template.document_type_id);
+                const sourceType = sourceTypes.find(type => type.id === template.document_type_id);
+                if (!documentTypeId) continue;
+                const copiedTemplate = await db.document.createDocumentTemplate({
+                  ...template,
+                  id: randomUUID(),
+                  workspace: row.id,
+                  project_id: projectId ?? null,
+                  document_type_id: documentTypeId,
+                  metadata_defaults: sourceType
+                    ? remapDocumentMetadataValues(
+                        sourceType.fields,
+                        template.metadata_defaults,
+                        id => entityMap.get(sourceEntityIdByIdentifier.get(id) ?? id),
+                        id => nodeMap.get(id)
+                      )
+                    : template.metadata_defaults,
+                  created_at: timestamp,
+                  updated_at: timestamp
+                });
+                if (template.archived)
+                  await db.document.archiveDocumentTemplate(
+                    row.id,
+                    copiedTemplate.id,
+                    true,
+                    timestamp
+                  );
+              }
+            }
           }
         } else {
           await db.workspace.replaceLifecycleStates(
@@ -455,278 +689,49 @@ export const createWorkspace = async (
             buildDefaultProjectEntityTypes(row.id, timestamp)
           );
           await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
-        }
 
-        const schemaMap = new Map<string, string>();
-        if (includeSet.has('schemas')) {
-          for (const schema of srcSchemas) schemaMap.set(schema.id, randomUUID());
-          for (const schema of srcSchemas) {
-            const remappedFields = schema.fields.map(field => {
-              if (field.type === 'reference' || field.type === 'containment') {
-                return { ...field, schemaId: schemaMap.get(field.schemaId) ?? field.schemaId };
-              }
-              return field;
-            });
-            const relationshipFieldIds = new Set(
-              schema.fields
-                .filter(field => field.type === 'reference' || field.type === 'containment')
-                .map(field => field.id)
-            );
-            const templates = (schema.templates ?? []).map(template => {
-              const templateFields = Object.fromEntries(
-                Object.entries(template.values.fields).filter(
-                  ([fieldId]) => !relationshipFieldIds.has(fieldId)
-                )
-              );
-              return {
-                ...template,
-                values: {
-                  ...template.values,
-                  fields: templateFields,
-                  owner: template.values.owner
-                    ? (teamMap.get(template.values.owner) ?? undefined)
-                    : undefined,
-                  lifecycle: template.values.lifecycle
-                    ? (lifecycleMap.get(template.values.lifecycle) ?? undefined)
-                    : undefined
-                }
-              };
-            });
-            const keyPrefix = generateCopiedSchemaKeyPrefix(`${row.id}:${schema.id}`);
-            await db.catalog.createSchema({
-              id: schemaMap.get(schema.id)!,
-              workspace: row.id,
-              name: schema.name,
-              description: schema.description,
-              key_prefix: keyPrefix,
-              color: schema.color,
-              icon: schema.icon,
-              fields: remappedFields,
-              templates,
-              default_owner: schema.default_owner
-                ? (teamMap.get(schema.default_owner) ?? null)
-                : null,
-              created_at: timestamp,
-              updated_at: timestamp
-            });
-            if (schema.key_prefix) {
-              await db.workspace.registerPublicIdPrefix(
-                keyPrefix,
-                'schema',
-                schemaMap.get(schema.id)!,
-                timestamp
-              );
+          if (typeof template === 'string' && template && template !== 'blank') {
+            const definitions = instantiateTemplateDefinitions(row.id, template, timestamp);
+            for (const enumeration of definitions.enums) {
+              await db.catalog.createEnum(enumeration);
             }
-          }
-        }
-        if (
-          includeSet.has('projects') ||
-          includeSet.has('entities') ||
-          includeSet.has('documents')
-        ) {
-          const projectMap = new Map<string, string>();
-          if (includeSet.has('projects')) {
-            for (const project of await db.project.listProjects(replicate_from)) {
-              const id = randomUUID();
-              projectMap.set(project.id, id);
-              const publicId = formatPublicId(
-                row.short_code,
-                await db.workspace.allocatePublicId(row.short_code, timestamp)
-              );
-              await db.project.createProject({
-                id,
-                workspace: row.id,
-                public_id: publicId,
-                name: project.name,
-                description: project.description,
-                owner: project.owner ? (teamMap.get(project.owner) ?? null) : null,
-                status: project.status,
-                color: project.color,
-                target_date: project.target_date,
-                pinned: project.pinned,
-                created_at: timestamp,
-                updated_at: timestamp
-              });
-            }
-          }
-          const entityMap = new Map<string, string>();
-          if (includeSet.has('entities') && includeSet.has('schemas')) {
-            const sourceEntities = await db.catalog.listEntities(replicate_from);
-            for (const entity of sourceEntities) {
-              const schemaId = schemaMap.get(entity.schema_id);
-              if (!schemaId) continue;
-              entityMap.set(entity.id, randomUUID());
-            }
-            for (const entity of sourceEntities) {
-              const schemaId = schemaMap.get(entity.schema_id);
-              const id = entityMap.get(entity.id);
-              if (!schemaId || !id) continue;
-              const sourceSchema = srcSchemas.find(schema => schema.id === entity.schema_id);
-              const targetSchema = await db.catalog.getSchema(row.id, schemaId);
-              if (!targetSchema) continue;
-              const data = { ...entity.data };
-              for (const field of sourceSchema?.fields ?? []) {
-                if (field.type !== 'reference' && field.type !== 'containment') continue;
-                const raw = data[field.id];
-                const linked = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
-                const mapped = linked
-                  .map(targetId => entityMap.get(targetId))
-                  .filter((targetId): targetId is string => !!targetId);
-                data[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
-              }
-              const mappedOwner = entity.owner ? (teamMap.get(entity.owner) ?? null) : null;
-              const mappedLifecycle = entity.lifecycle
-                ? (lifecycleMap.get(entity.lifecycle) ?? null)
-                : null;
-              await db.catalog.createEntity({
-                ...entity,
-                id,
-                workspace: row.id,
-                public_id: formatPublicId(
-                  targetSchema.key_prefix,
-                  await db.workspace.allocatePublicId(targetSchema.key_prefix, timestamp)
-                ),
-                slug: `${entity.slug}-${id.slice(0, 8)}`,
-                schema_id: schemaId,
-                owner: mappedOwner,
-                lifecycle: mappedLifecycle,
-                target_lifecycle: entity.target_lifecycle
-                  ? (lifecycleMap.get(entity.target_lifecycle) ?? null)
-                  : null,
-                data,
-                created_at: timestamp,
-                updated_at: timestamp,
-                // Owner/lifecycle mapping can drop a value to null if the target workspace has no
-                // equivalent, so recompute rather than carry the source workspace's score forward.
-                completeness: computeEntityCompleteness(
-                  {
-                    description: entity.description,
-                    owner: mappedOwner,
-                    lifecycle: mappedLifecycle,
-                    data
-                  },
-                  targetSchema
-                )
-              });
-            }
-          }
-
-          if (includeSet.has('documents')) {
-            const sourceTypes = await db.document.listDocumentTypes(replicate_from, true);
-            const typeMap = new Map(sourceTypes.map(type => [type.id, randomUUID()]));
-            for (const type of sourceTypes) {
-              await db.document.createDocumentType({
-                ...type,
-                id: typeMap.get(type.id)!,
-                workspace: row.id,
-                created_at: timestamp,
-                updated_at: timestamp
-              });
-              if (type.archived)
-                await db.document.archiveDocumentType(
-                  row.id,
-                  typeMap.get(type.id)!,
-                  true,
+            for (const schema of definitions.schemas) {
+              await db.catalog.createSchema(schema);
+              if (schema.key_prefix) {
+                await db.workspace.registerPublicIdPrefix(
+                  schema.key_prefix,
+                  'schema',
+                  schema.id,
                   timestamp
                 );
+              }
             }
-            const { nodeMap, sourceEntityIdByIdentifier } = await copyTypedWorkspaceDocuments(
-              db,
-              storage,
-              replicate_from,
-              row.id,
-              typeMap,
-              projectMap,
-              entityMap,
-              timestamp
-            );
-            for (const template of await db.document.listDocumentTemplates(
-              replicate_from,
-              undefined,
-              true
-            )) {
-              const projectId =
-                template.project_id == null ? null : projectMap.get(template.project_id);
-              if (template.project_id != null && !projectId) continue;
-              const documentTypeId = typeMap.get(template.document_type_id);
-              const sourceType = sourceTypes.find(type => type.id === template.document_type_id);
-              if (!documentTypeId) continue;
-              const copiedTemplate = await db.document.createDocumentTemplate({
-                ...template,
-                id: randomUUID(),
-                workspace: row.id,
-                project_id: projectId ?? null,
-                document_type_id: documentTypeId,
-                metadata_defaults: sourceType
-                  ? remapDocumentMetadataValues(
-                      sourceType.fields,
-                      template.metadata_defaults,
-                      id => entityMap.get(sourceEntityIdByIdentifier.get(id) ?? id),
-                      id => nodeMap.get(id)
-                    )
-                  : template.metadata_defaults,
-                created_at: timestamp,
-                updated_at: timestamp
-              });
-              if (template.archived)
-                await db.document.archiveDocumentTemplate(
-                  row.id,
-                  copiedTemplate.id,
-                  true,
-                  timestamp
-                );
+            for (const documentType of definitions.documentTypes) {
+              await db.document.createDocumentType(documentType);
+            }
+            for (const documentTemplate of definitions.documentTemplates) {
+              await db.document.createDocumentTemplate(documentTemplate);
             }
           }
         }
-      } else {
-        await db.workspace.replaceLifecycleStates(
-          row.id,
-          buildDefaultLifecycleStates(row.id, timestamp)
-        );
-        await db.workspace.replaceProjectEntityTypes(
-          row.id,
-          buildDefaultProjectEntityTypes(row.id, timestamp)
-        );
-        await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
 
-        if (typeof template === 'string' && template && template !== 'blank') {
-          const definitions = instantiateTemplateDefinitions(row.id, template, timestamp);
-          for (const enumeration of definitions.enums) {
-            await db.catalog.createEnum(enumeration);
-          }
-          for (const schema of definitions.schemas) {
-            await db.catalog.createSchema(schema);
-            if (schema.key_prefix) {
-              await db.workspace.registerPublicIdPrefix(
-                schema.key_prefix,
-                'schema',
-                schema.id,
-                timestamp
-              );
-            }
-          }
-          for (const documentType of definitions.documentTypes) {
-            await db.document.createDocumentType(documentType);
-          }
-          for (const documentTemplate of definitions.documentTemplates) {
-            await db.document.createDocumentTemplate(documentTemplate);
-          }
-        }
+        await db.ai.upsertAiConfig(row.id, { enabled: false });
+
+        await logAudit(db, {
+          userId: authCtx.userId,
+          workspace: row.id,
+          operation: 'create',
+          entityType: 'workspace',
+          entityId: row.id,
+          entityName: row.name,
+          changes: { new: extractEntityFields(row) }
+        });
+
+        return toApiWorkspace(row);
+      } catch (error) {
+        await db.workspace.deleteWorkspace(row.id).catch(() => undefined);
+        throw error;
       }
-
-      await db.ai.upsertAiConfig(row.id, { enabled: false });
-
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: row.id,
-        operation: 'create',
-        entityType: 'workspace',
-        entityId: row.id,
-        entityName: row.name,
-        changes: { new: extractEntityFields(row) }
-      });
-
-      return toApiWorkspace(row);
     }
   );
 };
