@@ -70219,6 +70219,9 @@
                   },
                   "message": {
                     "type": "string"
+                  },
+                  "dueAt": {
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -70495,6 +70498,9 @@
                     "additionalProperties": {}
                   },
                   "message": {
+                    "type": "string"
+                  },
+                  "dueAt": {
                     "type": "string"
                   }
                 },
@@ -71027,6 +71033,9 @@
                   "message": {
                     "type": "string"
                   },
+                  "dueAt": {
+                    "type": "string"
+                  },
                   "reason": {
                     "type": "string",
                     "minLength": 1
@@ -71128,6 +71137,9 @@
                     }
                   },
                   "message": {
+                    "type": "string"
+                  },
+                  "dueAt": {
                     "type": "string"
                   }
                 },
