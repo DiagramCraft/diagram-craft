@@ -5,7 +5,6 @@ import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy } from 'react-icons/tb';
-import { useTimelineMarkers } from '../../hooks/useEntities';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCollections } from '../../hooks/useCollections';
@@ -37,7 +36,6 @@ export const EntityBrowserScreen = () => {
   const { data: collections = [] } = useCollections(workspaceId, undefined, {
     enabled: search.sidebarTab === 'bookmarks' || collectionId != null
   });
-  const { data: timelineMarkers = [] } = useTimelineMarkers(workspaceId);
   const createSavedViewMutation = useCreateSavedView(workspaceId);
   const updateSavedViewMutation = useUpdateSavedView(workspaceId);
   const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
@@ -262,7 +260,7 @@ export const EntityBrowserScreen = () => {
         />
       </div>
 
-      <EntityBrowser onCountChange={setCount} timelineMarkers={timelineMarkers} />
+      <EntityBrowser onCountChange={setCount} />
 
       <SaveViewDialog
         open={isSavingView}
