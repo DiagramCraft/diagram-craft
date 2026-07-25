@@ -1,342 +1,104 @@
 # Backstage Catalog Sync
 
-A CLI tool that syncs Backstage `catalog-info.yaml` files from GitHub repositories into Arch Register using the idempotent entity sync API.
+This example imports supported Backstage entities from the root `catalog-info.yaml` file in every repository in a GitHub organization and upserts them into an Arch Register workspace.
 
-## Overview
+It demonstrates:
 
-This tool scans all repositories in a GitHub organization, finds `catalog-info.yaml` files, parses Backstage entities, and syncs them to Arch Register. It uses external identifiers to ensure repeated runs update existing entities instead of creating duplicates.
+- GitHub organization and repository API access
+- YAML parsing and basic Backstage entity validation
+- Backstage-to-Arch Register field mapping
+- schema auto-discovery
+- idempotent sync using external identities
+- dry-run, verbose logging, retries, and per-entity error reporting
 
-## Features
+## Scope and limitations
 
-- ✅ Scans entire GitHub organizations for catalog-info.yaml files
-- ✅ Supports Component, API, Resource, System, and Domain entity kinds
-- ✅ Idempotent sync using external identifiers (no duplicates)
-- ✅ Auto-discovers Arch Register schemas by name
-- ✅ Handles rate limiting and transient errors with retry logic
-- ✅ Comprehensive error reporting per entity
-- ✅ Dry-run mode for previewing changes
-- ✅ Verbose output for debugging
+Supported kinds are `Component`, `API`, `Resource`, `System`, and `Domain`.
+
+The importer currently reads only `catalog-info.yaml` from the repository root. It does not resolve Backstage `Group`, `User`, `Location`, or `Template` entities.
+
+Backstage relationship references are reported as warnings and are not written yet. Backstage references such as `system:default/my-system` are namespaced catalog references, while Arch Register relationship fields require entity IDs. Relationship synchronization is tracked in [the follow-up issue](https://github.com/DiagramCraft/diagram-craft/issues/2426).
+
+Owner references are also passed through as Backstage strings; Arch Register resolves them only when they match an existing team ID.
 
 ## Prerequisites
 
-1. **Arch Register Workspace**: Create a workspace using the "Backstage" template, which includes pre-configured schemas for Domain, System, Component, API, and Resource.
+1. Create an Arch Register workspace using the **Backstage** template.
+2. Create an API token with:
+   - `ws.view` to discover schemas
+   - `content.view` to read existing entities during repeat runs
+   - `ent.edit` to create entities
+   - `ent.external_update` to sync through the integration endpoint
+3. Set up a GitHub token when scanning private repositories or when higher rate limits are needed.
 
-2. **API Token**: Generate an Arch Register API token with the following permissions:
-   - `content.view` - Read entities through the public API
-   - `ws.view` - Read workspace schemas for schema auto-discovery
-   - `ent.external_update` - Write to entities using external identity
+## Setup
 
-3. **GitHub Access** (optional): For private repositories or higher rate limits, create a GitHub personal access token with `repo` scope.
-
-## Installation
+From the repository root:
 
 ```bash
-cd examples/backstage-catalog-sync
 pnpm install
+cp examples/backstage-catalog-sync/.env.example examples/backstage-catalog-sync/.env
 ```
 
-## Configuration
+Fill in the Arch Register values in `.env`:
 
-Copy the example environment file and configure it:
-
-```bash
-cp .env.example .env
-```
-
-### Required Environment Variables
-
-```bash
-# Arch Register Configuration
-ARCH_REGISTER_URL=http://127.0.0.1:3000
-ARCH_REGISTER_WORKSPACE=default
+```dotenv
+ARCH_REGISTER_URL=http://127.0.0.1:3010
+ARCH_REGISTER_WORKSPACE=backstage
 ARCH_REGISTER_TOKEN=ar_pat_...
 ```
 
-### Optional Environment Variables
-
-```bash
-# GitHub Configuration (for private repos or higher rate limits)
-GITHUB_TOKEN=ghp_...
-
-# Schema Mapping (auto-discovered if not provided)
-SCHEMA_DOMAIN=uuid-for-domain-schema
-SCHEMA_SYSTEM=uuid-for-system-schema
-SCHEMA_COMPONENT=uuid-for-component-schema
-SCHEMA_API=uuid-for-api-schema
-SCHEMA_RESOURCE=uuid-for-resource-schema
-
-# Sync Configuration
-DRY_RUN=false
-```
+The schema UUIDs are discovered by name by default. Set `SCHEMA_DOMAIN`, `SCHEMA_SYSTEM`, `SCHEMA_COMPONENT`, `SCHEMA_API`, or `SCHEMA_RESOURCE` when explicit mappings are preferred.
 
 ## Usage
 
-### Basic Usage
-
-Sync all catalog-info.yaml files from a GitHub organization:
+Run from this directory or use the workspace command from the repository root:
 
 ```bash
-pnpm start -- --org DiagramCraft
+pnpm start -- --org backstage
+pnpm start -- --org backstage --dry-run
+pnpm start -- --org backstage --verbose
 ```
 
-### Dry Run
+Use `GITHUB_TOKEN` in `.env` for private repositories. `DRY_RUN=true` is also supported.
 
-Preview changes without syncing to Arch Register:
+## External identity
 
-```bash
-pnpm start -- --org DiagramCraft --dry-run
-```
+Each entity uses:
 
-### Verbose Output
+- Source: `backstage-github-{organization}`
+- Key: `{namespace}/{kind}/{name}`
 
-Enable detailed logging for debugging:
+For example, a default-namespace component named `artist-web` uses `default/component/artist-web`. This makes repeated runs update the same Arch Register entity instead of creating duplicates.
 
-```bash
-pnpm start -- --org DiagramCraft --verbose
-```
+## Field mapping
 
-### With GitHub Token
+Common fields map as follows:
 
-For private repositories or to avoid rate limiting:
+| Backstage | Arch Register |
+| --- | --- |
+| `metadata.name` / `metadata.title` | `_name` |
+| `metadata.namespace` | `_namespace` |
+| `metadata.description` | `_description` |
+| `metadata.tags` | `_tags` |
+| `metadata.links` | `_links` |
+| `spec.owner` | `_owner` |
+| `spec.lifecycle` | `_lifecycle` |
 
-```bash
-GITHUB_TOKEN=ghp_xxx pnpm start -- --org DiagramCraft
-```
+Kind-specific scalar fields are mapped as follows:
 
-### Help
-
-Display usage information:
-
-```bash
-pnpm start -- --help
-```
-
-## External Identity Scheme
-
-The tool uses a deterministic external identity to ensure idempotent syncs:
-
-- **Source**: `backstage-github-{org}` (e.g., `backstage-github-DiagramCraft`)
-- **External Key**: `{namespace}/{kind}/{name}` (e.g., `default/component/artist-web`)
-
-This scheme is based on Backstage's stable entity references (namespace/kind/name) rather than UIDs, which can change when entities are re-registered.
-
-## Field Mapping
-
-### Component → Arch Register Component
-
-| Backstage Field | Arch Register Field | Notes |
-|----------------|-------------------|-------|
-| `metadata.name` | `_name` | Entity name |
-| `metadata.namespace` | `_namespace` | Defaults to "default" |
-| `metadata.description` | `_description` | Entity description |
-| `metadata.tags` | `_tags` | Array of tags |
-| `metadata.links` | `_links` | External links |
-| `spec.owner` | `_owner` | Owner team reference |
-| `spec.lifecycle` | `_lifecycle` | Lifecycle state |
-| `spec.type` | `kind` | Enum: service, library, website, documentation |
-| `spec.system` | `system` | Containment reference to System |
-| `spec.providesApis` | `provides_apis` | Array of API references |
-| `spec.consumesApis` | `consumes_apis` | Array of API references |
-| `metadata.annotations['backstage.io/techdocs-ref']` | `technology` | Technology reference |
-
-### API → Arch Register API
-
-| Backstage Field | Arch Register Field | Notes |
-|----------------|-------------------|-------|
-| `metadata.name` | `_name` | Entity name |
-| `metadata.namespace` | `_namespace` | Defaults to "default" |
-| `metadata.description` | `_description` | Entity description |
-| `metadata.tags` | `_tags` | Array of tags |
-| `metadata.links` | `_links` | External links |
-| `spec.owner` | `_owner` | Owner team reference |
-| `spec.lifecycle` | `_lifecycle` | Lifecycle state |
-| `spec.type` | `api_type` | Enum: openapi, grpc, graphql, asyncapi |
-| `spec.system` | `system` | Containment reference to System |
-
-### Resource → Arch Register Resource
-
-| Backstage Field | Arch Register Field | Notes |
-|----------------|-------------------|-------|
-| `metadata.name` | `_name` | Entity name |
-| `metadata.namespace` | `_namespace` | Defaults to "default" |
-| `metadata.description` | `_description` | Entity description |
-| `metadata.tags` | `_tags` | Array of tags |
-| `metadata.links` | `_links` | External links |
-| `spec.owner` | `_owner` | Owner team reference |
-| `spec.type` | `kind` | Enum: database, cache, queue, blob-storage |
-| `spec.system` | `system` | Optional containment reference to System |
-
-### System → Arch Register System
-
-| Backstage Field | Arch Register Field | Notes |
-|----------------|-------------------|-------|
-| `metadata.name` | `_name` | Entity name |
-| `metadata.namespace` | `_namespace` | Defaults to "default" |
-| `metadata.description` | `_description` | Entity description |
-| `metadata.tags` | `_tags` | Array of tags |
-| `metadata.links` | `_links` | External links |
-| `spec.owner` | `_owner` | Owner team reference |
-| `spec.domain` | `domain` | Containment reference to Domain |
-
-### Domain → Arch Register Domain
-
-| Backstage Field | Arch Register Field | Notes |
-|----------------|-------------------|-------|
-| `metadata.name` | `_name` | Entity name |
-| `metadata.namespace` | `_namespace` | Defaults to "default" |
-| `metadata.description` | `_description` | Entity description |
-| `metadata.tags` | `_tags` | Array of tags |
-| `metadata.links` | `_links` | External links |
-| `spec.owner` | `_owner` | Owner team reference |
-
-## Supported Entity Kinds
-
-- ✅ **Component** - Deployable units of code (services, libraries, websites)
-- ✅ **API** - Machine-readable interface definitions
-- ✅ **Resource** - Infrastructure dependencies (databases, caches, queues)
-- ✅ **System** - Collections of components and resources
-- ✅ **Domain** - High-level groupings of systems
-
-### Unsupported Kinds
-
-The following Backstage entity kinds are not currently supported but can be added in future iterations:
-
-- ⊘ **Group** - Organizational entities (teams, business units)
-- ⊘ **User** - Individual people
-- ⊘ **Template** - Scaffolding templates
-- ⊘ **Location** - Catalog data source markers
-
-## Error Handling
-
-The tool handles various error scenarios gracefully:
-
-### GitHub API Errors
-
-- **Rate Limiting**: Automatically waits and retries when rate limit is exceeded
-- **404 (No catalog-info.yaml)**: Skips repository with info message
-- **Authentication Errors**: Fails fast with clear message
-- **Network Errors**: Retries with exponential backoff (max 3 attempts)
-
-### YAML Parsing Errors
-
-- **Invalid Syntax**: Skips file, logs error with details
-- **Missing Required Fields**: Skips entity, logs validation error
-- **Unsupported Kind**: Skips entity, logs info message
-
-### Mapping Errors
-
-- **Unknown Schema ID**: Fails fast (configuration error)
-- **Invalid Field Values**: Skips entity, logs error
-- **Missing Required Fields**: Skips entity, logs error
-
-### Arch Register API Errors
-
-- **Authentication Errors**: Fails fast with clear message
-- **400 (Validation Error)**: Skips entity, logs error with details
-- **404 (Schema Not Found)**: Fails fast (configuration error)
-- **5xx Errors**: Retries with exponential backoff (max 3 attempts)
-
-## Sync Report
-
-After each sync run, a detailed report is displayed:
-
-```
-============================================================
-📊 Sync Report
-============================================================
-Repositories scanned: 45
-Entities found: 123
-  ✓ Created: 15
-  ✓ Updated: 8
-  ✓ Unchanged: 95
-  ⊘ Skipped: 3
-  ✗ Failed: 2
-
-❌ Errors:
-  • repo: diagram-craft / Component:default/invalid-name
-    Validation failed: Field metadata.name must match pattern
-  • repo: arch-register / API:default/broken-spec
-    Mapping failed: No schema mapping found for kind 'API'
-============================================================
-```
+| Kind | Backstage | Arch Register |
+| --- | --- | --- |
+| Component | `spec.type` | `kind` |
+| Component | `backstage.io/techdocs-ref` | `technology` |
+| API | `spec.type` | `api_type` |
+| Resource | `spec.type` | `kind` |
 
 ## Development
 
-### Run Tests
-
 ```bash
+pnpm typecheck
 pnpm test
 ```
 
-### Type Check
-
-```bash
-pnpm typecheck
-```
-
-### Watch Mode
-
-```bash
-pnpm dev -- --org DiagramCraft
-```
-
-## Architecture
-
-The tool is organized into modular components:
-
-- **`config.ts`** - Configuration loading and validation
-- **`github.ts`** - GitHub API client with retry logic
-- **`backstage.ts`** - YAML parser and entity validator
-- **`mapper.ts`** - Backstage → Arch Register field mapper
-- **`archRegister.ts`** - Arch Register integration API client
-- **`sync.ts`** - Main sync orchestration logic
-- **`main.ts`** - CLI entry point
-
-## Limitations
-
-1. **Relationship Resolution**: Entity references (e.g., `spec.system`, `spec.providesApis`) are stored as strings. The tool does not currently resolve these to actual entity IDs in Arch Register.
-
-2. **Schema Auto-Discovery**: Schemas are discovered by exact name match (case-insensitive). If your workspace uses different schema names, you must provide explicit schema IDs via environment variables.
-
-3. **Single File Support**: Only `catalog-info.yaml` in the repository root is processed. Multi-file catalogs and nested locations are not supported.
-
-4. **No Deletion**: The tool only creates and updates entities. It does not delete entities that no longer exist in Backstage.
-
-## Future Enhancements
-
-- Support for Group and User entity kinds
-- Relationship resolution (convert entity references to Arch Register IDs)
-- Incremental sync (only process changed files)
-- Support for nested catalog locations
-- Batch processing for better performance
-- Webhook integration for real-time sync
-- Deletion of entities removed from Backstage
-
-## Troubleshooting
-
-### "Organization not found or not accessible"
-
-- Verify the organization name is correct
-- For private organizations, ensure `GITHUB_TOKEN` is set with appropriate permissions
-
-### "Authentication failed. Check your ARCH_REGISTER_TOKEN"
-
-- Verify the token is valid and not expired
-- Ensure the token has `content.view` and `ent.external_update` permissions
-- Check that the workspace slug is correct
-
-### "No schema mapping found for kind 'Component'"
-
-- Ensure your workspace was created with the "Backstage" template
-- Verify schemas exist by checking the Arch Register UI
-- Provide explicit schema IDs via environment variables if auto-discovery fails
-
-### "Validation failed: Field metadata.name must match pattern"
-
-- Entity names must be 1-63 characters
-- Only alphanumeric characters separated by `-`, `_`, or `.`
-- Must start and end with alphanumeric character
-
-## License
-
-This example is part of the Diagram Craft project and follows the same license.
+The tests cover YAML parsing, validation, external-key generation, supported-kind handling, and scalar field mapping.

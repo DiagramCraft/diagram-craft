@@ -25,14 +25,6 @@ export interface SyncReport {
   }>;
 }
 
-export interface EntitySyncResult {
-  repo: string;
-  entity: string;
-  externalKey: string;
-  status: 'created' | 'updated' | 'unchanged' | 'skipped' | 'failed';
-  reason?: string;
-}
-
 /**
  * Syncs all Backstage catalog-info.yaml files from a GitHub organization
  */

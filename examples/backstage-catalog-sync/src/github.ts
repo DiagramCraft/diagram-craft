@@ -2,16 +2,6 @@ export interface GitHubRepo {
   name: string;
   fullName: string;
   defaultBranch: string;
-  url: string;
-  isPrivate: boolean;
-}
-
-export interface GitHubError extends Error {
-  status?: number;
-  response?: {
-    status: number;
-    data?: unknown;
-  };
 }
 
 /**
@@ -61,9 +51,7 @@ export const listRepos = async (org: string, token?: string): Promise<GitHubRepo
       repos.push({
         name: repo.name,
         fullName: repo.full_name,
-        defaultBranch: repo.default_branch,
-        url: repo.html_url,
-        isPrivate: repo.private
+        defaultBranch: repo.default_branch
       });
     }
 

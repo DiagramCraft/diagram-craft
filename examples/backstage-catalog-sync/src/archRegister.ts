@@ -1,9 +1,8 @@
 import type { ArchRegisterEntity } from './mapper.js';
 
-export interface Schema {
+interface Schema {
   id: string;
   name: string;
-  description: string;
 }
 
 export interface SyncResult {
