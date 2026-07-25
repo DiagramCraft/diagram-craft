@@ -13,6 +13,7 @@ import {
   useDecideGovernanceAssignment,
   useGovernanceSubmissions,
   useGovernanceTasks,
+  useSendGovernanceCaseReminder,
   useWithdrawGovernanceCase
 } from '../../hooks/useGovernance';
 import type {
@@ -101,6 +102,8 @@ export const GovernanceInboxScreen = () => {
   const queryClient = useQueryClient();
   const decide = useDecideGovernanceAssignment(workspace);
   const withdrawCase = useWithdrawGovernanceCase(workspace);
+  const sendReminder = useSendGovernanceCaseReminder(workspace);
+  const [reminderErrorByCaseId, setReminderErrorByCaseId] = useState<Record<string, string>>({});
   const [requestChangesTask, setRequestChangesTask] = useState<GovernanceTask | null>(null);
   const [requestChangesReason, setRequestChangesReason] = useState('');
   const isLoading = scope === 'assigned' ? tasksLoading : submissionsLoading;
@@ -247,6 +250,26 @@ export const GovernanceInboxScreen = () => {
       return;
     }
     withdrawCase.mutate({ caseId: submission.case.id });
+  };
+
+  const sendCaseReminder = (caseId: string) => {
+    setReminderErrorByCaseId(prev => {
+      const next = { ...prev };
+      delete next[caseId];
+      return next;
+    });
+    sendReminder.mutate(
+      { caseId },
+      {
+        onError: mutationError => {
+          setReminderErrorByCaseId(prev => ({
+            ...prev,
+            [caseId]:
+              mutationError instanceof Error ? mutationError.message : 'Could not send reminder'
+          }));
+        }
+      }
+    );
   };
 
   const submitRequestChanges = () => {
@@ -443,6 +466,9 @@ export const GovernanceInboxScreen = () => {
                   ((submission.case.caseKind === 'entity.change' ||
                     submission.case.caseKind === 'entity.change.bulk') &&
                     submission.case.outcome === 'request_changes'));
+              const canRemind =
+                submission.case.status === 'open' && submission.openAssignments.length > 0;
+              const reminderError = reminderErrorByCaseId[submission.case.id];
               return (
                 <li className={styles.task} key={submission.case.id}>
                   <div className={styles.taskMain}>
@@ -510,8 +536,26 @@ export const GovernanceInboxScreen = () => {
                         <span>{previewNote(requestChangesReason)}</span>
                       </div>
                     )}
+                    {reminderError && (
+                      <div className={styles.taskNote} title={reminderError}>
+                        <span className={styles.taskNoteLabel}>Reminder</span>
+                        <span>{previewNote(reminderError)}</span>
+                      </div>
+                    )}
                   </div>
                   <div className={styles.taskAction}>
+                    {canRemind && (
+                      <Button
+                        variant="secondary"
+                        disabled={sendReminder.isPending}
+                        onClick={event => {
+                          event.stopPropagation();
+                          sendCaseReminder(submission.case.id);
+                        }}
+                      >
+                        Send reminder
+                      </Button>
+                    )}
                     {canWithdraw && (
                       <Button
                         variant="secondary"

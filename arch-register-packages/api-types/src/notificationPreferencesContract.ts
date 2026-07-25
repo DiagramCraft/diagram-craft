@@ -12,6 +12,7 @@ const notificationTypeSchema = z.enum([
   'governance-task-assigned',
   'governance-case-activity',
   'governance-proposal-reminder',
+  'governance-deadline-reminder',
   'automation-rule'
 ]);
 

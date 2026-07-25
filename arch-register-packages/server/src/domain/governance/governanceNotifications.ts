@@ -63,6 +63,11 @@ const getPresentation = (eventType: GovernanceEventType, caseKind: string) => {
         title: `${subject} became stale`,
         message: 'The governed proposal needs attention.'
       };
+    case 'reminder_sent':
+      return {
+        title: `${subject} reminder`,
+        message: 'A reminder was sent for an outstanding governance task.'
+      };
     default:
       return {
         title: `${subject} updated`,
@@ -241,6 +246,14 @@ const resolveGovernanceNotificationRecipients = async (
 
   if (event.event_type === 'submitted') {
     for (const assignment of assignments) {
+      for (const recipient of await listAssignmentRecipients(db, workspace, assignment, signal)) {
+        recipients.set(`${recipient.id}:${assignment.id}`, assignment.id);
+      }
+    }
+  } else if (event.event_type === 'reminder_sent') {
+    // Reminders only go to whoever is still actually outstanding, not every assignee the case
+    // has ever had and not the initiator who triggered the reminder.
+    for (const assignment of assignments.filter(candidate => candidate.status === 'open')) {
       for (const recipient of await listAssignmentRecipients(db, workspace, assignment, signal)) {
         recipients.set(`${recipient.id}:${assignment.id}`, assignment.id);
       }

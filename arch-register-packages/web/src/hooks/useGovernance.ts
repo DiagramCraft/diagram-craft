@@ -75,6 +75,19 @@ export const useWithdrawGovernanceCase = (workspaceId: string) => {
   });
 };
 
+export const useSendGovernanceCaseReminder = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { caseId: string }) =>
+      orpcClient.governance.cases.remind({
+        params: { workspace: workspaceId, id: input.caseId }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: governanceKeys.all });
+    }
+  });
+};
+
 export const useDecideGovernanceAssignment = (workspaceId: string) => {
   const queryClient = useQueryClient();
   return useMutation({

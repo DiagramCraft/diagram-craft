@@ -30,7 +30,8 @@ export type GovernanceEventType =
   | 'scope_refreshed'
   | 'postponed'
   | 'finalized'
-  | 'finalization_override';
+  | 'finalization_override'
+  | 'reminder_sent';
 
 export type GovernanceCaseDbResult = {
   id: string;

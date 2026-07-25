@@ -258,7 +258,9 @@
           filter work by task and due-date attributes, and navigate to governed cases.
 
             - @id:ar.collaboration.governance-inbox.my-submissions Users can review governance work they have submitted,
-              see what or who is currently blocking it, and withdraw an open submission where permitted.
+              see what or who is currently blocking it, and withdraw an open submission where permitted. For an open
+              case with outstanding assignments, the initiator can also send an out-of-band reminder to the remaining
+              assignees on demand, rate-limited to prevent spamming them.
 
         - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity change
           cases, while authorized users can submit immutable coordinated revisions with an optional due date, review

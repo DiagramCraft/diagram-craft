@@ -48761,6 +48761,7 @@
                               "governance-task-assigned",
                               "governance-case-activity",
                               "governance-proposal-reminder",
+                              "governance-deadline-reminder",
                               "automation-rule"
                             ],
                             "type": "string"
@@ -48832,6 +48833,7 @@
                               "governance-task-assigned",
                               "governance-case-activity",
                               "governance-proposal-reminder",
+                              "governance-deadline-reminder",
                               "automation-rule"
                             ],
                             "type": "string"
@@ -48911,6 +48913,7 @@
                             "governance-task-assigned",
                             "governance-case-activity",
                             "governance-proposal-reminder",
+                            "governance-deadline-reminder",
                             "automation-rule"
                           ],
                           "type": "string"
@@ -48963,6 +48966,7 @@
                               "governance-task-assigned",
                               "governance-case-activity",
                               "governance-proposal-reminder",
+                              "governance-deadline-reminder",
                               "automation-rule"
                             ],
                             "type": "string"
@@ -49034,6 +49038,7 @@
                               "governance-task-assigned",
                               "governance-case-activity",
                               "governance-proposal-reminder",
+                              "governance-deadline-reminder",
                               "automation-rule"
                             ],
                             "type": "string"
@@ -76690,7 +76695,8 @@
                           "scope_refreshed",
                           "postponed",
                           "finalized",
-                          "finalization_override"
+                          "finalization_override",
+                          "reminder_sent"
                         ],
                         "type": "string",
                         "description": "Kind of event"
@@ -76974,6 +76980,314 @@
                     "dueAt",
                     "completedAt",
                     "cancelledAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/governance/cases/{id}/remind": {
+      "post": {
+        "operationId": "governance.cases.remind",
+        "summary": "Send an out-of-band reminder for a governance case",
+        "description": "Notifies the outstanding assignees of an open case on demand. Only the case initiator may send a reminder, and only for open cases with outstanding assignments; rate-limited to prevent spamming assignees.",
+        "tags": [
+          "Governance",
+          "Governance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "case": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique case identifier"
+                        },
+                        "workspace": {
+                          "type": "string",
+                          "description": "Parent workspace identifier"
+                        },
+                        "caseKind": {
+                          "type": "string",
+                          "description": "Domain-specific kind of governed process, e.g. entity change approval"
+                        },
+                        "subjectType": {
+                          "type": "string",
+                          "description": "Kind of resource this case governs, e.g. \"entity\""
+                        },
+                        "subjectId": {
+                          "type": "string",
+                          "description": "Identifier of the resource this case governs"
+                        },
+                        "subjectVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Immutable subject version or proposal revision being reviewed"
+                        },
+                        "status": {
+                          "enum": [
+                            "open",
+                            "completed",
+                            "cancelled"
+                          ],
+                          "type": "string",
+                          "description": "Generic lifecycle status"
+                        },
+                        "outcome": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Domain-specific outcome, e.g. \"approve\" or \"reject\""
+                        },
+                        "policyVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Applicable policy version captured when the case started"
+                        },
+                        "initiatorUserId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "User who opened the case, or null if the user was deleted"
+                        },
+                        "parentCaseId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Parent case identifier, for future compound operations"
+                        },
+                        "selfApprovalAllowed": {
+                          "type": "boolean",
+                          "description": "Whether the captured policy allows the initiator to decide their own case"
+                        },
+                        "payload": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Opaque domain payload reference, e.g. a proposal revision id"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "description": "ISO 8601 creation timestamp"
+                        },
+                        "dueAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 due timestamp"
+                        },
+                        "completedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 completion timestamp"
+                        },
+                        "cancelledAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 cancellation timestamp"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "workspace",
+                        "caseKind",
+                        "subjectType",
+                        "subjectId",
+                        "subjectVersion",
+                        "status",
+                        "outcome",
+                        "policyVersion",
+                        "initiatorUserId",
+                        "parentCaseId",
+                        "selfApprovalAllowed",
+                        "payload",
+                        "createdAt",
+                        "dueAt",
+                        "completedAt",
+                        "cancelledAt"
+                      ]
+                    },
+                    "event": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique event identifier"
+                        },
+                        "caseId": {
+                          "type": "string",
+                          "description": "Case this event belongs to"
+                        },
+                        "eventType": {
+                          "enum": [
+                            "submitted",
+                            "assigned",
+                            "reassigned",
+                            "changes_requested",
+                            "resubmitted",
+                            "approved",
+                            "rejected",
+                            "acknowledged",
+                            "cancelled",
+                            "admin_override",
+                            "proposal_stale",
+                            "domain_effect_applied",
+                            "domain_effect_failed",
+                            "scope_refreshed",
+                            "postponed",
+                            "finalized",
+                            "finalization_override",
+                            "reminder_sent"
+                          ],
+                          "type": "string",
+                          "description": "Kind of event"
+                        },
+                        "actorUserId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "User who performed the action, or null for system events / deleted users"
+                        },
+                        "occurredAt": {
+                          "type": "string",
+                          "description": "ISO 8601 timestamp the event occurred"
+                        },
+                        "previousStatus": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Case status before this event"
+                        },
+                        "resultingStatus": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Case status after this event"
+                        },
+                        "reason": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Optional reason or comment supplied by the actor"
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Structured, non-executable metadata"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "caseId",
+                        "eventType",
+                        "actorUserId",
+                        "occurredAt",
+                        "previousStatus",
+                        "resultingStatus",
+                        "reason",
+                        "metadata"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "case",
+                    "event"
                   ]
                 }
               }
@@ -77653,7 +77967,8 @@
                             "scope_refreshed",
                             "postponed",
                             "finalized",
-                            "finalization_override"
+                            "finalization_override",
+                            "reminder_sent"
                           ],
                           "type": "string",
                           "description": "Kind of event"

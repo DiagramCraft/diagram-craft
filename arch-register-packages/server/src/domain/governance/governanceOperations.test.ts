@@ -10,7 +10,8 @@ import type { GovernanceCaseListFilter } from './db/governanceDatabase';
 import {
   decideGovernanceAssignment,
   listMyGovernanceAssignments,
-  listMySubmittedGovernanceCases
+  listMySubmittedGovernanceCases,
+  sendGovernanceCaseReminder
 } from './governanceOperations';
 import type { GovernanceRegistry } from './governanceRegistry';
 
@@ -203,7 +204,10 @@ const makeGovernanceDouble = (
   };
 };
 
-const makeDb = (governance: ReturnType<typeof makeGovernanceDouble>): DatabaseAdapter =>
+const makeDb = (
+  governance: ReturnType<typeof makeGovernanceDouble>,
+  inAppOverrideUserIds: string[] = []
+): DatabaseAdapter =>
   ({
     catalog: {},
     governance,
@@ -215,7 +219,17 @@ const makeDb = (governance: ReturnType<typeof makeGovernanceDouble>): DatabaseAd
       }))
     },
     notificationPreference: {
-      listOverrides: vi.fn(async () => [])
+      listOverrides: vi.fn(async (userId: string) =>
+        inAppOverrideUserIds.includes(userId)
+          ? [
+              {
+                notification_type: 'governance-deadline-reminder',
+                channel: 'in_app',
+                enabled: true
+              }
+            ]
+          : []
+      )
     },
     notification: {
       createNotification: governance.createNotification,
@@ -227,7 +241,7 @@ const makeDb = (governance: ReturnType<typeof makeGovernanceDouble>): DatabaseAd
       transaction: async (callback: (db: DatabaseAdapter) => Promise<unknown>) => {
         const snapshot = governance._snapshot();
         try {
-          return await callback(makeDb(governance));
+          return await callback(makeDb(governance, inAppOverrideUserIds));
         } catch (error) {
           governance._restore(snapshot);
           throw error;
@@ -609,5 +623,88 @@ describe('listMySubmittedGovernanceCases', () => {
     const result = await listMySubmittedGovernanceCases(db, 'ws-1', event, {});
 
     expect(result).toHaveLength(1);
+  });
+});
+
+describe('sendGovernanceCaseReminder', () => {
+  it('denies a non-initiator, even if they are eligible for the open assignment', async () => {
+    const caseRow = makeCase({ initiator_user_id: 'user-2' });
+    const assignment = makeAssignment({ target_user_id: 'user-1' });
+    const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+
+    await expect(sendGovernanceCaseReminder(db, 'ws-1', caseRow.id, event)).rejects.toMatchObject({
+      status: 403
+    });
+  });
+
+  it('rejects reminders for cases that are not open', async () => {
+    const caseRow = makeCase({ initiator_user_id: 'user-1', status: 'completed' });
+    const assignment = makeAssignment({ target_user_id: 'user-1', status: 'completed' });
+    const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+
+    await expect(sendGovernanceCaseReminder(db, 'ws-1', caseRow.id, event)).rejects.toMatchObject({
+      status: 409
+    });
+  });
+
+  it('rejects reminders when nothing is outstanding', async () => {
+    const caseRow = makeCase({ initiator_user_id: 'user-1' });
+    const assignment = makeAssignment({ status: 'completed', resolved_at: now });
+    const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+
+    await expect(sendGovernanceCaseReminder(db, 'ws-1', caseRow.id, event)).rejects.toMatchObject({
+      status: 409
+    });
+  });
+
+  it('rate-limits repeated manual reminders on the same case', async () => {
+    // The workspace's fakeTimers config deliberately excludes Date (see vitest.config.ts), so
+    // the cooldown window is anchored to the real wall clock here rather than mocked time.
+    const caseRow = makeCase({ initiator_user_id: 'user-1' });
+    const assignment = makeAssignment({ target_user_id: 'user-3', status: 'open' });
+    const governance = makeGovernanceDouble(caseRow, assignment);
+    await governance.appendEvent({
+      id: 'reminder-existing',
+      case_id: caseRow.id,
+      workspace: 'ws-1',
+      event_type: 'reminder_sent',
+      actor_user_id: 'user-1',
+      occurred_at: new Date(Date.now() - 60 * 1000),
+      previous_status: 'open',
+      resulting_status: 'open',
+      reason: null,
+      metadata: { trigger: 'manual', actor_user_id: 'user-1' }
+    });
+    const db = makeDb(governance);
+
+    await expect(sendGovernanceCaseReminder(db, 'ws-1', caseRow.id, event)).rejects.toMatchObject({
+      status: 429
+    });
+  });
+
+  it('records a reminder_sent event and only notifies recipients of open assignments', async () => {
+    const caseRow = makeCase({ initiator_user_id: 'user-1' });
+    const openAssignment = makeAssignment({
+      id: 'assignment-open',
+      target_user_id: 'user-3',
+      status: 'open'
+    });
+    const resolvedAssignment = makeAssignment({
+      id: 'assignment-resolved',
+      target_user_id: 'user-4',
+      status: 'completed',
+      resolved_at: now
+    });
+    const governance = makeGovernanceDouble(caseRow, openAssignment, [resolvedAssignment]);
+    const db = makeDb(governance, ['user-3', 'user-4']);
+
+    const result = await sendGovernanceCaseReminder(db, 'ws-1', caseRow.id, event);
+
+    expect(result.event.eventType).toBe('reminder_sent');
+    expect(result.event.metadata).toEqual({ trigger: 'manual', actor_user_id: 'user-1' });
+    const notifiedUserIds = (governance.notifications as Array<{ user_id: string }>).map(
+      notification => notification.user_id
+    );
+    expect(notifiedUserIds).toEqual(['user-3']);
   });
 });
