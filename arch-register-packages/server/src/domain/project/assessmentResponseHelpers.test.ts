@@ -29,6 +29,8 @@ const makeAssessment = (overrides: Partial<AssessmentDbResult> = {}): Assessment
     },
     { id: 'f2', label: 'Notes', type: 'text', requirementLevel: 'optional' }
   ],
+  assigned_team_ids: [],
+  due_at: null,
   created_at: now,
   updated_at: now,
   ...overrides

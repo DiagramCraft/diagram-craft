@@ -24,6 +24,7 @@ import styles from './GovernanceInboxScreen.module.css';
 import { orpcClient } from '../../lib/orpcClient';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import { workspaceMarkdownRoute } from '../../routes/publicObjectRoutes';
+import { projectDetailRoute, asProjectPublicId } from '../../routes/publicObjectRoutes';
 import { entityKeys } from '../../queries/entities';
 import { projectFileKeys } from '../../queries/content';
 import {
@@ -40,6 +41,7 @@ const previewNote = (note: string) => (note.length > 180 ? `${note.slice(0, 177)
 const describeWaitingOn = (assignment: GovernanceAssignment) => {
   const action = humanize(assignment.action);
   if (assignment.targetType === 'user') return `Awaiting ${action.toLowerCase()}`;
+  if (assignment.targetType === 'team') return `Awaiting ${action.toLowerCase()} by your team`;
   if (assignment.targetType === 'team_role') {
     return `Awaiting ${action.toLowerCase()} by role: ${assignment.targetTeamRole ?? 'unknown'}`;
   }
@@ -389,9 +391,16 @@ export const GovernanceInboxScreen = () => {
                 submission.case.subjectType === 'document'
                   ? documentsById.get(submission.case.subjectId)
                   : undefined;
+              const assessmentName =
+                submission.case.subjectType === 'assessment'
+                  ? (submission.case.payload['name'] as string | undefined)
+                  : undefined;
               const subjectLabel = isBulk
                 ? `${bulkProposal?.entityIds.length ?? 0} entities`
-                : (subjectEntity?._name ?? subjectDocument?.name ?? submission.case.subjectId);
+                : (subjectEntity?._name ??
+                  subjectDocument?.name ??
+                  assessmentName ??
+                  submission.case.subjectId);
               const proposal = proposalsByEntityId.get(submission.case.subjectId);
               const latestRevision = isBulk
                 ? bulkProposal?.revisions.at(-1)
@@ -406,6 +415,16 @@ export const GovernanceInboxScreen = () => {
                       mode: 'preview'
                     })
                   );
+                } else if (submission.case.subjectType === 'assessment') {
+                  const projectId = submission.case.payload['projectId'] as string | undefined;
+                  if (projectId) {
+                    navigate(
+                      projectDetailRoute(workspace, asProjectPublicId(projectId), {
+                        section: 'assessments',
+                        assessmentId: submission.case.subjectId
+                      })
+                    );
+                  }
                 }
               };
               const withdrawPending =
@@ -510,14 +529,18 @@ export const GovernanceInboxScreen = () => {
                       icon={<TbExternalLink size={12} />}
                       onClick={viewSubject}
                       disabled={
-                        !subjectEntity?._publicId && submission.case.subjectType !== 'document'
+                        !subjectEntity?._publicId &&
+                        submission.case.subjectType !== 'document' &&
+                        submission.case.subjectType !== 'assessment'
                       }
                     >
                       {submission.case.subjectType === 'entity'
                         ? 'View entity'
                         : submission.case.subjectType === 'document'
                           ? 'View document'
-                          : 'View case'}
+                          : submission.case.subjectType === 'assessment'
+                            ? 'View assessment'
+                            : 'View case'}
                     </Button>
                   </div>
                 </li>
@@ -558,9 +581,16 @@ export const GovernanceInboxScreen = () => {
               task.case.subjectType === 'document'
                 ? documentsById.get(task.case.subjectId)
                 : undefined;
+            const assessmentName =
+              task.case.subjectType === 'assessment'
+                ? (task.case.payload['name'] as string | undefined)
+                : undefined;
             const subjectLabel = isBulk
               ? `${bulkProposal?.entityIds.length ?? 0} entities`
-              : (subjectEntity?._name ?? subjectDocument?.name ?? task.case.subjectId);
+              : (subjectEntity?._name ??
+                subjectDocument?.name ??
+                assessmentName ??
+                task.case.subjectId);
             const proposal = proposalsByEntityId.get(task.case.subjectId);
             const latestRevision = isBulk
               ? bulkProposal?.revisions.at(-1)
@@ -573,6 +603,16 @@ export const GovernanceInboxScreen = () => {
                 navigate(
                   workspaceMarkdownRoute(workspace, task.case.subjectId, { mode: 'preview' })
                 );
+              } else if (task.case.subjectType === 'assessment') {
+                const projectId = task.case.payload['projectId'] as string | undefined;
+                if (projectId) {
+                  navigate(
+                    projectDetailRoute(workspace, asProjectPublicId(projectId), {
+                      section: 'assessments',
+                      assessmentId: task.case.subjectId
+                    })
+                  );
+                }
               }
             };
             return (
@@ -670,13 +710,19 @@ export const GovernanceInboxScreen = () => {
                     variant="ghost"
                     icon={<TbExternalLink size={12} />}
                     onClick={viewSubject}
-                    disabled={!subjectEntity?._publicId && task.case.subjectType !== 'document'}
+                    disabled={
+                      !subjectEntity?._publicId &&
+                      task.case.subjectType !== 'document' &&
+                      task.case.subjectType !== 'assessment'
+                    }
                   >
                     {task.case.subjectType === 'entity'
                       ? 'View entity'
                       : task.case.subjectType === 'document'
                         ? 'View document'
-                        : 'View case'}
+                        : task.case.subjectType === 'assessment'
+                          ? 'View assessment'
+                          : 'View case'}
                   </Button>
                 </div>
               </li>

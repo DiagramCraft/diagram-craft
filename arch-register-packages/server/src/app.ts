@@ -50,6 +50,7 @@ import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOpe
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
 import { createDocumentGovernanceRegistry } from './domain/document/documentWorkflowOperations';
+import { createAssessmentGovernanceRegistry } from './domain/project/assessmentOperations';
 import { getHttpErrorLogLevel } from './utils/errorLogging';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
@@ -175,7 +176,8 @@ export const createApp = (
       new Map([
         ...createEntityGovernanceRegistry(),
         ...createDeprecationGovernanceRegistry(),
-        ...createDocumentGovernanceRegistry()
+        ...createDocumentGovernanceRegistry(),
+        ...createAssessmentGovernanceRegistry()
       ])
     )
   );

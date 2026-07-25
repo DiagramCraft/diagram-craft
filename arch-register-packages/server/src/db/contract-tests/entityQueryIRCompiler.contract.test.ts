@@ -548,6 +548,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       mode: 'fields',
       scope: [schema.id],
       scope_conditions: [],
+      assigned_team_ids: [],
+      due_at: null,
       fields: [
         { id: 'riskLevel', label: 'Risk Level', requirementLevel: 'required', type: 'rating' }
       ],
@@ -604,6 +606,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       mode: 'fields',
       scope: [schema.id],
       scope_conditions: [],
+      assigned_team_ids: [],
+      due_at: null,
       fields: [
         { id: 'riskLevel', label: 'Risk Level', requirementLevel: 'required', type: 'rating' }
       ],

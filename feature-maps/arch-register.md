@@ -185,6 +185,11 @@
 
         - @id:ar.assessments.export Users can export assessment results to CSV.
 
+        - @id:ar.assessments.team-assignment Users can assign one or more teams to an assessment, with an optional
+          due date, before opening it. Opening the assessment surfaces an acknowledgement task per assigned team in
+          the governance inbox; closing the assessment resolves those tasks. Assigned teams and the due date are
+          fixed while the assessment is open and can only be changed by returning it to draft.
+
     - @id:ar.content Users can maintain Markdown, diagram, and document content at workspace, project, and entity
       scopes.
 

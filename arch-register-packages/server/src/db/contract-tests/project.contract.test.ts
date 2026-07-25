@@ -449,6 +449,8 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         mode: 'fields',
         scope: ['entity-1', 'entity-2'],
         scope_conditions: [],
+        assigned_team_ids: [],
+        due_at: null,
         fields: [],
         created_at: now,
         updated_at: now
@@ -477,6 +479,8 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         mode: 'confirm',
         scope: [],
         scope_conditions: [],
+        assigned_team_ids: [],
+        due_at: null,
         fields: [],
         created_at: now,
         updated_at: now
@@ -593,6 +597,8 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         mode: 'fields',
         scope: [],
         scope_conditions: [],
+        assigned_team_ids: [],
+        due_at: null,
         fields: [],
         created_at: now,
         updated_at: now

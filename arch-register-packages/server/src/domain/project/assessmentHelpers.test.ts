@@ -28,6 +28,8 @@ const makeRow = (overrides: Partial<AssessmentDbResult> = {}): AssessmentDbResul
       requirementLevel: 'required'
     }
   ],
+  assigned_team_ids: [],
+  due_at: null,
   created_at: now,
   updated_at: now,
   ...overrides

@@ -3331,6 +3331,8 @@ export const seedAssessments: AssessmentDbCreate[] = [
       { id: 'f2', label: 'Last pen-test date', type: 'text', requirementLevel: 'optional' },
       { id: 'f3', label: 'Known vulnerabilities', type: 'text', requirementLevel: 'optional' }
     ],
+    assigned_team_ids: [],
+    due_at: null,
     created_at: now,
     updated_at: now
   },
@@ -3355,6 +3357,8 @@ export const seedAssessments: AssessmentDbCreate[] = [
       },
       { id: 'f3', label: 'Notes', type: 'text', requirementLevel: 'optional' }
     ],
+    assigned_team_ids: [],
+    due_at: null,
     created_at: now,
     updated_at: now
   }
