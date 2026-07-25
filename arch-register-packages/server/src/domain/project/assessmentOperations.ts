@@ -23,6 +23,83 @@ import {
   UpdateAssessmentRequest,
   UpdateAssessmentStatusRequest
 } from '@arch-register/api-types/assessmentContract';
+import {
+  createGovernanceCaseInTransaction,
+  recordGovernanceEvent,
+  resolveAssignmentNotifications,
+  resolveCaseNotifications
+} from '../governance/governanceOperations';
+import type { GovernanceRegistry } from '../governance/governanceRegistry';
+
+export const ASSESSMENT_RESPONSE_CASE_KIND = 'assessment.response';
+
+export const createAssessmentGovernanceRegistry = (): GovernanceRegistry =>
+  new Map([
+    [
+      ASSESSMENT_RESPONSE_CASE_KIND,
+      {
+        subjectVisible: async (
+          db: DatabaseAdapter,
+          _authCtx,
+          workspace: string,
+          subjectId: string
+        ) => {
+          const assessment = await db.project.getAssessmentById(workspace, subjectId);
+          return assessment != null;
+        },
+        independentAssignmentActions: new Set(['acknowledge' as const])
+      }
+    ]
+  ]);
+
+const openAssessmentGovernanceCase = async (
+  tx: DatabaseAdapter,
+  workspace: string,
+  initiatorUserId: string,
+  row: AssessmentDbResult
+): Promise<void> => {
+  if (row.assigned_team_ids.length === 0) return;
+  await createGovernanceCaseInTransaction(tx, workspace, initiatorUserId, {
+    caseKind: ASSESSMENT_RESPONSE_CASE_KIND,
+    subjectType: 'assessment',
+    subjectId: row.id,
+    selfApprovalAllowed: true,
+    dueAt: row.due_at,
+    payload: { projectId: row.project_id, name: row.name },
+    assignments: row.assigned_team_ids.map(teamId => ({
+      action: 'acknowledge' as const,
+      target: { type: 'team' as const, teamId }
+    }))
+  });
+};
+
+const closeAssessmentGovernanceCase = async (
+  tx: DatabaseAdapter,
+  workspace: string,
+  assessmentId: string
+): Promise<void> => {
+  const openCases = await tx.governance.listCases(workspace, {
+    caseKind: ASSESSMENT_RESPONSE_CASE_KIND,
+    subjectId: assessmentId,
+    status: 'open'
+  });
+  const now = new Date();
+  for (const caseRow of openCases) {
+    const completed = await tx.governance.completeCaseIfOpen(caseRow.id, 'closed', now);
+    if (!completed) continue;
+    const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+    await resolveAssignmentNotifications(tx, supersededIds, now);
+    await resolveCaseNotifications(tx, completed.id, now);
+    await recordGovernanceEvent(tx, completed, {
+      eventType: 'cancelled',
+      actorUserId: null,
+      previousStatus: 'open',
+      resultingStatus: 'completed',
+      reason: 'Assessment closed',
+      metadata: {}
+    });
+  }
+};
 
 const getAssessmentStats = async (
   db: DatabaseAdapter,
@@ -243,15 +320,27 @@ export const updateAssessmentStatus = async (
         'You do not have permission to change assessment status in this project'
       );
 
-      const row = await db.project.updateAssessment(ws, project.id, id, {
-        name: oldRow.name,
-        description: oldRow.description,
-        status: body.status,
-        mode: oldRow.mode,
-        scope: oldRow.scope,
-        scope_conditions: oldRow.scope_conditions,
-        fields: oldRow.fields,
-        updated_at: new Date()
+      const row = await db.core.transaction(async tx => {
+        const updated = await tx.project.updateAssessment(ws, project.id, id, {
+          name: oldRow.name,
+          description: oldRow.description,
+          status: body.status,
+          mode: oldRow.mode,
+          scope: oldRow.scope,
+          scope_conditions: oldRow.scope_conditions,
+          fields: oldRow.fields,
+          assigned_team_ids: oldRow.assigned_team_ids,
+          due_at: oldRow.due_at,
+          updated_at: new Date()
+        });
+        if (updated) {
+          if (oldRow.status !== 'open' && body.status === 'open') {
+            await openAssessmentGovernanceCase(tx, ws, authCtx.userId, updated);
+          } else if (oldRow.status === 'open' && body.status !== 'open') {
+            await closeAssessmentGovernanceCase(tx, ws, updated.id);
+          }
+        }
+        return updated;
       });
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
 

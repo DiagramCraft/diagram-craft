@@ -1,0 +1,5 @@
+ALTER TABLE assessment
+  ADD COLUMN IF NOT EXISTS assigned_team_ids JSONB NOT NULL DEFAULT '[]';
+
+ALTER TABLE assessment
+  ADD COLUMN IF NOT EXISTS due_at TIMESTAMPTZ;

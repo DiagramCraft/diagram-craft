@@ -897,8 +897,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async createAssessment(input: AssessmentDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.description}, ${input.status}, ${input.mode}, ${this.json(input.scope)}, ${this.json(input.scope_conditions)}, ${this.json(input.fields)}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, assigned_team_ids, due_at, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.description}, ${input.status}, ${input.mode}, ${this.json(input.scope)}, ${this.json(input.scope_conditions)}, ${this.json(input.fields)}, ${this.json(input.assigned_team_ids)}, ${input.due_at}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return projectMappers.assessment(row!);
@@ -923,6 +923,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             scope = ${this.json(input.scope)},
             scope_conditions = ${this.json(input.scope_conditions)},
             fields = ${this.json(input.fields)},
+            assigned_team_ids = ${this.json(input.assigned_team_ids)},
+            due_at = ${input.due_at},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
         RETURNING *

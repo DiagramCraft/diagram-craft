@@ -40,6 +40,8 @@ import { useEntitiesBySchema, useEntityCountsBySchema } from '../../hooks/useEnt
 import { AssessmentScopeFilterBuilder } from './components/AssessmentScopeFilterBuilder';
 import { EmptyState } from '../../components/EmptyState';
 import { assessmentTemplates, cloneAssessmentTemplateValues } from '../../lib/assessmentTemplates';
+import { UserGroupPicker } from '../../components/UserGroupPicker';
+import { stableHue } from '../../components/MemberAvatar';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
@@ -311,6 +313,39 @@ const AssessmentCard = ({
   );
 };
 
+const PickedTeams = ({
+  ids,
+  labels,
+  onRemove
+}: {
+  ids: string[];
+  labels: Map<string, string>;
+  onRemove: (id: string) => void;
+}) => {
+  if (ids.length === 0) return null;
+  return (
+    <div className={styles.pickedList}>
+      {ids.map(id => (
+        <span key={id} className={styles.pickedChip}>
+          <span
+            className={styles.teamDot}
+            style={{ background: `oklch(0.65 0.15 ${stableHue(id)})` }}
+          />
+          {labels.get(id) ?? 'Unavailable team'}
+          <button
+            type="button"
+            className={styles.pickedRemove}
+            title="Remove team"
+            onClick={() => onRemove(id)}
+          >
+            ×
+          </button>
+        </span>
+      ))}
+    </div>
+  );
+};
+
 export const AssessmentEditorDialog = ({
   assessment,
   schemas,
@@ -335,6 +370,10 @@ export const AssessmentEditorDialog = ({
   const [fields, setFields] = useState<AssessmentField[]>(
     assessment?.fields.map(f => ({ ...f })) ?? []
   );
+  const [assignedTeamIds, setAssignedTeamIds] = useState<string[]>(
+    assessment?.assigned_team_ids ?? []
+  );
+  const [dueAt, setDueAt] = useState<string>(assessment?.due_at?.slice(0, 10) ?? '');
   const [status, setStatus] = useState<Assessment['status']>(assessment?.status ?? 'draft');
   const [mode, setMode] = useState<Assessment['mode']>(assessment?.mode ?? 'fields');
   const [selectedTemplateId, setSelectedTemplateId] = useState(isNew ? START_FROM_SCRATCH : '');
@@ -400,6 +439,18 @@ export const AssessmentEditorDialog = ({
     setFields(prev => prev.filter(f => f.id !== id));
   };
 
+  const teamLabels = useMemo(() => new Map(teams.map(team => [team.id, team.name])), [teams]);
+
+  const addTeam = (id: string) => {
+    markDirty();
+    setAssignedTeamIds(prev => (prev.includes(id) ? prev : [...prev, id]));
+  };
+
+  const removeTeam = (id: string) => {
+    markDirty();
+    setAssignedTeamIds(prev => prev.filter(teamId => teamId !== id));
+  };
+
   const applyTemplate = (templateId: string) => {
     setSelectedTemplateId(templateId);
     setPendingTemplateId(null);
@@ -463,7 +514,9 @@ export const AssessmentEditorDialog = ({
                 mode,
                 scope,
                 scope_conditions: scopeConditions,
-                fields: mode === 'confirm' ? [] : fields
+                fields: mode === 'confirm' ? [] : fields,
+                assigned_team_ids: assignedTeamIds,
+                due_at: dueAt.length > 0 ? dueAt : null
               },
               status
             )
@@ -563,6 +616,38 @@ export const AssessmentEditorDialog = ({
                 Confirm only
               </Button>
             </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Assigned teams (optional)</div>
+            <div className={styles.sectionHint}>
+              {status === 'draft'
+                ? 'Assigned teams get a governance inbox task to acknowledge this assessment once it opens.'
+                : 'Assigned teams and the due date are locked once an assessment is open. Close and reopen it as draft to change them.'}
+            </div>
+            <PickedTeams ids={assignedTeamIds} labels={teamLabels} onRemove={removeTeam} />
+            {status === 'draft' && (
+              <UserGroupPicker
+                kind="team"
+                excludeIds={assignedTeamIds}
+                onSelect={item => addTeam(item.id)}
+                placeholder="Search teams to add…"
+              />
+            )}
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Due date (optional)</div>
+            <input
+              className={styles.dateInput}
+              type="date"
+              value={dueAt}
+              disabled={status !== 'draft'}
+              onChange={e => {
+                markDirty();
+                setDueAt(e.target.value);
+              }}
+            />
           </div>
         </Tabs.Content>
 

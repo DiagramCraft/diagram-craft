@@ -20,12 +20,31 @@ const toScopeConditions = (value: unknown, fallback: FilterCondition[]) =>
 const toAssessmentMode = (value: unknown, fallback: AssessmentDbResult['mode']) =>
   value === 'fields' || value === 'confirm' ? value : fallback;
 
+const toAssignedTeamIds = (value: unknown, fallback: string[]) =>
+  Array.isArray(value) ? (value as string[]) : fallback;
+
+const toDueAt = (value: unknown, fallback: Date | null): Date | null => {
+  if (value === undefined) return fallback;
+  if (value === null) return null;
+  return typeof value === 'string' ? new Date(value) : fallback;
+};
+
 export const buildCreateAssessmentInput = (
   workspace: string,
   body: Record<string, unknown>,
   timestamp: Date
 ): AssessmentDbCreate => {
-  const { project_id, name, description, mode, scope, scope_conditions, fields } = body;
+  const {
+    project_id,
+    name,
+    description,
+    mode,
+    scope,
+    scope_conditions,
+    fields,
+    assigned_team_ids,
+    due_at
+  } = body;
   httpAssert.string(project_id, { message: 'project_id is required and must be a string' });
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
@@ -40,6 +59,8 @@ export const buildCreateAssessmentInput = (
     scope: toScope(scope, []),
     scope_conditions: toScopeConditions(scope_conditions, []),
     fields: toAssessmentFields(fields, []),
+    assigned_team_ids: toAssignedTeamIds(assigned_team_ids, []),
+    due_at: toDueAt(due_at, null),
     created_at: timestamp,
     updated_at: timestamp
   };
@@ -50,7 +71,8 @@ export const buildUpdateAssessmentInput = (
   existing: AssessmentDbResult,
   updatedAt: Date
 ): AssessmentDbUpdate => {
-  const { name, description, mode, scope, scope_conditions, fields } = body;
+  const { name, description, mode, scope, scope_conditions, fields, assigned_team_ids, due_at } =
+    body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   return {
@@ -61,6 +83,8 @@ export const buildUpdateAssessmentInput = (
     scope: toScope(scope, existing.scope),
     scope_conditions: toScopeConditions(scope_conditions, existing.scope_conditions),
     fields: toAssessmentFields(fields, existing.fields),
+    assigned_team_ids: toAssignedTeamIds(assigned_team_ids, existing.assigned_team_ids),
+    due_at: toDueAt(due_at, existing.due_at),
     updated_at: updatedAt
   };
 };
@@ -80,6 +104,8 @@ export const toApiAssessment = (
   scope: row.scope,
   scope_conditions: row.scope_conditions,
   fields: row.fields,
+  assigned_team_ids: row.assigned_team_ids,
+  due_at: row.due_at ? row.due_at.toISOString() : null,
   response_count: stats.response_count,
   completed_entity_count: stats.completed_entity_count,
   created_at: row.created_at.toISOString(),

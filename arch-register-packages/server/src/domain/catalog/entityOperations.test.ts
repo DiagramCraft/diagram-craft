@@ -321,6 +321,8 @@ describe('listEntities / countEntities with joined assessment', () => {
     mode: 'fields',
     scope: ['schema-1'],
     scope_conditions: [],
+    assigned_team_ids: [],
+    due_at: null,
     fields: [
       { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating' },
       { id: 'enum1', label: 'Enum', requirementLevel: 'optional', type: 'enum', enumId: 'e1' }

@@ -64,6 +64,13 @@ const assessmentSchema = z.object({
     .array(filterConditionSchema)
     .describe('Additional AND-combined entity filters this assessment scope applies'),
   fields: z.array(assessmentFieldSchema).describe('Assessment field definitions'),
+  assigned_team_ids: z
+    .array(z.string())
+    .describe('Teams assigned to this assessment; surfaced as governance inbox tasks when open'),
+  due_at: z
+    .string()
+    .nullable()
+    .describe('Optional ISO 8601 due date applied when the assessment opens'),
   response_count: z.number().int().min(0).describe('Number of entities with a recorded response'),
   completed_entity_count: z
     .number()
@@ -97,7 +104,19 @@ const assessmentBodySchema = z
     fields: z.preprocess(
       value => (Array.isArray(value) ? value : undefined),
       z.array(assessmentFieldSchema).optional().describe('Assessment field definitions')
-    )
+    ),
+    assigned_team_ids: z.preprocess(
+      value => (Array.isArray(value) ? value : undefined),
+      z
+        .array(z.string())
+        .optional()
+        .describe('Teams assigned to this assessment; surfaced as governance inbox tasks when open')
+    ),
+    due_at: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Optional ISO 8601 due date applied when the assessment opens')
   })
   .refine(body => body.mode !== 'confirm' || !body.fields || body.fields.length === 0, {
     message: 'Confirm-only assessments cannot define fields',

@@ -294,6 +294,8 @@ export type AssessmentDbResult = {
   scope: string[];
   scope_conditions: FilterCondition[];
   fields: AssessmentField[];
+  assigned_team_ids: string[];
+  due_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -470,6 +472,12 @@ export const projectMappers = {
     scope: parseDatabaseJson(row['scope'], [], 'assessment.scope'),
     scope_conditions: parseDatabaseJson(row['scope_conditions'], [], 'assessment.scope_conditions'),
     fields: parseDatabaseJson(row['fields'], [], 'assessment.fields'),
+    assigned_team_ids: parseDatabaseJson(
+      row['assigned_team_ids'],
+      [],
+      'assessment.assigned_team_ids'
+    ),
+    due_at: row['due_at'] == null ? null : databaseDate(row['due_at']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),

@@ -122,6 +122,8 @@ describe('joined assessment display fields', () => {
         enumId: 'risk-enum'
       }
     ],
+    assigned_team_ids: [],
+    due_at: null,
     response_count: 0,
     completed_entity_count: 0,
     created_at: '',

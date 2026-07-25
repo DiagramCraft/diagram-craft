@@ -46,6 +46,8 @@ const makeAssessment = (
   scope: ['schema-service'],
   scope_conditions: [],
   fields: [{ id: 'f1', label: 'Rating', type: 'rating', requirementLevel: 'required' }],
+  assigned_team_ids: [],
+  due_at: null,
   created_at: now,
   updated_at: now,
   ...overrides
