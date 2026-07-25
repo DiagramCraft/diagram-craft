@@ -7,6 +7,19 @@ export type BubbleConfig = {
   yFieldId: string;
   sizeFieldId: string | null;
   colorFieldId: string | null;
+  quadrants: BubbleQuadrantsConfig;
+};
+
+export type BubbleQuadrantLabels = {
+  topLeft: string;
+  topRight: string;
+  bottomLeft: string;
+  bottomRight: string;
+};
+
+export type BubbleQuadrantsConfig = {
+  enabled: boolean;
+  labels: BubbleQuadrantLabels;
 };
 
 export type Bubble = {
@@ -38,6 +51,18 @@ export const MIN_R = 6;
 export const MAX_R = 26;
 export const UNIFORM_R = 10;
 export const UNIFORM_COLOR = 'var(--accent-fg)';
+
+export const DEFAULT_BUBBLE_QUADRANT_LABELS: BubbleQuadrantLabels = {
+  topLeft: 'Top left',
+  topRight: 'Top right',
+  bottomLeft: 'Bottom left',
+  bottomRight: 'Bottom right'
+};
+
+export const DEFAULT_BUBBLE_QUADRANTS: BubbleQuadrantsConfig = {
+  enabled: false,
+  labels: DEFAULT_BUBBLE_QUADRANT_LABELS
+};
 
 export const BUBBLE_COLORS = [
   'var(--tag-api)',

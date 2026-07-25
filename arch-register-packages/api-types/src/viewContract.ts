@@ -69,7 +69,21 @@ export const bubbleViewConfigSchema = z.object({
   colorFieldId: z
     .string()
     .nullable()
-    .describe('Field identifier mapped to bubble color (null for uniform color)')
+    .describe('Field identifier mapped to bubble color (null for uniform color)'),
+  quadrants: z
+    .object({
+      enabled: z.boolean().describe('Whether equal bubble-chart quadrants are displayed'),
+      labels: z
+        .object({
+          topLeft: z.string().describe('Label for the top-left quadrant'),
+          topRight: z.string().describe('Label for the top-right quadrant'),
+          bottomLeft: z.string().describe('Label for the bottom-left quadrant'),
+          bottomRight: z.string().describe('Label for the bottom-right quadrant')
+        })
+        .describe('Labels for the four bubble-chart quadrants')
+    })
+    .optional()
+    .describe('Optional equal x/y quadrant divider and label configuration')
 });
 
 const fieldDisplayConfigShape = {

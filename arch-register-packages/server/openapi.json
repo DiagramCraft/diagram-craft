@@ -20390,6 +20390,48 @@
                                       }
                                     ],
                                     "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                  },
+                                  "quadrants": {
+                                    "type": "object",
+                                    "properties": {
+                                      "enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether equal bubble-chart quadrants are displayed"
+                                      },
+                                      "labels": {
+                                        "type": "object",
+                                        "properties": {
+                                          "topLeft": {
+                                            "type": "string",
+                                            "description": "Label for the top-left quadrant"
+                                          },
+                                          "topRight": {
+                                            "type": "string",
+                                            "description": "Label for the top-right quadrant"
+                                          },
+                                          "bottomLeft": {
+                                            "type": "string",
+                                            "description": "Label for the bottom-left quadrant"
+                                          },
+                                          "bottomRight": {
+                                            "type": "string",
+                                            "description": "Label for the bottom-right quadrant"
+                                          }
+                                        },
+                                        "required": [
+                                          "topLeft",
+                                          "topRight",
+                                          "bottomLeft",
+                                          "bottomRight"
+                                        ],
+                                        "description": "Labels for the four bubble-chart quadrants"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled",
+                                      "labels"
+                                    ],
+                                    "description": "Optional equal x/y quadrant divider and label configuration"
                                   }
                                 },
                                 "required": [
@@ -21765,6 +21807,48 @@
                                   }
                                 ],
                                 "description": "Field identifier mapped to bubble color (null for uniform color)"
+                              },
+                              "quadrants": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether equal bubble-chart quadrants are displayed"
+                                  },
+                                  "labels": {
+                                    "type": "object",
+                                    "properties": {
+                                      "topLeft": {
+                                        "type": "string",
+                                        "description": "Label for the top-left quadrant"
+                                      },
+                                      "topRight": {
+                                        "type": "string",
+                                        "description": "Label for the top-right quadrant"
+                                      },
+                                      "bottomLeft": {
+                                        "type": "string",
+                                        "description": "Label for the bottom-left quadrant"
+                                      },
+                                      "bottomRight": {
+                                        "type": "string",
+                                        "description": "Label for the bottom-right quadrant"
+                                      }
+                                    },
+                                    "required": [
+                                      "topLeft",
+                                      "topRight",
+                                      "bottomLeft",
+                                      "bottomRight"
+                                    ],
+                                    "description": "Labels for the four bubble-chart quadrants"
+                                  }
+                                },
+                                "required": [
+                                  "enabled",
+                                  "labels"
+                                ],
+                                "description": "Optional equal x/y quadrant divider and label configuration"
                               }
                             },
                             "required": [
@@ -23250,6 +23334,48 @@
                                     }
                                   ],
                                   "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                },
+                                "quadrants": {
+                                  "type": "object",
+                                  "properties": {
+                                    "enabled": {
+                                      "type": "boolean",
+                                      "description": "Whether equal bubble-chart quadrants are displayed"
+                                    },
+                                    "labels": {
+                                      "type": "object",
+                                      "properties": {
+                                        "topLeft": {
+                                          "type": "string",
+                                          "description": "Label for the top-left quadrant"
+                                        },
+                                        "topRight": {
+                                          "type": "string",
+                                          "description": "Label for the top-right quadrant"
+                                        },
+                                        "bottomLeft": {
+                                          "type": "string",
+                                          "description": "Label for the bottom-left quadrant"
+                                        },
+                                        "bottomRight": {
+                                          "type": "string",
+                                          "description": "Label for the bottom-right quadrant"
+                                        }
+                                      },
+                                      "required": [
+                                        "topLeft",
+                                        "topRight",
+                                        "bottomLeft",
+                                        "bottomRight"
+                                      ],
+                                      "description": "Labels for the four bubble-chart quadrants"
+                                    }
+                                  },
+                                  "required": [
+                                    "enabled",
+                                    "labels"
+                                  ],
+                                  "description": "Optional equal x/y quadrant divider and label configuration"
                                 }
                               },
                               "required": [
@@ -24616,6 +24742,48 @@
                                   }
                                 ],
                                 "description": "Field identifier mapped to bubble color (null for uniform color)"
+                              },
+                              "quadrants": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether equal bubble-chart quadrants are displayed"
+                                  },
+                                  "labels": {
+                                    "type": "object",
+                                    "properties": {
+                                      "topLeft": {
+                                        "type": "string",
+                                        "description": "Label for the top-left quadrant"
+                                      },
+                                      "topRight": {
+                                        "type": "string",
+                                        "description": "Label for the top-right quadrant"
+                                      },
+                                      "bottomLeft": {
+                                        "type": "string",
+                                        "description": "Label for the bottom-left quadrant"
+                                      },
+                                      "bottomRight": {
+                                        "type": "string",
+                                        "description": "Label for the bottom-right quadrant"
+                                      }
+                                    },
+                                    "required": [
+                                      "topLeft",
+                                      "topRight",
+                                      "bottomLeft",
+                                      "bottomRight"
+                                    ],
+                                    "description": "Labels for the four bubble-chart quadrants"
+                                  }
+                                },
+                                "required": [
+                                  "enabled",
+                                  "labels"
+                                ],
+                                "description": "Optional equal x/y quadrant divider and label configuration"
                               }
                             },
                             "required": [
@@ -26096,6 +26264,48 @@
                                     }
                                   ],
                                   "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                },
+                                "quadrants": {
+                                  "type": "object",
+                                  "properties": {
+                                    "enabled": {
+                                      "type": "boolean",
+                                      "description": "Whether equal bubble-chart quadrants are displayed"
+                                    },
+                                    "labels": {
+                                      "type": "object",
+                                      "properties": {
+                                        "topLeft": {
+                                          "type": "string",
+                                          "description": "Label for the top-left quadrant"
+                                        },
+                                        "topRight": {
+                                          "type": "string",
+                                          "description": "Label for the top-right quadrant"
+                                        },
+                                        "bottomLeft": {
+                                          "type": "string",
+                                          "description": "Label for the bottom-left quadrant"
+                                        },
+                                        "bottomRight": {
+                                          "type": "string",
+                                          "description": "Label for the bottom-right quadrant"
+                                        }
+                                      },
+                                      "required": [
+                                        "topLeft",
+                                        "topRight",
+                                        "bottomLeft",
+                                        "bottomRight"
+                                      ],
+                                      "description": "Labels for the four bubble-chart quadrants"
+                                    }
+                                  },
+                                  "required": [
+                                    "enabled",
+                                    "labels"
+                                  ],
+                                  "description": "Optional equal x/y quadrant divider and label configuration"
                                 }
                               },
                               "required": [

@@ -1,6 +1,9 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import styles from './BubbleView.module.css';
-import { TbChevronDown } from 'react-icons/tb';
+import { TbChevronDown, TbGrid3X3 } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
+import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EmptyState } from '../../../components/EmptyState';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { bubbleViewConfigSchema } from '@arch-register/api-types/viewContract';
@@ -24,6 +27,7 @@ import {
   VB_H,
   VB_W,
   buildBubbles,
+  DEFAULT_BUBBLE_QUADRANTS,
   type BubbleConfig
 } from './bubbleViewState';
 import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
@@ -42,7 +46,8 @@ const EMPTY_BUBBLE_CONFIG: BubbleConfig = {
   xFieldId: '',
   yFieldId: '',
   sizeFieldId: null,
-  colorFieldId: null
+  colorFieldId: null,
+  quadrants: DEFAULT_BUBBLE_QUADRANTS
 };
 
 const OPEN_DELAY_MS = 250;
@@ -78,6 +83,7 @@ export const BubbleView = ({
     externalConfig: parsedConfig,
     onChange: onConfigChange
   });
+  const quadrantsActionsRef = useRef<PopoverActions | null>(null);
 
   const [tipPos, setTipPos] = useState({ x: 0, y: 0 });
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -136,7 +142,8 @@ export const BubbleView = ({
       xFieldId: axisFieldOptions[0]?.id ?? '',
       yFieldId: axisFieldOptions[1]?.id ?? axisFieldOptions[0]?.id ?? '',
       sizeFieldId: null,
-      colorFieldId: null
+      colorFieldId: null,
+      quadrants: DEFAULT_BUBBLE_QUADRANTS
     });
   }, [config, axisFieldOptions, applyConfig]);
 
@@ -333,6 +340,118 @@ export const BubbleView = ({
             </div>
           </div>
 
+          <div style={{ flex: 1 }} />
+
+          <Popover.Root actionsRef={quadrantsActionsRef}>
+            <Popover.Trigger
+              element={
+                <Button
+                  size="sm"
+                  variant={config?.quadrants.enabled ? 'primary' : 'secondary'}
+                  disabled={!config}
+                  icon={<TbGrid3X3 size={12} />}
+                >
+                  Quadrants
+                </Button>
+              }
+            />
+            <Popover.Content
+              side="bottom"
+              sideOffset={4}
+              align="end"
+              arrow={false}
+              closeButton={false}
+              className={styles.quadrantsPopover}
+            >
+              <div className={styles.quadrantsHeader}>Quadrants</div>
+              <label className={styles.quadrantsToggle}>
+                <input
+                  type="checkbox"
+                  checked={config?.quadrants.enabled ?? false}
+                  disabled={!config}
+                  onChange={e =>
+                    config &&
+                    applyConfig({
+                      ...config,
+                      quadrants: { ...config.quadrants, enabled: e.target.checked }
+                    })
+                  }
+                />
+                Show quadrant dividers and labels
+              </label>
+              <div className={styles.quadrantsGrid}>
+                <label className={styles.quadrantInput}>
+                  <span>Top left</span>
+                  <TextInput
+                    value={config?.quadrants.labels.topLeft ?? ''}
+                    disabled={!config}
+                    onChange={value =>
+                      config &&
+                      applyConfig({
+                        ...config,
+                        quadrants: {
+                          ...config.quadrants,
+                          labels: { ...config.quadrants.labels, topLeft: value ?? '' }
+                        }
+                      })
+                    }
+                  />
+                </label>
+                <label className={styles.quadrantInput}>
+                  <span>Top right</span>
+                  <TextInput
+                    value={config?.quadrants.labels.topRight ?? ''}
+                    disabled={!config}
+                    onChange={value =>
+                      config &&
+                      applyConfig({
+                        ...config,
+                        quadrants: {
+                          ...config.quadrants,
+                          labels: { ...config.quadrants.labels, topRight: value ?? '' }
+                        }
+                      })
+                    }
+                  />
+                </label>
+                <label className={styles.quadrantInput}>
+                  <span>Bottom left</span>
+                  <TextInput
+                    value={config?.quadrants.labels.bottomLeft ?? ''}
+                    disabled={!config}
+                    onChange={value =>
+                      config &&
+                      applyConfig({
+                        ...config,
+                        quadrants: {
+                          ...config.quadrants,
+                          labels: { ...config.quadrants.labels, bottomLeft: value ?? '' }
+                        }
+                      })
+                    }
+                  />
+                </label>
+                <label className={styles.quadrantInput}>
+                  <span>Bottom right</span>
+                  <TextInput
+                    value={config?.quadrants.labels.bottomRight ?? ''}
+                    disabled={!config}
+                    onChange={value =>
+                      config &&
+                      applyConfig({
+                        ...config,
+                        quadrants: {
+                          ...config.quadrants,
+                          labels: { ...config.quadrants.labels, bottomRight: value ?? '' }
+                        }
+                      })
+                    }
+                  />
+                </label>
+              </div>
+            </Popover.Content>
+          </Popover.Root>
+
           {axisFieldOptions.length === 0 && (
             <span className={styles.noFields}>
               No numeric or categorical fields available across the current entities.
@@ -390,6 +509,39 @@ export const BubbleView = ({
                 >
                   {yLabel}
                 </text>
+
+                {config.quadrants.enabled && (
+                  <g className={styles.quadrantsOverlay}>
+                    <line
+                      x1={MARGIN_LEFT + PLOT_W / 2}
+                      y1={MARGIN_TOP}
+                      x2={MARGIN_LEFT + PLOT_W / 2}
+                      y2={MARGIN_TOP + PLOT_H}
+                    />
+                    <line
+                      x1={MARGIN_LEFT}
+                      y1={MARGIN_TOP + PLOT_H / 2}
+                      x2={MARGIN_LEFT + PLOT_W}
+                      y2={MARGIN_TOP + PLOT_H / 2}
+                    />
+                    <text x={MARGIN_LEFT + 12} y={MARGIN_TOP + 18}>
+                      {config.quadrants.labels.topLeft}
+                    </text>
+                    <text x={MARGIN_LEFT + PLOT_W - 12} y={MARGIN_TOP + 18} textAnchor="end">
+                      {config.quadrants.labels.topRight}
+                    </text>
+                    <text x={MARGIN_LEFT + 12} y={MARGIN_TOP + PLOT_H - 12}>
+                      {config.quadrants.labels.bottomLeft}
+                    </text>
+                    <text
+                      x={MARGIN_LEFT + PLOT_W - 12}
+                      y={MARGIN_TOP + PLOT_H - 12}
+                      textAnchor="end"
+                    >
+                      {config.quadrants.labels.bottomRight}
+                    </text>
+                  </g>
+                )}
 
                 {bubbles.map(b => (
                   <g

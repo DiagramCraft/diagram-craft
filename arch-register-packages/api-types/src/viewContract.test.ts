@@ -1,5 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { savedViewQuerySchema } from './viewContract';
+import { bubbleViewConfigSchema, savedViewQuerySchema } from './viewContract';
+
+describe('bubble view configuration', () => {
+  it('accepts legacy configs without quadrant settings', () => {
+    expect(
+      bubbleViewConfigSchema.safeParse({
+        xFieldId: 'cost',
+        yFieldId: 'fit',
+        sizeFieldId: null,
+        colorFieldId: null
+      }).success
+    ).toBe(true);
+  });
+
+  it('accepts enabled quadrant settings with positional labels', () => {
+    expect(
+      bubbleViewConfigSchema.safeParse({
+        xFieldId: 'cost',
+        yFieldId: 'fit',
+        sizeFieldId: null,
+        colorFieldId: null,
+        quadrants: {
+          enabled: true,
+          labels: {
+            topLeft: 'Invest',
+            topRight: 'Strategic',
+            bottomLeft: 'Deprioritize',
+            bottomRight: 'Maintain'
+          }
+        }
+      }).success
+    ).toBe(true);
+  });
+});
 
 describe('saved view filters', () => {
   it('requires a canonical EntityQuery', () => {

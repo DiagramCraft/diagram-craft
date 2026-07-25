@@ -18,7 +18,21 @@ const fullConfig: EntityBrowserEmbedConfig = {
   viewConfigs: {
     radar: { xAxis: 'impact', yAxis: 'effort' },
     explore: { relationFields: ['dependsOn', 'ownedBy'] },
-    bubble: { xFieldId: 'cost', yFieldId: 'headcount', sizeFieldId: null, colorFieldId: 'status' },
+    bubble: {
+      xFieldId: 'cost',
+      yFieldId: 'headcount',
+      sizeFieldId: null,
+      colorFieldId: 'status',
+      quadrants: {
+        enabled: true,
+        labels: {
+          topLeft: 'Invest',
+          topRight: 'Strategic',
+          bottomLeft: 'Deprioritize',
+          bottomRight: 'Maintain'
+        }
+      }
+    },
     map: {
       levels: 3,
       level1SchemaId: 'schema-domain',

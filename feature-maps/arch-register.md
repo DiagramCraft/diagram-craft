@@ -102,7 +102,8 @@
         - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view.
 
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
-          colour in a bubble view.
+          colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views
+          and wiki embeds.
 
         - @id:ar.entity-views.map Users can inspect containment hierarchies as a nested capability map, colouring boxes
           by a configurable metric rolled up from descendant entities (numeric fields, lifecycle state, or assessment

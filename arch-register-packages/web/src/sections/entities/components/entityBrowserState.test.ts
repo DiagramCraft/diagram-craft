@@ -64,6 +64,28 @@ describe('entity browser view field persistence', () => {
     expect(parseViewConfigs(serializeViewConfigs({ map: mapConfig }))).toEqual({ map: mapConfig });
   });
 
+  it('round trips bubble quadrant configuration through browser and saved-view state', () => {
+    const bubbleConfig = {
+      xFieldId: 'technical-fit',
+      yFieldId: 'business-fit',
+      sizeFieldId: 'cost',
+      colorFieldId: null,
+      quadrants: {
+        enabled: true,
+        labels: {
+          topLeft: 'Invest',
+          topRight: 'Strategic',
+          bottomLeft: 'Deprioritize',
+          bottomRight: 'Maintain'
+        }
+      }
+    };
+    const configs = { bubble: bubbleConfig };
+
+    expect(parseViewConfigs(serializeViewConfigs(configs))).toEqual(configs);
+    expect(toSavedViewConfig('bubble', configs)).toEqual({ bubble: bubbleConfig });
+  });
+
   it('rejects malformed and non-object view-config payloads', () => {
     expect(parseViewConfigs('{')).toEqual({});
     expect(parseViewConfigs('[]')).toEqual({});
