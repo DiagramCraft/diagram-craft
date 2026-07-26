@@ -24,6 +24,13 @@ const conditionKindForField = (
   if (fieldId === '_owner') return 'owner';
   if (fieldId === '_schema') return 'schemaType';
   const field = fields.find(f => f.id === fieldId);
+  if (field?.type === 'derived') {
+    return field.resultType === 'select'
+      ? 'enum'
+      : field.resultType === 'rating'
+        ? 'rating'
+        : 'text';
+  }
   return field?.type ?? 'text';
 };
 
@@ -251,7 +258,10 @@ const AssessmentFilterRow = ({
           <Select.Root value={condition.value} onChange={v => onChange({ ...condition, value: v })}>
             {(() => {
               const field = fields.find(f => f.id === condition.fieldId);
-              return field?.type === 'enum' ? getAssessmentEnumOptions(field, enums) : [];
+              return field?.type === 'enum' ||
+                (field?.type === 'derived' && field.resultType === 'select')
+                ? getAssessmentEnumOptions(field, enums)
+                : [];
             })().map(o => (
               <Select.Item key={o.value} value={o.value}>
                 {o.label}
@@ -303,7 +313,7 @@ const AssessmentFilterRow = ({
 
 export const matchesAssessmentFilterConditions = (
   entity: EntitySummary,
-  values: Record<string, string | number>,
+  values: Record<string, string | number | boolean>,
   conditions: AssessmentFilterCondition[]
 ): boolean =>
   conditions.every(condition => {

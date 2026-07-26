@@ -12,7 +12,8 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'number', label: 'Number' },
   { value: 'select', label: 'Select' },
   { value: 'reference', label: 'Reference' },
-  { value: 'containment', label: 'Containment' }
+  { value: 'containment', label: 'Containment' },
+  { value: 'derived', label: 'Derived' }
 ];
 
 export const schemaColor = (index: number): string => SCHEMA_COLORS[index % SCHEMA_COLORS.length]!;

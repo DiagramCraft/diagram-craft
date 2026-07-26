@@ -46,7 +46,7 @@ type EntityBrowserViewData = {
   unsupportedView?: ReactNode;
   joinAssessmentId?: string | null;
   joinedAssessment?: JoinedAssessmentContext | null;
-  responsesByEntity?: Map<string, Record<string, string | number>>;
+  responsesByEntity?: Map<string, Record<string, string | number | boolean>>;
   onCountChange?: (count: number) => void;
 };
 

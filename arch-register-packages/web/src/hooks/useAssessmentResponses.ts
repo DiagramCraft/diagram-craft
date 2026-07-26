@@ -37,7 +37,7 @@ export const useUpsertAssessmentResponse = (
       values
     }: {
       entityId: string;
-      values: Record<string, string | number | null>;
+      values: Record<string, string | number | boolean | null>;
     }) =>
       orpcClient.assessmentResponses.upsert({
         params: { workspace: workspaceId, assessmentId, entityId },
@@ -49,7 +49,9 @@ export const useUpsertAssessmentResponse = (
 
       queryClient.setQueryData<AssessmentResponse[]>(listKey, current => {
         const existing = current?.find(r => r.entity_id === entityId);
-        const mergedValues: Record<string, string | number> = { ...(existing?.values ?? {}) };
+        const mergedValues: Record<string, string | number | boolean> = {
+          ...(existing?.values ?? {})
+        };
         for (const [fieldId, value] of Object.entries(values)) {
           if (value === null) delete mergedValues[fieldId];
           else mergedValues[fieldId] = value;

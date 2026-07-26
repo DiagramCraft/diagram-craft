@@ -325,7 +325,7 @@ export type AssessmentResponseDbResult = {
   assessment_id: string;
   entity_id: string;
   occurrence: number;
-  values: Record<string, string | number>;
+  values: Record<string, string | number | boolean>;
   created_at: Date;
   updated_at: Date;
   updated_by: string | null;
@@ -700,6 +700,10 @@ export type ProjectDatabase = {
     assessmentId: string,
     occurrence: number
   ): Promise<AssessmentResponseDbResult[]>;
+  listAllAssessmentResponses(
+    ws: string,
+    assessmentId: string
+  ): Promise<AssessmentResponseDbResult[]>;
   getAssessmentResponse(
     ws: string,
     assessmentId: string,
@@ -707,5 +711,12 @@ export type ProjectDatabase = {
     occurrence: number
   ): Promise<AssessmentResponseDbResult | null>;
   upsertAssessmentResponse(input: AssessmentResponseDbUpsert): Promise<AssessmentResponseDbResult>;
+  updateAssessmentResponseDerivedFields(
+    ws: string,
+    assessmentId: string,
+    entityId: string,
+    occurrence: number,
+    values: Record<string, string | number | boolean>
+  ): Promise<void>;
   countAssessmentResponses(ws: string, assessmentId: string): Promise<number>;
 };

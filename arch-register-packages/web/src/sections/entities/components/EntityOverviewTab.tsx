@@ -552,6 +552,7 @@ const PropertyRow = ({
   externalMeta?: ExternalMetadataResult;
 }) => {
   const isExternal = field.external_kind !== undefined;
+  const isDerived = field.type === 'derived';
   const renderEditor = () => {
     if (field.type === 'reference') {
       const candidates = referenceOptions[field.schemaId] ?? [];
@@ -652,6 +653,14 @@ const PropertyRow = ({
 
   const renderDisplay = () => {
     if (value == null || value === '') return <span className={sharedStyles.dim}>—</span>;
+    if (field.type === 'derived') {
+      if (field.resultType === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
+      if (field.resultType === 'select') {
+        const opt = field.options?.find(o => o.value === String(value));
+        return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
+      }
+      return <span>{String(value)}</span>;
+    }
     if (field.type === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
     if (field.type === 'select') {
       const opt = field.options.find(o => o.value === value);
@@ -699,7 +708,7 @@ const PropertyRow = ({
         className={styles.propValue}
         style={hasError ? { flexDirection: 'column', alignItems: 'flex-start' } : undefined}
       >
-        {editing && !isExternal ? renderEditor() : renderDisplay()}
+        {editing && !isExternal && !isDerived ? renderEditor() : renderDisplay()}
         {isExternal && (
           <ExternalMetadataIndicator kind={field.external_kind!} result={externalMeta} />
         )}

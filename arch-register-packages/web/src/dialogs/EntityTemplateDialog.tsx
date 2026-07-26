@@ -139,7 +139,7 @@ export const EntityTemplateDialog = ({
           <FormGroup label="Properties" icon={<TbAdjustments size={12} />}>
             <div className={styles.propertiesList}>
               {schema.fields
-                .filter(field => field.id !== 'name')
+                .filter(field => field.id !== 'name' && field.type !== 'derived')
                 .map(field => (
                   <EntityFieldInput
                     key={field.id}

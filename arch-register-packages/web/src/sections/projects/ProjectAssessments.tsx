@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -15,7 +15,8 @@ import {
   TbListCheck,
   TbAlignLeft,
   TbEdit,
-  TbDots
+  TbDots,
+  TbCopy
 } from 'react-icons/tb';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
@@ -33,8 +34,13 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import { toFieldId } from '../../utils/fieldId';
 import { TypeBadge } from '../../components/TypeBadge';
 import { GroupDialog } from '../../components/GroupsEditor';
+import {
+  DerivedExpressionTestDialog,
+  type ExpressionTestField
+} from '../../components/DerivedExpressionTestDialog';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
@@ -68,7 +74,8 @@ const FIELD_TYPE_META: Record<
 > = {
   rating: { icon: TbStar, hint: '1 – 5' },
   enum: { icon: TbDatabase, hint: null },
-  text: { icon: TbAlignLeft, hint: 'free text' }
+  text: { icon: TbAlignLeft, hint: 'free text' },
+  derived: { icon: TbDatabase, hint: null }
 };
 
 const START_FROM_SCRATCH = '__start_from_scratch__';
@@ -385,6 +392,7 @@ export const AssessmentEditorDialog = ({
   const [fields, setFields] = useState<AssessmentField[]>(
     assessment?.fields.map(f => ({ ...f })) ?? []
   );
+  const fieldKeysRef = useRef(new Map<string, string>());
   const [groups, setGroups] = useState<AssessmentGroup[]>(
     assessment?.groups.map(g => ({ ...g })) ?? []
   );
@@ -447,16 +455,33 @@ export const AssessmentEditorDialog = ({
 
   const addField = (type: AssessmentField['type'], groupId?: string) => {
     markDirty();
-    const base = {
-      id: `f${Date.now()}`,
-      label: '',
-      requirementLevel: 'required' as const,
-      ...(groupId && { groupId })
-    };
-    setFields(prev => [
-      ...prev,
-      type === 'enum' ? { ...base, type, enumId: '' } : { ...base, type }
-    ]);
+    setFields(prev => {
+      const baseId = toFieldId('new_field');
+      const id = uniqueAssessmentFieldId(
+        baseId,
+        prev.map(field => field.id)
+      );
+      const base = {
+        id,
+        label: '',
+        requirementLevel: 'required' as const,
+        ...(groupId && { groupId })
+      };
+      const inputField = prev.find(field => field.type !== 'derived');
+      const nextField: AssessmentField =
+        type === 'enum'
+          ? { ...base, type, enumId: '' }
+          : type === 'derived'
+            ? {
+                ...base,
+                type,
+                requirementLevel: 'optional' as const,
+                expression: inputField ? `field("${inputField.id}")` : '""',
+                resultType: 'text' as const
+              }
+            : { ...base, type };
+      return [...prev, nextField];
+    });
   };
 
   const updateField = (id: string, changes: Partial<AssessmentField>) => {
@@ -465,6 +490,20 @@ export const AssessmentEditorDialog = ({
       prev.map(f => {
         if (f.id !== id) return f;
         const next = { ...f, ...changes } as Record<string, unknown>;
+        if (
+          typeof changes.label === 'string' &&
+          (f.id === toFieldId(f.label) || /^new_field(?:_\d+)?$/.test(f.id)) &&
+          changes.label.trim() !== ''
+        ) {
+          next.id = uniqueAssessmentFieldId(
+            toFieldId(changes.label) || 'new_field',
+            prev.map(field => field.id),
+            f.id
+          );
+          const key = fieldKeysRef.current.get(f.id);
+          if (key) fieldKeysRef.current.set(next.id as string, key);
+          fieldKeysRef.current.delete(f.id);
+        }
         if ('enumId' in changes && changes.enumId === undefined) delete next.enumId;
         if ('options' in changes && changes.options === undefined) delete next.options;
         return next as AssessmentField;
@@ -474,7 +513,16 @@ export const AssessmentEditorDialog = ({
 
   const removeField = (id: string) => {
     markDirty();
+    fieldKeysRef.current.delete(id);
     setFields(prev => prev.filter(f => f.id !== id));
+  };
+
+  const fieldKey = (id: string) => {
+    const existing = fieldKeysRef.current.get(id);
+    if (existing) return existing;
+    const key = crypto.randomUUID();
+    fieldKeysRef.current.set(id, key);
+    return key;
   };
 
   const openNewGroup = () => {
@@ -578,7 +626,7 @@ export const AssessmentEditorDialog = ({
       open
       onClose={onCancel}
       title={isNew ? 'New assessment' : 'Edit assessment'}
-      width={600}
+      width={900}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onCancel },
         {
@@ -817,8 +865,9 @@ export const AssessmentEditorDialog = ({
               <div className={styles.fieldsList}>
                 {ungroupedFields.map(field => (
                   <FieldRow
-                    key={field.id}
+                    key={fieldKey(field.id)}
                     field={field}
+                    fields={fields}
                     groups={groups}
                     onUpdate={changes => updateField(field.id, changes)}
                     onRemove={() => removeField(field.id)}
@@ -872,8 +921,9 @@ export const AssessmentEditorDialog = ({
                     {(fieldsByGroup.get(group.id) ?? []).length > 0 ? (
                       (fieldsByGroup.get(group.id) ?? []).map(field => (
                         <FieldRow
-                          key={field.id}
+                          key={fieldKey(field.id)}
                           field={field}
+                          fields={fields}
                           groups={groups}
                           onUpdate={changes => updateField(field.id, changes)}
                           onRemove={() => removeField(field.id)}
@@ -975,18 +1025,29 @@ export const AssessmentEditorDialog = ({
 const FIELD_TYPE_OPTIONS: [AssessmentField['type'], string][] = [
   ['rating', 'Rating'],
   ['enum', 'Select'],
-  ['text', 'Notes']
+  ['text', 'Notes'],
+  ['derived', 'Derived']
 ];
 
 const NO_GROUP = '__no_group__';
 
+const uniqueAssessmentFieldId = (baseId: string, existingIds: string[], currentId?: string) => {
+  const occupied = new Set(existingIds.filter(id => id !== currentId));
+  if (!occupied.has(baseId)) return baseId;
+  let suffix = 2;
+  while (occupied.has(`${baseId}_${suffix}`)) suffix += 1;
+  return `${baseId}_${suffix}`;
+};
+
 const FieldRow = ({
   field,
+  fields,
   groups,
   onUpdate,
   onRemove
 }: {
   field: AssessmentField;
+  fields: AssessmentField[];
   groups: AssessmentGroup[];
   onUpdate: (changes: Partial<AssessmentField>) => void;
   onRemove: () => void;
@@ -994,13 +1055,15 @@ const FieldRow = ({
   const { enums } = useWorkspaceContext();
   const portal = usePortal();
   const [inlineOptionsOpen, setInlineOptionsOpen] = useState(false);
+  const [expressionTestOpen, setExpressionTestOpen] = useState(false);
   const [draftInlineOptions, setDraftInlineOptions] = useState<AssessmentEnumOption[]>([]);
   const meta = FIELD_TYPE_META[field.type];
   const Icon = meta.icon;
   const placeholders: Record<AssessmentField['type'], string> = {
     rating: 'Rating label…',
     enum: 'Select label…',
-    text: 'Notes label…'
+    text: 'Notes label…',
+    derived: 'Derived label…'
   };
 
   return (
@@ -1008,12 +1071,23 @@ const FieldRow = ({
       <div className={styles.fieldTypeIcon}>
         <Icon size={13} />
       </div>
-      <TextInput
-        value={field.label}
-        onChange={v => onUpdate({ label: v ?? '' })}
-        placeholder={placeholders[field.type]}
-        style={{ flex: 1, minWidth: 0 }}
-      />
+      <div className={styles.fieldIdentity}>
+        <TextInput
+          value={field.label}
+          onChange={v => onUpdate({ label: v ?? '' })}
+          placeholder={placeholders[field.type]}
+          style={{ flex: 1, minWidth: 0 }}
+        />
+        <div className={styles.fieldId} title="Field ID used in derived expressions">
+          <code>{field.id}</code>
+          <Button
+            variant="ghost"
+            icon={<TbCopy size={12} />}
+            title={`Copy field ID ${field.id}`}
+            onClick={() => void navigator.clipboard?.writeText(field.id)}
+          />
+        </div>
+      </div>
       {field.type === 'enum' && (
         <div className={styles.fieldEnum}>
           <div className={styles.enumSourceRow}>
@@ -1066,10 +1140,55 @@ const FieldRow = ({
           )}
         </div>
       )}
+      {field.type === 'derived' && (
+        <div className={styles.fieldExpression}>
+          <Select.Root
+            value={field.resultType}
+            onChange={value =>
+              onUpdate({
+                resultType: (value ?? 'text') as Extract<
+                  AssessmentField,
+                  { type: 'derived' }
+                >['resultType'],
+                enumId: undefined,
+                options: undefined
+              } as Partial<AssessmentField>)
+            }
+          >
+            <Select.Item value="text">Text</Select.Item>
+            <Select.Item value="number">Number</Select.Item>
+            <Select.Item value="select">Select</Select.Item>
+            <Select.Item value="boolean">Boolean</Select.Item>
+            <Select.Item value="rating">Rating</Select.Item>
+          </Select.Root>
+          {field.resultType === 'select' && (
+            <Select.Root
+              value={'options' in field ? 'inline' : 'workspace'}
+              onChange={value =>
+                onUpdate(
+                  value === 'inline'
+                    ? { options: [{ value: 'option_1', label: '' }], enumId: undefined }
+                    : { enumId: enums[0]?.id ?? '', options: undefined }
+                )
+              }
+            >
+              <Select.Item value="workspace">Existing enum</Select.Item>
+              <Select.Item value="inline">Inline values</Select.Item>
+            </Select.Root>
+          )}
+          <TextInput
+            value={field.expression}
+            onChange={value => onUpdate({ expression: value ?? '' })}
+            placeholder='field("input_field")'
+          />
+          <span className={styles.expressionHint}>Reference sibling fields with field("id")</span>
+        </div>
+      )}
       {meta.hint && <span className={styles.fieldHint}>{meta.hint}</span>}
       <div className={styles.fieldRequirement}>
         <Select.Root
           value={field.requirementLevel}
+          disabled={field.type === 'derived'}
           onChange={v =>
             onUpdate({ requirementLevel: (v ?? 'required') as 'required' | 'optional' })
           }
@@ -1102,11 +1221,28 @@ const FieldRow = ({
             </Menu.RadioGroup>
           </Menu.SubMenu>
           <Menu.Separator />
+          {field.type === 'derived' && (
+            <Menu.Item onClick={() => setExpressionTestOpen(true)}>Test expression</Menu.Item>
+          )}
+          {field.type === 'derived' && <Menu.Separator />}
           <Menu.Item type="danger" onClick={onRemove}>
             Delete field
           </Menu.Item>
         </MenuButton.Menu>
       </MenuButton.Root>
+      {field.type === 'derived' && (
+        <DerivedExpressionTestDialog
+          open={expressionTestOpen}
+          field={field}
+          fields={fields as ExpressionTestField[]}
+          expression={field.expression}
+          onClose={() => setExpressionTestOpen(false)}
+          onSave={expression => {
+            onUpdate({ expression });
+            setExpressionTestOpen(false);
+          }}
+        />
+      )}
       {field.type === 'enum' && 'options' in field && (
         <Dialog
           open={inlineOptionsOpen}

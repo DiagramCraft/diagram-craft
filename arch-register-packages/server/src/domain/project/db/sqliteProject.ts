@@ -1054,6 +1054,15 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async listAllAssessmentResponses(workspace: string, assessmentId: string) {
+    return this.all(
+      `${ASSESSMENT_RESPONSE_SELECT_SQL}
+       WHERE ar.workspace = ? AND ar.assessment_id = ?`,
+      [workspace, assessmentId],
+      projectMappers.assessmentResponse
+    );
+  }
+
   async getAssessmentResponse(
     workspace: string,
     assessmentId: string,
@@ -1100,6 +1109,19 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       input.entity_id,
       input.occurrence
     ))!;
+  }
+
+  async updateAssessmentResponseDerivedFields(
+    workspace: string,
+    assessmentId: string,
+    entityId: string,
+    occurrence: number,
+    values: Record<string, string | number | boolean>
+  ) {
+    this.run(
+      'UPDATE assessment_response SET "values" = ? WHERE workspace = ? AND assessment_id = ? AND entity_id = ? AND occurrence = ?',
+      [JSON.stringify(values), workspace, assessmentId, entityId, occurrence]
+    );
   }
 
   async countAssessmentResponses(workspace: string, assessmentId: string) {

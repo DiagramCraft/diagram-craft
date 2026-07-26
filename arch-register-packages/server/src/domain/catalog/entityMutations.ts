@@ -2,6 +2,7 @@ import type { EntityDbCreate, DatabaseAdapter, EntityDbUpdate } from '../../db/d
 import { computeChanges, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
 import { Entity, EntityVersionKind } from './db/catalogDatabase';
 import { outdateExternalMetadata, valueEquals } from '../externalMetadata/externalMetadataHelpers';
+import { materializeDerivedFields } from '../derived/derivedFields';
 
 const AUTOSAVE_KEEP_COUNT = 50;
 
@@ -61,7 +62,17 @@ export const createEntityWithAudit = async (
   db: DatabaseAdapter,
   params: CreateEntityWithAuditParams
 ) => {
-  const row = await db.catalog.createEntity(params.entity);
+  const schema = await db.catalog.getSchema(params.workspace, params.entity.schema_id);
+  const entity = schema
+    ? {
+        ...params.entity,
+        data: materializeDerivedFields(schema.fields, params.entity.data, {
+          objectType: 'entity',
+          objectId: params.entity.id
+        })
+      }
+    : params.entity;
+  const row = await db.catalog.createEntity(entity);
 
   await logAudit(db, {
     workspace: params.workspace,
@@ -115,7 +126,20 @@ export const updateEntityWithAudit = async (
   db: DatabaseAdapter,
   params: UpdateEntityWithAuditParams
 ) => {
-  const next = withOutdatedMetadataIfChanged(params.previous, params.next);
+  const schema = await db.catalog.getSchema(
+    params.workspace,
+    params.next.schema_id ?? params.previous.schema_id
+  );
+  const materializedNext = schema
+    ? {
+        ...params.next,
+        data: materializeDerivedFields(schema.fields, params.next.data, {
+          objectType: 'entity',
+          objectId: params.entityId
+        })
+      }
+    : params.next;
+  const next = withOutdatedMetadataIfChanged(params.previous, materializedNext);
   const row = await db.catalog.updateEntity(params.workspace, params.entityId, next);
 
   if (row == null) return null;

@@ -1,15 +1,25 @@
-import type { AssessmentEnumField, AssessmentEnumOption } from './assessmentContract';
+import type { AssessmentEnumOption, AssessmentField } from './assessmentContract';
 
 export const getInlineAssessmentEnumOptions = (
-  field: AssessmentEnumField
-): AssessmentEnumOption[] | undefined => ('options' in field ? field.options : undefined);
+  field: AssessmentField
+): AssessmentEnumOption[] | undefined =>
+  field.type === 'enum' || (field.type === 'derived' && field.resultType === 'select')
+    ? 'options' in field
+      ? field.options
+      : undefined
+    : undefined;
 
 export const getAssessmentEnumOptions = <T extends { id: string; options: AssessmentEnumOption[] }>(
-  field: AssessmentEnumField,
+  field: AssessmentField,
   enums: T[]
-): AssessmentEnumOption[] =>
-  getInlineAssessmentEnumOptions(field) ??
-  ('enumId' in field
-    ? enums.find(enumeration => enumeration.id === field.enumId)?.options
-    : undefined) ??
-  [];
+): AssessmentEnumOption[] => {
+  if (field.type !== 'enum' && (field.type !== 'derived' || field.resultType !== 'select'))
+    return [];
+  return (
+    getInlineAssessmentEnumOptions(field) ??
+    ('enumId' in field
+      ? enums.find(enumeration => enumeration.id === field.enumId)?.options
+      : undefined) ??
+    []
+  );
+};

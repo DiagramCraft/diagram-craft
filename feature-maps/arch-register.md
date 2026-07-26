@@ -34,11 +34,13 @@
           document types, templates, AI, analytics, audit, and other workspace settings.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
-              relationships, and schema-specific behavior, including marking a field as externally managed (by AI, an
-              integration, or an internal automation) with a refresh mode of on-change or scheduled. Fields can be
-              organized into named, presentation-only groups (with an optional description) that render as labeled
-              sections wherever fields appear as a form or list; this has no effect on validation, required-ness, or
-              completeness.
+            relationships, and schema-specific behavior, including read-only derived fields calculated from sibling
+            fields using a sandboxed expression and a declared text, number, select, boolean, or rating result type,
+            and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
+            on-change or scheduled. Derived values are materialized when inputs or definitions change, and are excluded
+            from required-field completeness. Fields can be organized into named, presentation-only groups (with an
+            optional description) that render as labeled sections wherever fields appear as a form or list; this has no
+            effect on validation, required-ness, or completeness.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally
@@ -177,9 +179,11 @@
         - @id:ar.assessments.definitions Users can create and edit assessment definitions with status, scope, filters,
           and required or optional fields, start from built-in assessment templates, or configure a confirm-only mode
           with no fields. Enum fields can reference reusable workspace enums or define assessment-local option values.
-          Fields can be organized into named, presentation-only groups (with an optional description) that render as
-          labeled sections in the assessment editor and the per-entity assessment accordion; this is purely visual and
-          does not affect the assessment grid/results view, where fields remain flat table columns.
+          Read-only derived fields can calculate typed values from sibling responses and are excluded from response
+          completeness and status. Fields can be organized into named, presentation-only groups (with an optional
+          description) that render as labeled sections in the assessment editor and the per-entity assessment
+          accordion; this is purely visual and does not affect the assessment grid/results view, where fields remain
+          flat table columns.
 
         - @id:ar.assessments.responses Reviewers can fill in assessment responses for in-scope entities from an
           assessment grid or entity detail view, or, for confirm-only assessments, record a single "confirmed

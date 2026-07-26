@@ -85,6 +85,40 @@ const containmentFieldSchema = baseFieldSchema.extend({
   maxCount: z.literal(1).describe('Maximum count (always 1 for containment)')
 });
 
+const derivedResultTypeSchema = z.enum(['text', 'number', 'select', 'boolean', 'rating']);
+
+const derivedFieldBaseSchema = baseFieldSchema
+  .omit({ external_kind: true, refresh_mode: true })
+  .extend({
+    external_kind: z.never().optional(),
+    refresh_mode: z.never().optional()
+  });
+
+const derivedFieldInputSchema = derivedFieldBaseSchema
+  .extend({
+    type: z.literal('derived').describe('Read-only value derived from sibling fields'),
+    requirementLevel: z.literal('optional').describe('Derived fields are never required'),
+    expression: z.string().min(1).describe('Sandboxed expression used to calculate the value'),
+    resultType: derivedResultTypeSchema.describe('Underlying type of the calculated value'),
+    enumId: z.string().optional().describe('Workspace enumeration for a derived select result')
+  })
+  .superRefine((field, ctx) => {
+    if (field.resultType === 'select' && !field.enumId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['enumId'],
+        message: 'Derived select fields require enumId'
+      });
+    }
+    if (field.resultType !== 'select' && field.enumId !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['enumId'],
+        message: 'enumId is only valid for derived select fields'
+      });
+    }
+  });
+
 const schemaFieldInputSchema = z
   .discriminatedUnion('type', [
     textFieldSchema,
@@ -94,7 +128,8 @@ const schemaFieldInputSchema = z
     numberFieldSchema,
     selectFieldInputSchema,
     referenceFieldSchema,
-    containmentFieldSchema
+    containmentFieldSchema,
+    derivedFieldInputSchema
   ])
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
@@ -111,6 +146,20 @@ const selectFieldResponseSchema = selectFieldInputSchema.extend({
   options: z.array(fieldOptionSchema).describe('Available dropdown options')
 });
 
+const derivedFieldResponseSchema = derivedFieldInputSchema
+  .extend({
+    options: z.array(fieldOptionSchema).optional().describe('Resolved options for a derived select')
+  })
+  .superRefine((field, ctx) => {
+    if (field.resultType === 'select' && (!field.options || field.options.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['options'],
+        message: 'Derived select fields require resolved options'
+      });
+    }
+  });
+
 const schemaFieldResponseSchema = z
   .discriminatedUnion('type', [
     textFieldSchema,
@@ -120,7 +169,8 @@ const schemaFieldResponseSchema = z
     numberFieldSchema,
     selectFieldResponseSchema,
     referenceFieldSchema,
-    containmentFieldSchema
+    containmentFieldSchema,
+    derivedFieldResponseSchema
   ])
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);

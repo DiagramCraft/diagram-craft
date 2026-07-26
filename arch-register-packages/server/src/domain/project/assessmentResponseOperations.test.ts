@@ -122,6 +122,53 @@ describe('upsertAssessmentResponse', () => {
     );
   });
 
+  it('materializes derived fields before storing a response', async () => {
+    const db = makeDb(
+      makeAssessment('open', {
+        fields: [
+          { id: 'f1', label: 'Rating', type: 'rating', requirementLevel: 'required' },
+          {
+            id: 'f2',
+            label: 'Double rating',
+            type: 'derived',
+            requirementLevel: 'optional',
+            expression: 'field("f1") + field("f1")',
+            resultType: 'number'
+          }
+        ]
+      })
+    );
+
+    await upsertAssessmentResponse(db, 'ws-1', 'asmnt-1', 'entity-1', { values: { f1: 5 } }, event);
+
+    expect(db.project.upsertAssessmentResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ values: { f1: 5, f2: 10 } })
+    );
+  });
+
+  it('rejects direct writes to derived fields', async () => {
+    const db = makeDb(
+      makeAssessment('open', {
+        fields: [
+          { id: 'f1', label: 'Rating', type: 'rating', requirementLevel: 'required' },
+          {
+            id: 'f2',
+            label: 'Double rating',
+            type: 'derived',
+            requirementLevel: 'optional',
+            expression: 'field("f1") + field("f1")',
+            resultType: 'number'
+          }
+        ]
+      })
+    );
+
+    await expect(
+      upsertAssessmentResponse(db, 'ws-1', 'asmnt-1', 'entity-1', { values: { f2: 10 } }, event)
+    ).rejects.toMatchObject({ status: 400 });
+    expect(db.project.upsertAssessmentResponse).not.toHaveBeenCalled();
+  });
+
   it('rejects field values for a confirm-only assessment', async () => {
     const db = makeDb(makeAssessment('open', { mode: 'confirm', fields: [] }));
 

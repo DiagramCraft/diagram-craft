@@ -1192,6 +1192,90 @@
                                 "minCount",
                                 "maxCount"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "const": "optional",
+                                  "description": "Derived fields are never required"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "not": {}
+                                },
+                                "refresh_mode": {
+                                  "not": {}
+                                },
+                                "type": {
+                                  "const": "derived",
+                                  "description": "Read-only value derived from sibling fields"
+                                },
+                                "expression": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Sandboxed expression used to calculate the value"
+                                },
+                                "resultType": {
+                                  "enum": [
+                                    "text",
+                                    "number",
+                                    "select",
+                                    "boolean",
+                                    "rating"
+                                  ],
+                                  "type": "string",
+                                  "description": "Underlying type of the calculated value"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Workspace enumeration for a derived select result"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Internal option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Display label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Resolved options for a derived select"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "requirementLevel",
+                                "type",
+                                "expression",
+                                "resultType"
+                              ]
                             }
                           ],
                           "description": "Schema field with resolved options"
@@ -2010,6 +2094,69 @@
                             "minCount",
                             "maxCount"
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique field identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Field name"
+                            },
+                            "requirementLevel": {
+                              "const": "optional",
+                              "description": "Derived fields are never required"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "external_kind": {
+                              "not": {}
+                            },
+                            "refresh_mode": {
+                              "not": {}
+                            },
+                            "type": {
+                              "const": "derived",
+                              "description": "Read-only value derived from sibling fields"
+                            },
+                            "expression": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Sandboxed expression used to calculate the value"
+                            },
+                            "resultType": {
+                              "enum": [
+                                "text",
+                                "number",
+                                "select",
+                                "boolean",
+                                "rating"
+                              ],
+                              "type": "string",
+                              "description": "Underlying type of the calculated value"
+                            },
+                            "enumId": {
+                              "type": "string",
+                              "description": "Workspace enumeration for a derived select result"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "requirementLevel",
+                            "type",
+                            "expression",
+                            "resultType"
+                          ]
                         }
                       ],
                       "description": "Schema field definition"
@@ -2815,6 +2962,90 @@
                               "schemaId",
                               "minCount",
                               "maxCount"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "const": "optional",
+                                "description": "Derived fields are never required"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "not": {}
+                              },
+                              "refresh_mode": {
+                                "not": {}
+                              },
+                              "type": {
+                                "const": "derived",
+                                "description": "Read-only value derived from sibling fields"
+                              },
+                              "expression": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Sandboxed expression used to calculate the value"
+                              },
+                              "resultType": {
+                                "enum": [
+                                  "text",
+                                  "number",
+                                  "select",
+                                  "boolean",
+                                  "rating"
+                                ],
+                                "type": "string",
+                                "description": "Underlying type of the calculated value"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Workspace enumeration for a derived select result"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Internal option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Display label"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Resolved options for a derived select"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "requirementLevel",
+                              "type",
+                              "expression",
+                              "resultType"
                             ]
                           }
                         ],
@@ -3675,6 +3906,90 @@
                               "minCount",
                               "maxCount"
                             ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "const": "optional",
+                                "description": "Derived fields are never required"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "not": {}
+                              },
+                              "refresh_mode": {
+                                "not": {}
+                              },
+                              "type": {
+                                "const": "derived",
+                                "description": "Read-only value derived from sibling fields"
+                              },
+                              "expression": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Sandboxed expression used to calculate the value"
+                              },
+                              "resultType": {
+                                "enum": [
+                                  "text",
+                                  "number",
+                                  "select",
+                                  "boolean",
+                                  "rating"
+                                ],
+                                "type": "string",
+                                "description": "Underlying type of the calculated value"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Workspace enumeration for a derived select result"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Internal option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Display label"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Resolved options for a derived select"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "requirementLevel",
+                              "type",
+                              "expression",
+                              "resultType"
+                            ]
                           }
                         ],
                         "description": "Schema field with resolved options"
@@ -4500,6 +4815,69 @@
                             "schemaId",
                             "minCount",
                             "maxCount"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique field identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Field name"
+                            },
+                            "requirementLevel": {
+                              "const": "optional",
+                              "description": "Derived fields are never required"
+                            },
+                            "archived": {
+                              "type": "boolean",
+                              "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "external_kind": {
+                              "not": {}
+                            },
+                            "refresh_mode": {
+                              "not": {}
+                            },
+                            "type": {
+                              "const": "derived",
+                              "description": "Read-only value derived from sibling fields"
+                            },
+                            "expression": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Sandboxed expression used to calculate the value"
+                            },
+                            "resultType": {
+                              "enum": [
+                                "text",
+                                "number",
+                                "select",
+                                "boolean",
+                                "rating"
+                              ],
+                              "type": "string",
+                              "description": "Underlying type of the calculated value"
+                            },
+                            "enumId": {
+                              "type": "string",
+                              "description": "Workspace enumeration for a derived select result"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "requirementLevel",
+                            "type",
+                            "expression",
+                            "resultType"
                           ]
                         }
                       ],
@@ -5335,6 +5713,90 @@
                               "schemaId",
                               "minCount",
                               "maxCount"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "const": "optional",
+                                "description": "Derived fields are never required"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "not": {}
+                              },
+                              "refresh_mode": {
+                                "not": {}
+                              },
+                              "type": {
+                                "const": "derived",
+                                "description": "Read-only value derived from sibling fields"
+                              },
+                              "expression": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Sandboxed expression used to calculate the value"
+                              },
+                              "resultType": {
+                                "enum": [
+                                  "text",
+                                  "number",
+                                  "select",
+                                  "boolean",
+                                  "rating"
+                                ],
+                                "type": "string",
+                                "description": "Underlying type of the calculated value"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Workspace enumeration for a derived select result"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Internal option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Display label"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Resolved options for a derived select"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "requirementLevel",
+                              "type",
+                              "expression",
+                              "resultType"
                             ]
                           }
                         ],
@@ -6244,6 +6706,90 @@
                                 "schemaId",
                                 "minCount",
                                 "maxCount"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "const": "optional",
+                                  "description": "Derived fields are never required"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "not": {}
+                                },
+                                "refresh_mode": {
+                                  "not": {}
+                                },
+                                "type": {
+                                  "const": "derived",
+                                  "description": "Read-only value derived from sibling fields"
+                                },
+                                "expression": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Sandboxed expression used to calculate the value"
+                                },
+                                "resultType": {
+                                  "enum": [
+                                    "text",
+                                    "number",
+                                    "select",
+                                    "boolean",
+                                    "rating"
+                                  ],
+                                  "type": "string",
+                                  "description": "Underlying type of the calculated value"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Workspace enumeration for a derived select result"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Internal option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Display label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Resolved options for a derived select"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "requirementLevel",
+                                "type",
+                                "expression",
+                                "resultType"
                               ]
                             }
                           ],
@@ -63000,6 +63546,81 @@
                                 "requirementLevel",
                                 "type"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "description": "Field label shown to the person completing the assessment"
+                                },
+                                "requirementLevel": {
+                                  "const": "optional",
+                                  "description": "Derived fields are never required"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "type": {
+                                  "const": "derived",
+                                  "description": "Read-only value derived from sibling fields"
+                                },
+                                "expression": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Sandboxed expression used to calculate the value"
+                                },
+                                "resultType": {
+                                  "enum": [
+                                    "text",
+                                    "number",
+                                    "select",
+                                    "boolean",
+                                    "rating"
+                                  ],
+                                  "type": "string",
+                                  "description": "Underlying type of the calculated value"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Workspace enumeration for a derived select result"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Stored option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Displayed option label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Assessment-local options for a derived select result"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "requirementLevel",
+                                "type",
+                                "expression",
+                                "resultType"
+                              ]
                             }
                           ],
                           "description": "Assessment field definition"
@@ -63496,6 +64117,81 @@
                             "requirementLevel",
                             "type"
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique field identifier"
+                            },
+                            "label": {
+                              "type": "string",
+                              "description": "Field label shown to the person completing the assessment"
+                            },
+                            "requirementLevel": {
+                              "const": "optional",
+                              "description": "Derived fields are never required"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "type": {
+                              "const": "derived",
+                              "description": "Read-only value derived from sibling fields"
+                            },
+                            "expression": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Sandboxed expression used to calculate the value"
+                            },
+                            "resultType": {
+                              "enum": [
+                                "text",
+                                "number",
+                                "select",
+                                "boolean",
+                                "rating"
+                              ],
+                              "type": "string",
+                              "description": "Underlying type of the calculated value"
+                            },
+                            "enumId": {
+                              "type": "string",
+                              "description": "Workspace enumeration for a derived select result"
+                            },
+                            "options": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "description": "Stored option value"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Displayed option label"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "label"
+                                ]
+                              },
+                              "description": "Assessment-local options for a derived select result"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "label",
+                            "requirementLevel",
+                            "type",
+                            "expression",
+                            "resultType"
+                          ]
                         }
                       ],
                       "description": "Assessment field definition"
@@ -63891,6 +64587,81 @@
                               "label",
                               "requirementLevel",
                               "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Field label shown to the person completing the assessment"
+                              },
+                              "requirementLevel": {
+                                "const": "optional",
+                                "description": "Derived fields are never required"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "derived",
+                                "description": "Read-only value derived from sibling fields"
+                              },
+                              "expression": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Sandboxed expression used to calculate the value"
+                              },
+                              "resultType": {
+                                "enum": [
+                                  "text",
+                                  "number",
+                                  "select",
+                                  "boolean",
+                                  "rating"
+                                ],
+                                "type": "string",
+                                "description": "Underlying type of the calculated value"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Workspace enumeration for a derived select result"
+                              },
+                              "options": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Stored option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Displayed option label"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Assessment-local options for a derived select result"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "requirementLevel",
+                              "type",
+                              "expression",
+                              "resultType"
                             ]
                           }
                         ],
@@ -64416,6 +65187,81 @@
                               "requirementLevel",
                               "type"
                             ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Field label shown to the person completing the assessment"
+                              },
+                              "requirementLevel": {
+                                "const": "optional",
+                                "description": "Derived fields are never required"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "derived",
+                                "description": "Read-only value derived from sibling fields"
+                              },
+                              "expression": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Sandboxed expression used to calculate the value"
+                              },
+                              "resultType": {
+                                "enum": [
+                                  "text",
+                                  "number",
+                                  "select",
+                                  "boolean",
+                                  "rating"
+                                ],
+                                "type": "string",
+                                "description": "Underlying type of the calculated value"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Workspace enumeration for a derived select result"
+                              },
+                              "options": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Stored option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Displayed option label"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Assessment-local options for a derived select result"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "requirementLevel",
+                              "type",
+                              "expression",
+                              "resultType"
+                            ]
                           }
                         ],
                         "description": "Assessment field definition"
@@ -64920,6 +65766,81 @@
                             "requirementLevel",
                             "type"
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique field identifier"
+                            },
+                            "label": {
+                              "type": "string",
+                              "description": "Field label shown to the person completing the assessment"
+                            },
+                            "requirementLevel": {
+                              "const": "optional",
+                              "description": "Derived fields are never required"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "type": {
+                              "const": "derived",
+                              "description": "Read-only value derived from sibling fields"
+                            },
+                            "expression": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Sandboxed expression used to calculate the value"
+                            },
+                            "resultType": {
+                              "enum": [
+                                "text",
+                                "number",
+                                "select",
+                                "boolean",
+                                "rating"
+                              ],
+                              "type": "string",
+                              "description": "Underlying type of the calculated value"
+                            },
+                            "enumId": {
+                              "type": "string",
+                              "description": "Workspace enumeration for a derived select result"
+                            },
+                            "options": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "description": "Stored option value"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Displayed option label"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "label"
+                                ]
+                              },
+                              "description": "Assessment-local options for a derived select result"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "label",
+                            "requirementLevel",
+                            "type",
+                            "expression",
+                            "resultType"
+                          ]
                         }
                       ],
                       "description": "Assessment field definition"
@@ -65315,6 +66236,81 @@
                               "label",
                               "requirementLevel",
                               "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Field label shown to the person completing the assessment"
+                              },
+                              "requirementLevel": {
+                                "const": "optional",
+                                "description": "Derived fields are never required"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "derived",
+                                "description": "Read-only value derived from sibling fields"
+                              },
+                              "expression": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Sandboxed expression used to calculate the value"
+                              },
+                              "resultType": {
+                                "enum": [
+                                  "text",
+                                  "number",
+                                  "select",
+                                  "boolean",
+                                  "rating"
+                                ],
+                                "type": "string",
+                                "description": "Underlying type of the calculated value"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Workspace enumeration for a derived select result"
+                              },
+                              "options": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Stored option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Displayed option label"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Assessment-local options for a derived select result"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "requirementLevel",
+                              "type",
+                              "expression",
+                              "resultType"
                             ]
                           }
                         ],
@@ -65919,6 +66915,81 @@
                               "requirementLevel",
                               "type"
                             ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Field label shown to the person completing the assessment"
+                              },
+                              "requirementLevel": {
+                                "const": "optional",
+                                "description": "Derived fields are never required"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "derived",
+                                "description": "Read-only value derived from sibling fields"
+                              },
+                              "expression": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Sandboxed expression used to calculate the value"
+                              },
+                              "resultType": {
+                                "enum": [
+                                  "text",
+                                  "number",
+                                  "select",
+                                  "boolean",
+                                  "rating"
+                                ],
+                                "type": "string",
+                                "description": "Underlying type of the calculated value"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Workspace enumeration for a derived select result"
+                              },
+                              "options": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Stored option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Displayed option label"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Assessment-local options for a derived select result"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "requirementLevel",
+                              "type",
+                              "expression",
+                              "resultType"
+                            ]
                           }
                         ],
                         "description": "Assessment field definition"
@@ -66205,6 +67276,9 @@
                             },
                             {
                               "type": "number"
+                            },
+                            {
+                              "type": "boolean"
                             }
                           ]
                         },
@@ -66321,6 +67395,9 @@
                           "type": "number"
                         },
                         {
+                          "type": "boolean"
+                        },
+                        {
                           "type": "null"
                         }
                       ]
@@ -66363,6 +67440,9 @@
                           },
                           {
                             "type": "number"
+                          },
+                          {
+                            "type": "boolean"
                           }
                         ]
                       },

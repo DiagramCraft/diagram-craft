@@ -27,7 +27,7 @@ export type ProjectLinkState = {
 
 export type BrowserEntityRecord = EntityRecord & {
   _projectLink?: ProjectLinkState;
-  _assessment?: Record<string, string | number> | null;
+  _assessment?: Record<string, string | number | boolean> | null;
 };
 
 export const isEntityInProject = (

@@ -134,7 +134,7 @@ export const resolveJoinedAssessment = async (
   hasAssessmentConditions: boolean
 ): Promise<{
   assessment: AssessmentDbResult;
-  responsesByEntity: Map<string, Record<string, string | number>>;
+  responsesByEntity: Map<string, Record<string, string | number | boolean>>;
 } | null> => {
   if (!hasAssessmentConditions) return null;
   httpAssert.present(assessmentId, {

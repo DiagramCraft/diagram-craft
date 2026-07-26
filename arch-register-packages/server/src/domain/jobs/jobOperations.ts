@@ -399,11 +399,16 @@ const createTechnologyEolJob = async (
     );
 
     const destinationIds = new Set(destinationFieldIds(body.mapping));
-    const nextFields = targetSchema.fields.map(field =>
-      destinationIds.has(field.id)
-        ? { ...field, external_kind: 'integration' as const, refresh_mode: 'scheduled' as const }
-        : field
+    httpAssert.true(
+      !targetSchema.fields.some(field => destinationIds.has(field.id) && field.type === 'derived'),
+      { status: 400, message: 'Technology End of Life mappings cannot target derived fields' }
     );
+    const nextFields = targetSchema.fields.map(field => {
+      if (field.type === 'derived') return field;
+      return destinationIds.has(field.id)
+        ? { ...field, external_kind: 'integration' as const, refresh_mode: 'scheduled' as const }
+        : field;
+    });
     const updatedSchema = await tx.catalog.updateSchema(ws, targetSchema.id, {
       name: targetSchema.name,
       key_prefix: targetSchema.key_prefix,

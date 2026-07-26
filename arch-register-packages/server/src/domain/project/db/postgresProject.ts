@@ -1035,6 +1035,15 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     return mapDatabaseRows(rows, projectMappers.assessmentResponse);
   }
 
+  async listAllAssessmentResponses(workspace: string, assessmentId: string) {
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ASSESSMENT_RESPONSE_SELECT_SQL}
+       WHERE ar.workspace = $1 AND ar.assessment_id = $2`,
+      [workspace, assessmentId]
+    );
+    return mapDatabaseRows(rows, projectMappers.assessmentResponse);
+  }
+
   async getAssessmentResponse(
     workspace: string,
     assessmentId: string,
@@ -1066,6 +1075,23 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async updateAssessmentResponseDerivedFields(
+    workspace: string,
+    assessmentId: string,
+    entityId: string,
+    occurrence: number,
+    values: Record<string, string | number | boolean>
+  ) {
+    await this.sql`
+      UPDATE assessment_response
+      SET "values" = ${this.json(values)}
+      WHERE workspace = ${workspace}
+        AND assessment_id = ${assessmentId}
+        AND entity_id = ${entityId}
+        AND occurrence = ${occurrence}
+    `;
   }
 
   async countAssessmentResponses(workspace: string, assessmentId: string) {

@@ -14,6 +14,7 @@ import {
 } from '@arch-register/api-types/assessmentResponseContract';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { generateCsv } from '../../utils/csv';
+import { assertNoDerivedFieldWrites, materializeDerivedFields } from '../derived/derivedFields';
 
 const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: string) => {
   const project = await db.project.getProject(ws, projectId);
@@ -86,6 +87,14 @@ export const upsertAssessmentResponse = async (
         status: 400,
         message: 'Confirm-only assessments do not accept field values'
       });
+      try {
+        assertNoDerivedFieldWrites(assessment.fields, body.values);
+      } catch (error) {
+        httpAssert.true(false, {
+          status: 400,
+          message: error instanceof Error ? error.message : String(error)
+        });
+      }
       const existing = await db.project.getAssessmentResponse(
         ws,
         assessmentId,
@@ -94,18 +103,23 @@ export const upsertAssessmentResponse = async (
       );
       const existingValues = existing?.values ?? {};
 
-      const values: Record<string, string | number> = { ...existingValues };
+      const values: Record<string, string | number | boolean> = { ...existingValues };
       for (const [fieldId, value] of Object.entries(body.values)) {
         if (value === null) delete values[fieldId];
         else values[fieldId] = value;
       }
+
+      const materializedValues = materializeDerivedFields(assessment.fields, values, {
+        objectType: 'assessment',
+        objectId: entityId
+      }) as Record<string, string | number | boolean>;
 
       const row = await db.project.upsertAssessmentResponse({
         workspace: ws,
         assessment_id: assessmentId,
         entity_id: entityId,
         occurrence: assessment.current_occurrence,
-        values,
+        values: materializedValues,
         updated_by: authCtx.userId
       });
 

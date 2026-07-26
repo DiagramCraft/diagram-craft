@@ -92,6 +92,30 @@ describe('buildCreateAssessmentInput', () => {
     expect(input.fields).toEqual(fields);
   });
 
+  it('accepts a derived field referencing a rating sibling', () => {
+    const input = buildCreateAssessmentInput(
+      'ws-1',
+      {
+        project_id: 'proj-1',
+        name: 'API',
+        fields: [
+          { id: 'rating', label: 'Rating', requirementLevel: 'required', type: 'rating' },
+          {
+            id: 'hyper',
+            label: 'Hyper',
+            requirementLevel: 'optional',
+            type: 'derived',
+            expression: 'field("rating")*5',
+            resultType: 'number'
+          }
+        ]
+      },
+      now
+    );
+
+    expect(input.fields).toHaveLength(2);
+  });
+
   it('throws when name is missing', () => {
     expect(() => buildCreateAssessmentInput('ws-1', {}, now)).toThrow();
   });

@@ -12,6 +12,7 @@ import {
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
+import { buildDerivedPlan } from '../derived/derivedFields';
 
 type SchemaMutationPayload = {
   name: string;
@@ -42,7 +43,7 @@ const defaultKeyPrefixFromName = (name: string) =>
 const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] => {
   if (!Array.isArray(fields)) return [];
 
-  return fields.map(field => {
+  const normalized = fields.map(field => {
     httpAssert.json(field, { message: 'Schema fields must be objects' });
 
     if (field.type === 'containment') {
@@ -68,12 +69,15 @@ const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] 
 
     return field as InternalEntitySchema['fields'][number];
   });
+  buildDerivedPlan(normalized);
+  return normalized;
 };
 
 const normalizeTemplateFieldValue = (
   value: unknown,
   field: InternalEntitySchema['fields'][number]
 ): EntityTemplate['values']['fields'][string] | undefined => {
+  if (field.type === 'derived') return undefined;
   if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
     return undefined;
   }
@@ -457,6 +461,13 @@ export const resolveSelectFieldOptions = (
   return fields.map(field => {
     if (field.type === 'select') {
       const enumDef = enumMap.get(field.enumId);
+      return {
+        ...field,
+        options: enumDef?.options ?? []
+      };
+    }
+    if (field.type === 'derived' && field.resultType === 'select') {
+      const enumDef = field.enumId ? enumMap.get(field.enumId) : undefined;
       return {
         ...field,
         options: enumDef?.options ?? []

@@ -43,13 +43,13 @@ export type TreeViewProps = {
   config: unknown;
   displayFields: EntityDisplayField[];
   joinAssessmentId?: string | null;
-  responsesByEntity?: Map<string, Record<string, string | number>>;
+  responsesByEntity?: Map<string, Record<string, string | number | boolean>>;
   onCountChange?: (count: number) => void;
 };
 
 type TreeItem = (TreeNode & {
   _projectLink?: ProjectLinkState;
-  _assessment?: Record<string, string | number> | null;
+  _assessment?: Record<string, string | number | boolean> | null;
 }) & {
   children: TreeItem[];
 };

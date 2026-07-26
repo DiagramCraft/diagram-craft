@@ -34,6 +34,7 @@ import {
   openAssessmentGovernanceCase,
   closeAssessmentGovernanceCase
 } from './assessmentGovernance';
+import { materializeDerivedFields } from '../derived/derivedFields';
 
 export {
   ASSESSMENT_RESPONSE_CASE_KIND,
@@ -244,12 +245,35 @@ export const updateAssessment = async (
         'You do not have permission to edit assessments in this project'
       );
 
-      const row = await db.project.updateAssessment(
-        ws,
-        project.id,
-        id,
-        buildUpdateAssessmentInput(body, existing, new Date())
-      );
+      const row = await db.core.transaction(async tx => {
+        const updated = await tx.project.updateAssessment(
+          ws,
+          project.id,
+          id,
+          buildUpdateAssessmentInput(body, existing, new Date())
+        );
+        if (updated) {
+          const responses = await tx.project.listAllAssessmentResponses(ws, id);
+          const previousDerivedIds = new Set(
+            existing.fields.filter(field => field.type === 'derived').map(field => field.id)
+          );
+          for (const response of responses) {
+            const responseValues = { ...response.values };
+            previousDerivedIds.forEach(fieldId => delete responseValues[fieldId]);
+            await tx.project.updateAssessmentResponseDerivedFields(
+              ws,
+              id,
+              response.entity_id,
+              response.occurrence,
+              materializeDerivedFields(updated.fields, responseValues, {
+                objectType: 'assessment',
+                objectId: response.id
+              }) as Record<string, string | number | boolean>
+            );
+          }
+        }
+        return updated;
+      });
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
 
       const changes = computeChanges(extractEntityFields(existing), extractEntityFields(row));
