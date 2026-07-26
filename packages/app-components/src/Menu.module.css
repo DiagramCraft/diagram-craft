@@ -1,11 +1,16 @@
 /**
- *  Menu - .cMenu
- *  | Separator [0..*] - .eSeparator
- *  | Item [1..*] - .eItem - data-type {regular,checkbox,radio,submenu-trigger}
- *  | | LeftSlot - .eItemLeftSlot
- *  | | RightSlot - .eItemRightSlot
- *  | Arrow - .eArrow
+ *  MenuPositioner - .cMenuPositioner
+ *  | Menu - .cMenu
+ *  | | Separator [0..*] - .eSeparator
+ *  | | Item [1..*] - .eItem - data-type {regular,checkbox,radio,submenu-trigger}
+ *  | | | LeftSlot - .eItemLeftSlot
+ *  | | | RightSlot - .eItemRightSlot
+ *  | | Arrow - .eArrow
  */
+.cMenuPositioner {
+  z-index: 1100;
+}
+
 .cMenu {
   min-width: 220px;
   background-color: var(--cmp-bg);
@@ -15,7 +20,6 @@
   padding: 5px;
   box-shadow: var(--popover-shadow);
   border: 1px solid var(--cmp-border);
-  z-index: 250;
 
   .eItem {
     font-size: 11px;

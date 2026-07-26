@@ -175,26 +175,52 @@ const AssessmentFillCard = ({
                   Confirm accurate
                 </Button>
               )
-            : assessment.fields.map(field => (
-                <div key={field.id} className={styles.row}>
-                  <div className={styles.label}>
-                    {field.label}
-                    {field.requirementLevel === 'optional' && (
-                      <span className={styles.optionalLabel}> (optional)</span>
-                    )}
+            : (() => {
+                const renderFieldRow = (field: (typeof assessment.fields)[number]) => (
+                  <div key={field.id} className={styles.row}>
+                    <div className={styles.label}>
+                      {field.label}
+                      {field.requirementLevel === 'optional' && (
+                        <span className={styles.optionalLabel}> (optional)</span>
+                      )}
+                    </div>
+                    <div className={styles.value}>
+                      <AssessmentFieldCell
+                        field={field}
+                        value={response?.values[field.id]}
+                        disabled={assessment.status !== 'open'}
+                        onChange={value =>
+                          upsertResponse.mutate({ entityId, values: { [field.id]: value } })
+                        }
+                      />
+                    </div>
                   </div>
-                  <div className={styles.value}>
-                    <AssessmentFieldCell
-                      field={field}
-                      value={response?.values[field.id]}
-                      disabled={assessment.status !== 'open'}
-                      onChange={value =>
-                        upsertResponse.mutate({ entityId, values: { [field.id]: value } })
-                      }
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+
+                const ungroupedFields = assessment.fields.filter(f => !f.groupId);
+                const groupedSections = assessment.groups
+                  .map(group => ({
+                    group,
+                    fields: assessment.fields.filter(f => f.groupId === group.id)
+                  }))
+                  .filter(section => section.fields.length > 0);
+
+                return (
+                  <>
+                    {ungroupedFields.map(renderFieldRow)}
+                    {groupedSections.map(({ group, fields: groupFields }) => (
+                      <div key={group.id} className={styles.groupSection}>
+                        <hr className={styles.divider} />
+                        <div className={styles.groupLabel}>{group.name}</div>
+                        {group.description && (
+                          <div className={styles.groupDescription}>{group.description}</div>
+                        )}
+                        {groupFields.map(renderFieldRow)}
+                      </div>
+                    ))}
+                  </>
+                );
+              })()}
         </div>
       )}
     </div>

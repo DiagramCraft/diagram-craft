@@ -318,6 +318,48 @@
   gap: 4px;
 }
 
+.groupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r-md);
+  background: var(--base-bg);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.groupName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.groupDescription {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-top: 2px;
+}
+
+.groupActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.groupEmpty {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  padding: 2px 0;
+}
+
 .inlineEnumDialogOptions {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws } from '@arch-register/api-types/common';
+import { ws, namedGroupSchema } from '@arch-register/api-types/common';
 import { filterConditionSchema } from '@arch-register/api-types/viewContract';
 
 const wsAndAssessmentId = ws.extend({
@@ -14,8 +14,14 @@ const requirementLevelSchema = z
 const baseAssessmentFieldSchema = z.object({
   id: z.string().describe('Unique field identifier'),
   label: z.string().describe('Field label shown to the person completing the assessment'),
-  requirementLevel: requirementLevelSchema
+  requirementLevel: requirementLevelSchema,
+  groupId: z
+    .string()
+    .optional()
+    .describe('Id of the presentation-only group this field belongs to; omitted means ungrouped')
 });
+
+const assessmentGroupSchema = namedGroupSchema;
 
 const ratingAssessmentFieldSchema = baseAssessmentFieldSchema.extend({
   type: z.literal('rating').describe('Numeric score field (1-5)')
@@ -78,6 +84,9 @@ const assessmentSchema = z.object({
     .array(filterConditionSchema)
     .describe('Additional AND-combined entity filters this assessment scope applies'),
   fields: z.array(assessmentFieldSchema).describe('Assessment field definitions'),
+  groups: z
+    .array(assessmentGroupSchema)
+    .describe('Named, presentation-only field groups, in display order'),
   assigned_team_ids: z
     .array(z.string())
     .describe('Teams assigned to this assessment; surfaced as governance inbox tasks when open'),
@@ -149,6 +158,10 @@ const assessmentBodySchema = z
     fields: z.preprocess(
       value => (Array.isArray(value) ? value : undefined),
       z.array(assessmentFieldSchema).optional().describe('Assessment field definitions')
+    ),
+    groups: z.preprocess(
+      value => (Array.isArray(value) ? value : undefined),
+      z.array(assessmentGroupSchema).optional().describe('Named, presentation-only field groups')
     ),
     assigned_team_ids: z.preprocess(
       value => (Array.isArray(value) ? value : undefined),
@@ -267,6 +280,7 @@ export const assessmentContract = oc.tag('Assessments').router({
 
 export type AssessmentRecurrence = z.infer<typeof assessmentRecurrenceSchema>;
 export type AssessmentField = z.infer<typeof assessmentFieldSchema>;
+export type AssessmentGroup = z.infer<typeof assessmentGroupSchema>;
 export type AssessmentEnumOption = z.infer<typeof assessmentEnumOptionSchema>;
 export type AssessmentEnumField = z.infer<typeof enumAssessmentFieldSchema>;
 export type Assessment = z.infer<typeof assessmentSchema>;

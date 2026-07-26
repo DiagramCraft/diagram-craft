@@ -113,6 +113,7 @@ type SubMenuProps = {
   children: React.ReactNode;
   leftSlot?: ReactElement;
   disabled?: boolean;
+  container?: HTMLElement;
 };
 
 const SubMenu = (props: SubMenuProps) => {
@@ -129,8 +130,8 @@ const SubMenu = (props: SubMenuProps) => {
           <TbChevronRight />
         </div>
       </BaseUIMenu.SubmenuTrigger>
-      <BaseUIMenu.Portal>
-        <BaseUIMenu.Positioner sideOffset={2} alignOffset={-5}>
+      <BaseUIMenu.Portal container={props.container}>
+        <BaseUIMenu.Positioner className={styles.cMenuPositioner} sideOffset={2} alignOffset={-5}>
           <BaseUIContextMenu.Popup className={styles.cMenu}>
             {props.children}
           </BaseUIContextMenu.Popup>

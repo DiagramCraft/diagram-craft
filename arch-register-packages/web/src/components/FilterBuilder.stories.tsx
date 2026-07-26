@@ -28,7 +28,8 @@ const mockSchemas: EntitySchema[] = [
       { id: 'deployDate', name: 'Deploy Date', type: 'date' },
       { id: 'active', name: 'Active', type: 'boolean' }
     ],
-    templates: []
+    templates: [],
+    groups: []
   },
   {
     id: 'database',
@@ -46,7 +47,8 @@ const mockSchemas: EntitySchema[] = [
       { id: 'engine', name: 'Engine', type: 'select', enumId: 'dbEngine', options: [] },
       { id: 'size', name: 'Size (GB)', type: 'text' }
     ],
-    templates: []
+    templates: [],
+    groups: []
   }
 ];
 

@@ -223,6 +223,12 @@
   margin: 8px 0;
 }
 
+.groupDescription {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin: -4px 0 8px;
+}
+
 /* Link editing */
 .linksEdit {
   margin-top: 8px;

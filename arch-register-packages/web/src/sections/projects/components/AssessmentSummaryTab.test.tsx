@@ -14,6 +14,7 @@ const baseAssessment: Assessment = {
   scope: [],
   scope_conditions: [],
   fields: [],
+  groups: [],
   assigned_team_ids: [],
   due_at: null,
   recurrence: { type: 'none' },

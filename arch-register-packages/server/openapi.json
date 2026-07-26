@@ -621,6 +621,10 @@
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
                                 "external_kind": {
                                   "enum": [
                                     "ai",
@@ -679,6 +683,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -739,6 +747,10 @@
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
                                 "external_kind": {
                                   "enum": [
                                     "ai",
@@ -798,6 +810,10 @@
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
                                 "external_kind": {
                                   "enum": [
                                     "ai",
@@ -856,6 +872,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -927,6 +947,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -1013,6 +1037,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -1104,6 +1132,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -1248,6 +1280,33 @@
                         },
                         "description": "Named entity creation templates"
                       },
+                      "groups": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable group identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Group display name"
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "Optional group description"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        "description": "Named, presentation-only field groups, in display order"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -1315,6 +1374,7 @@
                       "key_prefix",
                       "fields",
                       "templates",
+                      "groups",
                       "color",
                       "icon",
                       "entity_count",
@@ -1401,6 +1461,10 @@
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "external_kind": {
                               "enum": [
                                 "ai",
@@ -1459,6 +1523,10 @@
                             "archived": {
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
                             "external_kind": {
                               "enum": [
@@ -1519,6 +1587,10 @@
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "external_kind": {
                               "enum": [
                                 "ai",
@@ -1578,6 +1650,10 @@
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "external_kind": {
                               "enum": [
                                 "ai",
@@ -1636,6 +1712,10 @@
                             "archived": {
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
                             "external_kind": {
                               "enum": [
@@ -1708,6 +1788,10 @@
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "external_kind": {
                               "enum": [
                                 "ai",
@@ -1771,6 +1855,10 @@
                             "archived": {
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
                             "external_kind": {
                               "enum": [
@@ -1862,6 +1950,10 @@
                             "archived": {
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
                             "external_kind": {
                               "enum": [
@@ -2005,6 +2097,33 @@
                       "description": "Named defaults for creating an entity of this schema"
                     },
                     "description": "Named entity creation templates"
+                  },
+                  "groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Stable group identifier"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Group display name"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Optional group description"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    },
+                    "description": "Named, presentation-only field groups"
                   },
                   "color": {
                     "anyOf": [
@@ -2126,6 +2245,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -2184,6 +2307,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -2244,6 +2371,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -2303,6 +2434,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -2361,6 +2496,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -2432,6 +2571,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -2518,6 +2661,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -2609,6 +2756,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -2753,6 +2904,33 @@
                       },
                       "description": "Named entity creation templates"
                     },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable group identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Group display name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Optional group description"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "description": "Named, presentation-only field groups, in display order"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -2820,6 +2998,7 @@
                     "key_prefix",
                     "fields",
                     "templates",
+                    "groups",
                     "color",
                     "icon",
                     "entity_count",
@@ -2925,6 +3104,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -2983,6 +3166,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -3043,6 +3230,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -3102,6 +3293,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -3160,6 +3355,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -3231,6 +3430,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -3317,6 +3520,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -3408,6 +3615,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -3552,6 +3763,33 @@
                       },
                       "description": "Named entity creation templates"
                     },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable group identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Group display name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Optional group description"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "description": "Named, presentation-only field groups, in display order"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -3619,6 +3857,7 @@
                     "key_prefix",
                     "fields",
                     "templates",
+                    "groups",
                     "color",
                     "icon",
                     "entity_count",
@@ -3713,6 +3952,10 @@
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "external_kind": {
                               "enum": [
                                 "ai",
@@ -3771,6 +4014,10 @@
                             "archived": {
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
                             "external_kind": {
                               "enum": [
@@ -3831,6 +4078,10 @@
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "external_kind": {
                               "enum": [
                                 "ai",
@@ -3890,6 +4141,10 @@
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "external_kind": {
                               "enum": [
                                 "ai",
@@ -3948,6 +4203,10 @@
                             "archived": {
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
                             "external_kind": {
                               "enum": [
@@ -4020,6 +4279,10 @@
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "external_kind": {
                               "enum": [
                                 "ai",
@@ -4083,6 +4346,10 @@
                             "archived": {
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
                             "external_kind": {
                               "enum": [
@@ -4174,6 +4441,10 @@
                             "archived": {
                               "type": "boolean",
                               "description": "Whether the field is archived (hidden, but data is retained)"
+                            },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
                             "external_kind": {
                               "enum": [
@@ -4317,6 +4588,33 @@
                       "description": "Named defaults for creating an entity of this schema"
                     },
                     "description": "Named entity creation templates"
+                  },
+                  "groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Stable group identifier"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Group display name"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Optional group description"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    },
+                    "description": "Named, presentation-only field groups"
                   },
                   "color": {
                     "anyOf": [
@@ -4467,6 +4765,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -4525,6 +4827,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -4585,6 +4891,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -4644,6 +4954,10 @@
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "external_kind": {
                                 "enum": [
                                   "ai",
@@ -4702,6 +5016,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -4773,6 +5091,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -4859,6 +5181,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -4950,6 +5276,10 @@
                               "archived": {
                                 "type": "boolean",
                                 "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
                               "external_kind": {
                                 "enum": [
@@ -5094,6 +5424,33 @@
                       },
                       "description": "Named entity creation templates"
                     },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable group identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Group display name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Optional group description"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "description": "Named, presentation-only field groups, in display order"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -5161,6 +5518,7 @@
                     "key_prefix",
                     "fields",
                     "templates",
+                    "groups",
                     "color",
                     "icon",
                     "entity_count",
@@ -5316,6 +5674,10 @@
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
                                 "external_kind": {
                                   "enum": [
                                     "ai",
@@ -5374,6 +5736,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -5434,6 +5800,10 @@
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
                                 "external_kind": {
                                   "enum": [
                                     "ai",
@@ -5493,6 +5863,10 @@
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
                                 },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
                                 "external_kind": {
                                   "enum": [
                                     "ai",
@@ -5551,6 +5925,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -5622,6 +6000,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -5708,6 +6090,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -5799,6 +6185,10 @@
                                 "archived": {
                                   "type": "boolean",
                                   "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
                                   "enum": [
@@ -5943,6 +6333,33 @@
                         },
                         "description": "Templates at this version"
                       },
+                      "groups": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable group identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Group display name"
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "Optional group description"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        "description": "Field groups at this version"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -5995,6 +6412,7 @@
                       "description",
                       "fields",
                       "templates",
+                      "groups",
                       "color",
                       "icon",
                       "changeSummary",
@@ -62430,6 +62848,10 @@
                                   "type": "string",
                                   "description": "Whether a response to this field is required or optional"
                                 },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
                                 "type": {
                                   "const": "rating",
                                   "description": "Numeric score field (1-5)"
@@ -62462,6 +62884,10 @@
                                       ],
                                       "type": "string",
                                       "description": "Whether a response to this field is required or optional"
+                                    },
+                                    "groupId": {
+                                      "type": "string",
+                                      "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                     },
                                     "type": {
                                       "const": "enum",
@@ -62498,6 +62924,10 @@
                                       ],
                                       "type": "string",
                                       "description": "Whether a response to this field is required or optional"
+                                    },
+                                    "groupId": {
+                                      "type": "string",
+                                      "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                     },
                                     "type": {
                                       "const": "enum",
@@ -62555,6 +62985,10 @@
                                   "type": "string",
                                   "description": "Whether a response to this field is required or optional"
                                 },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
                                 "type": {
                                   "const": "text",
                                   "description": "Free-text notes field"
@@ -62571,6 +63005,33 @@
                           "description": "Assessment field definition"
                         },
                         "description": "Assessment field definitions"
+                      },
+                      "groups": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable group identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Group display name"
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "Optional group description"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        "description": "Named, presentation-only field groups, in display order"
                       },
                       "assigned_team_ids": {
                         "type": "array",
@@ -62747,6 +63208,7 @@
                       "scope",
                       "scope_conditions",
                       "fields",
+                      "groups",
                       "assigned_team_ids",
                       "due_at",
                       "recurrence",
@@ -62882,6 +63344,10 @@
                               "type": "string",
                               "description": "Whether a response to this field is required or optional"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "type": {
                               "const": "rating",
                               "description": "Numeric score field (1-5)"
@@ -62914,6 +63380,10 @@
                                   ],
                                   "type": "string",
                                   "description": "Whether a response to this field is required or optional"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "type": {
                                   "const": "enum",
@@ -62950,6 +63420,10 @@
                                   ],
                                   "type": "string",
                                   "description": "Whether a response to this field is required or optional"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "type": {
                                   "const": "enum",
@@ -63007,6 +63481,10 @@
                               "type": "string",
                               "description": "Whether a response to this field is required or optional"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "type": {
                               "const": "text",
                               "description": "Free-text notes field"
@@ -63023,6 +63501,33 @@
                       "description": "Assessment field definition"
                     },
                     "description": "Assessment field definitions"
+                  },
+                  "groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Stable group identifier"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Group display name"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Optional group description"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    },
+                    "description": "Named, presentation-only field groups"
                   },
                   "assigned_team_ids": {
                     "type": "array",
@@ -63235,6 +63740,10 @@
                                 "type": "string",
                                 "description": "Whether a response to this field is required or optional"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "type": {
                                 "const": "rating",
                                 "description": "Numeric score field (1-5)"
@@ -63267,6 +63776,10 @@
                                     ],
                                     "type": "string",
                                     "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "groupId": {
+                                    "type": "string",
+                                    "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                   },
                                   "type": {
                                     "const": "enum",
@@ -63303,6 +63816,10 @@
                                     ],
                                     "type": "string",
                                     "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "groupId": {
+                                    "type": "string",
+                                    "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                   },
                                   "type": {
                                     "const": "enum",
@@ -63360,6 +63877,10 @@
                                 "type": "string",
                                 "description": "Whether a response to this field is required or optional"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Free-text notes field"
@@ -63376,6 +63897,33 @@
                         "description": "Assessment field definition"
                       },
                       "description": "Assessment field definitions"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable group identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Group display name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Optional group description"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "description": "Named, presentation-only field groups, in display order"
                     },
                     "assigned_team_ids": {
                       "type": "array",
@@ -63552,6 +64100,7 @@
                     "scope",
                     "scope_conditions",
                     "fields",
+                    "groups",
                     "assigned_team_ids",
                     "due_at",
                     "recurrence",
@@ -63715,6 +64264,10 @@
                                 "type": "string",
                                 "description": "Whether a response to this field is required or optional"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "type": {
                                 "const": "rating",
                                 "description": "Numeric score field (1-5)"
@@ -63747,6 +64300,10 @@
                                     ],
                                     "type": "string",
                                     "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "groupId": {
+                                    "type": "string",
+                                    "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                   },
                                   "type": {
                                     "const": "enum",
@@ -63783,6 +64340,10 @@
                                     ],
                                     "type": "string",
                                     "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "groupId": {
+                                    "type": "string",
+                                    "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                   },
                                   "type": {
                                     "const": "enum",
@@ -63840,6 +64401,10 @@
                                 "type": "string",
                                 "description": "Whether a response to this field is required or optional"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Free-text notes field"
@@ -63856,6 +64421,33 @@
                         "description": "Assessment field definition"
                       },
                       "description": "Assessment field definitions"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable group identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Group display name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Optional group description"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "description": "Named, presentation-only field groups, in display order"
                     },
                     "assigned_team_ids": {
                       "type": "array",
@@ -64032,6 +64624,7 @@
                     "scope",
                     "scope_conditions",
                     "fields",
+                    "groups",
                     "assigned_team_ids",
                     "due_at",
                     "recurrence",
@@ -64175,6 +64768,10 @@
                               "type": "string",
                               "description": "Whether a response to this field is required or optional"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "type": {
                               "const": "rating",
                               "description": "Numeric score field (1-5)"
@@ -64207,6 +64804,10 @@
                                   ],
                                   "type": "string",
                                   "description": "Whether a response to this field is required or optional"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "type": {
                                   "const": "enum",
@@ -64243,6 +64844,10 @@
                                   ],
                                   "type": "string",
                                   "description": "Whether a response to this field is required or optional"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "type": {
                                   "const": "enum",
@@ -64300,6 +64905,10 @@
                               "type": "string",
                               "description": "Whether a response to this field is required or optional"
                             },
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
                             "type": {
                               "const": "text",
                               "description": "Free-text notes field"
@@ -64316,6 +64925,33 @@
                       "description": "Assessment field definition"
                     },
                     "description": "Assessment field definitions"
+                  },
+                  "groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Stable group identifier"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Group display name"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Optional group description"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    },
+                    "description": "Named, presentation-only field groups"
                   },
                   "assigned_team_ids": {
                     "type": "array",
@@ -64528,6 +65164,10 @@
                                 "type": "string",
                                 "description": "Whether a response to this field is required or optional"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "type": {
                                 "const": "rating",
                                 "description": "Numeric score field (1-5)"
@@ -64560,6 +65200,10 @@
                                     ],
                                     "type": "string",
                                     "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "groupId": {
+                                    "type": "string",
+                                    "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                   },
                                   "type": {
                                     "const": "enum",
@@ -64596,6 +65240,10 @@
                                     ],
                                     "type": "string",
                                     "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "groupId": {
+                                    "type": "string",
+                                    "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                   },
                                   "type": {
                                     "const": "enum",
@@ -64653,6 +65301,10 @@
                                 "type": "string",
                                 "description": "Whether a response to this field is required or optional"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Free-text notes field"
@@ -64669,6 +65321,33 @@
                         "description": "Assessment field definition"
                       },
                       "description": "Assessment field definitions"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable group identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Group display name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Optional group description"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "description": "Named, presentation-only field groups, in display order"
                     },
                     "assigned_team_ids": {
                       "type": "array",
@@ -64845,6 +65524,7 @@
                     "scope",
                     "scope_conditions",
                     "fields",
+                    "groups",
                     "assigned_team_ids",
                     "due_at",
                     "recurrence",
@@ -65087,6 +65767,10 @@
                                 "type": "string",
                                 "description": "Whether a response to this field is required or optional"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "type": {
                                 "const": "rating",
                                 "description": "Numeric score field (1-5)"
@@ -65119,6 +65803,10 @@
                                     ],
                                     "type": "string",
                                     "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "groupId": {
+                                    "type": "string",
+                                    "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                   },
                                   "type": {
                                     "const": "enum",
@@ -65155,6 +65843,10 @@
                                     ],
                                     "type": "string",
                                     "description": "Whether a response to this field is required or optional"
+                                  },
+                                  "groupId": {
+                                    "type": "string",
+                                    "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                   },
                                   "type": {
                                     "const": "enum",
@@ -65212,6 +65904,10 @@
                                 "type": "string",
                                 "description": "Whether a response to this field is required or optional"
                               },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Free-text notes field"
@@ -65228,6 +65924,33 @@
                         "description": "Assessment field definition"
                       },
                       "description": "Assessment field definitions"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable group identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Group display name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Optional group description"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "description": "Named, presentation-only field groups, in display order"
                     },
                     "assigned_team_ids": {
                       "type": "array",
@@ -65404,6 +66127,7 @@
                     "scope",
                     "scope_conditions",
                     "fields",
+                    "groups",
                     "assigned_team_ids",
                     "due_at",
                     "recurrence",

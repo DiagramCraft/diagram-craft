@@ -147,6 +147,45 @@
   background: var(--cmp-bg);
 }
 
+.groupSection {
+  border-top: 1px solid var(--panel-border);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.groupName {
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.groupDescription {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.groupActions {
+  display: flex;
+  gap: 4px;
+}
+
+.groupEmpty {
+  padding: 12px 10px;
+  color: var(--cmp-fg-disabled);
+  text-align: center;
+  font-size: 11px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
 .formActions {
   display: flex;
   align-items: center;

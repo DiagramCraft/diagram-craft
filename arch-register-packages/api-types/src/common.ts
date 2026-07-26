@@ -24,6 +24,14 @@ export const foreignKeySchema = z.object({
   name: z.string()
 });
 
+export const namedGroupSchema = z.object({
+  id: z.string().min(1).describe('Stable group identifier'),
+  name: z.string().min(1).describe('Group display name'),
+  description: z.string().optional().describe('Optional group description')
+});
+
+export type NamedGroup = z.infer<typeof namedGroupSchema>;
+
 export const teamRoleSchema = z.enum(['team_admin', 'team_editor', 'team_reviewer']);
 
 export const workspaceCapabilitySchema = z.enum([

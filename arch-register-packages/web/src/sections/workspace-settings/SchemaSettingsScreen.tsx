@@ -6,7 +6,9 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TypeBadge } from '../../components/TypeBadge';
-import { TbPlus, TbCode, TbEdit, TbGripVertical, TbTrash } from 'react-icons/tb';
+import { TbPlus, TbCode, TbEdit, TbGripVertical, TbTrash, TbDots } from 'react-icons/tb';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 import { Title } from '../../components/Title';
 import { resolveSchemaColor, FIELD_TYPES, SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
@@ -27,10 +29,12 @@ import {
   EntityTemplate,
   FieldMigrations,
   PendingFieldChange,
-  SchemaField
+  SchemaField,
+  SchemaGroup
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { EmptyState } from '../../components/EmptyState';
+import { GroupDialog } from '../../components/GroupsEditor';
 import { toFieldId } from '../../utils/fieldId';
 import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
@@ -59,6 +63,7 @@ export const SchemaSettingsScreen = () => {
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
   const [templates, setTemplates] = useState<EntityTemplate[]>([]);
+  const [groups, setGroups] = useState<SchemaGroup[]>([]);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
   const [entityApprovalPolicy, setEntityApprovalPolicy] = useState<'required' | 'disabled'>(
@@ -72,6 +77,8 @@ export const SchemaSettingsScreen = () => {
   const [editingTemplate, setEditingTemplate] = useState<EntityTemplate | null>(null);
   const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<SchemaGroup | null>(null);
   const fieldKeysRef = useRef<Map<string, string>>(new Map());
 
   const createSchemaMutation = useCreateSchema(workspaceSlug);
@@ -99,6 +106,7 @@ export const SchemaSettingsScreen = () => {
       setDescription(selected.description);
       setFields(selected.fields);
       setTemplates(selected.templates);
+      setGroups(selected.groups);
       setColor(selected.color);
       setIcon(selected.icon);
       setEntityApprovalPolicy(selected.entity_approval_policy ?? 'disabled');
@@ -107,6 +115,8 @@ export const SchemaSettingsScreen = () => {
       setTemplateDialogOpen(false);
       setShowHistory(false);
       setPendingFieldChanges(null);
+      setGroupDialogOpen(false);
+      setEditingGroup(null);
       fieldKeysRef.current.clear();
     }
   }, [selected]);
@@ -123,6 +133,7 @@ export const SchemaSettingsScreen = () => {
             description,
             fields,
             templates,
+            groups,
             color,
             icon,
             entity_approval_policy: entityApprovalPolicy,
@@ -148,6 +159,7 @@ export const SchemaSettingsScreen = () => {
       description,
       fields,
       templates,
+      groups,
       color,
       icon,
       dirty,
@@ -233,10 +245,15 @@ export const SchemaSettingsScreen = () => {
     setDirty(true);
   };
 
-  const addField = () => {
+  const addField = (groupId?: string) => {
     const id = toFieldId('new_field');
     fieldKeysRef.current.set(id, crypto.randomUUID());
-    const newField: SchemaField = { id, name: 'new_field', type: 'text' };
+    const newField: SchemaField = {
+      id,
+      name: 'new_field',
+      type: 'text',
+      ...(groupId && { groupId })
+    };
     setFields(prev => [...prev, newField]);
     setDirty(true);
   };
@@ -303,9 +320,60 @@ export const SchemaSettingsScreen = () => {
     setTemplateDialogOpen(false);
   };
 
+  const openNewGroup = () => {
+    setEditingGroup(null);
+    setGroupDialogOpen(true);
+  };
+
+  const saveGroup = (group: SchemaGroup) => {
+    setGroups(current =>
+      current.some(item => item.id === group.id)
+        ? current.map(item => (item.id === group.id ? group : item))
+        : [...current, group]
+    );
+    setDirty(true);
+    setGroupDialogOpen(false);
+  };
+
+  const removeGroup = (groupId: string) => {
+    setGroups(current => current.filter(g => g.id !== groupId));
+    setFields(current =>
+      current.map(f => (f.groupId === groupId ? { ...f, groupId: undefined } : f))
+    );
+    setDirty(true);
+  };
+
   if (activeTab === 'enums') {
     return <EnumEditorScreen />;
   }
+
+  const groupIds = new Set(groups.map(g => g.id));
+  const ungroupedFields = fields.filter(f => !f.groupId || !groupIds.has(f.groupId));
+  const fieldsByGroup = new Map<string, SchemaField[]>();
+  for (const group of groups) fieldsByGroup.set(group.id, []);
+  for (const f of fields) {
+    if (f.groupId && groupIds.has(f.groupId)) fieldsByGroup.get(f.groupId)!.push(f);
+  }
+
+  const renderFieldRow = (f: SchemaField) => {
+    const hasOtherContainment = fields.some(
+      other => other.id !== f.id && other.type === 'containment'
+    );
+    return (
+      <FieldRow
+        key={fieldKeysRef.current.get(f.id) ?? f.id}
+        field={f}
+        schemas={schemas}
+        enums={enums}
+        groups={groups}
+        onUpdate={patch => updateField(f.id, patch)}
+        onChangeType={t => changeFieldType(f.id, t)}
+        onRemove={canEdit ? () => removeField(f.id) : undefined}
+        containmentDisabled={hasOtherContainment}
+        canEdit={canEdit}
+      />
+    );
+  };
 
   return (
     <div className={styles.screen}>
@@ -480,13 +548,18 @@ export const SchemaSettingsScreen = () => {
               <div className={styles.fieldsHead}>
                 <div className={styles.sectionLabel}>Fields</div>
                 {canEdit && (
-                  <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
-                    Add field
-                  </Button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openNewGroup}>
+                      Add group
+                    </Button>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => addField()}>
+                      Add field
+                    </Button>
+                  </div>
                 )}
               </div>
 
-              {fields.length > 0 ? (
+              {fields.length > 0 || groups.length > 0 ? (
                 <div className={styles.fieldsTable}>
                   <div className={styles.fieldsTh}>
                     <span />
@@ -498,24 +571,52 @@ export const SchemaSettingsScreen = () => {
                     <span>External</span>
                     <span />
                   </div>
-                  {fields.map(f => {
-                    const hasOtherContainment = fields.some(
-                      other => other.id !== f.id && other.type === 'containment'
-                    );
-                    return (
-                      <FieldRow
-                        key={fieldKeysRef.current.get(f.id) ?? f.id}
-                        field={f}
-                        schemas={schemas}
-                        enums={enums}
-                        onUpdate={patch => updateField(f.id, patch)}
-                        onChangeType={t => changeFieldType(f.id, t)}
-                        onRemove={canEdit ? () => removeField(f.id) : undefined}
-                        containmentDisabled={hasOtherContainment}
-                        canEdit={canEdit}
-                      />
-                    );
-                  })}
+                  {ungroupedFields.map(f => renderFieldRow(f))}
+                  {groups.map(group => (
+                    <div className={styles.groupSection} key={group.id}>
+                      <div className={styles.groupHeader}>
+                        <div>
+                          <div className={styles.groupName}>{group.name}</div>
+                          {group.description && (
+                            <div className={styles.groupDescription}>{group.description}</div>
+                          )}
+                        </div>
+                        {canEdit && (
+                          <div className={styles.groupActions}>
+                            <Button
+                              variant="ghost"
+                              icon={<TbPlus size={11} />}
+                              onClick={() => addField(group.id)}
+                            >
+                              Add field
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              icon={<TbEdit size={12} />}
+                              onClick={() => {
+                                setEditingGroup(group);
+                                setGroupDialogOpen(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              icon={<TbTrash size={12} />}
+                              onClick={() => removeGroup(group.id)}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      {(fieldsByGroup.get(group.id) ?? []).length > 0 ? (
+                        (fieldsByGroup.get(group.id) ?? []).map(f => renderFieldRow(f))
+                      ) : (
+                        <div className={styles.groupEmpty}>No fields in this group.</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className={styles.fieldsTable}>
@@ -648,6 +749,13 @@ export const SchemaSettingsScreen = () => {
         onCancel={() => setPendingFieldChanges(null)}
         onConfirm={confirmFieldMigrations}
       />
+      <GroupDialog
+        open={groupDialogOpen}
+        onClose={() => setGroupDialogOpen(false)}
+        onSave={saveGroup}
+        group={editingGroup}
+        groups={groups}
+      />
       {selected && (
         <EntityTemplateDialog
           open={templateDialogOpen}
@@ -665,10 +773,13 @@ export const SchemaSettingsScreen = () => {
   );
 };
 
+const NO_GROUP = '__no_group__';
+
 const FieldRow = ({
   field,
   schemas,
   enums,
+  groups,
   onUpdate,
   onChangeType,
   onRemove,
@@ -678,6 +789,7 @@ const FieldRow = ({
   field: SchemaField;
   schemas: EntitySchema[];
   enums: WorkspaceEnum[];
+  groups: SchemaGroup[];
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
   onRemove?: () => void;
@@ -932,10 +1044,42 @@ const FieldRow = ({
           </Select.Root>
         )}
       </div>
-      {onRemove && (
-        <button type="button" className={styles.iconBtn} onClick={onRemove}>
-          <TbTrash size={13} />
-        </button>
+      {canEdit && (
+        <MenuButton.Root>
+          <MenuButton.Trigger
+            element={
+              <button type="button" className={styles.iconBtn}>
+                <TbDots size={13} />
+              </button>
+            }
+          />
+          <MenuButton.Menu>
+            <Menu.SubMenu label="Move to group">
+              <Menu.RadioGroup value={field.groupId ?? NO_GROUP}>
+                <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
+                  No group
+                </Menu.RadioItem>
+                {groups.map(group => (
+                  <Menu.RadioItem
+                    key={group.id}
+                    value={group.id}
+                    onClick={() => onUpdate({ groupId: group.id })}
+                  >
+                    {group.name}
+                  </Menu.RadioItem>
+                ))}
+              </Menu.RadioGroup>
+            </Menu.SubMenu>
+            {onRemove && (
+              <>
+                <Menu.Separator />
+                <Menu.Item type="danger" onClick={onRemove}>
+                  Delete field
+                </Menu.Item>
+              </>
+            )}
+          </MenuButton.Menu>
+        </MenuButton.Root>
       )}
     </div>
   );

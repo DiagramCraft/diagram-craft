@@ -12,7 +12,7 @@ import {
   TreeViewConfig
 } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityTemplate, SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { EntityRole } from '@arch-register/permissions';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
@@ -76,6 +76,7 @@ export type SchemaDbResult = {
   description: string;
   fields: SchemaField[];
   templates?: EntityTemplate[];
+  groups?: SchemaGroup[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
@@ -103,6 +104,7 @@ export type SchemaVersionDbResult = {
   description: string;
   fields: SchemaField[];
   templates: EntityTemplate[];
+  groups: SchemaGroup[];
   color: string | null;
   icon: string | null;
   change_summary: Record<string, unknown>;
@@ -367,6 +369,7 @@ export const catalogMappers = {
     description: String(row['description'] ?? ''),
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema.templates'),
+    groups: parseDatabaseJson(row['groups'], [], 'entity_schema.groups'),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
@@ -390,6 +393,7 @@ export const catalogMappers = {
     description: String(row['description'] ?? ''),
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema_version.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema_version.templates'),
+    groups: parseDatabaseJson(row['groups'], [], 'entity_schema_version.groups'),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     change_summary: parseDatabaseJson(

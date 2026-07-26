@@ -7,6 +7,7 @@ import {
   EntityTemplate,
   FieldMigrations,
   SchemaField,
+  SchemaGroup,
   SchemaVersion
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
@@ -18,6 +19,7 @@ type SchemaMutationPayload = {
   description: string;
   fields: InternalEntitySchema['fields'];
   templates: EntityTemplate[];
+  groups: SchemaGroup[];
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
@@ -179,6 +181,47 @@ export const normalizeEntityTemplates = (
   });
 };
 
+export const normalizeSchemaGroups = (groups: unknown): SchemaGroup[] => {
+  if (groups === undefined) return [];
+  httpAssert.true(Array.isArray(groups), { message: 'Schema groups must be an array' });
+  const groupList = groups as unknown[];
+
+  const ids = new Set<string>();
+  const names = new Set<string>();
+
+  return groupList.map(rawGroup => {
+    const group = rawGroup as Record<string, unknown>;
+    httpAssert.json(group, { message: 'Schema groups must be objects' });
+    httpAssert.string(group.id, { message: 'Group id is required and must be a string' });
+    httpAssert.string(group.name, { message: 'Group name is required and must be a string' });
+    const id = group.id.trim();
+    const name = group.name.trim();
+    httpAssert.true(id.length > 0, { message: 'Group id cannot be empty' });
+    httpAssert.true(name.length > 0, { message: 'Group name cannot be empty' });
+    httpAssert.true(!ids.has(id), { message: `Duplicate group id '${id}'` });
+    httpAssert.true(!names.has(name.toLowerCase()), { message: `Duplicate group name '${name}'` });
+    ids.add(id);
+    names.add(name.toLowerCase());
+
+    const description =
+      typeof group.description === 'string' && group.description.trim() !== ''
+        ? group.description.trim()
+        : undefined;
+
+    return description ? { id, name, description } : { id, name };
+  });
+};
+
+export const clearOrphanedGroupIds = <F extends { groupId?: string }>(
+  fields: F[],
+  groups: SchemaGroup[]
+): F[] => {
+  const groupIds = new Set(groups.map(group => group.id));
+  return fields.map(field =>
+    field.groupId && !groupIds.has(field.groupId) ? { ...field, groupId: undefined } : field
+  );
+};
+
 export const buildCreateSchemaInput = (
   workspace: string,
   body: Record<string, unknown>,
@@ -192,6 +235,7 @@ export const buildCreateSchemaInput = (
     description = '',
     fields = [],
     templates = [],
+    groups = [],
     color,
     icon,
     default_owner,
@@ -199,7 +243,8 @@ export const buildCreateSchemaInput = (
     deprecation_policy
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
-  const normalizedFields = normalizeSchemaFields(fields);
+  const normalizedGroups = normalizeSchemaGroups(groups);
+  const normalizedFields = clearOrphanedGroupIds(normalizeSchemaFields(fields), normalizedGroups);
 
   return {
     id: idFactory(),
@@ -212,6 +257,7 @@ export const buildCreateSchemaInput = (
     description: typeof description === 'string' ? description : '',
     fields: normalizedFields,
     templates: normalizeEntityTemplates(templates, normalizedFields),
+    groups: normalizedGroups,
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -238,6 +284,7 @@ export const buildUpdateSchemaInput = (
     description,
     fields,
     templates,
+    groups,
     color,
     icon,
     default_owner,
@@ -245,7 +292,10 @@ export const buildUpdateSchemaInput = (
     deprecation_policy
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
-  const normalizedFields = fields !== undefined ? normalizeSchemaFields(fields) : current.fields;
+  const normalizedGroups =
+    groups !== undefined ? normalizeSchemaGroups(groups) : (current.groups ?? []);
+  const rawFields = fields !== undefined ? normalizeSchemaFields(fields) : current.fields;
+  const normalizedFields = clearOrphanedGroupIds(rawFields, normalizedGroups);
 
   return {
     name,
@@ -261,6 +311,7 @@ export const buildUpdateSchemaInput = (
         : current.description,
     fields: normalizedFields,
     templates: normalizeEntityTemplates(templates ?? current.templates ?? [], normalizedFields),
+    groups: normalizedGroups,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
     defaultOwner:
@@ -429,6 +480,7 @@ export const toApiSchema = (
     key_prefix: schema.key_prefix,
     fields,
     templates: schema.templates ?? [],
+    groups: schema.groups ?? [],
     color: schema.color,
     icon: schema.icon,
     entity_count: entityCount,
@@ -491,6 +543,7 @@ export const toApiSchemaVersion = (
     description: string;
     fields: SchemaField[];
     templates: EntityTemplate[];
+    groups: SchemaGroup[];
     color: string | null;
     icon: string | null;
     change_summary: Record<string, unknown>;
@@ -504,6 +557,7 @@ export const toApiSchemaVersion = (
   description: row.description,
   fields: resolveSelectFieldOptions(row.fields, enums),
   templates: row.templates,
+  groups: row.groups,
   color: row.color,
   icon: row.icon,
   changeSummary: row.change_summary,

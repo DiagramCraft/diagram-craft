@@ -47,6 +47,7 @@ const assessment = (id: string, projectId: string): AssessmentDbResult => ({
   mode: 'fields',
   scope: [],
   scope_conditions: [],
+  groups: [],
   assigned_team_ids: [],
   due_at: null,
   recurrence: { type: 'none' },
@@ -166,6 +167,19 @@ describe('updateAssessmentStatus', () => {
     await updateAssessmentStatus(db, 'ws-1', 'assessment-1', { status: 'open' }, event);
 
     expect(governance.createCase).not.toHaveBeenCalled();
+  });
+
+  it('preserves groups on a status-only update', async () => {
+    const { db } = makeDb({ groups: [{ id: 'g1', name: 'Basics' }] });
+
+    await updateAssessmentStatus(db, 'ws-1', 'assessment-1', { status: 'open' }, event);
+
+    expect(db.project.updateAssessment).toHaveBeenCalledWith(
+      'ws-1',
+      'project-1',
+      'assessment-1',
+      expect.objectContaining({ groups: [{ id: 'g1', name: 'Basics' }] })
+    );
   });
 
   it('closes the open governance case when the assessment leaves open status', async () => {

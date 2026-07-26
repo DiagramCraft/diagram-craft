@@ -86,38 +86,57 @@ export const EntityOverviewTab = ({
     milestones.filter(milestone => futureSnapshotProjectIds.includes(milestone.project_id))
   );
 
+  const renderPropertyRow = (f: EntitySchema['fields'][number]) => (
+    <PropertyRow
+      key={f.id}
+      field={f}
+      value={entity[f.id]}
+      editing={editing}
+      editValue={editState[f.id]}
+      onChange={v => {
+        setEditState(s => ({ ...s, [f.id]: v }));
+        if (validationErrors.has(f.id))
+          setValidationErrors(s => {
+            const n = new Set(s);
+            n.delete(f.id);
+            return n;
+          });
+      }}
+      refLookup={refLookup}
+      referenceOptions={referenceOptions}
+      hasError={validationErrors.has(f.id)}
+      externalMeta={entity._externalMetadata?.[f.id]}
+    />
+  );
+
+  const ungroupedFields = schema?.fields.filter(f => !f.groupId) ?? [];
+  const groupedSections = (schema?.groups ?? [])
+    .map(group => ({ group, fields: schema!.fields.filter(f => f.groupId === group.id) }))
+    .filter(section => section.fields.length > 0);
+
   return (
     <div className={styles.overviewGrid}>
       <div className={styles.propsPanel}>
         {schema && schema.fields.length > 0 && (
           <>
-            <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
-              Properties
-            </div>
-            <div className={styles.propList}>
-              {schema.fields.map(f => (
-                <PropertyRow
-                  key={f.id}
-                  field={f}
-                  value={entity[f.id]}
-                  editing={editing}
-                  editValue={editState[f.id]}
-                  onChange={v => {
-                    setEditState(s => ({ ...s, [f.id]: v }));
-                    if (validationErrors.has(f.id))
-                      setValidationErrors(s => {
-                        const n = new Set(s);
-                        n.delete(f.id);
-                        return n;
-                      });
-                  }}
-                  refLookup={refLookup}
-                  referenceOptions={referenceOptions}
-                  hasError={validationErrors.has(f.id)}
-                  externalMeta={entity._externalMetadata?.[f.id]}
-                />
-              ))}
-            </div>
+            {ungroupedFields.length > 0 && (
+              <>
+                <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
+                  Properties
+                </div>
+                <div className={styles.propList}>{ungroupedFields.map(renderPropertyRow)}</div>
+              </>
+            )}
+            {groupedSections.map(({ group, fields: groupFields }) => (
+              <div key={group.id}>
+                <hr className={styles.divider} />
+                <div className={styles.sectionLabel}>{group.name}</div>
+                {group.description && (
+                  <div className={styles.groupDescription}>{group.description}</div>
+                )}
+                <div className={styles.propList}>{groupFields.map(renderPropertyRow)}</div>
+              </div>
+            ))}
           </>
         )}
       </div>

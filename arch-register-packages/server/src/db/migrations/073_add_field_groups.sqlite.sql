@@ -1,0 +1,3 @@
+ALTER TABLE entity_schema ADD COLUMN groups TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE entity_schema_version ADD COLUMN groups TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE assessment ADD COLUMN groups TEXT NOT NULL DEFAULT '[]';

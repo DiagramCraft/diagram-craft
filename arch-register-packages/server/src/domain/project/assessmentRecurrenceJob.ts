@@ -25,6 +25,7 @@ const toUpdateInput = (
   scope: row.scope,
   scope_conditions: row.scope_conditions,
   fields: row.fields,
+  groups: row.groups,
   assigned_team_ids: row.assigned_team_ids,
   due_at: row.due_at,
   recurrence: row.recurrence,

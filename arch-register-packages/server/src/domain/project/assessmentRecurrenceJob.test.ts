@@ -39,6 +39,7 @@ const baseRow = (overrides: Partial<AssessmentDbResult> = {}): AssessmentDbResul
   pending_occurrence_job_run_id: null,
   next_occurrence_at: null,
   fields: [],
+  groups: [],
   created_at: now,
   updated_at: now,
   ...overrides
@@ -119,6 +120,15 @@ describe('scheduleNextAssessmentOccurrence', () => {
     );
     expect(result.pending_occurrence_job_run_id).toBe('run-1');
     expect(result.next_occurrence_at).toEqual(new Date('2026-06-08T12:00:00.000Z'));
+  });
+
+  it('preserves groups when scheduling the next occurrence', async () => {
+    const row = baseRow({ groups: [{ id: 'g1', name: 'Basics' }] });
+    const { db } = makeDb(row);
+
+    const result = await scheduleNextAssessmentOccurrence(db, 'ws-1', row, now);
+
+    expect(result.groups).toEqual([{ id: 'g1', name: 'Basics' }]);
   });
 });
 

@@ -32,6 +32,7 @@ const schema: EntitySchema = {
     }
   ],
   templates: [],
+  groups: [],
   color: null,
   icon: null,
   entity_count: 0,

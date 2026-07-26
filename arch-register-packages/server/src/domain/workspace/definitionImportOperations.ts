@@ -624,6 +624,7 @@ export const executeDefinitionImport = async (
             description: row.description,
             fields,
             templates: [],
+            groups: [],
             color: row.color,
             icon: row.icon,
             change_summary: buildSchemaChangeSummary(null, fields),

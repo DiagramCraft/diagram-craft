@@ -130,3 +130,28 @@
 .st-complete {
   background: var(--green);
 }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--panel-border);
+  margin: 4px 0;
+}
+
+.groupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.groupLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--cmp-fg-disabled);
+}
+
+.groupDescription {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-top: -6px;
+}

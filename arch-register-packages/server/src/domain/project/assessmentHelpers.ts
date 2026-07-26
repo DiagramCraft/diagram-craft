@@ -8,12 +8,26 @@ import { httpAssert } from '../../utils/httpAssert';
 import {
   Assessment,
   AssessmentField,
+  AssessmentGroup,
   AssessmentRecurrence
 } from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 const toAssessmentFields = (value: unknown, fallback: AssessmentField[]) =>
   Array.isArray(value) ? (value as AssessmentField[]) : fallback;
+
+const toAssessmentGroups = (value: unknown, fallback: AssessmentGroup[]) =>
+  Array.isArray(value) ? (value as AssessmentGroup[]) : fallback;
+
+const clearOrphanedGroupIds = <F extends { groupId?: string }>(
+  fields: F[],
+  groups: AssessmentGroup[]
+): F[] => {
+  const groupIds = new Set(groups.map(group => group.id));
+  return fields.map(field =>
+    field.groupId && !groupIds.has(field.groupId) ? { ...field, groupId: undefined } : field
+  );
+};
 
 const toScope = (value: unknown, fallback: string[]) =>
   Array.isArray(value) ? (value as string[]) : fallback;
@@ -62,6 +76,7 @@ export const buildCreateAssessmentInput = (
     scope,
     scope_conditions,
     fields,
+    groups,
     assigned_team_ids,
     due_at,
     recurrence,
@@ -69,6 +84,8 @@ export const buildCreateAssessmentInput = (
   } = body;
   httpAssert.string(project_id, { message: 'project_id is required and must be a string' });
   httpAssert.string(name, { message: 'name is required and must be a string' });
+
+  const normalizedGroups = toAssessmentGroups(groups, []);
 
   return {
     id: randomUUID(),
@@ -80,7 +97,8 @@ export const buildCreateAssessmentInput = (
     mode: toAssessmentMode(mode, 'fields'),
     scope: toScope(scope, []),
     scope_conditions: toScopeConditions(scope_conditions, []),
-    fields: toAssessmentFields(fields, []),
+    fields: clearOrphanedGroupIds(toAssessmentFields(fields, []), normalizedGroups),
+    groups: normalizedGroups,
     assigned_team_ids: toAssignedTeamIds(assigned_team_ids, []),
     due_at: toDueAt(due_at, null),
     recurrence: toAssessmentRecurrence(recurrence, { type: 'none' }),
@@ -105,12 +123,15 @@ export const buildUpdateAssessmentInput = (
     scope,
     scope_conditions,
     fields,
+    groups,
     assigned_team_ids,
     due_at,
     recurrence,
     response_window_days
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
+
+  const normalizedGroups = toAssessmentGroups(groups, existing.groups ?? []);
 
   return {
     name,
@@ -119,7 +140,8 @@ export const buildUpdateAssessmentInput = (
     mode: toAssessmentMode(mode, existing.mode),
     scope: toScope(scope, existing.scope),
     scope_conditions: toScopeConditions(scope_conditions, existing.scope_conditions),
-    fields: toAssessmentFields(fields, existing.fields),
+    fields: clearOrphanedGroupIds(toAssessmentFields(fields, existing.fields), normalizedGroups),
+    groups: normalizedGroups,
     assigned_team_ids: toAssignedTeamIds(assigned_team_ids, existing.assigned_team_ids),
     due_at: toDueAt(due_at, existing.due_at),
     recurrence: toAssessmentRecurrence(recurrence, existing.recurrence),
@@ -157,6 +179,7 @@ export const toApiAssessment = (
   scope: row.scope,
   scope_conditions: row.scope_conditions,
   fields: row.fields,
+  groups: row.groups,
   assigned_team_ids: row.assigned_team_ids,
   due_at: row.due_at ? row.due_at.toISOString() : null,
   recurrence: row.recurrence,

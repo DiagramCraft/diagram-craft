@@ -7,6 +7,7 @@ import {
   EntityTemplate,
   FieldMigrations,
   SchemaField,
+  SchemaGroup,
   SchemaMigrationRequiredError
 } from '@arch-register/api-types/schemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -69,6 +70,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         description?: string;
         fields: SchemaField[];
         templates?: EntityTemplate[];
+        groups?: SchemaGroup[];
         color?: string | null;
         icon?: string | null;
         entity_approval_policy?: 'required' | 'disabled';
@@ -92,6 +94,7 @@ export const useUpdateSchema = (workspaceId: string) => {
                   description: variables.data.description ?? schema.description,
                   fields: variables.data.fields as EntitySchema['fields'],
                   templates: variables.data.templates ?? schema.templates,
+                  groups: variables.data.groups ?? schema.groups,
                   color: variables.data.color ?? schema.color,
                   icon: variables.data.icon ?? schema.icon,
                   entity_approval_policy:

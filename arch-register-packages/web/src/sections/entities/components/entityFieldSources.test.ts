@@ -60,6 +60,7 @@ const assessment: Assessment = {
     { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating' },
     { id: 'enum1', label: 'Risk', requirementLevel: 'optional', type: 'enum', enumId: 'risk-enum' }
   ],
+  groups: [],
   assigned_team_ids: [],
   due_at: null,
   recurrence: { type: 'none' },

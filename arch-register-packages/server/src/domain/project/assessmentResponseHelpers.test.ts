@@ -29,6 +29,7 @@ const makeAssessment = (overrides: Partial<AssessmentDbResult> = {}): Assessment
     },
     { id: 'f2', label: 'Notes', type: 'text', requirementLevel: 'optional' }
   ],
+  groups: [],
   assigned_team_ids: [],
   due_at: null,
   recurrence: { type: 'none' },
