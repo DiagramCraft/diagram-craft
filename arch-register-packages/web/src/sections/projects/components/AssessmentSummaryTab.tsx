@@ -71,6 +71,7 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
         ) : (
           assessment.fields.map(field => {
             if (field.type === 'rating') {
+              const max = field.max ?? 5;
               const values = responses
                 .map(r => r.values[field.id])
                 .filter((v): v is number => typeof v === 'number');
@@ -79,8 +80,10 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
               return (
                 <div key={field.id} className={styles.card}>
                   <div className={styles.cardTitle}>{field.label}</div>
-                  <div className={styles.statBig}>{avg !== null ? avg.toFixed(1) : '—'} / 5</div>
-                  {avg !== null && <ProgressBar pct={(avg / 5) * 100} />}
+                  <div className={styles.statBig}>
+                    {avg !== null ? avg.toFixed(1) : '—'} / {max}
+                  </div>
+                  {avg !== null && <ProgressBar pct={(avg / max) * 100} />}
                   <div className={styles.statSub}>
                     {values.length} of {total} answered
                   </div>

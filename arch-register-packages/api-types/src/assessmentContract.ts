@@ -24,7 +24,14 @@ const baseAssessmentFieldSchema = z.object({
 const assessmentGroupSchema = namedGroupSchema;
 
 const ratingAssessmentFieldSchema = baseAssessmentFieldSchema.extend({
-  type: z.literal('rating').describe('Numeric score field (1-5)')
+  type: z.literal('rating').describe('Numeric score field (1-5 by default)'),
+  max: z
+    .number()
+    .int()
+    .min(2)
+    .max(10)
+    .optional()
+    .describe('Upper bound of the rating scale; defaults to 5 when omitted')
 });
 
 const assessmentEnumOptionSchema = z.object({

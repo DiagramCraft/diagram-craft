@@ -179,11 +179,14 @@
         - @id:ar.assessments.definitions Users can create and edit assessment definitions with status, scope, filters,
           and required or optional fields, start from built-in assessment templates, or configure a confirm-only mode
           with no fields. Enum fields can reference reusable workspace enums or define assessment-local option values.
-          Read-only derived fields can calculate typed values from sibling responses and are excluded from response
+          Rating fields use a 1-5 scale by default but a template or definition can widen it up to 1-10. Read-only
+          derived fields can calculate typed values from sibling responses and are excluded from response
           completeness and status. Fields can be organized into named, presentation-only groups (with an optional
           description) that render as labeled sections in the assessment editor and the per-entity assessment
           accordion; this is purely visual and does not affect the assessment grid/results view, where fields remain
-          flat table columns.
+          flat table columns. The built-in "Business fit vs. technical fit" template scores both dimensions on a
+          1-10 scale and includes a derived TIME quadrant (Tolerate / Invest / Migrate / Eliminate) field computed
+          from the two ratings.
 
         - @id:ar.assessments.responses Reviewers can fill in assessment responses for in-scope entities from an
           assessment grid or entity detail view, or, for confirm-only assessments, record a single "confirmed

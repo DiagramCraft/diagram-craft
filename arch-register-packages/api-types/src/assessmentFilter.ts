@@ -81,5 +81,29 @@ export const matchesAssessmentConditions = (
       return true;
     }
 
+    if (field?.type === 'derived') {
+      if (field.resultType === 'rating' || field.resultType === 'number') {
+        if (typeof value !== 'number') return false;
+        if (condition.op === 'gte') return value >= Number(condition.value);
+        if (condition.op === 'lte') return value <= Number(condition.value);
+        return true;
+      }
+
+      if (field.resultType === 'select') {
+        if (condition.op === 'empty') return value === undefined;
+        if (value === undefined) return false;
+        if (condition.op === 'equals') return String(value) === condition.value;
+        if (condition.op === 'not_equals') return String(value) !== condition.value;
+        return true;
+      }
+
+      const str = value === undefined ? '' : String(value);
+      if (condition.op === 'empty') return str === '';
+      if (condition.op === 'not_empty') return str !== '';
+      if (condition.op === 'contains')
+        return str.toLowerCase().includes(String(condition.value ?? '').toLowerCase());
+      return true;
+    }
+
     return true;
   });

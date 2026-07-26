@@ -58,7 +58,19 @@ const assessment: Assessment = {
   scope_conditions: [],
   fields: [
     { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating' },
-    { id: 'enum1', label: 'Risk', requirementLevel: 'optional', type: 'enum', enumId: 'risk-enum' }
+    { id: 'enum1', label: 'Risk', requirementLevel: 'optional', type: 'enum', enumId: 'risk-enum' },
+    {
+      id: 'quadrant1',
+      label: 'Quadrant',
+      requirementLevel: 'optional',
+      type: 'derived',
+      resultType: 'select',
+      expression: 'field("rating1")',
+      options: [
+        { value: 'invest', label: 'Invest' },
+        { value: 'tolerate', label: 'Tolerate' }
+      ]
+    }
   ],
   groups: [],
   assigned_team_ids: [],
@@ -122,6 +134,11 @@ describe('getCategoricalFields', () => {
     const fields = getCategoricalFields([schema], [], [], joinedAssessment, true);
     expect(fields.some(f => f.id === '_assessment:rating1')).toBe(true);
   });
+
+  it('includes derived select assessment fields', () => {
+    const fields = getCategoricalFields([schema], [], [], joinedAssessment);
+    expect(fields.some(f => f.id === '_assessment:quadrant1')).toBe(true);
+  });
 });
 
 describe('getNumericFields', () => {
@@ -165,6 +182,20 @@ describe('getCategoricalFieldValues', () => {
     expect(values).toEqual([
       { id: 'low', label: 'Low' },
       { id: 'high', label: 'High' }
+    ]);
+  });
+
+  it('returns options for a derived select assessment field', () => {
+    const values = getCategoricalFieldValues(
+      [schema],
+      '_assessment:quadrant1',
+      [],
+      [],
+      joinedAssessment
+    );
+    expect(values).toEqual([
+      { id: 'invest', label: 'Invest' },
+      { id: 'tolerate', label: 'Tolerate' }
     ]);
   });
 
@@ -212,6 +243,22 @@ describe('getNumericFieldRange', () => {
   it('returns the fixed 1-5 range for rating assessment fields', () => {
     const range = getNumericFieldRange([schema], '_assessment:rating1', joinedAssessment, []);
     expect(range).toEqual({ min: 1, max: 5 });
+  });
+
+  it('uses the field-declared max for a rating assessment field with a wider scale', () => {
+    const wideAssessment: Assessment = {
+      ...assessment,
+      fields: [
+        { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating', max: 10 }
+      ]
+    };
+    const range = getNumericFieldRange(
+      [schema],
+      '_assessment:rating1',
+      { assessment: wideAssessment, enums },
+      []
+    );
+    expect(range).toEqual({ min: 1, max: 10 });
   });
 
   it('uses the declared field min/max when a single schema defines it', () => {

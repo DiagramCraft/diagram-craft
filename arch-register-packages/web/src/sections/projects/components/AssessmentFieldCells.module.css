@@ -1,15 +1,39 @@
 .stars {
   display: flex;
-  gap: 2px;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 0;
 }
 
 .star {
   color: var(--cmp-fg-disabled);
-  padding: 0 1px;
+  padding: 0;
   line-height: 1;
   transition: color 80ms;
 }
 
-.star:hover {
+.star:disabled {
+  pointer-events: none;
+}
+
+.star svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  transition:
+    fill 80ms,
+    stroke 80ms;
+}
+
+.star.on,
+.star:hover,
+.star:hover ~ .star {
   color: var(--warn, orange);
+}
+
+.star.on svg,
+.star:hover svg,
+.star:hover ~ .star svg {
+  fill: currentColor;
+  stroke: none;
 }

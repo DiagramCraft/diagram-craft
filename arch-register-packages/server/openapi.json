@@ -63400,7 +63400,13 @@
                                 },
                                 "type": {
                                   "const": "rating",
-                                  "description": "Numeric score field (1-5)"
+                                  "description": "Numeric score field (1-5 by default)"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": 2,
+                                  "maximum": 10,
+                                  "description": "Upper bound of the rating scale; defaults to 5 when omitted"
                                 }
                               },
                               "required": [
@@ -63971,7 +63977,13 @@
                             },
                             "type": {
                               "const": "rating",
-                              "description": "Numeric score field (1-5)"
+                              "description": "Numeric score field (1-5 by default)"
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": 2,
+                              "maximum": 10,
+                              "description": "Upper bound of the rating scale; defaults to 5 when omitted"
                             }
                           },
                           "required": [
@@ -64442,7 +64454,13 @@
                               },
                               "type": {
                                 "const": "rating",
-                                "description": "Numeric score field (1-5)"
+                                "description": "Numeric score field (1-5 by default)"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10,
+                                "description": "Upper bound of the rating scale; defaults to 5 when omitted"
                               }
                             },
                             "required": [
@@ -65041,7 +65059,13 @@
                               },
                               "type": {
                                 "const": "rating",
-                                "description": "Numeric score field (1-5)"
+                                "description": "Numeric score field (1-5 by default)"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10,
+                                "description": "Upper bound of the rating scale; defaults to 5 when omitted"
                               }
                             },
                             "required": [
@@ -65620,7 +65644,13 @@
                             },
                             "type": {
                               "const": "rating",
-                              "description": "Numeric score field (1-5)"
+                              "description": "Numeric score field (1-5 by default)"
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": 2,
+                              "maximum": 10,
+                              "description": "Upper bound of the rating scale; defaults to 5 when omitted"
                             }
                           },
                           "required": [
@@ -66091,7 +66121,13 @@
                               },
                               "type": {
                                 "const": "rating",
-                                "description": "Numeric score field (1-5)"
+                                "description": "Numeric score field (1-5 by default)"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10,
+                                "description": "Upper bound of the rating scale; defaults to 5 when omitted"
                               }
                             },
                             "required": [
@@ -66769,7 +66805,13 @@
                               },
                               "type": {
                                 "const": "rating",
-                                "description": "Numeric score field (1-5)"
+                                "description": "Numeric score field (1-5 by default)"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10,
+                                "description": "Upper bound of the rating scale; defaults to 5 when omitted"
                               }
                             },
                             "required": [

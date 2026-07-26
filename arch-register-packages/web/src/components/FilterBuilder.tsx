@@ -166,6 +166,20 @@ export const FilterBuilder = ({
                 options: getAssessmentEnumOptions(f, enums)
               };
             }
+            if (f.type === 'derived') {
+              const type =
+                f.resultType === 'select'
+                  ? 'select'
+                  : f.resultType === 'rating'
+                    ? 'rating'
+                    : f.resultType;
+              return {
+                id,
+                name: f.label,
+                type,
+                options: type === 'select' ? getAssessmentEnumOptions(f, enums) : undefined
+              };
+            }
             return { id, name: f.label, type: 'text' };
           })
         ]
