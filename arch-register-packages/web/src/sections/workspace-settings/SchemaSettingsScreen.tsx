@@ -37,6 +37,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { GroupDialog } from '../../components/GroupsEditor';
 import { toFieldId } from '../../utils/fieldId';
 import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
+import { DerivedExpressionTestDialog } from '../../components/DerivedExpressionTestDialog';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
 
@@ -371,6 +372,7 @@ export const SchemaSettingsScreen = () => {
       <FieldRow
         key={fieldKeysRef.current.get(f.id) ?? f.id}
         field={f}
+        fields={fields}
         schemas={schemas}
         enums={enums}
         groups={groups}
@@ -785,6 +787,7 @@ const NO_GROUP = '__no_group__';
 
 const FieldRow = ({
   field,
+  fields,
   schemas,
   enums,
   groups,
@@ -795,6 +798,7 @@ const FieldRow = ({
   canEdit
 }: {
   field: SchemaField;
+  fields: SchemaField[];
   schemas: EntitySchema[];
   enums: WorkspaceEnum[];
   groups: SchemaGroup[];
@@ -805,6 +809,7 @@ const FieldRow = ({
   canEdit: boolean;
 }) => {
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
+  const [expressionTestOpen, setExpressionTestOpen] = useState(false);
 
   const optionsDisplay = () => {
     if (field.type === 'select') {
@@ -1129,6 +1134,9 @@ const FieldRow = ({
                 ))}
               </Menu.RadioGroup>
             </Menu.SubMenu>
+            {field.type === 'derived' && (
+              <Menu.Item onClick={() => setExpressionTestOpen(true)}>Test expression</Menu.Item>
+            )}
             {onRemove && (
               <>
                 <Menu.Separator />
@@ -1139,6 +1147,19 @@ const FieldRow = ({
             )}
           </MenuButton.Menu>
         </MenuButton.Root>
+      )}
+      {field.type === 'derived' && (
+        <DerivedExpressionTestDialog
+          open={expressionTestOpen}
+          field={{ ...field, label: field.name }}
+          fields={fields.map(item => ({ ...item, label: item.name }))}
+          expression={field.expression}
+          onClose={() => setExpressionTestOpen(false)}
+          onSave={expression => {
+            onUpdate({ expression });
+            setExpressionTestOpen(false);
+          }}
+        />
       )}
     </div>
   );

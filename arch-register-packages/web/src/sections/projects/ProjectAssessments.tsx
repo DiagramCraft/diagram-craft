@@ -37,6 +37,10 @@ import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
 import { TypeBadge } from '../../components/TypeBadge';
 import { GroupDialog } from '../../components/GroupsEditor';
+import {
+  DerivedExpressionTestDialog,
+  type ExpressionTestField
+} from '../../components/DerivedExpressionTestDialog';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
@@ -862,6 +866,7 @@ export const AssessmentEditorDialog = ({
                   <FieldRow
                     key={fieldKey(field.id)}
                     field={field}
+                    fields={fields}
                     groups={groups}
                     onUpdate={changes => updateField(field.id, changes)}
                     onRemove={() => removeField(field.id)}
@@ -917,6 +922,7 @@ export const AssessmentEditorDialog = ({
                         <FieldRow
                           key={fieldKey(field.id)}
                           field={field}
+                          fields={fields}
                           groups={groups}
                           onUpdate={changes => updateField(field.id, changes)}
                           onRemove={() => removeField(field.id)}
@@ -1034,11 +1040,13 @@ const uniqueAssessmentFieldId = (baseId: string, existingIds: string[], currentI
 
 const FieldRow = ({
   field,
+  fields,
   groups,
   onUpdate,
   onRemove
 }: {
   field: AssessmentField;
+  fields: AssessmentField[];
   groups: AssessmentGroup[];
   onUpdate: (changes: Partial<AssessmentField>) => void;
   onRemove: () => void;
@@ -1046,6 +1054,7 @@ const FieldRow = ({
   const { enums } = useWorkspaceContext();
   const portal = usePortal();
   const [inlineOptionsOpen, setInlineOptionsOpen] = useState(false);
+  const [expressionTestOpen, setExpressionTestOpen] = useState(false);
   const [draftInlineOptions, setDraftInlineOptions] = useState<AssessmentEnumOption[]>([]);
   const meta = FIELD_TYPE_META[field.type];
   const Icon = meta.icon;
@@ -1211,11 +1220,28 @@ const FieldRow = ({
             </Menu.RadioGroup>
           </Menu.SubMenu>
           <Menu.Separator />
+          {field.type === 'derived' && (
+            <Menu.Item onClick={() => setExpressionTestOpen(true)}>Test expression</Menu.Item>
+          )}
+          {field.type === 'derived' && <Menu.Separator />}
           <Menu.Item type="danger" onClick={onRemove}>
             Delete field
           </Menu.Item>
         </MenuButton.Menu>
       </MenuButton.Root>
+      {field.type === 'derived' && (
+        <DerivedExpressionTestDialog
+          open={expressionTestOpen}
+          field={field}
+          fields={fields as ExpressionTestField[]}
+          expression={field.expression}
+          onClose={() => setExpressionTestOpen(false)}
+          onSave={expression => {
+            onUpdate({ expression });
+            setExpressionTestOpen(false);
+          }}
+        />
+      )}
       {field.type === 'enum' && 'options' in field && (
         <Dialog
           open={inlineOptionsOpen}
