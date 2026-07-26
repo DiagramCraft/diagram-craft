@@ -19,10 +19,8 @@ export type FieldOption = { id: string; label: string };
 
 export type JoinedAssessmentContext = { assessment: Assessment; enums: WorkspaceEnum[] };
 
-export const RATING_VALUES: FieldOption[] = ['1', '2', '3', '4', '5'].map(v => ({
-  id: v,
-  label: v
-}));
+export const ratingValues = (max = 5): FieldOption[] =>
+  Array.from({ length: max }, (_, i) => `${i + 1}`).map(v => ({ id: v, label: v }));
 
 /**
  * Fields are deduped by id across the given schemas (first occurrence wins), the same way
@@ -72,7 +70,12 @@ export const getCategoricalFields = (
     ...(teams.length > 0 ? [{ id: OWNER_FIELD_ID, label: 'Owner' }] : []),
     ...(joinedAssessment
       ? joinedAssessment.assessment.fields
-          .filter(f => f.type === 'enum' || (includeRatingFields && f.type === 'rating'))
+          .filter(
+            f =>
+              f.type === 'enum' ||
+              (f.type === 'derived' && f.resultType === 'select') ||
+              (includeRatingFields && f.type === 'rating')
+          )
           .map(f => ({ id: `${ASSESSMENT_FIELD_PREFIX}${f.id}`, label: f.label }))
       : [])
   ];
@@ -128,8 +131,12 @@ export const getCategoricalFieldValues = (
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) && joinedAssessment) {
     const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
     const field = joinedAssessment.assessment.fields.find(f => f.id === assessmentFieldId);
-    if (field?.type === 'rating') return RATING_VALUES;
+    if (field?.type === 'rating') return ratingValues(field.max ?? 5);
     if (field?.type === 'enum') {
+      const options = getAssessmentEnumOptions(field, joinedAssessment.enums);
+      return options.map(o => ({ id: o.value, label: o.label }));
+    }
+    if (field?.type === 'derived' && field.resultType === 'select') {
       const options = getAssessmentEnumOptions(field, joinedAssessment.enums);
       return options.map(o => ({ id: o.value, label: o.label }));
     }
@@ -199,7 +206,7 @@ export const getNumericFieldRange = (
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
     const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
     const field = joinedAssessment?.assessment.fields.find(f => f.id === assessmentFieldId);
-    if (field?.type === 'rating') return { min: 1, max: 5 };
+    if (field?.type === 'rating') return { min: 1, max: field.max ?? 5 };
   }
   const field = findFieldAcrossSchemas(schemas, fieldId);
   // A declared min/max only applies when every schema that defines this field id agrees on it;

@@ -13,7 +13,19 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 const fields: AssessmentField[] = [
   { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating' },
   { id: 'enum1', label: 'Enum', requirementLevel: 'optional', type: 'enum', enumId: 'e1' },
-  { id: 'text1', label: 'Text', requirementLevel: 'optional', type: 'text' }
+  { id: 'text1', label: 'Text', requirementLevel: 'optional', type: 'text' },
+  {
+    id: 'quadrant1',
+    label: 'Quadrant',
+    requirementLevel: 'optional',
+    type: 'derived',
+    resultType: 'select',
+    expression: 'field("rating1")',
+    options: [
+      { value: 'invest', label: 'Invest' },
+      { value: 'tolerate', label: 'Tolerate' }
+    ]
+  }
 ];
 
 describe('isAssessmentCondition / splitAssessmentConditions', () => {
@@ -126,6 +138,37 @@ describe('matchesAssessmentConditions', () => {
         fields
       )
     ).toBe(true);
+  });
+
+  it('matches a derived select field like an enum', () => {
+    expect(
+      matchesAssessmentConditions(
+        { quadrant1: 'invest' },
+        [{ fieldId: '_assessment:quadrant1', op: 'equals', value: 'invest' }],
+        fields
+      )
+    ).toBe(true);
+    expect(
+      matchesAssessmentConditions(
+        { quadrant1: 'invest' },
+        [{ fieldId: '_assessment:quadrant1', op: 'not_equals', value: 'tolerate' }],
+        fields
+      )
+    ).toBe(true);
+    expect(
+      matchesAssessmentConditions(
+        undefined,
+        [{ fieldId: '_assessment:quadrant1', op: 'empty', value: undefined }],
+        fields
+      )
+    ).toBe(true);
+    expect(
+      matchesAssessmentConditions(
+        undefined,
+        [{ fieldId: '_assessment:quadrant1', op: 'equals', value: 'invest' }],
+        fields
+      )
+    ).toBe(false);
   });
 });
 

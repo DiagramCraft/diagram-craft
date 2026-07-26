@@ -40,6 +40,45 @@ export const RatingCell = ({ value, onChange, disabled }: CellProps) => {
   );
 };
 
+export const RatingNumberCell = ({
+  value,
+  onChange,
+  disabled,
+  max
+}: CellProps & { max: number }) => {
+  const [draft, setDraft] = useState(typeof value === 'number' ? value.toString() : '');
+
+  const commit = () => {
+    if (draft.trim() === '') {
+      onChange(null);
+      return;
+    }
+    const n = Number(draft);
+    if (!Number.isFinite(n)) return;
+    onChange(Math.min(max, Math.max(1, Math.round(n))));
+  };
+
+  return (
+    <TextInput
+      type="number"
+      min={1}
+      max={max}
+      value={draft}
+      disabled={disabled}
+      onChange={v => setDraft(v ?? '')}
+      onBlur={commit}
+      onKeyDown={e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commit();
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      style={{ width: 64 }}
+    />
+  );
+};
+
 export const EnumCell = ({
   field,
   value,
@@ -100,8 +139,14 @@ export const AssessmentFieldCell = ({
   disabled?: boolean;
 }) => {
   const { enums } = useWorkspaceContext();
-  if (field.type === 'rating')
-    return <RatingCell value={value} onChange={onChange} disabled={disabled} />;
+  if (field.type === 'rating') {
+    const max = field.max ?? 5;
+    return max <= 5 ? (
+      <RatingCell value={value} onChange={onChange} disabled={disabled} />
+    ) : (
+      <RatingNumberCell value={value} onChange={onChange} disabled={disabled} max={max} />
+    );
+  }
   if (field.type === 'enum')
     return <EnumCell field={field} value={value} onChange={onChange} disabled={disabled} />;
   if (field.type === 'derived') {

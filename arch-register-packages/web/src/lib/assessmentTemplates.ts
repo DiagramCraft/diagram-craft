@@ -13,6 +13,13 @@ const SIX_RS_OPTIONS: AssessmentEnumOption[] = [
   { value: 'retain', label: 'Retain (Revisit Later)' }
 ];
 
+const TIME_QUADRANT_OPTIONS: AssessmentEnumOption[] = [
+  { value: 'invest', label: 'Invest' },
+  { value: 'migrate', label: 'Migrate' },
+  { value: 'tolerate', label: 'Tolerate' },
+  { value: 'eliminate', label: 'Eliminate' }
+];
+
 const PACE_LAYER_OPTIONS: AssessmentEnumOption[] = [
   { value: 'record', label: 'Systems of Record' },
   { value: 'differentiation', label: 'Systems of Differentiation' },
@@ -52,13 +59,28 @@ export const assessmentTemplates: AssessmentTemplate[] = [
           id: 'business_fit',
           label: 'Business fit',
           type: 'rating',
+          max: 10,
           requirementLevel: 'required'
         },
         {
           id: 'technical_fit',
           label: 'Technical fit',
           type: 'rating',
+          max: 10,
           requirementLevel: 'required'
+        },
+        {
+          id: 'time_quadrant',
+          label: 'TIME quadrant',
+          type: 'derived',
+          requirementLevel: 'optional',
+          resultType: 'select',
+          options: TIME_QUADRANT_OPTIONS,
+          expression:
+            '(field("business_fit")>=6 && field("technical_fit")>=6 && "invest") || ' +
+            '(field("business_fit")>=6 && field("technical_fit")<6 && "migrate") || ' +
+            '(field("business_fit")<6 && field("technical_fit")>=6 && "tolerate") || ' +
+            '"eliminate"'
         }
       ]
     }
@@ -116,7 +138,7 @@ export const cloneAssessmentTemplateValues = (
   scope_conditions: values.scope_conditions.map(condition => ({ ...condition })),
   fields: values.fields.map(field => ({
     ...field,
-    ...(field.type === 'enum' && 'options' in field
+    ...((field.type === 'enum' || field.type === 'derived') && 'options' in field && field.options
       ? { options: field.options.map(option => ({ ...option })) }
       : {})
   }))
