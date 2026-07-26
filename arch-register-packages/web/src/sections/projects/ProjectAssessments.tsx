@@ -467,6 +467,7 @@ export const AssessmentEditorDialog = ({
         requirementLevel: 'required' as const,
         ...(groupId && { groupId })
       };
+      const inputField = prev.find(field => field.type !== 'derived');
       const nextField: AssessmentField =
         type === 'enum'
           ? { ...base, type, enumId: '' }
@@ -475,7 +476,7 @@ export const AssessmentEditorDialog = ({
                 ...base,
                 type,
                 requirementLevel: 'optional' as const,
-                expression: 'field("input_field")',
+                expression: inputField ? `field("${inputField.id}")` : '""',
                 resultType: 'text' as const
               }
             : { ...base, type };

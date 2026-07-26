@@ -293,14 +293,16 @@ export const SchemaSettingsScreen = () => {
               minCount: 0,
               maxCount: 1
             };
-          case 'derived':
+          case 'derived': {
+            const inputField = prev.find(other => other.id !== fieldId && other.type !== 'derived');
             return {
               ...base,
               type: 'derived',
               requirementLevel: 'optional' as const,
-              expression: 'field("input_field")',
+              expression: inputField ? `field("${inputField.id}")` : '""',
               resultType: 'text' as const
             };
+          }
         }
       })
     );

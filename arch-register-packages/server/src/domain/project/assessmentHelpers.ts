@@ -16,7 +16,14 @@ import { buildDerivedPlan } from '../derived/derivedFields';
 
 const toAssessmentFields = (value: unknown, fallback: AssessmentField[]) => {
   const fields = Array.isArray(value) ? (value as AssessmentField[]) : fallback;
-  buildDerivedPlan(fields);
+  try {
+    buildDerivedPlan(fields);
+  } catch (error) {
+    httpAssert.true(false, {
+      status: 400,
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
   return fields;
 };
 
