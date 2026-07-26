@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TbStar, TbStarFilled } from 'react-icons/tb';
+import { TbStarFilled } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
@@ -13,69 +13,33 @@ type CellProps = {
   disabled?: boolean;
 };
 
-export const RatingCell = ({ value, onChange, disabled }: CellProps) => {
-  const [hover, setHover] = useState<number | null>(null);
-  const numericValue = typeof value === 'number' ? value : Number(value);
-  const current = Number.isNaN(numericValue) ? 0 : numericValue;
-
-  return (
-    <div className={styles.stars} onMouseLeave={() => setHover(null)}>
-      {[1, 2, 3, 4, 5].map(n => {
-        const on = n <= (hover ?? current);
-        return (
-          <button
-            key={n}
-            type="button"
-            className={styles.star}
-            style={on ? { color: 'var(--warn, orange)' } : undefined}
-            disabled={disabled}
-            onMouseEnter={() => setHover(n)}
-            onClick={() => onChange(n === current ? null : n)}
-          >
-            {on ? <TbStarFilled size={14} /> : <TbStar size={14} />}
-          </button>
-        );
-      })}
-    </div>
-  );
-};
-
-export const RatingNumberCell = ({
+export const RatingCell = ({
   value,
   onChange,
   disabled,
-  max
-}: CellProps & { max: number }) => {
-  const [draft, setDraft] = useState(typeof value === 'number' ? value.toString() : '');
+  max = 5
+}: CellProps & { max?: number }) => {
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  const current = Number.isNaN(numericValue) ? 0 : numericValue;
 
-  const commit = () => {
-    if (draft.trim() === '') {
-      onChange(null);
-      return;
-    }
-    const n = Number(draft);
-    if (!Number.isFinite(n)) return;
-    onChange(Math.min(max, Math.max(1, Math.round(n))));
-  };
-
+  // Hover highlighting is pure CSS (stars rendered high-to-low, then flipped back to
+  // left-to-right with flex-direction: row-reverse) rather than JS onMouseEnter/onMouseLeave
+  // state — the browser's :hover pseudo-class can't miss a leave event the way fast pointer
+  // movement across adjacent rows could desync manually tracked hover state.
   return (
-    <TextInput
-      type="number"
-      min={1}
-      max={max}
-      value={draft}
-      disabled={disabled}
-      onChange={v => setDraft(v ?? '')}
-      onBlur={commit}
-      onKeyDown={e => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          commit();
-          (e.target as HTMLInputElement).blur();
-        }
-      }}
-      style={{ width: 64 }}
-    />
+    <div className={styles.stars}>
+      {Array.from({ length: max }, (_, i) => max - i).map(n => (
+        <button
+          key={n}
+          type="button"
+          className={`${styles.star} ${n <= current ? styles.on : ''}`}
+          disabled={disabled}
+          onClick={() => onChange(n === current ? null : n)}
+        >
+          <TbStarFilled size={14} />
+        </button>
+      ))}
+    </div>
   );
 };
 
@@ -139,14 +103,10 @@ export const AssessmentFieldCell = ({
   disabled?: boolean;
 }) => {
   const { enums } = useWorkspaceContext();
-  if (field.type === 'rating') {
-    const max = field.max ?? 5;
-    return max <= 5 ? (
-      <RatingCell value={value} onChange={onChange} disabled={disabled} />
-    ) : (
-      <RatingNumberCell value={value} onChange={onChange} disabled={disabled} max={max} />
+  if (field.type === 'rating')
+    return (
+      <RatingCell value={value} onChange={onChange} disabled={disabled} max={field.max ?? 5} />
     );
-  }
   if (field.type === 'enum')
     return <EnumCell field={field} value={value} onChange={onChange} disabled={disabled} />;
   if (field.type === 'derived') {
