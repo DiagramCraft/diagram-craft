@@ -14,8 +14,12 @@ import {
   TbStar,
   TbListCheck,
   TbAlignLeft,
-  TbEdit
+  TbEdit,
+  TbDots
 } from 'react-icons/tb';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
+import { usePortal } from '@diagram-craft/app-components/PortalContext';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type {
   Assessment,
@@ -30,7 +34,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TypeBadge } from '../../components/TypeBadge';
-import { GroupsEditor } from '../../components/GroupsEditor';
+import { GroupDialog } from '../../components/GroupsEditor';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
@@ -370,6 +374,7 @@ export const AssessmentEditorDialog = ({
   onCancel: () => void;
 }) => {
   const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
+  const portal = usePortal();
   const isNew = !assessment;
   const [name, setName] = useState(assessment?.name ?? '');
   const [description, setDescription] = useState(assessment?.description ?? '');
@@ -405,6 +410,8 @@ export const AssessmentEditorDialog = ({
   const [selectedTemplateId, setSelectedTemplateId] = useState(isNew ? START_FROM_SCRATCH : '');
   const [isDirty, setIsDirty] = useState(false);
   const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<AssessmentGroup | null>(null);
 
   const markDirty = () => setIsDirty(true);
 
@@ -438,9 +445,14 @@ export const AssessmentEditorDialog = ({
       JSON.stringify(assessment.scope_conditions) !== JSON.stringify(scopeConditions));
   const showScopeWarning = !!assessment && assessment.response_count > 0 && hasScopeChanged;
 
-  const addField = (type: AssessmentField['type']) => {
+  const addField = (type: AssessmentField['type'], groupId?: string) => {
     markDirty();
-    const base = { id: `f${Date.now()}`, label: '', requirementLevel: 'required' as const };
+    const base = {
+      id: `f${Date.now()}`,
+      label: '',
+      requirementLevel: 'required' as const,
+      ...(groupId && { groupId })
+    };
     setFields(prev => [
       ...prev,
       type === 'enum' ? { ...base, type, enumId: '' } : { ...base, type }
@@ -465,8 +477,24 @@ export const AssessmentEditorDialog = ({
     setFields(prev => prev.filter(f => f.id !== id));
   };
 
-  const deleteGroup = (groupId: string) => {
+  const openNewGroup = () => {
+    setEditingGroup(null);
+    setGroupDialogOpen(true);
+  };
+
+  const saveGroup = (group: AssessmentGroup) => {
     markDirty();
+    setGroups(current =>
+      current.some(item => item.id === group.id)
+        ? current.map(item => (item.id === group.id ? group : item))
+        : [...current, group]
+    );
+    setGroupDialogOpen(false);
+  };
+
+  const removeGroup = (groupId: string) => {
+    markDirty();
+    setGroups(current => current.filter(g => g.id !== groupId));
     setFields(prev => prev.map(f => (f.groupId === groupId ? { ...f, groupId: undefined } : f)));
   };
 
@@ -521,6 +549,14 @@ export const AssessmentEditorDialog = ({
     }
     applyTemplate(nextTemplateId);
   };
+
+  const groupIds = new Set(groups.map(g => g.id));
+  const ungroupedFields = fields.filter(f => !f.groupId || !groupIds.has(f.groupId));
+  const fieldsByGroup = new Map<string, AssessmentField[]>();
+  for (const group of groups) fieldsByGroup.set(group.id, []);
+  for (const f of fields) {
+    if (f.groupId && groupIds.has(f.groupId)) fieldsByGroup.get(f.groupId)!.push(f);
+  }
 
   const recurrence: AssessmentRecurrence =
     recurrenceType === 'weekly'
@@ -600,8 +636,10 @@ export const AssessmentEditorDialog = ({
       <Tabs.Root defaultValue="basic-info">
         <Tabs.List aria-label="Assessment editor sections">
           <Tabs.Trigger value="basic-info">Basic Info</Tabs.Trigger>
+          <Tabs.Trigger value="assignment">Assignment</Tabs.Trigger>
           <Tabs.Trigger value="scope">Scope</Tabs.Trigger>
           <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
+          <Tabs.Trigger value="advanced">Advanced</Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="basic-info" style={{ height: 'auto' }}>
@@ -663,7 +701,9 @@ export const AssessmentEditorDialog = ({
               </Button>
             </div>
           </div>
+        </Tabs.Content>
 
+        <Tabs.Content value="assignment" style={{ height: 'auto' }}>
           <div className={styles.section}>
             <div className={styles.sectionLabel}>Assigned teams (optional)</div>
             <div className={styles.sectionHint}>
@@ -694,53 +734,6 @@ export const AssessmentEditorDialog = ({
                 setDueAt(e.target.value);
               }}
             />
-          </div>
-
-          <div className={styles.section}>
-            <div className={styles.sectionLabel}>Recurrence</div>
-            <div className={styles.sectionHint}>
-              Recurring assessments automatically reopen for a new response cycle once the response
-              window elapses.
-            </div>
-            <div style={{ width: 160 }}>
-              <Select.Root
-                value={recurrenceType}
-                onChange={v => {
-                  markDirty();
-                  setRecurrenceType((v ?? 'none') as AssessmentRecurrence['type']);
-                }}
-              >
-                <Select.Item value="none">One-off (no recurrence)</Select.Item>
-                <Select.Item value="weekly">Weekly</Select.Item>
-                <Select.Item value="monthly">Monthly</Select.Item>
-              </Select.Root>
-            </div>
-            {recurrenceType !== 'none' && (
-              <div className={styles.editorTopRow}>
-                <FormElement
-                  label={recurrenceType === 'weekly' ? 'Every N weeks' : 'Every N months'}
-                >
-                  <TextInput
-                    value={String(recurrenceInterval)}
-                    onChange={v => {
-                      markDirty();
-                      const parsed = Number(v);
-                      setRecurrenceInterval(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
-                    }}
-                  />
-                </FormElement>
-                <FormElement label="Response window (days)" required>
-                  <TextInput
-                    value={responseWindowDays}
-                    onChange={v => {
-                      markDirty();
-                      setResponseWindowDays(v ?? '');
-                    }}
-                    placeholder="e.g. 14"
-                  />
-                </FormElement>
-              </div>
-            )}
           </div>
         </Tabs.Content>
 
@@ -799,20 +792,30 @@ export const AssessmentEditorDialog = ({
                 Fields{fields.length > 0 ? ` (${fields.length})` : ''}
               </div>
               <div className={styles.fieldAddButtons}>
-                {FIELD_TYPE_OPTIONS.map(([type, label]) => (
-                  <Button key={type} icon={<TbPlus size={11} />} onClick={() => addField(type)}>
-                    {label}
-                  </Button>
-                ))}
+                <Button icon={<TbPlus size={11} />} onClick={openNewGroup}>
+                  Group
+                </Button>
+                <MenuButton.Root>
+                  <MenuButton.Trigger
+                    element={<Button icon={<TbPlus size={11} />}>Field</Button>}
+                  />
+                  <MenuButton.Menu container={portal}>
+                    {FIELD_TYPE_OPTIONS.map(([type, label]) => (
+                      <Menu.Item key={type} onClick={() => addField(type)}>
+                        {label}
+                      </Menu.Item>
+                    ))}
+                  </MenuButton.Menu>
+                </MenuButton.Root>
               </div>
             </div>
-            {fields.length === 0 ? (
+            {fields.length === 0 && groups.length === 0 ? (
               <div className={styles.fieldsEmpty}>
                 No fields yet — add a Rating, Select, or Notes field above.
               </div>
             ) : (
               <div className={styles.fieldsList}>
-                {fields.map(field => (
+                {ungroupedFields.map(field => (
                   <FieldRow
                     key={field.id}
                     field={field}
@@ -821,18 +824,118 @@ export const AssessmentEditorDialog = ({
                     onRemove={() => removeField(field.id)}
                   />
                 ))}
+                {groups.map(group => (
+                  <div className={styles.groupSection} key={group.id}>
+                    <div className={styles.groupHeader}>
+                      <div>
+                        <div className={styles.groupName}>{group.name}</div>
+                        {group.description && (
+                          <div className={styles.groupDescription}>{group.description}</div>
+                        )}
+                      </div>
+                      <div className={styles.groupActions}>
+                        <MenuButton.Root>
+                          <MenuButton.Trigger
+                            element={
+                              <Button variant="ghost" icon={<TbPlus size={11} />}>
+                                Add field
+                              </Button>
+                            }
+                          />
+                          <MenuButton.Menu container={portal}>
+                            {FIELD_TYPE_OPTIONS.map(([type, label]) => (
+                              <Menu.Item key={type} onClick={() => addField(type, group.id)}>
+                                {label}
+                              </Menu.Item>
+                            ))}
+                          </MenuButton.Menu>
+                        </MenuButton.Root>
+                        <Button
+                          variant="ghost"
+                          icon={<TbEdit size={12} />}
+                          onClick={() => {
+                            setEditingGroup(group);
+                            setGroupDialogOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          icon={<TbTrash size={12} />}
+                          onClick={() => removeGroup(group.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                    {(fieldsByGroup.get(group.id) ?? []).length > 0 ? (
+                      (fieldsByGroup.get(group.id) ?? []).map(field => (
+                        <FieldRow
+                          key={field.id}
+                          field={field}
+                          groups={groups}
+                          onUpdate={changes => updateField(field.id, changes)}
+                          onRemove={() => removeField(field.id)}
+                        />
+                      ))
+                    ) : (
+                      <div className={styles.groupEmpty}>No fields in this group.</div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
-          <GroupsEditor
-            groups={groups}
-            onChange={next => {
-              markDirty();
-              setGroups(next);
-            }}
-            onDeleteGroup={deleteGroup}
-            canEdit={true}
-          />
+        </Tabs.Content>
+
+        <Tabs.Content value="advanced" style={{ height: 'auto' }}>
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Recurrence</div>
+            <div className={styles.sectionHint}>
+              Recurring assessments automatically reopen for a new response cycle once the response
+              window elapses.
+            </div>
+            <div style={{ width: 160 }}>
+              <Select.Root
+                value={recurrenceType}
+                onChange={v => {
+                  markDirty();
+                  setRecurrenceType((v ?? 'none') as AssessmentRecurrence['type']);
+                }}
+              >
+                <Select.Item value="none">One-off (no recurrence)</Select.Item>
+                <Select.Item value="weekly">Weekly</Select.Item>
+                <Select.Item value="monthly">Monthly</Select.Item>
+              </Select.Root>
+            </div>
+            {recurrenceType !== 'none' && (
+              <div className={styles.editorTopRow}>
+                <FormElement
+                  label={recurrenceType === 'weekly' ? 'Every N weeks' : 'Every N months'}
+                >
+                  <TextInput
+                    value={String(recurrenceInterval)}
+                    onChange={v => {
+                      markDirty();
+                      const parsed = Number(v);
+                      setRecurrenceInterval(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
+                    }}
+                  />
+                </FormElement>
+                <FormElement label="Response window (days)" required>
+                  <TextInput
+                    value={responseWindowDays}
+                    onChange={v => {
+                      markDirty();
+                      setResponseWindowDays(v ?? '');
+                    }}
+                    placeholder="e.g. 14"
+                  />
+                </FormElement>
+              </div>
+            )}
+          </div>
         </Tabs.Content>
       </Tabs.Root>
     </Dialog>,
@@ -857,7 +960,15 @@ export const AssessmentEditorDialog = ({
         Your current assessment values will be replaced by the selected template. This cannot be
         undone.
       </p>
-    </Dialog>
+    </Dialog>,
+    <GroupDialog
+      key="group-editor"
+      open={groupDialogOpen}
+      onClose={() => setGroupDialogOpen(false)}
+      onSave={saveGroup}
+      group={editingGroup}
+      groups={groups}
+    />
   ];
 };
 
@@ -881,6 +992,7 @@ const FieldRow = ({
   onRemove: () => void;
 }) => {
   const { enums } = useWorkspaceContext();
+  const portal = usePortal();
   const [inlineOptionsOpen, setInlineOptionsOpen] = useState(false);
   const [draftInlineOptions, setDraftInlineOptions] = useState<AssessmentEnumOption[]>([]);
   const meta = FIELD_TYPE_META[field.type];
@@ -955,17 +1067,6 @@ const FieldRow = ({
         </div>
       )}
       {meta.hint && <span className={styles.fieldHint}>{meta.hint}</span>}
-      <Select.Root
-        value={field.groupId ?? NO_GROUP}
-        onChange={v => onUpdate({ groupId: v === NO_GROUP || !v ? undefined : v })}
-      >
-        <Select.Item value={NO_GROUP}>(none)</Select.Item>
-        {groups.map(group => (
-          <Select.Item key={group.id} value={group.id}>
-            {group.name}
-          </Select.Item>
-        ))}
-      </Select.Root>
       <div className={styles.fieldRequirement}>
         <Select.Root
           value={field.requirementLevel}
@@ -977,12 +1078,35 @@ const FieldRow = ({
           <Select.Item value="optional">Optional</Select.Item>
         </Select.Root>
       </div>
-      <Button
-        variant="ghost"
-        icon={<TbTrash size={13} />}
-        onClick={onRemove}
-        title="Remove field"
-      />
+      <MenuButton.Root>
+        <MenuButton.Trigger
+          element={
+            <Button variant="ghost" icon={<TbDots size={13} />} title="More field actions" />
+          }
+        />
+        <MenuButton.Menu container={portal}>
+          <Menu.SubMenu label="Move to group" container={portal}>
+            <Menu.RadioGroup value={field.groupId ?? NO_GROUP}>
+              <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
+                No group
+              </Menu.RadioItem>
+              {groups.map(group => (
+                <Menu.RadioItem
+                  key={group.id}
+                  value={group.id}
+                  onClick={() => onUpdate({ groupId: group.id })}
+                >
+                  {group.name}
+                </Menu.RadioItem>
+              ))}
+            </Menu.RadioGroup>
+          </Menu.SubMenu>
+          <Menu.Separator />
+          <Menu.Item type="danger" onClick={onRemove}>
+            Delete field
+          </Menu.Item>
+        </MenuButton.Menu>
+      </MenuButton.Root>
       {field.type === 'enum' && 'options' in field && (
         <Dialog
           open={inlineOptionsOpen}

@@ -102,7 +102,7 @@ export const GroupsEditor = ({
   );
 };
 
-const GroupDialog = ({
+export const GroupDialog = ({
   open,
   onClose,
   onSave,

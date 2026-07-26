@@ -42,7 +42,7 @@ type MenuProps = {
 const Menu = (props: MenuProps) => {
   return (
     <BaseUIContextMenu.Portal>
-      <BaseUIContextMenu.Positioner>
+      <BaseUIContextMenu.Positioner className={styles.cMenuPositioner}>
         <BaseUIContextMenu.Popup className={props.className ?? styles.cMenu}>
           {props.children}
         </BaseUIContextMenu.Popup>
@@ -64,7 +64,7 @@ const ImperativeContextMenu = ({ x, y, children, onClose }: ImperativeContextMen
     <_Menu.Context type={'context'}>
       <BaseUIContextMenu.Root open onOpenChange={open => !open && onClose()}>
         <BaseUIContextMenu.Portal>
-          <BaseUIContextMenu.Positioner style={positionStyle}>
+          <BaseUIContextMenu.Positioner className={styles.cMenuPositioner} style={positionStyle}>
             <BaseUIContextMenu.Popup className={styles.cMenu}>{children}</BaseUIContextMenu.Popup>
           </BaseUIContextMenu.Positioner>
         </BaseUIContextMenu.Portal>

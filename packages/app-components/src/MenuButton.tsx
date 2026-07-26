@@ -47,7 +47,7 @@ type MenuProps = {
 const Menu = (props: MenuProps) => {
   return (
     <BaseUIMenu.Portal container={props.container}>
-      <BaseUIMenu.Positioner sideOffset={5} align={props.align}>
+      <BaseUIMenu.Positioner className={styles.cMenuPositioner} sideOffset={5} align={props.align}>
         <BaseUIMenu.Popup className={props.className ?? styles.cMenu}>
           {props.children}
           <BaseUIMenu.Arrow className={styles.eArrow} />
