@@ -16,7 +16,9 @@ export const computeEntityCompleteness = (
   schema: SchemaDbResult
 ): number => {
   const expectedFields = schema.fields.filter(
-    f => f.requirementLevel === 'required' || f.requirementLevel === 'expected'
+    f =>
+      f.type !== 'derived' &&
+      (f.requirementLevel === 'required' || f.requirementLevel === 'expected')
   );
 
   // Built-in fields always count: description, owner, lifecycle

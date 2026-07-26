@@ -384,7 +384,7 @@ export const AddEntityDialog = ({
             {selectedSchema && (
               <div className={styles.propertiesList}>
                 {selectedSchema.fields
-                  .filter(f => f.id !== 'name')
+                  .filter(f => f.id !== 'name' && f.type !== 'derived')
                   .map(f => (
                     <EntityFieldInput
                       key={f.id}

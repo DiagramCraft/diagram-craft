@@ -32,7 +32,7 @@ const extractValue = (
   entity: EntityDbResult,
   source: MetricConfig['source'],
   lifecycleSortOrder: Map<string, number>,
-  responsesByEntity: Map<string, Record<string, string | number>> | null
+  responsesByEntity: Map<string, Record<string, string | number | boolean>> | null
 ): MetricValue | null => {
   if (source.kind === 'lifecycle') {
     if (entity.lifecycle == null) return null;
@@ -52,7 +52,7 @@ const extractValue = (
 const extractEnumValue = (
   entity: EntityDbResult,
   source: Extract<MetricConfig['source'], { kind: 'enum' | 'assessmentEnum' }>,
-  responsesByEntity: Map<string, Record<string, string | number>> | null
+  responsesByEntity: Map<string, Record<string, string | number | boolean>> | null
 ): string | null => {
   const raw =
     source.kind === 'assessmentEnum'
@@ -189,7 +189,7 @@ export const computeBoxMetrics = (
   entities: EntityDbResult[],
   schemas: SchemaDbResult[],
   lifecycleStates: LifecycleStateDbResult[],
-  responsesByEntity: Map<string, Record<string, string | number>> | null,
+  responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
   isFilterMatch: (entity: EntityDbResult) => boolean,
   enumOptions: EnumOption[] | null = null
 ): MetricRollupResponse => {

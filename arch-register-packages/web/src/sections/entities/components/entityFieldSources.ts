@@ -56,7 +56,10 @@ export const getCategoricalFields = (
   const selectFields: FieldOption[] = [];
   schemas.forEach(schema => {
     schema.fields.forEach(f => {
-      if (f.type === 'select' && !seen.has(f.id)) {
+      if (
+        (f.type === 'select' || (f.type === 'derived' && f.resultType === 'select')) &&
+        !seen.has(f.id)
+      ) {
         seen.add(f.id);
         selectFields.push({ id: f.id, label: f.name });
       }
@@ -84,7 +87,11 @@ export const getNumericFields = (
   const numberFields: FieldOption[] = [];
   schemas.forEach(schema => {
     schema.fields.forEach(f => {
-      if (f.type === 'number' && !seen.has(f.id)) {
+      if (
+        (f.type === 'number' ||
+          (f.type === 'derived' && (f.resultType === 'number' || f.resultType === 'rating'))) &&
+        !seen.has(f.id)
+      ) {
         seen.add(f.id);
         numberFields.push({ id: f.id, label: f.name });
       }
@@ -129,6 +136,9 @@ export const getCategoricalFieldValues = (
     return [];
   }
   const field = findFieldAcrossSchemas(schemas, fieldId);
+  if (field?.type === 'derived' && field.resultType === 'select') {
+    return (field.options ?? []).map(o => ({ id: o.value, label: o.label }));
+  }
   if (field?.type !== 'select') return [];
   return ((field as ApiSelectField).options ?? []).map(o => ({ id: o.value, label: o.label }));
 };

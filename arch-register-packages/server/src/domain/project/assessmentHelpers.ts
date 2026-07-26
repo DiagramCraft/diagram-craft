@@ -12,9 +12,13 @@ import {
   AssessmentRecurrence
 } from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { buildDerivedPlan } from '../derived/derivedFields';
 
-const toAssessmentFields = (value: unknown, fallback: AssessmentField[]) =>
-  Array.isArray(value) ? (value as AssessmentField[]) : fallback;
+const toAssessmentFields = (value: unknown, fallback: AssessmentField[]) => {
+  const fields = Array.isArray(value) ? (value as AssessmentField[]) : fallback;
+  buildDerivedPlan(fields);
+  return fields;
+};
 
 const toAssessmentGroups = (value: unknown, fallback: AssessmentGroup[]) =>
   Array.isArray(value) ? (value as AssessmentGroup[]) : fallback;

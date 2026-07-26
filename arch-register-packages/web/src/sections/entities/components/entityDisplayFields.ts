@@ -56,7 +56,15 @@ export const DEFAULT_DISPLAY_FIELDS: Record<
   map: ['_description', '_lifecycle', '_owner', '_tags']
 };
 
-const SCALAR_TYPES = new Set(['text', 'longtext', 'boolean', 'date', 'number', 'select']);
+const SCALAR_TYPES = new Set([
+  'text',
+  'longtext',
+  'boolean',
+  'date',
+  'number',
+  'select',
+  'derived'
+]);
 
 export const buildEntityDisplayFields = (
   schemas: EntitySchema[],
@@ -80,12 +88,24 @@ export const buildEntityDisplayFields = (
       if (seen.has(id)) continue;
       seen.add(id);
       const options =
-        field.type === 'enum' ? getAssessmentEnumOptions(field, joined.enums) : undefined;
+        field.type === 'enum' || (field.type === 'derived' && field.resultType === 'select')
+          ? getAssessmentEnumOptions(field, joined.enums)
+          : undefined;
       fields.push({
         id,
         label: field.label,
         group,
-        assessmentField: { type: field.type, options }
+        assessmentField: {
+          type:
+            field.type === 'derived'
+              ? field.resultType === 'select'
+                ? 'enum'
+                : field.resultType === 'rating'
+                  ? 'rating'
+                  : 'text'
+              : field.type,
+          options
+        }
       });
     }
   }
@@ -179,11 +199,20 @@ export const formatEntityDisplayValue = (
   }
   const value = entity[field.id];
   if (value == null || value === '') return null;
-  if (field.schemaField?.type === 'boolean') return value ? 'Yes' : 'No';
-  if (field.schemaField?.type === 'select') {
+  if (
+    field.schemaField?.type === 'boolean' ||
+    (field.schemaField?.type === 'derived' && field.schemaField.resultType === 'boolean')
+  ) {
+    return value ? 'Yes' : 'No';
+  }
+  if (
+    field.schemaField?.type === 'select' ||
+    (field.schemaField?.type === 'derived' && field.schemaField.resultType === 'select')
+  ) {
     return (
-      field.schemaField.options.find(option => option.value === String(value))?.label ??
-      String(value)
+      ('options' in field.schemaField
+        ? field.schemaField.options?.find(option => option.value === String(value))?.label
+        : undefined) ?? String(value)
     );
   }
   if (field.schemaField?.type === 'date') return formatDate(value, String(value));

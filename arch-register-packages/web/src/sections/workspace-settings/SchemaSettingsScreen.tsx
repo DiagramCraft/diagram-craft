@@ -292,6 +292,14 @@ export const SchemaSettingsScreen = () => {
               minCount: 0,
               maxCount: 1
             };
+          case 'derived':
+            return {
+              ...base,
+              type: 'derived',
+              requirementLevel: 'optional' as const,
+              expression: 'field("input_field")',
+              resultType: 'text' as const
+            };
         }
       })
     );
@@ -943,6 +951,51 @@ const FieldRow = ({
         </div>
       );
     }
+    if (field.type === 'derived') {
+      return (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <Select.Root
+            value={field.resultType}
+            disabled={!canEdit}
+            onChange={value =>
+              onUpdate({
+                resultType: (value ?? 'text') as Extract<
+                  SchemaField,
+                  { type: 'derived' }
+                >['resultType']
+              } as Partial<SchemaField>)
+            }
+          >
+            <Select.Item value="text">Text</Select.Item>
+            <Select.Item value="number">Number</Select.Item>
+            <Select.Item value="select">Select</Select.Item>
+            <Select.Item value="boolean">Boolean</Select.Item>
+            <Select.Item value="rating">Rating</Select.Item>
+          </Select.Root>
+          {field.resultType === 'select' && (
+            <Select.Root
+              value={field.enumId ?? undefined}
+              disabled={!canEdit}
+              onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
+              placeholder="Select enum..."
+            >
+              {enums.map(e => (
+                <Select.Item key={e.id} value={e.id}>
+                  {e.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          )}
+          <TextArea
+            value={field.expression}
+            disabled={!canEdit}
+            onChange={value => onUpdate({ expression: value ?? '' } as Partial<SchemaField>)}
+            rows={2}
+            placeholder='field("input_field")'
+          />
+        </div>
+      );
+    }
     return <span className="dim">&mdash;</span>;
   };
 
@@ -994,7 +1047,7 @@ const FieldRow = ({
       <span className={styles.fieldOptions}>{optionsDisplay()}</span>
       <Select.Root
         value={field.requirementLevel ?? 'optional'}
-        disabled={!canEdit}
+        disabled={!canEdit || field.type === 'derived'}
         onChange={value => {
           const requirementLevel = (value ?? 'optional') as SchemaField['requirementLevel'];
           onUpdate({
@@ -1010,7 +1063,13 @@ const FieldRow = ({
         <Select.Item value="expected">Expected</Select.Item>
         <Select.Item value="required">Required</Select.Item>
       </Select.Root>
-      <div style={{ display: 'grid', gap: 4 }}>
+      <div
+        style={{
+          display: 'grid',
+          gap: 4,
+          visibility: field.type === 'derived' ? 'hidden' : 'visible'
+        }}
+      >
         <Select.Root
           value={field.external_kind ?? NOT_EXTERNAL}
           disabled={!canEdit}

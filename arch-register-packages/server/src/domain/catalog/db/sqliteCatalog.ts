@@ -433,6 +433,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
+  async updateEntityDerivedFields(workspace: string, id: string, data: Record<string, unknown>) {
+    this.run('UPDATE entity SET data = ? WHERE workspace = ? AND id = ?', [
+      JSON.stringify(data),
+      workspace,
+      id
+    ]);
+  }
+
   async deleteEntity(workspace: string, id: string) {
     const row = await this.getEntity(workspace, id);
     if (!row) return null;

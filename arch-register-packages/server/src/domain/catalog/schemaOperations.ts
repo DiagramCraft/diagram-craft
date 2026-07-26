@@ -28,6 +28,7 @@ import {
   describeHardBlockedChange,
   findUnresolvedFieldMigrations
 } from './schemaHelpers';
+import { materializeDerivedFields } from '../derived/derivedFields';
 import {
   EntitySchema,
   FieldMigrations,
@@ -336,6 +337,20 @@ export const updateWorkspaceSchema = async (
           created_by: authCtx.userId,
           created_at: next.updated_at
         });
+
+        if (entityCount > 0) {
+          const entities = await listAllCatalogEntities(tx, ws, { schemaId: id });
+          for (const entity of entities) {
+            await tx.catalog.updateEntityDerivedFields(
+              ws,
+              entity.id,
+              materializeDerivedFields(finalFields, entity.data, {
+                objectType: 'entity',
+                objectId: entity.id
+              })
+            );
+          }
+        }
 
         return updated;
       });

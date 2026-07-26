@@ -242,6 +242,9 @@ importers:
       better-sqlite3:
         specifier: ^12.10.0
         version: 12.10.0
+      bonsai-js:
+        specifier: ^0.5.0
+        version: 0.5.0
       dotenv:
         specifier: ^17.2.3
         version: 17.4.2
@@ -5049,6 +5052,10 @@ packages:
 
   bonjour-service@1.4.1:
     resolution: {integrity: sha512-9KM4QMPKnaJqaja1v7gYO/+TXZGLtzPA05NmUTqDAJjcsWeVoOXKMvU9g0gfuuoYTQqJZ924hivICd5R/bCJbA==}
+
+  bonsai-js@0.5.0:
+    resolution: {integrity: sha512-s+pMKvpcbTcPfck5OC5awLJTadxTBJ7ksOqeM9UCOXJjTeoKqlcGosMdFFjMdiay/6PWj1RF2tsofge6fPiYHQ==}
+    engines: {node: '>=22'}
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
@@ -15357,7 +15364,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.9(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@24.12.4)(esbuild@0.25.12)(jiti@2.7.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+      vitest: 4.1.9(@types/node@20.19.41)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@20.19.41)(esbuild@0.25.12)(jiti@2.7.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
 
   '@vitest/expect@3.2.4':
     dependencies:
@@ -16042,6 +16049,8 @@ snapshots:
     dependencies:
       fast-deep-equal: 3.1.3
       multicast-dns: 7.2.5
+
+  bonsai-js@0.5.0: {}
 
   boolbase@1.0.0: {}
 

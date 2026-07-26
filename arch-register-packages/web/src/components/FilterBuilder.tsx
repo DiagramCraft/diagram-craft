@@ -137,6 +137,15 @@ export const FilterBuilder = ({
             options = en?.options ?? [];
           } else if (f.type === 'boolean') type = 'boolean';
           else if (f.type === 'number') type = 'number';
+          else if (f.type === 'derived') {
+            type =
+              f.resultType === 'select'
+                ? 'select'
+                : f.resultType === 'rating'
+                  ? 'rating'
+                  : f.resultType;
+            if (type === 'select') options = f.options ?? [];
+          }
 
           return { id: f.id, name: f.name, type, options };
         });

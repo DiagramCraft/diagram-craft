@@ -47,6 +47,7 @@ import {
   assertExternalUpdateOnlyChangesTarget,
   assertValidExternalUpdateTarget
 } from '../externalMetadata/externalMetadataHelpers';
+import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
 
 export const allocateEntityPublicId = async (
   db: DatabaseAdapter,
@@ -97,6 +98,7 @@ export const createEntity = async (
       fields: payload.fields,
       entities
     });
+    assertNoDerivedFieldWrites(schema.fields, normalizedFields);
     assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
     const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
     const parents = getEntityParentsFromPayload(schema, normalizedFields, entityLookup);
@@ -339,6 +341,7 @@ export const bulkCreateEntities = async (
           fields: draft.entity.data,
           entities: allEntities
         });
+        assertNoDerivedFieldWrites(draft.schema.fields, draft.entity.data);
         assertNoExternalEntityFieldWrites(draft.schema.fields, {}, draft.entity.data);
         const parents = getEntityParentsFromPayload(draft.schema, draft.entity.data, entityLookup);
         if (authCtx) {
@@ -486,6 +489,7 @@ export const updateEntity = async (
       fields: payload.fields,
       entities
     });
+    assertNoDerivedFieldWrites(schema.fields, normalizedFields);
 
     const timestamp = new Date();
     let nextGeneratedMetadata: ExternalMetadata | undefined;

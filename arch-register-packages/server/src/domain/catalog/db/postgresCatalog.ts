@@ -444,6 +444,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     `;
   }
 
+  async updateEntityDerivedFields(workspace: string, id: string, data: Record<string, unknown>) {
+    await this.sql`
+      UPDATE entity
+      SET data = ${this.json(data)}
+      WHERE workspace = ${workspace} AND id = ${id}
+    `;
+  }
+
   async deleteEntity(workspace: string, id: string) {
     try {
       const row = await this.getEntity(workspace, id);

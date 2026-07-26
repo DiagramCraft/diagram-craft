@@ -18,7 +18,7 @@ const assessmentResponseSchema = z.object({
   id: z.string().describe('Response identifier'),
   entity_id: z.string().describe('Entity this response belongs to'),
   values: z
-    .record(z.string(), z.union([z.string(), z.number()]))
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
     .describe('Recorded field values, keyed by assessment field id'),
   status: assessmentResponseStatusSchema,
   updated_at: z.string().describe('ISO 8601 last update timestamp'),
@@ -31,7 +31,7 @@ const assessmentResponseSchema = z.object({
 
 const upsertAssessmentResponseBodySchema = z.object({
   values: z
-    .record(z.string(), z.union([z.string(), z.number(), z.null()]))
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))
     .describe('Field values to merge into the response; null clears a field')
 });
 

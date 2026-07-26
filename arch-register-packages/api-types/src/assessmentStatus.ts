@@ -13,7 +13,9 @@ export const computeAssessmentStatus = (
 ): AssessmentEntityStatus => {
   if (mode === 'confirm') return values !== undefined ? 'complete' : 'not_started';
 
-  const requiredFields = fields.filter(f => f.requirementLevel === 'required');
+  const requiredFields = fields.filter(
+    f => f.type !== 'derived' && f.requirementLevel === 'required'
+  );
   if (requiredFields.length === 0) return 'complete';
 
   const answered = requiredFields.filter(f => isAnswered(values?.[f.id])).length;

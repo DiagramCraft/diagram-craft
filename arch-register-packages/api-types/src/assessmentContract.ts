@@ -47,8 +47,45 @@ const textAssessmentFieldSchema = baseAssessmentFieldSchema.extend({
   type: z.literal('text').describe('Free-text notes field')
 });
 
+const derivedAssessmentFieldSchema = baseAssessmentFieldSchema
+  .extend({
+    type: z.literal('derived').describe('Read-only value derived from sibling fields'),
+    requirementLevel: z.literal('optional').describe('Derived fields are never required'),
+    expression: z.string().min(1).describe('Sandboxed expression used to calculate the value'),
+    resultType: z
+      .enum(['text', 'number', 'select', 'boolean', 'rating'])
+      .describe('Underlying type of the calculated value'),
+    enumId: z.string().optional().describe('Workspace enumeration for a derived select result'),
+    options: z
+      .array(assessmentEnumOptionSchema)
+      .min(1)
+      .optional()
+      .describe('Assessment-local options for a derived select result')
+  })
+  .superRefine((field, ctx) => {
+    if (field.resultType === 'select' && !field.enumId && !field.options) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['options'],
+        message: 'Derived select fields require enumId or options'
+      });
+    }
+    if (field.resultType !== 'select' && (field.enumId !== undefined || field.options)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['resultType'],
+        message: 'Select options are only valid for derived select fields'
+      });
+    }
+  });
+
 const assessmentFieldSchema = z
-  .union([ratingAssessmentFieldSchema, enumAssessmentFieldSchema, textAssessmentFieldSchema])
+  .union([
+    ratingAssessmentFieldSchema,
+    enumAssessmentFieldSchema,
+    textAssessmentFieldSchema,
+    derivedAssessmentFieldSchema
+  ])
   .describe('Assessment field definition');
 
 const assessmentModeSchema = z

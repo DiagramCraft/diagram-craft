@@ -8,8 +8,8 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import styles from './AssessmentFieldCells.module.css';
 
 type CellProps = {
-  value: string | number | undefined;
-  onChange: (value: string | number | null) => void;
+  value: string | number | boolean | undefined;
+  onChange: (value: string | number | boolean | null) => void;
   disabled?: boolean;
 };
 
@@ -45,7 +45,7 @@ export const EnumCell = ({
   value,
   onChange,
   disabled
-}: CellProps & { field: Extract<AssessmentField, { type: 'enum' }> }) => {
+}: CellProps & { field: AssessmentField }) => {
   const { enums } = useWorkspaceContext();
   const options = getAssessmentEnumOptions(field, enums);
 
@@ -95,13 +95,22 @@ export const AssessmentFieldCell = ({
   disabled
 }: {
   field: AssessmentField;
-  value: string | number | undefined;
-  onChange: (value: string | number | null) => void;
+  value: string | number | boolean | undefined;
+  onChange: (value: string | number | boolean | null) => void;
   disabled?: boolean;
 }) => {
+  const { enums } = useWorkspaceContext();
   if (field.type === 'rating')
     return <RatingCell value={value} onChange={onChange} disabled={disabled} />;
   if (field.type === 'enum')
     return <EnumCell field={field} value={value} onChange={onChange} disabled={disabled} />;
+  if (field.type === 'derived') {
+    if (field.resultType === 'select') {
+      const options = getAssessmentEnumOptions(field, enums);
+      const label = options.find(option => option.value === String(value ?? ''))?.label;
+      return <span>{label ?? (value == null || value === '' ? '—' : String(value))}</span>;
+    }
+    return <span>{value == null || value === '' ? '—' : String(value)}</span>;
+  }
   return <TextCell value={value} onChange={onChange} disabled={disabled} />;
 };

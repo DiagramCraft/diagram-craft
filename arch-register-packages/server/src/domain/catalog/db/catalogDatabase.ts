@@ -519,6 +519,7 @@ export type CatalogDatabase = {
     override: 'required' | 'disabled' | null
   ): Promise<EntityDbResult | null>;
   updateEntityCompleteness(ws: string, id: string, completeness: number): Promise<void>;
+  updateEntityDerivedFields(ws: string, id: string, data: Record<string, unknown>): Promise<void>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
 
   createEntityVersion(input: EntityVersionDbCreate): Promise<EntityVersionDbResult>;

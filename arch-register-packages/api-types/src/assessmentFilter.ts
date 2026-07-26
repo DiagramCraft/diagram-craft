@@ -41,7 +41,7 @@ export const splitAssessmentConditions = (
 };
 
 export const matchesAssessmentConditions = (
-  values: Record<string, string | number> | undefined,
+  values: Record<string, string | number | boolean> | undefined,
   conditions: FilterCondition[],
   fields: AssessmentField[]
 ): boolean =>
