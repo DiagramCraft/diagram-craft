@@ -1,17 +1,35 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getUnifiedOpenAPISpec } from '../openapi';
+import {
+  getApplicationOpenAPISpec,
+  getDiagramCraftAdapterOpenAPISpec,
+  getIntegrationOpenAPISpec,
+  getUnifiedOpenAPISpec
+} from '../openapi';
 
 const scriptDir = fileURLToPath(new URL('.', import.meta.url));
-const outputPath = resolve(scriptDir, '../../openapi.json');
+const outputDir = resolve(scriptDir, '../../openapi');
+
+const artifacts = [
+  { path: resolve(scriptDir, '../../openapi.json'), getSpec: getUnifiedOpenAPISpec },
+  { path: resolve(outputDir, 'application-v1.json'), getSpec: getApplicationOpenAPISpec },
+  { path: resolve(outputDir, 'integrations-v1.json'), getSpec: getIntegrationOpenAPISpec },
+  {
+    path: resolve(outputDir, 'adapters/diagram-craft.json'),
+    getSpec: getDiagramCraftAdapterOpenAPISpec
+  }
+];
 
 const main = async () => {
-  const spec = await getUnifiedOpenAPISpec();
-
-  await writeFile(outputPath, `${JSON.stringify(spec, null, 2)}\n`, 'utf8');
-
-  console.log(`Wrote ${outputPath}`);
+  await mkdir(resolve(outputDir, 'adapters'), { recursive: true });
+  await Promise.all(
+    artifacts.map(async ({ path, getSpec }) => {
+      const spec = await getSpec();
+      await writeFile(path, `${JSON.stringify(spec, null, 2)}\n`, 'utf8');
+      console.log(`Wrote ${path}`);
+    })
+  );
 };
 
 main().catch(error => {

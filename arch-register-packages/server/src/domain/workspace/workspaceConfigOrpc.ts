@@ -166,7 +166,7 @@ export const workspaceConfigOpenAPIHandler = new OpenAPIHandler(workspaceConfigO
 export const createWorkspaceConfigORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceConfigOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

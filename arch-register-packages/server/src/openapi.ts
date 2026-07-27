@@ -5,11 +5,11 @@ import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
+import { projectContract } from '@arch-register/api-types/projectContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
-import { projectContract } from '@arch-register/api-types/projectContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
 import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
@@ -78,6 +78,12 @@ export const allContracts = {
   ...devContract
 };
 
+const coreContracts = {
+  ...authPublicContract,
+  ...authProtectedContract,
+  ...devContract
+};
+
 let generatedUnifiedSpec: Promise<object> | null = null;
 let generatedApplicationSpec: Promise<object> | null = null;
 let generatedIntegrationSpec: Promise<object> | null = null;
@@ -86,7 +92,7 @@ let generatedDiagramCraftAdapterSpec: Promise<object> | null = null;
 export const getUnifiedOpenAPISpec = () => {
   generatedUnifiedSpec ??= new OpenAPIGenerator({
     schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(allContracts, {
+  }).generate(coreContracts, {
     info: {
       title: 'Arch Register API',
       version: '1.0.0'
@@ -103,7 +109,37 @@ export const getApplicationOpenAPISpec = () => {
   }).generate(
     {
       ...workspaceSchemaContract,
-      ...workspaceEntityContract
+      ...workspaceEntityContract,
+      ...workspaceManagementContract,
+      ...projectContract,
+      ...workspaceConfigContract,
+      ...searchContract,
+      ...aiContract,
+      ...workspaceEnumContract,
+      ...workspaceViewContract,
+      ...workspaceCollectionContract,
+      ...workspaceTemplateContract,
+      ...auditContract,
+      ...watchContract,
+      ...notificationPreferencesContract,
+      ...discussionContract,
+      ...governanceContract,
+      ...governanceReminderConfigContract,
+      ...entityVersionContract,
+      ...entityChangeContract,
+      ...entityDeprecationContract,
+      ...assessmentContract,
+      ...assessmentResponseContract,
+      ...milestoneContract,
+      ...changeCaseContract,
+      ...automationRuleContract,
+      ...externalContentContract,
+      ...wikiCommentContract,
+      ...workspaceAnalyticsContract,
+      ...workspaceMetricContract,
+      ...jobsContract,
+      ...webhookContract,
+      ...documentContract
     },
     {
       info: {
@@ -169,12 +205,9 @@ export const getDiagramCraftAdapterOpenAPISpec = () => {
     })
     .then(spec => {
       const paths = Object.fromEntries(
-        Object.entries((spec as { paths?: Record<string, unknown> }).paths ?? {})
-          .filter(([path]) => path.startsWith('/public/'))
-          .map(([path, operations]) => [
-            `/adapters/diagram-craft/${path.slice('/public/'.length)}`,
-            operations
-          ])
+        Object.entries((spec as { paths?: Record<string, unknown> }).paths ?? {}).filter(([path]) =>
+          path.startsWith('/adapters/diagram-craft/')
+        )
       );
 
       return { ...spec, paths };

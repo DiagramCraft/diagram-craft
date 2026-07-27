@@ -56,7 +56,7 @@ const handler = new OpenAPIHandler(externalContentRouter, {
 export const createExternalContentORPCHandler = (db: DatabaseAdapter, storage: StorageAdapter) =>
   defineHandler(async event => {
     const result = await handler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: { db, storage, event: event as AuthenticatedEvent }
     });
     if (result.matched) return result.response;

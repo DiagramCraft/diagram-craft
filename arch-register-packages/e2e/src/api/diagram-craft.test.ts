@@ -118,12 +118,12 @@ const headers = (auth: string, contentType = 'application/json') => ({
 });
 
 test.describe('diagram craft routes', () => {
-  test('GET /api/public/:workspace/schemas returns diagram craft schema shapes', async ({
+  test('GET /api/adapters/diagram-craft/:workspace/schemas returns diagram craft schema shapes', async ({
     server,
     auth,
     mockAI: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/public/default/schemas`, {
+    const res = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/default/schemas`, {
       headers: { Authorization: auth }
     });
 
@@ -145,12 +145,12 @@ test.describe('diagram craft routes', () => {
     );
   });
 
-  test('GET /api/public/:workspace/data returns diagram craft entity data', async ({
+  test('GET /api/adapters/diagram-craft/:workspace/data returns diagram craft entity data', async ({
     server,
     auth,
     mockAI: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/public/default/data`, {
+    const res = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/default/data`, {
       headers: { Authorization: auth }
     });
 
@@ -172,12 +172,12 @@ test.describe('diagram craft routes', () => {
     );
   });
 
-  test('POST /api/:workspace/ai/generate returns JSON output from the mock provider', async ({
+  test('POST /api/adapters/diagram-craft/:workspace/ai/generate returns JSON output from the mock provider', async ({
     server,
     auth,
     mockAI
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const res = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({
@@ -199,12 +199,12 @@ test.describe('diagram craft routes', () => {
     });
   });
 
-  test('POST /api/:workspace/ai/generate proxies streaming responses', async ({
+  test('POST /api/adapters/diagram-craft/:workspace/ai/generate proxies streaming responses', async ({
     server,
     auth,
     mockAI: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const res = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({
@@ -218,10 +218,10 @@ test.describe('diagram craft routes', () => {
   });
 
   test('diagram craft routes return 401 without authentication', async ({ server, mockAI: _ }) => {
-    const publicRes = await fetch(`${server.baseUrl}/api/public/default/schemas`);
+    const publicRes = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/default/schemas`);
     expect(publicRes.status).toBe(401);
 
-    const aiRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const aiRes = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/default/ai/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -236,7 +236,7 @@ test.describe('diagram craft routes', () => {
     auth,
     mockAI: _
   }) => {
-    const publicRes = await fetch(`${server.baseUrl}/api/public/nonexistent/data`, {
+    const publicRes = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/nonexistent/data`, {
       method: 'POST',
       headers: { Authorization: auth },
       body: JSON.stringify({
@@ -245,7 +245,7 @@ test.describe('diagram craft routes', () => {
     });
     expect(publicRes.status).toBe(404);
 
-    const aiRes = await fetch(`${server.baseUrl}/api/missing/ai/generate`, {
+    const aiRes = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/missing/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({
@@ -255,12 +255,12 @@ test.describe('diagram craft routes', () => {
     expect(aiRes.status).toBe(404);
   });
 
-  test('POST /api/:workspace/ai/generate returns 503 when AI is not configured', async ({
+  test('POST /api/adapters/diagram-craft/:workspace/ai/generate returns 503 when AI is not configured', async ({
     server,
     auth,
     mockAI: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/no-ai/ai/generate`, {
+    const res = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/no-ai/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({
@@ -274,43 +274,52 @@ test.describe('diagram craft routes', () => {
     });
   });
 
-  test('POST /api/:workspace/ai/generate validates headers and body', async ({
+  test('POST /api/adapters/diagram-craft/:workspace/ai/generate validates headers and body', async ({
     server,
     auth,
     mockAI: _
   }) => {
-    const contentTypeRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
-      method: 'POST',
-      headers: headers(auth, 'text/plain'),
-      body: 'hello'
-    });
+    const contentTypeRes = await fetch(
+      `${server.baseUrl}/api/adapters/diagram-craft/default/ai/generate`,
+      {
+        method: 'POST',
+        headers: headers(auth, 'text/plain'),
+        body: 'hello'
+      }
+    );
     expect(contentTypeRes.status).toBe(400);
 
     const oversizedBody = JSON.stringify({
       messages: [{ role: 'user', content: 'x'.repeat(1024 * 1024 + 32) }]
     });
 
-    const oversizeRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: oversizedBody
-    });
+    const oversizeRes = await fetch(
+      `${server.baseUrl}/api/adapters/diagram-craft/default/ai/generate`,
+      {
+        method: 'POST',
+        headers: headers(auth),
+        body: oversizedBody
+      }
+    );
     expect(oversizeRes.status).toBe(413);
 
-    const invalidJsonRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: JSON.stringify({})
-    });
+    const invalidJsonRes = await fetch(
+      `${server.baseUrl}/api/adapters/diagram-craft/default/ai/generate`,
+      {
+        method: 'POST',
+        headers: headers(auth),
+        body: JSON.stringify({})
+      }
+    );
     expect(invalidJsonRes.status).toBe(400);
   });
 
-  test('POST /api/:workspace/ai/generate passes through provider HTTP errors', async ({
+  test('POST /api/adapters/diagram-craft/:workspace/ai/generate passes through provider HTTP errors', async ({
     server,
     auth,
     mockAI: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const res = await fetch(`${server.baseUrl}/api/adapters/diagram-craft/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({

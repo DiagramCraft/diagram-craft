@@ -780,7 +780,7 @@ export const projectOpenAPIHandler = new OpenAPIHandler(projectORPCRouter, {
 export const createProjectORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
   defineHandler(async event => {
     const result = await projectOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         storage,

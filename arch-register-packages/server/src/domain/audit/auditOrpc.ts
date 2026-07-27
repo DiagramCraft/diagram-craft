@@ -32,7 +32,7 @@ export const auditOpenAPIHandler = new OpenAPIHandler(auditORPCRouter, {
 export const createAuditORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await auditOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

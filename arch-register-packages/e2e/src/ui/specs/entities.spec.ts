@@ -71,12 +71,12 @@ test.describe('entities section', () => {
     const entityListRequests: string[] = [];
     page.on('request', request => {
       const pathname = new URL(request.url()).pathname;
-      if (pathname === '/api/default/data') entityListRequests.push(pathname);
+      if (pathname === '/api/application/v1/default/data') entityListRequests.push(pathname);
     });
 
     const treeResponse = page.waitForResponse(response => {
       const pathname = new URL(response.url()).pathname;
-      return pathname === '/api/default/data/tree' && response.ok();
+      return pathname === '/api/application/v1/default/data/tree' && response.ok();
     });
 
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);

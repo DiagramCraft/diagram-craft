@@ -79,7 +79,7 @@ export const workspaceCollectionOpenAPIHandler = new OpenAPIHandler(workspaceCol
 export const createWorkspaceCollectionORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceCollectionOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: { db, event: event as AuthenticatedEvent }
     });
     if (result.matched) return result.response;

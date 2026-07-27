@@ -36,7 +36,7 @@ export const workspaceAnalyticsOpenAPIHandler = new OpenAPIHandler(workspaceAnal
 export const createWorkspaceAnalyticsORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceAnalyticsOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

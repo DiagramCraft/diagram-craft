@@ -70,7 +70,7 @@ export const workspaceEnumOpenAPIHandler = new OpenAPIHandler(workspaceEnumORPCR
 export const createWorkspaceEnumORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceEnumOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

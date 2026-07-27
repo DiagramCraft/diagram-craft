@@ -75,7 +75,7 @@ export const assessmentOpenAPIHandler = new OpenAPIHandler(assessmentORPCRouter,
 export const createAssessmentORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await assessmentOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

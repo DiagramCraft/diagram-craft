@@ -110,7 +110,7 @@ test.describe('project permission routes', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 
     const forbiddenRead = await fetch(
-      `${server.baseUrl}/api/default/projects/${resources.projectIds.authMigration}/files`,
+      `${server.baseUrl}/api/application/v1/default/projects/${resources.projectIds.authMigration}/files`,
       {
         headers: { Authorization: designOnlyAuth }
       }

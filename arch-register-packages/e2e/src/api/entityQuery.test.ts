@@ -107,7 +107,7 @@ test.describe('EntityQuery HTTP routes', () => {
 
   test('accepts an EntityQuery serialized as a JSON GET parameter', async ({ server, auth }) => {
     const params = new URLSearchParams({ entityQuery: JSON.stringify(eolRiskQuery), view: 'full' });
-    const response = await fetch(`${server.baseUrl}/api/default/data?${params}`, {
+    const response = await fetch(`${server.baseUrl}/api/application/v1/default/data?${params}`, {
       headers: { Authorization: auth }
     });
 
@@ -159,9 +159,12 @@ test.describe('EntityQuery HTTP routes', () => {
 
     const request = async <T>(path: string): Promise<T> => {
       const params = new URLSearchParams({ entityQuery: JSON.stringify(query), view: 'summary' });
-      const response = await fetch(`${server.baseUrl}/api/default/data${path}?${params}`, {
-        headers: { Authorization: auth }
-      });
+      const response = await fetch(
+        `${server.baseUrl}/api/application/v1/default/data${path}?${params}`,
+        {
+          headers: { Authorization: auth }
+        }
+      );
       expect(response.status).toBe(200);
       return (await response.json()) as T;
     };
@@ -201,7 +204,7 @@ test.describe('EntityQuery HTTP routes', () => {
       }
     };
     const params = new URLSearchParams({ entityQuery: JSON.stringify(invalidQuery) });
-    const response = await fetch(`${server.baseUrl}/api/default/data?${params}`, {
+    const response = await fetch(`${server.baseUrl}/api/application/v1/default/data?${params}`, {
       headers: { Authorization: auth }
     });
 

@@ -418,7 +418,7 @@ export const createAiORPCHandler = (db: DatabaseAdapter, deps: AiORPCDeps = {}) 
 
   return defineHandler(async event => {
     const result = await aiOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: { db, event: event as AuthenticatedEvent }
     });
     if (result.matched) return result.response;

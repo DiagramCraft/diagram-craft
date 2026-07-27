@@ -17,7 +17,7 @@ const test = createPermissionApiTest().extend<{ templateSeed: true }>({
       });
 
       await fetch(
-        `${server.baseUrl}/api/default/projects/${resources.projectIds.portalRedesign}/template-status/${encodeURIComponent('templates/workspace-template.json')}`,
+        `${server.baseUrl}/api/application/v1/default/projects/${resources.projectIds.portalRedesign}/template-status/${encodeURIComponent('templates/workspace-template.json')}`,
         {
           method: 'PUT',
           headers: {
@@ -29,7 +29,7 @@ const test = createPermissionApiTest().extend<{ templateSeed: true }>({
       );
 
       await fetch(
-        `${server.baseUrl}/api/default/projects/${resources.projectIds.authMigration}/template-status/${encodeURIComponent('templates/project-template.json')}`,
+        `${server.baseUrl}/api/application/v1/default/projects/${resources.projectIds.authMigration}/template-status/${encodeURIComponent('templates/project-template.json')}`,
         {
           method: 'PUT',
           headers: {
@@ -96,7 +96,7 @@ test.describe('template permission routes', () => {
     templateSeed: _
   }) => {
     const forbiddenRes = await fetch(
-      `${server.baseUrl}/api/default/projects/${resources.projectIds.portalRedesign}/template-status/${encodeURIComponent('templates/workspace-template.json')}`,
+      `${server.baseUrl}/api/application/v1/default/projects/${resources.projectIds.portalRedesign}/template-status/${encodeURIComponent('templates/workspace-template.json')}`,
       {
         method: 'PUT',
         headers: {

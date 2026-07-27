@@ -76,7 +76,7 @@ export const workspaceTemplateOpenAPIHandler = new OpenAPIHandler(workspaceTempl
 export const createWorkspaceTemplateORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
   defineHandler(async event => {
     const result = await workspaceTemplateOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         storage,

@@ -71,7 +71,7 @@ export const discussionOpenAPIHandler = new OpenAPIHandler(discussionORPCRouter,
 export const createDiscussionORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await discussionOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

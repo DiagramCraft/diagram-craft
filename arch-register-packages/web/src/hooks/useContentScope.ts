@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { apiFetchResponse, ApiError } from '../lib/http';
+import { applicationWorkspacePath } from '../lib/applicationApi';
 import { orpcClient } from '../lib/orpcClient';
 import { emptyDiagram, prepareTemplateDiagramDocument } from '../lib/diagramDocuments';
 import { movePath, renamePath } from '../lib/contentPath';
@@ -51,11 +52,17 @@ export const contentScopeKey = (scope: ContentScope) => {
 export const contentUploadUrl = (scope: ContentScope): string => {
   switch (scope.kind) {
     case 'project':
-      return `/api/${scope.workspaceId}/projects/${scope.projectId}/files/upload`;
+      return applicationWorkspacePath(
+        scope.workspaceId,
+        `/projects/${scope.projectId}/files/upload`
+      );
     case 'entity':
-      return `/api/${scope.workspaceId}/entities/${scope.entityId}/content/files/upload`;
+      return applicationWorkspacePath(
+        scope.workspaceId,
+        `/entities/${scope.entityId}/content/files/upload`
+      );
     case 'workspace':
-      return `/api/${scope.workspaceId}/content/files/upload`;
+      return applicationWorkspacePath(scope.workspaceId, '/content/files/upload');
   }
 };
 
@@ -63,11 +70,20 @@ export const contentDownloadUrl = (scope: ContentScope, path: string): string =>
   const encodedPath = encodeURIComponent(path);
   switch (scope.kind) {
     case 'project':
-      return `/api/${scope.workspaceId}/projects/${scope.projectId}/files/download?path=${encodedPath}`;
+      return applicationWorkspacePath(
+        scope.workspaceId,
+        `/projects/${scope.projectId}/files/download?path=${encodedPath}`
+      );
     case 'entity':
-      return `/api/${scope.workspaceId}/entities/${scope.entityId}/content/files/download?path=${encodedPath}`;
+      return applicationWorkspacePath(
+        scope.workspaceId,
+        `/entities/${scope.entityId}/content/files/download?path=${encodedPath}`
+      );
     case 'workspace':
-      return `/api/${scope.workspaceId}/content/files/download?path=${encodedPath}`;
+      return applicationWorkspacePath(
+        scope.workspaceId,
+        `/content/files/download?path=${encodedPath}`
+      );
   }
 };
 

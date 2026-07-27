@@ -306,7 +306,7 @@ export const createWorkspaceManagementORPCHandler = (
 ) =>
   defineHandler(async event => {
     const result = await workspaceManagementOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         storage,

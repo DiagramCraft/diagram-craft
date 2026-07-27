@@ -63,7 +63,7 @@ export const workspaceMetricOpenAPIHandler = new OpenAPIHandler(workspaceMetricO
 export const createWorkspaceMetricORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceMetricOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

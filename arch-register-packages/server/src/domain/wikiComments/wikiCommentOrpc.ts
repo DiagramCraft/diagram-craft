@@ -77,7 +77,7 @@ export const wikiCommentOpenAPIHandler = new OpenAPIHandler(wikiCommentORPCRoute
 export const createWikiCommentORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await wikiCommentOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

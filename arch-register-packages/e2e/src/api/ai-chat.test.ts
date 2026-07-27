@@ -286,7 +286,7 @@ test.describe('ai chat routes', () => {
     const prompt =
       'Explain the authentication flow between the frontend, API gateway, and auth service clearly.';
 
-    const res = await fetch(`${server.baseUrl}/api/default/ai/chat`, {
+    const res = await fetch(`${server.baseUrl}/api/application/v1/default/ai/chat`, {
       method: 'POST',
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -332,21 +332,21 @@ test.describe('ai chat routes', () => {
     auth,
     seeded: _
   }) => {
-    const unauthRes = await fetch(`${server.baseUrl}/api/default/ai/chat`, {
+    const unauthRes = await fetch(`${server.baseUrl}/api/application/v1/default/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
     expect(unauthRes.status).toBe(401);
 
-    const invalidJsonRes = await fetch(`${server.baseUrl}/api/default/ai/chat`, {
+    const invalidJsonRes = await fetch(`${server.baseUrl}/api/application/v1/default/ai/chat`, {
       method: 'POST',
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: 'not-json'
     });
     expect(invalidJsonRes.status).toBe(400);
 
-    const missingWsRes = await fetch(`${server.baseUrl}/api/missing/ai/chat`, {
+    const missingWsRes = await fetch(`${server.baseUrl}/api/application/v1/missing/ai/chat`, {
       method: 'POST',
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -355,7 +355,7 @@ test.describe('ai chat routes', () => {
     });
     expect(missingWsRes.status).toBe(404);
 
-    const noConfigRes = await fetch(`${server.baseUrl}/api/no-ai/ai/chat`, {
+    const noConfigRes = await fetch(`${server.baseUrl}/api/application/v1/no-ai/ai/chat`, {
       method: 'POST',
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({

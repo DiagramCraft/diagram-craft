@@ -10,7 +10,7 @@ export const useAiChat = (
   conversationId?: string,
   initialMessages?: UIMessage[]
 ) => {
-  const url = `${BASE}/api/${workspaceSlug}/ai/chat`;
+  const url = `${BASE}/api/application/v1/${encodeURIComponent(workspaceSlug)}/ai/chat`;
 
   const connection = useMemo(
     () =>

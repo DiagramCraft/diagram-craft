@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
+import { applicationWorkspacePath } from '../lib/applicationApi';
 import { markdownContentKeys } from './useMarkdownContent';
 import {
   deleteContentFile,
@@ -26,7 +27,7 @@ export const useUploadMarkdownAttachment = (scope: ContentScope, nodeId: string)
   return useMutation({
     mutationFn: (file: File) =>
       uploadContentFile(
-        `/api/${workspaceId}/markdown/${nodeId}/attachments/upload`,
+        applicationWorkspacePath(workspaceId, `/markdown/${nodeId}/attachments/upload`),
         file,
         file.name
       ),

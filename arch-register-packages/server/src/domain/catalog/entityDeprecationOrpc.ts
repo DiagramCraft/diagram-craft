@@ -94,7 +94,7 @@ export const createEntityDeprecationORPCHandler = (db: DatabaseAdapter) => {
   });
   return defineHandler(async event => {
     const result = await openAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: { db, event: event as AuthenticatedEvent }
     });
     if (result.matched) return result.response;

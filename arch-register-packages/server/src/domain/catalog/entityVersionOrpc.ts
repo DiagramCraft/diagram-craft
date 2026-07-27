@@ -174,7 +174,7 @@ export const entityVersionOpenAPIHandler = new OpenAPIHandler(entityVersionORPCR
 export const createEntityVersionORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await entityVersionOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

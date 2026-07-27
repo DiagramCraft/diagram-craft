@@ -53,7 +53,7 @@ test.describe('markdown editor', () => {
       mount_id: 'external-mdx-mount'
     };
 
-    await page.route('**/api/default/content', route =>
+    await page.route('**/api/application/v1/default/content', route =>
       route.fulfill({
         json: {
           rootFiles: [],
@@ -69,7 +69,7 @@ test.describe('markdown editor', () => {
         }
       })
     );
-    await page.route(`**/api/default/markdown/${nodeId}`, route =>
+    await page.route(`**/api/application/v1/default/markdown/${nodeId}`, route =>
       route.fulfill({
         json: {
           body: '# Architecture\n\nThis document comes from MDX.',
@@ -82,7 +82,7 @@ test.describe('markdown editor', () => {
         }
       })
     );
-    await page.route(`**/api/default/markdown/${nodeId}/revisions`, route =>
+    await page.route(`**/api/application/v1/default/markdown/${nodeId}/revisions`, route =>
       route.fulfill({ json: [] })
     );
 

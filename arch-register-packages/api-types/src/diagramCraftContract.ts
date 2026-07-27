@@ -9,7 +9,7 @@ export const diagramCraftContract = oc.tag('Diagram Craft').router({
     getSchemas: oc
       .route({
         method: 'GET',
-        path: '/public/{workspace}/schemas',
+        path: '/adapters/diagram-craft/{workspace}/schemas',
         inputStructure: 'detailed',
         summary: 'Get public schemas',
         description:
@@ -22,7 +22,7 @@ export const diagramCraftContract = oc.tag('Diagram Craft').router({
     getData: oc
       .route({
         method: 'GET',
-        path: '/public/{workspace}/data',
+        path: '/adapters/diagram-craft/{workspace}/data',
         inputStructure: 'detailed',
         summary: 'Get public entity data',
         description:
@@ -35,7 +35,7 @@ export const diagramCraftContract = oc.tag('Diagram Craft').router({
     generate: oc
       .route({
         method: 'POST',
-        path: '/{workspace}/ai/generate',
+        path: '/adapters/diagram-craft/{workspace}/ai/generate',
         inputStructure: 'detailed',
         summary: 'Generate diagram with AI',
         description:

@@ -111,7 +111,7 @@ export const createGovernanceReminderConfigORPCHandler = (
 
   return defineHandler(async event => {
     const result = await handler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: { db, event: event as AuthenticatedEvent }
     });
     if (result.matched) return result.response;

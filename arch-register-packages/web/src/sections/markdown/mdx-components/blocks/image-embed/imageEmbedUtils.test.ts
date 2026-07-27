@@ -43,7 +43,7 @@ describe('imageEmbedUtils', () => {
         attachmentPath: 'docs/page/__attachments/image 1.png'
       })
     ).toBe(
-      '/api/demo/projects/project-42/files/download?path=docs%2Fpage%2F__attachments%2Fimage%201.png'
+      '/api/application/v1/demo/projects/project-42/files/download?path=docs%2Fpage%2F__attachments%2Fimage%201.png'
     );
   });
 
@@ -55,7 +55,7 @@ describe('imageEmbedUtils', () => {
         attachmentPath: 'docs/page/__attachments/image.png'
       })
     ).toBe(
-      '/api/demo/entities/entity-9/content/files/download?path=docs%2Fpage%2F__attachments%2Fimage.png'
+      '/api/application/v1/demo/entities/entity-9/content/files/download?path=docs%2Fpage%2F__attachments%2Fimage.png'
     );
 
     expect(
@@ -63,6 +63,8 @@ describe('imageEmbedUtils', () => {
         workspaceSlug: 'demo',
         attachmentPath: 'docs/page/__attachments/image.png'
       })
-    ).toBe('/api/demo/content/files/download?path=docs%2Fpage%2F__attachments%2Fimage.png');
+    ).toBe(
+      '/api/application/v1/demo/content/files/download?path=docs%2Fpage%2F__attachments%2Fimage.png'
+    );
   });
 });

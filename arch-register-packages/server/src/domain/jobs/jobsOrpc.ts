@@ -82,7 +82,7 @@ export const jobsOpenAPIHandler = new OpenAPIHandler(jobsORPCRouter, {
 export const createJobsORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await jobsOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

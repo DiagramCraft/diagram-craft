@@ -19,11 +19,10 @@ test.describe('versioned API surface aliases', () => {
       })
     ]);
 
+    expect(legacySchemas.status).toBe(404);
     expect(applicationSchemas.status).toBe(200);
     expect(integrationSchemas.status).toBe(200);
-    const legacySchemaBody = await legacySchemas.json();
-    expect(await applicationSchemas.json()).toEqual(legacySchemaBody);
-    expect(await integrationSchemas.json()).toEqual(legacySchemaBody);
+    expect(await integrationSchemas.json()).toEqual(await applicationSchemas.json());
 
     const [legacyEntities, applicationEntities] = await Promise.all([
       fetch(`${server.baseUrl}/api/default/data`, {
@@ -34,8 +33,8 @@ test.describe('versioned API surface aliases', () => {
       })
     ]);
 
+    expect(legacyEntities.status).toBe(404);
     expect(applicationEntities.status).toBe(200);
-    expect(await applicationEntities.json()).toEqual(await legacyEntities.json());
   });
 
   test('exposes Diagram Craft data through the named adapter surface', async ({ server, auth }) => {
@@ -48,8 +47,8 @@ test.describe('versioned API surface aliases', () => {
       })
     ]);
 
+    expect(legacySchemas.status).toBe(404);
     expect(adapterSchemas.status).toBe(200);
-    expect(await adapterSchemas.json()).toEqual(await legacySchemas.json());
   });
 
   test('keeps the new surfaces behind the existing authentication boundary', async ({ server }) => {
@@ -73,15 +72,17 @@ test.describe('versioned API surface aliases', () => {
   });
 
   test('publishes surface-specific OpenAPI documents', async ({ server }) => {
-    const [applicationRes, integrationRes, adapterRes] = await Promise.all([
+    const [applicationRes, integrationRes, adapterRes, defaultOpenApiRes] = await Promise.all([
       fetch(`${server.baseUrl}/openapi/application-v1.json`),
       fetch(`${server.baseUrl}/openapi/integrations-v1.json`),
-      fetch(`${server.baseUrl}/openapi/adapters/diagram-craft.json`)
+      fetch(`${server.baseUrl}/openapi/adapters/diagram-craft.json`),
+      fetch(`${server.baseUrl}/openapi.json`)
     ]);
 
     expect(applicationRes.status).toBe(200);
     expect(integrationRes.status).toBe(200);
     expect(adapterRes.status).toBe(200);
+    expect(defaultOpenApiRes.status).toBe(200);
 
     const applicationSpec = (await applicationRes.json()) as {
       servers: Array<{ url: string }>;
@@ -93,12 +94,57 @@ test.describe('versioned API surface aliases', () => {
     const adapterSpec = (await adapterRes.json()) as {
       paths: Record<string, unknown>;
     };
+    const defaultOpenApiSpec = (await defaultOpenApiRes.json()) as {
+      servers: Array<{ url: string }>;
+      paths: Record<string, unknown>;
+    };
 
     expect(applicationSpec.servers[0]?.url).toBe('/api/application/v1');
+    expect(defaultOpenApiSpec.servers[0]?.url).toBe('/api');
+    expect(defaultOpenApiSpec.paths['/auth/me']).toBeDefined();
+    expect(defaultOpenApiSpec.paths['/dev/config']).toBeDefined();
+    expect(defaultOpenApiSpec.paths['/{workspace}/schemas']).toBeUndefined();
+    expect(defaultOpenApiSpec.paths['/integrations/v1/{workspace}/entities/{id}']).toBeUndefined();
+    expect(defaultOpenApiSpec.paths['/adapters/diagram-craft/{workspace}/schemas']).toBeUndefined();
+    expect(applicationSpec.paths['/workspaces']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/schemas']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/projects']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/search']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/ai/config']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/config/lifecycle-states']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/enums']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/views']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/collections']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/templates']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/analytics']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/metrics/rollup']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/jobs/schedules']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/webhooks']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/document-types']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/audit']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/watching']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/notifications']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/notification-preferences']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/discussions']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/governance/cases']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/governance/reminder-config']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/data/{id}/versions']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/data/{id}/change-approvals']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/data/{id}/deprecation']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/assessments']).toBeDefined();
+    expect(
+      applicationSpec.paths['/{workspace}/assessments/{assessmentId}/responses']
+    ).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/milestones']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/projects/{id}/change-cases']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/automation-rules']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/content-mounts']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/wiki-comments']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/pinned-entities']).toBeDefined();
     expect(integrationSpec.paths['/integrations/v1/{workspace}/schemas']).toBeDefined();
     expect(integrationSpec.paths['/integrations/v1/{workspace}/schemas/{id}']).toBeUndefined();
     expect(integrationSpec.paths['/integrations/v1/{workspace}/entities/{id}']).toBeDefined();
     expect(adapterSpec.paths['/adapters/diagram-craft/{workspace}/schemas']).toBeDefined();
+    expect(adapterSpec.paths['/adapters/diagram-craft/{workspace}/ai/generate']).toBeDefined();
   });
 });

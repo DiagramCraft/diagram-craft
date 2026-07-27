@@ -70,7 +70,7 @@ export const milestoneOpenAPIHandler = new OpenAPIHandler(milestoneORPCRouter, {
 export const createMilestoneORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await milestoneOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent

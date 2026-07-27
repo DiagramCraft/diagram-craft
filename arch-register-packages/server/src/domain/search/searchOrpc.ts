@@ -40,7 +40,7 @@ export const searchOpenAPIHandler = new OpenAPIHandler(searchORPCRouter, {
 export const createSearchORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await searchOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
+      prefix: '/api/application/v1',
       context: {
         db,
         event: event as AuthenticatedEvent
