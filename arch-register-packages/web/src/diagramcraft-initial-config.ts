@@ -11,7 +11,9 @@ export const initializeDiagramCraft = (workspaceId: string) => {
   });
 
   if (workspaceId !== _currentWorkspaceId) {
-    instance.updateConfig({ ai: { provider: 'remote', endpoint: `/api/${workspaceId}` } });
+    instance.updateConfig({
+      ai: { provider: 'remote', endpoint: `/api/adapters/diagram-craft/${workspaceId}` }
+    });
     _currentWorkspaceId = workspaceId;
   }
 

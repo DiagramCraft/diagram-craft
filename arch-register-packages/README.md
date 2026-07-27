@@ -21,7 +21,7 @@ This directory contains the packages that make up the Architecture Register appl
   - `<x>Operations.ts` — business logic
   - `db/` — database repositories
 - Runs against PostgreSQL or SQLite; app wiring lives in `server/src/app.ts`
-- The OpenAPI spec is generated from the contracts (`@orpc/openapi`) and served at `/openapi.json`
+- The core and surface-specific OpenAPI documents are generated from the contracts (`@orpc/openapi`) and served at `/openapi.json`, `/openapi/application-v1.json`, `/openapi/integrations-v1.json`, and `/openapi/adapters/diagram-craft.json`.
 
 #### `web/`
 **React + Vite web client**
@@ -65,7 +65,7 @@ See `permissions/PERMISSIONS.md` for details.
 Contracts in `api-types` are the single source of truth: request/response shapes are Zod schemas, so server handlers, the web client, and e2e tests all share the same types with no manual sync or generation step. The OpenAPI spec is derived from the contracts:
 
 ```bash
-# Regenerate server/openapi.json from the contracts
+# Regenerate the checked-in OpenAPI documents from the contracts
 pnpm --filter @arch-register/server openapi:generate
 
 # Verify the checked-in spec is up to date
@@ -221,7 +221,7 @@ All packages use `workspace:*` protocol for internal dependencies, managed by pn
 
 ## 📚 Additional Documentation
 
-- **API Documentation**: Run the server and fetch `/openapi.json`, or see the checked-in `server/openapi.json`
+- **API Documentation**: Run the server and fetch the core document at `/openapi.json` or a surface-specific document such as `/openapi/application-v1.json`, or see the checked-in documents under `server/openapi.json` and `server/openapi/`
 - **Permission System**: See `permissions/PERMISSIONS.md`
 - **Feature Inventory**: See `FEATURES.md` and the repository-level `feature-maps/`
 - **AI Setup**: See `AI_SETUP.md`
@@ -235,4 +235,4 @@ All packages use `workspace:*` protocol for internal dependencies, managed by pn
 - Check team assignments and role inheritance
 
 **OpenAPI drift:**
-- `pnpm --filter @arch-register/server openapi:check` fails when `server/openapi.json` is out of date; regenerate with `openapi:generate`
+- `pnpm --filter @arch-register/server openapi:check` fails when any checked-in OpenAPI document is out of date; regenerate with `openapi:generate`

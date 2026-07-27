@@ -47,8 +47,8 @@ test.describe('versioned API surface aliases', () => {
       })
     ]);
 
+    expect(legacySchemas.status).toBe(404);
     expect(adapterSchemas.status).toBe(200);
-    expect(await adapterSchemas.json()).toEqual(await legacySchemas.json());
   });
 
   test('keeps the new surfaces behind the existing authentication boundary', async ({ server }) => {
@@ -72,15 +72,17 @@ test.describe('versioned API surface aliases', () => {
   });
 
   test('publishes surface-specific OpenAPI documents', async ({ server }) => {
-    const [applicationRes, integrationRes, adapterRes] = await Promise.all([
+    const [applicationRes, integrationRes, adapterRes, defaultOpenApiRes] = await Promise.all([
       fetch(`${server.baseUrl}/openapi/application-v1.json`),
       fetch(`${server.baseUrl}/openapi/integrations-v1.json`),
-      fetch(`${server.baseUrl}/openapi/adapters/diagram-craft.json`)
+      fetch(`${server.baseUrl}/openapi/adapters/diagram-craft.json`),
+      fetch(`${server.baseUrl}/openapi.json`)
     ]);
 
     expect(applicationRes.status).toBe(200);
     expect(integrationRes.status).toBe(200);
     expect(adapterRes.status).toBe(200);
+    expect(defaultOpenApiRes.status).toBe(200);
 
     const applicationSpec = (await applicationRes.json()) as {
       servers: Array<{ url: string }>;
@@ -92,8 +94,18 @@ test.describe('versioned API surface aliases', () => {
     const adapterSpec = (await adapterRes.json()) as {
       paths: Record<string, unknown>;
     };
+    const defaultOpenApiSpec = (await defaultOpenApiRes.json()) as {
+      servers: Array<{ url: string }>;
+      paths: Record<string, unknown>;
+    };
 
     expect(applicationSpec.servers[0]?.url).toBe('/api/application/v1');
+    expect(defaultOpenApiSpec.servers[0]?.url).toBe('/api');
+    expect(defaultOpenApiSpec.paths['/auth/me']).toBeDefined();
+    expect(defaultOpenApiSpec.paths['/dev/config']).toBeDefined();
+    expect(defaultOpenApiSpec.paths['/{workspace}/schemas']).toBeUndefined();
+    expect(defaultOpenApiSpec.paths['/integrations/v1/{workspace}/entities/{id}']).toBeUndefined();
+    expect(defaultOpenApiSpec.paths['/adapters/diagram-craft/{workspace}/schemas']).toBeUndefined();
     expect(applicationSpec.paths['/workspaces']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/schemas']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/projects']).toBeDefined();
@@ -133,5 +145,6 @@ test.describe('versioned API surface aliases', () => {
     expect(integrationSpec.paths['/integrations/v1/{workspace}/schemas/{id}']).toBeUndefined();
     expect(integrationSpec.paths['/integrations/v1/{workspace}/entities/{id}']).toBeDefined();
     expect(adapterSpec.paths['/adapters/diagram-craft/{workspace}/schemas']).toBeDefined();
+    expect(adapterSpec.paths['/adapters/diagram-craft/{workspace}/ai/generate']).toBeDefined();
   });
 });

@@ -78,6 +78,12 @@ export const allContracts = {
   ...devContract
 };
 
+const coreContracts = {
+  ...authPublicContract,
+  ...authProtectedContract,
+  ...devContract
+};
+
 let generatedUnifiedSpec: Promise<object> | null = null;
 let generatedApplicationSpec: Promise<object> | null = null;
 let generatedIntegrationSpec: Promise<object> | null = null;
@@ -86,7 +92,7 @@ let generatedDiagramCraftAdapterSpec: Promise<object> | null = null;
 export const getUnifiedOpenAPISpec = () => {
   generatedUnifiedSpec ??= new OpenAPIGenerator({
     schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(allContracts, {
+  }).generate(coreContracts, {
     info: {
       title: 'Arch Register API',
       version: '1.0.0'
@@ -199,12 +205,9 @@ export const getDiagramCraftAdapterOpenAPISpec = () => {
     })
     .then(spec => {
       const paths = Object.fromEntries(
-        Object.entries((spec as { paths?: Record<string, unknown> }).paths ?? {})
-          .filter(([path]) => path.startsWith('/public/'))
-          .map(([path, operations]) => [
-            `/adapters/diagram-craft/${path.slice('/public/'.length)}`,
-            operations
-          ])
+        Object.entries((spec as { paths?: Record<string, unknown> }).paths ?? {}).filter(([path]) =>
+          path.startsWith('/adapters/diagram-craft/')
+        )
       );
 
       return { ...spec, paths };

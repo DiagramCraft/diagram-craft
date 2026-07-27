@@ -1,0 +1,3302 @@
+{
+  "info": {
+    "title": "Arch Register Integration API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "openapi": "3.1.1",
+  "paths": {
+    "/integrations/v1/{workspace}/schemas": {
+      "get": {
+        "operationId": "schemas.list",
+        "summary": "List entity schemas",
+        "description": "Retrieves all entity schema definitions for the workspace. Schemas define the structure and fields for different types of entities.",
+        "tags": [
+          "Schemas",
+          "Schemas"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique schema identifier"
+                      },
+                      "workspace": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Schema name"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Schema description"
+                      },
+                      "key_prefix": {
+                        "type": "string",
+                        "description": "Prefix for entity public IDs (e.g., \"APP\" for APP-001)"
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "type": {
+                                  "const": "text",
+                                  "description": "Single-line text field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "type": {
+                                  "const": "longtext",
+                                  "description": "Multi-line text field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "type": {
+                                  "const": "boolean",
+                                  "description": "Boolean (true/false) field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "type": {
+                                  "const": "date",
+                                  "description": "Date field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "type": {
+                                  "const": "number",
+                                  "description": "Integer number field"
+                                },
+                                "min": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum allowed value"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Maximum allowed value"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "type": {
+                                  "const": "select",
+                                  "description": "Single-select dropdown field"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Enumeration identifier for dropdown options"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Internal option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Display label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Available dropdown options"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "enumId",
+                                "options"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "type": {
+                                  "const": "reference",
+                                  "description": "Reference to other entities"
+                                },
+                                "predicate": {
+                                  "type": "string",
+                                  "maxLength": 100,
+                                  "pattern": "^[a-zA-Z0-9\\s-]+$",
+                                  "description": "Relationship predicate/label"
+                                },
+                                "schemaId": {
+                                  "type": "string",
+                                  "description": "Target schema identifier"
+                                },
+                                "minCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of references required"
+                                },
+                                "maxCount": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of references (-1 for unlimited)"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "schemaId",
+                                "minCount",
+                                "maxCount"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "type": {
+                                  "const": "containment",
+                                  "description": "Containment relationship (parent-child)"
+                                },
+                                "predicate": {
+                                  "type": "string",
+                                  "maxLength": 100,
+                                  "pattern": "^[a-zA-Z0-9\\s-]+$",
+                                  "description": "Relationship predicate/label"
+                                },
+                                "schemaId": {
+                                  "type": "string",
+                                  "description": "Target schema identifier"
+                                },
+                                "minCount": {
+                                  "anyOf": [
+                                    {
+                                      "const": 0
+                                    },
+                                    {
+                                      "const": 1
+                                    }
+                                  ],
+                                  "description": "Minimum count (0 or 1)"
+                                },
+                                "maxCount": {
+                                  "const": 1,
+                                  "description": "Maximum count (always 1 for containment)"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "schemaId",
+                                "minCount",
+                                "maxCount"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "const": "optional",
+                                  "description": "Derived fields are never required"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "not": {}
+                                },
+                                "refresh_mode": {
+                                  "not": {}
+                                },
+                                "type": {
+                                  "const": "derived",
+                                  "description": "Read-only value derived from sibling fields"
+                                },
+                                "expression": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Sandboxed expression used to calculate the value"
+                                },
+                                "resultType": {
+                                  "enum": [
+                                    "text",
+                                    "number",
+                                    "select",
+                                    "boolean",
+                                    "rating"
+                                  ],
+                                  "type": "string",
+                                  "description": "Underlying type of the calculated value"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Workspace enumeration for a derived select result"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Internal option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Display label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Resolved options for a derived select"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "requirementLevel",
+                                "type",
+                                "expression",
+                                "resultType"
+                              ]
+                            }
+                          ],
+                          "description": "Schema field with resolved options"
+                        },
+                        "description": "Schema field definitions"
+                      },
+                      "templates": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable template identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Template display name"
+                            },
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "description": {
+                                  "type": "string",
+                                  "description": "Default entity description"
+                                },
+                                "owner": {
+                                  "type": "string",
+                                  "description": "Default owner team identifier"
+                                },
+                                "lifecycle": {
+                                  "type": "string",
+                                  "description": "Default lifecycle state identifier"
+                                },
+                                "namespace": {
+                                  "type": "string",
+                                  "description": "Default entity namespace"
+                                },
+                                "tags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Default entity tags"
+                                },
+                                "fields": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "description": "Schema field defaults"
+                                }
+                              },
+                              "required": [
+                                "fields"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "values"
+                          ],
+                          "description": "Named defaults for creating an entity of this schema"
+                        },
+                        "description": "Named entity creation templates"
+                      },
+                      "groups": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable group identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Group display name"
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "Optional group description"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        "description": "Named, presentation-only field groups, in display order"
+                      },
+                      "color": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Schema color (hex format)"
+                      },
+                      "icon": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Schema icon identifier"
+                      },
+                      "entity_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "Number of entities using this schema"
+                      },
+                      "version": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "Current schema version number"
+                      },
+                      "entity_approval_policy": {
+                        "enum": [
+                          "required",
+                          "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Default approval policy for existing entity changes"
+                      },
+                      "deprecation_policy": {
+                        "enum": [
+                          "required",
+                          "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Whether entities of this schema can go through the deprecation workflow"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "description": "ISO 8601 last update timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "name",
+                      "description",
+                      "key_prefix",
+                      "fields",
+                      "templates",
+                      "groups",
+                      "color",
+                      "icon",
+                      "entity_count",
+                      "version",
+                      "created_at",
+                      "updated_at"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/entities/{id}": {
+      "get": {
+        "operationId": "entitySync.getById",
+        "summary": "Get entity by ID",
+        "description": "Retrieves an entity by its unique identifier.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canView": {
+                      "type": "boolean",
+                      "description": "Whether the user can view this entity"
+                    },
+                    "canEdit": {
+                      "type": "boolean",
+                      "description": "Whether the user can edit this entity"
+                    },
+                    "canDelete": {
+                      "type": "boolean",
+                      "description": "Whether the user can delete this entity"
+                    },
+                    "canAdmin": {
+                      "type": "boolean",
+                      "description": "Whether the user can manage entity permissions"
+                    },
+                    "canCreateChild": {
+                      "type": "boolean",
+                      "description": "Whether the user can create child entities"
+                    },
+                    "_uid": {
+                      "type": "string",
+                      "description": "Unique entity identifier"
+                    },
+                    "_publicId": {
+                      "type": "string",
+                      "description": "Public entity identifier (e.g., APP-001)"
+                    },
+                    "_schema": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "Entity schema reference"
+                    },
+                    "_name": {
+                      "type": "string",
+                      "description": "Entity name"
+                    },
+                    "_slug": {
+                      "type": "string",
+                      "description": "Entity URL slug"
+                    },
+                    "_namespace": {
+                      "type": "string",
+                      "description": "Entity namespace for organization"
+                    },
+                    "_description": {
+                      "type": "string",
+                      "description": "Entity description"
+                    },
+                    "_owner": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Entity owner"
+                    },
+                    "_lifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Current lifecycle state"
+                    },
+                    "_targetLifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Target lifecycle state"
+                    },
+                    "_targetLifecycleDate": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Target date for lifecycle transition (ISO 8601)"
+                    },
+                    "_tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Entity tags"
+                    },
+                    "_links": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "description": "Link URL"
+                          },
+                          "title": {
+                            "type": "string",
+                            "description": "Link title/label"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Link type (e.g., \"documentation\", \"repository\")"
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "title"
+                        ]
+                      },
+                      "description": "External links associated with the entity"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp of the entity's most recent update"
+                    },
+                    "_version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Optimistic concurrency version"
+                    },
+                    "_approvalPolicyOverride": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "required",
+                            "disabled"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Entity-specific approval policy override"
+                    },
+                    "_projectId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
+                    },
+                    "_completeness": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Field completeness percentage (0-100)"
+                    },
+                    "_projectLink": {
+                      "type": "object",
+                      "properties": {
+                        "linked": {
+                          "type": "boolean",
+                          "description": "Whether the entity is linked to a project"
+                        },
+                        "entityType": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Project entity type classification"
+                        },
+                        "isDone": {
+                          "type": "boolean",
+                          "description": "Whether the entity is marked as done in the project"
+                        }
+                      },
+                      "required": [
+                        "linked",
+                        "entityType",
+                        "isDone"
+                      ],
+                      "description": "Project linkage information"
+                    },
+                    "_externalMetadata": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "fieldId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "external_kind": {
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Free-form source label supplied by the updater"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp, inferred by the server"
+                          },
+                          "explanation": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "findings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sourceVersion": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Updater version, if applicable"
+                          },
+                          "requestId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                          },
+                          "failureNotice": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "actionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sourceRevision": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "generatorVersion": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
+                      },
+                      "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_projections": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {},
+                      "description": "Values returned by structured EntityQuery projections"
+                    }
+                  },
+                  "required": [
+                    "canView",
+                    "canEdit",
+                    "canDelete",
+                    "canAdmin",
+                    "canCreateChild",
+                    "_uid",
+                    "_publicId",
+                    "_schema",
+                    "_name",
+                    "_slug",
+                    "_namespace",
+                    "_description",
+                    "_owner",
+                    "_lifecycle",
+                    "_targetLifecycle",
+                    "_targetLifecycleDate",
+                    "_tags",
+                    "_links",
+                    "_projectId",
+                    "_completeness"
+                  ],
+                  "additionalProperties": {},
+                  "description": "Complete entity record with schema-specific fields"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "entitySync.updateById",
+        "summary": "Update entity by ID",
+        "description": "Updates an existing entity identified by its unique identifier.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "_schemaId": {
+                    "type": "string",
+                    "description": "Schema identifier"
+                  },
+                  "_schema": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "description": "Schema reference"
+                  },
+                  "_name": {
+                    "type": "string",
+                    "description": "Entity name"
+                  },
+                  "_slug": {
+                    "type": "string",
+                    "description": "Entity URL slug"
+                  },
+                  "_namespace": {
+                    "type": "string",
+                    "description": "Entity namespace"
+                  },
+                  "_description": {
+                    "type": "string",
+                    "description": "Entity description"
+                  },
+                  "_owner": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Entity owner"
+                  },
+                  "_lifecycle": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Current lifecycle state"
+                  },
+                  "_targetLifecycle": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Target lifecycle state"
+                  },
+                  "_targetLifecycleDate": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Target date for lifecycle transition (ISO 8601)"
+                  },
+                  "_tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Entity tags"
+                  },
+                  "_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "description": "Link URL"
+                        },
+                        "title": {
+                          "type": "string",
+                          "description": "Link title/label"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "Link type (e.g., \"documentation\", \"repository\")"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "title"
+                      ]
+                    },
+                    "description": "External links"
+                  },
+                  "_projectId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Set to scope this entity to a single project; omit or set null for no scope"
+                  },
+                  "_external": {
+                    "type": "object",
+                    "properties": {
+                      "fieldId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "kind": {
+                        "enum": [
+                          "ai",
+                          "integration",
+                          "automation"
+                        ],
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "status": {
+                        "enum": [
+                          "success",
+                          "failed"
+                        ],
+                        "type": "string",
+                        "default": "success"
+                      },
+                      "failureNotice": {
+                        "type": "string"
+                      },
+                      "requestId": {
+                        "type": "string"
+                      },
+                      "explanation": {
+                        "type": "string"
+                      },
+                      "findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "sourceVersion": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "fieldId",
+                      "kind",
+                      "source"
+                    ],
+                    "description": "Present when this mutation is an external update (AI/integration/automation) rather than a user edit; required to write to any field with external_kind set"
+                  }
+                },
+                "additionalProperties": {},
+                "description": "Entity mutation data with schema-specific fields"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canView": {
+                      "type": "boolean",
+                      "description": "Whether the user can view this entity"
+                    },
+                    "canEdit": {
+                      "type": "boolean",
+                      "description": "Whether the user can edit this entity"
+                    },
+                    "canDelete": {
+                      "type": "boolean",
+                      "description": "Whether the user can delete this entity"
+                    },
+                    "canAdmin": {
+                      "type": "boolean",
+                      "description": "Whether the user can manage entity permissions"
+                    },
+                    "canCreateChild": {
+                      "type": "boolean",
+                      "description": "Whether the user can create child entities"
+                    },
+                    "_uid": {
+                      "type": "string",
+                      "description": "Unique entity identifier"
+                    },
+                    "_publicId": {
+                      "type": "string",
+                      "description": "Public entity identifier (e.g., APP-001)"
+                    },
+                    "_schema": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "Entity schema reference"
+                    },
+                    "_name": {
+                      "type": "string",
+                      "description": "Entity name"
+                    },
+                    "_slug": {
+                      "type": "string",
+                      "description": "Entity URL slug"
+                    },
+                    "_namespace": {
+                      "type": "string",
+                      "description": "Entity namespace for organization"
+                    },
+                    "_description": {
+                      "type": "string",
+                      "description": "Entity description"
+                    },
+                    "_owner": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Entity owner"
+                    },
+                    "_lifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Current lifecycle state"
+                    },
+                    "_targetLifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Target lifecycle state"
+                    },
+                    "_targetLifecycleDate": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Target date for lifecycle transition (ISO 8601)"
+                    },
+                    "_tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Entity tags"
+                    },
+                    "_links": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "description": "Link URL"
+                          },
+                          "title": {
+                            "type": "string",
+                            "description": "Link title/label"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Link type (e.g., \"documentation\", \"repository\")"
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "title"
+                        ]
+                      },
+                      "description": "External links associated with the entity"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp of the entity's most recent update"
+                    },
+                    "_version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Optimistic concurrency version"
+                    },
+                    "_approvalPolicyOverride": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "required",
+                            "disabled"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Entity-specific approval policy override"
+                    },
+                    "_projectId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
+                    },
+                    "_completeness": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Field completeness percentage (0-100)"
+                    },
+                    "_projectLink": {
+                      "type": "object",
+                      "properties": {
+                        "linked": {
+                          "type": "boolean",
+                          "description": "Whether the entity is linked to a project"
+                        },
+                        "entityType": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Project entity type classification"
+                        },
+                        "isDone": {
+                          "type": "boolean",
+                          "description": "Whether the entity is marked as done in the project"
+                        }
+                      },
+                      "required": [
+                        "linked",
+                        "entityType",
+                        "isDone"
+                      ],
+                      "description": "Project linkage information"
+                    },
+                    "_externalMetadata": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "fieldId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "external_kind": {
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Free-form source label supplied by the updater"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp, inferred by the server"
+                          },
+                          "explanation": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "findings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sourceVersion": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Updater version, if applicable"
+                          },
+                          "requestId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                          },
+                          "failureNotice": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "actionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sourceRevision": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "generatorVersion": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
+                      },
+                      "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_projections": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {},
+                      "description": "Values returned by structured EntityQuery projections"
+                    }
+                  },
+                  "required": [
+                    "canView",
+                    "canEdit",
+                    "canDelete",
+                    "canAdmin",
+                    "canCreateChild",
+                    "_uid",
+                    "_publicId",
+                    "_schema",
+                    "_name",
+                    "_slug",
+                    "_namespace",
+                    "_description",
+                    "_owner",
+                    "_lifecycle",
+                    "_targetLifecycle",
+                    "_targetLifecycleDate",
+                    "_tags",
+                    "_links",
+                    "_projectId",
+                    "_completeness"
+                  ],
+                  "additionalProperties": {},
+                  "description": "Complete entity record with schema-specific fields"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/entities/byExternalKey/{source}/{externalKey}": {
+      "get": {
+        "operationId": "entitySync.getByExternalKey",
+        "summary": "Get entity by external identity",
+        "description": "Retrieves an entity identified by a durable (source, externalKey) pair.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "externalKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canView": {
+                      "type": "boolean",
+                      "description": "Whether the user can view this entity"
+                    },
+                    "canEdit": {
+                      "type": "boolean",
+                      "description": "Whether the user can edit this entity"
+                    },
+                    "canDelete": {
+                      "type": "boolean",
+                      "description": "Whether the user can delete this entity"
+                    },
+                    "canAdmin": {
+                      "type": "boolean",
+                      "description": "Whether the user can manage entity permissions"
+                    },
+                    "canCreateChild": {
+                      "type": "boolean",
+                      "description": "Whether the user can create child entities"
+                    },
+                    "_uid": {
+                      "type": "string",
+                      "description": "Unique entity identifier"
+                    },
+                    "_publicId": {
+                      "type": "string",
+                      "description": "Public entity identifier (e.g., APP-001)"
+                    },
+                    "_schema": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "Entity schema reference"
+                    },
+                    "_name": {
+                      "type": "string",
+                      "description": "Entity name"
+                    },
+                    "_slug": {
+                      "type": "string",
+                      "description": "Entity URL slug"
+                    },
+                    "_namespace": {
+                      "type": "string",
+                      "description": "Entity namespace for organization"
+                    },
+                    "_description": {
+                      "type": "string",
+                      "description": "Entity description"
+                    },
+                    "_owner": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Entity owner"
+                    },
+                    "_lifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Current lifecycle state"
+                    },
+                    "_targetLifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Target lifecycle state"
+                    },
+                    "_targetLifecycleDate": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Target date for lifecycle transition (ISO 8601)"
+                    },
+                    "_tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Entity tags"
+                    },
+                    "_links": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "description": "Link URL"
+                          },
+                          "title": {
+                            "type": "string",
+                            "description": "Link title/label"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Link type (e.g., \"documentation\", \"repository\")"
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "title"
+                        ]
+                      },
+                      "description": "External links associated with the entity"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp of the entity's most recent update"
+                    },
+                    "_version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Optimistic concurrency version"
+                    },
+                    "_approvalPolicyOverride": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "required",
+                            "disabled"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Entity-specific approval policy override"
+                    },
+                    "_projectId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
+                    },
+                    "_completeness": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Field completeness percentage (0-100)"
+                    },
+                    "_projectLink": {
+                      "type": "object",
+                      "properties": {
+                        "linked": {
+                          "type": "boolean",
+                          "description": "Whether the entity is linked to a project"
+                        },
+                        "entityType": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Project entity type classification"
+                        },
+                        "isDone": {
+                          "type": "boolean",
+                          "description": "Whether the entity is marked as done in the project"
+                        }
+                      },
+                      "required": [
+                        "linked",
+                        "entityType",
+                        "isDone"
+                      ],
+                      "description": "Project linkage information"
+                    },
+                    "_externalMetadata": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "fieldId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "external_kind": {
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Free-form source label supplied by the updater"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp, inferred by the server"
+                          },
+                          "explanation": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "findings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sourceVersion": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Updater version, if applicable"
+                          },
+                          "requestId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                          },
+                          "failureNotice": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "actionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sourceRevision": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "generatorVersion": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
+                      },
+                      "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_projections": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {},
+                      "description": "Values returned by structured EntityQuery projections"
+                    }
+                  },
+                  "required": [
+                    "canView",
+                    "canEdit",
+                    "canDelete",
+                    "canAdmin",
+                    "canCreateChild",
+                    "_uid",
+                    "_publicId",
+                    "_schema",
+                    "_name",
+                    "_slug",
+                    "_namespace",
+                    "_description",
+                    "_owner",
+                    "_lifecycle",
+                    "_targetLifecycle",
+                    "_targetLifecycleDate",
+                    "_tags",
+                    "_links",
+                    "_projectId",
+                    "_completeness"
+                  ],
+                  "additionalProperties": {},
+                  "description": "Complete entity record with schema-specific fields"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "entitySync.syncByExternalKey",
+        "summary": "Idempotently create or update an entity by its external identity",
+        "description": "Creates or updates an entity identified by a durable (source, externalKey) pair, converging repeated submissions on the same entity instead of creating duplicates.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "externalKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "_schemaId": {
+                    "type": "string",
+                    "description": "Schema identifier"
+                  },
+                  "_schema": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "description": "Schema reference"
+                  },
+                  "_name": {
+                    "type": "string",
+                    "description": "Entity name"
+                  },
+                  "_slug": {
+                    "type": "string",
+                    "description": "Entity URL slug"
+                  },
+                  "_namespace": {
+                    "type": "string",
+                    "description": "Entity namespace"
+                  },
+                  "_description": {
+                    "type": "string",
+                    "description": "Entity description"
+                  },
+                  "_owner": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Entity owner"
+                  },
+                  "_lifecycle": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Current lifecycle state"
+                  },
+                  "_targetLifecycle": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Target lifecycle state"
+                  },
+                  "_targetLifecycleDate": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Target date for lifecycle transition (ISO 8601)"
+                  },
+                  "_tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Entity tags"
+                  },
+                  "_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "description": "Link URL"
+                        },
+                        "title": {
+                          "type": "string",
+                          "description": "Link title/label"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "Link type (e.g., \"documentation\", \"repository\")"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "title"
+                      ]
+                    },
+                    "description": "External links"
+                  },
+                  "_projectId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Set to scope this entity to a single project; omit or set null for no scope"
+                  },
+                  "_external": {
+                    "type": "object",
+                    "properties": {
+                      "fieldId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "kind": {
+                        "enum": [
+                          "ai",
+                          "integration",
+                          "automation"
+                        ],
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "status": {
+                        "enum": [
+                          "success",
+                          "failed"
+                        ],
+                        "type": "string",
+                        "default": "success"
+                      },
+                      "failureNotice": {
+                        "type": "string"
+                      },
+                      "requestId": {
+                        "type": "string"
+                      },
+                      "explanation": {
+                        "type": "string"
+                      },
+                      "findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "sourceVersion": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "fieldId",
+                      "kind",
+                      "source"
+                    ],
+                    "description": "Present when this mutation is an external update (AI/integration/automation) rather than a user edit; required to write to any field with external_kind set"
+                  }
+                },
+                "additionalProperties": {},
+                "description": "Entity mutation data with schema-specific fields"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "created",
+                        "updated",
+                        "unchanged"
+                      ],
+                      "type": "string"
+                    },
+                    "entity": {
+                      "type": "object",
+                      "properties": {
+                        "canView": {
+                          "type": "boolean",
+                          "description": "Whether the user can view this entity"
+                        },
+                        "canEdit": {
+                          "type": "boolean",
+                          "description": "Whether the user can edit this entity"
+                        },
+                        "canDelete": {
+                          "type": "boolean",
+                          "description": "Whether the user can delete this entity"
+                        },
+                        "canAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the user can manage entity permissions"
+                        },
+                        "canCreateChild": {
+                          "type": "boolean",
+                          "description": "Whether the user can create child entities"
+                        },
+                        "_uid": {
+                          "type": "string",
+                          "description": "Unique entity identifier"
+                        },
+                        "_publicId": {
+                          "type": "string",
+                          "description": "Public entity identifier (e.g., APP-001)"
+                        },
+                        "_schema": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ],
+                          "description": "Entity schema reference"
+                        },
+                        "_name": {
+                          "type": "string",
+                          "description": "Entity name"
+                        },
+                        "_slug": {
+                          "type": "string",
+                          "description": "Entity URL slug"
+                        },
+                        "_namespace": {
+                          "type": "string",
+                          "description": "Entity namespace for organization"
+                        },
+                        "_description": {
+                          "type": "string",
+                          "description": "Entity description"
+                        },
+                        "_owner": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Entity owner"
+                        },
+                        "_lifecycle": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Current lifecycle state"
+                        },
+                        "_targetLifecycle": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Target lifecycle state"
+                        },
+                        "_targetLifecycleDate": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Target date for lifecycle transition (ISO 8601)"
+                        },
+                        "_tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Entity tags"
+                        },
+                        "_links": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string",
+                                "description": "Link URL"
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "Link title/label"
+                              },
+                              "type": {
+                                "type": "string",
+                                "description": "Link type (e.g., \"documentation\", \"repository\")"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "title"
+                            ]
+                          },
+                          "description": "External links associated with the entity"
+                        },
+                        "_updatedAt": {
+                          "type": "string",
+                          "description": "ISO 8601 timestamp of the entity's most recent update"
+                        },
+                        "_version": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "Optimistic concurrency version"
+                        },
+                        "_approvalPolicyOverride": {
+                          "anyOf": [
+                            {
+                              "enum": [
+                                "required",
+                                "disabled"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Entity-specific approval policy override"
+                        },
+                        "_projectId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
+                        },
+                        "_completeness": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Field completeness percentage (0-100)"
+                        },
+                        "_projectLink": {
+                          "type": "object",
+                          "properties": {
+                            "linked": {
+                              "type": "boolean",
+                              "description": "Whether the entity is linked to a project"
+                            },
+                            "entityType": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name"
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Project entity type classification"
+                            },
+                            "isDone": {
+                              "type": "boolean",
+                              "description": "Whether the entity is marked as done in the project"
+                            }
+                          },
+                          "required": [
+                            "linked",
+                            "entityType",
+                            "isDone"
+                          ],
+                          "description": "Project linkage information"
+                        },
+                        "_externalMetadata": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "fieldId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string"
+                              },
+                              "status": {
+                                "enum": [
+                                  "success",
+                                  "failed",
+                                  "outdated"
+                                ],
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Free-form source label supplied by the updater"
+                              },
+                              "timestamp": {
+                                "type": "string",
+                                "description": "ISO 8601 timestamp, inferred by the server"
+                              },
+                              "explanation": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "findings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "sourceVersion": {
+                                "anyOf": [
+                                  {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Updater version, if applicable"
+                              },
+                              "requestId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                              },
+                              "failureNotice": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "actionId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "sourceRevision": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "exclusiveMinimum": 0
+                              },
+                              "generatorVersion": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "exclusiveMinimum": 0
+                              }
+                            },
+                            "required": [
+                              "fieldId",
+                              "external_kind",
+                              "status",
+                              "source",
+                              "timestamp"
+                            ]
+                          },
+                          "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                        },
+                        "_projections": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Values returned by structured EntityQuery projections"
+                        }
+                      },
+                      "required": [
+                        "canView",
+                        "canEdit",
+                        "canDelete",
+                        "canAdmin",
+                        "canCreateChild",
+                        "_uid",
+                        "_publicId",
+                        "_schema",
+                        "_name",
+                        "_slug",
+                        "_namespace",
+                        "_description",
+                        "_owner",
+                        "_lifecycle",
+                        "_targetLifecycle",
+                        "_targetLifecycleDate",
+                        "_tags",
+                        "_links",
+                        "_projectId",
+                        "_completeness"
+                      ],
+                      "additionalProperties": {},
+                      "description": "Complete entity record with schema-specific fields"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "entity"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
