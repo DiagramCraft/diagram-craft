@@ -1,4 +1,4 @@
-import type { BackstageEntity } from './backstage.js';
+import type { BackstageEntity, BackstageReferenceValue } from './backstage.js';
 import type { SchemaMapping } from './config.js';
 
 export interface ArchRegisterEntity {
@@ -19,8 +19,15 @@ export interface ArchRegisterEntity {
 
 export interface MappingResult {
   entity: ArchRegisterEntity | null;
+  relationships: RelationshipMapping[];
   errors: string[];
   warnings: string[];
+}
+
+export interface RelationshipMapping {
+  field: string;
+  defaultKind: string;
+  references: BackstageReferenceValue[];
 }
 
 /**
@@ -33,6 +40,7 @@ export const mapBackstageToArchRegister = (
 ): MappingResult => {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const relationships: RelationshipMapping[] = [];
 
   // Determine schema ID based on entity kind
   const schemaId = getSchemaIdForKind(entity.kind, schemaMapping);
@@ -40,7 +48,7 @@ export const mapBackstageToArchRegister = (
     errors.push(
       `No schema mapping found for kind '${entity.kind}'. Configure SCHEMA_${entity.kind.toUpperCase()} or ensure schema auto-discovery is working.`
     );
-    return { entity: null, errors, warnings };
+    return { entity: null, relationships, errors, warnings };
   }
 
   // Build base entity with common fields
@@ -78,16 +86,16 @@ export const mapBackstageToArchRegister = (
   // Map kind-specific fields
   switch (entity.kind) {
     case 'Component':
-      mapComponentFields(entity, archEntity, warnings);
+      mapComponentFields(entity, archEntity, relationships, warnings);
       break;
     case 'API':
-      mapApiFields(entity, archEntity, warnings);
+      mapApiFields(entity, archEntity, relationships, warnings);
       break;
     case 'Resource':
-      mapResourceFields(entity, archEntity, warnings);
+      mapResourceFields(entity, archEntity, relationships, warnings);
       break;
     case 'System':
-      mapSystemFields(entity, archEntity, warnings);
+      mapSystemFields(entity, archEntity, warnings, relationships);
       break;
     case 'Domain':
       // Domain has no additional fields in the template
@@ -96,7 +104,26 @@ export const mapBackstageToArchRegister = (
       warnings.push(`Unknown entity kind '${entity.kind}' - using base mapping only`);
   }
 
-  return { entity: archEntity, errors, warnings };
+  return { entity: archEntity, relationships, errors, warnings };
+};
+
+const retainRelationship = (
+  entity: BackstageEntity,
+  field: string,
+  defaultKind: string,
+  relationships: RelationshipMapping[]
+): void => {
+  const value = entity.spec[field];
+  relationships.push({
+    field,
+    defaultKind,
+    references:
+      value === undefined
+        ? []
+        : Array.isArray(value)
+          ? (value as BackstageReferenceValue[])
+          : [value as BackstageReferenceValue]
+  });
 };
 
 /**
@@ -105,6 +132,7 @@ export const mapBackstageToArchRegister = (
 const mapComponentFields = (
   entity: BackstageEntity,
   archEntity: ArchRegisterEntity,
+  relationships: RelationshipMapping[],
   warnings: string[]
 ): void => {
   // Map spec.type to 'kind' field (enum: service, library, website, documentation)
@@ -118,26 +146,9 @@ const mapComponentFields = (
     archEntity.technology = techAnnotation;
   }
 
-  // Map system reference (containment relationship)
-  if (entity.spec.system && typeof entity.spec.system === 'string') {
-    warnings.push(
-      'Field spec.system is not synced because Backstage entity references are not Arch Register entity IDs'
-    );
-  }
-
-  // Map providesApis (reference field)
-  if (entity.spec.providesApis && Array.isArray(entity.spec.providesApis)) {
-    warnings.push(
-      'Field spec.providesApis is not synced because Backstage entity references are not Arch Register entity IDs'
-    );
-  }
-
-  // Map consumesApis (reference field)
-  if (entity.spec.consumesApis && Array.isArray(entity.spec.consumesApis)) {
-    warnings.push(
-      'Field spec.consumesApis is not synced because Backstage entity references are not Arch Register entity IDs'
-    );
-  }
+  retainRelationship(entity, 'system', 'system', relationships);
+  retainRelationship(entity, 'providesApis', 'api', relationships);
+  retainRelationship(entity, 'consumesApis', 'api', relationships);
 
   // Warn about unmapped fields
   if (entity.spec.dependsOn) {
@@ -156,6 +167,7 @@ const mapComponentFields = (
 const mapApiFields = (
   entity: BackstageEntity,
   archEntity: ArchRegisterEntity,
+  relationships: RelationshipMapping[],
   warnings: string[]
 ): void => {
   // Map spec.type to 'api_type' field (enum: openapi, grpc, graphql, asyncapi)
@@ -163,12 +175,7 @@ const mapApiFields = (
     archEntity.api_type = entity.spec.type;
   }
 
-  // Map system reference (containment relationship)
-  if (entity.spec.system && typeof entity.spec.system === 'string') {
-    warnings.push(
-      'Field spec.system is not synced because Backstage entity references are not Arch Register entity IDs'
-    );
-  }
+  retainRelationship(entity, 'system', 'system', relationships);
 
   // Note: spec.definition is not stored in the template by default
   // It could be added as a link or external reference
@@ -185,6 +192,7 @@ const mapApiFields = (
 const mapResourceFields = (
   entity: BackstageEntity,
   archEntity: ArchRegisterEntity,
+  relationships: RelationshipMapping[],
   warnings: string[]
 ): void => {
   // Map spec.type to 'kind' field (enum: database, cache, queue, blob-storage)
@@ -192,12 +200,7 @@ const mapResourceFields = (
     archEntity.kind = entity.spec.type;
   }
 
-  // Map system reference (optional containment relationship)
-  if (entity.spec.system && typeof entity.spec.system === 'string') {
-    warnings.push(
-      'Field spec.system is not synced because Backstage entity references are not Arch Register entity IDs'
-    );
-  }
+  retainRelationship(entity, 'system', 'system', relationships);
 
   // Warn about unmapped fields
   if (entity.spec.dependsOn) {
@@ -214,14 +217,10 @@ const mapResourceFields = (
 const mapSystemFields = (
   entity: BackstageEntity,
   _archEntity: ArchRegisterEntity,
-  _warnings: string[]
+  _warnings: string[],
+  relationships: RelationshipMapping[]
 ): void => {
-  // Map domain reference (containment relationship)
-  if (entity.spec.domain && typeof entity.spec.domain === 'string') {
-    _warnings.push(
-      'Field spec.domain is not synced because Backstage entity references are not Arch Register entity IDs'
-    );
-  }
+  retainRelationship(entity, 'domain', 'domain', relationships);
 };
 
 /**

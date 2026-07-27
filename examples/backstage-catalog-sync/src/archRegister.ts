@@ -19,6 +19,41 @@ export interface SyncError extends Error {
   details?: unknown;
 }
 
+export const getEntityByExternalKey = async (
+  workspace: string,
+  source: string,
+  externalKey: string,
+  token: string,
+  baseUrl: string
+): Promise<SyncResult['entity']> => {
+  const encodedSource = encodeURIComponent(source);
+  const encodedKey = encodeURIComponent(externalKey);
+  const url = `${baseUrl}/api/integrations/v1/${workspace}/entities/byExternalKey/${encodedSource}/${encodedKey}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (error) {
+    throw createSyncError(requestFailure(url, error).message, undefined, error);
+  }
+
+  if (!response.ok) {
+    const detail = (await response.text()).trim().slice(0, 500);
+    throw createSyncError(
+      `Lookup failed: ${response.status} ${response.statusText}${detail ? ` - ${detail}` : ''}`,
+      response.status,
+      detail
+    );
+  }
+
+  return (await response.json()) as SyncResult['entity'];
+};
+
 const requestFailure = (url: string, error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
   const cause = error instanceof Error ? error.cause : undefined;

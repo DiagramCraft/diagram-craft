@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   generateExternalKey,
+  canonicalReferenceKey,
   isSupportedKind,
+  parseBackstageReference,
   parseBackstageYaml,
   validateEntity
 } from './backstage.js';
@@ -59,5 +61,37 @@ spec: {}
   it('recognizes only supported kinds', () => {
     assert.equal(isSupportedKind('Component'), true);
     assert.equal(isSupportedKind('User'), false);
+  });
+
+  it('parses Backstage references with field defaults', () => {
+    assert.deepEqual(parseBackstageReference('system:default/my-system', 'system'), {
+      kind: 'system',
+      namespace: 'default',
+      name: 'my-system'
+    });
+    assert.deepEqual(parseBackstageReference('default/my-system', 'system'), {
+      kind: 'system',
+      namespace: 'default',
+      name: 'my-system'
+    });
+    assert.deepEqual(parseBackstageReference('my-system', 'system'), {
+      kind: 'system',
+      namespace: 'default',
+      name: 'my-system'
+    });
+    assert.deepEqual(parseBackstageReference({ kind: 'API', name: 'artist-api' }, 'system'), {
+      kind: 'api',
+      namespace: 'default',
+      name: 'artist-api'
+    });
+  });
+
+  it('rejects malformed references and creates canonical keys', () => {
+    assert.equal(parseBackstageReference('system:default/too/many/parts', 'system'), null);
+    assert.equal(parseBackstageReference('system:', 'system'), null);
+    assert.equal(
+      canonicalReferenceKey({ kind: 'System', namespace: 'default', name: 'my-system' }),
+      'default/system/my-system'
+    );
   });
 });
