@@ -78,6 +78,9 @@ const makeDb = (assessment: AssessmentDbResult): DatabaseAdapter =>
         updated_by: 'user-1',
         updated_by_name: 'User One'
       }))
+    },
+    catalog: {
+      touchEntityAttestation: vi.fn(async () => {})
     }
   }) as unknown as DatabaseAdapter;
 
@@ -120,6 +123,7 @@ describe('upsertAssessmentResponse', () => {
         metadata: { subject_entity_id: 'entity-1' }
       })
     );
+    expect(db.catalog.touchEntityAttestation).not.toHaveBeenCalled();
   });
 
   it('materializes derived fields before storing a response', async () => {
@@ -193,5 +197,10 @@ describe('upsertAssessmentResponse', () => {
 
     expect(result.entity_id).toBe('entity-1');
     expect(db.project.upsertAssessmentResponse).toHaveBeenCalledTimes(1);
+    expect(db.catalog.touchEntityAttestation).toHaveBeenCalledWith(
+      'ws-1',
+      'entity-1',
+      expect.any(Date)
+    );
   });
 });

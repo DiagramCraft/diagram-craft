@@ -12,7 +12,12 @@ export const ENTITY_BUILTIN_COLUMNS: Record<string, string> = {
   _owner: 'e.owner',
   _updatedAt: 'e.updated_at',
   _projectId: 'e.project_id',
-  _completeness: 'e.completeness'
+  _completeness: 'e.completeness',
+  // Last activity considering both real edits and confirm-mode attestation (see #2410) — the
+  // greater of the two, so a recent attestation counts the same as a recent edit for staleness.
+  _effectiveActivityAt:
+    'CASE WHEN e.last_attested_at IS NOT NULL AND e.last_attested_at > e.updated_at ' +
+    'THEN e.last_attested_at ELSE e.updated_at END'
 };
 
 // Maps built-in FilterCondition fieldIds backed by a JSON array column, where

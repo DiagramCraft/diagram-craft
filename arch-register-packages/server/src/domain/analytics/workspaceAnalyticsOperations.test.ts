@@ -75,6 +75,7 @@ const makeEntity = (overrides: Partial<EntityDbResult>): EntityDbResult => {
     project_id: null,
     created_at: now,
     updated_at: now,
+    last_attested_at: null,
     owner_name: 'Platform',
     lifecycle_label: 'Production',
     target_lifecycle_label: null,
@@ -285,5 +286,26 @@ describe('computeWorkspaceAnalytics', () => {
         }
       ]
     });
+  });
+
+  it('excludes entities attested after the cutoff even if updated_at is stale', () => {
+    const analytics = computeWorkspaceAnalytics(
+      [
+        makeEntity({ id: 'stale-service', updated_at: new Date('2025-09-30T00:00:00.000Z') }),
+        makeEntity({
+          id: 'attested-service',
+          updated_at: new Date('2025-09-30T00:00:00.000Z'),
+          last_attested_at: new Date('2025-12-01T00:00:00.000Z')
+        })
+      ],
+      schemas,
+      lifecycleStates,
+      90,
+      [],
+      new Date('2026-01-01T00:00:00.000Z')
+    );
+
+    expect(analytics.stale.totalCount).toBe(1);
+    expect(analytics.stale.schemas.find(s => s.schemaId === 'schema-service')?.staleCount).toBe(1);
   });
 });

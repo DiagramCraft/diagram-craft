@@ -441,6 +441,17 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     ]);
   }
 
+  // System-maintained attestation stamp — does not bump `version` or `updated_at`, since
+  // confirming existing data isn't itself an edit and must not trip optimistic concurrency
+  // checks on a concurrent user update, or create a new entity_version snapshot.
+  async touchEntityAttestation(workspace: string, id: string, attestedAt: Date) {
+    this.run('UPDATE entity SET last_attested_at = ? WHERE workspace = ? AND id = ?', [
+      attestedAt.toISOString(),
+      workspace,
+      id
+    ]);
+  }
+
   async deleteEntity(workspace: string, id: string) {
     const row = await this.getEntity(workspace, id);
     if (!row) return null;

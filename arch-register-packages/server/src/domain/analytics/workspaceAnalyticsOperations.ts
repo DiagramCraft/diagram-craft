@@ -199,7 +199,16 @@ export const computeWorkspaceAnalytics = (
 
   const cutoffAt = new Date(now.getTime() - staleAfterDays * 24 * 60 * 60 * 1000);
   const staleEntityIds = new Set(
-    entities.filter(entity => entity.updated_at < cutoffAt).map(entity => entity.id)
+    entities
+      .filter(entity => {
+        const lastAttestedAt = entity.last_attested_at ?? null;
+        const lastActivity =
+          lastAttestedAt !== null && lastAttestedAt > entity.updated_at
+            ? lastAttestedAt
+            : entity.updated_at;
+        return lastActivity < cutoffAt;
+      })
+      .map(entity => entity.id)
   );
   const stale = {
     thresholdDays: staleAfterDays,

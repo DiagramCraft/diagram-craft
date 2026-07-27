@@ -123,6 +123,10 @@ export const upsertAssessmentResponse = async (
         updated_by: authCtx.userId
       });
 
+      if (assessment.mode === 'confirm') {
+        await db.catalog.touchEntityAttestation(ws, entityId, new Date());
+      }
+
       await logAudit(db, {
         userId: authCtx.userId,
         workspace: ws,
