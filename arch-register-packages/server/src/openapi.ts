@@ -118,15 +118,40 @@ export const getApplicationOpenAPISpec = () => {
 };
 
 export const getIntegrationOpenAPISpec = () => {
+  const integrationSchemaContract = {
+    schemas: {
+      list: workspaceSchemaContract.schemas.list
+    }
+  };
+
   generatedIntegrationSpec ??= new OpenAPIGenerator({
     schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(entitySyncContract, {
-    info: {
-      title: 'Arch Register Integration API',
-      version: '1.0.0'
-    },
-    servers: [{ url: '/api' }]
-  });
+  })
+    .generate(
+      {
+        ...integrationSchemaContract,
+        ...entitySyncContract
+      },
+      {
+        info: {
+          title: 'Arch Register Integration API',
+          version: '1.0.0'
+        },
+        servers: [{ url: '/api' }]
+      }
+    )
+    .then(spec => {
+      const paths = Object.fromEntries(
+        Object.entries((spec as { paths?: Record<string, unknown> }).paths ?? {}).map(
+          ([path, operations]) => [
+            path === '/{workspace}/schemas' ? `/integrations/v1${path}` : path,
+            operations
+          ]
+        )
+      );
+
+      return { ...spec, paths };
+    });
 
   return generatedIntegrationSpec;
 };

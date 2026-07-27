@@ -30,7 +30,7 @@ served by the application; “target” means the path is the destination for a 
 | --- | --- | --- | --- |
 | Legacy application API | `/api/workspaces`, `/api/:workspace/*` for catalog, projects, configuration, governance, search, audit, jobs, documents, webhooks, and related domains | Live canonical routes | Keep compatible while domains move to the application surface; inventory changes belong in #2448 |
 | Application v1 | `/api/application/v1/:workspace/schemas/*` and `/api/application/v1/:workspace/data/*` | Live aliases for catalog schemas and entities | Extend domain by domain in #2446 |
-| Integration v1 | `/api/integrations/v1/:workspace/entities/*` | Target surface; entity-sync behavior is currently served from `/api/:workspace/entities/*` | Productize and migrate in #2449 |
+| Integration v1 | `GET /api/integrations/v1/:workspace/schemas` and `/api/integrations/v1/:workspace/entities/*` | Live read-only schema alias and entity-sync routes | Productize the supported contract and migrate remaining examples in #2449 |
 | Diagram Craft adapter | `/api/adapters/diagram-craft/:workspace/schemas` and `/api/adapters/diagram-craft/:workspace/data` | Live aliases for the authenticated `/api/public/*` adapter routes | Expand and document adapter-specific behavior in #2451 |
 | Legacy adapter name | `/api/public/:workspace/*` | Live compatibility alias; the name does not make the route public | Retain until all Diagram Craft consumers use the adapter surface |
 | Authentication infrastructure | `/api/auth/*`, `/api/auth/oidc/callback` | Live special-purpose browser and session/token endpoints | Remains outside application/integration versioning; token audience enforcement is deferred to #2383 |
