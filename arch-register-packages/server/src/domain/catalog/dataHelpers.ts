@@ -96,6 +96,14 @@ export const matchesFilterCondition = (
     case '_updatedAt':
       value = entity.updated_at;
       break;
+    case '_effectiveActivityAt': {
+      const lastAttestedAt = entity.last_attested_at ?? null;
+      value =
+        lastAttestedAt !== null && lastAttestedAt > entity.updated_at
+          ? lastAttestedAt
+          : entity.updated_at;
+      break;
+    }
     default:
       value = entity.data[condition.fieldId];
   }

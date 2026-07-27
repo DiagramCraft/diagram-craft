@@ -452,6 +452,17 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     `;
   }
 
+  // System-maintained attestation stamp — does not bump `version` or `updated_at`, since
+  // confirming existing data isn't itself an edit and must not trip optimistic concurrency
+  // checks on a concurrent user update, or create a new entity_version snapshot.
+  async touchEntityAttestation(workspace: string, id: string, attestedAt: Date) {
+    await this.sql`
+      UPDATE entity
+      SET last_attested_at = ${attestedAt.toISOString()}
+      WHERE workspace = ${workspace} AND id = ${id}
+    `;
+  }
+
   async deleteEntity(workspace: string, id: string) {
     try {
       const row = await this.getEntity(workspace, id);

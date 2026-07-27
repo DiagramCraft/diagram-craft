@@ -58,5 +58,5 @@ export const activityAuditSearch = (
 export const staleSearch = (cutoffAt: string, schemaId?: string) =>
   analyticsEntitySearch({
     type: schemaId,
-    filters: [{ fieldId: '_updatedAt', op: 'before', value: cutoffAt }]
+    filters: [{ fieldId: '_effectiveActivityAt', op: 'before', value: cutoffAt }]
   });

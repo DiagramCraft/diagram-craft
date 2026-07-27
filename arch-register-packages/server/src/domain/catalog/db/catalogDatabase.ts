@@ -193,6 +193,12 @@ export type Entity = {
   // recomputed at write time and kept alongside the entity so it's queryable in SQL without a
   // per-row schema lookup (see #2346).
   completeness: number;
+  // Timestamp of the most recent confirm-mode assessment response ("confirmed accurate")
+  // recorded against this entity, stamped by touchEntityAttestation. Independent of updated_at
+  // so it can clear stale-entity status without implying the entity's own fields changed
+  // (see #2410). Optional/system-maintained like `version`/`approval_policy_override` — absent
+  // on freshly constructed entities, always populated (possibly null) when read from the DB.
+  last_attested_at?: Date | null;
 };
 
 // Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
@@ -208,7 +214,10 @@ export type EntityQueryDbResult = EntityDbResult & {
   projections: Record<string, unknown>;
 };
 
-export type EntityDbCreate = Omit<Entity, 'version' | 'approval_policy_override'> & {
+export type EntityDbCreate = Omit<
+  Entity,
+  'version' | 'approval_policy_override' | 'last_attested_at'
+> & {
   version?: number;
   approval_policy_override?: 'required' | 'disabled' | null;
   // Defaults to {} (a newly created entity starts with no external metadata).
@@ -217,7 +226,7 @@ export type EntityDbCreate = Omit<Entity, 'version' | 'approval_policy_override'
 
 export type EntityDbUpdate = Omit<
   Entity,
-  'id' | 'workspace' | 'public_id' | 'created_at' | 'version'
+  'id' | 'workspace' | 'public_id' | 'created_at' | 'version' | 'last_attested_at'
 > & {
   version?: number;
   // Omit to leave the stored value untouched (the common case for a plain field update);
@@ -313,7 +322,8 @@ export const catalogMappers = {
       row['approval_policy_override'] == null
         ? null
         : (String(row['approval_policy_override']) as Entity['approval_policy_override']),
-    completeness: Number(row['completeness'] ?? 0)
+    completeness: Number(row['completeness'] ?? 0),
+    last_attested_at: row['last_attested_at'] == null ? null : databaseDate(row['last_attested_at'])
   }),
   entityQuery: (row: DatabaseRow): EntityQueryDbResult => ({
     ...catalogMappers.enrichedEntity(row),
@@ -520,6 +530,7 @@ export type CatalogDatabase = {
   ): Promise<EntityDbResult | null>;
   updateEntityCompleteness(ws: string, id: string, completeness: number): Promise<void>;
   updateEntityDerivedFields(ws: string, id: string, data: Record<string, unknown>): Promise<void>;
+  touchEntityAttestation(ws: string, id: string, attestedAt: Date): Promise<void>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
 
   createEntityVersion(input: EntityVersionDbCreate): Promise<EntityVersionDbResult>;

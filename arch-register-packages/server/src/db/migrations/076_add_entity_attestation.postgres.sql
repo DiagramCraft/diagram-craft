@@ -1,0 +1,2 @@
+ALTER TABLE entity
+  ADD COLUMN IF NOT EXISTS last_attested_at TIMESTAMPTZ;
