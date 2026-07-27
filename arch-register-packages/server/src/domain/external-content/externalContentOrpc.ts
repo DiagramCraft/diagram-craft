@@ -13,7 +13,6 @@ import {
   updateExternalContentMount
 } from './externalContentOperations';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type Context = { db: DatabaseAdapter; storage: StorageAdapter; event: AuthenticatedEvent };
 const router = implement(externalContentContract).$context<Context>().use(orpcErrorMiddleware);
@@ -56,12 +55,9 @@ const handler = new OpenAPIHandler(externalContentRouter, {
 
 export const createExternalContentORPCHandler = (db: DatabaseAdapter, storage: StorageAdapter) =>
   defineHandler(async event => {
-    const result = await handler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: { db, storage, event: event as AuthenticatedEvent }
-      }
-    );
+    const result = await handler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: { db, storage, event: event as AuthenticatedEvent }
+    });
     if (result.matched) return result.response;
   });

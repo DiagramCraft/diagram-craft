@@ -17,7 +17,6 @@ import {
 } from './governanceOperations';
 import { createGovernanceRegistry, type GovernanceRegistry } from './governanceRegistry';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -131,16 +130,13 @@ export const createGovernanceORPCHandler = (
   });
 
   return defineHandler(async event => {
-    const result = await openAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: {
-          db,
-          event: event as AuthenticatedEvent
-        }
+    const result = await openAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: {
+        db,
+        event: event as AuthenticatedEvent
       }
-    );
+    });
 
     if (result.matched) {
       return result.response;

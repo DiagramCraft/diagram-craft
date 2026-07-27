@@ -124,9 +124,12 @@ test.describe('data routes', () => {
     auth,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data/export?_schemaId=${apiSchemaId}`, {
-      headers: { Authorization: auth }
-    });
+    const res = await fetch(
+      `${server.baseUrl}/api/application/v1/default/data/export?_schemaId=${apiSchemaId}`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/csv');
@@ -142,7 +145,7 @@ test.describe('data routes', () => {
     seeded: _
   }) => {
     const res = await fetch(
-      `${server.baseUrl}/api/default/data/import/template/${componentSchemaId}`,
+      `${server.baseUrl}/api/application/v1/default/data/import/template/${componentSchemaId}`,
       {
         headers: { Authorization: auth }
       }

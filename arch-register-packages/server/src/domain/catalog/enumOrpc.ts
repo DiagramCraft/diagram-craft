@@ -12,7 +12,6 @@ import {
   updateWorkspaceEnum
 } from './enumOperations';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -70,16 +69,13 @@ export const workspaceEnumOpenAPIHandler = new OpenAPIHandler(workspaceEnumORPCR
 
 export const createWorkspaceEnumORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await workspaceEnumOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: {
-          db,
-          event: event as AuthenticatedEvent
-        }
+    const result = await workspaceEnumOpenAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: {
+        db,
+        event: event as AuthenticatedEvent
       }
-    );
+    });
 
     if (result.matched) {
       return result.response;

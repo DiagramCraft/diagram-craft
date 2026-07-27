@@ -23,7 +23,6 @@ import {
   updateSavedView
 } from './viewOperations';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import { httpAssert } from '../../utils/httpAssert';
 
 type ORPCContext = {
@@ -154,16 +153,13 @@ export const workspaceViewOpenAPIHandler = new OpenAPIHandler(workspaceViewORPCR
 
 export const createWorkspaceViewORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await workspaceViewOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: {
-          db,
-          event: event as AuthenticatedEvent
-        }
+    const result = await workspaceViewOpenAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: {
+        db,
+        event: event as AuthenticatedEvent
       }
-    );
+    });
 
     if (result.matched) {
       return result.response;

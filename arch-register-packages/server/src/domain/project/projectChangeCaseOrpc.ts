@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
@@ -168,16 +167,13 @@ export const changeCaseOpenAPIHandler = new OpenAPIHandler(changeCaseORPCRouter,
 
 export const createChangeCaseORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await changeCaseOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: {
-          db,
-          event: event as AuthenticatedEvent
-        }
+    const result = await changeCaseOpenAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: {
+        db,
+        event: event as AuthenticatedEvent
       }
-    );
+    });
 
     if (result.matched) {
       return result.response;

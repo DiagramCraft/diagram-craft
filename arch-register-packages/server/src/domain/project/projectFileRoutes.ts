@@ -205,7 +205,6 @@ export const createProjectFileRoutesHandler = (db: DatabaseAdapter, storage: Sto
     });
   };
 
-  registerRoutes('/api');
   registerRoutes('/api/application/v1');
 
   return router;

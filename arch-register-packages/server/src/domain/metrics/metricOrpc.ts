@@ -12,7 +12,6 @@ import {
 import { buildApiEntityAuthCtx, requireProjectAccess } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import { getBoxMetrics } from './metricOperations';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -63,16 +62,13 @@ export const workspaceMetricOpenAPIHandler = new OpenAPIHandler(workspaceMetricO
 
 export const createWorkspaceMetricORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await workspaceMetricOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: {
-          db,
-          event: event as AuthenticatedEvent
-        }
+    const result = await workspaceMetricOpenAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: {
+        db,
+        event: event as AuthenticatedEvent
       }
-    );
+    });
 
     if (result.matched) {
       return result.response;

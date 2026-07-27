@@ -69,7 +69,6 @@ import {
 import { createMarkdownDiagramAttachment } from './markdownAttachmentOperations';
 import { runDocumentAiAction, testDocumentAiAction } from './markdownAiOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -780,17 +779,14 @@ export const projectOpenAPIHandler = new OpenAPIHandler(projectORPCRouter, {
 
 export const createProjectORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
   defineHandler(async event => {
-    const result = await projectOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: {
-          db,
-          storage,
-          event: event as AuthenticatedEvent
-        }
+    const result = await projectOpenAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: {
+        db,
+        storage,
+        event: event as AuthenticatedEvent
       }
-    );
+    });
 
     if (result.matched) {
       return result.response;

@@ -346,7 +346,7 @@ test.describe('ai chat routes', () => {
     });
     expect(invalidJsonRes.status).toBe(400);
 
-    const missingWsRes = await fetch(`${server.baseUrl}/api/missing/ai/chat`, {
+    const missingWsRes = await fetch(`${server.baseUrl}/api/application/v1/missing/ai/chat`, {
       method: 'POST',
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -355,7 +355,7 @@ test.describe('ai chat routes', () => {
     });
     expect(missingWsRes.status).toBe(404);
 
-    const noConfigRes = await fetch(`${server.baseUrl}/api/no-ai/ai/chat`, {
+    const noConfigRes = await fetch(`${server.baseUrl}/api/application/v1/no-ai/ai/chat`, {
       method: 'POST',
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({

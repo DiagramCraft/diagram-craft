@@ -9,7 +9,6 @@ import {
   updateNotificationPreferences
 } from './notificationPreferenceOperations';
 import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -47,16 +46,13 @@ export const notificationPreferencesOpenAPIHandler = new OpenAPIHandler(
 
 export const createNotificationPreferencesORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await notificationPreferencesOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: {
-          db,
-          event: event as AuthenticatedEvent
-        }
+    const result = await notificationPreferencesOpenAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: {
+        db,
+        event: event as AuthenticatedEvent
       }
-    );
+    });
 
     if (result.matched) {
       return result.response;

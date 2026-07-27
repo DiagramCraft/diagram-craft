@@ -5,7 +5,6 @@ import { automationRuleContract } from '@arch-register/api-types/automationRuleC
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import {
   createAutomationRule,
   deleteAutomationRule,
@@ -51,12 +50,9 @@ const handler = new OpenAPIHandler(automationRuleORPCRouter, {
 
 export const createAutomationRuleORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await handler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: { db, event: event as AuthenticatedEvent }
-      }
-    );
+    const result = await handler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: { db, event: event as AuthenticatedEvent }
+    });
     if (result.matched) return result.response;
   });

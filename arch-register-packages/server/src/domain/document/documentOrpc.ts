@@ -19,7 +19,6 @@ import {
   updateDocumentTemplate,
   updateDocumentType
 } from './documentOperations';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type Context = { db: DatabaseAdapter; event: AuthenticatedEvent };
 const router = implement(documentContract).$context<Context>().use(orpcErrorMiddleware);
@@ -107,12 +106,9 @@ export const documentOpenAPIHandler = new OpenAPIHandler(documentORPCRouter, {
 });
 export const createDocumentORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await documentOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: { db, event: event as AuthenticatedEvent }
-      }
-    );
+    const result = await documentOpenAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: { db, event: event as AuthenticatedEvent }
+    });
     if (result.matched) return result.response;
   });

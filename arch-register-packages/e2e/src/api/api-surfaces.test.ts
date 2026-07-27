@@ -19,11 +19,10 @@ test.describe('versioned API surface aliases', () => {
       })
     ]);
 
+    expect(legacySchemas.status).toBe(404);
     expect(applicationSchemas.status).toBe(200);
     expect(integrationSchemas.status).toBe(200);
-    const legacySchemaBody = await legacySchemas.json();
-    expect(await applicationSchemas.json()).toEqual(legacySchemaBody);
-    expect(await integrationSchemas.json()).toEqual(legacySchemaBody);
+    expect(await integrationSchemas.json()).toEqual(await applicationSchemas.json());
 
     const [legacyEntities, applicationEntities] = await Promise.all([
       fetch(`${server.baseUrl}/api/default/data`, {
@@ -34,8 +33,8 @@ test.describe('versioned API surface aliases', () => {
       })
     ]);
 
+    expect(legacyEntities.status).toBe(404);
     expect(applicationEntities.status).toBe(200);
-    expect(await applicationEntities.json()).toEqual(await legacyEntities.json());
   });
 
   test('exposes Diagram Craft data through the named adapter surface', async ({ server, auth }) => {

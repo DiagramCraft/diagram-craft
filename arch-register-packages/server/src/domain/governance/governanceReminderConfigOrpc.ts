@@ -12,7 +12,6 @@ import {
 } from '../../utils/orpcErrors';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import type { GovernanceRegistry } from './governanceRegistry';
 
 // Human-readable labels for the case kinds that support scheduled reminders — kept local to this
@@ -111,13 +110,10 @@ export const createGovernanceReminderConfigORPCHandler = (
   });
 
   return defineHandler(async event => {
-    const result = await handler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: { db, event: event as AuthenticatedEvent }
-      }
-    );
+    const result = await handler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: { db, event: event as AuthenticatedEvent }
+    });
     if (result.matched) return result.response;
   });
 };

@@ -44,7 +44,7 @@ test.describe('EntityQuery permission routes', () => {
   }) => {
     const query: EntityQuery = { root: { kind: 'and', children: [] } };
     const response = await fetch(
-      `${server.baseUrl}/api/default/data?${new URLSearchParams({
+      `${server.baseUrl}/api/application/v1/default/data?${new URLSearchParams({
         projectId: resources.projectIds.authMigration,
         projectScope: 'project',
         entityQuery: JSON.stringify(query)

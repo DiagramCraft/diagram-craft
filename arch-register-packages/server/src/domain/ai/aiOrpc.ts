@@ -2,7 +2,6 @@ import { defineHandler } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { aiContract } from '@arch-register/api-types/aiContract';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -418,13 +417,10 @@ export const createAiORPCHandler = (db: DatabaseAdapter, deps: AiORPCDeps = {}) 
   });
 
   return defineHandler(async event => {
-    const result = await aiOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: { db, event: event as AuthenticatedEvent }
-      }
-    );
+    const result = await aiOpenAPIHandler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: { db, event: event as AuthenticatedEvent }
+    });
     if (result.matched) return result.response;
   });
 };

@@ -214,7 +214,7 @@ test.describe('PUT /api/:workspace/projects/:projectId/template-status/:path', (
   }) => {
     const path = 'diagrams/plain.json';
     const res = await fetch(
-      `${server.baseUrl}/api/default/projects/${seeded.projectId}/template-status/${encodeURIComponent(path)}`,
+      `${server.baseUrl}/api/application/v1/default/projects/${seeded.projectId}/template-status/${encodeURIComponent(path)}`,
       {
         method: 'PUT',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
@@ -230,7 +230,7 @@ test.describe('PUT /api/:workspace/projects/:projectId/template-status/:path', (
   test('marks a file as a workspace template', async ({ server, auth, seeded }) => {
     const path = 'diagrams/plain.json';
     const res = await fetch(
-      `${server.baseUrl}/api/default/projects/${seeded.projectId}/template-status/${encodeURIComponent(path)}`,
+      `${server.baseUrl}/api/application/v1/default/projects/${seeded.projectId}/template-status/${encodeURIComponent(path)}`,
       {
         method: 'PUT',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
@@ -244,7 +244,7 @@ test.describe('PUT /api/:workspace/projects/:projectId/template-status/:path', (
 
   test('returns 400 when body is missing', async ({ server, auth, seeded }) => {
     const res = await fetch(
-      `${server.baseUrl}/api/default/projects/${seeded.projectId}/template-status/diagrams%2Fplain.json`,
+      `${server.baseUrl}/api/application/v1/default/projects/${seeded.projectId}/template-status/diagrams%2Fplain.json`,
       { method: 'PUT', headers: { Authorization: auth } }
     );
     expect(res.status).toBe(400);
@@ -252,7 +252,7 @@ test.describe('PUT /api/:workspace/projects/:projectId/template-status/:path', (
 
   test('returns 400 when is_template is not boolean', async ({ server, auth, seeded }) => {
     const res = await fetch(
-      `${server.baseUrl}/api/default/projects/${seeded.projectId}/template-status/diagrams%2Fplain.json`,
+      `${server.baseUrl}/api/application/v1/default/projects/${seeded.projectId}/template-status/diagrams%2Fplain.json`,
       {
         method: 'PUT',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
@@ -264,7 +264,7 @@ test.describe('PUT /api/:workspace/projects/:projectId/template-status/:path', (
 
   test('returns 404 when file does not exist', async ({ server, auth, seeded }) => {
     const res = await fetch(
-      `${server.baseUrl}/api/default/projects/${seeded.projectId}/template-status/diagrams%2Fnonexistent.json`,
+      `${server.baseUrl}/api/application/v1/default/projects/${seeded.projectId}/template-status/diagrams%2Fnonexistent.json`,
       {
         method: 'PUT',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
@@ -276,7 +276,7 @@ test.describe('PUT /api/:workspace/projects/:projectId/template-status/:path', (
 
   test('returns 404 when project does not exist', async ({ server, auth, seeded: _ }) => {
     const res = await fetch(
-      `${server.baseUrl}/api/default/projects/nonexistent/template-status/diagrams%2Ffile.json`,
+      `${server.baseUrl}/api/application/v1/default/projects/nonexistent/template-status/diagrams%2Ffile.json`,
       {
         method: 'PUT',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
@@ -288,7 +288,7 @@ test.describe('PUT /api/:workspace/projects/:projectId/template-status/:path', (
 
   test('returns 401 without auth', async ({ server, seeded }) => {
     const res = await fetch(
-      `${server.baseUrl}/api/default/projects/${seeded.projectId}/template-status/diagrams%2Fplain.json`,
+      `${server.baseUrl}/api/application/v1/default/projects/${seeded.projectId}/template-status/diagrams%2Fplain.json`,
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

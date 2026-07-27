@@ -152,7 +152,7 @@ test.describe('data permission routes', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 
     const res = await fetch(
-      `${server.baseUrl}/api/default/data/export?_schemaId=00000000-0000-0000-0000-000000000004`,
+      `${server.baseUrl}/api/application/v1/default/data/export?_schemaId=00000000-0000-0000-0000-000000000004`,
       {
         headers: { Authorization: personas.userWithExplicitEntityGrant.auth }
       }

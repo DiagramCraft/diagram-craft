@@ -12,7 +12,6 @@ import {
   rotateWebhookSecret,
   updateWebhook
 } from './webhookOperations';
-import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = { db: DatabaseAdapter; event: AuthenticatedEvent };
 const router = implement(webhookContract).$context<ORPCContext>().use(orpcErrorMiddleware);
@@ -43,12 +42,9 @@ const handler = new OpenAPIHandler(webhookORPCRouter, {
 
 export const createWebhookORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await handler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: { db, event: event as AuthenticatedEvent }
-      }
-    );
+    const result = await handler.handle(event.req, {
+      prefix: '/api/application/v1',
+      context: { db, event: event as AuthenticatedEvent }
+    });
     if (result.matched) return result.response;
   });
