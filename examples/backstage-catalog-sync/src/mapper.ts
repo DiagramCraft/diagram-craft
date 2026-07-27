@@ -117,11 +117,12 @@ const retainRelationship = (
   relationships.push({
     field,
     defaultKind,
-    references: value === undefined
-      ? []
-      : Array.isArray(value)
-        ? value as BackstageReferenceValue[]
-        : [value as BackstageReferenceValue]
+    references:
+      value === undefined
+        ? []
+        : Array.isArray(value)
+          ? (value as BackstageReferenceValue[])
+          : [value as BackstageReferenceValue]
   });
 };
 

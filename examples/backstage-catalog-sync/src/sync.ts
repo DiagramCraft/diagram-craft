@@ -10,7 +10,12 @@ import {
   type BackstageEntity
 } from './backstage.js';
 import { mapBackstageToArchRegister } from './mapper.js';
-import { syncEntity, getEntityByExternalKey, discoverSchemas, type SyncResult } from './archRegister.js';
+import {
+  syncEntity,
+  getEntityByExternalKey,
+  discoverSchemas,
+  type SyncResult
+} from './archRegister.js';
 
 export interface SyncReport {
   totalRepos: number;
@@ -45,24 +50,31 @@ interface ScannedEntity {
 
 const relationFieldName = (field: string): string => {
   switch (field) {
-    case 'providesApis': return 'provides_apis';
-    case 'consumesApis': return 'consumes_apis';
-    default: return field;
+    case 'providesApis':
+      return 'provides_apis';
+    case 'consumesApis':
+      return 'consumes_apis';
+    default:
+      return field;
   }
 };
 
 const relationFieldsForKind = (kind: string): string[] => {
   switch (kind) {
-    case 'Component': return ['system', 'provides_apis', 'consumes_apis'];
+    case 'Component':
+      return ['system', 'provides_apis', 'consumes_apis'];
     case 'API':
-    case 'Resource': return ['system'];
-    case 'System': return ['domain'];
-    default: return [];
+    case 'Resource':
+      return ['system'];
+    case 'System':
+      return ['domain'];
+    default:
+      return [];
   }
 };
 
 const referenceDisplay = (reference: unknown): string =>
-  typeof reference === 'string' ? reference : JSON.stringify(reference) ?? String(reference);
+  typeof reference === 'string' ? reference : (JSON.stringify(reference) ?? String(reference));
 
 /**
  * Syncs all Backstage catalog-info.yaml files from a GitHub organization
@@ -282,12 +294,21 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     const relationFields = relationFieldsForKind(item.entity.kind);
     try {
       existing = await getEntityByExternalKey(
-        config.archRegisterWorkspace, source, item.externalKey,
-        config.archRegisterToken, config.archRegisterUrl
+        config.archRegisterWorkspace,
+        source,
+        item.externalKey,
+        config.archRegisterToken,
+        config.archRegisterUrl
       );
       existingByKey.set(item.externalKey, existing);
     } catch (error) {
-      if (!(error instanceof Error && 'status' in error && (error as { status?: number }).status === 404)) {
+      if (
+        !(
+          error instanceof Error &&
+          'status' in error &&
+          (error as { status?: number }).status === 404
+        )
+      ) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         report.failed++;
         report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
@@ -302,19 +323,32 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
 
     try {
       const result = await syncEntity(
-        config.archRegisterWorkspace, source, item.externalKey, materialized,
-        config.archRegisterToken, config.archRegisterUrl
+        config.archRegisterWorkspace,
+        source,
+        item.externalKey,
+        materialized,
+        config.archRegisterToken,
+        config.archRegisterUrl
       );
       syncResults.set(item.externalKey, result);
-      idsByReference.set(canonicalReferenceKey({
-        kind: item.entity.kind,
-        namespace: item.entity.metadata.namespace ?? 'default',
-        name: item.entity.metadata.name
-      }), result.entity._uid);
+      idsByReference.set(
+        canonicalReferenceKey({
+          kind: item.entity.kind,
+          namespace: item.entity.metadata.namespace ?? 'default',
+          name: item.entity.metadata.name
+        }),
+        result.entity._uid
+      );
       switch (result.status) {
-        case 'created': report.created++; break;
-        case 'updated': report.updated++; break;
-        case 'unchanged': report.unchanged++; break;
+        case 'created':
+          report.created++;
+          break;
+        case 'updated':
+          report.updated++;
+          break;
+        case 'unchanged':
+          report.unchanged++;
+          break;
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -329,13 +363,20 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     if (lookupCache.has(key)) return lookupCache.get(key)!;
     try {
       const target = await getEntityByExternalKey(
-        config.archRegisterWorkspace, source, key,
-        config.archRegisterToken, config.archRegisterUrl
+        config.archRegisterWorkspace,
+        source,
+        key,
+        config.archRegisterToken,
+        config.archRegisterUrl
       );
       lookupCache.set(key, target._uid);
       return target._uid;
     } catch (error) {
-      if (error instanceof Error && 'status' in error && (error as { status?: number }).status === 404) {
+      if (
+        error instanceof Error &&
+        'status' in error &&
+        (error as { status?: number }).status === 404
+      ) {
         lookupCache.set(key, null);
         return null;
       }
@@ -353,9 +394,10 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
       const resolved: string[] = [];
       for (const original of relationship.references) {
         const parsed = parseBackstageReference(original, relationship.defaultKind);
-        const key = parsed && ['component', 'api', 'resource', 'system', 'domain'].includes(parsed.kind)
-          ? canonicalReferenceKey(parsed)
-          : null;
+        const key =
+          parsed && ['component', 'api', 'resource', 'system', 'domain'].includes(parsed.kind)
+            ? canonicalReferenceKey(parsed)
+            : null;
         let id: string | null = null;
         try {
           id = key ? await resolveReference(key) : null;
@@ -369,7 +411,13 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
           resolved.push(id);
         } else {
           const warning = `Unresolved relationship target for ${item.entityRef}.${relationship.field}: ${referenceDisplay(original)}`;
-          report.warnings.push({ repo: item.repo.fullName, entity: item.entityRef, field: relationship.field, reference: referenceDisplay(original), warning });
+          report.warnings.push({
+            repo: item.repo.fullName,
+            entity: item.entityRef,
+            field: relationship.field,
+            reference: referenceDisplay(original),
+            warning
+          });
           if (config.verbose) console.log(`   ⚠️  ${warning}`);
         }
       }
@@ -379,7 +427,9 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     const current = existingByKey.get(item.externalKey) ?? {};
     const changedFields: Record<string, unknown> = {};
     for (const [field, values] of relationValues) {
-      const currentValues = Array.isArray(current[field]) ? [...current[field] as unknown[]].map(String).sort() : [];
+      const currentValues = Array.isArray(current[field])
+        ? [...(current[field] as unknown[])].map(String).sort()
+        : [];
       if (JSON.stringify(currentValues) !== JSON.stringify(values)) changedFields[field] = values;
     }
     if (Object.keys(changedFields).length === 0) continue;
@@ -390,9 +440,12 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
 
     try {
       await syncEntity(
-        config.archRegisterWorkspace, source, item.externalKey,
+        config.archRegisterWorkspace,
+        source,
+        item.externalKey,
         { ...item.mapped, ...relationshipPayload },
-        config.archRegisterToken, config.archRegisterUrl
+        config.archRegisterToken,
+        config.archRegisterUrl
       );
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -421,7 +474,8 @@ export const printReport = (report: SyncReport): void => {
 
   if (report.warnings.length > 0) {
     console.log('\n⚠️  Relationship warnings:');
-    for (const warning of report.warnings) console.log(`  • ${warning.repo} / ${warning.entity}\n    ${warning.warning}`);
+    for (const warning of report.warnings)
+      console.log(`  • ${warning.repo} / ${warning.entity}\n    ${warning.warning}`);
   }
 
   if (report.errors.length > 0) {

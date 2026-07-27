@@ -63,7 +63,7 @@ export const parseBackstageReference = (
     parts.length < 1 ||
     parts.length > 2 ||
     parts.some(part => part.length === 0) ||
-    parts.length === 2 && parts[0]!.includes('/')
+    (parts.length === 2 && parts[0]!.includes('/'))
   ) {
     return null;
   }

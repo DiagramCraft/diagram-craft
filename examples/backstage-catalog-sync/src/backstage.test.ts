@@ -65,16 +65,24 @@ spec: {}
 
   it('parses Backstage references with field defaults', () => {
     assert.deepEqual(parseBackstageReference('system:default/my-system', 'system'), {
-      kind: 'system', namespace: 'default', name: 'my-system'
+      kind: 'system',
+      namespace: 'default',
+      name: 'my-system'
     });
     assert.deepEqual(parseBackstageReference('default/my-system', 'system'), {
-      kind: 'system', namespace: 'default', name: 'my-system'
+      kind: 'system',
+      namespace: 'default',
+      name: 'my-system'
     });
     assert.deepEqual(parseBackstageReference('my-system', 'system'), {
-      kind: 'system', namespace: 'default', name: 'my-system'
+      kind: 'system',
+      namespace: 'default',
+      name: 'my-system'
     });
     assert.deepEqual(parseBackstageReference({ kind: 'API', name: 'artist-api' }, 'system'), {
-      kind: 'api', namespace: 'default', name: 'artist-api'
+      kind: 'api',
+      namespace: 'default',
+      name: 'artist-api'
     });
   });
 
