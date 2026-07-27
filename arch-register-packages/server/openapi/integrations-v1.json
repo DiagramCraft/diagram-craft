@@ -15,7 +15,10 @@
         "operationId": "schemas.list",
         "summary": "List entity schemas",
         "description": "Retrieves all entity schema definitions for the workspace. Schemas define the structure and fields for different types of entities.",
-        "tags": ["Schemas", "Schemas"],
+        "tags": [
+          "Schemas",
+          "Schemas"
+        ],
         "parameters": [
           {
             "name": "workspace",
@@ -74,7 +77,11 @@
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
-                                      "enum": ["required", "expected", "optional"],
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
                                       "type": "string"
                                     },
                                     {
@@ -92,12 +99,19 @@
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
-                                  "enum": ["ai", "integration", "automation"],
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
                                   "type": "string",
                                   "description": "Producer that manages this field"
                                 },
                                 "refresh_mode": {
-                                  "enum": ["on_change", "scheduled"],
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
@@ -106,7 +120,11 @@
                                   "description": "Single-line text field"
                                 }
                               },
-                              "required": ["id", "name", "type"]
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
                             },
                             {
                               "type": "object",
@@ -122,7 +140,11 @@
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
-                                      "enum": ["required", "expected", "optional"],
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
                                       "type": "string"
                                     },
                                     {
@@ -140,12 +162,19 @@
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
-                                  "enum": ["ai", "integration", "automation"],
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
                                   "type": "string",
                                   "description": "Producer that manages this field"
                                 },
                                 "refresh_mode": {
-                                  "enum": ["on_change", "scheduled"],
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
@@ -154,7 +183,11 @@
                                   "description": "Multi-line text field"
                                 }
                               },
-                              "required": ["id", "name", "type"]
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
                             },
                             {
                               "type": "object",
@@ -170,7 +203,11 @@
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
-                                      "enum": ["required", "expected", "optional"],
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
                                       "type": "string"
                                     },
                                     {
@@ -188,12 +225,19 @@
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
-                                  "enum": ["ai", "integration", "automation"],
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
                                   "type": "string",
                                   "description": "Producer that manages this field"
                                 },
                                 "refresh_mode": {
-                                  "enum": ["on_change", "scheduled"],
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
@@ -202,7 +246,11 @@
                                   "description": "Boolean (true/false) field"
                                 }
                               },
-                              "required": ["id", "name", "type"]
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
                             },
                             {
                               "type": "object",
@@ -218,7 +266,11 @@
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
-                                      "enum": ["required", "expected", "optional"],
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
                                       "type": "string"
                                     },
                                     {
@@ -236,12 +288,19 @@
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
-                                  "enum": ["ai", "integration", "automation"],
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
                                   "type": "string",
                                   "description": "Producer that manages this field"
                                 },
                                 "refresh_mode": {
-                                  "enum": ["on_change", "scheduled"],
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
@@ -250,7 +309,11 @@
                                   "description": "Date field"
                                 }
                               },
-                              "required": ["id", "name", "type"]
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
                             },
                             {
                               "type": "object",
@@ -266,7 +329,11 @@
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
-                                      "enum": ["required", "expected", "optional"],
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
                                       "type": "string"
                                     },
                                     {
@@ -284,12 +351,19 @@
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
-                                  "enum": ["ai", "integration", "automation"],
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
                                   "type": "string",
                                   "description": "Producer that manages this field"
                                 },
                                 "refresh_mode": {
-                                  "enum": ["on_change", "scheduled"],
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
@@ -310,7 +384,11 @@
                                   "description": "Maximum allowed value"
                                 }
                               },
-                              "required": ["id", "name", "type"]
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
                             },
                             {
                               "type": "object",
@@ -326,7 +404,11 @@
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
-                                      "enum": ["required", "expected", "optional"],
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
                                       "type": "string"
                                     },
                                     {
@@ -344,12 +426,19 @@
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
-                                  "enum": ["ai", "integration", "automation"],
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
                                   "type": "string",
                                   "description": "Producer that manages this field"
                                 },
                                 "refresh_mode": {
-                                  "enum": ["on_change", "scheduled"],
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
@@ -375,12 +464,21 @@
                                         "description": "Display label"
                                       }
                                     },
-                                    "required": ["value", "label"]
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
                                   },
                                   "description": "Available dropdown options"
                                 }
                               },
-                              "required": ["id", "name", "type", "enumId", "options"]
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "enumId",
+                                "options"
+                              ]
                             },
                             {
                               "type": "object",
@@ -396,7 +494,11 @@
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
-                                      "enum": ["required", "expected", "optional"],
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
                                       "type": "string"
                                     },
                                     {
@@ -414,12 +516,19 @@
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
-                                  "enum": ["ai", "integration", "automation"],
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
                                   "type": "string",
                                   "description": "Producer that manages this field"
                                 },
                                 "refresh_mode": {
-                                  "enum": ["on_change", "scheduled"],
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
@@ -457,7 +566,14 @@
                                   "description": "Maximum number of references (-1 for unlimited)"
                                 }
                               },
-                              "required": ["id", "name", "type", "schemaId", "minCount", "maxCount"]
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "schemaId",
+                                "minCount",
+                                "maxCount"
+                              ]
                             },
                             {
                               "type": "object",
@@ -473,7 +589,11 @@
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
-                                      "enum": ["required", "expected", "optional"],
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
                                       "type": "string"
                                     },
                                     {
@@ -491,12 +611,19 @@
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
                                 "external_kind": {
-                                  "enum": ["ai", "integration", "automation"],
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
                                   "type": "string",
                                   "description": "Producer that manages this field"
                                 },
                                 "refresh_mode": {
-                                  "enum": ["on_change", "scheduled"],
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
@@ -530,7 +657,14 @@
                                   "description": "Maximum count (always 1 for containment)"
                                 }
                               },
-                              "required": ["id", "name", "type", "schemaId", "minCount", "maxCount"]
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "schemaId",
+                                "minCount",
+                                "maxCount"
+                              ]
                             },
                             {
                               "type": "object",
@@ -571,7 +705,13 @@
                                   "description": "Sandboxed expression used to calculate the value"
                                 },
                                 "resultType": {
-                                  "enum": ["text", "number", "select", "boolean", "rating"],
+                                  "enum": [
+                                    "text",
+                                    "number",
+                                    "select",
+                                    "boolean",
+                                    "rating"
+                                  ],
                                   "type": "string",
                                   "description": "Underlying type of the calculated value"
                                 },
@@ -593,7 +733,10 @@
                                         "description": "Display label"
                                       }
                                     },
-                                    "required": ["value", "label"]
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
                                   },
                                   "description": "Resolved options for a derived select"
                                 }
@@ -680,10 +823,16 @@
                                   "description": "Schema field defaults"
                                 }
                               },
-                              "required": ["fields"]
+                              "required": [
+                                "fields"
+                              ]
                             }
                           },
-                          "required": ["id", "name", "values"],
+                          "required": [
+                            "id",
+                            "name",
+                            "values"
+                          ],
                           "description": "Named defaults for creating an entity of this schema"
                         },
                         "description": "Named entity creation templates"
@@ -708,7 +857,10 @@
                               "description": "Optional group description"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         "description": "Named, presentation-only field groups, in display order"
                       },
@@ -747,12 +899,18 @@
                         "description": "Current schema version number"
                       },
                       "entity_approval_policy": {
-                        "enum": ["required", "disabled"],
+                        "enum": [
+                          "required",
+                          "disabled"
+                        ],
                         "type": "string",
                         "description": "Default approval policy for existing entity changes"
                       },
                       "deprecation_policy": {
-                        "enum": ["required", "disabled"],
+                        "enum": [
+                          "required",
+                          "disabled"
+                        ],
                         "type": "string",
                         "description": "Whether entities of this schema can go through the deprecation workflow"
                       },
@@ -794,7 +952,10 @@
         "operationId": "entitySync.getById",
         "summary": "Get entity by ID",
         "description": "Retrieves an entity by its unique identifier.",
-        "tags": ["Integrations", "Integrations"],
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
         "parameters": [
           {
             "name": "workspace",
@@ -859,7 +1020,10 @@
                           "type": "string"
                         }
                       },
-                      "required": ["id", "name"],
+                      "required": [
+                        "id",
+                        "name"
+                      ],
                       "description": "Entity schema reference"
                     },
                     "_name": {
@@ -890,7 +1054,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -910,7 +1077,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -930,7 +1100,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -974,7 +1147,10 @@
                             "description": "Link type (e.g., \"documentation\", \"repository\")"
                           }
                         },
-                        "required": ["url", "title"]
+                        "required": [
+                          "url",
+                          "title"
+                        ]
                       },
                       "description": "External links associated with the entity"
                     },
@@ -991,7 +1167,10 @@
                     "_approvalPolicyOverride": {
                       "anyOf": [
                         {
-                          "enum": ["required", "disabled"],
+                          "enum": [
+                            "required",
+                            "disabled"
+                          ],
                           "type": "string"
                         },
                         {
@@ -1041,7 +1220,10 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["id", "name"]
+                              "required": [
+                                "id",
+                                "name"
+                              ]
                             },
                             {
                               "type": "null"
@@ -1054,7 +1236,11 @@
                           "description": "Whether the entity is marked as done in the project"
                         }
                       },
-                      "required": ["linked", "entityType", "isDone"],
+                      "required": [
+                        "linked",
+                        "entityType",
+                        "isDone"
+                      ],
                       "description": "Project linkage information"
                     },
                     "_externalMetadata": {
@@ -1071,11 +1257,19 @@
                             "minLength": 1
                           },
                           "external_kind": {
-                            "enum": ["ai", "integration", "automation"],
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
                             "type": "string"
                           },
                           "status": {
-                            "enum": ["success", "failed", "outdated"],
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
                             "type": "string"
                           },
                           "source": {
@@ -1159,7 +1353,13 @@
                             "exclusiveMinimum": 0
                           }
                         },
-                        "required": ["fieldId", "external_kind", "status", "source", "timestamp"]
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                     },
@@ -1206,7 +1406,10 @@
         "operationId": "entitySync.updateById",
         "summary": "Update entity by ID",
         "description": "Updates an existing entity identified by its unique identifier.",
-        "tags": ["Integrations", "Integrations"],
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
         "parameters": [
           {
             "name": "workspace",
@@ -1246,7 +1449,10 @@
                         "type": "string"
                       }
                     },
-                    "required": ["id", "name"],
+                    "required": [
+                      "id",
+                      "name"
+                    ],
                     "description": "Schema reference"
                   },
                   "_name": {
@@ -1279,7 +1485,9 @@
                                 "type": "string"
                               }
                             },
-                            "required": ["id"],
+                            "required": [
+                              "id"
+                            ],
                             "additionalProperties": {}
                           }
                         ]
@@ -1304,7 +1512,9 @@
                                 "type": "string"
                               }
                             },
-                            "required": ["id"],
+                            "required": [
+                              "id"
+                            ],
                             "additionalProperties": {}
                           }
                         ]
@@ -1329,7 +1539,9 @@
                                 "type": "string"
                               }
                             },
-                            "required": ["id"],
+                            "required": [
+                              "id"
+                            ],
                             "additionalProperties": {}
                           }
                         ]
@@ -1376,7 +1588,10 @@
                           "description": "Link type (e.g., \"documentation\", \"repository\")"
                         }
                       },
-                      "required": ["url", "title"]
+                      "required": [
+                        "url",
+                        "title"
+                      ]
                     },
                     "description": "External links"
                   },
@@ -1399,7 +1614,11 @@
                         "minLength": 1
                       },
                       "kind": {
-                        "enum": ["ai", "integration", "automation"],
+                        "enum": [
+                          "ai",
+                          "integration",
+                          "automation"
+                        ],
                         "type": "string"
                       },
                       "source": {
@@ -1407,7 +1626,10 @@
                         "minLength": 1
                       },
                       "status": {
-                        "enum": ["success", "failed"],
+                        "enum": [
+                          "success",
+                          "failed"
+                        ],
                         "type": "string",
                         "default": "success"
                       },
@@ -1437,7 +1659,11 @@
                         ]
                       }
                     },
-                    "required": ["fieldId", "kind", "source"],
+                    "required": [
+                      "fieldId",
+                      "kind",
+                      "source"
+                    ],
                     "description": "Present when this mutation is an external update (AI/integration/automation) rather than a user edit; required to write to any field with external_kind set"
                   }
                 },
@@ -1493,7 +1719,10 @@
                           "type": "string"
                         }
                       },
-                      "required": ["id", "name"],
+                      "required": [
+                        "id",
+                        "name"
+                      ],
                       "description": "Entity schema reference"
                     },
                     "_name": {
@@ -1524,7 +1753,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -1544,7 +1776,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -1564,7 +1799,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -1608,7 +1846,10 @@
                             "description": "Link type (e.g., \"documentation\", \"repository\")"
                           }
                         },
-                        "required": ["url", "title"]
+                        "required": [
+                          "url",
+                          "title"
+                        ]
                       },
                       "description": "External links associated with the entity"
                     },
@@ -1625,7 +1866,10 @@
                     "_approvalPolicyOverride": {
                       "anyOf": [
                         {
-                          "enum": ["required", "disabled"],
+                          "enum": [
+                            "required",
+                            "disabled"
+                          ],
                           "type": "string"
                         },
                         {
@@ -1675,7 +1919,10 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["id", "name"]
+                              "required": [
+                                "id",
+                                "name"
+                              ]
                             },
                             {
                               "type": "null"
@@ -1688,7 +1935,11 @@
                           "description": "Whether the entity is marked as done in the project"
                         }
                       },
-                      "required": ["linked", "entityType", "isDone"],
+                      "required": [
+                        "linked",
+                        "entityType",
+                        "isDone"
+                      ],
                       "description": "Project linkage information"
                     },
                     "_externalMetadata": {
@@ -1705,11 +1956,19 @@
                             "minLength": 1
                           },
                           "external_kind": {
-                            "enum": ["ai", "integration", "automation"],
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
                             "type": "string"
                           },
                           "status": {
-                            "enum": ["success", "failed", "outdated"],
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
                             "type": "string"
                           },
                           "source": {
@@ -1793,7 +2052,13 @@
                             "exclusiveMinimum": 0
                           }
                         },
-                        "required": ["fieldId", "external_kind", "status", "source", "timestamp"]
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                     },
@@ -1842,7 +2107,10 @@
         "operationId": "entitySync.getByExternalKey",
         "summary": "Get entity by external identity",
         "description": "Retrieves an entity identified by a durable (source, externalKey) pair.",
-        "tags": ["Integrations", "Integrations"],
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
         "parameters": [
           {
             "name": "workspace",
@@ -1919,7 +2187,10 @@
                           "type": "string"
                         }
                       },
-                      "required": ["id", "name"],
+                      "required": [
+                        "id",
+                        "name"
+                      ],
                       "description": "Entity schema reference"
                     },
                     "_name": {
@@ -1950,7 +2221,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -1970,7 +2244,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -1990,7 +2267,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"]
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
@@ -2034,7 +2314,10 @@
                             "description": "Link type (e.g., \"documentation\", \"repository\")"
                           }
                         },
-                        "required": ["url", "title"]
+                        "required": [
+                          "url",
+                          "title"
+                        ]
                       },
                       "description": "External links associated with the entity"
                     },
@@ -2051,7 +2334,10 @@
                     "_approvalPolicyOverride": {
                       "anyOf": [
                         {
-                          "enum": ["required", "disabled"],
+                          "enum": [
+                            "required",
+                            "disabled"
+                          ],
                           "type": "string"
                         },
                         {
@@ -2101,7 +2387,10 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["id", "name"]
+                              "required": [
+                                "id",
+                                "name"
+                              ]
                             },
                             {
                               "type": "null"
@@ -2114,7 +2403,11 @@
                           "description": "Whether the entity is marked as done in the project"
                         }
                       },
-                      "required": ["linked", "entityType", "isDone"],
+                      "required": [
+                        "linked",
+                        "entityType",
+                        "isDone"
+                      ],
                       "description": "Project linkage information"
                     },
                     "_externalMetadata": {
@@ -2131,11 +2424,19 @@
                             "minLength": 1
                           },
                           "external_kind": {
-                            "enum": ["ai", "integration", "automation"],
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
                             "type": "string"
                           },
                           "status": {
-                            "enum": ["success", "failed", "outdated"],
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
                             "type": "string"
                           },
                           "source": {
@@ -2219,7 +2520,13 @@
                             "exclusiveMinimum": 0
                           }
                         },
-                        "required": ["fieldId", "external_kind", "status", "source", "timestamp"]
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                     },
@@ -2266,7 +2573,10 @@
         "operationId": "entitySync.syncByExternalKey",
         "summary": "Idempotently create or update an entity by its external identity",
         "description": "Creates or updates an entity identified by a durable (source, externalKey) pair, converging repeated submissions on the same entity instead of creating duplicates.",
-        "tags": ["Integrations", "Integrations"],
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
         "parameters": [
           {
             "name": "workspace",
@@ -2318,7 +2628,10 @@
                         "type": "string"
                       }
                     },
-                    "required": ["id", "name"],
+                    "required": [
+                      "id",
+                      "name"
+                    ],
                     "description": "Schema reference"
                   },
                   "_name": {
@@ -2351,7 +2664,9 @@
                                 "type": "string"
                               }
                             },
-                            "required": ["id"],
+                            "required": [
+                              "id"
+                            ],
                             "additionalProperties": {}
                           }
                         ]
@@ -2376,7 +2691,9 @@
                                 "type": "string"
                               }
                             },
-                            "required": ["id"],
+                            "required": [
+                              "id"
+                            ],
                             "additionalProperties": {}
                           }
                         ]
@@ -2401,7 +2718,9 @@
                                 "type": "string"
                               }
                             },
-                            "required": ["id"],
+                            "required": [
+                              "id"
+                            ],
                             "additionalProperties": {}
                           }
                         ]
@@ -2448,7 +2767,10 @@
                           "description": "Link type (e.g., \"documentation\", \"repository\")"
                         }
                       },
-                      "required": ["url", "title"]
+                      "required": [
+                        "url",
+                        "title"
+                      ]
                     },
                     "description": "External links"
                   },
@@ -2471,7 +2793,11 @@
                         "minLength": 1
                       },
                       "kind": {
-                        "enum": ["ai", "integration", "automation"],
+                        "enum": [
+                          "ai",
+                          "integration",
+                          "automation"
+                        ],
                         "type": "string"
                       },
                       "source": {
@@ -2479,7 +2805,10 @@
                         "minLength": 1
                       },
                       "status": {
-                        "enum": ["success", "failed"],
+                        "enum": [
+                          "success",
+                          "failed"
+                        ],
                         "type": "string",
                         "default": "success"
                       },
@@ -2509,7 +2838,11 @@
                         ]
                       }
                     },
-                    "required": ["fieldId", "kind", "source"],
+                    "required": [
+                      "fieldId",
+                      "kind",
+                      "source"
+                    ],
                     "description": "Present when this mutation is an external update (AI/integration/automation) rather than a user edit; required to write to any field with external_kind set"
                   }
                 },
@@ -2528,7 +2861,11 @@
                   "type": "object",
                   "properties": {
                     "status": {
-                      "enum": ["created", "updated", "unchanged"],
+                      "enum": [
+                        "created",
+                        "updated",
+                        "unchanged"
+                      ],
                       "type": "string"
                     },
                     "entity": {
@@ -2572,7 +2909,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id", "name"],
+                          "required": [
+                            "id",
+                            "name"
+                          ],
                           "description": "Entity schema reference"
                         },
                         "_name": {
@@ -2603,7 +2943,10 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["id", "name"]
+                              "required": [
+                                "id",
+                                "name"
+                              ]
                             },
                             {
                               "type": "null"
@@ -2623,7 +2966,10 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["id", "name"]
+                              "required": [
+                                "id",
+                                "name"
+                              ]
                             },
                             {
                               "type": "null"
@@ -2643,7 +2989,10 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["id", "name"]
+                              "required": [
+                                "id",
+                                "name"
+                              ]
                             },
                             {
                               "type": "null"
@@ -2687,7 +3036,10 @@
                                 "description": "Link type (e.g., \"documentation\", \"repository\")"
                               }
                             },
-                            "required": ["url", "title"]
+                            "required": [
+                              "url",
+                              "title"
+                            ]
                           },
                           "description": "External links associated with the entity"
                         },
@@ -2704,7 +3056,10 @@
                         "_approvalPolicyOverride": {
                           "anyOf": [
                             {
-                              "enum": ["required", "disabled"],
+                              "enum": [
+                                "required",
+                                "disabled"
+                              ],
                               "type": "string"
                             },
                             {
@@ -2754,7 +3109,10 @@
                                       "type": "string"
                                     }
                                   },
-                                  "required": ["id", "name"]
+                                  "required": [
+                                    "id",
+                                    "name"
+                                  ]
                                 },
                                 {
                                   "type": "null"
@@ -2767,7 +3125,11 @@
                               "description": "Whether the entity is marked as done in the project"
                             }
                           },
-                          "required": ["linked", "entityType", "isDone"],
+                          "required": [
+                            "linked",
+                            "entityType",
+                            "isDone"
+                          ],
                           "description": "Project linkage information"
                         },
                         "_externalMetadata": {
@@ -2784,11 +3146,19 @@
                                 "minLength": 1
                               },
                               "external_kind": {
-                                "enum": ["ai", "integration", "automation"],
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
                                 "type": "string"
                               },
                               "status": {
-                                "enum": ["success", "failed", "outdated"],
+                                "enum": [
+                                  "success",
+                                  "failed",
+                                  "outdated"
+                                ],
                                 "type": "string"
                               },
                               "source": {
@@ -2917,7 +3287,10 @@
                       "description": "Complete entity record with schema-specific fields"
                     }
                   },
-                  "required": ["status", "entity"]
+                  "required": [
+                    "status",
+                    "entity"
+                  ]
                 }
               }
             }

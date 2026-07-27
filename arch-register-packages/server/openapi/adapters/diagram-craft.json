@@ -15,7 +15,10 @@
         "operationId": "diagramCraft.getSchemas",
         "summary": "Get public schemas",
         "description": "Retrieves publicly accessible schema definitions for diagram collaboration. Used by Diagram Craft for entity integration.",
-        "tags": ["Diagram Craft", "Diagram Craft"],
+        "tags": [
+          "Diagram Craft",
+          "Diagram Craft"
+        ],
         "parameters": [
           {
             "name": "workspace",
@@ -53,7 +56,10 @@
         "operationId": "diagramCraft.getData",
         "summary": "Get public entity data",
         "description": "Retrieves publicly accessible entity data for diagram collaboration. Used by Diagram Craft for entity references.",
-        "tags": ["Diagram Craft", "Diagram Craft"],
+        "tags": [
+          "Diagram Craft",
+          "Diagram Craft"
+        ],
         "parameters": [
           {
             "name": "workspace",
@@ -91,7 +97,10 @@
         "operationId": "diagramCraft.generate",
         "summary": "Generate diagram with AI",
         "description": "Uses AI to generate diagram content based on provided messages. Supports streaming responses for real-time generation.",
-        "tags": ["Diagram Craft", "Diagram Craft"],
+        "tags": [
+          "Diagram Craft",
+          "Diagram Craft"
+        ],
         "parameters": [
           {
             "name": "workspace",
@@ -115,7 +124,11 @@
                       "type": "object",
                       "properties": {
                         "role": {
-                          "enum": ["system", "user", "assistant"],
+                          "enum": [
+                            "system",
+                            "user",
+                            "assistant"
+                          ],
                           "type": "string",
                           "description": "Message role"
                         },
@@ -123,7 +136,9 @@
                           "description": "Message content"
                         }
                       },
-                      "required": ["role"]
+                      "required": [
+                        "role"
+                      ]
                     },
                     "description": "Conversation messages for AI generation"
                   },
@@ -140,7 +155,9 @@
                     "description": "Maximum tokens to generate"
                   }
                 },
-                "required": ["messages"],
+                "required": [
+                  "messages"
+                ],
                 "additionalProperties": {}
               }
             }
@@ -167,7 +184,9 @@
                           "type": "number"
                         }
                       },
-                      "required": ["event"]
+                      "required": [
+                        "event"
+                      ]
                     },
                     {
                       "type": "object",
@@ -183,7 +202,9 @@
                           "type": "number"
                         }
                       },
-                      "required": ["event"]
+                      "required": [
+                        "event"
+                      ]
                     },
                     {
                       "type": "object",
@@ -199,7 +220,9 @@
                           "type": "number"
                         }
                       },
-                      "required": ["event"]
+                      "required": [
+                        "event"
+                      ]
                     }
                   ]
                 }
