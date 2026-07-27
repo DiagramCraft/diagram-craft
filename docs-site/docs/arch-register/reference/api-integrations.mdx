@@ -21,6 +21,60 @@ New consumers should choose the surface that matches their role:
 The legacy `/api/*` surface is not removed as part of the initial migration. Clients should move when their domain has
 an equivalent versioned contract, and breaking changes to versioned surfaces require a new major URL version.
 
+## Current route inventory
+
+The route classification below is the compatibility baseline for the migration. “Live” means the path is currently
+served by the application; “target” means the path is the destination for a later migration issue.
+
+| Surface | Current routes | Status | Owner / migration issue |
+| --- | --- | --- | --- |
+| Legacy application API | `/api/workspaces`, `/api/:workspace/*` for catalog, projects, configuration, governance, search, audit, jobs, documents, webhooks, and related domains | Live canonical routes | Keep compatible while domains move to the application surface; inventory changes belong in #2448 |
+| Application v1 | `/api/application/v1/:workspace/schemas/*` and `/api/application/v1/:workspace/data/*` | Live aliases for catalog schemas and entities | Extend domain by domain in #2446 |
+| Integration v1 | `/api/integrations/v1/:workspace/entities/*` | Target surface; entity-sync behavior is currently served from `/api/:workspace/entities/*` | Productize and migrate in #2449 |
+| Diagram Craft adapter | `/api/adapters/diagram-craft/:workspace/schemas` and `/api/adapters/diagram-craft/:workspace/data` | Live aliases for the authenticated `/api/public/*` adapter routes | Expand and document adapter-specific behavior in #2451 |
+| Legacy adapter name | `/api/public/:workspace/*` | Live compatibility alias; the name does not make the route public | Retain until all Diagram Craft consumers use the adapter surface |
+| Authentication infrastructure | `/api/auth/*`, `/api/auth/oidc/callback` | Live special-purpose browser and session/token endpoints | Remains outside application/integration versioning; token audience enforcement is deferred to #2383 |
+| Development infrastructure | `/api/dev/*` | Live, environment-gated development endpoints | Never expose as a supported integration surface |
+| MCP | `/mcp`, legacy `/sse`, `/messages` | Live in the standalone MCP server | Keep as a protocol surface; upstream REST migration is #2450 |
+| API descriptions | `/openapi.yaml`, `/openapi.json`, and surface-specific `/openapi/*.json` endpoints | Live documentation endpoints | Keep unified output compatible; publish surface specs in #2447 |
+
+The inventory intentionally distinguishes a route that exists from a route that has been selected as a migration
+destination. Surface ownership is not exclusive: a contract may be exposed on both the application and integration
+surfaces when the behavior, authorization, and representation are the same. In particular, `/api/integrations/v1/*`
+must not be treated as generally available until #2449 mounts the entity-sync contract there.
+
+## Compatibility policy
+
+- Existing `/api/*` routes are the compatibility baseline. A migration adds a new route alias or canonical route before
+  changing any existing consumer.
+- A domain may be aliased on both `/api/application/v1/*` and `/api/integrations/v1/*` when both consumers need the same
+  contract. Choose one primary owner for documentation and lifecycle decisions, and record the second path as an
+  intentional alias rather than maintaining separate business logic.
+- An alias must call the same contract handler and authorization path as its canonical route. It must not duplicate
+  business logic or weaken authentication.
+- Aliases preserve HTTP methods, request and response shapes, error behavior, and path parameters. The only permitted
+  transformation is the URL prefix mapping documented for that surface.
+- New public contracts use `/v{major}` in the surface path. Additive changes are allowed within a major version;
+  breaking changes require a new major version and a migration note.
+- `/api/public/*` is a naming-compatibility path, not an anonymous API. Authentication and workspace permissions apply
+  exactly as they do to the adapter route.
+- Do not add token audiences, scopes, or enforcement as part of route migration. Those decisions are tracked
+  separately in #2383.
+
+## Deprecation and removal
+
+When a replacement is live, update consumers and docs first, then mark the old path as compatibility-only. Removal of a
+legacy path requires all of the following:
+
+1. the replacement has a published contract and OpenAPI description;
+2. first-party consumers have used the replacement for one release cycle;
+3. external consumers have a migration note and a warning period;
+4. request metrics show no material usage of the old path, or remaining consumers have an agreed migration owner; and
+5. the removal is called out in release notes and covered by a regression test proving the replacement remains live.
+
+Until those criteria are met, compatibility aliases remain supported and are not silently redirected, since redirects can
+change methods, authentication handling, or streaming behavior.
+
 ## Primary Sources
 
 - server OpenAPI specification, generated to `arch-register-packages/server/openapi.json`
