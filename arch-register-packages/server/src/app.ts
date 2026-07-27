@@ -3,7 +3,12 @@ import { defineHandler, getMethod, getRequestPath, H3, handleCors } from 'h3';
 import type { DatabaseAdapter } from './db/database';
 import type { StorageAdapter } from './storage/storage';
 import { createLogger } from './utils/logger';
-import { createUnifiedOpenAPISpecHandler } from './openapi';
+import {
+  createApplicationOpenAPISpecHandler,
+  createDiagramCraftAdapterOpenAPISpecHandler,
+  createIntegrationOpenAPISpecHandler,
+  createUnifiedOpenAPISpecHandler
+} from './openapi';
 import { createOidcCallbackRoute } from './domain/auth/oidcCallbackRoute';
 import { requireAuth } from './middleware/auth';
 import { createDevDelayMiddleware } from './middleware/devDelay';
@@ -125,6 +130,9 @@ export const createApp = (
   );
 
   app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
+  app.use('/openapi/application-v1.json', createApplicationOpenAPISpecHandler());
+  app.use('/openapi/integrations-v1.json', createIntegrationOpenAPISpecHandler());
+  app.use('/openapi/adapters/diagram-craft.json', createDiagramCraftAdapterOpenAPISpecHandler());
 
   app.use(createDevDelayMiddleware());
 

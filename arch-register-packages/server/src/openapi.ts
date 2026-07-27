@@ -79,6 +79,9 @@ export const allContracts = {
 };
 
 let generatedUnifiedSpec: Promise<object> | null = null;
+let generatedApplicationSpec: Promise<object> | null = null;
+let generatedIntegrationSpec: Promise<object> | null = null;
+let generatedDiagramCraftAdapterSpec: Promise<object> | null = null;
 
 export const getUnifiedOpenAPISpec = () => {
   generatedUnifiedSpec ??= new OpenAPIGenerator({
@@ -94,9 +97,78 @@ export const getUnifiedOpenAPISpec = () => {
   return generatedUnifiedSpec;
 };
 
-export const createUnifiedOpenAPISpecHandler = () =>
-  defineHandler(async () => {
-    const spec = await getUnifiedOpenAPISpec();
-    // (spec as any).openapi = '3.1.0';
-    return Response.json(spec);
+export const getApplicationOpenAPISpec = () => {
+  generatedApplicationSpec ??= new OpenAPIGenerator({
+    schemaConverters: [new ZodToJsonSchemaConverter()]
+  }).generate(
+    {
+      ...workspaceSchemaContract,
+      ...workspaceEntityContract
+    },
+    {
+      info: {
+        title: 'Arch Register Application API',
+        version: '1.0.0'
+      },
+      servers: [{ url: '/api/application/v1' }]
+    }
+  );
+
+  return generatedApplicationSpec;
+};
+
+export const getIntegrationOpenAPISpec = () => {
+  generatedIntegrationSpec ??= new OpenAPIGenerator({
+    schemaConverters: [new ZodToJsonSchemaConverter()]
+  }).generate(entitySyncContract, {
+    info: {
+      title: 'Arch Register Integration API',
+      version: '1.0.0'
+    },
+    servers: [{ url: '/api' }]
   });
+
+  return generatedIntegrationSpec;
+};
+
+export const getDiagramCraftAdapterOpenAPISpec = () => {
+  generatedDiagramCraftAdapterSpec ??= new OpenAPIGenerator({
+    schemaConverters: [new ZodToJsonSchemaConverter()]
+  })
+    .generate(diagramCraftContract, {
+      info: {
+        title: 'Diagram Craft Adapter API',
+        version: '1.0.0'
+      },
+      servers: [{ url: '/api' }]
+    })
+    .then(spec => {
+      const paths = Object.fromEntries(
+        Object.entries((spec as { paths?: Record<string, unknown> }).paths ?? {})
+          .filter(([path]) => path.startsWith('/public/'))
+          .map(([path, operations]) => [
+            `/adapters/diagram-craft/${path.slice('/public/'.length)}`,
+            operations
+          ])
+      );
+
+      return { ...spec, paths };
+    });
+
+  return generatedDiagramCraftAdapterSpec;
+};
+
+const createOpenAPISpecHandler = (getSpec: () => Promise<object>) =>
+  defineHandler(async () => Response.json(await getSpec()));
+
+export const createUnifiedOpenAPISpecHandler = () =>
+  createOpenAPISpecHandler(getUnifiedOpenAPISpec);
+
+export const createApplicationOpenAPISpecHandler = () =>
+  createOpenAPISpecHandler(getApplicationOpenAPISpec);
+
+export const createIntegrationOpenAPISpecHandler = () =>
+  createOpenAPISpecHandler(getIntegrationOpenAPISpec);
+
+export const createDiagramCraftAdapterOpenAPISpecHandler = () =>
+  createOpenAPISpecHandler(getDiagramCraftAdapterOpenAPISpec);
