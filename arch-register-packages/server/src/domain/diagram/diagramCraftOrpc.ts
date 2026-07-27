@@ -19,6 +19,7 @@ import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import type { AIGenerateRequest } from '../ai/aiServer';
 import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransforms';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -126,10 +127,13 @@ export const createDiagramCraftORPCHandler = (db: DatabaseAdapter) => {
       });
     }
 
-    const result = await diagramCraftOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: { db, event: event as AuthenticatedEvent }
-    });
+    const result = await diagramCraftOpenAPIHandler.handle(
+      requestForApiSurface(event, '/api/adapters/diagram-craft', '/api/public'),
+      {
+        prefix: '/api',
+        context: { db, event: event as AuthenticatedEvent }
+      }
+    );
     if (result.matched) return result.response;
   });
 };

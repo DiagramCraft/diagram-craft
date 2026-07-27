@@ -6,11 +6,29 @@ page, rendered with [Redoc](https://github.com/Redocly/redoc) and grouped by dom
 (Enums, Schemas, Entities, Projects, and so on). This page covers where that reference comes from and how to keep
 it up to date.
 
+## API surfaces
+
+New consumers should choose the surface that matches their role:
+
+- `/api/application/v1/*` is the first-party application surface. It is being introduced domain by domain while
+  existing `/api/*` routes remain available for compatibility.
+- `/api/integrations/v1/*` is the stable REST surface for supported third-party integrations. The entity sync routes
+  use `/entities/{id}` for internal IDs and `/entities/byExternalKey/{source}/{externalKey}` for external identities.
+- `/api/adapters/diagram-craft/*` is the Diagram Craft-specific adapter surface. The existing `/api/public/*` paths are
+  authenticated compatibility aliases; `public` is not a security boundary.
+- `/mcp` is a separate MCP protocol endpoint, documented under [MCP Server](mcp-server), rather than a REST path.
+
+The legacy `/api/*` surface is not removed as part of the initial migration. Clients should move when their domain has
+an equivalent versioned contract, and breaking changes to versioned surfaces require a new major URL version.
+
 ## Primary Sources
 
 - server OpenAPI specification, generated to `arch-register-packages/server/openapi.json`
 - oRPC contract definitions in `arch-register-packages/api-types`
 - unified spec assembly in `arch-register-packages/server/src/openapi.ts`
+- application surface specification at `/openapi/application-v1.json`
+- integration surface specification at `/openapi/integrations-v1.json`
+- Diagram Craft adapter specification at `/openapi/adapters/diagram-craft.json`
 
 ## Updating The API Reference
 

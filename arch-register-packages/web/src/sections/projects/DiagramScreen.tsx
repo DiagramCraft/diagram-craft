@@ -77,8 +77,8 @@ export const DiagramScreen = () => {
         JSON.stringify({
           schemas: normalizedSchemas,
           data: [],
-          schemaUrl: `/api/public/${workspaceId}/schemas`,
-          dataUrl: `/api/public/${workspaceId}/data`
+          schemaUrl: `/api/adapters/diagram-craft/${workspaceId}/schemas`,
+          dataUrl: `/api/adapters/diagram-craft/${workspaceId}/data`
         })
       );
       provider.id = ARCH_REGISTER_PUBLIC_PROVIDER_ID;
@@ -320,7 +320,9 @@ export const DiagramScreen = () => {
                 avatar: config.awareness.avatar()
               };
 
-        const publicSchemasResponse = await fetch(`/api/public/${workspaceId}/schemas`);
+        const publicSchemasResponse = await fetch(
+          `/api/adapters/diagram-craft/${workspaceId}/schemas`
+        );
         if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
         const publicSchemas = (await publicSchemasResponse.json()) as PublicDiagramSchema[];
 

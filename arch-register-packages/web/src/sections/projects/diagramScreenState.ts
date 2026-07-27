@@ -52,8 +52,8 @@ export const injectPublicDiagramProvider = (
           data: JSON.stringify({
             schemas: normalizedSchemas,
             data: [],
-            schemaUrl: `/api/public/${workspaceId}/schemas`,
-            dataUrl: `/api/public/${workspaceId}/data`
+            schemaUrl: `/api/adapters/diagram-craft/${workspaceId}/schemas`,
+            dataUrl: `/api/adapters/diagram-craft/${workspaceId}/data`
           })
         }
       ],
