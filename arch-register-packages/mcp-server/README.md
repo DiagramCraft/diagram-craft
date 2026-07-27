@@ -1,6 +1,8 @@
 # @arch-register/mcp-server
 
-MCP tools for querying and, optionally, updating one Arch Register workspace.
+MCP tools for querying and, optionally, updating one Arch Register workspace. The gateway keeps `/mcp` as its
+own protocol surface and uses the versioned Arch Register APIs upstream: integration entity and schema routes
+for durable entity operations, and application routes for catalog queries and MCP-only mutations.
 
 ## Configuration
 
