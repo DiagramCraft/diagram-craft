@@ -90,6 +90,11 @@
   font-size: 11px;
 }
 
+.taskDueOverdue {
+  color: var(--error-fg, #d66);
+  font-weight: 600;
+}
+
 .taskProposalMeta {
   margin-top: 7px;
   color: var(--cmp-fg-disabled);

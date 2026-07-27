@@ -513,7 +513,8 @@ export const createDeprecationGovernanceRegistry = (
               hasUnownedDependents: hasUnowned
             }
           });
-        }
+        },
+        reminderWindows: { approachingDays: [3], overdueDays: [2] }
       }
     ]
   ]);

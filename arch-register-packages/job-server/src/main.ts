@@ -10,6 +10,15 @@ import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webho
 import { createAutomationRuleExecutionHandler } from '@arch-register/server/domain/automation/automationRuleExecution';
 import { AUTOMATION_RULE_JOB_TYPE } from '@arch-register/server/domain/automation/automationRuleEvaluation';
 import { createGovernanceNotificationJobHandler } from '@arch-register/server/domain/governance/governanceNotifications';
+import {
+  createGovernanceDeadlineScanJobHandler,
+  ensureAllGovernanceDeadlineScanSchedules,
+  GOVERNANCE_DEADLINE_SCAN_JOB_TYPE
+} from '@arch-register/server/domain/governance/governanceDeadlineScanJob';
+import { createEntityGovernanceRegistry } from '@arch-register/server/domain/catalog/entityChangeOperations';
+import { createDeprecationGovernanceRegistry } from '@arch-register/server/domain/catalog/entityDeprecationOperations';
+import { createDocumentGovernanceRegistry } from '@arch-register/server/domain/document/documentWorkflowOperations';
+import { createAssessmentGovernanceRegistry } from '@arch-register/server/domain/project/assessmentOperations';
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
 import { createTechnologyEolJobHandler } from '@arch-register/server/domain/jobs/technologyEolJob';
 import {
@@ -63,10 +72,21 @@ const main = async () => {
   const handlers = new Map<string, JobHandler>();
   const storage = createStorage();
   await ensureAllNotificationDeliverySchedules(db);
+  await ensureAllGovernanceDeadlineScanSchedules(db);
+  const governanceRegistry = new Map([
+    ...createEntityGovernanceRegistry(),
+    ...createDeprecationGovernanceRegistry(),
+    ...createDocumentGovernanceRegistry(),
+    ...createAssessmentGovernanceRegistry()
+  ]);
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
   handlers.set(AUTOMATION_RULE_JOB_TYPE, createAutomationRuleExecutionHandler(db));
   handlers.set('governance.notification', createGovernanceNotificationJobHandler(db));
+  handlers.set(
+    GOVERNANCE_DEADLINE_SCAN_JOB_TYPE,
+    createGovernanceDeadlineScanJobHandler(db, governanceRegistry)
+  );
   handlers.set(
     METADATA_GENERATION_SCAN_JOB_TYPE,
     createDocumentMetadataGenerationScanJobHandler(db, storage)

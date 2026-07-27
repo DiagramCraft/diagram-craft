@@ -15,6 +15,7 @@ import { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
 import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
+import { ensureGovernanceDeadlineScanSchedule } from '../governance/governanceDeadlineScanJob';
 import { computeEntityCompleteness } from '../../utils/completeness';
 
 const shortCodeFrom = (name: string): string =>
@@ -398,6 +399,7 @@ export const createWorkspace = async (
       const row = await db.workspace.createWorkspace(buildCreateInput(input, timestamp));
       try {
         await ensureNotificationDeliverySchedule(db, row.id, timestamp);
+        await ensureGovernanceDeadlineScanSchedule(db, row.id, timestamp);
         await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
 
         const { template, replicate_from, include } = input;

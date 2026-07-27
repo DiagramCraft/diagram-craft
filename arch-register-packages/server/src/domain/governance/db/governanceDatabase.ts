@@ -51,6 +51,7 @@ export type GovernanceCaseDbResult = {
   due_at: Date | null;
   completed_at: Date | null;
   cancelled_at: Date | null;
+  reminder_windows_sent: string[];
 };
 
 export type GovernanceCaseDbCreate = {
@@ -156,7 +157,12 @@ export const governanceMappers = {
     created_at: databaseDate(row['created_at']),
     due_at: row['due_at'] == null ? null : databaseDate(row['due_at']),
     completed_at: row['completed_at'] == null ? null : databaseDate(row['completed_at']),
-    cancelled_at: row['cancelled_at'] == null ? null : databaseDate(row['cancelled_at'])
+    cancelled_at: row['cancelled_at'] == null ? null : databaseDate(row['cancelled_at']),
+    reminder_windows_sent: parseDatabaseJson(
+      row['reminder_windows_sent'],
+      [],
+      'reminder_windows_sent'
+    )
   }),
   assignment: (row: DatabaseRow): GovernanceAssignmentDbResult => ({
     id: String(row['id']),
@@ -209,6 +215,11 @@ export type GovernanceDatabase = {
   ): Promise<GovernanceCaseDbResult | null>;
   /** Conditional transition case status to 'cancelled'; returns null if the case was not open. */
   cancelCaseIfOpen(id: string, cancelledAt: Date): Promise<GovernanceCaseDbResult | null>;
+  /**
+   * Appends `window` to `reminder_windows_sent` if not already present; returns null (a no-op)
+   * if it was already recorded, so callers can treat this as an idempotent "mark sent" primitive.
+   */
+  addReminderWindowSent(id: string, window: string): Promise<GovernanceCaseDbResult | null>;
 
   createAssignment(input: GovernanceAssignmentDbCreate): Promise<GovernanceAssignmentDbResult>;
   getAssignment(id: string): Promise<GovernanceAssignmentDbResult | null>;

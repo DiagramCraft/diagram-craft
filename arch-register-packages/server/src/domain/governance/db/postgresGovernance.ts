@@ -87,6 +87,16 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
     return row ? governanceMappers.case(row) : null;
   }
 
+  async addReminderWindowSent(id: string, window: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      UPDATE governance_case
+      SET reminder_windows_sent = reminder_windows_sent || to_jsonb(${window}::text)
+      WHERE id = ${id} AND NOT (reminder_windows_sent @> to_jsonb(${window}::text))
+      RETURNING *
+    `;
+    return row ? governanceMappers.case(row) : null;
+  }
+
   async createAssignment(input: GovernanceAssignmentDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`

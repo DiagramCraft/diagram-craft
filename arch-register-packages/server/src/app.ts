@@ -30,6 +30,7 @@ import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createNotificationPreferencesORPCHandler } from './domain/notification/notificationPreferenceOrpc';
 import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
 import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
+import { createGovernanceReminderConfigORPCHandler } from './domain/governance/governanceReminderConfigOrpc';
 import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
 import {
@@ -170,17 +171,14 @@ export const createApp = (
   app.use(createWatchORPCHandler(db));
   app.use(createNotificationPreferencesORPCHandler(db));
   app.use(createDiscussionORPCHandler(db));
-  app.use(
-    createGovernanceORPCHandler(
-      db,
-      new Map([
-        ...createEntityGovernanceRegistry(),
-        ...createDeprecationGovernanceRegistry(),
-        ...createDocumentGovernanceRegistry(),
-        ...createAssessmentGovernanceRegistry()
-      ])
-    )
-  );
+  const governanceRegistry = new Map([
+    ...createEntityGovernanceRegistry(),
+    ...createDeprecationGovernanceRegistry(),
+    ...createDocumentGovernanceRegistry(),
+    ...createAssessmentGovernanceRegistry()
+  ]);
+  app.use(createGovernanceORPCHandler(db, governanceRegistry));
+  app.use(createGovernanceReminderConfigORPCHandler(db, governanceRegistry));
   app.use(createWikiCommentORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
