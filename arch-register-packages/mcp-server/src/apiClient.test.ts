@@ -8,7 +8,7 @@ const makeResponse = (body: unknown, status = 200) =>
   });
 
 describe('ArchRegisterApiClient', () => {
-  it('uses the workspace API and bearer token for searches', async () => {
+  it('uses the versioned application API and bearer token for searches', async () => {
     const requests: Array<{ url: string; init: RequestInit }> = [];
     const fetchImpl: typeof fetch = vi.fn(async (input, init = {}) => {
       const url = String(input);
@@ -40,7 +40,7 @@ describe('ArchRegisterApiClient', () => {
     expect(requests).toHaveLength(1);
     const listRequest = requests.find(request => request.url.includes('/data?'))!;
     const listUrl = new URL(listRequest.url);
-    expect(listUrl.pathname).toBe('/api/workspace%2Fone/data');
+    expect(listUrl.pathname).toBe('/api/application/v1/workspace%2Fone/data');
     expect(listUrl.searchParams.get('_schemaId')).toBe('application');
     expect(listUrl.searchParams.get('q')).toBe('payments');
     expect(listUrl.searchParams.get('limit')).toBe('10');
@@ -78,12 +78,43 @@ describe('ArchRegisterApiClient', () => {
       _name: 'Payments API',
       tech: 'Node'
     });
-    expect(requests[1]?.url).toBe('https://arch-register.example.test/api/workspace/data/entity-1');
+    expect(requests[0]?.url).toBe(
+      'https://arch-register.example.test/api/application/v1/workspace/data'
+    );
+    expect(requests[1]?.url).toBe(
+      'https://arch-register.example.test/api/integrations/v1/workspace/entities/entity-1'
+    );
     expect(requests[1]?.init.method).toBe('PUT');
     expect(JSON.parse(String(requests[1]?.init.body))).toEqual({
       _name: 'Renamed',
       tech: 'Rust'
     });
+  });
+
+  it('uses the integration API for entity reads and schemas', async () => {
+    const requests: string[] = [];
+    const fetchImpl: typeof fetch = vi.fn(async input => {
+      requests.push(String(input));
+      return makeResponse(
+        String(input).endsWith('/schemas')
+          ? [{ id: 'application', name: 'Application', fields: [] }]
+          : { _uid: 'entity-1', _name: 'Payments API' }
+      );
+    }) as unknown as typeof fetch;
+    const client = new ArchRegisterApiClient({
+      baseUrl: 'https://arch-register.example.test',
+      workspace: 'workspace',
+      token: 'ar_pat_test',
+      fetchImpl
+    });
+
+    await client.getEntity('entity-1');
+    await client.listSchemas();
+
+    expect(requests).toEqual([
+      'https://arch-register.example.test/api/integrations/v1/workspace/entities/entity-1',
+      'https://arch-register.example.test/api/integrations/v1/workspace/schemas'
+    ]);
   });
 
   it('preserves upstream status and message details', async () => {

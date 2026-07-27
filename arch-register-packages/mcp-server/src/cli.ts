@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createApiClient } from './apiClient';
+import { requestToken } from './httpAuth';
 import { createMcpServer } from './tools';
 
 const requiredEnv = (name: string) => {
@@ -20,15 +21,6 @@ const createApi = (token: string) =>
     workspace: requiredEnv('ARCH_REGISTER_WORKSPACE'),
     token
   });
-
-const isApiToken = (token: string) => token.startsWith('ar_pat_');
-
-const requestToken = (request: IncomingMessage) => {
-  const value = request.headers.authorization;
-  if (!value?.startsWith('Bearer ')) return null;
-  const token = value.slice('Bearer '.length).trim();
-  return isApiToken(token) ? token : null;
-};
 
 const readJsonBody = async (request: IncomingMessage): Promise<unknown> => {
   const chunks: Buffer[] = [];

@@ -48,16 +48,23 @@ export class ArchRegisterApiClient {
     this.fetchImpl = options.fetchImpl ?? fetch;
   }
 
-  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const response = await this.fetchImpl(`${this.baseUrl}/api${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-        ...(init.body ? jsonHeaders : {}),
-        ...init.headers
+  private async request<T>(
+    surface: 'application' | 'integration',
+    path: string,
+    init: RequestInit = {}
+  ) {
+    const response = await this.fetchImpl(
+      `${this.baseUrl}/api/${surface === 'integration' ? 'integrations/v1' : 'application/v1'}${path}`,
+      {
+        ...init,
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+          ...(init.body ? jsonHeaders : {}),
+          ...init.headers
+        }
       }
-    });
+    );
 
     const text = await response.text();
     let body: unknown = null;
@@ -95,14 +102,15 @@ export class ArchRegisterApiClient {
     const page = await this.request<{
       items: Array<Record<string, unknown>>;
       total: number;
-    }>(path);
+    }>('application', path);
 
     return { entities: page.items, total: page.total };
   }
 
   async getEntity(entityId: string) {
     return this.request<Record<string, unknown>>(
-      `/${encodePath(this.workspace)}/data/${encodePath(entityId)}`
+      'integration',
+      `/${encodePath(this.workspace)}/entities/${encodePath(entityId)}`
     );
   }
 
@@ -110,11 +118,12 @@ export class ArchRegisterApiClient {
     return this.request<{
       outgoing: Array<Record<string, unknown>>;
       incoming: Array<Record<string, unknown>>;
-    }>(`/${encodePath(this.workspace)}/data/${encodePath(entityId)}/relations`);
+    }>('application', `/${encodePath(this.workspace)}/data/${encodePath(entityId)}/relations`);
   }
 
   async getEntityDependents(entityId: string, transitive: boolean, maxDepth: number) {
     return this.request<{ dependents: Array<Record<string, unknown>>; truncated: boolean }>(
+      'application',
       withQuery(`/${encodePath(this.workspace)}/data/${encodePath(entityId)}/dependents`, {
         transitive,
         maxDepth
@@ -123,35 +132,44 @@ export class ArchRegisterApiClient {
   }
 
   async listSchemas() {
-    return this.request<Array<Record<string, unknown>>>(`/${encodePath(this.workspace)}/schemas`);
+    return this.request<Array<Record<string, unknown>>>(
+      'integration',
+      `/${encodePath(this.workspace)}/schemas`
+    );
   }
 
   async listLifecycleStates() {
     return this.request<Array<Record<string, unknown>>>(
+      'application',
       `/${encodePath(this.workspace)}/config/lifecycle-states`
     );
   }
 
   async createEntity(input: McpCreateEntityInput) {
-    return this.request<Record<string, unknown>>(`/${encodePath(this.workspace)}/data`, {
-      method: 'POST',
-      body: JSON.stringify({
-        _schemaId: input.schemaId,
-        _name: input.name,
-        _slug: input.slug,
-        _namespace: input.namespace,
-        _description: input.description,
-        _owner: input.owner,
-        _lifecycle: input.lifecycle,
-        _tags: input.tags,
-        ...(input.fields ?? {})
-      })
-    });
+    return this.request<Record<string, unknown>>(
+      'application',
+      `/${encodePath(this.workspace)}/data`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          _schemaId: input.schemaId,
+          _name: input.name,
+          _slug: input.slug,
+          _namespace: input.namespace,
+          _description: input.description,
+          _owner: input.owner,
+          _lifecycle: input.lifecycle,
+          _tags: input.tags,
+          ...(input.fields ?? {})
+        })
+      }
+    );
   }
 
   async updateEntity(input: McpUpdateEntityInput) {
     return this.request<Record<string, unknown>>(
-      `/${encodePath(this.workspace)}/data/${encodePath(input.entityId)}`,
+      'integration',
+      `/${encodePath(this.workspace)}/entities/${encodePath(input.entityId)}`,
       {
         method: 'PUT',
         body: JSON.stringify({
