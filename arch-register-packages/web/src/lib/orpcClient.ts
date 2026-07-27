@@ -19,6 +19,7 @@ import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
+import { workspaceDashboardContract } from '@arch-register/api-types/dashboardContract';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
 import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
@@ -79,6 +80,7 @@ const webContracts = {
   ...workspaceEntityContract,
   ...entityVersionContract,
   ...workspaceViewContract,
+  ...workspaceDashboardContract,
   ...workspaceCollectionContract,
   ...workspaceManagementContract,
   ...workspaceConfigContract,

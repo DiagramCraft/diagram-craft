@@ -42,6 +42,18 @@ import { TABS_TYPE } from './blocks/tabs/TabsEditable';
 import { tabsSpec } from './blocks/tabs/TabsRegistration';
 import { TAB_TYPE } from './blocks/tabs/TabEditable';
 import { tabSpec } from './blocks/tabs/TabRegistration';
+import {
+  ENTITY_LIFECYCLE_CHART_TYPE,
+  entityLifecycleChartSpec
+} from './blocks/entity-lifecycle-chart/EntityLifecycleChartRegistration';
+import {
+  ENTITY_ACTIVITY_TREND_CHART_TYPE,
+  entityActivityTrendChartSpec
+} from './blocks/entity-activity-trend-chart/EntityActivityTrendChartRegistration';
+import {
+  ENTITY_STALE_REPORT_TYPE,
+  entityStaleReportSpec
+} from './blocks/entity-stale-report/EntityStaleReportRegistration';
 import type { MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
 
@@ -67,7 +79,10 @@ export const MDX_COMPONENTS = {
   [COLUMNS_TYPE]: columnsSpec,
   [COLUMN_TYPE]: columnSpec,
   [TABS_TYPE]: tabsSpec,
-  [TAB_TYPE]: tabSpec
+  [TAB_TYPE]: tabSpec,
+  [ENTITY_LIFECYCLE_CHART_TYPE]: entityLifecycleChartSpec,
+  [ENTITY_ACTIVITY_TREND_CHART_TYPE]: entityActivityTrendChartSpec,
+  [ENTITY_STALE_REPORT_TYPE]: entityStaleReportSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;
@@ -79,3 +94,18 @@ export type MdxComponentName = keyof typeof MDX_COMPONENTS;
  * aren't visible without this cast.
  */
 export const getMdxSpec = (name: MdxComponentName): MdxComponentSpec => MDX_COMPONENTS[name];
+
+/**
+ * Filters the registry by rendering surface. Wiki sees every registered
+ * component unchanged (preserving current behavior exactly); dashboard sees
+ * only components that explicitly opt in via `spec.surfaces`.
+ */
+export const getMdxSpecsForSurface = (
+  surface: 'wiki' | 'dashboard'
+): Record<string, MdxComponentSpec> => {
+  if (surface === 'wiki') return MDX_COMPONENTS;
+
+  return Object.fromEntries(
+    Object.entries(MDX_COMPONENTS).filter(([, spec]) => spec.surfaces?.includes('dashboard'))
+  );
+};

@@ -40,6 +40,7 @@ export const workspaceCapabilitySchema = z.enum([
   'ws.delete',
   'ws.audit',
   'ws.manage_views',
+  'ws.manage_dashboard',
   'people.invite',
   'people.role',
   'people.remove',

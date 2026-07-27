@@ -17,7 +17,6 @@ test.describe('projects section', () => {
 
     await homePage.goto();
     await homePage.expectLoaded(defaultWorkspace.name);
-    await homePage.expectProjectVisible(authMigrationProject.name);
     await projectsPage.workspaceShell.openNav('projects');
     await projectsPage.expectNoProjectSelected();
   });

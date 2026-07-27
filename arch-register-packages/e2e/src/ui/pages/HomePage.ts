@@ -15,10 +15,6 @@ export class HomePage extends WorkspacePage {
     await expect(this.page.getByText('Projects').first()).toBeVisible();
   };
 
-  expectProjectVisible = async (name: string) => {
-    await expect(this.page.getByRole('main').getByText(name, { exact: true })).toBeVisible();
-  };
-
   openNewProjectDialog = async () => {
     await this.page.getByRole('button', { name: 'New project' }).click();
     await expect(this.page.getByRole('alertdialog', { name: 'New project' })).toBeVisible();
@@ -29,7 +25,27 @@ export class HomePage extends WorkspacePage {
     await expect(this.page.getByRole('alertdialog', { name: 'New entity' })).toBeVisible();
   };
 
-  openProject = async (name: string) => {
-    await this.page.getByRole('button', { name }).click();
+  editDashboardButton = () => this.page.getByRole('button', { name: 'Edit dashboard' });
+
+  addWidgetButton = () => this.page.getByRole('button', { name: 'Add widget' });
+
+  saveDashboardButton = () => this.page.getByRole('button', { name: 'Save' });
+
+  cancelDashboardButton = () => this.page.getByRole('button', { name: 'Cancel' });
+
+  enterEditMode = async () => {
+    await this.editDashboardButton().click();
+  };
+
+  expectEditModeAvailable = async () => {
+    await expect(this.editDashboardButton()).toBeVisible();
+  };
+
+  expectReadOnly = async () => {
+    await expect(this.editDashboardButton()).toHaveCount(0);
+  };
+
+  saveDashboard = async () => {
+    await this.saveDashboardButton().click();
   };
 }

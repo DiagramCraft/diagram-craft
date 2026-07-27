@@ -7,6 +7,7 @@ import { workspaceEntityContract } from '@arch-register/api-types/entityContract
 import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
+import { workspaceDashboardContract } from '@arch-register/api-types/dashboardContract';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
@@ -44,6 +45,7 @@ export const allContracts = {
   ...workspaceEntityContract,
   ...entitySyncContract,
   ...workspaceViewContract,
+  ...workspaceDashboardContract,
   ...workspaceCollectionContract,
   ...workspaceManagementContract,
   ...workspaceConfigContract,
@@ -117,6 +119,7 @@ export const getApplicationOpenAPISpec = () => {
       ...aiContract,
       ...workspaceEnumContract,
       ...workspaceViewContract,
+      ...workspaceDashboardContract,
       ...workspaceCollectionContract,
       ...workspaceTemplateContract,
       ...auditContract,

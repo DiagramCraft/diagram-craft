@@ -5,12 +5,14 @@ import { Section } from './analyticsPrimitives';
 
 export const ActivityTrendsSection = ({
   analytics,
-  onNavigate
+  onNavigate,
+  initialWindowDays = 30
 }: {
   analytics: WorkspaceAnalytics;
   onNavigate: (operation: 'create' | 'update', startDate: string, endDate: string) => void;
+  initialWindowDays?: 30 | 90;
 }) => {
-  const [windowDays, setWindowDays] = useState<30 | 90>(30);
+  const [windowDays, setWindowDays] = useState<30 | 90>(initialWindowDays);
   const buckets =
     windowDays === 30 ? analytics.activityTrends.days30 : analytics.activityTrends.days90;
   const maximum = Math.max(1, ...buckets.map(bucket => bucket.created + bucket.updated));

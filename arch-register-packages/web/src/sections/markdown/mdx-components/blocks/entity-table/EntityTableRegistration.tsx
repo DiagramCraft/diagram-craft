@@ -12,6 +12,7 @@ export const entityTableSpec = defineMdxComponent<
   component: EntityTable,
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],
+  surfaces: ['wiki', 'dashboard'],
   editorSpec: {
     editableComponent: EntityTableEditable,
     nodeOptions: { isVoid: true },

@@ -17,6 +17,7 @@ type WorkspacePermissions = {
   canManageMembers: boolean;
   canManageJobs: boolean;
   canManageViews: boolean;
+  canManageDashboard: boolean;
   canManageAdminViews: boolean;
   canOverrideEntityApproval: boolean;
 };
@@ -60,6 +61,8 @@ export const useWorkspacePermissions = (
         checker.hasGlobalPermission(context, 'admin_platform'));
     const canManageViews =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.manage_views');
+    const canManageDashboard =
+      hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.manage_dashboard');
     const canManageAdminViews =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.settings');
     const canOverrideEntityApproval =
@@ -86,6 +89,7 @@ export const useWorkspacePermissions = (
       canManageMembers,
       canManageJobs,
       canManageViews,
+      canManageDashboard,
       canManageAdminViews,
       canOverrideEntityApproval
     };

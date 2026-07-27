@@ -6,16 +6,23 @@ import {
   EntityMetricEditable,
   entityMetricMdxRule
 } from './EntityMetricEditable';
-import type { EntityMetricSlateElement } from './types';
+import type { EntityMetricSlateElement, EntityMetricType } from './types';
 
 export const entityMetricSpec = defineMdxComponent<
   EntityMetricSlateElement,
-  { schema?: string; owner?: string; lifecycle?: string; label?: string },
+  {
+    schema?: string;
+    owner?: string;
+    lifecycle?: string;
+    label?: string;
+    metricType?: EntityMetricType;
+  },
   'block'
 >({
   component: EntityMetric,
   mode: 'block',
-  allowedProps: ['schema', 'owner', 'lifecycle', 'label'],
+  allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType'],
+  surfaces: ['wiki', 'dashboard'],
   editorSpec: {
     editableComponent: EntityMetricEditable,
     nodeOptions: { isVoid: true },

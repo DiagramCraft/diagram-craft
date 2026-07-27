@@ -2,6 +2,7 @@ import type { AiDatabase } from '../domain/ai/db/aiDatabase';
 import type { AuditDatabase } from '../domain/audit/db/auditDatabase';
 import type { AuthDatabase } from '../domain/auth/db/authDatabase';
 import type { CatalogDatabase, ViewDatabase } from '../domain/catalog/db/catalogDatabase';
+import type { DashboardDatabase } from '../domain/dashboard/db/dashboardDatabase';
 import type { ProjectDatabase } from '../domain/project/db/projectDatabase';
 import type { WatchDatabase } from '../domain/watch/db/watchDatabase';
 import type { DiscussionDatabase } from '../domain/discussion/db/discussionDatabase';
@@ -40,6 +41,7 @@ export type DatabaseAdapter = {
   workspace: WorkspaceDatabase;
   catalog: CatalogDatabase;
   view: ViewDatabase;
+  dashboard: DashboardDatabase;
   project: ProjectDatabase;
   audit: AuditDatabase;
   watch: WatchDatabase;

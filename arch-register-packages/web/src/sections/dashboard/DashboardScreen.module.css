@@ -1,0 +1,22 @@
+.screen {
+  padding: 20px 24px 32px;
+  max-width: 100%;
+}
+
+.header {
+  margin-bottom: 18px;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.gridContainer {
+  width: 100%;
+}
+
+.gridItem {
+  height: 100%;
+}

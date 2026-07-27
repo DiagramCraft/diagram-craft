@@ -18,13 +18,15 @@ const readAttr = (attrs: Record<string, unknown>, key: string) => {
 export const entityMetricMdxRule: MdxRuleDef<EntityMetricSlateElement, 'block'> = {
   deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
+    const metricType = readAttr(attrs, 'metricType');
     return {
       children: [{ text: '' }],
       type: getPluginType(options.editor!, ENTITY_METRIC_TYPE),
       schema: readAttr(attrs, 'schema'),
       owner: readAttr(attrs, 'owner'),
       lifecycle: readAttr(attrs, 'lifecycle'),
-      label: readAttr(attrs, 'label')
+      label: readAttr(attrs, 'label'),
+      ...(metricType ? { metricType: metricType as EntityMetricSlateElement['metricType'] } : {})
     };
   },
   serialize: slateNode => ({
@@ -32,7 +34,8 @@ export const entityMetricMdxRule: MdxRuleDef<EntityMetricSlateElement, 'block'> 
       ...(slateNode.schema ? { schema: slateNode.schema } : {}),
       ...(slateNode.owner ? { owner: slateNode.owner } : {}),
       ...(slateNode.lifecycle ? { lifecycle: slateNode.lifecycle } : {}),
-      ...(slateNode.label ? { label: slateNode.label } : {})
+      ...(slateNode.label ? { label: slateNode.label } : {}),
+      ...(slateNode.metricType ? { metricType: slateNode.metricType } : {})
     }),
     children: [],
     name: ENTITY_METRIC_TYPE,
@@ -49,6 +52,7 @@ export const EntityMetricEditable = ({
   const owner = element.owner ?? '';
   const lifecycle = element.lifecycle ?? '';
   const label = element.label ?? '';
+  const metricType = element.metricType;
   const hasValue = !!(schema || owner || lifecycle);
 
   return (
@@ -67,6 +71,7 @@ export const EntityMetricEditable = ({
           owner={owner === '' ? undefined : owner}
           lifecycle={lifecycle === '' ? undefined : lifecycle}
           label={label === '' ? undefined : label}
+          metricType={metricType}
         />
       }
       dialog={(open, onClose) => (

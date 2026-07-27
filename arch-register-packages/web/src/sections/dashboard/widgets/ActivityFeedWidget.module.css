@@ -1,0 +1,37 @@
+.activityList {
+  display: flex;
+  flex-direction: column;
+}
+
+.emptyInline {
+  padding: 8px;
+  font-size: 12px;
+}
+
+.activityRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--r);
+  font-size: 12px;
+}
+
+.activityRow:hover {
+  background: var(--cmp-bg);
+}
+
+.activityWho {
+  color: var(--base-fg);
+  font-weight: 500;
+}
+
+.activityTarget {
+  color: var(--base-fg);
+}
+
+.activityTime {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}

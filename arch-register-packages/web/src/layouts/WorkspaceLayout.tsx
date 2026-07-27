@@ -96,6 +96,7 @@ export const WorkspaceLayout = () => {
     canManageMembers,
     canManageJobs,
     canManageViews,
+    canManageDashboard,
     canManageAdminViews
   } = useWorkspacePermissions(ws?.id);
 
@@ -211,6 +212,7 @@ export const WorkspaceLayout = () => {
         canManageMembers,
         canManageJobs,
         canManageViews,
+        canManageDashboard,
         canManageAdminViews
       },
       availableSettingsSections,
@@ -238,6 +240,7 @@ export const WorkspaceLayout = () => {
       canManageMembers,
       canManageJobs,
       canManageViews,
+      canManageDashboard,
       canManageAdminViews,
       availableSettingsSections,
       defaultSettingsSection

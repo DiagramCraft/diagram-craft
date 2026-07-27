@@ -21,6 +21,7 @@ import { createEntityVersionORPCHandler } from './domain/catalog/entityVersionOr
 import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
+import { createWorkspaceDashboardORPCHandler } from './domain/dashboard/dashboardOrpc';
 import { createWorkspaceCollectionORPCHandler } from './domain/catalog/collectionOrpc';
 import { createWorkspaceManagementORPCHandler } from './domain/workspace/workspaceOrpc';
 import { createWorkspaceConfigORPCHandler } from './domain/workspace/workspaceConfigOrpc';
@@ -160,6 +161,7 @@ export const createApp = (
   app.use(createEntityDeprecationORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
+  app.use(createWorkspaceDashboardORPCHandler(db));
   app.use(createWorkspaceCollectionORPCHandler(db));
   app.use(createWorkspaceConfigORPCHandler(db));
   app.use(createWorkspaceAnalyticsORPCHandler(db));

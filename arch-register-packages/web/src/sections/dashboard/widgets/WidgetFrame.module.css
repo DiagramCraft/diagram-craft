@@ -1,0 +1,15 @@
+.frame {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.body {
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+}
