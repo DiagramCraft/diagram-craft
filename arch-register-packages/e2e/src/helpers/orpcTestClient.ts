@@ -37,6 +37,7 @@ import { documentContract } from '@arch-register/api-types/documentContract';
 import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
+import { workspaceDashboardContract } from '@arch-register/api-types/dashboardContract';
 
 const makeFetch =
   (auth?: string) =>
@@ -76,6 +77,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
   const applicationCollections = makeApplication(workspaceCollectionContract).collections;
   const applicationAnalytics = makeApplication(workspaceAnalyticsContract).analytics;
   const applicationMetrics = makeApplication(workspaceMetricContract).metrics;
+  const applicationDashboard = makeApplication(workspaceDashboardContract).dashboard;
   const applicationJobs = makeApplication(jobsContract).jobs;
   const applicationWebhooks = makeApplication(webhookContract).webhooks;
   const applicationAudit = makeApplication(auditContract).audit;
@@ -129,6 +131,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     config: applicationConfig,
     analytics: applicationAnalytics,
     metrics: applicationMetrics,
+    dashboard: applicationDashboard,
     audit: applicationAudit,
     watching: applicationWatch.watching,
     notifications: applicationWatch.notifications,

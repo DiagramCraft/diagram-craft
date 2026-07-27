@@ -13,6 +13,7 @@ import { PostgresWorkspaceDatabase } from '../domain/workspace/db/postgresWorksp
 import { PostgresAiDatabase } from '../domain/ai/db/postgresAi';
 import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
+import { PostgresDashboardDatabase } from '../domain/dashboard/db/postgresDashboard';
 import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
 import { PostgresDiscussionDatabase } from '../domain/discussion/db/postgresDiscussion';
 import { PostgresWikiCommentDatabase } from '../domain/wikiComments/db/postgresWikiComment';
@@ -43,6 +44,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly workspace: PostgresWorkspaceDatabase;
   readonly catalog: PostgresCatalogDatabase;
   readonly view: PostgresViewDatabase;
+  readonly dashboard: PostgresDashboardDatabase;
   readonly project: PostgresProjectDatabase;
   readonly audit: PostgresAuditDatabase;
   readonly watch: PostgresWatchDatabase;
@@ -71,6 +73,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       workspace: new PostgresWorkspaceDatabase(sql),
       catalog: new PostgresCatalogDatabase(sql),
       view: new PostgresViewDatabase(sql),
+      dashboard: new PostgresDashboardDatabase(sql),
       project: new PostgresProjectDatabase(sql),
       audit: new PostgresAuditDatabase(sql),
       watch: new PostgresWatchDatabase(sql),
@@ -131,6 +134,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.workspace = new PostgresWorkspaceDatabase(this.sql);
     this.catalog = new PostgresCatalogDatabase(this.sql);
     this.view = new PostgresViewDatabase(this.sql);
+    this.dashboard = new PostgresDashboardDatabase(this.sql);
     this.project = new PostgresProjectDatabase(this.sql);
     this.audit = new PostgresAuditDatabase(this.sql);
     this.watch = new PostgresWatchDatabase(this.sql);

@@ -1,9 +1,10 @@
 import { useNavigate } from '@tanstack/react-router';
 import { TbArrowRight } from 'react-icons/tb';
-import { useEntities } from '../../../../../hooks/useEntities';
+import { useEntities, useEntityFacets } from '../../../../../hooks/useEntities';
+import { useProjects } from '../../../../../hooks/useProjects';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import styles from './EntityMetric.module.css';
-import { EmptyState } from '../../../../../components/EmptyState';
+import type { EntityMetricType } from './types';
 
 export const hasEntityMetricFilter = (props: {
   schema?: string;
@@ -16,12 +17,64 @@ type Props = {
   owner?: string;
   lifecycle?: string;
   label?: string;
+  metricType?: EntityMetricType;
+  /** Omit the card's own border/background — used when a parent already provides panel chrome. */
+  bare?: boolean;
 };
 
-export const EntityMetric = ({ schema, owner, lifecycle, label }: Props) => {
-  const navigate = useNavigate();
-  const { workspaceSlug } = useWorkspaceContext();
+const cardClassName = (bare?: boolean) =>
+  bare ? `${styles.card} ${styles.cardBare}` : styles.card;
 
+export const EntityMetric = ({ schema, owner, lifecycle, label, metricType, bare }: Props) => {
+  const navigate = useNavigate();
+  const { workspaceSlug, schemas } = useWorkspaceContext();
+  const resolvedMetricType = metricType ?? 'entity-count';
+
+  if (resolvedMetricType === 'project-count') {
+    return <ProjectCountMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
+  }
+
+  if (resolvedMetricType === 'diagram-count') {
+    return <DiagramCountMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
+  }
+
+  if (resolvedMetricType === 'completeness-percent') {
+    return <CompletenessPercentMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
+  }
+
+  return (
+    <EntityCountMetric
+      workspaceSlug={workspaceSlug}
+      schema={schema}
+      owner={owner}
+      lifecycle={lifecycle}
+      label={label}
+      navigate={navigate}
+      totalEntityCount={schemas.reduce((sum, s) => sum + s.entity_count, 0)}
+      bare={bare}
+    />
+  );
+};
+
+const EntityCountMetric = ({
+  workspaceSlug,
+  schema,
+  owner,
+  lifecycle,
+  label,
+  navigate,
+  totalEntityCount,
+  bare
+}: {
+  workspaceSlug: string;
+  schema?: string;
+  owner?: string;
+  lifecycle?: string;
+  label?: string;
+  navigate: ReturnType<typeof useNavigate>;
+  totalEntityCount: number;
+  bare?: boolean;
+}) => {
   const hasFilter = hasEntityMetricFilter({ schema, owner, lifecycle });
 
   const { data: entities = [], isLoading } = useEntities(
@@ -38,8 +91,9 @@ export const EntityMetric = ({ schema, owner, lifecycle, label }: Props) => {
 
   if (!hasFilter) {
     return (
-      <div className={styles.container}>
-        <EmptyState compact title="No filters configured." />
+      <div className={cardClassName(bare)}>
+        <div className={styles.number}>{totalEntityCount}</div>
+        <div className={styles.label}>{label ?? 'Entities'}</div>
       </div>
     );
   }
@@ -56,7 +110,7 @@ export const EntityMetric = ({ schema, owner, lifecycle, label }: Props) => {
   const displayLabel = label ?? 'Entities';
 
   return (
-    <div className={styles.card}>
+    <div className={cardClassName(bare)}>
       <div className={styles.number}>{count}</div>
       <div className={styles.label}>{displayLabel}</div>
       <button
@@ -79,6 +133,93 @@ export const EntityMetric = ({ schema, owner, lifecycle, label }: Props) => {
       >
         View in catalog <TbArrowRight size={12} />
       </button>
+    </div>
+  );
+};
+
+const ProjectCountMetric = ({
+  workspaceSlug,
+  label,
+  bare
+}: {
+  workspaceSlug: string;
+  label?: string;
+  bare?: boolean;
+}) => {
+  const { data: projects = [], isLoading } = useProjects(workspaceSlug);
+
+  if (isLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.skeleton} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={cardClassName(bare)}>
+      <div className={styles.number}>{projects.length}</div>
+      <div className={styles.label}>{label ?? 'Projects'}</div>
+    </div>
+  );
+};
+
+const DiagramCountMetric = ({
+  workspaceSlug,
+  label,
+  bare
+}: {
+  workspaceSlug: string;
+  label?: string;
+  bare?: boolean;
+}) => {
+  const { data: projects = [], isLoading } = useProjects(workspaceSlug);
+
+  if (isLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.skeleton} />
+      </div>
+    );
+  }
+
+  const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
+
+  return (
+    <div className={cardClassName(bare)}>
+      <div className={styles.number}>{totalFiles}</div>
+      <div className={styles.label}>{label ?? 'Diagrams'}</div>
+    </div>
+  );
+};
+
+const CompletenessPercentMetric = ({
+  workspaceSlug,
+  label,
+  bare
+}: {
+  workspaceSlug: string;
+  label?: string;
+  bare?: boolean;
+}) => {
+  const { data: facets, isLoading } = useEntityFacets(workspaceSlug);
+
+  if (isLoading || !facets) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.skeleton} />
+      </div>
+    );
+  }
+
+  const { below50, below80, above80 } = facets.completeness;
+  const total = below50 + below80 + above80;
+  const percent = total > 0 ? Math.round((above80 / total) * 100) : 0;
+
+  return (
+    <div className={cardClassName(bare)}>
+      <div className={styles.number}>{percent}%</div>
+      <div className={styles.label}>{label ?? 'Well documented'}</div>
     </div>
   );
 };

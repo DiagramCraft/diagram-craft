@@ -49,6 +49,7 @@ const workspaceContext = {
     canManageMembers: false,
     canManageJobs: false,
     canManageViews: false,
+    canManageDashboard: false,
     canManageAdminViews: false
   },
   availableSettingsSections: [],

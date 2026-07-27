@@ -1,0 +1,39 @@
+.screen {
+  padding: 20px 24px 32px;
+  max-width: 100%;
+}
+
+.header {
+  margin-bottom: 18px;
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 24px;
+  margin: 0 -24px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.editActionsLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editActionsRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gridContainer {
+  width: 100%;
+}
+
+.gridItem {
+  height: 100%;
+}

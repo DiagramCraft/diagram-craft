@@ -17,6 +17,7 @@ export const entityChartSpec = defineMdxComponent<
   component: EntityChart,
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'groupBy', 'type'],
+  surfaces: ['wiki', 'dashboard'],
   editorSpec: {
     editableComponent: EntityChartEditable,
     nodeOptions: { isVoid: true },

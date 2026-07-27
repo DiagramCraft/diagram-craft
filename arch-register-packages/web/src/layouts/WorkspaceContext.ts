@@ -27,6 +27,7 @@ export type WorkspaceContextType = {
     canManageMembers: boolean;
     canManageJobs: boolean;
     canManageViews: boolean;
+    canManageDashboard: boolean;
     canManageAdminViews: boolean;
   };
   availableSettingsSections: string[];

@@ -12,13 +12,16 @@ import { LoadingState } from '../../../../components/LoadingState';
 
 export const StaleEntityReport = ({
   workspaceSlug,
-  onSelectView
+  onSelectView,
+  initialStaleAfterDays = 90
 }: {
   workspaceSlug: string;
-  onSelectView: (view: 'overview' | 'stale') => void;
+  /** Omit to hide the overview/stale tab switcher, e.g. when embedded as a standalone widget. */
+  onSelectView?: (view: 'overview' | 'stale') => void;
+  initialStaleAfterDays?: number;
 }) => {
-  const [thresholdInput, setThresholdInput] = useState('90');
-  const [staleAfterDays, setStaleAfterDays] = useState(90);
+  const [thresholdInput, setThresholdInput] = useState(String(initialStaleAfterDays));
+  const [staleAfterDays, setStaleAfterDays] = useState(initialStaleAfterDays);
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 25;
   const {
@@ -50,7 +53,7 @@ export const StaleEntityReport = ({
 
   return (
     <div className={styles.stack}>
-      <AnalyticsTabs active="stale" onSelect={onSelectView} />
+      {onSelectView && <AnalyticsTabs active="stale" onSelect={onSelectView} />}
 
       <div className={styles.staleReportControls}>
         <div className={styles.reportSub}>

@@ -58,4 +58,6 @@ export type MdxComponentSpec = {
   acceptsRichContent?: boolean;
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: EditorSpec;
+  /** Surfaces this component may render on; `undefined` means wiki only (default, matches all prior behavior). */
+  surfaces?: ReadonlyArray<'wiki' | 'dashboard'>;
 };

@@ -1,6 +1,6 @@
 import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { HomeSidebar } from '../../sections/home/HomeSidebar';
-import { WorkspaceHomeScreen } from '../../sections/home/WorkspaceHomeScreen';
+import { DashboardScreen } from '../../sections/dashboard/DashboardScreen';
 import { buildHomeBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
@@ -11,7 +11,7 @@ export const createHomeWorkspaceRoute = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: '/',
-      component: WorkspaceHomeScreen
+      component: DashboardScreen
     }),
     ctx => ({
       variant: 'standard',

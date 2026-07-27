@@ -37,6 +37,12 @@ describe('application API paths', () => {
     );
   });
 
+  it('maps dashboard calls to application v1', () => {
+    expect(toApplicationApiUrl('/api/default/dashboard')).toBe(
+      '/api/application/v1/default/dashboard'
+    );
+  });
+
   it('maps workspace control-plane calls to application v1', () => {
     expect(toApplicationApiUrl('/api/workspaces')).toBe('/api/application/v1/workspaces');
     expect(toApplicationApiUrl('/api/workspaces/templates')).toBe(

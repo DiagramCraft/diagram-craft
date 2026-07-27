@@ -66,6 +66,9 @@ export type MdxEditorSpecDef<E extends TElement, Mode extends MdxMode> = {
   createWrapper?: (child: TElement) => E;
 };
 
+/** Surfaces an MDX component may render on; `undefined` means wiki only (default, matches all prior behavior). */
+export type MdxSurface = 'wiki' | 'dashboard';
+
 export type MdxComponentDef<
   E extends TElement,
   P extends Record<string, unknown>,
@@ -91,6 +94,8 @@ export type MdxComponentDef<
   acceptsRichContent?: boolean;
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: MdxEditorSpecDef<E, Mode>;
+  /** Surfaces this component may render on; `undefined` means wiki only (default, matches all prior behavior). */
+  surfaces?: ReadonlyArray<MdxSurface>;
 };
 
 /**

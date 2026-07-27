@@ -25,7 +25,11 @@
       model.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
-          diagrams, and other primary work areas.
+          diagrams, and other primary work areas. The home screen is a composable dashboard of widgets (stat metrics,
+          saved-view embeds, entity tables, lifecycle and activity-trend charts, stale-entity reports, and an activity
+          feed) laid out on a grid; a fresh workspace shows a sensible default layout. Administrators can enter edit
+          mode to add, remove, resize, and reposition widgets and save the layout for the workspace; other users see
+          it read-only.
 
         - @id:ar.workspace.templates Administrators can create a workspace from a built-in architecture template,
           including its entity schemas, select-option enums, and document types and associated templates.

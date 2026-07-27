@@ -16,6 +16,7 @@ export const entityViewEmbedSpec = defineMdxComponent<
   component: EntityViewEmbed,
   mode: 'block',
   allowedProps: ['viewId'],
+  surfaces: ['wiki', 'dashboard'],
   editorSpec: {
     editableComponent: EntityViewEmbedEditable,
     nodeOptions: { isVoid: true },

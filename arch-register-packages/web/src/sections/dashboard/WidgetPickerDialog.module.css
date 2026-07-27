@@ -1,0 +1,57 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.option:hover {
+  background: var(--cmp-bg);
+  border-color: var(--panel-border);
+}
+
+.optionLabel {
+  color: var(--base-fg);
+  font-weight: 500;
+  font-size: 12.5px;
+}
+
+.optionDescription {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+.viewPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.viewSelect {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: var(--r);
+  border: 1px solid var(--panel-border);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  font-size: 12.5px;
+}
+
+.viewPickerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

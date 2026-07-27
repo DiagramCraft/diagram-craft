@@ -45,6 +45,12 @@
   overflow: hidden;
 }
 
+.sectionBare {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
 .cardLabel {
   font-size: 11px;
   color: var(--base-fg-more-dim);
