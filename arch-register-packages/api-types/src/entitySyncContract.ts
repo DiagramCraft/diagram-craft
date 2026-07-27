@@ -56,8 +56,7 @@ export const entitySyncContract = oc.tag('Integrations').router({
         path: '/integrations/v1/{workspace}/entities/byExternalKey/{source}/{externalKey}',
         inputStructure: 'detailed',
         summary: 'Get entity by external identity',
-        description:
-          'Retrieves an entity identified by a durable (source, externalKey) pair.',
+        description: 'Retrieves an entity identified by a durable (source, externalKey) pair.',
         tags: ['Integrations']
       })
       .input(
