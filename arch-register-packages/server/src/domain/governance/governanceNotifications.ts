@@ -187,12 +187,13 @@ const createGovernanceNotification = async (
     actorUserId: string | null;
     actorDisplayName: string | null;
     occurredAt: Date;
+    metadata: Record<string, unknown>;
     signal?: AbortSignal;
   }
 ) => {
   const signal = input.signal ?? NEVER_ABORTED_SIGNAL;
   throwIfAborted(signal);
-  const notificationType = notificationTypeForGovernanceEvent(input.eventType);
+  const notificationType = notificationTypeForGovernanceEvent(input.eventType, input.metadata);
   const inAppEnabled = await isChannelEnabled(
     db,
     input.recipientUserId,
@@ -307,6 +308,7 @@ export const createGovernanceInAppNotifications = async (
       actorUserId: event.actor_user_id,
       actorDisplayName: actor?.display_name ?? null,
       occurredAt: event.occurred_at,
+      metadata: event.metadata,
       signal
     });
   }

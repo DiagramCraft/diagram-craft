@@ -36,6 +36,7 @@ import { documentContract } from '@arch-register/api-types/documentContract';
 import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
+import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
@@ -70,6 +71,7 @@ const webContracts = {
   ...entityChangeContract,
   ...entityDeprecationContract,
   ...governanceContract,
+  ...governanceReminderConfigContract,
   ...diagramCraftContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,

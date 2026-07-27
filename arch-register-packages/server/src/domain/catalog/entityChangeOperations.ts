@@ -1074,7 +1074,8 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             reason: null,
             metadata: { entityId, proposalId, revisionId, entityVersion: updated.version ?? 1 }
           });
-        }
+        },
+        reminderWindows: { approachingDays: [2], overdueDays: [1, 5] }
       }
     ],
     [
@@ -1287,7 +1288,8 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
               appliedVersions
             }
           });
-        }
+        },
+        reminderWindows: { approachingDays: [2], overdueDays: [1, 5] }
       }
     ]
   ]);

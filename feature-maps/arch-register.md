@@ -276,6 +276,16 @@
               case with outstanding assignments, the initiator can also send an out-of-band reminder to the remaining
               assignees on demand, rate-limited to prevent spamming them.
 
+            - @id:ar.collaboration.governance-inbox.scheduled-reminders For governance case kinds with a due date
+              (entity change proposals, entity deprecations, assessment responses), still-open assignees automatically
+              receive reminders as the deadline approaches and again once it has passed, on a per-case-kind cadence.
+              Reminders respect each user's notification delivery preferences and are not re-sent once a given
+              reminder has already fired for a case. The inbox highlights an overdue deadline.
+
+              - @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config Workspace administrators
+                can configure, per governance case kind, whether scheduled reminders are enabled and how many days
+                before/after the deadline each reminder fires, overriding the case kind's built-in default.
+
         - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity change
           cases, while authorized users can submit immutable coordinated revisions with an optional due date, review
           before/after diffs across all affected entities, resubmit after requested changes, and record an audited

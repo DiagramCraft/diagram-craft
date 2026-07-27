@@ -58,6 +58,12 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   },
   { id: 'ai', label: 'AI', icon: <TbSparkles size={12} />, group: 'Workspace' },
   {
+    id: 'governance',
+    label: 'Governance reminders',
+    icon: <TbBolt size={12} />,
+    group: 'Workspace'
+  },
+  {
     id: 'export-import',
     label: 'Export & Import',
     icon: <TbFileExport size={12} />,

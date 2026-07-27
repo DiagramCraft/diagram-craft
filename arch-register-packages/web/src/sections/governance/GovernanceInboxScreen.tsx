@@ -702,7 +702,13 @@ export const GovernanceInboxScreen = () => {
                     {task.case.dueAt && (
                       <>
                         <span>·</span>
-                        <span>
+                        <span
+                          className={
+                            new Date(task.case.dueAt) < new Date()
+                              ? styles.taskDueOverdue
+                              : undefined
+                          }
+                        >
                           <TbClock size={11} /> Due {new Date(task.case.dueAt).toLocaleDateString()}
                         </span>
                       </>

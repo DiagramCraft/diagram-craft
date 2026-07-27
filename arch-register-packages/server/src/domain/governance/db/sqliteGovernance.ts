@@ -124,6 +124,24 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
     );
   }
 
+  async addReminderWindowSent(id: string, window: string) {
+    const current = await this.get(
+      'SELECT * FROM governance_case WHERE id = ?',
+      [id],
+      governanceMappers.case
+    );
+    if (!current || current.reminder_windows_sent.includes(window)) return null;
+    this.run('UPDATE governance_case SET reminder_windows_sent = ? WHERE id = ?', [
+      JSON.stringify([...current.reminder_windows_sent, window]),
+      id
+    ]);
+    return await this.get(
+      'SELECT * FROM governance_case WHERE id = ?',
+      [id],
+      governanceMappers.case
+    );
+  }
+
   async createAssignment(input: GovernanceAssignmentDbCreate) {
     this.run(
       `INSERT INTO governance_assignment (

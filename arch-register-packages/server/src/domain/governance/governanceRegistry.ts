@@ -71,6 +71,18 @@ export type GovernanceCaseKindConfig = {
    * which keeps their single-decision-closes-the-case behavior unchanged.
    */
   independentAssignmentActions?: Set<GovernanceAssignmentAction>;
+  /**
+   * Default day thresholds for #2418's scheduled reminder scan. Presence of this field is what
+   * makes a case kind eligible for scheduled reminders at all; its values are a fallback used
+   * when a workspace has no override row in `workspace_governance_reminder_config` for this kind
+   * (see governanceDeadlineScanJob.ts and governanceReminderConfigDatabase.ts).
+   */
+  reminderWindows?: {
+    /** Fire once due_at is within N days (going forward), for each N. */
+    approachingDays: number[];
+    /** Fire once N days past due_at, for each N. */
+    overdueDays: number[];
+  };
 };
 
 export type GovernanceRegistry = Map<string, GovernanceCaseKindConfig>;

@@ -24,7 +24,8 @@ export const createAssessmentGovernanceRegistry = (): GovernanceRegistry =>
           const assessment = await db.project.getAssessmentById(workspace, subjectId);
           return assessment != null;
         },
-        independentAssignmentActions: new Set(['acknowledge' as const])
+        independentAssignmentActions: new Set(['acknowledge' as const]),
+        reminderWindows: { approachingDays: [3], overdueDays: [1, 3] }
       }
     ]
   ]);

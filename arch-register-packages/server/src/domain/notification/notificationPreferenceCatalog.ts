@@ -23,6 +23,8 @@ export type NotificationType =
   | 'governance-case-activity'
   | 'governance-proposal-reminder'
   | 'governance-deadline-reminder'
+  | 'governance-deadline-approaching'
+  | 'governance-deadline-overdue'
   | 'automation-rule';
 
 export type NotificationTypeCategory = 'normal' | 'reminder';
@@ -72,6 +74,18 @@ export const NOTIFICATION_TYPE_CATALOG: Record<
     category: 'reminder',
     defaultChannels: []
   },
+  'governance-deadline-approaching': {
+    label: 'Approaching deadline reminders',
+    description: 'Scheduled reminders that a governance case deadline is coming up.',
+    category: 'reminder',
+    defaultChannels: []
+  },
+  'governance-deadline-overdue': {
+    label: 'Overdue deadline reminders',
+    description: 'Scheduled reminders that a governance case is past its deadline.',
+    category: 'reminder',
+    defaultChannels: []
+  },
   'automation-rule': {
     label: 'Automation rule notifications',
     description: 'Notifications sent by workspace automation rules.',
@@ -110,5 +124,14 @@ const GOVERNANCE_EVENT_TYPE_TO_NOTIFICATION_TYPE: Record<GovernanceEventType, No
 };
 
 export const notificationTypeForGovernanceEvent = (
-  eventType: GovernanceEventType
-): NotificationType => GOVERNANCE_EVENT_TYPE_TO_NOTIFICATION_TYPE[eventType];
+  eventType: GovernanceEventType,
+  metadata?: Record<string, unknown>
+): NotificationType => {
+  if (eventType === 'reminder_sent' && metadata?.['trigger'] === 'scheduled') {
+    const window = typeof metadata['window'] === 'string' ? metadata['window'] : '';
+    return window.startsWith('overdue')
+      ? 'governance-deadline-overdue'
+      : 'governance-deadline-approaching';
+  }
+  return GOVERNANCE_EVENT_TYPE_TO_NOTIFICATION_TYPE[eventType];
+};

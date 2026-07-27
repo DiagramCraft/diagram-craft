@@ -33,6 +33,7 @@ import { entityChangeContract } from '@arch-register/api-types/entityChangeContr
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
 import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
+import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
 import { milestoneContract } from '@arch-register/api-types/milestoneContract';
 import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
 import { devContract } from '@arch-register/api-types/devContract';
@@ -71,6 +72,7 @@ export const allContracts = {
   ...entityDeprecationContract,
   ...entityVersionContract,
   ...governanceContract,
+  ...governanceReminderConfigContract,
   ...milestoneContract,
   ...wikiCommentContract,
   ...devContract
