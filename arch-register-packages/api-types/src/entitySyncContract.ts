@@ -15,6 +15,60 @@ const entitySyncResultSchema = z.object({
 
 export const entitySyncContract = oc.tag('Integrations').router({
   entitySync: {
+    getById: oc
+      .route({
+        method: 'GET',
+        path: '/integrations/v1/{workspace}/entities/{id}',
+        inputStructure: 'detailed',
+        summary: 'Get entity by ID',
+        description: 'Retrieves an entity by its unique identifier.',
+        tags: ['Integrations']
+      })
+      .input(
+        z.object({
+          params: ws.extend({
+            id: z.string()
+          })
+        })
+      )
+      .output(entityRecordSchema),
+    updateById: oc
+      .route({
+        method: 'PUT',
+        path: '/integrations/v1/{workspace}/entities/{id}',
+        inputStructure: 'detailed',
+        summary: 'Update entity by ID',
+        description: 'Updates an existing entity identified by its unique identifier.',
+        tags: ['Integrations']
+      })
+      .input(
+        z.object({
+          params: ws.extend({
+            id: z.string()
+          }),
+          body: entityMutationBodySchema
+        })
+      )
+      .output(entityRecordSchema),
+    getByExternalKey: oc
+      .route({
+        method: 'GET',
+        path: '/integrations/v1/{workspace}/entities/byExternalKey/{source}/{externalKey}',
+        inputStructure: 'detailed',
+        summary: 'Get entity by external identity',
+        description:
+          'Retrieves an entity identified by a durable (source, externalKey) pair.',
+        tags: ['Integrations']
+      })
+      .input(
+        z.object({
+          params: ws.extend({
+            source: z.string().min(1).max(200),
+            externalKey: z.string().min(1).max(500)
+          })
+        })
+      )
+      .output(entityRecordSchema),
     syncByExternalKey: oc
       .route({
         method: 'PUT',

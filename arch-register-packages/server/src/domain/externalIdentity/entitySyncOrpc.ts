@@ -10,7 +10,9 @@ import {
   workspaceScoped
 } from '../../utils/orpcErrors';
 import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
-import { syncEntityByExternalKey } from './entitySyncOperations';
+import { syncEntityByExternalKey, getEntityByExternalKey } from './entitySyncOperations';
+import { getEntity } from '../catalog/entityQueryOperations';
+import { updateEntity } from '../catalog/entityMutationOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -25,6 +27,34 @@ const entitySyncRouter = implement(entitySyncContract)
 
 export const entitySyncORPCRouter = entitySyncRouter.router({
   entitySync: {
+    getById: entitySyncRouter.entitySync.getById.handler(async ({ input, context }) => {
+      const { workspace, authCtx } = context;
+      return await getEntity(context.db, workspace, input.params.id, authCtx);
+    }),
+    updateById: entitySyncRouter.entitySync.updateById.handler(async ({ input, context }) => {
+      const { workspace, authCtx } = context;
+      const auditUser = context.event.context.user;
+      return await updateEntity(
+        context.db,
+        workspace,
+        input.params.id,
+        input.body as Record<string, unknown>,
+        authCtx,
+        { id: auditUser.id, displayName: auditUser.display_name }
+      );
+    }),
+    getByExternalKey: entitySyncRouter.entitySync.getByExternalKey.handler(
+      async ({ input, context }) => {
+        const { workspace, authCtx } = context;
+        return await getEntityByExternalKey(
+          context.db,
+          workspace,
+          input.params.source,
+          input.params.externalKey,
+          authCtx
+        );
+      }
+    ),
     syncByExternalKey: entitySyncRouter.entitySync.syncByExternalKey.handler(
       async ({ input, context }) => {
         const { workspace, authCtx } = context;
