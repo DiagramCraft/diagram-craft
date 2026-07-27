@@ -295,6 +295,60 @@ const runSync = async (
   return { status: 'created', entity: toApiEntity(row, authCtx) };
 };
 
+export const getEntityByExternalKey = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  source: string,
+  externalKey: string,
+  authCtx: AuthorizationContext | null
+): Promise<EntityRecord> => {
+  httpAssert.string(source, { status: 400, message: 'source is required' });
+  httpAssert.true(source.length <= MAX_SOURCE_LENGTH, {
+    status: 400,
+    message: `source must be at most ${MAX_SOURCE_LENGTH} characters`
+  });
+  httpAssert.string(externalKey, { status: 400, message: 'externalKey is required' });
+  httpAssert.true(externalKey.length <= MAX_EXTERNAL_KEY_LENGTH, {
+    status: 400,
+    message: `externalKey must be at most ${MAX_EXTERNAL_KEY_LENGTH} characters`
+  });
+
+  try {
+    if (authCtx) {
+      requireWorkspaceCapability(
+        authCtx,
+        'ent.external_update',
+        'You do not have permission to access entities from this integration source'
+      );
+    }
+
+    const existingIdentity = await db.externalIdentity.find(workspace, source, externalKey);
+    httpAssert.present(existingIdentity, {
+      status: 404,
+      message: `Entity with external identity '${source}/${externalKey}' not found`
+    });
+
+    const entity = await db.catalog.getEntity(workspace, existingIdentity.entity_id);
+    httpAssert.present(entity, {
+      status: 404,
+      message: `Entity for external identity '${source}/${externalKey}' no longer exists`
+    });
+
+    if (authCtx) {
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have permission to view this entity'
+      );
+    }
+
+    return toApiEntity(entity, authCtx);
+  } catch (error) {
+    return handleError(error, 'Failed to get entity by external key');
+  }
+};
+
 export const syncEntityByExternalKey = async (
   db: DatabaseAdapter,
   workspace: string,
