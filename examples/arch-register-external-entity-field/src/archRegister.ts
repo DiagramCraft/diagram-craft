@@ -76,11 +76,11 @@ export class ArchRegisterClient {
     private readonly config: Config,
     private readonly fetchImpl: ArchRegisterFetch = fetch
   ) {
-    this.apiBase = `${config.archRegisterUrl}/api/${encodeURIComponent(config.workspace)}`;
+    this.apiBase = `${config.archRegisterUrl}/api/integrations/v1/${encodeURIComponent(config.workspace)}`;
   }
 
   async getEntity(id: string): Promise<EntityRecord> {
-    const response = await this.fetchImpl(`${this.apiBase}/data/${encodeURIComponent(id)}`, {
+    const response = await this.fetchImpl(`${this.apiBase}/entities/${encodeURIComponent(id)}`, {
       headers: { authorization: `Bearer ${this.config.archRegisterToken}` }
     });
     return this.readJson(response);
@@ -93,7 +93,7 @@ export class ArchRegisterClient {
   ): Promise<EntityRecord> {
     const id = entity['_uid'];
     if (typeof id !== 'string') throw new Error('The webhook entity did not contain _uid');
-    const response = await this.fetchImpl(`${this.apiBase}/data/${encodeURIComponent(id)}`, {
+    const response = await this.fetchImpl(`${this.apiBase}/entities/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: {
         authorization: `Bearer ${this.config.archRegisterToken}`,

@@ -79,8 +79,13 @@ export const workspaceSchemaOpenAPIHandler = new OpenAPIHandler(workspaceSchemaO
 
 export const createWorkspaceSchemaORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
+    const url = new URL(event.req.url);
+    const isIntegrationSchemaList =
+      event.req.method === 'GET' && /^\/api\/integrations\/v1\/[^/]+\/schemas$/.test(url.pathname);
     const result = await workspaceSchemaOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
+      isIntegrationSchemaList
+        ? requestForApiSurface(event, '/api/integrations/v1', '/api')
+        : requestForApiSurface(event, '/api/application/v1', '/api'),
       {
         prefix: '/api',
         context: {

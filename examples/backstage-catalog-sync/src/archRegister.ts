@@ -79,7 +79,7 @@ export const fetchSchemas = async (
   token: string,
   baseUrl: string
 ): Promise<Schema[]> => {
-  const url = `${baseUrl}/api/${workspace}/schemas`;
+  const url = `${baseUrl}/api/integrations/v1/${workspace}/schemas`;
   let response: Response;
   try {
     response = await fetch(url, {
