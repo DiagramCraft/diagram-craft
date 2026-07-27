@@ -31,16 +31,18 @@ export class PostgresGovernanceReminderConfigDatabase
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO workspace_governance_reminder_config (
-          workspace, case_kind, enabled, approaching_days, overdue_days, updated_at, updated_by
+          workspace, case_kind, enabled, approaching_days, overdue_days, escalation_enabled,
+          updated_at, updated_by
         ) VALUES (
           ${input.workspace}, ${input.case_kind}, ${input.enabled},
           ${this.json(input.approaching_days)}, ${this.json(input.overdue_days)},
-          ${input.updated_at}, ${input.updated_by}
+          ${input.escalation_enabled}, ${input.updated_at}, ${input.updated_by}
         )
         ON CONFLICT (workspace, case_kind) DO UPDATE
         SET enabled = ${input.enabled},
             approaching_days = ${this.json(input.approaching_days)},
             overdue_days = ${this.json(input.overdue_days)},
+            escalation_enabled = ${input.escalation_enabled},
             updated_at = ${input.updated_at},
             updated_by = ${input.updated_by}
         RETURNING *

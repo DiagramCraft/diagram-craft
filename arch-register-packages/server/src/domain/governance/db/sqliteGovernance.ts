@@ -142,6 +142,20 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
     );
   }
 
+  async markEscalated(id: string, escalatedAt: Date) {
+    const result = this.run(
+      `UPDATE governance_case SET escalated_at = ?
+       WHERE id = ? AND status = 'open' AND escalated_at IS NULL`,
+      [escalatedAt.toISOString(), id]
+    );
+    if (result.changes === 0) return null;
+    return await this.get(
+      'SELECT * FROM governance_case WHERE id = ?',
+      [id],
+      governanceMappers.case
+    );
+  }
+
   async createAssignment(input: GovernanceAssignmentDbCreate) {
     this.run(
       `INSERT INTO governance_assignment (

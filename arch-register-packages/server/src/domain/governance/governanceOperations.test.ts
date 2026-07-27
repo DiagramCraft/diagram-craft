@@ -63,6 +63,7 @@ const makeCase = (overrides: Partial<GovernanceCaseDbResult> = {}): GovernanceCa
   completed_at: null,
   cancelled_at: null,
   reminder_windows_sent: [],
+  escalated_at: null,
   ...overrides
 });
 

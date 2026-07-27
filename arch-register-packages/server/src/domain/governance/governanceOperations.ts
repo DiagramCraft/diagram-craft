@@ -60,6 +60,28 @@ export type GovernanceAssignmentTarget =
   | { type: 'team_role'; teamId: string; teamRole: TeamRole }
   | { type: 'capability'; capability: WorkspaceCapability };
 
+/**
+ * #2420's default escalation target: for a project-scoped case, the admins of the project's
+ * owning team (there's no distinct "project admin" role — project-admin authority is the
+ * `team_admin` TeamRole on the owning team); otherwise the workspace's `ws.settings` holders
+ * (owner/admin roles), used as the "workspace admin" proxy since there's no single ws.admin
+ * capability. Case kinds call this with whatever project id they know how to extract from their
+ * own case row/payload — there's no generic way to derive it, since case subjects vary by kind.
+ */
+export const resolveScopeAwareEscalationTarget = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string | null
+): Promise<GovernanceAssignmentTarget> => {
+  if (projectId) {
+    const project = await db.project.getProject(workspace, projectId);
+    if (project?.owner) {
+      return { type: 'team_role', teamId: project.owner, teamRole: 'team_admin' };
+    }
+  }
+  return { type: 'capability', capability: 'ws.settings' };
+};
+
 export type GovernanceAssignmentSpec = {
   action: GovernanceAssignmentAction;
   target: GovernanceAssignmentTarget;
@@ -100,7 +122,8 @@ const toApiCase = (row: GovernanceCaseDbResult): GovernanceCase => ({
   createdAt: row.created_at.toISOString(),
   dueAt: row.due_at?.toISOString() ?? null,
   completedAt: row.completed_at?.toISOString() ?? null,
-  cancelledAt: row.cancelled_at?.toISOString() ?? null
+  cancelledAt: row.cancelled_at?.toISOString() ?? null,
+  escalatedAt: row.escalated_at?.toISOString() ?? null
 });
 
 const toApiAssignment = (row: GovernanceAssignmentDbResult): GovernanceAssignment => ({

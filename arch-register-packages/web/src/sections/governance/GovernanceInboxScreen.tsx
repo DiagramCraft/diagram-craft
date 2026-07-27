@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { TbClipboardCheck, TbClock, TbExternalLink } from 'react-icons/tb';
+import { TbAlertTriangle, TbClipboardCheck, TbClock, TbExternalLink } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -710,6 +710,14 @@ export const GovernanceInboxScreen = () => {
                           }
                         >
                           <TbClock size={11} /> Due {new Date(task.case.dueAt).toLocaleDateString()}
+                        </span>
+                      </>
+                    )}
+                    {task.case.escalatedAt && (
+                      <>
+                        <span>·</span>
+                        <span className={styles.taskEscalatedBadge}>
+                          <TbAlertTriangle size={11} /> Escalated
                         </span>
                       </>
                     )}

@@ -12,6 +12,14 @@ const governanceReminderConfigSchema = z.object({
   overdue_days: z
     .array(z.number().int().min(0))
     .describe('Days past due_at at which an overdue reminder is sent'),
+  escalation_supported: z
+    .boolean()
+    .describe('Whether this case kind has a built-in escalation threshold at all'),
+  escalation_enabled: z
+    .boolean()
+    .describe(
+      'Whether overdue cases of this kind escalate to the code-defined escalation target. Only meaningful when escalation_supported is true.'
+    ),
   is_default: z
     .boolean()
     .describe('True if this reflects the case kind’s code default rather than a workspace override')
@@ -20,7 +28,8 @@ const governanceReminderConfigSchema = z.object({
 const governanceReminderConfigUpdateSchema = z.object({
   enabled: z.boolean(),
   approaching_days: z.array(z.number().int().min(0)),
-  overdue_days: z.array(z.number().int().min(0))
+  overdue_days: z.array(z.number().int().min(0)),
+  escalation_enabled: z.boolean()
 });
 
 export const governanceReminderConfigContract = oc.tag('Governance').router({

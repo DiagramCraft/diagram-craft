@@ -31,7 +31,8 @@ export type GovernanceEventType =
   | 'postponed'
   | 'finalized'
   | 'finalization_override'
-  | 'reminder_sent';
+  | 'reminder_sent'
+  | 'escalated';
 
 export type GovernanceCaseDbResult = {
   id: string;
@@ -52,6 +53,7 @@ export type GovernanceCaseDbResult = {
   completed_at: Date | null;
   cancelled_at: Date | null;
   reminder_windows_sent: string[];
+  escalated_at: Date | null;
 };
 
 export type GovernanceCaseDbCreate = {
@@ -162,7 +164,8 @@ export const governanceMappers = {
       row['reminder_windows_sent'],
       [],
       'reminder_windows_sent'
-    )
+    ),
+    escalated_at: row['escalated_at'] == null ? null : databaseDate(row['escalated_at'])
   }),
   assignment: (row: DatabaseRow): GovernanceAssignmentDbResult => ({
     id: String(row['id']),
@@ -220,6 +223,12 @@ export type GovernanceDatabase = {
    * if it was already recorded, so callers can treat this as an idempotent "mark sent" primitive.
    */
   addReminderWindowSent(id: string, window: string): Promise<GovernanceCaseDbResult | null>;
+  /**
+   * Conditionally sets `escalated_at` if the case is open and not already escalated; returns
+   * null (a no-op) if it was already escalated, so callers can treat this as an idempotent
+   * "mark escalated" primitive, mirroring `addReminderWindowSent`.
+   */
+  markEscalated(id: string, escalatedAt: Date): Promise<GovernanceCaseDbResult | null>;
 
   createAssignment(input: GovernanceAssignmentDbCreate): Promise<GovernanceAssignmentDbResult>;
   getAssignment(id: string): Promise<GovernanceAssignmentDbResult | null>;

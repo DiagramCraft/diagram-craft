@@ -5,6 +5,7 @@ import type {
   GovernanceCaseDbResult,
   GovernanceEventDbResult
 } from './db/governanceDatabase';
+import type { GovernanceAssignmentTarget } from './governanceOperations';
 
 /**
  * Per-case-kind hooks, registered by the domain that owns the case kind (e.g. entity-change
@@ -82,6 +83,22 @@ export type GovernanceCaseKindConfig = {
     approachingDays: number[];
     /** Fire once N days past due_at, for each N. */
     overdueDays: number[];
+  };
+  /**
+   * #2420: escalation for cases that remain open past their deadline. Presence of this field is
+   * what makes a case kind eligible for escalation at all — a workspace can still turn it off via
+   * `workspace_governance_reminder_config.escalation_enabled` (see governanceReminderConfigOrpc.ts)
+   * but cannot configure a different target or threshold in v1. Fires once per case, guarded by
+   * `governance_case.escalated_at`.
+   */
+  escalation?: {
+    /** Days overdue at which escalation fires. */
+    overdueDays: number;
+    /** Resolves the escalation target for a given (fresh) case row; null skips escalation. */
+    target: (
+      db: DatabaseAdapter,
+      caseRow: GovernanceCaseDbResult
+    ) => Promise<GovernanceAssignmentTarget | null>;
   };
 };
 

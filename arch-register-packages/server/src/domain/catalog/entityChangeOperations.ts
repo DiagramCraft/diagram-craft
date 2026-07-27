@@ -35,7 +35,8 @@ import {
   createGovernanceCaseInTransaction,
   recordGovernanceEvent,
   resolveAssignmentNotifications,
-  resolveCaseNotifications
+  resolveCaseNotifications,
+  resolveScopeAwareEscalationTarget
 } from '../governance/governanceOperations';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
@@ -895,6 +896,21 @@ export const bypassEntityApproval = async (
   return { entityId: canonicalEntityId, version: updated.version ?? 1, bypassed: true as const };
 };
 
+// Neither entity-change case kind's payload carries a projectId directly (only entity/proposal
+// ids) — resolve escalation scope from the subject entity's project instead. For the bulk kind,
+// a proposal can span entities from different projects; the first member's project is used as a
+// reasonable default rather than adding per-entity escalation.
+const resolveEntityChangeEscalationTarget = async (
+  db: DatabaseAdapter,
+  caseRow: GovernanceCaseDbResult
+) => {
+  const entityId =
+    (caseRow.payload['entityId'] as string | undefined) ??
+    (caseRow.payload['entityIds'] as string[] | undefined)?.[0];
+  const entity = entityId ? await db.catalog.getEntity(caseRow.workspace, entityId) : null;
+  return resolveScopeAwareEscalationTarget(db, caseRow.workspace, entity?.project_id ?? null);
+};
+
 export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
   new Map([
     [
@@ -1075,7 +1091,8 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             metadata: { entityId, proposalId, revisionId, entityVersion: updated.version ?? 1 }
           });
         },
-        reminderWindows: { approachingDays: [2], overdueDays: [1, 5] }
+        reminderWindows: { approachingDays: [2], overdueDays: [1, 5] },
+        escalation: { overdueDays: 5, target: resolveEntityChangeEscalationTarget }
       }
     ],
     [
@@ -1289,7 +1306,8 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             }
           });
         },
-        reminderWindows: { approachingDays: [2], overdueDays: [1, 5] }
+        reminderWindows: { approachingDays: [2], overdueDays: [1, 5] },
+        escalation: { overdueDays: 5, target: resolveEntityChangeEscalationTarget }
       }
     ]
   ]);

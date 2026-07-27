@@ -49728,6 +49728,7 @@
                               "governance-deadline-reminder",
                               "governance-deadline-approaching",
                               "governance-deadline-overdue",
+                              "governance-deadline-escalated",
                               "automation-rule"
                             ],
                             "type": "string"
@@ -49802,6 +49803,7 @@
                               "governance-deadline-reminder",
                               "governance-deadline-approaching",
                               "governance-deadline-overdue",
+                              "governance-deadline-escalated",
                               "automation-rule"
                             ],
                             "type": "string"
@@ -49884,6 +49886,7 @@
                             "governance-deadline-reminder",
                             "governance-deadline-approaching",
                             "governance-deadline-overdue",
+                            "governance-deadline-escalated",
                             "automation-rule"
                           ],
                           "type": "string"
@@ -49939,6 +49942,7 @@
                               "governance-deadline-reminder",
                               "governance-deadline-approaching",
                               "governance-deadline-overdue",
+                              "governance-deadline-escalated",
                               "automation-rule"
                             ],
                             "type": "string"
@@ -50013,6 +50017,7 @@
                               "governance-deadline-reminder",
                               "governance-deadline-approaching",
                               "governance-deadline-overdue",
+                              "governance-deadline-escalated",
                               "automation-rule"
                             ],
                             "type": "string"
@@ -78264,6 +78269,17 @@
                           }
                         ],
                         "description": "ISO 8601 cancellation timestamp"
+                      },
+                      "escalatedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
                       }
                     },
                     "required": [
@@ -78283,7 +78299,8 @@
                       "createdAt",
                       "dueAt",
                       "completedAt",
-                      "cancelledAt"
+                      "cancelledAt",
+                      "escalatedAt"
                     ]
                   }
                 }
@@ -78460,6 +78477,17 @@
                         }
                       ],
                       "description": "ISO 8601 cancellation timestamp"
+                    },
+                    "escalatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
                     }
                   },
                   "required": [
@@ -78479,7 +78507,8 @@
                     "createdAt",
                     "dueAt",
                     "completedAt",
-                    "cancelledAt"
+                    "cancelledAt",
+                    "escalatedAt"
                   ]
                 }
               }
@@ -78552,7 +78581,8 @@
                           "postponed",
                           "finalized",
                           "finalization_override",
-                          "reminder_sent"
+                          "reminder_sent",
+                          "escalated"
                         ],
                         "type": "string",
                         "description": "Kind of event"
@@ -78816,6 +78846,17 @@
                         }
                       ],
                       "description": "ISO 8601 cancellation timestamp"
+                    },
+                    "escalatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
                     }
                   },
                   "required": [
@@ -78835,7 +78876,8 @@
                     "createdAt",
                     "dueAt",
                     "completedAt",
-                    "cancelledAt"
+                    "cancelledAt",
+                    "escalatedAt"
                   ]
                 }
               }
@@ -79014,6 +79056,17 @@
                             }
                           ],
                           "description": "ISO 8601 cancellation timestamp"
+                        },
+                        "escalatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
                         }
                       },
                       "required": [
@@ -79033,7 +79086,8 @@
                         "createdAt",
                         "dueAt",
                         "completedAt",
-                        "cancelledAt"
+                        "cancelledAt",
+                        "escalatedAt"
                       ]
                     },
                     "event": {
@@ -79066,7 +79120,8 @@
                             "postponed",
                             "finalized",
                             "finalization_override",
-                            "reminder_sent"
+                            "reminder_sent",
+                            "escalated"
                           ],
                           "type": "string",
                           "description": "Kind of event"
@@ -79487,6 +79542,17 @@
                               }
                             ],
                             "description": "ISO 8601 cancellation timestamp"
+                          },
+                          "escalatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
                           }
                         },
                         "required": [
@@ -79506,7 +79572,8 @@
                           "createdAt",
                           "dueAt",
                           "completedAt",
-                          "cancelledAt"
+                          "cancelledAt",
+                          "escalatedAt"
                         ]
                       },
                       "requiresAction": {
@@ -79772,6 +79839,17 @@
                             }
                           ],
                           "description": "ISO 8601 cancellation timestamp"
+                        },
+                        "escalatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
                         }
                       },
                       "required": [
@@ -79791,7 +79869,8 @@
                         "createdAt",
                         "dueAt",
                         "completedAt",
-                        "cancelledAt"
+                        "cancelledAt",
+                        "escalatedAt"
                       ]
                     },
                     "event": {
@@ -79824,7 +79903,8 @@
                             "postponed",
                             "finalized",
                             "finalization_override",
-                            "reminder_sent"
+                            "reminder_sent",
+                            "escalated"
                           ],
                           "type": "string",
                           "description": "Kind of event"
@@ -80099,6 +80179,17 @@
                               }
                             ],
                             "description": "ISO 8601 cancellation timestamp"
+                          },
+                          "escalatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
                           }
                         },
                         "required": [
@@ -80118,7 +80209,8 @@
                           "createdAt",
                           "dueAt",
                           "completedAt",
-                          "cancelledAt"
+                          "cancelledAt",
+                          "escalatedAt"
                         ]
                       },
                       "openAssignments": {
@@ -80311,6 +80403,14 @@
                         },
                         "description": "Days past due_at at which an overdue reminder is sent"
                       },
+                      "escalation_supported": {
+                        "type": "boolean",
+                        "description": "Whether this case kind has a built-in escalation threshold at all"
+                      },
+                      "escalation_enabled": {
+                        "type": "boolean",
+                        "description": "Whether overdue cases of this kind escalate to the code-defined escalation target. Only meaningful when escalation_supported is true."
+                      },
                       "is_default": {
                         "type": "boolean",
                         "description": "True if this reflects the case kind’s code default rather than a workspace override"
@@ -80322,6 +80422,8 @@
                       "enabled",
                       "approaching_days",
                       "overdue_days",
+                      "escalation_supported",
+                      "escalation_enabled",
                       "is_default"
                     ]
                   }
@@ -80384,12 +80486,16 @@
                       "minimum": 0,
                       "maximum": 9007199254740991
                     }
+                  },
+                  "escalation_enabled": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
                   "enabled",
                   "approaching_days",
-                  "overdue_days"
+                  "overdue_days",
+                  "escalation_enabled"
                 ]
               }
             }
@@ -80433,6 +80539,14 @@
                       },
                       "description": "Days past due_at at which an overdue reminder is sent"
                     },
+                    "escalation_supported": {
+                      "type": "boolean",
+                      "description": "Whether this case kind has a built-in escalation threshold at all"
+                    },
+                    "escalation_enabled": {
+                      "type": "boolean",
+                      "description": "Whether overdue cases of this kind escalate to the code-defined escalation target. Only meaningful when escalation_supported is true."
+                    },
                     "is_default": {
                       "type": "boolean",
                       "description": "True if this reflects the case kind’s code default rather than a workspace override"
@@ -80444,6 +80558,8 @@
                     "enabled",
                     "approaching_days",
                     "overdue_days",
+                    "escalation_supported",
+                    "escalation_enabled",
                     "is_default"
                   ]
                 }

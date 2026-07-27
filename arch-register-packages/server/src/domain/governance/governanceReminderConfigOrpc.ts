@@ -55,6 +55,8 @@ export const createGovernanceReminderConfigORPCRouter = (registry: GovernanceReg
             enabled: override?.enabled ?? true,
             approaching_days: override?.approaching_days ?? codeDefault.approachingDays,
             overdue_days: override?.overdue_days ?? codeDefault.overdueDays,
+            escalation_supported: config.escalation != null,
+            escalation_enabled: override?.escalation_enabled ?? true,
             is_default: override == null
           });
         }
@@ -79,6 +81,7 @@ export const createGovernanceReminderConfigORPCRouter = (registry: GovernanceReg
             enabled: input.body.enabled,
             approaching_days: input.body.approaching_days,
             overdue_days: input.body.overdue_days,
+            escalation_enabled: input.body.escalation_enabled,
             updated_at: new Date(),
             updated_by: context.event.context.user.id
           });
@@ -89,6 +92,8 @@ export const createGovernanceReminderConfigORPCRouter = (registry: GovernanceReg
             enabled: updated.enabled,
             approaching_days: updated.approaching_days,
             overdue_days: updated.overdue_days,
+            escalation_supported: registry.get(updated.case_kind)?.escalation != null,
+            escalation_enabled: updated.escalation_enabled,
             is_default: false
           };
         }

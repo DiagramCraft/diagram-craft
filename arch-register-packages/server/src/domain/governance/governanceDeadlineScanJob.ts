@@ -82,49 +82,77 @@ export const createGovernanceDeadlineScanJobHandler =
     const cases = await db.governance.listCases(context.workspace, { status: 'open' });
     const now = new Date();
     let remindersSent = 0;
+    let escalationsSent = 0;
 
     for (const caseRow of cases) {
       if (context.signal?.aborted) break;
       if (!caseRow.due_at) continue;
 
-      const codeDefault = registry.get(caseRow.case_kind)?.reminderWindows;
-      if (!codeDefault) continue;
-
+      const kindConfig = registry.get(caseRow.case_kind);
+      const codeDefault = kindConfig?.reminderWindows;
       const override = await db.governanceReminderConfig.getReminderConfig(
         context.workspace,
         caseRow.case_kind
       );
-      if (override && !override.enabled) continue;
-      const windows = override
-        ? { approachingDays: override.approaching_days, overdueDays: override.overdue_days }
-        : codeDefault;
 
-      const candidateWindows = computeCandidateReminderWindows(
-        caseRow.due_at,
-        now,
-        windows,
-        caseRow.reminder_windows_sent
-      );
+      if (codeDefault && !(override && !override.enabled)) {
+        const windows = override
+          ? { approachingDays: override.approaching_days, overdueDays: override.overdue_days }
+          : codeDefault;
 
-      for (const window of candidateWindows) {
-        await db.core.transaction(async tx => {
-          const fresh = await tx.governance.getCase(context.workspace, caseRow.id);
-          if (fresh?.status !== 'open' || fresh.reminder_windows_sent.includes(window)) {
-            return;
-          }
-          await recordGovernanceEvent(tx, fresh, {
-            eventType: 'reminder_sent',
-            actorUserId: GOVERNANCE_DEADLINE_SCAN_SYSTEM_USER_ID,
-            previousStatus: fresh.status,
-            resultingStatus: fresh.status,
-            reason: null,
-            metadata: { trigger: 'scheduled', window }
+        const candidateWindows = computeCandidateReminderWindows(
+          caseRow.due_at,
+          now,
+          windows,
+          caseRow.reminder_windows_sent
+        );
+
+        for (const window of candidateWindows) {
+          await db.core.transaction(async tx => {
+            const fresh = await tx.governance.getCase(context.workspace, caseRow.id);
+            if (fresh?.status !== 'open' || fresh.reminder_windows_sent.includes(window)) {
+              return;
+            }
+            await recordGovernanceEvent(tx, fresh, {
+              eventType: 'reminder_sent',
+              actorUserId: GOVERNANCE_DEADLINE_SCAN_SYSTEM_USER_ID,
+              previousStatus: fresh.status,
+              resultingStatus: fresh.status,
+              reason: null,
+              metadata: { trigger: 'scheduled', window }
+            });
+            await tx.governance.addReminderWindowSent(fresh.id, window);
           });
-          await tx.governance.addReminderWindowSent(fresh.id, window);
-        });
-        remindersSent += 1;
+          remindersSent += 1;
+        }
+      }
+
+      const escalation = kindConfig?.escalation;
+      if (escalation && !caseRow.escalated_at && !(override && !override.escalation_enabled)) {
+        // Matches computeCandidateReminderWindows's overdue convention exactly (`-daysUntilDue`,
+        // not a separately-floored "days overdue"), so a case escalates at the same moment its
+        // corresponding overdue reminder window of the same day count would fire.
+        const daysUntilDue = Math.floor((caseRow.due_at.getTime() - now.getTime()) / MS_PER_DAY);
+        if (-daysUntilDue >= escalation.overdueDays) {
+          await db.core.transaction(async tx => {
+            const fresh = await tx.governance.getCase(context.workspace, caseRow.id);
+            if (fresh?.status !== 'open' || fresh.escalated_at) return;
+            const target = await escalation.target(tx, fresh);
+            if (!target) return;
+            await recordGovernanceEvent(tx, fresh, {
+              eventType: 'escalated',
+              actorUserId: GOVERNANCE_DEADLINE_SCAN_SYSTEM_USER_ID,
+              previousStatus: fresh.status,
+              resultingStatus: fresh.status,
+              reason: null,
+              metadata: { trigger: 'scheduled', target }
+            });
+            await tx.governance.markEscalated(fresh.id, now);
+          });
+          escalationsSent += 1;
+        }
       }
     }
 
-    return { scanned: cases.length, remindersSent };
+    return { scanned: cases.length, remindersSent, escalationsSent };
   };

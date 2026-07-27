@@ -34,7 +34,8 @@ import {
   decideGovernanceAssignment,
   recordGovernanceEvent,
   resolveAssignmentNotifications,
-  resolveCaseNotifications
+  resolveCaseNotifications,
+  resolveScopeAwareEscalationTarget
 } from '../governance/governanceOperations';
 import { isEligibleForAssignment } from '../governance/governanceEligibility';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
@@ -514,7 +515,16 @@ export const createDeprecationGovernanceRegistry = (
             }
           });
         },
-        reminderWindows: { approachingDays: [3], overdueDays: [2] }
+        reminderWindows: { approachingDays: [3], overdueDays: [2] },
+        escalation: {
+          overdueDays: 5,
+          target: (db, caseRow) =>
+            resolveScopeAwareEscalationTarget(
+              db,
+              caseRow.workspace,
+              (caseRow.payload['projectId'] as string | null) ?? null
+            )
+        }
       }
     ]
   ]);

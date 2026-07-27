@@ -4,7 +4,8 @@ import {
   createGovernanceCaseInTransaction,
   recordGovernanceEvent,
   resolveAssignmentNotifications,
-  resolveCaseNotifications
+  resolveCaseNotifications,
+  resolveScopeAwareEscalationTarget
 } from '../governance/governanceOperations';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 
@@ -25,7 +26,16 @@ export const createAssessmentGovernanceRegistry = (): GovernanceRegistry =>
           return assessment != null;
         },
         independentAssignmentActions: new Set(['acknowledge' as const]),
-        reminderWindows: { approachingDays: [3], overdueDays: [1, 3] }
+        reminderWindows: { approachingDays: [3], overdueDays: [1, 3] },
+        escalation: {
+          overdueDays: 5,
+          target: (db, caseRow) =>
+            resolveScopeAwareEscalationTarget(
+              db,
+              caseRow.workspace,
+              (caseRow.payload['projectId'] as string | null) ?? null
+            )
+        }
       }
     ]
   ]);
