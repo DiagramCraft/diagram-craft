@@ -31,7 +31,8 @@ const makeCase = (): GovernanceCaseDbResult => ({
   due_at: null,
   completed_at: null,
   cancelled_at: null,
-  reminder_windows_sent: []
+  reminder_windows_sent: [],
+  escalated_at: null
 });
 
 const makeAssignment = (): GovernanceAssignmentDbResult => ({
@@ -236,5 +237,48 @@ describe('governance notification delivery', () => {
 
     expect(result).toEqual({ recipients: 1 });
     expect(createNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('notifies only the resolved escalation target for an escalated event, not assignees or initiator', async () => {
+    const escalatedEvent = {
+      ...makeEvent(),
+      event_type: 'escalated' as const,
+      actor_user_id: null,
+      metadata: { trigger: 'scheduled', target: { type: 'user', userId: 'admin-1' } }
+    };
+    const createNotification = vi.fn(async input => input);
+    const db = {
+      governance: {
+        getCase: vi.fn(async () => makeCase()),
+        listEvents: vi.fn(async () => [escalatedEvent]),
+        listAssignmentsForCase: vi.fn(async () => [makeAssignment()])
+      },
+      auth: {
+        getUser: vi.fn(async (id: string) => ({ id, display_name: id, is_active: true }))
+      },
+      notification: { createNotification },
+      notificationPreference: {
+        // 'governance-deadline-escalated' is a reminder-category type with an empty
+        // defaultChannels list (opt-in), so in_app must be explicitly enabled here to observe
+        // delivery — mirrors how the other reminder types are opted into for their tests.
+        listOverrides: vi.fn(async () => [
+          {
+            user_id: 'admin-1',
+            workspace: 'workspace-1',
+            notification_type: 'governance-deadline-escalated',
+            channel: 'in_app',
+            enabled: true,
+            updated_at: now
+          }
+        ])
+      }
+    } as unknown as DatabaseAdapter;
+
+    await createGovernanceInAppNotifications(db, makeCase(), escalatedEvent);
+
+    expect(createNotification).toHaveBeenCalledTimes(1);
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'admin-1', title: expect.stringContaining('escalated') })
+    );
   });
 });

@@ -42,4 +42,8 @@ describe('notificationTypeForGovernanceEvent', () => {
       'governance-proposal-reminder'
     );
   });
+
+  it('maps an escalated event to the escalation type', () => {
+    expect(notificationTypeForGovernanceEvent('escalated')).toBe('governance-deadline-escalated');
+  });
 });

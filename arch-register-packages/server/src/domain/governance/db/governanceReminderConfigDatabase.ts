@@ -11,6 +11,7 @@ export type GovernanceReminderConfigDbResult = {
   enabled: boolean;
   approaching_days: number[];
   overdue_days: number[];
+  escalation_enabled: boolean;
   updated_at: Date;
   updated_by: string | null;
 };
@@ -21,6 +22,7 @@ export type GovernanceReminderConfigDbUpsert = {
   enabled: boolean;
   approaching_days: number[];
   overdue_days: number[];
+  escalation_enabled: boolean;
   updated_at: Date;
   updated_by: string | null;
 };
@@ -32,6 +34,7 @@ export const governanceReminderConfigMappers = {
     enabled: databaseBoolean(row['enabled']),
     approaching_days: parseDatabaseJson(row['approaching_days'], [], 'approaching_days'),
     overdue_days: parseDatabaseJson(row['overdue_days'], [], 'overdue_days'),
+    escalation_enabled: databaseBoolean(row['escalation_enabled']),
     updated_at: databaseDate(row['updated_at']),
     updated_by: row['updated_by'] == null ? null : String(row['updated_by'])
   })

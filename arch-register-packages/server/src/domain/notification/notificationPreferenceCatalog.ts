@@ -25,6 +25,7 @@ export type NotificationType =
   | 'governance-deadline-reminder'
   | 'governance-deadline-approaching'
   | 'governance-deadline-overdue'
+  | 'governance-deadline-escalated'
   | 'automation-rule';
 
 export type NotificationTypeCategory = 'normal' | 'reminder';
@@ -86,6 +87,12 @@ export const NOTIFICATION_TYPE_CATALOG: Record<
     category: 'reminder',
     defaultChannels: []
   },
+  'governance-deadline-escalated': {
+    label: 'Escalated cases',
+    description: 'A governance case was escalated after remaining overdue past its threshold.',
+    category: 'reminder',
+    defaultChannels: []
+  },
   'automation-rule': {
     label: 'Automation rule notifications',
     description: 'Notifications sent by workspace automation rules.',
@@ -120,7 +127,8 @@ const GOVERNANCE_EVENT_TYPE_TO_NOTIFICATION_TYPE: Record<GovernanceEventType, No
   postponed: 'governance-case-activity',
   finalized: 'governance-case-activity',
   finalization_override: 'governance-case-activity',
-  reminder_sent: 'governance-deadline-reminder'
+  reminder_sent: 'governance-deadline-reminder',
+  escalated: 'governance-deadline-escalated'
 };
 
 export const notificationTypeForGovernanceEvent = (

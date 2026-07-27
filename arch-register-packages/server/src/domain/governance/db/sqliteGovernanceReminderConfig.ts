@@ -28,12 +28,14 @@ export class SqliteGovernanceReminderConfigDatabase
   async upsertReminderConfig(input: GovernanceReminderConfigDbUpsert) {
     this.run(
       `INSERT INTO workspace_governance_reminder_config (
-        workspace, case_kind, enabled, approaching_days, overdue_days, updated_at, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        workspace, case_kind, enabled, approaching_days, overdue_days, escalation_enabled,
+        updated_at, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(workspace, case_kind) DO UPDATE SET
         enabled = excluded.enabled,
         approaching_days = excluded.approaching_days,
         overdue_days = excluded.overdue_days,
+        escalation_enabled = excluded.escalation_enabled,
         updated_at = excluded.updated_at,
         updated_by = excluded.updated_by`,
       [
@@ -42,6 +44,7 @@ export class SqliteGovernanceReminderConfigDatabase
         input.enabled ? 1 : 0,
         JSON.stringify(input.approaching_days),
         JSON.stringify(input.overdue_days),
+        input.escalation_enabled ? 1 : 0,
         input.updated_at.toISOString(),
         input.updated_by
       ]

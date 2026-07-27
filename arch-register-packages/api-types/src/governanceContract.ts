@@ -28,7 +28,8 @@ const governanceEventTypeSchema = z.enum([
   'postponed',
   'finalized',
   'finalization_override',
-  'reminder_sent'
+  'reminder_sent',
+  'escalated'
 ]);
 
 const governanceDecisionActionSchema = z.enum([
@@ -73,7 +74,11 @@ const governanceCaseSchema = z.object({
   createdAt: z.string().describe('ISO 8601 creation timestamp'),
   dueAt: z.string().nullable().describe('ISO 8601 due timestamp'),
   completedAt: z.string().nullable().describe('ISO 8601 completion timestamp'),
-  cancelledAt: z.string().nullable().describe('ISO 8601 cancellation timestamp')
+  cancelledAt: z.string().nullable().describe('ISO 8601 cancellation timestamp'),
+  escalatedAt: z
+    .string()
+    .nullable()
+    .describe('ISO 8601 timestamp the case was escalated, or null if not escalated')
 });
 
 const governanceAssignmentSchema = z.object({

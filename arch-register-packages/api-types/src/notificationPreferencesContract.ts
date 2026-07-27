@@ -15,6 +15,7 @@ const notificationTypeSchema = z.enum([
   'governance-deadline-reminder',
   'governance-deadline-approaching',
   'governance-deadline-overdue',
+  'governance-deadline-escalated',
   'automation-rule'
 ]);
 

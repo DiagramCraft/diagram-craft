@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { GovernanceCaseDbResult } from './db/governanceDatabase';
 import type { GovernanceReminderConfigDbResult } from './db/governanceReminderConfigDatabase';
 import { createGovernanceRegistry, type GovernanceRegistry } from './governanceRegistry';
+import type { GovernanceAssignmentTarget } from './governanceOperations';
 import {
   computeCandidateReminderWindows,
   createGovernanceDeadlineScanJobHandler
@@ -91,6 +92,7 @@ const makeCase = (overrides: Partial<GovernanceCaseDbResult> = {}): GovernanceCa
   completed_at: null,
   cancelled_at: null,
   reminder_windows_sent: [],
+  escalated_at: null,
   ...overrides
 });
 
@@ -102,6 +104,7 @@ const makeReminderConfigRow = (
   enabled: true,
   approaching_days: [2],
   overdue_days: [1],
+  escalation_enabled: true,
   updated_at: now,
   updated_by: null,
   ...overrides
@@ -123,6 +126,14 @@ const makeDb = (
     return updated;
   });
 
+  const markEscalated = vi.fn(async (id: string, escalatedAt: Date) => {
+    const current = store.get(id);
+    if (!current || current.status !== 'open' || current.escalated_at) return null;
+    const updated = { ...current, escalated_at: escalatedAt };
+    store.set(id, updated);
+    return updated;
+  });
+
   const governance = {
     listCases: vi.fn(async () => [...store.values()]),
     getCase: vi.fn(async (_workspace: string, id: string) => store.get(id) ?? null),
@@ -131,7 +142,8 @@ const makeDb = (
       occurred_at: now,
       ...input
     })),
-    addReminderWindowSent
+    addReminderWindowSent,
+    markEscalated
   };
 
   const governanceReminderConfig = {
@@ -146,13 +158,30 @@ const makeDb = (
     }
   } as unknown as DatabaseAdapter;
 
-  return { db, store, addReminderWindowSent, appendEvent: governance.appendEvent };
+  return {
+    db,
+    store,
+    addReminderWindowSent,
+    markEscalated,
+    appendEvent: governance.appendEvent
+  };
 };
 
 const registryWithDefault = (): GovernanceRegistry => {
   const registry = createGovernanceRegistry();
   registry.set('entity.change-case', {
     reminderWindows: { approachingDays: [2], overdueDays: [1] }
+  });
+  return registry;
+};
+
+const registryWithEscalation = (
+  target: GovernanceAssignmentTarget | null = { type: 'capability', capability: 'ws.settings' }
+): GovernanceRegistry => {
+  const registry = createGovernanceRegistry();
+  registry.set('entity.change-case', {
+    reminderWindows: { approachingDays: [2], overdueDays: [1] },
+    escalation: { overdueDays: 5, target: async () => target }
   });
   return registry;
 };
@@ -165,7 +194,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
-    expect(result).toEqual({ scanned: 1, remindersSent: 1 });
+    expect(result).toEqual({ scanned: 1, remindersSent: 1, escalationsSent: 0 });
     expect(appendEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         event_type: 'reminder_sent',
@@ -239,5 +268,72 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
 
     expect(result.remindersSent).toBe(0);
     expect(appendEvent).not.toHaveBeenCalled();
+  });
+
+  it('escalates an overdue case once the escalation threshold is crossed', async () => {
+    const target: GovernanceAssignmentTarget = { type: 'capability', capability: 'ws.settings' };
+    const caseRow = makeCase({ due_at: new Date(now.getTime() - 5 * dayMs) });
+    const { db, store, markEscalated, appendEvent } = makeDb([caseRow], null);
+    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithEscalation(target));
+
+    const result = await handler({ workspace: 'ws-1', payload: {} });
+
+    expect(result.escalationsSent).toBe(1);
+    expect(appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_type: 'escalated',
+        metadata: { trigger: 'scheduled', target }
+      })
+    );
+    expect(markEscalated).toHaveBeenCalledWith('case-1', expect.any(Date));
+    expect(store.get('case-1')!.escalated_at).toBeInstanceOf(Date);
+  });
+
+  it('does not escalate a case below the overdue threshold', async () => {
+    const caseRow = makeCase({ due_at: new Date(now.getTime() - 1 * dayMs) });
+    const { db, appendEvent } = makeDb([caseRow], null);
+    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithEscalation());
+
+    const result = await handler({ workspace: 'ws-1', payload: {} });
+
+    expect(result.escalationsSent).toBe(0);
+    expect(appendEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ event_type: 'escalated' })
+    );
+  });
+
+  it('does not re-escalate a case that is already escalated', async () => {
+    const caseRow = makeCase({
+      due_at: new Date(now.getTime() - 5 * dayMs),
+      escalated_at: new Date(now.getTime() - 1 * dayMs)
+    });
+    const { db, markEscalated } = makeDb([caseRow], null);
+    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithEscalation());
+
+    const result = await handler({ workspace: 'ws-1', payload: {} });
+
+    expect(result.escalationsSent).toBe(0);
+    expect(markEscalated).not.toHaveBeenCalled();
+  });
+
+  it('skips escalation for a case kind with no escalation config', async () => {
+    const caseRow = makeCase({ due_at: new Date(now.getTime() - 5 * dayMs) });
+    const { db } = makeDb([caseRow], null);
+    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithDefault());
+
+    const result = await handler({ workspace: 'ws-1', payload: {} });
+
+    expect(result.escalationsSent).toBe(0);
+  });
+
+  it('respects a workspace override that disables escalation for a kind', async () => {
+    const caseRow = makeCase({ due_at: new Date(now.getTime() - 5 * dayMs) });
+    const override = makeReminderConfigRow({ escalation_enabled: false });
+    const { db } = makeDb([caseRow], override);
+    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithEscalation());
+
+    const result = await handler({ workspace: 'ws-1', payload: {} });
+
+    expect(result.escalationsSent).toBe(0);
   });
 });

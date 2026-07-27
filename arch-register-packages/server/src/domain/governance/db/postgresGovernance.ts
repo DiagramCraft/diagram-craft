@@ -97,6 +97,16 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
     return row ? governanceMappers.case(row) : null;
   }
 
+  async markEscalated(id: string, escalatedAt: Date) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      UPDATE governance_case
+      SET escalated_at = ${escalatedAt}
+      WHERE id = ${id} AND status = 'open' AND escalated_at IS NULL
+      RETURNING *
+    `;
+    return row ? governanceMappers.case(row) : null;
+  }
+
   async createAssignment(input: GovernanceAssignmentDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`

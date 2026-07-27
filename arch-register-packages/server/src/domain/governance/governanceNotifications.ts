@@ -7,6 +7,7 @@ import {
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type {
+  GovernanceAssignmentTargetType,
   GovernanceCaseDbResult,
   GovernanceEventDbResult,
   GovernanceEventType
@@ -68,6 +69,11 @@ const getPresentation = (eventType: GovernanceEventType, caseKind: string) => {
         title: `${subject} reminder`,
         message: 'A reminder was sent for an outstanding governance task.'
       };
+    case 'escalated':
+      return {
+        title: `${subject} escalated`,
+        message: 'This governance case is overdue and has been escalated.'
+      };
     default:
       return {
         title: `${subject} updated`,
@@ -76,10 +82,24 @@ const getPresentation = (eventType: GovernanceEventType, caseKind: string) => {
   }
 };
 
-const listAssignmentRecipients = async (
+export type AssignmentTargetLike = {
+  target_type: GovernanceAssignmentTargetType;
+  target_user_id: string | null;
+  target_team_id: string | null;
+  target_team_role: string | null;
+  target_capability: string | null;
+};
+
+/**
+ * Resolves the users an assignment target (user/team/team_role/capability) points to. Takes just
+ * the target fields rather than a full `GovernanceAssignmentDbResult`, so it can also resolve a
+ * synthetic target that has no backing assignment row — e.g. #2420's escalation target, which is
+ * computed on the fly and stored only in event metadata.
+ */
+export const resolveTargetRecipients = async (
   db: DatabaseAdapter,
   workspace: string,
-  assignment: Awaited<ReturnType<DatabaseAdapter['governance']['getAssignment']>>,
+  assignment: AssignmentTargetLike | null,
   signal: AbortSignal = NEVER_ABORTED_SIGNAL
 ) => {
   throwIfAborted(signal);
@@ -234,6 +254,23 @@ const createGovernanceNotification = async (
   }
 };
 
+// The metadata stored on an 'escalated' event carries the resolved target in
+// `GovernanceAssignmentTarget`'s `{type, ...}` shape (see governanceOperations.ts), not the
+// `target_type`/`target_*` db-row shape `resolveTargetRecipients` expects — map between the two.
+const parseEscalationTarget = (metadata: Record<string, unknown>): AssignmentTargetLike | null => {
+  const target = metadata['target'] as
+    | { type?: string; userId?: string; teamId?: string; teamRole?: string; capability?: string }
+    | undefined;
+  if (!target?.type) return null;
+  return {
+    target_type: target.type as GovernanceAssignmentTargetType,
+    target_user_id: target.userId ?? null,
+    target_team_id: target.teamId ?? null,
+    target_team_role: target.teamRole ?? null,
+    target_capability: target.capability ?? null
+  };
+};
+
 const resolveGovernanceNotificationRecipients = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -247,7 +284,7 @@ const resolveGovernanceNotificationRecipients = async (
 
   if (event.event_type === 'submitted') {
     for (const assignment of assignments) {
-      for (const recipient of await listAssignmentRecipients(db, workspace, assignment, signal)) {
+      for (const recipient of await resolveTargetRecipients(db, workspace, assignment, signal)) {
         recipients.set(`${recipient.id}:${assignment.id}`, assignment.id);
       }
     }
@@ -255,13 +292,20 @@ const resolveGovernanceNotificationRecipients = async (
     // Reminders only go to whoever is still actually outstanding, not every assignee the case
     // has ever had and not the initiator who triggered the reminder.
     for (const assignment of assignments.filter(candidate => candidate.status === 'open')) {
-      for (const recipient of await listAssignmentRecipients(db, workspace, assignment, signal)) {
+      for (const recipient of await resolveTargetRecipients(db, workspace, assignment, signal)) {
         recipients.set(`${recipient.id}:${assignment.id}`, assignment.id);
       }
     }
+  } else if (event.event_type === 'escalated') {
+    // Escalation notifies only the resolved escalation target, not the case's own assignees or
+    // initiator — they already got their own overdue reminders separately.
+    const target = parseEscalationTarget(event.metadata);
+    for (const recipient of await resolveTargetRecipients(db, workspace, target, signal)) {
+      recipients.set(`${recipient.id}:none`, null);
+    }
   } else {
     for (const assignment of assignments) {
-      for (const recipient of await listAssignmentRecipients(db, workspace, assignment, signal)) {
+      for (const recipient of await resolveTargetRecipients(db, workspace, assignment, signal)) {
         recipients.set(`${recipient.id}:none`, null);
       }
     }
