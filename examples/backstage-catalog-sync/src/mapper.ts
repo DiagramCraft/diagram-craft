@@ -217,7 +217,7 @@ const mapResourceFields = (
 const mapSystemFields = (
   entity: BackstageEntity,
   _archEntity: ArchRegisterEntity,
-  warnings: string[],
+  _warnings: string[],
   relationships: RelationshipMapping[]
 ): void => {
   retainRelationship(entity, 'domain', 'domain', relationships);
