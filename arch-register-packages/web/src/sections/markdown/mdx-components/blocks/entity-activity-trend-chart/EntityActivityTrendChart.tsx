@@ -35,6 +35,7 @@ export const EntityActivityTrendChart = ({ lookbackDays }: EntityActivityTrendCh
           search: activityAuditSearch(operation, startDate, endDate)
         })
       }
+      bare
     />
   );
 };

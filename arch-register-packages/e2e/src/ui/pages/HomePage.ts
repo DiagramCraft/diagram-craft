@@ -27,11 +27,14 @@ export class HomePage extends WorkspacePage {
 
   editDashboardButton = () => this.page.getByRole('button', { name: 'Edit dashboard' });
 
-  addWidgetButton = () => this.page.getByRole('button', { name: 'Add widget' });
+  addWidgetButton = () =>
+    this.page.getByRole('main').getByRole('button', { name: 'Add widget', exact: true });
 
-  saveDashboardButton = () => this.page.getByRole('button', { name: 'Save' });
+  saveDashboardButton = () =>
+    this.page.getByRole('main').getByRole('button', { name: 'Save', exact: true });
 
-  cancelDashboardButton = () => this.page.getByRole('button', { name: 'Cancel' });
+  cancelDashboardButton = () =>
+    this.page.getByRole('main').getByRole('button', { name: 'Cancel', exact: true });
 
   enterEditMode = async () => {
     await this.editDashboardButton().click();

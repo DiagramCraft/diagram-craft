@@ -18,23 +18,28 @@ type Props = {
   lifecycle?: string;
   label?: string;
   metricType?: EntityMetricType;
+  /** Omit the card's own border/background — used when a parent already provides panel chrome. */
+  bare?: boolean;
 };
 
-export const EntityMetric = ({ schema, owner, lifecycle, label, metricType }: Props) => {
+const cardClassName = (bare?: boolean) =>
+  bare ? `${styles.card} ${styles.cardBare}` : styles.card;
+
+export const EntityMetric = ({ schema, owner, lifecycle, label, metricType, bare }: Props) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const resolvedMetricType = metricType ?? 'entity-count';
 
   if (resolvedMetricType === 'project-count') {
-    return <ProjectCountMetric workspaceSlug={workspaceSlug} label={label} />;
+    return <ProjectCountMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
   }
 
   if (resolvedMetricType === 'diagram-count') {
-    return <DiagramCountMetric workspaceSlug={workspaceSlug} label={label} />;
+    return <DiagramCountMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
   }
 
   if (resolvedMetricType === 'completeness-percent') {
-    return <CompletenessPercentMetric workspaceSlug={workspaceSlug} label={label} />;
+    return <CompletenessPercentMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
   }
 
   return (
@@ -46,6 +51,7 @@ export const EntityMetric = ({ schema, owner, lifecycle, label, metricType }: Pr
       label={label}
       navigate={navigate}
       totalEntityCount={schemas.reduce((sum, s) => sum + s.entity_count, 0)}
+      bare={bare}
     />
   );
 };
@@ -57,7 +63,8 @@ const EntityCountMetric = ({
   lifecycle,
   label,
   navigate,
-  totalEntityCount
+  totalEntityCount,
+  bare
 }: {
   workspaceSlug: string;
   schema?: string;
@@ -66,6 +73,7 @@ const EntityCountMetric = ({
   label?: string;
   navigate: ReturnType<typeof useNavigate>;
   totalEntityCount: number;
+  bare?: boolean;
 }) => {
   const hasFilter = hasEntityMetricFilter({ schema, owner, lifecycle });
 
@@ -83,7 +91,7 @@ const EntityCountMetric = ({
 
   if (!hasFilter) {
     return (
-      <div className={styles.card}>
+      <div className={cardClassName(bare)}>
         <div className={styles.number}>{totalEntityCount}</div>
         <div className={styles.label}>{label ?? 'Entities'}</div>
       </div>
@@ -102,7 +110,7 @@ const EntityCountMetric = ({
   const displayLabel = label ?? 'Entities';
 
   return (
-    <div className={styles.card}>
+    <div className={cardClassName(bare)}>
       <div className={styles.number}>{count}</div>
       <div className={styles.label}>{displayLabel}</div>
       <button
@@ -131,10 +139,12 @@ const EntityCountMetric = ({
 
 const ProjectCountMetric = ({
   workspaceSlug,
-  label
+  label,
+  bare
 }: {
   workspaceSlug: string;
   label?: string;
+  bare?: boolean;
 }) => {
   const { data: projects = [], isLoading } = useProjects(workspaceSlug);
 
@@ -147,7 +157,7 @@ const ProjectCountMetric = ({
   }
 
   return (
-    <div className={styles.card}>
+    <div className={cardClassName(bare)}>
       <div className={styles.number}>{projects.length}</div>
       <div className={styles.label}>{label ?? 'Projects'}</div>
     </div>
@@ -156,10 +166,12 @@ const ProjectCountMetric = ({
 
 const DiagramCountMetric = ({
   workspaceSlug,
-  label
+  label,
+  bare
 }: {
   workspaceSlug: string;
   label?: string;
+  bare?: boolean;
 }) => {
   const { data: projects = [], isLoading } = useProjects(workspaceSlug);
 
@@ -174,7 +186,7 @@ const DiagramCountMetric = ({
   const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
 
   return (
-    <div className={styles.card}>
+    <div className={cardClassName(bare)}>
       <div className={styles.number}>{totalFiles}</div>
       <div className={styles.label}>{label ?? 'Diagrams'}</div>
     </div>
@@ -183,10 +195,12 @@ const DiagramCountMetric = ({
 
 const CompletenessPercentMetric = ({
   workspaceSlug,
-  label
+  label,
+  bare
 }: {
   workspaceSlug: string;
   label?: string;
+  bare?: boolean;
 }) => {
   const { data: facets, isLoading } = useEntityFacets(workspaceSlug);
 
@@ -203,7 +217,7 @@ const CompletenessPercentMetric = ({
   const percent = total > 0 ? Math.round((above80 / total) * 100) : 0;
 
   return (
-    <div className={styles.card}>
+    <div className={cardClassName(bare)}>
       <div className={styles.number}>{percent}%</div>
       <div className={styles.label}>{label ?? 'Well documented'}</div>
     </div>

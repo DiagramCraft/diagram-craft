@@ -12,5 +12,6 @@ export const StatMetricWidget = ({ widget }: Props) => (
     owner={widget.owner}
     lifecycle={widget.lifecycle}
     label={widget.label}
+    bare
   />
 );

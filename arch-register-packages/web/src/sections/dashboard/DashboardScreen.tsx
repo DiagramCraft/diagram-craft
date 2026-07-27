@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Layout } from 'react-grid-layout';
 import ReactGridLayout from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
@@ -11,6 +11,7 @@ import { useWorkspaceDashboard, useUpdateWorkspaceDashboard } from '../../hooks/
 import { LoadingState } from '../../components/LoadingState';
 import { DashboardWidgetRenderer } from './widgets/DashboardWidgetRenderer';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
+import { WidgetConfigDialog } from './WidgetConfigDialog';
 import { DEFAULT_SEEDED_WIDGETS } from './dashboardWidgetDefaults';
 import styles from './DashboardScreen.module.css';
 
@@ -34,27 +35,27 @@ export const DashboardScreen = () => {
   const [localWidgets, setLocalWidgets] = useState<DashboardWidget[]>(persistedWidgets);
   const [isEditing, setIsEditing] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [editingWidgetId, setEditingWidgetId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isEditing) setLocalWidgets(persistedWidgets);
   }, [persistedWidgets, isEditing]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [gridContainerEl, setGridContainerEl] = useState<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(FALLBACK_WIDTH);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
+    if (!gridContainerEl || typeof ResizeObserver === 'undefined') return;
 
     const observer = new ResizeObserver(entries => {
       const entry = entries[0];
       if (entry) setWidth(entry.contentRect.width);
     });
-    observer.observe(el);
-    setWidth(el.clientWidth || FALLBACK_WIDTH);
+    observer.observe(gridContainerEl);
+    setWidth(gridContainerEl.clientWidth || FALLBACK_WIDTH);
 
     return () => observer.disconnect();
-  }, []);
+  }, [gridContainerEl]);
 
   if (!workspace) return null;
 
@@ -81,6 +82,7 @@ export const DashboardScreen = () => {
   };
 
   const canEditGrid = isEditing && canManageDashboard;
+  const editingWidget = localWidgets.find(w => w.id === editingWidgetId) ?? null;
 
   return (
     <div className={styles.screen}>
@@ -113,22 +115,30 @@ export const DashboardScreen = () => {
 
       {isEditing && canManageDashboard && (
         <div className={styles.editActions}>
-          <Button icon={<TbPlus size={12} />} onClick={() => setPickerOpen(true)}>
-            Add widget
-          </Button>
-          <Button icon={<TbX size={12} />} onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button variant="primary" icon={<TbCheck size={12} />} onClick={handleSave}>
-            Save
-          </Button>
+          <div className={styles.editActionsLeft}>
+            <Button
+              variant="secondary"
+              icon={<TbPlus size={12} />}
+              onClick={() => setPickerOpen(true)}
+            >
+              Add widget
+            </Button>
+          </div>
+          <div className={styles.editActionsRight}>
+            <Button variant="secondary" icon={<TbX size={12} />} onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button variant="secondary" icon={<TbCheck size={12} />} onClick={handleSave}>
+              Save
+            </Button>
+          </div>
         </div>
       )}
 
       {isLoading ? (
         <LoadingState text="Loading dashboard…" />
       ) : (
-        <div className={styles.gridContainer} ref={containerRef}>
+        <div className={styles.gridContainer} ref={setGridContainerEl}>
           <ReactGridLayout
             width={width}
             cols={GRID_COLS}
@@ -138,13 +148,22 @@ export const DashboardScreen = () => {
             isResizable={canEditGrid}
             onLayoutChange={handleLayoutChange}
             compactType={null}
-            preventCollision={false}
+            preventCollision={true}
             margin={[12, 12]}
             containerPadding={[0, 0]}
+            draggableCancel=".widgetControls"
           >
             {localWidgets.map(widget => (
               <div key={widget.id} className={styles.gridItem}>
-                <DashboardWidgetRenderer widget={widget} />
+                <DashboardWidgetRenderer
+                  widget={widget}
+                  onEdit={canEditGrid ? () => setEditingWidgetId(widget.id) : undefined}
+                  onRemove={
+                    canEditGrid
+                      ? () => setLocalWidgets(current => current.filter(w => w.id !== widget.id))
+                      : undefined
+                  }
+                />
               </div>
             ))}
           </ReactGridLayout>
@@ -158,6 +177,19 @@ export const DashboardScreen = () => {
           workspaceSlug={workspaceSlug}
           widgets={localWidgets}
           onAdd={widget => setLocalWidgets(current => [...current, widget])}
+        />
+      )}
+
+      {canManageDashboard && (
+        <WidgetConfigDialog
+          widget={editingWidget}
+          open={editingWidget !== null}
+          workspaceSlug={workspaceSlug}
+          onClose={() => setEditingWidgetId(null)}
+          onSave={updated => {
+            setLocalWidgets(current => current.map(w => (w.id === updated.id ? updated : w)));
+            setEditingWidgetId(null);
+          }}
         />
       )}
     </div>

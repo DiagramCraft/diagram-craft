@@ -9,8 +9,25 @@
 
 .editActions {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  padding: 8px 24px;
+  margin: 0 -24px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.editActionsLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editActionsRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .gridContainer {

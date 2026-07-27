@@ -8,6 +8,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), yaml()],
+    // react-draggable (via react-grid-layout) reads process.env.DRAGGABLE_DEBUG unconditionally,
+    // which throws in the browser since process isn't polyfilled without this.
+    define: {
+      'process.env': {}
+    },
     resolve: {
       dedupe: ['@platejs/core'],
       tsconfigPaths: true

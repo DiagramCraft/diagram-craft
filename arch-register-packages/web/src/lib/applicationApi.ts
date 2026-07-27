@@ -1,5 +1,5 @@
 const applicationWorkspacePathPattern =
-  /^\/api\/([^/]+)\/(schemas|data|projects|entities|content|markdown|search|ai|config|enums|views|collections|templates|analytics|metrics|jobs|webhooks|document-types|document-templates|audit|watching|notifications|notification-preferences|discussions|governance|assessments|milestones|automation-rules|content-mounts|wiki-comments|pinned-entities)(\/.*)?$/;
+  /^\/api\/([^/]+)\/(schemas|data|projects|entities|content|markdown|search|ai|config|enums|views|dashboard|collections|templates|analytics|metrics|jobs|webhooks|document-types|document-templates|audit|watching|notifications|notification-preferences|discussions|governance|assessments|milestones|automation-rules|content-mounts|wiki-comments|pinned-entities)(\/.*)?$/;
 const applicationControlPlanePathPattern = /^\/api\/workspaces(\/.*)?$/;
 
 /** Map supported workspace calls to the versioned first-party application surface. */

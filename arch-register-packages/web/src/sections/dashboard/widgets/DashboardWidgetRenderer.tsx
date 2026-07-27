@@ -10,11 +10,17 @@ import { ActivityFeedWidget } from './ActivityFeedWidget';
 
 type Props = {
   widget: DashboardWidget;
+  onEdit?: () => void;
+  onRemove?: () => void;
 };
 
-export const DashboardWidgetRenderer = ({ widget }: Props) => {
+export const DashboardWidgetRenderer = ({ widget, onEdit, onRemove }: Props) => {
   const content = renderWidgetContent(widget);
-  return <WidgetFrame>{content}</WidgetFrame>;
+  return (
+    <WidgetFrame onEdit={onEdit} onRemove={onRemove}>
+      {content}
+    </WidgetFrame>
+  );
 };
 
 const renderWidgetContent = (widget: DashboardWidget) => {

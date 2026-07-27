@@ -92,13 +92,16 @@ export const StackedBar = ({ buckets }: { buckets: BarBucket[] }) => {
 export const Section = ({
   title,
   sub,
-  children
+  children,
+  bare
 }: {
   title: string;
   sub: string;
   children: React.ReactNode;
+  /** Omit the section's own border/background — used when a parent already provides panel chrome. */
+  bare?: boolean;
 }) => (
-  <section className={styles.section}>
+  <section className={bare ? `${styles.section} ${styles.sectionBare}` : styles.section}>
     <div className={styles.sectionHead}>
       <div className={styles.sectionTitle}>{title}</div>
       <div className={styles.sectionSub}>{sub}</div>

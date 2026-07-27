@@ -11,6 +11,10 @@
   padding: 10px 12px;
   border-radius: var(--r);
   border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
   text-align: left;
 }
 
