@@ -27,11 +27,11 @@ The active AI path is workspace-scoped and lives in the server package:
 
 The mounted route set is:
 
-- `POST /api/:workspace/ai/chat`
-- `GET/POST/PATCH/DELETE /api/:workspace/ai/conversations`
-- `GET /api/:workspace/ai/conversations/:conversationId/messages`
-- `GET/PUT /api/:workspace/ai/config`
-- `POST /api/:workspace/ai/extract`
+- `POST /api/application/v1/:workspace/ai/chat`
+- `GET/POST/PATCH/DELETE /api/application/v1/:workspace/ai/conversations`
+- `GET /api/application/v1/:workspace/ai/conversations/:conversationId/messages`
+- `GET/PUT /api/application/v1/:workspace/ai/config`
+- `POST /api/application/v1/:workspace/ai/extract`
 
 There is also an older generic AI proxy route in `server/src/routes/ai.ts`, but it is not mounted by `server/src/app.ts`. The live implementation is the workspace-scoped route set in `ai-chat.ts`.
 
@@ -105,7 +105,7 @@ The web client uses TanStack AI React:
 
 - Hook: `web/src/hooks/useAiChat.ts`
 - Transport: `fetchServerSentEvents(...)`
-- Target: `/api/${workspaceSlug}/ai/chat`
+- Target: `/api/application/v1/${workspaceSlug}/ai/chat`
 
 The chat request is sent as an SSE-backed TanStack chat request. On the server:
 
@@ -346,7 +346,7 @@ Extraction is currently separate from chat.
 
 ### Route
 
-- `POST /api/:workspace/ai/extract`
+- `POST /api/application/v1/:workspace/ai/extract`
 
 ### Server Behavior
 
@@ -419,8 +419,8 @@ Configurable fields:
 
 Route backing:
 
-- `GET /api/:workspace/ai/config`
-- `PUT /api/:workspace/ai/config`
+- `GET /api/application/v1/:workspace/ai/config`
+- `PUT /api/application/v1/:workspace/ai/config`
 
 The custom system prompt is appended after the generated workspace/system context. It is not a replacement for the built-in prompt.
 

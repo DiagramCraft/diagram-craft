@@ -6,6 +6,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { listAuditLog, getAuditStats } from './auditOperations';
 import { auditContract } from '@arch-register/api-types/auditContract';
+import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -31,13 +32,16 @@ export const auditOpenAPIHandler = new OpenAPIHandler(auditORPCRouter, {
 
 export const createAuditORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await auditOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
+    const result = await auditOpenAPIHandler.handle(
+      requestForApiSurface(event, '/api/application/v1', '/api'),
+      {
+        prefix: '/api',
+        context: {
+          db,
+          event: event as AuthenticatedEvent
+        }
       }
-    });
+    );
 
     if (result.matched) {
       return result.response;

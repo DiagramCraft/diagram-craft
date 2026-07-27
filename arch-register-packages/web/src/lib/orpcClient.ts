@@ -39,6 +39,7 @@ import { governanceContract } from '@arch-register/api-types/governanceContract'
 import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
+import { toApplicationApiUrl } from './applicationApi';
 
 const ORPC_BASE_PATH = '/api';
 
@@ -108,7 +109,7 @@ const clientLink = new OpenAPILink(webContracts, {
     }
   ],
   fetch: async (request, init) => {
-    const raw = request.url;
+    const raw = toApplicationApiUrl(request.url);
     const method = request.method;
     const body = method === 'GET' || method === 'HEAD' ? undefined : await request.clone().text();
     const nextInit: RequestInit = { ...init, method, headers: request.headers, body };

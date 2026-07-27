@@ -95,7 +95,41 @@ test.describe('versioned API surface aliases', () => {
     };
 
     expect(applicationSpec.servers[0]?.url).toBe('/api/application/v1');
+    expect(applicationSpec.paths['/workspaces']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/schemas']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/projects']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/search']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/ai/config']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/config/lifecycle-states']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/enums']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/views']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/collections']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/templates']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/analytics']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/metrics/rollup']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/jobs/schedules']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/webhooks']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/document-types']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/audit']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/watching']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/notifications']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/notification-preferences']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/discussions']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/governance/cases']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/governance/reminder-config']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/data/{id}/versions']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/data/{id}/change-approvals']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/data/{id}/deprecation']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/assessments']).toBeDefined();
+    expect(
+      applicationSpec.paths['/{workspace}/assessments/{assessmentId}/responses']
+    ).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/milestones']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/projects/{id}/change-cases']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/automation-rules']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/content-mounts']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/wiki-comments']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/pinned-entities']).toBeDefined();
     expect(integrationSpec.paths['/integrations/v1/{workspace}/schemas']).toBeDefined();
     expect(integrationSpec.paths['/integrations/v1/{workspace}/schemas/{id}']).toBeUndefined();
     expect(integrationSpec.paths['/integrations/v1/{workspace}/entities/{id}']).toBeDefined();

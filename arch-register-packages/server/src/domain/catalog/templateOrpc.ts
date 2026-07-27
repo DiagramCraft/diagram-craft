@@ -12,6 +12,7 @@ import {
 } from './templateOperations';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import type { StorageAdapter } from '../../storage/storage';
+import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -75,14 +76,17 @@ export const workspaceTemplateOpenAPIHandler = new OpenAPIHandler(workspaceTempl
 
 export const createWorkspaceTemplateORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
   defineHandler(async event => {
-    const result = await workspaceTemplateOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: {
-        db,
-        storage,
-        event: event as AuthenticatedEvent
+    const result = await workspaceTemplateOpenAPIHandler.handle(
+      requestForApiSurface(event, '/api/application/v1', '/api'),
+      {
+        prefix: '/api',
+        context: {
+          db,
+          storage,
+          event: event as AuthenticatedEvent
+        }
       }
-    });
+    );
 
     if (result.matched) {
       return result.response;

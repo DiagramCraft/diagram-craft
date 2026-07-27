@@ -9,6 +9,7 @@ import {
   workspaceScoped
 } from '../../utils/orpcErrors';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
+import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import {
   addEntityToCollection,
   createCollection,
@@ -78,9 +79,12 @@ export const workspaceCollectionOpenAPIHandler = new OpenAPIHandler(workspaceCol
 
 export const createWorkspaceCollectionORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await workspaceCollectionOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: { db, event: event as AuthenticatedEvent }
-    });
+    const result = await workspaceCollectionOpenAPIHandler.handle(
+      requestForApiSurface(event, '/api/application/v1', '/api'),
+      {
+        prefix: '/api',
+        context: { db, event: event as AuthenticatedEvent }
+      }
+    );
     if (result.matched) return result.response;
   });

@@ -41,7 +41,7 @@ const uploadMarkdownAttachment = async (
   const formData = new FormData();
   formData.append('file', new Blob([body], { type: 'text/plain' }), fileName);
   const response = await fetch(
-    `${baseUrl}/api/default/markdown/${nodeId}/attachments/upload?path=${encodeURIComponent(fileName)}`,
+    `${baseUrl}/api/application/v1/default/markdown/${nodeId}/attachments/upload?path=${encodeURIComponent(fileName)}`,
     {
       method: 'POST',
       headers: { Authorization: auth },

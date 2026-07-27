@@ -54,6 +54,7 @@ import { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
 import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
 import type { ContentScope } from '../../hooks/useContentScope';
 import { downloadUrl } from '../../lib/browserDownload';
+import { applicationWorkspacePath } from '../../lib/applicationApi';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
 import { MarkdownPropertiesPanel, validateDocMetadata } from './MarkdownPropertiesPanel';
 import { ApiError } from '../../lib/http';
@@ -742,10 +743,19 @@ export const MarkdownEditorScreen = () => {
     (attachment: ProjectFile) => {
       if (attachment.type === 'file') {
         const href = projectId
-          ? `/api/${workspaceSlug}/projects/${projectId}/files/download?path=${encodeURIComponent(attachment.path)}`
+          ? applicationWorkspacePath(
+              workspaceSlug,
+              `/projects/${projectId}/files/download?path=${encodeURIComponent(attachment.path)}`
+            )
           : entityId
-            ? `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(attachment.path)}`
-            : `/api/${workspaceSlug}/content/files/download?path=${encodeURIComponent(attachment.path)}`;
+            ? applicationWorkspacePath(
+                workspaceSlug,
+                `/entities/${entityId}/content/files/download?path=${encodeURIComponent(attachment.path)}`
+              )
+            : applicationWorkspacePath(
+                workspaceSlug,
+                `/content/files/download?path=${encodeURIComponent(attachment.path)}`
+              );
         downloadUrl(href, attachment.original_filename ?? attachment.name);
         return;
       }

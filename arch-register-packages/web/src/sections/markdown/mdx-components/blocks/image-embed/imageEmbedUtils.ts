@@ -1,4 +1,5 @@
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import { applicationWorkspacePath } from '../../../../../lib/applicationApi';
 
 export const isImageMimeType = (mimeType: string | null | undefined) =>
   typeof mimeType === 'string' && mimeType.startsWith('image/');
@@ -16,12 +17,18 @@ export const getMarkdownAttachmentDownloadUrl = (params: {
   const encodedPath = encodeURIComponent(attachmentPath);
 
   if (projectId) {
-    return `/api/${workspaceSlug}/projects/${projectId}/files/download?path=${encodedPath}`;
+    return applicationWorkspacePath(
+      workspaceSlug,
+      `/projects/${projectId}/files/download?path=${encodedPath}`
+    );
   }
 
   if (entityId) {
-    return `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodedPath}`;
+    return applicationWorkspacePath(
+      workspaceSlug,
+      `/entities/${entityId}/content/files/download?path=${encodedPath}`
+    );
   }
 
-  return `/api/${workspaceSlug}/content/files/download?path=${encodedPath}`;
+  return applicationWorkspacePath(workspaceSlug, `/content/files/download?path=${encodedPath}`);
 };

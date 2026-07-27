@@ -93,7 +93,7 @@ describe('ImageEmbed', () => {
     expect(image?.style.marginLeft).toBe('auto');
     expect(image?.style.marginRight).toBe('0px');
     expect(fetchWithAuthResponseMock).toHaveBeenCalledWith(
-      '/api/demo/content/files/download?path=docs%2Fpage%2F__attachments%2Fimage.png'
+      '/api/application/v1/demo/content/files/download?path=docs%2Fpage%2F__attachments%2Fimage.png'
     );
 
     await act(async () => {

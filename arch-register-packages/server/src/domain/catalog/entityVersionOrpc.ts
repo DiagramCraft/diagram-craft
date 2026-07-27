@@ -1,6 +1,7 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
+import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import type { DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
@@ -173,13 +174,16 @@ export const entityVersionOpenAPIHandler = new OpenAPIHandler(entityVersionORPCR
 
 export const createEntityVersionORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await entityVersionOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
+    const result = await entityVersionOpenAPIHandler.handle(
+      requestForApiSurface(event, '/api/application/v1', '/api'),
+      {
+        prefix: '/api',
+        context: {
+          db,
+          event: event as AuthenticatedEvent
+        }
       }
-    });
+    );
 
     if (result.matched) {
       return result.response;

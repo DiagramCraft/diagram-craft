@@ -11,7 +11,7 @@ const jsonHeaders = (auth: string) => ({
 
 test.describe('watch and notification permission routes', () => {
   test('authentication: notification routes return 401 without auth', async ({ server }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/notifications/count`);
+    const res = await fetch(`${server.baseUrl}/api/application/v1/default/notifications/count`);
     expect(res.status).toBe(401);
   });
 
@@ -19,12 +19,15 @@ test.describe('watch and notification permission routes', () => {
     server,
     personas
   }) => {
-    const countRes = await fetch(`${server.baseUrl}/api/default/notifications/count`, {
-      headers: { Authorization: personas.outsider.auth }
-    });
+    const countRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications/count`,
+      {
+        headers: { Authorization: personas.outsider.auth }
+      }
+    );
     expect(countRes.status).toBe(403);
 
-    const watchRes = await fetch(`${server.baseUrl}/api/default/watching`, {
+    const watchRes = await fetch(`${server.baseUrl}/api/application/v1/default/watching`, {
       method: 'POST',
       headers: jsonHeaders(personas.outsider.auth),
       body: JSON.stringify({ entity_id: componentId })
@@ -36,22 +39,25 @@ test.describe('watch and notification permission routes', () => {
     server,
     personas
   }) => {
-    const listRes = await fetch(`${server.baseUrl}/api/default/pinned-entities`, {
+    const listRes = await fetch(`${server.baseUrl}/api/application/v1/default/pinned-entities`, {
       headers: { Authorization: personas.outsider.auth }
     });
     expect(listRes.status).toBe(403);
 
-    const createRes = await fetch(`${server.baseUrl}/api/default/pinned-entities`, {
+    const createRes = await fetch(`${server.baseUrl}/api/application/v1/default/pinned-entities`, {
       method: 'POST',
       headers: jsonHeaders(personas.outsider.auth),
       body: JSON.stringify({ entity_id: componentId })
     });
     expect(createRes.status).toBe(403);
 
-    const deleteRes = await fetch(`${server.baseUrl}/api/default/pinned-entities/${componentId}`, {
-      method: 'DELETE',
-      headers: { Authorization: personas.outsider.auth }
-    });
+    const deleteRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/pinned-entities/${componentId}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: personas.outsider.auth }
+      }
+    );
     expect(deleteRes.status).toBe(403);
   });
 });

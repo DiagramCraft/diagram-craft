@@ -1,6 +1,7 @@
 import { defineHandler, HTTPError } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
+import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -305,14 +306,17 @@ export const createWorkspaceManagementORPCHandler = (
   storage?: StorageAdapter
 ) =>
   defineHandler(async event => {
-    const result = await workspaceManagementOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: {
-        db,
-        storage,
-        event: event as AuthenticatedEvent
+    const result = await workspaceManagementOpenAPIHandler.handle(
+      requestForApiSurface(event, '/api/application/v1', '/api'),
+      {
+        prefix: '/api',
+        context: {
+          db,
+          storage,
+          event: event as AuthenticatedEvent
+        }
       }
-    });
+    );
 
     if (result.matched) {
       return result.response;

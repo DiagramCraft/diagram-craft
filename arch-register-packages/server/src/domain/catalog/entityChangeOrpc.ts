@@ -1,6 +1,7 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
+import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -87,10 +88,13 @@ export const createEntityChangeORPCHandler = (db: DatabaseAdapter) => {
     clientInterceptors: orpcErrorInterceptors
   });
   return defineHandler(async event => {
-    const result = await openAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: { db, event: event as AuthenticatedEvent }
-    });
+    const result = await openAPIHandler.handle(
+      requestForApiSurface(event, '/api/application/v1', '/api'),
+      {
+        prefix: '/api',
+        context: { db, event: event as AuthenticatedEvent }
+      }
+    );
     if (result.matched) return result.response;
   });
 };

@@ -14,6 +14,7 @@ import {
   clearNotifications
 } from './watchOperations';
 import { watchContract } from '@arch-register/api-types/watchContract';
+import { requestForApiSurface } from '../../utils/apiRouteAliases';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -66,13 +67,16 @@ export const watchOpenAPIHandler = new OpenAPIHandler(watchORPCRouter, {
 
 export const createWatchORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await watchOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
+    const result = await watchOpenAPIHandler.handle(
+      requestForApiSurface(event, '/api/application/v1', '/api'),
+      {
+        prefix: '/api',
+        context: {
+          db,
+          event: event as AuthenticatedEvent
+        }
       }
-    });
+    );
 
     if (result.matched) {
       return result.response;

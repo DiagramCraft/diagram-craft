@@ -155,7 +155,7 @@ export const createBlankProjectDiagram = async (page: Page, name: string) => {
   await page.evaluate(
     async ({ workspaceSlug, projectId, diagramName, diagramBody }) => {
       const response = await fetch(
-        `/api/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/files?path=${encodeURIComponent(diagramName)}.json`,
+        `/api/application/v1/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/files?path=${encodeURIComponent(diagramName)}.json`,
         {
           method: 'PUT',
           headers: {
@@ -197,10 +197,10 @@ export const createWikiPage = async (
       const payload = JSON.stringify({ name, ...(folder ? { folder } : {}) });
       const endpoint =
         scope === 'workspace'
-          ? `/api/${encodeURIComponent(workspaceSlug)}/content/markdown`
+          ? `/api/application/v1/${encodeURIComponent(workspaceSlug)}/content/markdown`
           : scope === 'project'
-            ? `/api/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/markdown`
-            : `/api/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(entityId)}/markdown`;
+          ? `/api/application/v1/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/markdown`
+          : `/api/application/v1/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(entityId)}/markdown`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -228,7 +228,7 @@ export const saveWikiContent = async (page: Page, nodeId: string, body: string) 
   await page.evaluate(
     async ({ workspaceSlug, nodeId, body }) => {
       const response = await fetch(
-        `/api/${encodeURIComponent(workspaceSlug)}/markdown/${encodeURIComponent(nodeId)}`,
+        `/api/application/v1/${encodeURIComponent(workspaceSlug)}/markdown/${encodeURIComponent(nodeId)}`,
         {
           method: 'PUT',
           headers: { 'content-type': 'application/json' },

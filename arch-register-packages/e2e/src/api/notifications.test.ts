@@ -55,7 +55,7 @@ const jsonHeaders = (auth: string) => ({
 });
 
 const getEntity = async (baseUrl: string, auth: string, entityId: string) => {
-  const res = await fetch(`${baseUrl}/api/default/data/${entityId}`, {
+  const res = await fetch(`${baseUrl}/api/application/v1/default/data/${entityId}`, {
     headers: { Authorization: auth }
   });
   expect(res.status).toBe(200);
@@ -63,15 +63,15 @@ const getEntity = async (baseUrl: string, auth: string, entityId: string) => {
 };
 
 const resetInbox = async (baseUrl: string, auth: string) => {
-  await fetch(`${baseUrl}/api/default/notifications`, {
+  await fetch(`${baseUrl}/api/application/v1/default/notifications`, {
     method: 'DELETE',
     headers: { Authorization: auth }
   });
-  await fetch(`${baseUrl}/api/default/watching/${componentId}`, {
+  await fetch(`${baseUrl}/api/application/v1/default/watching/${componentId}`, {
     method: 'DELETE',
     headers: { Authorization: auth }
   });
-  await fetch(`${baseUrl}/api/default/pinned-entities/${componentId}`, {
+  await fetch(`${baseUrl}/api/application/v1/default/pinned-entities/${componentId}`, {
     method: 'DELETE',
     headers: { Authorization: auth }
   });
@@ -85,39 +85,51 @@ test.describe('entity watch notifications', () => {
   }) => {
     await resetInbox(server.baseUrl, auth);
 
-    const watchRes = await fetch(`${server.baseUrl}/api/default/watching`, {
+    const watchRes = await fetch(`${server.baseUrl}/api/application/v1/default/watching`, {
       method: 'POST',
       headers: jsonHeaders(auth),
       body: JSON.stringify({ entity_id: componentId })
     });
     expect(watchRes.status).toBe(200);
 
-    const beforeCountRes = await fetch(`${server.baseUrl}/api/default/notifications/count`, {
-      headers: { Authorization: auth }
-    });
+    const beforeCountRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications/count`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
     expect(beforeCountRes.status).toBe(200);
     expect(await beforeCountRes.json()).toEqual({ count: 0 });
 
     const entity = await getEntity(server.baseUrl, editorAuth, componentId);
-    const updateRes = await fetch(`${server.baseUrl}/api/default/data/${componentId}`, {
-      method: 'PUT',
-      headers: jsonHeaders(editorAuth),
-      body: JSON.stringify({
-        ...entity,
-        _description: 'Updated by editor for notification testing'
-      })
-    });
+    const updateRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/data/${componentId}`,
+      {
+        method: 'PUT',
+        headers: jsonHeaders(editorAuth),
+        body: JSON.stringify({
+          ...entity,
+          _description: 'Updated by editor for notification testing'
+        })
+      }
+    );
     expect(updateRes.status).toBe(200);
 
-    const countRes = await fetch(`${server.baseUrl}/api/default/notifications/count`, {
-      headers: { Authorization: auth }
-    });
+    const countRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications/count`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
     expect(countRes.status).toBe(200);
     expect(await countRes.json()).toEqual({ count: 1 });
 
-    const notificationsRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
-      headers: { Authorization: auth }
-    });
+    const notificationsRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
     expect(notificationsRes.status).toBe(200);
     const notifications = (await notificationsRes.json()) as Array<Record<string, unknown>>;
     expect(notifications).toEqual([
@@ -137,14 +149,14 @@ test.describe('entity watch notifications', () => {
   }) => {
     await resetInbox(server.baseUrl, auth);
 
-    await fetch(`${server.baseUrl}/api/default/watching`, {
+    await fetch(`${server.baseUrl}/api/application/v1/default/watching`, {
       method: 'POST',
       headers: jsonHeaders(auth),
       body: JSON.stringify({ entity_id: componentId })
     });
 
     const entity = await getEntity(server.baseUrl, editorAuth, componentId);
-    await fetch(`${server.baseUrl}/api/default/data/${componentId}`, {
+    await fetch(`${server.baseUrl}/api/application/v1/default/data/${componentId}`, {
       method: 'PUT',
       headers: jsonHeaders(editorAuth),
       body: JSON.stringify({
@@ -153,14 +165,17 @@ test.describe('entity watch notifications', () => {
       })
     });
 
-    const notificationsRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
-      headers: { Authorization: auth }
-    });
+    const notificationsRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
     const notifications = (await notificationsRes.json()) as Array<{ id: string }>;
     expect(notifications).toHaveLength(1);
 
     const deleteRes = await fetch(
-      `${server.baseUrl}/api/default/notifications/${notifications[0]!.id}`,
+      `${server.baseUrl}/api/application/v1/default/notifications/${notifications[0]!.id}`,
       {
         method: 'DELETE',
         headers: { Authorization: auth }
@@ -168,9 +183,12 @@ test.describe('entity watch notifications', () => {
     );
     expect(deleteRes.status).toBe(200);
 
-    const countRes = await fetch(`${server.baseUrl}/api/default/notifications/count`, {
-      headers: { Authorization: auth }
-    });
+    const countRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications/count`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
     expect(await countRes.json()).toEqual({ count: 0 });
   });
 
@@ -182,7 +200,7 @@ test.describe('entity watch notifications', () => {
     await resetInbox(server.baseUrl, auth);
     await resetInbox(server.baseUrl, editorAuth);
 
-    const rootRes = await fetch(`${server.baseUrl}/api/default/discussions`, {
+    const rootRes = await fetch(`${server.baseUrl}/api/application/v1/default/discussions`, {
       method: 'POST',
       headers: jsonHeaders(auth),
       body: JSON.stringify({
@@ -193,9 +211,12 @@ test.describe('entity watch notifications', () => {
     });
     expect(rootRes.status).toBe(200);
 
-    const ownerNotificationsRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
-      headers: { Authorization: editorAuth }
-    });
+    const ownerNotificationsRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications`,
+      {
+        headers: { Authorization: editorAuth }
+      }
+    );
     const ownerNotifications = (await ownerNotificationsRes.json()) as Array<
       Record<string, unknown>
     >;
@@ -209,7 +230,7 @@ test.describe('entity watch notifications', () => {
     ]);
 
     await resetInbox(server.baseUrl, editorAuth);
-    const editorRootRes = await fetch(`${server.baseUrl}/api/default/discussions`, {
+    const editorRootRes = await fetch(`${server.baseUrl}/api/application/v1/default/discussions`, {
       method: 'POST',
       headers: jsonHeaders(editorAuth),
       body: JSON.stringify({
@@ -221,7 +242,7 @@ test.describe('entity watch notifications', () => {
     expect(editorRootRes.status).toBe(200);
     const editorRoot = (await editorRootRes.json()) as { id: string };
 
-    const replyRes = await fetch(`${server.baseUrl}/api/default/discussions`, {
+    const replyRes = await fetch(`${server.baseUrl}/api/application/v1/default/discussions`, {
       method: 'POST',
       headers: jsonHeaders(auth),
       body: JSON.stringify({
@@ -233,9 +254,12 @@ test.describe('entity watch notifications', () => {
     });
     expect(replyRes.status).toBe(200);
 
-    const replyNotificationsRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
-      headers: { Authorization: editorAuth }
-    });
+    const replyNotificationsRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications`,
+      {
+        headers: { Authorization: editorAuth }
+      }
+    );
     const replyNotifications = (await replyNotificationsRes.json()) as Array<
       Record<string, unknown>
     >;
@@ -255,14 +279,17 @@ test.describe('entity watch notifications', () => {
   }) => {
     await resetInbox(server.baseUrl, editorAuth);
 
-    const documentRes = await fetch(`${server.baseUrl}/api/default/content/markdown`, {
-      method: 'POST',
-      headers: jsonHeaders(editorAuth),
-      body: JSON.stringify({ name: 'Inline Review' })
-    });
+    const documentRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/content/markdown`,
+      {
+        method: 'POST',
+        headers: jsonHeaders(editorAuth),
+        body: JSON.stringify({ name: 'Inline Review' })
+      }
+    );
     expect(documentRes.status).toBe(200);
     const document = (await documentRes.json()) as { id: string };
-    const commentRes = await fetch(`${server.baseUrl}/api/default/wiki-comments`, {
+    const commentRes = await fetch(`${server.baseUrl}/api/application/v1/default/wiki-comments`, {
       method: 'POST',
       headers: jsonHeaders(auth),
       body: JSON.stringify({
@@ -274,9 +301,12 @@ test.describe('entity watch notifications', () => {
     expect(commentRes.status).toBe(200);
     const comment = (await commentRes.json()) as { id: string };
 
-    const notificationsRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
-      headers: { Authorization: editorAuth }
-    });
+    const notificationsRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications`,
+      {
+        headers: { Authorization: editorAuth }
+      }
+    );
     const notifications = (await notificationsRes.json()) as Array<Record<string, unknown>>;
     expect(notifications).toEqual([
       expect.objectContaining({
@@ -295,51 +325,63 @@ test.describe('entity watch notifications', () => {
   }) => {
     await resetInbox(server.baseUrl, auth);
 
-    await fetch(`${server.baseUrl}/api/default/watching`, {
+    await fetch(`${server.baseUrl}/api/application/v1/default/watching`, {
       method: 'POST',
       headers: jsonHeaders(auth),
       body: JSON.stringify({ entity_id: componentId })
     });
 
     const selfEntity = await getEntity(server.baseUrl, auth, componentId);
-    const selfUpdateRes = await fetch(`${server.baseUrl}/api/default/data/${componentId}`, {
-      method: 'PUT',
-      headers: jsonHeaders(auth),
-      body: JSON.stringify({
-        ...selfEntity,
-        _description: 'Self-authored update should not notify'
-      })
-    });
+    const selfUpdateRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/data/${componentId}`,
+      {
+        method: 'PUT',
+        headers: jsonHeaders(auth),
+        body: JSON.stringify({
+          ...selfEntity,
+          _description: 'Self-authored update should not notify'
+        })
+      }
+    );
     expect(selfUpdateRes.status).toBe(200);
 
-    const zeroCountRes = await fetch(`${server.baseUrl}/api/default/notifications/count`, {
-      headers: { Authorization: auth }
-    });
+    const zeroCountRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications/count`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
     expect(await zeroCountRes.json()).toEqual({ count: 0 });
 
     for (const description of ['External update one', 'External update two']) {
       const entity = await getEntity(server.baseUrl, editorAuth, componentId);
-      const updateRes = await fetch(`${server.baseUrl}/api/default/data/${componentId}`, {
-        method: 'PUT',
-        headers: jsonHeaders(editorAuth),
-        body: JSON.stringify({
-          ...entity,
-          _description: description
-        })
-      });
+      const updateRes = await fetch(
+        `${server.baseUrl}/api/application/v1/default/data/${componentId}`,
+        {
+          method: 'PUT',
+          headers: jsonHeaders(editorAuth),
+          body: JSON.stringify({
+            ...entity,
+            _description: description
+          })
+        }
+      );
       expect(updateRes.status).toBe(200);
     }
 
-    const clearRes = await fetch(`${server.baseUrl}/api/default/notifications`, {
+    const clearRes = await fetch(`${server.baseUrl}/api/application/v1/default/notifications`, {
       method: 'DELETE',
       headers: { Authorization: auth }
     });
     expect(clearRes.status).toBe(200);
     expect(await clearRes.json()).toMatchObject({ success: true, count: 2 });
 
-    const finalCountRes = await fetch(`${server.baseUrl}/api/default/notifications/count`, {
-      headers: { Authorization: auth }
-    });
+    const finalCountRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/notifications/count`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
     expect(await finalCountRes.json()).toEqual({ count: 0 });
   });
 });
@@ -349,7 +391,7 @@ test.describe('pinned entities API', () => {
     await resetInbox(server.baseUrl, auth);
     await resetInbox(server.baseUrl, editorAuth);
 
-    const createRes = await fetch(`${server.baseUrl}/api/default/pinned-entities`, {
+    const createRes = await fetch(`${server.baseUrl}/api/application/v1/default/pinned-entities`, {
       method: 'POST',
       headers: jsonHeaders(auth),
       body: JSON.stringify({ entity_id: componentId })
@@ -361,7 +403,7 @@ test.describe('pinned entities API', () => {
       })
     );
 
-    const ownPinsRes = await fetch(`${server.baseUrl}/api/default/pinned-entities`, {
+    const ownPinsRes = await fetch(`${server.baseUrl}/api/application/v1/default/pinned-entities`, {
       headers: { Authorization: auth }
     });
     expect(ownPinsRes.status).toBe(200);
@@ -371,25 +413,34 @@ test.describe('pinned entities API', () => {
       })
     ]);
 
-    const otherPinsRes = await fetch(`${server.baseUrl}/api/default/pinned-entities`, {
-      headers: { Authorization: editorAuth }
-    });
+    const otherPinsRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/pinned-entities`,
+      {
+        headers: { Authorization: editorAuth }
+      }
+    );
     expect(otherPinsRes.status).toBe(200);
     expect(await otherPinsRes.json()).toEqual([]);
 
-    const deleteRes = await fetch(`${server.baseUrl}/api/default/pinned-entities/${componentId}`, {
-      method: 'DELETE',
-      headers: { Authorization: auth }
-    });
+    const deleteRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/pinned-entities/${componentId}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: auth }
+      }
+    );
     expect(deleteRes.status).toBe(200);
     expect(await deleteRes.json()).toMatchObject({
       success: true,
       message: `Entity '${componentId}' unpinned`
     });
 
-    const afterDeleteRes = await fetch(`${server.baseUrl}/api/default/pinned-entities`, {
-      headers: { Authorization: auth }
-    });
+    const afterDeleteRes = await fetch(
+      `${server.baseUrl}/api/application/v1/default/pinned-entities`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
     expect(afterDeleteRes.status).toBe(200);
     expect(await afterDeleteRes.json()).toEqual([]);
   });

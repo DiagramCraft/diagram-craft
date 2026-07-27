@@ -29,24 +29,24 @@ describe('content scope adapter', () => {
   it('builds scope-specific download URLs', () => {
     expect(
       contentDownloadUrl({ kind: 'project', workspaceId: 'ws', projectId: 'p' }, 'a b/x.json')
-    ).toBe('/api/ws/projects/p/files/download?path=a%20b%2Fx.json');
+    ).toBe('/api/application/v1/ws/projects/p/files/download?path=a%20b%2Fx.json');
     expect(contentDownloadUrl({ kind: 'entity', workspaceId: 'ws', entityId: 'e' }, 'x.json')).toBe(
-      '/api/ws/entities/e/content/files/download?path=x.json'
+      '/api/application/v1/ws/entities/e/content/files/download?path=x.json'
     );
     expect(contentDownloadUrl({ kind: 'workspace', workspaceId: 'ws' }, 'x.json')).toBe(
-      '/api/ws/content/files/download?path=x.json'
+      '/api/application/v1/ws/content/files/download?path=x.json'
     );
   });
 
   it('builds scope-specific upload URLs', () => {
     expect(contentUploadUrl({ kind: 'project', workspaceId: 'ws', projectId: 'p' })).toBe(
-      '/api/ws/projects/p/files/upload'
+      '/api/application/v1/ws/projects/p/files/upload'
     );
     expect(contentUploadUrl({ kind: 'entity', workspaceId: 'ws', entityId: 'e' })).toBe(
-      '/api/ws/entities/e/content/files/upload'
+      '/api/application/v1/ws/entities/e/content/files/upload'
     );
     expect(contentUploadUrl({ kind: 'workspace', workspaceId: 'ws' })).toBe(
-      '/api/ws/content/files/upload'
+      '/api/application/v1/ws/content/files/upload'
     );
   });
 

@@ -16,6 +16,7 @@ import {
   TbDownload
 } from 'react-icons/tb';
 import { ApiError } from '../../lib/http';
+import { applicationWorkspacePath } from '../../lib/applicationApi';
 import { downloadUrl } from '../../lib/browserDownload';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import {
@@ -409,7 +410,10 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
   const triggerDownload = (file: ProjectFile) => {
     downloadUrl(
-      `/api/${workspaceId}/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`,
+      applicationWorkspacePath(
+        workspaceId,
+        `/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`
+      ),
       file.original_filename ?? file.name
     );
   };
