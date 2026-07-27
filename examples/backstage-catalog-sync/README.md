@@ -17,7 +17,9 @@ Supported kinds are `Component`, `API`, `Resource`, `System`, and `Domain`.
 
 The importer currently reads only `catalog-info.yaml` from the repository root. It does not resolve Backstage `Group`, `User`, `Location`, or `Template` entities.
 
-Backstage relationship references are reported as warnings and are not written yet. Backstage references such as `system:default/my-system` are namespaced catalog references, while Arch Register relationship fields require entity IDs. Relationship synchronization is tracked in [the follow-up issue](https://github.com/DiagramCraft/diagram-craft/issues/2426).
+The importer synchronizes `system`, `domain`, `providesApis`, and `consumesApis` relationships. It scans all supported entities first, materializes scalar data, then resolves references to Arch Register IDs in a second pass. References may use Backstage's `kind:namespace/name`, `namespace/name`, or `name` forms; the field supplies defaults for omitted kind and namespace.
+
+Missing, malformed, unsupported, or otherwise unresolved targets are omitted from the written relationship array and reported as relationship warnings. Relationship warnings do not fail the source entity; API and entity update failures still count as entity failures.
 
 Owner references are also passed through as Backstage strings; Arch Register resolves them only when they match an existing team ID.
 
@@ -101,4 +103,4 @@ pnpm typecheck
 pnpm test
 ```
 
-The tests cover YAML parsing, validation, external-key generation, supported-kind handling, and scalar field mapping.
+The tests cover YAML parsing, reference parsing, validation, external-key generation, supported-kind handling, and scalar/relationship mapping. Synchronization runs in two passes so repository order does not affect relationship resolution.

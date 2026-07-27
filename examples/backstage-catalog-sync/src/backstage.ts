@@ -26,6 +26,58 @@ export interface ValidationResult {
   errors: string[];
 }
 
+export interface BackstageEntityReference {
+  kind: string;
+  namespace: string;
+  name: string;
+}
+
+export type BackstageReferenceValue =
+  | string
+  | { kind?: string; namespace?: string; name?: string }
+  | null
+  | undefined;
+
+/** Parses a Backstage entity reference using the field's default kind. */
+export const parseBackstageReference = (
+  value: BackstageReferenceValue,
+  defaultKind: string
+): BackstageEntityReference | null => {
+  if (typeof value === 'object' && value !== null) {
+    if (typeof value.name !== 'string' || value.name.length === 0) return null;
+    return {
+      kind: (value.kind ?? defaultKind).toLowerCase(),
+      namespace: value.namespace ?? 'default',
+      name: value.name
+    };
+  }
+
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  const reference = value.trim();
+  const kindSeparator = reference.indexOf(':');
+  const kind = kindSeparator >= 0 ? reference.slice(0, kindSeparator) : defaultKind;
+  const namePart = kindSeparator >= 0 ? reference.slice(kindSeparator + 1) : reference;
+  const parts = namePart.split('/');
+  if (
+    !kind ||
+    parts.length < 1 ||
+    parts.length > 2 ||
+    parts.some(part => part.length === 0) ||
+    parts.length === 2 && parts[0]!.includes('/')
+  ) {
+    return null;
+  }
+
+  return {
+    kind: kind.toLowerCase(),
+    namespace: parts.length === 2 ? parts[0]! : 'default',
+    name: parts.length === 2 ? parts[1]! : parts[0]!
+  };
+};
+
+export const canonicalReferenceKey = (reference: BackstageEntityReference): string =>
+  `${reference.namespace}/${reference.kind.toLowerCase()}/${reference.name}`;
+
 /**
  * Parses YAML content and extracts Backstage entities
  * Supports both single-document and multi-document YAML

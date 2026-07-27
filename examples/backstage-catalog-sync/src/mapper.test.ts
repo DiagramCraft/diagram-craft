@@ -42,19 +42,50 @@ describe('Backstage entity mapping', () => {
     assert.deepEqual(result.entity?._tags, ['frontend']);
   });
 
-  it('does not send unresolved Backstage relationships as Arch Register IDs', () => {
+  it('retains relationship references separately from Arch Register fields', () => {
     const result = mapBackstageToArchRegister(component, schemaMapping);
 
     assert.equal('system' in (result.entity ?? {}), false);
-    assert.ok(result.warnings.some(warning => warning.includes('spec.system')));
+    assert.deepEqual(result.relationships, [
+      { field: 'system', defaultKind: 'system', references: ['system:default/artists'] },
+      { field: 'providesApis', defaultKind: 'api', references: [] },
+      { field: 'consumesApis', defaultKind: 'api', references: [] }
+    ]);
+    assert.equal(result.warnings.some(warning => warning.includes('spec.system')), false);
   });
 
   it('reports a missing schema mapping', () => {
     const result = mapBackstageToArchRegister(component, {});
 
     assert.equal(result.entity, null);
+    assert.deepEqual(result.relationships, []);
     assert.deepEqual(result.errors, [
       "No schema mapping found for kind 'Component'. Configure SCHEMA_COMPONENT or ensure schema auto-discovery is working."
     ]);
+  });
+
+  it('maps the relationship path for each supported kind', () => {
+    const makeEntity = (kind: string, field: string, value: unknown): BackstageEntity => ({
+      apiVersion: 'backstage.io/v1alpha1',
+      kind,
+      metadata: { name: `${kind.toLowerCase()}-one` },
+      spec: { [field]: value }
+    });
+
+    assert.equal(mapBackstageToArchRegister(
+      makeEntity('Component', 'system', 'my-system'), schemaMapping
+    ).relationships[0]?.field, 'system');
+    assert.equal(mapBackstageToArchRegister(
+      makeEntity('API', 'system', 'my-system'), schemaMapping
+    ).relationships[0]?.defaultKind, 'system');
+    assert.equal(mapBackstageToArchRegister(
+      makeEntity('Resource', 'system', 'my-system'), schemaMapping
+    ).relationships[0]?.field, 'system');
+    assert.equal(mapBackstageToArchRegister(
+      makeEntity('System', 'domain', 'my-domain'), schemaMapping
+    ).relationships[0]?.defaultKind, 'domain');
+    assert.deepEqual(mapBackstageToArchRegister(
+      makeEntity('Domain', 'unused', 'ignored'), schemaMapping
+    ).relationships, []);
   });
 });

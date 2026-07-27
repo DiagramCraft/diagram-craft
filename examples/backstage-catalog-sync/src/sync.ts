@@ -5,10 +5,12 @@ import {
   validateEntity,
   isSupportedKind,
   generateExternalKey,
+  parseBackstageReference,
+  canonicalReferenceKey,
   type BackstageEntity
 } from './backstage.js';
 import { mapBackstageToArchRegister } from './mapper.js';
-import { syncEntity, discoverSchemas } from './archRegister.js';
+import { syncEntity, getEntityByExternalKey, discoverSchemas, type SyncResult } from './archRegister.js';
 
 export interface SyncReport {
   totalRepos: number;
@@ -23,7 +25,44 @@ export interface SyncReport {
     entity?: string;
     error: string;
   }>;
+  warnings: Array<{
+    repo: string;
+    entity: string;
+    field: string;
+    reference: string;
+    warning: string;
+  }>;
 }
+
+interface ScannedEntity {
+  repo: GitHubRepo;
+  entity: BackstageEntity;
+  entityRef: string;
+  externalKey: string;
+  mapped: NonNullable<ReturnType<typeof mapBackstageToArchRegister>['entity']>;
+  relationships: ReturnType<typeof mapBackstageToArchRegister>['relationships'];
+}
+
+const relationFieldName = (field: string): string => {
+  switch (field) {
+    case 'providesApis': return 'provides_apis';
+    case 'consumesApis': return 'consumes_apis';
+    default: return field;
+  }
+};
+
+const relationFieldsForKind = (kind: string): string[] => {
+  switch (kind) {
+    case 'Component': return ['system', 'provides_apis', 'consumes_apis'];
+    case 'API':
+    case 'Resource': return ['system'];
+    case 'System': return ['domain'];
+    default: return [];
+  }
+};
+
+const referenceDisplay = (reference: unknown): string =>
+  typeof reference === 'string' ? reference : JSON.stringify(reference) ?? String(reference);
 
 /**
  * Syncs all Backstage catalog-info.yaml files from a GitHub organization
@@ -37,7 +76,8 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     unchanged: 0,
     skipped: 0,
     failed: 0,
-    errors: []
+    errors: [],
+    warnings: []
   };
 
   console.log(`\n🔍 Scanning GitHub organization: ${org}`);
@@ -95,7 +135,10 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     return report;
   }
 
-  // Process each repository
+  const scanned: ScannedEntity[] = [];
+
+  // Scan every repository and entity before making any writes. This makes references independent
+  // of GitHub's repository/entity ordering.
   const source = `backstage-github-${org}`;
 
   for (const repo of repos) {
@@ -210,49 +253,151 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
       // Generate external key
       const externalKey = generateExternalKey(entity);
 
-      // Sync to Arch Register (unless dry run)
-      if (config.dryRun) {
-        console.log(`   ✓ Would sync: ${externalKey}`);
-        report.unchanged++;
+      scanned.push({
+        repo,
+        entity,
+        entityRef,
+        externalKey,
+        mapped: mappingResult.entity,
+        relationships: mappingResult.relationships
+      });
+    }
+  }
+
+  if (config.dryRun) {
+    for (const item of scanned) {
+      console.log(`   ✓ Would sync: ${item.externalKey}`);
+      report.unchanged++;
+    }
+    return report;
+  }
+
+  const idsByReference = new Map<string, string>();
+  const existingByKey = new Map<string, Record<string, unknown>>();
+  const syncResults = new Map<string, SyncResult>();
+  // Pass one: materialize scalar fields, retaining existing relationship values until all IDs
+  // are known. New entities get empty arrays for every supported relation field.
+  for (const item of scanned) {
+    let existing: Record<string, unknown> | undefined;
+    const relationFields = relationFieldsForKind(item.entity.kind);
+    try {
+      existing = await getEntityByExternalKey(
+        config.archRegisterWorkspace, source, item.externalKey,
+        config.archRegisterToken, config.archRegisterUrl
+      );
+      existingByKey.set(item.externalKey, existing);
+    } catch (error) {
+      if (!(error instanceof Error && 'status' in error && (error as { status?: number }).status === 404)) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        report.failed++;
+        report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
         continue;
       }
+    }
 
-      try {
-        const result = await syncEntity(
-          config.archRegisterWorkspace,
-          source,
-          externalKey,
-          mappingResult.entity,
-          config.archRegisterToken,
-          config.archRegisterUrl
-        );
+    const materialized = { ...item.mapped };
+    for (const field of relationFields) {
+      materialized[field] = existing?.[field] ?? [];
+    }
 
-        switch (result.status) {
-          case 'created':
-            console.log(`   ✓ Created: ${result.entity._publicId} (${result.entity._name})`);
-            report.created++;
-            break;
-          case 'updated':
-            console.log(`   ✓ Updated: ${result.entity._publicId} (${result.entity._name})`);
-            report.updated++;
-            break;
-          case 'unchanged':
-            if (config.verbose) {
-              console.log(`   ✓ Unchanged: ${result.entity._publicId} (${result.entity._name})`);
-            }
-            report.unchanged++;
-            break;
-        }
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error(`   ✗ Sync failed: ${errorMsg}`);
-        report.failed++;
-        report.errors.push({
-          repo: repo.fullName,
-          entity: entityRef,
-          error: errorMsg
-        });
+    try {
+      const result = await syncEntity(
+        config.archRegisterWorkspace, source, item.externalKey, materialized,
+        config.archRegisterToken, config.archRegisterUrl
+      );
+      syncResults.set(item.externalKey, result);
+      idsByReference.set(canonicalReferenceKey({
+        kind: item.entity.kind,
+        namespace: item.entity.metadata.namespace ?? 'default',
+        name: item.entity.metadata.name
+      }), result.entity._uid);
+      switch (result.status) {
+        case 'created': report.created++; break;
+        case 'updated': report.updated++; break;
+        case 'unchanged': report.unchanged++; break;
       }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      report.failed++;
+      report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
+    }
+  }
+
+  const lookupCache = new Map<string, string | null>();
+  const resolveReference = async (key: string): Promise<string | null> => {
+    if (idsByReference.has(key)) return idsByReference.get(key)!;
+    if (lookupCache.has(key)) return lookupCache.get(key)!;
+    try {
+      const target = await getEntityByExternalKey(
+        config.archRegisterWorkspace, source, key,
+        config.archRegisterToken, config.archRegisterUrl
+      );
+      lookupCache.set(key, target._uid);
+      return target._uid;
+    } catch (error) {
+      if (error instanceof Error && 'status' in error && (error as { status?: number }).status === 404) {
+        lookupCache.set(key, null);
+        return null;
+      }
+      throw error;
+    }
+  };
+
+  // Pass two: resolve and submit only changed relationship arrays.
+  for (const item of scanned) {
+    if (!syncResults.has(item.externalKey)) continue;
+    const relationFields = relationFieldsForKind(item.entity.kind);
+    const relationValues = new Map<string, string[]>();
+    for (const relationship of item.relationships) {
+      const field = relationFieldName(relationship.field);
+      const resolved: string[] = [];
+      for (const original of relationship.references) {
+        const parsed = parseBackstageReference(original, relationship.defaultKind);
+        const key = parsed && ['component', 'api', 'resource', 'system', 'domain'].includes(parsed.kind)
+          ? canonicalReferenceKey(parsed)
+          : null;
+        let id: string | null = null;
+        try {
+          id = key ? await resolveReference(key) : null;
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          report.failed++;
+          report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
+          continue;
+        }
+        if (id) {
+          resolved.push(id);
+        } else {
+          const warning = `Unresolved relationship target for ${item.entityRef}.${relationship.field}: ${referenceDisplay(original)}`;
+          report.warnings.push({ repo: item.repo.fullName, entity: item.entityRef, field: relationship.field, reference: referenceDisplay(original), warning });
+          if (config.verbose) console.log(`   ⚠️  ${warning}`);
+        }
+      }
+      relationValues.set(field, [...new Set(resolved)].sort());
+    }
+
+    const current = existingByKey.get(item.externalKey) ?? {};
+    const changedFields: Record<string, unknown> = {};
+    for (const [field, values] of relationValues) {
+      const currentValues = Array.isArray(current[field]) ? [...current[field] as unknown[]].map(String).sort() : [];
+      if (JSON.stringify(currentValues) !== JSON.stringify(values)) changedFields[field] = values;
+    }
+    if (Object.keys(changedFields).length === 0) continue;
+
+    const relationshipPayload = Object.fromEntries(
+      relationFields.map(field => [field, relationValues.get(field) ?? current[field] ?? []])
+    );
+
+    try {
+      await syncEntity(
+        config.archRegisterWorkspace, source, item.externalKey,
+        { ...item.mapped, ...relationshipPayload },
+        config.archRegisterToken, config.archRegisterUrl
+      );
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      report.failed++;
+      report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
     }
   }
 
@@ -273,6 +418,11 @@ export const printReport = (report: SyncReport): void => {
   console.log(`  ✓ Unchanged: ${report.unchanged}`);
   console.log(`  ⊘ Skipped: ${report.skipped}`);
   console.log(`  ✗ Failed: ${report.failed}`);
+
+  if (report.warnings.length > 0) {
+    console.log('\n⚠️  Relationship warnings:');
+    for (const warning of report.warnings) console.log(`  • ${warning.repo} / ${warning.entity}\n    ${warning.warning}`);
+  }
 
   if (report.errors.length > 0) {
     console.log('\n❌ Errors:');
