@@ -49,6 +49,8 @@ import {
 } from './MarkdownEditorScreen.state';
 import { MarkdownDiagramSessionContext } from './MarkdownDiagramSessionContext';
 import { MarkdownCloseDialog } from './MarkdownCloseDialog';
+import { MarkdownChangeImpactDialog, type MarkdownSaveIntent } from './MarkdownChangeImpactDialog';
+import { hasWorkflowFields } from './markdownChangeImpact';
 import { useMarkdownDiagramSessionTracking } from './useMarkdownDiagramSessionTracking';
 import { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
 import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
@@ -170,6 +172,7 @@ export const MarkdownEditorScreen = () => {
   );
   const [dirty, setDirty] = useState(isDraft);
   const [changeKind, setChangeKind] = useState<'minor' | 'major'>('minor');
+  const [pendingSaveIntent, setPendingSaveIntent] = useState<MarkdownSaveIntent | null>(null);
   const [attemptedSave, setAttemptedSave] = useState(false);
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -204,6 +207,7 @@ export const MarkdownEditorScreen = () => {
     : null;
   const documentFields =
     documentTypeId == null ? [] : (selectedDocumentType?.fields ?? data?.available_fields ?? []);
+  const workflowEnabled = hasWorkflowFields(documentFields);
   const titleView = useMemo(
     () =>
       deriveMarkdownEditorTitleView(screenState, {
@@ -344,6 +348,8 @@ export const MarkdownEditorScreen = () => {
     setBody('');
     setDirty(false);
     setAttemptedSave(false);
+    setPendingSaveIntent(null);
+    setChangeKind('minor');
     handleCancelClose();
     clearCloseSummary();
   }, [nodeId, resetForNewDocument, handleCancelClose, clearCloseSummary]);
@@ -457,6 +463,64 @@ export const MarkdownEditorScreen = () => {
     ]
   );
 
+  const completeExistingSave = useCallback(
+    async (kind: 'minor' | 'major', closeAfterSave: boolean) => {
+      await saveExistingDocument(kind);
+      setDirty(false);
+      setAttemptedSave(false);
+      if (closeAfterSave) {
+        clearDiagramSessionState();
+        clearCloseSummary();
+        exitMarkdownEditor();
+      } else {
+        rotateDiagramSession();
+        clearCloseSummary();
+      }
+    },
+    [
+      clearCloseSummary,
+      clearDiagramSessionState,
+      exitMarkdownEditor,
+      rotateDiagramSession,
+      saveExistingDocument
+    ]
+  );
+
+  const validateExistingSave = useCallback(() => {
+    if (Object.keys(validateDocMetadata(documentFields, metadata).errors).length > 0) {
+      setAttemptedSave(true);
+      return false;
+    }
+    if (saveMutation.isPending || migrateMutation.isPending) return false;
+    return true;
+  }, [documentFields, metadata, migrateMutation.isPending, saveMutation.isPending]);
+
+  const requestExistingSave = useCallback(
+    async (intent: MarkdownSaveIntent) => {
+      if (!validateExistingSave()) return;
+      if (workflowEnabled) {
+        setPendingSaveIntent(intent);
+        return;
+      }
+      await completeExistingSave('minor', intent === 'save-and-close');
+    },
+    [completeExistingSave, validateExistingSave, workflowEnabled]
+  );
+
+  const handleChangeImpactCancel = useCallback(() => {
+    setPendingSaveIntent(null);
+    setChangeKind('minor');
+  }, []);
+
+  const handleChangeImpactConfirm = useCallback(async () => {
+    const intent = pendingSaveIntent;
+    if (!intent) return;
+    setPendingSaveIntent(null);
+    const kind = changeKind;
+    setChangeKind('minor');
+    await completeExistingSave(kind, intent === 'save-and-close');
+  }, [changeKind, completeExistingSave, pendingSaveIntent]);
+
   const saveDraftDocument = useCallback(async () => {
     const title = resolvedTitle.trim();
     if (!title) return null;
@@ -513,16 +577,7 @@ export const MarkdownEditorScreen = () => {
       }
       return;
     }
-    if (Object.keys(validateDocMetadata(documentFields, metadata).errors).length > 0) {
-      setAttemptedSave(true);
-      return;
-    }
-    if (saveMutation.isPending || migrateMutation.isPending) return;
-    await saveExistingDocument(changeKind);
-    setDirty(false);
-    setAttemptedSave(false);
-    rotateDiagramSession();
-    clearCloseSummary();
+    await requestExistingSave('save');
   }, [
     isDraft,
     saveNewMutation.isPending,
@@ -530,15 +585,10 @@ export const MarkdownEditorScreen = () => {
     navigateToSavedDraft,
     dirty,
     hasPendingDiagramChanges,
-    saveMutation,
-    migrateMutation,
-    saveExistingDocument,
     rotateDiagramSession,
     clearCloseSummary,
     isReadOnly,
-    documentFields,
-    metadata,
-    changeKind
+    requestExistingSave
   ]);
 
   const handleSaveAndClose = useCallback(async () => {
@@ -558,14 +608,8 @@ export const MarkdownEditorScreen = () => {
       return;
     }
     if (dirty) {
-      if (Object.keys(validateDocMetadata(documentFields, metadata).errors).length > 0) {
-        setAttemptedSave(true);
-        return;
-      }
-      if (saveMutation.isPending || migrateMutation.isPending) return;
-      await saveExistingDocument(changeKind);
-      setDirty(false);
-      setAttemptedSave(false);
+      await requestExistingSave('save-and-close');
+      return;
     }
     clearDiagramSessionState();
     clearCloseSummary();
@@ -577,15 +621,10 @@ export const MarkdownEditorScreen = () => {
     clearDiagramSessionState,
     handleNavigateBack,
     dirty,
-    saveMutation,
-    migrateMutation,
-    saveExistingDocument,
     clearCloseSummary,
     exitMarkdownEditor,
     isReadOnly,
-    documentFields,
-    metadata,
-    changeKind
+    requestExistingSave
   ]);
 
   const handleEnterEdit = useCallback(() => {
@@ -868,28 +907,14 @@ export const MarkdownEditorScreen = () => {
           />
 
           {(isDraft || (!isReadOnly && screenState.screenMode === 'edit')) && (
-            <>
-              {!isDraft && (
-                <label className={styles.changeKind}>
-                  Change impact
-                  <select
-                    value={changeKind}
-                    onChange={event => setChangeKind(event.target.value as 'minor' | 'major')}
-                  >
-                    <option value="minor">Minor — preserve pending approval</option>
-                    <option value="major">Major — request target approval</option>
-                  </select>
-                </label>
-              )}
-              <MarkdownEditorToolbar
-                paneMode={screenState.paneMode}
-                hasUnsavedChanges={hasUnsavedChanges}
-                onSelectPane={handleSelectPane}
-                onSave={handleSave}
-                onSaveAndClose={handleSaveAndClose}
-                onClose={isDraft ? handleDraftClose : handleClose}
-              />
-            </>
+            <MarkdownEditorToolbar
+              paneMode={screenState.paneMode}
+              hasUnsavedChanges={hasUnsavedChanges}
+              onSelectPane={handleSelectPane}
+              onSave={handleSave}
+              onSaveAndClose={handleSaveAndClose}
+              onClose={isDraft ? handleDraftClose : handleClose}
+            />
           )}
 
           {/* viewPanel is only ever 'history' while screenMode is 'preview' (see MarkdownEditorScreen.state.ts); never true in draft mode */}
@@ -1021,6 +1046,15 @@ export const MarkdownEditorScreen = () => {
                 ? handleRevertEligibleDiagramChanges(diagramIds)
                 : handleKeepDiagramChanges())
             }
+          />
+
+          <MarkdownChangeImpactDialog
+            open={pendingSaveIntent !== null}
+            intent={pendingSaveIntent}
+            changeKind={changeKind}
+            onChangeKind={setChangeKind}
+            onCancel={handleChangeImpactCancel}
+            onConfirm={() => void handleChangeImpactConfirm()}
           />
         </div>
       </MarkdownDiagramSessionContext.Provider>
