@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndUUID } from '@arch-register/api-types/common';
+import { ws, wsAndUUID, wsAndProjectId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -11,7 +11,9 @@ export const dashboardWidgetTypeSchema = z.enum([
   'lifecycle-chart',
   'activity-trend-chart',
   'stale-entity-report',
-  'activity-feed'
+  'activity-feed',
+  'active-assessments',
+  'upcoming-milestones'
 ]);
 
 const gridPositionShape = {
@@ -74,6 +76,16 @@ export const activityFeedWidgetSchema = z.object({
   limit: z.number().int().optional().describe('Maximum number of activity items to display')
 });
 
+export const activeAssessmentsWidgetSchema = z.object({
+  ...gridPositionShape,
+  type: z.literal('active-assessments')
+});
+
+export const upcomingMilestonesWidgetSchema = z.object({
+  ...gridPositionShape,
+  type: z.literal('upcoming-milestones')
+});
+
 export const dashboardWidgetSchema = z.discriminatedUnion('type', [
   statMetricWidgetSchema,
   savedViewEmbedWidgetSchema,
@@ -81,7 +93,9 @@ export const dashboardWidgetSchema = z.discriminatedUnion('type', [
   lifecycleChartWidgetSchema,
   activityTrendChartWidgetSchema,
   staleEntityReportWidgetSchema,
-  activityFeedWidgetSchema
+  activityFeedWidgetSchema,
+  activeAssessmentsWidgetSchema,
+  upcomingMilestonesWidgetSchema
 ]);
 
 export const workspaceDashboardSchema = z.object({
@@ -268,3 +282,51 @@ export const personalDashboardContract = oc.tag('PersonalDashboard').router({
 });
 
 export type PersonalDashboard = z.infer<typeof personalDashboardSchema>;
+
+// ── Project dashboards ────────────────────────────────────────
+
+export const projectDashboardSchema = z.object({
+  id: z.string().describe('Unique dashboard identifier'),
+  workspaceId: z.string().describe('Parent workspace identifier'),
+  projectId: z.string().describe('Parent project identifier'),
+  widgets: z.array(dashboardWidgetSchema).describe('Dashboard widget layout'),
+  updatedAt: z.string().nullable().describe('ISO 8601 last update timestamp'),
+  updatedBy: z.string().nullable().describe('Identifier of the user who last updated the layout')
+});
+
+export const updateProjectDashboardBodySchema = z.object({
+  widgets: z.array(dashboardWidgetSchema).describe('Dashboard widget layout to persist')
+});
+
+export const projectDashboardContract = oc.tag('ProjectDashboard').router({
+  projectDashboard: {
+    get: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{projectId}/dashboard',
+        inputStructure: 'detailed',
+        summary: 'Get project dashboard',
+        description:
+          'Retrieves the dashboard for the project. A project without a saved dashboard yet is seeded with a default one on first read.',
+        tags: ['ProjectDashboard']
+      })
+      .input(z.object({ params: wsAndProjectId }))
+      .output(projectDashboardSchema),
+    update: oc
+      .route({
+        method: 'PATCH',
+        path: '/{workspace}/projects/{projectId}/dashboard',
+        inputStructure: 'detailed',
+        summary: 'Update project dashboard',
+        description:
+          'Updates the project dashboard. Widgets wholesale-replace the existing layout.',
+        tags: ['ProjectDashboard']
+      })
+      .input(z.object({ params: wsAndProjectId, body: updateProjectDashboardBodySchema }))
+      .output(projectDashboardSchema)
+  }
+});
+
+export type ProjectDashboard = z.infer<typeof projectDashboardSchema>;
+
+export type UpdateProjectDashboardRequest = z.infer<typeof updateProjectDashboardBodySchema>;

@@ -7,6 +7,8 @@ import { LifecycleChartWidget } from './LifecycleChartWidget';
 import { ActivityTrendChartWidget } from './ActivityTrendChartWidget';
 import { StaleEntityReportWidget } from './StaleEntityReportWidget';
 import { ActivityFeedWidget } from './ActivityFeedWidget';
+import { ActiveAssessmentsWidget } from './ActiveAssessmentsWidget';
+import { UpcomingMilestonesWidget } from './UpcomingMilestonesWidget';
 
 type Props = {
   widget: DashboardWidget;
@@ -39,6 +41,10 @@ const renderWidgetContent = (widget: DashboardWidget) => {
       return <StaleEntityReportWidget widget={widget} />;
     case 'activity-feed':
       return <ActivityFeedWidget widget={widget} />;
+    case 'active-assessments':
+      return <ActiveAssessmentsWidget />;
+    case 'upcoming-milestones':
+      return <UpcomingMilestonesWidget />;
     default: {
       const _exhaustive: never = widget;
       return _exhaustive;

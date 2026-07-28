@@ -19,6 +19,11 @@ export const wsAndUUID = z.object({
   id: z.string().regex(UUID_REGEX)
 });
 
+export const wsAndProjectId = z.object({
+  workspace: z.string(),
+  projectId: z.string()
+});
+
 export const foreignKeySchema = z.object({
   id: z.string(),
   name: z.string()

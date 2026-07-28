@@ -21,7 +21,8 @@ import { workspaceTemplateContract } from '@arch-register/api-types/templateCont
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
 import {
   workspaceDashboardContract,
-  personalDashboardContract
+  personalDashboardContract,
+  projectDashboardContract
 } from '@arch-register/api-types/dashboardContract';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
@@ -88,6 +89,7 @@ const applicationContracts = {
   ...workspaceViewContract,
   ...workspaceDashboardContract,
   ...personalDashboardContract,
+  ...projectDashboardContract,
   ...workspaceCollectionContract,
   ...workspaceManagementContract,
   ...workspaceConfigContract,
@@ -162,6 +164,7 @@ export const orpcClient = {
   views: applicationClient.views,
   dashboards: applicationClient.dashboards,
   personalDashboards: applicationClient.personalDashboards,
+  projectDashboard: applicationClient.projectDashboard,
   collections: applicationClient.collections,
   workspaces: applicationClient.workspaces,
   config: applicationClient.config,

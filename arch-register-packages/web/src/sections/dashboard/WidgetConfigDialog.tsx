@@ -7,15 +7,18 @@ import { EntityFilterPanel, type EntityFilterValue } from '../../components/Enti
 import { EmptyState } from '../../components/EmptyState';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { useSavedViews } from '../../hooks/useSavedViews';
+import { useMdxContext } from '../markdown/MdxContext';
 import type { EntityMetricType } from '../markdown/mdx-components/blocks/entity-metric/types';
+import type { WidgetSurface } from './dashboardWidgetDefaults';
 import styles from './WidgetConfigDialog.module.css';
 
-const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string }[] = [
-  { value: 'entity-count', label: 'Entity count' },
-  { value: 'project-count', label: 'Project count' },
-  { value: 'diagram-count', label: 'Diagram count' },
-  { value: 'completeness-percent', label: 'Completeness %' }
-];
+const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string; surfaces: WidgetSurface[] }[] =
+  [
+    { value: 'entity-count', label: 'Entity count', surfaces: ['workspace', 'project'] },
+    { value: 'project-count', label: 'Project count', surfaces: ['workspace'] },
+    { value: 'diagram-count', label: 'Diagram count', surfaces: ['workspace', 'project'] },
+    { value: 'completeness-percent', label: 'Completeness %', surfaces: ['workspace'] }
+  ];
 
 const LIMIT_OPTIONS = [
   { value: '10', label: '10 rows' },
@@ -47,6 +50,10 @@ const titleForWidget = (widget: DashboardWidget): string => {
       return 'Stale entity report';
     case 'activity-feed':
       return 'Activity feed';
+    case 'active-assessments':
+      return 'Active assessments';
+    case 'upcoming-milestones':
+      return 'Upcoming milestones';
   }
 };
 
@@ -95,8 +102,14 @@ const WidgetConfigDialogContent = ({
     widget.type === 'activity-feed' ? widget.limit : undefined
   );
 
-  const { data: savedViews = [] } = useSavedViews(workspaceSlug, { includeWorkspace: true });
+  const { projectId } = useMdxContext();
+  const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
+    projectId,
+    includeWorkspace: true
+  });
   const adminViews = savedViews.filter(v => v.isAdminView);
+  const surface: WidgetSurface = projectId ? 'project' : 'workspace';
+  const metricTypeOptions = METRIC_TYPE_OPTIONS.filter(option => option.surfaces.includes(surface));
 
   const canSave = widget.type !== 'saved-view-embed' || !!viewId;
 
@@ -136,6 +149,8 @@ const WidgetConfigDialogContent = ({
         onSave({ ...widget, limit: activityLimit });
         break;
       case 'lifecycle-chart':
+      case 'active-assessments':
+      case 'upcoming-milestones':
         onSave(widget);
         break;
     }
@@ -157,7 +172,7 @@ const WidgetConfigDialogContent = ({
           <>
             <DialogSection label="Metric">
               <Select.Root value={metricType} onChange={v => setMetricType(v as EntityMetricType)}>
-                {METRIC_TYPE_OPTIONS.map(option => (
+                {metricTypeOptions.map(option => (
                   <Select.Item key={option.value} value={option.value}>
                     {option.label}
                   </Select.Item>
@@ -297,7 +312,9 @@ const WidgetConfigDialogContent = ({
           </DialogSection>
         )}
 
-        {widget.type === 'lifecycle-chart' && (
+        {(widget.type === 'lifecycle-chart' ||
+          widget.type === 'active-assessments' ||
+          widget.type === 'upcoming-milestones') && (
           <DialogSection label="Options" required={false}>
             <div className={`${styles.optionRow}`}>
               <span className={styles.optionLabel}>This widget has no configurable options.</span>

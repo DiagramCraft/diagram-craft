@@ -28,7 +28,7 @@ import {
   projectMarkdownDraftRoute
 } from '../../routes/publicObjectRoutes';
 import { ProjectContent } from './ProjectContent';
-import { ProjectDetails } from './ProjectDetails';
+import { ProjectDashboardScreen } from './ProjectDashboardScreen';
 import { ProjectEntities } from './ProjectEntities';
 import { ProjectAssessments } from './ProjectAssessments';
 import { AssessmentDetailsScreen } from './AssessmentDetailsScreen';
@@ -638,48 +638,16 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       ) : (
-        <ProjectDetails
+        <ProjectDashboardScreen
           project={project}
-          visibleFiles={visibleFiles}
           allFilesCount={allFiles.length}
           folderCount={project.files.folders.length}
-          filter={filter}
-          viewMode={viewMode}
           pinError={pinError}
           isUpdatingProject={updateProject.isPending}
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
           onTogglePinned={handleTogglePinned}
           onEdit={() => setEditing(true)}
-          onSetFilter={setFilter}
-          onSetViewMode={setViewMode}
-          onOpenDiagram={handleNavigateDiagram}
-          onOpenMarkdown={handleNavigateMarkdown}
-          onDownloadFile={triggerDownload}
-          onAddFolder={() => {
-            setAddFolderParent(contentFolderFilter);
-            setAddFolderOpen(true);
-          }}
-          onAddDiagram={() => {
-            setAddDiagramFolder(contentFolderFilter);
-            setAddDiagramOpen(true);
-          }}
-          onAddMarkdown={
-            project.canManageFiles
-              ? () => {
-                  setAddMarkdownFolder(contentFolderFilter);
-                  setAddMarkdownOpen(true);
-                }
-              : undefined
-          }
-          onUploadFile={
-            project.canManageFiles
-              ? () => {
-                  mainAreaFileInputRef.current?.click();
-                }
-              : undefined
-          }
-          onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       )}
 

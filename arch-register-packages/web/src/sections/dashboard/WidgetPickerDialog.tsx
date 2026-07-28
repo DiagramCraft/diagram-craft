@@ -5,22 +5,40 @@ import type {
   DashboardWidgetType
 } from '@arch-register/api-types/dashboardContract';
 import { useSavedViews } from '../../hooks/useSavedViews';
-import { WIDGET_TYPE_OPTIONS, createDefaultWidget } from './dashboardWidgetDefaults';
+import { useMdxContext } from '../markdown/MdxContext';
+import {
+  WIDGET_TYPE_OPTIONS,
+  createDefaultWidget,
+  type WidgetSurface
+} from './dashboardWidgetDefaults';
 import styles from './WidgetPickerDialog.module.css';
 
 type Props = {
   open: boolean;
   onClose: () => void;
   workspaceSlug: string;
+  surface?: WidgetSurface;
   widgets: DashboardWidget[];
   onAdd: (widget: DashboardWidget) => void;
 };
 
-export const WidgetPickerDialog = ({ open, onClose, workspaceSlug, widgets, onAdd }: Props) => {
+export const WidgetPickerDialog = ({
+  open,
+  onClose,
+  workspaceSlug,
+  surface = 'workspace',
+  widgets,
+  onAdd
+}: Props) => {
   const [pendingType, setPendingType] = useState<DashboardWidgetType | null>(null);
   const [selectedViewId, setSelectedViewId] = useState('');
 
-  const { data: savedViews = [] } = useSavedViews(workspaceSlug, { includeWorkspace: true });
+  const { projectId } = useMdxContext();
+  const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
+    projectId,
+    includeWorkspace: true
+  });
+  const options = WIDGET_TYPE_OPTIONS.filter(option => option.surfaces.includes(surface));
 
   const handleClose = () => {
     setPendingType(null);
@@ -80,7 +98,7 @@ export const WidgetPickerDialog = ({ open, onClose, workspaceSlug, widgets, onAd
         </div>
       ) : (
         <div className={styles.list}>
-          {WIDGET_TYPE_OPTIONS.map(option => (
+          {options.map(option => (
             <button
               key={option.type}
               type="button"

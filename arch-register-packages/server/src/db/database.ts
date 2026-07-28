@@ -4,6 +4,7 @@ import type { AuthDatabase } from '../domain/auth/db/authDatabase';
 import type { CatalogDatabase, ViewDatabase } from '../domain/catalog/db/catalogDatabase';
 import type { DashboardDatabase } from '../domain/dashboard/db/dashboardDatabase';
 import type { PersonalDashboardDatabase } from '../domain/personalDashboard/db/personalDashboardDatabase';
+import type { ProjectDashboardDatabase } from '../domain/dashboard/db/projectDashboardDatabase';
 import type { ProjectDatabase } from '../domain/project/db/projectDatabase';
 import type { WatchDatabase } from '../domain/watch/db/watchDatabase';
 import type { DiscussionDatabase } from '../domain/discussion/db/discussionDatabase';
@@ -44,6 +45,7 @@ export type DatabaseAdapter = {
   view: ViewDatabase;
   dashboard: DashboardDatabase;
   personalDashboard: PersonalDashboardDatabase;
+  projectDashboard: ProjectDashboardDatabase;
   project: ProjectDatabase;
   audit: AuditDatabase;
   watch: WatchDatabase;

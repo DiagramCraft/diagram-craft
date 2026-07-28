@@ -4,6 +4,7 @@ import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
 import { useEntities } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
+import { useMdxContext } from '../../../MdxContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';
 import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { Table } from '../../../../../components/table/Table';
@@ -34,8 +35,9 @@ type Props = {
 
 export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
+  const { projectId } = useMdxContext();
 
-  const hasFilter = hasEntityTableFilter({ schema, owner, lifecycle });
+  const hasFilter = hasEntityTableFilter({ schema, owner, lifecycle }) || !!projectId;
   const limitNum = normalizeEntityTableLimit(limit);
 
   const schemaIndex = useMemo(
@@ -49,6 +51,8 @@ export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
       schemaId: schema === '' ? undefined : schema,
       owner: owner === '' ? undefined : owner,
       lifecycle: lifecycle === '' ? undefined : lifecycle,
+      projectId,
+      projectScope: projectId ? 'project' : undefined,
       view: 'full',
       limit: limitNum
     },

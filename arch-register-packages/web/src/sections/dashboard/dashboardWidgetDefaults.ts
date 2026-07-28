@@ -3,12 +3,15 @@ import type {
   DashboardWidgetType
 } from '@arch-register/api-types/dashboardContract';
 
+export type WidgetSurface = 'workspace' | 'project';
+
 export type WidgetTypeOption = {
   type: DashboardWidgetType;
   label: string;
   description: string;
   defaultW: number;
   defaultH: number;
+  surfaces: WidgetSurface[];
 };
 
 export const WIDGET_TYPE_OPTIONS: WidgetTypeOption[] = [
@@ -17,49 +20,72 @@ export const WIDGET_TYPE_OPTIONS: WidgetTypeOption[] = [
     label: 'Stat metric',
     description: 'A single number, such as entity count or completeness percentage.',
     defaultW: 3,
-    defaultH: 2
+    defaultH: 2,
+    surfaces: ['workspace', 'project']
   },
   {
     type: 'saved-view-embed',
     label: 'Saved view',
     description: 'Embed one of the workspace saved views.',
     defaultW: 6,
-    defaultH: 6
+    defaultH: 6,
+    surfaces: ['workspace', 'project']
   },
   {
     type: 'entity-table',
     label: 'Entity table',
     description: 'A filtered table of entities.',
     defaultW: 6,
-    defaultH: 6
+    defaultH: 6,
+    surfaces: ['workspace', 'project']
   },
   {
     type: 'lifecycle-chart',
     label: 'Lifecycle chart',
     description: 'Breakdown of entities by lifecycle state.',
     defaultW: 6,
-    defaultH: 6
+    defaultH: 6,
+    surfaces: ['workspace']
   },
   {
     type: 'activity-trend-chart',
     label: 'Activity trend chart',
     description: 'Recent activity volume over time.',
     defaultW: 6,
-    defaultH: 6
+    defaultH: 6,
+    surfaces: ['workspace']
   },
   {
     type: 'stale-entity-report',
     label: 'Stale entity report',
     description: 'Entities that have not been updated recently.',
     defaultW: 6,
-    defaultH: 6
+    defaultH: 6,
+    surfaces: ['workspace']
   },
   {
     type: 'activity-feed',
     label: 'Activity feed',
     description: 'A live feed of recent audit log activity.',
     defaultW: 12,
-    defaultH: 6
+    defaultH: 6,
+    surfaces: ['workspace']
+  },
+  {
+    type: 'active-assessments',
+    label: 'Active assessments',
+    description: 'Up to four active assessments for the project.',
+    defaultW: 3,
+    defaultH: 2,
+    surfaces: ['project']
+  },
+  {
+    type: 'upcoming-milestones',
+    label: 'Upcoming milestones',
+    description: 'The most recently completed milestone and up to three upcoming ones.',
+    defaultW: 3,
+    defaultH: 2,
+    surfaces: ['project']
   }
 ];
 
@@ -90,6 +116,10 @@ export const createDefaultWidget = (
       return { ...base, type: 'stale-entity-report' };
     case 'activity-feed':
       return { ...base, type: 'activity-feed' };
+    case 'active-assessments':
+      return { ...base, type: 'active-assessments' };
+    case 'upcoming-milestones':
+      return { ...base, type: 'upcoming-milestones' };
   }
 };
 

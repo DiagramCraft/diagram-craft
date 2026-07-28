@@ -1,8 +1,10 @@
 import { useNavigate } from '@tanstack/react-router';
 import { TbArrowRight } from 'react-icons/tb';
 import { useEntities, useEntityFacets } from '../../../../../hooks/useEntities';
-import { useProjects } from '../../../../../hooks/useProjects';
+import { useProject, useProjects } from '../../../../../hooks/useProjects';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
+import { useMdxContext } from '../../../MdxContext';
+import { asProjectPublicId, projectDetailRoute } from '../../../../../routes/publicObjectRoutes';
 import styles from './EntityMetric.module.css';
 import type { EntityMetricType } from './types';
 
@@ -28,7 +30,19 @@ const cardClassName = (bare?: boolean) =>
 export const EntityMetric = ({ schema, owner, lifecycle, label, metricType, bare }: Props) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
+  const { projectId } = useMdxContext();
   const resolvedMetricType = metricType ?? 'entity-count';
+
+  if (resolvedMetricType === 'diagram-count' && projectId) {
+    return (
+      <ProjectDiagramCountMetric
+        workspaceSlug={workspaceSlug}
+        projectId={projectId}
+        label={label}
+        bare={bare}
+      />
+    );
+  }
 
   if (resolvedMetricType === 'project-count') {
     return <ProjectCountMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
@@ -45,6 +59,7 @@ export const EntityMetric = ({ schema, owner, lifecycle, label, metricType, bare
   return (
     <EntityCountMetric
       workspaceSlug={workspaceSlug}
+      projectId={projectId}
       schema={schema}
       owner={owner}
       lifecycle={lifecycle}
@@ -58,6 +73,7 @@ export const EntityMetric = ({ schema, owner, lifecycle, label, metricType, bare
 
 const EntityCountMetric = ({
   workspaceSlug,
+  projectId,
   schema,
   owner,
   lifecycle,
@@ -67,6 +83,7 @@ const EntityCountMetric = ({
   bare
 }: {
   workspaceSlug: string;
+  projectId?: string;
   schema?: string;
   owner?: string;
   lifecycle?: string;
@@ -75,7 +92,7 @@ const EntityCountMetric = ({
   totalEntityCount: number;
   bare?: boolean;
 }) => {
-  const hasFilter = hasEntityMetricFilter({ schema, owner, lifecycle });
+  const hasFilter = hasEntityMetricFilter({ schema, owner, lifecycle }) || !!projectId;
 
   const { data: entities = [], isLoading } = useEntities(
     workspaceSlug,
@@ -83,6 +100,8 @@ const EntityCountMetric = ({
       schemaId: schema === '' ? undefined : schema,
       owner: owner === '' ? undefined : owner,
       lifecycle: lifecycle === '' ? undefined : lifecycle,
+      projectId,
+      projectScope: projectId ? 'project' : undefined,
       view: 'summary',
       limit: 1000
     },
@@ -124,10 +143,22 @@ const EntityCountMetric = ({
               : []),
             ...(owner ? [{ fieldId: '_owner', op: 'equals' as const, value: owner }] : [])
           ];
+          const filters = conditions.length > 0 ? JSON.stringify(conditions) : undefined;
+
+          if (projectId) {
+            navigate(
+              projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+                section: 'entities' as const,
+                filters
+              })
+            );
+            return;
+          }
+
           navigate({
             to: '/$workspaceSlug/entities',
             params: { workspaceSlug },
-            search: { filters: conditions.length > 0 ? JSON.stringify(conditions) : undefined }
+            search: { filters }
           });
         }}
       >
@@ -160,6 +191,35 @@ const ProjectCountMetric = ({
     <div className={cardClassName(bare)}>
       <div className={styles.number}>{projects.length}</div>
       <div className={styles.label}>{label ?? 'Projects'}</div>
+    </div>
+  );
+};
+
+const ProjectDiagramCountMetric = ({
+  workspaceSlug,
+  projectId,
+  label,
+  bare
+}: {
+  workspaceSlug: string;
+  projectId: string;
+  label?: string;
+  bare?: boolean;
+}) => {
+  const { data: project, isLoading } = useProject(workspaceSlug, projectId);
+
+  if (isLoading || !project) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.skeleton} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={cardClassName(bare)}>
+      <div className={styles.number}>{project.file_count}</div>
+      <div className={styles.label}>{label ?? 'Diagrams'}</div>
     </div>
   );
 };
