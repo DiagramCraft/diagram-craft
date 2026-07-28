@@ -30,6 +30,9 @@ const LIMIT_OPTIONS = [
 const configString = (config: Record<string, unknown>, key: string): string =>
   typeof config[key] === 'string' ? config[key] : '';
 
+const optionalText = (value: string): string | undefined =>
+  value.trim() === '' ? undefined : value;
+
 type Props = {
   widget: DashboardWidget | null;
   open: boolean;
@@ -135,10 +138,10 @@ const WidgetConfigDialogContent = ({
           config: {
             ...widget.config,
             metricType,
-            schema: filter.schemaId || undefined,
-            owner: filter.owner || undefined,
-            lifecycle: filter.lifecycle || undefined,
-            label: label || undefined
+            schema: optionalText(filter.schemaId),
+            owner: optionalText(filter.owner),
+            lifecycle: optionalText(filter.lifecycle),
+            label: optionalText(label)
           }
         });
         break;
@@ -147,9 +150,9 @@ const WidgetConfigDialogContent = ({
           ...widget,
           config: {
             ...widget.config,
-            schema: filter.schemaId || undefined,
-            owner: filter.owner || undefined,
-            lifecycle: filter.lifecycle || undefined,
+            schema: optionalText(filter.schemaId),
+            owner: optionalText(filter.owner),
+            lifecycle: optionalText(filter.lifecycle),
             limit: Number(limit)
           }
         });

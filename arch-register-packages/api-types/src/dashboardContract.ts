@@ -14,15 +14,13 @@ const gridPositionShape = {
   h: z.number().int().describe('Grid height in rows')
 };
 
-const dashboardWidgetSchema = z.object({
+export const dashboardWidgetSchema = z.object({
   ...gridPositionShape,
   type: dashboardWidgetTypeSchema,
   config: z
     .record(z.string(), z.unknown())
     .describe('Widget-specific configuration; interpreted by the widget implementation')
 });
-
-export { dashboardWidgetSchema };
 
 export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),
