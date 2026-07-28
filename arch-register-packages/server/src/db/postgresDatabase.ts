@@ -15,6 +15,7 @@ import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 import { PostgresDashboardDatabase } from '../domain/dashboard/db/postgresDashboard';
 import { PostgresPersonalDashboardDatabase } from '../domain/personalDashboard/db/postgresPersonalDashboard';
+import { PostgresProjectDashboardDatabase } from '../domain/dashboard/db/postgresProjectDashboard';
 import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
 import { PostgresDiscussionDatabase } from '../domain/discussion/db/postgresDiscussion';
 import { PostgresWikiCommentDatabase } from '../domain/wikiComments/db/postgresWikiComment';
@@ -47,6 +48,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly view: PostgresViewDatabase;
   readonly dashboard: PostgresDashboardDatabase;
   readonly personalDashboard: PostgresPersonalDashboardDatabase;
+  readonly projectDashboard: PostgresProjectDashboardDatabase;
   readonly project: PostgresProjectDatabase;
   readonly audit: PostgresAuditDatabase;
   readonly watch: PostgresWatchDatabase;
@@ -77,6 +79,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       view: new PostgresViewDatabase(sql),
       dashboard: new PostgresDashboardDatabase(sql),
       personalDashboard: new PostgresPersonalDashboardDatabase(sql),
+      projectDashboard: new PostgresProjectDashboardDatabase(sql),
       project: new PostgresProjectDatabase(sql),
       audit: new PostgresAuditDatabase(sql),
       watch: new PostgresWatchDatabase(sql),
@@ -139,6 +142,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.view = new PostgresViewDatabase(this.sql);
     this.dashboard = new PostgresDashboardDatabase(this.sql);
     this.personalDashboard = new PostgresPersonalDashboardDatabase(this.sql);
+    this.projectDashboard = new PostgresProjectDashboardDatabase(this.sql);
     this.project = new PostgresProjectDatabase(this.sql);
     this.audit = new PostgresAuditDatabase(this.sql);
     this.watch = new PostgresWatchDatabase(this.sql);

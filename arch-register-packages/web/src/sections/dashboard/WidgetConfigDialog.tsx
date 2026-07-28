@@ -7,21 +7,31 @@ import { EntityFilterPanel, type EntityFilterValue } from '../../components/Enti
 import { EmptyState } from '../../components/EmptyState';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { useSavedViews } from '../../hooks/useSavedViews';
+import { useMdxContext } from '../markdown/MdxContext';
 import type { EntityMetricType } from '../markdown/mdx-components/blocks/entity-metric/types';
+import type { WidgetSurface } from './dashboardWidgetDefaults';
+import { parseKnownDashboardWidget, type KnownDashboardWidget } from './dashboardWidgetConfig';
 import styles from './WidgetConfigDialog.module.css';
 
-const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string }[] = [
-  { value: 'entity-count', label: 'Entity count' },
-  { value: 'project-count', label: 'Project count' },
-  { value: 'diagram-count', label: 'Diagram count' },
-  { value: 'completeness-percent', label: 'Completeness %' }
-];
+const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string; surfaces: WidgetSurface[] }[] =
+  [
+    { value: 'entity-count', label: 'Entity count', surfaces: ['workspace', 'project'] },
+    { value: 'project-count', label: 'Project count', surfaces: ['workspace'] },
+    { value: 'diagram-count', label: 'Diagram count', surfaces: ['workspace', 'project'] },
+    { value: 'completeness-percent', label: 'Completeness %', surfaces: ['workspace'] }
+  ];
 
 const LIMIT_OPTIONS = [
   { value: '10', label: '10 rows' },
   { value: '20', label: '20 rows' },
   { value: '50', label: '50 rows' }
 ];
+
+const configString = (config: Record<string, unknown>, key: string): string =>
+  typeof config[key] === 'string' ? config[key] : '';
+
+const optionalText = (value: string): string | undefined =>
+  value.trim() === '' ? undefined : value;
 
 type Props = {
   widget: DashboardWidget | null;
@@ -47,16 +57,24 @@ const titleForWidget = (widget: DashboardWidget): string => {
       return 'Stale entity report';
     case 'activity-feed':
       return 'Activity feed';
+    case 'active-assessments':
+      return 'Active assessments';
+    case 'upcoming-milestones':
+      return 'Upcoming milestones';
+    default:
+      return 'Widget';
   }
 };
 
 export const WidgetConfigDialog = ({ widget, open, workspaceSlug, onClose, onSave }: Props) => {
   if (!widget) return null;
+  const knownWidget = parseKnownDashboardWidget(widget);
+  if (!knownWidget) return null;
 
   return (
     <WidgetConfigDialogContent
-      key={widget.id}
-      widget={widget}
+      key={knownWidget.id}
+      widget={knownWidget}
       open={open}
       workspaceSlug={workspaceSlug}
       onClose={onClose}
@@ -71,32 +89,42 @@ const WidgetConfigDialogContent = ({
   workspaceSlug,
   onClose,
   onSave
-}: Props & { widget: DashboardWidget }) => {
+}: Props & { widget: KnownDashboardWidget }) => {
   const [filter, setFilter] = useState<EntityFilterValue>({
-    schemaId: 'schema' in widget ? (widget.schema ?? '') : '',
-    owner: 'owner' in widget ? (widget.owner ?? '') : '',
-    lifecycle: 'lifecycle' in widget ? (widget.lifecycle ?? '') : ''
+    schemaId: configString(widget.config, 'schema'),
+    owner: configString(widget.config, 'owner'),
+    lifecycle: configString(widget.config, 'lifecycle')
   });
   const [metricType, setMetricType] = useState<EntityMetricType>(
-    widget.type === 'stat-metric' ? widget.metricType : 'entity-count'
+    widget.type === 'stat-metric' ? widget.config.metricType : 'entity-count'
   );
-  const [label, setLabel] = useState(widget.type === 'stat-metric' ? (widget.label ?? '') : '');
+  const [label, setLabel] = useState(
+    widget.type === 'stat-metric' ? (widget.config.label ?? '') : ''
+  );
   const [limit, setLimit] = useState(
-    widget.type === 'entity-table' ? String(widget.limit ?? '10') : '10'
+    widget.type === 'entity-table' ? String(widget.config.limit ?? '10') : '10'
   );
-  const [viewId, setViewId] = useState(widget.type === 'saved-view-embed' ? widget.viewId : '');
+  const [viewId, setViewId] = useState(
+    widget.type === 'saved-view-embed' ? widget.config.viewId : ''
+  );
   const [lookbackDays, setLookbackDays] = useState<number | undefined>(
-    widget.type === 'activity-trend-chart' ? widget.lookbackDays : undefined
+    widget.type === 'activity-trend-chart' ? widget.config.lookbackDays : undefined
   );
   const [staleAfterDays, setStaleAfterDays] = useState<number | undefined>(
-    widget.type === 'stale-entity-report' ? widget.staleAfterDays : undefined
+    widget.type === 'stale-entity-report' ? widget.config.staleAfterDays : undefined
   );
   const [activityLimit, setActivityLimit] = useState<number | undefined>(
-    widget.type === 'activity-feed' ? widget.limit : undefined
+    widget.type === 'activity-feed' ? widget.config.limit : undefined
   );
 
-  const { data: savedViews = [] } = useSavedViews(workspaceSlug, { includeWorkspace: true });
+  const { projectId } = useMdxContext();
+  const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
+    projectId,
+    includeWorkspace: true
+  });
   const adminViews = savedViews.filter(v => v.isAdminView);
+  const surface: WidgetSurface = projectId ? 'project' : 'workspace';
+  const metricTypeOptions = METRIC_TYPE_OPTIONS.filter(option => option.surfaces.includes(surface));
 
   const canSave = widget.type !== 'saved-view-embed' || !!viewId;
 
@@ -107,35 +135,43 @@ const WidgetConfigDialogContent = ({
       case 'stat-metric':
         onSave({
           ...widget,
-          metricType,
-          schema: filter.schemaId || undefined,
-          owner: filter.owner || undefined,
-          lifecycle: filter.lifecycle || undefined,
-          label: label || undefined
+          config: {
+            ...widget.config,
+            metricType,
+            schema: optionalText(filter.schemaId),
+            owner: optionalText(filter.owner),
+            lifecycle: optionalText(filter.lifecycle),
+            label: optionalText(label)
+          }
         });
         break;
       case 'entity-table':
         onSave({
           ...widget,
-          schema: filter.schemaId || undefined,
-          owner: filter.owner || undefined,
-          lifecycle: filter.lifecycle || undefined,
-          limit: Number(limit)
+          config: {
+            ...widget.config,
+            schema: optionalText(filter.schemaId),
+            owner: optionalText(filter.owner),
+            lifecycle: optionalText(filter.lifecycle),
+            limit: Number(limit)
+          }
         });
         break;
       case 'saved-view-embed':
-        onSave({ ...widget, viewId });
+        onSave({ ...widget, config: { ...widget.config, viewId } });
         break;
       case 'activity-trend-chart':
-        onSave({ ...widget, lookbackDays });
+        onSave({ ...widget, config: { ...widget.config, lookbackDays } });
         break;
       case 'stale-entity-report':
-        onSave({ ...widget, staleAfterDays });
+        onSave({ ...widget, config: { ...widget.config, staleAfterDays } });
         break;
       case 'activity-feed':
-        onSave({ ...widget, limit: activityLimit });
+        onSave({ ...widget, config: { ...widget.config, limit: activityLimit } });
         break;
       case 'lifecycle-chart':
+      case 'active-assessments':
+      case 'upcoming-milestones':
         onSave(widget);
         break;
     }
@@ -157,7 +193,7 @@ const WidgetConfigDialogContent = ({
           <>
             <DialogSection label="Metric">
               <Select.Root value={metricType} onChange={v => setMetricType(v as EntityMetricType)}>
-                {METRIC_TYPE_OPTIONS.map(option => (
+                {metricTypeOptions.map(option => (
                   <Select.Item key={option.value} value={option.value}>
                     {option.label}
                   </Select.Item>
@@ -297,7 +333,9 @@ const WidgetConfigDialogContent = ({
           </DialogSection>
         )}
 
-        {widget.type === 'lifecycle-chart' && (
+        {(widget.type === 'lifecycle-chart' ||
+          widget.type === 'active-assessments' ||
+          widget.type === 'upcoming-milestones') && (
           <DialogSection label="Options" required={false}>
             <div className={`${styles.optionRow}`}>
               <span className={styles.optionLabel}>This widget has no configurable options.</span>

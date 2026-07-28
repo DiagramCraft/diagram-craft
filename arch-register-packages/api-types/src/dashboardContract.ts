@@ -1,18 +1,10 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndUUID } from '@arch-register/api-types/common';
+import { ws, wsAndUUID, wsAndProjectId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-export const dashboardWidgetTypeSchema = z.enum([
-  'stat-metric',
-  'saved-view-embed',
-  'entity-table',
-  'lifecycle-chart',
-  'activity-trend-chart',
-  'stale-entity-report',
-  'activity-feed'
-]);
+export const dashboardWidgetTypeSchema = z.string().describe('Extensible widget type identifier');
 
 const gridPositionShape = {
   id: z.string().describe('Unique widget identifier'),
@@ -22,67 +14,13 @@ const gridPositionShape = {
   h: z.number().int().describe('Grid height in rows')
 };
 
-export const statMetricWidgetSchema = z.object({
+export const dashboardWidgetSchema = z.object({
   ...gridPositionShape,
-  type: z.literal('stat-metric'),
-  metricType: z.enum(['entity-count', 'project-count', 'diagram-count', 'completeness-percent']),
-  schema: z.string().optional().describe('Optional schema identifier to scope the metric'),
-  owner: z.string().optional().describe('Optional owner identifier to scope the metric'),
-  lifecycle: z.string().optional().describe('Optional lifecycle state to scope the metric'),
-  label: z.string().optional().describe('Optional display label override')
+  type: dashboardWidgetTypeSchema,
+  config: z
+    .record(z.string(), z.unknown())
+    .describe('Widget-specific configuration; interpreted by the widget implementation')
 });
-
-export const savedViewEmbedWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('saved-view-embed'),
-  viewId: z.string().describe('Identifier of the saved view to embed')
-});
-
-export const entityTableWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('entity-table'),
-  schema: z.string().optional().describe('Optional schema identifier to scope the table'),
-  owner: z.string().optional().describe('Optional owner identifier to scope the table'),
-  lifecycle: z.string().optional().describe('Optional lifecycle state to scope the table'),
-  limit: z.number().int().optional().describe('Maximum number of entities to display')
-});
-
-export const lifecycleChartWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('lifecycle-chart')
-});
-
-export const activityTrendChartWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('activity-trend-chart'),
-  lookbackDays: z.number().int().optional().describe('Number of days to look back')
-});
-
-export const staleEntityReportWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('stale-entity-report'),
-  staleAfterDays: z
-    .number()
-    .int()
-    .optional()
-    .describe('Number of days without update before an entity is considered stale')
-});
-
-export const activityFeedWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('activity-feed'),
-  limit: z.number().int().optional().describe('Maximum number of activity items to display')
-});
-
-export const dashboardWidgetSchema = z.discriminatedUnion('type', [
-  statMetricWidgetSchema,
-  savedViewEmbedWidgetSchema,
-  entityTableWidgetSchema,
-  lifecycleChartWidgetSchema,
-  activityTrendChartWidgetSchema,
-  staleEntityReportWidgetSchema,
-  activityFeedWidgetSchema
-]);
 
 export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),
@@ -268,3 +206,51 @@ export const personalDashboardContract = oc.tag('PersonalDashboard').router({
 });
 
 export type PersonalDashboard = z.infer<typeof personalDashboardSchema>;
+
+// ── Project dashboards ────────────────────────────────────────
+
+export const projectDashboardSchema = z.object({
+  id: z.string().describe('Unique dashboard identifier'),
+  workspaceId: z.string().describe('Parent workspace identifier'),
+  projectId: z.string().describe('Parent project identifier'),
+  widgets: z.array(dashboardWidgetSchema).describe('Dashboard widget layout'),
+  updatedAt: z.string().nullable().describe('ISO 8601 last update timestamp'),
+  updatedBy: z.string().nullable().describe('Identifier of the user who last updated the layout')
+});
+
+export const updateProjectDashboardBodySchema = z.object({
+  widgets: z.array(dashboardWidgetSchema).describe('Dashboard widget layout to persist')
+});
+
+export const projectDashboardContract = oc.tag('ProjectDashboard').router({
+  projectDashboard: {
+    get: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{projectId}/dashboard',
+        inputStructure: 'detailed',
+        summary: 'Get project dashboard',
+        description:
+          'Retrieves the dashboard for the project. A project without a saved dashboard yet is seeded with a default one on first read.',
+        tags: ['ProjectDashboard']
+      })
+      .input(z.object({ params: wsAndProjectId }))
+      .output(projectDashboardSchema),
+    update: oc
+      .route({
+        method: 'PATCH',
+        path: '/{workspace}/projects/{projectId}/dashboard',
+        inputStructure: 'detailed',
+        summary: 'Update project dashboard',
+        description:
+          'Updates the project dashboard. Widgets wholesale-replace the existing layout.',
+        tags: ['ProjectDashboard']
+      })
+      .input(z.object({ params: wsAndProjectId, body: updateProjectDashboardBodySchema }))
+      .output(projectDashboardSchema)
+  }
+});
+
+export type ProjectDashboard = z.infer<typeof projectDashboardSchema>;
+
+export type UpdateProjectDashboardRequest = z.infer<typeof updateProjectDashboardBodySchema>;

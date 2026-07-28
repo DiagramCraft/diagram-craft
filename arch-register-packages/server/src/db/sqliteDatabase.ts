@@ -13,6 +13,7 @@ import { SqliteAiDatabase } from '../domain/ai/db/sqliteAi';
 import { SqliteViewDatabase } from '../domain/catalog/db/sqliteView';
 import { SqliteDashboardDatabase } from '../domain/dashboard/db/sqliteDashboard';
 import { SqlitePersonalDashboardDatabase } from '../domain/personalDashboard/db/sqlitePersonalDashboard';
+import { SqliteProjectDashboardDatabase } from '../domain/dashboard/db/sqliteProjectDashboard';
 import { SqliteWatchDatabase } from '../domain/watch/db/sqliteWatch';
 import { SqliteDiscussionDatabase } from '../domain/discussion/db/sqliteDiscussion';
 import { SqliteWikiCommentDatabase } from '../domain/wikiComments/db/sqliteWikiComment';
@@ -41,6 +42,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly view;
   readonly dashboard;
   readonly personalDashboard;
+  readonly projectDashboard;
   readonly project;
   readonly audit;
   readonly watch;
@@ -75,6 +77,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.view = new SqliteViewDatabase(() => this.db);
     this.dashboard = new SqliteDashboardDatabase(() => this.db);
     this.personalDashboard = new SqlitePersonalDashboardDatabase(() => this.db);
+    this.projectDashboard = new SqliteProjectDashboardDatabase(() => this.db);
     this.project = new SqliteProjectDatabase(() => this.db);
     this.audit = new SqliteAuditDatabase(() => this.db);
     this.watch = new SqliteWatchDatabase(() => this.db);
@@ -156,6 +159,7 @@ export class SqliteDatabase implements DatabaseAdapter {
       view: this.view,
       dashboard: this.dashboard,
       personalDashboard: this.personalDashboard,
+      projectDashboard: this.projectDashboard,
       project: this.project,
       audit: this.audit,
       watch: this.watch,

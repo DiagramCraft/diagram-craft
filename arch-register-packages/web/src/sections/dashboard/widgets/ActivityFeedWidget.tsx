@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import type { ActivityFeedWidgetConfig } from '../dashboardWidgetConfig';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { useAuditLog } from '../../../hooks/useAudit';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -45,14 +46,14 @@ const getEntityTypeLabel = (entityType: string): string => {
 };
 
 type Props = {
-  widget: Extract<DashboardWidget, { type: 'activity-feed' }>;
+  widget: DashboardWidget & { type: 'activity-feed'; config: ActivityFeedWidgetConfig };
 };
 
 export const ActivityFeedWidget = ({ widget }: Props) => {
   const navigate = useNavigate();
   const { workspaceSlug, permissions } = useWorkspaceContext();
   const { canViewAudit } = permissions;
-  const limit = widget.limit ?? DEFAULT_ACTIVITY_LIMIT;
+  const limit = widget.config.limit ?? DEFAULT_ACTIVITY_LIMIT;
 
   const { data: recentActivity = [], isLoading: activityLoading } = useAuditLog(
     workspaceSlug,

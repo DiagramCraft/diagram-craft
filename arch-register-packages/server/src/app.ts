@@ -23,6 +23,7 @@ import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrp
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
 import { createWorkspaceDashboardORPCHandler } from './domain/dashboard/dashboardOrpc';
 import { createPersonalDashboardORPCHandler } from './domain/personalDashboard/personalDashboardOrpc';
+import { createProjectDashboardORPCHandler } from './domain/dashboard/projectDashboardOrpc';
 import { createWorkspaceCollectionORPCHandler } from './domain/catalog/collectionOrpc';
 import { createWorkspaceManagementORPCHandler } from './domain/workspace/workspaceOrpc';
 import { createWorkspaceConfigORPCHandler } from './domain/workspace/workspaceConfigOrpc';
@@ -164,6 +165,7 @@ export const createApp = (
   app.use(createWorkspaceViewORPCHandler(db));
   app.use(createWorkspaceDashboardORPCHandler(db));
   app.use(createPersonalDashboardORPCHandler(db));
+  app.use(createProjectDashboardORPCHandler(db));
   app.use(createWorkspaceCollectionORPCHandler(db));
   app.use(createWorkspaceConfigORPCHandler(db));
   app.use(createWorkspaceAnalyticsORPCHandler(db));

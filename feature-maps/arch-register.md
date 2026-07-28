@@ -161,6 +161,18 @@
         - @id:ar.projects.lifecycle Users can create, edit, view, and delete projects and manage their project-level
           metadata.
 
+        - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
+          project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,
+          entity tables, and two project-only widgets — active assessments and upcoming milestones — plus a
+          project-relevant subset of the general catalog; workspace-wide analytics widgets such as lifecycle and
+          activity-trend charts, stale-entity reports, and the activity feed are not available at project scope). The
+          active-assessments widget lists up to four open assessments for the project; the upcoming-milestones widget
+          shows the most recently completed milestone plus up to three upcoming ones. A project has a single
+          dashboard (no personal or multiple project dashboards); a fresh project shows a sensible default layout.
+          Project editors can enter edit mode to add, remove, resize, and reposition widgets and save the layout;
+          other project members see the dashboard read-only. File and diagram browsing for the project remains
+          available via the sidebar rather than as a dashboard widget.
+
         - @id:ar.projects.files Users can organize project files and folders, create content nodes, rename or relocate
           them, and manage supported file content.
 

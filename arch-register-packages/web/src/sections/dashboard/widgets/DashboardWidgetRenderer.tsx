@@ -7,6 +7,9 @@ import { LifecycleChartWidget } from './LifecycleChartWidget';
 import { ActivityTrendChartWidget } from './ActivityTrendChartWidget';
 import { StaleEntityReportWidget } from './StaleEntityReportWidget';
 import { ActivityFeedWidget } from './ActivityFeedWidget';
+import { ActiveAssessmentsWidget } from './ActiveAssessmentsWidget';
+import { UpcomingMilestonesWidget } from './UpcomingMilestonesWidget';
+import { parseKnownDashboardWidget } from '../dashboardWidgetConfig';
 
 type Props = {
   widget: DashboardWidget;
@@ -24,24 +27,33 @@ export const DashboardWidgetRenderer = ({ widget, onEdit, onRemove }: Props) => 
 };
 
 const renderWidgetContent = (widget: DashboardWidget) => {
-  switch (widget.type) {
+  const knownWidget = parseKnownDashboardWidget(widget);
+  if (!knownWidget) {
+    return (
+      <div>
+        Unsupported dashboard widget: <code>{widget.type}</code>
+      </div>
+    );
+  }
+
+  switch (knownWidget.type) {
     case 'stat-metric':
-      return <StatMetricWidget widget={widget} />;
+      return <StatMetricWidget widget={knownWidget} />;
     case 'saved-view-embed':
-      return <SavedViewEmbedWidget widget={widget} />;
+      return <SavedViewEmbedWidget widget={knownWidget} />;
     case 'entity-table':
-      return <EntityTableWidget widget={widget} />;
+      return <EntityTableWidget widget={knownWidget} />;
     case 'lifecycle-chart':
       return <LifecycleChartWidget />;
     case 'activity-trend-chart':
-      return <ActivityTrendChartWidget widget={widget} />;
+      return <ActivityTrendChartWidget widget={knownWidget} />;
     case 'stale-entity-report':
-      return <StaleEntityReportWidget widget={widget} />;
+      return <StaleEntityReportWidget widget={knownWidget} />;
     case 'activity-feed':
-      return <ActivityFeedWidget widget={widget} />;
-    default: {
-      const _exhaustive: never = widget;
-      return _exhaustive;
-    }
+      return <ActivityFeedWidget widget={knownWidget} />;
+    case 'active-assessments':
+      return <ActiveAssessmentsWidget />;
+    case 'upcoming-milestones':
+      return <UpcomingMilestonesWidget />;
   }
 };

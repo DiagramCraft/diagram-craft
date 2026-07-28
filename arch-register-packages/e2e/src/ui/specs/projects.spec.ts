@@ -97,7 +97,7 @@ test.describe('projects section', () => {
     page
   }) => {
     await page.goto(
-      `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=home&q=auth&viewMode=timeline`
+      `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test?tab=projects&q=auth&viewMode=timeline`
     );
 
     const filterInput = page.getByPlaceholder('Filter diagrams…');

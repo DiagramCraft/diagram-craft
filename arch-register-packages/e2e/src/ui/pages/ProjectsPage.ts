@@ -23,7 +23,7 @@ export class ProjectsPage extends WorkspacePage {
 
   pinProjectButton = () => this.page.getByRole('button', { name: /Pin project|Unpin project/ });
 
-  editProjectButton = () => this.page.getByRole('button', { name: 'Edit' });
+  editProjectButton = () => this.page.getByRole('button', { name: 'Edit', exact: true });
 
   newProjectButton = () => this.page.locator('button[title="New project"]');
 
