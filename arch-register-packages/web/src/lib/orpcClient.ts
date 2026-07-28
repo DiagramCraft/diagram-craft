@@ -1,4 +1,4 @@
-import type { ContractRouterClient } from '@orpc/contract';
+import type { AnyContractRouter, ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
@@ -40,29 +40,33 @@ import { governanceContract } from '@arch-register/api-types/governanceContract'
 import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
-import { toApplicationApiUrl } from './applicationApi';
 
-const ORPC_BASE_PATH = '/api';
+const CORE_API_PATH = '/api';
+const APPLICATION_API_PATH = '/api/application/v1';
 
-const resolveORPCBaseUrl = () => {
+const resolveORPCBaseUrl = (apiPath: string) => {
   const configuredBase = import.meta.env.VITE_API_URL ?? '';
 
   if (configuredBase) {
-    return new URL(ORPC_BASE_PATH, configuredBase).toString();
+    return new URL(apiPath, configuredBase).toString();
   }
 
   if (typeof window !== 'undefined') {
-    return new URL(ORPC_BASE_PATH, window.location.origin).toString();
+    return new URL(apiPath, window.location.origin).toString();
   }
 
-  return `http://localhost${ORPC_BASE_PATH}`;
+  return `http://localhost${apiPath}`;
 };
 
-const webContracts = {
-  ...aiContract,
+const coreContracts = {
   ...authPublicContract,
   ...authProtectedContract,
   ...devContract,
+  ...diagramCraftContract
+};
+
+const applicationContracts = {
+  ...aiContract,
   ...workspaceAnalyticsContract,
   ...workspaceMetricContract,
   ...jobsContract,
@@ -74,7 +78,6 @@ const webContracts = {
   ...entityDeprecationContract,
   ...governanceContract,
   ...governanceReminderConfigContract,
-  ...diagramCraftContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceEntityContract,
@@ -98,32 +101,77 @@ const webContracts = {
   ...workspaceTemplateContract
 };
 
-const clientLink = new OpenAPILink(webContracts, {
-  url: resolveORPCBaseUrl,
-  interceptors: [
-    async options => {
-      try {
-        return await options.next();
-      } catch (error) {
-        if (options.signal?.aborted) throw error;
-        throw normalizeApiError(error);
+const fetchApiRequest = async (request: Request, init?: RequestInit) => {
+  const method = request.method;
+  const body = method === 'GET' || method === 'HEAD' ? undefined : await request.clone().text();
+  const nextInit: RequestInit = { ...init, method, headers: request.headers, body };
+  const url = new URL(request.url);
+
+  return fetchWithAuthResponse(`${url.pathname}${url.search}`, nextInit);
+};
+
+const createApiClient = <T extends AnyContractRouter>(contracts: T, apiPath: string) => {
+  const clientLink = new OpenAPILink(contracts, {
+    url: () => resolveORPCBaseUrl(apiPath),
+    interceptors: [
+      async options => {
+        try {
+          return await options.next();
+        } catch (error) {
+          if (options.signal?.aborted) throw error;
+          throw normalizeApiError(error);
+        }
       }
-    }
-  ],
-  fetch: async (request, init) => {
-    const raw = toApplicationApiUrl(request.url);
-    const method = request.method;
-    const body = method === 'GET' || method === 'HEAD' ? undefined : await request.clone().text();
-    const nextInit: RequestInit = { ...init, method, headers: request.headers, body };
+    ],
+    fetch: fetchApiRequest
+  });
 
-    if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      const url = new URL(raw);
-      return fetchWithAuthResponse(`${url.pathname}${url.search}`, nextInit);
-    }
+  return createORPCClient(clientLink) as JsonifiedClient<ContractRouterClient<T>>;
+};
 
-    return fetchWithAuthResponse(raw, nextInit);
-  }
-});
+const coreClient = createApiClient(coreContracts, CORE_API_PATH);
+const applicationClient = createApiClient(applicationContracts, APPLICATION_API_PATH);
 
-export const orpcClient: JsonifiedClient<ContractRouterClient<typeof webContracts>> =
-  createORPCClient(clientLink);
+export const orpcClient = {
+  auth: coreClient.auth,
+  authProtected: coreClient.authProtected,
+  dev: coreClient.dev,
+  diagramCraft: coreClient.diagramCraft,
+  ai: applicationClient.ai,
+  analytics: applicationClient.analytics,
+  metrics: applicationClient.metrics,
+  jobs: applicationClient.jobs,
+  externalContent: applicationClient.externalContent,
+  webhooks: applicationClient.webhooks,
+  automationRules: applicationClient.automationRules,
+  documentTypes: applicationClient.documentTypes,
+  documentTemplates: applicationClient.documentTemplates,
+  entityChanges: applicationClient.entityChanges,
+  entityDeprecations: applicationClient.entityDeprecations,
+  governance: applicationClient.governance,
+  governanceReminderConfig: applicationClient.governanceReminderConfig,
+  enums: applicationClient.enums,
+  schemas: applicationClient.schemas,
+  entities: applicationClient.entities,
+  entityQueryText: applicationClient.entityQueryText,
+  entityVersions: applicationClient.entityVersions,
+  views: applicationClient.views,
+  dashboards: applicationClient.dashboards,
+  collections: applicationClient.collections,
+  workspaces: applicationClient.workspaces,
+  config: applicationClient.config,
+  projects: applicationClient.projects,
+  milestones: applicationClient.milestones,
+  changeCases: applicationClient.changeCases,
+  assessments: applicationClient.assessments,
+  assessmentResponses: applicationClient.assessmentResponses,
+  audit: applicationClient.audit,
+  watching: applicationClient.watching,
+  notifications: applicationClient.notifications,
+  pinnedEntities: applicationClient.pinnedEntities,
+  notificationPreferences: applicationClient.notificationPreferences,
+  discussions: applicationClient.discussions,
+  wikiComments: applicationClient.wikiComments,
+  search: applicationClient.search,
+  templates: applicationClient.templates
+};
