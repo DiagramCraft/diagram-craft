@@ -8,7 +8,12 @@ import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbPencil, TbCheck, TbX } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useWorkspaceDashboards, useUpdateWorkspaceDashboard } from '../../hooks/useDashboard';
+import {
+  useWorkspaceDashboards,
+  useUpdateWorkspaceDashboard,
+  usePersonalDashboards,
+  useUpdatePersonalDashboard
+} from '../../hooks/useDashboard';
 import { LoadingState } from '../../components/LoadingState';
 import { DashboardWidgetRenderer } from './widgets/DashboardWidgetRenderer';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
@@ -28,8 +33,17 @@ export const DashboardScreen = () => {
   const { data: dashboards, isLoading } = useWorkspaceDashboards(workspaceSlug);
   const updateDashboard = useUpdateWorkspaceDashboard(workspaceSlug);
 
+  const { data: personalDashboards, isLoading: isPersonalLoading } =
+    usePersonalDashboards(workspaceSlug);
+  const updatePersonalDashboard = useUpdatePersonalDashboard(workspaceSlug);
+
   const activeDashboardId = search.dashboard ?? dashboards?.[0]?.id;
-  const activeDashboard = dashboards?.find(d => d.id === activeDashboardId) ?? null;
+  const sharedDashboard = dashboards?.find(d => d.id === activeDashboardId) ?? null;
+  const personalDashboard = sharedDashboard
+    ? null
+    : (personalDashboards?.find(d => d.id === activeDashboardId) ?? null);
+  const activeDashboard = sharedDashboard ?? personalDashboard;
+  const isPersonalActive = personalDashboard !== null;
 
   const persistedWidgets = useMemo(
     () =>
@@ -78,9 +92,15 @@ export const DashboardScreen = () => {
     );
   };
 
+  const canEditActiveDashboard = canManageDashboard || isPersonalActive;
+
   const handleSave = () => {
     if (!activeDashboardId) return;
-    updateDashboard.mutate({ id: activeDashboardId, body: { widgets: localWidgets } });
+    if (isPersonalActive) {
+      updatePersonalDashboard.mutate({ id: activeDashboardId, body: { widgets: localWidgets } });
+    } else {
+      updateDashboard.mutate({ id: activeDashboardId, body: { widgets: localWidgets } });
+    }
     setIsEditing(false);
   };
 
@@ -89,7 +109,7 @@ export const DashboardScreen = () => {
     setIsEditing(false);
   };
 
-  const canEditGrid = isEditing && canManageDashboard;
+  const canEditGrid = isEditing && canEditActiveDashboard;
   const editingWidget = localWidgets.find(w => w.id === editingWidgetId) ?? null;
 
   return (
@@ -100,7 +120,7 @@ export const DashboardScreen = () => {
           title={workspace.name}
           description={workspace.description}
           buttons={
-            canManageDashboard &&
+            canEditActiveDashboard &&
             !isEditing && (
               <Button icon={<TbPencil size={12} />} onClick={() => setIsEditing(true)}>
                 Edit
@@ -110,7 +130,7 @@ export const DashboardScreen = () => {
         />
       </div>
 
-      {isEditing && canManageDashboard && (
+      {isEditing && canEditActiveDashboard && (
         <div className={styles.editActions}>
           <div className={styles.editActionsLeft}>
             <Button
@@ -132,7 +152,7 @@ export const DashboardScreen = () => {
         </div>
       )}
 
-      {isLoading ? (
+      {isLoading || isPersonalLoading ? (
         <LoadingState text="Loading dashboard…" />
       ) : (
         <div className={styles.gridContainer} ref={setGridContainerEl}>
@@ -167,7 +187,7 @@ export const DashboardScreen = () => {
         </div>
       )}
 
-      {canManageDashboard && (
+      {canEditActiveDashboard && (
         <WidgetPickerDialog
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
@@ -177,7 +197,7 @@ export const DashboardScreen = () => {
         />
       )}
 
-      {canManageDashboard && (
+      {canEditActiveDashboard && (
         <WidgetConfigDialog
           widget={editingWidget}
           open={editingWidget !== null}

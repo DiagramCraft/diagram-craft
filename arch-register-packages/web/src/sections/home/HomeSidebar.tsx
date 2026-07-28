@@ -25,7 +25,11 @@ import {
   useCreateWorkspaceDashboard,
   useDeleteWorkspaceDashboard,
   useUpdateWorkspaceDashboard,
-  useWorkspaceDashboards
+  useWorkspaceDashboards,
+  useCreatePersonalDashboard,
+  useDeletePersonalDashboard,
+  useUpdatePersonalDashboard,
+  usePersonalDashboards
 } from '../../hooks/useDashboard';
 import { DashboardNameDialog } from '../dashboard/DashboardNameDialog';
 
@@ -57,6 +61,11 @@ export const HomeSidebar = ({
   const updateDashboard = useUpdateWorkspaceDashboard(workspaceSlug);
   const deleteDashboard = useDeleteWorkspaceDashboard(workspaceSlug);
 
+  const { data: personalDashboards } = usePersonalDashboards(workspaceSlug);
+  const createPersonalDashboard = useCreatePersonalDashboard(workspaceSlug);
+  const updatePersonalDashboard = useUpdatePersonalDashboard(workspaceSlug);
+  const deletePersonalDashboard = useDeletePersonalDashboard(workspaceSlug);
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -66,9 +75,27 @@ export const HomeSidebar = ({
     dashboardId: string;
   } | null>(null);
 
+  const [createPersonalDialogOpen, setCreatePersonalDialogOpen] = useState(false);
+  const [renamePersonalTarget, setRenamePersonalTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deletePersonalTarget, setDeletePersonalTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [personalContextMenu, setPersonalContextMenu] = useState<{
+    x: number;
+    y: number;
+    dashboardId: string;
+  } | null>(null);
+
   const activeDashboardId = search.dashboard ?? dashboards?.[0]?.id;
   const contextMenuDashboard = dashboards?.find(d => d.id === contextMenu?.dashboardId) ?? null;
   const canDeleteDashboard = (dashboards?.length ?? 0) > 1;
+
+  const personalContextMenuDashboard =
+    personalDashboards?.find(d => d.id === personalContextMenu?.dashboardId) ?? null;
 
   const selectDashboard = (id: string) => {
     navigate({
@@ -83,40 +110,42 @@ export const HomeSidebar = ({
       <SidebarTitleHeader
         title="Overview"
         actions={
-          (canManageDashboard || canCreateProjects || canCreateEntities) && (
-            <MenuButton.Root>
-              <MenuButton.Trigger
-                element={
-                  <button type="button" className={styles.action} title="New">
-                    <TbPlus size={13} />
-                  </button>
-                }
-              />
-              <MenuButton.Menu>
-                {canManageDashboard && (
-                  <Menu.Item
-                    leftSlot={<TbLayoutDashboard size={13} />}
-                    onClick={() => setCreateDialogOpen(true)}
-                  >
-                    New dashboard
-                  </Menu.Item>
-                )}
-                {canManageDashboard && (canCreateProjects || canCreateEntities) && (
-                  <Menu.Separator />
-                )}
-                {canCreateProjects && (
-                  <Menu.Item leftSlot={<TbFolders size={13} />} onClick={openAddProjectDialog}>
-                    New project
-                  </Menu.Item>
-                )}
-                {canCreateEntities && (
-                  <Menu.Item leftSlot={<TbDatabase size={13} />} onClick={openAddEntityDialog}>
-                    New entity
-                  </Menu.Item>
-                )}
-              </MenuButton.Menu>
-            </MenuButton.Root>
-          )
+          <MenuButton.Root>
+            <MenuButton.Trigger
+              element={
+                <button type="button" className={styles.action} title="New">
+                  <TbPlus size={13} />
+                </button>
+              }
+            />
+            <MenuButton.Menu>
+              {canManageDashboard && (
+                <Menu.Item
+                  leftSlot={<TbLayoutDashboard size={13} />}
+                  onClick={() => setCreateDialogOpen(true)}
+                >
+                  New dashboard
+                </Menu.Item>
+              )}
+              <Menu.Item
+                leftSlot={<TbLayoutDashboard size={13} />}
+                onClick={() => setCreatePersonalDialogOpen(true)}
+              >
+                New personal dashboard
+              </Menu.Item>
+              {(canManageDashboard || canCreateProjects || canCreateEntities) && <Menu.Separator />}
+              {canCreateProjects && (
+                <Menu.Item leftSlot={<TbFolders size={13} />} onClick={openAddProjectDialog}>
+                  New project
+                </Menu.Item>
+              )}
+              {canCreateEntities && (
+                <Menu.Item leftSlot={<TbDatabase size={13} />} onClick={openAddEntityDialog}>
+                  New entity
+                </Menu.Item>
+              )}
+            </MenuButton.Menu>
+          </MenuButton.Root>
         }
       />
       <div className={styles.scroll}>
@@ -144,6 +173,30 @@ export const HomeSidebar = ({
                       }
                     : undefined
                 }
+              />
+            ))}
+          </div>
+        )}
+        {personalDashboards && personalDashboards.length > 0 && (
+          <div>
+            <SidebarGroupLabel>My Dashboards</SidebarGroupLabel>
+            {personalDashboards.map(dashboard => (
+              <TreeRow
+                key={dashboard.id}
+                testId={`personal-dashboard-row-${dashboard.name}`}
+                icon={<TbLayoutDashboard size={12} />}
+                label={dashboard.name}
+                active={dashboard.id === activeDashboardId}
+                onClick={() => selectDashboard(dashboard.id)}
+                onContextMenu={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setPersonalContextMenu({
+                    x: event.clientX,
+                    y: event.clientY,
+                    dashboardId: dashboard.id
+                  });
+                }}
               />
             ))}
           </div>
@@ -288,6 +341,107 @@ export const HomeSidebar = ({
           setDeleteTarget(null);
         }}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      {personalContextMenu && (
+        <ContextMenu.Imperative
+          x={personalContextMenu.x}
+          y={personalContextMenu.y}
+          onClose={() => setPersonalContextMenu(null)}
+        >
+          <Menu.Item
+            leftSlot={<TbPencil size={13} />}
+            disabled={!personalContextMenuDashboard}
+            onClick={() => {
+              if (personalContextMenuDashboard)
+                setRenamePersonalTarget(personalContextMenuDashboard);
+              setPersonalContextMenu(null);
+            }}
+          >
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            disabled={!personalContextMenuDashboard}
+            onClick={() => {
+              if (personalContextMenuDashboard)
+                setDeletePersonalTarget(personalContextMenuDashboard);
+              setPersonalContextMenu(null);
+            }}
+          >
+            Delete
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
+
+      <DashboardNameDialog
+        key={`create-personal-${createPersonalDialogOpen}`}
+        open={createPersonalDialogOpen}
+        title="New personal dashboard"
+        confirmLabel="Create dashboard"
+        onCancel={() => setCreatePersonalDialogOpen(false)}
+        onConfirm={name => {
+          createPersonalDashboard.mutate(
+            { name },
+            {
+              onSuccess: created => {
+                setCreatePersonalDialogOpen(false);
+                selectDashboard(created.id);
+              }
+            }
+          );
+        }}
+      />
+
+      {renamePersonalTarget && (
+        <DashboardNameDialog
+          key={`rename-personal-${renamePersonalTarget.id}`}
+          open={!!renamePersonalTarget}
+          title="Rename dashboard"
+          confirmLabel="Save"
+          initialName={renamePersonalTarget.name}
+          onCancel={() => setRenamePersonalTarget(null)}
+          onConfirm={name => {
+            updatePersonalDashboard.mutate(
+              { id: renamePersonalTarget.id, body: { name } },
+              { onSuccess: () => setRenamePersonalTarget(null) }
+            );
+          }}
+        />
+      )}
+
+      <DeleteConfirmationDialog
+        open={!!deletePersonalTarget}
+        title="Delete dashboard?"
+        message={
+          deletePersonalTarget ? (
+            <>
+              The dashboard <b>{deletePersonalTarget.name}</b> will be permanently deleted.
+            </>
+          ) : (
+            ''
+          )
+        }
+        confirmLabel="Delete dashboard"
+        onConfirm={() => {
+          if (!deletePersonalTarget) return;
+          const wasActive = deletePersonalTarget.id === activeDashboardId;
+          deletePersonalDashboard.mutate(deletePersonalTarget.id, {
+            onSuccess: () => {
+              if (wasActive) {
+                navigate({
+                  to: '/$workspaceSlug',
+                  params: { workspaceSlug },
+                  search: prev => ({ ...prev, dashboard: undefined })
+                });
+              }
+            }
+          });
+          setDeletePersonalTarget(null);
+        }}
+        onCancel={() => setDeletePersonalTarget(null)}
       />
     </>
   );

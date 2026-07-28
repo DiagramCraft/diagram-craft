@@ -19,7 +19,10 @@ import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
-import { workspaceDashboardContract } from '@arch-register/api-types/dashboardContract';
+import {
+  workspaceDashboardContract,
+  personalDashboardContract
+} from '@arch-register/api-types/dashboardContract';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
 import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
@@ -84,6 +87,7 @@ const applicationContracts = {
   ...entityVersionContract,
   ...workspaceViewContract,
   ...workspaceDashboardContract,
+  ...personalDashboardContract,
   ...workspaceCollectionContract,
   ...workspaceManagementContract,
   ...workspaceConfigContract,
@@ -157,6 +161,7 @@ export const orpcClient = {
   entityVersions: applicationClient.entityVersions,
   views: applicationClient.views,
   dashboards: applicationClient.dashboards,
+  personalDashboards: applicationClient.personalDashboards,
   collections: applicationClient.collections,
   workspaces: applicationClient.workspaces,
   config: applicationClient.config,
