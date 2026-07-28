@@ -9,7 +9,8 @@ import { StaleEntityReportWidget } from './StaleEntityReportWidget';
 import { ActivityFeedWidget } from './ActivityFeedWidget';
 import { ActiveAssessmentsWidget } from './ActiveAssessmentsWidget';
 import { UpcomingMilestonesWidget } from './UpcomingMilestonesWidget';
-import { parseKnownDashboardWidget } from '../dashboardWidgetConfig';
+import { parseKnownDashboardWidget, type KnownDashboardWidget } from '../dashboardWidgetConfig';
+import { WIDGET_TYPE_ICON, getWidgetTitle } from '../dashboardWidgetDefaults';
 
 type Props = {
   widget: DashboardWidget;
@@ -18,16 +19,24 @@ type Props = {
 };
 
 export const DashboardWidgetRenderer = ({ widget, onEdit, onRemove }: Props) => {
-  const content = renderWidgetContent(widget);
+  const knownWidget = parseKnownDashboardWidget(widget);
+  const content = renderWidgetContent(widget, knownWidget);
+  const title = knownWidget ? getWidgetTitle(knownWidget) : widget.type;
+  const Icon = knownWidget ? WIDGET_TYPE_ICON[knownWidget.type] : undefined;
+
   return (
-    <WidgetFrame onEdit={onEdit} onRemove={onRemove}>
+    <WidgetFrame
+      title={title}
+      icon={Icon && <Icon size={14} />}
+      onEdit={onEdit}
+      onRemove={onRemove}
+    >
       {content}
     </WidgetFrame>
   );
 };
 
-const renderWidgetContent = (widget: DashboardWidget) => {
-  const knownWidget = parseKnownDashboardWidget(widget);
+const renderWidgetContent = (widget: DashboardWidget, knownWidget: KnownDashboardWidget | null) => {
   if (!knownWidget) {
     return (
       <div>

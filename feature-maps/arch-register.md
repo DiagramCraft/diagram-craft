@@ -33,6 +33,10 @@
           least one dashboard. Administrators can create a dashboard from the sidebar (added at the end of the order),
           and rename or delete a dashboard via its context menu. Administrators can also enter edit mode to add,
           remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
+          Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
+          stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed
+          title naming the widget type. In edit mode, the per-widget edit and remove controls appear within the title
+          bar rather than overlapping the content.
 
         - @id:ar.workspace.home.personal-dashboards Any workspace member can optionally create one or more personal
           dashboards for themselves, separate from the shared workspace dashboard(s). Personal dashboards are listed

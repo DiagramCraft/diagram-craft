@@ -9,6 +9,7 @@ import { LoadingState } from '../../components/LoadingState';
 import { DashboardWidgetRenderer } from './widgets/DashboardWidgetRenderer';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
 import { WidgetConfigDialog } from './WidgetConfigDialog';
+import { MdxContext, useMdxContext } from '../markdown/MdxContext';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
 import styles from './DashboardGrid.module.css';
@@ -38,6 +39,7 @@ export const DashboardGrid = ({
   workspaceSlug,
   surface = 'workspace'
 }: Props) => {
+  const ambientMdxContext = useMdxContext();
   const [localWidgets, setLocalWidgets] = useState<DashboardWidget[]>(widgets);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [editingWidgetId, setEditingWidgetId] = useState<string | null>(null);
@@ -118,38 +120,40 @@ export const DashboardGrid = ({
         <LoadingState text="Loading dashboard…" />
       ) : (
         <div className={styles.gridContainer} ref={setGridContainerEl}>
-          <ReactGridLayout
-            width={width}
-            cols={GRID_COLS}
-            rowHeight={GRID_ROW_HEIGHT}
-            layout={layout}
-            isDraggable={canEditGrid}
-            isResizable={canEditGrid}
-            onLayoutChange={handleLayoutChange}
-            compactType={null}
-            preventCollision={true}
-            margin={[12, 12]}
-            containerPadding={[0, 0]}
-            draggableCancel=".widgetControls"
-          >
-            {localWidgets.map(widget => (
-              <div key={widget.id} className={styles.gridItem}>
-                <DashboardWidgetRenderer
-                  widget={widget}
-                  onEdit={
-                    canEditGrid && parseKnownDashboardWidget(widget)
-                      ? () => setEditingWidgetId(widget.id)
-                      : undefined
-                  }
-                  onRemove={
-                    canEditGrid
-                      ? () => setLocalWidgets(current => current.filter(w => w.id !== widget.id))
-                      : undefined
-                  }
-                />
-              </div>
-            ))}
-          </ReactGridLayout>
+          <MdxContext.Provider value={{ ...ambientMdxContext, renderMode: 'dashboard' }}>
+            <ReactGridLayout
+              width={width}
+              cols={GRID_COLS}
+              rowHeight={GRID_ROW_HEIGHT}
+              layout={layout}
+              isDraggable={canEditGrid}
+              isResizable={canEditGrid}
+              onLayoutChange={handleLayoutChange}
+              compactType={null}
+              preventCollision={true}
+              margin={[12, 12]}
+              containerPadding={[0, 0]}
+              draggableCancel=".widgetControls"
+            >
+              {localWidgets.map(widget => (
+                <div key={widget.id} className={styles.gridItem}>
+                  <DashboardWidgetRenderer
+                    widget={widget}
+                    onEdit={
+                      canEditGrid && parseKnownDashboardWidget(widget)
+                        ? () => setEditingWidgetId(widget.id)
+                        : undefined
+                    }
+                    onRemove={
+                      canEditGrid
+                        ? () => setLocalWidgets(current => current.filter(w => w.id !== widget.id))
+                        : undefined
+                    }
+                  />
+                </div>
+              ))}
+            </ReactGridLayout>
+          </MdxContext.Provider>
         </div>
       )}
 

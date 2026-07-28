@@ -1,5 +1,18 @@
+import type { ComponentType } from 'react';
+import {
+  TbActivity,
+  TbChartBar,
+  TbChartDonut2,
+  TbChartLine,
+  TbClipboardCheck,
+  TbClockExclamation,
+  TbFlag3,
+  TbLayoutDashboard,
+  TbTable
+} from 'react-icons/tb';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import type { KnownWidgetType } from './dashboardWidgetConfig';
+import type { EntityMetricType } from '../markdown/mdx-components/blocks/entity-metric/types';
+import type { KnownDashboardWidget, KnownWidgetType } from './dashboardWidgetConfig';
 
 export type WidgetSurface = 'workspace' | 'project';
 
@@ -86,6 +99,33 @@ export const WIDGET_TYPE_OPTIONS: WidgetTypeOption[] = [
     surfaces: ['project']
   }
 ];
+
+export const WIDGET_TYPE_ICON: Record<KnownWidgetType, ComponentType<{ size?: number }>> = {
+  'stat-metric': TbChartBar,
+  'saved-view-embed': TbLayoutDashboard,
+  'entity-table': TbTable,
+  'lifecycle-chart': TbChartDonut2,
+  'activity-trend-chart': TbChartLine,
+  'stale-entity-report': TbClockExclamation,
+  'activity-feed': TbActivity,
+  'active-assessments': TbClipboardCheck,
+  'upcoming-milestones': TbFlag3
+};
+
+const METRIC_TYPE_DEFAULT_LABEL: Record<EntityMetricType, string> = {
+  'entity-count': 'Entities',
+  'project-count': 'Projects',
+  'diagram-count': 'Diagrams',
+  'completeness-percent': 'Well documented'
+};
+
+export const getWidgetTitle = (widget: KnownDashboardWidget): string => {
+  if (widget.type === 'stat-metric') {
+    return widget.config.label?.trim() || METRIC_TYPE_DEFAULT_LABEL[widget.config.metricType];
+  }
+  const option = WIDGET_TYPE_OPTIONS.find(o => o.type === widget.type);
+  return option?.label ?? 'Widget';
+};
 
 const nextRowY = (widgets: DashboardWidget[]): number =>
   widgets.reduce((max, w) => Math.max(max, w.y + w.h), 0);
