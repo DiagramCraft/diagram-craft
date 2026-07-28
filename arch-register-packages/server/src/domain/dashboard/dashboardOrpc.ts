@@ -9,7 +9,13 @@ import {
   orpcErrorMiddleware,
   workspaceScoped
 } from '../../utils/orpcErrors';
-import { getWorkspaceDashboard, putWorkspaceDashboard } from './dashboardOperations';
+import {
+  createWorkspaceDashboard,
+  deleteWorkspaceDashboard,
+  getWorkspaceDashboard,
+  listWorkspaceDashboards,
+  updateWorkspaceDashboard
+} from './dashboardOperations';
 import { workspaceDashboardContract } from '@arch-register/api-types/dashboardContract';
 
 type ORPCContext = {
@@ -23,21 +29,42 @@ const dashboardRouter = implement(workspaceDashboardContract)
   .use(workspaceScoped);
 
 export const workspaceDashboardORPCRouter = dashboardRouter.router({
-  dashboard: {
-    get: dashboardRouter.dashboard.get.handler(async ({ context }) => {
+  dashboards: {
+    list: dashboardRouter.dashboards.list.handler(async ({ context }) => {
       const { workspace, authCtx } = context;
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await getWorkspaceDashboard(context.db, workspace);
+      return await listWorkspaceDashboards(context.db, workspace);
     }),
-    put: dashboardRouter.dashboard.put.handler(async ({ input, context }) => {
+    create: dashboardRouter.dashboards.create.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
       requireWorkspaceCapability(authCtx, 'ws.manage_dashboard');
-      return await putWorkspaceDashboard(
+      return await createWorkspaceDashboard(
         context.db,
         workspace,
-        input.body.widgets,
+        input.body,
         context.event.context.user.id
       );
+    }),
+    get: dashboardRouter.dashboards.get.handler(async ({ input, context }) => {
+      const { workspace, authCtx } = context;
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      return await getWorkspaceDashboard(context.db, workspace, input.params.id);
+    }),
+    update: dashboardRouter.dashboards.update.handler(async ({ input, context }) => {
+      const { workspace, authCtx } = context;
+      requireWorkspaceCapability(authCtx, 'ws.manage_dashboard');
+      return await updateWorkspaceDashboard(
+        context.db,
+        workspace,
+        input.params.id,
+        input.body,
+        context.event.context.user.id
+      );
+    }),
+    remove: dashboardRouter.dashboards.remove.handler(async ({ input, context }) => {
+      const { workspace, authCtx } = context;
+      requireWorkspaceCapability(authCtx, 'ws.manage_dashboard');
+      return await deleteWorkspaceDashboard(context.db, workspace, input.params.id);
     })
   }
 });

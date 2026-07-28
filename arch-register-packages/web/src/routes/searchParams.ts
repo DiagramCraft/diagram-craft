@@ -378,3 +378,12 @@ export const validateAssistantSearch = (raw: Record<string, unknown>): Assistant
   conversation: typeof raw.conversation === 'string' ? raw.conversation : undefined,
   layout: raw.layout === 'conversation' || raw.layout === 'split' ? raw.layout : undefined
 });
+
+// Home params
+export type HomeSearchParams = {
+  dashboard?: string;
+};
+
+export const validateHomeSearch = (raw: Record<string, unknown>): HomeSearchParams => ({
+  dashboard: typeof raw.dashboard === 'string' ? raw.dashboard : undefined
+});

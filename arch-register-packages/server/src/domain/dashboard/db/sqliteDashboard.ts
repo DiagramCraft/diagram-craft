@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Database as DatabaseType } from 'better-sqlite3';
-import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import type { DashboardDatabase } from './dashboardDatabase';
+import type { DashboardDbCreate, DashboardDbUpdate, DashboardDatabase } from './dashboardDatabase';
 import { mapWorkspaceDashboardRow } from './dashboardDatabase';
 import { normalizeSqliteError } from '../../../db/sqliteBase';
 
@@ -12,33 +11,80 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
     return this.getDb();
   }
 
-  async get(workspace: string) {
+  async list(workspace: string) {
+    try {
+      const rows = this.db
+        .prepare('SELECT * FROM workspace_dashboard WHERE workspace = ? ORDER BY sort_order')
+        .all(workspace) as Record<string, unknown>[];
+      return rows.map(mapWorkspaceDashboardRow);
+    } catch (error) {
+      return normalizeSqliteError(error);
+    }
+  }
+
+  async get(workspace: string, id: string) {
     try {
       const row = this.db
-        .prepare('SELECT * FROM workspace_dashboard WHERE workspace = ?')
-        .get(workspace) as Record<string, unknown> | undefined;
+        .prepare('SELECT * FROM workspace_dashboard WHERE workspace = ? AND id = ?')
+        .get(workspace, id) as Record<string, unknown> | undefined;
       return row ? mapWorkspaceDashboardRow(row) : null;
     } catch (error) {
       return normalizeSqliteError(error);
     }
   }
 
-  async put(workspace: string, widgets: DashboardWidget[], actorUserId: string | null) {
+  async create(input: DashboardDbCreate) {
+    const now = new Date().toISOString();
+    const id = input.id || randomUUID();
+    try {
+      this.db
+        .prepare(
+          `INSERT INTO workspace_dashboard (id, workspace, name, sort_order, layout, updated_at, updated_by)
+           VALUES (?, ?, ?, ?, '[]', ?, ?)`
+        )
+        .run(id, input.workspace, input.name, input.sort_order, now, input.updated_by);
+    } catch (error) {
+      return normalizeSqliteError(error);
+    }
+    return (await this.get(input.workspace, id))!;
+  }
+
+  async update(workspace: string, id: string, input: DashboardDbUpdate) {
+    const existing = await this.get(workspace, id);
+    if (!existing) return null;
+
     const now = new Date().toISOString();
     try {
       this.db
         .prepare(
-          `INSERT INTO workspace_dashboard (id, workspace, layout, updated_at, updated_by)
-           VALUES (?, ?, ?, ?, ?)
-           ON CONFLICT(workspace) DO UPDATE SET
-             layout = excluded.layout,
-             updated_at = excluded.updated_at,
-             updated_by = excluded.updated_by`
+          `UPDATE workspace_dashboard
+           SET name = ?, layout = ?, updated_at = ?, updated_by = ?
+           WHERE workspace = ? AND id = ?`
         )
-        .run(randomUUID(), workspace, JSON.stringify(widgets), now, actorUserId);
+        .run(
+          input.name ?? existing.name,
+          input.layout ? JSON.stringify(input.layout) : JSON.stringify(existing.layout),
+          now,
+          input.updated_by,
+          workspace,
+          id
+        );
     } catch (error) {
       return normalizeSqliteError(error);
     }
-    return (await this.get(workspace))!;
+    return this.get(workspace, id);
+  }
+
+  async remove(workspace: string, id: string) {
+    const existing = await this.get(workspace, id);
+    if (!existing) return null;
+    try {
+      this.db
+        .prepare('DELETE FROM workspace_dashboard WHERE workspace = ? AND id = ?')
+        .run(workspace, id);
+      return existing;
+    } catch (error) {
+      return normalizeSqliteError(error);
+    }
   }
 }

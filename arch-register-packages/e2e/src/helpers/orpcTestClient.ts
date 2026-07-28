@@ -77,7 +77,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
   const applicationCollections = makeApplication(workspaceCollectionContract).collections;
   const applicationAnalytics = makeApplication(workspaceAnalyticsContract).analytics;
   const applicationMetrics = makeApplication(workspaceMetricContract).metrics;
-  const applicationDashboard = makeApplication(workspaceDashboardContract).dashboard;
+  const applicationDashboard = makeApplication(workspaceDashboardContract).dashboards;
   const applicationJobs = makeApplication(jobsContract).jobs;
   const applicationWebhooks = makeApplication(webhookContract).webhooks;
   const applicationAudit = makeApplication(auditContract).audit;

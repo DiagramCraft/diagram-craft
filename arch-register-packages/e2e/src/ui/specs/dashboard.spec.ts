@@ -39,4 +39,21 @@ test.describe('dashboard section', () => {
     await expect(homePage.editDashboardButton()).toBeVisible();
     await expect(page.getByText('Not changed in')).toHaveCount(0);
   });
+
+  test('admin can create, rename, switch to, and delete a dashboard @quick', async ({ page }) => {
+    const homePage = new HomePage(page, defaultWorkspace.slug);
+
+    await homePage.goto();
+    await homePage.expectLoaded(defaultWorkspace.name);
+
+    await homePage.createDashboard('Security posture');
+    await expect(homePage.dashboardRow('Security posture')).toBeVisible();
+    await homePage.switchDashboard('Security posture');
+
+    await homePage.renameDashboard('Security posture', 'Security posture v2');
+    await expect(homePage.dashboardRow('Security posture v2')).toBeVisible();
+
+    await homePage.deleteDashboard('Security posture v2');
+    await expect(homePage.dashboardRow('Security posture v2')).toHaveCount(0);
+  });
 });

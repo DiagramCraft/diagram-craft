@@ -3,6 +3,7 @@ import { HomeSidebar } from '../../sections/home/HomeSidebar';
 import { DashboardScreen } from '../../sections/dashboard/DashboardScreen';
 import { buildHomeBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
+import { validateHomeSearch } from '../searchParams';
 
 export const createHomeWorkspaceRoute = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -11,6 +12,7 @@ export const createHomeWorkspaceRoute = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: '/',
+      validateSearch: validateHomeSearch,
       component: DashboardScreen
     }),
     ctx => ({

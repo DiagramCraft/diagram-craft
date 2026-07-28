@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws } from '@arch-register/api-types/common';
+import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -85,7 +85,15 @@ export const dashboardWidgetSchema = z.discriminatedUnion('type', [
 ]);
 
 export const workspaceDashboardSchema = z.object({
+  id: z.string().describe('Unique dashboard identifier'),
   workspaceId: z.string().describe('Parent workspace identifier'),
+  name: z.string().describe('Dashboard name'),
+  order: z
+    .number()
+    .int()
+    .describe(
+      'Position among the workspace dashboards, ascending; the lowest is shown at the workspace home'
+    ),
   widgets: z.array(dashboardWidgetSchema).describe('Dashboard widget layout'),
   updatedAt: z.string().nullable().describe('ISO 8601 last update timestamp'),
   updatedBy: z.string().nullable().describe('Identifier of the user who last updated the layout')
@@ -93,38 +101,81 @@ export const workspaceDashboardSchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-export const putDashboardBodySchema = z.object({
-  widgets: z.array(dashboardWidgetSchema).describe('Dashboard widget layout to persist')
+export const createDashboardBodySchema = z.object({
+  name: z.string().describe('Dashboard name')
+});
+
+export const updateDashboardBodySchema = z.object({
+  name: z.string().optional().describe('Dashboard name'),
+  widgets: z.array(dashboardWidgetSchema).optional().describe('Dashboard widget layout to persist')
+});
+
+const deleteDashboardResponseSchema = z.object({
+  success: z.boolean().describe('Whether the deletion was successful')
 });
 
 // ── Contract ──────────────────────────────────────────────────
 
 export const workspaceDashboardContract = oc.tag('Dashboard').router({
-  dashboard: {
-    get: oc
+  dashboards: {
+    list: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/dashboard',
+        path: '/{workspace}/dashboards',
         inputStructure: 'detailed',
-        summary: 'Get workspace dashboard',
+        summary: 'List workspace dashboards',
         description:
-          'Retrieves the workspace dashboard layout. Returns an empty widget list if no dashboard has been configured yet.',
+          'Retrieves all dashboards for the workspace. A fresh workspace has a single seeded default dashboard.',
         tags: ['Dashboard']
       })
       .input(z.object({ params: ws }))
-      .output(workspaceDashboardSchema),
-    put: oc
+      .output(z.array(workspaceDashboardSchema)),
+    create: oc
       .route({
-        method: 'PUT',
-        path: '/{workspace}/dashboard',
+        method: 'POST',
+        path: '/{workspace}/dashboards',
         inputStructure: 'detailed',
-        summary: 'Replace workspace dashboard',
-        description:
-          'Replaces the entire workspace dashboard layout with the provided widgets. This operation is a wholesale replacement, not a merge.',
+        summary: 'Create workspace dashboard',
+        description: 'Creates a new, empty dashboard for the workspace.',
         tags: ['Dashboard']
       })
-      .input(z.object({ params: ws, body: putDashboardBodySchema }))
-      .output(workspaceDashboardSchema)
+      .input(z.object({ params: ws, body: createDashboardBodySchema }))
+      .output(workspaceDashboardSchema),
+    get: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/dashboards/{id}',
+        inputStructure: 'detailed',
+        summary: 'Get workspace dashboard',
+        description: 'Retrieves a single dashboard by id.',
+        tags: ['Dashboard']
+      })
+      .input(z.object({ params: wsAndUUID }))
+      .output(workspaceDashboardSchema),
+    update: oc
+      .route({
+        method: 'PATCH',
+        path: '/{workspace}/dashboards/{id}',
+        inputStructure: 'detailed',
+        summary: 'Update workspace dashboard',
+        description:
+          'Updates an existing dashboard. Only provided fields will be updated; widgets, when provided, wholesale replace the existing layout.',
+        tags: ['Dashboard']
+      })
+      .input(z.object({ params: wsAndUUID, body: updateDashboardBodySchema }))
+      .output(workspaceDashboardSchema),
+    remove: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/dashboards/{id}',
+        inputStructure: 'detailed',
+        summary: 'Delete workspace dashboard',
+        description:
+          'Deletes a dashboard. A workspace must always have at least one dashboard; deleting the last remaining dashboard is rejected. Deleting the default dashboard promotes another dashboard to default.',
+        tags: ['Dashboard']
+      })
+      .input(z.object({ params: wsAndUUID }))
+      .output(deleteDashboardResponseSchema)
   }
 });
 
@@ -134,4 +185,6 @@ export type DashboardWidget = z.infer<typeof dashboardWidgetSchema>;
 
 export type WorkspaceDashboard = z.infer<typeof workspaceDashboardSchema>;
 
-export type PutDashboardRequest = z.infer<typeof putDashboardBodySchema>;
+export type CreateDashboardRequest = z.infer<typeof createDashboardBodySchema>;
+
+export type UpdateDashboardRequest = z.infer<typeof updateDashboardBodySchema>;

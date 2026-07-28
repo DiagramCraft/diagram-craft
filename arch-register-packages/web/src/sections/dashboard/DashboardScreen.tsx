@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearch } from '@tanstack/react-router';
 import type { Layout } from 'react-grid-layout';
 import ReactGridLayout from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbPlus, TbEdit, TbCheck, TbX } from 'react-icons/tb';
+import { TbPlus, TbPencil, TbCheck, TbX } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useWorkspaceDashboard, useUpdateWorkspaceDashboard } from '../../hooks/useDashboard';
+import { useWorkspaceDashboards, useUpdateWorkspaceDashboard } from '../../hooks/useDashboard';
 import { LoadingState } from '../../components/LoadingState';
 import { DashboardWidgetRenderer } from './widgets/DashboardWidgetRenderer';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
@@ -20,16 +21,22 @@ const GRID_ROW_HEIGHT = 80;
 const FALLBACK_WIDTH = 1200;
 
 export const DashboardScreen = () => {
-  const { workspace, workspaceSlug, permissions, openAddProjectDialog, openAddEntityDialog } =
-    useWorkspaceContext();
-  const { canManageDashboard, canCreateProjects, canCreateEntities } = permissions;
+  const { workspace, workspaceSlug, permissions } = useWorkspaceContext();
+  const { canManageDashboard } = permissions;
 
-  const { data, isLoading } = useWorkspaceDashboard(workspaceSlug);
+  const search = useSearch({ strict: false }) as { dashboard?: string };
+  const { data: dashboards, isLoading } = useWorkspaceDashboards(workspaceSlug);
   const updateDashboard = useUpdateWorkspaceDashboard(workspaceSlug);
 
+  const activeDashboardId = search.dashboard ?? dashboards?.[0]?.id;
+  const activeDashboard = dashboards?.find(d => d.id === activeDashboardId) ?? null;
+
   const persistedWidgets = useMemo(
-    () => (data && data.widgets.length > 0 ? data.widgets : DEFAULT_SEEDED_WIDGETS),
-    [data]
+    () =>
+      activeDashboard && activeDashboard.widgets.length > 0
+        ? activeDashboard.widgets
+        : DEFAULT_SEEDED_WIDGETS,
+    [activeDashboard]
   );
 
   const [localWidgets, setLocalWidgets] = useState<DashboardWidget[]>(persistedWidgets);
@@ -72,7 +79,8 @@ export const DashboardScreen = () => {
   };
 
   const handleSave = () => {
-    updateDashboard.mutate({ widgets: localWidgets });
+    if (!activeDashboardId) return;
+    updateDashboard.mutate({ id: activeDashboardId, body: { widgets: localWidgets } });
     setIsEditing(false);
   };
 
@@ -92,23 +100,12 @@ export const DashboardScreen = () => {
           title={workspace.name}
           description={workspace.description}
           buttons={
-            <>
-              {canCreateProjects && (
-                <Button icon={<TbPlus size={12} />} onClick={openAddProjectDialog}>
-                  New project
-                </Button>
-              )}
-              {canCreateEntities && (
-                <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
-                  New entity
-                </Button>
-              )}
-              {canManageDashboard && !isEditing && (
-                <Button icon={<TbEdit size={12} />} onClick={() => setIsEditing(true)}>
-                  Edit dashboard
-                </Button>
-              )}
-            </>
+            canManageDashboard &&
+            !isEditing && (
+              <Button icon={<TbPencil size={12} />} onClick={() => setIsEditing(true)}>
+                Edit
+              </Button>
+            )
           }
         />
       </div>
