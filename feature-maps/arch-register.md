@@ -34,6 +34,14 @@
           and rename or delete a dashboard via its context menu. Administrators can also enter edit mode to add,
           remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
 
+        - @id:ar.workspace.home.personal-dashboards Any workspace member can optionally create one or more personal
+          dashboards for themselves, separate from the shared workspace dashboard(s). Personal dashboards are listed
+          in a "My Dashboards" section of the home sidebar, shown only when the user has at least one, and are
+          created via the "New personal dashboard" item in the sidebar's "+" menu. Owners can freely rename or
+          delete their own personal dashboards, including deleting the last one, and no workspace capability beyond
+          membership is required. A personal dashboard is always fully editable by its owner (add, remove, resize,
+          and reposition widgets from the same widget catalog as the shared dashboard) — there is no read-only mode.
+
         - @id:ar.workspace.templates Administrators can create a workspace from a built-in architecture template,
           including its entity schemas, select-option enums, and document types and associated templates.
 

@@ -188,3 +188,83 @@ export type WorkspaceDashboard = z.infer<typeof workspaceDashboardSchema>;
 export type CreateDashboardRequest = z.infer<typeof createDashboardBodySchema>;
 
 export type UpdateDashboardRequest = z.infer<typeof updateDashboardBodySchema>;
+
+// ── Personal dashboards ───────────────────────────────────────
+
+export const personalDashboardSchema = z.object({
+  id: z.string().describe('Unique dashboard identifier'),
+  workspaceId: z.string().describe('Parent workspace identifier'),
+  name: z.string().describe('Dashboard name'),
+  order: z.number().int().describe('Position among the caller’s personal dashboards, ascending'),
+  widgets: z.array(dashboardWidgetSchema).describe('Dashboard widget layout'),
+  updatedAt: z.string().nullable().describe('ISO 8601 last update timestamp')
+});
+
+const deletePersonalDashboardResponseSchema = z.object({
+  success: z.boolean().describe('Whether the deletion was successful')
+});
+
+export const personalDashboardContract = oc.tag('PersonalDashboard').router({
+  personalDashboards: {
+    list: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/personal-dashboards',
+        inputStructure: 'detailed',
+        summary: 'List personal dashboards',
+        description:
+          'Retrieves the caller’s personal dashboards for the workspace. Returns an empty array if the caller has not created any.',
+        tags: ['PersonalDashboard']
+      })
+      .input(z.object({ params: ws }))
+      .output(z.array(personalDashboardSchema)),
+    create: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/personal-dashboards',
+        inputStructure: 'detailed',
+        summary: 'Create personal dashboard',
+        description: 'Creates a new, empty personal dashboard for the caller in this workspace.',
+        tags: ['PersonalDashboard']
+      })
+      .input(z.object({ params: ws, body: createDashboardBodySchema }))
+      .output(personalDashboardSchema),
+    get: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/personal-dashboards/{id}',
+        inputStructure: 'detailed',
+        summary: 'Get personal dashboard',
+        description: 'Retrieves a single personal dashboard owned by the caller by id.',
+        tags: ['PersonalDashboard']
+      })
+      .input(z.object({ params: wsAndUUID }))
+      .output(personalDashboardSchema),
+    update: oc
+      .route({
+        method: 'PATCH',
+        path: '/{workspace}/personal-dashboards/{id}',
+        inputStructure: 'detailed',
+        summary: 'Update personal dashboard',
+        description:
+          'Updates an existing personal dashboard owned by the caller. Only provided fields will be updated; widgets, when provided, wholesale replace the existing layout.',
+        tags: ['PersonalDashboard']
+      })
+      .input(z.object({ params: wsAndUUID, body: updateDashboardBodySchema }))
+      .output(personalDashboardSchema),
+    remove: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/personal-dashboards/{id}',
+        inputStructure: 'detailed',
+        summary: 'Delete personal dashboard',
+        description:
+          'Deletes a personal dashboard owned by the caller. Unlike workspace dashboards, deleting the last remaining personal dashboard is allowed.',
+        tags: ['PersonalDashboard']
+      })
+      .input(z.object({ params: wsAndUUID }))
+      .output(deletePersonalDashboardResponseSchema)
+  }
+});
+
+export type PersonalDashboard = z.infer<typeof personalDashboardSchema>;

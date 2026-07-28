@@ -4,6 +4,10 @@ import type {
   UpdateDashboardRequest
 } from '@arch-register/api-types/dashboardContract';
 import { dashboardKeys, invalidateDashboardQueries } from '../queries/dashboard';
+import {
+  personalDashboardKeys,
+  invalidatePersonalDashboardQueries
+} from '../queries/personalDashboard';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useWorkspaceDashboards = (workspaceSlug: string) =>
@@ -40,5 +44,42 @@ export const useDeleteWorkspaceDashboard = (workspaceSlug: string) => {
     mutationFn: (id: string) =>
       orpcClient.dashboards.remove({ params: { workspace: workspaceSlug, id } }),
     onSuccess: () => invalidateDashboardQueries(queryClient, workspaceSlug)
+  });
+};
+
+export const usePersonalDashboards = (workspaceSlug: string) =>
+  useQuery({
+    queryKey: personalDashboardKeys.list(workspaceSlug),
+    queryFn: () => orpcClient.personalDashboards.list({ params: { workspace: workspaceSlug } }),
+    enabled: workspaceSlug !== ''
+  });
+
+export const useCreatePersonalDashboard = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: CreateDashboardRequest) =>
+      orpcClient.personalDashboards.create({ params: { workspace: workspaceSlug }, body }),
+    onSuccess: () => invalidatePersonalDashboardQueries(queryClient, workspaceSlug)
+  });
+};
+
+export const useUpdatePersonalDashboard = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateDashboardRequest }) =>
+      orpcClient.personalDashboards.update({ params: { workspace: workspaceSlug, id }, body }),
+    onSuccess: () => invalidatePersonalDashboardQueries(queryClient, workspaceSlug)
+  });
+};
+
+export const useDeletePersonalDashboard = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      orpcClient.personalDashboards.remove({ params: { workspace: workspaceSlug, id } }),
+    onSuccess: () => invalidatePersonalDashboardQueries(queryClient, workspaceSlug)
   });
 };
