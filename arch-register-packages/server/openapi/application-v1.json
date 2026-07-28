@@ -48981,11 +48981,11 @@
         }
       }
     },
-    "/{workspace}/dashboard": {
+    "/{workspace}/dashboards": {
       "get": {
-        "operationId": "dashboard.get",
-        "summary": "Get workspace dashboard",
-        "description": "Retrieves the workspace dashboard layout. Returns an empty widget list if no dashboard has been configured yet.",
+        "operationId": "dashboards.list",
+        "summary": "List workspace dashboards",
+        "description": "Retrieves all dashboards for the workspace. A fresh workspace has a single seeded default dashboard.",
         "tags": [
           "Dashboard",
           "Dashboard"
@@ -49006,11 +49006,512 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique dashboard identifier"
+                      },
+                      "workspaceId": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Dashboard name"
+                      },
+                      "order": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Position among the workspace dashboards, ascending; the lowest is shown at the workspace home"
+                      },
+                      "widgets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique widget identifier"
+                                },
+                                "x": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid column position"
+                                },
+                                "y": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid row position"
+                                },
+                                "w": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid width in columns"
+                                },
+                                "h": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid height in rows"
+                                },
+                                "type": {
+                                  "const": "stat-metric"
+                                },
+                                "metricType": {
+                                  "enum": [
+                                    "entity-count",
+                                    "project-count",
+                                    "diagram-count",
+                                    "completeness-percent"
+                                  ],
+                                  "type": "string"
+                                },
+                                "schema": {
+                                  "type": "string",
+                                  "description": "Optional schema identifier to scope the metric"
+                                },
+                                "owner": {
+                                  "type": "string",
+                                  "description": "Optional owner identifier to scope the metric"
+                                },
+                                "lifecycle": {
+                                  "type": "string",
+                                  "description": "Optional lifecycle state to scope the metric"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "description": "Optional display label override"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "x",
+                                "y",
+                                "w",
+                                "h",
+                                "type",
+                                "metricType"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique widget identifier"
+                                },
+                                "x": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid column position"
+                                },
+                                "y": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid row position"
+                                },
+                                "w": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid width in columns"
+                                },
+                                "h": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid height in rows"
+                                },
+                                "type": {
+                                  "const": "saved-view-embed"
+                                },
+                                "viewId": {
+                                  "type": "string",
+                                  "description": "Identifier of the saved view to embed"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "x",
+                                "y",
+                                "w",
+                                "h",
+                                "type",
+                                "viewId"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique widget identifier"
+                                },
+                                "x": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid column position"
+                                },
+                                "y": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid row position"
+                                },
+                                "w": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid width in columns"
+                                },
+                                "h": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid height in rows"
+                                },
+                                "type": {
+                                  "const": "entity-table"
+                                },
+                                "schema": {
+                                  "type": "string",
+                                  "description": "Optional schema identifier to scope the table"
+                                },
+                                "owner": {
+                                  "type": "string",
+                                  "description": "Optional owner identifier to scope the table"
+                                },
+                                "lifecycle": {
+                                  "type": "string",
+                                  "description": "Optional lifecycle state to scope the table"
+                                },
+                                "limit": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Maximum number of entities to display"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "x",
+                                "y",
+                                "w",
+                                "h",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique widget identifier"
+                                },
+                                "x": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid column position"
+                                },
+                                "y": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid row position"
+                                },
+                                "w": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid width in columns"
+                                },
+                                "h": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid height in rows"
+                                },
+                                "type": {
+                                  "const": "lifecycle-chart"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "x",
+                                "y",
+                                "w",
+                                "h",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique widget identifier"
+                                },
+                                "x": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid column position"
+                                },
+                                "y": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid row position"
+                                },
+                                "w": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid width in columns"
+                                },
+                                "h": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid height in rows"
+                                },
+                                "type": {
+                                  "const": "activity-trend-chart"
+                                },
+                                "lookbackDays": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Number of days to look back"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "x",
+                                "y",
+                                "w",
+                                "h",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique widget identifier"
+                                },
+                                "x": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid column position"
+                                },
+                                "y": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid row position"
+                                },
+                                "w": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid width in columns"
+                                },
+                                "h": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid height in rows"
+                                },
+                                "type": {
+                                  "const": "stale-entity-report"
+                                },
+                                "staleAfterDays": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Number of days without update before an entity is considered stale"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "x",
+                                "y",
+                                "w",
+                                "h",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique widget identifier"
+                                },
+                                "x": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid column position"
+                                },
+                                "y": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid row position"
+                                },
+                                "w": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid width in columns"
+                                },
+                                "h": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Grid height in rows"
+                                },
+                                "type": {
+                                  "const": "activity-feed"
+                                },
+                                "limit": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Maximum number of activity items to display"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "x",
+                                "y",
+                                "w",
+                                "h",
+                                "type"
+                              ]
+                            }
+                          ]
+                        },
+                        "description": "Dashboard widget layout"
+                      },
+                      "updatedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 last update timestamp"
+                      },
+                      "updatedBy": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Identifier of the user who last updated the layout"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspaceId",
+                      "name",
+                      "order",
+                      "widgets",
+                      "updatedAt",
+                      "updatedBy"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "dashboards.create",
+        "summary": "Create workspace dashboard",
+        "description": "Creates a new, empty dashboard for the workspace.",
+        "tags": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Dashboard name"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
                   "type": "object",
                   "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique dashboard identifier"
+                    },
                     "workspaceId": {
                       "type": "string",
                       "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Dashboard name"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the workspace dashboards, ascending; the lowest is shown at the workspace home"
                     },
                     "widgets": {
                       "type": "array",
@@ -49419,7 +49920,10 @@
                     }
                   },
                   "required": [
+                    "id",
                     "workspaceId",
+                    "name",
+                    "order",
                     "widgets",
                     "updatedAt",
                     "updatedBy"
@@ -49429,11 +49933,13 @@
             }
           }
         }
-      },
-      "put": {
-        "operationId": "dashboard.put",
-        "summary": "Replace workspace dashboard",
-        "description": "Replaces the entire workspace dashboard layout with the provided widgets. This operation is a wholesale replacement, not a merge.",
+      }
+    },
+    "/{workspace}/dashboards/{id}": {
+      "get": {
+        "operationId": "dashboards.get",
+        "summary": "Get workspace dashboard",
+        "description": "Retrieves a single dashboard by id.",
         "tags": [
           "Dashboard",
           "Dashboard"
@@ -49446,6 +49952,489 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique dashboard identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Dashboard name"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the workspace dashboards, ascending; the lowest is shown at the workspace home"
+                    },
+                    "widgets": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique widget identifier"
+                              },
+                              "x": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid column position"
+                              },
+                              "y": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid row position"
+                              },
+                              "w": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid width in columns"
+                              },
+                              "h": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid height in rows"
+                              },
+                              "type": {
+                                "const": "stat-metric"
+                              },
+                              "metricType": {
+                                "enum": [
+                                  "entity-count",
+                                  "project-count",
+                                  "diagram-count",
+                                  "completeness-percent"
+                                ],
+                                "type": "string"
+                              },
+                              "schema": {
+                                "type": "string",
+                                "description": "Optional schema identifier to scope the metric"
+                              },
+                              "owner": {
+                                "type": "string",
+                                "description": "Optional owner identifier to scope the metric"
+                              },
+                              "lifecycle": {
+                                "type": "string",
+                                "description": "Optional lifecycle state to scope the metric"
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Optional display label override"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "x",
+                              "y",
+                              "w",
+                              "h",
+                              "type",
+                              "metricType"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique widget identifier"
+                              },
+                              "x": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid column position"
+                              },
+                              "y": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid row position"
+                              },
+                              "w": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid width in columns"
+                              },
+                              "h": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid height in rows"
+                              },
+                              "type": {
+                                "const": "saved-view-embed"
+                              },
+                              "viewId": {
+                                "type": "string",
+                                "description": "Identifier of the saved view to embed"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "x",
+                              "y",
+                              "w",
+                              "h",
+                              "type",
+                              "viewId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique widget identifier"
+                              },
+                              "x": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid column position"
+                              },
+                              "y": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid row position"
+                              },
+                              "w": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid width in columns"
+                              },
+                              "h": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid height in rows"
+                              },
+                              "type": {
+                                "const": "entity-table"
+                              },
+                              "schema": {
+                                "type": "string",
+                                "description": "Optional schema identifier to scope the table"
+                              },
+                              "owner": {
+                                "type": "string",
+                                "description": "Optional owner identifier to scope the table"
+                              },
+                              "lifecycle": {
+                                "type": "string",
+                                "description": "Optional lifecycle state to scope the table"
+                              },
+                              "limit": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum number of entities to display"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "x",
+                              "y",
+                              "w",
+                              "h",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique widget identifier"
+                              },
+                              "x": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid column position"
+                              },
+                              "y": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid row position"
+                              },
+                              "w": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid width in columns"
+                              },
+                              "h": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid height in rows"
+                              },
+                              "type": {
+                                "const": "lifecycle-chart"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "x",
+                              "y",
+                              "w",
+                              "h",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique widget identifier"
+                              },
+                              "x": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid column position"
+                              },
+                              "y": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid row position"
+                              },
+                              "w": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid width in columns"
+                              },
+                              "h": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid height in rows"
+                              },
+                              "type": {
+                                "const": "activity-trend-chart"
+                              },
+                              "lookbackDays": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of days to look back"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "x",
+                              "y",
+                              "w",
+                              "h",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique widget identifier"
+                              },
+                              "x": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid column position"
+                              },
+                              "y": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid row position"
+                              },
+                              "w": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid width in columns"
+                              },
+                              "h": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid height in rows"
+                              },
+                              "type": {
+                                "const": "stale-entity-report"
+                              },
+                              "staleAfterDays": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of days without update before an entity is considered stale"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "x",
+                              "y",
+                              "w",
+                              "h",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique widget identifier"
+                              },
+                              "x": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid column position"
+                              },
+                              "y": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid row position"
+                              },
+                              "w": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid width in columns"
+                              },
+                              "h": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Grid height in rows"
+                              },
+                              "type": {
+                                "const": "activity-feed"
+                              },
+                              "limit": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum number of activity items to display"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "x",
+                              "y",
+                              "w",
+                              "h",
+                              "type"
+                            ]
+                          }
+                        ]
+                      },
+                      "description": "Dashboard widget layout"
+                    },
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "updatedBy": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the user who last updated the layout"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "name",
+                    "order",
+                    "widgets",
+                    "updatedAt",
+                    "updatedBy"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "dashboards.update",
+        "summary": "Update workspace dashboard",
+        "description": "Updates an existing dashboard. Only provided fields will be updated; widgets, when provided, wholesale replace the existing layout.",
+        "tags": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
           }
         ],
         "requestBody": {
@@ -49455,6 +50444,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Dashboard name"
+                  },
                   "widgets": {
                     "type": "array",
                     "items": {
@@ -49838,10 +50831,7 @@
                     },
                     "description": "Dashboard widget layout to persist"
                   }
-                },
-                "required": [
-                  "widgets"
-                ]
+                }
               }
             }
           }
@@ -49854,9 +50844,23 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique dashboard identifier"
+                    },
                     "workspaceId": {
                       "type": "string",
                       "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Dashboard name"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the workspace dashboards, ascending; the lowest is shown at the workspace home"
                     },
                     "widgets": {
                       "type": "array",
@@ -50265,10 +51269,62 @@
                     }
                   },
                   "required": [
+                    "id",
                     "workspaceId",
+                    "name",
+                    "order",
                     "widgets",
                     "updatedAt",
                     "updatedBy"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "dashboards.remove",
+        "summary": "Delete workspace dashboard",
+        "description": "Deletes a dashboard. A workspace must always have at least one dashboard; deleting the last remaining dashboard is rejected. Deleting the default dashboard promotes another dashboard to default.",
+        "tags": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the deletion was successful"
+                    }
+                  },
+                  "required": [
+                    "success"
                   ]
                 }
               }

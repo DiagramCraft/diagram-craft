@@ -38,8 +38,11 @@ describe('application API paths', () => {
   });
 
   it('maps dashboard calls to application v1', () => {
-    expect(toApplicationApiUrl('/api/default/dashboard')).toBe(
-      '/api/application/v1/default/dashboard'
+    expect(toApplicationApiUrl('/api/default/dashboards')).toBe(
+      '/api/application/v1/default/dashboards'
+    );
+    expect(toApplicationApiUrl('/api/default/dashboards/dashboard-1')).toBe(
+      '/api/application/v1/default/dashboards/dashboard-1'
     );
   });
 
