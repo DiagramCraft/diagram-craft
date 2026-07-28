@@ -5,6 +5,7 @@ interface MdxContextValue {
   projectId?: string;
   entityId?: string;
   nodeId?: string;
+  renderMode?: 'dashboard' | 'wiki';
 }
 
 export const MdxContext = createContext<MdxContextValue>({});

@@ -30,8 +30,9 @@ const cardClassName = (bare?: boolean) =>
 export const EntityMetric = ({ schema, owner, lifecycle, label, metricType, bare }: Props) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
-  const { projectId } = useMdxContext();
+  const { projectId, renderMode } = useMdxContext();
   const resolvedMetricType = metricType ?? 'entity-count';
+  const showInlineLabel = renderMode !== 'dashboard';
 
   if (resolvedMetricType === 'diagram-count' && projectId) {
     return (
@@ -40,20 +41,42 @@ export const EntityMetric = ({ schema, owner, lifecycle, label, metricType, bare
         projectId={projectId}
         label={label}
         bare={bare}
+        showInlineLabel={showInlineLabel}
       />
     );
   }
 
   if (resolvedMetricType === 'project-count') {
-    return <ProjectCountMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
+    return (
+      <ProjectCountMetric
+        workspaceSlug={workspaceSlug}
+        label={label}
+        bare={bare}
+        showInlineLabel={showInlineLabel}
+      />
+    );
   }
 
   if (resolvedMetricType === 'diagram-count') {
-    return <DiagramCountMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
+    return (
+      <DiagramCountMetric
+        workspaceSlug={workspaceSlug}
+        label={label}
+        bare={bare}
+        showInlineLabel={showInlineLabel}
+      />
+    );
   }
 
   if (resolvedMetricType === 'completeness-percent') {
-    return <CompletenessPercentMetric workspaceSlug={workspaceSlug} label={label} bare={bare} />;
+    return (
+      <CompletenessPercentMetric
+        workspaceSlug={workspaceSlug}
+        label={label}
+        bare={bare}
+        showInlineLabel={showInlineLabel}
+      />
+    );
   }
 
   return (
@@ -67,6 +90,7 @@ export const EntityMetric = ({ schema, owner, lifecycle, label, metricType, bare
       navigate={navigate}
       totalEntityCount={schemas.reduce((sum, s) => sum + s.entity_count, 0)}
       bare={bare}
+      showInlineLabel={showInlineLabel}
     />
   );
 };
@@ -80,7 +104,8 @@ const EntityCountMetric = ({
   label,
   navigate,
   totalEntityCount,
-  bare
+  bare,
+  showInlineLabel
 }: {
   workspaceSlug: string;
   projectId?: string;
@@ -91,6 +116,7 @@ const EntityCountMetric = ({
   navigate: ReturnType<typeof useNavigate>;
   totalEntityCount: number;
   bare?: boolean;
+  showInlineLabel?: boolean;
 }) => {
   const hasFilter = hasEntityMetricFilter({ schema, owner, lifecycle }) || !!projectId;
 
@@ -112,7 +138,7 @@ const EntityCountMetric = ({
     return (
       <div className={cardClassName(bare)}>
         <div className={styles.number}>{totalEntityCount}</div>
-        <div className={styles.label}>{label ?? 'Entities'}</div>
+        {showInlineLabel && <div className={styles.label}>{label ?? 'Entities'}</div>}
       </div>
     );
   }
@@ -131,7 +157,7 @@ const EntityCountMetric = ({
   return (
     <div className={cardClassName(bare)}>
       <div className={styles.number}>{count}</div>
-      <div className={styles.label}>{displayLabel}</div>
+      {showInlineLabel && <div className={styles.label}>{displayLabel}</div>}
       <button
         type="button"
         className={styles.viewLink}
@@ -171,11 +197,13 @@ const EntityCountMetric = ({
 const ProjectCountMetric = ({
   workspaceSlug,
   label,
-  bare
+  bare,
+  showInlineLabel
 }: {
   workspaceSlug: string;
   label?: string;
   bare?: boolean;
+  showInlineLabel?: boolean;
 }) => {
   const { data: projects = [], isLoading } = useProjects(workspaceSlug);
 
@@ -190,7 +218,7 @@ const ProjectCountMetric = ({
   return (
     <div className={cardClassName(bare)}>
       <div className={styles.number}>{projects.length}</div>
-      <div className={styles.label}>{label ?? 'Projects'}</div>
+      {showInlineLabel && <div className={styles.label}>{label ?? 'Projects'}</div>}
     </div>
   );
 };
@@ -199,12 +227,14 @@ const ProjectDiagramCountMetric = ({
   workspaceSlug,
   projectId,
   label,
-  bare
+  bare,
+  showInlineLabel
 }: {
   workspaceSlug: string;
   projectId: string;
   label?: string;
   bare?: boolean;
+  showInlineLabel?: boolean;
 }) => {
   const { data: project, isLoading } = useProject(workspaceSlug, projectId);
 
@@ -219,7 +249,7 @@ const ProjectDiagramCountMetric = ({
   return (
     <div className={cardClassName(bare)}>
       <div className={styles.number}>{project.file_count}</div>
-      <div className={styles.label}>{label ?? 'Diagrams'}</div>
+      {showInlineLabel && <div className={styles.label}>{label ?? 'Diagrams'}</div>}
     </div>
   );
 };
@@ -227,11 +257,13 @@ const ProjectDiagramCountMetric = ({
 const DiagramCountMetric = ({
   workspaceSlug,
   label,
-  bare
+  bare,
+  showInlineLabel
 }: {
   workspaceSlug: string;
   label?: string;
   bare?: boolean;
+  showInlineLabel?: boolean;
 }) => {
   const { data: projects = [], isLoading } = useProjects(workspaceSlug);
 
@@ -248,7 +280,7 @@ const DiagramCountMetric = ({
   return (
     <div className={cardClassName(bare)}>
       <div className={styles.number}>{totalFiles}</div>
-      <div className={styles.label}>{label ?? 'Diagrams'}</div>
+      {showInlineLabel && <div className={styles.label}>{label ?? 'Diagrams'}</div>}
     </div>
   );
 };
@@ -256,11 +288,13 @@ const DiagramCountMetric = ({
 const CompletenessPercentMetric = ({
   workspaceSlug,
   label,
-  bare
+  bare,
+  showInlineLabel
 }: {
   workspaceSlug: string;
   label?: string;
   bare?: boolean;
+  showInlineLabel?: boolean;
 }) => {
   const { data: facets, isLoading } = useEntityFacets(workspaceSlug);
 
@@ -279,7 +313,7 @@ const CompletenessPercentMetric = ({
   return (
     <div className={cardClassName(bare)}>
       <div className={styles.number}>{percent}%</div>
-      <div className={styles.label}>{label ?? 'Well documented'}</div>
+      {showInlineLabel && <div className={styles.label}>{label ?? 'Well documented'}</div>}
     </div>
   );
 };
