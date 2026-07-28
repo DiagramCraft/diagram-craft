@@ -130,7 +130,7 @@ Diagram Craft splits its tool windows between a left sidebar and a right sidebar
 ### Style Overview
 
 - Shortcut: no default shortcut exposed in the keymap
-- Purpose: inspect reusable style assets at the document level
+- Purpose: inspect reusable style assets and harmonize formatting at the document level; see [Style Overview](../use/styling/style-overview) for the workflow guide
 - Tabs:
   - `Stylesheets`
   - `Styles`

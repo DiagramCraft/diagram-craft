@@ -46,7 +46,7 @@ The right sidebar is where you typically:
 - inspect selection details
 - manage attached data
 - review and resolve comments
-- inspect document-level style assets
+- inspect document-level style assets in [Style Overview](../use/styling/style-overview)
 
 ## How To Use Them Well
 

@@ -83,6 +83,7 @@ const sidebars: SidebarsConfig = {
           label: 'Styling and Appearance',
           items: [
             'use/styling/styling-system',
+            'use/styling/style-overview',
             'use/styling/colors-gradients',
             'use/styling/effects'
           ]
