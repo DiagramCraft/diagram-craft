@@ -1,8 +1,15 @@
 import { TbTable } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityTable } from './EntityTable';
+import { EntityTableWidget } from '../../../../dashboard/widgets/EntityTableWidget';
 import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
-import type { EntityTableSlateElement } from './types';
+import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
+
+const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
+  config[key] === undefined || typeof config[key] === 'string';
+
+const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
+  config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 
 export const entityTableSpec = defineMdxComponent<
   EntityTableSlateElement,
@@ -13,6 +20,21 @@ export const entityTableSpec = defineMdxComponent<
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],
   surfaces: ['wiki', 'dashboard'],
+  dashboardWidget: {
+    icon: TbTable,
+    label: 'Entity table',
+    description: 'A filtered table of entities.',
+    defaultW: 6,
+    defaultH: 6,
+    surfaces: ['workspace', 'project'],
+    component: EntityTableWidget,
+    isValidConfig: (config): config is EntityTableWidgetConfig =>
+      hasOptionalString(config, 'schema') &&
+      hasOptionalString(config, 'owner') &&
+      hasOptionalString(config, 'lifecycle') &&
+      hasOptionalInteger(config, 'limit'),
+    createDefaultConfig: () => ({})
+  },
   editorSpec: {
     editableComponent: EntityTableEditable,
     nodeOptions: { isVoid: true },

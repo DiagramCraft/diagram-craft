@@ -23,7 +23,7 @@ test.describe('Workspace Dashboard API', () => {
     const widgets = [
       {
         id: 'entities',
-        type: 'stat-metric' as const,
+        type: 'EntityMetric' as const,
         x: 0,
         y: 0,
         w: 3,
@@ -59,10 +59,10 @@ test.describe('Workspace Dashboard API', () => {
       params: { workspace: 'default', id: homeDashboardId },
       body: {
         widgets: [
-          { id: 'a', type: 'lifecycle-chart' as const, config: {}, x: 0, y: 0, w: 6, h: 4 },
+          { id: 'a', type: 'entity-lifecycle-chart' as const, config: {}, x: 0, y: 0, w: 6, h: 4 },
           {
             id: 'b',
-            type: 'stale-entity-report' as const,
+            type: 'entity-stale-report' as const,
             config: {},
             x: 6,
             y: 0,
@@ -77,7 +77,7 @@ test.describe('Workspace Dashboard API', () => {
       params: { workspace: 'default', id: homeDashboardId },
       body: {
         widgets: [
-          { id: 'c', type: 'lifecycle-chart' as const, config: {}, x: 0, y: 0, w: 12, h: 4 }
+          { id: 'c', type: 'entity-lifecycle-chart' as const, config: {}, x: 0, y: 0, w: 12, h: 4 }
         ]
       }
     });
@@ -111,7 +111,7 @@ test.describe('Workspace Dashboard API', () => {
     const widgets = [
       {
         id: 'metric',
-        type: 'stat-metric' as const,
+        type: 'EntityMetric' as const,
         x: 0,
         y: 0,
         w: 3,
@@ -126,7 +126,7 @@ test.describe('Workspace Dashboard API', () => {
       },
       {
         id: 'view',
-        type: 'saved-view-embed' as const,
+        type: 'EntityViewEmbed' as const,
         x: 3,
         y: 0,
         w: 3,
@@ -135,7 +135,7 @@ test.describe('Workspace Dashboard API', () => {
       },
       {
         id: 'table',
-        type: 'entity-table' as const,
+        type: 'EntityTable' as const,
         x: 6,
         y: 0,
         w: 6,
@@ -144,7 +144,7 @@ test.describe('Workspace Dashboard API', () => {
       },
       {
         id: 'lifecycle',
-        type: 'lifecycle-chart' as const,
+        type: 'entity-lifecycle-chart' as const,
         config: {},
         x: 0,
         y: 4,
@@ -153,7 +153,7 @@ test.describe('Workspace Dashboard API', () => {
       },
       {
         id: 'trend',
-        type: 'activity-trend-chart' as const,
+        type: 'entity-activity-trend-chart' as const,
         x: 6,
         y: 4,
         w: 6,
@@ -162,7 +162,7 @@ test.describe('Workspace Dashboard API', () => {
       },
       {
         id: 'stale',
-        type: 'stale-entity-report' as const,
+        type: 'entity-stale-report' as const,
         x: 0,
         y: 8,
         w: 6,

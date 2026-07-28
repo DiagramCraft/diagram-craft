@@ -17,3 +17,11 @@ export interface EntityMetricSlateElement extends TElement {
   label?: string;
   metricType?: EntityMetricType;
 }
+
+export type StatMetricWidgetConfig = {
+  metricType: EntityMetricType;
+  schema?: string;
+  owner?: string;
+  lifecycle?: string;
+  label?: string;
+};

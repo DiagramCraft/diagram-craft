@@ -3,12 +3,11 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
+import { createDefaultWidget, type WidgetSurface } from './dashboardWidgetDefaults';
 import {
-  WIDGET_TYPE_OPTIONS,
-  createDefaultWidget,
-  type WidgetSurface
-} from './dashboardWidgetDefaults';
-import type { KnownWidgetType } from './dashboardWidgetConfig';
+  getDashboardWidgetSpecs,
+  type KnownWidgetType
+} from '../markdown/mdx-components/mdxRegistry';
 import styles from './WidgetPickerDialog.module.css';
 
 type Props = {
@@ -36,7 +35,7 @@ export const WidgetPickerDialog = ({
     projectId,
     includeWorkspace: true
   });
-  const options = WIDGET_TYPE_OPTIONS.filter(option => option.surfaces.includes(surface));
+  const options = getDashboardWidgetSpecs().filter(({ spec }) => spec.surfaces.includes(surface));
 
   const handleClose = () => {
     setPendingType(null);
@@ -45,7 +44,7 @@ export const WidgetPickerDialog = ({
   };
 
   const handlePick = (type: KnownWidgetType) => {
-    if (type === 'saved-view-embed') {
+    if (type === 'EntityViewEmbed') {
       setPendingType(type);
       return;
     }
@@ -55,7 +54,7 @@ export const WidgetPickerDialog = ({
 
   const handleConfirmSavedView = () => {
     if (!selectedViewId) return;
-    onAdd(createDefaultWidget('saved-view-embed', widgets, selectedViewId));
+    onAdd(createDefaultWidget('EntityViewEmbed', widgets, selectedViewId));
     handleClose();
   };
 
@@ -66,7 +65,7 @@ export const WidgetPickerDialog = ({
       title="Add widget"
       width={420}
       buttons={
-        pendingType === 'saved-view-embed'
+        pendingType === 'EntityViewEmbed'
           ? [
               { label: 'Cancel', type: 'cancel', onClick: handleClose },
               {
@@ -79,7 +78,7 @@ export const WidgetPickerDialog = ({
           : [{ label: 'Cancel', type: 'cancel', onClick: handleClose }]
       }
     >
-      {pendingType === 'saved-view-embed' ? (
+      {pendingType === 'EntityViewEmbed' ? (
         <div className={styles.viewPicker}>
           <select
             className={styles.viewSelect}
@@ -96,15 +95,15 @@ export const WidgetPickerDialog = ({
         </div>
       ) : (
         <div className={styles.list}>
-          {options.map(option => (
+          {options.map(({ type, spec }) => (
             <button
-              key={option.type}
+              key={type}
               type="button"
               className={styles.option}
-              onClick={() => handlePick(option.type)}
+              onClick={() => handlePick(type)}
             >
-              <span className={styles.optionLabel}>{option.label}</span>
-              <span className={styles.optionDescription}>{option.description}</span>
+              <span className={styles.optionLabel}>{spec.label}</span>
+              <span className={styles.optionDescription}>{spec.description}</span>
             </button>
           ))}
         </div>

@@ -1,16 +1,15 @@
-import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { EntityTable } from '../../markdown/mdx-components/blocks/entity-table/EntityTable';
-import type { EntityTableWidgetConfig } from '../dashboardWidgetConfig';
+import type { EntityTableWidgetConfig } from '../../markdown/mdx-components/blocks/entity-table/types';
 
 type Props = {
-  widget: DashboardWidget & { type: 'entity-table'; config: EntityTableWidgetConfig };
+  config: EntityTableWidgetConfig;
 };
 
-export const EntityTableWidget = ({ widget }: Props) => (
+export const EntityTableWidget = ({ config }: Props) => (
   <EntityTable
-    schema={widget.config.schema}
-    owner={widget.config.owner}
-    lifecycle={widget.config.lifecycle}
-    limit={widget.config.limit != null ? String(widget.config.limit) : undefined}
+    schema={config.schema}
+    owner={config.owner}
+    lifecycle={config.lifecycle}
+    limit={config.limit != null ? String(config.limit) : undefined}
   />
 );

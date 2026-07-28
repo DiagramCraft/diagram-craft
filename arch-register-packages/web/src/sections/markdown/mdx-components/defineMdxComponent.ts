@@ -8,7 +8,7 @@ import type {
   MdMdxJsxFlowElement,
   MdMdxJsxTextElement
 } from '@platejs/markdown';
-import type { MdxComponentSpec } from './types';
+import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
 
 export type MdxMode = 'block' | 'inline';
 
@@ -96,6 +96,9 @@ export type MdxComponentDef<
   editorSpec?: MdxEditorSpecDef<E, Mode>;
   /** Surfaces this component may render on; `undefined` means wiki only (default, matches all prior behavior). */
   surfaces?: ReadonlyArray<MdxSurface>;
+  /** Present when this component can also be added as a dashboard widget. */
+  // biome-ignore lint/suspicious/noExplicitAny: registry entries have per-component Config types, erased here
+  dashboardWidget?: DashboardWidgetSpec<any>;
 };
 
 /**

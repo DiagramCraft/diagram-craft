@@ -1,8 +1,13 @@
+import { TbClockExclamation } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityStaleReport } from './EntityStaleReport';
+import { StaleEntityReportWidget } from '../../../../dashboard/widgets/StaleEntityReportWidget';
 import type { EntityStaleReportProps, EntityStaleReportSlateElement } from './types';
 
 export const ENTITY_STALE_REPORT_TYPE = 'entity-stale-report' as const;
+
+const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
+  config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 
 /**
  * Dashboard-only analytics widget: no editorSpec, so it never appears in the
@@ -16,5 +21,17 @@ export const entityStaleReportSpec = defineMdxComponent<
   component: EntityStaleReport,
   mode: 'block',
   allowedProps: ['staleAfterDays'],
-  surfaces: ['dashboard']
+  surfaces: ['dashboard'],
+  dashboardWidget: {
+    icon: TbClockExclamation,
+    label: 'Stale entity report',
+    description: 'Entities that have not been updated recently.',
+    defaultW: 6,
+    defaultH: 6,
+    surfaces: ['workspace'],
+    component: StaleEntityReportWidget,
+    isValidConfig: (config): config is EntityStaleReportProps =>
+      hasOptionalInteger(config, 'staleAfterDays'),
+    createDefaultConfig: () => ({})
+  }
 });
