@@ -357,16 +357,6 @@ export const DocumentTypeEditor = ({
 
               {fields.length > 0 ? (
                 <div className={styles.fieldsTable}>
-                  <div className={styles.fieldsTh}>
-                    <span />
-                    <span>Field ID</span>
-                    <span>Name</span>
-                    <span>Type</span>
-                    <span>Options / Cardinality</span>
-                    <span>Requirement</span>
-                    <span>External</span>
-                    <span />
-                  </div>
                   {fields.map(field => (
                     <DocumentFieldRow
                       key={fieldKeysRef.current.get(field.id) ?? field.id}

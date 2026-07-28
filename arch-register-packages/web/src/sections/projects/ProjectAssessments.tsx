@@ -15,8 +15,7 @@ import {
   TbListCheck,
   TbAlignLeft,
   TbEdit,
-  TbDots,
-  TbCopy
+  TbDots
 } from 'react-icons/tb';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
@@ -52,6 +51,7 @@ import {
 import { useEntitiesBySchema, useEntityCountsBySchema } from '../../hooks/useEntities';
 import { AssessmentScopeFilterBuilder } from './components/AssessmentScopeFilterBuilder';
 import { EmptyState } from '../../components/EmptyState';
+import { FieldConfig } from '../../components/FieldConfig';
 import { assessmentTemplates, cloneAssessmentTemplateValues } from '../../lib/assessmentTemplates';
 import { UserGroupPicker } from '../../components/UserGroupPicker';
 import { stableHue } from '../../components/MemberAvatar';
@@ -1066,170 +1066,197 @@ const FieldRow = ({
     derived: 'Derived label…'
   };
 
-  return (
-    <div className={styles.fieldRow}>
-      <div className={styles.fieldTypeIcon}>
-        <Icon size={13} />
-      </div>
-      <div className={styles.fieldIdentity}>
-        <TextInput
-          value={field.label}
-          onChange={v => onUpdate({ label: v ?? '' })}
-          placeholder={placeholders[field.type]}
-          style={{ flex: 1, minWidth: 0 }}
-        />
-        <div className={styles.fieldId} title="Field ID used in derived expressions">
-          <code>{field.id}</code>
-          <Button
-            variant="ghost"
-            icon={<TbCopy size={12} />}
-            title={`Copy field ID ${field.id}`}
-            onClick={() => void navigator.clipboard?.writeText(field.id)}
-          />
-        </div>
-      </div>
-      {field.type === 'enum' && (
-        <div className={styles.fieldEnum}>
-          <div className={styles.enumSourceRow}>
-            <Select.Root
-              value={'options' in field ? 'inline' : 'workspace'}
-              onChange={v => {
-                if (v === 'inline') {
-                  onUpdate({
-                    options:
-                      'options' in field && field.options.length > 0
-                        ? field.options
-                        : [{ value: 'option_1', label: '' }],
-                    enumId: undefined
-                  } as Partial<AssessmentField>);
-                } else {
-                  onUpdate({
-                    enumId: ('enumId' in field ? field.enumId : undefined) ?? enums[0]?.id ?? '',
-                    options: undefined
-                  } as Partial<AssessmentField>);
-                }
-              }}
-            >
-              <Select.Item value="workspace">Existing enum</Select.Item>
-              <Select.Item value="inline">Inline values</Select.Item>
-            </Select.Root>
-            {'options' in field && (
-              <Button
-                variant="ghost"
-                icon={<TbEdit size={13} />}
-                onClick={() => {
-                  setDraftInlineOptions(field.options.map(option => ({ ...option })));
-                  setInlineOptionsOpen(true);
+  const options = (() => {
+    if (field.type === 'enum') {
+      return (
+        <>
+          <FieldConfig.Cell label="Source" flexBasis={180}>
+            <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <Select.Root
+                value={'options' in field ? 'inline' : 'workspace'}
+                onChange={v => {
+                  if (v === 'inline') {
+                    onUpdate({
+                      options:
+                        'options' in field && field.options.length > 0
+                          ? field.options
+                          : [{ value: 'option_1', label: '' }],
+                      enumId: undefined
+                    } as Partial<AssessmentField>);
+                  } else {
+                    onUpdate({
+                      enumId: ('enumId' in field ? field.enumId : undefined) ?? enums[0]?.id ?? '',
+                      options: undefined
+                    } as Partial<AssessmentField>);
+                  }
                 }}
-                title="Edit inline values"
-              />
-            )}
-          </div>
-          {'options' in field ? null : (
-            <Select.Root
-              value={field.enumId}
-              placeholder="Choose enum…"
-              onChange={v => onUpdate({ enumId: v ?? '' } as Partial<AssessmentField>)}
-            >
-              {enums.map(en => (
-                <Select.Item key={en.id} value={en.id}>
-                  {en.name}
-                </Select.Item>
-              ))}
-            </Select.Root>
+              >
+                <Select.Item value="workspace">Existing enum</Select.Item>
+                <Select.Item value="inline">Inline values</Select.Item>
+              </Select.Root>
+              {'options' in field && (
+                <Button
+                  variant="ghost"
+                  icon={<TbEdit size={13} />}
+                  onClick={() => {
+                    setDraftInlineOptions(field.options.map(option => ({ ...option })));
+                    setInlineOptionsOpen(true);
+                  }}
+                  title="Edit inline values"
+                />
+              )}
+            </span>
+          </FieldConfig.Cell>
+          {!('options' in field) && (
+            <FieldConfig.Cell label="Enum" flexBasis={180}>
+              <Select.Root
+                value={field.enumId}
+                placeholder="Choose enum…"
+                onChange={v => onUpdate({ enumId: v ?? '' } as Partial<AssessmentField>)}
+                style={{ width: '100%' }}
+              >
+                {enums.map(en => (
+                  <Select.Item key={en.id} value={en.id}>
+                    {en.name}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </FieldConfig.Cell>
           )}
-        </div>
-      )}
-      {field.type === 'derived' && (
-        <div className={styles.fieldExpression}>
-          <Select.Root
-            value={field.resultType}
-            onChange={value =>
-              onUpdate({
-                resultType: (value ?? 'text') as Extract<
-                  AssessmentField,
-                  { type: 'derived' }
-                >['resultType'],
-                enumId: undefined,
-                options: undefined
-              } as Partial<AssessmentField>)
-            }
-          >
-            <Select.Item value="text">Text</Select.Item>
-            <Select.Item value="number">Number</Select.Item>
-            <Select.Item value="select">Select</Select.Item>
-            <Select.Item value="boolean">Boolean</Select.Item>
-            <Select.Item value="rating">Rating</Select.Item>
-          </Select.Root>
-          {field.resultType === 'select' && (
+        </>
+      );
+    }
+    if (field.type === 'derived') {
+      return (
+        <>
+          <FieldConfig.Cell label="Result type" flexBasis={140}>
             <Select.Root
-              value={'options' in field ? 'inline' : 'workspace'}
+              value={field.resultType}
               onChange={value =>
-                onUpdate(
-                  value === 'inline'
-                    ? { options: [{ value: 'option_1', label: '' }], enumId: undefined }
-                    : { enumId: enums[0]?.id ?? '', options: undefined }
-                )
+                onUpdate({
+                  resultType: (value ?? 'text') as Extract<
+                    AssessmentField,
+                    { type: 'derived' }
+                  >['resultType'],
+                  enumId: undefined,
+                  options: undefined
+                } as Partial<AssessmentField>)
               }
+              style={{ width: '100%' }}
             >
-              <Select.Item value="workspace">Existing enum</Select.Item>
-              <Select.Item value="inline">Inline values</Select.Item>
+              <Select.Item value="text">Text</Select.Item>
+              <Select.Item value="number">Number</Select.Item>
+              <Select.Item value="select">Select</Select.Item>
+              <Select.Item value="boolean">Boolean</Select.Item>
+              <Select.Item value="rating">Rating</Select.Item>
             </Select.Root>
+          </FieldConfig.Cell>
+          {field.resultType === 'select' && (
+            <FieldConfig.Cell label="Source" flexBasis={140}>
+              <Select.Root
+                value={'options' in field ? 'inline' : 'workspace'}
+                onChange={value =>
+                  onUpdate(
+                    value === 'inline'
+                      ? { options: [{ value: 'option_1', label: '' }], enumId: undefined }
+                      : { enumId: enums[0]?.id ?? '', options: undefined }
+                  )
+                }
+                style={{ width: '100%' }}
+              >
+                <Select.Item value="workspace">Existing enum</Select.Item>
+                <Select.Item value="inline">Inline values</Select.Item>
+              </Select.Root>
+            </FieldConfig.Cell>
           )}
-          <TextInput
-            value={field.expression}
-            onChange={value => onUpdate({ expression: value ?? '' })}
-            placeholder='field("input_field")'
-          />
-          <span className={styles.expressionHint}>Reference sibling fields with field("id")</span>
-        </div>
-      )}
-      {meta.hint && <span className={styles.fieldHint}>{meta.hint}</span>}
-      <div className={styles.fieldRequirement}>
-        <Select.Root
-          value={field.requirementLevel}
-          disabled={field.type === 'derived'}
-          onChange={v =>
-            onUpdate({ requirementLevel: (v ?? 'required') as 'required' | 'optional' })
-          }
-        >
-          <Select.Item value="required">Required</Select.Item>
-          <Select.Item value="optional">Optional</Select.Item>
-        </Select.Root>
-      </div>
-      <MenuButton.Root>
-        <MenuButton.Trigger
-          element={
-            <Button variant="ghost" icon={<TbDots size={13} />} title="More field actions" />
-          }
-        />
-        <MenuButton.Menu container={portal}>
-          <Menu.SubMenu label="Move to group" container={portal}>
-            <Menu.RadioGroup value={field.groupId ?? NO_GROUP}>
-              <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
-                No group
+          <FieldConfig.Cell label="Expression" flexBasis="100%">
+            <TextInput
+              value={field.expression}
+              onChange={value => onUpdate({ expression: value ?? '' })}
+              placeholder='field("input_field")'
+              style={{ width: '100%' }}
+            />
+            <span className={styles.expressionHint}>Reference sibling fields with field("id")</span>
+          </FieldConfig.Cell>
+        </>
+      );
+    }
+    return undefined;
+  })();
+
+  const menu = (
+    <MenuButton.Root>
+      <MenuButton.Trigger
+        element={<Button variant="ghost" icon={<TbDots size={13} />} title="More field actions" />}
+      />
+      <MenuButton.Menu container={portal}>
+        <Menu.SubMenu label="Move to group" container={portal}>
+          <Menu.RadioGroup value={field.groupId ?? NO_GROUP}>
+            <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
+              No group
+            </Menu.RadioItem>
+            {groups.map(group => (
+              <Menu.RadioItem
+                key={group.id}
+                value={group.id}
+                onClick={() => onUpdate({ groupId: group.id })}
+              >
+                {group.name}
               </Menu.RadioItem>
-              {groups.map(group => (
-                <Menu.RadioItem
-                  key={group.id}
-                  value={group.id}
-                  onClick={() => onUpdate({ groupId: group.id })}
-                >
-                  {group.name}
-                </Menu.RadioItem>
-              ))}
-            </Menu.RadioGroup>
-          </Menu.SubMenu>
-          <Menu.Separator />
-          {field.type === 'derived' && (
-            <Menu.Item onClick={() => setExpressionTestOpen(true)}>Test expression</Menu.Item>
-          )}
-          {field.type === 'derived' && <Menu.Separator />}
-          <Menu.Item type="danger" onClick={onRemove}>
-            Delete field
-          </Menu.Item>
-        </MenuButton.Menu>
-      </MenuButton.Root>
+            ))}
+          </Menu.RadioGroup>
+        </Menu.SubMenu>
+        <Menu.Separator />
+        {field.type === 'derived' && (
+          <Menu.Item onClick={() => setExpressionTestOpen(true)}>Test expression</Menu.Item>
+        )}
+        {field.type === 'derived' && <Menu.Separator />}
+        <Menu.Item type="danger" onClick={onRemove}>
+          Delete field
+        </Menu.Item>
+      </MenuButton.Menu>
+    </MenuButton.Root>
+  );
+
+  return (
+    <>
+      <FieldConfig dragHandle options={options} menu={menu}>
+        <FieldConfig.Cell label="Id" mono flexBasis={140}>
+          <TextInput
+            value={field.id}
+            onChange={v => onUpdate({ id: v ?? field.id })}
+            style={{ width: '100%' }}
+          />
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Label" flexBasis={200}>
+          <TextInput
+            value={field.label}
+            onChange={v => onUpdate({ label: v ?? '' })}
+            placeholder={placeholders[field.type]}
+            style={{ width: '100%' }}
+          />
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Type" flexBasis={130}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon size={13} />
+            {FIELD_TYPE_OPTIONS.find(([type]) => type === field.type)?.[1]}
+            {meta.hint && <span className={styles.fieldHint}>{meta.hint}</span>}
+          </span>
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Completeness" flexBasis={120}>
+          <Select.Root
+            value={field.requirementLevel}
+            disabled={field.type === 'derived'}
+            onChange={v =>
+              onUpdate({ requirementLevel: (v ?? 'required') as 'required' | 'optional' })
+            }
+            style={{ width: '100%' }}
+          >
+            <Select.Item value="required">Required</Select.Item>
+            <Select.Item value="optional">Optional</Select.Item>
+          </Select.Root>
+        </FieldConfig.Cell>
+      </FieldConfig>
       {field.type === 'derived' && (
         <DerivedExpressionTestDialog
           open={expressionTestOpen}
@@ -1313,6 +1340,6 @@ const FieldRow = ({
           </div>
         </Dialog>
       )}
-    </div>
+    </>
   );
 };

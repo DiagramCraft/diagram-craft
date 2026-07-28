@@ -6,7 +6,8 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TypeBadge } from '../../components/TypeBadge';
-import { TbPlus, TbCode, TbEdit, TbGripVertical, TbTrash, TbDots } from 'react-icons/tb';
+import { TbPlus, TbCode, TbEdit, TbTrash, TbDots } from 'react-icons/tb';
+import { FieldConfig } from '../../components/FieldConfig';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { Title } from '../../components/Title';
@@ -573,16 +574,6 @@ export const SchemaSettingsScreen = () => {
 
               {fields.length > 0 || groups.length > 0 ? (
                 <div className={styles.fieldsTable}>
-                  <div className={styles.fieldsTh}>
-                    <span />
-                    <span>Name</span>
-                    <span>Label</span>
-                    <span>Type</span>
-                    <span>Options / Ref</span>
-                    <span>Completeness</span>
-                    <span>External</span>
-                    <span />
-                  </div>
                   {ungroupedFields.map(f => renderFieldRow(f))}
                   {groups.map(group => (
                     <div className={styles.groupSection} key={group.id}>
@@ -1003,153 +994,158 @@ const FieldRow = ({
         </div>
       );
     }
-    return <span className="dim">&mdash;</span>;
+    return undefined;
   };
 
+  const menu = canEdit ? (
+    <MenuButton.Root>
+      <MenuButton.Trigger
+        element={
+          <button type="button" className={styles.iconBtn}>
+            <TbDots size={13} />
+          </button>
+        }
+      />
+      <MenuButton.Menu>
+        <Menu.SubMenu label="Move to group">
+          <Menu.RadioGroup value={field.groupId ?? NO_GROUP}>
+            <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
+              No group
+            </Menu.RadioItem>
+            {groups.map(group => (
+              <Menu.RadioItem
+                key={group.id}
+                value={group.id}
+                onClick={() => onUpdate({ groupId: group.id })}
+              >
+                {group.name}
+              </Menu.RadioItem>
+            ))}
+          </Menu.RadioGroup>
+        </Menu.SubMenu>
+        {field.type === 'derived' && (
+          <Menu.Item onClick={() => setExpressionTestOpen(true)}>Test expression</Menu.Item>
+        )}
+        {onRemove && (
+          <>
+            <Menu.Separator />
+            <Menu.Item type="danger" onClick={onRemove}>
+              Delete field
+            </Menu.Item>
+          </>
+        )}
+      </MenuButton.Menu>
+    </MenuButton.Root>
+  ) : undefined;
+
   return (
-    <div className={styles.fieldRow} style={{ alignItems: 'flex-start' }}>
-      <span className={styles.fieldHandle}>
-        <TbGripVertical size={14} />
-      </span>
-      <TextInput
-        value={field.id}
-        disabled={!canEdit}
-        onChange={value => {
-          setIdUserEdited(true);
-          onUpdate({ id: value ?? '' });
-        }}
-        style={{ width: '100%', fontFamily: 'monospace' }}
-      />
-      <TextInput
-        value={field.name}
-        disabled={!canEdit}
-        onChange={value => {
-          const name = value ?? '';
-          if (!idUserEdited) {
-            onUpdate({ name, id: toFieldId(name) });
-          } else {
-            onUpdate({ name });
-          }
-        }}
-        style={{ width: '100%' }}
-      />
-      <Select.Root
-        value={field.type}
-        disabled={!canEdit}
-        onChange={value => {
-          if (value) onChangeType(value as FieldType);
-        }}
-        style={{ width: '100%' }}
-      >
-        {FIELD_TYPES.map(t => (
-          <Select.Item
-            key={t.value}
-            value={t.value}
-            disabled={t.value === 'containment' && containmentDisabled}
-          >
-            {t.label}
-          </Select.Item>
-        ))}
-      </Select.Root>
-      <span className={styles.fieldOptions}>{optionsDisplay()}</span>
-      <Select.Root
-        value={field.requirementLevel ?? 'optional'}
-        disabled={!canEdit || field.type === 'derived'}
-        onChange={value => {
-          const requirementLevel = (value ?? 'optional') as SchemaField['requirementLevel'];
-          onUpdate({
-            requirementLevel,
-            ...(field.type === 'containment'
-              ? { minCount: requirementLevel === 'required' ? 1 : 0 }
-              : {})
-          } as Partial<SchemaField>);
-        }}
-        style={{ width: '100%' }}
-      >
-        <Select.Item value="optional">Optional</Select.Item>
-        <Select.Item value="expected">Expected</Select.Item>
-        <Select.Item value="required">Required</Select.Item>
-      </Select.Root>
-      <div
-        style={{
-          display: 'grid',
-          gap: 4,
-          visibility: field.type === 'derived' ? 'hidden' : 'visible'
-        }}
-      >
-        <Select.Root
-          value={field.external_kind ?? NOT_EXTERNAL}
-          disabled={!canEdit}
-          onChange={value =>
-            onUpdate(
-              value === NOT_EXTERNAL || !value
-                ? { external_kind: undefined, refresh_mode: undefined }
-                : { external_kind: value as SchemaField['external_kind'] }
-            )
-          }
-          style={{ width: '100%' }}
-        >
-          <Select.Item value={NOT_EXTERNAL}>Not external</Select.Item>
-          <Select.Item value="ai">AI</Select.Item>
-          <Select.Item value="integration">Integration</Select.Item>
-          <Select.Item value="automation">Automation</Select.Item>
-        </Select.Root>
-        {field.external_kind && (
-          <Select.Root
-            value={field.refresh_mode ?? 'on_change'}
+    <>
+      <FieldConfig dragHandle options={optionsDisplay()} menu={menu}>
+        <FieldConfig.Cell label="Id" mono flexBasis={160}>
+          <TextInput
+            value={field.id}
             disabled={!canEdit}
-            onChange={value =>
-              onUpdate({
-                refresh_mode: (value ?? 'on_change') as SchemaField['refresh_mode']
-              } as Partial<SchemaField>)
-            }
+            onChange={value => {
+              setIdUserEdited(true);
+              onUpdate({ id: value ?? '' });
+            }}
+            style={{ width: '100%' }}
+          />
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Label" flexBasis={160}>
+          <TextInput
+            value={field.name}
+            disabled={!canEdit}
+            onChange={value => {
+              const name = value ?? '';
+              if (!idUserEdited) {
+                onUpdate({ name, id: toFieldId(name) });
+              } else {
+                onUpdate({ name });
+              }
+            }}
+            style={{ width: '100%' }}
+          />
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Type" flexBasis={140}>
+          <Select.Root
+            value={field.type}
+            disabled={!canEdit}
+            onChange={value => {
+              if (value) onChangeType(value as FieldType);
+            }}
             style={{ width: '100%' }}
           >
-            <Select.Item value="on_change">On change</Select.Item>
-            <Select.Item value="scheduled">Scheduled</Select.Item>
+            {FIELD_TYPES.map(t => (
+              <Select.Item
+                key={t.value}
+                value={t.value}
+                disabled={t.value === 'containment' && containmentDisabled}
+              >
+                {t.label}
+              </Select.Item>
+            ))}
           </Select.Root>
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Completeness" flexBasis={120}>
+          <Select.Root
+            value={field.requirementLevel ?? 'optional'}
+            disabled={!canEdit || field.type === 'derived'}
+            onChange={value => {
+              const requirementLevel = (value ?? 'optional') as SchemaField['requirementLevel'];
+              onUpdate({
+                requirementLevel,
+                ...(field.type === 'containment'
+                  ? { minCount: requirementLevel === 'required' ? 1 : 0 }
+                  : {})
+              } as Partial<SchemaField>);
+            }}
+            style={{ width: '100%' }}
+          >
+            <Select.Item value="optional">Optional</Select.Item>
+            <Select.Item value="expected">Expected</Select.Item>
+            <Select.Item value="required">Required</Select.Item>
+          </Select.Root>
+        </FieldConfig.Cell>
+        {field.type !== 'derived' && (
+          <FieldConfig.Cell label="External" flexBasis={150}>
+            <div style={{ display: 'grid', gap: 4 }}>
+              <Select.Root
+                value={field.external_kind ?? NOT_EXTERNAL}
+                disabled={!canEdit}
+                onChange={value =>
+                  onUpdate(
+                    value === NOT_EXTERNAL || !value
+                      ? { external_kind: undefined, refresh_mode: undefined }
+                      : { external_kind: value as SchemaField['external_kind'] }
+                  )
+                }
+                style={{ width: '100%' }}
+              >
+                <Select.Item value={NOT_EXTERNAL}>Not external</Select.Item>
+                <Select.Item value="ai">AI</Select.Item>
+                <Select.Item value="integration">Integration</Select.Item>
+                <Select.Item value="automation">Automation</Select.Item>
+              </Select.Root>
+              {field.external_kind && (
+                <Select.Root
+                  value={field.refresh_mode ?? 'on_change'}
+                  disabled={!canEdit}
+                  onChange={value =>
+                    onUpdate({
+                      refresh_mode: (value ?? 'on_change') as SchemaField['refresh_mode']
+                    } as Partial<SchemaField>)
+                  }
+                  style={{ width: '100%' }}
+                >
+                  <Select.Item value="on_change">On change</Select.Item>
+                  <Select.Item value="scheduled">Scheduled</Select.Item>
+                </Select.Root>
+              )}
+            </div>
+          </FieldConfig.Cell>
         )}
-      </div>
-      {canEdit && (
-        <MenuButton.Root>
-          <MenuButton.Trigger
-            element={
-              <button type="button" className={styles.iconBtn}>
-                <TbDots size={13} />
-              </button>
-            }
-          />
-          <MenuButton.Menu>
-            <Menu.SubMenu label="Move to group">
-              <Menu.RadioGroup value={field.groupId ?? NO_GROUP}>
-                <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
-                  No group
-                </Menu.RadioItem>
-                {groups.map(group => (
-                  <Menu.RadioItem
-                    key={group.id}
-                    value={group.id}
-                    onClick={() => onUpdate({ groupId: group.id })}
-                  >
-                    {group.name}
-                  </Menu.RadioItem>
-                ))}
-              </Menu.RadioGroup>
-            </Menu.SubMenu>
-            {field.type === 'derived' && (
-              <Menu.Item onClick={() => setExpressionTestOpen(true)}>Test expression</Menu.Item>
-            )}
-            {onRemove && (
-              <>
-                <Menu.Separator />
-                <Menu.Item type="danger" onClick={onRemove}>
-                  Delete field
-                </Menu.Item>
-              </>
-            )}
-          </MenuButton.Menu>
-        </MenuButton.Root>
-      )}
+      </FieldConfig>
       {field.type === 'derived' && (
         <DerivedExpressionTestDialog
           open={expressionTestOpen}
@@ -1163,6 +1159,6 @@ const FieldRow = ({
           }}
         />
       )}
-    </div>
+    </>
   );
 };
