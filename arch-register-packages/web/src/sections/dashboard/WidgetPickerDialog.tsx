@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import type {
-  DashboardWidget,
-  DashboardWidgetType
-} from '@arch-register/api-types/dashboardContract';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import {
@@ -11,6 +8,7 @@ import {
   createDefaultWidget,
   type WidgetSurface
 } from './dashboardWidgetDefaults';
+import type { KnownWidgetType } from './dashboardWidgetConfig';
 import styles from './WidgetPickerDialog.module.css';
 
 type Props = {
@@ -30,7 +28,7 @@ export const WidgetPickerDialog = ({
   widgets,
   onAdd
 }: Props) => {
-  const [pendingType, setPendingType] = useState<DashboardWidgetType | null>(null);
+  const [pendingType, setPendingType] = useState<KnownWidgetType | null>(null);
   const [selectedViewId, setSelectedViewId] = useState('');
 
   const { projectId } = useMdxContext();
@@ -46,7 +44,7 @@ export const WidgetPickerDialog = ({
     onClose();
   };
 
-  const handlePick = (type: DashboardWidgetType) => {
+  const handlePick = (type: KnownWidgetType) => {
     if (type === 'saved-view-embed') {
       setPendingType(type);
       return;

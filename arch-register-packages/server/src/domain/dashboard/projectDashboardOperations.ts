@@ -11,7 +11,7 @@ const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
   {
     id: 'default-entity-count',
     type: 'stat-metric',
-    metricType: 'entity-count',
+    config: { metricType: 'entity-count' },
     x: 0,
     y: 0,
     w: 3,
@@ -20,15 +20,31 @@ const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
   {
     id: 'default-diagram-count',
     type: 'stat-metric',
-    metricType: 'diagram-count',
+    config: { metricType: 'diagram-count' },
     x: 3,
     y: 0,
     w: 3,
     h: 2
   },
-  { id: 'default-active-assessments', type: 'active-assessments', x: 6, y: 0, w: 3, h: 2 },
-  { id: 'default-upcoming-milestones', type: 'upcoming-milestones', x: 9, y: 0, w: 3, h: 2 },
-  { id: 'default-entity-table', type: 'entity-table', x: 0, y: 2, w: 12, h: 6 }
+  {
+    id: 'default-active-assessments',
+    type: 'active-assessments',
+    config: {},
+    x: 6,
+    y: 0,
+    w: 3,
+    h: 2
+  },
+  {
+    id: 'default-upcoming-milestones',
+    type: 'upcoming-milestones',
+    config: {},
+    x: 9,
+    y: 0,
+    w: 3,
+    h: 2
+  },
+  { id: 'default-entity-table', type: 'entity-table', config: {}, x: 0, y: 2, w: 12, h: 6 }
 ];
 
 export const toApi = (row: ProjectDashboardDbResult): ApiProjectDashboard => ({

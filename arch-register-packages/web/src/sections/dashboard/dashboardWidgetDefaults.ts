@@ -1,12 +1,10 @@
-import type {
-  DashboardWidget,
-  DashboardWidgetType
-} from '@arch-register/api-types/dashboardContract';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import type { KnownWidgetType } from './dashboardWidgetConfig';
 
 export type WidgetSurface = 'workspace' | 'project';
 
 export type WidgetTypeOption = {
-  type: DashboardWidgetType;
+  type: KnownWidgetType;
   label: string;
   description: string;
   defaultW: number;
@@ -93,7 +91,7 @@ const nextRowY = (widgets: DashboardWidget[]): number =>
   widgets.reduce((max, w) => Math.max(max, w.y + w.h), 0);
 
 export const createDefaultWidget = (
-  type: DashboardWidgetType,
+  type: KnownWidgetType,
   widgets: DashboardWidget[],
   viewId?: string
 ): DashboardWidget => {
@@ -103,23 +101,23 @@ export const createDefaultWidget = (
 
   switch (type) {
     case 'stat-metric':
-      return { ...base, type: 'stat-metric', metricType: 'entity-count' };
+      return { ...base, type: 'stat-metric', config: { metricType: 'entity-count' } };
     case 'saved-view-embed':
-      return { ...base, type: 'saved-view-embed', viewId: viewId ?? '' };
+      return { ...base, type: 'saved-view-embed', config: { viewId: viewId ?? '' } };
     case 'entity-table':
-      return { ...base, type: 'entity-table' };
+      return { ...base, type: 'entity-table', config: {} };
     case 'lifecycle-chart':
-      return { ...base, type: 'lifecycle-chart' };
+      return { ...base, type: 'lifecycle-chart', config: {} };
     case 'activity-trend-chart':
-      return { ...base, type: 'activity-trend-chart' };
+      return { ...base, type: 'activity-trend-chart', config: {} };
     case 'stale-entity-report':
-      return { ...base, type: 'stale-entity-report' };
+      return { ...base, type: 'stale-entity-report', config: {} };
     case 'activity-feed':
-      return { ...base, type: 'activity-feed' };
+      return { ...base, type: 'activity-feed', config: {} };
     case 'active-assessments':
-      return { ...base, type: 'active-assessments' };
+      return { ...base, type: 'active-assessments', config: {} };
     case 'upcoming-milestones':
-      return { ...base, type: 'upcoming-milestones' };
+      return { ...base, type: 'upcoming-milestones', config: {} };
   }
 };
 
@@ -127,7 +125,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
   {
     id: 'default-entity-count',
     type: 'stat-metric',
-    metricType: 'entity-count',
+    config: { metricType: 'entity-count' },
     x: 0,
     y: 0,
     w: 3,
@@ -136,7 +134,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
   {
     id: 'default-project-count',
     type: 'stat-metric',
-    metricType: 'project-count',
+    config: { metricType: 'project-count' },
     x: 3,
     y: 0,
     w: 3,
@@ -145,7 +143,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
   {
     id: 'default-diagram-count',
     type: 'stat-metric',
-    metricType: 'diagram-count',
+    config: { metricType: 'diagram-count' },
     x: 6,
     y: 0,
     w: 3,
@@ -154,11 +152,11 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
   {
     id: 'default-completeness-percent',
     type: 'stat-metric',
-    metricType: 'completeness-percent',
+    config: { metricType: 'completeness-percent' },
     x: 9,
     y: 0,
     w: 3,
     h: 2
   },
-  { id: 'default-activity-feed', type: 'activity-feed', x: 0, y: 2, w: 12, h: 6 }
+  { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 2, w: 12, h: 6 }
 ];

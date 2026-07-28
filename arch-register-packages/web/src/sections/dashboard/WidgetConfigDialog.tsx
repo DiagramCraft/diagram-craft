@@ -10,6 +10,7 @@ import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import type { EntityMetricType } from '../markdown/mdx-components/blocks/entity-metric/types';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
+import { parseKnownDashboardWidget, type KnownDashboardWidget } from './dashboardWidgetConfig';
 import styles from './WidgetConfigDialog.module.css';
 
 const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string; surfaces: WidgetSurface[] }[] =
@@ -25,6 +26,9 @@ const LIMIT_OPTIONS = [
   { value: '20', label: '20 rows' },
   { value: '50', label: '50 rows' }
 ];
+
+const configString = (config: Record<string, unknown>, key: string): string =>
+  typeof config[key] === 'string' ? config[key] : '';
 
 type Props = {
   widget: DashboardWidget | null;
@@ -54,16 +58,20 @@ const titleForWidget = (widget: DashboardWidget): string => {
       return 'Active assessments';
     case 'upcoming-milestones':
       return 'Upcoming milestones';
+    default:
+      return 'Widget';
   }
 };
 
 export const WidgetConfigDialog = ({ widget, open, workspaceSlug, onClose, onSave }: Props) => {
   if (!widget) return null;
+  const knownWidget = parseKnownDashboardWidget(widget);
+  if (!knownWidget) return null;
 
   return (
     <WidgetConfigDialogContent
-      key={widget.id}
-      widget={widget}
+      key={knownWidget.id}
+      widget={knownWidget}
       open={open}
       workspaceSlug={workspaceSlug}
       onClose={onClose}
@@ -78,28 +86,32 @@ const WidgetConfigDialogContent = ({
   workspaceSlug,
   onClose,
   onSave
-}: Props & { widget: DashboardWidget }) => {
+}: Props & { widget: KnownDashboardWidget }) => {
   const [filter, setFilter] = useState<EntityFilterValue>({
-    schemaId: 'schema' in widget ? (widget.schema ?? '') : '',
-    owner: 'owner' in widget ? (widget.owner ?? '') : '',
-    lifecycle: 'lifecycle' in widget ? (widget.lifecycle ?? '') : ''
+    schemaId: configString(widget.config, 'schema'),
+    owner: configString(widget.config, 'owner'),
+    lifecycle: configString(widget.config, 'lifecycle')
   });
   const [metricType, setMetricType] = useState<EntityMetricType>(
-    widget.type === 'stat-metric' ? widget.metricType : 'entity-count'
+    widget.type === 'stat-metric' ? widget.config.metricType : 'entity-count'
   );
-  const [label, setLabel] = useState(widget.type === 'stat-metric' ? (widget.label ?? '') : '');
+  const [label, setLabel] = useState(
+    widget.type === 'stat-metric' ? (widget.config.label ?? '') : ''
+  );
   const [limit, setLimit] = useState(
-    widget.type === 'entity-table' ? String(widget.limit ?? '10') : '10'
+    widget.type === 'entity-table' ? String(widget.config.limit ?? '10') : '10'
   );
-  const [viewId, setViewId] = useState(widget.type === 'saved-view-embed' ? widget.viewId : '');
+  const [viewId, setViewId] = useState(
+    widget.type === 'saved-view-embed' ? widget.config.viewId : ''
+  );
   const [lookbackDays, setLookbackDays] = useState<number | undefined>(
-    widget.type === 'activity-trend-chart' ? widget.lookbackDays : undefined
+    widget.type === 'activity-trend-chart' ? widget.config.lookbackDays : undefined
   );
   const [staleAfterDays, setStaleAfterDays] = useState<number | undefined>(
-    widget.type === 'stale-entity-report' ? widget.staleAfterDays : undefined
+    widget.type === 'stale-entity-report' ? widget.config.staleAfterDays : undefined
   );
   const [activityLimit, setActivityLimit] = useState<number | undefined>(
-    widget.type === 'activity-feed' ? widget.limit : undefined
+    widget.type === 'activity-feed' ? widget.config.limit : undefined
   );
 
   const { projectId } = useMdxContext();
@@ -120,33 +132,39 @@ const WidgetConfigDialogContent = ({
       case 'stat-metric':
         onSave({
           ...widget,
-          metricType,
-          schema: filter.schemaId || undefined,
-          owner: filter.owner || undefined,
-          lifecycle: filter.lifecycle || undefined,
-          label: label || undefined
+          config: {
+            ...widget.config,
+            metricType,
+            schema: filter.schemaId || undefined,
+            owner: filter.owner || undefined,
+            lifecycle: filter.lifecycle || undefined,
+            label: label || undefined
+          }
         });
         break;
       case 'entity-table':
         onSave({
           ...widget,
-          schema: filter.schemaId || undefined,
-          owner: filter.owner || undefined,
-          lifecycle: filter.lifecycle || undefined,
-          limit: Number(limit)
+          config: {
+            ...widget.config,
+            schema: filter.schemaId || undefined,
+            owner: filter.owner || undefined,
+            lifecycle: filter.lifecycle || undefined,
+            limit: Number(limit)
+          }
         });
         break;
       case 'saved-view-embed':
-        onSave({ ...widget, viewId });
+        onSave({ ...widget, config: { ...widget.config, viewId } });
         break;
       case 'activity-trend-chart':
-        onSave({ ...widget, lookbackDays });
+        onSave({ ...widget, config: { ...widget.config, lookbackDays } });
         break;
       case 'stale-entity-report':
-        onSave({ ...widget, staleAfterDays });
+        onSave({ ...widget, config: { ...widget.config, staleAfterDays } });
         break;
       case 'activity-feed':
-        onSave({ ...widget, limit: activityLimit });
+        onSave({ ...widget, config: { ...widget.config, limit: activityLimit } });
         break;
       case 'lifecycle-chart':
       case 'active-assessments':

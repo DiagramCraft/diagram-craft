@@ -4,17 +4,7 @@ import { ws, wsAndUUID, wsAndProjectId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-export const dashboardWidgetTypeSchema = z.enum([
-  'stat-metric',
-  'saved-view-embed',
-  'entity-table',
-  'lifecycle-chart',
-  'activity-trend-chart',
-  'stale-entity-report',
-  'activity-feed',
-  'active-assessments',
-  'upcoming-milestones'
-]);
+export const dashboardWidgetTypeSchema = z.string().describe('Extensible widget type identifier');
 
 const gridPositionShape = {
   id: z.string().describe('Unique widget identifier'),
@@ -24,79 +14,15 @@ const gridPositionShape = {
   h: z.number().int().describe('Grid height in rows')
 };
 
-export const statMetricWidgetSchema = z.object({
+const dashboardWidgetSchema = z.object({
   ...gridPositionShape,
-  type: z.literal('stat-metric'),
-  metricType: z.enum(['entity-count', 'project-count', 'diagram-count', 'completeness-percent']),
-  schema: z.string().optional().describe('Optional schema identifier to scope the metric'),
-  owner: z.string().optional().describe('Optional owner identifier to scope the metric'),
-  lifecycle: z.string().optional().describe('Optional lifecycle state to scope the metric'),
-  label: z.string().optional().describe('Optional display label override')
+  type: dashboardWidgetTypeSchema,
+  config: z
+    .record(z.string(), z.unknown())
+    .describe('Widget-specific configuration; interpreted by the widget implementation')
 });
 
-export const savedViewEmbedWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('saved-view-embed'),
-  viewId: z.string().describe('Identifier of the saved view to embed')
-});
-
-export const entityTableWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('entity-table'),
-  schema: z.string().optional().describe('Optional schema identifier to scope the table'),
-  owner: z.string().optional().describe('Optional owner identifier to scope the table'),
-  lifecycle: z.string().optional().describe('Optional lifecycle state to scope the table'),
-  limit: z.number().int().optional().describe('Maximum number of entities to display')
-});
-
-export const lifecycleChartWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('lifecycle-chart')
-});
-
-export const activityTrendChartWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('activity-trend-chart'),
-  lookbackDays: z.number().int().optional().describe('Number of days to look back')
-});
-
-export const staleEntityReportWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('stale-entity-report'),
-  staleAfterDays: z
-    .number()
-    .int()
-    .optional()
-    .describe('Number of days without update before an entity is considered stale')
-});
-
-export const activityFeedWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('activity-feed'),
-  limit: z.number().int().optional().describe('Maximum number of activity items to display')
-});
-
-export const activeAssessmentsWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('active-assessments')
-});
-
-export const upcomingMilestonesWidgetSchema = z.object({
-  ...gridPositionShape,
-  type: z.literal('upcoming-milestones')
-});
-
-export const dashboardWidgetSchema = z.discriminatedUnion('type', [
-  statMetricWidgetSchema,
-  savedViewEmbedWidgetSchema,
-  entityTableWidgetSchema,
-  lifecycleChartWidgetSchema,
-  activityTrendChartWidgetSchema,
-  staleEntityReportWidgetSchema,
-  activityFeedWidgetSchema,
-  activeAssessmentsWidgetSchema,
-  upcomingMilestonesWidgetSchema
-]);
+export { dashboardWidgetSchema };
 
 export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),

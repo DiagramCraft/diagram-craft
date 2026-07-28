@@ -10,6 +10,7 @@ import { DashboardWidgetRenderer } from './widgets/DashboardWidgetRenderer';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
 import { WidgetConfigDialog } from './WidgetConfigDialog';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
+import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
 import styles from './DashboardGrid.module.css';
 
 const GRID_COLS = 12;
@@ -135,7 +136,11 @@ export const DashboardGrid = ({
               <div key={widget.id} className={styles.gridItem}>
                 <DashboardWidgetRenderer
                   widget={widget}
-                  onEdit={canEditGrid ? () => setEditingWidgetId(widget.id) : undefined}
+                  onEdit={
+                    canEditGrid && parseKnownDashboardWidget(widget)
+                      ? () => setEditingWidgetId(widget.id)
+                      : undefined
+                  }
                   onRemove={
                     canEditGrid
                       ? () => setLocalWidgets(current => current.filter(w => w.id !== widget.id))
