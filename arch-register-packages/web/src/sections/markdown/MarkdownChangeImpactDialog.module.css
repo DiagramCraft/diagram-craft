@@ -1,0 +1,28 @@
+.body {
+  display: grid;
+  gap: 16px;
+}
+
+.description {
+  margin: 0;
+  color: var(--text-color-secondary, #4b5563);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field select {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  color: inherit;
+  background: var(--cmp-bg, var(--background-color, #fff));
+  border: 1px solid var(--cmp-border, #cbd5e1);
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 400;
+}
