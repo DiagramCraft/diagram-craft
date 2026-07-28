@@ -4,7 +4,7 @@ import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 const test = createPermissionApiTest();
 
 const sampleWidgets = [
-  { id: 'a', type: 'lifecycle-chart' as const, config: {}, x: 0, y: 0, w: 6, h: 4 }
+  { id: 'a', type: 'entity-lifecycle-chart' as const, config: {}, x: 0, y: 0, w: 6, h: 4 }
 ];
 
 test.describe('workspace dashboard permission routes', () => {

@@ -33,7 +33,7 @@ test.describe('Project Dashboard API', () => {
     const widgets = [
       {
         id: 'entities',
-        type: 'stat-metric' as const,
+        type: 'EntityMetric' as const,
         x: 0,
         y: 0,
         w: 3,
@@ -42,7 +42,7 @@ test.describe('Project Dashboard API', () => {
       },
       {
         id: 'table',
-        type: 'entity-table' as const,
+        type: 'EntityTable' as const,
         x: 0,
         y: 2,
         w: 12,
@@ -72,7 +72,7 @@ test.describe('Project Dashboard API', () => {
     await orpc.projectDashboard.update({
       params: { workspace: 'default', projectId: project.id },
       body: {
-        widgets: [{ id: 'a', type: 'entity-table' as const, config: {}, x: 0, y: 0, w: 6, h: 4 }]
+        widgets: [{ id: 'a', type: 'EntityTable' as const, config: {}, x: 0, y: 0, w: 6, h: 4 }]
       }
     });
 
@@ -82,7 +82,7 @@ test.describe('Project Dashboard API', () => {
         widgets: [
           {
             id: 'b',
-            type: 'stat-metric' as const,
+            type: 'EntityMetric' as const,
             x: 0,
             y: 0,
             w: 3,

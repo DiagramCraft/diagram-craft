@@ -54,8 +54,20 @@ import {
   ENTITY_STALE_REPORT_TYPE,
   entityStaleReportSpec
 } from './blocks/entity-stale-report/EntityStaleReportRegistration';
-import type { MdxComponentSpec } from './types';
-export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
+import {
+  ACTIVITY_FEED_TYPE,
+  activityFeedSpec
+} from '../../dashboard/widgets/ActivityFeedRegistration';
+import {
+  ACTIVE_ASSESSMENTS_TYPE,
+  activeAssessmentsSpec
+} from '../../dashboard/widgets/ActiveAssessmentsRegistration';
+import {
+  UPCOMING_MILESTONES_TYPE,
+  upcomingMilestonesSpec
+} from '../../dashboard/widgets/UpcomingMilestonesRegistration';
+import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
+export type { SlashCommandDef, EditorSpec, MdxComponentSpec, DashboardWidgetSpec } from './types';
 
 export const MDX_COMPONENTS = {
   [DIAGRAM_EMBED_TYPE]: diagramEmbedSpec,
@@ -82,7 +94,10 @@ export const MDX_COMPONENTS = {
   [TAB_TYPE]: tabSpec,
   [ENTITY_LIFECYCLE_CHART_TYPE]: entityLifecycleChartSpec,
   [ENTITY_ACTIVITY_TREND_CHART_TYPE]: entityActivityTrendChartSpec,
-  [ENTITY_STALE_REPORT_TYPE]: entityStaleReportSpec
+  [ENTITY_STALE_REPORT_TYPE]: entityStaleReportSpec,
+  [ACTIVITY_FEED_TYPE]: activityFeedSpec,
+  [ACTIVE_ASSESSMENTS_TYPE]: activeAssessmentsSpec,
+  [UPCOMING_MILESTONES_TYPE]: upcomingMilestonesSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;
@@ -94,6 +109,10 @@ export type MdxComponentName = keyof typeof MDX_COMPONENTS;
  * aren't visible without this cast.
  */
 export const getMdxSpec = (name: MdxComponentName): MdxComponentSpec => MDX_COMPONENTS[name];
+
+/** Safe accessor for an arbitrary, untyped string (e.g. a persisted `widget.type`). */
+export const getMdxSpecSafe = (name: string): MdxComponentSpec | undefined =>
+  (MDX_COMPONENTS as Record<string, MdxComponentSpec>)[name];
 
 /**
  * Filters the registry by rendering surface. Wiki sees every registered
@@ -109,3 +128,38 @@ export const getMdxSpecsForSurface = (
     Object.entries(MDX_COMPONENTS).filter(([, spec]) => spec.surfaces?.includes('dashboard'))
   );
 };
+
+/**
+ * Every `MDX_COMPONENTS` key that carries a `dashboardWidget` block, i.e. every
+ * type addable to a dashboard. `defineMdxComponent` erases each registration to
+ * the common `MdxComponentSpec` type, so this can't be derived structurally from
+ * `typeof MDX_COMPONENTS` — it's a union of the same `_TYPE` consts used as the
+ * map's keys above. Registering a new dashboard widget means adding it here and
+ * to `MDX_COMPONENTS`, both in this one file.
+ */
+export type KnownWidgetType =
+  | typeof ENTITY_METRIC_TYPE
+  | typeof ENTITY_VIEW_EMBED_TYPE
+  | typeof ENTITY_TABLE_TYPE
+  | typeof ENTITY_LIFECYCLE_CHART_TYPE
+  | typeof ENTITY_ACTIVITY_TREND_CHART_TYPE
+  | typeof ENTITY_STALE_REPORT_TYPE
+  | typeof ACTIVITY_FEED_TYPE
+  | typeof ACTIVE_ASSESSMENTS_TYPE
+  | typeof UPCOMING_MILESTONES_TYPE;
+
+export const isKnownWidgetType = (type: string): type is KnownWidgetType =>
+  !!getMdxSpecSafe(type)?.dashboardWidget;
+
+/** All dashboard-widget specs in the registry, keyed by their MDX type. */
+export const getDashboardWidgetSpecs = (): Array<{
+  type: KnownWidgetType;
+  spec: DashboardWidgetSpec;
+}> =>
+  Object.entries(MDX_COMPONENTS)
+    .filter((entry): entry is [string, MdxComponentSpec] => !!entry[1].dashboardWidget)
+    .map(([type, spec]) => ({ type: type as KnownWidgetType, spec: spec.dashboardWidget! }));
+
+/** Looks up a single dashboard-widget spec by type, if it has one. */
+export const getDashboardWidgetSpec = (type: string): DashboardWidgetSpec | undefined =>
+  getMdxSpecSafe(type)?.dashboardWidget;

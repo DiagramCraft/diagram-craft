@@ -1,5 +1,7 @@
+import { TbChartDonut2 } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityLifecycleChart } from './EntityLifecycleChart';
+import { LifecycleChartWidget } from '../../../../dashboard/widgets/LifecycleChartWidget';
 import type { EntityLifecycleChartProps, EntityLifecycleChartSlateElement } from './types';
 
 export const ENTITY_LIFECYCLE_CHART_TYPE = 'entity-lifecycle-chart' as const;
@@ -16,5 +18,16 @@ export const entityLifecycleChartSpec = defineMdxComponent<
   component: EntityLifecycleChart,
   mode: 'block',
   allowedProps: [],
-  surfaces: ['dashboard']
+  surfaces: ['dashboard'],
+  dashboardWidget: {
+    icon: TbChartDonut2,
+    label: 'Lifecycle chart',
+    description: 'Breakdown of entities by lifecycle state.',
+    defaultW: 6,
+    defaultH: 6,
+    surfaces: ['workspace'],
+    component: LifecycleChartWidget,
+    isValidConfig: (_config): _config is Record<string, never> => true,
+    createDefaultConfig: () => ({})
+  }
 });

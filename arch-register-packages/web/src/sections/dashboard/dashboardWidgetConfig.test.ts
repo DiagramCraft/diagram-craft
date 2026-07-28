@@ -5,7 +5,7 @@ describe('parseKnownDashboardWidget', () => {
   it('parses a built-in widget with nested config', () => {
     const widget = parseKnownDashboardWidget({
       id: 'metric',
-      type: 'stat-metric',
+      type: 'EntityMetric',
       config: { metricType: 'entity-count', label: 'Entities' },
       x: 0,
       y: 0,
@@ -13,7 +13,7 @@ describe('parseKnownDashboardWidget', () => {
       h: 2
     });
 
-    expect(widget?.type).toBe('stat-metric');
+    expect(widget?.type).toBe('EntityMetric');
     expect(widget?.config).toEqual({ metricType: 'entity-count', label: 'Entities' });
   });
 
@@ -35,7 +35,7 @@ describe('parseKnownDashboardWidget', () => {
     expect(
       parseKnownDashboardWidget({
         id: 'metric',
-        type: 'stat-metric',
+        type: 'EntityMetric',
         config: { metricType: 'not-a-metric' },
         x: 0,
         y: 0,

@@ -11,6 +11,7 @@ import { useMdxContext } from '../markdown/MdxContext';
 import type { EntityMetricType } from '../markdown/mdx-components/blocks/entity-metric/types';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { parseKnownDashboardWidget, type KnownDashboardWidget } from './dashboardWidgetConfig';
+import { getDashboardWidgetSpec } from '../markdown/mdx-components/mdxRegistry';
 import styles from './WidgetConfigDialog.module.css';
 
 const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string; surfaces: WidgetSurface[] }[] =
@@ -41,30 +42,8 @@ type Props = {
   onSave: (widget: DashboardWidget) => void;
 };
 
-const titleForWidget = (widget: DashboardWidget): string => {
-  switch (widget.type) {
-    case 'stat-metric':
-      return 'Stat metric';
-    case 'saved-view-embed':
-      return 'Saved view';
-    case 'entity-table':
-      return 'Entity table';
-    case 'lifecycle-chart':
-      return 'Lifecycle chart';
-    case 'activity-trend-chart':
-      return 'Activity trend chart';
-    case 'stale-entity-report':
-      return 'Stale entity report';
-    case 'activity-feed':
-      return 'Activity feed';
-    case 'active-assessments':
-      return 'Active assessments';
-    case 'upcoming-milestones':
-      return 'Upcoming milestones';
-    default:
-      return 'Widget';
-  }
-};
+const titleForWidget = (widget: DashboardWidget): string =>
+  getDashboardWidgetSpec(widget.type)?.label ?? 'Widget';
 
 export const WidgetConfigDialog = ({ widget, open, workspaceSlug, onClose, onSave }: Props) => {
   if (!widget) return null;
@@ -96,22 +75,22 @@ const WidgetConfigDialogContent = ({
     lifecycle: configString(widget.config, 'lifecycle')
   });
   const [metricType, setMetricType] = useState<EntityMetricType>(
-    widget.type === 'stat-metric' ? widget.config.metricType : 'entity-count'
+    widget.type === 'EntityMetric' ? widget.config.metricType : 'entity-count'
   );
   const [label, setLabel] = useState(
-    widget.type === 'stat-metric' ? (widget.config.label ?? '') : ''
+    widget.type === 'EntityMetric' ? (widget.config.label ?? '') : ''
   );
   const [limit, setLimit] = useState(
-    widget.type === 'entity-table' ? String(widget.config.limit ?? '10') : '10'
+    widget.type === 'EntityTable' ? String(widget.config.limit ?? '10') : '10'
   );
   const [viewId, setViewId] = useState(
-    widget.type === 'saved-view-embed' ? widget.config.viewId : ''
+    widget.type === 'EntityViewEmbed' ? widget.config.viewId : ''
   );
   const [lookbackDays, setLookbackDays] = useState<number | undefined>(
-    widget.type === 'activity-trend-chart' ? widget.config.lookbackDays : undefined
+    widget.type === 'entity-activity-trend-chart' ? widget.config.lookbackDays : undefined
   );
   const [staleAfterDays, setStaleAfterDays] = useState<number | undefined>(
-    widget.type === 'stale-entity-report' ? widget.config.staleAfterDays : undefined
+    widget.type === 'entity-stale-report' ? widget.config.staleAfterDays : undefined
   );
   const [activityLimit, setActivityLimit] = useState<number | undefined>(
     widget.type === 'activity-feed' ? widget.config.limit : undefined
@@ -126,13 +105,13 @@ const WidgetConfigDialogContent = ({
   const surface: WidgetSurface = projectId ? 'project' : 'workspace';
   const metricTypeOptions = METRIC_TYPE_OPTIONS.filter(option => option.surfaces.includes(surface));
 
-  const canSave = widget.type !== 'saved-view-embed' || !!viewId;
+  const canSave = widget.type !== 'EntityViewEmbed' || !!viewId;
 
   const handleSave = () => {
     if (!canSave) return;
 
     switch (widget.type) {
-      case 'stat-metric':
+      case 'EntityMetric':
         onSave({
           ...widget,
           config: {
@@ -145,7 +124,7 @@ const WidgetConfigDialogContent = ({
           }
         });
         break;
-      case 'entity-table':
+      case 'EntityTable':
         onSave({
           ...widget,
           config: {
@@ -157,19 +136,19 @@ const WidgetConfigDialogContent = ({
           }
         });
         break;
-      case 'saved-view-embed':
+      case 'EntityViewEmbed':
         onSave({ ...widget, config: { ...widget.config, viewId } });
         break;
-      case 'activity-trend-chart':
+      case 'entity-activity-trend-chart':
         onSave({ ...widget, config: { ...widget.config, lookbackDays } });
         break;
-      case 'stale-entity-report':
+      case 'entity-stale-report':
         onSave({ ...widget, config: { ...widget.config, staleAfterDays } });
         break;
       case 'activity-feed':
         onSave({ ...widget, config: { ...widget.config, limit: activityLimit } });
         break;
-      case 'lifecycle-chart':
+      case 'entity-lifecycle-chart':
       case 'active-assessments':
       case 'upcoming-milestones':
         onSave(widget);
@@ -189,7 +168,7 @@ const WidgetConfigDialogContent = ({
       ]}
     >
       <DialogContent>
-        {widget.type === 'stat-metric' && (
+        {widget.type === 'EntityMetric' && (
           <>
             <DialogSection label="Metric">
               <Select.Root value={metricType} onChange={v => setMetricType(v as EntityMetricType)}>
@@ -227,7 +206,7 @@ const WidgetConfigDialogContent = ({
           </>
         )}
 
-        {widget.type === 'entity-table' && (
+        {widget.type === 'EntityTable' && (
           <>
             <DialogSection label="Filters" required={false}>
               <EntityFilterPanel
@@ -254,7 +233,7 @@ const WidgetConfigDialogContent = ({
           </>
         )}
 
-        {widget.type === 'saved-view-embed' && (
+        {widget.type === 'EntityViewEmbed' && (
           <DialogSection label="View">
             {adminViews.length === 0 ? (
               <EmptyState
@@ -273,7 +252,7 @@ const WidgetConfigDialogContent = ({
           </DialogSection>
         )}
 
-        {widget.type === 'activity-trend-chart' && (
+        {widget.type === 'entity-activity-trend-chart' && (
           <DialogSection label="Options" required={false}>
             <div className={styles.options}>
               <label className={styles.optionRow}>
@@ -293,7 +272,7 @@ const WidgetConfigDialogContent = ({
           </DialogSection>
         )}
 
-        {widget.type === 'stale-entity-report' && (
+        {widget.type === 'entity-stale-report' && (
           <DialogSection label="Options" required={false}>
             <div className={styles.options}>
               <label className={styles.optionRow}>
@@ -333,7 +312,7 @@ const WidgetConfigDialogContent = ({
           </DialogSection>
         )}
 
-        {(widget.type === 'lifecycle-chart' ||
+        {(widget.type === 'entity-lifecycle-chart' ||
           widget.type === 'active-assessments' ||
           widget.type === 'upcoming-milestones') && (
           <DialogSection label="Options" required={false}>

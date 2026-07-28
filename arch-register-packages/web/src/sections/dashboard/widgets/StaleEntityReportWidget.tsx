@@ -1,14 +1,10 @@
-import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { EntityStaleReport } from '../../markdown/mdx-components/blocks/entity-stale-report/EntityStaleReport';
-import type { StaleEntityReportWidgetConfig } from '../dashboardWidgetConfig';
+import type { EntityStaleReportProps } from '../../markdown/mdx-components/blocks/entity-stale-report/types';
 
 type Props = {
-  widget: DashboardWidget & {
-    type: 'stale-entity-report';
-    config: StaleEntityReportWidgetConfig;
-  };
+  config: EntityStaleReportProps;
 };
 
-export const StaleEntityReportWidget = ({ widget }: Props) => (
-  <EntityStaleReport staleAfterDays={widget.config.staleAfterDays} />
+export const StaleEntityReportWidget = ({ config }: Props) => (
+  <EntityStaleReport staleAfterDays={config.staleAfterDays} />
 );

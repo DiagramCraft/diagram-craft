@@ -6,3 +6,10 @@ export interface EntityTableSlateElement extends TElement {
   lifecycle?: string;
   limit?: string;
 }
+
+export type EntityTableWidgetConfig = {
+  schema?: string;
+  owner?: string;
+  lifecycle?: string;
+  limit?: number;
+};

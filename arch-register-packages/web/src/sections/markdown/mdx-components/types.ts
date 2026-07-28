@@ -37,6 +37,29 @@ export type EditorSpec = {
   createWrapper?: (child: TElement) => TElement;
 };
 
+export type WidgetSurface = 'workspace' | 'project';
+
+export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<string, unknown>> =
+  {
+    /** Icon shown in the widget picker and the widget frame header. */
+    icon: React.ComponentType<{ size?: number }>;
+    label: string;
+    description: string;
+    defaultW: number;
+    defaultH: number;
+    /** Which dashboard surfaces this widget may be added to. */
+    surfaces: ReadonlyArray<WidgetSurface>;
+    /**
+     * Renders the widget body from persisted config. Distinct from the MDX
+     * `component` field, which takes flat string props authored in wiki markdown.
+     */
+    component: React.ComponentType<{ config: Config }>;
+    isValidConfig: (config: Record<string, unknown>) => config is Config;
+    createDefaultConfig: (context: { viewId?: string }) => Config;
+    /** Per-instance title; falls back to `label` when omitted. */
+    getTitle?: (config: Config) => string;
+  };
+
 export type MdxComponentSpec = {
   /** Preview-mode React component */
   component: React.ComponentType<Record<string, string>>;
@@ -60,4 +83,7 @@ export type MdxComponentSpec = {
   editorSpec?: EditorSpec;
   /** Surfaces this component may render on; `undefined` means wiki only (default, matches all prior behavior). */
   surfaces?: ReadonlyArray<'wiki' | 'dashboard'>;
+  /** Present when this component can also be added as a dashboard widget. */
+  // biome-ignore lint/suspicious/noExplicitAny: registry entries have per-component Config types, erased here
+  dashboardWidget?: DashboardWidgetSpec<any>;
 };
