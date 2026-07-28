@@ -358,7 +358,9 @@ class TableComponent extends BaseNodeComponent {
 
     if (props.nodeProps.custom.table.verticalBorder !== false) {
       let x = bounds.x + gap;
-      const row = props.node.children[0] as DiagramNode;
+      const row = getTableRowsSorted(props.node)[0];
+      if (!row) return;
+
       for (let i = 0; i < row.children.length - 1; i++) {
         const child = row.children[i];
         if (isNode(child)) {
