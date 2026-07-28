@@ -266,90 +266,10 @@
   gap: 6px;
 }
 
-.fieldRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  background: var(--panel-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-}
-
-.fieldTypeIcon {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r);
-  background: var(--cmp-bg);
-  color: var(--cmp-fg-dim);
-  flex-shrink: 0;
-}
-
-.fieldIdentity {
-  flex: 1 1 220px;
-  min-width: 180px;
-}
-
-.fieldId {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  color: var(--cmp-fg-disabled);
-  font-size: 10px;
-  line-height: 1;
-}
-
-.fieldId code {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fieldInput {
-  flex: 1;
-  min-width: 0;
-}
-
 .fieldHint {
   font-size: 11px;
   font-family: var(--font-mono, monospace);
   color: var(--cmp-fg-disabled);
-  flex-shrink: 0;
-  min-width: 52px;
-  text-align: right;
-}
-
-.fieldRequirement {
-  width: 96px;
-  flex-shrink: 0;
-}
-
-.fieldEnum {
-  width: 140px;
-  flex-shrink: 0;
-}
-
-.fieldExpression {
-  flex: 1 1 260px;
-  width: auto;
-  min-width: 220px;
-}
-
-.expressionHint {
-  display: block;
-  margin-top: 2px;
-  color: var(--cmp-fg-disabled);
-  font-size: 10px;
-}
-
-.enumSourceRow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .groupSection {
