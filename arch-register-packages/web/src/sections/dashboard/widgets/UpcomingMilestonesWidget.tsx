@@ -55,12 +55,7 @@ export const UpcomingMilestonesWidget = () => {
   return (
     <div className={styles.list}>
       {items.map(milestone => (
-        <button
-          key={milestone.id}
-          type="button"
-          className={styles.row}
-          onClick={goToMilestones}
-        >
+        <button key={milestone.id} type="button" className={styles.row} onClick={goToMilestones}>
           {milestone.status === 'complete' && <TbCircleCheck size={12} className="dim" />}
           <span className={styles.rowLabel}>{milestone.name}</span>
           <span className={styles.rowMeta}>{formatDate(milestone.target_date)}</span>
