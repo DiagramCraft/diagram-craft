@@ -28,9 +28,7 @@ test.describe('project dashboard permission routes', () => {
     });
     expect(dashboard.projectId).toBe(project.id);
 
-    const widgets = [
-      { id: 'a', type: 'EntityTable' as const, config: {}, x: 0, y: 0, w: 6, h: 4 }
-    ];
+    const widgets = [{ id: 'a', type: 'EntityTable' as const, config: {}, x: 0, y: 0, w: 6, h: 4 }];
     const updated = await personas.designTeamAdmin.orpc.projectDashboard.update({
       params: { workspace: 'default', projectId: project.id },
       body: { widgets }
