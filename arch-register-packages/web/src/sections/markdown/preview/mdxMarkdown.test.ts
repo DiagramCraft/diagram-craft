@@ -5,7 +5,17 @@ import { normalizeEntityGraphProps } from '../mdx-components/blocks/entity-graph
 // Stub the component registry so this test only exercises the parser grammar,
 // independent of each component's own (heavy) implementation modules.
 vi.mock('../mdx-components/mdxRegistry', () => {
-  const MDX_COMPONENTS = {
+  const MDX_COMPONENTS: Record<
+    string,
+    {
+      mode: string;
+      allowedProps: string[];
+      normalizeProps?: (props: Record<string, string>) => Record<string, string>;
+      acceptsChildren?: boolean;
+      acceptsRichContent?: boolean;
+      surfaces?: string[];
+    }
+  > = {
     DiagramEmbed: { mode: 'block', allowedProps: ['id'] },
     EntityCard: { mode: 'block', allowedProps: ['id'] },
     EntityGraph: {
@@ -15,11 +25,20 @@ vi.mock('../mdx-components/mdxRegistry', () => {
     },
     EntityMention: { mode: 'inline', allowedProps: ['id'] },
     Caption: { mode: 'block', allowedProps: ['caption'], acceptsChildren: true },
-    Callout: { mode: 'block', allowedProps: ['variant'], acceptsRichContent: true }
+    Callout: { mode: 'block', allowedProps: ['variant'], acceptsRichContent: true },
+    EntityLifecycleChart: { mode: 'block', allowedProps: [], surfaces: ['dashboard'] }
   };
   return {
     MDX_COMPONENTS,
-    getMdxSpec: (name: string) => MDX_COMPONENTS[name as keyof typeof MDX_COMPONENTS]
+    getMdxSpec: (name: string) => MDX_COMPONENTS[name as keyof typeof MDX_COMPONENTS],
+    getMdxSpecsForSurface: (surface: 'wiki' | 'dashboard') =>
+      Object.fromEntries(
+        Object.entries(MDX_COMPONENTS).filter(([, spec]) =>
+          surface === 'wiki'
+            ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
+            : !!spec.surfaces?.includes('dashboard')
+        )
+      )
   };
 });
 
@@ -162,6 +181,11 @@ describe('parseMarkdownWithComponents', () => {
     expect(ast).toHaveLength(1);
     const node = ast[0] as { type: string; children?: ASTNode[] };
     expect(node.children?.map(child => child.type)).toEqual(['paragraph', 'component']);
+  });
+
+  it('does not parse a dashboard-only component as a component node in wiki content', () => {
+    const ast = parseMarkdownWithComponents('<EntityLifecycleChart />');
+    expect(ast.every(n => n.type !== 'component')).toBe(true);
   });
 
   it('normalizes EntityGraph depth and direction props while parsing', () => {

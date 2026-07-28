@@ -115,19 +115,26 @@ export const getMdxSpecSafe = (name: string): MdxComponentSpec | undefined =>
   (MDX_COMPONENTS as Record<string, MdxComponentSpec>)[name];
 
 /**
- * Filters the registry by rendering surface. Wiki sees every registered
- * component unchanged (preserving current behavior exactly); dashboard sees
- * only components that explicitly opt in via `spec.surfaces`.
+ * A spec is eligible for `'wiki'` when `surfaces` is unset (defaults to wiki-only,
+ * matching prior behavior) or explicitly includes `'wiki'`; eligible for `'dashboard'`
+ * only when it explicitly opts in via `surfaces`.
+ */
+const isEligibleForSurface = (spec: MdxComponentSpec, surface: 'wiki' | 'dashboard'): boolean =>
+  surface === 'wiki'
+    ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
+    : !!spec.surfaces?.includes('dashboard');
+
+/**
+ * Filters the registry by rendering surface: wiki sees components that are
+ * wiki-eligible (`surfaces` unset or including `'wiki'`); dashboard sees only
+ * components that explicitly opt in via `spec.surfaces`.
  */
 export const getMdxSpecsForSurface = (
   surface: 'wiki' | 'dashboard'
-): Record<string, MdxComponentSpec> => {
-  if (surface === 'wiki') return MDX_COMPONENTS;
-
-  return Object.fromEntries(
-    Object.entries(MDX_COMPONENTS).filter(([, spec]) => spec.surfaces?.includes('dashboard'))
+): Record<string, MdxComponentSpec> =>
+  Object.fromEntries(
+    Object.entries(MDX_COMPONENTS).filter(([, spec]) => isEligibleForSurface(spec, surface))
   );
-};
 
 /**
  * Every `MDX_COMPONENTS` key that carries a `dashboardWidget` block, i.e. every
