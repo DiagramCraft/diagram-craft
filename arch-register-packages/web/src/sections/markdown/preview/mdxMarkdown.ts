@@ -7,7 +7,12 @@ import {
   type ParserState
 } from '@diagram-craft/markdown';
 import { markdownEngine } from './markdownAstUtils';
-import { MDX_COMPONENTS, getMdxSpec, type MdxComponentName } from '../mdx-components/mdxRegistry';
+import {
+  MDX_COMPONENTS,
+  getMdxSpec,
+  getMdxSpecsForSurface,
+  type MdxComponentName
+} from '../mdx-components/mdxRegistry';
 
 const JSX_BLOCK_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
@@ -17,7 +22,12 @@ const SAFE_PROP_NAME = /^[a-zA-Z0-9_-]+$/;
 // Allows parens so CSS color functions (e.g. `oklch(0.62 0.13 145)`) survive as prop values.
 const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,()%\s]*$/;
 
-const isKnownComponent = (name: string): name is MdxComponentName => name in MDX_COMPONENTS;
+// This module's parsing pipeline is used only for wiki content, so components
+// that opt out of the 'wiki' surface (e.g. dashboard-only widgets) must never
+// be recognized here, regardless of their presence in the full registry.
+const WIKI_MDX_COMPONENTS = getMdxSpecsForSurface('wiki');
+
+const isKnownComponent = (name: string): name is MdxComponentName => name in WIKI_MDX_COMPONENTS;
 
 /**
  * Strips the common leading whitespace the markdown serializer adds to a JSX

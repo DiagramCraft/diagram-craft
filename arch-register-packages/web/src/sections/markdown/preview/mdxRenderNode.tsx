@@ -1,6 +1,11 @@
 import React, { type ReactNode } from 'react';
 import { type ASTNode } from '@diagram-craft/markdown';
-import { getMdxSpec, type MdxComponentName } from '../mdx-components/mdxRegistry';
+import { getMdxSpecsForSurface } from '../mdx-components/mdxRegistry';
+
+// This renderer is used only for wiki content, so components that opt out of
+// the 'wiki' surface (e.g. dashboard-only widgets) must never render here,
+// even if a stored/persisted AST node still names one.
+const WIKI_MDX_COMPONENTS = getMdxSpecsForSurface('wiki');
 
 /** A highlighted comment anchor, in the same plain-text offset space as `renderText`. Ranges must be sorted and non-overlapping. */
 export type HighlightRange = { commentId: string; start: number; end: number; resolved?: boolean };
@@ -101,7 +106,7 @@ const renderNode = (node: ASTNode, key: string, ctx?: RenderCtx): ReactNode[] =>
       return renderLiteral(node.value, key, ctx);
 
     case 'component': {
-      const spec = getMdxSpec(node.name as MdxComponentName);
+      const spec = WIKI_MDX_COMPONENTS[node.name];
       if (!spec) return [];
       const Component = spec.component as unknown as React.ComponentType<
         Record<string, unknown> & { children?: ReactNode }

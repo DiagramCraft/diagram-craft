@@ -9,19 +9,44 @@ const Wrapper = ({ caption, children }: { caption?: string; children?: React.Rea
 
 const Leaf = ({ id }: { id?: string }) => <span data-testid="leaf">{id}</span>;
 
+const DashboardOnly = () => <span data-testid="dashboard-only" />;
+
 vi.mock('../mdx-components/mdxRegistry', () => {
-  const MDX_COMPONENTS = {
+  const MDX_COMPONENTS: Record<
+    string,
+    {
+      component: React.ComponentType<Record<string, unknown>>;
+      mode: string;
+      allowedProps: string[];
+      acceptsChildren?: boolean;
+      surfaces?: string[];
+    }
+  > = {
     Wrapper: {
       component: Wrapper,
       mode: 'block',
       allowedProps: ['caption'],
       acceptsChildren: true
     },
-    Leaf: { component: Leaf, mode: 'block', allowedProps: ['id'] }
+    Leaf: { component: Leaf, mode: 'block', allowedProps: ['id'] },
+    DashboardOnly: {
+      component: DashboardOnly,
+      mode: 'block',
+      allowedProps: [],
+      surfaces: ['dashboard']
+    }
   };
   return {
     MDX_COMPONENTS,
-    getMdxSpec: (name: string) => MDX_COMPONENTS[name as keyof typeof MDX_COMPONENTS]
+    getMdxSpec: (name: string) => MDX_COMPONENTS[name as keyof typeof MDX_COMPONENTS],
+    getMdxSpecsForSurface: (surface: 'wiki' | 'dashboard') =>
+      Object.fromEntries(
+        Object.entries(MDX_COMPONENTS).filter(([, spec]) =>
+          surface === 'wiki'
+            ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
+            : !!spec.surfaces?.includes('dashboard')
+        )
+      )
   };
 });
 
@@ -96,6 +121,17 @@ describe('renderNodes — component children threading', () => {
     expect(markup).toContain('class="task-list"');
     expect(markup).toContain('checked=""');
     expect(markup.match(/disabled=""/g)).toHaveLength(2);
+  });
+
+  it('does not render a dashboard-only component in this (wiki) render pipeline', () => {
+    const markup = renderToStaticMarkup(
+      renderNodes(
+        [{ type: 'component', subtype: 'block', name: 'DashboardOnly', props: {}, source: '' }],
+        'root'
+      )
+    );
+
+    expect(markup).toBe('');
   });
 
   it('renders strikethrough text in view mode', () => {
