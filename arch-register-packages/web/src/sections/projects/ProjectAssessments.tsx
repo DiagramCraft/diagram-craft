@@ -1070,7 +1070,7 @@ const FieldRow = ({
     if (field.type === 'enum') {
       return (
         <>
-          <FieldConfig.Cell label="Source" flexBasis={180}>
+          <FormElement label="Source">
             <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <Select.Root
                 value={'options' in field ? 'inline' : 'workspace'}
@@ -1106,14 +1106,13 @@ const FieldRow = ({
                 />
               )}
             </span>
-          </FieldConfig.Cell>
+          </FormElement>
           {!('options' in field) && (
-            <FieldConfig.Cell label="Enum" flexBasis={180}>
+            <FormElement label="Enum">
               <Select.Root
                 value={field.enumId}
                 placeholder="Choose enum…"
                 onChange={v => onUpdate({ enumId: v ?? '' } as Partial<AssessmentField>)}
-                style={{ width: '100%' }}
               >
                 {enums.map(en => (
                   <Select.Item key={en.id} value={en.id}>
@@ -1121,7 +1120,7 @@ const FieldRow = ({
                   </Select.Item>
                 ))}
               </Select.Root>
-            </FieldConfig.Cell>
+            </FormElement>
           )}
         </>
       );
@@ -1129,7 +1128,7 @@ const FieldRow = ({
     if (field.type === 'derived') {
       return (
         <>
-          <FieldConfig.Cell label="Result type" flexBasis={140}>
+          <FormElement label="Result type">
             <Select.Root
               value={field.resultType}
               onChange={value =>
@@ -1142,7 +1141,6 @@ const FieldRow = ({
                   options: undefined
                 } as Partial<AssessmentField>)
               }
-              style={{ width: '100%' }}
             >
               <Select.Item value="text">Text</Select.Item>
               <Select.Item value="number">Number</Select.Item>
@@ -1150,9 +1148,9 @@ const FieldRow = ({
               <Select.Item value="boolean">Boolean</Select.Item>
               <Select.Item value="rating">Rating</Select.Item>
             </Select.Root>
-          </FieldConfig.Cell>
+          </FormElement>
           {field.resultType === 'select' && (
-            <FieldConfig.Cell label="Source" flexBasis={140}>
+            <FormElement label="Source">
               <Select.Root
                 value={'options' in field ? 'inline' : 'workspace'}
                 onChange={value =>
@@ -1162,22 +1160,19 @@ const FieldRow = ({
                       : { enumId: enums[0]?.id ?? '', options: undefined }
                   )
                 }
-                style={{ width: '100%' }}
               >
                 <Select.Item value="workspace">Existing enum</Select.Item>
                 <Select.Item value="inline">Inline values</Select.Item>
               </Select.Root>
-            </FieldConfig.Cell>
+            </FormElement>
           )}
-          <FieldConfig.Cell label="Expression" flexBasis="100%">
+          <FormElement label="Expression" hint='Reference sibling fields with field("id")'>
             <TextInput
               value={field.expression}
               onChange={value => onUpdate({ expression: value ?? '' })}
               placeholder='field("input_field")'
-              style={{ width: '100%' }}
             />
-            <span className={styles.expressionHint}>Reference sibling fields with field("id")</span>
-          </FieldConfig.Cell>
+          </FormElement>
         </>
       );
     }

@@ -272,13 +272,6 @@
   color: var(--cmp-fg-disabled);
 }
 
-.expressionHint {
-  display: block;
-  margin-top: 2px;
-  color: var(--cmp-fg-disabled);
-  font-size: 10px;
-}
-
 .groupSection {
   display: flex;
   flex-direction: column;

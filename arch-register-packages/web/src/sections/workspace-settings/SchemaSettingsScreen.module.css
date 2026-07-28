@@ -84,6 +84,16 @@
   gap: 8px;
 }
 
+.fieldsEmpty {
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  padding: 16px;
+  text-align: center;
+}
+
 .iconBtn {
   width: 28px;
   height: 28px;

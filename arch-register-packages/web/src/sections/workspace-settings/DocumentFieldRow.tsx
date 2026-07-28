@@ -5,6 +5,7 @@ import { TbEye, TbGripVertical, TbSettings, TbSettingsCheck, TbDots } from 'reac
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 
@@ -71,8 +72,8 @@ export const DocumentFieldRow = ({
   const options = (() => {
     if (field.type === 'enum') {
       return (
-        <FieldConfig.Cell label="Values" flexBasis="100%">
-          <span style={{ display: 'grid', gap: 5 }}>
+        <>
+          <FormElement label="Values">
             <TextInput
               value={(field.enumOptions ?? [])
                 .map(option => `${option.value}:${option.label}`)
@@ -99,75 +100,70 @@ export const DocumentFieldRow = ({
                     })
                 });
               }}
-              style={{ width: '100%' }}
             />
-            <Button
-              variant="ghost"
-              icon={
-                field.isStatus ? (
-                  <TbSettingsCheck size={12} color="var(--green)" />
-                ) : (
-                  <TbSettings size={12} />
-                )
-              }
-              title={field.isStatus ? 'Workflow enabled' : 'Workflow not configured'}
-              onClick={() => setWorkflowDialogOpen(true)}
-            >
-              {field.isStatus ? 'Workflow enabled' : 'Configure workflow'}
-            </Button>
-            <WorkflowConfigDialog
-              open={workflowDialogOpen}
-              workspaceSlug={workspaceSlug}
-              field={field}
-              allFields={allFields}
-              onClose={() => setWorkflowDialogOpen(false)}
-              onSave={patch => {
-                onUpdate(patch);
-                setWorkflowDialogOpen(false);
-              }}
-            />
-          </span>
-        </FieldConfig.Cell>
+          </FormElement>
+          <Button
+            style={{ marginLeft: 'auto' }}
+            icon={
+              field.isStatus ? (
+                <TbSettingsCheck size={12} color="var(--green)" />
+              ) : (
+                <TbSettings size={12} />
+              )
+            }
+            title={field.isStatus ? 'Workflow enabled' : 'Workflow not configured'}
+            onClick={() => setWorkflowDialogOpen(true)}
+          >
+            {field.isStatus ? 'Workflow enabled' : 'Configure workflow'}
+          </Button>
+          <WorkflowConfigDialog
+            open={workflowDialogOpen}
+            workspaceSlug={workspaceSlug}
+            field={field}
+            allFields={allFields}
+            onClose={() => setWorkflowDialogOpen(false)}
+            onSave={patch => {
+              onUpdate(patch);
+              setWorkflowDialogOpen(false);
+            }}
+          />
+        </>
       );
     }
     if (isLinkType(field.type)) {
       return (
         <>
-          <FieldConfig.Cell label="Cardinality" flexBasis={140}>
-            <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <TextInput
-                value={field.minCardinality === undefined ? '' : String(field.minCardinality)}
-                placeholder="Min"
-                onChange={value =>
-                  onUpdate({
-                    minCardinality: value === '' || value === undefined ? undefined : Number(value)
-                  })
-                }
-                style={{ width: 56 }}
-              />
-              <span className="dim">–</span>
-              <TextInput
-                value={field.maxCardinality === undefined ? '' : String(field.maxCardinality)}
-                placeholder="Max"
-                onChange={value =>
-                  onUpdate({
-                    maxCardinality: value === '' || value === undefined ? undefined : Number(value)
-                  })
-                }
-                style={{ width: 56 }}
-              />
-            </span>
-          </FieldConfig.Cell>
-          <FieldConfig.Cell label="Inverse label" flexBasis={160}>
+          <FormElement label="Min">
+            <TextInput
+              value={field.minCardinality === undefined ? '' : String(field.minCardinality)}
+              placeholder="Min"
+              onChange={value =>
+                onUpdate({
+                  minCardinality: value === '' || value === undefined ? undefined : Number(value)
+                })
+              }
+            />
+          </FormElement>
+          <FormElement label="Max">
+            <TextInput
+              value={field.maxCardinality === undefined ? '' : String(field.maxCardinality)}
+              placeholder="Max"
+              onChange={value =>
+                onUpdate({
+                  maxCardinality: value === '' || value === undefined ? undefined : Number(value)
+                })
+              }
+            />
+          </FormElement>
+          <FormElement label="Inverse label">
             <TextInput
               value={field.inverseName ?? ''}
               placeholder="Inverse label"
               onChange={value =>
                 onUpdate({ inverseName: value?.trim() ? value.trim() : undefined })
               }
-              style={{ width: '100%' }}
             />
-          </FieldConfig.Cell>
+          </FormElement>
         </>
       );
     }

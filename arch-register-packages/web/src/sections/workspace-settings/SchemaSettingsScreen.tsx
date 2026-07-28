@@ -5,6 +5,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TypeBadge } from '../../components/TypeBadge';
 import { TbPlus, TbCode, TbEdit, TbTrash, TbDots } from 'react-icons/tb';
 import { FieldConfig } from '../../components/FieldConfig';
@@ -622,17 +623,8 @@ export const SchemaSettingsScreen = () => {
                   ))}
                 </div>
               ) : (
-                <div className={styles.fieldsTable}>
-                  <div
-                    style={{
-                      padding: '16px',
-                      color: 'var(--cmp-fg-disabled)',
-                      textAlign: 'center',
-                      fontSize: 12
-                    }}
-                  >
-                    No fields defined yet. Click "Add field" to get started.
-                  </div>
+                <div className={styles.fieldsEmpty}>
+                  No fields defined yet. Click "Add field" to get started.
                 </div>
               )}
 
@@ -807,41 +799,42 @@ const FieldRow = ({
   const optionsDisplay = () => {
     if (field.type === 'select') {
       return (
-        <Select.Root
-          value={field.enumId ?? undefined}
-          disabled={!canEdit}
-          onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
-          placeholder="Select enum..."
-          style={{ width: '100%' }}
-        >
-          {enums.map(e => (
-            <Select.Item key={e.id} value={e.id}>
-              {e.name}
-            </Select.Item>
-          ))}
-        </Select.Root>
+        <FormElement label="Enum">
+          <Select.Root
+            value={field.enumId ?? undefined}
+            disabled={!canEdit}
+            onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
+            placeholder="Select enum..."
+          >
+            {enums.map(e => (
+              <Select.Item key={e.id} value={e.id}>
+                {e.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormElement>
       );
     }
     if (field.type === 'reference' || field.type === 'containment') {
       return (
-        <div style={{ display: 'grid', gap: 8 }}>
-          <Select.Root
-            value={field.schemaId ?? undefined}
-            disabled={!canEdit}
-            onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<SchemaField>)}
-            placeholder="Select type..."
-            style={{ width: '100%' }}
+        <>
+          <FormElement
+            label={field.type === 'reference' ? 'Reference target' : 'Containment target'}
           >
-            {schemas.map(s => (
-              <Select.Item key={s.id} value={s.id}>
-                {s.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
-          <div style={{ display: 'grid', gap: 4 }}>
-            <span className="dim" style={{ fontSize: 11 }}>
-              Predicate
-            </span>
+            <Select.Root
+              value={field.schemaId ?? undefined}
+              disabled={!canEdit}
+              onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<SchemaField>)}
+              placeholder="Select type..."
+            >
+              {schemas.map(s => (
+                <Select.Item key={s.id} value={s.id}>
+                  {s.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+          <FormElement label="Predicate">
             <TextInput
               value={field.predicate ?? ''}
               disabled={!canEdit}
@@ -850,16 +843,12 @@ const FieldRow = ({
                   predicate: value?.trim() == null || value.trim() === '' ? undefined : value.trim()
                 } as Partial<SchemaField>)
               }
-              style={{ width: '100%' }}
               placeholder="e.g., belongs to, depends on"
             />
-          </div>
-          {field.type === 'reference' ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div style={{ display: 'grid', gap: 4 }}>
-                <span className="dim" style={{ fontSize: 11 }}>
-                  Min
-                </span>
+          </FormElement>
+          {field.type === 'reference' && (
+            <>
+              <FormElement label="Min">
                 <TextInput
                   value={String(field.minCount)}
                   disabled={!canEdit}
@@ -869,13 +858,9 @@ const FieldRow = ({
                       minCount: Number.isNaN(next) ? 0 : Math.max(0, next)
                     } as Partial<SchemaField>);
                   }}
-                  style={{ width: '100%' }}
                 />
-              </div>
-              <div style={{ display: 'grid', gap: 4 }}>
-                <span className="dim" style={{ fontSize: 11 }}>
-                  Max
-                </span>
+              </FormElement>
+              <FormElement label="Max">
                 <TextInput
                   value={field.maxCount === -1 ? '' : String(field.maxCount)}
                   disabled={!canEdit}
@@ -890,22 +875,18 @@ const FieldRow = ({
                       maxCount: Number.isNaN(next) ? -1 : Math.max(0, next)
                     } as Partial<SchemaField>);
                   }}
-                  style={{ width: '100%' }}
                   placeholder="Unbounded"
                 />
-              </div>
-            </div>
-          ) : null}
-        </div>
+              </FormElement>
+            </>
+          )}
+        </>
       );
     }
     if (field.type === 'number') {
       return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <div style={{ display: 'grid', gap: 4 }}>
-            <span className="dim" style={{ fontSize: 11 }}>
-              Min
-            </span>
+        <>
+          <FormElement label="Min">
             <TextInput
               value={field.min === undefined ? '' : String(field.min)}
               disabled={!canEdit}
@@ -920,14 +901,10 @@ const FieldRow = ({
                   onUpdate({ min: Math.trunc(next) } as Partial<SchemaField>);
                 }
               }}
-              style={{ width: '100%' }}
               placeholder="Unbounded"
             />
-          </div>
-          <div style={{ display: 'grid', gap: 4 }}>
-            <span className="dim" style={{ fontSize: 11 }}>
-              Max
-            </span>
+          </FormElement>
+          <FormElement label="Max">
             <TextInput
               value={field.max === undefined ? '' : String(field.max)}
               disabled={!canEdit}
@@ -942,56 +919,61 @@ const FieldRow = ({
                   onUpdate({ max: Math.trunc(next) } as Partial<SchemaField>);
                 }
               }}
-              style={{ width: '100%' }}
               placeholder="Unbounded"
             />
-          </div>
-        </div>
+          </FormElement>
+        </>
       );
     }
     if (field.type === 'derived') {
       return (
-        <div style={{ display: 'grid', gap: 8 }}>
-          <Select.Root
-            value={field.resultType}
-            disabled={!canEdit}
-            onChange={value =>
-              onUpdate({
-                resultType: (value ?? 'text') as Extract<
-                  SchemaField,
-                  { type: 'derived' }
-                >['resultType']
-              } as Partial<SchemaField>)
-            }
-          >
-            <Select.Item value="text">Text</Select.Item>
-            <Select.Item value="number">Number</Select.Item>
-            <Select.Item value="select">Select</Select.Item>
-            <Select.Item value="boolean">Boolean</Select.Item>
-            <Select.Item value="rating">Rating</Select.Item>
-          </Select.Root>
-          {field.resultType === 'select' && (
+        <>
+          <FormElement label="Result type">
             <Select.Root
-              value={field.enumId ?? undefined}
+              value={field.resultType}
               disabled={!canEdit}
-              onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
-              placeholder="Select enum..."
+              onChange={value =>
+                onUpdate({
+                  resultType: (value ?? 'text') as Extract<
+                    SchemaField,
+                    { type: 'derived' }
+                  >['resultType']
+                } as Partial<SchemaField>)
+              }
             >
-              {enums.map(e => (
-                <Select.Item key={e.id} value={e.id}>
-                  {e.name}
-                </Select.Item>
-              ))}
+              <Select.Item value="text">Text</Select.Item>
+              <Select.Item value="number">Number</Select.Item>
+              <Select.Item value="select">Select</Select.Item>
+              <Select.Item value="boolean">Boolean</Select.Item>
+              <Select.Item value="rating">Rating</Select.Item>
             </Select.Root>
+          </FormElement>
+          {field.resultType === 'select' && (
+            <FormElement label="Enum">
+              <Select.Root
+                value={field.enumId ?? undefined}
+                disabled={!canEdit}
+                onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
+                placeholder="Select enum..."
+              >
+                {enums.map(e => (
+                  <Select.Item key={e.id} value={e.id}>
+                    {e.name}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </FormElement>
           )}
-          <TextArea
-            value={field.expression}
-            disabled={!canEdit}
-            onChange={value => onUpdate({ expression: value ?? '' } as Partial<SchemaField>)}
-            rows={2}
-            placeholder='field("input_field")'
-          />
-        </div>
+          <FormElement label="Expression">
+            <TextArea
+              value={field.expression}
+              disabled={!canEdit}
+              onChange={value => onUpdate({ expression: value ?? '' } as Partial<SchemaField>)}
+              rows={2}
+              placeholder='field("input_field")'
+            />
+          </FormElement>
+        </>
       );
     }
     return undefined;
