@@ -15,6 +15,7 @@ import {
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
+import { ENTITY_TYPE_LABELS, OPERATION_LABELS } from '../../../utils/auditLabels';
 
 const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> = [
   { value: '', label: 'All object types' },
@@ -34,24 +35,6 @@ const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
   { value: 'update', label: 'Updated' },
   { value: 'delete', label: 'Deleted' }
 ];
-
-const OPERATION_LABELS: Record<AuditOperation, string> = {
-  create: 'created',
-  update: 'updated',
-  delete: 'deleted'
-};
-
-const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
-  entity: 'entity',
-  project: 'project',
-  content_node: 'diagram',
-  entity_schema: 'schema',
-  workspace: 'workspace',
-  assessment: 'assessment',
-  assessment_response: 'assessment response',
-  project_milestone: 'milestone',
-  automation_note: 'automation note'
-};
 
 const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   workspace: styles.typeWorkspace ?? '',
