@@ -8,3 +8,12 @@ export interface EntityChangelogSlateElement extends TElement {
   limit?: string;
   since?: string;
 }
+
+export type EntityChangelogWidgetConfig = {
+  entityId?: string;
+  schema?: string;
+  owner?: string;
+  lifecycle?: string;
+  limit?: string;
+  since?: string;
+};

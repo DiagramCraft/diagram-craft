@@ -9,6 +9,12 @@ export interface EntityGraphSlateElement extends TElement {
   direction?: EntityGraphDirection;
 }
 
+export type EntityGraphWidgetConfig = {
+  entityId: string;
+  depth?: number;
+  direction?: EntityGraphDirection;
+};
+
 export const normalizeEntityGraphDepth = (value: unknown): number => {
   if (value == null || (typeof value === 'string' && value.trim() === '')) return 1;
 

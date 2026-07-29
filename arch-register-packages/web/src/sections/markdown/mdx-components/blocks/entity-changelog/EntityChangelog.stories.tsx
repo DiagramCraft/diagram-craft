@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { EntityChangelog } from './EntityChangelog';
-import { createStoryQueryClient, StoryProviders, WORKSPACE } from '../StorybookHarness';
+import {
+  createStoryQueryClient,
+  DashboardStory,
+  StoryProviders,
+  WORKSPACE,
+  dashboardWidget
+} from '../StorybookHarness';
 import { auditKeys } from '../../../../../queries/audit';
 
 const entityId = 'entity-payments';
@@ -116,6 +122,36 @@ export const WikiNoFilter: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChangelog />
+    </StoryProviders>
+  )
+};
+
+export const DashboardDefault: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'entity-changelog',
+            'EntityChangelog',
+            { entityId, limit: '10' },
+            0,
+            0,
+            6,
+            4
+          )
+        ]}
+      />
+    </StoryProviders>
+  )
+};
+
+export const DashboardEmpty: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[dashboardWidget('entity-changelog-empty', 'EntityChangelog', {}, 0, 0, 6, 4)]}
+      />
     </StoryProviders>
   )
 };

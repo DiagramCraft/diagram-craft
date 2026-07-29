@@ -4,7 +4,13 @@ import {
   encodeEntityBrowserEmbedConfig,
   type EntityBrowserEmbedConfig
 } from './EntityBrowserEmbedCodec';
-import { StoryProviders, WORKSPACE, createStoryQueryClient } from '../StorybookHarness';
+import {
+  StoryProviders,
+  WORKSPACE,
+  createStoryQueryClient,
+  DashboardStory,
+  dashboardWidget
+} from '../StorybookHarness';
 import { entityKeys } from '../../../../../queries/entities';
 
 const conditions: EntityBrowserEmbedConfig['conditions'] = [];
@@ -96,6 +102,18 @@ export const WikiNoViewConfigured: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityBrowserEmbed />
+    </StoryProviders>
+  )
+};
+
+export const DashboardDefault: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget('entity-browser-embed', 'EntityBrowserEmbed', browserConfig, 0, 0, 6, 6)
+        ]}
+      />
     </StoryProviders>
   )
 };

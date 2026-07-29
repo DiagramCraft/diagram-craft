@@ -1,8 +1,13 @@
 import { TbVectorTriangle } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityGraph } from './EntityGraph';
+import { EntityGraphWidget } from '../../../../dashboard/widgets/EntityGraphWidget';
 import { ENTITY_GRAPH_TYPE, EntityGraphEditable, entityGraphMdxRule } from './EntityGraphEditable';
-import { normalizeEntityGraphProps, type EntityGraphSlateElement } from './types';
+import {
+  normalizeEntityGraphProps,
+  type EntityGraphSlateElement,
+  type EntityGraphWidgetConfig
+} from './types';
 
 export const entityGraphSpec = defineMdxComponent<
   EntityGraphSlateElement,
@@ -13,6 +18,21 @@ export const entityGraphSpec = defineMdxComponent<
   mode: 'block',
   allowedProps: ['id', 'depth', 'direction'],
   normalizeProps: normalizeEntityGraphProps,
+  surfaces: ['wiki', 'dashboard'],
+  dashboardWidget: {
+    icon: TbVectorTriangle,
+    label: 'Entity graph',
+    description:
+      'A clickable dependency and relationship graph for one entity. Works best at 6x4 or larger.',
+    defaultW: 6,
+    defaultH: 4,
+    surfaces: ['workspace', 'project'],
+    component: EntityGraphWidget,
+    isValidConfig: (config): config is EntityGraphWidgetConfig =>
+      typeof config.entityId === 'string',
+    createDefaultConfig: () => ({ entityId: '', depth: 1, direction: 'both' }),
+    getTitle: () => 'Entity graph'
+  },
   editorSpec: {
     editableComponent: EntityGraphEditable,
     nodeOptions: { isVoid: true },

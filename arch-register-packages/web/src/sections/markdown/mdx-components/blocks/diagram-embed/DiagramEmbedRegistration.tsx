@@ -1,12 +1,13 @@
 import { TbChartLine } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { DiagramEmbed } from './DiagramEmbed';
+import { DiagramEmbedWidget } from '../../../../dashboard/widgets/DiagramEmbedWidget';
 import {
   DIAGRAM_EMBED_TYPE,
   DiagramEmbedEditable,
   diagramEmbedMdxRule
 } from './DiagramEmbedEditable';
-import type { DiagramEmbedSlateElement } from './types';
+import type { DiagramEmbedSlateElement, DiagramEmbedWidgetConfig } from './types';
 
 export const diagramEmbedSpec = defineMdxComponent<
   DiagramEmbedSlateElement,
@@ -16,6 +17,21 @@ export const diagramEmbedSpec = defineMdxComponent<
   component: DiagramEmbed,
   mode: 'block',
   allowedProps: ['id', 'caption'],
+  surfaces: ['wiki', 'dashboard'],
+  dashboardWidget: {
+    icon: TbChartLine,
+    label: 'Diagram',
+    description: 'A read-only preview of a selected architecture diagram.',
+    defaultW: 6,
+    defaultH: 4,
+    surfaces: ['workspace', 'project'],
+    component: DiagramEmbedWidget,
+    isValidConfig: (config): config is DiagramEmbedWidgetConfig =>
+      typeof config.fileId === 'string' &&
+      (config.caption === undefined || typeof config.caption === 'string'),
+    createDefaultConfig: () => ({ fileId: '' }),
+    getTitle: () => 'Diagram'
+  },
   editorSpec: {
     editableComponent: DiagramEmbedEditable,
     nodeOptions: { isVoid: true },

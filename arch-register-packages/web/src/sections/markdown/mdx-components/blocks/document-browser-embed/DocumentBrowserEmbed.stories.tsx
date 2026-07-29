@@ -3,7 +3,13 @@ import type { DocumentListItem } from '@arch-register/api-types/projectContract'
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
 import { encodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
 import { DOCUMENT_BROWSER_BASE_COLUMN_IDS } from './types';
-import { createStoryQueryClient, StoryProviders, WORKSPACE } from '../StorybookHarness';
+import {
+  createStoryQueryClient,
+  DashboardStory,
+  StoryProviders,
+  WORKSPACE,
+  dashboardWidget
+} from '../StorybookHarness';
 import { documentKeys } from '../../../../../hooks/useDocuments';
 
 const documentOptions = {
@@ -100,6 +106,35 @@ export const WikiNoConfiguration: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DocumentBrowserEmbed />
+    </StoryProviders>
+  )
+};
+
+const dashboardConfig = {
+  q: '',
+  conditions: [],
+  sort: 'updated_at',
+  sortDir: 'desc',
+  visibleBaseColumnIds: [...DOCUMENT_BROWSER_BASE_COLUMN_IDS],
+  visibleFieldIds: []
+};
+
+export const DashboardDefault: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'document-browser-embed',
+            'DocumentBrowserEmbed',
+            dashboardConfig,
+            0,
+            0,
+            6,
+            4
+          )
+        ]}
+      />
     </StoryProviders>
   )
 };

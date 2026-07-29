@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramEmbed } from './DiagramEmbed';
-import { createStoryQueryClient, StoryProviders, WORKSPACE } from '../StorybookHarness';
+import {
+  createStoryQueryClient,
+  DashboardStory,
+  StoryProviders,
+  WORKSPACE,
+  dashboardWidget
+} from '../StorybookHarness';
 import { projectFileKeys } from '../../../../../queries/content';
 
 const previewFileId = 'diagram-system-context';
@@ -67,6 +73,46 @@ export const WikiMissingId: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DiagramEmbed id="" />
+    </StoryProviders>
+  )
+};
+
+export const DashboardDefault: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'diagram-embed',
+            'DiagramEmbed',
+            { fileId: previewFileId, caption: 'System context diagram' },
+            0,
+            0,
+            6,
+            4
+          )
+        ]}
+      />
+    </StoryProviders>
+  )
+};
+
+export const DashboardLarge: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'diagram-embed-large',
+            'DiagramEmbed',
+            { fileId: previewFileId, caption: 'System context diagram' },
+            0,
+            0,
+            12,
+            6
+          )
+        ]}
+      />
     </StoryProviders>
   )
 };

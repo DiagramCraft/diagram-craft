@@ -4,16 +4,11 @@ import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
-import {
-  STANDARD_FIELD_OPTIONS,
-  DEFAULT_FIELDS,
-  STANDARD_FIELD_IDS,
-  filterSchemaFields
-} from './EntityCard';
+import { DEFAULT_FIELDS, filterSchemaFields } from './EntityCard';
+import { EntityCardFieldsPicker } from './EntityCardFieldsPicker';
 import { EntityPicker } from '../../../../../components/EntityPicker';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import type { EntityCardSlateElement } from './types';
-import styles from './EntityCardDialog.module.css';
 
 export const EntityCardDialog = ({
   element,
@@ -102,31 +97,11 @@ export const EntityCardDialog = ({
 
         {selectedEntityId && (
           <DialogSection label="Fields">
-            <div className={styles.fieldGrid}>
-              {STANDARD_FIELD_OPTIONS.map(opt => (
-                <label key={opt.id} className={styles.fieldOption}>
-                  <input
-                    type="checkbox"
-                    checked={selectedFields.includes(opt.id)}
-                    onChange={() => toggleField(opt.id)}
-                  />
-                  {opt.label}
-                </label>
-              ))}
-              {schemaFields.map(field => (
-                <label
-                  key={field.id}
-                  className={`${styles.fieldOption} ${STANDARD_FIELD_IDS.has(field.id) ? '' : styles.fieldOptionSchema}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedFields.includes(field.id)}
-                    onChange={() => toggleField(field.id)}
-                  />
-                  {field.name}
-                </label>
-              ))}
-            </div>
+            <EntityCardFieldsPicker
+              schemaFields={schemaFields}
+              selectedFields={selectedFields}
+              onToggleField={toggleField}
+            />
           </DialogSection>
         )}
       </DialogContent>
