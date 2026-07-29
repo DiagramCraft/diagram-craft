@@ -7,6 +7,7 @@ import {
   DiagramEmbedEditable,
   diagramEmbedMdxRule
 } from './DiagramEmbedEditable';
+import { DiagramEmbedDashboardConfigForm } from './DiagramEmbedDashboardConfigForm';
 import type { DiagramEmbedSlateElement, DiagramEmbedWidgetConfig } from './types';
 
 export const diagramEmbedSpec = defineMdxComponent<
@@ -28,9 +29,11 @@ export const diagramEmbedSpec = defineMdxComponent<
     component: DiagramEmbedWidget,
     isValidConfig: (config): config is DiagramEmbedWidgetConfig =>
       typeof config.fileId === 'string' &&
+      config.fileId.length > 0 &&
       (config.caption === undefined || typeof config.caption === 'string'),
     createDefaultConfig: () => ({ fileId: '' }),
-    getTitle: () => 'Diagram'
+    getTitle: () => 'Diagram',
+    configForm: DiagramEmbedDashboardConfigForm
   },
   editorSpec: {
     editableComponent: DiagramEmbedEditable,

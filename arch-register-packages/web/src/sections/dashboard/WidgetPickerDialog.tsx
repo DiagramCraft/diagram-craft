@@ -4,10 +4,7 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import { createDefaultWidget, type WidgetSurface } from './dashboardWidgetDefaults';
-import {
-  getDashboardWidgetSpecs,
-  type KnownWidgetType
-} from '../markdown/mdx-components/mdxRegistry';
+import { getDashboardWidgetSpecs } from '../markdown/mdx-components/mdxRegistry';
 import styles from './WidgetPickerDialog.module.css';
 
 type Props = {
@@ -27,7 +24,7 @@ export const WidgetPickerDialog = ({
   widgets,
   onAdd
 }: Props) => {
-  const [pendingType, setPendingType] = useState<KnownWidgetType | null>(null);
+  const [pendingType, setPendingType] = useState<string | null>(null);
   const [selectedViewId, setSelectedViewId] = useState('');
 
   const { projectId } = useMdxContext();
@@ -43,7 +40,7 @@ export const WidgetPickerDialog = ({
     onClose();
   };
 
-  const handlePick = (type: KnownWidgetType) => {
+  const handlePick = (type: string) => {
     if (type === 'EntityViewEmbed') {
       setPendingType(type);
       return;

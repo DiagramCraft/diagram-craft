@@ -141,43 +141,14 @@ export const getMdxSpecsForSurface = (
     Object.entries(MDX_COMPONENTS).filter(([, spec]) => isEligibleForSurface(spec, surface))
   );
 
-/**
- * Every `MDX_COMPONENTS` key that carries a `dashboardWidget` block, i.e. every
- * type addable to a dashboard. `defineMdxComponent` erases each registration to
- * the common `MdxComponentSpec` type, so this can't be derived structurally from
- * `typeof MDX_COMPONENTS` — it's a union of the same `_TYPE` consts used as the
- * map's keys above. Registering a new dashboard widget means adding it here and
- * to `MDX_COMPONENTS`, both in this one file.
- */
-export type KnownWidgetType =
-  | typeof ENTITY_METRIC_TYPE
-  | typeof ENTITY_VIEW_EMBED_TYPE
-  | typeof ENTITY_TABLE_TYPE
-  | typeof ENTITY_CARD_TYPE
-  | typeof ENTITY_GRAPH_TYPE
-  | typeof ENTITY_CHANGELOG_TYPE
-  | typeof DOCUMENT_BROWSER_EMBED_TYPE
-  | typeof ENTITY_BROWSER_EMBED_TYPE
-  | typeof DIAGRAM_EMBED_TYPE
-  | typeof ENTITY_LIFECYCLE_CHART_TYPE
-  | typeof ENTITY_ACTIVITY_TREND_CHART_TYPE
-  | typeof ENTITY_STALE_REPORT_TYPE
-  | typeof ACTIVITY_FEED_TYPE
-  | typeof ACTIVE_ASSESSMENTS_TYPE
-  | typeof UPCOMING_MILESTONES_TYPE
-  | typeof MARKDOWN_WIDGET_TYPE;
-
-export const isKnownWidgetType = (type: string): type is KnownWidgetType =>
-  !!getMdxSpecSafe(type)?.dashboardWidget;
+/** True when the given `widget.type` string carries a `dashboardWidget` block, i.e. is addable to a dashboard. */
+export const isKnownWidgetType = (type: string): boolean => !!getMdxSpecSafe(type)?.dashboardWidget;
 
 /** All dashboard-widget specs in the registry, keyed by their MDX type. */
-export const getDashboardWidgetSpecs = (): Array<{
-  type: KnownWidgetType;
-  spec: DashboardWidgetSpec;
-}> =>
+export const getDashboardWidgetSpecs = (): Array<{ type: string; spec: DashboardWidgetSpec }> =>
   Object.entries(MDX_COMPONENTS)
     .filter((entry): entry is [string, MdxComponentSpec] => !!entry[1].dashboardWidget)
-    .map(([type, spec]) => ({ type: type as KnownWidgetType, spec: spec.dashboardWidget! }));
+    .map(([type, spec]) => ({ type, spec: spec.dashboardWidget! }));
 
 /** Looks up a single dashboard-widget spec by type, if it has one. */
 export const getDashboardWidgetSpec = (type: string): DashboardWidgetSpec | undefined =>

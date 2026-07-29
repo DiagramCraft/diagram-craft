@@ -3,6 +3,7 @@ import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityGraph } from './EntityGraph';
 import { EntityGraphWidget } from '../../../../dashboard/widgets/EntityGraphWidget';
 import { ENTITY_GRAPH_TYPE, EntityGraphEditable, entityGraphMdxRule } from './EntityGraphEditable';
+import { EntityGraphDashboardConfigForm } from './EntityGraphDashboardConfigForm';
 import {
   normalizeEntityGraphProps,
   type EntityGraphSlateElement,
@@ -29,9 +30,10 @@ export const entityGraphSpec = defineMdxComponent<
     surfaces: ['workspace', 'project'],
     component: EntityGraphWidget,
     isValidConfig: (config): config is EntityGraphWidgetConfig =>
-      typeof config.entityId === 'string',
+      typeof config.entityId === 'string' && config.entityId.length > 0,
     createDefaultConfig: () => ({ entityId: '', depth: 1, direction: 'both' }),
-    getTitle: () => 'Entity graph'
+    getTitle: () => 'Entity graph',
+    configForm: EntityGraphDashboardConfigForm
   },
   editorSpec: {
     editableComponent: EntityGraphEditable,

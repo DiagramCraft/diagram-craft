@@ -2,6 +2,7 @@ import { TbChartLine } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityActivityTrendChart } from './EntityActivityTrendChart';
 import { ActivityTrendChartWidget } from '../../../../dashboard/widgets/ActivityTrendChartWidget';
+import { EntityActivityTrendChartDashboardConfigForm } from './EntityActivityTrendChartDashboardConfigForm';
 import type { EntityActivityTrendChartProps, EntityActivityTrendChartSlateElement } from './types';
 
 export const ENTITY_ACTIVITY_TREND_CHART_TYPE = 'entity-activity-trend-chart' as const;
@@ -32,6 +33,7 @@ export const entityActivityTrendChartSpec = defineMdxComponent<
     component: ActivityTrendChartWidget,
     isValidConfig: (config): config is EntityActivityTrendChartProps =>
       hasOptionalInteger(config, 'lookbackDays'),
-    createDefaultConfig: () => ({})
+    createDefaultConfig: () => ({}),
+    configForm: EntityActivityTrendChartDashboardConfigForm
   }
 });

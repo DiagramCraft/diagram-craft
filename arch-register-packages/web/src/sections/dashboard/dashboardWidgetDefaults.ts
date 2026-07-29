@@ -1,6 +1,5 @@
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { getDashboardWidgetSpec } from '../markdown/mdx-components/mdxRegistry';
-import type { KnownWidgetType } from '../markdown/mdx-components/mdxRegistry';
 import type { KnownDashboardWidget } from './dashboardWidgetConfig';
 
 export type { WidgetSurface } from '../markdown/mdx-components/types';
@@ -15,7 +14,7 @@ const nextRowY = (widgets: DashboardWidget[]): number =>
   widgets.reduce((max, w) => Math.max(max, w.y + w.h), 0);
 
 export const createDefaultWidget = (
-  type: KnownWidgetType,
+  type: string,
   widgets: DashboardWidget[],
   viewId?: string
 ): DashboardWidget => {

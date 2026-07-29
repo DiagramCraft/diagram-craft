@@ -2,6 +2,7 @@ import { TbClockExclamation } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityStaleReport } from './EntityStaleReport';
 import { StaleEntityReportWidget } from '../../../../dashboard/widgets/StaleEntityReportWidget';
+import { EntityStaleReportDashboardConfigForm } from './EntityStaleReportDashboardConfigForm';
 import type { EntityStaleReportProps, EntityStaleReportSlateElement } from './types';
 
 export const ENTITY_STALE_REPORT_TYPE = 'entity-stale-report' as const;
@@ -32,6 +33,7 @@ export const entityStaleReportSpec = defineMdxComponent<
     component: StaleEntityReportWidget,
     isValidConfig: (config): config is EntityStaleReportProps =>
       hasOptionalInteger(config, 'staleAfterDays'),
-    createDefaultConfig: () => ({})
+    createDefaultConfig: () => ({}),
+    configForm: EntityStaleReportDashboardConfigForm
   }
 });
