@@ -1,0 +1,9 @@
+.content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  color: var(--base-fg-dim);
+  font-size: 13px;
+}

@@ -12,6 +12,7 @@ import type { DiagramEmbedWidgetConfig } from '../markdown/mdx-components/blocks
 import type { EntityActivityTrendChartProps as ActivityTrendChartWidgetConfig } from '../markdown/mdx-components/blocks/entity-activity-trend-chart/types';
 import type { EntityStaleReportProps as StaleEntityReportWidgetConfig } from '../markdown/mdx-components/blocks/entity-stale-report/types';
 import type { ActivityFeedWidgetConfig } from './widgets/ActivityFeedWidget';
+import type { MarkdownWidgetConfig } from './widgets/MarkdownWidget';
 
 export type {
   StatMetricWidgetConfig,
@@ -25,7 +26,8 @@ export type {
   DiagramEmbedWidgetConfig,
   ActivityTrendChartWidgetConfig,
   StaleEntityReportWidgetConfig,
-  ActivityFeedWidgetConfig
+  ActivityFeedWidgetConfig,
+  MarkdownWidgetConfig
 };
 
 export type KnownDashboardWidget =
@@ -46,7 +48,8 @@ export type KnownDashboardWidget =
   | (DashboardWidget & { type: 'entity-stale-report'; config: StaleEntityReportWidgetConfig })
   | (DashboardWidget & { type: 'activity-feed'; config: ActivityFeedWidgetConfig })
   | (DashboardWidget & { type: 'active-assessments' })
-  | (DashboardWidget & { type: 'upcoming-milestones' });
+  | (DashboardWidget & { type: 'upcoming-milestones' })
+  | (DashboardWidget & { type: 'markdown'; config: MarkdownWidgetConfig });
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

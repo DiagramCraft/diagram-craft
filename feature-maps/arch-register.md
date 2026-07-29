@@ -27,7 +27,8 @@
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
-          browsers, diagram previews, lifecycle and activity-trend charts, stale-entity reports, and an activity feed)
+          browsers, diagram previews, lifecycle and activity-trend charts, stale-entity reports, an activity feed, and
+          configurable Markdown content)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
@@ -173,7 +174,7 @@
         - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
           project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,
           entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity browsers, diagram
-          previews, and two project-only widgets — active assessments and upcoming milestones — plus a
+          previews, configurable Markdown content, and two project-only widgets — active assessments and upcoming milestones — plus a
           project-relevant subset of the general catalog; workspace-wide analytics widgets such as lifecycle and
           activity-trend charts, stale-entity reports, and the activity feed are not available at project scope). The
           active-assessments widget lists up to four open assessments for the project; the upcoming-milestones widget

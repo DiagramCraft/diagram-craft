@@ -32,6 +32,7 @@ import type { EntityBrowserEmbedConfig } from '../markdown/mdx-components/blocks
 import { DiagramPicker } from '../../components/DiagramPicker';
 import { useContentTree, type ContentScope } from '../../hooks/useContentScope';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { MarkdownWidgetConfig } from './widgets/MarkdownWidget';
 import { SavedViewSelectField } from '../markdown/mdx-components/blocks/entity-view-embed/SavedViewSelectField';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { parseKnownDashboardWidget, type KnownDashboardWidget } from './dashboardWidgetConfig';
@@ -113,6 +114,12 @@ const WidgetConfigDialogContent = ({
   );
   const [activityLimit, setActivityLimit] = useState<number | undefined>(
     widget.type === 'activity-feed' ? widget.config.limit : undefined
+  );
+  const [markdownTitle, setMarkdownTitle] = useState(
+    widget.type === 'markdown' ? widget.config.title : ''
+  );
+  const [markdown, setMarkdown] = useState(
+    widget.type === 'markdown' ? widget.config.markdown : ''
   );
   const [cardEntityId, setCardEntityId] = useState(
     widget.type === 'EntityCard' ? widget.config.entityId : ''
@@ -295,6 +302,11 @@ const WidgetConfigDialogContent = ({
       case 'activity-feed':
         onSave({ ...widget, config: { ...widget.config, limit: activityLimit } });
         break;
+      case 'markdown': {
+        const config: MarkdownWidgetConfig = { title: markdownTitle, markdown };
+        onSave({ ...widget, config });
+        break;
+      }
       case 'entity-lifecycle-chart':
       case 'active-assessments':
       case 'upcoming-milestones':
@@ -607,6 +619,29 @@ const WidgetConfigDialogContent = ({
               </label>
             </div>
           </DialogSection>
+        )}
+
+        {widget.type === 'markdown' && (
+          <>
+            <DialogSection label="Title">
+              <input
+                type="text"
+                className={styles.labelInput}
+                value={markdownTitle}
+                onChange={e => setMarkdownTitle(e.target.value)}
+                placeholder="Markdown"
+              />
+            </DialogSection>
+            <DialogSection label="Markdown">
+              <textarea
+                className={styles.markdownInput}
+                value={markdown}
+                onChange={e => setMarkdown(e.target.value)}
+                placeholder="Write Markdown…"
+                rows={12}
+              />
+            </DialogSection>
+          </>
         )}
 
         {(widget.type === 'entity-lifecycle-chart' ||

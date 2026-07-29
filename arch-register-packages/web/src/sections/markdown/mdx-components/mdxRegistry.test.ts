@@ -16,6 +16,7 @@ describe('getMdxSpecsForSurface', () => {
     expect(wiki['entity-lifecycle-chart']).toBeUndefined();
     expect(wiki['entity-activity-trend-chart']).toBeUndefined();
     expect(wiki['entity-stale-report']).toBeUndefined();
+    expect(wiki['markdown']).toBeUndefined();
   });
 
   it('includes only components that explicitly opt in via surfaces for "dashboard"', () => {
@@ -24,6 +25,7 @@ describe('getMdxSpecsForSurface', () => {
     expect(dashboard['entity-activity-trend-chart']).toBeDefined();
     expect(dashboard['entity-stale-report']).toBeDefined();
     expect(dashboard['EntityViewEmbed']).toBeDefined();
+    expect(dashboard['markdown']).toBeDefined();
   });
 
   it('excludes wiki-only components for "dashboard"', () => {
