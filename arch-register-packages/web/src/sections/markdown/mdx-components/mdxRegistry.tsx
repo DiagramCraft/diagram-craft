@@ -66,6 +66,10 @@ import {
   UPCOMING_MILESTONES_TYPE,
   upcomingMilestonesSpec
 } from '../../dashboard/widgets/UpcomingMilestonesRegistration';
+import {
+  MARKDOWN_WIDGET_TYPE,
+  markdownWidgetSpec
+} from '../../dashboard/widgets/MarkdownRegistration';
 import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec, DashboardWidgetSpec } from './types';
 
@@ -97,7 +101,8 @@ export const MDX_COMPONENTS = {
   [ENTITY_STALE_REPORT_TYPE]: entityStaleReportSpec,
   [ACTIVITY_FEED_TYPE]: activityFeedSpec,
   [ACTIVE_ASSESSMENTS_TYPE]: activeAssessmentsSpec,
-  [UPCOMING_MILESTONES_TYPE]: upcomingMilestonesSpec
+  [UPCOMING_MILESTONES_TYPE]: upcomingMilestonesSpec,
+  [MARKDOWN_WIDGET_TYPE]: markdownWidgetSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;
@@ -159,7 +164,8 @@ export type KnownWidgetType =
   | typeof ENTITY_STALE_REPORT_TYPE
   | typeof ACTIVITY_FEED_TYPE
   | typeof ACTIVE_ASSESSMENTS_TYPE
-  | typeof UPCOMING_MILESTONES_TYPE;
+  | typeof UPCOMING_MILESTONES_TYPE
+  | typeof MARKDOWN_WIDGET_TYPE;
 
 export const isKnownWidgetType = (type: string): type is KnownWidgetType =>
   !!getMdxSpecSafe(type)?.dashboardWidget;
