@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { Select } from '@diagram-craft/app-components/Select';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import { useSavedViews } from '../../../../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import type { EntityViewEmbedSlateElement } from './types';
-import { EmptyState } from '../../../../../components/EmptyState';
+import { SavedViewSelectField } from './SavedViewSelectField';
 
 export const EntityViewEmbedDialog = ({
   element,
@@ -75,20 +74,7 @@ export const EntityViewEmbedDialog = ({
     >
       <DialogContent>
         <DialogSection label="View">
-          {adminViews.length === 0 ? (
-            <EmptyState
-              compact
-              title="No saved views available. Create an admin view in the entity browser first."
-            />
-          ) : (
-            <Select.Root value={viewId} onChange={value => setViewId(value ?? '')}>
-              {adminViews.map(view => (
-                <Select.Item key={view.id} value={view.id}>
-                  {view.name}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          )}
+          <SavedViewSelectField adminViews={adminViews} value={viewId} onChange={setViewId} />
         </DialogSection>
       </DialogContent>
     </Dialog>
