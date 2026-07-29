@@ -35,14 +35,4 @@ describe('Caption', () => {
     const markup = renderToStaticMarkup(<Caption caption="Text" />);
     expect(markup).not.toContain('Figure:');
   });
-
-  it.each([
-    ['left', 'alignLeft'],
-    ['right', 'alignRight'],
-    ['center', 'alignCenter'],
-    [undefined, 'alignCenter']
-  ] as const)('applies the %s alignment class', (align, expectedClassFragment) => {
-    const markup = renderToStaticMarkup(<Caption caption="x" align={align} />);
-    expect(markup).toContain(expectedClassFragment);
-  });
 });

@@ -31,14 +31,13 @@ const baseOptions = {
 };
 
 describe('captionMdxRule', () => {
-  it('deserializes caption/align/numbered attributes and the single valid child', () => {
+  it('deserializes caption/numbered attributes and the single valid child', () => {
     const node = captionMdxRule.deserialize(
       {
         type: 'mdxJsxFlowElement',
         name: 'Caption',
         attributes: [
           { type: 'mdxJsxAttribute', name: 'caption', value: 'A diagram' },
-          { type: 'mdxJsxAttribute', name: 'align', value: 'left' },
           { type: 'mdxJsxAttribute', name: 'numbered', value: 'true' }
         ],
         children: [
@@ -56,7 +55,6 @@ describe('captionMdxRule', () => {
 
     expect(node.type).toBe('Caption');
     expect(node.caption).toBe('A diagram');
-    expect(node.align).toBe('left');
     expect(node.numbered).toBe(true);
     expect(node.children).toEqual([
       { type: 'DiagramEmbed', fileId: 'd1', children: [{ text: '' }] }
@@ -72,12 +70,11 @@ describe('captionMdxRule', () => {
     expect(node.children).toEqual([{ type: 'p', children: [{ text: '' }] }]);
   });
 
-  it('serializes caption/align/numbered and the child via its own serializer', () => {
+  it('serializes caption/numbered and the child via its own serializer', () => {
     const result = captionMdxRule.serialize(
       {
         type: 'Caption',
         caption: 'A diagram',
-        align: 'left',
         numbered: true,
         children: [{ type: 'DiagramEmbed', fileId: 'd1', children: [{ text: '' }] } as never]
       },
@@ -89,7 +86,6 @@ describe('captionMdxRule', () => {
       name: 'Caption',
       attributes: [
         { type: 'mdxJsxAttribute', name: 'caption', value: 'A diagram' },
-        { type: 'mdxJsxAttribute', name: 'align', value: 'left' },
         { type: 'mdxJsxAttribute', name: 'numbered', value: 'true' }
       ],
       children: [
@@ -103,7 +99,7 @@ describe('captionMdxRule', () => {
     });
   });
 
-  it('omits align/numbered attributes when not set', () => {
+  it('omits numbered attribute when not set', () => {
     const result = captionMdxRule.serialize(
       { type: 'Caption', caption: 'x', children: [] },
       baseOptions as unknown as Parameters<typeof captionMdxRule.serialize>[1]

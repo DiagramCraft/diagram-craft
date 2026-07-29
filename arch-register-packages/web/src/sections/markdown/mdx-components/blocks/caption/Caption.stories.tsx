@@ -39,27 +39,7 @@ const architectureDiagram = (
 export const WikiNumbered: Story = {
   render: () => (
     <StoryProviders>
-      <Caption caption="Request flow across the platform" align="center" numbered="true">
-        {architectureDiagram}
-      </Caption>
-    </StoryProviders>
-  )
-};
-
-export const WikiLeftAligned: Story = {
-  render: () => (
-    <StoryProviders>
-      <Caption caption="Deployment boundary" align="left">
-        {architectureDiagram}
-      </Caption>
-    </StoryProviders>
-  )
-};
-
-export const WikiRightAligned: Story = {
-  render: () => (
-    <StoryProviders>
-      <Caption caption="Data ownership" align="right">
+      <Caption caption="Request flow across the platform" numbered="true">
         {architectureDiagram}
       </Caption>
     </StoryProviders>
