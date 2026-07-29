@@ -1,8 +1,12 @@
 import { TbId } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityCard } from './EntityCard';
+import { EntityCardWidget } from '../../../../dashboard/widgets/EntityCardWidget';
 import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
-import type { EntityCardSlateElement } from './types';
+import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
+
+const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
+  config[key] === undefined || typeof config[key] === 'string';
 
 export const entityCardSpec = defineMdxComponent<
   EntityCardSlateElement,
@@ -12,6 +16,20 @@ export const entityCardSpec = defineMdxComponent<
   component: EntityCard,
   mode: 'block',
   allowedProps: ['id', 'fields'],
+  surfaces: ['wiki', 'dashboard'],
+  dashboardWidget: {
+    icon: TbId,
+    label: 'Entity card',
+    description: 'A focused summary card for a single entity.',
+    defaultW: 3,
+    defaultH: 2,
+    surfaces: ['workspace', 'project'],
+    component: EntityCardWidget,
+    isValidConfig: (config): config is EntityCardWidgetConfig =>
+      typeof config.entityId === 'string' && hasOptionalString(config, 'fields'),
+    createDefaultConfig: () => ({ entityId: '' }),
+    getTitle: () => 'Entity card'
+  },
   editorSpec: {
     editableComponent: EntityCardEditable,
     nodeOptions: { isVoid: true },

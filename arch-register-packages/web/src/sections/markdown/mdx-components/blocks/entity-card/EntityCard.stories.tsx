@@ -1,6 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EntityCard } from './EntityCard';
-import { StoryProviders, WORKSPACE, createStoryQueryClient } from '../StorybookHarness';
+import {
+  DashboardStory,
+  StoryProviders,
+  WORKSPACE,
+  createStoryQueryClient,
+  dashboardWidget
+} from '../StorybookHarness';
 import { entityKeys } from '../../../../../queries/entities';
 
 const entityId = 'entity-payments';
@@ -41,6 +47,36 @@ export const WikiExpanded: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityCard id={entityId} fields="owner,description,tags" />
+    </StoryProviders>
+  )
+};
+
+export const DashboardDefault: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[dashboardWidget('entity-card', 'EntityCard', { entityId }, 0, 0, 3, 2)]}
+      />
+    </StoryProviders>
+  )
+};
+
+export const DashboardWide: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'entity-card-wide',
+            'EntityCard',
+            { entityId, fields: 'owner,description,tags' },
+            0,
+            0,
+            6,
+            4
+          )
+        ]}
+      />
     </StoryProviders>
   )
 };

@@ -1,6 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EntityGraph } from './EntityGraph';
-import { createStoryQueryClient, StoryProviders, WORKSPACE } from '../StorybookHarness';
+import {
+  createStoryQueryClient,
+  DashboardStory,
+  StoryProviders,
+  WORKSPACE,
+  dashboardWidget
+} from '../StorybookHarness';
 import { entityKeys } from '../../../../../queries/entities';
 
 const rootEntityId = 'entity-payments';
@@ -96,6 +102,46 @@ export const WikiMissingId: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityGraph id="" />
+    </StoryProviders>
+  )
+};
+
+export const DashboardDefault: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'entity-graph',
+            'EntityGraph',
+            { entityId: rootEntityId, depth: 2, direction: 'both' },
+            0,
+            0,
+            6,
+            4
+          )
+        ]}
+      />
+    </StoryProviders>
+  )
+};
+
+export const DashboardLarge: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'entity-graph-large',
+            'EntityGraph',
+            { entityId: rootEntityId, depth: 2, direction: 'both' },
+            0,
+            0,
+            12,
+            6
+          )
+        ]}
+      />
     </StoryProviders>
   )
 };
