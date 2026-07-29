@@ -2,6 +2,7 @@ import type { TElement } from 'platejs';
 import { TbActivity } from 'react-icons/tb';
 import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
 import { ActivityFeedWidget, type ActivityFeedWidgetConfig } from './ActivityFeedWidget';
+import { ActivityFeedDashboardConfigForm } from './ActivityFeedDashboardConfigForm';
 
 export const ACTIVITY_FEED_TYPE = 'activity-feed' as const;
 
@@ -32,6 +33,7 @@ export const activityFeedSpec = defineMdxComponent<
     component: ActivityFeedWidget,
     isValidConfig: (config): config is ActivityFeedWidgetConfig =>
       hasOptionalInteger(config, 'limit'),
-    createDefaultConfig: () => ({})
+    createDefaultConfig: () => ({}),
+    configForm: ActivityFeedDashboardConfigForm
   }
 });

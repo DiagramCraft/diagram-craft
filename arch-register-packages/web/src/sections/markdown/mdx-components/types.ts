@@ -54,10 +54,26 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
      * `component` field, which takes flat string props authored in wiki markdown.
      */
     component: React.ComponentType<{ config: Config }>;
+    /**
+     * Structural validity AND save-completeness: also gates the dialog's Save
+     * button, so this should reject configs missing required selections (e.g. an
+     * empty entity id), not just wrong types.
+     */
     isValidConfig: (config: Record<string, unknown>) => config is Config;
     createDefaultConfig: (context: { viewId?: string }) => Config;
     /** Per-instance title; falls back to `label` when omitted. */
     getTitle?: (config: Config) => string;
+    /**
+     * Renders this widget's config editor in the dashboard's WidgetConfigDialog.
+     * Omit for widgets with no configurable options.
+     */
+    configForm?: React.ComponentType<{
+      config: Config;
+      onChange: (config: Config) => void;
+      context: { workspaceSlug: string; projectId?: string };
+    }>;
+    /** WidgetConfigDialog width override; defaults to 460. */
+    dialogWidth?: number | string;
   };
 
 export type MdxComponentSpec = {

@@ -2,6 +2,7 @@ import type { TElement } from 'platejs';
 import { TbMarkdown } from 'react-icons/tb';
 import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
 import { MarkdownWidget, type MarkdownWidgetConfig } from './MarkdownWidget';
+import { MarkdownDashboardConfigForm } from './MarkdownDashboardConfigForm';
 
 export const MARKDOWN_WIDGET_TYPE = 'markdown' as const;
 
@@ -31,6 +32,7 @@ export const markdownWidgetSpec = defineMdxComponent<
     getTitle: (config: MarkdownWidgetConfig) => {
       const title = config.title.trim();
       return title.length > 0 ? title : 'Markdown';
-    }
+    },
+    configForm: MarkdownDashboardConfigForm
   }
 });

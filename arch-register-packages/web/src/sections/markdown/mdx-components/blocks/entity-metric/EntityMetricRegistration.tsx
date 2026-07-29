@@ -7,6 +7,7 @@ import {
   EntityMetricEditable,
   entityMetricMdxRule
 } from './EntityMetricEditable';
+import { EntityMetricDashboardConfigForm } from './EntityMetricDashboardConfigForm';
 import type { EntityMetricSlateElement, EntityMetricType, StatMetricWidgetConfig } from './types';
 
 const isMetricType = (value: unknown): value is EntityMetricType =>
@@ -53,7 +54,8 @@ export const entityMetricSpec = defineMdxComponent<
       (config.label === undefined || typeof config.label === 'string'),
     createDefaultConfig: () => ({ metricType: 'entity-count' }),
     getTitle: (config: StatMetricWidgetConfig) =>
-      config.label?.trim() || METRIC_TYPE_DEFAULT_LABEL[config.metricType]
+      config.label?.trim() || METRIC_TYPE_DEFAULT_LABEL[config.metricType],
+    configForm: EntityMetricDashboardConfigForm
   },
   editorSpec: {
     editableComponent: EntityMetricEditable,
