@@ -35,13 +35,3 @@ export const WikiDefaultLabel: Story = {
     </StoryProviders>
   )
 };
-
-export const WikiWhitespaceLabel: Story = {
-  render: () => (
-    <StoryProviders>
-      <FoldableSection label="   ">
-        <p>Blank labels use the component&apos;s Details fallback.</p>
-      </FoldableSection>
-    </StoryProviders>
-  )
-};

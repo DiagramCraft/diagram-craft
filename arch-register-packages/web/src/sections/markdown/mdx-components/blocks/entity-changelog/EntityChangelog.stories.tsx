@@ -80,8 +80,10 @@ const schemaQueryOptions = {
   limit: 10
 };
 
+const entityHistoryEntries = entityEntries.filter(entry => entry.entity_id === entityId);
+
 const storyQueryClient = createStoryQueryClient();
-storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, entityQueryOptions), entityEntries);
+storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, entityQueryOptions), entityHistoryEntries);
 storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, schemaQueryOptions), entityEntries);
 
 const meta = {
