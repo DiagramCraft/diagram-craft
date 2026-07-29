@@ -4,11 +4,13 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { EntityFilterPanel, type EntityFilterValue } from '../../components/EntityFilterPanel';
-import { EmptyState } from '../../components/EmptyState';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import type { EntityMetricType } from '../markdown/mdx-components/blocks/entity-metric/types';
+import { EntityTableConfigForm } from '../markdown/mdx-components/blocks/entity-table/EntityTableConfigForm';
+import type { EntityTableFilterState } from '../markdown/mdx-components/blocks/entity-table/types';
+import { SavedViewSelectField } from '../markdown/mdx-components/blocks/entity-view-embed/SavedViewSelectField';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { parseKnownDashboardWidget, type KnownDashboardWidget } from './dashboardWidgetConfig';
 import { getDashboardWidgetSpec } from '../markdown/mdx-components/mdxRegistry';
@@ -21,12 +23,6 @@ const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string; surfaces: W
     { value: 'diagram-count', label: 'Diagram count', surfaces: ['workspace', 'project'] },
     { value: 'completeness-percent', label: 'Completeness %', surfaces: ['workspace'] }
   ];
-
-const LIMIT_OPTIONS = [
-  { value: '10', label: '10 rows' },
-  { value: '20', label: '20 rows' },
-  { value: '50', label: '50 rows' }
-];
 
 const configString = (config: Record<string, unknown>, key: string): string =>
   typeof config[key] === 'string' ? config[key] : '';
@@ -207,48 +203,21 @@ const WidgetConfigDialogContent = ({
         )}
 
         {widget.type === 'EntityTable' && (
-          <>
-            <DialogSection label="Filters" required={false}>
-              <EntityFilterPanel
-                value={filter}
-                onChange={update => setFilter(prev => ({ ...prev, ...update }))}
-              />
-            </DialogSection>
-            <DialogSection label="Options">
-              <div className={styles.options}>
-                <label className={styles.optionRow}>
-                  <span className={styles.optionLabel}>Limit</span>
-                  <div className={styles.optionControl}>
-                    <Select.Root value={limit} onChange={value => setLimit(value ?? '10')}>
-                      {LIMIT_OPTIONS.map(option => (
-                        <Select.Item key={option.value} value={option.value}>
-                          {option.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Root>
-                  </div>
-                </label>
-              </div>
-            </DialogSection>
-          </>
+          <EntityTableConfigForm
+            value={{ ...filter, limit }}
+            onChange={(update: Partial<EntityTableFilterState>) => {
+              const { limit: limitUpdate, ...filterUpdate } = update;
+              if (Object.keys(filterUpdate).length > 0) {
+                setFilter(prev => ({ ...prev, ...filterUpdate }));
+              }
+              if (limitUpdate !== undefined) setLimit(limitUpdate);
+            }}
+          />
         )}
 
         {widget.type === 'EntityViewEmbed' && (
           <DialogSection label="View">
-            {adminViews.length === 0 ? (
-              <EmptyState
-                compact
-                title="No saved views available. Create an admin view in the entity browser first."
-              />
-            ) : (
-              <Select.Root value={viewId} onChange={value => setViewId(value ?? '')}>
-                {adminViews.map(view => (
-                  <Select.Item key={view.id} value={view.id}>
-                    {view.name}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            )}
+            <SavedViewSelectField adminViews={adminViews} value={viewId} onChange={setViewId} />
           </DialogSection>
         )}
 
