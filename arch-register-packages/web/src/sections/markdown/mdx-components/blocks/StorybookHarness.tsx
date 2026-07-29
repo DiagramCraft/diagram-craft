@@ -3,9 +3,9 @@ import {
   createMemoryHistory,
   createRootRoute,
   createRouter,
-  RouterContextProvider
+  RouterProvider
 } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -77,7 +77,10 @@ queryClient.setQueryData(entityKeys.facets(WORKSPACE), {
   completeness: { below50: 2, below80: 3, above80: 5 }
 });
 
-const storyRootRoute = createRootRoute({ component: () => null });
+const StoryContentContext = createContext<ReactNode>(null);
+const StoryRoot = () => useContext(StoryContentContext);
+
+const storyRootRoute = createRootRoute({ component: StoryRoot });
 const storyRouter = createRouter({
   routeTree: storyRootRoute,
   history: createMemoryHistory({ initialEntries: ['/'] })
@@ -94,20 +97,20 @@ export const StoryProviders = ({
   permissions?: Partial<WorkspaceContextType['permissions']>;
   projectId?: string;
 }) => (
-  <RouterContextProvider router={storyRouter}>
-    <QueryClientProvider client={client}>
-      <WorkspaceContext.Provider
-        value={{
-          ...workspaceContext,
-          permissions: { ...workspaceContext.permissions, ...permissions }
-        }}
-      >
-        <MdxContext.Provider value={{ workspaceSlug: WORKSPACE, projectId, renderMode: 'wiki' }}>
-          {children}
-        </MdxContext.Provider>
-      </WorkspaceContext.Provider>
-    </QueryClientProvider>
-  </RouterContextProvider>
+  <QueryClientProvider client={client}>
+    <WorkspaceContext.Provider
+      value={{
+        ...workspaceContext,
+        permissions: { ...workspaceContext.permissions, ...permissions }
+      }}
+    >
+      <MdxContext.Provider value={{ workspaceSlug: WORKSPACE, projectId, renderMode: 'wiki' }}>
+        <StoryContentContext.Provider value={children}>
+          <RouterProvider router={storyRouter} />
+        </StoryContentContext.Provider>
+      </MdxContext.Provider>
+    </WorkspaceContext.Provider>
+  </QueryClientProvider>
 );
 
 export const dashboardWidget = (
