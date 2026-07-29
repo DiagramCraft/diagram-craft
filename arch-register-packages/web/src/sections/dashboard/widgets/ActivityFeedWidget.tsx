@@ -8,42 +8,13 @@ import {
   entityDetailRoute,
   projectDetailRoute
 } from '../../../routes/publicObjectRoutes';
+import { ENTITY_TYPE_LABELS, OPERATION_LABELS } from '../../../utils/auditLabels';
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import styles from './ActivityFeedWidget.module.css';
 
 export type ActivityFeedWidgetConfig = { limit?: number };
 
 const DEFAULT_ACTIVITY_LIMIT = 15;
-
-const getOperationLabel = (operation: string): string => {
-  switch (operation) {
-    case 'create':
-      return 'created';
-    case 'update':
-      return 'updated';
-    case 'delete':
-      return 'deleted';
-    default:
-      return operation;
-  }
-};
-
-const getEntityTypeLabel = (entityType: string): string => {
-  switch (entityType) {
-    case 'entity':
-      return 'entity';
-    case 'project':
-      return 'project';
-    case 'content_node':
-      return 'diagram';
-    case 'entity_schema':
-      return 'schema';
-    case 'workspace':
-      return 'workspace';
-    default:
-      return entityType;
-  }
-};
 
 type Props = {
   config: ActivityFeedWidgetConfig;
@@ -103,9 +74,9 @@ export const ActivityFeedWidget = ({ config }: Props) => {
             <span className={styles.activityWho}>
               {entry.user_display_name ?? entry.user_id ?? 'Unknown'}
             </span>
-            <span className="dim"> {getOperationLabel(entry.operation)} </span>
+            <span className="dim"> {OPERATION_LABELS[entry.operation]} </span>
             <span className={styles.activityTarget}>{entry.entity_name}</span>
-            <span className="dim"> &middot; {getEntityTypeLabel(entry.entity_type)}</span>
+            <span className="dim"> &middot; {ENTITY_TYPE_LABELS[entry.entity_type]}</span>
             <span className={styles.activityTime}>{formatRelativeTime(entry.timestamp)}</span>
           </button>
         ))
