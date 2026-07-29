@@ -7,12 +7,12 @@ import type { CaptionSlateElement } from './types';
 
 export const captionSpec = defineMdxComponent<
   CaptionSlateElement,
-  { caption?: string; align?: string; numbered?: string; children?: React.ReactNode },
+  { caption?: string; numbered?: string; children?: React.ReactNode },
   'block'
 >({
   component: Caption,
   mode: 'block',
-  allowedProps: ['caption', 'align', 'numbered'],
+  allowedProps: ['caption', 'numbered'],
   acceptsChildren: true,
   editorSpec: {
     editableComponent: CaptionEditable,
@@ -28,7 +28,6 @@ export const captionSpec = defineMdxComponent<
         insertOrReplaceBlock(editor, {
           type: CAPTION_TYPE,
           caption: '',
-          align: '',
           numbered: false,
           children: [{ type: 'p', children: [{ text: '' }] }]
         });
@@ -37,7 +36,6 @@ export const captionSpec = defineMdxComponent<
     createWrapper: child => ({
       type: CAPTION_TYPE,
       caption: '',
-      align: '',
       numbered: false,
       children: [child]
     })

@@ -15,12 +15,6 @@ import styles from './Caption.module.css';
 
 export const CAPTION_TYPE = 'Caption' as const;
 
-const alignClass = (align?: string) => {
-  if (align === 'left') return styles.alignLeft;
-  if (align === 'right') return styles.alignRight;
-  return styles.alignCenter;
-};
-
 export const captionMdxRule: MdxRuleDef<CaptionSlateElement, 'block'> = {
   deserialize: (mdastNode, deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
@@ -43,7 +37,6 @@ export const captionMdxRule: MdxRuleDef<CaptionSlateElement, 'block'> = {
         : [{ type: getPluginType(options.editor!, 'p'), children: [{ text: '' }] }],
       type: getPluginType(options.editor!, CAPTION_TYPE),
       caption: typeof attrs['caption'] === 'string' ? attrs['caption'] : '',
-      align: typeof attrs['align'] === 'string' ? attrs['align'] : '',
       // `numbered` is a boolean on the Slate element (internal editor state)
       // but always a string on the wire (`numbered="true"`), since MDX/JSX
       // attributes are string-only — see the matching split in `serialize`
@@ -54,7 +47,6 @@ export const captionMdxRule: MdxRuleDef<CaptionSlateElement, 'block'> = {
   serialize: (slateNode, options) => ({
     attributes: propsToAttributes({
       caption: slateNode.caption ?? '',
-      ...(slateNode.align ? { align: slateNode.align } : {}),
       ...(slateNode.numbered ? { numbered: 'true' } : {})
     }),
     // convertNodesSerialize returns generic unist nodes; the mdast-mdx typings
@@ -104,9 +96,7 @@ export const CaptionEditable = ({
 
   return (
     <EditorBlock element={element} {...props}>
-      <figure
-        className={`${styles.container} ${styles.editorContainer} ${alignClass(element.align)}`}
-      >
+      <figure className={`${styles.container} ${styles.editorContainer}`}>
         <div className={styles.body}>{children}</div>
         <figcaption contentEditable={false} className={styles.caption}>
           {/*

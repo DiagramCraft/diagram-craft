@@ -5,18 +5,6 @@
   width: 100%;
 }
 
-.container.alignLeft {
-  align-items: flex-start;
-}
-
-.container.alignCenter {
-  align-items: center;
-}
-
-.container.alignRight {
-  align-items: flex-end;
-}
-
 .body {
   width: 100%;
 }
