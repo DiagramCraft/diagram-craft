@@ -28,7 +28,7 @@ describe('getMdxSpecsForSurface', () => {
 
   it('excludes wiki-only components for "dashboard"', () => {
     const dashboard = getMdxSpecsForSurface('dashboard');
-    expect(dashboard['DiagramEmbed']).toBeUndefined();
+    expect(dashboard['EntityChart']).toBeUndefined();
   });
 
   it('never returns more entries than the full registry', () => {
