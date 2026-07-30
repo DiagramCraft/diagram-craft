@@ -6,17 +6,14 @@ import { lifecycleSearch } from './workspaceAnalyticsHelpers';
 
 export const LifecycleSection = ({
   analytics,
-  onNavigate,
-  bare
+  onNavigate
 }: {
   analytics: WorkspaceAnalytics;
   onNavigate: (search: EntitySearchParams) => void;
-  bare?: boolean;
 }) => (
   <Section
     title="Lifecycle Breakdown"
     sub="Workspace-wide counts and percentages by lifecycle value."
-    bare={bare}
   >
     <div className={styles.bucketList}>
       {analytics.lifecycleBreakdown.map(bucket => (

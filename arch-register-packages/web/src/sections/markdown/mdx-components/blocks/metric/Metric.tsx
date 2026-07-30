@@ -20,14 +20,9 @@ type Props = {
   lifecycle?: string;
   label?: string;
   metricType?: MetricType;
-  /** Omit the card's own border/background — used when a parent already provides panel chrome. */
-  bare?: boolean;
   /** Whether to show a link to the relevant list/catalog. Defaults to true. */
   showLink?: boolean;
 };
-
-const cardClassName = (bare?: boolean) =>
-  bare ? `${styles.card} ${styles.cardBare}` : styles.card;
 
 const ViewLink = ({ onClick, children }: { onClick: () => void; children: string }) => (
   <button type="button" className={styles.viewLink} onClick={onClick}>
@@ -35,7 +30,7 @@ const ViewLink = ({ onClick, children }: { onClick: () => void; children: string
   </button>
 );
 
-export const Metric = ({ schema, owner, lifecycle, label, metricType, bare, showLink }: Props) => {
+export const Metric = ({ schema, owner, lifecycle, label, metricType, showLink }: Props) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { projectId, renderMode } = useMdxContext();
@@ -49,7 +44,6 @@ export const Metric = ({ schema, owner, lifecycle, label, metricType, bare, show
         workspaceSlug={workspaceSlug}
         projectId={projectId}
         label={label}
-        bare={bare}
         showInlineLabel={showInlineLabel}
         showLink={resolvedShowLink}
         navigate={navigate}
@@ -62,7 +56,6 @@ export const Metric = ({ schema, owner, lifecycle, label, metricType, bare, show
       <ProjectCountMetric
         workspaceSlug={workspaceSlug}
         label={label}
-        bare={bare}
         showInlineLabel={showInlineLabel}
         showLink={resolvedShowLink}
         navigate={navigate}
@@ -75,7 +68,6 @@ export const Metric = ({ schema, owner, lifecycle, label, metricType, bare, show
       <DiagramCountMetric
         workspaceSlug={workspaceSlug}
         label={label}
-        bare={bare}
         showInlineLabel={showInlineLabel}
         showLink={resolvedShowLink}
         navigate={navigate}
@@ -88,7 +80,6 @@ export const Metric = ({ schema, owner, lifecycle, label, metricType, bare, show
       <CompletenessPercentMetric
         workspaceSlug={workspaceSlug}
         label={label}
-        bare={bare}
         showInlineLabel={showInlineLabel}
         showLink={resolvedShowLink}
         navigate={navigate}
@@ -106,7 +97,6 @@ export const Metric = ({ schema, owner, lifecycle, label, metricType, bare, show
       label={label}
       navigate={navigate}
       totalEntityCount={schemas.reduce((sum, s) => sum + s.entity_count, 0)}
-      bare={bare}
       showInlineLabel={showInlineLabel}
       showLink={resolvedShowLink}
     />
@@ -122,7 +112,6 @@ const EntityCountMetric = ({
   label,
   navigate,
   totalEntityCount,
-  bare,
   showInlineLabel,
   showLink
 }: {
@@ -134,7 +123,6 @@ const EntityCountMetric = ({
   label?: string;
   navigate: ReturnType<typeof useNavigate>;
   totalEntityCount: number;
-  bare?: boolean;
   showInlineLabel?: boolean;
   showLink: boolean;
 }) => {
@@ -181,7 +169,7 @@ const EntityCountMetric = ({
 
   if (!hasFilter) {
     return (
-      <div className={cardClassName(bare)}>
+      <div className={styles.card}>
         <div className={styles.number}>{totalEntityCount}</div>
         {showInlineLabel && <div className={styles.label}>{label ?? 'Entities'}</div>}
         {showLink && <ViewLink onClick={navigateToCatalog}>View in catalog</ViewLink>}
@@ -201,7 +189,7 @@ const EntityCountMetric = ({
   const displayLabel = label ?? 'Entities';
 
   return (
-    <div className={cardClassName(bare)}>
+    <div className={styles.card}>
       <div className={styles.number}>{count}</div>
       {showInlineLabel && <div className={styles.label}>{displayLabel}</div>}
       {showLink && <ViewLink onClick={navigateToCatalog}>View in catalog</ViewLink>}
@@ -212,14 +200,12 @@ const EntityCountMetric = ({
 const ProjectCountMetric = ({
   workspaceSlug,
   label,
-  bare,
   showInlineLabel,
   showLink,
   navigate
 }: {
   workspaceSlug: string;
   label?: string;
-  bare?: boolean;
   showInlineLabel?: boolean;
   showLink: boolean;
   navigate: ReturnType<typeof useNavigate>;
@@ -235,7 +221,7 @@ const ProjectCountMetric = ({
   }
 
   return (
-    <div className={cardClassName(bare)}>
+    <div className={styles.card}>
       <div className={styles.number}>{projects.length}</div>
       {showInlineLabel && <div className={styles.label}>{label ?? 'Projects'}</div>}
       {showLink && (
@@ -253,7 +239,6 @@ const ProjectDiagramCountMetric = ({
   workspaceSlug,
   projectId,
   label,
-  bare,
   showInlineLabel,
   showLink,
   navigate
@@ -261,7 +246,6 @@ const ProjectDiagramCountMetric = ({
   workspaceSlug: string;
   projectId: string;
   label?: string;
-  bare?: boolean;
   showInlineLabel?: boolean;
   showLink: boolean;
   navigate: ReturnType<typeof useNavigate>;
@@ -277,11 +261,13 @@ const ProjectDiagramCountMetric = ({
   }
 
   return (
-    <div className={cardClassName(bare)}>
+    <div className={styles.card}>
       <div className={styles.number}>{project.file_count}</div>
       {showInlineLabel && <div className={styles.label}>{label ?? 'Diagrams'}</div>}
       {showLink && (
-        <ViewLink onClick={() => navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)))}>
+        <ViewLink
+          onClick={() => navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)))}
+        >
           View diagrams
         </ViewLink>
       )}
@@ -292,14 +278,12 @@ const ProjectDiagramCountMetric = ({
 const DiagramCountMetric = ({
   workspaceSlug,
   label,
-  bare,
   showInlineLabel,
   showLink,
   navigate
 }: {
   workspaceSlug: string;
   label?: string;
-  bare?: boolean;
   showInlineLabel?: boolean;
   showLink: boolean;
   navigate: ReturnType<typeof useNavigate>;
@@ -317,11 +301,13 @@ const DiagramCountMetric = ({
   const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
 
   return (
-    <div className={cardClassName(bare)}>
+    <div className={styles.card}>
       <div className={styles.number}>{totalFiles}</div>
       {showInlineLabel && <div className={styles.label}>{label ?? 'Diagrams'}</div>}
       {showLink && (
-        <ViewLink onClick={() => navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } })}>
+        <ViewLink
+          onClick={() => navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } })}
+        >
           View diagrams
         </ViewLink>
       )}
@@ -332,14 +318,12 @@ const DiagramCountMetric = ({
 const CompletenessPercentMetric = ({
   workspaceSlug,
   label,
-  bare,
   showInlineLabel,
   showLink,
   navigate
 }: {
   workspaceSlug: string;
   label?: string;
-  bare?: boolean;
   showInlineLabel?: boolean;
   showLink: boolean;
   navigate: ReturnType<typeof useNavigate>;
@@ -359,11 +343,13 @@ const CompletenessPercentMetric = ({
   const percent = total > 0 ? Math.round((above80 / total) * 100) : 0;
 
   return (
-    <div className={cardClassName(bare)}>
+    <div className={styles.card}>
       <div className={styles.number}>{percent}%</div>
       {showInlineLabel && <div className={styles.label}>{label ?? 'Well documented'}</div>}
       {showLink && (
-        <ViewLink onClick={() => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } })}>
+        <ViewLink
+          onClick={() => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } })}
+        >
           View in catalog
         </ViewLink>
       )}

@@ -13,6 +13,5 @@ export const StatMetricWidget = ({ config }: Props) => (
     lifecycle={config.lifecycle}
     label={config.label}
     showLink={config.showLink}
-    bare
   />
 );

@@ -4,7 +4,11 @@ import type { TElement } from 'platejs';
  * What the metric counts. Absent (or `'entity-count'`) preserves the original
  * behavior: counting entities filtered by schema/owner/lifecycle.
  */
-export type MetricType = 'entity-count' | 'project-count' | 'diagram-count' | 'completeness-percent';
+export type MetricType =
+  | 'entity-count'
+  | 'project-count'
+  | 'diagram-count'
+  | 'completeness-percent';
 
 export interface MetricSlateElement extends TElement {
   schema?: string;

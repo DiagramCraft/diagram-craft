@@ -45,12 +45,6 @@
   overflow: hidden;
 }
 
-.sectionBare {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-}
-
 .cardLabel {
   font-size: 11px;
   color: var(--base-fg-more-dim);
@@ -99,6 +93,9 @@ div[data-frame="true"] {
     padding-top: 8px;
   }
   .section {
+    background: transparent;
+    border: none;
+    border-radius: 0;
     height: calc(100% - 4px);
   }
   .activityChartGroup {
