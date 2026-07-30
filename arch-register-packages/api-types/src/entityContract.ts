@@ -230,13 +230,20 @@ const timelineMarkerSchema = z.object({
   count: z.number().int().describe('Number of events on this date')
 });
 
+const timelineVersionSchema = entityVersionSchema.omit({ state: true });
+
+const timelineChangeCaseMemberSchema = changeCaseMemberSchema.omit({
+  base_state: true,
+  proposed_state: true
+});
+
 const timelineProjectChangeSchema = z.object({
   changeCase: changeCaseSummarySchema,
-  member: changeCaseMemberSchema
+  member: timelineChangeCaseMemberSchema
 });
 
 const timelineViewDataSchema = z.object({
-  versions: z.array(entityVersionSchema),
+  versions: z.array(timelineVersionSchema),
   projectChanges: z.array(timelineProjectChangeSchema)
 });
 
@@ -831,4 +838,6 @@ export type TimelineMarker = z.infer<typeof timelineMarkerSchema>;
 export type EntityQueryParseError = z.infer<typeof entityQueryParseErrorSchema>;
 export type EntityQueryParseResult = z.infer<typeof entityQueryParseResultSchema>;
 export type TimelineViewData = z.infer<typeof timelineViewDataSchema>;
+export type TimelineVersion = z.infer<typeof timelineVersionSchema>;
+export type TimelineChangeCaseMember = z.infer<typeof timelineChangeCaseMemberSchema>;
 export type TimelineProjectChange = z.infer<typeof timelineProjectChangeSchema>;

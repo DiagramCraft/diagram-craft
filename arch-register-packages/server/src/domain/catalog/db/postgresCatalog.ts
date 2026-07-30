@@ -580,12 +580,13 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async listEntityVersionsByIds(workspace: string, entityIds: string[]) {
     if (entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT v.*, u.display_name AS created_by_name
+      SELECT v.id, v.workspace, v.entity_id, v.version_number, v.kind, v.commit_message,
+        v.created_at, v.created_by, v.applied_case_revision_id, u.display_name AS created_by_name
       FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.entity_id = ANY(${entityIds})
       ORDER BY v.entity_id, v.created_at DESC
     `;
-    return mapDatabaseRows(rows, catalogMappers.entityVersion);
+    return mapDatabaseRows(rows, catalogMappers.entityVersionSummary);
   }
 
   async listEntityVersionsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {

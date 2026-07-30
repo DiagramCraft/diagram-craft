@@ -1,11 +1,17 @@
 import type { TimelineViewData } from '@arch-register/api-types/entityContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import type { EntityVersionSummaryDbResult } from './db/catalogDatabase';
 import { defineEntityOperation } from '../operation';
 import { PermissionChecker } from '@arch-register/permissions';
-import { serializeEntityVersion } from './entityVersionOperations';
 
 const checker = new PermissionChecker();
+
+const serializeTimelineVersion = (version: EntityVersionSummaryDbResult) => ({
+  ...version,
+  created_at: version.created_at.toISOString(),
+  created_by_name: version.created_by_name
+});
 
 export const getTimelineViewData = async (
   db: DatabaseAdapter,
@@ -44,7 +50,7 @@ export const getTimelineViewData = async (
       }
 
       for (const version of versions) {
-        result[version.entity_id]?.versions.push(serializeEntityVersion(version));
+        result[version.entity_id]?.versions.push(serializeTimelineVersion(version));
       }
 
       for (const change of changes) {
@@ -68,8 +74,6 @@ export const getTimelineViewData = async (
             id: change.member.id,
             entity_id: change.member.entity_id,
             base_version: change.member.base_version,
-            base_state: change.member.base_state,
-            proposed_state: change.member.proposed_state,
             applied_version_id: change.member.applied_version_id
           }
         });

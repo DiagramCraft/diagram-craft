@@ -12230,14 +12230,6 @@
                                 }
                               ],
                               "description": "Display name of creator"
-                            },
-                            "state": {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {},
-                              "description": "Entity state captured by this version"
                             }
                           },
                           "required": [
@@ -12249,8 +12241,7 @@
                             "commit_message",
                             "created_at",
                             "created_by",
-                            "created_by_name",
-                            "state"
+                            "created_by_name"
                           ]
                         }
                       },
@@ -12387,22 +12378,6 @@
                                   "type": "number",
                                   "description": "Entity version this member was planned against"
                                 },
-                                "base_state": {
-                                  "type": "object",
-                                  "propertyNames": {
-                                    "type": "string"
-                                  },
-                                  "additionalProperties": {},
-                                  "description": "Entity state at planning time"
-                                },
-                                "proposed_state": {
-                                  "type": "object",
-                                  "propertyNames": {
-                                    "type": "string"
-                                  },
-                                  "additionalProperties": {},
-                                  "description": "Proposed future state"
-                                },
                                 "applied_version_id": {
                                   "anyOf": [
                                     {
@@ -12419,8 +12394,6 @@
                                 "id",
                                 "entity_id",
                                 "base_version",
-                                "base_state",
-                                "proposed_state",
                                 "applied_version_id"
                               ]
                             }

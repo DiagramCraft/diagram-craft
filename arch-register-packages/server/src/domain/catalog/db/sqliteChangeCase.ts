@@ -103,8 +103,7 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
          c.closed_at AS case_closed_at, r.message AS revision_message,
          m.id AS member_id, m.revision_id AS member_revision_id,
          m.workspace AS member_workspace, m.entity_id AS member_entity_id,
-         m.base_version AS member_base_version, m.base_state AS member_base_state,
-         m.proposed_state AS member_proposed_state, m.diff AS member_diff,
+         m.base_version AS member_base_version,
          m.applied_version_id AS member_applied_version_id
        FROM entity_change_case c
        JOIN entity_change_case_revision r ON r.case_id = c.id
