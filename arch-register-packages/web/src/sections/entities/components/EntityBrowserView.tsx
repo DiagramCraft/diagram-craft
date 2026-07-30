@@ -179,6 +179,12 @@ export const EntityBrowserView = ({
           onConfigChange={onConfigChange}
           workspaceId={workspaceId}
           projects={projects}
+          projectId={projectId}
+          projectScope={projectScope}
+          q={q}
+          typeFilter={typeFilter}
+          ownerFilter={ownerFilter}
+          statusFilter={statusFilter}
           linkedEntityIds={linkedEntityIds}
           hideToolbar={hideToolbar}
         />

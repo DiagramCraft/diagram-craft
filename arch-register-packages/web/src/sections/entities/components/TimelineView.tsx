@@ -23,6 +23,7 @@ import {
   type TimelineColumnWidths
 } from '../../../components/timeline/timelineUtils';
 import {
+  buildContainmentParentNames,
   collectTimelineDates,
   getDatedTimelineRows,
   filterOwnTimelineVersions,
@@ -30,6 +31,7 @@ import {
   groupTimelineRows,
   groupChangeCaseEntriesByProject
 } from './timelineViewState';
+import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord, TimelineViewData } from '@arch-register/api-types/entityContract';
 import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
@@ -61,7 +63,7 @@ import {
 export type TimelineConfig = {
   startFieldId: string | null;
   endFieldId: string | null;
-  groupBy: 'owner' | 'type' | 'snapshot' | 'project';
+  groupBy: 'owner' | 'type' | 'snapshot' | 'project' | 'containment';
   zoom: 'month' | 'quarter' | 'year';
   showProjectLanes: boolean;
   showMilestones: boolean;
@@ -641,6 +643,7 @@ const ConfigBar = ({
       options={[
         { value: 'owner', label: 'By owner' },
         { value: 'type', label: 'By type' },
+        { value: 'containment', label: 'By parent' },
         { value: 'project', label: 'Project + Entity' },
         { value: 'snapshot', label: 'Entity + Project' }
       ]}
@@ -797,6 +800,12 @@ type TimelineViewProps = EntityBrowserRowViewProps & {
   onConfigChange: (cfg: TimelineConfig) => void;
   workspaceId: string;
   projects: Project[];
+  projectId?: string;
+  projectScope: 'project' | 'all';
+  q: string;
+  typeFilter: string | null;
+  ownerFilter: string | null;
+  statusFilter: string | null;
   hideToolbar?: boolean;
 };
 
@@ -809,6 +818,12 @@ export const TimelineView = ({
   onConfigChange,
   workspaceId,
   projects,
+  projectId,
+  projectScope,
+  q,
+  typeFilter,
+  ownerFilter,
+  statusFilter,
   linkedEntityIds,
   hideToolbar
 }: TimelineViewProps) => {
@@ -878,11 +893,26 @@ export const TimelineView = ({
     [rows, cfg.startFieldId, cfg.endFieldId]
   );
 
-  // Group by owner or type (not used in snapshot mode)
+  const { treeNodes, treeEdges } = useEntityBrowserTreeData({
+    workspaceId,
+    projectId,
+    projectScope,
+    q,
+    typeFilter,
+    ownerFilter,
+    statusFilter,
+    enabled: cfg.groupBy === 'containment'
+  });
+  const parentNameByUid = useMemo(
+    () => buildContainmentParentNames(treeNodes, treeEdges),
+    [treeNodes, treeEdges]
+  );
+
+  // Group by owner, type, or containment parent (not used in snapshot mode)
   const groups = useMemo(() => {
     if (cfg.groupBy === 'snapshot' || cfg.groupBy === 'project') return [];
-    return groupTimelineRows(datedRows, cfg.groupBy, schemaMap);
-  }, [datedRows, cfg.groupBy, schemaMap]);
+    return groupTimelineRows(datedRows, cfg.groupBy, schemaMap, parentNameByUid);
+  }, [datedRows, cfg.groupBy, schemaMap, parentNameByUid]);
 
   // Date range + columns
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {

@@ -1,8 +1,8 @@
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityRecord, TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
 import type { ChangeCaseMemberEntry } from './snapshotDisplay';
 
-export type TimelineGroupBy = 'owner' | 'type' | 'snapshot';
+export type TimelineGroupBy = 'owner' | 'type' | 'snapshot' | 'containment';
 
 export type TimelineSchemaEntry = {
   schema: { name: string };
@@ -66,17 +66,36 @@ export const getDatedTimelineRows = (
 export const groupTimelineRows = (
   rows: EntityRecord[],
   groupBy: Exclude<TimelineGroupBy, 'snapshot'>,
-  schemaMap: Map<string, TimelineSchemaEntry>
+  schemaMap: Map<string, TimelineSchemaEntry>,
+  parentNameByUid?: Map<string, string>
 ): [string, EntityRecord[]][] => {
   const groups: Record<string, EntityRecord[]> = {};
   for (const entity of rows) {
     const key =
       groupBy === 'type'
         ? (schemaMap.get(entity._schema.id)?.schema.name ?? entity._schema.id)
-        : (entity._owner?.name ?? 'Unassigned');
+        : groupBy === 'containment'
+          ? (parentNameByUid?.get(entity._uid) ?? 'No parent')
+          : (entity._owner?.name ?? 'Unassigned');
     (groups[key] ??= []).push(entity);
   }
   return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+};
+
+// Reverse-direction lookup over the same nodes/edges the tree and map views use: for each
+// child, resolve its containment parent's display name (falls back to nothing if the parent
+// isn't present in `nodes`, e.g. filtered out).
+export const buildContainmentParentNames = (
+  nodes: TreeNode[],
+  edges: TreeEdge[]
+): Map<string, string> => {
+  const nameByUid = new Map(nodes.map(n => [n._uid, n._name ?? n._slug]));
+  const parentNameByChildUid = new Map<string, string>();
+  for (const { childId, parentId } of edges) {
+    const parentName = nameByUid.get(parentId);
+    if (parentName) parentNameByChildUid.set(childId, parentName);
+  }
+  return parentNameByChildUid;
 };
 
 export const collectTimelineDates = (
