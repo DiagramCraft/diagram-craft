@@ -128,7 +128,8 @@
           available.
 
         - @id:ar.entity-views.timeline Users can inspect date-driven entity history and planned change context in a
-          timeline view.
+          condensed Entity + Project timeline with configurable project lanes, milestone guides, and autosave
+          snapshot visibility.
 
         - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view.
 

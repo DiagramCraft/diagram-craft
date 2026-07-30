@@ -1,5 +1,12 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { TbX, TbChevronRight, TbCalendarWeek, TbGitBranch } from 'react-icons/tb';
+import {
+  TbX,
+  TbChevronRight,
+  TbCalendarWeek,
+  TbGitBranch,
+  TbFlag,
+  TbHistory
+} from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { FilterDropdown } from '../../../components/FilterDropdown';
@@ -17,7 +24,7 @@ import {
 import {
   collectTimelineDates,
   getDatedTimelineRows,
-  getOwnTimelineVersions,
+  filterOwnTimelineVersions,
   getOwnVersionDisplayStatus,
   groupTimelineRows,
   groupChangeCaseEntriesByProject
@@ -55,6 +62,9 @@ export type TimelineConfig = {
   endFieldId: string | null;
   groupBy: 'owner' | 'type' | 'snapshot' | 'project';
   zoom: 'month' | 'quarter' | 'year';
+  showProjectLanes: boolean;
+  showMilestones: boolean;
+  showAutosaves: boolean;
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -150,6 +160,8 @@ type SnapBlockProps = {
   TODAY: Date;
   lifecycleStates: WorkspaceLifecycleState[];
   selectedSnapId: string | null;
+  showProjectLanes: boolean;
+  showAutosaves: boolean;
   onSnapSelect: (snap: TimelineDot | null, entity: EntityRecord) => void;
   onEntityClick: (entityId: string) => void;
   onBarClick: (entity: EntityRecord) => void;
@@ -171,6 +183,8 @@ const SnapBlock = ({
   TODAY,
   lifecycleStates,
   selectedSnapId,
+  showProjectLanes,
+  showAutosaves,
   onSnapSelect,
   onEntityClick,
   onBarClick
@@ -180,12 +194,12 @@ const SnapBlock = ({
 
   const ownDots = useMemo<TimelineDot[]>(
     () =>
-      getOwnTimelineVersions(versions).map(version => ({
+      filterOwnTimelineVersions(versions, showAutosaves).map(version => ({
         source: 'own',
         id: version.id,
         version
       })),
-    [versions]
+    [versions, showAutosaves]
   );
 
   const projectLanes = useMemo(() => {
@@ -260,11 +274,30 @@ const SnapBlock = ({
           )}
         </div>
         <div className={styles.barCell} style={{ width: totalWidth }}>
-          {projectFilterId != null ? (
+          {projectFilterId != null || !showProjectLanes ? (
             <>
               <div className={styles.snapBaseline} />
-              {projectSnapshots.map(snap => {
-                if (snap.source !== 'project') return null;
+              {[...projectSnapshots, ...(projectFilterId == null ? ownDots : [])].map(snap => {
+                if (snap.source === 'own') {
+                  const px = toPx(new Date(dotCreatedAt(snap)));
+                  const isSel = selectedSnapId === snap.id;
+                  const dotClass =
+                    dotStatus(snap) === 'saved_version'
+                      ? styles.snapDotSavedVersion
+                      : styles.snapDotAutosave;
+                  return (
+                    <div
+                      key={snap.id}
+                      className={`${styles.snapDot} ${dotClass} ${isSel ? styles.snapDotSelected : ''}`}
+                      style={{ left: px }}
+                      onClick={ev => {
+                        ev.stopPropagation();
+                        onSnapSelect(isSel ? null : snap, entity);
+                      }}
+                      title={dotCommitMessage(snap) ?? dotStatus(snap)}
+                    />
+                  );
+                }
                 const effectiveDate = getSnapshotEffectiveDate(
                   snap.entry.changeCase,
                   milestonesById
@@ -316,7 +349,7 @@ const SnapBlock = ({
       </div>
 
       {/* Own history lane */}
-      {projectFilterId == null && ownDots.length > 0 && (
+      {(projectFilterId != null || showProjectLanes) && ownDots.length > 0 && (
         <div className={`${styles.snapLane} ${styles.snapLaneOwn}`}>
           <div className={`${styles.labelCol} ${styles.snapLaneLabel}`}>
             <TbGitBranch size={10} style={{ color: 'var(--base-fg-more-dim)', flexShrink: 0 }} />
@@ -349,6 +382,7 @@ const SnapBlock = ({
 
       {/* Project lanes */}
       {projectFilterId == null &&
+        showProjectLanes &&
         visibleProjectLanes.map(({ projectId, dots }) => {
           const project = projects.find(p => p.id === projectId);
           if (!project) return null;
@@ -532,13 +566,15 @@ const ConfigBar = ({
   onChange,
   dateFields,
   totalDated,
-  totalRows
+  totalRows,
+  isSnapshotMode
 }: {
   cfg: TimelineConfig;
   onChange: (update: Partial<TimelineConfig>) => void;
   dateFields: FieldOption[];
   totalDated: number;
   totalRows: number;
+  isSnapshotMode: boolean;
 }) => (
   <div className={styles.configBar}>
     <span className={styles.configMeta}>Date mapping</span>
@@ -575,7 +611,7 @@ const ConfigBar = ({
         { value: 'owner', label: 'By owner' },
         { value: 'type', label: 'By type' },
         { value: 'project', label: 'Project + Entity' },
-        { value: 'snapshot', label: 'Entity + project' }
+        { value: 'snapshot', label: 'Entity + Project' }
       ]}
     />
 
@@ -594,6 +630,41 @@ const ConfigBar = ({
         </button>
       ))}
     </div>
+
+    {isSnapshotMode && (
+      <>
+        <div className={styles.configSep} />
+        {cfg.groupBy === 'snapshot' && (
+          <Button
+            size="sm"
+            variant={cfg.showProjectLanes ? 'primary' : 'secondary'}
+            icon={<TbGitBranch size={13} />}
+            title={cfg.showProjectLanes ? 'Hide project lanes' : 'Show project lanes'}
+            aria-label={cfg.showProjectLanes ? 'Hide project lanes' : 'Show project lanes'}
+            aria-pressed={cfg.showProjectLanes}
+            onClick={() => onChange({ showProjectLanes: !cfg.showProjectLanes })}
+          />
+        )}
+        <Button
+          size="sm"
+          variant={cfg.showMilestones ? 'primary' : 'secondary'}
+          icon={<TbFlag size={13} />}
+          title={cfg.showMilestones ? 'Hide milestones' : 'Show milestones'}
+          aria-label={cfg.showMilestones ? 'Hide milestones' : 'Show milestones'}
+          aria-pressed={cfg.showMilestones}
+          onClick={() => onChange({ showMilestones: !cfg.showMilestones })}
+        />
+        <Button
+          size="sm"
+          variant={cfg.showAutosaves ? 'primary' : 'secondary'}
+          icon={<TbHistory size={13} />}
+          title={cfg.showAutosaves ? 'Hide autosave snapshots' : 'Show autosave snapshots'}
+          aria-label={cfg.showAutosaves ? 'Hide autosave snapshots' : 'Show autosave snapshots'}
+          aria-pressed={cfg.showAutosaves}
+          onClick={() => onChange({ showAutosaves: !cfg.showAutosaves })}
+        />
+      </>
+    )}
 
     <div style={{ flex: 1 }} />
 
@@ -719,8 +790,11 @@ export const TimelineView = ({
     const defaults: TimelineConfig = {
       startFieldId: dateFields[0]?.id ?? null,
       endFieldId: dateFields[1]?.id ?? dateFields[0]?.id ?? null,
-      groupBy: 'owner',
-      zoom: 'quarter'
+      groupBy: 'snapshot',
+      zoom: 'quarter',
+      showProjectLanes: true,
+      showMilestones: true,
+      showAutosaves: true
     };
     return normalizeViewConfig(timelineViewConfigSchema, config, defaults);
   }, [config, dateFields]);
@@ -895,6 +969,8 @@ export const TimelineView = ({
       lifecycleStates={lifecycleStates}
       isLinked={linkedEntityIds == null || linkedEntityIdSet.has(entity._uid)}
       selectedSnapId={snapDetail?.snap.id ?? null}
+      showProjectLanes={cfg.showProjectLanes}
+      showAutosaves={cfg.showAutosaves}
       onSnapSelect={handleSnapSelect}
       onEntityClick={onEntityClick}
       onBarClick={handleBarClick}
@@ -910,6 +986,7 @@ export const TimelineView = ({
           dateFields={dateFields}
           totalDated={totalDated}
           totalRows={rows.length}
+          isSnapshotMode={isSnapshotMode}
         />
       )}
 
@@ -961,7 +1038,7 @@ export const TimelineView = ({
             )
           }
           overlayLines={
-            cfg.groupBy === 'snapshot'
+            cfg.showMilestones && cfg.groupBy === 'snapshot'
               ? visibleMilestoneMarkers.map(({ milestone, px }) => {
                   const projectName = projects.find(
                     project => project.id === milestone.project_id
@@ -985,7 +1062,7 @@ export const TimelineView = ({
               : null
           }
         >
-          {cfg.groupBy === 'snapshot' && milestoneMarkers.length > 0 && (
+          {cfg.showMilestones && cfg.groupBy === 'snapshot' && milestoneMarkers.length > 0 && (
             <div className={styles.milestoneLane}>
               <div className={styles.milestoneLaneCorner}>Milestones</div>
               <div className={styles.milestoneLaneTrack} style={{ width: totalWidth }} />
@@ -1103,25 +1180,26 @@ export const TimelineView = ({
           {cfg.groupBy === 'project'
             ? projectEntityGroups.map(({ project, entities }) => (
                 <div key={project.id} className={styles.projectGroup}>
-                  {visibleMilestoneMarkers
-                    .filter(({ milestone }) => milestone.project_id === project.id)
-                    .map(({ milestone, px }) => {
-                      const milestoneTitle = `${milestone.name} · ${project.name} (${milestone.target_date})`;
-                      return (
-                        <div
-                          key={milestone.id}
-                          role="img"
-                          className={styles.projectMilestoneLine}
-                          style={{ left: TL_LABEL_W + px }}
-                          title={milestoneTitle}
-                          aria-label={`Milestone: ${milestoneTitle}`}
-                        >
-                          <span className={styles.projectMilestoneLabel} title={milestoneTitle}>
-                            {milestone.name}
-                          </span>
-                        </div>
-                      );
-                    })}
+                  {cfg.showMilestones &&
+                    visibleMilestoneMarkers
+                      .filter(({ milestone }) => milestone.project_id === project.id)
+                      .map(({ milestone, px }) => {
+                        const milestoneTitle = `${milestone.name} · ${project.name} (${milestone.target_date})`;
+                        return (
+                          <div
+                            key={milestone.id}
+                            role="img"
+                            className={styles.projectMilestoneLine}
+                            style={{ left: TL_LABEL_W + px }}
+                            title={milestoneTitle}
+                            aria-label={`Milestone: ${milestoneTitle}`}
+                          >
+                            <span className={styles.projectMilestoneLabel} title={milestoneTitle}>
+                              {milestone.name}
+                            </span>
+                          </div>
+                        );
+                      })}
                   <div className={styles.groupRow}>
                     <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
                       {project.name}
