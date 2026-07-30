@@ -3,7 +3,7 @@ import { TbEdit, TbX } from 'react-icons/tb';
 import styles from './WidgetFrame.module.css';
 
 type Props = {
-  title: string;
+  title: ReactNode;
   icon?: ReactNode;
   children: ReactNode;
   onEdit?: () => void;

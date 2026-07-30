@@ -1,5 +1,5 @@
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import { getDashboardWidgetSpec } from '../markdown/mdx-components/mdxRegistry';
+import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
 
 export type KnownDashboardWidget = DashboardWidget & { config: Record<string, unknown> };
 

@@ -1,6 +1,6 @@
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrame } from './WidgetFrame';
-import { getDashboardWidgetSpec } from '../../markdown/mdx-components/mdxRegistry';
+import { getDashboardWidgetSpec } from '../dashboardWidgetRegistry';
 import { parseKnownDashboardWidget } from '../dashboardWidgetConfig';
 import { getWidgetTitle } from '../dashboardWidgetDefaults';
 
@@ -13,7 +13,15 @@ type Props = {
 export const DashboardWidgetRenderer = ({ widget, onEdit, onRemove }: Props) => {
   const knownWidget = parseKnownDashboardWidget(widget);
   const dashboardWidget = knownWidget ? getDashboardWidgetSpec(knownWidget.type) : undefined;
-  const title = knownWidget ? getWidgetTitle(knownWidget) : widget.type;
+  const title = knownWidget ? (
+    dashboardWidget?.titleComponent ? (
+      <dashboardWidget.titleComponent config={knownWidget.config} />
+    ) : (
+      getWidgetTitle(knownWidget)
+    )
+  ) : (
+    widget.type
+  );
   const Icon = dashboardWidget?.icon;
 
   return (

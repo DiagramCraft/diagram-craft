@@ -54,6 +54,8 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
      * `component` field, which takes flat string props authored in wiki markdown.
      */
     component: React.ComponentType<{ config: Config }>;
+    /** Optional live title renderer for widgets whose title comes from fetched data. */
+    titleComponent?: React.ComponentType<{ config: Config }>;
     /**
      * Structural validity AND save-completeness: also gates the dialog's Save
      * button, so this should reject configs missing required selections (e.g. an
@@ -70,7 +72,7 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
     configForm?: React.ComponentType<{
       config: Config;
       onChange: (config: Config) => void;
-      context: { workspaceSlug: string; projectId?: string };
+      context: { workspaceSlug: string; projectId?: string; surface: WidgetSurface };
     }>;
     /** WidgetConfigDialog width override; defaults to 460. */
     dialogWidth?: number | string;
