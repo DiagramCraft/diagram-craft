@@ -99,6 +99,7 @@ export const CaptionEditable = ({
       <figure className={`${styles.container} ${styles.editorContainer}`}>
         <div className={styles.body}>{children}</div>
         <figcaption contentEditable={false} className={styles.caption}>
+          {element.numbered && <span className={styles.figureLabel} />}
           {/*
             A native <textarea>, not a contentEditable div: Slate's own
             beforeinput handler intercepts any element whose resolved
