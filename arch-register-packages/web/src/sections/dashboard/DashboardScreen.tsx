@@ -12,6 +12,7 @@ import {
   useUpdatePersonalDashboard
 } from '../../hooks/useDashboard';
 import { DashboardGrid } from './DashboardGrid';
+import { MdxContext } from '../markdown/MdxContext';
 import { DEFAULT_SEEDED_WIDGETS } from './dashboardWidgetDefaults';
 import styles from './DashboardScreen.module.css';
 
@@ -76,16 +77,18 @@ export const DashboardScreen = () => {
         />
       </div>
 
-      <DashboardGrid
-        widgets={persistedWidgets}
-        canEdit={canEditActiveDashboard}
-        isEditing={isEditing}
-        onEditingChange={setIsEditing}
-        onSave={handleSave}
-        isLoading={isLoading || isPersonalLoading}
-        workspaceSlug={workspaceSlug}
-        surface="workspace"
-      />
+      <MdxContext.Provider value={{ workspaceSlug }}>
+        <DashboardGrid
+          widgets={persistedWidgets}
+          canEdit={canEditActiveDashboard}
+          isEditing={isEditing}
+          onEditingChange={setIsEditing}
+          onSave={handleSave}
+          isLoading={isLoading || isPersonalLoading}
+          workspaceSlug={workspaceSlug}
+          surface="workspace"
+        />
+      </MdxContext.Provider>
     </div>
   );
 };

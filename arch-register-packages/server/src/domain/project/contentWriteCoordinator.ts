@@ -25,10 +25,14 @@ type ContentWriteOptions<T> = {
   afterCommit?: readonly ContentWriteStage[];
 };
 
-const errorDetails = (error: unknown) =>
-  error instanceof Error
-    ? { name: error.name, message: error.message }
-    : { message: String(error) };
+const errorDetails = (error: unknown): Record<string, unknown> => {
+  if (!(error instanceof Error)) return { message: String(error) };
+  const details: Record<string, unknown> = { name: error.name, message: error.message };
+  if ('code' in error) details.code = (error as { code: unknown }).code;
+  if ('details' in error) details.details = (error as { details: unknown }).details;
+  if (error.cause) details.cause = errorDetails(error.cause);
+  return details;
+};
 
 const reportFailure = (
   level: 'warn' | 'error',
