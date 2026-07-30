@@ -109,7 +109,11 @@ export const useEntityDependents = (workspaceId: string, entityId: string, trans
 };
 
 // Hook for fetching entity tree
-export const useEntityTree = (workspaceId: string, options: EntityListOptions = {}) => {
+export const useEntityTree = (
+  workspaceId: string,
+  options: EntityListOptions = {},
+  enabled = true
+) => {
   return useQuery({
     queryKey: entityKeys.tree(workspaceId, options),
     queryFn: () =>
@@ -117,7 +121,7 @@ export const useEntityTree = (workspaceId: string, options: EntityListOptions = 
         params: { workspace: workspaceId },
         query: toEntityListQuery(options)
       }),
-    enabled: !!workspaceId
+    enabled: enabled && !!workspaceId
   });
 };
 

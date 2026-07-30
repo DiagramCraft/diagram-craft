@@ -3,7 +3,9 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
 import type { ChangeCase, ChangeCaseMember } from '@arch-register/api-types/changeCaseContract';
 import type { ChangeCaseMemberEntry } from './snapshotDisplay';
+import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 import {
+  buildContainmentParentNames,
   collectTimelineDates,
   filterOwnTimelineVersions,
   getDatedTimelineRows,
@@ -81,5 +83,28 @@ describe('timeline view state', () => {
         date.toISOString()
       )
     ).toEqual(['2024-02-01T00:00:00.000Z', '2024-01-01T00:00:00.000Z', '2020-01-01T00:00:00.000Z']);
+  });
+
+  it('groups rows by containment parent, falling back to "No parent"', () => {
+    const rows = [entity('a'), entity('b')];
+    const parentNameByUid = new Map([['a', 'Parent Service']]);
+    expect(groupTimelineRows(rows, 'containment', new Map(), parentNameByUid)).toEqual([
+      ['No parent', [rows[1]]],
+      ['Parent Service', [rows[0]]]
+    ]);
+  });
+
+  it('builds a child-uid to parent-name map from tree nodes and edges', () => {
+    const nodes = [
+      { _uid: 'parent', _name: 'Parent Service', _slug: 'parent-service' },
+      { _uid: 'child', _name: 'Child Service', _slug: 'child-service' }
+    ] as unknown as TreeNode[];
+    const edges: TreeEdge[] = [
+      { childId: 'child', parentId: 'parent' },
+      { childId: 'orphan', parentId: 'missing' }
+    ];
+    expect(buildContainmentParentNames(nodes, edges)).toEqual(
+      new Map([['child', 'Parent Service']])
+    );
   });
 });
