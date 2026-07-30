@@ -42522,7 +42522,8 @@
                                       "owner",
                                       "type",
                                       "snapshot",
-                                      "project"
+                                      "project",
+                                      "containment"
                                     ],
                                     "type": "string",
                                     "description": "Timeline grouping mode"
@@ -43951,7 +43952,8 @@
                                   "owner",
                                   "type",
                                   "snapshot",
-                                  "project"
+                                  "project",
+                                  "containment"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -45490,7 +45492,8 @@
                                     "owner",
                                     "type",
                                     "snapshot",
-                                    "project"
+                                    "project",
+                                    "containment"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
@@ -46910,7 +46913,8 @@
                                   "owner",
                                   "type",
                                   "snapshot",
-                                  "project"
+                                  "project",
+                                  "containment"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -48444,7 +48448,8 @@
                                     "owner",
                                     "type",
                                     "snapshot",
-                                    "project"
+                                    "project",
+                                    "containment"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
