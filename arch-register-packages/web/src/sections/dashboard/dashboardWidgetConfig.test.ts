@@ -33,6 +33,34 @@ describe('parseKnownDashboardWidget', () => {
     expect(widget?.config).toEqual({ title: 'Notes', markdown: '# Heading\n\nBody' });
   });
 
+  it('parses a wiki page widget with a selected page', () => {
+    const widget = parseKnownDashboardWidget({
+      id: 'wiki-page',
+      type: 'wiki-page',
+      config: { nodeId: 'wiki-1' },
+      x: 0,
+      y: 0,
+      w: 6,
+      h: 6
+    });
+
+    expect(widget?.type).toBe('wiki-page');
+  });
+
+  it('rejects a wiki page widget without a selected page', () => {
+    expect(
+      parseKnownDashboardWidget({
+        id: 'wiki-page',
+        type: 'wiki-page',
+        config: { nodeId: '' },
+        x: 0,
+        y: 0,
+        w: 6,
+        h: 6
+      })
+    ).toBeNull();
+  });
+
   it('rejects a Markdown widget without string title or content', () => {
     expect(
       parseKnownDashboardWidget({

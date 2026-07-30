@@ -4,7 +4,8 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import { createDefaultWidget, type WidgetSurface } from './dashboardWidgetDefaults';
-import { getDashboardWidgetSpecs } from '../markdown/mdx-components/mdxRegistry';
+import { getDashboardWidgetSpecs } from './dashboardWidgetRegistry';
+import { WikiPagePicker } from './widgets/WikiPagePicker';
 import styles from './WidgetPickerDialog.module.css';
 
 type Props = {
@@ -26,6 +27,7 @@ export const WidgetPickerDialog = ({
 }: Props) => {
   const [pendingType, setPendingType] = useState<string | null>(null);
   const [selectedViewId, setSelectedViewId] = useState('');
+  const [selectedWikiPageId, setSelectedWikiPageId] = useState('');
 
   const { projectId } = useMdxContext();
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
@@ -37,11 +39,16 @@ export const WidgetPickerDialog = ({
   const handleClose = () => {
     setPendingType(null);
     setSelectedViewId('');
+    setSelectedWikiPageId('');
     onClose();
   };
 
   const handlePick = (type: string) => {
     if (type === 'EntityViewEmbed') {
+      setPendingType(type);
+      return;
+    }
+    if (type === 'wiki-page') {
       setPendingType(type);
       return;
     }
@@ -55,6 +62,17 @@ export const WidgetPickerDialog = ({
     handleClose();
   };
 
+  const handleConfirmWikiPage = () => {
+    if (!selectedWikiPageId) return;
+    onAdd({
+      ...createDefaultWidget('wiki-page', widgets),
+      config: { nodeId: selectedWikiPageId }
+    });
+    handleClose();
+  };
+
+  const isSelectingWikiPage = pendingType === 'wiki-page';
+
   return (
     <Dialog
       open={open}
@@ -62,14 +80,14 @@ export const WidgetPickerDialog = ({
       title="Add widget"
       width={420}
       buttons={
-        pendingType === 'EntityViewEmbed'
+        pendingType === 'EntityViewEmbed' || isSelectingWikiPage
           ? [
               { label: 'Cancel', type: 'cancel', onClick: handleClose },
               {
                 label: 'Add',
                 type: 'default',
-                disabled: !selectedViewId,
-                onClick: handleConfirmSavedView
+                disabled: isSelectingWikiPage ? !selectedWikiPageId : !selectedViewId,
+                onClick: isSelectingWikiPage ? handleConfirmWikiPage : handleConfirmSavedView
               }
             ]
           : [{ label: 'Cancel', type: 'cancel', onClick: handleClose }]
@@ -89,6 +107,16 @@ export const WidgetPickerDialog = ({
               </option>
             ))}
           </select>
+        </div>
+      ) : isSelectingWikiPage ? (
+        <div className={styles.viewPicker}>
+          <WikiPagePicker
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            surface={surface}
+            value={selectedWikiPageId}
+            onChange={setSelectedWikiPageId}
+          />
         </div>
       ) : (
         <div className={styles.list}>

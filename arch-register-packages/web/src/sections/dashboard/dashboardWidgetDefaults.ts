@@ -1,5 +1,5 @@
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import { getDashboardWidgetSpec } from '../markdown/mdx-components/mdxRegistry';
+import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
 import type { KnownDashboardWidget } from './dashboardWidgetConfig';
 
 export type { WidgetSurface } from '../markdown/mdx-components/types';

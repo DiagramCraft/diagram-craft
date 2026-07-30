@@ -120,7 +120,9 @@ export const DashboardGrid = ({
         <LoadingState text="Loading dashboard…" />
       ) : (
         <div className={styles.gridContainer} ref={setGridContainerEl}>
-          <MdxContext.Provider value={{ ...ambientMdxContext, renderMode: 'dashboard' }}>
+          <MdxContext.Provider
+            value={{ ...ambientMdxContext, renderMode: 'dashboard', dashboardSurface: surface }}
+          >
             <ReactGridLayout
               width={width}
               cols={GRID_COLS}
@@ -173,6 +175,7 @@ export const DashboardGrid = ({
           widget={editingWidget}
           open={editingWidget !== null}
           workspaceSlug={workspaceSlug}
+          surface={surface}
           onClose={() => setEditingWidgetId(null)}
           onSave={updated => {
             setLocalWidgets(current => current.map(w => (w.id === updated.id ? updated : w)));

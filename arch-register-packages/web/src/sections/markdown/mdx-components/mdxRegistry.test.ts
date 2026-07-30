@@ -33,6 +33,10 @@ describe('getMdxSpecsForSurface', () => {
     expect(dashboard['Callout']).toBeUndefined();
   });
 
+  it('keeps the dashboard-only wiki page widget out of wiki rendering', () => {
+    expect(getMdxSpecsForSurface('wiki')['wiki-page']).toBeUndefined();
+  });
+
   it('never returns more entries than the full registry', () => {
     expect(Object.keys(getMdxSpecsForSurface('wiki')).length).toBeLessThanOrEqual(
       Object.keys(MDX_COMPONENTS).length

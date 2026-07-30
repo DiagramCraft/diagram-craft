@@ -2,20 +2,29 @@ import { useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { DashboardWidgetSpec } from '../markdown/mdx-components/types';
+import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { useMdxContext } from '../markdown/MdxContext';
-import { getDashboardWidgetSpec } from '../markdown/mdx-components/mdxRegistry';
+import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
 import styles from './WidgetConfigDialog.module.css';
 
 type Props = {
   widget: DashboardWidget | null;
   open: boolean;
   workspaceSlug: string;
+  surface?: WidgetSurface;
   onClose: () => void;
   onSave: (widget: DashboardWidget) => void;
 };
 
-export const WidgetConfigDialog = ({ widget, open, workspaceSlug, onClose, onSave }: Props) => {
+export const WidgetConfigDialog = ({
+  widget,
+  open,
+  workspaceSlug,
+  surface = 'workspace',
+  onClose,
+  onSave
+}: Props) => {
   if (!widget) return null;
   const spec = getDashboardWidgetSpec(widget.type);
   if (!spec) return null;
@@ -27,6 +36,7 @@ export const WidgetConfigDialog = ({ widget, open, workspaceSlug, onClose, onSav
       spec={spec}
       open={open}
       workspaceSlug={workspaceSlug}
+      surface={surface}
       onClose={onClose}
       onSave={onSave}
     />
@@ -38,9 +48,10 @@ const WidgetConfigDialogContent = ({
   spec,
   open,
   workspaceSlug,
+  surface,
   onClose,
   onSave
-}: Props & { widget: DashboardWidget; spec: DashboardWidgetSpec }) => {
+}: Props & { widget: DashboardWidget; spec: DashboardWidgetSpec; surface: WidgetSurface }) => {
   const { projectId } = useMdxContext();
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config);
 
@@ -68,7 +79,7 @@ const WidgetConfigDialogContent = ({
           <ConfigForm
             config={config}
             onChange={setConfig}
-            context={{ mode: 'dashboard', workspaceSlug, projectId }}
+            context={{ mode: 'dashboard', workspaceSlug, projectId, surface }}
           />
         ) : (
           <DialogSection label="Options" required={false}>

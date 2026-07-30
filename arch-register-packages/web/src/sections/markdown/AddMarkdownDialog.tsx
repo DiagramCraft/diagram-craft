@@ -35,7 +35,7 @@ export const AddMarkdownDialog = ({
   isPending
 }: AddMarkdownDialogProps) => {
   const [name, setName] = useState('');
-  const [documentTypeId, setDocumentTypeId] = useState('');
+  const [documentTypeId, setDocumentTypeId] = useState<string | null>(null);
   const [templateId, setTemplateId] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
@@ -59,7 +59,7 @@ export const AddMarkdownDialog = ({
   useEffect(() => {
     if (open) {
       setName('');
-      setDocumentTypeId('');
+      setDocumentTypeId(null);
       setTemplateId('');
       setError('');
     }
@@ -75,7 +75,7 @@ export const AddMarkdownDialog = ({
     if (onOpenDraft) {
       onOpenDraft({
         name: trimmed,
-        documentTypeId: documentTypeId ?? null,
+        documentTypeId,
         templateId: templateId ?? null
       });
       onClose();
@@ -94,7 +94,7 @@ export const AddMarkdownDialog = ({
     }
   };
 
-  const handleDocumentTypeChange = (nextTypeId: string) => {
+  const handleDocumentTypeChange = (nextTypeId: string | null) => {
     setDocumentTypeId(nextTypeId);
     if (
       templateId &&
@@ -135,7 +135,7 @@ export const AddMarkdownDialog = ({
           <Select.Root
             value={documentTypeId ?? '__untyped__'}
             onChange={value =>
-              handleDocumentTypeChange(value === '__untyped__' ? '' : (value ?? ''))
+              handleDocumentTypeChange(value === '__untyped__' ? null : (value ?? null))
             }
             disabled={documentTypesLoading || isPending}
             style={{ width: '100%' }}
