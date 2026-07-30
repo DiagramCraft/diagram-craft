@@ -42,7 +42,7 @@ export const WidgetFrame = ({ title, icon, children, onEdit, onRemove }: Props) 
         </div>
       )}
     </div>
-    <div className={styles.body} data-widget={'true'}>
+    <div className={styles.body} data-frame={'true'}>
       <div className={styles.innerBody}>{children}</div>
     </div>
   </div>

@@ -44,11 +44,13 @@
 }
 
 .body {
-  padding: 8px 10px;
+  --_frame-top-padding: 8px;
+  --_frame-left-padding: 10px;
+  padding: var(--_frame-top-padding) var(--_frame-left-padding);
   flex: 1;
   min-height: 0;
   container-type: inline-size;
-  container-name: widget;
+  container-name: frame;
   overflow: auto;
 }
 

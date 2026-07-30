@@ -81,8 +81,8 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
-div[data-widget="true"] {
-  @container widget (max-width: 320px) {
+div[data-frame="true"] {
+  @container frame (max-width: 320px) {
     .trendRange {
       display: none;
     }
@@ -96,15 +96,13 @@ div[data-widget="true"] {
   }
   .activityChart {
     height: 100%;
+    padding-top: 8px;
   }
   .section {
     height: calc(100% - 4px);
   }
-  fieldset {
+  .activityChartGroup {
     height: calc(100% - 20px);
-  }
-  .activityChart {
-    padding-top: 8px;
   }
   .trendRange {
     padding-left: 0;

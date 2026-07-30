@@ -20,11 +20,11 @@
   color: var(--cmp-fg-disabled);
 }
 
-div[data-widget="true"] .activityRow {
+div[data-frame="true"] .activityRow {
   padding: 6px 0;
 }
 
-@container widget (max-width: 320px) {
+@container frame (max-width: 320px) {
   .activityWho,
   .activityType {
     display: none;

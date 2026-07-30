@@ -28,7 +28,7 @@
 }
 
 /* Shrink the number in narrow dashboard widget allocations. See docs/internal/dashboard-widgets.md. */
-@container widget (max-width: 220px) {
+@container frame (max-width: 220px) {
   .card .number,
   .cardBare .number {
     font-size: 28px;
