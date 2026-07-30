@@ -6,7 +6,7 @@ import {
   WORKSPACE,
   dashboardWidget,
   createStoryQueryClient
-} from '../StorybookHarness';
+} from '../../blocks/StorybookHarness';
 import { workspaceAnalyticsKeys } from '../../../../../queries/workspaceAnalytics';
 
 const staleAfterDays = 90;

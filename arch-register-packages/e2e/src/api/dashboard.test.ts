@@ -23,7 +23,7 @@ test.describe('Workspace Dashboard API', () => {
     const widgets = [
       {
         id: 'entities',
-        type: 'EntityMetric' as const,
+        type: 'Metric' as const,
         x: 0,
         y: 0,
         w: 3,
@@ -111,7 +111,7 @@ test.describe('Workspace Dashboard API', () => {
     const widgets = [
       {
         id: 'metric',
-        type: 'EntityMetric' as const,
+        type: 'Metric' as const,
         x: 0,
         y: 0,
         w: 3,

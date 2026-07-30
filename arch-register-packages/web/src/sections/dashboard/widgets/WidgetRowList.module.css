@@ -8,10 +8,14 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 8px;
+  padding: 3px 0;
   border-radius: var(--r);
   font-size: 12px;
   text-align: left;
+
+  &:first-of-type {
+    padding-top: 0;
+  }
 }
 
 .row:hover {
@@ -39,6 +43,6 @@
 }
 
 .emptyInline {
-  padding: 8px;
+  padding: 0;
   font-size: 12px;
 }

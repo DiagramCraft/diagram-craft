@@ -16,6 +16,20 @@
   border-radius: var(--r);
   font-size: 12px;
 }
+.activityType {
+  color: var(--cmp-fg-disabled);
+}
+
+div[data-widget="true"] .activityRow {
+  padding: 6px 0;
+}
+
+@container widget (max-width: 320px) {
+  .activityWho,
+  .activityType {
+    display: none;
+  }
+}
 
 .activityRow:hover {
   background: var(--cmp-bg);

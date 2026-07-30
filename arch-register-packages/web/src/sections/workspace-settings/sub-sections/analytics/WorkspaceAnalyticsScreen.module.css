@@ -81,6 +81,37 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
+div[data-widget="true"] {
+  @container widget (max-width: 320px) {
+    .trendRange {
+      display: none;
+    }
+  }
+  .sectionHead {
+    display: none;
+  }
+  .trendControls,
+  .activityChart {
+    padding: 0;
+  }
+  .activityChart {
+    height: 100%;
+  }
+  .section {
+    height: calc(100% - 4px);
+  }
+  fieldset {
+    height: calc(100% - 20px);
+  }
+  .activityChart {
+    padding-top: 8px;
+  }
+  .trendRange {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 .sectionTitle {
   font-size: 13.5px;
   font-weight: 500;

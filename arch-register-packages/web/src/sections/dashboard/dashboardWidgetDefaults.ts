@@ -34,7 +34,7 @@ export const createDefaultWidget = (
 export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
   {
     id: 'default-entity-count',
-    type: 'EntityMetric',
+    type: 'Metric',
     config: { metricType: 'entity-count' },
     x: 0,
     y: 0,
@@ -43,7 +43,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
   },
   {
     id: 'default-project-count',
-    type: 'EntityMetric',
+    type: 'Metric',
     config: { metricType: 'project-count' },
     x: 3,
     y: 0,
@@ -52,7 +52,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
   },
   {
     id: 'default-diagram-count',
-    type: 'EntityMetric',
+    type: 'Metric',
     config: { metricType: 'diagram-count' },
     x: 6,
     y: 0,
@@ -61,7 +61,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
   },
   {
     id: 'default-completeness-percent',
-    type: 'EntityMetric',
+    type: 'Metric',
     config: { metricType: 'completeness-percent' },
     x: 9,
     y: 0,

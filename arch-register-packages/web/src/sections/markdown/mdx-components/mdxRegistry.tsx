@@ -10,8 +10,8 @@ import { ENTITY_CHANGELOG_TYPE } from './blocks/entity-changelog/EntityChangelog
 import { entityChangelogSpec } from './blocks/entity-changelog/EntityChangelogRegistration';
 import { ENTITY_CHART_TYPE } from './blocks/entity-chart/EntityChartEditable';
 import { entityChartSpec } from './blocks/entity-chart/EntityChartRegistration';
-import { ENTITY_METRIC_TYPE } from './blocks/entity-metric/EntityMetricEditable';
-import { entityMetricSpec } from './blocks/entity-metric/EntityMetricRegistration';
+import { METRIC_TYPE } from './blocks/metric/MetricEditable';
+import { metricSpec } from './blocks/metric/MetricRegistration';
 import { ENTITY_TABLE_TYPE } from './blocks/entity-table/EntityTableEditable';
 import { entityTableSpec } from './blocks/entity-table/EntityTableRegistration';
 import { ENTITY_VIEW_EMBED_TYPE } from './blocks/entity-view-embed/EntityViewEmbedEditable';
@@ -45,15 +45,15 @@ import { tabSpec } from './blocks/tabs/TabRegistration';
 import {
   ENTITY_LIFECYCLE_CHART_TYPE,
   entityLifecycleChartSpec
-} from './blocks/entity-lifecycle-chart/EntityLifecycleChartRegistration';
+} from './widgets/entity-lifecycle-chart/EntityLifecycleChartRegistration';
 import {
   ENTITY_ACTIVITY_TREND_CHART_TYPE,
   entityActivityTrendChartSpec
-} from './blocks/entity-activity-trend-chart/EntityActivityTrendChartRegistration';
+} from './widgets/entity-activity-trend-chart/EntityActivityTrendChartRegistration';
 import {
   ENTITY_STALE_REPORT_TYPE,
   entityStaleReportSpec
-} from './blocks/entity-stale-report/EntityStaleReportRegistration';
+} from './widgets/entity-stale-report/EntityStaleReportRegistration';
 import {
   ACTIVITY_FEED_TYPE,
   activityFeedSpec
@@ -80,7 +80,7 @@ export const MDX_COMPONENTS = {
   [ENTITY_CARD_TYPE]: entityCardSpec,
   [ENTITY_CHANGELOG_TYPE]: entityChangelogSpec,
   [ENTITY_CHART_TYPE]: entityChartSpec,
-  [ENTITY_METRIC_TYPE]: entityMetricSpec,
+  [METRIC_TYPE]: metricSpec,
   [ENTITY_TABLE_TYPE]: entityTableSpec,
   [ENTITY_VIEW_EMBED_TYPE]: entityViewEmbedSpec,
   [ENTITY_GRAPH_TYPE]: entityGraphSpec,

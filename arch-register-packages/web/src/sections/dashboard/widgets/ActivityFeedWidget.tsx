@@ -76,7 +76,10 @@ export const ActivityFeedWidget = ({ config }: Props) => {
             </span>
             <span className="dim"> {OPERATION_LABELS[entry.operation]} </span>
             <span className={styles.activityTarget}>{entry.entity_name}</span>
-            <span className="dim"> &middot; {ENTITY_TYPE_LABELS[entry.entity_type]}</span>
+            <span className={styles.activityType}>
+              {' '}
+              &middot; {ENTITY_TYPE_LABELS[entry.entity_type]}
+            </span>
             <span className={styles.activityTime}>{formatRelativeTime(entry.timestamp)}</span>
           </button>
         ))

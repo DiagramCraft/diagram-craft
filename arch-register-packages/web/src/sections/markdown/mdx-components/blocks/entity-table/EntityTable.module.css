@@ -28,6 +28,14 @@
   margin: 0 0 var(--article-block-gap);
 }
 
+div[data-widget="true"] .tableWrapper {
+  margin: -8px -10px;
+  border-radius: 0;
+  & > div {
+    border: 0;
+  }
+}
+
 .tableWrapper .tableSurface {
   border: none;
   border-radius: 0;
