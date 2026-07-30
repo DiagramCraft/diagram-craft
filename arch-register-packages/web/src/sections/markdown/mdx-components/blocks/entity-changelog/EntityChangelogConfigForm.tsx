@@ -7,7 +7,7 @@ import {
 import { DialogSection } from '../../../editor/BlockDialog';
 import { useEntity } from '../../../../../hooks/useEntities';
 import type { EntityChangelogWidgetConfig } from './types';
-import styles from './EntityChangelogDialog.module.css';
+import styles from './EntityChangelogConfigForm.module.css';
 
 type Mode = 'single' | 'filtered';
 
@@ -52,7 +52,7 @@ type Props = {
   context: { workspaceSlug: string };
 };
 
-export const EntityChangelogDashboardConfigForm = ({ config, onChange, context }: Props) => {
+export const EntityChangelogConfigForm = ({ config, onChange, context }: Props) => {
   const [mode, setMode] = useState<Mode>(config.entityId ? 'single' : 'filtered');
   const [entityId, setEntityId] = useState(config.entityId ?? '');
   const [filter, setFilter] = useState<EntityFilterValue>({

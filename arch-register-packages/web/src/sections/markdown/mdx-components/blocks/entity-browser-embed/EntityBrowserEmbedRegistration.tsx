@@ -7,7 +7,7 @@ import {
   EntityBrowserEmbedEditable,
   entityBrowserEmbedMdxRule
 } from './EntityBrowserEmbedEditable';
-import { EntityBrowserEmbedDashboardConfigForm } from './EntityBrowserEmbedDashboardConfigForm';
+import { EntityBrowserEmbedConfigForm } from './EntityBrowserEmbedConfigForm';
 import type { EntityBrowserEmbedSlateElement } from './types';
 import type { EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 
@@ -47,7 +47,7 @@ export const entityBrowserEmbedSpec = defineMdxComponent<
       viewConfigs: {}
     }),
     getTitle: () => 'Entity browser',
-    configForm: EntityBrowserEmbedDashboardConfigForm,
+    configForm: EntityBrowserEmbedConfigForm,
     dialogWidth: 'min(1200px, 92vw)'
   },
   editorSpec: {

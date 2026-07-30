@@ -79,7 +79,7 @@ const WidgetConfigDialogContent = ({
           <ConfigForm
             config={config}
             onChange={setConfig}
-            context={{ workspaceSlug, projectId, surface }}
+            context={{ mode: 'dashboard', workspaceSlug, projectId, surface }}
           />
         ) : (
           <DialogSection label="Options" required={false}>

@@ -60,4 +60,9 @@ textarea.captionText:focus {
 
 .figureLabel {
   font-weight: 600;
+  counter-increment: figure-counter;
+}
+
+.figureLabel::before {
+  content: "Figure " counter(figure-counter) ": ";
 }

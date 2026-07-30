@@ -27,6 +27,14 @@
   color: var(--base-fg);
 }
 
+/* Shrink the number in narrow dashboard widget allocations. See docs/internal/dashboard-widgets.md. */
+@container widget (max-width: 220px) {
+  .card .number,
+  .cardBare .number {
+    font-size: 28px;
+  }
+}
+
 .label {
   font-size: 13px;
   color: var(--base-fg-dim);

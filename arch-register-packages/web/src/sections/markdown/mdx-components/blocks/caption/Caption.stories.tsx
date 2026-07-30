@@ -53,3 +53,18 @@ export const WikiWithoutCaption: Story = {
     </StoryProviders>
   )
 };
+
+export const WikiNumberedSequence: Story = {
+  render: () => (
+    <StoryProviders>
+      <div style={{ counterReset: 'figure-counter' }}>
+        <Caption caption="Request flow across the platform" numbered="true">
+          {architectureDiagram}
+        </Caption>
+        <Caption caption="Deployment topology" numbered="true">
+          {architectureDiagram}
+        </Caption>
+      </div>
+    </StoryProviders>
+  )
+};

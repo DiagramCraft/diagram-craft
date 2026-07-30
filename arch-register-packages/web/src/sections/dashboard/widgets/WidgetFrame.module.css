@@ -47,6 +47,8 @@
   padding: 8px;
   flex: 1;
   min-height: 0;
+  container-type: inline-size;
+  container-name: widget;
 }
 
 .controls {

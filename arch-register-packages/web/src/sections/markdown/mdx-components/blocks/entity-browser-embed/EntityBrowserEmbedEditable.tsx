@@ -4,8 +4,14 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbListSearch } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
+import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
-import { EntityBrowserEmbedDialog } from './EntityBrowserEmbedDialog';
+import { EntityBrowserEmbedConfigForm } from './EntityBrowserEmbedConfigForm';
+import {
+  decodeEntityBrowserEmbedConfig,
+  encodeEntityBrowserEmbedConfig,
+  type EntityBrowserEmbedConfig
+} from './EntityBrowserEmbedCodec';
 import type { EntityBrowserEmbedSlateElement } from './types';
 
 export const ENTITY_BROWSER_EMBED_TYPE = 'EntityBrowserEmbed' as const;
@@ -34,6 +40,28 @@ export const entityBrowserEmbedMdxRule: MdxRuleDef<EntityBrowserEmbedSlateElemen
   })
 };
 
+const emptyConfig = (context: { projectId?: string }): EntityBrowserEmbedConfig => ({
+  q: '',
+  conditions: [],
+  sort: 'name',
+  view: 'table',
+  viewConfigs: {},
+  projectScope: context.projectId ? 'project' : 'all'
+});
+
+export const entityBrowserEmbedMdxConfigSpec: MdxConfigSpec<
+  EntityBrowserEmbedSlateElement,
+  EntityBrowserEmbedConfig
+> = {
+  title: 'Entity browser',
+  width: 'min(1200px, 92vw)',
+  fromElement: el => decodeEntityBrowserEmbedConfig(el.config) ?? emptyConfig({}),
+  toElement: config => ({ config: encodeEntityBrowserEmbedConfig(config) }),
+  defaultConfig: emptyConfig,
+  isValidConfig: () => true,
+  ConfigForm: EntityBrowserEmbedConfigForm
+};
+
 export const EntityBrowserEmbedEditable = ({
   element,
   children,
@@ -55,11 +83,12 @@ export const EntityBrowserEmbedEditable = ({
       }
       content={<EntityBrowserEmbed config={config === '' ? undefined : config} />}
       dialog={(open, onClose) => (
-        <EntityBrowserEmbedDialog
+        <MdxWidgetConfigDialog
           element={element}
           open={open}
           onClose={onClose}
           isNew={!hasValue}
+          spec={entityBrowserEmbedMdxConfigSpec}
         />
       )}
       {...props}

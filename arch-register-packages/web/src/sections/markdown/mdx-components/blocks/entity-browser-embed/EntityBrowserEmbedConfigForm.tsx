@@ -16,15 +16,16 @@ import {
   withDisplayFieldIds,
   withoutDisplayFieldIds
 } from '../../../../entities/components/entityDisplayFields';
-import styles from './EntityBrowserEmbedDialog.module.css';
+import styles from './EntityBrowserEmbedConfigForm.module.css';
 
 type Props = {
-  projectId?: string;
-  initialConfig: EntityBrowserEmbedConfig | null;
+  config: EntityBrowserEmbedConfig;
   onChange: (config: EntityBrowserEmbedConfig) => void;
+  context: { projectId?: string };
 };
 
-export const EntityBrowserEmbedConfigForm = ({ projectId, initialConfig, onChange }: Props) => {
+export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Props) => {
+  const { projectId } = context;
   const { workspaceSlug, schemas, enums, lifecycleStates, projects } = useWorkspaceContext();
 
   const {
@@ -46,16 +47,14 @@ export const EntityBrowserEmbedConfigForm = ({ projectId, initialConfig, onChang
     viewConfigs
   } = useEntityBrowserLocalState({
     projectId,
-    initial: initialConfig
-      ? {
-          q: initialConfig.q,
-          conditions: initialConfig.conditions,
-          projectScope: initialConfig.projectScope,
-          sort: initialConfig.sort,
-          view: initialConfig.view,
-          viewConfigs: initialConfig.viewConfigs
-        }
-      : undefined
+    initial: {
+      q: config.q,
+      conditions: config.conditions,
+      projectScope: config.projectScope,
+      sort: config.sort,
+      view: config.view,
+      viewConfigs: config.viewConfigs
+    }
   });
 
   useEffect(() => {

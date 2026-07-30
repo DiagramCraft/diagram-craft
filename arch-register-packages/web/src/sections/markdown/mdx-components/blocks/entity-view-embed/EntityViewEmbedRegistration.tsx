@@ -7,7 +7,7 @@ import {
   EntityViewEmbedEditable,
   entityViewEmbedMdxRule
 } from './EntityViewEmbedEditable';
-import { EntityViewEmbedDashboardConfigForm } from './EntityViewEmbedDashboardConfigForm';
+import { EntityViewEmbedConfigForm } from './EntityViewEmbedConfigForm';
 import type { EntityViewEmbedSlateElement, SavedViewEmbedWidgetConfig } from './types';
 
 export const entityViewEmbedSpec = defineMdxComponent<
@@ -30,7 +30,7 @@ export const entityViewEmbedSpec = defineMdxComponent<
     isValidConfig: (config): config is SavedViewEmbedWidgetConfig =>
       typeof config.viewId === 'string' && config.viewId.length > 0,
     createDefaultConfig: context => ({ viewId: context.viewId ?? '' }),
-    configForm: EntityViewEmbedDashboardConfigForm
+    configForm: EntityViewEmbedConfigForm
   },
   editorSpec: {
     editableComponent: EntityViewEmbedEditable,

@@ -4,9 +4,10 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbTable } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
+import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { EntityTable } from './EntityTable';
-import { EntityTableDialog } from './EntityTableDialog';
-import type { EntityTableSlateElement } from './types';
+import { EntityTableConfigForm } from './EntityTableConfigForm';
+import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
 
 export const ENTITY_TABLE_TYPE = 'EntityTable' as const;
 
@@ -40,6 +41,29 @@ export const entityTableMdxRule: MdxRuleDef<EntityTableSlateElement, 'block'> = 
   })
 };
 
+export const entityTableMdxConfigSpec: MdxConfigSpec<
+  EntityTableSlateElement,
+  EntityTableWidgetConfig
+> = {
+  title: 'Entity table',
+  width: 460,
+  fromElement: el => ({
+    schema: el.schema,
+    owner: el.owner,
+    lifecycle: el.lifecycle,
+    limit: el.limit ? Number(el.limit) : undefined
+  }),
+  toElement: config => ({
+    schema: config.schema ?? '',
+    owner: config.owner ?? '',
+    lifecycle: config.lifecycle ?? '',
+    limit: String(config.limit ?? 10)
+  }),
+  defaultConfig: () => ({}),
+  isValidConfig: () => true,
+  ConfigForm: EntityTableConfigForm
+};
+
 export const EntityTableEditable = ({
   element,
   children,
@@ -71,7 +95,13 @@ export const EntityTableEditable = ({
         />
       }
       dialog={(open, onClose) => (
-        <EntityTableDialog element={element} open={open} onClose={onClose} isNew={!hasValue} />
+        <MdxWidgetConfigDialog
+          element={element}
+          open={open}
+          onClose={onClose}
+          isNew={!hasValue}
+          spec={entityTableMdxConfigSpec}
+        />
       )}
       {...props}
     >

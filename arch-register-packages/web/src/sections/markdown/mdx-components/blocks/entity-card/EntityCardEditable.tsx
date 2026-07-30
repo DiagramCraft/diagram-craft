@@ -4,9 +4,10 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbId } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
+import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { EntityCard } from './EntityCard';
-import { EntityCardDialog } from './EntityCardDialog';
-import type { EntityCardSlateElement } from './types';
+import { EntityCardConfigForm } from './EntityCardConfigForm';
+import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
 
 export const ENTITY_CARD_TYPE = 'EntityCard' as const;
 
@@ -35,6 +36,21 @@ export const entityCardMdxRule: MdxRuleDef<EntityCardSlateElement, 'block'> = {
   })
 };
 
+// ── Config editing ────────────────────────────────────────────────────────────
+
+export const entityCardMdxConfigSpec: MdxConfigSpec<
+  EntityCardSlateElement,
+  EntityCardWidgetConfig
+> = {
+  title: 'Entity card',
+  width: 440,
+  fromElement: el => ({ entityId: el.entityId ?? '', fields: el.fields }),
+  toElement: config => ({ entityId: config.entityId, fields: config.fields }),
+  defaultConfig: () => ({ entityId: '' }),
+  isValidConfig: config => !!config.entityId,
+  ConfigForm: EntityCardConfigForm
+};
+
 // ── Plate element ─────────────────────────────────────────────────────────────
 
 export const EntityCardEditable = ({
@@ -58,7 +74,13 @@ export const EntityCardEditable = ({
       }
       content={<EntityCard id={entityId} fields={fields} />}
       dialog={(open, onClose) => (
-        <EntityCardDialog element={element} open={open} onClose={onClose} isNew={isNew} />
+        <MdxWidgetConfigDialog
+          element={element}
+          open={open}
+          onClose={onClose}
+          isNew={isNew}
+          spec={entityCardMdxConfigSpec}
+        />
       )}
       {...props}
     >

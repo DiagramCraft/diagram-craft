@@ -4,9 +4,18 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbFileSearch } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
+import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import { DocumentBrowserEmbedDialog } from './DocumentBrowserEmbedDialog';
-import type { DocumentBrowserEmbedSlateElement } from './types';
+import { DocumentBrowserEmbedConfigForm } from './DocumentBrowserEmbedConfigForm';
+import {
+  decodeDocumentBrowserEmbedConfig,
+  encodeDocumentBrowserEmbedConfig
+} from './DocumentBrowserEmbedCodec';
+import {
+  DOCUMENT_BROWSER_BASE_COLUMN_IDS,
+  type DocumentBrowserEmbedConfig,
+  type DocumentBrowserEmbedSlateElement
+} from './types';
 
 export const DOCUMENT_BROWSER_EMBED_TYPE = 'DocumentBrowserEmbed' as const;
 
@@ -34,6 +43,29 @@ export const documentBrowserEmbedMdxRule: MdxRuleDef<DocumentBrowserEmbedSlateEl
   })
 };
 
+const defaultDocumentBrowserEmbedConfig = (): DocumentBrowserEmbedConfig => ({
+  q: '',
+  conditions: [],
+  sort: 'updated_at',
+  sortDir: 'desc',
+  visibleBaseColumnIds: [...DOCUMENT_BROWSER_BASE_COLUMN_IDS],
+  visibleFieldIds: []
+});
+
+export const documentBrowserEmbedMdxConfigSpec: MdxConfigSpec<
+  DocumentBrowserEmbedSlateElement,
+  DocumentBrowserEmbedConfig
+> = {
+  title: 'Document browser',
+  width: 'min(1200px, 92vw)',
+  fromElement: el =>
+    decodeDocumentBrowserEmbedConfig(el.config) ?? defaultDocumentBrowserEmbedConfig(),
+  toElement: config => ({ config: encodeDocumentBrowserEmbedConfig(config) }),
+  defaultConfig: defaultDocumentBrowserEmbedConfig,
+  isValidConfig: () => true,
+  ConfigForm: DocumentBrowserEmbedConfigForm
+};
+
 export const DocumentBrowserEmbedEditable = ({
   element,
   children,
@@ -55,11 +87,12 @@ export const DocumentBrowserEmbedEditable = ({
       }
       content={<DocumentBrowserEmbed config={config === '' ? undefined : config} />}
       dialog={(open, onClose) => (
-        <DocumentBrowserEmbedDialog
+        <MdxWidgetConfigDialog
           element={element}
           open={open}
           onClose={onClose}
           isNew={!hasValue}
+          spec={documentBrowserEmbedMdxConfigSpec}
         />
       )}
       {...props}

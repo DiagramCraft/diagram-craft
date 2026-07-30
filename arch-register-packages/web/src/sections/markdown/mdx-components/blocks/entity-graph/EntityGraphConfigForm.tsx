@@ -13,7 +13,7 @@ type Props = {
   context: { workspaceSlug: string };
 };
 
-export const EntityGraphDashboardConfigForm = ({ config, onChange, context }: Props) => {
+export const EntityGraphConfigForm = ({ config, onChange, context }: Props) => {
   const { data: entity } = useEntity(context.workspaceSlug, config.entityId);
   const depth = normalizeEntityGraphDepth(config.depth);
   const direction = normalizeEntityGraphDirection(config.direction);

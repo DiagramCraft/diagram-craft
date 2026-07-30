@@ -17,7 +17,7 @@ export const Caption = ({
       <div className={styles.body}>{children}</div>
       {caption && (
         <figcaption className={styles.caption}>
-          {numbered === 'true' && <span className={styles.figureLabel}>Figure: </span>}
+          {numbered === 'true' && <span className={styles.figureLabel} />}
           {caption}
         </figcaption>
       )}

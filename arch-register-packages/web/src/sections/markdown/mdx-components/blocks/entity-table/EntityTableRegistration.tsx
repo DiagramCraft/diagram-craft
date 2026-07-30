@@ -3,7 +3,7 @@ import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityTable } from './EntityTable';
 import { EntityTableWidget } from '../../../../dashboard/widgets/EntityTableWidget';
 import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
-import { EntityTableDashboardConfigForm } from './EntityTableDashboardConfigForm';
+import { EntityTableConfigForm } from './EntityTableConfigForm';
 import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
 
 const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
@@ -35,7 +35,7 @@ export const entityTableSpec = defineMdxComponent<
       hasOptionalString(config, 'lifecycle') &&
       hasOptionalInteger(config, 'limit'),
     createDefaultConfig: () => ({}),
-    configForm: EntityTableDashboardConfigForm
+    configForm: EntityTableConfigForm
   },
   editorSpec: {
     editableComponent: EntityTableEditable,
