@@ -438,6 +438,39 @@ describe('reconstructEntitiesAsOf', () => {
       expect(result).toHaveLength(1);
       expect(result[0]?.name).toBe('Current Name');
     });
+
+    it('can restrict planned changes to one project', async () => {
+      const db = makeDb(
+        makeVersions(),
+        [
+          ...makePlannedChanges(),
+          basePlannedChange({
+            id: 'change-other',
+            project_id: 'project-other',
+            target_date: '2026-06-01',
+            proposed_state: { name: 'Other Project Name' }
+          })
+        ],
+        [],
+        [
+          { id: 'project-private', owner: 'team-private' },
+          { id: 'project-other', owner: 'team-other' }
+        ]
+      );
+      const authCtx = makeAuthCtx(['team-private', 'team-other']);
+
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-07-01T00:00:00.000Z'),
+        authCtx,
+        undefined,
+        true,
+        'project-private'
+      );
+
+      expect(result[0]?.name).toBe('Leaked Planned Name');
+    });
   });
 
   it('respects candidateEntityIds to scope reconstruction to a project-linked entity set', async () => {

@@ -216,6 +216,38 @@ const entityListResponseSchema = z.object({
   total: z.number().int().describe('Total number of entities matching the filters')
 });
 
+const entityLandscapeDiffStateSchema = z.object({
+  asOf: z
+    .string()
+    .refine(value => !Number.isNaN(Date.parse(value)), 'Invalid asOf date')
+    .describe('ISO 8601 timestamp for the reconstructed state'),
+  projectId: z
+    .string()
+    .optional()
+    .describe('Project whose connected entities and planned changes apply'),
+  includePlannedChanges: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Whether to apply planned changes when reconstructing this state')
+});
+
+const entityLandscapeDiffFieldSchema = z.object({
+  before: z.unknown().nullable(),
+  after: z.unknown().nullable()
+});
+
+const entityLandscapeDiffResponseSchema = z.object({
+  added: z.array(entityRecordSchema).describe('Entities present only in the to state'),
+  removed: z.array(entityRecordSchema).describe('Entities present only in the from state'),
+  changed: z.array(
+    z.object({
+      entity: entityRecordSchema.describe('The entity in the to state'),
+      diff: z.record(z.string(), entityLandscapeDiffFieldSchema)
+    })
+  )
+});
+
 // ── Facets ────────────────────────────────────────────────────
 
 const entityFacetBucketSchema = z.object({
@@ -496,6 +528,27 @@ export const workspaceEntityContract = oc.tag('Entities').router({
         })
       )
       .output(entityCountResponseSchema),
+    diff: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/data/diff',
+        inputStructure: 'detailed',
+        summary: 'Compare two reconstructed entity landscapes',
+        description:
+          'Returns entities added, removed, or changed between two reconstructed workspace states. ' +
+          'Changed entries include raw field-level before/after values.',
+        tags: ['Entities']
+      })
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({
+            from: entityLandscapeDiffStateSchema,
+            to: entityLandscapeDiffStateSchema
+          })
+        })
+      )
+      .output(entityLandscapeDiffResponseSchema),
     facets: oc
       .route({
         method: 'GET',
@@ -841,3 +894,5 @@ export type TimelineViewData = z.infer<typeof timelineViewDataSchema>;
 export type TimelineVersion = z.infer<typeof timelineVersionSchema>;
 export type TimelineChangeCaseMember = z.infer<typeof timelineChangeCaseMemberSchema>;
 export type TimelineProjectChange = z.infer<typeof timelineProjectChangeSchema>;
+export type EntityLandscapeDiffState = z.infer<typeof entityLandscapeDiffStateSchema>;
+export type EntityLandscapeDiff = z.infer<typeof entityLandscapeDiffResponseSchema>;

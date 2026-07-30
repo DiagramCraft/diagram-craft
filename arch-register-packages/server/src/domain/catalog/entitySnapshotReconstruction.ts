@@ -73,7 +73,8 @@ export const reconstructEntitiesAsOf = async (
   asOf: Date,
   authCtx: AuthorizationContext | null,
   candidateEntityIds?: string[],
-  includePlannedChanges = true
+  includePlannedChanges = true,
+  plannedChangesProjectId?: string | null
 ): Promise<EntityDbResult[]> => {
   const [baselineVersions, plannedChanges, schemas, owners, lifecycles] = await Promise.all([
     db.catalog.listEntityVersionsAsOf(workspace, asOf, candidateEntityIds),
@@ -84,6 +85,13 @@ export const reconstructEntitiesAsOf = async (
     db.workspace.listTeams(workspace),
     db.workspace.listLifecycleStates(workspace)
   ]);
+
+  // Landscape comparisons can scope planned changes to one project while retaining the same
+  // reconstruction and authorization rules used by the workspace browser.
+  const applicablePlannedChanges =
+    plannedChangesProjectId == null
+      ? plannedChanges
+      : plannedChanges.filter(change => change.project_id === plannedChangesProjectId);
 
   const schemaNameMap = new Map(schemas.map(s => [s.id, s.name]));
   const ownerNameMap = new Map(owners.map(o => [o.id, o.name]));
@@ -97,7 +105,9 @@ export const reconstructEntitiesAsOf = async (
   // out of planned changes entirely (e.g. the workspace browser's "include planned changes"
   // toggle), `plannedChanges` is already empty, so this resolves to nothing.
   const futureUpdateProjectIds = [
-    ...new Set(plannedChanges.filter(c => c.project_id != null).map(c => c.project_id as string))
+    ...new Set(
+      applicablePlannedChanges.filter(c => c.project_id != null).map(c => c.project_id as string)
+    )
   ];
   const accessibleProjectIds = new Set(
     authCtx == null
@@ -117,7 +127,9 @@ export const reconstructEntitiesAsOf = async (
   // raw-date changes.
   const milestoneIds = [
     ...new Set(
-      plannedChanges.filter(c => c.milestone_id != null).map(c => c.milestone_id as string)
+      applicablePlannedChanges
+        .filter(c => c.milestone_id != null)
+        .map(c => c.milestone_id as string)
     )
   ];
   const milestoneTargetDates = new Map(
@@ -138,7 +150,7 @@ export const reconstructEntitiesAsOf = async (
   const futureUpdatesByEntity = new Map<string, PlannedEntityChangeDbResult[]>();
   const futureUpdateGroups = new Map<string, PlannedEntityChangeDbResult[]>();
 
-  for (const change of plannedChanges) {
+  for (const change of applicablePlannedChanges) {
     if (change.project_id != null && !accessibleProjectIds.has(change.project_id)) continue;
     const group = futureUpdateGroups.get(change.case_revision_id) ?? [];
     group.push(change);
