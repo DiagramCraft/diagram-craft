@@ -6,7 +6,7 @@ import {
   WORKSPACE,
   dashboardWidget,
   createStoryQueryClient
-} from '../StorybookHarness';
+} from '../../blocks/StorybookHarness';
 import { entityKeys } from '../../../../../queries/entities';
 import { workspaceAnalyticsKeys } from '../../../../../queries/workspaceAnalytics';
 

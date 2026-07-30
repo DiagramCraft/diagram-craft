@@ -6,13 +6,11 @@ import { Section } from './analyticsPrimitives';
 export const ActivityTrendsSection = ({
   analytics,
   onNavigate,
-  initialWindowDays = 30,
-  bare
+  initialWindowDays = 30
 }: {
   analytics: WorkspaceAnalytics;
   onNavigate: (operation: 'create' | 'update', startDate: string, endDate: string) => void;
   initialWindowDays?: 30 | 90;
-  bare?: boolean;
 }) => {
   const [windowDays, setWindowDays] = useState<30 | 90>(initialWindowDays);
   const buckets =
@@ -20,11 +18,7 @@ export const ActivityTrendsSection = ({
   const maximum = Math.max(1, ...buckets.map(bucket => bucket.created + bucket.updated));
 
   return (
-    <Section
-      title="Activity trends"
-      sub="Entity create and update activity from audit history."
-      bare={bare}
-    >
+    <Section title="Activity trends" sub="Entity create and update activity from audit history.">
       <div className={styles.trendControls}>
         <div className={styles.trendLegend}>
           <span>

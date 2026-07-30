@@ -31,7 +31,6 @@ export const EntityLifecycleChart = () => {
           search
         })
       }
-      bare
     />
   );
 };

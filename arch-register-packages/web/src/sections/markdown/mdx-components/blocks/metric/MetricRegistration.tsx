@@ -1,42 +1,39 @@
 import { TbChartBar, TbHash } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
-import { EntityMetric } from './EntityMetric';
+import { Metric } from './Metric';
 import { StatMetricWidget } from '../../../../dashboard/widgets/StatMetricWidget';
-import {
-  ENTITY_METRIC_TYPE,
-  EntityMetricEditable,
-  entityMetricMdxRule
-} from './EntityMetricEditable';
-import { EntityMetricConfigForm } from './EntityMetricConfigForm';
-import type { EntityMetricSlateElement, EntityMetricType, StatMetricWidgetConfig } from './types';
+import { METRIC_TYPE, MetricEditable, metricMdxRule } from './MetricEditable';
+import { MetricConfigForm } from './MetricConfigForm';
+import type { MetricSlateElement, MetricType, StatMetricWidgetConfig } from './types';
 
-const isMetricType = (value: unknown): value is EntityMetricType =>
+const isMetricType = (value: unknown): value is MetricType =>
   value === 'entity-count' ||
   value === 'project-count' ||
   value === 'diagram-count' ||
   value === 'completeness-percent';
 
-const METRIC_TYPE_DEFAULT_LABEL: Record<EntityMetricType, string> = {
+const METRIC_TYPE_DEFAULT_LABEL: Record<MetricType, string> = {
   'entity-count': 'Entities',
   'project-count': 'Projects',
   'diagram-count': 'Diagrams',
   'completeness-percent': 'Well documented'
 };
 
-export const entityMetricSpec = defineMdxComponent<
-  EntityMetricSlateElement,
+export const metricSpec = defineMdxComponent<
+  MetricSlateElement,
   {
     schema?: string;
     owner?: string;
     lifecycle?: string;
     label?: string;
-    metricType?: EntityMetricType;
+    metricType?: MetricType;
+    showLink?: boolean;
   },
   'block'
 >({
-  component: EntityMetric,
+  component: Metric,
   mode: 'block',
-  allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType'],
+  allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType', 'showLink'],
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbChartBar,
@@ -51,25 +48,26 @@ export const entityMetricSpec = defineMdxComponent<
       (config.schema === undefined || typeof config.schema === 'string') &&
       (config.owner === undefined || typeof config.owner === 'string') &&
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
-      (config.label === undefined || typeof config.label === 'string'),
+      (config.label === undefined || typeof config.label === 'string') &&
+      (config.showLink === undefined || typeof config.showLink === 'boolean'),
     createDefaultConfig: () => ({ metricType: 'entity-count' }),
     getTitle: (config: StatMetricWidgetConfig) =>
       config.label?.trim() || METRIC_TYPE_DEFAULT_LABEL[config.metricType],
-    configForm: EntityMetricConfigForm
+    configForm: MetricConfigForm
   },
   editorSpec: {
-    editableComponent: EntityMetricEditable,
+    editableComponent: MetricEditable,
     nodeOptions: { isVoid: true },
-    mdxRule: entityMetricMdxRule,
+    mdxRule: metricMdxRule,
     slashCommand: {
-      key: 'entity-metric',
-      label: 'Entity Metric',
-      description: 'Display a live count of entities',
+      key: 'metric',
+      label: 'Metric',
+      description: 'Display a live count of entities, projects, or diagrams',
       icon: <TbHash size={14} />,
       keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
       onSelect: (editor, { insertOrReplaceBlock }) => {
         insertOrReplaceBlock(editor, {
-          type: ENTITY_METRIC_TYPE,
+          type: METRIC_TYPE,
           schema: '',
           owner: '',
           lifecycle: '',

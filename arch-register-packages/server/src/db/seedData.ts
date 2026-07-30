@@ -3944,7 +3944,7 @@ This page demonstrates the custom MDX components that pull live data from the ca
 
 ## Entity metric
 
-<EntityMetric schema="00000000-0000-0000-0000-000000000004" label="Total APIs" />
+<Metric schema="00000000-0000-0000-0000-000000000004" label="Total APIs" />
 
 ## Entity browser embed
 

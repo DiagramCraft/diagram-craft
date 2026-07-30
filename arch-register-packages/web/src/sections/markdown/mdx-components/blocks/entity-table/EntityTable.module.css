@@ -28,6 +28,14 @@
   margin: 0 0 var(--article-block-gap);
 }
 
+div[data-frame="true"] .tableWrapper {
+  margin: calc(-1 * var(--_frame-top-padding, 0px)) calc(-1 * var(--_frame-left-padding, 0px));
+  border-radius: 0;
+  & > div {
+    border: 0;
+  }
+}
+
 .tableWrapper .tableSurface {
   border: none;
   border-radius: 0;

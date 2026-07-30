@@ -12,7 +12,8 @@
   margin: 0 0 var(--article-block-gap) 0;
 }
 
-.cardBare {
+/* Rendered as dashboard widget content: WidgetFrame already supplies chrome. */
+div[data-frame="true"] .card {
   border: none;
   background: transparent;
   margin: 0;
@@ -28,9 +29,8 @@
 }
 
 /* Shrink the number in narrow dashboard widget allocations. See docs/internal/dashboard-widgets.md. */
-@container widget (max-width: 220px) {
-  .card .number,
-  .cardBare .number {
+@container frame (max-width: 220px) {
+  .card .number {
     font-size: 28px;
   }
 }

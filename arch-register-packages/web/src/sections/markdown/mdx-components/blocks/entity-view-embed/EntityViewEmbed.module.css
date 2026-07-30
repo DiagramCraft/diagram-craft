@@ -2,6 +2,19 @@
   padding: 8px 0;
 }
 
+.entityBrowserViewWrapper {
+  padding: 0;
+}
+div[data-frame="true"] {
+  .entityBrowserViewWrapper {
+    margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
+    & > div {
+      border-width: 0;
+      overflow: visible;
+    }
+  }
+}
+
 .skeleton {
   height: 40px;
   border-radius: var(--r);

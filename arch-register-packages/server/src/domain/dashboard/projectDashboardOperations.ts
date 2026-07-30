@@ -10,7 +10,7 @@ import { httpAssert } from '../../utils/httpAssert';
 const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
   {
     id: 'default-entity-count',
-    type: 'EntityMetric',
+    type: 'Metric',
     config: { metricType: 'entity-count' },
     x: 0,
     y: 0,
@@ -19,7 +19,7 @@ const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
   },
   {
     id: 'default-diagram-count',
-    type: 'EntityMetric',
+    type: 'Metric',
     config: { metricType: 'diagram-count' },
     x: 3,
     y: 0,

@@ -6,7 +6,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../markdown/MdxContext';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
-import styles from './ProjectSummaryWidget.module.css';
+import styles from './WidgetRowList.module.css';
 
 const MAX_UPCOMING = 3;
 

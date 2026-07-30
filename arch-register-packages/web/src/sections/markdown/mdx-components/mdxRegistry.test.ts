@@ -6,7 +6,7 @@ describe('getMdxSpecsForSurface', () => {
     const wiki = getMdxSpecsForSurface('wiki');
     expect(wiki['EntityViewEmbed']).toBeDefined();
     expect(wiki['EntityChart']).toBeDefined();
-    expect(wiki['EntityMetric']).toBeDefined();
+    expect(wiki['Metric']).toBeDefined();
     expect(wiki['EntityTable']).toBeDefined();
     expect(wiki['DiagramEmbed']).toBeDefined();
   });

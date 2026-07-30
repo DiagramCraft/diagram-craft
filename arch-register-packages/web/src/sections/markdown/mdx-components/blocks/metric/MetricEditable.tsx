@@ -5,29 +5,31 @@ import { TbHash } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { EntityMetric } from './EntityMetric';
-import { EntityMetricConfigForm } from './EntityMetricConfigForm';
-import type { EntityMetricSlateElement, StatMetricWidgetConfig } from './types';
+import { Metric } from './Metric';
+import { MetricConfigForm } from './MetricConfigForm';
+import type { MetricSlateElement, StatMetricWidgetConfig } from './types';
 
-export const ENTITY_METRIC_TYPE = 'EntityMetric' as const;
+export const METRIC_TYPE = 'Metric' as const;
 
 const readAttr = (attrs: Record<string, unknown>, key: string) => {
   const value = attrs[key];
   return value == null ? '' : String(value);
 };
 
-export const entityMetricMdxRule: MdxRuleDef<EntityMetricSlateElement, 'block'> = {
+export const metricMdxRule: MdxRuleDef<MetricSlateElement, 'block'> = {
   deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     const metricType = readAttr(attrs, 'metricType');
+    const showLink = readAttr(attrs, 'showLink');
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor!, ENTITY_METRIC_TYPE),
+      type: getPluginType(options.editor!, METRIC_TYPE),
       schema: readAttr(attrs, 'schema'),
       owner: readAttr(attrs, 'owner'),
       lifecycle: readAttr(attrs, 'lifecycle'),
       label: readAttr(attrs, 'label'),
-      ...(metricType ? { metricType: metricType as EntityMetricSlateElement['metricType'] } : {})
+      ...(metricType ? { metricType: metricType as MetricSlateElement['metricType'] } : {}),
+      ...(showLink !== '' ? { showLink: showLink !== 'false' } : {})
     };
   },
   serialize: slateNode => ({
@@ -36,44 +38,44 @@ export const entityMetricMdxRule: MdxRuleDef<EntityMetricSlateElement, 'block'> 
       ...(slateNode.owner ? { owner: slateNode.owner } : {}),
       ...(slateNode.lifecycle ? { lifecycle: slateNode.lifecycle } : {}),
       ...(slateNode.label ? { label: slateNode.label } : {}),
-      ...(slateNode.metricType ? { metricType: slateNode.metricType } : {})
+      ...(slateNode.metricType ? { metricType: slateNode.metricType } : {}),
+      ...(slateNode.showLink === false ? { showLink: 'false' } : {})
     }),
     children: [],
-    name: ENTITY_METRIC_TYPE,
+    name: METRIC_TYPE,
     type: 'mdxJsxFlowElement'
   })
 };
 
-export const entityMetricMdxConfigSpec: MdxConfigSpec<
-  EntityMetricSlateElement,
-  StatMetricWidgetConfig
-> = {
-  title: 'Entity metric',
+export const metricMdxConfigSpec: MdxConfigSpec<MetricSlateElement, StatMetricWidgetConfig> = {
+  title: 'Metric',
   width: 460,
   fromElement: el => ({
     metricType: el.metricType ?? 'entity-count',
     schema: el.schema,
     owner: el.owner,
     lifecycle: el.lifecycle,
-    label: el.label
+    label: el.label,
+    showLink: el.showLink
   }),
   toElement: config => ({
     schema: config.schema ?? '',
     owner: config.owner ?? '',
     lifecycle: config.lifecycle ?? '',
     label: config.label ?? '',
-    metricType: config.metricType
+    metricType: config.metricType,
+    showLink: config.showLink
   }),
   defaultConfig: () => ({ metricType: 'entity-count' }),
   isValidConfig: () => true,
-  ConfigForm: EntityMetricConfigForm
+  ConfigForm: MetricConfigForm
 };
 
-export const EntityMetricEditable = ({
+export const MetricEditable = ({
   element,
   children,
   ...props
-}: PlateElementProps<EntityMetricSlateElement>) => {
+}: PlateElementProps<MetricSlateElement>) => {
   const schema = element.schema ?? '';
   const owner = element.owner ?? '';
   const lifecycle = element.lifecycle ?? '';
@@ -88,16 +90,17 @@ export const EntityMetricEditable = ({
       placeholder={
         <>
           <TbHash size={16} />
-          <span>Configure entity metric…</span>
+          <span>Configure metric…</span>
         </>
       }
       content={
-        <EntityMetric
+        <Metric
           schema={schema === '' ? undefined : schema}
           owner={owner === '' ? undefined : owner}
           lifecycle={lifecycle === '' ? undefined : lifecycle}
           label={label === '' ? undefined : label}
           metricType={metricType}
+          showLink={element.showLink}
         />
       }
       dialog={(open, onClose) => (
@@ -106,7 +109,7 @@ export const EntityMetricEditable = ({
           open={open}
           onClose={onClose}
           isNew={!hasValue}
-          spec={entityMetricMdxConfigSpec}
+          spec={metricMdxConfigSpec}
         />
       )}
       {...props}

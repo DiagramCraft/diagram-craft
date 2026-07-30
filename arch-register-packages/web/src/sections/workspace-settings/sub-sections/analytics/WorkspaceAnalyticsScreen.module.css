@@ -5,6 +5,17 @@
   padding: 16px 24px 32px;
 }
 
+div[data-frame="true"] {
+  .stack {
+    padding: 0;
+
+    & > div {
+      margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
+      border-width: 0;
+    }
+  }
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -45,12 +56,6 @@
   overflow: hidden;
 }
 
-.sectionBare {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-}
-
 .cardLabel {
   font-size: 11px;
   color: var(--base-fg-more-dim);
@@ -79,6 +84,38 @@
   gap: 16px;
   padding: 13px 16px;
   border-bottom: 1px solid var(--panel-border);
+}
+
+div[data-frame="true"] {
+  @container frame (max-width: 320px) {
+    .trendRange {
+      display: none;
+    }
+  }
+  .sectionHead {
+    display: none;
+  }
+  .trendControls,
+  .activityChart {
+    padding: 0;
+  }
+  .activityChart {
+    height: 100%;
+    padding-top: 8px;
+  }
+  .section {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    height: calc(100% - 4px);
+  }
+  .activityChartGroup {
+    height: calc(100% - 20px);
+  }
+  .trendRange {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 .sectionTitle {
@@ -131,6 +168,17 @@
   flex-wrap: wrap;
   gap: 6px;
   padding: 12px 14px 14px;
+}
+
+div[data-frame="true"] {
+  .bucketList {
+    padding: 0;
+
+    @container frame (max-width: 320px) {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+  }
 }
 
 .bucketCard {
@@ -356,6 +404,12 @@
 
 .staleReportControls .reportSub {
   margin-right: auto;
+}
+
+div[data-frame="true"] {
+  .staleReportControls {
+    display: none;
+  }
 }
 
 .staleLabel {

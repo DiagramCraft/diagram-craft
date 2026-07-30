@@ -33,7 +33,7 @@ test.describe('Project Dashboard API', () => {
     const widgets = [
       {
         id: 'entities',
-        type: 'EntityMetric' as const,
+        type: 'Metric' as const,
         x: 0,
         y: 0,
         w: 3,
@@ -82,7 +82,7 @@ test.describe('Project Dashboard API', () => {
         widgets: [
           {
             id: 'b',
-            type: 'EntityMetric' as const,
+            type: 'Metric' as const,
             x: 0,
             y: 0,
             w: 3,

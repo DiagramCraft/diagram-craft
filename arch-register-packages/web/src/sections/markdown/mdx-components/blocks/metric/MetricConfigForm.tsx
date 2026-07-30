@@ -5,16 +5,15 @@ import {
 } from '../../../../../components/EntityFilterPanel';
 import { DialogSection } from '../../../editor/BlockDialog';
 import type { WidgetSurface } from '../../types';
-import type { EntityMetricType, StatMetricWidgetConfig } from './types';
-import styles from './EntityMetricConfigForm.module.css';
+import type { MetricType, StatMetricWidgetConfig } from './types';
+import styles from './MetricConfigForm.module.css';
 
-const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string; surfaces: WidgetSurface[] }[] =
-  [
-    { value: 'entity-count', label: 'Entity count', surfaces: ['workspace', 'project'] },
-    { value: 'project-count', label: 'Project count', surfaces: ['workspace'] },
-    { value: 'diagram-count', label: 'Diagram count', surfaces: ['workspace', 'project'] },
-    { value: 'completeness-percent', label: 'Completeness %', surfaces: ['workspace'] }
-  ];
+const METRIC_TYPE_OPTIONS: { value: MetricType; label: string; surfaces: WidgetSurface[] }[] = [
+  { value: 'entity-count', label: 'Entity count', surfaces: ['workspace', 'project'] },
+  { value: 'project-count', label: 'Project count', surfaces: ['workspace'] },
+  { value: 'diagram-count', label: 'Diagram count', surfaces: ['workspace', 'project'] },
+  { value: 'completeness-percent', label: 'Completeness %', surfaces: ['workspace'] }
+];
 
 const optionalText = (value: string): string | undefined =>
   value.trim() === '' ? undefined : value;
@@ -25,7 +24,7 @@ type Props = {
   context: { projectId?: string };
 };
 
-export const EntityMetricConfigForm = ({ config, onChange, context }: Props) => {
+export const MetricConfigForm = ({ config, onChange, context }: Props) => {
   const metricType = config.metricType ?? 'entity-count';
   const surface: WidgetSurface = context.projectId ? 'project' : 'workspace';
   const metricTypeOptions = METRIC_TYPE_OPTIONS.filter(option => option.surfaces.includes(surface));
@@ -34,13 +33,14 @@ export const EntityMetricConfigForm = ({ config, onChange, context }: Props) => 
     owner: config.owner ?? '',
     lifecycle: config.lifecycle ?? ''
   };
+  const showLink = config.showLink ?? true;
 
   return (
     <>
       <DialogSection label="Metric">
         <Select.Root
           value={metricType}
-          onChange={value => onChange({ ...config, metricType: value as EntityMetricType })}
+          onChange={value => onChange({ ...config, metricType: value as MetricType })}
         >
           {metricTypeOptions.map(option => (
             <Select.Item key={option.value} value={option.value}>
@@ -76,6 +76,16 @@ export const EntityMetricConfigForm = ({ config, onChange, context }: Props) => 
                 value={config.label ?? ''}
                 onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
                 placeholder="e.g. Services in production"
+              />
+            </div>
+          </label>
+          <label className={styles.optionRow}>
+            <span className={styles.optionLabel}>Show link</span>
+            <div className={styles.optionControl}>
+              <input
+                type="checkbox"
+                checked={showLink}
+                onChange={e => onChange({ ...config, showLink: e.target.checked })}
               />
             </div>
           </label>

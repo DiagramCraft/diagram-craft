@@ -1,7 +1,7 @@
 import { TbChartDonut2 } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityLifecycleChart } from './EntityLifecycleChart';
-import { LifecycleChartWidget } from '../../../../dashboard/widgets/LifecycleChartWidget';
+import { EntityLifecycleChartWidget } from '../../../../dashboard/widgets/EntityLifecycleChartWidget';
 import type { EntityLifecycleChartProps, EntityLifecycleChartSlateElement } from './types';
 
 export const ENTITY_LIFECYCLE_CHART_TYPE = 'entity-lifecycle-chart' as const;
@@ -26,7 +26,7 @@ export const entityLifecycleChartSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 6,
     surfaces: ['workspace'],
-    component: LifecycleChartWidget,
+    component: EntityLifecycleChartWidget,
     isValidConfig: (_config): _config is Record<string, never> => true,
     createDefaultConfig: () => ({})
   }
