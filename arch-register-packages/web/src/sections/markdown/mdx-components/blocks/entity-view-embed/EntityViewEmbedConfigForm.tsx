@@ -9,7 +9,7 @@ type Props = {
   context: { workspaceSlug: string; projectId?: string };
 };
 
-export const EntityViewEmbedDashboardConfigForm = ({ config, onChange, context }: Props) => {
+export const EntityViewEmbedConfigForm = ({ config, onChange, context }: Props) => {
   const { data: savedViews = [] } = useSavedViews(context.workspaceSlug, {
     projectId: context.projectId,
     includeWorkspace: true

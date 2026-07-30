@@ -13,10 +13,3 @@ export type EntityTableWidgetConfig = {
   lifecycle?: string;
   limit?: number;
 };
-
-export type EntityTableFilterState = {
-  schemaId: string;
-  owner: string;
-  lifecycle: string;
-  limit: string;
-};

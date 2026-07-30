@@ -4,9 +4,10 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbLayoutGrid } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
+import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { EntityViewEmbed } from './EntityViewEmbed';
-import { EntityViewEmbedDialog } from './EntityViewEmbedDialog';
-import type { EntityViewEmbedSlateElement } from './types';
+import { EntityViewEmbedConfigForm } from './EntityViewEmbedConfigForm';
+import type { EntityViewEmbedSlateElement, SavedViewEmbedWidgetConfig } from './types';
 
 export const ENTITY_VIEW_EMBED_TYPE = 'EntityViewEmbed' as const;
 
@@ -34,6 +35,19 @@ export const entityViewEmbedMdxRule: MdxRuleDef<EntityViewEmbedSlateElement, 'bl
   })
 };
 
+export const entityViewEmbedMdxConfigSpec: MdxConfigSpec<
+  EntityViewEmbedSlateElement,
+  SavedViewEmbedWidgetConfig
+> = {
+  title: 'Entity view',
+  width: 460,
+  fromElement: el => ({ viewId: el.viewId ?? '' }),
+  toElement: config => ({ viewId: config.viewId }),
+  defaultConfig: () => ({ viewId: '' }),
+  isValidConfig: config => !!config.viewId,
+  ConfigForm: EntityViewEmbedConfigForm
+};
+
 export const EntityViewEmbedEditable = ({
   element,
   children,
@@ -55,7 +69,13 @@ export const EntityViewEmbedEditable = ({
       }
       content={<EntityViewEmbed viewId={viewId === '' ? undefined : viewId} />}
       dialog={(open, onClose) => (
-        <EntityViewEmbedDialog element={element} open={open} onClose={onClose} isNew={!hasValue} />
+        <MdxWidgetConfigDialog
+          element={element}
+          open={open}
+          onClose={onClose}
+          isNew={!hasValue}
+          spec={entityViewEmbedMdxConfigSpec}
+        />
       )}
       {...props}
     >

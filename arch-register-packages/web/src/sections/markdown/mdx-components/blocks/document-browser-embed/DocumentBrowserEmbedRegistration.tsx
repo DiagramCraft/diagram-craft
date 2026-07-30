@@ -7,7 +7,7 @@ import {
   DocumentBrowserEmbedEditable,
   documentBrowserEmbedMdxRule
 } from './DocumentBrowserEmbedEditable';
-import { DocumentBrowserEmbedDashboardConfigForm } from './DocumentBrowserEmbedDashboardConfigForm';
+import { DocumentBrowserEmbedConfigForm } from './DocumentBrowserEmbedConfigForm';
 import { DOCUMENT_BROWSER_BASE_COLUMN_IDS } from './types';
 import type { DocumentBrowserEmbedConfig, DocumentBrowserEmbedSlateElement } from './types';
 
@@ -48,7 +48,7 @@ export const documentBrowserEmbedSpec = defineMdxComponent<
       visibleFieldIds: []
     }),
     getTitle: () => 'Document browser',
-    configForm: DocumentBrowserEmbedDashboardConfigForm,
+    configForm: DocumentBrowserEmbedConfigForm,
     dialogWidth: 'min(1200px, 92vw)'
   },
   editorSpec: {

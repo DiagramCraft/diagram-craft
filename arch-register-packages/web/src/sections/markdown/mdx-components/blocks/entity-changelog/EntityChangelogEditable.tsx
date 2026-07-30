@@ -4,9 +4,10 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbHistory } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
+import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { EntityChangelog } from './EntityChangelog';
-import { EntityChangelogDialog } from './EntityChangelogDialog';
-import type { EntityChangelogSlateElement } from './types';
+import { EntityChangelogConfigForm } from './EntityChangelogConfigForm';
+import type { EntityChangelogSlateElement, EntityChangelogWidgetConfig } from './types';
 
 export const ENTITY_CHANGELOG_TYPE = 'EntityChangelog' as const;
 
@@ -39,6 +40,33 @@ export const entityChangelogMdxRule: MdxRuleDef<EntityChangelogSlateElement, 'bl
     name: ENTITY_CHANGELOG_TYPE,
     type: 'mdxJsxFlowElement'
   })
+};
+
+export const entityChangelogMdxConfigSpec: MdxConfigSpec<
+  EntityChangelogSlateElement,
+  EntityChangelogWidgetConfig
+> = {
+  title: 'Entity changelog',
+  width: 460,
+  fromElement: el => ({
+    entityId: el.entityId,
+    schema: el.schema,
+    owner: el.owner,
+    lifecycle: el.lifecycle,
+    limit: el.limit ?? '10',
+    since: el.since ?? '30d'
+  }),
+  toElement: config => ({
+    entityId: config.entityId ?? '',
+    schema: config.schema ?? '',
+    owner: config.owner ?? '',
+    lifecycle: config.lifecycle ?? '',
+    limit: config.limit,
+    since: config.since
+  }),
+  defaultConfig: () => ({ since: '30d', limit: '10' }),
+  isValidConfig: config => !!(config.entityId || config.schema || config.owner || config.lifecycle),
+  ConfigForm: EntityChangelogConfigForm
 };
 
 export const EntityChangelogEditable = ({
@@ -78,7 +106,13 @@ export const EntityChangelogEditable = ({
         />
       }
       dialog={(open, onClose) => (
-        <EntityChangelogDialog element={element} open={open} onClose={onClose} isNew={isNew} />
+        <MdxWidgetConfigDialog
+          element={element}
+          open={open}
+          onClose={onClose}
+          isNew={isNew}
+          spec={entityChangelogMdxConfigSpec}
+        />
       )}
       {...props}
     >

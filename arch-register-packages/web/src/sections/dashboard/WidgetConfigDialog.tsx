@@ -65,7 +65,11 @@ const WidgetConfigDialogContent = ({
     >
       <DialogContent>
         {ConfigForm ? (
-          <ConfigForm config={config} onChange={setConfig} context={{ workspaceSlug, projectId }} />
+          <ConfigForm
+            config={config}
+            onChange={setConfig}
+            context={{ mode: 'dashboard', workspaceSlug, projectId }}
+          />
         ) : (
           <DialogSection label="Options" required={false}>
             <div className={styles.optionRow}>

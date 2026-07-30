@@ -3,7 +3,7 @@ import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityCard } from './EntityCard';
 import { EntityCardWidget } from '../../../../dashboard/widgets/EntityCardWidget';
 import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
-import { EntityCardDashboardConfigForm } from './EntityCardDashboardConfigForm';
+import { EntityCardConfigForm } from './EntityCardConfigForm';
 import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
 
 const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
@@ -32,7 +32,7 @@ export const entityCardSpec = defineMdxComponent<
       hasOptionalString(config, 'fields'),
     createDefaultConfig: () => ({ entityId: '' }),
     getTitle: () => 'Entity card',
-    configForm: EntityCardDashboardConfigForm
+    configForm: EntityCardConfigForm
   },
   editorSpec: {
     editableComponent: EntityCardEditable,

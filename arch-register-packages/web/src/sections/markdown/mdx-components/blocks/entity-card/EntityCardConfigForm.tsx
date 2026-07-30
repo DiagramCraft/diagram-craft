@@ -12,7 +12,7 @@ type Props = {
   context: { workspaceSlug: string };
 };
 
-export const EntityCardDashboardConfigForm = ({ config, onChange, context }: Props) => {
+export const EntityCardConfigForm = ({ config, onChange, context }: Props) => {
   const { schemas } = useWorkspaceContext();
   const { data: entity } = useEntity(context.workspaceSlug, config.entityId);
   const schema = schemas.find(s => s.id === entity?._schema?.id);

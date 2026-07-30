@@ -37,8 +37,9 @@ There are three places that render these view components, each with different co
 1. **`EntityBrowser.tsx`** — the full interactive browser. Passes real mutation handlers
    (`onDelete`, `onClone`, row selection), a real `onConfigChange` that persists to the URL/saved
    view, and lets users freely reconfigure a view via its internal toolbar.
-2. **`EntityBrowserEmbedDialog.tsx`** (`markdown/mdx-components/blocks/entity-browser-embed/`) —
-   the "click to edit" dialog for the `entity-browser-embed` MDX block. Reuses
+2. **`EntityBrowserEmbedConfigForm.tsx`** (`markdown/mdx-components/blocks/entity-browser-embed/`) —
+   the shared config-editing form for the `entity-browser-embed` MDX block/dashboard widget, rendered
+   inside the generic `MdxWidgetConfigDialog`/`WidgetConfigDialog` chrome. Reuses
    `useEntityBrowserLocalState` and `EntityBrowserToolbar` so the same search/filter/sort/view UI
    works without a router. Row-level mutation (`onDelete`/`onClone`/`onEntityClick`) is `noop`'d and
    `readOnly` is passed to `TableView`/`CardsView`/`TreeView`, because this dialog only exists to
@@ -66,7 +67,7 @@ survives that filter.
   just disable them, since a visibly-dead control is worse than no control in the published embed.
 - **`hideToolbar` (Radar/Timeline/Matrix/Hierarchy/Explore only)**: if your view has its own inline
   settings/search bar, gate it behind `hideToolbar?: boolean`. `EntityBrowserEmbed.tsx` passes this;
-  `EntityBrowser.tsx` and `EntityBrowserEmbedDialog.tsx` don't.
+  `EntityBrowser.tsx` and `EntityBrowserEmbedConfigForm.tsx` don't.
 - **Wire it into all three consumers**: `EntityBrowser.tsx`'s view switch, the embed dialog's
   preview, and `EntityBrowserEmbed.tsx`'s read-mode switch. It's easy to add a view to the live
   browser and forget the embed — check all three `view === '...'` switches.

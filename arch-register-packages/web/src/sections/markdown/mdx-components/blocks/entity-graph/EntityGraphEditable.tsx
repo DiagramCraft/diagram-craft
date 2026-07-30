@@ -4,13 +4,15 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbVectorTriangle } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
+import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { EntityGraph } from './EntityGraph';
 import {
   normalizeEntityGraphDepth,
   normalizeEntityGraphDirection,
-  type EntityGraphSlateElement
+  type EntityGraphSlateElement,
+  type EntityGraphWidgetConfig
 } from './types';
-import { EntityGraphDialog } from './EntityGraphDialog';
+import { EntityGraphConfigForm } from './EntityGraphConfigForm';
 
 export const ENTITY_GRAPH_TYPE = 'EntityGraph' as const;
 
@@ -48,6 +50,27 @@ export const entityGraphMdxRule: MdxRuleDef<EntityGraphSlateElement, 'block'> = 
   })
 };
 
+export const entityGraphMdxConfigSpec: MdxConfigSpec<
+  EntityGraphSlateElement,
+  EntityGraphWidgetConfig
+> = {
+  title: 'Entity graph',
+  width: 440,
+  fromElement: el => ({
+    entityId: el.entityId ?? '',
+    depth: normalizeEntityGraphDepth(el.depth),
+    direction: normalizeEntityGraphDirection(el.direction)
+  }),
+  toElement: config => ({
+    entityId: config.entityId,
+    depth: config.depth,
+    direction: config.direction
+  }),
+  defaultConfig: () => ({ entityId: '', depth: 1, direction: 'both' }),
+  isValidConfig: config => !!config.entityId,
+  ConfigForm: EntityGraphConfigForm
+};
+
 export const EntityGraphEditable = ({
   element,
   children,
@@ -70,7 +93,13 @@ export const EntityGraphEditable = ({
       }
       content={<EntityGraph id={entityId} depth={String(depth)} direction={direction} />}
       dialog={(open, onClose) => (
-        <EntityGraphDialog element={element} open={open} onClose={onClose} isNew={!entityId} />
+        <MdxWidgetConfigDialog
+          element={element}
+          open={open}
+          onClose={onClose}
+          isNew={!entityId}
+          spec={entityGraphMdxConfigSpec}
+        />
       )}
       {...props}
     >
