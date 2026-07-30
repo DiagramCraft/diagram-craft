@@ -73,14 +73,14 @@ export const computeCandidateReminderWindows = (
 };
 
 export const createGovernanceDeadlineScanJobHandler =
-  (db: DatabaseAdapter, registry: GovernanceRegistry) =>
+  (db: DatabaseAdapter, registry: GovernanceRegistry, clock: () => Date = () => new Date()) =>
   async (context: {
     workspace: string;
     payload: Record<string, unknown>;
     signal?: AbortSignal;
   }) => {
     const cases = await db.governance.listCases(context.workspace, { status: 'open' });
-    const now = new Date();
+    const scanNow = clock();
     let remindersSent = 0;
     let escalationsSent = 0;
 
@@ -102,7 +102,7 @@ export const createGovernanceDeadlineScanJobHandler =
 
         const candidateWindows = computeCandidateReminderWindows(
           caseRow.due_at,
-          now,
+          scanNow,
           windows,
           caseRow.reminder_windows_sent
         );
@@ -132,7 +132,9 @@ export const createGovernanceDeadlineScanJobHandler =
         // Matches computeCandidateReminderWindows's overdue convention exactly (`-daysUntilDue`,
         // not a separately-floored "days overdue"), so a case escalates at the same moment its
         // corresponding overdue reminder window of the same day count would fire.
-        const daysUntilDue = Math.floor((caseRow.due_at.getTime() - now.getTime()) / MS_PER_DAY);
+        const daysUntilDue = Math.floor(
+          (caseRow.due_at.getTime() - scanNow.getTime()) / MS_PER_DAY
+        );
         if (-daysUntilDue >= escalation.overdueDays) {
           await db.core.transaction(async tx => {
             const fresh = await tx.governance.getCase(context.workspace, caseRow.id);
@@ -147,7 +149,7 @@ export const createGovernanceDeadlineScanJobHandler =
               reason: null,
               metadata: { trigger: 'scheduled', target }
             });
-            await tx.governance.markEscalated(fresh.id, now);
+            await tx.governance.markEscalated(fresh.id, scanNow);
           });
           escalationsSent += 1;
         }

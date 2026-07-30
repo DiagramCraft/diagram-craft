@@ -10,14 +10,22 @@ import { normalizeViewConfig } from './entityViewConfig';
 const defaults = {
   startFieldId: null,
   endFieldId: null,
-  groupBy: 'owner' as const,
-  zoom: 'quarter' as const
+  groupBy: 'snapshot' as const,
+  zoom: 'quarter' as const,
+  showProjectLanes: true,
+  showMilestones: true,
+  showAutosaves: true
 };
 
 describe('normalizeViewConfig', () => {
   it('returns the parsed config as-is when fully valid', () => {
     const raw = { startFieldId: 'start', endFieldId: 'end', groupBy: 'type', zoom: 'month' };
-    expect(normalizeViewConfig(timelineViewConfigSchema, raw, defaults)).toEqual(raw);
+    expect(normalizeViewConfig(timelineViewConfigSchema, raw, defaults)).toEqual({
+      ...raw,
+      showProjectLanes: true,
+      showMilestones: true,
+      showAutosaves: true
+    });
   });
 
   it('merges a partially-valid config over the defaults field-by-field', () => {
@@ -26,8 +34,21 @@ describe('normalizeViewConfig', () => {
       startFieldId: 'start',
       endFieldId: null,
       groupBy: 'snapshot',
-      zoom: 'month'
+      zoom: 'month',
+      showProjectLanes: true,
+      showMilestones: true,
+      showAutosaves: true
     });
+  });
+
+  it('preserves explicit timeline display toggles', () => {
+    const raw = {
+      ...defaults,
+      showProjectLanes: false,
+      showMilestones: false,
+      showAutosaves: false
+    };
+    expect(normalizeViewConfig(timelineViewConfigSchema, raw, defaults)).toEqual(raw);
   });
 
   it('returns the defaults unchanged when the raw config fails to parse', () => {

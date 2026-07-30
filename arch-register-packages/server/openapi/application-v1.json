@@ -42535,6 +42535,18 @@
                                     ],
                                     "type": "string",
                                     "description": "Timeline zoom level"
+                                  },
+                                  "showProjectLanes": {
+                                    "type": "boolean",
+                                    "description": "Whether Entity + Project renders separate project lanes"
+                                  },
+                                  "showMilestones": {
+                                    "type": "boolean",
+                                    "description": "Whether timeline milestone guides are visible"
+                                  },
+                                  "showAutosaves": {
+                                    "type": "boolean",
+                                    "description": "Whether autosave snapshots are visible"
                                   }
                                 },
                                 "required": [
@@ -43952,6 +43964,18 @@
                                 ],
                                 "type": "string",
                                 "description": "Timeline zoom level"
+                              },
+                              "showProjectLanes": {
+                                "type": "boolean",
+                                "description": "Whether Entity + Project renders separate project lanes"
+                              },
+                              "showMilestones": {
+                                "type": "boolean",
+                                "description": "Whether timeline milestone guides are visible"
+                              },
+                              "showAutosaves": {
+                                "type": "boolean",
+                                "description": "Whether autosave snapshots are visible"
                               }
                             },
                             "required": [
@@ -45479,6 +45503,18 @@
                                   ],
                                   "type": "string",
                                   "description": "Timeline zoom level"
+                                },
+                                "showProjectLanes": {
+                                  "type": "boolean",
+                                  "description": "Whether Entity + Project renders separate project lanes"
+                                },
+                                "showMilestones": {
+                                  "type": "boolean",
+                                  "description": "Whether timeline milestone guides are visible"
+                                },
+                                "showAutosaves": {
+                                  "type": "boolean",
+                                  "description": "Whether autosave snapshots are visible"
                                 }
                               },
                               "required": [
@@ -46887,6 +46923,18 @@
                                 ],
                                 "type": "string",
                                 "description": "Timeline zoom level"
+                              },
+                              "showProjectLanes": {
+                                "type": "boolean",
+                                "description": "Whether Entity + Project renders separate project lanes"
+                              },
+                              "showMilestones": {
+                                "type": "boolean",
+                                "description": "Whether timeline milestone guides are visible"
+                              },
+                              "showAutosaves": {
+                                "type": "boolean",
+                                "description": "Whether autosave snapshots are visible"
                               }
                             },
                             "required": [
@@ -48409,6 +48457,18 @@
                                   ],
                                   "type": "string",
                                   "description": "Timeline zoom level"
+                                },
+                                "showProjectLanes": {
+                                  "type": "boolean",
+                                  "description": "Whether Entity + Project renders separate project lanes"
+                                },
+                                "showMilestones": {
+                                  "type": "boolean",
+                                  "description": "Whether timeline milestone guides are visible"
+                                },
+                                "showAutosaves": {
+                                  "type": "boolean",
+                                  "description": "Whether autosave snapshots are visible"
                                 }
                               },
                               "required": [

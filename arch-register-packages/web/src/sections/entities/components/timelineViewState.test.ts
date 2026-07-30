@@ -5,6 +5,7 @@ import type { ChangeCase, ChangeCaseMember } from '@arch-register/api-types/chan
 import type { ChangeCaseMemberEntry } from './snapshotDisplay';
 import {
   collectTimelineDates,
+  filterOwnTimelineVersions,
   getDatedTimelineRows,
   getOwnTimelineVersions,
   groupTimelineRows,
@@ -44,6 +45,7 @@ describe('timeline view state', () => {
       version('auto', 'autosave', '2024-01-01T12:00:00Z')
     ];
     expect(getOwnTimelineVersions(versions).map(item => item.id)).toEqual(['auto', 'saved']);
+    expect(filterOwnTimelineVersions(versions, false).map(item => item.id)).toEqual(['saved']);
   });
 
   it('groups change case entries while preserving lane order', () => {
