@@ -247,6 +247,54 @@ const SnapBlock = ({
   }
   const milestoneX = isMilestone ? toPx(endD) : 0;
 
+  const condensedDots = !showProjectLanes && projectFilterId == null && (
+    <>
+      <div className={styles.snapBaseline} />
+      {[...projectSnapshots, ...ownDots].map(snap => {
+        if (snap.source === 'own') {
+          const px = toPx(new Date(dotCreatedAt(snap)));
+          const isSel = selectedSnapId === snap.id;
+          const dotClass =
+            dotStatus(snap) === 'saved_version'
+              ? styles.snapDotSavedVersion
+              : styles.snapDotAutosave;
+          return (
+            <div
+              key={snap.id}
+              className={`${styles.snapDot} ${dotClass} ${isSel ? styles.snapDotSelected : ''}`}
+              style={{ left: px }}
+              onClick={ev => {
+                ev.stopPropagation();
+                onSnapSelect(isSel ? null : snap, entity);
+              }}
+              title={dotCommitMessage(snap) ?? dotStatus(snap)}
+            />
+          );
+        }
+        const effectiveDate = getSnapshotEffectiveDate(snap.entry.changeCase, milestonesById);
+        if (!effectiveDate) return null;
+        const px = toPx(new Date(`${effectiveDate}T00:00:00`));
+        const isSel = selectedSnapId === snap.id;
+        const status = dotStatus(snap);
+        const dotClass = status === 'applied' ? styles.snapDotApplied : styles.snapDotFutureUpdate;
+        const dateLabel = getSnapshotDateLabel(snap.entry.changeCase, milestonesById);
+        const commitMessage = dotCommitMessage(snap);
+        return (
+          <div
+            key={snap.id}
+            className={`${styles.snapDot} ${dotClass} ${isSel ? styles.snapDotSelected : ''}`}
+            style={{ left: px, '--snap-color': projectColor } as React.CSSProperties}
+            onClick={ev => {
+              ev.stopPropagation();
+              onSnapSelect(isSel ? null : snap, entity);
+            }}
+            title={commitMessage ? `${commitMessage} (${dateLabel})` : (dateLabel ?? status)}
+          />
+        );
+      })}
+    </>
+  );
+
   return (
     <div className={styles.snapBlock}>
       {/* Entity header row */}
@@ -274,30 +322,11 @@ const SnapBlock = ({
           )}
         </div>
         <div className={styles.barCell} style={{ width: totalWidth }}>
-          {projectFilterId != null || !showProjectLanes ? (
+          {projectFilterId != null ? (
             <>
               <div className={styles.snapBaseline} />
-              {[...projectSnapshots, ...(projectFilterId == null ? ownDots : [])].map(snap => {
-                if (snap.source === 'own') {
-                  const px = toPx(new Date(dotCreatedAt(snap)));
-                  const isSel = selectedSnapId === snap.id;
-                  const dotClass =
-                    dotStatus(snap) === 'saved_version'
-                      ? styles.snapDotSavedVersion
-                      : styles.snapDotAutosave;
-                  return (
-                    <div
-                      key={snap.id}
-                      className={`${styles.snapDot} ${dotClass} ${isSel ? styles.snapDotSelected : ''}`}
-                      style={{ left: px }}
-                      onClick={ev => {
-                        ev.stopPropagation();
-                        onSnapSelect(isSel ? null : snap, entity);
-                      }}
-                      title={dotCommitMessage(snap) ?? dotStatus(snap)}
-                    />
-                  );
-                }
+              {projectSnapshots.map(snap => {
+                if (snap.source !== 'project') return null;
                 const effectiveDate = getSnapshotEffectiveDate(
                   snap.entry.changeCase,
                   milestonesById
@@ -345,6 +374,7 @@ const SnapBlock = ({
               }}
             />
           ) : null}
+          {condensedDots}
         </div>
       </div>
 
