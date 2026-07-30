@@ -42,6 +42,7 @@ import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
+import { buildDiff, equalEntityValue, mutableStateKeys } from './entityDiff';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
 export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change-case.bulk';
@@ -53,21 +54,6 @@ type ResolvedEntityApprovalPolicy = {
   selfApprovalAllowed: boolean;
   policyVersion: string;
 };
-
-const stableStringify = (value: unknown): string => {
-  if (value === undefined) return 'undefined';
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
-  return `{${Object.keys(value as Record<string, unknown>)
-    .sort()
-    .map(
-      key => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`
-    )
-    .join(',')}}`;
-};
-
-const equalValue = (left: unknown, right: unknown) =>
-  stableStringify(left) === stableStringify(right);
 
 const entityState = (entity: Entity): Record<string, unknown> => ({
   id: entity.id,
@@ -89,29 +75,6 @@ const entityState = (entity: Entity): Record<string, unknown> => ({
   created_at: entity.created_at.toISOString(),
   updated_at: entity.updated_at.toISOString()
 });
-
-const mutableStateKeys = [
-  'slug',
-  'namespace',
-  'name',
-  'description',
-  'owner',
-  'lifecycle',
-  'target_lifecycle',
-  'target_lifecycle_date',
-  'tags',
-  'links',
-  'schema_id',
-  'data',
-  'project_id'
-] as const;
-
-const buildDiff = (base: Record<string, unknown>, proposed: Record<string, unknown>) =>
-  Object.fromEntries(
-    mutableStateKeys
-      .filter(key => !equalValue(base[key], proposed[key]))
-      .map(key => [key, { before: base[key] ?? null, after: proposed[key] ?? null }])
-  );
 
 const policyFor = (
   schema: { id: string; version?: number; entity_approval_policy?: 'required' | 'disabled' },
@@ -941,8 +904,8 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           const currentState = entityState(entity);
           const conflicting = Object.keys(revision.diff).some(
             key =>
-              !equalValue(revision.base_state[key], currentState[key]) &&
-              !equalValue(currentState[key], revision.proposed_state[key])
+              !equalEntityValue(revision.base_state[key], currentState[key]) &&
+              !equalEntityValue(currentState[key], revision.proposed_state[key])
           );
           if (!conflicting) return 'proceed';
           await tx.entityChange.updateApprovalRevisionStatus(
@@ -998,8 +961,8 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           const touchedKeys = Object.keys(revision.diff);
           const conflictingKeys = touchedKeys.filter(
             key =>
-              !equalValue(revision.base_state[key], currentState[key]) &&
-              !equalValue(currentState[key], revision.proposed_state[key])
+              !equalEntityValue(revision.base_state[key], currentState[key]) &&
+              !equalEntityValue(currentState[key], revision.proposed_state[key])
           );
           httpAssert.true(conflictingKeys.length === 0, {
             status: 409,
@@ -1131,8 +1094,8 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             const currentState = entityState(entity);
             const conflicting = Object.keys(member.diff).some(
               key =>
-                !equalValue(member.base_state[key], currentState[key]) &&
-                !equalValue(currentState[key], member.proposed_state[key])
+                !equalEntityValue(member.base_state[key], currentState[key]) &&
+                !equalEntityValue(currentState[key], member.proposed_state[key])
             );
             if (conflicting) {
               anyConflicting = true;
@@ -1202,8 +1165,8 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             const touchedKeys = Object.keys(member.diff);
             const conflictingKeys = touchedKeys.filter(
               key =>
-                !equalValue(member.base_state[key], currentState[key]) &&
-                !equalValue(currentState[key], member.proposed_state[key])
+                !equalEntityValue(member.base_state[key], currentState[key]) &&
+                !equalEntityValue(currentState[key], member.proposed_state[key])
             );
             httpAssert.true(conflictingKeys.length === 0, {
               status: 409,

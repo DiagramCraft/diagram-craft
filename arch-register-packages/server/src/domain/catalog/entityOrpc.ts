@@ -48,6 +48,7 @@ import {
   type EnumCatalog
 } from './entityQueryTextCompiler';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
+import { diffEntityLandscapes } from './entityLandscapeDiffOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -118,6 +119,17 @@ const entityHandlers = {
     }
     const total = await countEntities(context.db, workspace, authCtx, query);
     return { total };
+  }),
+
+  diff: entityRouter.entities.diff.handler(async ({ input, context }) => {
+    const { workspace, authCtx } = context;
+    return await diffEntityLandscapes(
+      context.db,
+      workspace,
+      authCtx,
+      input.body.from,
+      input.body.to
+    );
   }),
 
   facets: entityRouter.entities.facets.handler(async ({ context }) => {
