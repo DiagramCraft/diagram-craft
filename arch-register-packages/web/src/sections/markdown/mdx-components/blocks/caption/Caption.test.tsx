@@ -26,13 +26,13 @@ describe('Caption', () => {
     expect(markup).not.toContain('<figcaption');
   });
 
-  it('prefixes "Figure:" when numbered is set', () => {
+  it('renders the figure label when numbered is set', () => {
     const markup = renderToStaticMarkup(<Caption caption="Text" numbered="true" />);
-    expect(markup).toContain('Figure:');
+    expect(markup).toContain('figureLabel');
   });
 
-  it('does not prefix "Figure:" when numbered is not set', () => {
+  it('does not render the figure label when numbered is not set', () => {
     const markup = renderToStaticMarkup(<Caption caption="Text" />);
-    expect(markup).not.toContain('Figure:');
+    expect(markup).not.toContain('figureLabel');
   });
 });
