@@ -35,6 +35,14 @@ export const getOwnTimelineVersions = (versions: EntityVersion[]): EntityVersion
     .filter(version => OWN_HISTORY_KINDS.has(version.kind))
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
+export const filterOwnTimelineVersions = (
+  versions: EntityVersion[],
+  showAutosaves: boolean
+): EntityVersion[] =>
+  getOwnTimelineVersions(versions).filter(
+    version => showAutosaves || getOwnVersionDisplayStatus(version.kind) !== 'autosave'
+  );
+
 export const groupChangeCaseEntriesByProject = (
   entries: ChangeCaseMemberEntry[]
 ): TimelineProjectLane[] => {

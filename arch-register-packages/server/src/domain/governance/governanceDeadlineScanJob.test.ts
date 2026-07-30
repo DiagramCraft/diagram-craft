@@ -186,11 +186,14 @@ const registryWithEscalation = (
   return registry;
 };
 
+const createHandler = (db: DatabaseAdapter, registry: GovernanceRegistry) =>
+  createGovernanceDeadlineScanJobHandler(db, registry, () => now);
+
 describe('createGovernanceDeadlineScanJobHandler', () => {
   it('sends a reminder and records reminder_windows_sent for an overdue case', async () => {
     const caseRow = makeCase();
     const { db, store, addReminderWindowSent, appendEvent } = makeDb([caseRow], null);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithDefault());
+    const handler = createHandler(db, registryWithDefault());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -208,7 +211,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
   it('does not re-send a window already recorded on the case', async () => {
     const caseRow = makeCase({ reminder_windows_sent: ['overdue:1'] });
     const { db, appendEvent } = makeDb([caseRow], null);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithDefault());
+    const handler = createHandler(db, registryWithDefault());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -219,7 +222,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
   it('skips a case whose kind has no reminderWindows configured', async () => {
     const caseRow = makeCase({ case_kind: 'document.status-case' });
     const { db, appendEvent } = makeDb([caseRow], null);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithDefault());
+    const handler = createHandler(db, registryWithDefault());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -233,7 +236,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
     // listCases is mocked to return whatever is in the store regardless of the status filter
     // passed in, matching how the real query would already exclude non-open cases — verify the
     // handler's own re-fetch-inside-transaction guard independently by forcing a status flip.
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithDefault());
+    const handler = createHandler(db, registryWithDefault());
 
     await handler({ workspace: 'ws-1', payload: {} });
 
@@ -244,7 +247,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
     const caseRow = makeCase();
     const override = makeReminderConfigRow({ enabled: false });
     const { db, appendEvent } = makeDb([caseRow], override);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithDefault());
+    const handler = createHandler(db, registryWithDefault());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -262,7 +265,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
       overdue_days: [5]
     });
     const { db, appendEvent } = makeDb([caseRow], override);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithDefault());
+    const handler = createHandler(db, registryWithDefault());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -274,7 +277,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
     const target: GovernanceAssignmentTarget = { type: 'capability', capability: 'ws.settings' };
     const caseRow = makeCase({ due_at: new Date(now.getTime() - 5 * dayMs) });
     const { db, store, markEscalated, appendEvent } = makeDb([caseRow], null);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithEscalation(target));
+    const handler = createHandler(db, registryWithEscalation(target));
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -292,7 +295,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
   it('does not escalate a case below the overdue threshold', async () => {
     const caseRow = makeCase({ due_at: new Date(now.getTime() - 1 * dayMs) });
     const { db, appendEvent } = makeDb([caseRow], null);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithEscalation());
+    const handler = createHandler(db, registryWithEscalation());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -308,7 +311,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
       escalated_at: new Date(now.getTime() - 1 * dayMs)
     });
     const { db, markEscalated } = makeDb([caseRow], null);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithEscalation());
+    const handler = createHandler(db, registryWithEscalation());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -319,7 +322,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
   it('skips escalation for a case kind with no escalation config', async () => {
     const caseRow = makeCase({ due_at: new Date(now.getTime() - 5 * dayMs) });
     const { db } = makeDb([caseRow], null);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithDefault());
+    const handler = createHandler(db, registryWithDefault());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
@@ -330,7 +333,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
     const caseRow = makeCase({ due_at: new Date(now.getTime() - 5 * dayMs) });
     const override = makeReminderConfigRow({ escalation_enabled: false });
     const { db } = makeDb([caseRow], override);
-    const handler = createGovernanceDeadlineScanJobHandler(db, registryWithEscalation());
+    const handler = createHandler(db, registryWithEscalation());
 
     const result = await handler({ workspace: 'ws-1', payload: {} });
 
