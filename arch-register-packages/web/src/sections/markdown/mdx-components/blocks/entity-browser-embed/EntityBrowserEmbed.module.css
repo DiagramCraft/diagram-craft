@@ -19,3 +19,15 @@
     opacity: 0.4;
   }
 }
+
+.entityBrowserWrapper {
+  padding: 0;
+}
+
+div[data-frame="true"] {
+  .entityBrowserWrapper > div {
+    margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
+    overflow: visible;
+    border-width: 0;
+  }
+}

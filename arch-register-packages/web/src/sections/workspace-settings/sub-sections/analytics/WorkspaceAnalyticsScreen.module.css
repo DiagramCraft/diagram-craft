@@ -5,6 +5,17 @@
   padding: 16px 24px 32px;
 }
 
+div[data-frame="true"] {
+  .stack {
+    padding: 0;
+
+    & > div {
+      margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
+      border-width: 0;
+    }
+  }
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -157,6 +168,17 @@ div[data-frame="true"] {
   flex-wrap: wrap;
   gap: 6px;
   padding: 12px 14px 14px;
+}
+
+div[data-frame="true"] {
+  .bucketList {
+    padding: 0;
+
+    @container frame (max-width: 320px) {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+  }
 }
 
 .bucketCard {
@@ -382,6 +404,12 @@ div[data-frame="true"] {
 
 .staleReportControls .reportSub {
   margin-right: auto;
+}
+
+div[data-frame="true"] {
+  .staleReportControls {
+    display: none;
+  }
 }
 
 .staleLabel {

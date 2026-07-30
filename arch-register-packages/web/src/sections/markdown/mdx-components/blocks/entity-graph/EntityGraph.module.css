@@ -8,6 +8,13 @@
   background: var(--panel-bg);
 }
 
+div[data-frame="true"] {
+  .container {
+    margin: 0;
+    border-width: 0;
+  }
+}
+
 @media (max-width: 560px) {
   .container {
     height: 340px;

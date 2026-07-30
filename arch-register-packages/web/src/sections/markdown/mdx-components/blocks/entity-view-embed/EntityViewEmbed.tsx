@@ -108,28 +108,30 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   );
 
   return (
-    <EntityBrowserView
-      view={savedView.viewMode}
-      rows={rows}
-      schemaMap={schemaMap}
-      schemas={schemas}
-      lifecycleStates={lifecycleStates}
-      projects={projects}
-      workspaceId={workspaceSlug}
-      projectId={resolvedProjectId ?? undefined}
-      projectScope={projectScope}
-      q={q}
-      typeFilter={typeFilter}
-      ownerFilter={ownerFilter}
-      statusFilter={statusFilter}
-      activeViewConfig={viewConfig}
-      displayFields={displayFields}
-      mode={{ kind: 'published', onEntityClick }}
-      unsupportedView={
-        <div className={styles.container}>
-          <EmptyState compact title="Unsupported view mode." />
-        </div>
-      }
-    />
+    <div className={styles.entityBrowserViewWrapper}>
+      <EntityBrowserView
+        view={savedView.viewMode}
+        rows={rows}
+        schemaMap={schemaMap}
+        schemas={schemas}
+        lifecycleStates={lifecycleStates}
+        projects={projects}
+        workspaceId={workspaceSlug}
+        projectId={resolvedProjectId ?? undefined}
+        projectScope={projectScope}
+        q={q}
+        typeFilter={typeFilter}
+        ownerFilter={ownerFilter}
+        statusFilter={statusFilter}
+        activeViewConfig={viewConfig}
+        displayFields={displayFields}
+        mode={{ kind: 'published', onEntityClick }}
+        unsupportedView={
+          <div className={styles.container}>
+            <EmptyState compact title="Unsupported view mode." />
+          </div>
+        }
+      />
+    </div>
   );
 };

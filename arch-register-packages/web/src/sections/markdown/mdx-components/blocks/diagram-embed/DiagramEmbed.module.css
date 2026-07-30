@@ -38,3 +38,10 @@
   margin: 8px 0 0 0;
   font-style: italic;
 }
+
+div[data-frame="true"] {
+  .container {
+    border-width: 0;
+    padding: 0;
+  }
+}
