@@ -8,7 +8,7 @@ import styles from '../../../../dashboard/WidgetConfigDialog.module.css';
 type Props = {
   config: DiagramEmbedWidgetConfig;
   onChange: (config: DiagramEmbedWidgetConfig) => void;
-  context: { workspaceSlug: string; projectId?: string };
+  context: { mode: 'mdx' | 'dashboard'; workspaceSlug: string; projectId?: string };
 };
 
 export const DiagramEmbedDashboardConfigForm = ({ config, onChange, context }: Props) => {

@@ -7,7 +7,7 @@ import {
   EntityChangelogEditable,
   entityChangelogMdxRule
 } from './EntityChangelogEditable';
-import { EntityChangelogDashboardConfigForm } from './EntityChangelogDashboardConfigForm';
+import { EntityChangelogConfigForm } from './EntityChangelogConfigForm';
 import type { EntityChangelogSlateElement, EntityChangelogWidgetConfig } from './types';
 
 const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
@@ -47,7 +47,7 @@ export const entityChangelogSpec = defineMdxComponent<
       !!(config.entityId || config.schema || config.owner || config.lifecycle),
     createDefaultConfig: () => ({ since: '30d', limit: '10' }),
     getTitle: () => 'Entity changelog',
-    configForm: EntityChangelogDashboardConfigForm
+    configForm: EntityChangelogConfigForm
   },
   editorSpec: {
     editableComponent: EntityChangelogEditable,

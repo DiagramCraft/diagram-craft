@@ -70,7 +70,7 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
     configForm?: React.ComponentType<{
       config: Config;
       onChange: (config: Config) => void;
-      context: { workspaceSlug: string; projectId?: string };
+      context: { mode: 'mdx' | 'dashboard'; workspaceSlug: string; projectId?: string };
     }>;
     /** WidgetConfigDialog width override; defaults to 460. */
     dialogWidth?: number | string;

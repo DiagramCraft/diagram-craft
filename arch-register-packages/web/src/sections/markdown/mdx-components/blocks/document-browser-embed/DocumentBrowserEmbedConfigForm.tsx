@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { TbColumns3, TbFilter, TbPlus, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
@@ -13,8 +13,11 @@ import filterStyles from '../../../../../components/FilterBuilder.module.css';
 import { SearchInput } from '../../../../../components/SearchInput';
 import { useDocumentTypes } from '../../../../../hooks/useDocuments';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
+import { DialogSection } from '../../../editor/BlockDialog';
+import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
+import { encodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
 import type { DocumentBrowserBaseColumnId, DocumentBrowserEmbedConfig } from './types';
-import styles from './DocumentBrowserEmbedDialog.module.css';
+import styles from './DocumentBrowserEmbedConfigForm.module.css';
 
 const ALL_TYPES = '__all__';
 const UNTYPED = 'none';
@@ -324,18 +327,35 @@ const DocumentFieldsPopover = ({
 );
 
 type Props = {
-  value: DocumentBrowserEmbedConfig;
-  onChange: (value: DocumentBrowserEmbedConfig) => void;
+  config: DocumentBrowserEmbedConfig;
+  onChange: (config: DocumentBrowserEmbedConfig) => void;
 };
 
-export const DocumentBrowserEmbedConfigForm = ({ value, onChange }: Props) => {
+export const DocumentBrowserEmbedConfigForm = ({ config: value, onChange }: Props) => {
   const { workspaceSlug } = useWorkspaceContext();
-  const { data: documentTypes = [] } = useDocumentTypes(workspaceSlug);
+  const { data: documentTypes = [], isSuccess: documentTypesLoaded } =
+    useDocumentTypes(workspaceSlug);
 
   const selectedFields = useMemo(
     () => fieldsForType(documentTypes, value.documentTypeId),
     [documentTypes, value.documentTypeId]
   );
+
+  // Drops filter conditions/columns that no longer belong to the selected document type's
+  // fields (e.g. a field was retired since this config was saved); deferred until the document
+  // types query resolves so it doesn't wipe valid state against the transient empty default.
+  useEffect(() => {
+    if (!documentTypesLoaded) return;
+    const validFieldIds = new Set(selectedFields.map(field => field.id));
+    const sanitizedConditions = sanitizeConditions(value.conditions, selectedFields);
+    const sanitizedFieldIds = value.visibleFieldIds.filter(id => validFieldIds.has(id));
+    if (
+      sanitizedConditions.length !== value.conditions.length ||
+      sanitizedFieldIds.length !== value.visibleFieldIds.length
+    ) {
+      onChange({ ...value, conditions: sanitizedConditions, visibleFieldIds: sanitizedFieldIds });
+    }
+  }, [documentTypesLoaded, selectedFields, value, onChange]);
   const sortOptions = useMemo(
     () => [
       { value: 'updated_at', label: 'Updated date' },
@@ -362,70 +382,79 @@ export const DocumentBrowserEmbedConfigForm = ({ value, onChange }: Props) => {
   const selectValue = value.documentTypeId ?? ALL_TYPES;
 
   return (
-    <div className={styles.toolbar}>
-      <SearchInput
-        size="sm"
-        className={styles.searchInline}
-        value={value.q}
-        onChange={q => onChange({ ...value, q })}
-        onClear={() => onChange({ ...value, q: '' })}
-        placeholder="Search document titles…"
-      />
-      <Select.Root
-        value={selectValue}
-        onChange={handleTypeChange}
-        style={{ width: 190, minWidth: 190, flex: '0 0 190px' }}
-      >
-        <Select.Item value={ALL_TYPES}>All document types</Select.Item>
-        <Select.Item value={UNTYPED}>Untyped Markdown</Select.Item>
-        {documentTypes
-          .filter(type => !type.archived)
-          .map(type => (
-            <Select.Item key={type.id} value={type.id}>
-              {type.name}
-            </Select.Item>
-          ))}
-      </Select.Root>
-      <Popover.Root>
-        <Popover.Trigger
-          element={
-            <Button size="sm" variant={value.conditions.length > 0 ? 'primary' : 'secondary'}>
-              <TbFilter size={12} style={{ marginRight: 4 }} />
-              Filter
-              {value.conditions.length > 0 && (
-                <span className={styles.filterCount}>{value.conditions.length}</span>
-              )}
-            </Button>
-          }
-        />
-        <Popover.Content
-          sideOffset={4}
-          align="start"
-          arrow={false}
-          closeButton={false}
-          className={styles.filterPopover}
-        >
-          <MetadataFilterBuilder
-            fields={selectedFields}
-            conditions={value.conditions}
-            onChange={conditions => onChange({ ...value, conditions })}
+    <>
+      <DialogSection label="Filters" required={false}>
+        <div className={styles.toolbar}>
+          <SearchInput
+            size="sm"
+            className={styles.searchInline}
+            value={value.q}
+            onChange={q => onChange({ ...value, q })}
+            onClear={() => onChange({ ...value, q: '' })}
+            placeholder="Search document titles…"
           />
-        </Popover.Content>
-      </Popover.Root>
-      <div className={styles.toolbarSpacer} />
-      <FilterDropdown
-        label="Sort"
-        value={sortValue}
-        onChange={sort => onChange({ ...value, sort })}
-        options={sortOptions}
-      />
-      <DocumentFieldsPopover
-        visibleBaseColumnIds={value.visibleBaseColumnIds}
-        onBaseColumnChange={visibleBaseColumnIds => onChange({ ...value, visibleBaseColumnIds })}
-        fields={selectedFields}
-        visibleFieldIds={value.visibleFieldIds}
-        onChange={visibleFieldIds => onChange({ ...value, visibleFieldIds })}
-      />
-    </div>
+          <Select.Root
+            value={selectValue}
+            onChange={handleTypeChange}
+            style={{ width: 190, minWidth: 190, flex: '0 0 190px' }}
+          >
+            <Select.Item value={ALL_TYPES}>All document types</Select.Item>
+            <Select.Item value={UNTYPED}>Untyped Markdown</Select.Item>
+            {documentTypes
+              .filter(type => !type.archived)
+              .map(type => (
+                <Select.Item key={type.id} value={type.id}>
+                  {type.name}
+                </Select.Item>
+              ))}
+          </Select.Root>
+          <Popover.Root>
+            <Popover.Trigger
+              element={
+                <Button size="sm" variant={value.conditions.length > 0 ? 'primary' : 'secondary'}>
+                  <TbFilter size={12} style={{ marginRight: 4 }} />
+                  Filter
+                  {value.conditions.length > 0 && (
+                    <span className={styles.filterCount}>{value.conditions.length}</span>
+                  )}
+                </Button>
+              }
+            />
+            <Popover.Content
+              sideOffset={4}
+              align="start"
+              arrow={false}
+              closeButton={false}
+              className={styles.filterPopover}
+            >
+              <MetadataFilterBuilder
+                fields={selectedFields}
+                conditions={value.conditions}
+                onChange={conditions => onChange({ ...value, conditions })}
+              />
+            </Popover.Content>
+          </Popover.Root>
+          <div className={styles.toolbarSpacer} />
+          <FilterDropdown
+            label="Sort"
+            value={sortValue}
+            onChange={sort => onChange({ ...value, sort })}
+            options={sortOptions}
+          />
+          <DocumentFieldsPopover
+            visibleBaseColumnIds={value.visibleBaseColumnIds}
+            onBaseColumnChange={visibleBaseColumnIds =>
+              onChange({ ...value, visibleBaseColumnIds })
+            }
+            fields={selectedFields}
+            visibleFieldIds={value.visibleFieldIds}
+            onChange={visibleFieldIds => onChange({ ...value, visibleFieldIds })}
+          />
+        </div>
+      </DialogSection>
+      <div className={styles.preview}>
+        <DocumentBrowserEmbed config={encodeDocumentBrowserEmbedConfig(value)} />
+      </div>
+    </>
   );
 };

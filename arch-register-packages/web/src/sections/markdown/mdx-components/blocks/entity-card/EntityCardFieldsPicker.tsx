@@ -1,5 +1,5 @@
 import { STANDARD_FIELD_OPTIONS, STANDARD_FIELD_IDS } from './EntityCard';
-import styles from './EntityCardDialog.module.css';
+import styles from './EntityCardFieldsPicker.module.css';
 
 export const EntityCardFieldsPicker = ({
   schemaFields,

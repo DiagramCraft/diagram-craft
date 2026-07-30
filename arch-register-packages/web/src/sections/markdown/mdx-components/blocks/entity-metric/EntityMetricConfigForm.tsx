@@ -6,7 +6,7 @@ import {
 import { DialogSection } from '../../../editor/BlockDialog';
 import type { WidgetSurface } from '../../types';
 import type { EntityMetricType, StatMetricWidgetConfig } from './types';
-import styles from './EntityMetricDialog.module.css';
+import styles from './EntityMetricConfigForm.module.css';
 
 const METRIC_TYPE_OPTIONS: { value: EntityMetricType; label: string; surfaces: WidgetSurface[] }[] =
   [
@@ -25,7 +25,7 @@ type Props = {
   context: { projectId?: string };
 };
 
-export const EntityMetricDashboardConfigForm = ({ config, onChange, context }: Props) => {
+export const EntityMetricConfigForm = ({ config, onChange, context }: Props) => {
   const metricType = config.metricType ?? 'entity-count';
   const surface: WidgetSurface = context.projectId ? 'project' : 'workspace';
   const metricTypeOptions = METRIC_TYPE_OPTIONS.filter(option => option.surfaces.includes(surface));

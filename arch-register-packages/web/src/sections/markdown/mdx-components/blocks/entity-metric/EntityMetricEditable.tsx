@@ -4,9 +4,10 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbHash } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
+import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { EntityMetric } from './EntityMetric';
-import { EntityMetricDialog } from './EntityMetricDialog';
-import type { EntityMetricSlateElement } from './types';
+import { EntityMetricConfigForm } from './EntityMetricConfigForm';
+import type { EntityMetricSlateElement, StatMetricWidgetConfig } from './types';
 
 export const ENTITY_METRIC_TYPE = 'EntityMetric' as const;
 
@@ -43,6 +44,31 @@ export const entityMetricMdxRule: MdxRuleDef<EntityMetricSlateElement, 'block'> 
   })
 };
 
+export const entityMetricMdxConfigSpec: MdxConfigSpec<
+  EntityMetricSlateElement,
+  StatMetricWidgetConfig
+> = {
+  title: 'Entity metric',
+  width: 460,
+  fromElement: el => ({
+    metricType: el.metricType ?? 'entity-count',
+    schema: el.schema,
+    owner: el.owner,
+    lifecycle: el.lifecycle,
+    label: el.label
+  }),
+  toElement: config => ({
+    schema: config.schema ?? '',
+    owner: config.owner ?? '',
+    lifecycle: config.lifecycle ?? '',
+    label: config.label ?? '',
+    metricType: config.metricType
+  }),
+  defaultConfig: () => ({ metricType: 'entity-count' }),
+  isValidConfig: () => true,
+  ConfigForm: EntityMetricConfigForm
+};
+
 export const EntityMetricEditable = ({
   element,
   children,
@@ -53,7 +79,7 @@ export const EntityMetricEditable = ({
   const lifecycle = element.lifecycle ?? '';
   const label = element.label ?? '';
   const metricType = element.metricType;
-  const hasValue = !!(schema || owner || lifecycle);
+  const hasValue = !!(schema || owner || lifecycle || label || metricType);
 
   return (
     <BaseBlockEditable
@@ -75,7 +101,13 @@ export const EntityMetricEditable = ({
         />
       }
       dialog={(open, onClose) => (
-        <EntityMetricDialog element={element} open={open} onClose={onClose} isNew={!hasValue} />
+        <MdxWidgetConfigDialog
+          element={element}
+          open={open}
+          onClose={onClose}
+          isNew={!hasValue}
+          spec={entityMetricMdxConfigSpec}
+        />
       )}
       {...props}
     >
