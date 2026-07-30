@@ -583,12 +583,13 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   async listEntityVersionsByIds(workspace: string, entityIds: string[]) {
     if (entityIds.length === 0) return [];
     return this.all(
-      `SELECT v.*, u.display_name AS created_by_name
+      `SELECT v.id, v.workspace, v.entity_id, v.version_number, v.kind, v.commit_message,
+         v.created_at, v.created_by, v.applied_case_revision_id, u.display_name AS created_by_name
        FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.entity_id IN (${entityIds.map(() => '?').join(',')})
        ORDER BY v.entity_id, v.created_at DESC`,
       [workspace, ...entityIds],
-      catalogMappers.entityVersion
+      catalogMappers.entityVersionSummary
     );
   }
 

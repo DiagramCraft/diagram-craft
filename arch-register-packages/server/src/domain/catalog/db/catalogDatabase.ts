@@ -261,6 +261,8 @@ export type EntityVersionDbResult = {
 
 export type EntityVersionDbCreate = Omit<EntityVersionDbResult, 'created_by_name'>;
 
+export type EntityVersionSummaryDbResult = Omit<EntityVersionDbResult, 'state'>;
+
 // A single member of an active (not yet applied) change-case revision, as of a point in time.
 // Represents a planned future edit to one entity, coordinated with other entities under the same
 // `case_revision_id`.
@@ -363,6 +365,19 @@ export const catalogMappers = {
     created_by: row['created_by'] == null ? null : String(row['created_by']),
     created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
     state: parseDatabaseJson<Record<string, unknown>>(row['state'], {}, 'entity_version.state'),
+    applied_case_revision_id:
+      row['applied_case_revision_id'] == null ? null : String(row['applied_case_revision_id'])
+  }),
+  entityVersionSummary: (row: DatabaseRow): EntityVersionSummaryDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    version_number: Number(row['version_number']),
+    kind: row['kind'] as EntityVersionKind,
+    commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
+    created_at: databaseDate(row['created_at']),
+    created_by: row['created_by'] == null ? null : String(row['created_by']),
+    created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
     applied_case_revision_id:
       row['applied_case_revision_id'] == null ? null : String(row['applied_case_revision_id'])
   }),
@@ -536,7 +551,7 @@ export type CatalogDatabase = {
   createEntityVersion(input: EntityVersionDbCreate): Promise<EntityVersionDbResult>;
   getEntityVersionById(ws: string, id: string): Promise<EntityVersionDbResult | null>;
   listEntityVersions(ws: string, entityId: string): Promise<EntityVersionDbResult[]>;
-  listEntityVersionsByIds(ws: string, entityIds: string[]): Promise<EntityVersionDbResult[]>;
+  listEntityVersionsByIds(ws: string, entityIds: string[]): Promise<EntityVersionSummaryDbResult[]>;
   listEntityVersionsAsOf(
     ws: string,
     asOf: Date,

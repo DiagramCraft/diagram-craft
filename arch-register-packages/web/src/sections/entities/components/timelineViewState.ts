@@ -1,8 +1,17 @@
-import type { EntityRecord, TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
-import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
-import type { ChangeCaseMemberEntry } from './snapshotDisplay';
+import type {
+  EntityRecord,
+  TreeEdge,
+  TreeNode,
+  TimelineVersion,
+  TimelineViewData
+} from '@arch-register/api-types/entityContract';
 
 export type TimelineGroupBy = 'owner' | 'type' | 'snapshot' | 'containment';
+
+// A single project-scoped change-case entry as returned by the timeline summary endpoint (no
+// entity state blobs — see snapshotDisplay.ts's ChangeCaseMemberEntry for the full-state variant
+// used elsewhere).
+export type TimelineChangeCaseEntry = TimelineViewData['projectChanges'][number];
 
 export type TimelineSchemaEntry = {
   schema: { name: string };
@@ -11,12 +20,12 @@ export type TimelineSchemaEntry = {
 
 export type TimelineProjectLane = {
   projectId: string;
-  entries: ChangeCaseMemberEntry[];
+  entries: TimelineChangeCaseEntry[];
 };
 
 // 'case_applied' and 'deleted' versions aren't rendered on the own-history lane — they surface
 // via the project lanes (applied) or aren't shown at all (deleted).
-const OWN_HISTORY_KINDS = new Set<EntityVersion['kind']>([
+const OWN_HISTORY_KINDS = new Set<TimelineVersion['kind']>([
   'autosave',
   'direct_edit',
   'restored',
@@ -27,26 +36,31 @@ const OWN_HISTORY_KINDS = new Set<EntityVersion['kind']>([
 export type OwnVersionDisplayStatus = 'saved_version' | 'autosave';
 
 // 'direct_edit', 'restored', and 'bypass' all render as a plain autosave entry.
-export const getOwnVersionDisplayStatus = (kind: EntityVersion['kind']): OwnVersionDisplayStatus =>
-  kind === 'saved_version' ? 'saved_version' : 'autosave';
+export const getOwnVersionDisplayStatus = (
+  kind: TimelineVersion['kind']
+): OwnVersionDisplayStatus => (kind === 'saved_version' ? 'saved_version' : 'autosave');
 
-export const getOwnTimelineVersions = (versions: EntityVersion[]): EntityVersion[] =>
+// Generic over the version shape so both the full EntityVersion (single-entity timeline tab) and
+// the lighter TimelineVersion (browser-wide timeline view, no state blobs) can share this logic.
+export const getOwnTimelineVersions = <V extends Pick<TimelineVersion, 'kind' | 'created_at'>>(
+  versions: V[]
+): V[] =>
   versions
     .filter(version => OWN_HISTORY_KINDS.has(version.kind))
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-export const filterOwnTimelineVersions = (
-  versions: EntityVersion[],
+export const filterOwnTimelineVersions = <V extends Pick<TimelineVersion, 'kind' | 'created_at'>>(
+  versions: V[],
   showAutosaves: boolean
-): EntityVersion[] =>
+): V[] =>
   getOwnTimelineVersions(versions).filter(
     version => showAutosaves || getOwnVersionDisplayStatus(version.kind) !== 'autosave'
   );
 
 export const groupChangeCaseEntriesByProject = (
-  entries: ChangeCaseMemberEntry[]
+  entries: TimelineChangeCaseEntry[]
 ): TimelineProjectLane[] => {
-  const byProject: Record<string, ChangeCaseMemberEntry[]> = {};
+  const byProject: Record<string, TimelineChangeCaseEntry[]> = {};
   for (const entry of entries) {
     if (entry.changeCase.project_id) {
       (byProject[entry.changeCase.project_id] ??= []).push(entry);

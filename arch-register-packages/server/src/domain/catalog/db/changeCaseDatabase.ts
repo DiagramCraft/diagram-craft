@@ -73,9 +73,9 @@ export type ChangeCaseMemberInput = {
   diff: Record<string, unknown>;
 };
 
-export type ChangeCaseTimelineMemberDbResult = {
+export type ChangeCaseTimelineMemberSummaryDbResult = {
   changeCase: ChangeCaseDbResult;
-  member: ChangeCaseMemberDbResult;
+  member: Omit<ChangeCaseMemberDbResult, 'base_state' | 'proposed_state' | 'diff'>;
   revisionMessage: string | null;
 };
 
@@ -140,7 +140,7 @@ export const changeCaseMappers = {
     diff: parseDatabaseJson(row['diff'], {}, 'entity_change_case_entity_version.diff'),
     applied_version_id: row['applied_version_id'] == null ? null : String(row['applied_version_id'])
   }),
-  timelineMember: (row: DatabaseRow): ChangeCaseTimelineMemberDbResult => ({
+  timelineMember: (row: DatabaseRow): ChangeCaseTimelineMemberSummaryDbResult => ({
     changeCase: {
       id: String(row['case_id']),
       workspace: String(row['case_workspace']),
@@ -164,13 +164,6 @@ export const changeCaseMappers = {
       workspace: String(row['member_workspace']),
       entity_id: String(row['member_entity_id']),
       base_version: Number(row['member_base_version']),
-      base_state: parseDatabaseJson(row['member_base_state'], {}, 'timeline.base_state'),
-      proposed_state: parseDatabaseJson(
-        row['member_proposed_state'],
-        {},
-        'timeline.proposed_state'
-      ),
-      diff: parseDatabaseJson(row['member_diff'], {}, 'timeline.diff'),
       applied_version_id:
         row['member_applied_version_id'] == null ? null : String(row['member_applied_version_id'])
     },
@@ -186,7 +179,7 @@ export type ChangeCaseDatabase = {
   listTimelineMembersByEntities(
     workspace: string,
     entityIds: string[]
-  ): Promise<ChangeCaseTimelineMemberDbResult[]>;
+  ): Promise<ChangeCaseTimelineMemberSummaryDbResult[]>;
   getActiveRevision(workspace: string, caseId: string): Promise<ChangeCaseRevisionDbResult | null>;
   getLatestRevision(workspace: string, caseId: string): Promise<ChangeCaseRevisionDbResult | null>;
   listMembers(workspace: string, revisionId: string): Promise<ChangeCaseMemberDbResult[]>;

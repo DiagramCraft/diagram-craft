@@ -29,12 +29,16 @@ import {
   filterOwnTimelineVersions,
   getOwnVersionDisplayStatus,
   groupTimelineRows,
-  groupChangeCaseEntriesByProject
+  groupChangeCaseEntriesByProject,
+  type TimelineChangeCaseEntry
 } from './timelineViewState';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import type { EntityRecord, TimelineViewData } from '@arch-register/api-types/entityContract';
-import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
+import type {
+  EntityRecord,
+  TimelineViewData,
+  TimelineVersion
+} from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { Project } from '@arch-register/api-types/projectContract';
@@ -45,8 +49,7 @@ import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import {
   getSnapshotDateLabel,
   getSnapshotEffectiveDate,
-  toMilestonesById,
-  type ChangeCaseMemberEntry
+  toMilestonesById
 } from './snapshotDisplay';
 import { EmptyState } from '../../../components/EmptyState';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
@@ -120,14 +123,12 @@ const SNAP_STATUS_LABEL: Record<string, string> = {
 // needs from either source — it isn't a shared "snapshot" API shape.
 
 type TimelineDot =
-  | { source: 'own'; id: string; version: EntityVersion }
-  | { source: 'project'; id: string; entry: ChangeCaseMemberEntry };
+  | { source: 'own'; id: string; version: TimelineVersion }
+  | { source: 'project'; id: string; entry: TimelineChangeCaseEntry };
 
-const toChangeCaseEntries = (timelineData: TimelineViewData | undefined): ChangeCaseMemberEntry[] =>
-  (timelineData?.projectChanges ?? []).map(({ changeCase, member }) => ({
-    changeCase: { ...changeCase, members: [member] },
-    member
-  }));
+const toChangeCaseEntries = (
+  timelineData: TimelineViewData | undefined
+): TimelineChangeCaseEntry[] => timelineData?.projectChanges ?? [];
 
 const dotStatus = (dot: TimelineDot): string =>
   dot.source === 'own'
