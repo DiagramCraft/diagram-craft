@@ -5,7 +5,8 @@ import {
   TbCalendarWeek,
   TbGitBranch,
   TbFlag,
-  TbHistory
+  TbGitCommit,
+  TbBriefcase2
 } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -668,7 +669,7 @@ const ConfigBar = ({
           <Button
             size="sm"
             variant={cfg.showProjectLanes ? 'primary' : 'secondary'}
-            icon={<TbGitBranch size={13} />}
+            icon={<TbBriefcase2 size={13} />}
             title={cfg.showProjectLanes ? 'Hide project lanes' : 'Show project lanes'}
             aria-label={cfg.showProjectLanes ? 'Hide project lanes' : 'Show project lanes'}
             aria-pressed={cfg.showProjectLanes}
@@ -687,7 +688,7 @@ const ConfigBar = ({
         <Button
           size="sm"
           variant={cfg.showAutosaves ? 'primary' : 'secondary'}
-          icon={<TbHistory size={13} />}
+          icon={<TbGitCommit size={13} />}
           title={cfg.showAutosaves ? 'Hide autosave snapshots' : 'Show autosave snapshots'}
           aria-label={cfg.showAutosaves ? 'Hide autosave snapshots' : 'Show autosave snapshots'}
           aria-pressed={cfg.showAutosaves}
