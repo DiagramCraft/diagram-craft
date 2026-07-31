@@ -8,12 +8,10 @@ describe('hosted MCP authentication', () => {
     );
   });
 
-  it.each([
-    undefined,
-    'Basic ar_pat_workspace',
-    'Bearer user-token',
-    'Bearer'
-  ])('rejects invalid authorization %s', authorization => {
-    expect(requestToken({ headers: { authorization } } as never)).toBeNull();
-  });
+  it.each([undefined, 'Basic ar_pat_workspace', 'Bearer user-token', 'Bearer'])(
+    'rejects invalid authorization %s',
+    authorization => {
+      expect(requestToken({ headers: { authorization } } as never)).toBeNull();
+    }
+  );
 });

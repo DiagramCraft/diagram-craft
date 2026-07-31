@@ -17,6 +17,6 @@
     "embeddable-jq": "^1.0.4"
   },
   "devDependencies": {
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.10"
   }
 }

@@ -105,60 +105,57 @@ const cases: ScopeCase[] = [
   }
 ];
 
-describe.each(cases)('deleteContentFolder ($name scope)', ({
-  scope,
-  identifier,
-  makeDb,
-  deleteFolderMock,
-  expectedDeleteFolderArgs
-}) => {
-  it('deletes matching content nodes, their storage blobs, and logs an audit entry', async () => {
-    const db = makeDb();
-    const storage = {
-      delete: vi.fn(async () => {}),
-      stageDelete: vi.fn(async (workspace: string, storageId: string, nodeId: string) => ({
-        commit: () => storage.delete(workspace, storageId, nodeId),
-        rollback: async () => {},
-        finalize: async () => {}
-      }))
-    } as unknown as StorageAdapter;
+describe.each(cases)(
+  'deleteContentFolder ($name scope)',
+  ({ scope, identifier, makeDb, deleteFolderMock, expectedDeleteFolderArgs }) => {
+    it('deletes matching content nodes, their storage blobs, and logs an audit entry', async () => {
+      const db = makeDb();
+      const storage = {
+        delete: vi.fn(async () => {}),
+        stageDelete: vi.fn(async (workspace: string, storageId: string, nodeId: string) => ({
+          commit: () => storage.delete(workspace, storageId, nodeId),
+          rollback: async () => {},
+          finalize: async () => {}
+        }))
+      } as unknown as StorageAdapter;
 
-    const result = await deleteContentFolder(
-      scope,
-      db,
-      storage,
-      'ws-1',
-      identifier,
-      '/docs',
-      event
-    );
+      const result = await deleteContentFolder(
+        scope,
+        db,
+        storage,
+        'ws-1',
+        identifier,
+        '/docs',
+        event
+      );
 
-    expect(result).toEqual({ success: true, count: 2 });
-    expect(deleteFolderMock(db)).toHaveBeenCalledWith(...expectedDeleteFolderArgs);
-    expect(storage.delete).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({ success: true, count: 2 });
+      expect(deleteFolderMock(db)).toHaveBeenCalledWith(...expectedDeleteFolderArgs);
+      expect(storage.delete).toHaveBeenCalledTimes(1);
 
-    const { writeAudit } = await import('../audit/db/auditLogging');
-    expect(writeAudit).toHaveBeenCalledWith(
-      db,
-      expect.objectContaining({
-        operation: 'delete',
-        entityType: 'content_node',
-        entityName: '/docs',
-        changes: { old: { path: '/docs', type: 'folder' } }
-      })
-    );
-  });
+      const { writeAudit } = await import('../audit/db/auditLogging');
+      expect(writeAudit).toHaveBeenCalledWith(
+        db,
+        expect.objectContaining({
+          operation: 'delete',
+          entityType: 'content_node',
+          entityName: '/docs',
+          changes: { old: { path: '/docs', type: 'folder' } }
+        })
+      );
+    });
 
-  it('returns a 404 when no content nodes are found under the folder', async () => {
-    const db = makeDb();
-    (deleteFolderMock(db) as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
-    const storage = { delete: vi.fn(async () => {}) } as unknown as StorageAdapter;
+    it('returns a 404 when no content nodes are found under the folder', async () => {
+      const db = makeDb();
+      (deleteFolderMock(db) as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
+      const storage = { delete: vi.fn(async () => {}) } as unknown as StorageAdapter;
 
-    await expect(
-      deleteContentFolder(scope, db, storage, 'ws-1', identifier, '/missing', event)
-    ).rejects.toThrow(/No files found under folder/);
-  });
-});
+      await expect(
+        deleteContentFolder(scope, db, storage, 'ws-1', identifier, '/missing', event)
+      ).rejects.toThrow(/No files found under folder/);
+    });
+  }
+);
 
 type RenameScopeCase = {
   name: string;
@@ -215,43 +212,48 @@ const renameCases: RenameScopeCase[] = [
   }
 ];
 
-describe.each(renameCases)('renameContentFolder ($name scope)', ({
-  scope,
-  identifier,
-  makeDb,
-  renameFolderMock,
-  expectedRenameFolderArgs
-}) => {
-  it('renames matching content nodes and logs an audit entry', async () => {
-    const db = makeDb();
+describe.each(renameCases)(
+  'renameContentFolder ($name scope)',
+  ({ scope, identifier, makeDb, renameFolderMock, expectedRenameFolderArgs }) => {
+    it('renames matching content nodes and logs an audit entry', async () => {
+      const db = makeDb();
 
-    const result = await renameContentFolder(scope, db, 'ws-1', identifier, '/old', '/new', event);
+      const result = await renameContentFolder(
+        scope,
+        db,
+        'ws-1',
+        identifier,
+        '/old',
+        '/new',
+        event
+      );
 
-    expect(result).toEqual({ success: true, message: 'Renamed 2 file(s)', count: 2 });
-    expect(renameFolderMock(db)).toHaveBeenCalledWith(
-      ...expectedRenameFolderArgs,
-      expect.any(Date)
-    );
+      expect(result).toEqual({ success: true, message: 'Renamed 2 file(s)', count: 2 });
+      expect(renameFolderMock(db)).toHaveBeenCalledWith(
+        ...expectedRenameFolderArgs,
+        expect.any(Date)
+      );
 
-    const { writeAudit } = await import('../audit/db/auditLogging');
-    expect(writeAudit).toHaveBeenCalledWith(
-      db,
-      expect.objectContaining({
-        operation: 'update',
-        entityType: 'content_node',
-        entityName: '/new',
-        changes: { old: { path: '/old' }, new: { path: '/new' } },
-        metadata: expect.objectContaining({ operation: 'rename_folder' })
-      })
-    );
-  });
+      const { writeAudit } = await import('../audit/db/auditLogging');
+      expect(writeAudit).toHaveBeenCalledWith(
+        db,
+        expect.objectContaining({
+          operation: 'update',
+          entityType: 'content_node',
+          entityName: '/new',
+          changes: { old: { path: '/old' }, new: { path: '/new' } },
+          metadata: expect.objectContaining({ operation: 'rename_folder' })
+        })
+      );
+    });
 
-  it('returns a 404 when no content nodes are found under the old path', async () => {
-    const db = makeDb();
-    (renameFolderMock(db) as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
+    it('returns a 404 when no content nodes are found under the old path', async () => {
+      const db = makeDb();
+      (renameFolderMock(db) as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
 
-    await expect(
-      renameContentFolder(scope, db, 'ws-1', identifier, '/missing', '/new', event)
-    ).rejects.toThrow(/No files found under folder/);
-  });
-});
+      await expect(
+        renameContentFolder(scope, db, 'ws-1', identifier, '/missing', '/new', event)
+      ).rejects.toThrow(/No files found under folder/);
+    });
+  }
+);

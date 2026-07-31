@@ -14,15 +14,15 @@
   "dependencies": {
     "@arch-register/api-types": "workspace:*",
     "@arch-register/server": "workspace:*",
-    "@orpc/client": "^1.14.5",
-    "@orpc/contract": "^1.14.5",
-    "@orpc/openapi-client": "^1.14.5",
+    "@orpc/client": "^1.14.13",
+    "@orpc/contract": "^1.14.13",
+    "@orpc/openapi-client": "^1.14.13",
     "h3": "^2.0.1-rc.22",
     "postgres": "^3.4.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
     "@types/node": "^20.14.2",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   }
 }
