@@ -306,7 +306,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           messages: input.body.messages as any,
           systemPrompts: [systemPrompt],
           tools,
-          temperature: aiConfig.temperature,
+          modelOptions: { temperature: aiConfig.temperature },
           threadId: input.body.threadId,
           runId: input.body.runId,
           parentRunId: input.body.parentRunId

@@ -17,18 +17,18 @@ import buttonStyles from '@diagram-craft/app-components/Button.module.css';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 import { TbLine } from 'react-icons/tb';
 import { $t } from '@diagram-craft/utils/localize';
-import bubbles1TextureUrl from '../../../../public/textures/bubbles1.jpeg';
-import grunge1TextureUrl from '../../../../public/textures/grunge1.jpeg';
-import grunge2TextureUrl from '../../../../public/textures/grunge2.jpeg';
-import grunge3TextureUrl from '../../../../public/textures/grunge3.jpeg';
-import marble1TextureUrl from '../../../../public/textures/marble1.jpeg';
-import marble2TextureUrl from '../../../../public/textures/marble2.jpeg';
-import paper1TextureUrl from '../../../../public/textures/paper1.jpeg';
-import paper2TextureUrl from '../../../../public/textures/paper2.jpeg';
-import paper3TextureUrl from '../../../../public/textures/paper3.jpeg';
-import paper4TextureUrl from '../../../../public/textures/paper4.jpeg';
-import paper5TextureUrl from '../../../../public/textures/paper5.jpeg';
-import textile1TextureUrl from '../../../../public/textures/textile1.jpeg';
+import bubbles1TextureUrl from '../../../textures/bubbles1.jpeg';
+import grunge1TextureUrl from '../../../textures/grunge1.jpeg';
+import grunge2TextureUrl from '../../../textures/grunge2.jpeg';
+import grunge3TextureUrl from '../../../textures/grunge3.jpeg';
+import marble1TextureUrl from '../../../textures/marble1.jpeg';
+import marble2TextureUrl from '../../../textures/marble2.jpeg';
+import paper1TextureUrl from '../../../textures/paper1.jpeg';
+import paper2TextureUrl from '../../../textures/paper2.jpeg';
+import paper3TextureUrl from '../../../textures/paper3.jpeg';
+import paper4TextureUrl from '../../../textures/paper4.jpeg';
+import paper5TextureUrl from '../../../textures/paper5.jpeg';
+import textile1TextureUrl from '../../../textures/textile1.jpeg';
 
 const TEXTURES = [
   { id: 'bubbles1.jpeg', url: bubbles1TextureUrl },

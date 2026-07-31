@@ -103,7 +103,7 @@ export const runDocumentAiAction = async (
         adapter,
         messages: [{ role: 'user', content: prompt }],
         tools,
-        temperature: aiConfig.temperature,
+        modelOptions: { temperature: aiConfig.temperature },
         stream: true
       });
 
@@ -226,7 +226,7 @@ export const testDocumentAiAction = async (
             adapter,
             messages: [{ role: 'user', content: prompt }],
             tools,
-            temperature: aiConfig.temperature,
+            modelOptions: { temperature: aiConfig.temperature },
             stream: true
           });
 
@@ -253,7 +253,7 @@ export const testDocumentAiAction = async (
                 adapter,
                 messages: [{ role: 'user', content: prompt }],
                 tools,
-                temperature: aiConfig.temperature,
+                modelOptions: { temperature: aiConfig.temperature },
                 outputSchema: documentMetadataGenerationOutputSchema(outputField)
               });
               rawOutput = JSON.stringify(structured);
@@ -264,7 +264,7 @@ export const testDocumentAiAction = async (
                 adapter,
                 messages: [{ role: 'user', content: prompt }],
                 tools,
-                temperature: aiConfig.temperature,
+                modelOptions: { temperature: aiConfig.temperature },
                 stream: false
               });
               rawOutput =

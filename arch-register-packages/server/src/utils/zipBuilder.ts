@@ -1,16 +1,16 @@
 import { createWriteStream } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import archiver from 'archiver';
+import { ZipArchive, type Archiver } from 'archiver';
 import unzipper from 'unzipper';
 import type { Readable } from 'node:stream';
 
 export class ZipBuilder {
-  private archive: archiver.Archiver;
+  private archive: Archiver;
   private finalized = false;
 
   constructor() {
-    this.archive = archiver('zip', {
+    this.archive = new ZipArchive({
       zlib: { level: 9 } // Maximum compression
     });
   }

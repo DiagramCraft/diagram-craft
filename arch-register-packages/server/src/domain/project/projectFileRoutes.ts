@@ -1,12 +1,4 @@
-import {
-  createRouter,
-  getQuery,
-  getRouterParam,
-  readBody,
-  readMultipartFormData,
-  assertBodySize,
-  HTTPError
-} from 'h3';
+import { createRouter, getQuery, getRouterParam, readBody, assertBodySize, HTTPError } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -29,21 +21,31 @@ const readUpload = async (
   event: AuthenticatedEvent
 ): Promise<{ buffer: Buffer; mimeType: string; originalFilename: string }> => {
   await assertBodySize(event, MAX_REQUEST_SIZE_BYTES);
-  const parts = await readMultipartFormData(event);
-  const file = parts?.find(p => p.name === 'file');
-  if (!file) {
+  // h3's body-size limiter exposes a proxied formData() that does not preserve
+  // the request headers when it creates the limited stream. Rebuild the request
+  // so the multipart boundary remains available to the native parser.
+  const request = new Request(event.req.url, {
+    method: event.req.method,
+    headers: event.req.headers,
+    body: event.req.body,
+    duplex: 'half'
+  } as RequestInit & { duplex: 'half' });
+  const formData = await request.formData();
+  const file = formData.get('file');
+  if (!file || typeof file === 'string') {
     throw new HTTPError({ status: 400, message: 'Missing file field in multipart body' });
   }
-  if (file.data.byteLength > MAX_SIZE_BYTES) {
+  const data = new Uint8Array(await file.arrayBuffer());
+  if (data.byteLength > MAX_SIZE_BYTES) {
     throw new HTTPError({
       status: 413,
       message: `File exceeds the maximum allowed size of ${MAX_SIZE_BYTES / 1024 / 1024} MB`
     });
   }
   return {
-    buffer: Buffer.from(file.data),
+    buffer: Buffer.from(data),
     mimeType: file.type ?? 'application/octet-stream',
-    originalFilename: file.filename ?? 'upload'
+    originalFilename: file.name ?? 'upload'
   };
 };
 
