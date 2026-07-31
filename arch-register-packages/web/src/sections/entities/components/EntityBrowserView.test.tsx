@@ -104,36 +104,31 @@ const entityListViews = new Set(['table', 'cards', 'tree']);
 const configurableViews = new Set(['map', 'explore', 'matrix', 'timeline', 'radar', 'bubble']);
 
 describe('EntityBrowserView', () => {
-  it.each(
-    modes.flatMap(mode => views.map(view => ({ ...mode, view })))
-  )('dispatches $view with $name behavior', ({
-    view,
-    mode,
-    readOnly,
-    hideToolbar,
-    hasSelection
-  }) => {
-    const markup = renderToStaticMarkup(
-      <EntityBrowserView {...baseProps} view={view} mode={mode} />
-    );
+  it.each(modes.flatMap(mode => views.map(view => ({ ...mode, view }))))(
+    'dispatches $view with $name behavior',
+    ({ view, mode, readOnly, hideToolbar, hasSelection }) => {
+      const markup = renderToStaticMarkup(
+        <EntityBrowserView {...baseProps} view={view} mode={mode} />
+      );
 
-    expect(markup).toContain(`data-view="${view}"`);
-    expect(markup).toContain(`data-read-only="${entityListViews.has(view) ? readOnly : false}"`);
-    expect(markup).toContain(
-      `data-hide-toolbar="${configurableViews.has(view) ? hideToolbar : false}"`
-    );
-    expect(markup).toContain('data-click="function"');
-    expect(markup).toContain(
-      `data-delete="${entityListViews.has(view) ? 'function' : 'undefined'}"`
-    );
-    expect(markup).toContain(
-      `data-clone="${entityListViews.has(view) ? 'function' : 'undefined'}"`
-    );
-    expect(markup).toContain(
-      `data-config="${configurableViews.has(view) ? 'function' : 'undefined'}"`
-    );
-    expect(markup).toContain(
-      `data-selection="${view === 'table' && hasSelection ? 'function' : 'undefined'}"`
-    );
-  });
+      expect(markup).toContain(`data-view="${view}"`);
+      expect(markup).toContain(`data-read-only="${entityListViews.has(view) ? readOnly : false}"`);
+      expect(markup).toContain(
+        `data-hide-toolbar="${configurableViews.has(view) ? hideToolbar : false}"`
+      );
+      expect(markup).toContain('data-click="function"');
+      expect(markup).toContain(
+        `data-delete="${entityListViews.has(view) ? 'function' : 'undefined'}"`
+      );
+      expect(markup).toContain(
+        `data-clone="${entityListViews.has(view) ? 'function' : 'undefined'}"`
+      );
+      expect(markup).toContain(
+        `data-config="${configurableViews.has(view) ? 'function' : 'undefined'}"`
+      );
+      expect(markup).toContain(
+        `data-selection="${view === 'table' && hasSelection ? 'function' : 'undefined'}"`
+      );
+    }
+  );
 });

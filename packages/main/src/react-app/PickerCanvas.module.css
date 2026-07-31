@@ -6,7 +6,7 @@
   background: var(--_canvas-bg, var(--canvas-bg));
   font-family: var(--font-sans, system-ui);
   border-radius: 4px;
-  line-Height: 0;
+  line-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -18,12 +18,10 @@ describe('parseRoomPath', () => {
     });
   });
 
-  it.each([
-    '',
-    'workspace-1',
-    'workspace-1/project-1',
-    '/workspace-1/project-1/file-1.json'
-  ])('rejects malformed room path %j', room => {
-    expect(parseRoomPath(room)).toBeNull();
-  });
+  it.each(['', 'workspace-1', 'workspace-1/project-1', '/workspace-1/project-1/file-1.json'])(
+    'rejects malformed room path %j',
+    room => {
+      expect(parseRoomPath(room)).toBeNull();
+    }
+  );
 });

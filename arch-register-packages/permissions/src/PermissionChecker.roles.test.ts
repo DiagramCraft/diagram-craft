@@ -344,27 +344,25 @@ describe('PermissionChecker - Team Role Differentiation', () => {
       { role: 'team_admin', edit: true, delete_: true, files: true },
       { role: 'team_editor', edit: true, delete_: false, files: true },
       { role: 'team_reviewer', edit: false, delete_: false, files: false }
-    ])('$role grants edit=$edit, delete=$delete_, manage_files=$files', ({
-      role,
-      edit,
-      delete_,
-      files
-    }) => {
-      const context = buildAuthorizationContext({
-        userId: 'user-1',
-        globalRoles: [],
-        workspaceRole: null,
-        teamAssignments: [{ teamId: 'team-1', role }],
-        teams: [],
-        schemas: [],
-        entities: [],
-        grants: []
-      });
+    ])(
+      '$role grants edit=$edit, delete=$delete_, manage_files=$files',
+      ({ role, edit, delete_, files }) => {
+        const context = buildAuthorizationContext({
+          userId: 'user-1',
+          globalRoles: [],
+          workspaceRole: null,
+          teamAssignments: [{ teamId: 'team-1', role }],
+          teams: [],
+          schemas: [],
+          entities: [],
+          grants: []
+        });
 
-      expect(checker.hasProjectPermission(context, 'team-1', 'edit_project')).toBe(edit);
-      expect(checker.hasProjectPermission(context, 'team-1', 'delete_project')).toBe(delete_);
-      expect(checker.hasProjectPermission(context, 'team-1', 'manage_files')).toBe(files);
-    });
+        expect(checker.hasProjectPermission(context, 'team-1', 'edit_project')).toBe(edit);
+        expect(checker.hasProjectPermission(context, 'team-1', 'delete_project')).toBe(delete_);
+        expect(checker.hasProjectPermission(context, 'team-1', 'manage_files')).toBe(files);
+      }
+    );
   });
 
   it('user with multiple team roles on same team gets the union', () => {

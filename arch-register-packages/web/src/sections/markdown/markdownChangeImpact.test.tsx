@@ -63,37 +63,38 @@ describe('MarkdownChangeImpactDialog', () => {
   it.each([
     ['save', 'Save'],
     ['save-and-close', 'Save & Close']
-  ] as Array<
-    [MarkdownSaveIntent, string]
-  >)('keeps the originating action for %s', (intent, label) => {
-    const onConfirm = vi.fn();
+  ] as Array<[MarkdownSaveIntent, string]>)(
+    'keeps the originating action for %s',
+    (intent, label) => {
+      const onConfirm = vi.fn();
 
-    act(() => {
-      root.render(
-        <MarkdownChangeImpactDialog
-          open
-          intent={intent}
-          changeKind="minor"
-          onChangeKind={vi.fn()}
-          onCancel={vi.fn()}
-          onConfirm={onConfirm}
-        />
-      );
-    });
+      act(() => {
+        root.render(
+          <MarkdownChangeImpactDialog
+            open
+            intent={intent}
+            changeKind="minor"
+            onChangeKind={vi.fn()}
+            onCancel={vi.fn()}
+            onConfirm={onConfirm}
+          />
+        );
+      });
 
-    expect(container.textContent).toContain(label);
-    const select = container.querySelector('select');
-    expect(select).not.toBeNull();
-    expect((select as HTMLSelectElement).value).toBe('minor');
+      expect(container.textContent).toContain(label);
+      const select = container.querySelector('select');
+      expect(select).not.toBeNull();
+      expect((select as HTMLSelectElement).value).toBe('minor');
 
-    act(() => {
-      (select as HTMLSelectElement).value = 'major';
-      select?.dispatchEvent(new Event('change', { bubbles: true }));
-      container
-        .querySelector(`button:last-of-type`)
-        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
+      act(() => {
+        (select as HTMLSelectElement).value = 'major';
+        select?.dispatchEvent(new Event('change', { bubbles: true }));
+        container
+          .querySelector(`button:last-of-type`)
+          ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
 
-    expect(onConfirm).toHaveBeenCalledOnce();
-  });
+      expect(onConfirm).toHaveBeenCalledOnce();
+    }
+  );
 });

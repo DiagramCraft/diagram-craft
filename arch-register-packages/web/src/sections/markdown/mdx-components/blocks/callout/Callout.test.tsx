@@ -24,16 +24,13 @@ describe('Callout', () => {
     expect(markup).toContain('info');
   });
 
-  it.each([
-    'info',
-    'warning',
-    'danger',
-    'success',
-    'note'
-  ] as const)('renders the %s variant class', variant => {
-    const markup = renderToStaticMarkup(<Callout variant={variant}>text</Callout>);
-    expect(markup).toContain(variant);
-  });
+  it.each(['info', 'warning', 'danger', 'success', 'note'] as const)(
+    'renders the %s variant class',
+    variant => {
+      const markup = renderToStaticMarkup(<Callout variant={variant}>text</Callout>);
+      expect(markup).toContain(variant);
+    }
+  );
 
   it('wraps multiple block-level children (paragraphs, lists)', () => {
     const markup = renderToStaticMarkup(

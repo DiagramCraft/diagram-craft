@@ -32,15 +32,12 @@ describe('parseMetricConfig', () => {
     expect(config?.worstDirection).toBe('low');
   });
 
-  it.each([
-    undefined,
-    null,
-    'not an object',
-    42,
-    []
-  ])('returns null for non-object input: %s', raw => {
-    expect(parseMetricConfig(raw)).toBeNull();
-  });
+  it.each([undefined, null, 'not an object', 42, []])(
+    'returns null for non-object input: %s',
+    raw => {
+      expect(parseMetricConfig(raw)).toBeNull();
+    }
+  );
 
   it('returns null when sourceSchemaId, source, or aggregation is missing', () => {
     expect(parseMetricConfig({ source: { kind: 'lifecycle' }, aggregation: 'count' })).toBeNull();

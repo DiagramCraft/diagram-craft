@@ -120,29 +120,30 @@ describe('coordinateContentWrite', () => {
     expect(audit).toHaveBeenCalledOnce();
   });
 
-  it.each([
-    'preview',
-    'references',
-    'revision',
-    'audit'
-  ] as const)('continues after a %s failure and runs later stages', async failedStage => {
-    const db = database(async callback => callback(db));
-    const later = vi.fn().mockResolvedValue(undefined);
-    await expect(
-      coordinateContentWrite({
-        db,
-        operation: 'update',
-        scope: 'project',
-        nodeIds: ['node'],
-        writeDatabase: async () => 'saved',
-        afterCommit: [
-          { name: failedStage, run: vi.fn().mockRejectedValue(new Error(`${failedStage} failed`)) },
-          { name: 'audit', run: later }
-        ]
-      })
-    ).resolves.toBe('saved');
-    expect(later).toHaveBeenCalledOnce();
-  });
+  it.each(['preview', 'references', 'revision', 'audit'] as const)(
+    'continues after a %s failure and runs later stages',
+    async failedStage => {
+      const db = database(async callback => callback(db));
+      const later = vi.fn().mockResolvedValue(undefined);
+      await expect(
+        coordinateContentWrite({
+          db,
+          operation: 'update',
+          scope: 'project',
+          nodeIds: ['node'],
+          writeDatabase: async () => 'saved',
+          afterCommit: [
+            {
+              name: failedStage,
+              run: vi.fn().mockRejectedValue(new Error(`${failedStage} failed`))
+            },
+            { name: 'audit', run: later }
+          ]
+        })
+      ).resolves.toBe('saved');
+      expect(later).toHaveBeenCalledOnce();
+    }
+  );
 
   it('rolls back earlier storage mutations when a later commit fails', async () => {
     const first = mutation();
