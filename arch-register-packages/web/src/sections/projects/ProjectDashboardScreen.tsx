@@ -77,11 +77,9 @@ export const ProjectDashboardScreen = ({
       actions={
         project.canEdit &&
         !isEditing && (
-          <>
-            <Button icon={<TbPencil size={12} />} onClick={onEdit}>
-              Edit
-            </Button>
-          </>
+          <Button icon={<TbPencil size={12} />} onClick={onEdit}>
+            Edit
+          </Button>
         )
       }
       menu={

@@ -1440,9 +1440,9 @@ export const instantiateTemplateDefinitions = (
       color: schema.color,
       icon: schema.icon,
       fields: resolvedFields,
-      shared_field_group_ids: (schema.sharedFieldGroupIds ?? []).map(
-        id => fieldGroupIdMap.get(id) ?? id
-      ),
+      shared_field_group_links: (schema.sharedFieldGroupIds ?? []).map(id => ({
+        groupId: fieldGroupIdMap.get(id) ?? id
+      })),
       default_owner: null,
       created_at: now,
       updated_at: now

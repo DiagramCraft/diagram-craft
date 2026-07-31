@@ -135,7 +135,7 @@ describe('instantiateTemplate', () => {
 
     for (const schemaName of ['API', 'Component', 'System']) {
       const schema = definitions.schemas.find(item => item.name === schemaName);
-      expect(schema?.shared_field_group_ids).toEqual([fieldGroup?.id]);
+      expect(schema?.shared_field_group_links).toEqual([{ groupId: fieldGroup?.id }]);
     }
   });
 });

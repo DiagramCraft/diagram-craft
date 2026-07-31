@@ -71,15 +71,22 @@ export const buildUpdateSharedFieldGroupInput = (
 };
 
 export const isSharedFieldGroupReferencedBySchemas = (schemas: SchemaDbResult[], groupId: string) =>
-  schemas.some(schema => (schema.shared_field_group_ids ?? []).includes(groupId));
+  schemas.some(schema =>
+    (schema.shared_field_group_links ?? []).some(link => link.groupId === groupId)
+  );
 
 export const compileSchemaWithSharedGroups = (
   schema: SchemaDbResult,
   groups: SharedFieldGroupDbResult[]
 ): SchemaDbResult => {
-  const included = (schema.shared_field_group_ids ?? []).map(id => {
-    const group = groups.find(item => item.id === id);
-    httpAssert.present(group, { status: 400, message: `Shared fieldgroup '${id}' not found` });
+  const links = schema.shared_field_group_links ?? [];
+  const teamIdsByGroupId = new Map(links.map(link => [link.groupId, link.teamIds]));
+  const included = links.map(link => {
+    const group = groups.find(item => item.id === link.groupId);
+    httpAssert.present(group, {
+      status: 400,
+      message: `Shared fieldgroup '${link.groupId}' not found`
+    });
     return group;
   });
   const localFieldIds = new Set<string>();
@@ -113,24 +120,24 @@ export const compileSchemaWithSharedGroups = (
     }
   }
 
+  const buildSharedGroupEntry = (shared: SharedFieldGroupDbResult) => {
+    const teamIds = teamIdsByGroupId.get(shared.id);
+    return {
+      id: shared.id,
+      name: shared.name,
+      ...(shared.description ? { description: shared.description } : {}),
+      ...(teamIds && teamIds.length > 0 ? { accessControl: { teamIds } } : {})
+    };
+  };
+
   const orderedGroups = (schema.groups ?? []).flatMap(group => {
     const shared = includedById.get(group.id);
     if (!shared) return [group];
-    return [
-      {
-        id: shared.id,
-        name: shared.name,
-        ...(shared.description ? { description: shared.description } : {})
-      }
-    ];
+    return [buildSharedGroupEntry(shared)];
   });
   for (const group of included) {
     if (!orderedGroups.some(item => item.id === group.id)) {
-      orderedGroups.push({
-        id: group.id,
-        name: group.name,
-        ...(group.description ? { description: group.description } : {})
-      });
+      orderedGroups.push(buildSharedGroupEntry(group));
     }
   }
   return { ...schema, fields, groups: orderedGroups };

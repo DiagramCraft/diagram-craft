@@ -8,7 +8,8 @@ import {
   FieldMigrations,
   SchemaField,
   SchemaGroup,
-  SchemaMigrationRequiredError
+  SchemaMigrationRequiredError,
+  SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
@@ -71,7 +72,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         fields: SchemaField[];
         templates?: EntityTemplate[];
         groups?: SchemaGroup[];
-        shared_field_group_ids?: string[];
+        shared_field_group_links?: SharedFieldGroupLink[];
         color?: string | null;
         icon?: string | null;
         entity_approval_policy?: 'required' | 'disabled';
@@ -96,8 +97,8 @@ export const useUpdateSchema = (workspaceId: string) => {
                   fields: variables.data.fields as EntitySchema['fields'],
                   templates: variables.data.templates ?? schema.templates,
                   groups: variables.data.groups ?? schema.groups,
-                  shared_field_group_ids:
-                    variables.data.shared_field_group_ids ?? schema.shared_field_group_ids,
+                  shared_field_group_links:
+                    variables.data.shared_field_group_links ?? schema.shared_field_group_links,
                   color: variables.data.color ?? schema.color,
                   icon: variables.data.icon ?? schema.icon,
                   entity_approval_policy:

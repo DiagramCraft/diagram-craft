@@ -200,7 +200,27 @@ const entityTemplateSchema = z
   })
   .describe('Named defaults for creating an entity of this schema');
 
-const schemaGroupSchema = namedGroupSchema;
+const fieldGroupAccessControlSchema = z
+  .object({
+    teamIds: z.array(z.string()).describe('Teams whose role determines view/edit access')
+  })
+  .describe('Optional access-control binding for a field group');
+
+const schemaGroupSchema = namedGroupSchema.extend({
+  accessControl: fieldGroupAccessControlSchema
+    .optional()
+    .describe('If set, restricts view/edit of this group to members of the listed teams')
+});
+
+const sharedFieldGroupLinkSchema = z
+  .object({
+    groupId: z.string().describe('Id of the included workspace shared fieldgroup'),
+    teamIds: z
+      .array(z.string())
+      .optional()
+      .describe('Teams whose role determines view/edit access for this inclusion')
+  })
+  .describe('A schema-local inclusion of a workspace shared fieldgroup');
 
 const entitySchemaSchema = z.object({
   id: z.string().describe('Unique schema identifier'),
@@ -213,10 +233,10 @@ const entitySchemaSchema = z.object({
   groups: z
     .array(schemaGroupSchema)
     .describe('Named, presentation-only field groups, in display order'),
-  shared_field_group_ids: z
-    .array(z.string())
+  shared_field_group_links: z
+    .array(sharedFieldGroupLinkSchema)
     .optional()
-    .describe('Included workspace shared fieldgroup identifiers, in display order'),
+    .describe('Included workspace shared fieldgroups, in display order'),
   color: z.string().nullable().describe('Schema color (hex format)'),
   icon: z.string().nullable().describe('Schema icon identifier'),
   entity_count: z.number().int().min(0).describe('Number of entities using this schema'),
@@ -247,10 +267,10 @@ const schemaVersionSchema = z.object({
   fields: z.array(schemaFieldResponseSchema).describe('Field definitions at this version'),
   templates: z.array(entityTemplateSchema).describe('Templates at this version'),
   groups: z.array(schemaGroupSchema).describe('Field groups at this version'),
-  shared_field_group_ids: z
-    .array(z.string())
+  shared_field_group_links: z
+    .array(sharedFieldGroupLinkSchema)
     .optional()
-    .describe('Included workspace shared fieldgroup identifiers at this version'),
+    .describe('Included workspace shared fieldgroups at this version'),
   color: z.string().nullable().describe('Schema color at this version'),
   icon: z.string().nullable().describe('Schema icon at this version'),
   changeSummary: z
@@ -282,9 +302,9 @@ const createSchemaBodySchema = z.object({
     v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
     z.array(schemaGroupSchema).optional().describe('Named, presentation-only field groups')
   ),
-  shared_field_group_ids: z.preprocess(
+  shared_field_group_links: z.preprocess(
     v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
-    z.array(z.string()).optional().describe('Included workspace shared fieldgroup identifiers')
+    z.array(sharedFieldGroupLinkSchema).optional().describe('Included workspace shared fieldgroups')
   ),
   color: z.preprocess(
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
@@ -430,6 +450,8 @@ export type EntitySchema = z.infer<typeof entitySchemaSchema>;
 export type EntityTemplate = z.infer<typeof entityTemplateSchema>;
 export type EntityTemplateValues = EntityTemplate['values'];
 export type SchemaGroup = z.infer<typeof schemaGroupSchema>;
+export type FieldGroupAccessControl = z.infer<typeof fieldGroupAccessControlSchema>;
+export type SharedFieldGroupLink = z.infer<typeof sharedFieldGroupLinkSchema>;
 export type SchemaFieldInput = z.infer<typeof schemaFieldInputSchema>;
 
 // ── Schema Versioning & Field Migrations ─────────────────────

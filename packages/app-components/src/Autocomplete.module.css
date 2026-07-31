@@ -28,6 +28,8 @@
   color: var(--base-fg);
   box-shadow: var(--shadow-lg, 0 4px 16px rgb(0 0 0 / 18%));
   overflow: hidden;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-size: 13px;
 }
 
 .list {

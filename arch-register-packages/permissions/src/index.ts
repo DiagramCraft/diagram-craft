@@ -58,3 +58,10 @@ export {
 // Export permission checker and capability evaluator
 export { PermissionChecker } from './PermissionChecker.js';
 export { CapabilityEvaluator } from './CapabilityEvaluator.js';
+
+// Export field group access evaluator
+export {
+  getFieldGroupAccess,
+  type FieldGroupAccess,
+  type FieldGroupAccessControl
+} from './fieldGroupAccess.js';

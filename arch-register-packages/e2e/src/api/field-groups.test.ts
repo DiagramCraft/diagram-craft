@@ -17,10 +17,10 @@ test.describe('shared fieldgroups', () => {
     expect(group.fields).toHaveLength(2);
     const schema = await orpc.schemas.create({
       params: { workspace: 'default' },
-      body: { name: 'Secure Component', shared_field_group_ids: [group.id] }
+      body: { name: 'Secure Component', shared_field_group_links: [{ groupId: group.id }] }
     });
 
-    expect(schema.shared_field_group_ids).toEqual([group.id]);
+    expect(schema.shared_field_group_links).toEqual([{ groupId: group.id }]);
     expect(schema.groups).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: group.id })])
     );
@@ -46,7 +46,7 @@ test.describe('shared fieldgroups', () => {
     });
     const schema = await orpc.schemas.create({
       params: { workspace: 'default' },
-      body: { name: 'Operational System', shared_field_group_ids: [group.id] }
+      body: { name: 'Operational System', shared_field_group_links: [{ groupId: group.id }] }
     });
 
     const updated = await orpc.fieldGroups.update({
@@ -81,7 +81,7 @@ test.describe('shared fieldgroups', () => {
           { id: shared.id, name: shared.name },
           { id: 'local-group', name: 'Local group' }
         ],
-        shared_field_group_ids: [shared.id]
+        shared_field_group_links: [{ groupId: shared.id }]
       }
     });
 
