@@ -8,7 +8,8 @@ import {
   FieldMigrations,
   SchemaField,
   SchemaGroup,
-  SchemaVersion
+  SchemaVersion,
+  SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
@@ -21,7 +22,7 @@ type SchemaMutationPayload = {
   fields: InternalEntitySchema['fields'];
   templates: EntityTemplate[];
   groups: SchemaGroup[];
-  shared_field_group_ids: string[];
+  shared_field_group_links: SharedFieldGroupLink[];
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
@@ -186,6 +187,21 @@ export const normalizeEntityTemplates = (
   });
 };
 
+const normalizeTeamIds = (teamIds: unknown): string[] | undefined => {
+  if (!Array.isArray(teamIds)) return undefined;
+  const filtered = [...new Set(teamIds.filter((id): id is string => typeof id === 'string'))];
+  return filtered.length > 0 ? filtered : undefined;
+};
+
+const normalizeAccessControl = (
+  accessControl: unknown
+): SchemaGroup['accessControl'] | undefined => {
+  if (accessControl === undefined || accessControl === null) return undefined;
+  httpAssert.json(accessControl, { message: 'Group accessControl must be an object' });
+  const teamIds = normalizeTeamIds((accessControl as Record<string, unknown>).teamIds);
+  return teamIds ? { teamIds } : undefined;
+};
+
 export const normalizeSchemaGroups = (groups: unknown): SchemaGroup[] => {
   if (groups === undefined) return [];
   httpAssert.true(Array.isArray(groups), { message: 'Schema groups must be an array' });
@@ -212,9 +228,37 @@ export const normalizeSchemaGroups = (groups: unknown): SchemaGroup[] => {
       typeof group.description === 'string' && group.description.trim() !== ''
         ? group.description.trim()
         : undefined;
+    const accessControl = normalizeAccessControl(group.accessControl);
 
-    return description ? { id, name, description } : { id, name };
+    return {
+      id,
+      name,
+      ...(description ? { description } : {}),
+      ...(accessControl ? { accessControl } : {})
+    };
   });
+};
+
+export const normalizeSharedFieldGroupLinks = (links: unknown): SharedFieldGroupLink[] => {
+  if (!Array.isArray(links)) return [];
+  const seen = new Set<string>();
+  const result: SharedFieldGroupLink[] = [];
+  for (const rawLink of links) {
+    const groupId =
+      typeof rawLink === 'string'
+        ? rawLink
+        : typeof (rawLink as Record<string, unknown>)?.groupId === 'string'
+          ? ((rawLink as Record<string, unknown>).groupId as string)
+          : undefined;
+    if (!groupId || seen.has(groupId)) continue;
+    seen.add(groupId);
+    const teamIds =
+      typeof rawLink === 'object' && rawLink !== null
+        ? normalizeTeamIds((rawLink as Record<string, unknown>).teamIds)
+        : undefined;
+    result.push({ groupId, ...(teamIds ? { teamIds } : {}) });
+  }
+  return result;
 };
 
 export const clearOrphanedGroupIds = <F extends { groupId?: string }>(
@@ -241,7 +285,7 @@ export const buildCreateSchemaInput = (
     fields = [],
     templates = [],
     groups = [],
-    shared_field_group_ids = [],
+    shared_field_group_links = [],
     color,
     icon,
     default_owner,
@@ -264,9 +308,7 @@ export const buildCreateSchemaInput = (
     fields: normalizedFields,
     templates: normalizeEntityTemplates(templates, normalizedFields),
     groups: normalizedGroups,
-    shared_field_group_ids: Array.isArray(shared_field_group_ids)
-      ? [...new Set(shared_field_group_ids.filter((id): id is string => typeof id === 'string'))]
-      : [],
+    shared_field_group_links: normalizeSharedFieldGroupLinks(shared_field_group_links),
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -294,7 +336,7 @@ export const buildUpdateSchemaInput = (
     fields,
     templates,
     groups,
-    shared_field_group_ids,
+    shared_field_group_links,
     color,
     icon,
     default_owner,
@@ -322,16 +364,10 @@ export const buildUpdateSchemaInput = (
     fields: normalizedFields,
     templates: normalizeEntityTemplates(templates ?? current.templates ?? [], normalizedFields),
     groups: normalizedGroups,
-    shared_field_group_ids:
+    shared_field_group_links:
       groups !== undefined
-        ? Array.isArray(shared_field_group_ids)
-          ? [
-              ...new Set(
-                shared_field_group_ids.filter((id): id is string => typeof id === 'string')
-              )
-            ]
-          : []
-        : (current.shared_field_group_ids ?? []),
+        ? normalizeSharedFieldGroupLinks(shared_field_group_links)
+        : (current.shared_field_group_links ?? []),
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
     defaultOwner:
@@ -531,7 +567,7 @@ export const toApiSchema = (
     fields,
     templates: schema.templates ?? [],
     groups: schema.groups ?? [],
-    shared_field_group_ids: schema.shared_field_group_ids ?? [],
+    shared_field_group_links: schema.shared_field_group_links ?? [],
     color: schema.color,
     icon: schema.icon,
     entity_count: entityCount,
@@ -595,7 +631,7 @@ export const toApiSchemaVersion = (
     fields: SchemaField[];
     templates: EntityTemplate[];
     groups: SchemaGroup[];
-    shared_field_group_ids?: string[];
+    shared_field_group_links?: SharedFieldGroupLink[];
     color: string | null;
     icon: string | null;
     change_summary: Record<string, unknown>;
@@ -610,7 +646,7 @@ export const toApiSchemaVersion = (
   fields: resolveSelectFieldOptions(row.fields, enums),
   templates: row.templates,
   groups: row.groups,
-  shared_field_group_ids: row.shared_field_group_ids ?? [],
+  shared_field_group_links: row.shared_field_group_links ?? [],
   color: row.color,
   icon: row.icon,
   changeSummary: row.change_summary,

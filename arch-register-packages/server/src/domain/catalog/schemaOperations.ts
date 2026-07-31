@@ -160,7 +160,7 @@ export const createWorkspaceSchema = async (
         fields: row.fields,
         templates: row.templates ?? [],
         groups: row.groups ?? [],
-        shared_field_group_ids: row.shared_field_group_ids ?? [],
+        shared_field_group_links: row.shared_field_group_links ?? [],
         color: row.color,
         icon: row.icon,
         change_summary: buildSchemaChangeSummary(null, row.fields),
@@ -208,7 +208,7 @@ export const updateWorkspaceSchema = async (
       const next = buildUpdateSchemaInput(body, oldRow, teamIds, new Date());
       const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
       const compiledNext = compileSchemaWithSharedGroups(
-        { ...oldRow, ...next, shared_field_group_ids: next.shared_field_group_ids },
+        { ...oldRow, ...next, shared_field_group_links: next.shared_field_group_links },
         sharedGroups
       );
       const fieldMigrations = body.fieldMigrations as FieldMigrations | undefined;
@@ -303,7 +303,7 @@ export const updateWorkspaceSchema = async (
           fields: finalFields,
           templates: next.templates,
           groups: compiledNext.groups,
-          shared_field_group_ids: compiledNext.shared_field_group_ids ?? [],
+          shared_field_group_links: compiledNext.shared_field_group_links ?? [],
           color: next.color,
           icon: next.icon,
           default_owner: next.defaultOwner,
@@ -340,7 +340,7 @@ export const updateWorkspaceSchema = async (
           fields: updated.fields,
           templates: updated.templates ?? [],
           groups: updated.groups ?? [],
-          shared_field_group_ids: updated.shared_field_group_ids ?? [],
+          shared_field_group_links: updated.shared_field_group_links ?? [],
           color: updated.color,
           icon: updated.icon,
           change_summary: changeSummary,

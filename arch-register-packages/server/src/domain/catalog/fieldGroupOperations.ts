@@ -141,7 +141,7 @@ export const updateWorkspaceSharedFieldGroup = async (
       >();
 
       for (const schema of schemas.filter(item =>
-        (item.shared_field_group_ids ?? []).includes(id)
+        (item.shared_field_group_links ?? []).some(link => link.groupId === id)
       )) {
         const oldEffective = compileSchemaWithSharedGroups(schema, groups);
         const nextEffective = compileSchemaWithSharedGroups(schema, nextGroups);
@@ -217,7 +217,7 @@ export const updateWorkspaceSharedFieldGroup = async (
             ...current,
             fields: change.next.fields,
             groups: change.next.groups,
-            shared_field_group_ids: current.shared_field_group_ids ?? [],
+            shared_field_group_links: current.shared_field_group_links ?? [],
             version: (current.version ?? 1) + 1,
             updated_at: now
           });
@@ -232,7 +232,7 @@ export const updateWorkspaceSharedFieldGroup = async (
             fields: row.fields,
             templates: row.templates ?? [],
             groups: row.groups ?? [],
-            shared_field_group_ids: row.shared_field_group_ids ?? [],
+            shared_field_group_links: row.shared_field_group_links ?? [],
             color: row.color,
             icon: row.icon,
             change_summary: buildSchemaChangeSummary(

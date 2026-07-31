@@ -66,7 +66,9 @@
             on-change or scheduled. Derived values are materialized when inputs or definitions change, and are excluded
             from required-field completeness. Fields can be organized into named, presentation-only groups (with an
             optional description) that render as labeled sections wherever fields appear as a form or list; this has no
-            effect on validation, required-ness, or completeness.
+            effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's
+            inclusion of a reusable shared fieldgroup — can optionally be assigned one or more teams to scope its
+            access: a team's reviewer role (or above) grants view, and editor role (or above) grants edit.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally

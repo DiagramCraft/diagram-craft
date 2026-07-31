@@ -12,7 +12,12 @@ import {
   TreeViewConfig
 } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import { EntityTemplate, SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import {
+  EntityTemplate,
+  SchemaField,
+  SchemaGroup,
+  SharedFieldGroupLink
+} from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { EntityRole } from '@arch-register/permissions';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
@@ -77,7 +82,7 @@ export type SchemaDbResult = {
   fields: SchemaField[];
   templates?: EntityTemplate[];
   groups?: SchemaGroup[];
-  shared_field_group_ids?: string[];
+  shared_field_group_links?: SharedFieldGroupLink[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
@@ -106,7 +111,7 @@ export type SchemaVersionDbResult = {
   fields: SchemaField[];
   templates: EntityTemplate[];
   groups: SchemaGroup[];
-  shared_field_group_ids: string[];
+  shared_field_group_links: SharedFieldGroupLink[];
   color: string | null;
   icon: string | null;
   change_summary: Record<string, unknown>;
@@ -114,8 +119,8 @@ export type SchemaVersionDbResult = {
   created_at: Date;
 };
 
-export type SchemaVersionDbCreate = Omit<SchemaVersionDbResult, 'shared_field_group_ids'> & {
-  shared_field_group_ids?: string[];
+export type SchemaVersionDbCreate = Omit<SchemaVersionDbResult, 'shared_field_group_links'> & {
+  shared_field_group_links?: SharedFieldGroupLink[];
 };
 
 // -- Workspace Enum
@@ -416,10 +421,10 @@ export const catalogMappers = {
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema.templates'),
     groups: parseDatabaseJson(row['groups'], [], 'entity_schema.groups'),
-    shared_field_group_ids: parseDatabaseJson(
-      row['shared_field_group_ids'],
+    shared_field_group_links: parseDatabaseJson(
+      row['shared_field_group_links'],
       [],
-      'entity_schema.shared_field_group_ids'
+      'entity_schema.shared_field_group_links'
     ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
@@ -445,10 +450,10 @@ export const catalogMappers = {
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema_version.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema_version.templates'),
     groups: parseDatabaseJson(row['groups'], [], 'entity_schema_version.groups'),
-    shared_field_group_ids: parseDatabaseJson(
-      row['shared_field_group_ids'],
+    shared_field_group_links: parseDatabaseJson(
+      row['shared_field_group_links'],
       [],
-      'entity_schema_version.shared_field_group_ids'
+      'entity_schema_version.shared_field_group_links'
     ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),

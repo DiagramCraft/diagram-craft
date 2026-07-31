@@ -8,7 +8,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TypeBadge } from '../../components/TypeBadge';
-import { TbPlus, TbCode, TbEdit, TbTrash, TbDots } from 'react-icons/tb';
+import { TbPlus, TbCode, TbEdit, TbTrash, TbDots, TbLock } from 'react-icons/tb';
 import { FieldConfig } from '../../components/FieldConfig';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
@@ -26,6 +26,7 @@ import {
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import {
   EntitySchema,
@@ -33,11 +34,13 @@ import {
   FieldMigrations,
   PendingFieldChange,
   SchemaField,
-  SchemaGroup
+  SchemaGroup,
+  SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupDialog } from '../../components/GroupsEditor';
+import { TeamAccessPicker } from '../../components/TeamAccessPicker';
 import { toFieldId } from '../../utils/fieldId';
 import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
 import { DerivedExpressionTestDialog } from '../../components/DerivedExpressionTestDialog';
@@ -76,7 +79,8 @@ export const SchemaSettingsScreen = () => {
   const [fields, setFields] = useState<SchemaField[]>([]);
   const [templates, setTemplates] = useState<EntityTemplate[]>([]);
   const [groups, setGroups] = useState<SchemaGroup[]>([]);
-  const [sharedFieldGroupIds, setSharedFieldGroupIds] = useState<string[]>([]);
+  const [sharedFieldGroupLinks, setSharedFieldGroupLinks] = useState<SharedFieldGroupLink[]>([]);
+  const [accessDialogGroupId, setAccessDialogGroupId] = useState<string | null>(null);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
   const [entityApprovalPolicy, setEntityApprovalPolicy] = useState<'required' | 'disabled'>(
@@ -123,7 +127,7 @@ export const SchemaSettingsScreen = () => {
       setFields(selected.fields);
       setTemplates(selected.templates);
       setGroups(selected.groups);
-      setSharedFieldGroupIds(selected.shared_field_group_ids ?? []);
+      setSharedFieldGroupLinks(selected.shared_field_group_links ?? []);
       setColor(selected.color);
       setIcon(selected.icon);
       setEntityApprovalPolicy(selected.entity_approval_policy ?? 'disabled');
@@ -152,7 +156,7 @@ export const SchemaSettingsScreen = () => {
             fields,
             templates,
             groups,
-            shared_field_group_ids: sharedFieldGroupIds,
+            shared_field_group_links: sharedFieldGroupLinks,
             color,
             icon,
             entity_approval_policy: entityApprovalPolicy,
@@ -179,7 +183,7 @@ export const SchemaSettingsScreen = () => {
       fields,
       templates,
       groups,
-      sharedFieldGroupIds,
+      sharedFieldGroupLinks,
       color,
       icon,
       dirty,
@@ -279,10 +283,10 @@ export const SchemaSettingsScreen = () => {
   };
 
   const addSharedFieldGroup = (groupId: string | undefined) => {
-    if (!groupId || sharedFieldGroupIds.includes(groupId)) return;
+    if (!groupId || sharedFieldGroupLinks.some(link => link.groupId === groupId)) return;
     const sharedGroup = fieldGroups.find(group => group.id === groupId);
     if (!sharedGroup) return;
-    setSharedFieldGroupIds(current => [...current, groupId]);
+    setSharedFieldGroupLinks(current => [...current, { groupId }]);
     setGroups(current => [
       ...current,
       {
@@ -295,9 +299,37 @@ export const SchemaSettingsScreen = () => {
   };
 
   const removeSharedFieldGroup = (groupId: string) => {
-    setSharedFieldGroupIds(current => current.filter(id => id !== groupId));
+    setSharedFieldGroupLinks(current => current.filter(link => link.groupId !== groupId));
     setGroups(current => current.filter(group => group.id !== groupId));
     setDirty(true);
+  };
+
+  const setSharedFieldGroupTeamIds = (groupId: string, teamIds: string[]) => {
+    setSharedFieldGroupLinks(current =>
+      current.map(link =>
+        link.groupId === groupId ? { groupId, ...(teamIds.length > 0 ? { teamIds } : {}) } : link
+      )
+    );
+    setDirty(true);
+  };
+
+  const setLocalGroupTeamIds = (groupId: string, teamIds: string[]) => {
+    setGroups(current =>
+      current.map(item => {
+        if (item.id !== groupId) return item;
+        const { accessControl: _accessControl, ...rest } = item;
+        return teamIds.length > 0 ? { ...rest, accessControl: { teamIds } } : rest;
+      })
+    );
+    setDirty(true);
+  };
+
+  const setGroupAccess = (groupId: string, teamIds: string[]) => {
+    if (sharedFieldGroupLinks.some(link => link.groupId === groupId)) {
+      setSharedFieldGroupTeamIds(groupId, teamIds);
+    } else {
+      setLocalGroupTeamIds(groupId, teamIds);
+    }
   };
 
   const changeFieldType = (fieldId: string, newType: FieldType) => {
@@ -411,7 +443,8 @@ export const SchemaSettingsScreen = () => {
   }
 
   const renderFieldRow = (f: SchemaField) => {
-    const inherited = f.groupId != null && sharedFieldGroupIds.includes(f.groupId);
+    const inherited =
+      f.groupId != null && sharedFieldGroupLinks.some(link => link.groupId === f.groupId);
     const hasOtherContainment = fields.some(
       other => other.id !== f.id && other.type === 'containment'
     );
@@ -593,15 +626,39 @@ export const SchemaSettingsScreen = () => {
                     <div className={styles.fieldsTable}>
                       {ungroupedFields.map(f => renderFieldRow(f))}
                       {groups.map(group => {
-                        const inherited = sharedFieldGroupIds.includes(group.id);
+                        const link = sharedFieldGroupLinks.find(item => item.groupId === group.id);
+                        const inherited = link !== undefined;
                         const groupFields = fieldsByGroup.get(group.id) ?? [];
+                        const teamIds = inherited
+                          ? (link!.teamIds ?? [])
+                          : (group.accessControl?.teamIds ?? []);
                         return (
                           <div className={styles.groupSection} key={group.id}>
                             <div className={styles.groupHeader}>
                               <div>
-                                <div className={styles.groupName}>{group.name}</div>
+                                <div className={styles.groupName}>
+                                  {group.name}
+                                  {teamIds.length > 0 && (
+                                    <span className={styles.restrictedBadge}>
+                                      <TbLock size={10} />
+                                      Restricted
+                                    </span>
+                                  )}
+                                </div>
                                 {group.description && (
                                   <div className={styles.groupDescription}>{group.description}</div>
+                                )}
+                                {teamIds.length > 0 && (
+                                  <div className={styles.restrictedTeams}>
+                                    Restricted to{' '}
+                                    {teamIds
+                                      .map(
+                                        teamId =>
+                                          teams.find(team => team.id === teamId)?.name ??
+                                          'Unavailable team'
+                                      )
+                                      .join(', ')}
+                                  </div>
                                 )}
                               </div>
                               {canEdit && (
@@ -615,34 +672,40 @@ export const SchemaSettingsScreen = () => {
                                       Add field
                                     </Button>
                                   )}
-                                  {!inherited && (
-                                    <Button
-                                      variant="ghost"
-                                      icon={<TbEdit size={12} />}
-                                      onClick={() => {
-                                        setEditingGroup(group);
-                                        setGroupDialogOpen(true);
-                                      }}
-                                    >
-                                      Edit
-                                    </Button>
-                                  )}
-                                  {inherited ? (
-                                    <Button
-                                      variant="ghost"
-                                      onClick={() => removeSharedFieldGroup(group.id)}
-                                    >
-                                      Remove
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      variant="ghost"
-                                      icon={<TbTrash size={12} />}
-                                      onClick={() => removeGroup(group.id)}
-                                    >
-                                      Delete
-                                    </Button>
-                                  )}
+                                  <MenuButton.Root>
+                                    <MenuButton.Trigger
+                                      element={
+                                        <button type="button" className={styles.iconBtn}>
+                                          <TbDots size={13} />
+                                        </button>
+                                      }
+                                    />
+                                    <MenuButton.Menu>
+                                      <Menu.Item
+                                        disabled={inherited}
+                                        onClick={() => {
+                                          setEditingGroup(group);
+                                          setGroupDialogOpen(true);
+                                        }}
+                                      >
+                                        Edit
+                                      </Menu.Item>
+                                      <Menu.Item onClick={() => setAccessDialogGroupId(group.id)}>
+                                        Change access
+                                      </Menu.Item>
+                                      <Menu.Separator />
+                                      <Menu.Item
+                                        type="danger"
+                                        onClick={() =>
+                                          inherited
+                                            ? removeSharedFieldGroup(group.id)
+                                            : removeGroup(group.id)
+                                        }
+                                      >
+                                        Delete
+                                      </Menu.Item>
+                                    </MenuButton.Menu>
+                                  </MenuButton.Root>
                                 </div>
                               )}
                             </div>
@@ -831,9 +894,29 @@ export const SchemaSettingsScreen = () => {
         onSave={saveGroup}
         group={editingGroup}
         groups={groups}
-        sharedGroups={fieldGroups.filter(group => !sharedFieldGroupIds.includes(group.id))}
+        sharedGroups={fieldGroups.filter(
+          group => !sharedFieldGroupLinks.some(link => link.groupId === group.id)
+        )}
         onAddSharedGroup={addSharedFieldGroup}
       />
+      <Dialog
+        open={accessDialogGroupId !== null}
+        onClose={() => setAccessDialogGroupId(null)}
+        title="Field group access"
+        buttons={[{ label: 'Done', type: 'default', onClick: () => setAccessDialogGroupId(null) }]}
+      >
+        {accessDialogGroupId && (
+          <TeamAccessPicker
+            teams={teams}
+            teamIds={
+              sharedFieldGroupLinks.find(link => link.groupId === accessDialogGroupId)?.teamIds ??
+              groups.find(group => group.id === accessDialogGroupId)?.accessControl?.teamIds ??
+              []
+            }
+            onChange={teamIds => setGroupAccess(accessDialogGroupId, teamIds)}
+          />
+        )}
+      </Dialog>
       {selected && (
         <EntityTemplateDialog
           open={templateDialogOpen}

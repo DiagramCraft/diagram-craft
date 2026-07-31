@@ -1005,7 +1005,7 @@ export const seedSchemas: SchemaDbResult[] = (
         description: 'Classifies personal data handled by the entity and documents its scope.'
       }
     ],
-    shared_field_group_ids: [PII_FIELD_GROUP_ID]
+    shared_field_group_links: [{ groupId: PII_FIELD_GROUP_ID }]
   };
 });
 
