@@ -1,7 +1,7 @@
 import { TbId } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityCard } from './EntityCard';
-import { EntityCardWidget } from '../../../../dashboard/widgets/EntityCardWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
 import { EntityCardConfigForm } from './EntityCardConfigForm';
 import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
@@ -25,7 +25,10 @@ export const entityCardSpec = defineMdxComponent<
     defaultW: 3,
     defaultH: 2,
     surfaces: ['workspace', 'project'],
-    component: EntityCardWidget,
+    component: createDashboardWidgetAdapter(EntityCard, (config: EntityCardWidgetConfig) => ({
+      id: config.entityId,
+      fields: config.fields
+    })),
     isValidConfig: (config): config is EntityCardWidgetConfig =>
       typeof config.entityId === 'string' &&
       config.entityId.length > 0 &&

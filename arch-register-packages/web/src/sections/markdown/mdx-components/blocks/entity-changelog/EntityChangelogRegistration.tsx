@@ -1,7 +1,7 @@
 import { TbHistory } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityChangelog } from './EntityChangelog';
-import { EntityChangelogWidget } from '../../../../dashboard/widgets/EntityChangelogWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
   ENTITY_CHANGELOG_TYPE,
   EntityChangelogEditable,
@@ -36,7 +36,17 @@ export const entityChangelogSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 4,
     surfaces: ['workspace', 'project'],
-    component: EntityChangelogWidget,
+    component: createDashboardWidgetAdapter(
+      EntityChangelog,
+      (config: EntityChangelogWidgetConfig) => ({
+        id: config.entityId,
+        schema: config.schema,
+        owner: config.owner,
+        lifecycle: config.lifecycle,
+        limit: config.limit,
+        since: config.since
+      })
+    ),
     isValidConfig: (config): config is EntityChangelogWidgetConfig =>
       hasOptionalString(config, 'entityId') &&
       hasOptionalString(config, 'schema') &&

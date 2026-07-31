@@ -1,7 +1,7 @@
 import { TbClockExclamation } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityStaleReport } from './EntityStaleReport';
-import { EntityStaleReportWidget } from '../../../../dashboard/widgets/EntityStaleReportWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { EntityStaleReportDashboardConfigForm } from './EntityStaleReportDashboardConfigForm';
 import type { EntityStaleReportProps, EntityStaleReportSlateElement } from './types';
 
@@ -30,7 +30,10 @@ export const entityStaleReportSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 6,
     surfaces: ['workspace'],
-    component: EntityStaleReportWidget,
+    component: createDashboardWidgetAdapter(
+      EntityStaleReport,
+      (config: EntityStaleReportProps) => ({ staleAfterDays: config.staleAfterDays })
+    ),
     isValidConfig: (config): config is EntityStaleReportProps =>
       hasOptionalInteger(config, 'staleAfterDays'),
     createDefaultConfig: () => ({}),
