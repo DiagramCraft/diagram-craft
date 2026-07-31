@@ -149,7 +149,8 @@ export const EntityBrowserToolbar = ({
             { value: 'timeline', label: 'Timeline' },
             { value: 'matrix', label: 'Matrix' },
             { value: 'explore', label: 'Explore' },
-            { value: 'map', label: 'Map' }
+            { value: 'map', label: 'Map' },
+            { value: 'diff', label: 'Diff' }
           ]
         }
       />

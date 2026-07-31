@@ -34,7 +34,7 @@ import { ProjectChangesSummaryTab } from './ProjectChangesSummaryTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useWithdrawChangeCase } from '../../hooks/useChangeCases';
-import { useEntityLandscapeDiff } from '../../hooks/useEntities';
+import { useEntityLandscapeDiff, buildProjectLandscapeDiffStates } from '../../hooks/useEntities';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
@@ -103,6 +103,7 @@ export const ProjectEntities = ({
   const [groupBy, setGroupBy] = useState<GroupBy>('date');
   const [isSavingView, setIsSavingView] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ChangeCaseMemberEntry | null>(null);
+  const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
 
   const projectEntries = useMemo(() => flattenChangeCaseMembers(changeCases), [changeCases]);
   const futureEntries = useMemo(
@@ -130,10 +131,17 @@ export const ProjectEntities = ({
       .filter((date): date is string => !!date);
     return dates.length > 0 ? dates.sort().at(-1)! : null;
   }, [futureEntries, milestonesById]);
+  const projectLandscapeDiffStates = useMemo(
+    () =>
+      changesTargetDate
+        ? buildProjectLandscapeDiffStates(project.id, changesTargetDate, includeOverdueChanges)
+        : null,
+    [project.id, changesTargetDate, includeOverdueChanges]
+  );
   const { data: landscapeDiff, isLoading: isLandscapeDiffLoading } = useEntityLandscapeDiff(
     workspaceSlug,
-    project.id,
-    changesTargetDate,
+    projectLandscapeDiffStates?.from ?? null,
+    projectLandscapeDiffStates?.to ?? null,
     activeTab === 'whats-changed'
   );
 
@@ -485,6 +493,8 @@ export const ProjectEntities = ({
             schemas={schemas}
             lifecycleStates={lifecycleStates}
             teams={teams}
+            includeOverdueChanges={includeOverdueChanges}
+            onIncludeOverdueChangesChange={setIncludeOverdueChanges}
           />
         </div>
       )}

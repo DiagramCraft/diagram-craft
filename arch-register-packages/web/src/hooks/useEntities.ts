@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import type { EntityRelation } from '@arch-register/api-types/entityContract';
+import type {
+  EntityLandscapeDiffState,
+  EntityRelation
+} from '@arch-register/api-types/entityContract';
 import { toEntityListQuery, type EntityListOptions } from './entityListQuery';
 import {
   entityKeys,
@@ -50,27 +53,40 @@ export const useEntity = (workspaceId: string, entityId: string) => {
   });
 };
 
-// Hook for fetching the entity-landscape diff between the current committed state and a
-// project's end state (its planned changes applied as of `targetDate`) — powers the project
-// page's "What's changed" tab.
+// Hook for fetching an entity-landscape diff between two reconstructed states — powers both the
+// project page's "What's changed" tab (from = now, to = project's end state) and the workspace
+// entities section's "Diff" view (from = now, to = a chosen future date, both scoped to the
+// currently active entity-browser filters).
 export const useEntityLandscapeDiff = (
   workspaceId: string,
-  projectId: string,
-  targetDate: string | null,
+  from: EntityLandscapeDiffState | null,
+  to: EntityLandscapeDiffState | null,
   enabled = true
 ) =>
   useQuery({
-    queryKey: entityKeys.landscapeDiff(workspaceId, projectId, targetDate),
+    queryKey: entityKeys.landscapeDiff(workspaceId, from, to),
     queryFn: () =>
       orpcClient.entities.diff({
         params: { workspace: workspaceId },
-        body: {
-          from: { asOf: new Date().toISOString(), includePlannedChanges: false },
-          to: { asOf: targetDate!, projectId, includePlannedChanges: true }
-        }
+        body: { from: from!, to: to! }
       }),
-    enabled: enabled && !!workspaceId && !!projectId && !!targetDate
+    enabled: enabled && !!workspaceId && !!from && !!to
   });
+
+// Builds the `from`/`to` states for a project's "what's changed by end of project" diff: now
+// (no planned changes) vs. the project's connected entities with its planned changes applied.
+export const buildProjectLandscapeDiffStates = (
+  projectId: string,
+  targetDate: string,
+  includeOverdueChanges = false
+): { from: EntityLandscapeDiffState; to: EntityLandscapeDiffState } => ({
+  from: {
+    asOf: new Date().toISOString(),
+    includePlannedChanges: false,
+    includeOverdueChanges: false
+  },
+  to: { asOf: targetDate, projectId, includePlannedChanges: true, includeOverdueChanges }
+});
 
 // Hook for fetching entity facets (for filters)
 export const useEntityFacets = (workspaceId: string, enabled = true) => {

@@ -1,18 +1,14 @@
-import { Fragment, useMemo, useState } from 'react';
-import { TbChevronRight, TbChevronDown } from 'react-icons/tb';
 import type { EntityLandscapeDiff } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { EmptyState } from '../../components/EmptyState';
-import { TypeBadge } from '../../components/TypeBadge';
-import { Table } from '../../components/table/Table';
-import { mapEntityLandscapeDiffToChangeRows } from '../entities/components/entityTimelineHelpers';
+import { EntityLandscapeDiffTable } from '../entities/components/EntityLandscapeDiffTable';
 import { formatDate } from '../../utils/dateFormat';
 import styles from './ProjectChangesSummaryTab.module.css';
 
 type SchemaInfo = { color: string; icon: string | null };
-type DiffEntity = EntityLandscapeDiff['added'][number];
 
 export const ProjectChangesSummaryTab = ({
   diff,
@@ -21,7 +17,9 @@ export const ProjectChangesSummaryTab = ({
   schemaMap,
   schemas,
   lifecycleStates,
-  teams
+  teams,
+  includeOverdueChanges,
+  onIncludeOverdueChangesChange
 }: {
   diff: EntityLandscapeDiff | undefined;
   isLoading: boolean;
@@ -30,18 +28,9 @@ export const ProjectChangesSummaryTab = ({
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  includeOverdueChanges: boolean;
+  onIncludeOverdueChangesChange: (include: boolean) => void;
 }) => {
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const schemaById = useMemo(() => new Map(schemas.map(s => [s.id, s])), [schemas]);
-
-  const toggleExpanded = (id: string) =>
-    setExpandedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
   if (!targetDate) {
     return (
       <div className={styles.wrap}>
@@ -57,147 +46,30 @@ export const ProjectChangesSummaryTab = ({
     return <div className={styles.wrap}>Loading…</div>;
   }
 
-  const { added, removed, changed } = diff;
-  const hasChanges = added.length > 0 || removed.length > 0 || changed.length > 0;
-
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
         <div className={styles.headerTitle}>What&apos;s changed by {formatDate(targetDate)}</div>
         <div className={styles.headerCounts}>
-          {added.length} added &middot; {removed.length} removed &middot; {changed.length} changed
+          {diff.added.length} added &middot; {diff.removed.length} removed &middot;{' '}
+          {diff.changed.length} changed
         </div>
+        <label className={styles.overdueToggle}>
+          <Checkbox
+            value={includeOverdueChanges}
+            onChange={v => onIncludeOverdueChangesChange(v ?? false)}
+          />
+          <span>Overdue changes</span>
+        </label>
       </div>
 
-      {!hasChanges && (
-        <EmptyState
-          title="No changes"
-          subtitle="This project's planned changes don't add, remove, or modify any entities."
-        />
-      )}
-
-      {added.length > 0 && (
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>Added ({added.length})</div>
-          <EntityList entities={added} schemaMap={schemaMap} />
-        </div>
-      )}
-
-      {removed.length > 0 && (
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>Removed ({removed.length})</div>
-          <EntityList entities={removed} schemaMap={schemaMap} />
-        </div>
-      )}
-
-      {changed.length > 0 && (
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>Changed ({changed.length})</div>
-          <Table.Root>
-            <Table.Head>
-              <Table.Row>
-                <Table.HeaderCell />
-                <Table.HeaderCell>Entity</Table.HeaderCell>
-              </Table.Row>
-            </Table.Head>
-            <Table.Body>
-              {changed.map(({ entity, diff: fieldDiff }) => {
-                const schemaInfo = schemaMap.get(entity._schema.id);
-                const schema = schemaById.get(entity._schema.id) ?? null;
-                const expanded = expandedIds.has(entity._uid);
-                const changeRows = mapEntityLandscapeDiffToChangeRows(
-                  fieldDiff,
-                  schema,
-                  lifecycleStates,
-                  teams
-                );
-                return (
-                  <Fragment key={entity._uid}>
-                    <Table.Row onClick={() => toggleExpanded(entity._uid)}>
-                      <Table.Cell width={24}>
-                        <button
-                          type="button"
-                          className={styles.entityRowExpand}
-                          aria-label={expanded ? 'Collapse' : 'Expand'}
-                        >
-                          {expanded ? <TbChevronDown size={14} /> : <TbChevronRight size={14} />}
-                        </button>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div className={styles.entityRow}>
-                          {schemaInfo && (
-                            <TypeBadge color={schemaInfo.color} icon={schemaInfo.icon} size={16} />
-                          )}
-                          <span className={styles.entityName}>{entity._name}</span>
-                          <span className={styles.entityPublicId}>{entity._publicId}</span>
-                        </div>
-                      </Table.Cell>
-                    </Table.Row>
-                    {expanded && (
-                      <Table.DetailRow>
-                        <div className={styles.detailCell}>
-                          <Table.Root bordered={false}>
-                            <Table.Head>
-                              <Table.Row>
-                                <Table.HeaderCell>Field</Table.HeaderCell>
-                                <Table.HeaderCell>Current Value</Table.HeaderCell>
-                                <Table.HeaderCell>New Value</Table.HeaderCell>
-                              </Table.Row>
-                            </Table.Head>
-                            <Table.Body>
-                              {changeRows.map((change, idx) => (
-                                <Table.Row key={idx}>
-                                  <Table.Cell>{change.label}</Table.Cell>
-                                  <Table.Cell>{change.from}</Table.Cell>
-                                  <Table.Cell>{change.to}</Table.Cell>
-                                </Table.Row>
-                              ))}
-                            </Table.Body>
-                          </Table.Root>
-                        </div>
-                      </Table.DetailRow>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </Table.Body>
-          </Table.Root>
-        </div>
-      )}
+      <EntityLandscapeDiffTable
+        diff={diff}
+        schemaMap={schemaMap}
+        schemas={schemas}
+        lifecycleStates={lifecycleStates}
+        teams={teams}
+      />
     </div>
   );
 };
-
-const EntityList = ({
-  entities,
-  schemaMap
-}: {
-  entities: DiffEntity[];
-  schemaMap: Map<string, SchemaInfo>;
-}) => (
-  <Table.Root>
-    <Table.Head>
-      <Table.Row>
-        <Table.HeaderCell>Entity</Table.HeaderCell>
-      </Table.Row>
-    </Table.Head>
-    <Table.Body>
-      {entities.map(entity => {
-        const schemaInfo = schemaMap.get(entity._schema.id);
-        return (
-          <Table.Row key={entity._uid}>
-            <Table.Cell>
-              <div className={styles.entityRow}>
-                {schemaInfo && (
-                  <TypeBadge color={schemaInfo.color} icon={schemaInfo.icon} size={16} />
-                )}
-                <span className={styles.entityName}>{entity._name}</span>
-                <span className={styles.entityPublicId}>{entity._publicId}</span>
-              </div>
-            </Table.Cell>
-          </Table.Row>
-        );
-      })}
-    </Table.Body>
-  </Table.Root>
-);

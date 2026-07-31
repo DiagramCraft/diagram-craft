@@ -73,6 +73,7 @@ const makeEntity = (id: string, overrides: Partial<EntityDbResult> = {}): Entity
 const state = (overrides: Partial<EntityLandscapeDiffState>): EntityLandscapeDiffState => ({
   asOf: now.toISOString(),
   includePlannedChanges: false,
+  includeOverdueChanges: false,
   ...overrides
 });
 
@@ -144,7 +145,8 @@ describe('diffEntityLandscapes', () => {
       {},
       expect.arrayContaining(['owned-1', 'linked-1']),
       false,
-      'project-1'
+      'project-1',
+      expect.any(Date)
     );
     expect(reconstructEntitiesAsOf).toHaveBeenNthCalledWith(
       2,
@@ -154,7 +156,43 @@ describe('diffEntityLandscapes', () => {
       {},
       expect.arrayContaining(['owned-1', 'linked-1']),
       true,
-      'project-1'
+      'project-1',
+      expect.any(Date)
+    );
+  });
+
+  it('omits the overdue-changes cutoff when includeOverdueChanges is set', async () => {
+    vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+
+    await diffEntityLandscapes(
+      db,
+      'ws-1',
+      {} as never,
+      state({}),
+      state({ includeOverdueChanges: true })
+    );
+
+    expect(reconstructEntitiesAsOf).toHaveBeenNthCalledWith(
+      1,
+      db,
+      'ws-1',
+      expect.any(Date),
+      {},
+      undefined,
+      false,
+      undefined,
+      expect.any(Date)
+    );
+    expect(reconstructEntitiesAsOf).toHaveBeenNthCalledWith(
+      2,
+      db,
+      'ws-1',
+      expect.any(Date),
+      {},
+      undefined,
+      false,
+      undefined,
+      undefined
     );
   });
 
@@ -168,5 +206,62 @@ describe('diffEntityLandscapes', () => {
         state({ projectId: 'project-b' })
       )
     ).rejects.toThrow('Comparing different projects is not supported');
+  });
+
+  it('includes project-owned entities in a workspace-wide diff (no projectId)', async () => {
+    const from = [makeEntity('global-1'), makeEntity('project-owned-1', { project_id: 'p-1' })];
+    const to = [makeEntity('global-1'), makeEntity('project-owned-1', { project_id: 'p-1' })];
+    vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+    const result = await diffEntityLandscapes(db, 'ws-1', {} as never, state({}), state({}));
+
+    expect(result.added).toEqual([]);
+    expect(result.removed).toEqual([]);
+  });
+
+  it('scopes each side by a free-text query independently', async () => {
+    const from = [makeEntity('alpha', { name: 'Alpha service' })];
+    const to = [
+      makeEntity('alpha', { name: 'Alpha service' }),
+      makeEntity('beta', { name: 'Beta service' })
+    ];
+    vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+    const result = await diffEntityLandscapes(
+      db,
+      'ws-1',
+      {} as never,
+      state({ q: 'beta' }),
+      state({ q: 'beta' })
+    );
+
+    expect(result.added.map(entity => entity._uid)).toEqual(['beta']);
+    expect(result.removed).toEqual([]);
+  });
+
+  it('scopes by collection membership independently per side', async () => {
+    const dbWithView = {
+      ...db,
+      view: {
+        listCollectionEntityIds: vi
+          .fn()
+          .mockResolvedValueOnce(['alpha'])
+          .mockResolvedValueOnce(['alpha', 'beta'])
+      }
+    } as unknown as DatabaseAdapter;
+    const from = [makeEntity('alpha'), makeEntity('beta')];
+    const to = [makeEntity('alpha'), makeEntity('beta')];
+    vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+    const result = await diffEntityLandscapes(
+      dbWithView,
+      'ws-1',
+      { userId: 'user-1' } as never,
+      state({ collectionId: 'col-1' }),
+      state({ collectionId: 'col-1' })
+    );
+
+    expect(result.added.map(entity => entity._uid)).toEqual(['beta']);
+    expect(result.removed).toEqual([]);
   });
 });

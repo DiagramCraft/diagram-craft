@@ -25,6 +25,8 @@ type TimelineStripProps = {
   onClose: () => void;
   includePlannedChanges?: boolean;
   onToggleIncludePlannedChanges?: (include: boolean) => void;
+  includeOverdueChanges?: boolean;
+  onToggleIncludeOverdueChanges?: (include: boolean) => void;
 };
 
 const markerTypeLabel = (type: AsOfMarker['type']) => {
@@ -66,7 +68,9 @@ export const TimelineStrip = ({
   onClear,
   onClose,
   includePlannedChanges,
-  onToggleIncludePlannedChanges
+  onToggleIncludePlannedChanges,
+  includeOverdueChanges,
+  onToggleIncludeOverdueChanges
 }: TimelineStripProps) => {
   const { todayMs, startMs, endMs, rangeMs } = useTimelineRange(markers);
   const todayIso = useMemo(() => toDateOnly(new Date(todayMs)), [todayMs]);
@@ -161,7 +165,16 @@ export const TimelineStrip = ({
                 value={includePlannedChanges ?? true}
                 onChange={v => onToggleIncludePlannedChanges(v ?? true)}
               />
-              <span>Include planned changes</span>
+              <span>Planned changes</span>
+            </label>
+          )}
+          {onToggleIncludeOverdueChanges && (
+            <label className={styles.toggleRow}>
+              <Checkbox
+                value={includeOverdueChanges ?? false}
+                onChange={v => onToggleIncludeOverdueChanges(v ?? false)}
+              />
+              <span>Overdue changes</span>
             </label>
           )}
           {displayDate && (
