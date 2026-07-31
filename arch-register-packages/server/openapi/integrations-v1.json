@@ -855,6 +855,22 @@
                             "description": {
                               "type": "string",
                               "description": "Optional group description"
+                            },
+                            "accessControl": {
+                              "type": "object",
+                              "properties": {
+                                "teamIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Teams whose role determines view/edit access"
+                                }
+                              },
+                              "required": [
+                                "teamIds"
+                              ],
+                              "description": "If set, restricts view/edit of this group to members of the listed teams"
                             }
                           },
                           "required": [
@@ -864,12 +880,29 @@
                         },
                         "description": "Named, presentation-only field groups, in display order"
                       },
-                      "shared_field_group_ids": {
+                      "shared_field_group_links": {
                         "type": "array",
                         "items": {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the included workspace shared fieldgroup"
+                            },
+                            "teamIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "Teams whose role determines view/edit access for this inclusion"
+                            }
+                          },
+                          "required": [
+                            "groupId"
+                          ],
+                          "description": "A schema-local inclusion of a workspace shared fieldgroup"
                         },
-                        "description": "Included workspace shared fieldgroup identifiers, in display order"
+                        "description": "Included workspace shared fieldgroups, in display order"
                       },
                       "color": {
                         "anyOf": [
