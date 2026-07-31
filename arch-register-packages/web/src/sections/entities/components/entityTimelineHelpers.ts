@@ -81,6 +81,83 @@ export function diffSnapshotState(
   return changes;
 }
 
+const LANDSCAPE_DIFF_FIELD_LABELS: Record<string, string> = {
+  slug: 'Slug',
+  namespace: 'Namespace',
+  name: 'Name',
+  description: 'Description',
+  owner: 'Owner',
+  lifecycle: 'Lifecycle',
+  target_lifecycle: 'Target lifecycle',
+  target_lifecycle_date: 'Target date',
+  tags: 'Tags',
+  links: 'Links',
+  schema_id: 'Schema',
+  project_id: 'Project'
+};
+
+function resolveLandscapeDiffValue(
+  key: string,
+  value: unknown,
+  lifecycleStates: WorkspaceLifecycleState[],
+  teams: WorkspaceTeam[]
+): string {
+  if (key === 'lifecycle' || key === 'target_lifecycle' || key === 'owner') {
+    return resolveBuiltIn(key, value, lifecycleStates, teams);
+  }
+  if (value == null || value === '') return '—';
+  if (key === 'tags') return Array.isArray(value) && value.length > 0 ? value.join(', ') : '—';
+  if (key === 'links') {
+    return Array.isArray(value) && value.length > 0
+      ? value
+          .map(
+            link =>
+              (link as { title?: string; url?: string }).title ?? (link as { url?: string }).url
+          )
+          .join(', ')
+      : '—';
+  }
+  return String(value);
+}
+
+// Backend `entities.diff` (entity-landscape diff) returns raw before/after values keyed by db
+// field name (see mutableStateKeys in entityDiff.ts server-side) rather than the display-oriented
+// ChangeRow shape `diffSnapshotState` produces from full base/proposed states. This adapts that
+// raw diff to ChangeRow[], reusing the same label-resolution helpers so values render consistently
+// with the rest of the app (owner/lifecycle names, not raw IDs).
+export function mapEntityLandscapeDiffToChangeRows(
+  diff: Record<string, { before: unknown; after: unknown }>,
+  schema: EntitySchema | null,
+  lifecycleStates: WorkspaceLifecycleState[],
+  teams: WorkspaceTeam[]
+): ChangeRow[] {
+  const rows: ChangeRow[] = [];
+
+  for (const [key, { before, after }] of Object.entries(diff)) {
+    if (key === 'data') {
+      const beforeData = (before ?? {}) as Record<string, unknown>;
+      const afterData = (after ?? {}) as Record<string, unknown>;
+      const fieldIds = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
+      for (const fieldId of fieldIds) {
+        const field = schema?.fields.find(f => f.id === fieldId);
+        const from = resolveFieldVal(field, beforeData[fieldId]);
+        const to = resolveFieldVal(field, afterData[fieldId]);
+        if (from === to) continue;
+        rows.push({ label: field?.name ?? fieldId, from, to });
+      }
+      continue;
+    }
+
+    const label = LANDSCAPE_DIFF_FIELD_LABELS[key] ?? key;
+    const from = resolveLandscapeDiffValue(key, before, lifecycleStates, teams);
+    const to = resolveLandscapeDiffValue(key, after, lifecycleStates, teams);
+    if (from === to) continue;
+    rows.push({ label, from, to });
+  }
+
+  return rows;
+}
+
 export function detectConflicts(entries: ChangeCaseMemberEntry[]): {
   conflictedProjectIds: Set<string>;
   conflictedSnapIds: Set<string>;

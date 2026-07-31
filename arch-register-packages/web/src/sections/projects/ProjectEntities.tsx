@@ -30,9 +30,11 @@ import { EmptyState } from '../../components/EmptyState';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
+import { ProjectChangesSummaryTab } from './ProjectChangesSummaryTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useWithdrawChangeCase } from '../../hooks/useChangeCases';
+import { useEntityLandscapeDiff } from '../../hooks/useEntities';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
@@ -57,7 +59,7 @@ import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
-type ViewTab = 'entities' | 'future-changes' | 'timeline';
+type ViewTab = 'entities' | 'future-changes' | 'timeline' | 'whats-changed';
 type GroupBy = 'entity' | 'date';
 
 export const ProjectEntities = ({
@@ -118,6 +120,22 @@ export const ProjectEntities = ({
   const search = routeApi.useSearch();
   const asOf = search.asOf;
   const readOnly = !!asOf;
+
+  // "What's changed" target date — the latest effective target_date across this project's
+  // planned change cases. No date picker in this iteration (deferred).
+  const changesTargetDate = useMemo(() => {
+    const dates = [...new Set(futureEntries.map(entry => entry.changeCase.id))]
+      .map(id => futureEntries.find(entry => entry.changeCase.id === id)!.changeCase)
+      .map(changeCase => getSnapshotEffectiveDate(changeCase, milestonesById))
+      .filter((date): date is string => !!date);
+    return dates.length > 0 ? dates.sort().at(-1)! : null;
+  }, [futureEntries, milestonesById]);
+  const { data: landscapeDiff, isLoading: isLandscapeDiffLoading } = useEntityLandscapeDiff(
+    workspaceSlug,
+    project.id,
+    changesTargetDate,
+    activeTab === 'whats-changed'
+  );
 
   const entityNameById = useMemo(
     () => new Map(projectEntities.map(e => [e.entity_id, e.entity_name])),
@@ -377,6 +395,15 @@ export const ProjectEntities = ({
                 Timeline
               </button>
             )}
+            {!readOnly && pendingCount > 0 && (
+              <button
+                type="button"
+                className={`${styles.entityTabBtn} ${activeTab === 'whats-changed' ? styles.entityTabBtnActive : ''}`}
+                onClick={() => setActiveTab('whats-changed')}
+              >
+                What&apos;s changed
+              </button>
+            )}
           </div>
           {activeTab === 'future-changes' && pendingCount > 0 && (
             <div className={styles.tabBarRight}>
@@ -430,7 +457,7 @@ export const ProjectEntities = ({
           onEditSnapshot={onEditSnapshot}
           onDeleteSnapshot={setDeleteTarget}
         />
-      ) : (
+      ) : activeTab === 'timeline' ? (
         <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
           <ProjectTimelineTab
             project={project}
@@ -446,6 +473,18 @@ export const ProjectEntities = ({
             onApplySnapshot={onApplySnapshot}
             onEditSnapshot={onEditSnapshot}
             onDeleteSnapshot={setDeleteTarget}
+          />
+        </div>
+      ) : (
+        <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
+          <ProjectChangesSummaryTab
+            diff={landscapeDiff}
+            isLoading={isLandscapeDiffLoading}
+            targetDate={changesTargetDate}
+            schemaMap={schemaMap}
+            schemas={schemas}
+            lifecycleStates={lifecycleStates}
+            teams={teams}
           />
         </div>
       )}
