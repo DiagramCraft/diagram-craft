@@ -164,8 +164,9 @@ const reconstructState = async (
   return applyStateFilters(db, workspace, authCtx, state, visible);
 };
 
+// TODO(#2543): thread schema for field-group redaction in diff snapshots
 const toApi = (entity: EntityDbResult, authCtx: AuthorizationContext): EntityRecord =>
-  toApiEntity(entity, authCtx, entity.completeness);
+  toApiEntity(entity, authCtx, null, entity.completeness);
 
 export const diffEntityLandscapes = async (
   db: DatabaseAdapter,

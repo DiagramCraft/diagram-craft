@@ -173,7 +173,7 @@ const runSync = async (
     };
 
     if (entityUnchanged(oldRow, next)) {
-      return { status: 'unchanged', entity: toApiEntity(oldRow, authCtx) };
+      return { status: 'unchanged', entity: toApiEntity(oldRow, authCtx, schema) };
     }
 
     const timestamp = new Date();
@@ -198,7 +198,7 @@ const runSync = async (
       message: `Entity for external identity '${source}/${externalKey}' no longer exists`
     });
 
-    return { status: 'updated', entity: toApiEntity(row, authCtx) };
+    return { status: 'updated', entity: toApiEntity(row, authCtx, schema) };
   }
 
   // No existing identity — creating a new entity requires the same ownership/parent-tier
@@ -292,7 +292,7 @@ const runSync = async (
     throw error;
   }
 
-  return { status: 'created', entity: toApiEntity(row, authCtx) };
+  return { status: 'created', entity: toApiEntity(row, authCtx, schema) };
 };
 
 export const getEntityByExternalKey = async (
@@ -343,7 +343,8 @@ export const getEntityByExternalKey = async (
       );
     }
 
-    return toApiEntity(entity, authCtx);
+    const schema = await db.catalog.getSchema(workspace, entity.schema_id);
+    return toApiEntity(entity, authCtx, schema);
   } catch (error) {
     return handleError(error, 'Failed to get entity by external key');
   }

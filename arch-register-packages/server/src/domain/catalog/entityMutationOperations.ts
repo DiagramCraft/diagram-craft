@@ -41,6 +41,8 @@ import type {
 } from './db/catalogDatabase';
 import { entityRequiresApproval } from './entityChangeOperations';
 import { assertNoExternalEntityFieldWrites } from './entityValidation';
+import { equalEntityValue } from './entityDiff';
+import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
   applyExternalFieldUpdate,
@@ -161,7 +163,7 @@ export const createEntity = async (
       }
     });
 
-    return toApiEntity(row, authCtx);
+    return toApiEntity(row, authCtx, schema);
   } catch (error) {
     return handleError(error, 'Failed to create data record');
   }
@@ -381,7 +383,7 @@ export const bulkCreateEntities = async (
           actor,
           entity: draft.entity
         });
-        created.push(toApiEntity(row, authCtx));
+        created.push(toApiEntity(row, authCtx, draft.schema));
       }
       return created;
     });
@@ -490,6 +492,17 @@ export const updateEntity = async (
       entities
     });
     assertNoDerivedFieldWrites(schema.fields, normalizedFields);
+    if (authCtx) {
+      const changedFieldIds = Object.keys(normalizedFields).filter(
+        fieldId => !equalEntityValue(oldRow.data[fieldId], normalizedFields[fieldId])
+      );
+      requireNoRestrictedFieldWrites(
+        authCtx,
+        schema,
+        changedFieldIds,
+        'You do not have permission to edit one or more restricted fields on this entity'
+      );
+    }
 
     const timestamp = new Date();
     let nextGeneratedMetadata: ExternalMetadata | undefined;
@@ -609,7 +622,7 @@ export const updateEntity = async (
     });
 
     httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
-    return toApiEntity(row, authCtx);
+    return toApiEntity(row, authCtx, schema);
   } catch (error) {
     return handleError(error, 'Failed to update data record');
   }
@@ -625,6 +638,7 @@ export const cloneEntity = async (
   try {
     const source = await db.catalog.getEntity(workspace, id);
     httpAssert.present(source, { status: 404, message: `Data record '${id}' not found` });
+    const schema = await db.catalog.getSchema(workspace, source.schema_id);
     if (authCtx)
       requireEntityAction(
         authCtx,
@@ -672,7 +686,7 @@ export const cloneEntity = async (
       changes: { new: flattenEntityAuditFields(row) }
     });
 
-    return toApiEntity(row, authCtx);
+    return toApiEntity(row, authCtx, schema);
   } catch (error) {
     return handleError(error, 'Failed to clone data record');
   }

@@ -236,7 +236,7 @@ export const collectEntitiesFromIR = async (
             projectEntityMap
           ) as EntityRecord)
         : attachProjectLink(
-            toApiEntity(row, authCtx, completeness),
+            toApiEntity(row, authCtx, schemaCatalog.get(row.schema_id) ?? null, completeness),
             row.id,
             options.projectId,
             projectEntityMap
@@ -335,6 +335,7 @@ const collectEntities = async (
   }
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   const rows: CollectedEntity[] = [];
 
   const hasWorkspaceWideView = authCtx != null && checker.hasWorkspaceWideEntityView(authCtx);
@@ -376,7 +377,7 @@ const collectEntities = async (
               projectEntityMap
             ) as EntityRecord)
           : attachProjectLink(
-              toApiEntity(entity, authCtx, completeness),
+              toApiEntity(entity, authCtx, schemaById.get(entity.schema_id) ?? null, completeness),
               entity.id,
               projectId,
               projectEntityMap
@@ -594,6 +595,7 @@ export const getEntityTree = async (
             checker.hasEntityPermission(authCtx, entity, 'view_entity')
           );
 
+    const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
     const containmentFieldsBySchema = new Map<string, string[]>();
     for (const schema of schemas) {
       const cFields = schema.fields
@@ -658,7 +660,12 @@ export const getEntityTree = async (
 
     return {
       nodes: [...allIncluded.values()].map(row => ({
-        ...attachProjectLink(toApiEntity(row, authCtx), row.id, projectId, projectEntityMap),
+        ...attachProjectLink(
+          toApiEntity(row, authCtx, schemaById.get(row.schema_id) ?? null),
+          row.id,
+          projectId,
+          projectEntityMap
+        ),
         _isMatch: matchIds.has(row.id)
       })),
       edges
@@ -684,7 +691,8 @@ export const getEntity = async (
         'view_entity',
         'You do not have access to view this entity'
       );
-    return toApiEntity(row, authCtx, row.completeness);
+    const schema = await db.catalog.getSchema(workspace, row.schema_id);
+    return toApiEntity(row, authCtx, schema, row.completeness);
   } catch (error) {
     return handleError(error, 'Failed to retrieve data record');
   }
