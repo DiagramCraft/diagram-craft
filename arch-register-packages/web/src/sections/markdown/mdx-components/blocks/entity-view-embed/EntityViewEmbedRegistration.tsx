@@ -26,9 +26,12 @@ export const entityViewEmbedSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 6,
     surfaces: ['workspace', 'project'],
-    component: createDashboardWidgetAdapter(EntityViewEmbed, (config: SavedViewEmbedWidgetConfig) => ({
-      viewId: config.viewId
-    })),
+    component: createDashboardWidgetAdapter(
+      EntityViewEmbed,
+      (config: SavedViewEmbedWidgetConfig) => ({
+        viewId: config.viewId
+      })
+    ),
     isValidConfig: (config): config is SavedViewEmbedWidgetConfig =>
       typeof config.viewId === 'string' && config.viewId.length > 0,
     createDefaultConfig: context => ({ viewId: context.viewId ?? '' }),
