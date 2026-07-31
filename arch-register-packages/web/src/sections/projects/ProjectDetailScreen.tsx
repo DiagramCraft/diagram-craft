@@ -44,6 +44,7 @@ import { RenameDialog } from '../../components/RenameDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { AddEntityToProjectDialog } from './components/AddEntityToProjectDialog';
 import { ProjectSettingsForm } from './components/ProjectSettingsForm';
+import { ProjectMarkdownTemplatesDialog } from './components/ProjectMarkdownTemplatesDialog';
 import { PlanChangeDialog } from './components/PlanChangeDialog';
 import { ApplyChangeCaseDialog } from './components/ApplyChangeCaseDialog';
 import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
@@ -70,6 +71,8 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
     viewMode,
     editing,
     setEditing,
+    markdownTemplatesOpen,
+    setMarkdownTemplatesOpen,
     addFolderOpen,
     setAddFolderOpen,
     addFolderParent,
@@ -648,6 +651,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onNavigateProject={handleNavigateProject}
           onTogglePinned={handleTogglePinned}
           onEdit={() => setEditing(true)}
+          onEditMarkdownTemplates={() => setMarkdownTemplatesOpen(true)}
         />
       )}
 
@@ -661,6 +665,15 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           }}
           onClose={() => setEditing(false)}
           onDelete={handleNavigateHome}
+        />
+      )}
+
+      {project.canEdit && (
+        <ProjectMarkdownTemplatesDialog
+          open={markdownTemplatesOpen}
+          project={project}
+          workspaceId={workspaceId}
+          onClose={() => setMarkdownTemplatesOpen(false)}
         />
       )}
 

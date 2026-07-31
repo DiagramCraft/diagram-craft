@@ -1,0 +1,62 @@
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.formLabel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formInput {
+  height: 28px;
+  padding: 0 8px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  color: var(--base-fg);
+  font-size: 12.5px;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.formInput:focus {
+  border-color: var(--accent-fg);
+}
+
+.formTextarea {
+  height: auto;
+  min-height: 60px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+
+.templateList {
+  display: grid;
+  gap: 8px;
+}
+
+.templateRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.templateName {
+  flex: 1;
+}
+
+.error {
+  font-size: 12px;
+  color: var(--error-fg);
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+}

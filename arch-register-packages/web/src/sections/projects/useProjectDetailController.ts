@@ -43,6 +43,7 @@ export const useProjectDetailController = (folder?: string) => {
   const filter = search.contentQuery ?? '';
   const viewMode = search.contentView ?? 'grid';
   const [editing, setEditing] = useState(false);
+  const [markdownTemplatesOpen, setMarkdownTemplatesOpen] = useState(false);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
@@ -129,6 +130,8 @@ export const useProjectDetailController = (folder?: string) => {
     viewMode,
     editing,
     setEditing,
+    markdownTemplatesOpen,
+    setMarkdownTemplatesOpen,
     addFolderOpen,
     setAddFolderOpen,
     addFolderParent,

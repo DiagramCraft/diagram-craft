@@ -81,6 +81,22 @@ test.describe('projects section', () => {
     await projectsPage.openEditProjectDialog();
   });
 
+  test('opens project Markdown templates from the project actions menu', async ({ page }) => {
+    const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
+
+    await projectsPage.gotoProject(authMigrationProject.id);
+    await projectsPage.expectProjectOpened(authMigrationProject.name);
+    await projectsPage.openMarkdownTemplatesDialog();
+  });
+
+  test('opens dashboard editing from the project actions menu', async ({ page }) => {
+    const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
+
+    await projectsPage.gotoProject(authMigrationProject.id);
+    await projectsPage.expectProjectOpened(authMigrationProject.name);
+    await projectsPage.openDashboardEditor();
+  });
+
   test('creates a new project from the sidebar action', async ({ page }) => {
     const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
     const projectName = `Sidebar Project ${Date.now()}`;
