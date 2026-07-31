@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Title } from '../../components/Title';
-import { FieldRow } from './SchemaSettingsScreen';
+import { FieldConfig } from '../../components/FieldConfig';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   useCreateFieldGroup,
@@ -13,11 +15,154 @@ import {
   useUpdateFieldGroup
 } from '../../hooks/useFieldGroups';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
-import { type FieldType } from '../../lib/schemaPresentation';
+import { FIELD_TYPES, type FieldType } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
 import styles from './SchemaSettingsScreen.module.css';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
+
+const SharedFieldRow = ({
+  field,
+  schemas,
+  enums,
+  onUpdate,
+  onChangeType,
+  onRemove,
+  containmentDisabled,
+  canEdit
+  }: {
+  field: SchemaField;
+  schemas: { id: string; name: string }[];
+  enums: { id: string; name: string }[];
+  onUpdate: (patch: Partial<SchemaField>) => void;
+  onChangeType: (type: FieldType) => void;
+  onRemove?: () => void;
+  containmentDisabled: boolean;
+  canEdit: boolean;
+}) => {
+  const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
+
+  const options = () => {
+    if (field.type === 'select') {
+      return (
+        <FormElement label="Enum">
+          <Select.Root
+            value={field.enumId ?? undefined}
+            disabled={!canEdit}
+            onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
+            placeholder="Select enum..."
+          >
+            {enums.map(item => (
+              <Select.Item key={item.id} value={item.id}>
+                {item.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormElement>
+      );
+    }
+    if (field.type === 'reference' || field.type === 'containment') {
+      return (
+        <FormElement label={field.type === 'reference' ? 'Reference target' : 'Containment target'}>
+          <Select.Root
+            value={field.schemaId ?? undefined}
+            disabled={!canEdit}
+            onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<SchemaField>)}
+            placeholder="Select type..."
+          >
+            {schemas.map(item => (
+              <Select.Item key={item.id} value={item.id}>
+                {item.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormElement>
+      );
+    }
+    if (field.type === 'derived') {
+      return (
+        <FormElement label="Expression">
+          <TextArea
+            value={field.expression}
+            disabled={!canEdit}
+            onChange={value => onUpdate({ expression: value ?? '' } as Partial<SchemaField>)}
+            rows={2}
+            placeholder='field("input_field")'
+          />
+        </FormElement>
+      );
+    }
+    return undefined;
+  };
+
+  return (
+    <FieldConfig options={options()}>
+      <FieldConfig.Cell label="Id" mono flexBasis={160}>
+        <TextInput
+          value={field.id}
+          disabled={!canEdit}
+          onChange={value => {
+            setIdUserEdited(true);
+            onUpdate({ id: value ?? '' });
+          }}
+          style={{ width: '100%' }}
+        />
+      </FieldConfig.Cell>
+      <FieldConfig.Cell label="Label" flexBasis={160}>
+        <TextInput
+          value={field.name}
+          disabled={!canEdit}
+          onChange={value => {
+            const name = value ?? '';
+            onUpdate(idUserEdited ? { name } : { name, id: toFieldId(name) });
+          }}
+          style={{ width: '100%' }}
+        />
+      </FieldConfig.Cell>
+      <FieldConfig.Cell label="Type" flexBasis={140}>
+        <Select.Root
+          value={field.type}
+          disabled={!canEdit}
+          onChange={value => {
+            if (value) onChangeType(value as FieldType);
+          }}
+          style={{ width: '100%' }}
+        >
+          {FIELD_TYPES.map(item => (
+            <Select.Item
+              key={item.value}
+              value={item.value}
+              disabled={item.value === 'containment' && containmentDisabled}
+            >
+              {item.label}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </FieldConfig.Cell>
+      <FieldConfig.Cell label="Completeness" flexBasis={120}>
+        <Select.Root
+          value={field.requirementLevel ?? 'optional'}
+          disabled={!canEdit || field.type === 'derived'}
+          onChange={value =>
+            onUpdate({ requirementLevel: (value ?? 'optional') as SchemaField['requirementLevel'] })
+          }
+          style={{ width: '100%' }}
+        >
+          <Select.Item value="optional">Optional</Select.Item>
+          <Select.Item value="expected">Expected</Select.Item>
+          <Select.Item value="required">Required</Select.Item>
+        </Select.Root>
+      </FieldConfig.Cell>
+      {onRemove && (
+        <FieldConfig.Cell label="Actions" flexBasis={80}>
+          <Button variant="ghost" onClick={onRemove} disabled={!canEdit}>
+            Remove
+          </Button>
+        </FieldConfig.Cell>
+      )}
+    </FieldConfig>
+  );
+};
 
 export const FieldGroupEditorScreen = () => {
   const navigate = routeApi.useNavigate();
@@ -191,13 +336,11 @@ export const FieldGroupEditorScreen = () => {
             )}
           </div>
           {fields.map(field => (
-            <FieldRow
+            <SharedFieldRow
               key={field.id}
               field={field}
-              fields={fields}
               schemas={schemas}
               enums={enums}
-              groups={[]}
               onUpdate={patch => {
                 setFields(current =>
                   current.map(item =>

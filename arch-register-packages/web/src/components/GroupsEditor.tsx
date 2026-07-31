@@ -134,7 +134,7 @@ export const GroupDialog = ({
     setError('');
     setMode(group ? 'new' : 'new');
     setSelectedSharedGroupId(sharedGroups[0]?.id);
-  }, [open, group]);
+  }, [open, group, sharedGroups]);
 
   const addSharedGroup = () => {
     if (!selectedSharedGroupId || !onAddSharedGroup) {
