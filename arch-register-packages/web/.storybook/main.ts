@@ -18,8 +18,7 @@ const config: StorybookConfig = {
   },
   docs: {},
   typescript: {
-    reactDocgen: 'react-docgen-typescript',
-    reactDocgenTypescriptOptions: {}
+    reactDocgen: 'react-docgen'
   },
   viteFinal: async (config) => {
     // Merge with existing vite config
