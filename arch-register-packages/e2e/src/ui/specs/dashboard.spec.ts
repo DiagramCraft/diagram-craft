@@ -33,7 +33,7 @@ test.describe('dashboard section', () => {
     await homePage.enterEditMode();
     await homePage.addWidgetButton().click();
     await page.getByRole('button', { name: 'Stale entity report' }).click();
-    await expect(page.getByText('Not changed in').first()).toBeVisible();
+    await expect(page.getByText('Stale entity report', { exact: true }).last()).toBeVisible();
 
     await homePage.cancelDashboardButton().click();
     await expect(homePage.editDashboardButton()).toBeVisible();
