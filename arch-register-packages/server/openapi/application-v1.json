@@ -22342,6 +22342,17 @@
                         ],
                         "description": "Project color (hex format)"
                       },
+                      "start_date": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Start date (ISO 8601)"
+                      },
                       "target_date": {
                         "anyOf": [
                           {
@@ -22382,6 +22393,7 @@
                       "owner",
                       "status",
                       "color",
+                      "start_date",
                       "target_date",
                       "pinned",
                       "file_count",
@@ -22459,6 +22471,17 @@
                       }
                     ],
                     "description": "Project color (hex format)"
+                  },
+                  "start_date": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Start date (ISO 8601)"
                   },
                   "target_date": {
                     "anyOf": [
@@ -22567,6 +22590,17 @@
                       ],
                       "description": "Project color (hex format)"
                     },
+                    "start_date": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Start date (ISO 8601)"
+                    },
                     "target_date": {
                       "anyOf": [
                         {
@@ -22607,6 +22641,7 @@
                     "owner",
                     "status",
                     "color",
+                    "start_date",
                     "target_date",
                     "pinned",
                     "file_count",
@@ -22730,6 +22765,17 @@
                         }
                       ],
                       "description": "Project color (hex format)"
+                    },
+                    "start_date": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Start date (ISO 8601)"
                     },
                     "target_date": {
                       "anyOf": [
@@ -23356,6 +23402,7 @@
                     "owner",
                     "status",
                     "color",
+                    "start_date",
                     "target_date",
                     "pinned",
                     "file_count",
@@ -23441,6 +23488,17 @@
                       }
                     ],
                     "description": "Project color (hex format)"
+                  },
+                  "start_date": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Start date (ISO 8601)"
                   },
                   "target_date": {
                     "anyOf": [
@@ -23549,6 +23607,17 @@
                       ],
                       "description": "Project color (hex format)"
                     },
+                    "start_date": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Start date (ISO 8601)"
+                    },
                     "target_date": {
                       "anyOf": [
                         {
@@ -23589,6 +23658,7 @@
                     "owner",
                     "status",
                     "color",
+                    "start_date",
                     "target_date",
                     "pinned",
                     "file_count",
@@ -26588,6 +26658,17 @@
                             ],
                             "description": "Project color (hex format)"
                           },
+                          "start_date": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Start date (ISO 8601)"
+                          },
                           "target_date": {
                             "anyOf": [
                               {
@@ -26628,6 +26709,7 @@
                           "owner",
                           "status",
                           "color",
+                          "start_date",
                           "target_date",
                           "pinned",
                           "file_count",
