@@ -303,7 +303,8 @@ export const pruneAssessmentReferences = (
   return { conditions: prunedConditions, viewConfigs: prunedViewConfigs };
 };
 
-export const isTreeBasedView = (view: BrowserView): boolean => view === 'tree' || view === 'map';
+export const isTreeBasedView = (view: BrowserView): boolean =>
+  view === 'tree' || view === 'map' || view === 'diff';
 
 export const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.config == null) return null;

@@ -4,9 +4,11 @@ import type { Project } from '@arch-register/api-types/projectContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { ReactNode } from 'react';
 import { BubbleView } from './BubbleView';
 import { CardsView } from './CardsView';
+import { EntityDiffView } from './EntityDiffView';
 import { ExploreView } from './ExploreView';
 import { MapView } from './MapView';
 import { MatrixView } from './MatrixView';
@@ -28,10 +30,12 @@ type EntityBrowserViewData = {
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
+  teams?: WorkspaceTeam[];
   projects: Project[];
   workspaceId: string;
   projectId?: string;
   projectScope: 'project' | 'all';
+  collectionId?: string | null;
   q: string;
   typeFilter: string | null;
   ownerFilter: string | null;
@@ -48,6 +52,9 @@ type EntityBrowserViewData = {
   joinedAssessment?: JoinedAssessmentContext | null;
   responsesByEntity?: Map<string, Record<string, string | number | boolean>>;
   onCountChange?: (count: number) => void;
+  diffTargetDate?: string;
+  diffIncludePlannedChanges?: boolean;
+  diffIncludeOverdueChanges?: boolean;
 };
 
 type EntityBrowserViewMode =
@@ -86,10 +93,12 @@ export const EntityBrowserView = ({
   schemaMap,
   schemas,
   lifecycleStates,
+  teams,
   projects,
   workspaceId,
   projectId,
   projectScope,
+  collectionId,
   q,
   typeFilter,
   ownerFilter,
@@ -106,6 +115,9 @@ export const EntityBrowserView = ({
   joinedAssessment,
   responsesByEntity,
   onCountChange,
+  diffTargetDate,
+  diffIncludePlannedChanges,
+  diffIncludeOverdueChanges,
   mode
 }: EntityBrowserViewProps) => {
   const readOnly = mode.kind !== 'interactive';
@@ -119,6 +131,24 @@ export const EntityBrowserView = ({
   const onSelectAll = mode.kind === 'interactive' ? mode.onSelectAll : undefined;
   const onSelectRow = mode.kind === 'interactive' ? mode.onSelectRow : undefined;
   switch (view) {
+    case 'diff':
+      return (
+        <EntityDiffView
+          workspaceId={workspaceId}
+          projectId={projectId}
+          projectScope={projectScope}
+          collectionId={collectionId}
+          q={q}
+          conditions={conditions ?? []}
+          entityQuery={entityQuery}
+          targetDate={diffTargetDate}
+          includePlannedChanges={diffIncludePlannedChanges ?? true}
+          includeOverdueChanges={diffIncludeOverdueChanges ?? false}
+          schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          teams={teams ?? []}
+        />
+      );
     case 'map':
       return (
         <MapView

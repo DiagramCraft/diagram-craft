@@ -7,7 +7,18 @@ import { filterOpSchema } from '@arch-register/api-types/filterOp';
 // ── Shared sub-schemas ────────────────────────────────────────
 
 export const browserViewSchema = z
-  .enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix', 'explore', 'bubble', 'map'])
+  .enum([
+    'table',
+    'cards',
+    'tree',
+    'radar',
+    'timeline',
+    'matrix',
+    'explore',
+    'bubble',
+    'map',
+    'diff'
+  ])
   .describe('Available view modes for displaying entities');
 
 export const filterConditionSchema = z.object({

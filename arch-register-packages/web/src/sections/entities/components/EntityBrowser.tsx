@@ -222,8 +222,12 @@ export const EntityBrowser = ({
     projectId,
     setJoinAssessmentId
   ]);
-  const readOnly = !!asOf && !collectionId;
+  const readOnly = !!asOf && !collectionId && view !== 'diff';
   const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
+  const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
+  useEffect(() => {
+    if (view === 'diff' && !collectionId) setTlOpen(true);
+  }, [view, collectionId]);
   const { data: fetchedTimelineMarkers = [] } = useTimelineMarkers(
     workspaceId,
     !projectId && !collectionId && (tlOpen || !!asOf)
@@ -433,6 +437,8 @@ export const EntityBrowser = ({
           onClose={() => setTlOpen(false)}
           includePlannedChanges={projectId ? undefined : includePlannedChanges}
           onToggleIncludePlannedChanges={projectId ? undefined : setIncludePlannedChanges}
+          includeOverdueChanges={includeOverdueChanges}
+          onToggleIncludeOverdueChanges={view === 'diff' ? setIncludeOverdueChanges : undefined}
         />
       )}
 
@@ -466,10 +472,15 @@ export const EntityBrowser = ({
             schemaMap={schemaMap}
             schemas={schemas}
             lifecycleStates={lifecycleStates}
+            teams={teams as WorkspaceTeam[]}
             projects={projects}
             workspaceId={workspaceId}
             projectId={projectId}
             projectScope={projectScope}
+            collectionId={collectionId}
+            diffTargetDate={asOf}
+            diffIncludePlannedChanges={includePlannedChanges}
+            diffIncludeOverdueChanges={includeOverdueChanges}
             q={q}
             typeFilter={typeFilter}
             ownerFilter={ownerFilter}

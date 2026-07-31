@@ -500,6 +500,84 @@ describe('reconstructEntitiesAsOf', () => {
     expect(result[0]?.id).toBe('entity-1');
   });
 
+  describe('excludeOverdueChangesBefore', () => {
+    const makeVersions = () => [
+      baseVersion({
+        entity_id: 'entity-1',
+        created_at: new Date('2026-01-01T00:00:00.000Z'),
+        state: { id: 'entity-1', name: 'Current Name', schema_id: 'schema-1', data: {} }
+      })
+    ];
+
+    it('excludes a planned change whose target date is before the cutoff', async () => {
+      const plannedChanges = [
+        basePlannedChange({
+          target_date: '2026-01-15',
+          created_at: new Date('2026-01-10T00:00:00.000Z'),
+          proposed_state: { name: 'Overdue Planned Name' }
+        })
+      ];
+      const db = makeDb(makeVersions(), plannedChanges);
+
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-03-01T00:00:00.000Z'),
+        null,
+        undefined,
+        true,
+        undefined,
+        new Date('2026-02-01T00:00:00.000Z')
+      );
+
+      expect(result[0]?.name).toBe('Current Name');
+    });
+
+    it('includes a planned change whose target date is at or after the cutoff', async () => {
+      const plannedChanges = [
+        basePlannedChange({
+          target_date: '2026-02-15',
+          created_at: new Date('2026-01-10T00:00:00.000Z'),
+          proposed_state: { name: 'Upcoming Planned Name' }
+        })
+      ];
+      const db = makeDb(makeVersions(), plannedChanges);
+
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-03-01T00:00:00.000Z'),
+        null,
+        undefined,
+        true,
+        undefined,
+        new Date('2026-02-01T00:00:00.000Z')
+      );
+
+      expect(result[0]?.name).toBe('Upcoming Planned Name');
+    });
+
+    it('does not exclude anything when no cutoff is given', async () => {
+      const plannedChanges = [
+        basePlannedChange({
+          target_date: '2026-01-15',
+          created_at: new Date('2026-01-10T00:00:00.000Z'),
+          proposed_state: { name: 'Overdue Planned Name' }
+        })
+      ];
+      const db = makeDb(makeVersions(), plannedChanges);
+
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-03-01T00:00:00.000Z'),
+        null
+      );
+
+      expect(result[0]?.name).toBe('Overdue Planned Name');
+    });
+  });
+
   describe('entities with no version history at all (e.g. imported or seeded)', () => {
     it('falls back to the live entity for a past asOf on or after its created_at', async () => {
       const live = makeLiveEntity({

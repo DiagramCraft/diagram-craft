@@ -74,7 +74,8 @@ export const reconstructEntitiesAsOf = async (
   authCtx: AuthorizationContext | null,
   candidateEntityIds?: string[],
   includePlannedChanges = true,
-  plannedChangesProjectId?: string | null
+  plannedChangesProjectId?: string | null,
+  excludeOverdueChangesBefore?: Date
 ): Promise<EntityDbResult[]> => {
   const [baselineVersions, plannedChanges, schemas, owners, lifecycles] = await Promise.all([
     db.catalog.listEntityVersionsAsOf(workspace, asOf, candidateEntityIds),
@@ -147,10 +148,24 @@ export const reconstructEntitiesAsOf = async (
     baselineByEntity.set(version.entity_id, version);
   }
 
+  // Landscape diffing can exclude "overdue" changes — planned changes whose target date has
+  // already passed (relative to `excludeOverdueChangesBefore`, typically "now") but were never
+  // applied. Without this, a change scheduled for last month keeps showing up as a "future"
+  // change in every reconstruction from today onward. Changes with no resolvable date (no
+  // target_date and no milestone) aren't excluded — there's nothing to judge as overdue.
+  const overdueFilteredChanges =
+    excludeOverdueChangesBefore == null
+      ? applicablePlannedChanges
+      : applicablePlannedChanges.filter(change => {
+          const effectiveDate = effectiveTargetDate(change, milestoneTargetDates);
+          if (!effectiveDate) return true;
+          return effectiveDate >= excludeOverdueChangesBefore.toISOString().slice(0, 10);
+        });
+
   const futureUpdatesByEntity = new Map<string, PlannedEntityChangeDbResult[]>();
   const futureUpdateGroups = new Map<string, PlannedEntityChangeDbResult[]>();
 
-  for (const change of applicablePlannedChanges) {
+  for (const change of overdueFilteredChanges) {
     if (change.project_id != null && !accessibleProjectIds.has(change.project_id)) continue;
     const group = futureUpdateGroups.get(change.case_revision_id) ?? [];
     group.push(change);

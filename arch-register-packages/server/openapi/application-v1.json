@@ -11914,6 +11914,71 @@
                         "type": "boolean",
                         "default": true,
                         "description": "Whether to apply planned changes when reconstructing this state"
+                      },
+                      "q": {
+                        "type": "string",
+                        "description": "Search query string"
+                      },
+                      "conditions": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fieldId": {
+                              "type": "string",
+                              "description": "Field identifier to filter on"
+                            },
+                            "op": {
+                              "enum": [
+                                "equals",
+                                "not_equals",
+                                "contains",
+                                "starts_with",
+                                "ends_with",
+                                "empty",
+                                "not_empty",
+                                "before",
+                                "after",
+                                "on",
+                                "gt",
+                                "lt",
+                                "gte",
+                                "lte"
+                              ],
+                              "type": "string",
+                              "description": "Filter operation"
+                            },
+                            "value": {
+                              "description": "Filter value (type depends on field and operation)"
+                            }
+                          },
+                          "required": [
+                            "fieldId",
+                            "op"
+                          ]
+                        },
+                        "description": "Additional filter conditions"
+                      },
+                      "assessmentId": {
+                        "type": "string",
+                        "description": "Joined assessment identifier — required when conditions reference assessment fields"
+                      },
+                      "projectScope": {
+                        "enum": [
+                          "project",
+                          "all"
+                        ],
+                        "type": "string",
+                        "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                      },
+                      "collectionId": {
+                        "type": "string",
+                        "description": "Filter by the current user's collection identifier"
+                      },
+                      "includeOverdueChanges": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether to include planned changes whose target date has already passed but were never applied. Defaults to false — overdue changes are excluded so a diff against \"today\" isn't skewed by stale, unexecuted plans."
                       }
                     },
                     "required": [
@@ -11935,6 +12000,71 @@
                         "type": "boolean",
                         "default": true,
                         "description": "Whether to apply planned changes when reconstructing this state"
+                      },
+                      "q": {
+                        "type": "string",
+                        "description": "Search query string"
+                      },
+                      "conditions": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fieldId": {
+                              "type": "string",
+                              "description": "Field identifier to filter on"
+                            },
+                            "op": {
+                              "enum": [
+                                "equals",
+                                "not_equals",
+                                "contains",
+                                "starts_with",
+                                "ends_with",
+                                "empty",
+                                "not_empty",
+                                "before",
+                                "after",
+                                "on",
+                                "gt",
+                                "lt",
+                                "gte",
+                                "lte"
+                              ],
+                              "type": "string",
+                              "description": "Filter operation"
+                            },
+                            "value": {
+                              "description": "Filter value (type depends on field and operation)"
+                            }
+                          },
+                          "required": [
+                            "fieldId",
+                            "op"
+                          ]
+                        },
+                        "description": "Additional filter conditions"
+                      },
+                      "assessmentId": {
+                        "type": "string",
+                        "description": "Joined assessment identifier — required when conditions reference assessment fields"
+                      },
+                      "projectScope": {
+                        "enum": [
+                          "project",
+                          "all"
+                        ],
+                        "type": "string",
+                        "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                      },
+                      "collectionId": {
+                        "type": "string",
+                        "description": "Filter by the current user's collection identifier"
+                      },
+                      "includeOverdueChanges": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether to include planned changes whose target date has already passed but were never applied. Defaults to false — overdue changes are excluded so a diff against \"today\" isn't skewed by stale, unexecuted plans."
                       }
                     },
                     "required": [
@@ -42751,7 +42881,8 @@
                           "matrix",
                           "explore",
                           "bubble",
-                          "map"
+                          "map",
+                          "diff"
                         ],
                         "type": "string",
                         "description": "View display mode"
@@ -44321,7 +44452,8 @@
                       "matrix",
                       "explore",
                       "bubble",
-                      "map"
+                      "map",
+                      "diff"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -45721,7 +45853,8 @@
                         "matrix",
                         "explore",
                         "bubble",
-                        "map"
+                        "map",
+                        "diff"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -47282,7 +47415,8 @@
                       "matrix",
                       "explore",
                       "bubble",
-                      "map"
+                      "map",
+                      "diff"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -48677,7 +48811,8 @@
                         "matrix",
                         "explore",
                         "bubble",
-                        "map"
+                        "map",
+                        "diff"
                       ],
                       "type": "string",
                       "description": "View display mode"

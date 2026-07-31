@@ -32,8 +32,8 @@ export const entityKeys = {
   trees: (workspaceId: string) => [...entityKeys.all, 'tree', workspaceId] as const,
   tree: (workspaceId: string, filters: Record<string, unknown>) =>
     [...entityKeys.trees(workspaceId), filters] as const,
-  landscapeDiff: (workspaceId: string, projectId: string, targetDate: string | null) =>
-    [...entityKeys.all, 'landscapeDiff', workspaceId, projectId, targetDate] as const
+  landscapeDiff: (workspaceId: string, from: unknown, to: unknown) =>
+    [...entityKeys.all, 'landscapeDiff', workspaceId, from, to] as const
 };
 
 export const invalidateEntityDetails = async (

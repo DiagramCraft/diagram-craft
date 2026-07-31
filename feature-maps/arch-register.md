@@ -131,6 +131,12 @@
           condensed Entity + Project timeline, grouping rows by owner, type, or containment parent, with configurable
           project lanes, milestone guides, and autosave snapshot visibility.
 
+        - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
+          then — entities added, removed, or changed, with all applicable planned changes across projects applied,
+          scoped to the browser's current search/filter/project-scope selection, with a field-level diff on
+          drill-down for changed entities. Planned changes with a target date already in the past but never applied
+          are excluded by default (an "include overdue changes" toggle brings them back in).
+
         - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view.
 
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and

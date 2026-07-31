@@ -229,7 +229,21 @@ const entityLandscapeDiffStateSchema = z.object({
     .boolean()
     .optional()
     .default(true)
-    .describe('Whether to apply planned changes when reconstructing this state')
+    .describe('Whether to apply planned changes when reconstructing this state'),
+  q: entityListFiltersSchema.shape.q,
+  conditions: entityListFiltersSchema.shape.conditions,
+  assessmentId: entityListFiltersSchema.shape.assessmentId,
+  projectScope: entityListFiltersSchema.shape.projectScope,
+  collectionId: entityListFiltersSchema.shape.collectionId,
+  includeOverdueChanges: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'Whether to include planned changes whose target date has already passed but were never ' +
+        'applied. Defaults to false — overdue changes are excluded so a diff against "today" ' +
+        "isn't skewed by stale, unexecuted plans."
+    )
 });
 
 const entityLandscapeDiffFieldSchema = z.object({
