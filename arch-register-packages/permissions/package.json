@@ -12,6 +12,6 @@
     "@arch-register/api-types": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "rc"
+    "typescript": "7.0.2"
   }
 }

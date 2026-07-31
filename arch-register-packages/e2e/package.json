@@ -17,12 +17,12 @@
     "@orpc/client": "^1.14.13",
     "@orpc/contract": "^1.14.13",
     "@orpc/openapi-client": "^1.14.13",
-    "h3": "^2.0.1-rc.22",
+    "h3": "^2.0.1-rc.26",
     "postgres": "^3.4.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
-    "@types/node": "^20.14.2",
+    "@types/node": "^26.1.2",
     "vitest": "^4.1.10"
   }
 }

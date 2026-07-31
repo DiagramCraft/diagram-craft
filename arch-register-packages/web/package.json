@@ -43,7 +43,7 @@
     "@platejs/slash-command": "^53.0.0",
     "@platejs/table": "^53.0.9",
     "@radix-ui/colors": "^3.0.0",
-    "@tanstack/ai-react": "^0.13.1",
+    "@tanstack/ai-react": "^0.18.1",
     "@tanstack/react-query": "^5.100.14",
     "@tanstack/react-query-devtools": "^5.100.14",
     "@tanstack/react-router": "^1.170.18",
@@ -67,7 +67,7 @@
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^6.0.4",
     "storybook": "^10.4.6",
-    "typescript": "rc",
+    "typescript": "7.0.2",
     "vite": "^8.0.16",
     "vitest": "^4.1.10"
   }

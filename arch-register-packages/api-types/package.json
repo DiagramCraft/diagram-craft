@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "tsx": "^4.23.1",
-    "typescript": "rc",
+    "typescript": "7.0.2",
     "yaml": "^2.6.1"
   }
 }

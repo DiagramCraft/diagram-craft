@@ -421,7 +421,7 @@ const processGenerationRow = async (
         adapter,
         messages: [{ role: 'user', content: prompt }],
         tools,
-        temperature: aiConfig.temperature,
+        modelOptions: { temperature: aiConfig.temperature },
         outputSchema: documentMetadataGenerationOutputSchema(outputField)
       });
       rawAnswer = JSON.stringify(structured);
@@ -441,7 +441,7 @@ const processGenerationRow = async (
         adapter,
         messages: [{ role: 'user', content: prompt }],
         tools,
-        temperature: aiConfig.temperature,
+        modelOptions: { temperature: aiConfig.temperature },
         stream: false
       });
       rawAnswer = legacyAnswer;
