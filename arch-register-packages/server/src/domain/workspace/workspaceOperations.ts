@@ -545,6 +545,7 @@ export const createWorkspace = async (
                   owner: project.owner ? (teamMap.get(project.owner) ?? null) : null,
                   status: project.status,
                   color: project.color,
+                  start_date: project.start_date,
                   target_date: project.target_date,
                   pinned: project.pinned,
                   created_at: timestamp,

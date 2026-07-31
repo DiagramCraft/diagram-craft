@@ -47,6 +47,7 @@ export const ProjectSettingsForm = ({
   const [owner, setOwner] = useState(project.owner?.id ?? '');
   const [status, setStatus] = useState(project.status);
   const [color, setColor] = useState<string | null>(project.color ?? null);
+  const [startDate, setStartDate] = useState(project.start_date ?? '');
   const [targetDate, setTargetDate] = useState(project.target_date ?? '');
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -72,6 +73,7 @@ export const ProjectSettingsForm = ({
     setOwner(project.owner?.id ?? '');
     setStatus(project.status);
     setColor(project.color ?? null);
+    setStartDate(project.start_date ?? '');
     setTargetDate(project.target_date ?? '');
     setError('');
   }, [project]);
@@ -92,6 +94,7 @@ export const ProjectSettingsForm = ({
           owner: owner ?? null,
           status,
           color,
+          start_date: startDate ?? null,
           target_date: targetDate ?? null
         }
       },
@@ -204,14 +207,25 @@ export const ProjectSettingsForm = ({
         <label className={styles.formLabel}>Color (optional)</label>
         <ColorPicker value={color} onChange={setColor} size="small" />
       </div>
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Target date (optional)</label>
-        <input
-          className={styles.formInput}
-          type="date"
-          value={targetDate}
-          onChange={e => setTargetDate(e.target.value)}
-        />
+      <div className={styles.formRowSplit}>
+        <div className={styles.formRow}>
+          <label className={styles.formLabel}>Start date (optional)</label>
+          <input
+            className={styles.formInput}
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+          />
+        </div>
+        <div className={styles.formRow}>
+          <label className={styles.formLabel}>Target date (optional)</label>
+          <input
+            className={styles.formInput}
+            type="date"
+            value={targetDate}
+            onChange={e => setTargetDate(e.target.value)}
+          />
+        </div>
       </div>
       <div className={styles.formRow}>
         <label className={styles.formLabel}>Project Markdown templates</label>

@@ -56,7 +56,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async createProject(input: ProjectDbCreate) {
     this.run(
-      'INSERT INTO project (id, workspace, public_id, name, description, owner, status, color, target_date, pinned, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO project (id, workspace, public_id, name, description, owner, status, color, start_date, target_date, pinned, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -66,6 +66,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         input.owner,
         input.status,
         input.color,
+        input.start_date,
         input.target_date,
         input.pinned ? 1 : 0,
         input.created_at.toISOString(),
@@ -77,13 +78,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async updateProject(workspace: string, id: string, input: ProjectDbUpdate) {
     this.run(
-      'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, color = ?, target_date = ?, pinned = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, color = ?, start_date = ?, target_date = ?, pinned = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
         input.owner,
         input.status,
         input.color,
+        input.start_date,
         input.target_date,
         input.pinned ? 1 : 0,
         input.updated_at.toISOString(),

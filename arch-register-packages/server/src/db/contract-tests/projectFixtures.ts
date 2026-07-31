@@ -82,6 +82,7 @@ export const createFixtureProject = async (
     owner: null,
     status: 'active',
     color: null,
+    start_date: null,
     target_date: null,
     pinned: false,
     created_at: now,

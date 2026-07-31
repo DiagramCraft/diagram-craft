@@ -39,6 +39,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         owner: null,
         status: 'complete',
         color: '#ff0000',
+        start_date: '2029-01-01',
         target_date: '2030-01-01',
         pinned: true,
         updated_at: new Date()
@@ -75,6 +76,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
           owner: null,
           status: 'active',
           color: null,
+          start_date: null,
           target_date: null,
           pinned: false,
           created_at: new Date(),

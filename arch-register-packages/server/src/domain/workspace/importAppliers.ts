@@ -436,6 +436,7 @@ export const importProjects = async (
         owner,
         status,
         color: project.color,
+        start_date: null,
         target_date: null,
         pinned,
         updated_at: now
@@ -454,6 +455,7 @@ export const importProjects = async (
         owner,
         status,
         color: project.color,
+        start_date: null,
         target_date: null,
         pinned,
         created_at: now,

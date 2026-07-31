@@ -60,8 +60,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async createProject(input: ProjectDbCreate) {
     try {
       await this.sql`
-        INSERT INTO project (id, workspace, public_id, name, description, owner, status, color, target_date, pinned, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.public_id ?? input.id}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.target_date}, ${input.pinned}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO project (id, workspace, public_id, name, description, owner, status, color, start_date, target_date, pinned, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.public_id ?? input.id}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.start_date}, ${input.target_date}, ${input.pinned}, ${input.created_at}, ${input.updated_at})
       `;
       return (await this.getProject(input.workspace, input.id))!;
     } catch (error) {
@@ -78,6 +78,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             owner = ${input.owner},
             status = ${input.status},
             color = ${input.color},
+            start_date = ${input.start_date},
             target_date = ${input.target_date},
             pinned = ${input.pinned},
             updated_at = ${input.updated_at}

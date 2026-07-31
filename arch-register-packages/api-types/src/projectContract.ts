@@ -35,6 +35,7 @@ const projectSchema = projectCapabilitiesSchema.extend({
   owner: foreignKeySchema.nullable().describe('Project owner'),
   status: z.enum(['draft', 'active', 'complete', 'cancelled']).describe('Project status'),
   color: z.string().nullable().describe('Project color (hex format)'),
+  start_date: z.string().nullable().describe('Start date (ISO 8601)'),
   target_date: z.string().nullable().describe('Target completion date (ISO 8601)'),
   pinned: z.boolean().describe('Whether the project is pinned'),
   file_count: z.number().describe('Number of files in the project'),
@@ -354,6 +355,7 @@ export const projectContract = oc.tag('Projects').router({
               v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
               z.string().nullable().optional().describe('Project color (hex format)')
             ),
+            start_date: z.string().nullable().optional().describe('Start date (ISO 8601)'),
             target_date: z
               .string()
               .nullable()
@@ -385,6 +387,7 @@ export const projectContract = oc.tag('Projects').router({
               .optional()
               .describe('Project status'),
             color: z.string().nullable().optional().describe('Project color (hex format)'),
+            start_date: z.string().nullable().optional().describe('Start date (ISO 8601)'),
             target_date: z
               .string()
               .nullable()

@@ -5,6 +5,17 @@
   margin-bottom: 12px;
 }
 
+.formRowSplit {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.formRowSplit > .formRow {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 .formLabel {
   font-size: 11px;
   color: var(--base-fg-more-dim);
