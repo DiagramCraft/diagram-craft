@@ -197,7 +197,8 @@
           them, and manage supported file content.
 
         - @id:ar.projects.markdown Users can create and edit Markdown documents with links, backlinks, attachments,
-          metadata, and revision history.
+          metadata, and revision history. Project editors can manage project-specific Markdown templates from the
+          project home actions menu.
 
         - @id:ar.projects.revisions Users can inspect, create, restore, and validate revisions for supported project and
           workspace documents.

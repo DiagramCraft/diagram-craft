@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbLayoutGrid, TbPencil, TbStar } from 'react-icons/tb';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { TbDots, TbFileText, TbLayoutGrid, TbPencil, TbStar } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -21,6 +23,7 @@ type Props = {
   onNavigateProject: () => void;
   onTogglePinned: () => void;
   onEdit: () => void;
+  onEditMarkdownTemplates: () => void;
 };
 
 export const ProjectDashboardScreen = ({
@@ -32,7 +35,8 @@ export const ProjectDashboardScreen = ({
   onNavigateHome,
   onNavigateProject,
   onTogglePinned,
-  onEdit
+  onEdit,
+  onEditMarkdownTemplates
 }: Props) => {
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
@@ -74,17 +78,30 @@ export const ProjectDashboardScreen = ({
         project.canEdit &&
         !isEditing && (
           <>
-            <Button
-              variant="secondary"
-              icon={<TbLayoutGrid size={12} />}
-              onClick={() => setIsEditing(true)}
-            >
-              Edit dashboard
-            </Button>
             <Button icon={<TbPencil size={12} />} onClick={onEdit}>
               Edit
             </Button>
           </>
+        )
+      }
+      menu={
+        project.canEdit &&
+        !isEditing && (
+          <MenuButton.Root>
+            <MenuButton.Trigger
+              element={
+                <Button variant="ghost" aria-label="Project actions" icon={<TbDots size={16} />} />
+              }
+            />
+            <MenuButton.Menu align="end">
+              <Menu.Item leftSlot={<TbFileText size={13} />} onClick={onEditMarkdownTemplates}>
+                Edit Markdown Templates
+              </Menu.Item>
+              <Menu.Item leftSlot={<TbLayoutGrid size={13} />} onClick={() => setIsEditing(true)}>
+                Edit dashboard
+              </Menu.Item>
+            </MenuButton.Menu>
+          </MenuButton.Root>
         )
       }
       meta={

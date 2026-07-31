@@ -25,6 +25,8 @@ export class ProjectsPage extends WorkspacePage {
 
   editProjectButton = () => this.page.getByRole('button', { name: 'Edit', exact: true });
 
+  projectActionsButton = () => this.page.getByRole('button', { name: 'Project actions' });
+
   newProjectButton = () => this.page.locator('button[title="New project"]');
 
   addProjectDialog = () => this.page.getByRole('alertdialog', { name: 'New project' });
@@ -104,6 +106,20 @@ export class ProjectsPage extends WorkspacePage {
   openEditProjectDialog = async () => {
     await this.editProjectButton().click();
     await expect(this.page.getByRole('alertdialog', { name: 'Edit project' })).toBeVisible();
+  };
+
+  openMarkdownTemplatesDialog = async () => {
+    await this.projectActionsButton().click();
+    await this.page.getByRole('menuitem', { name: 'Edit Markdown Templates' }).click();
+    await expect(
+      this.page.getByRole('alertdialog', { name: 'Edit Markdown Templates' })
+    ).toBeVisible();
+  };
+
+  openDashboardEditor = async () => {
+    await this.projectActionsButton().click();
+    await this.page.getByRole('menuitem', { name: 'Edit dashboard' }).click();
+    await expect(this.page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
   };
 
   openAddProjectDialog = async () => {
