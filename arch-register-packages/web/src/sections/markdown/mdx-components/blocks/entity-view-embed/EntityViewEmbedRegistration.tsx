@@ -1,7 +1,7 @@
 import { TbLayoutDashboard, TbLayoutGrid } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityViewEmbed } from './EntityViewEmbed';
-import { SavedViewEmbedWidget } from '../../../../dashboard/widgets/SavedViewEmbedWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
   ENTITY_VIEW_EMBED_TYPE,
   EntityViewEmbedEditable,
@@ -26,7 +26,9 @@ export const entityViewEmbedSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 6,
     surfaces: ['workspace', 'project'],
-    component: SavedViewEmbedWidget,
+    component: createDashboardWidgetAdapter(EntityViewEmbed, (config: SavedViewEmbedWidgetConfig) => ({
+      viewId: config.viewId
+    })),
     isValidConfig: (config): config is SavedViewEmbedWidgetConfig =>
       typeof config.viewId === 'string' && config.viewId.length > 0,
     createDefaultConfig: context => ({ viewId: context.viewId ?? '' }),

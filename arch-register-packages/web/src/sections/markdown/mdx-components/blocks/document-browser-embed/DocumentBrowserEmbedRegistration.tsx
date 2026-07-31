@@ -1,7 +1,8 @@
 import { TbFileSearch } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import { DocumentBrowserEmbedWidget } from '../../../../dashboard/widgets/DocumentBrowserEmbedWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
+import { encodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
 import {
   DOCUMENT_BROWSER_EMBED_TYPE,
   DocumentBrowserEmbedEditable,
@@ -37,7 +38,10 @@ export const documentBrowserEmbedSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 4,
     surfaces: ['workspace', 'project'],
-    component: DocumentBrowserEmbedWidget,
+    component: createDashboardWidgetAdapter(
+      DocumentBrowserEmbed,
+      (config: DocumentBrowserEmbedConfig) => ({ config: encodeDocumentBrowserEmbedConfig(config) })
+    ),
     isValidConfig: isDocumentBrowserEmbedConfig,
     createDefaultConfig: () => ({
       q: '',

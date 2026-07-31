@@ -1,7 +1,7 @@
 import { TbTable } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityTable } from './EntityTable';
-import { EntityTableWidget } from '../../../../dashboard/widgets/EntityTableWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
 import { EntityTableConfigForm } from './EntityTableConfigForm';
 import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
@@ -28,7 +28,12 @@ export const entityTableSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 6,
     surfaces: ['workspace', 'project'],
-    component: EntityTableWidget,
+    component: createDashboardWidgetAdapter(EntityTable, (config: EntityTableWidgetConfig) => ({
+      schema: config.schema,
+      owner: config.owner,
+      lifecycle: config.lifecycle,
+      limit: config.limit != null ? String(config.limit) : undefined
+    })),
     isValidConfig: (config): config is EntityTableWidgetConfig =>
       hasOptionalString(config, 'schema') &&
       hasOptionalString(config, 'owner') &&

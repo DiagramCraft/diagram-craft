@@ -1,7 +1,8 @@
 import { TbListSearch } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
-import { EntityBrowserEmbedWidget } from '../../../../dashboard/widgets/EntityBrowserEmbedWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
+import { encodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import {
   ENTITY_BROWSER_EMBED_TYPE,
   EntityBrowserEmbedEditable,
@@ -37,7 +38,10 @@ export const entityBrowserEmbedSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 6,
     surfaces: ['workspace', 'project'],
-    component: EntityBrowserEmbedWidget,
+    component: createDashboardWidgetAdapter(
+      EntityBrowserEmbed,
+      (config: EntityBrowserEmbedConfig) => ({ config: encodeEntityBrowserEmbedConfig(config) })
+    ),
     isValidConfig: isEntityBrowserEmbedConfig,
     createDefaultConfig: () => ({
       q: '',

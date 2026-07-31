@@ -1,7 +1,7 @@
 import { TbChartBar, TbHash } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { Metric } from './Metric';
-import { StatMetricWidget } from '../../../../dashboard/widgets/StatMetricWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { METRIC_TYPE, MetricEditable, metricMdxRule } from './MetricEditable';
 import { MetricConfigForm } from './MetricConfigForm';
 import type { MetricSlateElement, MetricType, StatMetricWidgetConfig } from './types';
@@ -42,7 +42,14 @@ export const metricSpec = defineMdxComponent<
     defaultW: 3,
     defaultH: 2,
     surfaces: ['workspace', 'project'],
-    component: StatMetricWidget,
+    component: createDashboardWidgetAdapter(Metric, (config: StatMetricWidgetConfig) => ({
+      metricType: config.metricType,
+      schema: config.schema,
+      owner: config.owner,
+      lifecycle: config.lifecycle,
+      label: config.label,
+      showLink: config.showLink
+    })),
     isValidConfig: (config): config is StatMetricWidgetConfig =>
       isMetricType(config.metricType) &&
       (config.schema === undefined || typeof config.schema === 'string') &&

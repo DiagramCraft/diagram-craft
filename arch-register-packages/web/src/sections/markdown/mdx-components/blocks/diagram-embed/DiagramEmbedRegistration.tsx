@@ -1,7 +1,7 @@
 import { TbChartLine } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { DiagramEmbed } from './DiagramEmbed';
-import { DiagramEmbedWidget } from '../../../../dashboard/widgets/DiagramEmbedWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
   DIAGRAM_EMBED_TYPE,
   DiagramEmbedEditable,
@@ -26,7 +26,10 @@ export const diagramEmbedSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 4,
     surfaces: ['workspace', 'project'],
-    component: DiagramEmbedWidget,
+    component: createDashboardWidgetAdapter(DiagramEmbed, (config: DiagramEmbedWidgetConfig) => ({
+      id: config.fileId,
+      caption: config.caption
+    })),
     isValidConfig: (config): config is DiagramEmbedWidgetConfig =>
       typeof config.fileId === 'string' &&
       config.fileId.length > 0 &&

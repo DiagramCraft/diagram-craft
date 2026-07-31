@@ -1,7 +1,7 @@
 import { TbVectorTriangle } from 'react-icons/tb';
 import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityGraph } from './EntityGraph';
-import { EntityGraphWidget } from '../../../../dashboard/widgets/EntityGraphWidget';
+import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { ENTITY_GRAPH_TYPE, EntityGraphEditable, entityGraphMdxRule } from './EntityGraphEditable';
 import { EntityGraphConfigForm } from './EntityGraphConfigForm';
 import {
@@ -28,7 +28,11 @@ export const entityGraphSpec = defineMdxComponent<
     defaultW: 6,
     defaultH: 4,
     surfaces: ['workspace', 'project'],
-    component: EntityGraphWidget,
+    component: createDashboardWidgetAdapter(EntityGraph, (config: EntityGraphWidgetConfig) => ({
+      id: config.entityId,
+      depth: config.depth != null ? String(config.depth) : undefined,
+      direction: config.direction
+    })),
     isValidConfig: (config): config is EntityGraphWidgetConfig =>
       typeof config.entityId === 'string' && config.entityId.length > 0,
     createDefaultConfig: () => ({ entityId: '', depth: 1, direction: 'both' }),
