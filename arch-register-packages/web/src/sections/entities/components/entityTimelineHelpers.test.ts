@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { ChangeCase, ChangeCaseMember } from '@arch-register/api-types/changeCaseContract';
 import type { ChangeCaseMemberEntry } from './snapshotDisplay';
-import { detectConflicts, diffSnapshotState } from './entityTimelineHelpers';
+import {
+  detectConflicts,
+  diffSnapshotState,
+  mapEntityLandscapeDiffToChangeRows
+} from './entityTimelineHelpers';
 
 describe('diffSnapshotState', () => {
   it('returns no changes when proposed state is missing', () => {
@@ -48,6 +52,46 @@ describe('diffSnapshotState', () => {
       []
     );
     expect(changes).toEqual([]);
+  });
+});
+
+describe('mapEntityLandscapeDiffToChangeRows', () => {
+  it('resolves built-in field labels and owner/lifecycle ids', () => {
+    const rows = mapEntityLandscapeDiffToChangeRows(
+      {
+        name: { before: 'A', after: 'B' },
+        owner: { before: 't1', after: 't2' }
+      },
+      null,
+      [],
+      [{ id: 't1', name: 'Platform' } as never, { id: 't2', name: 'Infra' } as never]
+    );
+    expect(rows).toContainEqual({ label: 'Name', from: 'A', to: 'B' });
+    expect(rows).toContainEqual({ label: 'Owner', from: 'Platform', to: 'Infra' });
+  });
+
+  it('expands per-field diffs from the data blob using the schema', () => {
+    const rows = mapEntityLandscapeDiffToChangeRows(
+      { data: { before: { technology: 'Java' }, after: { technology: 'Kotlin' } } },
+      {
+        id: 's',
+        name: 'Service',
+        fields: [{ id: 'technology', name: 'Technology', type: 'text' }]
+      } as never,
+      [],
+      []
+    );
+    expect(rows).toEqual([{ label: 'Technology', from: 'Java', to: 'Kotlin' }]);
+  });
+
+  it('falls back to raw string values for fields without a resolver', () => {
+    const rows = mapEntityLandscapeDiffToChangeRows(
+      { slug: { before: 'old-slug', after: 'new-slug' } },
+      null,
+      [],
+      []
+    );
+    expect(rows).toEqual([{ label: 'Slug', from: 'old-slug', to: 'new-slug' }]);
   });
 });
 

@@ -50,6 +50,28 @@ export const useEntity = (workspaceId: string, entityId: string) => {
   });
 };
 
+// Hook for fetching the entity-landscape diff between the current committed state and a
+// project's end state (its planned changes applied as of `targetDate`) — powers the project
+// page's "What's changed" tab.
+export const useEntityLandscapeDiff = (
+  workspaceId: string,
+  projectId: string,
+  targetDate: string | null,
+  enabled = true
+) =>
+  useQuery({
+    queryKey: entityKeys.landscapeDiff(workspaceId, projectId, targetDate),
+    queryFn: () =>
+      orpcClient.entities.diff({
+        params: { workspace: workspaceId },
+        body: {
+          from: { asOf: new Date().toISOString(), includePlannedChanges: false },
+          to: { asOf: targetDate!, projectId, includePlannedChanges: true }
+        }
+      }),
+    enabled: enabled && !!workspaceId && !!projectId && !!targetDate
+  });
+
 // Hook for fetching entity facets (for filters)
 export const useEntityFacets = (workspaceId: string, enabled = true) => {
   return useQuery({

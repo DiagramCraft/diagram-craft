@@ -210,6 +210,11 @@
             - @id:ar.projects.planned-changes.apply Users can apply a planned entity change case atomically, promoting
               all approved member states into the live entities.
 
+            - @id:ar.projects.planned-changes.whats-changed Users can view a summary of what changes across a
+              project's connected entities once all of its planned changes are applied, compared to the current
+              live state — entities added, removed, or changed, with a field-level diff on drill-down for changed
+              entities. The comparison date is fixed to the latest target date among the project's planned changes.
+
         - @id:ar.projects.permissions Project content can be protected through the applicable workspace, project,
           entity, team, and role permissions.
 
