@@ -30,7 +30,7 @@ const SharedFieldRow = ({
   onRemove,
   containmentDisabled,
   canEdit
-  }: {
+}: {
   field: SchemaField;
   schemas: { id: string; name: string }[];
   enums: { id: string; name: string }[];
