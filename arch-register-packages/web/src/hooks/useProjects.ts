@@ -39,6 +39,8 @@ export const useCreateProject = (workspaceId: string) => {
       owner?: string | null;
       status?: 'draft' | 'active' | 'complete' | 'cancelled';
       color?: string | null;
+      start_date?: string | null;
+      target_date?: string | null;
     }) => orpcClient.projects.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async newProject => {
       // Update project list cache with the new project
@@ -67,6 +69,7 @@ export const useUpdateProject = (workspaceId: string) => {
         owner?: string | null;
         status?: 'draft' | 'active' | 'complete' | 'cancelled';
         color?: string | null;
+        start_date?: string | null;
         target_date?: string | null;
         pinned?: boolean;
       };

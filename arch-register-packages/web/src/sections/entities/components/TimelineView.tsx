@@ -1267,7 +1267,36 @@ export const TimelineView = ({
                       {project.name}
                       <span className={styles.groupCount}>({entities.length})</span>
                     </div>
-                    <div className={styles.groupSpacer} style={{ width: totalWidth }} />
+                    <div className={styles.groupSpacer} style={{ width: totalWidth }}>
+                      {project.start_date && project.target_date
+                        ? (() => {
+                            const barLeft = stringDateToTimelinePx(
+                              project.start_date,
+                              rangeStart,
+                              rangeEnd,
+                              totalWidth
+                            );
+                            const barRight = stringDateToTimelinePx(
+                              project.target_date,
+                              rangeStart,
+                              rangeEnd,
+                              totalWidth
+                            );
+                            if (barLeft == null || barRight == null) return null;
+                            return (
+                              <div
+                                className={styles.bar}
+                                style={{
+                                  left: barLeft,
+                                  width: Math.max(6, barRight - barLeft),
+                                  background: project.color ?? 'var(--base-fg-more-dim)'
+                                }}
+                                title={`${project.name} · ${formatTimelineDate(project.start_date)} → ${formatTimelineDate(project.target_date)}`}
+                              />
+                            );
+                          })()
+                        : null}
+                    </div>
                   </div>
                   {entities.map(entity => renderSnapBlock(entity, project.id))}
                 </div>

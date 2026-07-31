@@ -108,6 +108,7 @@ export const createProject = async (
     owner?: string | null;
     status?: 'draft' | 'active' | 'complete' | 'cancelled';
     color?: string | null;
+    start_date?: string | null;
     target_date?: string | null;
     pinned?: boolean;
   },
@@ -143,6 +144,7 @@ export const createProject = async (
         owner: resolveProjectOwner(input.owner, teamIds),
         status: parseProjectStatus(input.status),
         color: typeof input.color === 'string' ? input.color : null,
+        start_date: typeof input.start_date === 'string' ? input.start_date : null,
         target_date: typeof input.target_date === 'string' ? input.target_date : null,
         pinned: input.pinned ?? false,
         created_at: timestamp,
@@ -182,6 +184,7 @@ export const updateProject = async (
     owner?: string | null;
     status?: 'draft' | 'active' | 'complete' | 'cancelled';
     color?: string | null;
+    start_date?: string | null;
     target_date?: string | null;
     pinned?: boolean;
   },
@@ -222,6 +225,12 @@ export const updateProject = async (
               ? input.color
               : null
             : oldRow.color,
+        start_date:
+          input.start_date !== undefined
+            ? typeof input.start_date === 'string'
+              ? input.start_date
+              : null
+            : oldRow.start_date,
         target_date:
           input.target_date !== undefined
             ? typeof input.target_date === 'string'

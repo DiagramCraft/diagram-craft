@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
@@ -42,6 +43,8 @@ export const AddProjectDialog = ({
   const [owner, setOwner] = useState('');
   const [status, setStatus] = useState<'draft' | 'active' | 'complete' | 'cancelled'>('active');
   const [color, setColor] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [targetDate, setTargetDate] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
   useAutoFocus(nameRef, { enabled: open });
@@ -58,6 +61,8 @@ export const AddProjectDialog = ({
       setOwner(canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? ''));
       setStatus('active');
       setColor(null);
+      setStartDate('');
+      setTargetDate('');
       setError('');
     }
   }, [canCreateWithoutOwner, creatableTeams, open]);
@@ -75,7 +80,9 @@ export const AddProjectDialog = ({
         description: description.trim(),
         owner: owner ?? null,
         status,
-        color
+        color,
+        start_date: startDate || null,
+        target_date: targetDate || null
       });
       onCreated(project);
       onClose();
@@ -165,6 +172,22 @@ export const AddProjectDialog = ({
         <FormElement label="Color" required={false}>
           <ColorPicker value={color} onChange={setColor} size="small" />
         </FormElement>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <FormElement label="Start date" required={false} style={{ flex: 1 }}>
+            <DateInput
+              value={startDate}
+              onChange={value => setStartDate(value ?? '')}
+              style={{ width: '100%' }}
+            />
+          </FormElement>
+          <FormElement label="Target date" required={false} style={{ flex: 1 }}>
+            <DateInput
+              value={targetDate}
+              onChange={value => setTargetDate(value ?? '')}
+              style={{ width: '100%' }}
+            />
+          </FormElement>
+        </div>
         {error && <div className={styles.error}>{error}</div>}
       </form>
     </Dialog>

@@ -129,7 +129,8 @@
 
         - @id:ar.entity-views.timeline Users can inspect date-driven entity history and planned change context in a
           condensed Entity + Project timeline, grouping rows by owner, type, or containment parent, with configurable
-          project lanes, milestone guides, and autosave snapshot visibility.
+          project lanes, milestone guides, and autosave snapshot visibility. When grouped by Project + Entity, a
+          project with both a start and target date set shows a gantt bar spanning that range in its group header.
 
         - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
           then — entities added, removed, or changed, with all applicable planned changes across projects applied,
@@ -176,7 +177,7 @@
       milestones, and assessments.
 
         - @id:ar.projects.lifecycle Users can create, edit, view, and delete projects and manage their project-level
-          metadata.
+          metadata, including optional start and target dates shown on the project home screen.
 
         - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
           project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,

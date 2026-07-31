@@ -211,6 +211,7 @@ type BaseProject = {
   owner: string | null;
   status: 'draft' | 'active' | 'complete' | 'cancelled';
   color: string | null;
+  start_date: string | null;
   target_date: string | null;
   pinned: boolean;
   created_at: Date;
@@ -368,6 +369,7 @@ export const projectMappers = {
     owner: row['owner'] == null ? null : String(row['owner']),
     status: String(row['status']) as ProjectDbResult['status'],
     color: row['color'] == null ? null : String(row['color']),
+    start_date: row['start_date'] == null ? null : String(row['start_date']),
     target_date: row['target_date'] == null ? null : String(row['target_date']),
     pinned: databaseBoolean(row['pinned']),
     created_at: databaseDate(row['created_at']),

@@ -102,6 +102,8 @@ export const ProjectDashboardScreen = ({
             value={<span className="mono tabular">{folderCount}</span>}
           />
           <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
+          <ProjectMetaItem label="Start date" value={formatDate(project.start_date)} />
+          <ProjectMetaItem label="Target date" value={formatDate(project.target_date)} />
           <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
         </>
       }

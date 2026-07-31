@@ -180,6 +180,7 @@
 
 .groupSpacer {
   flex: 1;
+  position: relative;
   background: var(--panel-bg);
 }
 
