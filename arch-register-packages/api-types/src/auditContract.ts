@@ -19,6 +19,7 @@ const auditLogEntrySchema = z.object({
     .enum([
       'workspace',
       'entity_schema',
+      'workspace_field_group',
       'entity',
       'project',
       'content_node',
@@ -95,7 +96,7 @@ export const auditContract = oc.tag('Audit').router({
               .string()
               .optional()
               .describe(
-                'Filter by entity type (workspace, entity_schema, entity, project, content_node, assessment)'
+                'Filter by entity type (workspace, entity_schema, workspace_field_group, entity, project, content_node, assessment)'
               ),
             entityId: z.string().optional().describe('Filter by specific entity ID'),
             schemaId: z.string().optional().describe('Filter by schema ID (for entity operations)'),

@@ -698,6 +698,9 @@ export const createWorkspace = async (
             for (const enumeration of definitions.enums) {
               await db.catalog.createEnum(enumeration);
             }
+            for (const fieldGroup of definitions.fieldGroups) {
+              await db.catalog.createSharedFieldGroup(fieldGroup);
+            }
             for (const schema of definitions.schemas) {
               await db.catalog.createSchema(schema);
               if (schema.key_prefix) {

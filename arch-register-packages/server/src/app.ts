@@ -14,6 +14,7 @@ import { requireAuth } from './middleware/auth';
 import { createDevDelayMiddleware } from './middleware/devDelay';
 import { createSecurityHeadersMiddleware } from './middleware/securityHeaders';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
+import { createWorkspaceFieldGroupORPCHandler } from './domain/catalog/fieldGroupOrpc';
 import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
 import { createEntitySyncORPCHandler } from './domain/externalIdentity/entitySyncOrpc';
@@ -155,6 +156,7 @@ export const createApp = (
   // GET /workspaces/templates being matched as GET /{workspace}/templates
   app.use(createWorkspaceManagementORPCHandler(db, storage));
   app.use(createWorkspaceEnumORPCHandler(db));
+  app.use(createWorkspaceFieldGroupORPCHandler(db));
   app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
   app.use(createEntitySyncORPCHandler(db));

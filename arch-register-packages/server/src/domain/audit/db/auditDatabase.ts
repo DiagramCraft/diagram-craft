@@ -26,6 +26,7 @@ export type AuditOperation = 'create' | 'update' | 'delete';
 export type AuditEntityType =
   | 'workspace'
   | 'entity_schema'
+  | 'workspace_field_group'
   | 'entity'
   | 'project'
   | 'content_node'

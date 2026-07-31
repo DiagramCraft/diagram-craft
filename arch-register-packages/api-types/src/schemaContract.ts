@@ -119,7 +119,7 @@ const derivedFieldInputSchema = derivedFieldBaseSchema
     }
   });
 
-const schemaFieldInputSchema = z
+export const schemaFieldInputSchema = z
   .discriminatedUnion('type', [
     textFieldSchema,
     longtextFieldSchema,
@@ -160,7 +160,7 @@ const derivedFieldResponseSchema = derivedFieldInputSchema
     }
   });
 
-const schemaFieldResponseSchema = z
+export const schemaFieldResponseSchema = z
   .discriminatedUnion('type', [
     textFieldSchema,
     longtextFieldSchema,
@@ -213,6 +213,10 @@ const entitySchemaSchema = z.object({
   groups: z
     .array(schemaGroupSchema)
     .describe('Named, presentation-only field groups, in display order'),
+  shared_field_group_ids: z
+    .array(z.string())
+    .optional()
+    .describe('Included workspace shared fieldgroup identifiers, in display order'),
   color: z.string().nullable().describe('Schema color (hex format)'),
   icon: z.string().nullable().describe('Schema icon identifier'),
   entity_count: z.number().int().min(0).describe('Number of entities using this schema'),
@@ -243,6 +247,10 @@ const schemaVersionSchema = z.object({
   fields: z.array(schemaFieldResponseSchema).describe('Field definitions at this version'),
   templates: z.array(entityTemplateSchema).describe('Templates at this version'),
   groups: z.array(schemaGroupSchema).describe('Field groups at this version'),
+  shared_field_group_ids: z
+    .array(z.string())
+    .optional()
+    .describe('Included workspace shared fieldgroup identifiers at this version'),
   color: z.string().nullable().describe('Schema color at this version'),
   icon: z.string().nullable().describe('Schema icon at this version'),
   changeSummary: z
@@ -273,6 +281,10 @@ const createSchemaBodySchema = z.object({
   groups: z.preprocess(
     v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
     z.array(schemaGroupSchema).optional().describe('Named, presentation-only field groups')
+  ),
+  shared_field_group_ids: z.preprocess(
+    v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
+    z.array(z.string()).optional().describe('Included workspace shared fieldgroup identifiers')
   ),
   color: z.preprocess(
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
@@ -418,6 +430,7 @@ export type EntitySchema = z.infer<typeof entitySchemaSchema>;
 export type EntityTemplate = z.infer<typeof entityTemplateSchema>;
 export type EntityTemplateValues = EntityTemplate['values'];
 export type SchemaGroup = z.infer<typeof schemaGroupSchema>;
+export type SchemaFieldInput = z.infer<typeof schemaFieldInputSchema>;
 
 // ── Schema Versioning & Field Migrations ─────────────────────
 

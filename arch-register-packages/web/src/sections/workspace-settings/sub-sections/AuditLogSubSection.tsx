@@ -21,6 +21,7 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
   { value: '', label: 'All object types' },
   { value: 'workspace', label: 'Workspace' },
   { value: 'entity_schema', label: 'Schema' },
+  { value: 'workspace_field_group', label: 'Shared fieldgroup' },
   { value: 'entity', label: 'Entity' },
   { value: 'project', label: 'Project' },
   { value: 'content_node', label: 'Diagram / folder' },
@@ -39,6 +40,7 @@ const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
 const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   workspace: styles.typeWorkspace ?? '',
   entity_schema: styles.typeSchema ?? '',
+  workspace_field_group: styles.typeSchema ?? '',
   entity: styles.typeEntity ?? '',
   project: styles.typeProject ?? '',
   content_node: styles.typeFile ?? '',

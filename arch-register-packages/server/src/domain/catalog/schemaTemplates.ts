@@ -7,7 +7,11 @@ import {
   AR_COLOR_RED
 } from '@arch-register/api-types/colors';
 import { createHash, randomUUID } from 'node:crypto';
-import type { SchemaDbCreate, WorkspaceEnumDbCreate } from '../../db/database';
+import type {
+  SchemaDbCreate,
+  SharedFieldGroupDbCreate,
+  WorkspaceEnumDbCreate
+} from '../../db/database';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import type {
@@ -45,6 +49,7 @@ export type TemplateSchema = {
   color: string;
   icon: string;
   fields: SymbolicField[];
+  sharedFieldGroupIds?: string[];
 };
 
 export type SymbolicEnum = {
@@ -76,8 +81,16 @@ export type SchemaTemplate = {
   description: string;
   schemas: TemplateSchema[];
   enums: SymbolicEnum[];
+  fieldGroups?: SymbolicFieldGroup[];
   documentTypes: SymbolicDocumentType[];
   documentTemplates: SymbolicDocumentTemplate[];
+};
+
+export type SymbolicFieldGroup = {
+  id: string;
+  name: string;
+  description?: string;
+  fields: SymbolicField[];
 };
 
 const enumDefinition = (
@@ -85,6 +98,29 @@ const enumDefinition = (
   name: string,
   options: Array<{ value: string; label: string }>
 ): SymbolicEnum => ({ id, name, options });
+
+const piiClassificationEnum = enumDefinition('pii-classification', 'PII Classification', [
+  { value: 'none', label: 'None' },
+  { value: 'public', label: 'Public' },
+  { value: 'non-sensitive', label: 'Non-Sensitive' },
+  { value: 'sensitive', label: 'Sensitive' },
+  { value: 'highly-sensitive', label: 'Highly Sensitive' }
+]);
+
+const piiClassificationFieldGroup: SymbolicFieldGroup = {
+  id: 'pii-classification',
+  name: 'PII Classification',
+  description: 'Classifies personal data handled by the entity and documents its scope.',
+  fields: [
+    {
+      id: 'pii_classification',
+      name: 'PII Classification',
+      type: 'select',
+      enumId: 'pii-classification'
+    },
+    { id: 'pii_scope', name: 'PII Scope', type: 'text' }
+  ]
+};
 
 export const ADR_DOCUMENT_TYPE_NAME = 'Architecture Decision Record';
 export const ADR_DOCUMENT_TEMPLATE_NAME = 'Architecture Decision Record';
@@ -438,7 +474,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           }
-        ]
+        ],
+        sharedFieldGroupIds: ['pii-classification']
       },
       {
         symId: 'component',
@@ -484,7 +521,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: -1
           }
-        ]
+        ],
+        sharedFieldGroupIds: ['pii-classification']
       },
       {
         symId: 'api',
@@ -503,7 +541,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           }
-        ]
+        ],
+        sharedFieldGroupIds: ['pii-classification']
       },
       {
         symId: 'resource',
@@ -529,7 +568,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       technologySchema,
       technologyReleaseSchema
     ],
-    enums: [backstageEnums[0]!, ...technologyEnums],
+    enums: [backstageEnums[0]!, piiClassificationEnum, ...technologyEnums],
+    fieldGroups: [piiClassificationFieldGroup],
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
   },
@@ -1302,6 +1342,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
 export type InstantiatedTemplate = {
   schemas: SchemaDbCreate[];
   enums: WorkspaceEnumDbCreate[];
+  fieldGroups: SharedFieldGroupDbCreate[];
   documentTypes: DocumentTypeDbCreate[];
   documentTemplates: DocumentTemplateDbCreate[];
 };
@@ -1313,7 +1354,7 @@ export const instantiateTemplateDefinitions = (
 ): InstantiatedTemplate => {
   const template = SCHEMA_TEMPLATES.find(t => t.id === templateId);
   if (!template) {
-    return { schemas: [], enums: [], documentTypes: [], documentTemplates: [] };
+    return { schemas: [], enums: [], fieldGroups: [], documentTypes: [], documentTemplates: [] };
   }
 
   const idMap = new Map<string, string>();
@@ -1329,53 +1370,64 @@ export const instantiateTemplateDefinitions = (
     documentTypeIdMap.set(documentType.id, randomUUID());
   }
 
+  const fieldGroupIdMap = new Map<string, string>();
+  for (const fieldGroup of template.fieldGroups ?? []) {
+    fieldGroupIdMap.set(fieldGroup.id, randomUUID());
+  }
+
+  const resolveField = (field: SymbolicField): SchemaField => {
+    if (field.type === 'reference') {
+      const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
+      return {
+        id: field.id,
+        name: field.name,
+        predicate: field.predicate,
+        type: 'reference',
+        schemaId: resolvedId,
+        minCount: field.minCount,
+        maxCount: field.maxCount,
+        requirementLevel: field.minCount > 0 ? 'required' : 'optional'
+      };
+    }
+    if (field.type === 'containment') {
+      const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
+      return {
+        id: field.id,
+        name: field.name,
+        predicate: field.predicate,
+        type: 'containment',
+        schemaId: resolvedId,
+        minCount: field.minCount,
+        maxCount: field.maxCount,
+        requirementLevel: field.minCount > 0 ? 'required' : 'optional'
+      };
+    }
+    if (field.type === 'select') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: field.type,
+        enumId: enumIdMap.get(field.enumId) ?? field.enumId
+      };
+    }
+    return { id: field.id, name: field.name, type: field.type };
+  };
+
+  const fieldGroups: SharedFieldGroupDbCreate[] = (template.fieldGroups ?? []).map(
+    (fieldGroup, index) => ({
+      id: fieldGroupIdMap.get(fieldGroup.id)!,
+      workspace: workspaceId,
+      name: fieldGroup.name,
+      description: fieldGroup.description ?? null,
+      fields: fieldGroup.fields.map(resolveField),
+      sort_order: index,
+      created_at: now,
+      updated_at: now
+    })
+  );
+
   const schemas = template.schemas.map(schema => {
-    const resolvedFields: SchemaField[] = schema.fields.map(field => {
-      if (field.type === 'reference') {
-        const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
-        return {
-          id: field.id,
-          name: field.name,
-          predicate: field.predicate,
-          type: 'reference',
-          schemaId: resolvedId,
-          minCount: field.minCount,
-          maxCount: field.maxCount,
-          requirementLevel: field.minCount > 0 ? 'required' : 'optional'
-        };
-      }
-      if (field.type === 'containment') {
-        const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
-        return {
-          id: field.id,
-          name: field.name,
-          predicate: field.predicate,
-          type: 'containment',
-          schemaId: resolvedId,
-          minCount: field.minCount,
-          maxCount: field.maxCount,
-          requirementLevel: field.minCount > 0 ? 'required' : 'optional'
-        };
-      }
-      if (field.type === 'select') {
-        return {
-          id: field.id,
-          name: field.name,
-          type: field.type,
-          enumId: enumIdMap.get(field.enumId) ?? field.enumId
-        };
-      }
-      if (field.type === 'text') {
-        return { id: field.id, name: field.name, type: 'text' };
-      }
-      if (field.type === 'longtext') {
-        return { id: field.id, name: field.name, type: 'longtext' };
-      }
-      if (field.type === 'boolean') {
-        return { id: field.id, name: field.name, type: 'boolean' };
-      }
-      return { id: field.id, name: field.name, type: 'date' };
-    });
+    const resolvedFields: SchemaField[] = schema.fields.map(resolveField);
 
     return {
       id: idMap.get(schema.symId)!,
@@ -1388,6 +1440,9 @@ export const instantiateTemplateDefinitions = (
       color: schema.color,
       icon: schema.icon,
       fields: resolvedFields,
+      shared_field_group_ids: (schema.sharedFieldGroupIds ?? []).map(
+        id => fieldGroupIdMap.get(id) ?? id
+      ),
       default_owner: null,
       created_at: now,
       updated_at: now
@@ -1430,7 +1485,7 @@ export const instantiateTemplateDefinitions = (
     })
   );
 
-  return { schemas, enums, documentTypes, documentTemplates };
+  return { schemas, enums, fieldGroups, documentTypes, documentTemplates };
 };
 
 export const instantiateTemplateDocuments = (

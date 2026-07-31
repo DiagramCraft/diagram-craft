@@ -20,6 +20,7 @@ import {
   seedEnums,
   seedNotificationEvents,
   seedSchemas,
+  seedSharedFieldGroups,
   seedTeamAssignments,
   seedUserWatches,
   seedWikiPageBodies,
@@ -284,6 +285,9 @@ export const seedBootstrapData = async (
   }
   for (const e of seedEnums) {
     await db.catalog.createEnum(e);
+  }
+  for (const fieldGroup of seedSharedFieldGroups) {
+    await db.catalog.createSharedFieldGroup(fieldGroup);
   }
   for (const schema of seedSchemas) {
     await db.catalog.createSchema(schema);

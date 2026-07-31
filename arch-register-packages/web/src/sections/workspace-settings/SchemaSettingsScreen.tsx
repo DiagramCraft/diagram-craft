@@ -3,6 +3,7 @@ import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -42,6 +43,7 @@ import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
 import { DerivedExpressionTestDialog } from '../../components/DerivedExpressionTestDialog';
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
+import { FieldGroupEditorScreen } from './FieldGroupEditorScreen';
 
 const deriveKeyPrefix = (value: string) =>
   value
@@ -58,8 +60,15 @@ export const SchemaSettingsScreen = () => {
   const search = routeApi.useSearch();
   const selectedSchemaId = search.schema;
   const activeTab = search.tab ?? 'types';
-  const { workspaceSlug, schemas, enums, permissions, teams, lifecycleStates } =
-    useWorkspaceContext();
+  const {
+    workspaceSlug,
+    schemas,
+    enums,
+    fieldGroups = [],
+    permissions,
+    teams,
+    lifecycleStates
+  } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
   const [name, setName] = useState('');
   const [keyPrefix, setKeyPrefix] = useState('');
@@ -67,6 +76,7 @@ export const SchemaSettingsScreen = () => {
   const [fields, setFields] = useState<SchemaField[]>([]);
   const [templates, setTemplates] = useState<EntityTemplate[]>([]);
   const [groups, setGroups] = useState<SchemaGroup[]>([]);
+  const [sharedFieldGroupIds, setSharedFieldGroupIds] = useState<string[]>([]);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
   const [entityApprovalPolicy, setEntityApprovalPolicy] = useState<'required' | 'disabled'>(
@@ -80,6 +90,9 @@ export const SchemaSettingsScreen = () => {
   const [editingTemplate, setEditingTemplate] = useState<EntityTemplate | null>(null);
   const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [schemaPanelTab, setSchemaPanelTab] = useState<'fields' | 'templates' | 'workflows'>(
+    'fields'
+  );
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<SchemaGroup | null>(null);
   const fieldKeysRef = useRef<Map<string, string>>(new Map());
@@ -110,6 +123,7 @@ export const SchemaSettingsScreen = () => {
       setFields(selected.fields);
       setTemplates(selected.templates);
       setGroups(selected.groups);
+      setSharedFieldGroupIds(selected.shared_field_group_ids ?? []);
       setColor(selected.color);
       setIcon(selected.icon);
       setEntityApprovalPolicy(selected.entity_approval_policy ?? 'disabled');
@@ -117,6 +131,7 @@ export const SchemaSettingsScreen = () => {
       setDirty(false);
       setTemplateDialogOpen(false);
       setShowHistory(false);
+      setSchemaPanelTab('fields');
       setPendingFieldChanges(null);
       setGroupDialogOpen(false);
       setEditingGroup(null);
@@ -137,6 +152,7 @@ export const SchemaSettingsScreen = () => {
             fields,
             templates,
             groups,
+            shared_field_group_ids: sharedFieldGroupIds,
             color,
             icon,
             entity_approval_policy: entityApprovalPolicy,
@@ -163,6 +179,7 @@ export const SchemaSettingsScreen = () => {
       fields,
       templates,
       groups,
+      sharedFieldGroupIds,
       color,
       icon,
       dirty,
@@ -258,6 +275,28 @@ export const SchemaSettingsScreen = () => {
       ...(groupId && { groupId })
     };
     setFields(prev => [...prev, newField]);
+    setDirty(true);
+  };
+
+  const addSharedFieldGroup = (groupId: string | undefined) => {
+    if (!groupId || sharedFieldGroupIds.includes(groupId)) return;
+    const sharedGroup = fieldGroups.find(group => group.id === groupId);
+    if (!sharedGroup) return;
+    setSharedFieldGroupIds(current => [...current, groupId]);
+    setGroups(current => [
+      ...current,
+      {
+        id: sharedGroup.id,
+        name: sharedGroup.name,
+        ...(sharedGroup.description ? { description: sharedGroup.description } : {})
+      }
+    ]);
+    setDirty(true);
+  };
+
+  const removeSharedFieldGroup = (groupId: string) => {
+    setSharedFieldGroupIds(current => current.filter(id => id !== groupId));
+    setGroups(current => current.filter(group => group.id !== groupId));
     setDirty(true);
   };
 
@@ -359,6 +398,9 @@ export const SchemaSettingsScreen = () => {
   if (activeTab === 'enums') {
     return <EnumEditorScreen />;
   }
+  if (activeTab === 'fieldgroups') {
+    return <FieldGroupEditorScreen />;
+  }
 
   const groupIds = new Set(groups.map(g => g.id));
   const ungroupedFields = fields.filter(f => !f.groupId || !groupIds.has(f.groupId));
@@ -369,6 +411,7 @@ export const SchemaSettingsScreen = () => {
   }
 
   const renderFieldRow = (f: SchemaField) => {
+    const inherited = f.groupId != null && sharedFieldGroupIds.includes(f.groupId);
     const hasOtherContainment = fields.some(
       other => other.id !== f.id && other.type === 'containment'
     );
@@ -382,9 +425,9 @@ export const SchemaSettingsScreen = () => {
         groups={groups}
         onUpdate={patch => updateField(f.id, patch)}
         onChangeType={t => changeFieldType(f.id, t)}
-        onRemove={canEdit ? () => removeField(f.id) : undefined}
+        onRemove={canEdit && !inherited ? () => removeField(f.id) : undefined}
         containmentDisabled={hasOtherContainment}
-        canEdit={canEdit}
+        canEdit={canEdit && !inherited}
       />
     );
   };
@@ -473,48 +516,6 @@ export const SchemaSettingsScreen = () => {
                 </div>
               </div>
 
-              <div className={styles.formRow}>
-                <div style={{ width: '100%' }}>
-                  <div className={styles.formLabel}>Workflows</div>
-                  <div style={{ display: 'flex', gap: 16 }}>
-                    <div style={{ flex: 1 }}>
-                      <div className={styles.formLabel}>Propose entity change</div>
-                      <Select.Root
-                        value={entityApprovalPolicy}
-                        disabled={!canEdit}
-                        onChange={value => {
-                          if (value === 'required' || value === 'disabled') {
-                            setEntityApprovalPolicy(value);
-                            setDirty(true);
-                          }
-                        }}
-                        style={{ width: '100%' }}
-                      >
-                        <Select.Item value="disabled">Disabled</Select.Item>
-                        <Select.Item value="required">Required for entity edits</Select.Item>
-                      </Select.Root>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div className={styles.formLabel}>Entity deprecation</div>
-                      <Select.Root
-                        value={deprecationPolicy}
-                        disabled={!canEdit}
-                        onChange={value => {
-                          if (value === 'required' || value === 'disabled') {
-                            setDeprecationPolicy(value);
-                            setDirty(true);
-                          }
-                        }}
-                        style={{ width: '100%' }}
-                      >
-                        <Select.Item value="disabled">Disabled</Select.Item>
-                        <Select.Item value="required">Enabled for this schema</Select.Item>
-                      </Select.Root>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               <div className={styles.appearanceRow}>
                 <div>
                   <div className={styles.formLabel}>Color</div>
@@ -559,125 +560,205 @@ export const SchemaSettingsScreen = () => {
                 </div>
               </div>
 
-              <div className={styles.fieldsHead}>
-                <div className={styles.sectionLabel}>Fields</div>
-                {canEdit && (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openNewGroup}>
-                      Add group
-                    </Button>
-                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => addField()}>
-                      Add field
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <Tabs.Root
+                value={schemaPanelTab}
+                onValueChange={value => setSchemaPanelTab(value as typeof schemaPanelTab)}
+              >
+                <Tabs.List aria-label="Schema editor sections">
+                  <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
+                  <Tabs.Trigger value="templates">Templates</Tabs.Trigger>
+                  <Tabs.Trigger value="workflows">Workflows</Tabs.Trigger>
+                </Tabs.List>
 
-              {fields.length > 0 || groups.length > 0 ? (
-                <div className={styles.fieldsTable}>
-                  {ungroupedFields.map(f => renderFieldRow(f))}
-                  {groups.map(group => (
-                    <div className={styles.groupSection} key={group.id}>
-                      <div className={styles.groupHeader}>
-                        <div>
-                          <div className={styles.groupName}>{group.name}</div>
-                          {group.description && (
-                            <div className={styles.groupDescription}>{group.description}</div>
+                <Tabs.Content value="fields" style={{ height: 'auto' }}>
+                  <div className={styles.fieldsHead}>
+                    <div className={styles.sectionLabel}>Fields</div>
+                    {canEdit && (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openNewGroup}>
+                          Add group
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          icon={<TbPlus size={11} />}
+                          onClick={() => addField()}
+                        >
+                          Add field
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {fields.length > 0 || groups.length > 0 ? (
+                    <div className={styles.fieldsTable}>
+                      {ungroupedFields.map(f => renderFieldRow(f))}
+                      {groups.map(group => {
+                        const inherited = sharedFieldGroupIds.includes(group.id);
+                        const groupFields = fieldsByGroup.get(group.id) ?? [];
+                        return (
+                          <div className={styles.groupSection} key={group.id}>
+                            <div className={styles.groupHeader}>
+                              <div>
+                                <div className={styles.groupName}>{group.name}</div>
+                                {group.description && (
+                                  <div className={styles.groupDescription}>{group.description}</div>
+                                )}
+                              </div>
+                              {canEdit && (
+                                <div className={styles.groupActions}>
+                                  {!inherited && (
+                                    <Button
+                                      variant="ghost"
+                                      icon={<TbPlus size={11} />}
+                                      onClick={() => addField(group.id)}
+                                    >
+                                      Add field
+                                    </Button>
+                                  )}
+                                  {!inherited && (
+                                    <Button
+                                      variant="ghost"
+                                      icon={<TbEdit size={12} />}
+                                      onClick={() => {
+                                        setEditingGroup(group);
+                                        setGroupDialogOpen(true);
+                                      }}
+                                    >
+                                      Edit
+                                    </Button>
+                                  )}
+                                  {inherited ? (
+                                    <Button
+                                      variant="ghost"
+                                      onClick={() => removeSharedFieldGroup(group.id)}
+                                    >
+                                      Remove
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="ghost"
+                                      icon={<TbTrash size={12} />}
+                                      onClick={() => removeGroup(group.id)}
+                                    >
+                                      Delete
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            {groupFields.length > 0 ? (
+                              groupFields.map(field => renderFieldRow(field))
+                            ) : (
+                              <div className={styles.groupEmpty}>No fields in this group.</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className={styles.fieldsEmpty}>
+                      No fields defined yet. Click "Add field" to get started.
+                    </div>
+                  )}
+                </Tabs.Content>
+
+                <Tabs.Content value="templates" style={{ height: 'auto' }}>
+                  <div className={styles.fieldsHead}>
+                    <div className={styles.sectionLabel}>Entity templates</div>
+                    {canEdit && (
+                      <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openNewTemplate}>
+                        Add template
+                      </Button>
+                    )}
+                  </div>
+                  <div className={styles.templateList}>
+                    {templates.length === 0 ? (
+                      <div className={styles.templateEmpty}>No templates defined.</div>
+                    ) : (
+                      templates.map(template => (
+                        <div className={styles.templateRow} key={template.id}>
+                          <div>
+                            <div className={styles.templateName}>{template.name}</div>
+                            <div className={styles.templateSummary}>
+                              {Object.keys(template.values.fields).length} field defaults
+                            </div>
+                          </div>
+                          {canEdit && (
+                            <div className={styles.templateActions}>
+                              <Button
+                                variant="ghost"
+                                icon={<TbEdit size={12} />}
+                                onClick={() => {
+                                  setEditingTemplate(template);
+                                  setTemplateDialogOpen(true);
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                icon={<TbTrash size={12} />}
+                                onClick={() => {
+                                  setTemplates(current =>
+                                    current.filter(item => item.id !== template.id)
+                                  );
+                                  setDirty(true);
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           )}
                         </div>
-                        {canEdit && (
-                          <div className={styles.groupActions}>
-                            <Button
-                              variant="ghost"
-                              icon={<TbPlus size={11} />}
-                              onClick={() => addField(group.id)}
-                            >
-                              Add field
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              icon={<TbEdit size={12} />}
-                              onClick={() => {
-                                setEditingGroup(group);
-                                setGroupDialogOpen(true);
-                              }}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              icon={<TbTrash size={12} />}
-                              onClick={() => removeGroup(group.id)}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      {(fieldsByGroup.get(group.id) ?? []).length > 0 ? (
-                        (fieldsByGroup.get(group.id) ?? []).map(f => renderFieldRow(f))
-                      ) : (
-                        <div className={styles.groupEmpty}>No fields in this group.</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.fieldsEmpty}>
-                  No fields defined yet. Click "Add field" to get started.
-                </div>
-              )}
+                      ))
+                    )}
+                  </div>
+                </Tabs.Content>
 
-              <div className={styles.fieldsHead}>
-                <div className={styles.sectionLabel}>Entity templates</div>
-                {canEdit && (
-                  <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openNewTemplate}>
-                    Add template
-                  </Button>
-                )}
-              </div>
-              <div className={styles.templateList}>
-                {templates.length === 0 ? (
-                  <div className={styles.templateEmpty}>No templates defined.</div>
-                ) : (
-                  templates.map(template => (
-                    <div className={styles.templateRow} key={template.id}>
-                      <div>
-                        <div className={styles.templateName}>{template.name}</div>
-                        <div className={styles.templateSummary}>
-                          {Object.keys(template.values.fields).length} field defaults
+                <Tabs.Content value="workflows" style={{ height: 'auto' }}>
+                  <div className={styles.formRow}>
+                    <div style={{ width: '100%' }}>
+                      <div className={styles.formLabel}>Workflows</div>
+                      <div style={{ display: 'flex', gap: 16 }}>
+                        <div style={{ flex: 1 }}>
+                          <div className={styles.formLabel}>Propose entity change</div>
+                          <Select.Root
+                            value={entityApprovalPolicy}
+                            disabled={!canEdit}
+                            onChange={value => {
+                              if (value === 'required' || value === 'disabled') {
+                                setEntityApprovalPolicy(value);
+                                setDirty(true);
+                              }
+                            }}
+                            style={{ width: '100%' }}
+                          >
+                            <Select.Item value="disabled">Disabled</Select.Item>
+                            <Select.Item value="required">Required for entity edits</Select.Item>
+                          </Select.Root>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div className={styles.formLabel}>Entity deprecation</div>
+                          <Select.Root
+                            value={deprecationPolicy}
+                            disabled={!canEdit}
+                            onChange={value => {
+                              if (value === 'required' || value === 'disabled') {
+                                setDeprecationPolicy(value);
+                                setDirty(true);
+                              }
+                            }}
+                            style={{ width: '100%' }}
+                          >
+                            <Select.Item value="disabled">Disabled</Select.Item>
+                            <Select.Item value="required">Enabled for this schema</Select.Item>
+                          </Select.Root>
                         </div>
                       </div>
-                      {canEdit && (
-                        <div className={styles.templateActions}>
-                          <Button
-                            variant="ghost"
-                            icon={<TbEdit size={12} />}
-                            onClick={() => {
-                              setEditingTemplate(template);
-                              setTemplateDialogOpen(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            icon={<TbTrash size={12} />}
-                            onClick={() => {
-                              setTemplates(current =>
-                                current.filter(item => item.id !== template.id)
-                              );
-                              setDirty(true);
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      )}
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                </Tabs.Content>
+              </Tabs.Root>
 
               <div className={styles.formActions}>
                 {canEdit && (
@@ -750,6 +831,8 @@ export const SchemaSettingsScreen = () => {
         onSave={saveGroup}
         group={editingGroup}
         groups={groups}
+        sharedGroups={fieldGroups.filter(group => !sharedFieldGroupIds.includes(group.id))}
+        onAddSharedGroup={addSharedFieldGroup}
       />
       {selected && (
         <EntityTemplateDialog
@@ -770,7 +853,7 @@ export const SchemaSettingsScreen = () => {
 
 const NO_GROUP = '__no_group__';
 
-const FieldRow = ({
+export const FieldRow = ({
   field,
   fields,
   schemas,

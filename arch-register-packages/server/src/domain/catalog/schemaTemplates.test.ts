@@ -112,4 +112,30 @@ describe('instantiateTemplate', () => {
       })
     ]);
   });
+
+  it('seeds the reusable PII classification fieldgroup for the default catalog', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'default');
+    const fieldGroup = definitions.fieldGroups.find(group => group.name === 'PII Classification');
+    const enumIds = new Set(definitions.enums.map(enumeration => enumeration.id));
+
+    expect(fieldGroup).toBeDefined();
+    expect(fieldGroup?.fields).toEqual([
+      expect.objectContaining({
+        id: 'pii_classification',
+        name: 'PII Classification',
+        type: 'select',
+        enumId: expect.any(String)
+      }),
+      { id: 'pii_scope', name: 'PII Scope', type: 'text' }
+    ]);
+    const classificationField = fieldGroup?.fields.find(field => field.id === 'pii_classification');
+    expect(classificationField?.type === 'select' && enumIds.has(classificationField.enumId)).toBe(
+      true
+    );
+
+    for (const schemaName of ['API', 'Component', 'System']) {
+      const schema = definitions.schemas.find(item => item.name === schemaName);
+      expect(schema?.shared_field_group_ids).toEqual([fieldGroup?.id]);
+    }
+  });
 });

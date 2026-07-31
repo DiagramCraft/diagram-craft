@@ -8,6 +8,8 @@ import type {
   SchemaDbCreate,
   EntityDbUpdate,
   WorkspaceEnumDbUpdate,
+  SharedFieldGroupDbCreate,
+  SharedFieldGroupDbUpdate,
   SchemaDbUpdate,
   SchemaVersionDbCreate,
   PinnedEntityDbCreate,
@@ -61,7 +63,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchema(input: SchemaDbCreate) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, groups, color, icon, default_owner, key_prefix, entity_approval_policy, deprecation_policy, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, groups, shared_field_group_ids, color, icon, default_owner, key_prefix, entity_approval_policy, deprecation_policy, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -70,6 +72,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         JSON.stringify(input.fields),
         JSON.stringify(input.templates ?? []),
         JSON.stringify(input.groups ?? []),
+        JSON.stringify(input.shared_field_group_ids ?? []),
         input.color,
         input.icon,
         input.default_owner,
@@ -85,13 +88,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
-      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, groups = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, entity_approval_policy = COALESCE(?, entity_approval_policy), deprecation_policy = COALESCE(?, deprecation_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, groups = ?, shared_field_group_ids = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, entity_approval_policy = COALESCE(?, entity_approval_policy), deprecation_policy = COALESCE(?, deprecation_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
         JSON.stringify(input.fields),
         JSON.stringify(input.templates ?? []),
         JSON.stringify(input.groups ?? []),
+        JSON.stringify(input.shared_field_group_ids ?? []),
         input.color,
         input.icon,
         input.default_owner,
@@ -124,7 +128,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchemaVersion(input: SchemaVersionDbCreate) {
     this.run(
-      'INSERT INTO entity_schema_version (id, workspace, schema_id, version, name, description, fields, templates, groups, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema_version (id, workspace, schema_id, version, name, description, fields, templates, groups, shared_field_group_ids, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -135,6 +139,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         JSON.stringify(input.fields),
         JSON.stringify(input.templates),
         JSON.stringify(input.groups),
+        JSON.stringify(input.shared_field_group_ids ?? []),
         input.color,
         input.icon,
         JSON.stringify(input.change_summary),
@@ -225,6 +230,62 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const row = await this.getEnum(workspace, id);
     if (!row) return null;
     this.run('DELETE FROM workspace_enum WHERE workspace = ? AND id = ?', [workspace, id]);
+    return row;
+  }
+
+  async listSharedFieldGroups(workspace: string) {
+    return this.all(
+      'SELECT * FROM workspace_field_group WHERE workspace = ? ORDER BY sort_order, name',
+      [workspace],
+      catalogMappers.sharedFieldGroup
+    );
+  }
+
+  async getSharedFieldGroup(workspace: string, id: string) {
+    return this.get(
+      'SELECT * FROM workspace_field_group WHERE workspace = ? AND id = ?',
+      [workspace, id],
+      catalogMappers.sharedFieldGroup
+    );
+  }
+
+  async createSharedFieldGroup(input: SharedFieldGroupDbCreate) {
+    this.run(
+      'INSERT INTO workspace_field_group (id, workspace, name, description, fields, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.name,
+        input.description,
+        JSON.stringify(input.fields),
+        input.sort_order,
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getSharedFieldGroup(input.workspace, input.id))!;
+  }
+
+  async updateSharedFieldGroup(workspace: string, id: string, input: SharedFieldGroupDbUpdate) {
+    this.run(
+      'UPDATE workspace_field_group SET name = ?, description = ?, fields = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      [
+        input.name,
+        input.description,
+        JSON.stringify(input.fields),
+        input.sort_order,
+        input.updated_at.toISOString(),
+        workspace,
+        id
+      ]
+    );
+    return await this.getSharedFieldGroup(workspace, id);
+  }
+
+  async deleteSharedFieldGroup(workspace: string, id: string) {
+    const row = await this.getSharedFieldGroup(workspace, id);
+    if (!row) return null;
+    this.run('DELETE FROM workspace_field_group WHERE workspace = ? AND id = ?', [workspace, id]);
     return row;
   }
 

@@ -1,0 +1,297 @@
+import { randomUUID } from 'node:crypto';
+import type { DatabaseAdapter } from '../../db/database';
+import type { AuthenticatedEvent } from '../../middleware/auth';
+import { defineOperation } from '../operation';
+import { requireWorkspaceCapability } from '../auth/authorization';
+import { httpAssert } from '../../utils/httpAssert';
+import {
+  buildCreateSharedFieldGroupInput,
+  buildUpdateSharedFieldGroupInput,
+  compileSchemaWithSharedGroups,
+  isSharedFieldGroupReferencedBySchemas
+} from './fieldGroupHelpers';
+import {
+  buildSchemaChangeSummary,
+  classifyFieldChanges,
+  describeHardBlockedChange,
+  hardBlockedFieldChanges,
+  findUnresolvedFieldMigrations,
+  migratableFieldChanges,
+  toApiSharedFieldGroup
+} from './schemaHelpers';
+import type { FieldMigrations, PendingFieldChange } from '@arch-register/api-types/schemaContract';
+import type {
+  CreateSharedFieldGroupRequest,
+  SharedFieldGroup,
+  UpdateSharedFieldGroupRequest
+} from '@arch-register/api-types/fieldGroupContract';
+import { listAllCatalogEntities } from './entityLoader';
+import { materializeDerivedFields } from '../derived/derivedFields';
+import { computeChanges, extractEntityFields, logAudit } from '../audit/db/auditLogging';
+
+const dbErrorMessages = {
+  unique: 'A shared fieldgroup with that name already exists in this workspace',
+  foreign: 'Cannot delete shared fieldgroup: it is still referenced by one or more schemas'
+} as const;
+
+const apiGroup = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  group: Awaited<ReturnType<DatabaseAdapter['catalog']['getSharedFieldGroup']>>
+) => {
+  httpAssert.present(group, { status: 404, message: 'Shared fieldgroup not found' });
+  return toApiSharedFieldGroup(group, await db.catalog.listEnums(workspace));
+};
+
+export const listWorkspaceSharedFieldGroups = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+): Promise<SharedFieldGroup[]> =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to retrieve shared fieldgroups', dbErrorMessages },
+    async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const [groups, enums] = await Promise.all([
+        db.catalog.listSharedFieldGroups(ws),
+        db.catalog.listEnums(ws)
+      ]);
+      return groups.map(group => toApiSharedFieldGroup(group, enums));
+    }
+  );
+
+export const getWorkspaceSharedFieldGroup = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  event: AuthenticatedEvent
+): Promise<SharedFieldGroup> =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to retrieve shared fieldgroup', dbErrorMessages },
+    async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      return apiGroup(db, ws, await db.catalog.getSharedFieldGroup(ws, id));
+    }
+  );
+
+export const createWorkspaceSharedFieldGroup = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  body: CreateSharedFieldGroupRequest,
+  event: AuthenticatedEvent
+): Promise<SharedFieldGroup> =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to create shared fieldgroup', dbErrorMessages },
+    async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      const row = await db.catalog.createSharedFieldGroup(
+        buildCreateSharedFieldGroupInput(ws, body as Record<string, unknown>, new Date())
+      );
+      return apiGroup(db, ws, row);
+    }
+  );
+
+export const updateWorkspaceSharedFieldGroup = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  body: UpdateSharedFieldGroupRequest,
+  event: AuthenticatedEvent
+): Promise<SharedFieldGroup> =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to update shared fieldgroup', dbErrorMessages },
+    async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      const oldGroup = await db.catalog.getSharedFieldGroup(ws, id);
+      httpAssert.present(oldGroup, { status: 404, message: `Shared fieldgroup '${id}' not found` });
+      const next = buildUpdateSharedFieldGroupInput(
+        body as Record<string, unknown>,
+        oldGroup,
+        new Date()
+      );
+      const fieldMigrations = body.fieldMigrations as FieldMigrations | undefined;
+      const [schemas, groups] = await Promise.all([
+        db.catalog.listSchemas(ws),
+        db.catalog.listSharedFieldGroups(ws)
+      ]);
+      const nextGroups = groups.map(group => (group.id === id ? { ...group, ...next } : group));
+      const changesBySchema = new Map<
+        string,
+        {
+          old: ReturnType<typeof compileSchemaWithSharedGroups>;
+          next: ReturnType<typeof compileSchemaWithSharedGroups>;
+          migrations: Array<{
+            action: 'rename' | 'remove';
+            oldFieldId: string;
+            newFieldId?: string;
+          }>;
+        }
+      >();
+
+      for (const schema of schemas.filter(item =>
+        (item.shared_field_group_ids ?? []).includes(id)
+      )) {
+        const oldEffective = compileSchemaWithSharedGroups(schema, groups);
+        const nextEffective = compileSchemaWithSharedGroups(schema, nextGroups);
+        const fieldChanges = classifyFieldChanges(oldEffective.fields, nextEffective.fields);
+        const blocked = hardBlockedFieldChanges(fieldChanges);
+        httpAssert.true(blocked.length === 0, {
+          status: 409,
+          message: `Cannot update shared fieldgroup: ${blocked.map(describeHardBlockedChange).join('; ')}`
+        });
+        const unresolved = findUnresolvedFieldMigrations(fieldChanges, fieldMigrations);
+        const entities = await listAllCatalogEntities(db, ws, { schemaId: schema.id });
+        if (entities.length > 0 && unresolved.length > 0) {
+          const oldFieldsById = new Map(oldEffective.fields.map(field => [field.id, field]));
+          const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
+            fieldId: change.fieldId,
+            fieldName: oldFieldsById.get(change.fieldId)?.name ?? change.fieldName,
+            kind: change.kind as 'removed' | 'renamed',
+            renamedToId: change.renamedToId,
+            entityCount: entities.filter(
+              entity =>
+                entity.data[change.fieldId] !== undefined && entity.data[change.fieldId] !== null
+            ).length
+          }));
+          httpAssert.true(false, {
+            status: 409,
+            message: `Shared fieldgroup changes require migration decisions (${pendingChanges.map(change => `${schema.name}: ${change.fieldName}`).join(', ')})`,
+            data: { code: 'SCHEMA_MIGRATION_REQUIRED', pendingChanges }
+          });
+        }
+        const migrations: Array<{
+          action: 'rename' | 'remove';
+          oldFieldId: string;
+          newFieldId?: string;
+        }> = [];
+        for (const change of migratableFieldChanges(fieldChanges)) {
+          const migration = fieldMigrations?.[change.fieldId];
+          if (!migration) continue;
+          if (migration.action === 'rename') {
+            migrations.push({
+              action: 'rename',
+              oldFieldId: change.fieldId,
+              newFieldId: migration.renameTo ?? change.renamedToId
+            });
+          } else if (migration.action === 'remove') {
+            migrations.push({ action: 'remove', oldFieldId: change.fieldId });
+          } else {
+            const oldField = oldEffective.fields.find(field => field.id === change.fieldId);
+            if (oldField && !nextEffective.fields.some(field => field.id === oldField.id)) {
+              nextEffective.fields.push({ ...oldField, archived: true });
+            }
+          }
+        }
+        changesBySchema.set(schema.id, { old: oldEffective, next: nextEffective, migrations });
+      }
+
+      const now = new Date();
+      const updated = await db.core.transaction(async tx => {
+        const group = await tx.catalog.updateSharedFieldGroup(ws, id, next);
+        httpAssert.present(group, { status: 404, message: `Shared fieldgroup '${id}' not found` });
+        for (const [schemaId, change] of changesBySchema) {
+          for (const migration of change.migrations) {
+            if (migration.action === 'rename')
+              await tx.catalog.renameEntityDataField(
+                ws,
+                schemaId,
+                migration.oldFieldId,
+                migration.newFieldId!
+              );
+            else await tx.catalog.removeEntityDataField(ws, schemaId, migration.oldFieldId);
+          }
+          const current = schemas.find(schema => schema.id === schemaId)!;
+          const row = await tx.catalog.updateSchema(ws, schemaId, {
+            ...current,
+            fields: change.next.fields,
+            groups: change.next.groups,
+            shared_field_group_ids: current.shared_field_group_ids ?? [],
+            version: (current.version ?? 1) + 1,
+            updated_at: now
+          });
+          httpAssert.present(row, { status: 404, message: `Schema '${schemaId}' not found` });
+          await tx.catalog.createSchemaVersion({
+            id: randomUUID(),
+            workspace: ws,
+            schema_id: schemaId,
+            version: row.version ?? 1,
+            name: row.name,
+            description: row.description,
+            fields: row.fields,
+            templates: row.templates ?? [],
+            groups: row.groups ?? [],
+            shared_field_group_ids: row.shared_field_group_ids ?? [],
+            color: row.color,
+            icon: row.icon,
+            change_summary: buildSchemaChangeSummary(
+              change.old.fields,
+              row.fields,
+              fieldMigrations
+            ),
+            created_by: authCtx.userId,
+            created_at: now
+          });
+          const entities = await listAllCatalogEntities(tx, ws, { schemaId });
+          for (const entity of entities) {
+            await tx.catalog.updateEntityDerivedFields(
+              ws,
+              entity.id,
+              materializeDerivedFields(row.fields, entity.data, {
+                objectType: 'entity',
+                objectId: entity.id
+              })
+            );
+          }
+        }
+        return group;
+      });
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: ws,
+        operation: 'update',
+        entityType: 'workspace_field_group',
+        entityId: id,
+        entityName: updated.name,
+        changes: computeChanges(extractEntityFields(oldGroup), extractEntityFields(updated)),
+        metadata: fieldMigrations ? { fieldMigrations } : undefined
+      });
+      return apiGroup(db, ws, updated);
+    }
+  );
+
+export const deleteWorkspaceSharedFieldGroup = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  event: AuthenticatedEvent
+) =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to delete shared fieldgroup', dbErrorMessages },
+    async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      const schemas = await db.catalog.listSchemas(ws);
+      httpAssert.true(!isSharedFieldGroupReferencedBySchemas(schemas, id), {
+        status: 409,
+        message: 'Cannot delete shared fieldgroup: it is still referenced by one or more schemas'
+      });
+      const row = await db.catalog.getSharedFieldGroup(ws, id);
+      httpAssert.present(row, { status: 404, message: `Shared fieldgroup '${id}' not found` });
+      await db.catalog.deleteSharedFieldGroup(ws, id);
+      return { success: true, message: `Shared fieldgroup '${id}' deleted` };
+    }
+  );

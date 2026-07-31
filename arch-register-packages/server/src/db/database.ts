@@ -97,6 +97,8 @@ export type {
   SchemaDbUpdate,
   WorkspaceEnumDbCreate,
   WorkspaceEnumDbUpdate,
+  SharedFieldGroupDbCreate,
+  SharedFieldGroupDbUpdate,
   EntityDbCreate,
   EntityDbUpdate,
   EntityGrantDbCretae,

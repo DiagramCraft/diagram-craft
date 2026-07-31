@@ -77,6 +77,7 @@ export type SchemaDbResult = {
   fields: SchemaField[];
   templates?: EntityTemplate[];
   groups?: SchemaGroup[];
+  shared_field_group_ids?: string[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
@@ -105,6 +106,7 @@ export type SchemaVersionDbResult = {
   fields: SchemaField[];
   templates: EntityTemplate[];
   groups: SchemaGroup[];
+  shared_field_group_ids: string[];
   color: string | null;
   icon: string | null;
   change_summary: Record<string, unknown>;
@@ -112,7 +114,9 @@ export type SchemaVersionDbResult = {
   created_at: Date;
 };
 
-export type SchemaVersionDbCreate = SchemaVersionDbResult;
+export type SchemaVersionDbCreate = Omit<SchemaVersionDbResult, 'shared_field_group_ids'> & {
+  shared_field_group_ids?: string[];
+};
 
 // -- Workspace Enum
 
@@ -129,6 +133,23 @@ export type WorkspaceEnumDbResult = {
 export type WorkspaceEnumDbCreate = WorkspaceEnumDbResult;
 
 export type WorkspaceEnumDbUpdate = Omit<WorkspaceEnumDbResult, 'id' | 'workspace' | 'created_at'>;
+
+export type SharedFieldGroupDbResult = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string | null;
+  fields: SchemaField[];
+  sort_order: number;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type SharedFieldGroupDbCreate = SharedFieldGroupDbResult;
+export type SharedFieldGroupDbUpdate = Omit<
+  SharedFieldGroupDbResult,
+  'id' | 'workspace' | 'created_at'
+>;
 
 // -- Entity Grant
 
@@ -395,6 +416,11 @@ export const catalogMappers = {
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema.templates'),
     groups: parseDatabaseJson(row['groups'], [], 'entity_schema.groups'),
+    shared_field_group_ids: parseDatabaseJson(
+      row['shared_field_group_ids'],
+      [],
+      'entity_schema.shared_field_group_ids'
+    ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
@@ -419,6 +445,11 @@ export const catalogMappers = {
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema_version.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema_version.templates'),
     groups: parseDatabaseJson(row['groups'], [], 'entity_schema_version.groups'),
+    shared_field_group_ids: parseDatabaseJson(
+      row['shared_field_group_ids'],
+      [],
+      'entity_schema_version.shared_field_group_ids'
+    ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     change_summary: parseDatabaseJson(
@@ -434,6 +465,16 @@ export const catalogMappers = {
     workspace: String(row['workspace']),
     name: String(row['name']),
     options: parseDatabaseJson(row['options'], [], 'workspace_enum.options'),
+    sort_order: Number(row['sort_order'] ?? 0),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
+  sharedFieldGroup: (row: DatabaseRow): SharedFieldGroupDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    description: row['description'] == null ? null : String(row['description']),
+    fields: parseDatabaseJson(row['fields'], [], 'workspace_field_group.fields'),
     sort_order: Number(row['sort_order'] ?? 0),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
@@ -518,6 +559,16 @@ export type CatalogDatabase = {
     input: WorkspaceEnumDbUpdate
   ): Promise<WorkspaceEnumDbResult | null>;
   deleteEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
+
+  listSharedFieldGroups(ws: string): Promise<SharedFieldGroupDbResult[]>;
+  getSharedFieldGroup(ws: string, id: string): Promise<SharedFieldGroupDbResult | null>;
+  createSharedFieldGroup(input: SharedFieldGroupDbCreate): Promise<SharedFieldGroupDbResult>;
+  updateSharedFieldGroup(
+    ws: string,
+    id: string,
+    input: SharedFieldGroupDbUpdate
+  ): Promise<SharedFieldGroupDbResult | null>;
+  deleteSharedFieldGroup(ws: string, id: string): Promise<SharedFieldGroupDbResult | null>;
 
   listEntitiesPaginated(
     ws: string,

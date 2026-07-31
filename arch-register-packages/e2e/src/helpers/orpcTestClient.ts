@@ -7,6 +7,7 @@ import { authPublicContract, authProtectedContract } from '@arch-register/api-ty
 import { devContract } from '@arch-register/api-types/devContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
+import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
@@ -75,6 +76,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
   const applicationConfig = makeApplication(workspaceConfigContract).config;
   const applicationAi = makeApplication(aiContract).ai;
   const applicationEnums = makeApplication(workspaceEnumContract).enums;
+  const applicationFieldGroups = makeApplication(workspaceFieldGroupContract).fieldGroups;
   const applicationTemplates = makeApplication(workspaceTemplateContract).templates;
   const applicationViews = makeApplication(workspaceViewContract).views;
   const applicationCollections = makeApplication(workspaceCollectionContract).collections;
@@ -126,6 +128,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     entities: applicationEntities,
     entityQueryText: make(workspaceEntityContract).entityQueryText,
     enums: applicationEnums,
+    fieldGroups: applicationFieldGroups,
     schemas: applicationSchemas,
     search: applicationSearch,
     templates: applicationTemplates,

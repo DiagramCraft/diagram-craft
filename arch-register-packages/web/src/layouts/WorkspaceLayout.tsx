@@ -12,6 +12,7 @@ import { useWorkspaces, workspaceKeys } from '../hooks/useWorkspaces';
 import { projectKeys } from '../queries/projects';
 import { useSchemas } from '../hooks/useSchemas';
 import { useEnums } from '../hooks/useEnums';
+import { useFieldGroups } from '../hooks/useFieldGroups';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
 import { useAiConfig } from '../hooks/useAiConfig';
@@ -77,6 +78,10 @@ export const WorkspaceLayout = () => {
 
   const { data: schemas = [], error: schemasError } = useSchemas(workspaceSlug, !!workspaceSlug);
   const { data: enums = [], error: enumsError } = useEnums(workspaceSlug, !!workspaceSlug);
+  const { data: fieldGroups = [], error: fieldGroupsError } = useFieldGroups(
+    workspaceSlug,
+    !!workspaceSlug
+  );
   const { data: projects = [], error: projectsError } = useProjects(workspaceSlug);
   const { lifecycleStates, teams, projectEntityTypes } = useWorkspaceConfig(
     workspaceSlug,
@@ -196,6 +201,7 @@ export const WorkspaceLayout = () => {
       workspaceSlug,
       schemas,
       enums,
+      fieldGroups,
       projects,
       lifecycleStates,
       teams,
@@ -225,6 +231,7 @@ export const WorkspaceLayout = () => {
       workspaceSlug,
       schemas,
       enums,
+      fieldGroups,
       projects,
       lifecycleStates,
       teams,
@@ -280,8 +287,9 @@ export const WorkspaceLayout = () => {
     </RouteContentBoundary>
   );
 
-  if (workspacesError || projectsError || schemasError || enumsError) {
-    const error = workspacesError ?? projectsError ?? schemasError ?? enumsError;
+  if (workspacesError || projectsError || schemasError || enumsError || fieldGroupsError) {
+    const error =
+      workspacesError ?? projectsError ?? schemasError ?? enumsError ?? fieldGroupsError;
     return (
       <AppErrorState
         fullScreen

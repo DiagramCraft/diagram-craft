@@ -28,6 +28,7 @@ import {
   describeHardBlockedChange,
   findUnresolvedFieldMigrations
 } from './schemaHelpers';
+import { compileSchemaWithSharedGroups } from './fieldGroupHelpers';
 import { materializeDerivedFields } from '../derived/derivedFields';
 import {
   EntitySchema,
@@ -139,9 +140,10 @@ export const createWorkspaceSchema = async (
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(owner => owner.id));
       const timestamp = new Date();
-      const row = await db.catalog.createSchema(
-        buildCreateSchemaInput(ws, body, teamIds, timestamp)
-      );
+      const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
+      const requested = buildCreateSchemaInput(ws, body, teamIds, timestamp);
+      const compiled = compileSchemaWithSharedGroups(requested, sharedGroups);
+      const row = await db.catalog.createSchema(compiled);
       httpAssert.present(row.key_prefix, {
         status: 409,
         message: `Schema '${row.id}' is missing a key prefix`
@@ -158,6 +160,7 @@ export const createWorkspaceSchema = async (
         fields: row.fields,
         templates: row.templates ?? [],
         groups: row.groups ?? [],
+        shared_field_group_ids: row.shared_field_group_ids ?? [],
         color: row.color,
         icon: row.icon,
         change_summary: buildSchemaChangeSummary(null, row.fields),
@@ -203,11 +206,16 @@ export const updateWorkspaceSchema = async (
 
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(owner => owner.id));
       const next = buildUpdateSchemaInput(body, oldRow, teamIds, new Date());
+      const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
+      const compiledNext = compileSchemaWithSharedGroups(
+        { ...oldRow, ...next, shared_field_group_ids: next.shared_field_group_ids },
+        sharedGroups
+      );
       const fieldMigrations = body.fieldMigrations as FieldMigrations | undefined;
 
       const entityCount = await countEntitiesForSchema(db, ws, id);
 
-      const finalFields = [...next.fields];
+      const finalFields = [...compiledNext.fields];
       const dataMigrations: Array<{
         action: 'rename' | 'remove';
         oldFieldId: string;
@@ -215,7 +223,7 @@ export const updateWorkspaceSchema = async (
       }> = [];
 
       if (entityCount > 0) {
-        const fieldChanges = classifyFieldChanges(oldRow.fields, next.fields);
+        const fieldChanges = classifyFieldChanges(oldRow.fields, compiledNext.fields);
 
         const blocked = hardBlockedFieldChanges(fieldChanges);
         httpAssert.true(blocked.length === 0, {
@@ -294,7 +302,8 @@ export const updateWorkspaceSchema = async (
           description: next.description,
           fields: finalFields,
           templates: next.templates,
-          groups: next.groups,
+          groups: compiledNext.groups,
+          shared_field_group_ids: compiledNext.shared_field_group_ids ?? [],
           color: next.color,
           icon: next.icon,
           default_owner: next.defaultOwner,
@@ -331,6 +340,7 @@ export const updateWorkspaceSchema = async (
           fields: updated.fields,
           templates: updated.templates ?? [],
           groups: updated.groups ?? [],
+          shared_field_group_ids: updated.shared_field_group_ids ?? [],
           color: updated.color,
           icon: updated.icon,
           change_summary: changeSummary,

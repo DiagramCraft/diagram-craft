@@ -16,6 +16,7 @@ import { projectContract } from '@arch-register/api-types/projectContract';
 import { milestoneContract } from '@arch-register/api-types/milestoneContract';
 import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
+import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
 import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
@@ -70,6 +71,7 @@ const coreContracts = {
 };
 
 const applicationContracts = {
+  ...workspaceFieldGroupContract,
   ...aiContract,
   ...workspaceAnalyticsContract,
   ...workspaceMetricContract,
@@ -157,6 +159,7 @@ export const orpcClient = {
   governance: applicationClient.governance,
   governanceReminderConfig: applicationClient.governanceReminderConfig,
   enums: applicationClient.enums,
+  fieldGroups: applicationClient.fieldGroups,
   schemas: applicationClient.schemas,
   entities: applicationClient.entities,
   entityQueryText: applicationClient.entityQueryText,

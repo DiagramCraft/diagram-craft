@@ -284,17 +284,20 @@ export const validateModelSearch = (raw: Record<string, unknown>): ModelSearchPa
 
 // Schema settings params (for settings/schemas route)
 export type SchemaSettingsSearchParams = {
-  tab?: 'types' | 'enums';
+  tab?: 'types' | 'enums' | 'fieldgroups';
   schema?: string;
   enumId?: string;
+  fieldGroupId?: string;
 };
 
 export const validateSchemaSettingsSearch = (
   raw: Record<string, unknown>
 ): SchemaSettingsSearchParams => ({
-  tab: raw.tab === 'types' || raw.tab === 'enums' ? raw.tab : undefined,
+  tab:
+    raw.tab === 'types' || raw.tab === 'enums' || raw.tab === 'fieldgroups' ? raw.tab : undefined,
   schema: typeof raw.schema === 'string' ? raw.schema : undefined,
-  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined
+  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined,
+  fieldGroupId: typeof raw.fieldGroupId === 'string' ? raw.fieldGroupId : undefined
 });
 
 // Document settings params (for settings/documents route)

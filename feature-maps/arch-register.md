@@ -59,7 +59,8 @@
           document types, templates, AI, analytics, audit, and other workspace settings.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
-            relationships, and schema-specific behavior, including read-only derived fields calculated from sibling
+            reusable shared fieldgroups, relationships, and schema-specific behavior, including read-only derived fields
+            calculated from sibling
             fields using a sandboxed expression and a declared text, number, select, boolean, or rating result type,
             and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
             on-change or scheduled. Derived values are materialized when inputs or definitions change, and are excluded
