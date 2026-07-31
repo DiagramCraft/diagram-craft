@@ -71,6 +71,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         fields: SchemaField[];
         templates?: EntityTemplate[];
         groups?: SchemaGroup[];
+        shared_field_group_ids?: string[];
         color?: string | null;
         icon?: string | null;
         entity_approval_policy?: 'required' | 'disabled';
@@ -95,6 +96,8 @@ export const useUpdateSchema = (workspaceId: string) => {
                   fields: variables.data.fields as EntitySchema['fields'],
                   templates: variables.data.templates ?? schema.templates,
                   groups: variables.data.groups ?? schema.groups,
+                  shared_field_group_ids:
+                    variables.data.shared_field_group_ids ?? schema.shared_field_group_ids,
                   color: variables.data.color ?? schema.color,
                   icon: variables.data.icon ?? schema.icon,
                   entity_approval_policy:

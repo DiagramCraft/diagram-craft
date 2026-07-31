@@ -864,6 +864,13 @@
                         },
                         "description": "Named, presentation-only field groups, in display order"
                       },
+                      "shared_field_group_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Included workspace shared fieldgroup identifiers, in display order"
+                      },
                       "color": {
                         "anyOf": [
                           {

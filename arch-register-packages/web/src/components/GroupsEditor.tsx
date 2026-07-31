@@ -4,8 +4,10 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Select } from '@diagram-craft/app-components/Select';
 import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import type { NamedGroup } from '@arch-register/api-types/common';
+import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 import { Banner } from './Banner';
 import styles from './GroupsEditor.module.css';
 
@@ -107,24 +109,40 @@ export const GroupDialog = ({
   onClose,
   onSave,
   group,
-  groups
+  groups,
+  sharedGroups = [],
+  onAddSharedGroup
 }: {
   open: boolean;
   onClose: () => void;
   onSave: (group: NamedGroup) => void;
   group: NamedGroup | null;
   groups: NamedGroup[];
+  sharedGroups?: SharedFieldGroup[];
+  onAddSharedGroup?: (groupId: string) => void;
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const [mode, setMode] = useState<'new' | 'shared'>('new');
+  const [selectedSharedGroupId, setSelectedSharedGroupId] = useState<string | undefined>();
 
   useEffect(() => {
     if (!open) return;
     setName(group?.name ?? '');
     setDescription(group?.description ?? '');
     setError('');
+    setMode(group ? 'new' : 'new');
+    setSelectedSharedGroupId(sharedGroups[0]?.id);
   }, [open, group]);
+
+  const addSharedGroup = () => {
+    if (!selectedSharedGroupId || !onAddSharedGroup) {
+      setError('Select a shared fieldgroup');
+      return;
+    }
+    onAddSharedGroup(selectedSharedGroupId);
+  };
 
   const save = () => {
     const trimmedName = name.trim();
@@ -152,29 +170,62 @@ export const GroupDialog = ({
     <Dialog
       open={open}
       onClose={onClose}
-      title={group ? 'Edit group' : 'New group'}
+      title={group ? 'Edit group' : 'Add group'}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: group ? 'Update group' : 'Add group', type: 'default', onClick: save }
+        {
+          label: group ? 'Update group' : mode === 'shared' ? 'Add shared group' : 'Create group',
+          type: 'default',
+          onClick: mode === 'shared' ? addSharedGroup : save
+        }
       ]}
     >
       <div style={{ display: 'grid', gap: 12 }}>
-        <FormElement label="Group name" required>
-          <TextInput
-            value={name}
-            onChange={value => setName(value ?? '')}
-            placeholder="Group name"
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-        <FormElement label="Description" required={false}>
-          <TextArea
-            value={description}
-            onChange={value => setDescription(value ?? '')}
-            rows={3}
-            style={{ width: '100%' }}
-          />
-        </FormElement>
+        {!group && onAddSharedGroup && (
+          <FormElement label="Group source">
+            <Select.Root
+              value={mode}
+              onChange={value => setMode(value === 'shared' ? 'shared' : 'new')}
+            >
+              <Select.Item value="new">Create new group</Select.Item>
+              <Select.Item value="shared">Add shared group</Select.Item>
+            </Select.Root>
+          </FormElement>
+        )}
+        {!group && mode === 'shared' ? (
+          <FormElement label="Shared fieldgroup" required>
+            <Select.Root
+              value={selectedSharedGroupId}
+              onChange={setSelectedSharedGroupId}
+              placeholder="Select shared fieldgroup..."
+            >
+              {sharedGroups.map(sharedGroup => (
+                <Select.Item key={sharedGroup.id} value={sharedGroup.id}>
+                  {sharedGroup.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+        ) : (
+          <>
+            <FormElement label="Group name" required>
+              <TextInput
+                value={name}
+                onChange={value => setName(value ?? '')}
+                placeholder="Group name"
+                style={{ width: '100%' }}
+              />
+            </FormElement>
+            <FormElement label="Description" required={false}>
+              <TextArea
+                value={description}
+                onChange={value => setDescription(value ?? '')}
+                rows={3}
+                style={{ width: '100%' }}
+              />
+            </FormElement>
+          </>
+        )}
         {error && <Banner variant="error">{error}</Banner>}
       </div>
     </Dialog>

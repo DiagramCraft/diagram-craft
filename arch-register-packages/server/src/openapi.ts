@@ -3,6 +3,7 @@ import { OpenAPIGenerator } from '@orpc/openapi';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
+import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
@@ -44,6 +45,7 @@ import { devContract } from '@arch-register/api-types/devContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
+  ...workspaceFieldGroupContract,
   ...workspaceSchemaContract,
   ...workspaceEntityContract,
   ...entitySyncContract,
@@ -122,6 +124,7 @@ export const getApplicationOpenAPISpec = () => {
       ...searchContract,
       ...aiContract,
       ...workspaceEnumContract,
+      ...workspaceFieldGroupContract,
       ...workspaceViewContract,
       ...workspaceDashboardContract,
       ...projectDashboardContract,

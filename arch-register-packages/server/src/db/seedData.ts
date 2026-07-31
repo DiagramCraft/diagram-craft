@@ -21,11 +21,13 @@ import {
   CollectionDbCreate,
   CollectionEntityDbResult,
   SchemaDbResult,
+  SharedFieldGroupDbResult,
   SavedViewDbResult,
   WorkspaceEnumDbResult
 } from '../domain/catalog/db/catalogDatabase';
 import { ChangeCaseDbCreate } from '../domain/catalog/db/changeCaseDatabase';
 import { computeEntityCompleteness } from '../utils/completeness';
+import type { SchemaField } from '@arch-register/api-types/schemaContract';
 
 // Seed fixtures list entity data without a completeness score — it's derived from `data` +
 // `seedSchemas` once, below, rather than kept in sync by hand across ~150 fixture entries.
@@ -592,6 +594,21 @@ export const seedWorkspaceMembers: MemberDbResult[] = [
 
 export const seedEnums: WorkspaceEnumDbResult[] = [
   {
+    id: '00000000-0000-0000-0000-e00000000005',
+    workspace: WORKSPACE_ID,
+    name: 'PII Classification',
+    options: [
+      { value: 'none', label: 'None' },
+      { value: 'public', label: 'Public' },
+      { value: 'non-sensitive', label: 'Non-Sensitive' },
+      { value: 'sensitive', label: 'Sensitive' },
+      { value: 'highly-sensitive', label: 'Highly Sensitive' }
+    ],
+    sort_order: 3,
+    created_at: now,
+    updated_at: now
+  },
+  {
     id: '00000000-0000-0000-0000-e00000000001',
     workspace: WORKSPACE_ID,
     name: 'API Type',
@@ -651,301 +668,346 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
   }
 ];
 
-export const seedSchemas: SchemaDbResult[] = [
+const PII_FIELD_GROUP_ID = '00000000-0000-0000-0000-f00000000001';
+const PII_FIELDS: SchemaField[] = [
   {
-    id: '00000000-0000-0000-0000-000000000001',
+    id: 'pii_classification',
+    name: 'PII Classification',
+    type: 'select' as const,
+    enumId: '00000000-0000-0000-0000-e00000000005',
+    groupId: PII_FIELD_GROUP_ID
+  },
+  { id: 'pii_scope', name: 'PII Scope', type: 'text' as const, groupId: PII_FIELD_GROUP_ID }
+];
+
+export const seedSharedFieldGroups: SharedFieldGroupDbResult[] = [
+  {
+    id: PII_FIELD_GROUP_ID,
     workspace: WORKSPACE_ID,
-    name: 'Domain',
-    description: 'A high-level grouping that owns one or more Systems.',
-    fields: [],
-    color: AR_COLOR_YELLOW,
-    icon: 'globe',
-    default_owner: null,
-    key_prefix: 'DOM',
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000002',
-    workspace: WORKSPACE_ID,
-    name: 'System',
-    description:
-      'A collection of resources that exposes one or more APIs to users and other Systems.',
-    fields: [
-      {
-        id: 'domain',
-        name: 'Domain',
-        type: 'containment',
-        predicate: 'belongs to',
-        schemaId: '00000000-0000-0000-0000-000000000001',
-        minCount: 1,
-        maxCount: 1
-      }
-    ],
-    color: AR_COLOR_PURPLE,
-    icon: 'layers',
-    default_owner: null,
-    key_prefix: 'SYS',
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000003',
-    workspace: WORKSPACE_ID,
-    name: 'Component',
-    description: 'A deployable unit of code within a System (service, library, website, etc.).',
-    fields: [
-      {
-        id: 'technology_releases',
-        name: 'Technology Releases',
-        type: 'reference',
-        predicate: 'uses',
-        schemaId: '00000000-0000-0000-0000-000000000006',
-        minCount: 0,
-        maxCount: -1
-      },
-      {
-        id: 'system',
-        name: 'System',
-        type: 'containment',
-        predicate: 'belongs to',
-        schemaId: '00000000-0000-0000-0000-000000000002',
-        minCount: 1,
-        maxCount: 1
-      },
-      {
-        id: 'provides_apis',
-        name: 'Provided APIs',
-        type: 'reference',
-        predicate: 'provides',
-        schemaId: '00000000-0000-0000-0000-000000000004',
-        minCount: 0,
-        maxCount: -1
-      },
-      {
-        id: 'consumes_apis',
-        name: 'Consumed APIs',
-        type: 'reference',
-        predicate: 'consumes',
-        schemaId: '00000000-0000-0000-0000-000000000004',
-        minCount: 0,
-        maxCount: -1
-      },
-      {
-        id: 'depends_on',
-        name: 'Depends On',
-        type: 'reference',
-        predicate: 'depends on',
-        schemaId: '00000000-0000-0000-0000-000000000003',
-        minCount: 0,
-        maxCount: -1
-      }
-    ],
-    color: AR_COLOR_GREEN,
-    icon: 'box',
-    default_owner: null,
-    key_prefix: 'CMP',
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000004',
-    workspace: WORKSPACE_ID,
-    name: 'API',
-    description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
-    fields: [
-      {
-        id: 'api_type',
-        name: 'Type',
-        type: 'select',
-        enumId: '00000000-0000-0000-0000-e00000000001'
-      },
-      {
-        id: 'system',
-        name: 'System',
-        type: 'containment',
-        predicate: 'belongs to',
-        schemaId: '00000000-0000-0000-0000-000000000002',
-        minCount: 1,
-        maxCount: 1
-      }
-    ],
-    color: AR_COLOR_BLUE,
-    icon: 'api',
-    default_owner: null,
-    key_prefix: 'API',
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000005',
-    workspace: WORKSPACE_ID,
-    name: 'Resource',
-    description: 'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
-    fields: [
-      { id: 'resource_type', name: 'Type', type: 'text' },
-      {
-        id: 'technology_releases',
-        name: 'Technology Releases',
-        type: 'reference',
-        predicate: 'uses',
-        schemaId: '00000000-0000-0000-0000-000000000006',
-        minCount: 0,
-        maxCount: -1
-      },
-      {
-        id: 'system',
-        name: 'System',
-        type: 'containment',
-        predicate: 'belongs to',
-        schemaId: '00000000-0000-0000-0000-000000000002',
-        minCount: 0,
-        maxCount: 1
-      }
-    ],
-    color: AR_COLOR_ORANGE,
-    icon: 'database',
-    default_owner: null,
-    key_prefix: 'RES',
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000007',
-    workspace: WORKSPACE_ID,
-    name: 'Technology',
-    description: 'A technology product tracked for governance and planning.',
-    fields: [
-      { id: 'product', name: 'Product', type: 'text' },
-      { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
-      {
-        id: 'category',
-        name: 'Category',
-        type: 'select',
-        enumId: '00000000-0000-0000-0000-e00000000003'
-      },
-      {
-        id: 'radar_status',
-        name: 'Radar Status',
-        type: 'select',
-        enumId: '00000000-0000-0000-0000-e00000000004'
-      }
-    ],
-    color: AR_COLOR_BLUE,
-    icon: 'chip',
-    default_owner: null,
-    key_prefix: 'TECH',
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000006',
-    workspace: WORKSPACE_ID,
-    name: 'Technology Release',
-    description:
-      'A product release cycle tracked for support lifecycle, technology radar governance, and planning.',
-    fields: [
-      {
-        id: 'technology',
-        name: 'Technology',
-        type: 'containment',
-        predicate: 'belongs to',
-        schemaId: '00000000-0000-0000-0000-000000000007',
-        minCount: 1,
-        maxCount: 1
-      },
-      { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
-      { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
-      {
-        id: 'latest_version',
-        name: 'Latest Version',
-        type: 'text'
-      },
-      {
-        id: 'release_date',
-        name: 'Release Date',
-        type: 'date'
-      },
-      {
-        id: 'active_support_until',
-        name: 'Active Support Until',
-        type: 'date'
-      },
-      {
-        id: 'security_support_until',
-        name: 'Security Support Until',
-        type: 'date'
-      },
-      {
-        id: 'eol_date',
-        name: 'EOL Date',
-        type: 'date'
-      },
-      {
-        id: 'source_url',
-        name: 'Source URL',
-        type: 'text'
-      },
-      {
-        id: 'last_synchronized',
-        name: 'Last Synchronized',
-        type: 'date'
-      },
-      {
-        id: 'category',
-        name: 'Category',
-        type: 'select',
-        enumId: '00000000-0000-0000-0000-e00000000003'
-      },
-      {
-        id: 'radar_status',
-        name: 'Radar Status',
-        type: 'select',
-        enumId: '00000000-0000-0000-0000-e00000000004'
-      }
-    ],
-    color: AR_COLOR_BLUE,
-    icon: 'cpu',
-    default_owner: null,
-    key_prefix: 'TEC',
-    created_at: now,
-    updated_at: now
-  },
-  // Second workspace schemas
-  {
-    id: '00000000-0000-0000-0000-000000000011',
-    workspace: WORKSPACE2_ID,
-    name: 'Application',
-    description: 'A mobile or web application delivered to end users.',
-    fields: [
-      {
-        id: 'platform',
-        name: 'Platform',
-        type: 'select',
-        enumId: '00000000-0000-0000-0000-e00000000002'
-      }
-    ],
-    color: AR_COLOR_TEAL,
-    icon: 'box',
-    default_owner: null,
-    key_prefix: 'APP',
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000012',
-    workspace: WORKSPACE2_ID,
-    name: 'Service',
-    description: 'A backend service or microservice.',
-    fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
-    color: AR_COLOR_CYAN,
-    icon: 'layers',
-    default_owner: null,
-    key_prefix: 'SVC',
+    name: 'PII Classification',
+    description: 'Classifies personal data handled by the entity and documents its scope.',
+    fields: PII_FIELDS,
+    sort_order: 3,
     created_at: now,
     updated_at: now
   }
 ];
+
+export const seedSchemas: SchemaDbResult[] = (
+  [
+    {
+      id: '00000000-0000-0000-0000-000000000001',
+      workspace: WORKSPACE_ID,
+      name: 'Domain',
+      description: 'A high-level grouping that owns one or more Systems.',
+      fields: [],
+      color: AR_COLOR_YELLOW,
+      icon: 'globe',
+      default_owner: null,
+      key_prefix: 'DOM',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000002',
+      workspace: WORKSPACE_ID,
+      name: 'System',
+      description:
+        'A collection of resources that exposes one or more APIs to users and other Systems.',
+      fields: [
+        {
+          id: 'domain',
+          name: 'Domain',
+          type: 'containment',
+          predicate: 'belongs to',
+          schemaId: '00000000-0000-0000-0000-000000000001',
+          minCount: 1,
+          maxCount: 1
+        }
+      ],
+      color: AR_COLOR_PURPLE,
+      icon: 'layers',
+      default_owner: null,
+      key_prefix: 'SYS',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000003',
+      workspace: WORKSPACE_ID,
+      name: 'Component',
+      description: 'A deployable unit of code within a System (service, library, website, etc.).',
+      fields: [
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          predicate: 'uses',
+          schemaId: '00000000-0000-0000-0000-000000000006',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'system',
+          name: 'System',
+          type: 'containment',
+          predicate: 'belongs to',
+          schemaId: '00000000-0000-0000-0000-000000000002',
+          minCount: 1,
+          maxCount: 1
+        },
+        {
+          id: 'provides_apis',
+          name: 'Provided APIs',
+          type: 'reference',
+          predicate: 'provides',
+          schemaId: '00000000-0000-0000-0000-000000000004',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'consumes_apis',
+          name: 'Consumed APIs',
+          type: 'reference',
+          predicate: 'consumes',
+          schemaId: '00000000-0000-0000-0000-000000000004',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'depends_on',
+          name: 'Depends On',
+          type: 'reference',
+          predicate: 'depends on',
+          schemaId: '00000000-0000-0000-0000-000000000003',
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      color: AR_COLOR_GREEN,
+      icon: 'box',
+      default_owner: null,
+      key_prefix: 'CMP',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000004',
+      workspace: WORKSPACE_ID,
+      name: 'API',
+      description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
+      fields: [
+        {
+          id: 'api_type',
+          name: 'Type',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000001'
+        },
+        {
+          id: 'system',
+          name: 'System',
+          type: 'containment',
+          predicate: 'belongs to',
+          schemaId: '00000000-0000-0000-0000-000000000002',
+          minCount: 1,
+          maxCount: 1
+        }
+      ],
+      color: AR_COLOR_BLUE,
+      icon: 'api',
+      default_owner: null,
+      key_prefix: 'API',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000005',
+      workspace: WORKSPACE_ID,
+      name: 'Resource',
+      description:
+        'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
+      fields: [
+        { id: 'resource_type', name: 'Type', type: 'text' },
+        {
+          id: 'technology_releases',
+          name: 'Technology Releases',
+          type: 'reference',
+          predicate: 'uses',
+          schemaId: '00000000-0000-0000-0000-000000000006',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'system',
+          name: 'System',
+          type: 'containment',
+          predicate: 'belongs to',
+          schemaId: '00000000-0000-0000-0000-000000000002',
+          minCount: 0,
+          maxCount: 1
+        }
+      ],
+      color: AR_COLOR_ORANGE,
+      icon: 'database',
+      default_owner: null,
+      key_prefix: 'RES',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000007',
+      workspace: WORKSPACE_ID,
+      name: 'Technology',
+      description: 'A technology product tracked for governance and planning.',
+      fields: [
+        { id: 'product', name: 'Product', type: 'text' },
+        { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
+        {
+          id: 'category',
+          name: 'Category',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000003'
+        },
+        {
+          id: 'radar_status',
+          name: 'Radar Status',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000004'
+        }
+      ],
+      color: AR_COLOR_BLUE,
+      icon: 'chip',
+      default_owner: null,
+      key_prefix: 'TECH',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000006',
+      workspace: WORKSPACE_ID,
+      name: 'Technology Release',
+      description:
+        'A product release cycle tracked for support lifecycle, technology radar governance, and planning.',
+      fields: [
+        {
+          id: 'technology',
+          name: 'Technology',
+          type: 'containment',
+          predicate: 'belongs to',
+          schemaId: '00000000-0000-0000-0000-000000000007',
+          minCount: 1,
+          maxCount: 1
+        },
+        { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
+        { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
+        {
+          id: 'latest_version',
+          name: 'Latest Version',
+          type: 'text'
+        },
+        {
+          id: 'release_date',
+          name: 'Release Date',
+          type: 'date'
+        },
+        {
+          id: 'active_support_until',
+          name: 'Active Support Until',
+          type: 'date'
+        },
+        {
+          id: 'security_support_until',
+          name: 'Security Support Until',
+          type: 'date'
+        },
+        {
+          id: 'eol_date',
+          name: 'EOL Date',
+          type: 'date'
+        },
+        {
+          id: 'source_url',
+          name: 'Source URL',
+          type: 'text'
+        },
+        {
+          id: 'last_synchronized',
+          name: 'Last Synchronized',
+          type: 'date'
+        },
+        {
+          id: 'category',
+          name: 'Category',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000003'
+        },
+        {
+          id: 'radar_status',
+          name: 'Radar Status',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000004'
+        }
+      ],
+      color: AR_COLOR_BLUE,
+      icon: 'cpu',
+      default_owner: null,
+      key_prefix: 'TEC',
+      created_at: now,
+      updated_at: now
+    },
+    // Second workspace schemas
+    {
+      id: '00000000-0000-0000-0000-000000000011',
+      workspace: WORKSPACE2_ID,
+      name: 'Application',
+      description: 'A mobile or web application delivered to end users.',
+      fields: [
+        {
+          id: 'platform',
+          name: 'Platform',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000002'
+        }
+      ],
+      color: AR_COLOR_TEAL,
+      icon: 'box',
+      default_owner: null,
+      key_prefix: 'APP',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000012',
+      workspace: WORKSPACE2_ID,
+      name: 'Service',
+      description: 'A backend service or microservice.',
+      fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
+      color: AR_COLOR_CYAN,
+      icon: 'layers',
+      default_owner: null,
+      key_prefix: 'SVC',
+      created_at: now,
+      updated_at: now
+    }
+  ] as SchemaDbResult[]
+).map((schema): SchemaDbResult => {
+  if (schema.workspace !== WORKSPACE_ID || !['API', 'Component', 'System'].includes(schema.name)) {
+    return schema;
+  }
+  return {
+    ...schema,
+    fields: [...schema.fields, ...PII_FIELDS],
+    groups: [
+      ...(schema.groups ?? []),
+      {
+        id: PII_FIELD_GROUP_ID,
+        name: 'PII Classification',
+        description: 'Classifies personal data handled by the entity and documents its scope.'
+      }
+    ],
+    shared_field_group_ids: [PII_FIELD_GROUP_ID]
+  };
+});
 
 const seedTechnologies: SeedEntityInput[] = [
   {

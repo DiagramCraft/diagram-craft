@@ -21,6 +21,7 @@ type SchemaMutationPayload = {
   fields: InternalEntitySchema['fields'];
   templates: EntityTemplate[];
   groups: SchemaGroup[];
+  shared_field_group_ids: string[];
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
@@ -40,7 +41,7 @@ export const resolveSchemaDefaultOwner = (
 const defaultKeyPrefixFromName = (name: string) =>
   normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) ?? name.slice(0, 5));
 
-const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] => {
+export const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] => {
   if (!Array.isArray(fields)) return [];
 
   const normalized = fields.map(field => {
@@ -240,6 +241,7 @@ export const buildCreateSchemaInput = (
     fields = [],
     templates = [],
     groups = [],
+    shared_field_group_ids = [],
     color,
     icon,
     default_owner,
@@ -262,6 +264,9 @@ export const buildCreateSchemaInput = (
     fields: normalizedFields,
     templates: normalizeEntityTemplates(templates, normalizedFields),
     groups: normalizedGroups,
+    shared_field_group_ids: Array.isArray(shared_field_group_ids)
+      ? [...new Set(shared_field_group_ids.filter((id): id is string => typeof id === 'string'))]
+      : [],
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -289,6 +294,7 @@ export const buildUpdateSchemaInput = (
     fields,
     templates,
     groups,
+    shared_field_group_ids,
     color,
     icon,
     default_owner,
@@ -316,6 +322,16 @@ export const buildUpdateSchemaInput = (
     fields: normalizedFields,
     templates: normalizeEntityTemplates(templates ?? current.templates ?? [], normalizedFields),
     groups: normalizedGroups,
+    shared_field_group_ids:
+      groups !== undefined
+        ? Array.isArray(shared_field_group_ids)
+          ? [
+              ...new Set(
+                shared_field_group_ids.filter((id): id is string => typeof id === 'string')
+              )
+            ]
+          : []
+        : (current.shared_field_group_ids ?? []),
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
     defaultOwner:
@@ -477,6 +493,29 @@ export const resolveSelectFieldOptions = (
   });
 };
 
+export const toApiSharedFieldGroup = (
+  group: {
+    id: string;
+    workspace: string;
+    name: string;
+    description: string | null;
+    fields: SchemaField[];
+    sort_order: number;
+    created_at: Date;
+    updated_at: Date;
+  },
+  enums: InternalWorkspaceEnum[]
+) => ({
+  id: group.id,
+  workspace: group.workspace,
+  name: group.name,
+  ...(group.description ? { description: group.description } : {}),
+  fields: resolveSelectFieldOptions(group.fields, enums),
+  sort_order: group.sort_order,
+  created_at: group.created_at.toISOString(),
+  updated_at: group.updated_at.toISOString()
+});
+
 export const toApiSchema = (
   schema: InternalEntitySchema,
   entityCount: number,
@@ -492,6 +531,7 @@ export const toApiSchema = (
     fields,
     templates: schema.templates ?? [],
     groups: schema.groups ?? [],
+    shared_field_group_ids: schema.shared_field_group_ids ?? [],
     color: schema.color,
     icon: schema.icon,
     entity_count: entityCount,
@@ -555,6 +595,7 @@ export const toApiSchemaVersion = (
     fields: SchemaField[];
     templates: EntityTemplate[];
     groups: SchemaGroup[];
+    shared_field_group_ids?: string[];
     color: string | null;
     icon: string | null;
     change_summary: Record<string, unknown>;
@@ -569,6 +610,7 @@ export const toApiSchemaVersion = (
   fields: resolveSelectFieldOptions(row.fields, enums),
   templates: row.templates,
   groups: row.groups,
+  shared_field_group_ids: row.shared_field_group_ids ?? [],
   color: row.color,
   icon: row.icon,
   changeSummary: row.change_summary,

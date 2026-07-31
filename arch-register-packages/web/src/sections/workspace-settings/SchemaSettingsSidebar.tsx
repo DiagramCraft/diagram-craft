@@ -8,6 +8,8 @@ import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { TbLayoutGrid } from 'react-icons/tb';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
@@ -22,12 +24,15 @@ export const SchemaSettingsSidebar = ({
 }) => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
+  const { fieldGroups = [] } = useWorkspaceContext();
 
-  const activeTab = search.tab === 'enums' ? 'enums' : 'types';
+  const activeTab =
+    search.tab === 'enums' ? 'enums' : search.tab === 'fieldgroups' ? 'fieldgroups' : 'types';
   const schemaId = search.schema ?? null;
   const enumId = search.enumId ?? null;
+  const fieldGroupId = search.fieldGroupId ?? null;
 
-  const activateTab = (tab: 'types' | 'enums') => {
+  const activateTab = (tab: 'types' | 'enums' | 'fieldgroups') => {
     navigate({
       to: '/$workspaceSlug/settings/schemas',
       params: { workspaceSlug },
@@ -40,11 +45,12 @@ export const SchemaSettingsSidebar = ({
       <SidebarHeader>
         <Tabs.Root
           value={activeTab}
-          onValueChange={value => activateTab(value as 'types' | 'enums')}
+          onValueChange={value => activateTab(value as 'types' | 'enums' | 'fieldgroups')}
         >
           <Tabs.List>
             <Tabs.Trigger value="types">Types</Tabs.Trigger>
             <Tabs.Trigger value="enums">Enums</Tabs.Trigger>
+            <Tabs.Trigger value="fieldgroups">Fieldgroups</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
       </SidebarHeader>
@@ -72,7 +78,7 @@ export const SchemaSettingsSidebar = ({
             />
           ))}
         </div>
-      ) : (
+      ) : activeTab === 'enums' ? (
         <div className={styles.scroll}>
           <SidebarGroupLabel>Enums</SidebarGroupLabel>
           {enums.length === 0 && (
@@ -92,6 +98,29 @@ export const SchemaSettingsSidebar = ({
                 })
               }
               trailing={<span className="dim mono">{e.options.length}</span>}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className={styles.scroll}>
+          <SidebarGroupLabel>Shared fieldgroups</SidebarGroupLabel>
+          {fieldGroups.length === 0 && (
+            <div className={`${styles.emptyState} dim`}>No fieldgroups defined.</div>
+          )}
+          {fieldGroups.map(group => (
+            <TreeRow
+              key={group.id}
+              icon={<TbLayoutGrid size={12} />}
+              label={group.name}
+              active={fieldGroupId === group.id}
+              onClick={() =>
+                navigate({
+                  to: '/$workspaceSlug/settings/schemas',
+                  params: { workspaceSlug },
+                  search: { tab: 'fieldgroups', fieldGroupId: group.id }
+                })
+              }
+              trailing={<span className="dim mono">{group.fields.length}</span>}
             />
           ))}
         </div>

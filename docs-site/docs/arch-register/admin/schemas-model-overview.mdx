@@ -14,6 +14,11 @@ Schemas define:
 - references
 - containment relationships
 
+Schemas can also include reusable shared fieldgroups. A shared fieldgroup is defined once in workspace settings and
+can be included by multiple schemas, keeping its fields consistent when the fieldgroup changes. The default workspace
+includes a **PII Classification** fieldgroup with **PII Classification** and **PII Scope**, used by the API, Component,
+and System schemas.
+
 Supported field types include text, long text, boolean, date, select, reference, and containment.
 
 <ThemedImage

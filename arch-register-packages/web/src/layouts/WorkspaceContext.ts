@@ -4,6 +4,7 @@ import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/wor
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Project } from '@arch-register/api-types/projectContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 export type ProjectEntityType = { id: string; label: string; sort_order: number };
 
 export type WorkspaceContextType = {
@@ -11,6 +12,7 @@ export type WorkspaceContextType = {
   workspaceSlug: string;
   schemas: EntitySchema[];
   enums: WorkspaceEnum[];
+  fieldGroups?: SharedFieldGroup[];
   projects: Project[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
