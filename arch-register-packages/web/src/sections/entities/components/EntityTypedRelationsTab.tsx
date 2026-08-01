@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { TbChevronRight, TbPlus } from 'react-icons/tb';
+import { TbChevronRight, TbInfoCircle, TbPlus } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { AddRelationDialog } from '../../../dialogs/AddRelationDialog';
+import { RelationDetailDialog } from '../../../dialogs/RelationDetailDialog';
 import type {
   RelationField,
   RelationSchema
@@ -44,6 +45,7 @@ export const EntityTypedRelationsTab = ({
   relationSchemas
 }: Props) => {
   const [addDialogEndpoint, setAddDialogEndpoint] = useState<'in' | 'out' | null>(null);
+  const [selectedRelation, setSelectedRelation] = useState<RelationRecord | null>(null);
 
   const groupBySchema = (records: RelationRecord[]) => {
     const groups = new Map<string, RelationRecord[]>();
@@ -89,6 +91,7 @@ export const EntityTypedRelationsTab = ({
             groups={outgoingBySchema}
             direction="outgoing"
             relationSchemas={relationSchemas}
+            onInspect={setSelectedRelation}
           />
         </>
       )}
@@ -114,6 +117,7 @@ export const EntityTypedRelationsTab = ({
             groups={incomingBySchema}
             direction="incoming"
             relationSchemas={relationSchemas}
+            onInspect={setSelectedRelation}
           />
         </>
       )}
@@ -129,6 +133,14 @@ export const EntityTypedRelationsTab = ({
         fixedEntitySchemaId={entitySchemaId}
         fixedEndpoint={addDialogEndpoint ?? 'in'}
       />
+
+      <RelationDetailDialog
+        open={selectedRelation !== null}
+        onClose={() => setSelectedRelation(null)}
+        workspaceId={workspaceId}
+        relation={selectedRelation}
+        relationSchema={relationSchemas.find(rs => rs.id === selectedRelation?._schema.id)}
+      />
     </div>
   );
 };
@@ -136,11 +148,13 @@ export const EntityTypedRelationsTab = ({
 const RelationSchemaGroups = ({
   groups,
   direction,
-  relationSchemas
+  relationSchemas,
+  onInspect
 }: {
   groups: Map<string, RelationRecord[]>;
   direction: 'outgoing' | 'incoming';
   relationSchemas: RelationSchema[];
+  onInspect: (record: RelationRecord) => void;
 }) => {
   if (groups.size === 0) {
     return (
@@ -179,6 +193,7 @@ const RelationSchemaGroups = ({
                   record={record}
                   direction={direction}
                   relationSchema={relationSchema}
+                  onInspect={onInspect}
                 />
               ))}
             </div>
@@ -192,11 +207,13 @@ const RelationSchemaGroups = ({
 const RelationRow = ({
   record,
   direction,
-  relationSchema
+  relationSchema,
+  onInspect
 }: {
   record: RelationRecord;
   direction: 'outgoing' | 'incoming';
   relationSchema: RelationSchema | undefined;
+  onInspect: (record: RelationRecord) => void;
 }) => {
   const otherEndpoint = direction === 'outgoing' ? record._out : record._in;
   const keyFields = (relationSchema?.fields ?? [])
@@ -210,8 +227,8 @@ const RelationRow = ({
     .filter((v): v is string => v !== null);
 
   return (
-    <EntityNavigationLink publicId={otherEndpoint.id} className={styles.relation}>
-      <span className={styles.relationLead}>
+    <div className={styles.relation}>
+      <EntityNavigationLink publicId={otherEndpoint.id} className={styles.relationLead}>
         <span className={styles.relationName}>{otherEndpoint.name}</span>
         {fieldSummaries.length > 0 && (
           <>
@@ -219,7 +236,17 @@ const RelationRow = ({
             <span className={sharedStyles.dim}>{fieldSummaries.join(' · ')}</span>
           </>
         )}
-      </span>
-    </EntityNavigationLink>
+      </EntityNavigationLink>
+      <button
+        type="button"
+        title="Inspect relation"
+        aria-label="Inspect relation"
+        className={sharedStyles.dim}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+        onClick={() => onInspect(record)}
+      >
+        <TbInfoCircle size={14} />
+      </button>
+    </div>
   );
 };

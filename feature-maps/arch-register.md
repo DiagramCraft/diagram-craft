@@ -113,8 +113,10 @@
           with each row showing the connected entity and its key field values (subject to field-group redaction) and
           linking to that entity. From this tab, users can create a new relation instance connecting the current
           entity to another entity, choosing among relation types whose endpoint constraints allow the entity's
-          schema and filling in the relation's fields (also subject to field-group access control). Versioning and
-          change-approval for relation instances are not yet supported.
+          schema and filling in the relation's fields (also subject to field-group access control). Each row can
+          also be inspected in a detail view showing its fields (editable subject to access and the user's
+          edit/delete capability on that instance) and its audit trail of create/update/delete events. Versioning
+          and change-approval for relation instances are not yet supported.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.
