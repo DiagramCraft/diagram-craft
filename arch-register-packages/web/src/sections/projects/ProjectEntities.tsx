@@ -49,6 +49,7 @@ import { formatDate } from '../../utils/dateFormat';
 import { useMilestones } from '../../hooks/useMilestones';
 import {
   getSnapshotEffectiveDate,
+  getProjectScenarioDate,
   toMilestonesById,
   flattenChangeCaseMembers,
   type ChangeCaseMemberEntry
@@ -114,7 +115,7 @@ export const ProjectEntities = ({
   // Distinct change cases, not entity rows — a multi-entity case should count once.
   const pendingCount = new Set(futureEntries.map(entry => entry.changeCase.id)).size;
   const navigate = routeApi.useNavigate();
-  const { workspaceSlug, permissions } = useWorkspaceContext();
+  const { workspaceSlug, permissions, projects } = useWorkspaceContext();
   const withdrawChangeCaseMutation = useWithdrawChangeCase(workspaceSlug, project.id);
   const { data: milestones = [] } = useMilestones(workspaceSlug, project.id);
   const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
@@ -122,15 +123,12 @@ export const ProjectEntities = ({
   const asOf = search.asOf;
   const readOnly = !!asOf;
 
-  // "What's changed" target date — the latest effective target_date across this project's
-  // planned change cases. No date picker in this iteration (deferred).
-  const changesTargetDate = useMemo(() => {
-    const dates = [...new Set(futureEntries.map(entry => entry.changeCase.id))]
-      .map(id => futureEntries.find(entry => entry.changeCase.id === id)!.changeCase)
-      .map(changeCase => getSnapshotEffectiveDate(changeCase, milestonesById))
-      .filter((date): date is string => !!date);
-    return dates.length > 0 ? dates.sort().at(-1)! : null;
-  }, [futureEntries, milestonesById]);
+  // "What's changed" target date — the latest effective date across this project's planned
+  // changes, falling back to the project's own end date when no planned change is dated.
+  const changesTargetDate = useMemo(
+    () => getProjectScenarioDate(project.target_date, changeCases, milestonesById),
+    [changeCases, milestonesById, project.target_date]
+  );
   const projectLandscapeDiffStates = useMemo(
     () =>
       changesTargetDate
@@ -403,7 +401,7 @@ export const ProjectEntities = ({
                 Timeline
               </button>
             )}
-            {!readOnly && pendingCount > 0 && (
+            {!readOnly && changesTargetDate != null && (
               <button
                 type="button"
                 className={`${styles.entityTabBtn} ${activeTab === 'whats-changed' ? styles.entityTabBtnActive : ''}`}
@@ -486,6 +484,9 @@ export const ProjectEntities = ({
       ) : (
         <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
           <ProjectChangesSummaryTab
+            workspaceId={workspaceSlug}
+            project={project}
+            projects={projects}
             diff={landscapeDiff}
             isLoading={isLandscapeDiffLoading}
             targetDate={changesTargetDate}

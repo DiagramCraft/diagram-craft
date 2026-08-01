@@ -3,7 +3,7 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { ChangeCaseMemberEntry } from './snapshotDisplay';
 
-export type ChangeRow = { label: string; from: string; to: string };
+export type ChangeRow = { label: string; current?: string; from: string; to: string };
 
 export type SnapshotState = Record<string, unknown>;
 
@@ -126,24 +126,32 @@ function resolveLandscapeDiffValue(
 // raw diff to ChangeRow[], reusing the same label-resolution helpers so values render consistently
 // with the rest of the app (owner/lifecycle names, not raw IDs).
 export function mapEntityLandscapeDiffToChangeRows(
-  diff: Record<string, { before: unknown; after: unknown }>,
+  diff: Record<string, { current?: unknown; before: unknown; after: unknown }>,
   schema: EntitySchema | null,
   lifecycleStates: WorkspaceLifecycleState[],
   teams: WorkspaceTeam[]
 ): ChangeRow[] {
   const rows: ChangeRow[] = [];
 
-  for (const [key, { before, after }] of Object.entries(diff)) {
+  for (const [key, fieldDiff] of Object.entries(diff)) {
+    const { before, after } = fieldDiff;
+    const hasCurrent = Object.hasOwn(fieldDiff, 'current');
     if (key === 'data') {
       const beforeData = (before ?? {}) as Record<string, unknown>;
       const afterData = (after ?? {}) as Record<string, unknown>;
+      const currentData = (fieldDiff.current ?? {}) as Record<string, unknown>;
       const fieldIds = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
       for (const fieldId of fieldIds) {
         const field = schema?.fields.find(f => f.id === fieldId);
         const from = resolveFieldVal(field, beforeData[fieldId]);
         const to = resolveFieldVal(field, afterData[fieldId]);
         if (from === to) continue;
-        rows.push({ label: field?.name ?? fieldId, from, to });
+        rows.push({
+          label: field?.name ?? fieldId,
+          ...(hasCurrent ? { current: resolveFieldVal(field, currentData[fieldId]) } : {}),
+          from,
+          to
+        });
       }
       continue;
     }
@@ -152,7 +160,14 @@ export function mapEntityLandscapeDiffToChangeRows(
     const from = resolveLandscapeDiffValue(key, before, lifecycleStates, teams);
     const to = resolveLandscapeDiffValue(key, after, lifecycleStates, teams);
     if (from === to) continue;
-    rows.push({ label, from, to });
+    rows.push({
+      label,
+      ...(hasCurrent
+        ? { current: resolveLandscapeDiffValue(key, fieldDiff.current, lifecycleStates, teams) }
+        : {}),
+      from,
+      to
+    });
   }
 
   return rows;

@@ -38,7 +38,7 @@ const entityState = (entity: EntityDbResult): Record<string, unknown> => ({
 type ProjectScope = {
   projectId: string;
   projectScope: 'project' | 'all';
-  candidateEntityIds: string[];
+  candidateEntityIds?: string[];
   links: Awaited<ReturnType<DatabaseAdapter['project']['listProjectEntityLinks']>>;
 };
 
@@ -177,25 +177,61 @@ export const diffEntityLandscapes = async (
   const projectIds = [from.projectId, to.projectId].filter(
     (projectId): projectId is string => projectId != null
   );
-  httpAssert.true(new Set(projectIds).size <= 1, {
-    status: 400,
-    message: 'Comparing different projects is not supported'
-  });
+  const isScenarioComparison = new Set(projectIds).size > 1;
+  if (isScenarioComparison) {
+    httpAssert.true(from.projectScope === 'all' && to.projectScope === 'all', {
+      status: 400,
+      message: 'Comparing different projects requires workspace-wide scenario scope'
+    });
+  }
 
-  const projectScope = await resolveProjectScope(
-    db,
-    workspace,
-    authCtx,
-    projectIds[0],
-    to.projectScope ?? from.projectScope ?? 'project'
-  );
+  const [fromScope, toScope] = isScenarioComparison
+    ? await Promise.all([
+        resolveProjectScope(db, workspace, authCtx, from.projectId, 'all'),
+        resolveProjectScope(db, workspace, authCtx, to.projectId, 'all')
+      ])
+    : [
+        await resolveProjectScope(
+          db,
+          workspace,
+          authCtx,
+          projectIds[0],
+          to.projectScope ?? from.projectScope ?? 'project'
+        ),
+        null
+      ];
+
+  // Scenario comparisons intentionally reconstruct the complete workspace. The per-side
+  // project filter below keeps project-owned entities on their owning side while shared/global
+  // entities remain present on both sides as the live fallback when only one project changes them.
+  const scopes = isScenarioComparison
+    ? [
+        fromScope ? { ...fromScope, candidateEntityIds: undefined } : null,
+        toScope ? { ...toScope, candidateEntityIds: undefined } : null
+      ]
+    : [fromScope, fromScope];
   const now = new Date();
-  const [fromEntities, toEntities] = await Promise.all([
-    reconstructState(db, workspace, authCtx, from, projectScope, now),
-    reconstructState(db, workspace, authCtx, to, projectScope, now)
+  const [fromEntities, toEntities, currentEntities] = await Promise.all([
+    reconstructState(db, workspace, authCtx, from, scopes[0] ?? null, now),
+    reconstructState(db, workspace, authCtx, to, scopes[1] ?? null, now),
+    isScenarioComparison
+      ? reconstructState(
+          db,
+          workspace,
+          authCtx,
+          {
+            asOf: now.toISOString(),
+            includePlannedChanges: false,
+            includeOverdueChanges: false
+          },
+          null,
+          now
+        )
+      : Promise.resolve([])
   ]);
   const fromById = new Map(fromEntities.map(entity => [entity.id, entity]));
   const toById = new Map(toEntities.map(entity => [entity.id, entity]));
+  const currentById = new Map(currentEntities.map(entity => [entity.id, entity]));
 
   const added = [...toById.values()]
     .filter(entity => !fromById.has(entity.id))
@@ -209,11 +245,25 @@ export const diffEntityLandscapes = async (
     .filter(entity => fromById.has(entity.id))
     .map(entity => ({
       entity,
-      diff: buildDiff(entityState(fromById.get(entity.id)!), entityState(entity))
+      diff: buildDiff(entityState(fromById.get(entity.id)!), entityState(entity)),
+      current: currentById.get(entity.id)
     }))
     .filter(entry => Object.keys(entry.diff).length > 0)
     .sort((a, b) => a.entity.id.localeCompare(b.entity.id))
-    .map(entry => ({ entity: toApi(entry.entity, authCtx), diff: entry.diff }));
+    .map(entry => ({
+      entity: toApi(entry.entity, authCtx),
+      diff: isScenarioComparison
+        ? Object.fromEntries(
+            Object.entries(entry.diff).map(([key, fieldDiff]) => [
+              key,
+              {
+                ...fieldDiff,
+                current: entityState(entry.current ?? entry.entity)[key] ?? null
+              }
+            ])
+          )
+        : entry.diff
+    }));
 
   return { added, removed, changed };
 };

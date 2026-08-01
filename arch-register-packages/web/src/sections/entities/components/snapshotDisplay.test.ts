@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
-import { getSnapshotDateLabel, getSnapshotEffectiveDate } from './snapshotDisplay';
+import {
+  getProjectScenarioDate,
+  getSnapshotDateLabel,
+  getSnapshotEffectiveDate
+} from './snapshotDisplay';
 
 const changeCase = (overrides: Partial<ChangeCase>): ChangeCase =>
   ({
@@ -41,5 +45,24 @@ describe('snapshotDisplay', () => {
 
     expect(getSnapshotEffectiveDate(snap, new Map())).toBeNull();
     expect(getSnapshotDateLabel(snap, new Map())).toBeNull();
+  });
+
+  it('uses the latest effective planned-change date for a project scenario', () => {
+    const changeCases = [
+      changeCase({ status: 'planned', target_date: '2026-08-01' }),
+      changeCase({ status: 'planned', milestone_id: 'm1' }),
+      changeCase({ status: 'applied', target_date: '2026-12-01' })
+    ];
+
+    expect(getProjectScenarioDate('2026-01-01', changeCases, new Map([['m1', milestone()]]))).toBe(
+      '2026-08-01'
+    );
+  });
+
+  it('falls back to the project target date when no planned change is dated', () => {
+    const changeCases = [changeCase({ status: 'planned', milestone_id: 'missing' })];
+
+    expect(getProjectScenarioDate('2026-10-01', changeCases, new Map())).toBe('2026-10-01');
+    expect(getProjectScenarioDate(null, changeCases, new Map())).toBeNull();
   });
 });

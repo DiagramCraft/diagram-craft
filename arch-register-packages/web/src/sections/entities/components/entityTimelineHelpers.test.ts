@@ -59,14 +59,14 @@ describe('mapEntityLandscapeDiffToChangeRows', () => {
   it('resolves built-in field labels and owner/lifecycle ids', () => {
     const rows = mapEntityLandscapeDiffToChangeRows(
       {
-        name: { before: 'A', after: 'B' },
+        name: { current: 'Live', before: 'A', after: 'B' },
         owner: { before: 't1', after: 't2' }
       },
       null,
       [],
       [{ id: 't1', name: 'Platform' } as never, { id: 't2', name: 'Infra' } as never]
     );
-    expect(rows).toContainEqual({ label: 'Name', from: 'A', to: 'B' });
+    expect(rows).toContainEqual({ label: 'Name', current: 'Live', from: 'A', to: 'B' });
     expect(rows).toContainEqual({ label: 'Owner', from: 'Platform', to: 'Infra' });
   });
 

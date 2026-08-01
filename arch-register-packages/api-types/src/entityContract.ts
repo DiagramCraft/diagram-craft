@@ -224,7 +224,9 @@ const entityLandscapeDiffStateSchema = z.object({
   projectId: z
     .string()
     .optional()
-    .describe('Project whose connected entities and planned changes apply'),
+    .describe(
+      'Project whose planned changes apply. When comparing two different projects, both states must use projectScope=all.'
+    ),
   includePlannedChanges: z
     .boolean()
     .optional()
@@ -247,6 +249,7 @@ const entityLandscapeDiffStateSchema = z.object({
 });
 
 const entityLandscapeDiffFieldSchema = z.object({
+  current: z.unknown().nullable().optional(),
   before: z.unknown().nullable(),
   after: z.unknown().nullable()
 });
@@ -550,7 +553,8 @@ export const workspaceEntityContract = oc.tag('Entities').router({
         summary: 'Compare two reconstructed entity landscapes',
         description:
           'Returns entities added, removed, or changed between two reconstructed workspace states. ' +
-          'Changed entries include raw field-level before/after values.',
+          'Changed entries include raw field-level before/after values. Different project IDs are supported ' +
+          'for workspace-wide scenario comparisons when both states use projectScope=all.',
         tags: ['Entities']
       })
       .input(

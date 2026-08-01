@@ -18,13 +18,23 @@ export const EntityLandscapeDiffTable = ({
   schemaMap,
   schemas,
   lifecycleStates,
-  teams
+  teams,
+  addedTitle = 'Added',
+  removedTitle = 'Removed',
+  currentValueLabel,
+  fromValueLabel = 'Current Value',
+  toValueLabel = 'New Value'
 }: {
   diff: EntityLandscapeDiff;
   schemaMap: Map<string, SchemaInfo>;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  addedTitle?: string;
+  removedTitle?: string;
+  currentValueLabel?: string;
+  fromValueLabel?: string;
+  toValueLabel?: string;
 }) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const schemaById = useMemo(() => new Map(schemas.map(s => [s.id, s])), [schemas]);
@@ -48,14 +58,18 @@ export const EntityLandscapeDiffTable = ({
 
       {added.length > 0 && (
         <div className={styles.section}>
-          <div className={styles.sectionTitle}>Added ({added.length})</div>
+          <div className={styles.sectionTitle}>
+            {addedTitle} ({added.length})
+          </div>
           <EntityList entities={added} schemaMap={schemaMap} />
         </div>
       )}
 
       {removed.length > 0 && (
         <div className={styles.section}>
-          <div className={styles.sectionTitle}>Removed ({removed.length})</div>
+          <div className={styles.sectionTitle}>
+            {removedTitle} ({removed.length})
+          </div>
           <EntityList entities={removed} schemaMap={schemaMap} />
         </div>
       )}
@@ -81,6 +95,10 @@ export const EntityLandscapeDiffTable = ({
                   lifecycleStates,
                   teams
                 );
+
+                const labelWidth = currentValueLabel ? '16%' : '20%';
+                const width = currentValueLabel ? '28%' : '40%';
+
                 return (
                   <Fragment key={entity._uid}>
                     <Table.Row onClick={() => toggleExpanded(entity._uid)}>
@@ -106,18 +124,26 @@ export const EntityLandscapeDiffTable = ({
                     {expanded && (
                       <Table.DetailRow>
                         <div className={styles.detailCell}>
-                          <Table.Root bordered={false}>
+                          <Table.Root>
                             <Table.Head>
                               <Table.Row>
-                                <Table.HeaderCell>Field</Table.HeaderCell>
-                                <Table.HeaderCell>Current Value</Table.HeaderCell>
-                                <Table.HeaderCell>New Value</Table.HeaderCell>
+                                <Table.HeaderCell width={labelWidth}>Field</Table.HeaderCell>
+                                {currentValueLabel && (
+                                  <Table.HeaderCell width={width}>
+                                    {currentValueLabel}
+                                  </Table.HeaderCell>
+                                )}
+                                <Table.HeaderCell width={width}>{fromValueLabel}</Table.HeaderCell>
+                                <Table.HeaderCell width={width}>{toValueLabel}</Table.HeaderCell>
                               </Table.Row>
                             </Table.Head>
                             <Table.Body>
                               {changeRows.map((change, idx) => (
                                 <Table.Row key={idx}>
                                   <Table.Cell>{change.label}</Table.Cell>
+                                  {currentValueLabel && (
+                                    <Table.Cell>{change.current ?? '—'}</Table.Cell>
+                                  )}
                                   <Table.Cell>{change.from}</Table.Cell>
                                   <Table.Cell>{change.to}</Table.Cell>
                                 </Table.Row>

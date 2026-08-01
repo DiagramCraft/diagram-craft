@@ -7,8 +7,9 @@
 
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
+  padding: 2px 2px 2px 0;
   flex-wrap: wrap;
 }
 
@@ -32,4 +33,15 @@
   color: var(--base-fg-dim);
   cursor: pointer;
   user-select: none;
+}
+
+.comparisonControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.header > .comparisonControls:only-child {
+  margin-left: auto;
 }
