@@ -29,7 +29,10 @@ import {
   findUnresolvedFieldMigrations
 } from './schemaHelpers';
 import { compileSchemaWithSharedGroups } from './fieldGroupHelpers';
-import { materializeDerivedFields } from '../derived/derivedFields';
+import {
+  materializeDerivedFields,
+  validateDerivedFieldGroupAccess
+} from '../derived/derivedFields';
 import {
   EntitySchema,
   FieldMigrations,
@@ -143,6 +146,7 @@ export const createWorkspaceSchema = async (
       const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
       const requested = buildCreateSchemaInput(ws, body, teamIds, timestamp);
       const compiled = compileSchemaWithSharedGroups(requested, sharedGroups);
+      validateDerivedFieldGroupAccess(compiled.fields, compiled.groups ?? []);
       const row = await db.catalog.createSchema(compiled);
       httpAssert.present(row.key_prefix, {
         status: 409,
@@ -279,6 +283,8 @@ export const updateWorkspaceSchema = async (
           }
         }
       }
+
+      validateDerivedFieldGroupAccess(finalFields, compiledNext.groups ?? []);
 
       const changeSummary = buildSchemaChangeSummary(oldRow.fields, finalFields, fieldMigrations);
 

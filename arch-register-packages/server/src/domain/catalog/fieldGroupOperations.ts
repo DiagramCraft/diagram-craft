@@ -26,7 +26,10 @@ import type {
   UpdateSharedFieldGroupRequest
 } from '@arch-register/api-types/fieldGroupContract';
 import { listAllCatalogEntities } from './entityLoader';
-import { materializeDerivedFields } from '../derived/derivedFields';
+import {
+  materializeDerivedFields,
+  validateDerivedFieldGroupAccess
+} from '../derived/derivedFields';
 import { computeChanges, extractEntityFields, logAudit } from '../audit/db/auditLogging';
 
 const dbErrorMessages = {
@@ -194,6 +197,7 @@ export const updateWorkspaceSharedFieldGroup = async (
             }
           }
         }
+        validateDerivedFieldGroupAccess(nextEffective.fields, nextEffective.groups ?? []);
         changesBySchema.set(schema.id, { old: oldEffective, next: nextEffective, migrations });
       }
 

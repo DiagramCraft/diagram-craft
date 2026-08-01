@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
-import { buildDerivedPlan, evaluateDerivedFields, materializeDerivedFields } from './derivedFields';
+import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import {
+  buildDerivedPlan,
+  evaluateDerivedFields,
+  materializeDerivedFields,
+  validateDerivedFieldGroupAccess
+} from './derivedFields';
 
 const field = (id: string, type: AssessmentField['type'] = 'text'): AssessmentField => {
   if (type === 'derived') {
@@ -17,6 +23,23 @@ const field = (id: string, type: AssessmentField['type'] = 'text'): AssessmentFi
 };
 
 const context = { objectType: 'assessment' as const, objectId: 'assessment-1' };
+
+const schemaText = (id: string, groupId?: string): SchemaField => ({
+  id,
+  name: id,
+  type: 'text',
+  ...(groupId ? { groupId } : {})
+});
+
+const derivedSchemaText = (id: string, expression: string, groupId?: string): SchemaField => ({
+  id,
+  name: id,
+  type: 'derived',
+  requirementLevel: 'optional',
+  expression,
+  resultType: 'text',
+  ...(groupId ? { groupId } : {})
+});
 
 describe('derived fields', () => {
   it('evaluates sibling references in dependency order and materializes typed values', () => {
@@ -101,5 +124,61 @@ describe('derived fields', () => {
       }
     ];
     expect(() => buildDerivedPlan(cyclic)).toThrow(/Cyclic derived field dependency/);
+  });
+
+  it('rejects an unrestricted derived field that references a restricted field', () => {
+    expect(() =>
+      validateDerivedFieldGroupAccess(
+        [schemaText('salary', 'hr'), derivedSchemaText('salary_copy', 'field("salary")')],
+        [{ id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } }]
+      )
+    ).toThrow(/salary_copy.*salary/);
+  });
+
+  it('allows a derived field in an equally or more restrictive group', () => {
+    const fields = [
+      schemaText('salary', 'hr'),
+      derivedSchemaText('salary_copy', 'field("salary")', 'hr-only')
+    ];
+    const groups: SchemaGroup[] = [
+      { id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr', 'team-payroll'] } },
+      { id: 'hr-only', name: 'HR only', accessControl: { teamIds: ['team-hr'] } }
+    ];
+
+    expect(() => validateDerivedFieldGroupAccess(fields, groups)).not.toThrow();
+  });
+
+  it('rejects a derived group that is broader than any restricted dependency', () => {
+    expect(() =>
+      validateDerivedFieldGroupAccess(
+        [
+          schemaText('salary', 'hr'),
+          schemaText('bonus', 'payroll'),
+          derivedSchemaText('compensation', 'field("salary") + field("bonus")', 'combined')
+        ],
+        [
+          { id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } },
+          { id: 'payroll', name: 'Payroll', accessControl: { teamIds: ['team-payroll'] } },
+          {
+            id: 'combined',
+            name: 'Combined',
+            accessControl: { teamIds: ['team-hr', 'team-payroll'] }
+          }
+        ]
+      )
+    ).toThrow(/compensation.*salary/);
+  });
+
+  it('applies the restriction transitively through derived dependencies', () => {
+    expect(() =>
+      validateDerivedFieldGroupAccess(
+        [
+          schemaText('salary', 'hr'),
+          derivedSchemaText('salary_copy', 'field("salary")', 'hr'),
+          derivedSchemaText('salary_label', 'field("salary_copy")')
+        ],
+        [{ id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } }]
+      )
+    ).toThrow(/salary_label.*salary/);
   });
 });

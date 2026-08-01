@@ -121,6 +121,92 @@ test.describe('schema routes', () => {
     );
   });
 
+  test('POST /api/:workspace/schemas rejects derived fields that broaden restricted values', async ({
+    orpc
+  }) => {
+    await expect(
+      orpc.schemas.create({
+        params: { workspace: 'default' },
+        body: {
+          name: 'Restricted Derived Boundary',
+          fields: [
+            { id: 'salary', name: 'Salary', type: 'text', groupId: 'hr' },
+            {
+              id: 'salary_copy',
+              name: 'Salary Copy',
+              type: 'derived',
+              requirementLevel: 'optional',
+              expression: 'field("salary")',
+              resultType: 'text'
+            }
+          ],
+          groups: [
+            {
+              id: 'hr',
+              name: 'HR',
+              accessControl: { teamIds: ['00000000-0000-0000-0000-000000000001'] }
+            }
+          ]
+        }
+      })
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: expect.stringContaining("Derived field 'salary_copy'")
+    });
+  });
+
+  test('PUT /api/:workspace/schemas rejects making an existing derived value broader than its source', async ({
+    orpc
+  }) => {
+    const schema = await orpc.schemas.create({
+      params: { workspace: 'default' },
+      body: {
+        name: 'Restriction Transition',
+        fields: [
+          { id: 'salary', name: 'Salary', type: 'text' },
+          {
+            id: 'salary_copy',
+            name: 'Salary Copy',
+            type: 'derived',
+            requirementLevel: 'optional',
+            expression: 'field("salary")',
+            resultType: 'text'
+          }
+        ]
+      }
+    });
+
+    await expect(
+      orpc.schemas.update({
+        params: { workspace: 'default', id: schema.id },
+        body: {
+          name: schema.name,
+          fields: [
+            { id: 'salary', name: 'Salary', type: 'text', groupId: 'hr' },
+            {
+              id: 'salary_copy',
+              name: 'Salary Copy',
+              type: 'derived',
+              requirementLevel: 'optional',
+              expression: 'field("salary")',
+              resultType: 'text'
+            }
+          ],
+          groups: [
+            {
+              id: 'hr',
+              name: 'HR',
+              accessControl: { teamIds: ['00000000-0000-0000-0000-000000000001'] }
+            }
+          ]
+        }
+      })
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: expect.stringContaining("Derived field 'salary_copy'")
+    });
+  });
+
   test('POST /api/:workspace/schemas returns 400 for a non-object request body', async ({
     orpc
   }) => {

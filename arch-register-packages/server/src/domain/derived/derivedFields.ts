@@ -1,6 +1,6 @@
 import { bonsai, type ASTNode, type CompiledExpression } from 'bonsai-js';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
-import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
 import { createLogger } from '../../utils/logger';
 import { httpAssert } from '../../utils/httpAssert';
 
@@ -14,6 +14,7 @@ type DerivedPlan = {
   fields: DerivedFieldDefinition[];
   compiled: Map<string, CompiledExpression>;
   dependencies: Map<string, string[]>;
+  references: Map<string, string[]>;
 };
 
 type EvaluationContext = { values: Record<string, unknown> };
@@ -64,6 +65,7 @@ export const buildDerivedPlan = (fields: Array<SchemaField | AssessmentField>): 
   const derivedIds = new Set(definitions.map(field => field.id));
   const compiled = new Map<string, CompiledExpression>();
   const dependencies = new Map<string, string[]>();
+  const references = new Map<string, string[]>();
 
   for (const definition of definitions) {
     const validation = engine.validate(definition.expression);
@@ -94,6 +96,7 @@ export const buildDerivedPlan = (fields: Array<SchemaField | AssessmentField>): 
       definition.id,
       uniqueDependencies.filter(id => derivedIds.has(id))
     );
+    references.set(definition.id, uniqueDependencies);
     compiled.set(definition.id, engine.compile(definition.expression));
   }
 
@@ -112,7 +115,64 @@ export const buildDerivedPlan = (fields: Array<SchemaField | AssessmentField>): 
   };
   definitions.forEach(field => visit(field.id));
 
-  return { fields: ordered, compiled, dependencies };
+  return { fields: ordered, compiled, dependencies, references };
+};
+
+const groupTeamIds = (field: SchemaField, groups: SchemaGroup[]): Set<string> | null => {
+  if (!field.groupId) return null;
+  const group = groups.find(candidate => candidate.id === field.groupId);
+  const teamIds = group?.accessControl?.teamIds;
+  return teamIds && teamIds.length > 0 ? new Set(teamIds) : null;
+};
+
+/**
+ * Ensures a derived field cannot be visible to a broader audience than any value it reads.
+ * A null team set represents an unrestricted field/group. This is intentionally based on the
+ * persisted team-set boundary rather than the current caller because derived values are stored
+ * once and subsequently returned to many callers.
+ */
+export const validateDerivedFieldGroupAccess = (
+  fields: SchemaField[],
+  groups: SchemaGroup[] = []
+) => {
+  const plan = buildDerivedPlan(fields);
+  const fieldById = new Map(fields.map(field => [field.id, field]));
+  const dependenciesByDerivedId = new Map<string, Set<string>>();
+
+  const collectDependencies = (fieldId: string, visiting: Set<string>): Set<string> => {
+    const cached = dependenciesByDerivedId.get(fieldId);
+    if (cached) return cached;
+    if (visiting.has(fieldId)) return new Set();
+
+    visiting.add(fieldId);
+    const result = new Set<string>();
+    for (const dependency of plan.references.get(fieldId) ?? []) {
+      result.add(dependency);
+      if (fieldById.get(dependency)?.type === 'derived') {
+        collectDependencies(dependency, visiting).forEach(id => result.add(id));
+      }
+    }
+    visiting.delete(fieldId);
+    dependenciesByDerivedId.set(fieldId, result);
+    return result;
+  };
+
+  for (const derived of plan.fields) {
+    const outputTeamIds = groupTeamIds(fieldById.get(derived.id)!, groups);
+    for (const dependencyId of collectDependencies(derived.id, new Set())) {
+      const dependency = fieldById.get(dependencyId);
+      if (!dependency) continue;
+      const dependencyTeamIds = groupTeamIds(dependency, groups);
+      if (dependencyTeamIds === null) continue;
+
+      const outputIsNarrowEnough =
+        outputTeamIds !== null && [...outputTeamIds].every(teamId => dependencyTeamIds.has(teamId));
+      httpAssert.true(outputIsNarrowEnough, {
+        status: 400,
+        message: `Derived field '${derived.id}' cannot reference restricted field '${dependency.id}' from a broader field group`
+      });
+    }
+  }
 };
 
 const isMissing = (value: unknown) => value === undefined || value === null || value === '';
