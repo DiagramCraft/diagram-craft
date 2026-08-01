@@ -8,6 +8,7 @@ import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entit
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
+import type { RelationSchemaDbResult } from '../catalog/db/relationDatabase';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 import type { AuditLogDbResult } from './db/auditDatabase';
 
@@ -21,10 +22,15 @@ export const stripAuditChanges = (rows: AuditLogDbResult[]): Omit<AuditLogDbResu
 export const redactAuditEntryChanges = (
   entry: AuditLogEntry,
   authCtx: WorkspaceAuthorizationContext | null,
-  schemaById: Map<string, SchemaDbResult>
+  schemaById: Map<string, SchemaDbResult>,
+  relationSchemaById: Map<string, RelationSchemaDbResult>
 ): AuditLogEntry => {
-  if (entry.entity_type !== 'entity' || !entry.schema_id) return entry;
-  const schema = schemaById.get(entry.schema_id) ?? null;
+  if (!entry.schema_id) return entry;
+  if (entry.entity_type !== 'entity' && entry.entity_type !== 'relation') return entry;
+  const schema =
+    entry.entity_type === 'entity'
+      ? (schemaById.get(entry.schema_id) ?? null)
+      : (relationSchemaById.get(entry.schema_id) ?? null);
   return {
     ...entry,
     changes: {
@@ -139,11 +145,13 @@ export const listAuditLog = async (
     entityIds = matchingEntities.map(e => e._uid);
   }
 
-  const [rows, schemas] = await Promise.all([
+  const [rows, schemas, relationSchemas] = await Promise.all([
     db.audit.listAuditLogs(ws),
-    db.catalog.listSchemas(ws)
+    db.catalog.listSchemas(ws),
+    db.relation.listRelationSchemas(ws)
   ]);
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
   const entries = filterAndPaginateAuditLogs(rows, {
     entityType: filters.entityType ?? null,
     entityId: filters.entityId ?? null,
@@ -156,7 +164,7 @@ export const listAuditLog = async (
     offset: filters.offset ?? 0
   })
     .map(entry => toApiAuditLogEntry(entry))
-    .map(entry => redactAuditEntryChanges(entry, authCtx, schemaById));
+    .map(entry => redactAuditEntryChanges(entry, authCtx, schemaById, relationSchemaById));
 
   return await Promise.all(entries.map(entry => resolveAuditPublicIds(db, ws, entry)));
 };
