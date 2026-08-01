@@ -20,8 +20,10 @@ import type {
 } from './db/catalogDatabase';
 import {
   filterRestrictedFieldGroups,
+  requireNoRestrictedFieldWrites,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
+import { equalEntityValue } from './entityDiff';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import {
   getEntityParentsFromPayload,
@@ -229,6 +231,29 @@ const normalizeCaseMemberState = async (
   };
 };
 
+export const requireNoRestrictedCaseMemberWrites = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext,
+  entity: Entity,
+  proposedState: Record<string, unknown>
+) => {
+  const schemaId = String(proposedState['schema_id'] ?? entity.schema_id);
+  const schema = await db.catalog.getSchema(workspace, schemaId);
+  httpAssert.present(schema, { status: 400, message: `Schema '${schemaId}' not found` });
+
+  const proposedData = asRecord(proposedState['data']);
+  const changedFieldIds = Object.keys(proposedData).filter(
+    fieldId => !equalEntityValue(entity.data[fieldId], proposedData[fieldId])
+  );
+  requireNoRestrictedFieldWrites(
+    authCtx,
+    schema,
+    changedFieldIds,
+    'You do not have permission to edit one or more restricted fields on this entity'
+  );
+};
+
 const toEntityMutationPayload = (
   entity: Entity,
   state: Record<string, unknown>,
@@ -336,6 +361,12 @@ const createProjectScopedDraftEntities = async (
       entity.target_lifecycle = null;
     }
     if (authCtx) {
+      requireNoRestrictedFieldWrites(
+        authCtx,
+        schema,
+        Object.keys(entity.data),
+        'You do not have permission to set one or more restricted fields on this entity'
+      );
       if (parents.length > 0) {
         parents.forEach(parent =>
           requireEntityAction(
@@ -531,6 +562,7 @@ export const createChangeCase = async (
               draftResult.draftEntities,
               draftResult.allEntities
             );
+            await requireNoRestrictedCaseMemberWrites(tx, ws, authCtx, entity, proposedState);
             return buildMemberInput(entity, proposedState, project.id);
           })
         );
@@ -587,6 +619,8 @@ export const addEntityToChangeCase = async (
         `You do not have permission to edit entity '${entity.id}'`
       );
       await assertEntityBelongsToProject(db, ws, project.id, entity);
+
+      await requireNoRestrictedCaseMemberWrites(db, ws, authCtx, entity, body.proposedState);
 
       const existingMembers = await db.changeCase.listMembers(ws, revision.id);
       httpAssert.true(!existingMembers.some(member => member.entity_id === entity.id), {
@@ -673,6 +707,8 @@ export const updateChangeCaseMemberProposedState = async (
         'edit_entity',
         `You do not have permission to edit entity '${entity.id}'`
       );
+
+      await requireNoRestrictedCaseMemberWrites(db, ws, authCtx, entity, body.proposedState);
 
       const updated = await db.changeCase.updateMemberProposedState(
         ws,
@@ -817,6 +853,7 @@ export const saveChangeCaseDraft = async (
               draftResult.draftEntities,
               draftResult.allEntities
             );
+            await requireNoRestrictedCaseMemberWrites(tx, ws, authCtx, entity, proposedState);
             return { entity, proposedState };
           })
         );

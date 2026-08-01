@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildAuthorizationContext } from '@arch-register/permissions';
+import type { DatabaseAdapter } from '../../db/database';
 import { toApiMember } from './changeCaseOperations';
+import { requireNoRestrictedCaseMemberWrites } from './changeCaseOperations';
 import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import type { ChangeCaseMemberDbResult } from './db/changeCaseDatabase';
@@ -70,5 +72,54 @@ describe('toApiMember', () => {
     const api = toApiMember(member, authCtxWithNoTeams(), new Map());
     expect(api.base_state['data']).toEqual({ visible: 'v-before', secret: 'before' });
     expect(api.proposed_state['data']).toEqual({ visible: 'v-after', secret: 'after' });
+  });
+});
+
+describe('requireNoRestrictedCaseMemberWrites', () => {
+  const entity = {
+    schema_id: 'schema-1',
+    data: { visible: 'before', secret: 'before' }
+  } as never;
+  const db = {
+    catalog: {
+      getSchema: vi.fn(async () => schema)
+    }
+  } as unknown as DatabaseAdapter;
+
+  it('rejects a proposed change to a restricted field', async () => {
+    await expect(
+      requireNoRestrictedCaseMemberWrites(db, 'ws-1', authCtxWithNoTeams(), entity, {
+        schema_id: 'schema-1',
+        data: { visible: 'after', secret: 'changed' }
+      })
+    ).rejects.toThrow();
+  });
+
+  it('allows a proposed state that resubmits an unchanged restricted field', async () => {
+    await expect(
+      requireNoRestrictedCaseMemberWrites(db, 'ws-1', authCtxWithNoTeams(), entity, {
+        schema_id: 'schema-1',
+        data: { visible: 'after', secret: 'before' }
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  it('allows a restricted change for a caller with edit access', async () => {
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-restricted', role: 'team_editor' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    await expect(
+      requireNoRestrictedCaseMemberWrites(db, 'ws-1', authCtx, entity, {
+        schema_id: 'schema-1',
+        data: { visible: 'before', secret: 'changed' }
+      })
+    ).resolves.toBeUndefined();
   });
 });
