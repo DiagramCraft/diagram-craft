@@ -9,6 +9,8 @@ import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import { isReferenceOrContainmentField, type SchemaCatalog } from './entityQueryIRValidator';
 import type { WorkspaceEnumDbResult } from './db/catalogDatabase';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 
 // Text ⇄ IR compiler for the entity query language (specs/QUERY_LANGUAGE.md §4). This file owns
 // both directions: `parseEntityQueryText` (text -> IR) and `printEntityQueryText` (IR -> text).
@@ -170,7 +172,12 @@ const tokenize = (input: string): Token[] => {
 
 // ── Parser state ─────────────────────────────────────────────────────────
 
-type ParserState = { tokens: Token[]; pos: number; hopsUsed: number };
+type ParserState = {
+  tokens: Token[];
+  pos: number;
+  hopsUsed: number;
+  authCtx: WorkspaceAuthorizationContext | null;
+};
 
 const peek = (state: ParserState): Token => state.tokens[state.pos]!;
 const advance = (state: ParserState): Token => state.tokens[state.pos++]!;
@@ -235,13 +242,16 @@ const resolveField = (
   fieldId: string,
   currentSchemaId: string | undefined,
   schemas: SchemaCatalog,
-  offset: number
+  offset: number,
+  authCtx: WorkspaceAuthorizationContext | null
 ): FieldResolution => {
   if (isPseudoFieldId(fieldId)) return { kind: 'pseudo' };
 
-  const candidateSchemas = currentSchemaId
-    ? [schemas.get(currentSchemaId)].filter((s): s is NonNullable<typeof s> => s != null)
-    : [...schemas.values()];
+  const candidateSchemas = (
+    currentSchemaId
+      ? [schemas.get(currentSchemaId)].filter((s): s is NonNullable<typeof s> => s != null)
+      : [...schemas.values()]
+  ).filter(schema => !isFieldViewRestricted(authCtx, schema, fieldId));
 
   const matches = candidateSchemas
     .map(schema => schema.fields.find(f => f.id === fieldId))
@@ -291,13 +301,18 @@ const resolveBackwardStep = (
   explicitSchemaRef: string | undefined,
   currentSchemaId: string | undefined,
   schemas: SchemaCatalog,
-  offset: number
+  offset: number,
+  authCtx: WorkspaceAuthorizationContext | null
 ): { ownerSchemaId: string } => {
   if (explicitSchemaRef) {
     const ownerSchemaId = resolveSchemaRef(schemas, explicitSchemaRef, offset);
     const owner = schemas.get(ownerSchemaId)!;
     const field = owner.fields.find(f => f.id === fieldId);
-    if (!field || !isReferenceOrContainmentField(field)) {
+    if (
+      !field ||
+      !isReferenceOrContainmentField(field) ||
+      isFieldViewRestricted(authCtx, owner, fieldId)
+    ) {
       throw new TextCompileError(
         `Schema '${explicitSchemaRef}' does not define a reference/containment field '${fieldId}'`,
         offset
@@ -315,6 +330,7 @@ const resolveBackwardStep = (
   const candidates = [...schemas.values()].filter(schema => {
     const field = schema.fields.find(f => f.id === fieldId);
     if (!field || !isReferenceOrContainmentField(field)) return false;
+    if (isFieldViewRestricted(authCtx, schema, fieldId)) return false;
     return currentSchemaId ? field.schemaId === currentSchemaId : true;
   });
 
@@ -530,7 +546,8 @@ const parseStep = (
       explicitSchemaRef,
       currentSchemaId,
       schemas,
-      token.offset
+      token.offset,
+      state.authCtx
     );
     let filter: QueryNode | undefined;
     if (peek(state).kind === 'LBRACKET') {
@@ -552,7 +569,7 @@ const parseStep = (
     };
   }
 
-  const resolution = resolveField(fieldId, currentSchemaId, schemas, token.offset);
+  const resolution = resolveField(fieldId, currentSchemaId, schemas, token.offset, state.authCtx);
   const nextSchemaId = resolution.kind === 'relation' ? resolution.field.schemaId : currentSchemaId;
 
   let filter: QueryNode | undefined;
@@ -798,12 +815,13 @@ const deriveRootSchemaId = (tokens: Token[], schemas: SchemaCatalog): string | u
 export const parseEntityQueryText = (
   text: string,
   schemas: SchemaCatalog,
-  enums: EnumCatalog
+  enums: EnumCatalog,
+  authCtx: WorkspaceAuthorizationContext | null = null
 ): TextParseResult => {
   try {
     const tokens = tokenize(text);
     const rootSchemaId = deriveRootSchemaId(tokens, schemas);
-    const state: ParserState = { tokens, pos: 0, hopsUsed: 0 };
+    const state: ParserState = { tokens, pos: 0, hopsUsed: 0, authCtx };
     const root = parseOrExpr(state, rootSchemaId, schemas, enums, true);
     if (peek(state).kind !== 'EOF') {
       throw new TextCompileError(

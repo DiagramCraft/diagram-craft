@@ -9,6 +9,7 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import styles from '../../../components/FilterBuilder.module.css';
 import scopeStyles from './AssessmentScopeFilterBuilder.module.css';
 import { EmptyState } from '../../../components/EmptyState';
+import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 
 type ScopeField = {
   id: string;
@@ -56,12 +57,14 @@ const useScopeFields = ({
   schemas,
   scope,
   lifecycleStates,
-  teams
+  teams,
+  getFieldGroupAccess
 }: {
   schemas: EntitySchema[];
   scope: string[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  getFieldGroupAccess: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
 }) =>
   React.useMemo(() => {
     const fields: ScopeField[] = [
@@ -86,6 +89,10 @@ const useScopeFields = ({
       for (const field of schema.fields) {
         if (field.type === 'reference' || field.type === 'containment') continue;
         if (customFields.has(field.id)) continue;
+        if (field.groupId) {
+          const group = schema.groups?.find(g => g.id === field.groupId);
+          if (getFieldGroupAccess(group?.accessControl) === 'none') continue;
+        }
         customFields.set(field.id, {
           id: field.id,
           name: field.name,
@@ -96,7 +103,7 @@ const useScopeFields = ({
     }
 
     return [...fields, ...customFields.values()];
-  }, [schemas, scope, lifecycleStates, teams]);
+  }, [schemas, scope, lifecycleStates, teams, getFieldGroupAccess]);
 
 export const AssessmentScopeFilterBuilder = ({
   conditions,
@@ -104,7 +111,8 @@ export const AssessmentScopeFilterBuilder = ({
   schemas,
   scope,
   lifecycleStates,
-  teams
+  teams,
+  getFieldGroupAccess = () => 'edit'
 }: {
   conditions: FilterCondition[];
   onChange: (conditions: FilterCondition[]) => void;
@@ -112,8 +120,12 @@ export const AssessmentScopeFilterBuilder = ({
   scope: string[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  // Resolves a field group's access for the current caller — pass `useFieldGroupAccess(workspaceId)`.
+  // Defaults to unrestricted (matches the hook's own no-context fallback) so this stays a pure,
+  // presentational component usable without an auth context (e.g. in Storybook).
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
 }) => {
-  const fields = useScopeFields({ schemas, scope, lifecycleStates, teams });
+  const fields = useScopeFields({ schemas, scope, lifecycleStates, teams, getFieldGroupAccess });
 
   const addCondition = () => {
     const first = fields[0];

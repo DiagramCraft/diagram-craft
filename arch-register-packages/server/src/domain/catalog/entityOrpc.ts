@@ -356,11 +356,11 @@ const buildQueryCatalogs = async (
 
 const entityQueryTextHandlers = {
   parseText: entityRouter.entityQueryText.parseText.handler(async ({ input, context }) => {
-    const { workspace } = context;
+    const { workspace, authCtx } = context;
     const { schemas, enums } = await buildQueryCatalogs(context.db, workspace);
-    const result = parseEntityQueryText(input.query.text, schemas, enums);
+    const result = parseEntityQueryText(input.query.text, schemas, enums, authCtx);
     if (!result.ok) return result;
-    const validation = validateEntityQueryIR(result.query, schemas);
+    const validation = validateEntityQueryIR(result.query, schemas, authCtx);
     if (!validation.ok) {
       return {
         ok: false,

@@ -32,6 +32,7 @@ import type {
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useFieldGroupAccess } from '../../auth/useFieldGroupAccess';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -381,6 +382,7 @@ export const AssessmentEditorDialog = ({
   onCancel: () => void;
 }) => {
   const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
+  const getFieldGroupAccess = useFieldGroupAccess(workspaceSlug);
   const portal = usePortal();
   const isNew = !assessment;
   const [name, setName] = useState(assessment?.name ?? '');
@@ -816,6 +818,7 @@ export const AssessmentEditorDialog = ({
               scope={scope}
               lifecycleStates={lifecycleStates}
               teams={teams}
+              getFieldGroupAccess={getFieldGroupAccess}
             />
             <div className={styles.scopePreview}>
               {scope.length === 0

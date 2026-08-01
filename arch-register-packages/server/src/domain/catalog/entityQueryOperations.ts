@@ -194,7 +194,7 @@ export const collectEntitiesFromIR = async (
   httpAssert.present(query, { status: 400, message: 'EntityQuery is required' });
 
   const schemaCatalog: SchemaCatalog = new Map(schemas.map(schema => [schema.id, schema]));
-  const validation = validateEntityQueryIR(query, schemaCatalog);
+  const validation = validateEntityQueryIR(query, schemaCatalog, authCtx);
   httpAssert.true(validation.ok, {
     status: 400,
     message: validation.ok
