@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
+import {
+  resolveFieldSchemaScope,
+  validateEntityQueryIR,
+  type SchemaCatalog
+} from './entityQueryIRValidator';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
@@ -413,5 +417,41 @@ describe('validateEntityQueryIR field-group restriction', () => {
       root: { kind: 'predicate', path: [], fieldId: 'secret', op: 'equals', value: 'x' }
     };
     expect(validateEntityQueryIR(query, restrictedSchemas)).toEqual({ ok: true });
+  });
+
+  // #2592: a field id restricted in one schema but also defined, unrestricted, by an unrelated
+  // schema must still resolve at this layer (matching the collapsing behavior above) — the
+  // per-schema leak this collision otherwise causes is closed downstream, at compile time, by
+  // scoping the compiled SQL to only the schemas that actually grant the field. See
+  // entityQueryIRCompiler.contract.test.ts for the SQL-level regression coverage.
+  describe('field id collision across schemas', () => {
+    const UNRESTRICTED_COLLIDER = makeSchema('collider-schema', [
+      { id: 'secret', name: 'Secret', type: 'text' }
+    ]);
+    const collidingSchemas: SchemaCatalog = new Map([
+      ...restrictedSchemas,
+      [UNRESTRICTED_COLLIDER.id, UNRESTRICTED_COLLIDER]
+    ]);
+
+    it('still resolves the field via the unrestricted schema', () => {
+      const noAccess = authCtxWithTeamRoles({});
+      const query: EntityQuery = {
+        root: { kind: 'predicate', path: [], fieldId: 'secret', op: 'equals', value: 'x' }
+      };
+      expect(validateEntityQueryIR(query, collidingSchemas, noAccess)).toEqual({ ok: true });
+    });
+
+    it('resolveFieldSchemaScope reports the granting schema and flags scoping as needed', () => {
+      const noAccess = authCtxWithTeamRoles({});
+      const scope = resolveFieldSchemaScope('secret', collidingSchemas, noAccess);
+      expect(scope.needsScoping).toBe(true);
+      expect(scope.grantedSchemaIds).toEqual(new Set([UNRESTRICTED_COLLIDER.id]));
+    });
+
+    it('resolveFieldSchemaScope needs no scoping for a non-colliding field', () => {
+      const noAccess = authCtxWithTeamRoles({});
+      const scope = resolveFieldSchemaScope('eol_date', collidingSchemas, noAccess);
+      expect(scope.needsScoping).toBe(false);
+    });
   });
 });

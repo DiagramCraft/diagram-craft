@@ -639,4 +639,22 @@ describe('parseEntityQueryText field-group restriction', () => {
     const result = parseEntityQueryText('schema:Restricted secret = "x"', restrictedSchemas, enums);
     expect(result.ok).toBe(true);
   });
+
+  // #2592: a bare (no `schema:` prefix) field id resolves against every schema in the catalog, so
+  // a field id restricted in one schema but also defined, unrestricted, by an unrelated schema
+  // still resolves here — matching the collapsing behavior above. The per-schema leak this
+  // collision would otherwise cause is closed downstream, at compile time, by scoping the
+  // compiled SQL to only the schemas that actually grant the field (entityQueryIRCompiler.ts).
+  it('still resolves a colliding field via an unrelated unrestricted schema', () => {
+    const UNRESTRICTED_COLLIDER = makeSchema('collider-id', 'Collider', [
+      { id: 'secret', name: 'Secret', type: 'text' }
+    ]);
+    const collidingSchemas: SchemaCatalog = new Map([
+      ...restrictedSchemas,
+      [UNRESTRICTED_COLLIDER.id, UNRESTRICTED_COLLIDER]
+    ]);
+    const noAccess = authCtxWithTeamRoles({});
+    const result = parseEntityQueryText('secret = "x"', collidingSchemas, enums, noAccess);
+    expect(result.ok).toBe(true);
+  });
 });
