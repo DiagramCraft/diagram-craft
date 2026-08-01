@@ -1,0 +1,157 @@
+import { describe, expect, it, vi } from 'vitest';
+import type { DatabaseAdapter } from '../../db/database';
+import { buildAuthorizationContext } from '@arch-register/permissions';
+import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import { importCommit } from './importOperations';
+
+const now = new Date('2026-06-29T12:00:00.000Z');
+
+const schema: SchemaDbResult = {
+  id: 'schema-1',
+  workspace: 'ws-1',
+  name: 'Service',
+  description: '',
+  fields: [
+    { id: 'name_field', name: 'Name field', requirementLevel: null, type: 'text' } as never,
+    {
+      id: 'secret',
+      name: 'Secret',
+      requirementLevel: null,
+      type: 'text',
+      groupId: 'restricted'
+    } as never
+  ],
+  groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-owner'] } }],
+  color: null,
+  icon: null,
+  default_owner: null,
+  key_prefix: 'SRV',
+  created_at: now,
+  updated_at: now
+};
+
+const existingEntity: EntityDbResult = {
+  id: 'entity-1',
+  workspace: 'ws-1',
+  public_id: 'SRV-1',
+  slug: 'my-entity',
+  namespace: 'default',
+  name: 'My Entity',
+  description: '',
+  owner: 'team-owner',
+  lifecycle: null,
+  target_lifecycle: null,
+  target_lifecycle_date: null,
+  tags: [],
+  links: [],
+  schema_id: 'schema-1',
+  data: { name_field: 'x', secret: 'original' },
+  project_id: null,
+  created_at: now,
+  updated_at: now,
+  owner_name: null,
+  lifecycle_label: null,
+  target_lifecycle_label: null,
+  schema_name: 'Service',
+  completeness: 0
+};
+
+const makeDb = () =>
+  ({
+    catalog: {
+      getSchema: vi.fn(async () => schema),
+      listEntitiesPaginated: vi.fn(async () => [existingEntity]),
+      updateEntity: vi.fn(async (_ws: string, _id: string, input: Record<string, unknown>) => ({
+        ...existingEntity,
+        ...input
+      })),
+      createEntity: vi.fn(async (input: Record<string, unknown>) => ({
+        ...input,
+        owner_name: null,
+        schema_name: 'Service'
+      }))
+    },
+    workspace: {
+      listLifecycleStates: vi.fn(async () => []),
+      listTeams: vi.fn(async () => [{ id: 'team-owner' }]),
+      allocatePublicId: vi.fn(async () => 1)
+    },
+    audit: {
+      createAuditLog: vi.fn(async () => ({ id: 'audit-1' }))
+    },
+    watch: {
+      listWatcherUserIds: vi.fn(async () => []),
+      createNotificationsFromAudit: vi.fn(async () => {})
+    }
+  }) as unknown as DatabaseAdapter;
+
+const authCtxWithTeamRole = (role: 'team_reviewer' | 'team_editor' | 'team_admin' | null) =>
+  buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: 'editor',
+    teamAssignments: role ? [{ teamId: 'team-owner', role }] : [],
+    schemas: [],
+    entities: [],
+    grants: []
+  });
+
+describe('importCommit — restricted field group writes', () => {
+  it('rejects updating a restricted field via CSV import when the caller cannot edit it', async () => {
+    const db = makeDb();
+    const authCtx = authCtxWithTeamRole(null);
+
+    await expect(
+      importCommit(db, authCtx, {
+        workspace: 'ws-1',
+        schemaId: 'schema-1',
+        entities: [{ _existingId: 'entity-1', name_field: 'x', secret: 'changed' }],
+        auditUser: { id: 'user-1', display_name: 'User' }
+      })
+    ).rejects.toThrow();
+  });
+
+  it('allows updating a restricted field via CSV import when the caller has team_editor access', async () => {
+    const db = makeDb();
+    const authCtx = authCtxWithTeamRole('team_editor');
+
+    await importCommit(db, authCtx, {
+      workspace: 'ws-1',
+      schemaId: 'schema-1',
+      entities: [{ _existingId: 'entity-1', name_field: 'x', secret: 'changed' }],
+      auditUser: { id: 'user-1', display_name: 'User' }
+    });
+
+    expect(db.catalog.updateEntity).toHaveBeenCalled();
+  });
+
+  it('rejects creating an entity with a restricted value via CSV import when the caller cannot edit it', async () => {
+    const db = makeDb();
+    const authCtx = authCtxWithTeamRole(null);
+
+    await expect(
+      importCommit(db, authCtx, {
+        workspace: 'ws-1',
+        schemaId: 'schema-1',
+        entities: [{ _name: 'New Entity', name_field: 'x', secret: 'sneaked-in' }],
+        auditUser: { id: 'user-1', display_name: 'User' }
+      })
+    ).rejects.toThrow();
+
+    expect(db.catalog.createEntity).not.toHaveBeenCalled();
+  });
+
+  it('allows creating an entity with a restricted value via CSV import when the caller has team_editor access', async () => {
+    const db = makeDb();
+    const authCtx = authCtxWithTeamRole('team_editor');
+
+    await importCommit(db, authCtx, {
+      workspace: 'ws-1',
+      schemaId: 'schema-1',
+      entities: [{ _name: 'New Entity', name_field: 'x', secret: 'allowed' }],
+      auditUser: { id: 'user-1', display_name: 'User' }
+    });
+
+    expect(db.catalog.createEntity).toHaveBeenCalled();
+  });
+});
