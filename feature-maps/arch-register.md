@@ -463,7 +463,9 @@
       structured records.
 
         - @id:ar.ai.assistant @status:experimental Users can hold workspace-scoped AI conversations and inspect
-          persisted conversation history when AI is configured.
+          persisted conversation history when AI is configured. Field values from access-restricted field groups
+          are scrubbed from the assistant's entity search, preview, and detail results, and writes to a restricted
+          field through the assistant are blocked, consistent with the equivalent REST/oRPC entity operations.
 
         - @id:ar.ai.entity-extraction @status:experimental Users can submit supported content to an AI extraction
           workflow, review parsed entities, and accept selected results.
