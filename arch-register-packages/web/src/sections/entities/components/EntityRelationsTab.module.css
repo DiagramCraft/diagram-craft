@@ -39,4 +39,9 @@
   color: var(--base-fg);
   font-weight: 500;
   min-width: 0;
+  text-decoration: none;
+}
+
+.relationName:hover {
+  text-decoration: underline;
 }

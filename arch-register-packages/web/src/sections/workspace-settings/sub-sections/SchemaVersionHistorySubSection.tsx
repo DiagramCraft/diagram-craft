@@ -1,8 +1,13 @@
-import { useSchemaVersions } from '../../../hooks/useSchemas';
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { TbHistory } from 'react-icons/tb';
+
+type VersionEntryLike = {
+  version: number;
+  createdAt: string;
+  changeSummary: Record<string, unknown>;
+};
 
 const summarizeChange = (changeSummary: Record<string, unknown>): string => {
   const parts: string[] = [];
@@ -22,14 +27,12 @@ const summarizeChange = (changeSummary: Record<string, unknown>): string => {
 };
 
 export const SchemaVersionHistorySubSection = ({
-  workspaceId,
-  schemaId
+  versions,
+  isLoading
 }: {
-  workspaceId: string;
-  schemaId: string;
+  versions: VersionEntryLike[] | undefined;
+  isLoading: boolean;
 }) => {
-  const { data: versions, isLoading } = useSchemaVersions(workspaceId, schemaId);
-
   if (isLoading) return <LoadingState text="Loading version history..." />;
 
   if (!versions || versions.length === 0) {

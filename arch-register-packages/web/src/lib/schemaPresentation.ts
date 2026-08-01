@@ -1,6 +1,7 @@
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import type { DocumentType } from '@arch-register/api-types/documentContract';
-import type { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 
 export type FieldType = SchemaField['type'];
 
@@ -16,9 +17,18 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'derived', label: 'Derived' }
 ];
 
+export type RelationFieldType = RelationField['type'];
+
+// Relation fields intentionally exclude reference/containment/derived — see relationSchemaContract.ts
+export const RELATION_FIELD_TYPES: { value: RelationFieldType; label: string }[] =
+  FIELD_TYPES.filter(
+    (t): t is { value: RelationFieldType; label: string } =>
+      t.value !== 'reference' && t.value !== 'containment' && t.value !== 'derived'
+  );
+
 export const schemaColor = (index: number): string => SCHEMA_COLORS[index % SCHEMA_COLORS.length]!;
 
-export const resolveSchemaColor = (schema: EntitySchema, index: number): string =>
+export const resolveSchemaColor = (schema: { color: string | null }, index: number): string =>
   schema.color ?? schemaColor(index);
 
 export const resolveDocumentTypeColor = (documentType: DocumentType, index: number): string =>

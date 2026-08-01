@@ -11,6 +11,7 @@ import { AddProjectDialog } from '../dialogs/AddProjectDialog';
 import { useWorkspaces, workspaceKeys } from '../hooks/useWorkspaces';
 import { projectKeys } from '../queries/projects';
 import { useSchemas } from '../hooks/useSchemas';
+import { useRelationSchemas } from '../hooks/useRelationSchemas';
 import { useEnums } from '../hooks/useEnums';
 import { useFieldGroups } from '../hooks/useFieldGroups';
 import { useProjects } from '../hooks/useProjects';
@@ -77,6 +78,10 @@ export const WorkspaceLayout = () => {
   const ws = workspaces.find(w => w.url_slug === workspaceSlug) ?? null;
 
   const { data: schemas = [], error: schemasError } = useSchemas(workspaceSlug, !!workspaceSlug);
+  const { data: relationSchemas = [], error: relationSchemasError } = useRelationSchemas(
+    workspaceSlug,
+    !!workspaceSlug
+  );
   const { data: enums = [], error: enumsError } = useEnums(workspaceSlug, !!workspaceSlug);
   const { data: fieldGroups = [], error: fieldGroupsError } = useFieldGroups(
     workspaceSlug,
@@ -200,6 +205,7 @@ export const WorkspaceLayout = () => {
       workspace: ws,
       workspaceSlug,
       schemas,
+      relationSchemas,
       enums,
       fieldGroups,
       projects,
@@ -230,6 +236,7 @@ export const WorkspaceLayout = () => {
       ws,
       workspaceSlug,
       schemas,
+      relationSchemas,
       enums,
       fieldGroups,
       projects,
@@ -287,9 +294,21 @@ export const WorkspaceLayout = () => {
     </RouteContentBoundary>
   );
 
-  if (workspacesError || projectsError || schemasError || enumsError || fieldGroupsError) {
+  if (
+    workspacesError ||
+    projectsError ||
+    schemasError ||
+    relationSchemasError ||
+    enumsError ||
+    fieldGroupsError
+  ) {
     const error =
-      workspacesError ?? projectsError ?? schemasError ?? enumsError ?? fieldGroupsError;
+      workspacesError ??
+      projectsError ??
+      schemasError ??
+      relationSchemasError ??
+      enumsError ??
+      fieldGroupsError;
     return (
       <AppErrorState
         fullScreen

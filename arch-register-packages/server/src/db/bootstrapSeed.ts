@@ -19,6 +19,8 @@ import {
   seedSavedViews,
   seedEnums,
   seedNotificationEvents,
+  seedRelationSchemas,
+  seedRelations,
   seedSchemas,
   seedSharedFieldGroups,
   seedTeamAssignments,
@@ -308,6 +310,12 @@ export const seedBootstrapData = async (
   }
   for (const entity of seedEntities) {
     await db.catalog.createEntity(entity);
+  }
+  for (const relationSchema of seedRelationSchemas) {
+    await db.relation.createRelationSchema(relationSchema);
+  }
+  for (const relation of seedRelations) {
+    await db.relation.createRelation(relation);
   }
   for (const assessment of seedAssessments) {
     await db.project.createAssessment(assessment);
