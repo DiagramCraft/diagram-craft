@@ -24,6 +24,7 @@ import type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeData
 import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 import type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
 import type { EntityExternalIdentityDatabase } from '../domain/externalIdentity/db/externalIdentityDatabase';
+import type { RelationDatabase } from '../domain/catalog/db/relationDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -67,6 +68,7 @@ export type DatabaseAdapter = {
   entityDeprecation: EntityDeprecationDatabase;
   changeCase: ChangeCaseDatabase;
   externalIdentity: EntityExternalIdentityDatabase;
+  relation: RelationDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain

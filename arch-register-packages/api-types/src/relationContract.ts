@@ -94,11 +94,21 @@ export const workspaceRelationContract = oc.tag('Relations').router({
             ...relationListFiltersSchema.shape,
             limit: z.preprocess(
               v => (v !== undefined ? Number(v) : undefined),
-              z.number().int().positive().optional().describe('Maximum number of relations to return')
+              z
+                .number()
+                .int()
+                .positive()
+                .optional()
+                .describe('Maximum number of relations to return')
             ),
             offset: z.preprocess(
               v => (v !== undefined ? Number(v) : undefined),
-              z.number().int().min(0).optional().describe('Number of relations to skip for pagination')
+              z
+                .number()
+                .int()
+                .min(0)
+                .optional()
+                .describe('Number of relations to skip for pagination')
             )
           })
         })

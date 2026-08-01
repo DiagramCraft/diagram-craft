@@ -132,7 +132,11 @@ const relationSchemaSchema = z.object({
     .describe('Included workspace shared fieldgroups, in display order'),
   color: z.string().nullable().describe('Relation schema color (hex format)'),
   icon: z.string().nullable().describe('Relation schema icon identifier'),
-  relation_count: z.number().int().min(0).describe('Number of relation instances using this schema'),
+  relation_count: z
+    .number()
+    .int()
+    .min(0)
+    .describe('Number of relation instances using this schema'),
   version: z.number().int().min(1).describe('Current schema version number'),
   relation_approval_policy: z
     .enum(['required', 'disabled'])

@@ -33,6 +33,7 @@ import { PostgresEntityChangeDatabase } from '../domain/catalog/db/postgresEntit
 import { PostgresEntityDeprecationDatabase } from '../domain/catalog/db/postgresEntityDeprecation';
 import { PostgresChangeCaseDatabase } from '../domain/catalog/db/postgresChangeCase';
 import { PostgresExternalIdentityDatabase } from '../domain/externalIdentity/db/postgresExternalIdentity';
+import { PostgresRelationDatabase } from '../domain/catalog/db/postgresRelation';
 import { createLogger } from '../utils/logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -70,6 +71,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly entityDeprecation: PostgresEntityDeprecationDatabase;
   readonly changeCase: PostgresChangeCaseDatabase;
   readonly externalIdentity: PostgresExternalIdentityDatabase;
+  readonly relation: PostgresRelationDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -100,7 +102,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       entityChange: new PostgresEntityChangeDatabase(sql),
       entityDeprecation: new PostgresEntityDeprecationDatabase(sql),
       changeCase: new PostgresChangeCaseDatabase(sql),
-      externalIdentity: new PostgresExternalIdentityDatabase(sql)
+      externalIdentity: new PostgresExternalIdentityDatabase(sql),
+      relation: new PostgresRelationDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -164,6 +167,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.entityDeprecation = new PostgresEntityDeprecationDatabase(this.sql);
     this.changeCase = new PostgresChangeCaseDatabase(this.sql);
     this.externalIdentity = new PostgresExternalIdentityDatabase(this.sql);
+    this.relation = new PostgresRelationDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

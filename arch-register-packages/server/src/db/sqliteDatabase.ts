@@ -31,6 +31,7 @@ import { SqliteEntityChangeDatabase } from '../domain/catalog/db/sqliteEntityCha
 import { SqliteEntityDeprecationDatabase } from '../domain/catalog/db/sqliteEntityDeprecation';
 import { SqliteChangeCaseDatabase } from '../domain/catalog/db/sqliteChangeCase';
 import { SqliteExternalIdentityDatabase } from '../domain/externalIdentity/db/sqliteExternalIdentity';
+import { SqliteRelationDatabase } from '../domain/catalog/db/sqliteRelation';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -64,6 +65,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly entityDeprecation;
   readonly changeCase;
   readonly externalIdentity;
+  readonly relation;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -99,6 +101,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.entityDeprecation = new SqliteEntityDeprecationDatabase(() => this.db);
     this.changeCase = new SqliteChangeCaseDatabase(() => this.db);
     this.externalIdentity = new SqliteExternalIdentityDatabase(() => this.db);
+    this.relation = new SqliteRelationDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -180,7 +183,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       entityChange: this.entityChange,
       entityDeprecation: this.entityDeprecation,
       changeCase: this.changeCase,
-      externalIdentity: this.externalIdentity
+      externalIdentity: this.externalIdentity,
+      relation: this.relation
     };
   }
 
