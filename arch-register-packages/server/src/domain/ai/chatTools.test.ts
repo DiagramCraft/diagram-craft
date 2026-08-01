@@ -21,7 +21,8 @@ const schemas: SchemaDbResult[] = [
         type: 'reference',
         schemaId: 'capability',
         minCount: 0,
-        maxCount: -1
+        maxCount: -1,
+        groupId: 'finance'
       },
       { id: 'budget', name: 'Budget', type: 'text', groupId: 'finance' }
     ],
@@ -191,6 +192,7 @@ const entities: Entity[] = [
     schema_id: 'application',
     data: {
       tech: 'Java',
+      dependsOn: 'entity-cap-1',
       budget: '1000000'
     },
     project_id: null,
@@ -361,19 +363,20 @@ describe('createAiChatTools', () => {
       entity: {
         id: 'entity-cap-1',
         name: 'Payment Processing',
-        schemaName: 'Capability',
-        incomingRelations: [
-          {
-            source: {
-              id: 'entity-app-2',
-              name: 'Billing API'
-            },
-            fieldId: 'dependsOn',
-            kind: 'reference'
-          }
-        ]
+        schemaName: 'Capability'
       }
     });
+    expect(
+      (result as { entity: { incomingRelations: unknown[] } }).entity.incomingRelations
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: expect.objectContaining({ id: 'entity-app-2', name: 'Billing API' }),
+          fieldId: 'dependsOn',
+          kind: 'reference'
+        })
+      ])
+    );
   });
 
   it('creates entities through an approval-gated mutation tool', async () => {
@@ -463,16 +466,16 @@ describe('createAiChatTools', () => {
     expect((result as { nodes: { id: string }[] }).nodes.map(n => n.id).sort()).toEqual(
       ['entity-app-2', 'entity-cap-1'].sort()
     );
-    expect(result).toMatchObject({
-      edges: [
-        {
+    expect((result as { edges: unknown[] }).edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
           sourceId: 'entity-app-2',
           targetId: 'entity-cap-1',
           fieldId: 'dependsOn',
           kind: 'reference'
-        }
-      ]
-    });
+        })
+      ])
+    );
   });
 
   it('traverses incoming relations one hop', async () => {
@@ -486,18 +489,18 @@ describe('createAiChatTools', () => {
     });
 
     expect((result as { nodes: { id: string }[] }).nodes.map(n => n.id).sort()).toEqual(
-      ['entity-app-2', 'entity-cap-1'].sort()
+      ['entity-app-2', 'entity-app-4', 'entity-cap-1'].sort()
     );
-    expect(result).toMatchObject({
-      edges: [
-        {
+    expect((result as { edges: unknown[] }).edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
           sourceId: 'entity-app-2',
           targetId: 'entity-cap-1',
           fieldId: 'dependsOn',
           kind: 'reference'
-        }
-      ]
-    });
+        })
+      ])
+    );
   });
 
   it('traverses both directions across multiple hops', async () => {
@@ -535,6 +538,47 @@ describe('createAiChatTools', () => {
   });
 
   describe('field group restriction', () => {
+    it('omits restricted relations from entity details and graph traversal', async () => {
+      const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');
+      const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+
+      const details = await getEntityDetails!.execute?.({ entityId: 'entity-app-4' });
+      expect(
+        (details as { entity: { outgoingRelations: unknown[] } }).entity.outgoingRelations
+      ).toEqual([]);
+
+      const graph = await traverseRelations!.execute?.({
+        entityId: 'entity-app-4',
+        depth: 2,
+        direction: 'both'
+      });
+      expect((graph as { nodes: { id: string }[] }).nodes.map(node => node.id)).toEqual([
+        'entity-app-4'
+      ]);
+      expect((graph as { edges: unknown[] }).edges).toEqual([]);
+    });
+
+    it('includes restricted relations for a caller with group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+      const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');
+      const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+
+      const details = await getEntityDetails!.execute?.({ entityId: 'entity-app-4' });
+      expect(details).toMatchObject({
+        entity: { outgoingRelations: [{ fieldId: 'dependsOn', targets: [{ id: 'entity-cap-1' }] }] }
+      });
+
+      const graph = await traverseRelations!.execute?.({
+        entityId: 'entity-app-4',
+        depth: 1,
+        direction: 'outgoing'
+      });
+      expect((graph as { nodes: { id: string }[] }).nodes.map(node => node.id).sort()).toEqual(
+        ['entity-app-4', 'entity-cap-1'].sort()
+      );
+    });
+
     it('omits a restricted field from get_entity_details for a caller without group access', async () => {
       const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
       const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');

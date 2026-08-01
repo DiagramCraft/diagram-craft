@@ -37,7 +37,7 @@ export const getEntityRelations = async (
     const entities = authCtx
       ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
       : entitiesRaw;
-    return buildEntityRelations(entity, schemas, entities);
+    return buildEntityRelations(entity, schemas, entities, authCtx);
   } catch (error) {
     return handleError(error, 'Failed to retrieve data relations');
   }
@@ -62,7 +62,7 @@ export const getBatchEntityRelations = async (
     for (const id of ids) {
       const entity = entityLookup.get(id);
       if (!entity) continue;
-      result[id] = buildEntityRelations(entity, schemas, entities);
+      result[id] = buildEntityRelations(entity, schemas, entities, authCtx);
     }
     return result;
   } catch (error) {
@@ -94,7 +94,7 @@ export const getEntityDependents = async (
     const entities = authCtx
       ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
       : entitiesRaw;
-    return buildEntityDependents(entity.id, entities, schemas, options);
+    return buildEntityDependents(entity.id, entities, schemas, options, authCtx);
   } catch (error) {
     return handleError(error, 'Failed to retrieve entity dependents');
   }

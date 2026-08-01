@@ -6,6 +6,7 @@ import { decodeRefs } from '../../types';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
 import {
   filterRestrictedFieldGroups,
+  isFieldViewRestricted,
   requireNoRestrictedFieldWrites
 } from '../auth/fieldGroupAccessControl';
 import {
@@ -465,42 +466,46 @@ export const createAiChatTools = (
     const includeRelated = args.includeRelated ?? true;
     const outgoingRelations =
       includeRelated && schema
-        ? relationFields(schema.fields).map(field => {
-            const ids = decodeRefs(entity.data[field.id]);
-            return {
-              fieldId: field.id,
-              fieldName: field.name,
-              kind: field.type,
-              targets: ids.map(id => {
-                const target = entityLookup.get(id);
-                if (!target) {
-                  return {
-                    id,
-                    name: null,
-                    slug: null,
-                    schemaId: field.schemaId,
-                    schemaName: schemaMap.get(field.schemaId)?.name ?? field.schemaId
-                  };
-                }
-                return summarizeRelationTarget(target, schemaMap.get(target.schema_id)?.name);
-              })
-            };
-          })
+        ? relationFields(schema.fields)
+            .filter(field => !isFieldViewRestricted(authCtx, schema, field.id))
+            .map(field => {
+              const ids = decodeRefs(entity.data[field.id]);
+              return {
+                fieldId: field.id,
+                fieldName: field.name,
+                kind: field.type,
+                targets: ids.map(id => {
+                  const target = entityLookup.get(id);
+                  if (!target) {
+                    return {
+                      id,
+                      name: null,
+                      slug: null,
+                      schemaId: field.schemaId,
+                      schemaName: schemaMap.get(field.schemaId)?.name ?? field.schemaId
+                    };
+                  }
+                  return summarizeRelationTarget(target, schemaMap.get(target.schema_id)?.name);
+                })
+              };
+            })
         : [];
 
     const incomingRelations = includeRelated
       ? entities.flatMap(source => {
           const sourceSchema = schemaMap.get(source.schema_id);
           if (!sourceSchema) return [];
-          return relationFields(sourceSchema.fields).flatMap(field => {
-            if (!decodeRefs(source.data[field.id]).includes(entity.id)) return [];
-            return {
-              source: summarizeRelationTarget(source, sourceSchema.name),
-              fieldId: field.id,
-              fieldName: field.name,
-              kind: field.type
-            };
-          });
+          return relationFields(sourceSchema.fields)
+            .filter(field => !isFieldViewRestricted(authCtx, sourceSchema, field.id))
+            .flatMap(field => {
+              if (!decodeRefs(source.data[field.id]).includes(entity.id)) return [];
+              return {
+                source: summarizeRelationTarget(source, sourceSchema.name),
+                fieldId: field.id,
+                fieldName: field.name,
+                kind: field.type
+              };
+            });
         })
       : [];
 
@@ -782,6 +787,7 @@ export const createAiChatTools = (
 
       if (direction === 'outgoing' || direction === 'both') {
         for (const field of relationFields(schema?.fields ?? [])) {
+          if (isFieldViewRestricted(authCtx, schema, field.id)) continue;
           for (const refId of decodeRefs(current.data[field.id])) {
             addEdge(currentId, refId, field.id, field.name, field.type);
             if (!visited.has(refId)) {
@@ -798,6 +804,7 @@ export const createAiChatTools = (
           if (source.id === currentId) continue;
           const sourceSchema = schemaMap.get(source.schema_id);
           for (const field of relationFields(sourceSchema?.fields ?? [])) {
+            if (isFieldViewRestricted(authCtx, sourceSchema, field.id)) continue;
             if (!decodeRefs(source.data[field.id]).includes(currentId)) continue;
             addEdge(source.id, currentId, field.id, field.name, field.type);
             if (!visited.has(source.id)) {

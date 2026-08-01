@@ -23,6 +23,7 @@ import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 import type { EntityDbResult, EntityQueryDbResult, SchemaDbResult } from './db/catalogDatabase';
 import { compileEntityQueryIR, UnsupportedEntityQueryIRError } from './entityQueryIRCompiler';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 
 const checker = new PermissionChecker();
 
@@ -622,7 +623,7 @@ export const getEntityTree = async (
       const cFields = schema.fields
         .filter(
           (f): f is Extract<(typeof schema.fields)[number], { type: 'containment' }> =>
-            f.type === 'containment'
+            f.type === 'containment' && !isFieldViewRestricted(authCtx, schema, f.id)
         )
         .map(f => f.id);
       if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);

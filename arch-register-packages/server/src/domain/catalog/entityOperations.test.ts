@@ -3,7 +3,12 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import type { AssessmentDbResult, AssessmentResponseDbResult } from '../project/db/projectDatabase';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
-import { countEntities, listEntities, listEntitiesWithCount } from './entityQueryOperations';
+import {
+  countEntities,
+  getEntityTree,
+  listEntities,
+  listEntitiesWithCount
+} from './entityQueryOperations';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
 
@@ -654,5 +659,53 @@ describe('completeness redaction for restricted field groups', () => {
 
     // description + owner + isCritical filled: 3/4.
     expect(result[0]?._completeness).toBe(75);
+  });
+});
+
+describe('tree relation access control', () => {
+  const containmentSchema: SchemaDbResult = {
+    ...schema,
+    fields: [
+      {
+        id: 'parent',
+        name: 'Parent',
+        type: 'containment',
+        schemaId: schema.id,
+        minCount: 0,
+        maxCount: 1,
+        groupId: 'restricted'
+      }
+    ],
+    groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-allowed'] } }]
+  };
+
+  const parent = { ...makeEntity(1), data: {} };
+  const child = { ...makeEntity(2), data: { parent: ['entity-1'] } };
+
+  const makeTreeDb = () => {
+    const db = makeDb([parent, child]);
+    vi.mocked(db.catalog.listSchemas).mockResolvedValue([containmentSchema]);
+    return db;
+  };
+
+  const authCtx = (allowed: boolean) =>
+    buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: allowed ? [{ teamId: 'team-allowed', role: 'team_editor' }] : [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+  it('omits restricted containment edges and parent expansion', async () => {
+    const result = await getEntityTree(makeTreeDb(), 'ws-1', authCtx(false), {});
+    expect(result.edges).toEqual([]);
+  });
+
+  it('keeps containment edges for callers with group access', async () => {
+    const result = await getEntityTree(makeTreeDb(), 'ws-1', authCtx(true), {});
+    expect(result.edges).toEqual([{ childId: 'entity-2', parentId: 'entity-1' }]);
   });
 });
