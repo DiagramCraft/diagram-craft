@@ -13,22 +13,38 @@ type FieldGroupAccessContext = Pick<
   | 'workspaceRoles'
 >;
 
-/**
- * Global admins, and workspace roles holding the `people.role` capability (the
- * built-in owner/admin roles, or a custom role granted it), always have full
- * access to every field group regardless of team membership — the same "admin
- * sees everything" expectation as the rest of the permission model.
- */
-const hasFieldGroupAdminBypass = (context: FieldGroupAccessContext): boolean => {
+const hasCapability = (
+  context: FieldGroupAccessContext,
+  capability: 'ws.settings' | 'schema.edit' | 'ent.edit'
+): boolean => {
   if (context.workspaceCapabilityCeiling) {
-    return context.workspaceCapabilityCeiling.has('people.role');
+    return context.workspaceCapabilityCeiling.has(capability);
   }
   if (context.globalPermissions.has('admin_platform')) return true;
   if (context.workspaceRole == null) return false;
   return (
-    context.workspaceRoles.get(context.workspaceRole)?.capabilities.includes('people.role') ?? false
+    context.workspaceRoles.get(context.workspaceRole)?.capabilities.includes(capability) ?? false
   );
 };
+
+/**
+ * Global admins, and workspace roles holding all of `ws.settings`, `schema.edit`
+ * and `ent.edit` (the built-in owner/admin roles, or a custom role granted all
+ * three), always have full access to every field group regardless of team
+ * membership — the same "admin sees everything" expectation as the rest of the
+ * permission model.
+ *
+ * This combination — rather than a single capability like `people.role` — is
+ * used deliberately: it reads as genuine workspace/content administration
+ * (settings + data model + entities), and stays decoupled from people
+ * management, so a custom role built to manage team membership doesn't
+ * incidentally unlock every restricted field group, and a role built to see
+ * everything doesn't have to also grant the ability to change member roles.
+ */
+const hasFieldGroupAdminBypass = (context: FieldGroupAccessContext): boolean =>
+  hasCapability(context, 'ws.settings') &&
+  hasCapability(context, 'schema.edit') &&
+  hasCapability(context, 'ent.edit');
 
 /**
  * Evaluates a caller's access to a field group given its optional team-scoped

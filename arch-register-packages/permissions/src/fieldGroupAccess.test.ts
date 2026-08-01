@@ -62,7 +62,7 @@ describe('getFieldGroupAccess', () => {
     expect(getFieldGroupAccess(context, { teamIds: ['team1'] })).toBe('edit');
   });
 
-  it('grants edit to a workspace role with the people.role capability, regardless of team membership', () => {
+  it('grants edit to a workspace role with ws.settings, schema.edit and ent.edit, regardless of team membership', () => {
     const workspaceRoles = new Map<string, WorkspaceRoleDefinition>([
       [
         'admin',
@@ -72,7 +72,7 @@ describe('getFieldGroupAccess', () => {
           description: '',
           tone: '',
           builtin: true,
-          capabilities: ['people.role']
+          capabilities: ['ws.settings', 'schema.edit', 'ent.edit']
         }
       ]
     ]);
@@ -80,7 +80,43 @@ describe('getFieldGroupAccess', () => {
     expect(getFieldGroupAccess(context, { teamIds: ['team1'] })).toBe('edit');
   });
 
-  it('does not bypass restriction for a workspace role lacking the people.role capability', () => {
+  it('does not bypass restriction for a workspace role holding only people.role', () => {
+    const workspaceRoles = new Map<string, WorkspaceRoleDefinition>([
+      [
+        'people-manager',
+        {
+          id: 'people-manager',
+          name: 'People manager',
+          description: '',
+          tone: '',
+          builtin: false,
+          capabilities: ['people.role']
+        }
+      ]
+    ]);
+    const context = contextWithTeamRoles({}, { workspaceRole: 'people-manager', workspaceRoles });
+    expect(getFieldGroupAccess(context, { teamIds: ['team1'] })).toBe('none');
+  });
+
+  it('does not bypass restriction for a workspace role holding only two of the three bypass capabilities', () => {
+    const workspaceRoles = new Map<string, WorkspaceRoleDefinition>([
+      [
+        'partial-admin',
+        {
+          id: 'partial-admin',
+          name: 'Partial admin',
+          description: '',
+          tone: '',
+          builtin: false,
+          capabilities: ['ws.settings', 'schema.edit']
+        }
+      ]
+    ]);
+    const context = contextWithTeamRoles({}, { workspaceRole: 'partial-admin', workspaceRoles });
+    expect(getFieldGroupAccess(context, { teamIds: ['team1'] })).toBe('none');
+  });
+
+  it('does not bypass restriction for a workspace role lacking all bypass capabilities', () => {
     const workspaceRoles = new Map<string, WorkspaceRoleDefinition>([
       [
         'editor',
@@ -98,7 +134,7 @@ describe('getFieldGroupAccess', () => {
     expect(getFieldGroupAccess(context, { teamIds: ['team1'] })).toBe('none');
   });
 
-  it('does not bypass restriction for an API token ceiling without people.role', () => {
+  it('does not bypass restriction for an API token ceiling missing any bypass capability', () => {
     const context = contextWithTeamRoles(
       {},
       { globalAdmin: true, workspaceCapabilityCeiling: new Set(['content.view']) }
@@ -106,10 +142,18 @@ describe('getFieldGroupAccess', () => {
     expect(getFieldGroupAccess(context, { teamIds: ['team1'] })).toBe('none');
   });
 
-  it('bypasses restriction for an API token ceiling that includes people.role', () => {
+  it('does not bypass restriction for an API token ceiling with only some bypass capabilities', () => {
     const context = contextWithTeamRoles(
       {},
-      { workspaceCapabilityCeiling: new Set(['people.role']) }
+      { workspaceCapabilityCeiling: new Set(['ws.settings', 'schema.edit']) }
+    );
+    expect(getFieldGroupAccess(context, { teamIds: ['team1'] })).toBe('none');
+  });
+
+  it('bypasses restriction for an API token ceiling that includes all three bypass capabilities', () => {
+    const context = contextWithTeamRoles(
+      {},
+      { workspaceCapabilityCeiling: new Set(['ws.settings', 'schema.edit', 'ent.edit']) }
     );
     expect(getFieldGroupAccess(context, { teamIds: ['team1'] })).toBe('edit');
   });
