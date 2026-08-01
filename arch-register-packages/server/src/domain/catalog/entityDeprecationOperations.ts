@@ -72,7 +72,13 @@ const computeDirectImpact = async (
     listAllCatalogEntities(db, workspace)
   ]);
   const entityLookup: Map<string, Entity> = new Map(entities.map(e => [e.id, e]));
-  const { dependents } = buildEntityDependents(entityId, entities, schemas, { transitive: false });
+  const { dependents } = buildEntityDependents(
+    entityId,
+    entities,
+    schemas,
+    { transitive: false },
+    null
+  );
   return dependents.map(dependent => toImpactEntry(dependent, entityLookup));
 };
 

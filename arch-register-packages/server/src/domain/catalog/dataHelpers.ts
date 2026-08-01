@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { EntityGrantDbCretae, DatabaseAdapter } from '../../db/database';
+import type { AuthorizationContext } from '@arch-register/permissions';
 import { decodeRefs } from '../../types';
 import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 import type { EntityDbResult } from './db/catalogDatabase';
@@ -12,6 +13,7 @@ import {
   externalUpdateEnvelopeSchema,
   type ExternalUpdateEnvelope
 } from '@arch-register/api-types/common';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 
 export const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
@@ -385,11 +387,14 @@ export const getEntityParentsFromPayload = (
 export const buildEntityRelations = (
   entity: Entity,
   schemas: InternalEntitySchema[],
-  entities: Entity[]
+  entities: Entity[],
+  authCtx: AuthorizationContext | null
 ): RelationsResponse => {
   const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
   const entitySchema = schemaMap.get(entity.schema_id);
-  const outgoingFields = relationFields(entitySchema?.fields ?? []);
+  const outgoingFields = relationFields(entitySchema?.fields ?? []).filter(
+    field => !isFieldViewRestricted(authCtx, entitySchema, field.id)
+  );
   const entityLookup = new Map(entities.map(row => [row.id, row]));
   const outgoing: RelationRecord[] = [];
   for (const field of outgoingFields) {
@@ -414,7 +419,9 @@ export const buildEntityRelations = (
     if (row.id === entity.id) continue;
     const rowSchema = schemaMap.get(row.schema_id);
     if (!rowSchema) continue;
-    for (const field of relationFields(rowSchema.fields)) {
+    for (const field of relationFields(rowSchema.fields).filter(
+      field => !isFieldViewRestricted(authCtx, rowSchema, field.id)
+    )) {
       if (!decodeRefs(row.data[field.id]).includes(entity.id)) continue;
       incoming.push({
         entityId: row.id,
@@ -450,7 +457,8 @@ export const buildEntityDependents = (
   entityId: string,
   entities: Entity[],
   schemas: InternalEntitySchema[],
-  options: { transitive: boolean; maxDepth?: number }
+  options: { transitive: boolean; maxDepth?: number },
+  authCtx: AuthorizationContext | null
 ): DependentsResponse => {
   const maxDepth = options.maxDepth ?? 5;
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
@@ -469,7 +477,9 @@ export const buildEntityDependents = (
   for (const entity of entities) {
     const schema = schemaMap.get(entity.schema_id);
     if (!schema) continue;
-    for (const field of relationFields(schema.fields)) {
+    for (const field of relationFields(schema.fields).filter(
+      field => !isFieldViewRestricted(authCtx, schema, field.id)
+    )) {
       for (const refId of decodeRefs(entity.data[field.id])) {
         if (!incomingIndex.has(refId)) incomingIndex.set(refId, []);
         incomingIndex.get(refId)!.push({

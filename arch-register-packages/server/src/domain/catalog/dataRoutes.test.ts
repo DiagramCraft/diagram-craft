@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 import {
   buildEntityGrantInputs,
+  buildEntityDependents,
   buildEntityRelations,
   filterEntities,
   getEntityParentsFromPayload,
@@ -86,9 +88,11 @@ const componentSchema: SchemaDbResult = {
       predicate: 'depends on',
       schemaId: 'schema-component',
       minCount: 0,
-      maxCount: -1
+      maxCount: -1,
+      groupId: 'restricted'
     }
   ],
+  groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-allowed'] } }],
   color: null,
   icon: null,
   default_owner: null,
@@ -182,6 +186,25 @@ const dependency: EntityDbResult = enriched({
 });
 
 describe('data route helpers', () => {
+  const restrictedAuthCtx = buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: 'editor',
+    teamAssignments: [],
+    schemas: [],
+    entities: [],
+    grants: []
+  });
+  const allowedAuthCtx = buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: 'editor',
+    teamAssignments: [{ teamId: 'team-allowed', role: 'team_editor' }],
+    schemas: [],
+    entities: [],
+    grants: []
+  });
+
   it('parses mutation payloads with defaults and derived slug', () => {
     expect(
       parseEntityMutationPayload({
@@ -306,7 +329,8 @@ describe('data route helpers', () => {
     const relations = buildEntityRelations(
       component,
       [domainSchema, systemSchema, componentSchema],
-      [domain, system, component, dependency]
+      [domain, system, component, dependency],
+      null
     );
 
     expect(relations.outgoing).toEqual([
@@ -332,6 +356,49 @@ describe('data route helpers', () => {
       }
     ]);
     expect(relations.incoming).toEqual([]);
+  });
+
+  it('omits restricted outgoing and incoming relation fields', () => {
+    const relations = buildEntityRelations(
+      component,
+      [domainSchema, systemSchema, componentSchema],
+      [domain, system, component, dependency],
+      restrictedAuthCtx
+    );
+
+    expect(relations.outgoing.map(relation => relation.entityId)).toEqual(['system-1']);
+    expect(relations.incoming).toEqual([]);
+
+    const allowed = buildEntityRelations(
+      component,
+      [domainSchema, systemSchema, componentSchema],
+      [domain, system, component, dependency],
+      allowedAuthCtx
+    );
+    expect(allowed.outgoing.map(relation => relation.entityId)).toEqual([
+      'system-1',
+      'component-2'
+    ]);
+  });
+
+  it('does not traverse dependents through a restricted relation field', () => {
+    const restricted = buildEntityDependents(
+      dependency.id,
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, componentSchema],
+      { transitive: true },
+      restrictedAuthCtx
+    );
+    expect(restricted.dependents).toEqual([]);
+
+    const allowed = buildEntityDependents(
+      dependency.id,
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, componentSchema],
+      { transitive: true },
+      allowedAuthCtx
+    );
+    expect(allowed.dependents.map(dependent => dependent.entityId)).toEqual(['component-1']);
   });
 
   it('builds validated entity grant inputs', () => {
