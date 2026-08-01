@@ -5,7 +5,30 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
 import { listEntities } from '../catalog/entityQueryOperations';
 import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
+import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
+
+export const redactAuditEntryChanges = (
+  entry: AuditLogEntry,
+  authCtx: WorkspaceAuthorizationContext | null,
+  schemaById: Map<string, SchemaDbResult>
+): AuditLogEntry => {
+  if (entry.entity_type !== 'entity' || !entry.schema_id) return entry;
+  const schema = schemaById.get(entry.schema_id) ?? null;
+  return {
+    ...entry,
+    changes: {
+      old: entry.changes.old
+        ? filterRestrictedFieldGroups(authCtx, schema, entry.changes.old)
+        : entry.changes.old,
+      new: entry.changes.new
+        ? filterRestrictedFieldGroups(authCtx, schema, entry.changes.new)
+        : entry.changes.new
+    }
+  };
+};
 
 const resolveAssessmentResponseEntityName = async (
   db: DatabaseAdapter,
@@ -108,7 +131,11 @@ export const listAuditLog = async (
     entityIds = matchingEntities.map(e => e._uid);
   }
 
-  const rows = await db.audit.listAuditLogs(ws);
+  const [rows, schemas] = await Promise.all([
+    db.audit.listAuditLogs(ws),
+    db.catalog.listSchemas(ws)
+  ]);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   const entries = filterAndPaginateAuditLogs(rows, {
     entityType: filters.entityType ?? null,
     entityId: filters.entityId ?? null,
@@ -119,7 +146,9 @@ export const listAuditLog = async (
     endDate: filters.endDate ?? null,
     limit: filters.limit ?? 50,
     offset: filters.offset ?? 0
-  }).map(entry => toApiAuditLogEntry(entry));
+  })
+    .map(entry => toApiAuditLogEntry(entry))
+    .map(entry => redactAuditEntryChanges(entry, authCtx, schemaById));
 
   return await Promise.all(entries.map(entry => resolveAuditPublicIds(db, ws, entry)));
 };

@@ -1,6 +1,6 @@
 import {
   getFieldGroupAccess,
-  type AuthorizationContext,
+  type WorkspaceAuthorizationContext,
   type FieldGroupAccess
 } from '@arch-register/permissions';
 import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
@@ -12,7 +12,7 @@ export type FieldGroupSchemaShape = {
 };
 
 const groupAccessByFieldId = (
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   schema: FieldGroupSchemaShape
 ): Map<string, FieldGroupAccess> => {
   const accessByGroupId = new Map(
@@ -34,7 +34,7 @@ const groupAccessByFieldId = (
  * bypass other entity-level permission checks).
  */
 export const filterRestrictedFieldGroups = (
-  authCtx: AuthorizationContext | null,
+  authCtx: WorkspaceAuthorizationContext | null,
   schema: FieldGroupSchemaShape | null | undefined,
   data: Record<string, unknown>
 ): Record<string, unknown> => {
@@ -52,7 +52,7 @@ export const filterRestrictedFieldGroups = (
 
 /** Throws 403 if any of `changedFieldIds` sits in a group the caller cannot edit. */
 export const requireNoRestrictedFieldWrites = (
-  authCtx: AuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   schema: FieldGroupSchemaShape,
   changedFieldIds: Iterable<string>,
   message?: string
