@@ -1,8 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
-import { redactAuditEntryChanges } from './auditOperations';
 import type { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
+import type { AuditLogDbResult } from './db/auditDatabase';
+import type { DatabaseAdapter } from '../../db/database';
+import type { AuthenticatedEvent } from '../../middleware/auth';
+
+vi.mock('../workspace/resolveWorkspace', () => ({
+  resolveWorkspace: vi.fn(async () => 'ws-1')
+}));
+
+vi.mock('../auth/authorization', () => ({
+  buildApiAuthCtx: vi.fn(),
+  requireWorkspaceCapability: vi.fn()
+}));
+
+import { redactAuditEntryChanges, listAuditLog } from './auditOperations';
+import { buildApiAuthCtx } from '../auth/authorization';
 
 const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
   buildAuthorizationContext({
@@ -99,5 +113,61 @@ describe('redactAuditEntryChanges', () => {
     const entry = makeEntry({ operation: 'create', changes: { new: { name: 'x', secret: 'y' } } });
     const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), schemaById);
     expect(result.changes).toEqual({ new: { name: 'x' } });
+  });
+});
+
+describe('listAuditLog', () => {
+  const event = { context: { user: { id: 'user-1' } } } as unknown as AuthenticatedEvent;
+
+  const rawRow: AuditLogDbResult = {
+    id: 'audit-1',
+    workspace: 'ws-1',
+    timestamp: new Date('2026-05-27T10:00:00.000Z'),
+    user_id: 'u-1',
+    user_display_name: null,
+    operation: 'update',
+    entity_type: 'entity',
+    entity_id: 'e-1',
+    entity_name: 'My Entity',
+    entity_slug: 'my-entity',
+    schema_id: schema.id,
+    changes: {
+      old: { name: 'old-name', secret: 'old-secret' },
+      new: { name: 'new-name', secret: 'new-secret' }
+    },
+    metadata: {}
+  };
+
+  const makeDb = (): DatabaseAdapter =>
+    ({
+      catalog: {
+        listSchemas: vi.fn(async () => [schema]),
+        getEntity: vi.fn(async () => ({ id: 'e-1', workspace: 'ws-1', public_id: 'ENT-1' }))
+      },
+      audit: {
+        listAuditLogs: vi.fn(async () => [rawRow])
+      }
+    }) as unknown as DatabaseAdapter;
+
+  it('redacts restricted field values end-to-end for a caller without view access', async () => {
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(authCtxWithTeamRoles({}));
+
+    const result = await listAuditLog(makeDb(), 'ws-1', {}, event);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.changes).toEqual({
+      old: { name: 'old-name' },
+      new: { name: 'new-name' }
+    });
+  });
+
+  it('keeps restricted field values end-to-end for a caller with view access', async () => {
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(
+      authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] })
+    );
+
+    const result = await listAuditLog(makeDb(), 'ws-1', {}, event);
+
+    expect(result[0]!.changes).toEqual(rawRow.changes);
   });
 });

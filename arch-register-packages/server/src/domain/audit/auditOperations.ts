@@ -9,6 +9,14 @@ import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
+import type { AuditLogDbResult } from './db/auditDatabase';
+
+// Drops raw `changes` before rows reach a consumer that must never see unredacted field values
+// (e.g. aggregate stats). `listAuditLog` is the only place allowed to hold onto `.changes`, and it
+// must always run it through `redactAuditEntryChanges` before returning. See
+// `auditAccessBoundary.test.ts` for the enforcement of this boundary.
+export const stripAuditChanges = (rows: AuditLogDbResult[]): Omit<AuditLogDbResult, 'changes'>[] =>
+  rows.map(({ changes, ...rest }) => rest);
 
 export const redactAuditEntryChanges = (
   entry: AuditLogEntry,
@@ -163,5 +171,5 @@ export const getAuditStats = async (
   requireWorkspaceCapability(authCtx, 'ws.audit');
 
   const rows = await db.audit.listAuditLogs(ws);
-  return computeAuditStats(rows);
+  return computeAuditStats(stripAuditChanges(rows));
 };
