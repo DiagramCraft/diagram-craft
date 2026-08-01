@@ -28,6 +28,10 @@ import {
 import { ChangeCaseDbCreate } from '../domain/catalog/db/changeCaseDatabase';
 import { computeEntityCompleteness } from '../utils/completeness';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import type {
+  RelationSchemaDbResult,
+  RelationDbCreate
+} from '../domain/catalog/db/relationDatabase';
 
 // Seed fixtures list entity data without a completeness score — it's derived from `data` +
 // `seedSchemas` once, below, rather than kept in sync by hand across ~150 fixture entries.
@@ -649,6 +653,33 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
       { value: 'hold', label: 'Hold' }
     ],
     sort_order: 2,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-e00000000006',
+    workspace: WORKSPACE_ID,
+    name: 'Data Flow Direction',
+    options: [
+      { value: 'one-way', label: 'One-way' },
+      { value: 'bidirectional', label: 'Bidirectional' }
+    ],
+    sort_order: 4,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-e00000000007',
+    workspace: WORKSPACE_ID,
+    name: 'Communication Protocol',
+    options: [
+      { value: 'https-rest', label: 'HTTPS / REST' },
+      { value: 'grpc', label: 'gRPC' },
+      { value: 'kafka', label: 'Kafka' },
+      { value: 'file-transfer', label: 'Batch File Transfer' },
+      { value: 'database-replication', label: 'Database Replication' }
+    ],
+    sort_order: 5,
     created_at: now,
     updated_at: now
   },
@@ -4653,3 +4684,99 @@ export const seedAiConfig: AiConfigInputDbUpsert = {
   system_prompt: null,
   enabled: false
 };
+
+// Typed relation objects (see #2569/#2570): a "Data Flow" relation type between Systems,
+// modeling upstream/downstream data movement as a first-class relation instead of a generic
+// reference field (see #2532).
+export const seedRelationSchemas: RelationSchemaDbResult[] = [
+  {
+    id: '00000000-0000-0000-0000-000000000030',
+    workspace: WORKSPACE_ID,
+    name: 'Data Flow',
+    description:
+      'Models data moving from one System to another: its direction, the sensitivity of the ' +
+      'data carried, and the protocol used to move it.',
+    in_schema_ids: ['00000000-0000-0000-0000-000000000002'],
+    out_schema_ids: ['00000000-0000-0000-0000-000000000002'],
+    fields: [
+      {
+        id: 'direction',
+        name: 'Direction',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000006',
+        requirementLevel: 'required'
+      },
+      {
+        id: 'data_classification',
+        name: 'Data Classification',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000005',
+        requirementLevel: 'required'
+      },
+      {
+        id: 'protocol',
+        name: 'Protocol',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000007',
+        requirementLevel: 'optional'
+      }
+    ],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_TEAL,
+    icon: 'network',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  }
+];
+
+const DATA_FLOW_SCHEMA_ID = '00000000-0000-0000-0000-000000000030';
+
+export const seedRelations: RelationDbCreate[] = [
+  {
+    id: '00000000-0000-0000-0009-000000000001',
+    workspace: WORKSPACE_ID,
+    schema_id: DATA_FLOW_SCHEMA_ID,
+    // Customer Portal -> Identity Platform: login credentials for authentication.
+    in_entity_id: '00000000-0000-0000-0002-000000000001',
+    out_entity_id: '00000000-0000-0000-0002-000000000002',
+    data: {
+      direction: 'one-way',
+      data_classification: 'sensitive',
+      protocol: 'https-rest'
+    },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0009-000000000002',
+    workspace: WORKSPACE_ID,
+    schema_id: DATA_FLOW_SCHEMA_ID,
+    // Payments Platform -> Analytics Platform: transaction events for reporting.
+    in_entity_id: '00000000-0000-0000-0002-000000000003',
+    out_entity_id: '00000000-0000-0000-0002-000000000004',
+    data: {
+      direction: 'one-way',
+      data_classification: 'non-sensitive',
+      protocol: 'kafka'
+    },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0009-000000000003',
+    workspace: WORKSPACE_ID,
+    schema_id: DATA_FLOW_SCHEMA_ID,
+    // Customer Portal -> Analytics Platform: user behaviour/clickstream events.
+    in_entity_id: '00000000-0000-0000-0002-000000000001',
+    out_entity_id: '00000000-0000-0000-0002-000000000004',
+    data: {
+      direction: 'one-way',
+      data_classification: 'sensitive',
+      protocol: 'kafka'
+    },
+    created_at: now,
+    updated_at: now
+  }
+];
