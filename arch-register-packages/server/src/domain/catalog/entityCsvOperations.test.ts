@@ -204,6 +204,7 @@ describe('exportEntitiesCsv', () => {
     );
     const restrictedCsv = await restrictedResponse.body.text();
     expect(restrictedCsv).not.toContain('top secret');
+    expect(restrictedCsv.split('\n')[0]).not.toContain('Secret Plan');
 
     const viewerResponse = await exportEntitiesCsv(
       db,
@@ -214,6 +215,7 @@ describe('exportEntitiesCsv', () => {
     );
     const viewerCsv = await viewerResponse.body.text();
     expect(viewerCsv).toContain('top secret');
+    expect(viewerCsv.split('\n')[0]).toContain('Secret Plan');
   });
 });
 
@@ -238,5 +240,41 @@ describe('downloadEntityImportTemplate', () => {
       'business-application-import-template.csv'
     );
     expect(await response.body.text()).toContain('"Criticality"');
+  });
+
+  it('omits a restricted field-group column from the import template', async () => {
+    const getSchema = vi.fn().mockResolvedValue({
+      id: 'application',
+      name: 'Business Application',
+      fields: [
+        { id: 'criticality', name: 'Criticality', type: 'text' },
+        { id: 'secretPlan', name: 'Secret Plan', type: 'text', groupId: 'restricted' }
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    });
+    const db = { catalog: { getSchema } } as unknown as DatabaseAdapter;
+
+    const restrictedContext = buildAuthorizationContext({
+      userId: 'user-2',
+      globalRoles: [],
+      workspaceRole: 'viewer',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const response = await downloadEntityImportTemplate(
+      db,
+      'workspace-1',
+      restrictedContext,
+      'application'
+    );
+
+    const csv = await response.body.text();
+    expect(csv).toContain('"Criticality"');
+    expect(csv).not.toContain('Secret Plan');
   });
 });
