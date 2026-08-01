@@ -58,9 +58,9 @@ export const SchemaSettingsSidebar = ({
         >
           <Tabs.List>
             <Tabs.Trigger value="types">Types</Tabs.Trigger>
-            <Tabs.Trigger value="relation-types">Relation types</Tabs.Trigger>
+            <Tabs.Trigger value="relation-types">Relations</Tabs.Trigger>
             <Tabs.Trigger value="enums">Enums</Tabs.Trigger>
-            <Tabs.Trigger value="fieldgroups">Fieldgroups</Tabs.Trigger>
+            <Tabs.Trigger value="fieldgroups">Groups</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
       </SidebarHeader>
