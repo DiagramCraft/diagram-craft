@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { searchWorkspace } from './searchOperations';
 import type { DatabaseAdapter } from '../../db/database';
+import { buildApiEntityAuthCtx } from '../auth/authorization';
 
 vi.mock('../auth/authorization', () => ({
   buildApiAuthCtx: vi.fn(async () => ({
@@ -255,6 +256,147 @@ describe('searchWorkspace file metadata matching', () => {
         entityId: null,
         fileId: 'workspace-file'
       })
+    ]);
+  });
+});
+
+describe('searchWorkspace entity field-group redaction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const restrictedSchema = {
+    id: 'schema-1',
+    workspace: 'ws-1',
+    name: 'Component',
+    description: '',
+    color: null,
+    icon: null,
+    default_owner: null,
+    key_prefix: 'CMP',
+    created_at: new Date(),
+    updated_at: new Date(),
+    fields: [
+      { id: 'note', name: 'Note', requirementLevel: null, type: 'text' },
+      {
+        id: 'secret',
+        name: 'Secret',
+        requirementLevel: null,
+        type: 'text',
+        groupId: 'restricted'
+      }
+    ],
+    groups: [
+      { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+    ]
+  };
+
+  const makeEntityDb = (): DatabaseAdapter =>
+    ({
+      catalog: {
+        listSchemas: vi.fn(async () => [restrictedSchema]),
+        listEntitiesPaginated: vi.fn(
+          async (
+            _ws: string,
+            _filters: unknown,
+            { limit, offset }: { limit: number; offset: number }
+          ) => {
+            const all = [
+              {
+                id: 'entity-1',
+                public_id: 'ENT-1',
+                schema_id: 'schema-1',
+                schema_name: 'Component',
+                name: 'Entity One',
+                slug: 'entity-one',
+                description: '',
+                owner: 'team-a',
+                owner_name: 'Team A',
+                lifecycle: null,
+                lifecycle_label: null,
+                target_lifecycle: null,
+                target_lifecycle_label: null,
+                tags: [],
+                links: [],
+                data: { note: 'alpha-value', secret: 'salary-42' },
+                namespace: '',
+                workspace: 'ws-1',
+                visibility_mode: null,
+                created_at: new Date(),
+                updated_at: new Date(),
+                target_lifecycle_date: null
+              }
+            ];
+            return all.slice(offset, offset + limit);
+          }
+        ),
+        resolveWorkspaceSlug: vi.fn(async () => 'ws-1')
+      },
+      project: {
+        listProjects: vi.fn(async () => []),
+        listContentNodes: vi.fn(async () => []),
+        listEntityContentNodes: vi.fn(async () => []),
+        listWorkspaceContentNodes: vi.fn(async () => [])
+      }
+    }) as unknown as DatabaseAdapter;
+
+  const noAccessCtx = {
+    userId: 'user-1',
+    globalPermissions: new Set<string>(),
+    workspaceRole: null,
+    workspaceRoles: new Map(),
+    workspaceCapabilityCeiling: new Set(['content.view']),
+    teamRolesByTeam: new Map(),
+    schemas: new Map(),
+    entities: new Map(),
+    grants: []
+  };
+
+  const viewAccessCtx = {
+    ...noAccessCtx,
+    teamRolesByTeam: new Map([['team-restricted', new Set(['team_reviewer'])]])
+  };
+
+  it('excludes a restricted field from matchedFields and does not match on its value', async () => {
+    vi.mocked(buildApiEntityAuthCtx).mockResolvedValueOnce(noAccessCtx as never);
+
+    const result = await searchWorkspace(
+      makeEntityDb(),
+      'default',
+      { q: 'salary-42', types: 'entities' },
+      { context: { user: { id: 'user-1' } } } as never
+    );
+
+    expect(result.entities).toEqual([]);
+  });
+
+  it('still matches on unrestricted fields while omitting the restricted field id', async () => {
+    vi.mocked(buildApiEntityAuthCtx).mockResolvedValueOnce(noAccessCtx as never);
+
+    const result = await searchWorkspace(
+      makeEntityDb(),
+      'default',
+      { q: 'alpha-value', types: 'entities' },
+      { context: { user: { id: 'user-1' } } } as never
+    );
+
+    expect(result.entities).toEqual([
+      expect.objectContaining({ entityId: 'entity-1', matchedFields: ['note'] })
+    ]);
+  });
+
+  it('includes the restricted field once the caller has group access', async () => {
+    vi.mocked(buildApiEntityAuthCtx).mockResolvedValueOnce(viewAccessCtx as never);
+
+    const result = await searchWorkspace(
+      makeEntityDb(),
+      'default',
+      { q: 'salary-42', types: 'entities' },
+      { context: { user: { id: 'user-1' } } } as never
+    );
+
+    expect(result.entities).toEqual([
+      expect.objectContaining({ entityId: 'entity-1', matchedFields: ['secret'] })
     ]);
   });
 });

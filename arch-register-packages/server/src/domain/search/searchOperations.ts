@@ -3,10 +3,14 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiEntityAuthCtx as buildApiAuthCtx, canAccessProject } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { SEARCH_DEFAULTS } from '../../constants';
-import { PermissionChecker } from '@arch-register/permissions';
+import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+import {
+  filterRestrictedFieldGroups,
+  type FieldGroupSchemaShape
+} from '../auth/fieldGroupAccessControl';
 
 const checker = new PermissionChecker();
 
@@ -58,8 +62,13 @@ const collectMatchedMetadata = (entity: EntityDbResult, query: string) => {
   return matches;
 };
 
-const collectMatchedFields = (data: EntityDbResult['data'], query: string) =>
-  Object.entries(data)
+const collectMatchedFields = (
+  authCtx: AuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null | undefined,
+  data: EntityDbResult['data'],
+  query: string
+) =>
+  Object.entries(filterRestrictedFieldGroups(authCtx, schema, data))
     .filter(([, value]) => includesQuery(value, query))
     .map(([key]) => key)
     .sort();
@@ -281,10 +290,17 @@ export const searchWorkspace = async (
     );
   }
 
+  const schemasById = new Map(schemas.map(schema => [schema.id, schema]));
+
   const entityResults = types.includes('entities')
     ? visibleEntities
         .map(entity => {
-          const matchedFields = collectMatchedFields(entity.data, normalizedQuery);
+          const matchedFields = collectMatchedFields(
+            authCtx,
+            schemasById.get(entity.schema_id),
+            entity.data,
+            normalizedQuery
+          );
           const matchedMetadata = collectMatchedMetadata(entity, normalizedQuery);
           if (matchedFields.length === 0 && matchedMetadata.length === 0) return null;
           return {
