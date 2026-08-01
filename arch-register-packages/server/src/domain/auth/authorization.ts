@@ -9,6 +9,7 @@ import {
   type Entity as PermissionEntity,
   fetchEntityAuthorizationContextData,
   fetchWorkspaceAuthorizationContextData,
+  hasFieldGroupAdminBypass,
   PermissionChecker,
   ProjectAction,
   type WorkspaceAuthorizationContext,
@@ -114,6 +115,24 @@ export const requireWorkspaceAdmin = (context: WorkspaceAuthorizationContext, me
     status: 403,
     statusText: 'Forbidden',
     message: message ?? 'Workspace admin permission required'
+  });
+};
+
+/**
+ * Require the field-group admin bar — `ws.settings` + `schema.edit` + `ent.edit` (or global
+ * admin) — throw 403 if not allowed. This is the same bar `hasFieldGroupAdminBypass` uses to
+ * decide who sees every restricted field group, kept separate from `requireWorkspaceAdmin`
+ * (which checks `people.role`) so people-management roles don't incidentally unlock actions
+ * that gate raw restricted-data egress, such as webhook management.
+ */
+export const requireFieldGroupAdminBypass = (
+  context: WorkspaceAuthorizationContext,
+  message?: string
+) => {
+  httpAssert.true(hasFieldGroupAdminBypass(context), {
+    status: 403,
+    statusText: 'Forbidden',
+    message: message ?? 'Field-group administrator permission required'
   });
 };
 

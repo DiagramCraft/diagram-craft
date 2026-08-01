@@ -81,6 +81,32 @@ export const filterRestrictedFieldGroups = (
   return result;
 };
 
+/**
+ * Omits values for every field whose group has team-scoped accessControl, regardless of caller.
+ * Used for contexts with no live principal to redact against (e.g. webhook delivery) — the
+ * unattended, always-on egress path defaults to least privilege rather than bypassing.
+ */
+export const filterAllRestrictedFieldGroups = (
+  schema: FieldGroupSchemaShape | null | undefined,
+  data: Record<string, unknown>
+): Record<string, unknown> => {
+  if (!schema) return data;
+  const restrictedGroupIds = new Set(
+    (schema.groups ?? [])
+      .filter(group => group.accessControl && group.accessControl.teamIds.length > 0)
+      .map(group => group.id)
+  );
+  if (restrictedGroupIds.size === 0) return data;
+
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    const field = schema.fields.find(f => f.id === key);
+    if (field?.groupId && restrictedGroupIds.has(field.groupId)) continue;
+    result[key] = value;
+  }
+  return result;
+};
+
 /** Throws 403 if any of `changedFieldIds` sits in a group the caller cannot edit. */
 export const requireNoRestrictedFieldWrites = (
   authCtx: WorkspaceAuthorizationContext,

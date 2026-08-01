@@ -9,6 +9,7 @@ import {
   buildApiEntityAuthCtx,
   filterVisibleEntities,
   GLOBAL_WS,
+  requireFieldGroupAdminBypass,
   requireSchemaRead
 } from './authorization';
 
@@ -131,6 +132,48 @@ describe('authorization helpers', () => {
     });
 
     expect(() => requireSchemaRead(allowedContext)).not.toThrow();
+  });
+
+  it('requires the field-group admin bar, distinct from a people-management role', () => {
+    const peopleManagerContext = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'people-manager',
+      workspaceRoles: [
+        {
+          id: 'people-manager',
+          name: 'People Manager',
+          description: '',
+          tone: 'neutral',
+          builtin: false,
+          capabilities: ['people.role']
+        }
+      ],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    expect(() => requireFieldGroupAdminBypass(peopleManagerContext)).toThrowError(HTTPError);
+
+    const fieldGroupAdminContext = buildAuthorizationContext({
+      userId: 'user-2',
+      globalRoles: [],
+      workspaceRole: 'content-admin',
+      workspaceRoles: [
+        {
+          id: 'content-admin',
+          name: 'Content Admin',
+          description: '',
+          tone: 'neutral',
+          builtin: false,
+          capabilities: ['ws.settings', 'schema.edit', 'ent.edit']
+        }
+      ],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    expect(() => requireFieldGroupAdminBypass(fieldGroupAdminContext)).not.toThrow();
   });
 });
 

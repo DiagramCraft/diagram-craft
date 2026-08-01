@@ -5,7 +5,7 @@ import type {
   WebhookEventFilter,
   WebhookOperation
 } from '@arch-register/api-types/webhookContract';
-import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
+import { buildApiAuthCtx, requireFieldGroupAdminBypass } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type { WorkspaceWebhookDbResult } from './db/webhookDatabase';
@@ -87,7 +87,7 @@ export const toApiWebhook = (webhook: WorkspaceWebhookDbResult) => ({
 const authorize = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
+  requireFieldGroupAdminBypass(authCtx);
   return ws;
 };
 

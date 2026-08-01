@@ -59,6 +59,9 @@ const makeTransactionalDatabase = (events: string[], enqueueError?: Error) => {
       return auditLog;
     }
   };
+  const catalog = {
+    getSchema: async () => null
+  };
   const webhook = {
     listWebhooks: async () => [
       {
@@ -88,6 +91,7 @@ const makeTransactionalDatabase = (events: string[], enqueueError?: Error) => {
   const tx = {
     core: { driver: 'sqlite' as const, isTransaction: true },
     audit,
+    catalog,
     webhook,
     jobs,
     watch

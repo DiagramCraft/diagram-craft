@@ -1,9 +1,50 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { assertSafeWebhookUrl, normalizeWebhookUrl } from './webhookOperations';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { AuthenticatedEvent } from '../../middleware/auth';
+import type { DatabaseAdapter } from '../../db/database';
+import { assertSafeWebhookUrl, listWebhooks, normalizeWebhookUrl } from './webhookOperations';
+
+const { requireFieldGroupAdminBypass } = vi.hoisted(() => ({
+  requireFieldGroupAdminBypass: vi.fn()
+}));
+
+vi.mock('../auth/authorization', () => ({
+  buildApiAuthCtx: vi.fn(async () => ({ userId: 'user-1' })),
+  requireFieldGroupAdminBypass
+}));
+
+vi.mock('../workspace/resolveWorkspace', () => ({
+  resolveWorkspace: vi.fn(async () => 'ws-1')
+}));
+
+const event = { context: { user: { id: 'user-1' } } } as unknown as AuthenticatedEvent;
 
 const originalNodeEnv = process.env['NODE_ENV'];
 afterEach(() => {
   process.env['NODE_ENV'] = originalNodeEnv;
+  requireFieldGroupAdminBypass.mockReset();
+});
+
+describe('webhook management authorization', () => {
+  it('gates webhook management on the field-group admin bar, not workspace-admin role', async () => {
+    const listWebhooksDb = vi.fn(async () => []);
+    const db = { webhook: { listWebhooks: listWebhooksDb } } as unknown as DatabaseAdapter;
+    requireFieldGroupAdminBypass.mockImplementation(() => {
+      throw new Error('forbidden');
+    });
+
+    await expect(listWebhooks(db, 'ws-1', event)).rejects.toThrow('forbidden');
+    expect(requireFieldGroupAdminBypass).toHaveBeenCalledWith(expect.anything());
+    expect(listWebhooksDb).not.toHaveBeenCalled();
+  });
+
+  it('allows webhook management once the field-group admin bar is met', async () => {
+    const listWebhooksDb = vi.fn(async () => []);
+    const db = { webhook: { listWebhooks: listWebhooksDb } } as unknown as DatabaseAdapter;
+    requireFieldGroupAdminBypass.mockImplementation(() => {});
+
+    await expect(listWebhooks(db, 'ws-1', event)).resolves.toEqual([]);
+    expect(listWebhooksDb).toHaveBeenCalledWith('ws-1');
+  });
 });
 
 describe('normalizeWebhookUrl', () => {

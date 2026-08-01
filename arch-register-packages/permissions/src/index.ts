@@ -62,6 +62,8 @@ export { CapabilityEvaluator } from './CapabilityEvaluator.js';
 // Export field group access evaluator
 export {
   getFieldGroupAccess,
+  hasFieldGroupAdminBypass,
   type FieldGroupAccess,
-  type FieldGroupAccessControl
+  type FieldGroupAccessControl,
+  type FieldGroupAccessContext
 } from './fieldGroupAccess.js';
