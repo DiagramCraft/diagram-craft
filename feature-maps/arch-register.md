@@ -305,7 +305,9 @@
               relationships and graph data.
 
             - @id:ar.content.diagrams.editing Users can open associated diagrams in the Diagram Craft editing experience
-              where the integration is configured.
+              where the integration is configured. Entity data and field values exposed to Diagram Craft through this
+              integration are scrubbed of access-restricted field groups per viewer, mirroring the redaction applied
+              when viewing the entity directly.
 
             - @id:ar.content.diagrams.preview Users can view generated or stored diagram previews and associated diagram
               metadata.

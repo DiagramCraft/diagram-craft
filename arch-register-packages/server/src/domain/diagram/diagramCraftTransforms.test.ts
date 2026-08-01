@@ -5,6 +5,21 @@ import {
   toDiagramCraftSchema
 } from './diagramCraftTransforms';
 import { Entity, SchemaDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
+import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
+
+const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+  buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: null,
+    teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+      teamRoles.map(role => ({ teamId, role }))
+    ),
+    schemas: [],
+    entities: [],
+    grants: []
+  });
 
 describe('diagram craft transforms', () => {
   it('keeps containment fields in diagram craft schema responses', () => {
@@ -135,7 +150,7 @@ describe('diagram craft transforms', () => {
       }
     } as unknown as Entity;
 
-    expect(toDiagramCraftData(row)).toEqual({
+    expect(toDiagramCraftData(row, null, null)).toEqual({
       _uid: 'entity-1',
       _workspace: 'default',
       _schemaId: 'schema-1',
@@ -153,5 +168,48 @@ describe('diagram craft transforms', () => {
       technology: 'React',
       system: 'system-1'
     });
+  });
+
+  it('omits fields in restricted groups from diagram craft data responses', () => {
+    const row = {
+      id: 'entity-1',
+      workspace: 'default',
+      schema_id: 'schema-1',
+      name: 'Frontend App',
+      slug: 'frontend-app',
+      namespace: 'default',
+      description: 'React SPA',
+      owner: 'Design Systems',
+      lifecycle: 'production',
+      tags: ['react'],
+      links: [],
+      project_id: null,
+      created_at: new Date('2026-06-06T00:00:00.000Z'),
+      updated_at: new Date('2026-06-06T00:00:00.000Z'),
+      data: {
+        technology: 'React',
+        secret: 'confidential'
+      }
+    } as unknown as Entity;
+
+    const schema: FieldGroupSchemaShape = {
+      fields: [
+        { id: 'technology', name: 'Technology', type: 'text' } as never,
+        {
+          id: 'secret',
+          name: 'Secret',
+          type: 'text',
+          groupId: 'restricted'
+        } as never
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+
+    const result = toDiagramCraftData(row, schema, authCtxWithTeamRoles({}));
+
+    expect(result.technology).toBe('React');
+    expect(result.secret).toBeUndefined();
   });
 });
