@@ -425,6 +425,8 @@
           including recursively resolved dependencies and remapped references.
 
         - @id:ar.import-export.entity-csv Users can import and export entity collections through CSV workflows.
+          Field values from access-restricted field groups are scrubbed from import previews, and CSV updates
+          cannot write or clear fields in field groups the importer lacks edit access to.
 
     - @id:ar.integrations Arch Register exposes integration surfaces for external clients, content sources, event
       delivery, and scheduled work.

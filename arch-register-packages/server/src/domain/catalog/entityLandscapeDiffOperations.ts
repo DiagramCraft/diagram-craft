@@ -11,6 +11,7 @@ import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 import { buildDiff, redactDataDiff } from './entityDiff';
 import { toApiEntity } from './entityHelpers';
+import { computeEntityCompleteness } from '../../utils/completeness';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterEntities, matchesFilterCondition } from './dataHelpers';
 import { resolveJoinedAssessment } from './entityQueryOperations';
@@ -169,8 +170,13 @@ const toApi = (
   entity: EntityDbResult,
   authCtx: AuthorizationContext,
   schemaById: Map<string, SchemaDbResult>
-): EntityRecord =>
-  toApiEntity(entity, authCtx, schemaById.get(entity.schema_id) ?? null, entity.completeness);
+): EntityRecord => {
+  const schema = schemaById.get(entity.schema_id) ?? null;
+  const visibleCompleteness = schema
+    ? computeEntityCompleteness(entity, schema, authCtx)
+    : entity.completeness;
+  return toApiEntity(entity, authCtx, schema, visibleCompleteness);
+};
 
 export const diffEntityLandscapes = async (
   db: DatabaseAdapter,
