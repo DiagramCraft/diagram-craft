@@ -118,7 +118,6 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'ent.override',
     'ent.external_update',
     'comments',
-    'export',
     'schema.edit',
     'schema.publish'
   ],
@@ -143,7 +142,6 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'ent.override',
     'ent.external_update',
     'comments',
-    'export',
     'schema.edit',
     'schema.publish'
   ],
@@ -157,11 +155,10 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'content.edit',
     'ent.edit',
     'ent.propose',
-    'comments',
-    'export'
+    'comments'
   ],
-  reviewer: ['ws.view', 'content.view', 'ent.propose', 'comments', 'export'],
-  viewer: ['ws.view', 'content.view', 'export']
+  reviewer: ['ws.view', 'content.view', 'ent.propose', 'comments'],
+  viewer: ['ws.view', 'content.view']
 };
 
 /**
@@ -254,8 +251,7 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
       { id: 'ent.propose', name: 'Propose entity changes' },
       { id: 'ent.approve', name: 'Approve entity changes' },
       { id: 'ent.override', name: 'Bypass entity approval' },
-      { id: 'comments', name: 'Comment & discuss' },
-      { id: 'export', name: 'Export schema / CSV' }
+      { id: 'comments', name: 'Comment & discuss' }
     ]
   },
   {

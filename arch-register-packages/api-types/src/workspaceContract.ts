@@ -571,7 +571,6 @@ export type WorkspaceRoleCapability =
   | 'ent.override'
   | 'ent.external_update'
   | 'comments'
-  | 'export'
   | 'schema.edit'
   | 'schema.publish';
 

@@ -35,7 +35,6 @@ const ALL_CAPABILITIES: WorkspaceCapability[] = [
   'ent.edit',
   'ent.propose',
   'comments',
-  'export',
   'schema.edit',
   'schema.publish'
 ];

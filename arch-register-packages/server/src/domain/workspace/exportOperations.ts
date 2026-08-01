@@ -4,6 +4,7 @@ import type { StorageAdapter } from '../../storage/storage';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
+import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import type {
   ExportOptions,
   ExportManifest,
@@ -198,7 +199,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
 
 const exportEntities = async (
   db: DatabaseAdapter,
-  _authCtx: WorkspaceAuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   filters?: {
     schema_ids?: string[];
@@ -208,6 +209,9 @@ const exportEntities = async (
   },
   includeGrants = false
 ): Promise<ExportEntity[]> => {
+  const schemas = await db.catalog.listSchemas(workspace);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+
   let entities = await db.catalog.listEntities(workspace);
 
   if (filters?.schema_ids?.length) {
@@ -245,7 +249,7 @@ const exportEntities = async (
     target_lifecycle_date: e.target_lifecycle_date,
     tags: e.tags,
     links: e.links,
-    data: e.data,
+    data: filterRestrictedFieldGroups(authCtx, schemaById.get(e.schema_id) ?? null, e.data),
     project_id: e.project_id,
     ...(includeGrants && {
       grants: (grantsMap.get(e.id) ?? []).map(g => ({

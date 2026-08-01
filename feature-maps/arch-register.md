@@ -412,7 +412,8 @@
       and out of Arch Register.
 
         - @id:ar.import-export.workspace-export Authorized users can export selected or complete workspace data,
-          including supported content and configuration.
+          including supported content and configuration. Exported entity data is scrubbed of access-restricted
+          field groups per exporting user, mirroring the redaction applied when viewing entities directly.
 
         - @id:ar.import-export.workspace-import Authorized users can validate, preview, and execute supported workspace
           imports.
