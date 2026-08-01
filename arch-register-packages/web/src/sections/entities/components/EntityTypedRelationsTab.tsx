@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TbChevronRight, TbInfoCircle, TbPlus } from 'react-icons/tb';
+import { TbChevronRight, TbPlus } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
@@ -227,26 +227,34 @@ const RelationRow = ({
     .filter((v): v is string => v !== null);
 
   return (
-    <div className={styles.relation}>
-      <EntityNavigationLink publicId={otherEndpoint.id} className={styles.relationLead}>
-        <span className={styles.relationName}>{otherEndpoint.name}</span>
+    <div
+      className={styles.relation}
+      role="button"
+      tabIndex={0}
+      title="Inspect relation"
+      onClick={() => onInspect(record)}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onInspect(record);
+        }
+      }}
+    >
+      <span className={styles.relationLead}>
+        <EntityNavigationLink
+          publicId={otherEndpoint.id}
+          className={styles.relationName}
+          onClick={event => event.stopPropagation()}
+        >
+          {otherEndpoint.name}
+        </EntityNavigationLink>
         {fieldSummaries.length > 0 && (
           <>
             <TbChevronRight size={10} className={sharedStyles.dim} />
             <span className={sharedStyles.dim}>{fieldSummaries.join(' · ')}</span>
           </>
         )}
-      </EntityNavigationLink>
-      <button
-        type="button"
-        title="Inspect relation"
-        aria-label="Inspect relation"
-        className={sharedStyles.dim}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-        onClick={() => onInspect(record)}
-      >
-        <TbInfoCircle size={14} />
-      </button>
+      </span>
     </div>
   );
 };
