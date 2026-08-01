@@ -659,6 +659,130 @@ describe('computeBoxMetrics - enum sources', () => {
   });
 });
 
+describe('computeBoxMetrics - restricted field groups', () => {
+  const restrictedServiceSchema: SchemaDbResult = {
+    ...serviceSchema,
+    fields: serviceSchema.fields.map(f =>
+      f.id === 'score' || f.id === 'tier' ? { ...f, groupId: 'restricted' } : f
+    ),
+    groups: [
+      { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+    ]
+  };
+  const restrictedSchemas = [domainSchema, restrictedServiceSchema];
+
+  const noAccessAuthCtx = buildAuthorizationContext({
+    userId: 'user-2',
+    globalRoles: [],
+    workspaceRole: null,
+    schemas: [],
+    entities: [],
+    grants: []
+  });
+
+  const viewerAuthCtx = buildAuthorizationContext({
+    userId: 'user-3',
+    globalRoles: [],
+    workspaceRole: null,
+    teamAssignments: [{ teamId: 'team-restricted', role: 'team_reviewer' }],
+    schemas: [],
+    entities: [],
+    grants: []
+  });
+
+  it('returns null for min/max/average/worst on a restricted numeric field', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', score: 10 } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', score: 20 } })
+    ];
+    for (const aggregation of ['minimum', 'maximum', 'average', 'sum'] as const) {
+      const result = computeBoxMetrics(
+        ['d1'],
+        { ...numericMetric, aggregation },
+        entities,
+        restrictedSchemas,
+        lifecycleStates,
+        null,
+        alwaysMatch,
+        null,
+        noAccessAuthCtx
+      );
+      expect(result.results[0]).toMatchObject({
+        value: null,
+        sourceCount: 2,
+        populatedCount: 0
+      });
+    }
+  });
+
+  it('returns an empty distribution and null dominant option for a restricted enum field', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', tier: 'gold' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', tier: 'silver' } })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      {
+        sourceSchemaId: 'service',
+        source: { kind: 'enum', fieldId: 'tier' },
+        aggregation: 'count'
+      },
+      entities,
+      restrictedSchemas,
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      tierEnumOptions,
+      noAccessAuthCtx
+    );
+    expect(result.results[0]).toMatchObject({
+      dominantValue: null,
+      dominantLabel: null,
+      distribution: [],
+      populatedCount: 0,
+      sourceCount: 2
+    });
+  });
+
+  it('resolves normally once the caller has view or edit access to the group', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', score: 10 } })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      numericMetric,
+      entities,
+      restrictedSchemas,
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      null,
+      viewerAuthCtx
+    );
+    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
+  });
+
+  it('defaults to unrestricted when authCtx is omitted (internal/system callers)', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', score: 10 } })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      numericMetric,
+      entities,
+      restrictedSchemas,
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
+  });
+});
+
 describe('getBoxMetrics', () => {
   const permissiveAuthCtx = buildAuthorizationContext({
     userId: 'user-1',

@@ -159,7 +159,10 @@
         - @id:ar.entity-views.map Users can inspect containment hierarchies as a nested capability map, colouring boxes
           by a configurable metric rolled up from descendant entities (numeric fields, lifecycle state, or assessment
           fields), using dominant-option or worst aggregation. For enum-sourced metrics, "worst" ranks options by the
-          admin-configured top-to-bottom order of the enum's options.
+          admin-configured top-to-bottom order of the enum's options. A metric source in an access-restricted field
+          group evaluates as unavailable (no value, distribution, or dominant option) for viewers without view access
+          to that group, rather than exposing the underlying data; the field picker also excludes such fields when
+          configuring the metric.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view.
 

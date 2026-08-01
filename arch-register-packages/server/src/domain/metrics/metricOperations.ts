@@ -13,6 +13,7 @@ import type {
 import { getInlineAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterVisibleEntities } from '../auth/authorization';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import {
   resolveJoinedAssessment,
   collectEntitiesFromIR,
@@ -32,12 +33,21 @@ const extractValue = (
   entity: EntityDbResult,
   source: MetricConfig['source'],
   lifecycleSortOrder: Map<string, number>,
-  responsesByEntity: Map<string, Record<string, string | number | boolean>> | null
+  responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
+  sourceSchema: SchemaDbResult | undefined,
+  authCtx: AuthorizationContext | null
 ): MetricValue | null => {
   if (source.kind === 'lifecycle') {
     if (entity.lifecycle == null) return null;
     const sortOrder = lifecycleSortOrder.get(entity.lifecycle);
     return sortOrder == null ? null : { value: sortOrder, lifecycleId: entity.lifecycle };
+  }
+
+  if (
+    source.kind !== 'assessmentRating' &&
+    isFieldViewRestricted(authCtx, sourceSchema, source.fieldId)
+  ) {
+    return null;
   }
 
   const raw =
@@ -52,8 +62,14 @@ const extractValue = (
 const extractEnumValue = (
   entity: EntityDbResult,
   source: Extract<MetricConfig['source'], { kind: 'enum' | 'assessmentEnum' }>,
-  responsesByEntity: Map<string, Record<string, string | number | boolean>> | null
+  responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
+  sourceSchema: SchemaDbResult | undefined,
+  authCtx: AuthorizationContext | null
 ): string | null => {
+  if (source.kind === 'enum' && isFieldViewRestricted(authCtx, sourceSchema, source.fieldId)) {
+    return null;
+  }
+
   const raw =
     source.kind === 'assessmentEnum'
       ? (responsesByEntity?.get(entity.id)?.[source.fieldId] ?? null)
@@ -191,12 +207,14 @@ export const computeBoxMetrics = (
   lifecycleStates: LifecycleStateDbResult[],
   responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
   isFilterMatch: (entity: EntityDbResult) => boolean,
-  enumOptions: EnumOption[] | null = null
+  enumOptions: EnumOption[] | null = null,
+  authCtx: AuthorizationContext | null = null
 ): MetricRollupResponse => {
   const childrenOf = buildContainmentChildrenIndex(schemas, entities);
   const entityById = new Map(entities.map(e => [e.id, e]));
   const lifecycleSortOrder = new Map(lifecycleStates.map(s => [s.id, s.sort_order]));
   const worstDirection = metric.worstDirection ?? 'high';
+  const sourceSchema = schemas.find(s => s.id === metric.sourceSchemaId);
 
   const results = boxEntityIds.map(boxEntityId => {
     const sourceEntities = collectDescendantIds(boxEntityId, childrenOf)
@@ -212,7 +230,7 @@ export const computeBoxMetrics = (
         { kind: 'enum' | 'assessmentEnum' }
       >;
       const values = sourceEntities
-        .map(entity => extractEnumValue(entity, source, responsesByEntity))
+        .map(entity => extractEnumValue(entity, source, responsesByEntity, sourceSchema, authCtx))
         .filter((v): v is string => v != null);
       const {
         dominantValue: modeValue,
@@ -249,7 +267,16 @@ export const computeBoxMetrics = (
     }
 
     const populated = sourceEntities
-      .map(entity => extractValue(entity, metric.source, lifecycleSortOrder, responsesByEntity))
+      .map(entity =>
+        extractValue(
+          entity,
+          metric.source,
+          lifecycleSortOrder,
+          responsesByEntity,
+          sourceSchema,
+          authCtx
+        )
+      )
       .filter((v): v is MetricValue => v != null);
     const { value, lifecycleId } = aggregate(populated, metric.aggregation, worstDirection);
 
@@ -441,6 +468,7 @@ export const getBoxMetrics = async (
     lifecycleStates,
     joinedAssessment?.responsesByEntity ?? null,
     isFilterMatch,
-    enumOptions
+    enumOptions,
+    authCtx
   );
 };

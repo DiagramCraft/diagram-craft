@@ -4,6 +4,7 @@ import type {
   MetricConfig,
   MetricSource
 } from '@arch-register/api-types/metricContract';
+import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import type { JoinedAssessmentContext } from './entityFieldSources';
 
 // `MapConfig.metricConfig` is stored as `unknown` in the saved-view config schema (the web app
@@ -40,14 +41,25 @@ export type MetricSourceOption = {
   label: string;
 };
 
-/** Selectable metric sources for `schema`'s descendants: numeric/select fields, lifecycle, and (if joined) assessment rating/enum fields. */
+/**
+ * Selectable metric sources for `schema`'s descendants: numeric/select fields, lifecycle, and (if
+ * joined) assessment rating/enum fields. Fields in a group the caller cannot view are omitted -
+ * pass `useFieldGroupAccess(workspaceId)` for `getFieldGroupAccess`, matching `FilterBuilder`.
+ */
 export const getMetricSourceOptions = (
   schema: EntitySchema | undefined,
-  joinedAssessment?: JoinedAssessmentContext | null
+  joinedAssessment?: JoinedAssessmentContext | null,
+  getFieldGroupAccess: (
+    accessControl: FieldGroupAccessControl | undefined
+  ) => FieldGroupAccess = () => 'edit'
 ): MetricSourceOption[] => {
   if (!schema) return [];
   const options: MetricSourceOption[] = [{ source: { kind: 'lifecycle' }, label: 'Lifecycle' }];
   for (const field of schema.fields) {
+    if (field.groupId) {
+      const group = schema.groups?.find(g => g.id === field.groupId);
+      if (getFieldGroupAccess(group?.accessControl) === 'none') continue;
+    }
     if (field.type === 'number') {
       options.push({ source: { kind: 'field', fieldId: field.id }, label: field.name });
     } else if (field.type === 'select') {
