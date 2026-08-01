@@ -111,7 +111,10 @@
           An entity's detail view has a "Typed relations" tab, alongside its generic "Relationships" tab, that lists
           the typed relation instances the entity participates in (outgoing and incoming), grouped by relation type,
           with each row showing the connected entity and its key field values (subject to field-group redaction) and
-          linking to that entity. Versioning and change-approval for relation instances are not yet supported.
+          linking to that entity. From this tab, users can create a new relation instance connecting the current
+          entity to another entity, choosing among relation types whose endpoint constraints allow the entity's
+          schema and filling in the relation's fields (also subject to field-group access control). Versioning and
+          change-approval for relation instances are not yet supported.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.

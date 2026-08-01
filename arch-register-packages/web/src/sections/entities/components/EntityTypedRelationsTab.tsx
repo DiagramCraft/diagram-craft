@@ -1,6 +1,9 @@
-import { TbChevronRight } from 'react-icons/tb';
+import { useState } from 'react';
+import { TbChevronRight, TbPlus } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
+import { AddRelationDialog } from '../../../dialogs/AddRelationDialog';
 import type {
   RelationField,
   RelationSchema
@@ -12,7 +15,11 @@ import { EmptyState } from '../../../components/EmptyState';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 
 type Props = {
+  workspaceId: string;
   entityId: string;
+  entityName: string;
+  entitySchemaId: string;
+  canEdit: boolean;
   outgoing: RelationRecord[];
   incoming: RelationRecord[];
   relationSchemas: RelationSchema[];
@@ -27,23 +34,16 @@ const formatFieldValue = (field: RelationField, value: unknown): string | null =
 const KEY_FIELD_COUNT = 3;
 
 export const EntityTypedRelationsTab = ({
+  workspaceId,
   entityId,
+  entityName,
+  entitySchemaId,
+  canEdit,
   outgoing,
   incoming,
   relationSchemas
 }: Props) => {
-  const relationCount = outgoing.length + incoming.length;
-
-  if (relationCount === 0) {
-    return (
-      <div className={styles.relationsPage}>
-        <EmptyState
-          title="No typed relations"
-          subtitle="This entity doesn't participate in any typed relation instances yet."
-        />
-      </div>
-    );
-  }
+  const [addDialogEndpoint, setAddDialogEndpoint] = useState<'in' | 'out' | null>(null);
 
   const groupBySchema = (records: RelationRecord[]) => {
     const groups = new Map<string, RelationRecord[]>();
@@ -57,24 +57,77 @@ export const EntityTypedRelationsTab = ({
 
   const outgoingBySchema = groupBySchema(outgoing);
   const incomingBySchema = groupBySchema(incoming);
+  const relationCount = outgoing.length + incoming.length;
+
+  const eligibleAsIn = relationSchemas.some(rs => rs.in.schemaIds.includes(entitySchemaId));
+  const eligibleAsOut = relationSchemas.some(rs => rs.out.schemaIds.includes(entitySchemaId));
 
   return (
     <div className={styles.relationsPage}>
-      <div className={sharedStyles.sectionLabel}>Outgoing ({outgoing.length})</div>
-      <RelationSchemaGroups
-        entityId={entityId}
-        groups={outgoingBySchema}
-        direction="outgoing"
+      {relationCount === 0 && !eligibleAsIn && !eligibleAsOut && (
+        <EmptyState
+          title="No typed relations"
+          subtitle="This entity doesn't participate in any typed relation instances yet."
+        />
+      )}
+
+      {(relationCount > 0 || eligibleAsIn) && (
+        <>
+          <div className={sharedStyles.sectionLabel} style={{ display: 'flex', gap: 8 }}>
+            <span style={{ flex: 1 }}>Outgoing ({outgoing.length})</span>
+            {canEdit && eligibleAsIn && (
+              <Button
+                variant="ghost"
+                icon={<TbPlus size={11} />}
+                onClick={() => setAddDialogEndpoint('in')}
+              >
+                Add relation
+              </Button>
+            )}
+          </div>
+          <RelationSchemaGroups
+            groups={outgoingBySchema}
+            direction="outgoing"
+            relationSchemas={relationSchemas}
+          />
+        </>
+      )}
+
+      {(relationCount > 0 || eligibleAsOut) && (
+        <>
+          <div
+            className={sharedStyles.sectionLabel}
+            style={{ display: 'flex', gap: 8, marginTop: 16 }}
+          >
+            <span style={{ flex: 1 }}>Incoming ({incoming.length})</span>
+            {canEdit && eligibleAsOut && (
+              <Button
+                variant="ghost"
+                icon={<TbPlus size={11} />}
+                onClick={() => setAddDialogEndpoint('out')}
+              >
+                Add relation
+              </Button>
+            )}
+          </div>
+          <RelationSchemaGroups
+            groups={incomingBySchema}
+            direction="incoming"
+            relationSchemas={relationSchemas}
+          />
+        </>
+      )}
+
+      <AddRelationDialog
+        open={addDialogEndpoint !== null}
+        onClose={() => setAddDialogEndpoint(null)}
+        onCreated={() => setAddDialogEndpoint(null)}
+        workspaceId={workspaceId}
         relationSchemas={relationSchemas}
-      />
-      <div className={sharedStyles.sectionLabel} style={{ marginTop: 16 }}>
-        Incoming ({incoming.length})
-      </div>
-      <RelationSchemaGroups
-        entityId={entityId}
-        groups={incomingBySchema}
-        direction="incoming"
-        relationSchemas={relationSchemas}
+        fixedEntityId={entityId}
+        fixedEntityName={entityName}
+        fixedEntitySchemaId={entitySchemaId}
+        fixedEndpoint={addDialogEndpoint ?? 'in'}
       />
     </div>
   );
@@ -85,7 +138,6 @@ const RelationSchemaGroups = ({
   direction,
   relationSchemas
 }: {
-  entityId: string;
   groups: Map<string, RelationRecord[]>;
   direction: 'outgoing' | 'incoming';
   relationSchemas: RelationSchema[];

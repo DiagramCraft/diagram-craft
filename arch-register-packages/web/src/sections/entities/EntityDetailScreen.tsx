@@ -785,7 +785,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           }}
           relationsProps={{ outgoing, incoming, schemas }}
           typedRelationsProps={{
+            workspaceId,
             entityId: entity?._uid ?? entityId,
+            entityName: entity?._name ?? '',
+            entitySchemaId: entity?._schema.id ?? '',
+            canEdit: entity?.canEdit ?? false,
             outgoing: typedRelations.outgoing,
             incoming: typedRelations.incoming,
             relationSchemas
