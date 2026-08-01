@@ -3,6 +3,10 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuditLogDbResult } from '../audit/db/auditDatabase';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import { RetryableJobError } from '../jobs/jobRetry';
+import {
+  filterAllRestrictedFieldGroups,
+  type FieldGroupSchemaShape
+} from '../auth/fieldGroupAccessControl';
 import { UnsafeOutboundHostError } from './webhookRequest';
 import { sendWebhookRequest } from './webhookRequest';
 
@@ -22,7 +26,12 @@ export type WebhookEvent = {
   metadata: Record<string, unknown>;
 };
 
-export const auditLogToWebhookEvent = (auditLog: AuditLogDbResult): WebhookEvent => ({
+// `schema` redacts restricted field-group values from `changes` unconditionally (there is no
+// live principal to redact against in the async delivery path) — see filterAllRestrictedFieldGroups.
+export const auditLogToWebhookEvent = (
+  auditLog: AuditLogDbResult,
+  schema: FieldGroupSchemaShape | null
+): WebhookEvent => ({
   version: '1',
   id: auditLog.id,
   type: `entity.${auditLog.operation}d` as WebhookEvent['type'],
@@ -35,7 +44,14 @@ export const auditLogToWebhookEvent = (auditLog: AuditLogDbResult): WebhookEvent
     slug: auditLog.entity_slug,
     schema_id: auditLog.schema_id
   },
-  changes: auditLog.changes,
+  changes: {
+    old: auditLog.changes.old
+      ? filterAllRestrictedFieldGroups(schema, auditLog.changes.old)
+      : auditLog.changes.old,
+    new: auditLog.changes.new
+      ? filterAllRestrictedFieldGroups(schema, auditLog.changes.new)
+      : auditLog.changes.new
+  },
   metadata: auditLog.metadata
 });
 
@@ -50,7 +66,11 @@ export const enqueueWebhookDeliveries = async (db: DatabaseAdapter, auditLog: Au
         (auditLog.schema_id != null &&
           webhook.event_filter.schema_ids.includes(auditLog.schema_id)))
   );
-  const event = auditLogToWebhookEvent(auditLog);
+  if (matching.length === 0) return 0;
+  const schema = auditLog.schema_id
+    ? await db.catalog.getSchema(auditLog.workspace, auditLog.schema_id)
+    : null;
+  const event = auditLogToWebhookEvent(auditLog, schema);
   for (const webhook of matching) {
     await enqueueOneOffJobRun(db, {
       id: randomUUID(),

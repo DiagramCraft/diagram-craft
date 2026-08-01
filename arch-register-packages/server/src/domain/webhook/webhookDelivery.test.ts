@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import { RetryableJobError } from '../jobs/jobRetry';
+import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import {
   auditLogToWebhookEvent,
   createWebhookDeliveryHandler,
@@ -27,21 +28,24 @@ const webhook = {
   updated_at: new Date()
 };
 
-const event = auditLogToWebhookEvent({
-  id: 'audit-1',
-  workspace: 'ws-1',
-  timestamp: new Date('2026-07-15T10:00:00.000Z'),
-  user_id: 'user-1',
-  user_display_name: 'Ada',
-  operation: 'create',
-  entity_type: 'entity',
-  entity_id: 'entity-1',
-  entity_name: 'Payments',
-  entity_slug: 'payments',
-  schema_id: 'schema-1',
-  changes: { new: { _name: 'Payments' } },
-  metadata: { source: 'test' }
-});
+const event = auditLogToWebhookEvent(
+  {
+    id: 'audit-1',
+    workspace: 'ws-1',
+    timestamp: new Date('2026-07-15T10:00:00.000Z'),
+    user_id: 'user-1',
+    user_display_name: 'Ada',
+    operation: 'create',
+    entity_type: 'entity',
+    entity_id: 'entity-1',
+    entity_name: 'Payments',
+    entity_slug: 'payments',
+    schema_id: 'schema-1',
+    changes: { new: { _name: 'Payments' } },
+    metadata: { source: 'test' }
+  },
+  null
+);
 
 const db = { webhook: { getWebhook: vi.fn(async () => webhook) } } as unknown as DatabaseAdapter;
 
@@ -65,6 +69,7 @@ describe('webhook delivery', () => {
           { ...webhook, id: 'hook-disabled', enabled: false }
         ])
       },
+      catalog: { getSchema: vi.fn(async () => null) },
       jobs: { enqueueOneOffRun }
     } as unknown as DatabaseAdapter;
 
@@ -93,6 +98,47 @@ describe('webhook delivery', () => {
         payload: expect.objectContaining({ webhookId: 'hook-1' })
       })
     );
+  });
+
+  it('strips restricted field-group values from the delivered event unconditionally', async () => {
+    const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
+    const schema: FieldGroupSchemaShape = {
+      fields: [
+        { id: '_name', name: 'Name' } as never,
+        { id: 'secret', name: 'Secret', groupId: 'restricted' } as never
+      ],
+      groups: [{ id: 'restricted', accessControl: { teamIds: ['team-1'] } } as never]
+    };
+    const restrictedDb = {
+      webhook: { listWebhooks: vi.fn(async () => [webhook]) },
+      catalog: { getSchema: vi.fn(async () => schema) },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    await enqueueWebhookDeliveries(restrictedDb, {
+      id: 'audit-2',
+      workspace: 'ws-1',
+      timestamp: new Date('2026-07-15T10:00:00.000Z'),
+      user_id: 'user-1',
+      user_display_name: 'Ada',
+      operation: 'create',
+      entity_type: 'entity',
+      entity_id: 'entity-1',
+      entity_name: 'Payments',
+      entity_slug: 'payments',
+      schema_id: 'schema-1',
+      changes: {
+        old: { _name: 'Payments', secret: 'old-secret' },
+        new: { _name: 'Payments Inc', secret: 'new-secret' }
+      },
+      metadata: {}
+    });
+
+    const payload = enqueueOneOffRun.mock.calls[0]![0].payload as { event: { changes: unknown } };
+    expect(payload.event.changes).toEqual({
+      old: { _name: 'Payments' },
+      new: { _name: 'Payments Inc' }
+    });
   });
 
   it('sends the exact signed payload and delivery headers', async () => {

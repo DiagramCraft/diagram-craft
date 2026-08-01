@@ -4,7 +4,7 @@ export type FieldGroupAccessControl = { teamIds: string[] };
 
 export type FieldGroupAccess = 'view' | 'edit' | 'none';
 
-type FieldGroupAccessContext = Pick<
+export type FieldGroupAccessContext = Pick<
   WorkspaceAuthorizationContext,
   | 'teamRolesByTeam'
   | 'globalPermissions'
@@ -41,7 +41,7 @@ const hasCapability = (
  * incidentally unlock every restricted field group, and a role built to see
  * everything doesn't have to also grant the ability to change member roles.
  */
-const hasFieldGroupAdminBypass = (context: FieldGroupAccessContext): boolean =>
+export const hasFieldGroupAdminBypass = (context: FieldGroupAccessContext): boolean =>
   hasCapability(context, 'ws.settings') &&
   hasCapability(context, 'schema.edit') &&
   hasCapability(context, 'ent.edit');
