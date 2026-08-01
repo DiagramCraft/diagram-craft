@@ -371,7 +371,9 @@
           before/after diffs across all affected entities, resubmit after requested changes, and record an audited
           approval bypass. This covers both a single entity's propose-a-change flow and a bulk-edit-originated
           proposal bundling several entities into one case, the latter routed through governance without a resubmit
-          path.
+          path. Field values from access-restricted field groups are scrubbed from a proposal's base/proposed state
+          and diffs for viewers without view access to that group, mirroring the redaction applied when viewing the
+          entity directly.
 
         - @id:ar.collaboration.entity-deprecation Workspace administrators can require deprecation proposals for
           entities on schemas that opt in, while authorized users can propose a deprecation with a target date, reason,
