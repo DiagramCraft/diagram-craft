@@ -33,6 +33,8 @@ export type AuditEntityType =
   | 'assessment'
   | 'assessment_response'
   | 'project_milestone'
+  | 'relation_schema'
+  | 'relation'
   // A note recorded by an automation rule's `create_audit_note` action. Written directly via
   // `db.audit.createAuditLog`, never through `writeAudit`, so it does not re-trigger webhook
   // delivery, watcher notifications, or another round of automation rule evaluation.

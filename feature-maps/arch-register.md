@@ -98,7 +98,11 @@
           under a labeled section in the entity's Properties panel, with ungrouped fields shown first.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
-          dependent, and referenced records.
+          dependent, and referenced records. Alongside these generic reference/containment relations, workspace
+          admins can define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of
+          allowed entity schemas) and their own configurable fields, field groups, and access control; relation
+          instances are first-class, independently addressable, audited records rather than entity-data values.
+          Versioning and change-approval for relation instances are not yet supported.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.

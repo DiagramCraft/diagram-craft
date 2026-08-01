@@ -27,6 +27,8 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
   { value: 'content_node', label: 'Diagram / folder' },
   { value: 'assessment', label: 'Assessment' },
   { value: 'assessment_response', label: 'Assessment response' },
+  { value: 'relation_schema', label: 'Relation schema' },
+  { value: 'relation', label: 'Relation' },
   { value: 'automation_note', label: 'Automation note' }
 ];
 
@@ -47,6 +49,8 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   assessment: styles.typeAssessment ?? '',
   assessment_response: styles.typeAssessment ?? '',
   project_milestone: styles.typeAssessment ?? '',
+  relation_schema: styles.typeSchema ?? '',
+  relation: styles.typeEntity ?? '',
   automation_note: styles.typeAssessment ?? ''
 };
 
