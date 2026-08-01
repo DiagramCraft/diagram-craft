@@ -2,10 +2,18 @@ import type { EntityDbResult } from './db/catalogDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
+import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
   filterRestrictedFieldGroups,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
+
+const filterExternalMetadata = (
+  authCtx: AuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null,
+  generatedMetadata: ExternalMetadata | undefined
+): ExternalMetadata =>
+  filterRestrictedFieldGroups(authCtx, schema, generatedMetadata ?? {}) as ExternalMetadata;
 
 const checker = new PermissionChecker();
 
@@ -60,7 +68,7 @@ export const toApiEntity = (
   _approvalPolicyOverride: entity.approval_policy_override ?? null,
   _projectId: entity.project_id,
   _completeness: completeness,
-  _externalMetadata: entity.generated_metadata ?? {},
+  _externalMetadata: filterExternalMetadata(authCtx, schema, entity.generated_metadata),
   ...getEntityCapabilities(authCtx, entity),
   ...filterRestrictedFieldGroups(authCtx, schema, entity.data)
 });
@@ -68,6 +76,7 @@ export const toApiEntity = (
 export const toApiEntitySummary = (
   entity: EntityDbResult,
   authCtx: AuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null,
   completeness: number | null = null
 ): EntitySummary => ({
   _uid: entity.id,
@@ -95,6 +104,6 @@ export const toApiEntitySummary = (
   _approvalPolicyOverride: entity.approval_policy_override ?? null,
   _projectId: entity.project_id,
   _completeness: completeness,
-  _externalMetadata: entity.generated_metadata ?? {},
+  _externalMetadata: filterExternalMetadata(authCtx, schema, entity.generated_metadata),
   ...getEntityCapabilities(authCtx, entity)
 });

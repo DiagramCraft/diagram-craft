@@ -240,7 +240,7 @@ export const collectEntitiesFromIR = async (
     const apiEntity =
       options.view === 'summary'
         ? (attachProjectLink(
-            toApiEntitySummary(row, authCtx, visibleCompleteness) as EntityRecord,
+            toApiEntitySummary(row, authCtx, schema, visibleCompleteness) as EntityRecord,
             row.id,
             options.projectId,
             projectEntityMap
@@ -385,7 +385,7 @@ const collectEntities = async (
       entity:
         view === 'summary'
           ? (attachProjectLink(
-              toApiEntitySummary(entity, authCtx, visibleCompleteness) as EntityRecord,
+              toApiEntitySummary(entity, authCtx, schema, visibleCompleteness) as EntityRecord,
               entity.id,
               projectId,
               projectEntityMap

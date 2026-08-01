@@ -102,20 +102,109 @@ describe('toApiEntity', () => {
     expect(result.custom).toBe('value');
     expect((result as Record<string, unknown>).secret).toBeUndefined();
   });
+
+  it('omits external metadata for fields in a restricted group the caller cannot view', () => {
+    const entity: EntityDbResult = {
+      ...baseEntity,
+      data: { custom: 'value', secret: 'hidden' },
+      generated_metadata: {
+        custom: {
+          fieldId: 'custom',
+          external_kind: 'ai',
+          status: 'success',
+          source: 'updater',
+          timestamp: now.toISOString()
+        } as never,
+        secret: {
+          fieldId: 'secret',
+          external_kind: 'ai',
+          status: 'success',
+          source: 'updater',
+          timestamp: now.toISOString(),
+          explanation: 'This is confidential'
+        } as never
+      }
+    };
+    const schema = {
+      fields: [
+        { id: 'custom', name: 'Custom', requirementLevel: null, type: 'text' } as never,
+        {
+          id: 'secret',
+          name: 'Secret',
+          requirementLevel: null,
+          type: 'text',
+          groupId: 'restricted'
+        } as never
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+    const authCtx = authCtxWithTeamRoles({});
+
+    const result = toApiEntity(entity, authCtx, schema);
+
+    expect(result._externalMetadata?.custom).toBeDefined();
+    expect(result._externalMetadata?.secret).toBeUndefined();
+  });
 });
 
 // ── toApiEntitySummary ────────────────────────────────────────
 
 describe('toApiEntitySummary', () => {
   it('maps standard fields without data spread', () => {
-    const result = toApiEntitySummary(baseEntity, null);
+    const result = toApiEntitySummary(baseEntity, null, null);
     expect(result._uid).toBe('e-1');
     expect(result._name).toBe('My Entity');
     expect((result as Record<string, unknown>).custom).toBeUndefined();
   });
 
   it('grants all capabilities when authCtx is null', () => {
-    const result = toApiEntitySummary(baseEntity, null);
+    const result = toApiEntitySummary(baseEntity, null, null);
     expect(result.canView).toBe(true);
+  });
+
+  it('omits external metadata for fields in a restricted group the caller cannot view', () => {
+    const entity: EntityDbResult = {
+      ...baseEntity,
+      generated_metadata: {
+        custom: {
+          fieldId: 'custom',
+          external_kind: 'ai',
+          status: 'success',
+          source: 'updater',
+          timestamp: now.toISOString()
+        } as never,
+        secret: {
+          fieldId: 'secret',
+          external_kind: 'ai',
+          status: 'success',
+          source: 'updater',
+          timestamp: now.toISOString(),
+          explanation: 'This is confidential'
+        } as never
+      }
+    };
+    const schema = {
+      fields: [
+        { id: 'custom', name: 'Custom', requirementLevel: null, type: 'text' } as never,
+        {
+          id: 'secret',
+          name: 'Secret',
+          requirementLevel: null,
+          type: 'text',
+          groupId: 'restricted'
+        } as never
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+    const authCtx = authCtxWithTeamRoles({});
+
+    const result = toApiEntitySummary(entity, authCtx, schema);
+
+    expect(result._externalMetadata?.custom).toBeDefined();
+    expect(result._externalMetadata?.secret).toBeUndefined();
   });
 });
