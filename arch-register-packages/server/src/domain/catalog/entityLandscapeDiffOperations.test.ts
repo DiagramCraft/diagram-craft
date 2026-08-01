@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityLandscapeDiffState } from '@arch-register/api-types/entityContract';
-import type { EntityDbResult } from './db/catalogDatabase';
+import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 
 vi.mock('../auth/authorization', () => ({
   filterVisibleEntities: (_authCtx: unknown, entities: EntityDbResult[]) => entities,
@@ -77,13 +78,53 @@ const state = (overrides: Partial<EntityLandscapeDiffState>): EntityLandscapeDif
   ...overrides
 });
 
+const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+  buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: null,
+    teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+      teamRoles.map(role => ({ teamId, role }))
+    ),
+    schemas: [],
+    entities: [],
+    grants: []
+  });
+
+const restrictedSchema = {
+  id: 'schema-1',
+  workspace: 'ws-1',
+  name: 'Service',
+  description: '',
+  color: null,
+  icon: null,
+  default_owner: null,
+  key_prefix: 'SVC',
+  created_at: now,
+  updated_at: now,
+  fields: [
+    { id: 'visible', name: 'Visible', requirementLevel: null, type: 'text' },
+    {
+      id: 'secret',
+      name: 'Secret',
+      requirementLevel: null,
+      type: 'text',
+      groupId: 'restricted'
+    }
+  ],
+  groups: [
+    { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+  ]
+} as unknown as SchemaDbResult;
+
 const db = {
   project: {
     getProject: vi.fn(async () => null),
     listProjectEntityLinks: vi.fn(async () => [])
   },
   catalog: {
-    listEntitiesPaginated: vi.fn(async () => [])
+    listEntitiesPaginated: vi.fn(async () => []),
+    listSchemas: vi.fn(async () => [])
   }
 } as unknown as DatabaseAdapter;
 
@@ -92,6 +133,7 @@ beforeEach(() => {
   vi.mocked(db.project.getProject).mockResolvedValue(null as never);
   vi.mocked(db.project.listProjectEntityLinks).mockResolvedValue([] as never);
   vi.mocked(db.catalog.listEntitiesPaginated).mockResolvedValue([] as never);
+  vi.mocked(db.catalog.listSchemas).mockResolvedValue([] as never);
 });
 
 describe('diffEntityLandscapes', () => {
@@ -336,5 +378,145 @@ describe('diffEntityLandscapes', () => {
 
     expect(result.added.map(entity => entity._uid)).toEqual(['beta']);
     expect(result.removed).toEqual([]);
+  });
+
+  describe('field-group redaction', () => {
+    beforeEach(() => {
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([restrictedSchema] as never);
+    });
+
+    it('keeps a restricted-only data change in `changed` with an empty diff', async () => {
+      const from = [makeEntity('e1', { data: { secret: 'before' } })];
+      const to = [makeEntity('e1', { data: { secret: 'after' } })];
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({}),
+        state({})
+      );
+
+      expect(result.changed).toEqual([
+        expect.objectContaining({
+          entity: expect.objectContaining({ _uid: 'e1' }),
+          diff: {}
+        })
+      ]);
+    });
+
+    it('redacts only the restricted field when a visible field also changes', async () => {
+      const from = [makeEntity('e1', { data: { visible: 'v-before', secret: 'before' } })];
+      const to = [makeEntity('e1', { data: { visible: 'v-after', secret: 'after' } })];
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({}),
+        state({})
+      );
+
+      expect(result.changed).toEqual([
+        expect.objectContaining({
+          diff: {
+            data: {
+              before: { visible: 'v-before' },
+              after: { visible: 'v-after' }
+            }
+          }
+        })
+      ]);
+    });
+
+    it('does not redact when the caller has view access to the group', async () => {
+      const from = [makeEntity('e1', { data: { secret: 'before' } })];
+      const to = [makeEntity('e1', { data: { secret: 'after' } })];
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] }),
+        state({}),
+        state({})
+      );
+
+      expect(result.changed).toEqual([
+        expect.objectContaining({
+          diff: {
+            data: { before: { secret: 'before' }, after: { secret: 'after' } }
+          }
+        })
+      ]);
+    });
+
+    it('redacts the merged current value in scenario comparisons', async () => {
+      const projectA = { id: 'project-a', owner: 'team-a' };
+      const projectB = { id: 'project-b', owner: 'team-b' };
+      vi.mocked(db.project.getProject)
+        .mockResolvedValueOnce(projectA as never)
+        .mockResolvedValueOnce(projectB as never);
+      vi.mocked(db.project.listProjectEntityLinks)
+        .mockResolvedValueOnce([] as never)
+        .mockResolvedValueOnce([] as never);
+
+      vi.mocked(reconstructEntitiesAsOf)
+        .mockResolvedValueOnce([
+          makeEntity('shared', { data: { visible: 'v-before', secret: 'before' } })
+        ])
+        .mockResolvedValueOnce([
+          makeEntity('shared', { data: { visible: 'v-after', secret: 'after' } })
+        ])
+        .mockResolvedValueOnce([
+          makeEntity('shared', { data: { visible: 'v-live', secret: 'live' } })
+        ]);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({ projectId: 'project-a', projectScope: 'all' }),
+        state({ projectId: 'project-b', projectScope: 'all' })
+      );
+
+      expect(result.changed).toEqual([
+        expect.objectContaining({
+          entity: expect.objectContaining({ _uid: 'shared' }),
+          diff: {
+            data: {
+              before: { visible: 'v-before' },
+              after: { visible: 'v-after' },
+              current: { visible: 'v-live' }
+            }
+          }
+        })
+      ]);
+    });
+
+    it('behaves unchanged when no schema is found for the entity', async () => {
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([] as never);
+      const from = [makeEntity('e1', { data: { secret: 'before' } })];
+      const to = [makeEntity('e1', { data: { secret: 'after' } })];
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({}),
+        state({})
+      );
+
+      expect(result.changed).toEqual([
+        expect.objectContaining({
+          diff: {
+            data: { before: { secret: 'before' }, after: { secret: 'after' } }
+          }
+        })
+      ]);
+    });
   });
 });

@@ -14,7 +14,11 @@ import { orpcAssert } from '../../utils/orpcAssert';
 import { requireEntityAction } from '../auth/authorization';
 import { updateEntityWithAudit } from './entityMutations';
 import { entityRequiresApproval } from './entityChangeOperations';
-import { assertVersionCanBeRestored, serializeEntityVersion } from './entityVersionOperations';
+import {
+  assertVersionCanBeRestored,
+  redactVersionState,
+  serializeEntityVersion
+} from './entityVersionOperations';
 import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
 
 type ORPCContext = {
@@ -43,7 +47,22 @@ const entityVersionHandlers = {
       'You do not have access to view this entity'
     );
     const versions = await context.db.catalog.listEntityVersions(workspace, entity.id);
-    return versions.map(serializeEntityVersion);
+    const schemaIds = new Set(
+      versions.map(version => String(version.state['schema_id'] ?? entity.schema_id))
+    );
+    const schemas = await Promise.all(
+      [...schemaIds].map(schemaId => context.db.catalog.getSchema(workspace, schemaId))
+    );
+    const schemaById = new Map(schemas.filter(s => s != null).map(s => [s.id, s]));
+    return versions.map(version =>
+      serializeEntityVersion(
+        redactVersionState(
+          version,
+          authCtx,
+          schemaById.get(String(version.state['schema_id'] ?? entity.schema_id)) ?? null
+        )
+      )
+    );
   }),
 
   get: entityVersionRouter.entityVersions.get.handler(async ({ input, context }) => {
@@ -68,7 +87,9 @@ const entityVersionHandlers = {
       code: 'BAD_REQUEST',
       message: 'Version does not belong to this entity'
     });
-    return serializeEntityVersion(version);
+    const schemaId = String(version.state['schema_id'] ?? entity.schema_id);
+    const schema = await context.db.catalog.getSchema(workspace, schemaId);
+    return serializeEntityVersion(redactVersionState(version, authCtx, schema ?? null));
   }),
 
   promote: entityVersionRouter.entityVersions.promote.handler(async ({ input, context }) => {

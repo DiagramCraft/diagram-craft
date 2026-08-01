@@ -9,15 +9,16 @@ import { requireProjectAccess, filterVisibleEntities } from '../auth/authorizati
 import { httpAssert } from '../../utils/httpAssert';
 import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
-import { buildDiff } from './entityDiff';
+import { buildDiff, redactDataDiff } from './entityDiff';
 import { toApiEntity } from './entityHelpers';
+import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterEntities, matchesFilterCondition } from './dataHelpers';
 import { resolveJoinedAssessment } from './entityQueryOperations';
 import {
   splitAssessmentConditions,
   matchesAssessmentConditions
 } from '@arch-register/api-types/assessmentFilter';
-import type { EntityDbResult } from './db/catalogDatabase';
+import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 
 const entityState = (entity: EntityDbResult): Record<string, unknown> => ({
   slug: entity.slug,
@@ -164,9 +165,12 @@ const reconstructState = async (
   return applyStateFilters(db, workspace, authCtx, state, visible);
 };
 
-// TODO(#2543): thread schema for field-group redaction in diff snapshots
-const toApi = (entity: EntityDbResult, authCtx: AuthorizationContext): EntityRecord =>
-  toApiEntity(entity, authCtx, null, entity.completeness);
+const toApi = (
+  entity: EntityDbResult,
+  authCtx: AuthorizationContext,
+  schemaById: Map<string, SchemaDbResult>
+): EntityRecord =>
+  toApiEntity(entity, authCtx, schemaById.get(entity.schema_id) ?? null, entity.completeness);
 
 export const diffEntityLandscapes = async (
   db: DatabaseAdapter,
@@ -234,37 +238,56 @@ export const diffEntityLandscapes = async (
   const toById = new Map(toEntities.map(entity => [entity.id, entity]));
   const currentById = new Map(currentEntities.map(entity => [entity.id, entity]));
 
+  const schemas = await db.catalog.listSchemas(workspace);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const schemaFor = (entity: EntityDbResult) => schemaById.get(entity.schema_id) ?? null;
+
   const added = [...toById.values()]
     .filter(entity => !fromById.has(entity.id))
     .sort((a, b) => a.id.localeCompare(b.id))
-    .map(entity => toApi(entity, authCtx));
+    .map(entity => toApi(entity, authCtx, schemaById));
   const removed = [...fromById.values()]
     .filter(entity => !toById.has(entity.id))
     .sort((a, b) => a.id.localeCompare(b.id))
-    .map(entity => toApi(entity, authCtx));
+    .map(entity => toApi(entity, authCtx, schemaById));
   const changed = [...toById.values()]
     .filter(entity => fromById.has(entity.id))
     .map(entity => ({
       entity,
+      // Raw (unredacted) diff decides whether the entity belongs in `changed` at all — an entity
+      // whose only change is in a restricted group must still be included, surfaced below as an
+      // empty `diff: {}` ("Restricted changes"), rather than disappearing silently.
       diff: buildDiff(entityState(fromById.get(entity.id)!), entityState(entity)),
       current: currentById.get(entity.id)
     }))
     .filter(entry => Object.keys(entry.diff).length > 0)
     .sort((a, b) => a.entity.id.localeCompare(b.entity.id))
-    .map(entry => ({
-      entity: toApi(entry.entity, authCtx),
-      diff: isScenarioComparison
+    .map(entry => {
+      const fromEntity = fromById.get(entry.entity.id)!;
+      const redactedDiff = redactDataDiff(
+        entry.diff,
+        authCtx,
+        schemaFor(fromEntity),
+        schemaFor(entry.entity)
+      );
+      const currentEntity = entry.current ?? entry.entity;
+      const diff = isScenarioComparison
         ? Object.fromEntries(
-            Object.entries(entry.diff).map(([key, fieldDiff]) => [
-              key,
-              {
-                ...fieldDiff,
-                current: entityState(entry.current ?? entry.entity)[key] ?? null
+            Object.entries(redactedDiff).map(([key, fieldDiff]) => {
+              if (key !== 'data') {
+                return [key, { ...fieldDiff, current: entityState(currentEntity)[key] ?? null }];
               }
-            ])
+              const current = filterRestrictedFieldGroups(
+                authCtx,
+                schemaFor(currentEntity),
+                (entityState(currentEntity)[key] ?? {}) as Record<string, unknown>
+              );
+              return [key, { ...fieldDiff, current }];
+            })
           )
-        : entry.diff
-    }));
+        : redactedDiff;
+      return { entity: toApi(entry.entity, authCtx, schemaById), diff };
+    });
 
   return { added, removed, changed };
 };

@@ -12,7 +12,16 @@ import {
 import { updateEntity } from './entityMutationOperations';
 import { allocateEntityPublicId } from './entityMutationOperations';
 import { createEntityWithAudit, entityToBaseState } from './entityMutations';
-import type { Entity, EntityDbCreate, EntityVersionDbResult } from './db/catalogDatabase';
+import type {
+  Entity,
+  EntityDbCreate,
+  EntityVersionDbResult,
+  SchemaDbResult
+} from './db/catalogDatabase';
+import {
+  filterRestrictedFieldGroups,
+  type FieldGroupSchemaShape
+} from '../auth/fieldGroupAccessControl';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import {
   getEntityParentsFromPayload,
@@ -92,13 +101,29 @@ const requireCaseEditAccess = (authCtx: AuthorizationContext, project: { owner: 
     'You do not have permission to edit change cases in this project'
   );
 
+const redactMemberStateData = (
+  state: Record<string, unknown>,
+  authCtx: AuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null
+): Record<string, unknown> => {
+  const data = state['data'];
+  if (data == null || typeof data !== 'object') return state;
+  return {
+    ...state,
+    data: filterRestrictedFieldGroups(authCtx, schema, data as Record<string, unknown>)
+  };
+};
+
 const toApiChangeCase = async (
   db: DatabaseAdapter,
   ws: string,
-  changeCase: ChangeCaseDbResult
+  changeCase: ChangeCaseDbResult,
+  authCtx: AuthorizationContext | null
 ): Promise<ChangeCase> => {
   const revision = await db.changeCase.getLatestRevision(ws, changeCase.id);
   const members = revision ? await db.changeCase.listMembers(ws, revision.id) : [];
+  const schemas = members.length > 0 ? await db.catalog.listSchemas(ws) : [];
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   return {
     id: changeCase.id,
     workspace: changeCase.workspace,
@@ -111,18 +136,28 @@ const toApiChangeCase = async (
     commit_message: revision?.message ?? null,
     created_at: changeCase.created_at.toISOString(),
     updated_at: changeCase.updated_at.toISOString(),
-    members: members.map(toApiMember)
+    members: members.map(member => toApiMember(member, authCtx, schemaById))
   };
 };
 
-const toApiMember = (member: ChangeCaseMemberDbResult) => ({
-  id: member.id,
-  entity_id: member.entity_id,
-  base_version: member.base_version,
-  base_state: member.base_state,
-  proposed_state: member.proposed_state,
-  applied_version_id: member.applied_version_id
-});
+export const toApiMember = (
+  member: ChangeCaseMemberDbResult,
+  authCtx: AuthorizationContext | null,
+  schemaById: Map<string, SchemaDbResult>
+) => {
+  const baseState = member.base_state;
+  const proposedState = member.proposed_state;
+  const baseSchema = schemaById.get(String(baseState['schema_id'] ?? '')) ?? null;
+  const proposedSchema = schemaById.get(String(proposedState['schema_id'] ?? '')) ?? baseSchema;
+  return {
+    id: member.id,
+    entity_id: member.entity_id,
+    base_version: member.base_version,
+    base_state: redactMemberStateData(baseState, authCtx, baseSchema),
+    proposed_state: redactMemberStateData(proposedState, authCtx, proposedSchema),
+    applied_version_id: member.applied_version_id
+  };
+};
 
 const buildMemberInput = (
   entity: Entity,
@@ -378,7 +413,7 @@ export const listChangeCasesByProject = async (
       requireProjectAccess(authCtx, project.owner);
 
       const rows = await db.changeCase.listCasesByProject(ws, project.id);
-      return Promise.all(rows.map(row => toApiChangeCase(db, ws, row)));
+      return Promise.all(rows.map(row => toApiChangeCase(db, ws, row, authCtx)));
     }
   );
 };
@@ -405,7 +440,7 @@ export const listChangeCasesByEntity = async (
       );
 
       const rows = await db.changeCase.listCasesByEntity(ws, entity.id);
-      return Promise.all(rows.map(row => toApiChangeCase(db, ws, row)));
+      return Promise.all(rows.map(row => toApiChangeCase(db, ws, row, authCtx)));
     }
   );
 };
@@ -427,7 +462,7 @@ export const getChangeCase = async (
       requireProjectAccess(authCtx, project.owner);
 
       const changeCase = await getCaseOrThrow(db, ws, caseId);
-      return toApiChangeCase(db, ws, changeCase);
+      return toApiChangeCase(db, ws, changeCase, authCtx);
     }
   );
 };
@@ -514,7 +549,7 @@ export const createChangeCase = async (
         });
       });
 
-      return toApiChangeCase(db, ws, changeCase);
+      return toApiChangeCase(db, ws, changeCase, authCtx);
     }
   );
 };
@@ -561,7 +596,7 @@ export const addEntityToChangeCase = async (
 
       await db.changeCase.addMember(ws, revision.id, buildMemberInput(entity, body.proposedState));
 
-      return toApiChangeCase(db, ws, changeCase);
+      return toApiChangeCase(db, ws, changeCase, authCtx);
     }
   );
 };
@@ -601,7 +636,7 @@ export const removeEntityFromChangeCase = async (
       const removed = await db.changeCase.removeMember(ws, memberId);
       httpAssert.present(removed, { status: 404, message: 'Change case member not found' });
 
-      return toApiChangeCase(db, ws, changeCase);
+      return toApiChangeCase(db, ws, changeCase, authCtx);
     }
   );
 };
@@ -647,7 +682,7 @@ export const updateChangeCaseMemberProposedState = async (
       );
       httpAssert.present(updated, { status: 404, message: 'Change case member not found' });
 
-      return toApiChangeCase(db, ws, changeCase);
+      return toApiChangeCase(db, ws, changeCase, authCtx);
     }
   );
 };
@@ -694,7 +729,7 @@ export const updateChangeCaseFields = async (
       });
       httpAssert.present(updated, { status: 404, message: `Change case '${caseId}' not found` });
 
-      return toApiChangeCase(db, ws, updated);
+      return toApiChangeCase(db, ws, updated, authCtx);
     }
   );
 };
@@ -826,7 +861,7 @@ export const saveChangeCaseDraft = async (
         });
         return (await tx.changeCase.getCase(ws, caseId))!;
       });
-      return toApiChangeCase(db, ws, updated);
+      return toApiChangeCase(db, ws, updated, authCtx);
     }
   );
 };
@@ -853,7 +888,7 @@ export const withdrawChangeCase = async (
       const withdrawn = await db.changeCase.withdrawCase(ws, caseId);
       httpAssert.present(withdrawn, { status: 404, message: `Change case '${caseId}' not found` });
 
-      return toApiChangeCase(db, ws, withdrawn);
+      return toApiChangeCase(db, ws, withdrawn, authCtx);
     }
   );
 };
@@ -1034,7 +1069,7 @@ export const applyChangeCase = async (
         return (await tx.changeCase.getCase(ws, caseId))!;
       });
 
-      return toApiChangeCase(db, ws, appliedCase);
+      return toApiChangeCase(db, ws, appliedCase, authCtx);
     }
   );
 };
