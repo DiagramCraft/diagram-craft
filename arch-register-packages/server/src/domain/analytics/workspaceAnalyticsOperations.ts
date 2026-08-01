@@ -14,6 +14,7 @@ import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDataba
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import type { AuditLogDbResult } from '../audit/db/auditDatabase';
+import { stripAuditChanges } from '../audit/auditOperations';
 
 const roundPercent = (count: number, total: number) =>
   total === 0 ? 0 : Math.round((count / total) * 1000) / 10;
@@ -53,7 +54,7 @@ const startOfUtcDay = (date: Date) =>
   new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
 export const computeActivityTrend = (
-  auditRows: AuditLogDbResult[],
+  auditRows: Omit<AuditLogDbResult, 'changes'>[],
   days: number,
   now = new Date()
 ): ActivityTrendBucket[] => {
@@ -86,7 +87,7 @@ export const computeWorkspaceAnalytics = (
   schemas: SchemaDbResult[],
   lifecycleStates: LifecycleStateDbResult[],
   staleAfterDays = 90,
-  auditRows: AuditLogDbResult[] = [],
+  auditRows: Omit<AuditLogDbResult, 'changes'>[] = [],
   now = new Date()
 ): WorkspaceAnalytics => {
   const totalEntities = entities.length;
@@ -271,6 +272,6 @@ export const getWorkspaceAnalytics = async (
     schemas,
     lifecycleStates,
     staleAfterDays,
-    auditRows
+    stripAuditChanges(auditRows)
   );
 };

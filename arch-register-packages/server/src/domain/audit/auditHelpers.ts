@@ -30,7 +30,7 @@ export const filterAndPaginateAuditLogs = (
 };
 
 export const computeAuditStats = (
-  rows: InternalAuditLogEntry[],
+  rows: Omit<InternalAuditLogEntry, 'changes'>[],
   nowMs = Date.now()
 ): AuditStats => {
   const byOperationMap = new Map<string, number>();

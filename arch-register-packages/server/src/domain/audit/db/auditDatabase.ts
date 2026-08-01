@@ -63,6 +63,12 @@ export const auditMappers = {
 };
 
 export type AuditDatabase = {
+  /**
+   * Returns raw, unredacted rows, including restricted field-group values in `changes`.
+   * Only `listAuditLog` (auditOperations.ts) may hold onto `.changes` after calling this, and it
+   * must always redact via `redactAuditEntryChanges` before returning. Any other consumer must
+   * strip `changes` immediately via `stripAuditChanges`. Enforced by `auditAccessBoundary.test.ts`.
+   */
   listAuditLogs(ws: string): Promise<AuditLogDbResult[]>;
   createAuditLog(input: AuditLogDbCreate): Promise<AuditLogDbResult>;
 };
