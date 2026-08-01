@@ -57,9 +57,8 @@ export const AddRelationDialog = ({
       setOtherEntityId('');
       setFields({});
       setError('');
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-  }, [open]);
+  }, [open, eligibleRelationSchemas]);
 
   const selectedRelationSchema = eligibleRelationSchemas.find(rs => rs.id === relationSchemaId);
   const otherSchemaIds = selectedRelationSchema?.[otherEndpoint].schemaIds ?? [];
