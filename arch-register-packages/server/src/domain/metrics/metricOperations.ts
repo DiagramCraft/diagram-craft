@@ -43,7 +43,10 @@ const extractValue = (
     return sortOrder == null ? null : { value: sortOrder, lifecycleId: entity.lifecycle };
   }
 
-  if (source.kind !== 'assessmentRating' && isFieldViewRestricted(authCtx, sourceSchema, source.fieldId)) {
+  if (
+    source.kind !== 'assessmentRating' &&
+    isFieldViewRestricted(authCtx, sourceSchema, source.fieldId)
+  ) {
     return null;
   }
 

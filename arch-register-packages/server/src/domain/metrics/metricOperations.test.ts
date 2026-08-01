@@ -724,7 +724,11 @@ describe('computeBoxMetrics - restricted field groups', () => {
     ];
     const result = computeBoxMetrics(
       ['d1'],
-      { sourceSchemaId: 'service', source: { kind: 'enum', fieldId: 'tier' }, aggregation: 'count' },
+      {
+        sourceSchemaId: 'service',
+        source: { kind: 'enum', fieldId: 'tier' },
+        aggregation: 'count'
+      },
       entities,
       restrictedSchemas,
       lifecycleStates,

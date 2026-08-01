@@ -49,8 +49,9 @@ export type MetricSourceOption = {
 export const getMetricSourceOptions = (
   schema: EntitySchema | undefined,
   joinedAssessment?: JoinedAssessmentContext | null,
-  getFieldGroupAccess: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess = () =>
-    'edit'
+  getFieldGroupAccess: (
+    accessControl: FieldGroupAccessControl | undefined
+  ) => FieldGroupAccess = () => 'edit'
 ): MetricSourceOption[] => {
   if (!schema) return [];
   const options: MetricSourceOption[] = [{ source: { kind: 'lifecycle' }, label: 'Lifecycle' }];
