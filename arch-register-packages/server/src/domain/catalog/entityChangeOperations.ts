@@ -39,10 +39,21 @@ import {
   resolveScopeAwareEscalationTarget
 } from '../governance/governanceOperations';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type {
+  AuthorizationContext,
+  WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
-import { buildDiff, equalEntityValue, mutableStateKeys } from './entityDiff';
+import {
+  buildDiff,
+  equalEntityValue,
+  mutableStateKeys,
+  redactDataDiff,
+  type EntityFieldDiff
+} from './entityDiff';
+import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import type { SchemaDbResult } from './db/catalogDatabase';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
 export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change-case.bulk';
@@ -238,29 +249,54 @@ const buildProposedEntity = async (
   return { state, update: next };
 };
 
-const toApiApprovalRevision = (
+export const toApiApprovalRevision = (
   revision: EntityChangeApprovalRevisionDbResult,
   caseId: string | null,
-  createdByName: string | null
-): EntityChangeApprovalRevision => ({
-  id: revision.id,
-  approvalId: revision.proposal_id,
-  entityId: revision.entity_id,
-  revisionNumber: revision.revision_number,
-  baseVersion: revision.base_version,
-  baseState: revision.base_state,
-  proposedState: revision.proposed_state,
-  diff: revision.diff,
-  policyVersion: revision.policy_version,
-  resolvedPolicy: revision.resolved_policy,
-  message: revision.message,
-  createdBy: revision.created_by,
-  createdByName,
-  status: revision.status,
-  createdAt: revision.created_at.toISOString(),
-  resolvedAt: revision.resolved_at?.toISOString() ?? null,
-  caseId
-});
+  createdByName: string | null,
+  authCtx: WorkspaceAuthorizationContext | null,
+  schemaById: Map<string, SchemaDbResult>
+): EntityChangeApprovalRevision => {
+  const baseSchema = schemaById.get(String(revision.base_state['schema_id'])) ?? null;
+  const proposedSchema = schemaById.get(String(revision.proposed_state['schema_id'])) ?? null;
+  return {
+    id: revision.id,
+    approvalId: revision.proposal_id,
+    entityId: revision.entity_id,
+    revisionNumber: revision.revision_number,
+    baseVersion: revision.base_version,
+    baseState: {
+      ...revision.base_state,
+      data: filterRestrictedFieldGroups(
+        authCtx,
+        baseSchema,
+        (revision.base_state['data'] ?? {}) as Record<string, unknown>
+      )
+    },
+    proposedState: {
+      ...revision.proposed_state,
+      data: filterRestrictedFieldGroups(
+        authCtx,
+        proposedSchema,
+        (revision.proposed_state['data'] ?? {}) as Record<string, unknown>
+      )
+    },
+    diff: redactDataDiff(
+      revision.diff as Record<string, EntityFieldDiff>,
+      authCtx,
+      baseSchema,
+      proposedSchema
+    ),
+    policyVersion: revision.policy_version,
+    resolvedPolicy: revision.resolved_policy,
+    message: revision.message,
+    createdBy: revision.created_by,
+    createdByName,
+    status: revision.status,
+    createdAt: revision.created_at.toISOString(),
+    resolvedAt: revision.resolved_at?.toISOString() ?? null,
+    caseId
+  };
+};
 
 const findCaseForRevision = async (
   db: DatabaseAdapter,
@@ -275,11 +311,29 @@ const findCaseForRevision = async (
   return cases.find(candidate => candidate.subject_version === revisionId) ?? null;
 };
 
+const schemaByIdForStates = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  states: Record<string, unknown>[]
+): Promise<Map<string, SchemaDbResult>> => {
+  const schemaIds = new Set(states.map(state => String(state['schema_id'])));
+  const schemas = await Promise.all(
+    [...schemaIds].map(schemaId => db.catalog.getSchema(workspace, schemaId))
+  );
+  return new Map(schemas.filter((s): s is SchemaDbResult => s != null).map(s => [s.id, s]));
+};
+
 const toApiApproval = async (
   db: DatabaseAdapter,
-  proposal: EntityChangeApprovalDbResult
+  proposal: EntityChangeApprovalDbResult,
+  authCtx: WorkspaceAuthorizationContext | null
 ): Promise<EntityChangeApproval> => {
   const revisions = await db.entityChange.listApprovalRevisions(proposal.workspace, proposal.id);
+  const schemaById = await schemaByIdForStates(
+    db,
+    proposal.workspace,
+    revisions.flatMap(revision => [revision.base_state, revision.proposed_state])
+  );
   const apiRevisions = await Promise.all(
     revisions.map(async revision => {
       const caseRow = await findCaseForRevision(
@@ -289,7 +343,13 @@ const toApiApproval = async (
         revision.id
       );
       const creator = revision.created_by ? await db.auth.getUser(revision.created_by) : null;
-      return toApiApprovalRevision(revision, caseRow?.id ?? null, creator?.display_name ?? null);
+      return toApiApprovalRevision(
+        revision,
+        caseRow?.id ?? null,
+        creator?.display_name ?? null,
+        authCtx,
+        schemaById
+      );
     })
   );
   return {
@@ -305,23 +365,48 @@ const toApiApproval = async (
   };
 };
 
-const toApiBulkApprovalRevision = (
+export const toApiBulkApprovalRevision = (
   members: EntityChangeApprovalRevisionMemberDbResult[],
   caseId: string | null,
-  createdByName: string | null
+  createdByName: string | null,
+  authCtx: WorkspaceAuthorizationContext | null,
+  schemaById: Map<string, SchemaDbResult>
 ): EntityChangeBulkApprovalRevision => {
   const first = members[0]!;
   return {
     id: first.id,
     approvalId: first.proposal_id,
     revisionNumber: first.revision_number,
-    members: members.map(member => ({
-      entityId: member.entity_id,
-      baseVersion: member.base_version,
-      baseState: member.base_state,
-      proposedState: member.proposed_state,
-      diff: member.diff
-    })),
+    members: members.map(member => {
+      const baseSchema = schemaById.get(String(member.base_state['schema_id'])) ?? null;
+      const proposedSchema = schemaById.get(String(member.proposed_state['schema_id'])) ?? null;
+      return {
+        entityId: member.entity_id,
+        baseVersion: member.base_version,
+        baseState: {
+          ...member.base_state,
+          data: filterRestrictedFieldGroups(
+            authCtx,
+            baseSchema,
+            (member.base_state['data'] ?? {}) as Record<string, unknown>
+          )
+        },
+        proposedState: {
+          ...member.proposed_state,
+          data: filterRestrictedFieldGroups(
+            authCtx,
+            proposedSchema,
+            (member.proposed_state['data'] ?? {}) as Record<string, unknown>
+          )
+        },
+        diff: redactDataDiff(
+          member.diff as Record<string, EntityFieldDiff>,
+          authCtx,
+          baseSchema,
+          proposedSchema
+        )
+      };
+    }),
     policyVersion: first.policy_version,
     resolvedPolicy: first.resolved_policy,
     message: first.message,
@@ -349,19 +434,36 @@ const findCaseForBulkRevision = async (
 
 const toApiBulkApproval = async (
   db: DatabaseAdapter,
-  proposal: EntityChangeApprovalDbResult
+  proposal: EntityChangeApprovalDbResult,
+  authCtx: WorkspaceAuthorizationContext | null
 ): Promise<EntityChangeBulkApproval> => {
   const revisions = await db.entityChange.listApprovalRevisions(proposal.workspace, proposal.id);
   const revisionNumbers = [...new Set(revisions.map(revision => revision.revision_number))].sort(
     (a, b) => b - a
   );
+  const membersByRevisionNumber = new Map(
+    await Promise.all(
+      revisionNumbers.map(async revisionNumber => {
+        const revision = revisions.find(candidate => candidate.revision_number === revisionNumber)!;
+        const members = await db.entityChange.getApprovalRevisionMembers(
+          proposal.workspace,
+          revision.id
+        );
+        return [revisionNumber, members] as const;
+      })
+    )
+  );
+  const schemaById = await schemaByIdForStates(
+    db,
+    proposal.workspace,
+    [...membersByRevisionNumber.values()].flatMap(members =>
+      members.flatMap(member => [member.base_state, member.proposed_state])
+    )
+  );
   const apiRevisions = await Promise.all(
     revisionNumbers.map(async revisionNumber => {
       const revision = revisions.find(candidate => candidate.revision_number === revisionNumber)!;
-      const members = await db.entityChange.getApprovalRevisionMembers(
-        proposal.workspace,
-        revision.id
-      );
+      const members = membersByRevisionNumber.get(revisionNumber)!;
       const caseRow = await findCaseForBulkRevision(
         db,
         proposal.workspace,
@@ -369,7 +471,13 @@ const toApiBulkApproval = async (
         revision.id
       );
       const creator = revision.created_by ? await db.auth.getUser(revision.created_by) : null;
-      return toApiBulkApprovalRevision(members, caseRow?.id ?? null, creator?.display_name ?? null);
+      return toApiBulkApprovalRevision(
+        members,
+        caseRow?.id ?? null,
+        creator?.display_name ?? null,
+        authCtx,
+        schemaById
+      );
     })
   );
   const entityIds = [
@@ -415,7 +523,7 @@ export const getEntityChangeApproval = async (
   httpAssert.present(entity, { status: 404, message: 'Entity not found' });
   requireEntityAction(authCtx, entity, 'view_entity');
   const proposal = await db.entityChange.getOpenApproval(workspace, entity.id);
-  return proposal ? await toApiApproval(db, proposal) : null;
+  return proposal ? await toApiApproval(db, proposal, authCtx) : null;
 };
 
 export const getBulkEntityChangeApproval = async (
@@ -428,7 +536,7 @@ export const getBulkEntityChangeApproval = async (
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   const proposal = await db.entityChange.getApproval(workspace, proposalId);
   if (!proposal) return null;
-  const apiProposal = await toApiBulkApproval(db, proposal);
+  const apiProposal = await toApiBulkApproval(db, proposal, authCtx);
   for (const entityId of apiProposal.entityIds) {
     const entity = await db.catalog.getEntity(workspace, entityId);
     if (entity) requireEntityAction(authCtx, entity, 'view_entity');
@@ -450,6 +558,7 @@ export const submitBulkEntityChangeApproval = async (
 
   const userId = event.context.user.id;
   const now = new Date();
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
 
   type PreparedMember = {
     entity: Entity;
@@ -586,7 +695,7 @@ export const submitBulkEntityChangeApproval = async (
     );
     return root;
   });
-  return await toApiBulkApproval(db, proposal);
+  return await toApiBulkApproval(db, proposal, authCtx);
 };
 
 const submitProposal = async (
@@ -730,7 +839,7 @@ const submitProposal = async (
     );
     return root;
   });
-  return await toApiApproval(db, proposal);
+  return await toApiApproval(db, proposal, authCtx);
 };
 
 export const submitEntityChangeApproval = (
@@ -759,7 +868,7 @@ export const withdrawEntityChangeApproval = async (
   reason?: string
 ) => {
   const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { entity } = await assertCanPropose(db, workspace, entityId, event);
+  const { authCtx, entity } = await assertCanPropose(db, workspace, entityId, event);
   const proposal = await db.entityChange.getOpenApproval(workspace, entity.id);
   httpAssert.true(proposal?.id === proposalId, {
     status: 404,
@@ -793,7 +902,11 @@ export const withdrawEntityChangeApproval = async (
       });
     }
   });
-  return await toApiApproval(db, (await db.entityChange.getApproval(workspace, proposal.id))!);
+  return await toApiApproval(
+    db,
+    (await db.entityChange.getApproval(workspace, proposal.id))!,
+    authCtx
+  );
 };
 
 export const bypassEntityApproval = async (
