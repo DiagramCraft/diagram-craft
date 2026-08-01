@@ -57,10 +57,10 @@ export const SchemaSettingsSidebar = ({
           onValueChange={value => activateTab(value as SchemaSettingsTab)}
         >
           <Tabs.List>
-            <Tabs.Trigger value="types">Types</Tabs.Trigger>
-            <Tabs.Trigger value="relation-types">Relations</Tabs.Trigger>
-            <Tabs.Trigger value="enums">Enums</Tabs.Trigger>
-            <Tabs.Trigger value="fieldgroups">Groups</Tabs.Trigger>
+            <Tabs.Trigger value="types">Type</Tabs.Trigger>
+            <Tabs.Trigger value="relation-types">Relation</Tabs.Trigger>
+            <Tabs.Trigger value="enums">Enum</Tabs.Trigger>
+            <Tabs.Trigger value="fieldgroups">Group</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
       </SidebarHeader>
