@@ -520,6 +520,13 @@ const SnapDetail = ({
           </div>
         )}
 
+        {changes.length === 0 && snapshot.source === 'project' && (
+          <div className={styles.etlDetailChanges}>
+            <div className={styles.etlDetailSectionLabel}>Changes</div>
+            <div className={styles.etlChgRow}>Restricted changes</div>
+          </div>
+        )}
+
         {project?.name && (
           <div className={styles.etlDetailMeta}>
             <span>{project.name}</span>

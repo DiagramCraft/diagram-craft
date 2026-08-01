@@ -513,6 +513,13 @@ const SnapDetail = ({
           </div>
         )}
 
+        {changes.length === 0 && (
+          <div className={styles.ptlDetailChanges}>
+            <div className={styles.ptlDetailSectionLabel}>Changes</div>
+            <div className={styles.ptlChgRow}>Restricted changes</div>
+          </div>
+        )}
+
         <div className={styles.ptlDetailMeta}>
           <span>
             {formatTimelineDate(changeCase.created_at, { month: 'short', year: 'numeric' })}
@@ -577,7 +584,7 @@ const SnapDetail = ({
                           </div>
                         ))
                       ) : (
-                        <span className={styles.ptlDetailSiblingNoChanges}>No field changes</span>
+                        <span className={styles.ptlDetailSiblingNoChanges}>Restricted changes</span>
                       )}
                     </div>
                   );

@@ -104,7 +104,9 @@
           entity.
 
         - @id:ar.entities.history Users can inspect immutable entity versions, compare actual historical state, and
-          restore earlier versions where permitted.
+          restore earlier versions where permitted. Field values from access-restricted field groups are scrubbed
+          from a version's recorded state for viewers without view access to that group, mirroring the redaction
+          applied when viewing the entity directly.
 
         - @id:ar.entities.bulk-edit Users can select multiple entities and edit supported fields in bulk. Entities that
           require an approved change proposal are bundled into a single multi-entity proposal case routed through
@@ -139,7 +141,10 @@
           then — entities added, removed, or changed, with all applicable planned changes across projects applied,
           scoped to the browser's current search/filter/project-scope selection, with a field-level diff on
           drill-down for changed entities. Planned changes with a target date already in the past but never applied
-          are excluded by default (an "include overdue changes" toggle brings them back in).
+          are excluded by default (an "include overdue changes" toggle brings them back in). Field values from
+          access-restricted field groups are scrubbed from added/removed entities and from changed-entity field
+          diffs for viewers without view access to that group; an entity whose only changes are restricted shows an
+          undifferentiated "Restricted changes" indicator rather than being silently omitted.
 
         - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view.
 
@@ -210,7 +215,10 @@
 
         - @id:ar.projects.planned-changes Users can record named, coordinated change cases for one or more entities
           within or outside a project without changing the current live entity state, including planning the
-          introduction of new project-scoped entities.
+          introduction of new project-scoped entities. A member's recorded base and proposed state scrub field
+          values from access-restricted field groups for viewers without view access to that group, with an
+          undifferentiated "Restricted changes" indicator shown where redaction would otherwise leave a member's
+          diff looking empty.
 
             - @id:ar.projects.planned-changes.schedule Users can target a planned entity change to a future date or
               associate it with a project milestone.
@@ -227,7 +235,9 @@
               entities. The comparison date is fixed to the latest effective date among the project's planned
               changes, falling back to the project's target date when no planned change has a date. From this view,
               users can compare the project's reconstructed future state with another project's future state, showing
-              entities present in only one scenario and field-level differences between both proposals.
+              entities present in only one scenario and field-level differences between both proposals. As with the
+              workspace-wide diff, restricted field-group values are scrubbed per viewer, with a "Restricted changes"
+              indicator standing in when redaction would otherwise leave a changed entity's diff empty.
 
         - @id:ar.projects.permissions Project content can be protected through the applicable workspace, project,
           entity, team, and role permissions.
@@ -368,6 +378,8 @@
           entity to the workspace's designated deprecated lifecycle state.
 
         - @id:ar.collaboration.audit Authorized users can inspect audit activity for workspace and domain changes.
+          Field values from access-restricted field groups are scrubbed from an entry's recorded changes for viewers
+          without view access to that group, mirroring the same redaction applied when viewing the entity directly.
 
     - @id:ar.authorization Administrators can control who can access, modify, review, and administer workspace content.
 

@@ -138,16 +138,22 @@ export const EntityLandscapeDiffTable = ({
                               </Table.Row>
                             </Table.Head>
                             <Table.Body>
-                              {changeRows.map((change, idx) => (
-                                <Table.Row key={idx}>
-                                  <Table.Cell>{change.label}</Table.Cell>
-                                  {currentValueLabel && (
-                                    <Table.Cell>{change.current ?? '—'}</Table.Cell>
-                                  )}
-                                  <Table.Cell>{change.from}</Table.Cell>
-                                  <Table.Cell>{change.to}</Table.Cell>
-                                </Table.Row>
-                              ))}
+                              {changeRows.length === 0 ? (
+                                <Table.EmptyRow colSpan={currentValueLabel ? 4 : 3}>
+                                  Restricted changes
+                                </Table.EmptyRow>
+                              ) : (
+                                changeRows.map((change, idx) => (
+                                  <Table.Row key={idx}>
+                                    <Table.Cell>{change.label}</Table.Cell>
+                                    {currentValueLabel && (
+                                      <Table.Cell>{change.current ?? '—'}</Table.Cell>
+                                    )}
+                                    <Table.Cell>{change.from}</Table.Cell>
+                                    <Table.Cell>{change.to}</Table.Cell>
+                                  </Table.Row>
+                                ))
+                              )}
                             </Table.Body>
                           </Table.Root>
                         </div>

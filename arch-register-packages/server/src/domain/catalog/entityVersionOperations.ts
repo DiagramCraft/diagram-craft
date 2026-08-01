@@ -1,5 +1,26 @@
 import { orpcAssert } from '../../utils/orpcAssert';
 import type { EntityVersionDbResult } from './db/catalogDatabase';
+import {
+  filterRestrictedFieldGroups,
+  type FieldGroupSchemaShape
+} from '../auth/fieldGroupAccessControl';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+
+export const redactVersionState = (
+  version: EntityVersionDbResult,
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null
+): EntityVersionDbResult => {
+  const data = version.state['data'];
+  if (data == null || typeof data !== 'object') return version;
+  return {
+    ...version,
+    state: {
+      ...version.state,
+      data: filterRestrictedFieldGroups(authCtx, schema, data as Record<string, unknown>)
+    }
+  };
+};
 
 export const serializeEntityVersion = (version: EntityVersionDbResult) => ({
   ...version,

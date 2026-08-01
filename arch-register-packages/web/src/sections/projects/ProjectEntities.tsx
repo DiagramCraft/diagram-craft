@@ -927,7 +927,7 @@ const FutureSnapshotRow = ({
             </div>
           ))
         ) : (
-          <span className={styles.futureRowNoChanges}>No field changes</span>
+          <span className={styles.futureRowNoChanges}>Restricted changes</span>
         )}
       </div>
     </div>
