@@ -1,4 +1,4 @@
-import type { AuthorizationContext } from '@arch-register/permissions';
+import { buildAuthorizationContext, type AuthorizationContext } from '@arch-register/permissions';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
@@ -152,6 +152,68 @@ describe('exportEntitiesCsv', () => {
     expect(runCompiledEntityQuery).toHaveBeenCalled();
     const csv = await response.body.text();
     expect(csv).toContain('Payments API');
+  });
+
+  it('omits a restricted field-group column for a caller without view access, and includes it for one with view access', async () => {
+    const restrictedSchema: SchemaDbResult = {
+      ...schema,
+      fields: [
+        { id: 'criticality', name: 'Criticality', type: 'text' },
+        { id: 'secretPlan', name: 'Secret Plan', type: 'text', groupId: 'restricted' }
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    } as never;
+    const entities = [
+      makeEntity(1, {
+        name: 'Payments API',
+        data: { criticality: 'high', secretPlan: 'top secret' }
+      })
+    ];
+    const db = {
+      ...makeDb(entities),
+      catalog: { ...makeDb(entities).catalog, listSchemas: vi.fn(async () => [restrictedSchema]) }
+    } as unknown as DatabaseAdapter;
+
+    const restrictedContext = buildAuthorizationContext({
+      userId: 'user-2',
+      globalRoles: [],
+      workspaceRole: 'viewer',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const viewerContext = buildAuthorizationContext({
+      userId: 'user-3',
+      globalRoles: [],
+      workspaceRole: 'viewer',
+      teamAssignments: [{ teamId: 'team-restricted', role: 'team_reviewer' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const restrictedResponse = await exportEntitiesCsv(
+      db,
+      'ws-1',
+      restrictedContext,
+      { schemaId: 'schema-1' },
+      now
+    );
+    const restrictedCsv = await restrictedResponse.body.text();
+    expect(restrictedCsv).not.toContain('top secret');
+
+    const viewerResponse = await exportEntitiesCsv(
+      db,
+      'ws-1',
+      viewerContext,
+      { schemaId: 'schema-1' },
+      now
+    );
+    const viewerCsv = await viewerResponse.body.text();
+    expect(viewerCsv).toContain('top secret');
   });
 });
 

@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import type { EntityDbResult } from './db/catalogDatabase';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
+
+const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+  buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: null,
+    teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+      teamRoles.map(role => ({ teamId, role }))
+    ),
+    schemas: [],
+    entities: [],
+    grants: []
+  });
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 
@@ -34,7 +48,7 @@ const baseEntity: EntityDbResult = {
 
 describe('toApiEntity', () => {
   it('maps all standard fields', () => {
-    const result = toApiEntity(baseEntity, null);
+    const result = toApiEntity(baseEntity, null, null);
     expect(result._uid).toBe('e-1');
     expect(result._schema).toEqual({ id: 'schema-1', name: 'Service' });
     expect(result._name).toBe('My Entity');
@@ -48,17 +62,45 @@ describe('toApiEntity', () => {
   });
 
   it('spreads entity.data into the result', () => {
-    const result = toApiEntity(baseEntity, null);
+    const result = toApiEntity(baseEntity, null, null);
     expect(result.custom).toBe('value');
   });
 
   it('grants all capabilities when authCtx is null', () => {
-    const result = toApiEntity(baseEntity, null);
+    const result = toApiEntity(baseEntity, null, null);
     expect(result.canView).toBe(true);
     expect(result.canEdit).toBe(true);
     expect(result.canDelete).toBe(true);
     expect(result.canAdmin).toBe(true);
     expect(result.canCreateChild).toBe(true);
+  });
+
+  it('omits fields in a restricted group the caller cannot view', () => {
+    const entity: EntityDbResult = {
+      ...baseEntity,
+      data: { custom: 'value', secret: 'hidden' }
+    };
+    const schema = {
+      fields: [
+        { id: 'custom', name: 'Custom', requirementLevel: null, type: 'text' } as never,
+        {
+          id: 'secret',
+          name: 'Secret',
+          requirementLevel: null,
+          type: 'text',
+          groupId: 'restricted'
+        } as never
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+    const authCtx = authCtxWithTeamRoles({});
+
+    const result = toApiEntity(entity, authCtx, schema);
+
+    expect(result.custom).toBe('value');
+    expect((result as Record<string, unknown>).secret).toBeUndefined();
   });
 });
 

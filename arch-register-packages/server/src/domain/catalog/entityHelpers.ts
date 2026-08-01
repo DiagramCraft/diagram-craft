@@ -2,6 +2,10 @@ import type { EntityDbResult } from './db/catalogDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
+import {
+  filterRestrictedFieldGroups,
+  type FieldGroupSchemaShape
+} from '../auth/fieldGroupAccessControl';
 
 const checker = new PermissionChecker();
 
@@ -28,6 +32,7 @@ const getEntityCapabilities = (context: AuthorizationContext | null, entity: Ent
 export const toApiEntity = (
   entity: EntityDbResult,
   authCtx: AuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null,
   completeness: number | null = null
 ): EntityRecord => ({
   _uid: entity.id,
@@ -57,7 +62,7 @@ export const toApiEntity = (
   _completeness: completeness,
   _externalMetadata: entity.generated_metadata ?? {},
   ...getEntityCapabilities(authCtx, entity),
-  ...entity.data
+  ...filterRestrictedFieldGroups(authCtx, schema, entity.data)
 });
 
 export const toApiEntitySummary = (
