@@ -44,6 +44,22 @@ export const isFieldViewRestricted = (
 };
 
 /**
+ * Ids of fields whose group the caller cannot view. Empty when authCtx or schema is absent
+ * (internal/system callers bypass field-group restriction, same as filterRestrictedFieldGroups
+ * and isFieldViewRestricted). Used to keep derived values — e.g. entity completeness (#2581) —
+ * from leaking occupancy of a restricted field: recompute over `fields - restrictedFieldIds`
+ * rather than exposing a number derived from fields the caller can't see.
+ */
+export const restrictedFieldIds = (
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null | undefined
+): Set<string> => {
+  if (!authCtx || !schema) return new Set();
+  const byField = groupAccessByFieldId(authCtx, schema);
+  return new Set([...byField].filter(([, access]) => access === 'none').map(([id]) => id));
+};
+
+/**
  * Omits values for fields whose group the caller cannot view. A no-op when authCtx or
  * schema is absent (internal/system callers bypass field-group redaction, same as they
  * bypass other entity-level permission checks).

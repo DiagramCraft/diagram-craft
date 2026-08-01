@@ -33,6 +33,14 @@ export const validateRelationEndpoints = (
   });
 };
 
+/** Flattens relation field data to top level for audit logging, mirroring `flattenEntityAuditFields`. */
+export const flattenRelationAuditFields = (row: RelationDbResult): Record<string, unknown> => ({
+  _schemaId: row.schema_id,
+  _inEntityId: row.in_entity_id,
+  _outEntityId: row.out_entity_id,
+  ...row.data
+});
+
 export const toApiRelation = (row: RelationDbResult): RelationRecord => ({
   _uid: row.id,
   _schema: { id: row.schema_id, name: row.schema_name },

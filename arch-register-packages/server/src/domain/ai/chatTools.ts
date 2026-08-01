@@ -5,11 +5,16 @@ import type { DatabaseAdapter } from '../../db/database';
 import { decodeRefs } from '../../types';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
 import {
+  filterRestrictedFieldGroups,
+  requireNoRestrictedFieldWrites
+} from '../auth/fieldGroupAccessControl';
+import {
   createEntityWithAudit,
   type EntityMutationActor,
   updateEntityWithAudit
 } from '../catalog/entityMutations';
 import { Entity } from '../catalog/db/catalogDatabase';
+import { equalEntityValue } from '../catalog/entityDiff';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
@@ -320,9 +325,9 @@ const matchesEntityFilters = (
   return true;
 };
 
-const getDataPreview = (entity: Entity, matchedFields: string[]) => {
-  const fieldIds = matchedFields.length > 0 ? matchedFields : Object.keys(entity.data).slice(0, 6);
-  return Object.fromEntries(fieldIds.map(fieldId => [fieldId, entity.data[fieldId] ?? null]));
+const getDataPreview = (data: Entity['data'], matchedFields: string[]) => {
+  const fieldIds = matchedFields.length > 0 ? matchedFields : Object.keys(data).slice(0, 6);
+  return Object.fromEntries(fieldIds.map(fieldId => [fieldId, data[fieldId] ?? null]));
 };
 
 const relationFields = (fields: SchemaField[]) =>
@@ -393,10 +398,15 @@ export const createAiChatTools = (
         })
       )
       .map(entity => {
+        const visibleData = filterRestrictedFieldGroups(
+          authCtx,
+          schemaMap.get(entity.schema_id),
+          entity.data
+        );
         const matchedMetadata =
           normalizedQuery.length > 0 ? getMatchedMetadata(entity, normalizedQuery) : [];
         const matchedFields =
-          normalizedQuery.length > 0 ? getMatchedFields(entity.data, normalizedQuery) : [];
+          normalizedQuery.length > 0 ? getMatchedFields(visibleData, normalizedQuery) : [];
 
         if (
           normalizedQuery.length > 0 &&
@@ -418,7 +428,7 @@ export const createAiChatTools = (
           tags: entity.tags,
           matchedMetadata,
           matchedFields,
-          dataPreview: getDataPreview(entity, matchedFields)
+          dataPreview: getDataPreview(visibleData, matchedFields)
         };
       })
       .filter(entity => entity !== null)
@@ -509,7 +519,7 @@ export const createAiChatTools = (
         lifecycle: entity.lifecycle,
         tags: entity.tags,
         links: entity.links,
-        data: entity.data,
+        data: filterRestrictedFieldGroups(authCtx, schema, entity.data),
         schemaFields: schema?.fields ?? [],
         outgoingRelations,
         incomingRelations
@@ -547,6 +557,15 @@ export const createAiChatTools = (
       typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle)
         ? args.lifecycle
         : null;
+
+    if (authCtx !== null) {
+      requireNoRestrictedFieldWrites(
+        authCtx,
+        schema,
+        Object.keys(args.fields ?? {}),
+        'You do not have permission to set one or more restricted fields on this entity'
+      );
+    }
 
     const timestamp = new Date();
     if (!schema.key_prefix) throw new Error(`Schema '${args.schemaId}' is missing a key prefix`);
@@ -646,6 +665,18 @@ export const createAiChatTools = (
       ...current.data,
       ...(args.fields ?? {})
     };
+
+    if (authCtx !== null && schema) {
+      const changedFieldIds = Object.keys(args.fields ?? {}).filter(
+        fieldId => !equalEntityValue(current.data[fieldId], nextData[fieldId])
+      );
+      requireNoRestrictedFieldWrites(
+        authCtx,
+        schema,
+        changedFieldIds,
+        'You do not have permission to edit one or more restricted fields on this entity'
+      );
+    }
 
     const entity = await updateEntityWithAudit(db, {
       workspace: workspaceId,

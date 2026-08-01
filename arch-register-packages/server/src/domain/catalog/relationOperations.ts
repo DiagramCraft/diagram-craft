@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
+import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authorization';
 import { defineOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
@@ -11,6 +11,7 @@ import {
 } from '../auth/fieldGroupAccessControl';
 import {
   extractRelationFieldData,
+  flattenRelationAuditFields,
   toApiRelation,
   validateRelationEndpoints
 } from './relationHelpers';
@@ -143,7 +144,7 @@ export const createWorkspaceRelation = async (
         entityId: row.id,
         entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
         schemaId: row.schema_id,
-        changes: { new: extractEntityFields(row) }
+        changes: { new: flattenRelationAuditFields(row) }
       });
 
       const record = toApiRelation(row);
@@ -190,7 +191,10 @@ export const updateWorkspaceRelation = async (
       });
       httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
 
-      const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
+      const changes = computeChanges(
+        flattenRelationAuditFields(oldRow),
+        flattenRelationAuditFields(row)
+      );
       await logAudit(db, {
         userId: authCtx.userId,
         workspace: ws,
@@ -234,7 +238,7 @@ export const deleteWorkspaceRelation = async (
         entityId: id,
         entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
         schemaId: row.schema_id,
-        changes: { old: extractEntityFields(row) }
+        changes: { old: flattenRelationAuditFields(row) }
       });
 
       return { success: true, message: `Relation '${id}' deleted` };
