@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
 import { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
@@ -21,8 +22,10 @@ const schemas: SchemaDbResult[] = [
         schemaId: 'capability',
         minCount: 0,
         maxCount: -1
-      }
+      },
+      { id: 'budget', name: 'Budget', type: 'text', groupId: 'finance' }
     ],
+    groups: [{ id: 'finance', name: 'Finance', accessControl: { teamIds: ['team-finance'] } }],
     color: null,
     icon: null,
     default_owner: null,
@@ -170,6 +173,30 @@ const entities: Entity[] = [
     created_at: now,
     updated_at: now,
     completeness: 0
+  },
+  {
+    id: 'entity-app-4',
+    workspace: 'ws-1',
+    public_id: 'APP-4',
+    slug: 'restricted-app',
+    namespace: '',
+    name: 'Restricted App',
+    description: 'Has a restricted field',
+    owner: 'team-payments',
+    lifecycle: 'production',
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: 'application',
+    data: {
+      tech: 'Java',
+      budget: '1000000'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now,
+    completeness: 0
   }
 ];
 
@@ -256,6 +283,26 @@ const actor = {
   id: 'user-1',
   displayName: 'Test User'
 };
+
+const restrictedCallerAuthCtx = buildAuthorizationContext({
+  userId: 'user-1',
+  globalRoles: [],
+  workspaceRole: 'editor',
+  teamAssignments: [],
+  schemas: [],
+  entities: [],
+  grants: []
+});
+
+const financeCallerAuthCtx = buildAuthorizationContext({
+  userId: 'user-1',
+  globalRoles: [],
+  workspaceRole: 'editor',
+  teamAssignments: [{ teamId: 'team-finance', role: 'team_editor' }],
+  schemas: [],
+  entities: [],
+  grants: []
+});
 
 describe('createAiChatTools', () => {
   it('exposes the standard read-only set when no selection is provided', () => {
@@ -484,6 +531,127 @@ describe('createAiChatTools', () => {
       nodes: [{ id: 'entity-app-3', name: 'Orphan Service' }],
       edges: [],
       truncated: false
+    });
+  });
+
+  describe('field group restriction', () => {
+    it('omits a restricted field from get_entity_details for a caller without group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');
+
+      const result = await getEntityDetails!.execute?.({ entityId: 'entity-app-4' });
+
+      expect(result).toMatchObject({ found: true, entity: { data: { tech: 'Java' } } });
+      expect(
+        (result as { entity: { data: Record<string, unknown> } }).entity.data
+      ).not.toHaveProperty('budget');
+    });
+
+    it('includes a restricted field in get_entity_details for a caller with group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+      const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');
+
+      const result = await getEntityDetails!.execute?.({ entityId: 'entity-app-4' });
+
+      expect(result).toMatchObject({
+        found: true,
+        entity: { data: { tech: 'Java', budget: '1000000' } }
+      });
+    });
+
+    it('includes a restricted field in get_entity_details when authCtx is null (system bypass)', async () => {
+      const tools = createAiChatTools(db, 'ws-1', null, actor);
+      const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');
+
+      const result = await getEntityDetails!.execute?.({ entityId: 'entity-app-4' });
+
+      expect(result).toMatchObject({
+        found: true,
+        entity: { data: { tech: 'Java', budget: '1000000' } }
+      });
+    });
+
+    it('cannot match or preview a restricted field via query_entities for a caller without group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const queryEntities = tools.find(tool => tool.name === 'query_entities');
+
+      const result = await queryEntities!.execute?.({ query: '1000000' });
+
+      expect(result).toMatchObject({ total: 0, entities: [] });
+    });
+
+    it('matches a restricted field via query_entities for a caller with group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+      const queryEntities = tools.find(tool => tool.name === 'query_entities');
+
+      const result = await queryEntities!.execute?.({ query: '1000000' });
+
+      expect(result).toMatchObject({
+        total: 1,
+        entities: [{ id: 'entity-app-4', matchedFields: ['budget'] }]
+      });
+    });
+
+    it('rejects create_entity writes to a restricted field for a caller without group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const createEntity = tools.find(tool => tool.name === 'create_entity');
+
+      await expect(
+        createEntity!.execute?.({
+          schemaId: 'application',
+          name: 'New App',
+          fields: { budget: '500' }
+        })
+      ).rejects.toThrow();
+    });
+
+    it('allows create_entity writes to a restricted field for a caller with group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+      const createEntity = tools.find(tool => tool.name === 'create_entity');
+
+      const result = await createEntity!.execute?.({
+        schemaId: 'application',
+        name: 'New Finance App',
+        fields: { budget: '500' }
+      });
+
+      expect(result).toMatchObject({ entity: { name: 'New Finance App' } });
+    });
+
+    it('rejects update_entity writes to a changed restricted field for a caller without group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const updateEntity = tools.find(tool => tool.name === 'update_entity');
+
+      await expect(
+        updateEntity!.execute?.({
+          entityId: 'entity-app-4',
+          fields: { budget: '2000000' }
+        })
+      ).rejects.toThrow();
+    });
+
+    it('allows update_entity when the restricted field is unchanged', async () => {
+      const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const updateEntity = tools.find(tool => tool.name === 'update_entity');
+
+      const result = await updateEntity!.execute?.({
+        entityId: 'entity-app-4',
+        fields: { budget: '1000000', tech: 'Kotlin' }
+      });
+
+      expect(result).toMatchObject({ entity: { id: 'entity-app-4' } });
+    });
+
+    it('allows update_entity writes to a changed restricted field for a caller with group access', async () => {
+      const tools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+      const updateEntity = tools.find(tool => tool.name === 'update_entity');
+
+      const result = await updateEntity!.execute?.({
+        entityId: 'entity-app-4',
+        fields: { budget: '2000000' }
+      });
+
+      expect(result).toMatchObject({ entity: { id: 'entity-app-4' } });
     });
   });
 });
