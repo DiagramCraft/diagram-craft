@@ -22,6 +22,8 @@ import {
 import { listAllCatalogEntities } from './entityLoader';
 import { entityRequiresApproval } from './entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
+import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
+import { equalEntityValue } from './entityDiff';
 
 const checker = new PermissionChecker();
 
@@ -305,6 +307,20 @@ export const importCommit = async (
       ),
       entities: allEntities
     });
+
+    const changedFieldIds =
+      isUpdate && existingEntity
+        ? Object.keys(normalizedRelationFields).filter(
+            fieldId =>
+              !equalEntityValue(existingEntity.data[fieldId], normalizedRelationFields[fieldId])
+          )
+        : Object.keys(normalizedRelationFields);
+    requireNoRestrictedFieldWrites(
+      authCtx,
+      schema,
+      changedFieldIds,
+      'You do not have permission to set one or more restricted fields on this entity'
+    );
 
     if (isUpdate && existingId && existingEntity) {
       requireEntityAction(

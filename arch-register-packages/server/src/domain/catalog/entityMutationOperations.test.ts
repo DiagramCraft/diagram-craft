@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
-import { updateEntity } from './entityMutationOperations';
+import { updateEntity, createEntity, bulkCreateEntities } from './entityMutationOperations';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
 
@@ -195,5 +195,98 @@ describe('updateEntity — restricted field group writes', () => {
 
     expect(result.secret).toBe('changed');
     expect(db.catalog.updateEntity).toHaveBeenCalled();
+  });
+});
+
+const makeCreateDb = () => {
+  const created: Record<string, unknown>[] = [];
+  const db = {
+    catalog: {
+      getSchema: vi.fn(async () => schema),
+      listSchemas: vi.fn(async () => [schema]),
+      listEntitiesPaginated: vi.fn(async () => []),
+      createEntity: vi.fn(async (input: Record<string, unknown>) => {
+        created.push(input);
+        return { ...input, owner_name: null, schema_name: 'Service' };
+      }),
+      createEntityVersion: vi.fn(async () => ({})),
+      pruneAutosaveVersions: vi.fn(async () => {})
+    },
+    workspace: {
+      allocatePublicId: vi.fn(async () => 1),
+      listLifecycleStates: vi.fn(async () => []),
+      listTeams: vi.fn(async () => [{ id: 'team-owner' }])
+    },
+    audit: {
+      createAuditLog: vi.fn(async () => ({ id: 'audit-1' }))
+    },
+    watch: {
+      listWatcherUserIds: vi.fn(async () => []),
+      createNotificationsFromAudit: vi.fn(async () => {})
+    },
+    core: {
+      transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(db))
+    }
+  } as unknown as DatabaseAdapter;
+  return { db, created };
+};
+
+describe('createEntity — restricted field group writes', () => {
+  it('rejects creating an entity with a value in a group the caller cannot edit', async () => {
+    const { db } = makeCreateDb();
+    const authCtx = authCtxWithTeamRole(null);
+
+    await expect(
+      createEntity(db, 'ws-1', updatePayload({ name_field: 'x', secret: 'sneaked-in' }), authCtx, {
+        id: 'user-1',
+        displayName: 'User'
+      })
+    ).rejects.toThrow();
+  });
+
+  it('allows creating an entity with a restricted value when the caller has team_editor access', async () => {
+    const { db, created } = makeCreateDb();
+    const authCtx = authCtxWithTeamRole('team_editor');
+
+    await createEntity(db, 'ws-1', updatePayload({ name_field: 'x', secret: 'allowed' }), authCtx, {
+      id: 'user-1',
+      displayName: 'User'
+    });
+
+    expect(created).toHaveLength(1);
+    expect(created[0]?.data).toMatchObject({ secret: 'allowed' });
+  });
+});
+
+describe('bulkCreateEntities — restricted field group writes', () => {
+  it('rejects bulk-creating an entity with a value in a group the caller cannot edit', async () => {
+    const { db } = makeCreateDb();
+    const authCtx = authCtxWithTeamRole(null);
+
+    await expect(
+      bulkCreateEntities(
+        db,
+        'ws-1',
+        [updatePayload({ name_field: 'x', secret: 'sneaked-in' })],
+        authCtx,
+        { id: 'user-1', displayName: 'User' }
+      )
+    ).rejects.toThrow();
+  });
+
+  it('allows bulk-creating an entity with a restricted value when the caller has team_editor access', async () => {
+    const { db, created } = makeCreateDb();
+    const authCtx = authCtxWithTeamRole('team_editor');
+
+    await bulkCreateEntities(
+      db,
+      'ws-1',
+      [updatePayload({ name_field: 'x', secret: 'allowed' })],
+      authCtx,
+      { id: 'user-1', displayName: 'User' }
+    );
+
+    expect(created).toHaveLength(1);
+    expect(created[0]?.data).toMatchObject({ secret: 'allowed' });
   });
 });

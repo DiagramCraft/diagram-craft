@@ -52,7 +52,10 @@ import {
   redactDataDiff,
   type EntityFieldDiff
 } from './entityDiff';
-import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import {
+  filterRestrictedFieldGroups,
+  requireNoRestrictedFieldWrites
+} from '../auth/fieldGroupAccessControl';
 import type { SchemaDbResult } from './db/catalogDatabase';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
@@ -175,7 +178,8 @@ const buildProposedEntity = async (
   db: DatabaseAdapter,
   workspace: string,
   entity: Entity,
-  proposedState: Record<string, unknown>
+  proposedState: Record<string, unknown>,
+  authCtx?: WorkspaceAuthorizationContext | null
 ): Promise<{ state: Record<string, unknown>; update: EntityDbUpdate }> => {
   const schema = await db.catalog.getSchema(
     workspace,
@@ -216,6 +220,17 @@ const buildProposedEntity = async (
     fields: payload.fields,
     entities
   });
+  if (authCtx) {
+    const changedFieldIds = Object.keys(data).filter(
+      fieldId => !equalEntityValue(entity.data[fieldId], data[fieldId])
+    );
+    requireNoRestrictedFieldWrites(
+      authCtx,
+      schema,
+      changedFieldIds,
+      'You do not have permission to propose changes to one or more restricted fields'
+    );
+  }
   const next: EntityDbUpdate = {
     slug: payload.slug,
     namespace: payload.namespace,
@@ -584,7 +599,8 @@ export const submitBulkEntityChangeApproval = async (
       db,
       workspace,
       entity,
-      member.proposedState
+      member.proposedState,
+      authCtx
     );
     const baseState = entityState(entity);
     const diff = buildDiff(baseState, proposedState);
@@ -721,7 +737,8 @@ const submitProposal = async (
     db,
     workspace,
     entity,
-    body.proposedState
+    body.proposedState,
+    authCtx
   );
   const baseState = entityState(entity);
   const diff = buildDiff(baseState, proposedState);

@@ -102,6 +102,14 @@ export const createEntity = async (
     });
     assertNoDerivedFieldWrites(schema.fields, normalizedFields);
     assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
+    if (authCtx) {
+      requireNoRestrictedFieldWrites(
+        authCtx,
+        schema,
+        Object.keys(normalizedFields),
+        'You do not have permission to set one or more restricted fields on this entity'
+      );
+    }
     const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
     const parents = getEntityParentsFromPayload(schema, normalizedFields, entityLookup);
     const fallbackOwner = (await db.workspace.listTeams(workspace))[0]?.id ?? null;
@@ -347,6 +355,12 @@ export const bulkCreateEntities = async (
         assertNoExternalEntityFieldWrites(draft.schema.fields, {}, draft.entity.data);
         const parents = getEntityParentsFromPayload(draft.schema, draft.entity.data, entityLookup);
         if (authCtx) {
+          requireNoRestrictedFieldWrites(
+            authCtx,
+            draft.schema,
+            Object.keys(draft.entity.data),
+            'You do not have permission to set one or more restricted fields on this entity'
+          );
           if (parents.length > 0) {
             parents.forEach(parent =>
               requireEntityAction(
