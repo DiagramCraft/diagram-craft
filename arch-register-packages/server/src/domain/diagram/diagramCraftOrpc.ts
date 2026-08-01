@@ -49,11 +49,15 @@ export const createDiagramCraftORPCRouter = () => {
         requireWorkspaceCapability(authCtx, 'ws.view');
 
         const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
-        const entities = filterVisibleEntities(
-          entityAuthCtx,
-          await listAllCatalogEntities(context.db, workspace)
+        const [allEntities, schemas] = await Promise.all([
+          listAllCatalogEntities(context.db, workspace),
+          context.db.catalog.listSchemas(workspace)
+        ]);
+        const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+        const entities = filterVisibleEntities(entityAuthCtx, allEntities);
+        return entities.map(entity =>
+          toDiagramCraftData(entity, schemaById.get(entity.schema_id) ?? null, entityAuthCtx)
         );
-        return entities.map(entity => toDiagramCraftData(entity));
       }),
 
       generate: diagramCraftRouter.diagramCraft.generate.handler(async ({ input, context }) => {

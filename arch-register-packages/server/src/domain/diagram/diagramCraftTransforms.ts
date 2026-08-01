@@ -1,6 +1,11 @@
 import type { DiagramCraftEntityResponse } from '../../types';
 import { Entity, SchemaDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
 import { ReferenceField, SchemaField } from '@arch-register/api-types/schemaContract';
+import type { AuthorizationContext } from '@arch-register/permissions';
+import {
+  filterRestrictedFieldGroups,
+  type FieldGroupSchemaShape
+} from '../auth/fieldGroupAccessControl';
 
 export type DiagramCraftSchemaField =
   | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' | 'number' }>
@@ -65,7 +70,11 @@ export const toDiagramCraftSchema = (
   ]
 });
 
-export const toDiagramCraftData = (row: Entity): DiagramCraftEntityResponse => ({
+export const toDiagramCraftData = (
+  row: Entity,
+  schema: FieldGroupSchemaShape | null,
+  authCtx: AuthorizationContext | null
+): DiagramCraftEntityResponse => ({
   _uid: row.id,
   _workspace: row.workspace,
   _schemaId: row.schema_id,
@@ -82,5 +91,5 @@ export const toDiagramCraftData = (row: Entity): DiagramCraftEntityResponse => (
   _projectId: row.project_id,
   name: row.name,
   description: row.description,
-  ...row.data
+  ...filterRestrictedFieldGroups(authCtx, schema, row.data)
 });
