@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import type { AssessmentDbResult, AssessmentResponseDbResult } from '../project/db/projectDatabase';
-import { buildAuthorizationContext } from '@arch-register/permissions';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import { countEntities, listEntities, listEntitiesWithCount } from './entityQueryOperations';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
@@ -573,5 +573,86 @@ describe('listEntities / countEntities with joined assessment', () => {
       conditions: [{ fieldId: '_assessment', op: 'not_empty', value: undefined }]
     });
     expect(result.map(r => r._uid)).toEqual(['entity-1']);
+  });
+});
+
+describe('completeness redaction for restricted field groups', () => {
+  const schemaWithRestrictedGroup: SchemaDbResult = {
+    ...schema,
+    fields: [
+      {
+        id: 'isCritical',
+        name: 'Critical',
+        type: 'boolean',
+        requirementLevel: 'required',
+        groupId: 'restricted'
+      }
+    ],
+    groups: [
+      { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+    ]
+  };
+
+  const makeRestrictedDb = (entity: EntityDbResult) => {
+    const db = makeDb([entity]);
+    vi.mocked(db.catalog.listSchemas).mockResolvedValue([schemaWithRestrictedGroup]);
+    return db;
+  };
+
+  const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+    buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      // Grants entity view without the ws.settings + schema.edit + ent.edit combination that
+      // would trigger the field-group admin bypass (see hasFieldGroupAdminBypass), so this
+      // context's field-group access is driven purely by teamAssignments below.
+      workspaceCapabilityCeiling: ['content.view'],
+      teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+        teamRoles.map(role => ({ teamId, role }))
+      ),
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+  it('recomputes _completeness excluding a restricted required field for a caller without access', async () => {
+    const entity: EntityDbResult = {
+      ...makeEntity(1),
+      schema_id: schemaWithRestrictedGroup.id,
+      owner: 'team-a',
+      data: { isCritical: true },
+      completeness: 67
+    };
+    const restrictedCallerCtx = authCtxWithTeamRoles({});
+
+    const full = await listEntities(makeRestrictedDb(entity), 'ws-1', restrictedCallerCtx, {
+      view: 'full'
+    });
+    const summary = await listEntities(makeRestrictedDb(entity), 'ws-1', restrictedCallerCtx, {
+      view: 'summary'
+    });
+
+    // description + owner filled, isCritical dropped from both numerator and denominator: 2/3.
+    expect(full[0]?._completeness).toBe(67);
+    expect(summary[0]?._completeness).toBe(67);
+  });
+
+  it('returns the true completeness for a caller with access to the restricted group', async () => {
+    const entity: EntityDbResult = {
+      ...makeEntity(1),
+      schema_id: schemaWithRestrictedGroup.id,
+      owner: 'team-a',
+      data: { isCritical: true },
+      completeness: 0
+    };
+    const permittedCallerCtx = authCtxWithTeamRoles({ 'team-restricted': ['team_editor'] });
+
+    const result = await listEntities(makeRestrictedDb(entity), 'ws-1', permittedCallerCtx, {
+      view: 'full'
+    });
+
+    // description + owner + isCritical filled: 3/4.
+    expect(result[0]?._completeness).toBe(75);
   });
 });
