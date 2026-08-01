@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
 import type { SchemaDbResult } from './db/catalogDatabase';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
 
@@ -311,5 +312,106 @@ describe('validateEntityQueryIR', () => {
     if (!result.ok) {
       expect(result.errors.some(error => error.path[0] === 'assessmentId')).toBe(true);
     }
+  });
+});
+
+describe('validateEntityQueryIR field-group restriction', () => {
+  const RESTRICTED = makeSchema('restricted-schema', [
+    { id: 'name', name: 'Name', type: 'text' },
+    { id: 'secret', name: 'Secret', type: 'text', groupId: 'restricted' },
+    {
+      id: 'link',
+      name: 'Link',
+      type: 'containment',
+      schemaId: DOMAIN.id,
+      minCount: 0,
+      maxCount: 1,
+      groupId: 'restricted'
+    }
+  ]);
+  RESTRICTED.groups = [
+    { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+  ];
+
+  const restrictedSchemas: SchemaCatalog = new Map([...schemas, [RESTRICTED.id, RESTRICTED]]);
+
+  const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+    buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+        teamRoles.map(role => ({ teamId, role }))
+      ),
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+  it('treats a restricted field in a predicate as unknown, identically to a typo', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const restrictedQuery: EntityQuery = {
+      root: { kind: 'predicate', path: [], fieldId: 'secret', op: 'equals', value: 'x' }
+    };
+    const typoQuery: EntityQuery = {
+      root: { kind: 'predicate', path: [], fieldId: 'sekret', op: 'equals', value: 'x' }
+    };
+    const restrictedResult = validateEntityQueryIR(restrictedQuery, restrictedSchemas, noAccess);
+    const typoResult = validateEntityQueryIR(typoQuery, restrictedSchemas, noAccess);
+    expect(restrictedResult).toEqual({
+      ok: false,
+      errors: [{ path: ['root', 'fieldId'], message: "Unknown field 'secret'" }]
+    });
+    expect(typoResult).toEqual({
+      ok: false,
+      errors: [{ path: ['root', 'fieldId'], message: "Unknown field 'sekret'" }]
+    });
+  });
+
+  it('allows a restricted field once the caller has view or edit access', () => {
+    const viewer = authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] });
+    const query: EntityQuery = {
+      root: { kind: 'predicate', path: [], fieldId: 'secret', op: 'equals', value: 'x' }
+    };
+    expect(validateEntityQueryIR(query, restrictedSchemas, viewer)).toEqual({ ok: true });
+  });
+
+  it('rejects a restricted field in a projection', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const query: EntityQuery = {
+      root: { kind: 'and', children: [] },
+      projections: [{ path: [], fieldId: 'secret' }]
+    };
+    const result = validateEntityQueryIR(query, restrictedSchemas, noAccess);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.some(error => error.message === "Unknown field 'secret'")).toBe(true);
+    }
+  });
+
+  it('rejects a restricted backward relation field in a path step', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const query: EntityQuery = {
+      root: {
+        kind: 'relationExists',
+        path: [{ kind: 'backward', fieldId: 'link', ownerSchemaId: RESTRICTED.id }]
+      }
+    };
+    const result = validateEntityQueryIR(query, restrictedSchemas, noAccess);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(
+        result.errors.some(error =>
+          error.message.includes("does not define a reference/containment field 'link'")
+        )
+      ).toBe(true);
+    }
+  });
+
+  it('defaults to unrestricted when authCtx is omitted (internal/system callers)', () => {
+    const query: EntityQuery = {
+      root: { kind: 'predicate', path: [], fieldId: 'secret', op: 'equals', value: 'x' }
+    };
+    expect(validateEntityQueryIR(query, restrictedSchemas)).toEqual({ ok: true });
   });
 });

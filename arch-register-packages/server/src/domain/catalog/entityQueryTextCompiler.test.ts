@@ -7,6 +7,7 @@ import {
 } from './entityQueryTextCompiler';
 import type { SchemaCatalog } from './entityQueryIRValidator';
 import type { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
 
@@ -547,5 +548,95 @@ describe('printEntityQueryText', () => {
     const printed = printEntityQueryText(query, schemas);
     expect(printed).toContain('<-Component.system');
     expect(parseOk(printed)).toEqual(query);
+  });
+});
+
+describe('parseEntityQueryText field-group restriction', () => {
+  const RESTRICTED = makeSchema('restricted-id', 'Restricted', [
+    { id: 'name', name: 'Name', type: 'text' },
+    { id: 'secret', name: 'Secret', type: 'text', groupId: 'restricted' },
+    {
+      id: 'link',
+      name: 'Link',
+      type: 'containment',
+      schemaId: DOMAIN.id,
+      minCount: 0,
+      maxCount: 1,
+      groupId: 'restricted'
+    }
+  ]);
+  RESTRICTED.groups = [
+    { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+  ];
+
+  const restrictedSchemas: SchemaCatalog = new Map([...schemas, [RESTRICTED.id, RESTRICTED]]);
+
+  const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+    buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+        teamRoles.map(role => ({ teamId, role }))
+      ),
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+  it('reports a restricted field identically to a typo', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const restrictedResult = parseEntityQueryText(
+      'schema:Restricted secret = "x"',
+      restrictedSchemas,
+      enums,
+      noAccess
+    );
+    const typoResult = parseEntityQueryText(
+      'schema:Restricted sekret = "x"',
+      restrictedSchemas,
+      enums,
+      noAccess
+    );
+    expect(restrictedResult).toEqual({
+      ok: false,
+      errors: [
+        {
+          offset: expect.any(Number),
+          message: "Schema 'Restricted' does not define field 'secret'"
+        }
+      ]
+    });
+    expect(typoResult).toEqual({
+      ok: false,
+      errors: [
+        {
+          offset: expect.any(Number),
+          message: "Schema 'Restricted' does not define field 'sekret'"
+        }
+      ]
+    });
+  });
+
+  it('resolves a restricted field once the caller has view or edit access', () => {
+    const viewer = authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] });
+    const result = parseEntityQueryText(
+      'schema:Restricted secret = "x"',
+      restrictedSchemas,
+      enums,
+      viewer
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects a restricted backward relation field', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const result = parseEntityQueryText('<-link.name', restrictedSchemas, enums, noAccess);
+    expect(result.ok).toBe(false);
+  });
+
+  it('defaults to unrestricted when authCtx is omitted (internal/system callers)', () => {
+    const result = parseEntityQueryText('schema:Restricted secret = "x"', restrictedSchemas, enums);
+    expect(result.ok).toBe(true);
   });
 });

@@ -10,6 +10,8 @@ import {
   ASSESSMENT_FIELD_PREFIX
 } from '@arch-register/api-types/assessmentFilter';
 import type { SchemaDbResult } from './db/catalogDatabase';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 
 export type SchemaCatalog = Map<string, SchemaDbResult>;
 
@@ -38,10 +40,18 @@ const PSEUDO_FIELD_IDS = new Set([
   '_assessment'
 ]);
 
-const isKnownFieldId = (fieldId: string, schemas: SchemaCatalog): boolean => {
+const isKnownFieldId = (
+  fieldId: string,
+  schemas: SchemaCatalog,
+  authCtx: WorkspaceAuthorizationContext | null
+): boolean => {
   if (PSEUDO_FIELD_IDS.has(fieldId) || fieldId.startsWith('_assessment:')) return true;
   for (const schema of schemas.values()) {
-    if (schema.fields.some(f => f.id === fieldId)) return true;
+    if (
+      schema.fields.some(f => f.id === fieldId) &&
+      !isFieldViewRestricted(authCtx, schema, fieldId)
+    )
+      return true;
   }
   return false;
 };
@@ -51,7 +61,8 @@ const validatePathSteps = (
   schemas: SchemaCatalog,
   path: (string | number)[],
   hopsUsedBefore: number,
-  errors: ValidationError[]
+  errors: ValidationError[],
+  authCtx: WorkspaceAuthorizationContext | null
 ): number => {
   let hopsUsed = hopsUsedBefore;
   steps.forEach((step, index) => {
@@ -73,7 +84,11 @@ const validatePathSteps = (
         });
       } else {
         const field = ownerSchema.fields.find(f => f.id === step.fieldId);
-        if (!field || !isRelationField(field)) {
+        if (
+          !field ||
+          !isRelationField(field) ||
+          isFieldViewRestricted(authCtx, ownerSchema, step.fieldId)
+        ) {
           errors.push({
             path: [...stepPath, 'fieldId'],
             message: `Schema '${step.ownerSchemaId}' does not define a reference/containment field '${step.fieldId}'`
@@ -81,7 +96,7 @@ const validatePathSteps = (
         }
       }
     } else {
-      if (!isKnownFieldId(step.fieldId, schemas)) {
+      if (!isKnownFieldId(step.fieldId, schemas, authCtx)) {
         errors.push({
           path: [...stepPath, 'fieldId'],
           message: `Unknown field '${step.fieldId}'`
@@ -96,7 +111,8 @@ const validatePathSteps = (
         [...stepPath, 'filter'],
         hopsUsed,
         false,
-        errors
+        errors,
+        authCtx
       );
     }
   });
@@ -109,7 +125,8 @@ const validateNode = (
   path: (string | number)[],
   hopsUsedBefore: number,
   allowFreeText: boolean,
-  errors: ValidationError[]
+  errors: ValidationError[],
+  authCtx: WorkspaceAuthorizationContext | null
 ): number => {
   switch (node.kind) {
     case 'and':
@@ -125,7 +142,8 @@ const validateNode = (
           [...path, 'children', index],
           hopsUsedBefore,
           allowFreeText,
-          errors
+          errors,
+          authCtx
         );
         maxHops = Math.max(maxHops, childHops);
       });
@@ -138,7 +156,8 @@ const validateNode = (
         [...path, 'child'],
         hopsUsedBefore,
         allowFreeText,
-        errors
+        errors,
+        authCtx
       );
     case 'freeText':
       if (!allowFreeText) {
@@ -157,9 +176,10 @@ const validateNode = (
         schemas,
         [...path, 'path'],
         hopsUsedBefore,
-        errors
+        errors,
+        authCtx
       );
-      if (!isKnownFieldId(node.fieldId, schemas)) {
+      if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
         errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
       }
       return hopsAfterPath;
@@ -171,7 +191,14 @@ const validateNode = (
           message: "'relationExists' requires a non-empty path"
         });
       }
-      return validatePathSteps(node.path, schemas, [...path, 'path'], hopsUsedBefore, errors);
+      return validatePathSteps(
+        node.path,
+        schemas,
+        [...path, 'path'],
+        hopsUsedBefore,
+        errors,
+        authCtx
+      );
     }
   }
 };
@@ -220,7 +247,8 @@ const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[num
 
 export const validateEntityQueryIR = (
   query: EntityQuery,
-  schemas: SchemaCatalog
+  schemas: SchemaCatalog,
+  authCtx: WorkspaceAuthorizationContext | null = null
 ): ValidationResult => {
   const errors: ValidationError[] = [];
   if (query.schemaId && !schemas.has(query.schemaId)) {
@@ -242,12 +270,12 @@ export const validateEntityQueryIR = (
   if (query.asOf != null && Number.isNaN(Date.parse(query.asOf))) {
     errors.push({ path: ['asOf'], message: `Invalid asOf date '${query.asOf}'` });
   }
-  validateNode(query.root, schemas, ['root'], 0, true, errors);
+  validateNode(query.root, schemas, ['root'], 0, true, errors, authCtx);
 
   const aliases = new Set<string>();
   for (const [index, projection] of (query.projections ?? []).entries()) {
     const projectionPath = ['projections', index] as (string | number)[];
-    validatePathSteps(projection.path, schemas, [...projectionPath, 'path'], 0, errors);
+    validatePathSteps(projection.path, schemas, [...projectionPath, 'path'], 0, errors, authCtx);
     projection.path.forEach((step, stepIndex) => {
       if (step.filter) {
         errors.push({
@@ -256,7 +284,7 @@ export const validateEntityQueryIR = (
         });
       }
     });
-    if (!isKnownFieldId(projection.fieldId, schemas)) {
+    if (!isKnownFieldId(projection.fieldId, schemas, authCtx)) {
       errors.push({
         path: [...projectionPath, 'fieldId'],
         message: `Unknown field '${projection.fieldId}'`

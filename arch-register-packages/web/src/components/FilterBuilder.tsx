@@ -18,6 +18,7 @@ import {
   ASSESSMENT_FIELD_PREFIX,
   ASSESSMENT_PRESENCE_FIELD_ID
 } from '@arch-register/api-types/assessmentFilter';
+import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 
 const TEXT_OPERATORS = [
   { value: 'equals', label: 'Equals' },
@@ -82,6 +83,10 @@ type Props = {
   enums: WorkspaceEnum[];
   selectedSchemaId?: string | null;
   joinedAssessment?: Assessment | null;
+  // Resolves a field group's access for the current caller — pass `useFieldGroupAccess(workspaceId)`.
+  // Defaults to unrestricted (matches the hook's own no-context fallback) so this stays a pure,
+  // presentational component usable without an auth context (e.g. in Storybook).
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
 };
 
 export const FilterBuilder = ({
@@ -93,7 +98,8 @@ export const FilterBuilder = ({
   owners,
   enums,
   selectedSchemaId,
-  joinedAssessment
+  joinedAssessment,
+  getFieldGroupAccess = () => 'edit'
 }: Props) => {
   const fields = React.useMemo(() => {
     const builtIn: FieldDef[] = [
@@ -126,29 +132,35 @@ export const FilterBuilder = ({
     if (selectedSchemaId) {
       const schema = schemas.find(s => s.id === selectedSchemaId);
       if (schema) {
-        schemaFields = schema.fields.map(f => {
-          let type: FieldDef['type'] = 'text';
-          let options: FieldDef['options'];
+        schemaFields = schema.fields
+          .filter(f => {
+            if (!f.groupId) return true;
+            const group = schema.groups?.find(g => g.id === f.groupId);
+            return getFieldGroupAccess(group?.accessControl) !== 'none';
+          })
+          .map(f => {
+            let type: FieldDef['type'] = 'text';
+            let options: FieldDef['options'];
 
-          if (f.type === 'date') type = 'date';
-          else if (f.type === 'select') {
-            type = 'select';
-            const en = enums.find(e => e.id === f.enumId);
-            options = en?.options ?? [];
-          } else if (f.type === 'boolean') type = 'boolean';
-          else if (f.type === 'number') type = 'number';
-          else if (f.type === 'derived') {
-            type =
-              f.resultType === 'select'
-                ? 'select'
-                : f.resultType === 'rating'
-                  ? 'rating'
-                  : f.resultType;
-            if (type === 'select') options = f.options ?? [];
-          }
+            if (f.type === 'date') type = 'date';
+            else if (f.type === 'select') {
+              type = 'select';
+              const en = enums.find(e => e.id === f.enumId);
+              options = en?.options ?? [];
+            } else if (f.type === 'boolean') type = 'boolean';
+            else if (f.type === 'number') type = 'number';
+            else if (f.type === 'derived') {
+              type =
+                f.resultType === 'select'
+                  ? 'select'
+                  : f.resultType === 'rating'
+                    ? 'rating'
+                    : f.resultType;
+              if (type === 'select') options = f.options ?? [];
+            }
 
-          return { id: f.id, name: f.name, type, options };
-        });
+            return { id: f.id, name: f.name, type, options };
+          });
       }
     }
 
@@ -186,7 +198,15 @@ export const FilterBuilder = ({
       : [];
 
     return [...builtIn, ...schemaFields, ...assessmentFields];
-  }, [schemas, lifecycleStates, owners, enums, selectedSchemaId, joinedAssessment]);
+  }, [
+    schemas,
+    lifecycleStates,
+    owners,
+    enums,
+    selectedSchemaId,
+    joinedAssessment,
+    getFieldGroupAccess
+  ]);
 
   const addCondition = () => {
     onChange([...conditions, { fieldId: '_name', op: 'contains', value: '' }]);

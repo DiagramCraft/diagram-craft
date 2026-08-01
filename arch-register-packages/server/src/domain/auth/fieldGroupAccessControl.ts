@@ -29,6 +29,21 @@ const groupAccessByFieldId = (
 };
 
 /**
+ * True when the caller cannot view the field's group. A no-op (always false) when authCtx or
+ * schema is absent — internal/system callers bypass field-group restriction, same as they
+ * bypass other entity-level permission checks. Used by the query DSL to treat a restricted
+ * field as unknown, identically to an unrecognized/typo'd field id.
+ */
+export const isFieldViewRestricted = (
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null | undefined,
+  fieldId: string
+): boolean => {
+  if (!authCtx || !schema) return false;
+  return groupAccessByFieldId(authCtx, schema).get(fieldId) === 'none';
+};
+
+/**
  * Omits values for fields whose group the caller cannot view. A no-op when authCtx or
  * schema is absent (internal/system callers bypass field-group redaction, same as they
  * bypass other entity-level permission checks).

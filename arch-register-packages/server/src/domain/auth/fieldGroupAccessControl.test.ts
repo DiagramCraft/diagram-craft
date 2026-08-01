@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import {
   filterRestrictedFieldGroups,
+  isFieldViewRestricted,
   requireNoRestrictedFieldWrites
 } from './fieldGroupAccessControl';
 import type { FieldGroupSchemaShape } from './fieldGroupAccessControl';
@@ -67,6 +68,35 @@ describe('filterRestrictedFieldGroups', () => {
     });
     const data = { name: 'x', secret: 'y', reviewOnly: 'z' };
     expect(filterRestrictedFieldGroups(authCtx, schema, data)).toEqual(data);
+  });
+});
+
+describe('isFieldViewRestricted', () => {
+  it('is false when authCtx is null', () => {
+    expect(isFieldViewRestricted(null, schema, 'secret')).toBe(false);
+  });
+
+  it('is false when schema is null or undefined', () => {
+    const authCtx = authCtxWithTeamRoles({});
+    expect(isFieldViewRestricted(authCtx, null, 'secret')).toBe(false);
+    expect(isFieldViewRestricted(authCtx, undefined, 'secret')).toBe(false);
+  });
+
+  it('is false for ungrouped fields', () => {
+    const authCtx = authCtxWithTeamRoles({});
+    expect(isFieldViewRestricted(authCtx, schema, 'name')).toBe(false);
+  });
+
+  it('is true when the caller has no access to the field group', () => {
+    const authCtx = authCtxWithTeamRoles({});
+    expect(isFieldViewRestricted(authCtx, schema, 'secret')).toBe(true);
+  });
+
+  it('is false when the caller has view or edit access to the field group', () => {
+    const viewOnly = authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] });
+    expect(isFieldViewRestricted(viewOnly, schema, 'secret')).toBe(false);
+    const editor = authCtxWithTeamRoles({ 'team-restricted': ['team_editor'] });
+    expect(isFieldViewRestricted(editor, schema, 'secret')).toBe(false);
   });
 });
 

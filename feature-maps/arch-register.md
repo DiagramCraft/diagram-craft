@@ -171,7 +171,9 @@
           browser views offer Basic (free-text search plus a visual filter popover) and Advanced (a single text
           query parsed against the entity query language) modes, switchable without losing the underlying query;
           switching from Advanced to Basic warns first if the query uses grouping, negation, or relation traversal
-          that Basic mode can't represent.
+          that Basic mode can't represent. A field in a schema group the user cannot view is offered nowhere as a
+          filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,
+          matching how the field is hidden elsewhere.
 
         - @id:ar.search.navigation Search results provide context and links into the relevant entity, project, document,
           or workspace surface.
