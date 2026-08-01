@@ -108,7 +108,10 @@
           admins can define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of
           allowed entity schemas) and their own configurable fields, field groups, and access control; relation
           instances are first-class, independently addressable, audited records rather than entity-data values.
-          Versioning and change-approval for relation instances are not yet supported.
+          An entity's detail view has a "Typed relations" tab, alongside its generic "Relationships" tab, that lists
+          the typed relation instances the entity participates in (outgoing and incoming), grouped by relation type,
+          with each row showing the connected entity and its key field values (subject to field-group redaction) and
+          linking to that entity. Versioning and change-approval for relation instances are not yet supported.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.

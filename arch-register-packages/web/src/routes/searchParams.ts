@@ -86,6 +86,7 @@ export type EntityDetailSearchParams = {
     | 'topology'
     | 'graph'
     | 'relations'
+    | 'typed-relations'
     | 'related-content'
     | 'dependents'
     | 'assessments'
@@ -124,6 +125,7 @@ export const validateEntityDetailSearch = (
     raw.tab === 'topology' ||
     raw.tab === 'graph' ||
     raw.tab === 'relations' ||
+    raw.tab === 'typed-relations' ||
     raw.tab === 'related-content' ||
     raw.tab === 'dependents' ||
     raw.tab === 'assessments' ||
