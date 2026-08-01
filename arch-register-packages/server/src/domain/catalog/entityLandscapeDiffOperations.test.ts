@@ -196,16 +196,89 @@ describe('diffEntityLandscapes', () => {
     );
   });
 
-  it('rejects comparisons between different projects', async () => {
+  it('compares two projects as independent workspace-wide scenarios', async () => {
+    const projectA = { id: 'project-a', owner: 'team-a' };
+    const projectB = { id: 'project-b', owner: 'team-b' };
+    vi.mocked(db.project.getProject)
+      .mockResolvedValueOnce(projectA as never)
+      .mockResolvedValueOnce(projectB as never);
+    vi.mocked(db.project.listProjectEntityLinks)
+      .mockResolvedValueOnce([] as never)
+      .mockResolvedValueOnce([] as never);
+
+    vi.mocked(reconstructEntitiesAsOf)
+      .mockResolvedValueOnce([
+        makeEntity('shared', { name: 'Shared before' }),
+        makeEntity('only-a', { project_id: 'project-a' })
+      ])
+      .mockResolvedValueOnce([
+        makeEntity('shared', { name: 'Shared after' }),
+        makeEntity('only-b', { project_id: 'project-b' })
+      ])
+      .mockResolvedValueOnce([makeEntity('shared', { name: 'Live value' })]);
+
+    const result = await diffEntityLandscapes(
+      db,
+      'ws-1',
+      {} as never,
+      state({
+        asOf: '2026-08-01T00:00:00.000Z',
+        projectId: 'project-a',
+        projectScope: 'all',
+        includePlannedChanges: true
+      }),
+      state({
+        asOf: '2026-09-01T00:00:00.000Z',
+        projectId: 'project-b',
+        projectScope: 'all',
+        includePlannedChanges: true
+      })
+    );
+
+    expect(result.added.map(entity => entity._uid)).toEqual(['only-b']);
+    expect(result.removed.map(entity => entity._uid)).toEqual(['only-a']);
+    expect(result.changed).toEqual([
+      expect.objectContaining({
+        entity: expect.objectContaining({ _uid: 'shared', _name: 'Shared after' }),
+        diff: {
+          name: { current: 'Live value', before: 'Shared before', after: 'Shared after' }
+        }
+      })
+    ]);
+    expect(reconstructEntitiesAsOf).toHaveBeenNthCalledWith(
+      1,
+      db,
+      'ws-1',
+      expect.any(Date),
+      {},
+      undefined,
+      true,
+      'project-a',
+      expect.any(Date)
+    );
+    expect(reconstructEntitiesAsOf).toHaveBeenNthCalledWith(
+      2,
+      db,
+      'ws-1',
+      expect.any(Date),
+      {},
+      undefined,
+      true,
+      'project-b',
+      expect.any(Date)
+    );
+  });
+
+  it('requires workspace-wide scope for comparisons between different projects', async () => {
     await expect(
       diffEntityLandscapes(
         db,
         'ws-1',
         {} as never,
-        state({ projectId: 'project-a' }),
-        state({ projectId: 'project-b' })
+        state({ projectId: 'project-a', projectScope: 'project' }),
+        state({ projectId: 'project-b', projectScope: 'project' })
       )
-    ).rejects.toThrow('Comparing different projects is not supported');
+    ).rejects.toThrow('Comparing different projects requires workspace-wide scenario scope');
   });
 
   it('includes project-owned entities in a workspace-wide diff (no projectId)', async () => {

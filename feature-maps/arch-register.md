@@ -224,7 +224,10 @@
             - @id:ar.projects.planned-changes.whats-changed Users can view a summary of what changes across a
               project's connected entities once all of its planned changes are applied, compared to the current
               live state — entities added, removed, or changed, with a field-level diff on drill-down for changed
-              entities. The comparison date is fixed to the latest target date among the project's planned changes.
+              entities. The comparison date is fixed to the latest effective date among the project's planned
+              changes, falling back to the project's target date when no planned change has a date. From this view,
+              users can compare the project's reconstructed future state with another project's future state, showing
+              entities present in only one scenario and field-level differences between both proposals.
 
         - @id:ar.projects.permissions Project content can be protected through the applicable workspace, project,
           entity, team, and role permissions.

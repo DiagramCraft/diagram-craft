@@ -32,6 +32,21 @@ export const getSnapshotEffectiveDate = (
     ? (milestonesById.get(changeCase.milestone_id)?.target_date ?? null)
     : null);
 
+export const getProjectScenarioDate = (
+  projectTargetDate: string | null | undefined,
+  changeCases: ChangeCase[],
+  milestonesById: Map<string, Milestone>
+): string | null => {
+  const plannedDates = changeCases
+    .filter(changeCase => changeCase.status === 'planned')
+    .map(changeCase => getSnapshotEffectiveDate(changeCase, milestonesById))
+    .filter((date): date is string => date != null);
+
+  return plannedDates.length > 0
+    ? [...new Set(plannedDates)].sort().at(-1)!
+    : (projectTargetDate ?? null);
+};
+
 export const getSnapshotDateLabel = (
   changeCase: Pick<ChangeCase, 'target_date' | 'milestone_id'>,
   milestonesById: Map<string, Milestone>

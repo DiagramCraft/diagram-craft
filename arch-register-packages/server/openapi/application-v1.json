@@ -12157,7 +12157,7 @@
       "post": {
         "operationId": "entities.diff",
         "summary": "Compare two reconstructed entity landscapes",
-        "description": "Returns entities added, removed, or changed between two reconstructed workspace states. Changed entries include raw field-level before/after values.",
+        "description": "Returns entities added, removed, or changed between two reconstructed workspace states. Changed entries include raw field-level before/after values. Different project IDs are supported for workspace-wide scenario comparisons when both states use projectScope=all.",
         "tags": [
           "Entities",
           "Entities"
@@ -12188,7 +12188,7 @@
                       },
                       "projectId": {
                         "type": "string",
-                        "description": "Project whose connected entities and planned changes apply"
+                        "description": "Project whose planned changes apply. When comparing two different projects, both states must use projectScope=all."
                       },
                       "includePlannedChanges": {
                         "type": "boolean",
@@ -12274,7 +12274,7 @@
                       },
                       "projectId": {
                         "type": "string",
-                        "description": "Project whose connected entities and planned changes apply"
+                        "description": "Project whose planned changes apply. When comparing two different projects, both states must use projectScope=all."
                       },
                       "includePlannedChanges": {
                         "type": "boolean",
@@ -13643,6 +13643,14 @@
                             "additionalProperties": {
                               "type": "object",
                               "properties": {
+                                "current": {
+                                  "anyOf": [
+                                    {},
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
                                 "before": {
                                   "anyOf": [
                                     {},
