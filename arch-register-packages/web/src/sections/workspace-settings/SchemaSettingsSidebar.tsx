@@ -11,6 +11,8 @@ import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/Sideb
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { TbLayoutGrid } from 'react-icons/tb';
 
+type SchemaSettingsTab = 'types' | 'enums' | 'fieldgroups' | 'relation-types';
+
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 export const SchemaSettingsSidebar = ({
@@ -24,15 +26,22 @@ export const SchemaSettingsSidebar = ({
 }) => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
-  const { fieldGroups = [] } = useWorkspaceContext();
+  const { fieldGroups = [], relationSchemas } = useWorkspaceContext();
 
-  const activeTab =
-    search.tab === 'enums' ? 'enums' : search.tab === 'fieldgroups' ? 'fieldgroups' : 'types';
+  const activeTab: SchemaSettingsTab =
+    search.tab === 'enums'
+      ? 'enums'
+      : search.tab === 'fieldgroups'
+        ? 'fieldgroups'
+        : search.tab === 'relation-types'
+          ? 'relation-types'
+          : 'types';
   const schemaId = search.schema ?? null;
   const enumId = search.enumId ?? null;
   const fieldGroupId = search.fieldGroupId ?? null;
+  const relationSchemaId = search.relationSchema ?? null;
 
-  const activateTab = (tab: 'types' | 'enums' | 'fieldgroups') => {
+  const activateTab = (tab: SchemaSettingsTab) => {
     navigate({
       to: '/$workspaceSlug/settings/schemas',
       params: { workspaceSlug },
@@ -45,10 +54,11 @@ export const SchemaSettingsSidebar = ({
       <SidebarHeader>
         <Tabs.Root
           value={activeTab}
-          onValueChange={value => activateTab(value as 'types' | 'enums' | 'fieldgroups')}
+          onValueChange={value => activateTab(value as SchemaSettingsTab)}
         >
           <Tabs.List>
             <Tabs.Trigger value="types">Types</Tabs.Trigger>
+            <Tabs.Trigger value="relation-types">Relation types</Tabs.Trigger>
             <Tabs.Trigger value="enums">Enums</Tabs.Trigger>
             <Tabs.Trigger value="fieldgroups">Fieldgroups</Tabs.Trigger>
           </Tabs.List>
@@ -75,6 +85,33 @@ export const SchemaSettingsSidebar = ({
               }
               tagColor={resolveSchemaColor(s, i)}
               trailing={<span className="dim mono">{s.fields.length}</span>}
+            />
+          ))}
+        </div>
+      ) : activeTab === 'relation-types' ? (
+        <div className={styles.scroll}>
+          <SidebarGroupLabel>Relation types</SidebarGroupLabel>
+          {relationSchemas.length === 0 && (
+            <div className={`${styles.emptyState} dim`}>No relation types defined.</div>
+          )}
+          {relationSchemas.map((s, i) => (
+            <TreeRow
+              key={s.id}
+              testId={`relation-schema-type-${s.name}`}
+              icon={
+                <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
+              }
+              label={s.name}
+              active={relationSchemaId === s.id}
+              onClick={() =>
+                navigate({
+                  to: '/$workspaceSlug/settings/schemas',
+                  params: { workspaceSlug },
+                  search: { tab: 'relation-types', relationSchema: s.id }
+                })
+              }
+              tagColor={resolveSchemaColor(s, i)}
+              trailing={<span className="dim mono">{s.relation_count}</span>}
             />
           ))}
         </div>

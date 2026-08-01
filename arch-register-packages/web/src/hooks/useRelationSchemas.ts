@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invalidateDeletedRelationSchema, relationSchemaKeys } from '../queries/relationSchemas';
 import { relationKeys } from '../queries/relations';
 import { invalidateAuditQueries } from '../queries/audit';
-import type { FieldMigrations, SchemaMigrationRequiredError } from '@arch-register/api-types/schemaContract';
+import type {
+  FieldMigrations,
+  SchemaMigrationRequiredError
+} from '@arch-register/api-types/schemaContract';
 import type {
   RelationField,
   RelationEndpoint,
@@ -98,7 +101,8 @@ export const useUpdateRelationSchema = (workspaceId: string) => {
                   description: variables.data.description ?? relationSchema.description,
                   in: variables.data.in,
                   out: variables.data.out,
-                  fields: (variables.data.fields ?? relationSchema.fields) as RelationSchema['fields'],
+                  fields: (variables.data.fields ??
+                    relationSchema.fields) as RelationSchema['fields'],
                   groups: variables.data.groups ?? relationSchema.groups,
                   shared_field_group_links:
                     variables.data.shared_field_group_links ??
@@ -159,7 +163,9 @@ export const useDeleteRelationSchema = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (relationSchemaId: string) =>
-      orpcClient.relationSchemas.remove({ params: { workspace: workspaceId, id: relationSchemaId } }),
+      orpcClient.relationSchemas.remove({
+        params: { workspace: workspaceId, id: relationSchemaId }
+      }),
     onSuccess: async (_, relationSchemaId) => {
       await invalidateDeletedRelationSchema(queryClient, workspaceId, relationSchemaId);
     }

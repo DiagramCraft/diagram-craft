@@ -1,9 +1,11 @@
 import type { FieldGroupAccessControl } from '@arch-register/permissions';
-import type { SchemaGroup, SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+
+type GroupWithAccessControl = { id: string; accessControl?: FieldGroupAccessControl };
+type FieldGroupLink = { groupId: string; teamIds?: string[] };
 
 export const resolveGroupAccessControl = (
-  group: SchemaGroup,
-  sharedFieldGroupLinks: SharedFieldGroupLink[]
+  group: GroupWithAccessControl,
+  sharedFieldGroupLinks: FieldGroupLink[]
 ): FieldGroupAccessControl | undefined => {
   const link = sharedFieldGroupLinks.find(l => l.groupId === group.id);
   if (link) return link.teamIds ? { teamIds: link.teamIds } : undefined;

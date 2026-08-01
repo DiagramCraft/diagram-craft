@@ -69,6 +69,12 @@
             effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's
             inclusion of a reusable shared fieldgroup — can optionally be assigned one or more teams to scope its
             access: a team's reviewer role (or above) grants view, and editor role (or above) grants edit.
+            Administrators can similarly define relation types (name, description, "in"/"out" endpoint constraints
+            naming the allowed entity schemas at each end, fields, groups, and field-group access control) from a
+            dedicated relation-types admin screen alongside entity types, enums, and shared fieldgroups; relation
+            types support the same field-group access control, shared-fieldgroup inclusion, field migrations, and
+            version history as entity schemas, but only text, long text, boolean, date, number, and select field
+            types (no reference, containment, or derived fields, and no templates or approval/deprecation policy).
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally

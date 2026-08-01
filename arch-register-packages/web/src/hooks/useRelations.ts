@@ -84,13 +84,11 @@ export const useUpdateRelation = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      relationId,
-      data
-    }: {
-      relationId: string;
-      data: Record<string, unknown>;
-    }) => orpcClient.relations.update({ params: { workspace: workspaceId, id: relationId }, body: data }),
+    mutationFn: ({ relationId, data }: { relationId: string; data: Record<string, unknown> }) =>
+      orpcClient.relations.update({
+        params: { workspace: workspaceId, id: relationId },
+        body: data
+      }),
     onSuccess: async updated => {
       queryClient.setQueryData(relationKeys.detail(workspaceId, updated._uid), updated);
       await invalidateRelationEndpoints(queryClient, workspaceId, [
@@ -109,7 +107,9 @@ export const useDeleteRelation = (workspaceId: string) => {
     mutationFn: ({ relationId }: { relationId: string; inEntityId: string; outEntityId: string }) =>
       orpcClient.relations.remove({ params: { workspace: workspaceId, id: relationId } }),
     onSuccess: async (_, variables) => {
-      queryClient.removeQueries({ queryKey: relationKeys.detail(workspaceId, variables.relationId) });
+      queryClient.removeQueries({
+        queryKey: relationKeys.detail(workspaceId, variables.relationId)
+      });
       await invalidateRelationEndpoints(queryClient, workspaceId, [
         variables.inEntityId,
         variables.outEntityId

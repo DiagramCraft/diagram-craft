@@ -21,6 +21,7 @@ import {
   useCreateSchema,
   useUpdateSchema,
   useDeleteSchema,
+  useSchemaVersions,
   getSchemaMigrationRequired
 } from '../../hooks/useSchemas';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -47,6 +48,7 @@ import { DerivedExpressionTestDialog } from '../../components/DerivedExpressionT
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
 import { FieldGroupEditorScreen } from './FieldGroupEditorScreen';
+import { RelationSchemaSettingsScreen } from './RelationSchemaSettingsScreen';
 import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
 
 const deriveKeyPrefix = (value: string) =>
@@ -105,6 +107,10 @@ export const SchemaSettingsScreen = () => {
   const createSchemaMutation = useCreateSchema(workspaceSlug);
   const updateSchemaMutation = useUpdateSchema(workspaceSlug);
   const deleteSchemaMutation = useDeleteSchema(workspaceSlug);
+  const { data: schemaVersions, isLoading: schemaVersionsLoading } = useSchemaVersions(
+    workspaceSlug,
+    showHistory ? (selectedSchemaId ?? null) : null
+  );
 
   const onSelectSchema = useCallback(
     (id: string) => {
@@ -434,6 +440,9 @@ export const SchemaSettingsScreen = () => {
   if (activeTab === 'fieldgroups') {
     return <FieldGroupEditorScreen />;
   }
+  if (activeTab === 'relation-types') {
+    return <RelationSchemaSettingsScreen />;
+  }
 
   const groupIds = new Set(groups.map(g => g.id));
   const ungroupedFields = fields.filter(f => !f.groupId || !groupIds.has(f.groupId));
@@ -496,7 +505,10 @@ export const SchemaSettingsScreen = () => {
             </Button>
           </div>
           {showHistory ? (
-            <SchemaVersionHistorySubSection workspaceId={workspaceSlug} schemaId={selected.id} />
+            <SchemaVersionHistorySubSection
+              versions={schemaVersions}
+              isLoading={schemaVersionsLoading}
+            />
           ) : (
             <div className={styles.editor}>
               <div className={styles.formRow}>
