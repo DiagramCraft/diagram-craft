@@ -11,6 +11,7 @@ import {
 import type { AssessmentDbResult } from '../project/db/projectDatabase';
 
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
+import { computeEntityCompleteness } from '../../utils/completeness';
 import { decodeRefs } from '../../types';
 import { handleError, filterEntities, matchesFilterCondition } from './dataHelpers';
 import { ENTITY_DEFAULTS } from '../../constants';
@@ -227,16 +228,20 @@ export const collectEntitiesFromIR = async (
 
   return filteredRows.map((row: EntityQueryDbResult) => {
     const completeness = row.completeness;
+    const schema = schemaCatalog.get(row.schema_id) ?? null;
+    const visibleCompleteness = schema
+      ? computeEntityCompleteness(row, schema, authCtx)
+      : completeness;
     const apiEntity =
       options.view === 'summary'
         ? (attachProjectLink(
-            toApiEntitySummary(row, authCtx, completeness) as EntityRecord,
+            toApiEntitySummary(row, authCtx, visibleCompleteness) as EntityRecord,
             row.id,
             options.projectId,
             projectEntityMap
           ) as EntityRecord)
         : attachProjectLink(
-            toApiEntity(row, authCtx, schemaCatalog.get(row.schema_id) ?? null, completeness),
+            toApiEntity(row, authCtx, schema, visibleCompleteness),
             row.id,
             options.projectId,
             projectEntityMap
@@ -367,17 +372,21 @@ const collectEntities = async (
       return;
     }
 
+    const schema = schemaById.get(entity.schema_id) ?? null;
+    const visibleCompleteness = schema
+      ? computeEntityCompleteness(entity, schema, authCtx)
+      : completeness;
     rows.push({
       entity:
         view === 'summary'
           ? (attachProjectLink(
-              toApiEntitySummary(entity, authCtx, completeness) as EntityRecord,
+              toApiEntitySummary(entity, authCtx, visibleCompleteness) as EntityRecord,
               entity.id,
               projectId,
               projectEntityMap
             ) as EntityRecord)
           : attachProjectLink(
-              toApiEntity(entity, authCtx, schemaById.get(entity.schema_id) ?? null, completeness),
+              toApiEntity(entity, authCtx, schema, visibleCompleteness),
               entity.id,
               projectId,
               projectEntityMap
@@ -479,7 +488,11 @@ export const getEntityFacets = async (
   authCtx: AuthorizationContext | null
 ): Promise<EntityFacets> => {
   try {
-    const allEntities = await listAllCatalogEntities(db, workspace);
+    const [allEntities, schemas] = await Promise.all([
+      listAllCatalogEntities(db, workspace),
+      db.catalog.listSchemas(workspace)
+    ]);
+    const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
     const entities =
       authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
         ? allEntities
@@ -494,7 +507,10 @@ export const getEntityFacets = async (
         .map(([value, count]) => ({ value, count }))
         .sort((a, b) => b.count - a.count || String(a.value).localeCompare(String(b.value)));
 
-    const scored = entities.map(entity => entity.completeness);
+    const scored = entities.map(entity => {
+      const schema = schemaById.get(entity.schema_id) ?? null;
+      return schema ? computeEntityCompleteness(entity, schema, authCtx) : entity.completeness;
+    });
     const completeness = {
       below50: scored.filter(s => s < 50).length,
       below80: scored.filter(s => s >= 50 && s < 80).length,
@@ -692,7 +708,12 @@ export const getEntity = async (
         'You do not have access to view this entity'
       );
     const schema = await db.catalog.getSchema(workspace, row.schema_id);
-    return toApiEntity(row, authCtx, schema, row.completeness);
+    return toApiEntity(
+      row,
+      authCtx,
+      schema,
+      schema ? computeEntityCompleteness(row, schema, authCtx) : row.completeness
+    );
   } catch (error) {
     return handleError(error, 'Failed to retrieve data record');
   }

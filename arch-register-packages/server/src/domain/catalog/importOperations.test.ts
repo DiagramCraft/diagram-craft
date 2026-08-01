@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
-import { importCommit } from './importOperations';
+import { importCommit, importParse } from './importOperations';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
 
@@ -153,5 +153,53 @@ describe('importCommit — restricted field group writes', () => {
     });
 
     expect(db.catalog.createEntity).toHaveBeenCalled();
+  });
+
+  it('preserves a restricted field the caller cannot see when the CSV omits its column', async () => {
+    const db = makeDb();
+    const authCtx = authCtxWithTeamRole(null);
+
+    await importCommit(db, authCtx, {
+      workspace: 'ws-1',
+      schemaId: 'schema-1',
+      entities: [{ _existingId: 'entity-1', name_field: 'y' }],
+      auditUser: { id: 'user-1', display_name: 'User' }
+    });
+
+    expect(db.catalog.updateEntity).toHaveBeenCalled();
+    const [, , updateInput] = (db.catalog.updateEntity as ReturnType<typeof vi.fn>).mock
+      .calls[0] as [string, string, { data: Record<string, unknown> }];
+    expect(updateInput.data).toEqual({ name_field: 'y', secret: 'original' });
+  });
+});
+
+describe('importParse — restricted field group reads', () => {
+  const csvContent = 'ID,Name,Name field\nentity-1,My Entity,x\n';
+
+  it('omits a restricted field from the preview when the caller cannot view it', async () => {
+    const db = makeDb();
+    const authCtx = authCtxWithTeamRole(null);
+
+    const result = await importParse(db, authCtx, {
+      workspace: 'ws-1',
+      schemaId: 'schema-1',
+      csvContent
+    });
+
+    expect(result.entities[0]?.existingEntity).not.toBeNull();
+    expect(result.entities[0]?.existingEntity).not.toHaveProperty('secret');
+  });
+
+  it('includes a restricted field in the preview when the caller has team_editor access', async () => {
+    const db = makeDb();
+    const authCtx = authCtxWithTeamRole('team_editor');
+
+    const result = await importParse(db, authCtx, {
+      workspace: 'ws-1',
+      schemaId: 'schema-1',
+      csvContent
+    });
+
+    expect(result.entities[0]?.existingEntity).toMatchObject({ secret: 'original' });
   });
 });
