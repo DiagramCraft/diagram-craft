@@ -1,0 +1,319 @@
+import { oc } from '@orpc/contract';
+import { z } from 'zod';
+import { ws, wsAndUUID, namedGroupSchema } from '@arch-register/api-types/common';
+
+const requirementLevelSchema = z
+  .enum(['required', 'expected', 'optional'])
+  .nullish()
+  .describe('Field requirement level');
+
+const baseRelationFieldSchema = z.object({
+  id: z.string().describe('Unique field identifier'),
+  name: z.string().describe('Field name'),
+  requirementLevel: requirementLevelSchema.describe(
+    'Whether the field is required, expected, or optional'
+  ),
+  archived: z
+    .boolean()
+    .optional()
+    .describe('Whether the field is archived (hidden, but data is retained)'),
+  groupId: z
+    .string()
+    .optional()
+    .describe('Id of the presentation-only group this field belongs to; omitted means ungrouped')
+});
+
+const textRelationFieldSchema = baseRelationFieldSchema.extend({
+  type: z.literal('text').describe('Single-line text field')
+});
+
+const longtextRelationFieldSchema = baseRelationFieldSchema.extend({
+  type: z.literal('longtext').describe('Multi-line text field')
+});
+
+const booleanRelationFieldSchema = baseRelationFieldSchema.extend({
+  type: z.literal('boolean').describe('Boolean (true/false) field')
+});
+
+const dateRelationFieldSchema = baseRelationFieldSchema.extend({
+  type: z.literal('date').describe('Date field')
+});
+
+const numberRelationFieldSchema = baseRelationFieldSchema.extend({
+  type: z.literal('number').describe('Integer number field'),
+  min: z.number().int().optional().describe('Minimum allowed value'),
+  max: z.number().int().optional().describe('Maximum allowed value')
+});
+
+const selectRelationFieldInputSchema = baseRelationFieldSchema.extend({
+  type: z.literal('select').describe('Single-select dropdown field'),
+  enumId: z.string().describe('Enumeration identifier for dropdown options')
+});
+
+// Note: unlike EntitySchema fields, relation fields intentionally exclude `reference`,
+// `containment`, and `derived` — a relation's only connections to entities are its structural
+// `in`/`out` endpoints below, not additional generic pointer fields.
+export const relationFieldInputSchema = z
+  .discriminatedUnion('type', [
+    textRelationFieldSchema,
+    longtextRelationFieldSchema,
+    booleanRelationFieldSchema,
+    dateRelationFieldSchema,
+    numberRelationFieldSchema,
+    selectRelationFieldInputSchema
+  ])
+  .describe('Relation field definition');
+
+const fieldOptionSchema = z.object({
+  value: z.string().describe('Internal option value'),
+  label: z.string().describe('Display label')
+});
+
+const selectRelationFieldResponseSchema = selectRelationFieldInputSchema.extend({
+  options: z.array(fieldOptionSchema).describe('Available dropdown options')
+});
+
+export const relationFieldResponseSchema = z
+  .discriminatedUnion('type', [
+    textRelationFieldSchema,
+    longtextRelationFieldSchema,
+    booleanRelationFieldSchema,
+    dateRelationFieldSchema,
+    numberRelationFieldSchema,
+    selectRelationFieldResponseSchema
+  ])
+  .describe('Relation field with resolved options');
+
+const fieldGroupAccessControlSchema = z
+  .object({
+    teamIds: z.array(z.string()).describe('Teams whose role determines view/edit access')
+  })
+  .describe('Optional access-control binding for a field group');
+
+const relationSchemaGroupSchema = namedGroupSchema.extend({
+  accessControl: fieldGroupAccessControlSchema
+    .optional()
+    .describe('If set, restricts view/edit of this group to members of the listed teams')
+});
+
+const sharedFieldGroupLinkSchema = z
+  .object({
+    groupId: z.string().describe('Id of the included workspace shared fieldgroup'),
+    teamIds: z
+      .array(z.string())
+      .optional()
+      .describe('Teams whose role determines view/edit access for this inclusion')
+  })
+  .describe('A schema-local inclusion of a workspace shared fieldgroup');
+
+const relationEndpointSchema = z
+  .object({
+    schemaIds: z
+      .array(z.string())
+      .min(1)
+      .describe('Entity schema identifiers allowed at this endpoint')
+  })
+  .describe('Typed endpoint constraint for a relation schema');
+
+const relationSchemaSchema = z.object({
+  id: z.string().describe('Unique relation schema identifier'),
+  workspace: z.string().describe('Parent workspace identifier'),
+  name: z.string().describe('Relation schema name'),
+  description: z.string().describe('Relation schema description'),
+  in: relationEndpointSchema.describe('Allowed entity schemas for the "in" endpoint'),
+  out: relationEndpointSchema.describe('Allowed entity schemas for the "out" endpoint'),
+  fields: z.array(relationFieldResponseSchema).describe('Relation field definitions'),
+  groups: z
+    .array(relationSchemaGroupSchema)
+    .describe('Named, presentation-only field groups, in display order'),
+  shared_field_group_links: z
+    .array(sharedFieldGroupLinkSchema)
+    .optional()
+    .describe('Included workspace shared fieldgroups, in display order'),
+  color: z.string().nullable().describe('Relation schema color (hex format)'),
+  icon: z.string().nullable().describe('Relation schema icon identifier'),
+  relation_count: z.number().int().min(0).describe('Number of relation instances using this schema'),
+  version: z.number().int().min(1).describe('Current schema version number'),
+  relation_approval_policy: z
+    .enum(['required', 'disabled'])
+    .optional()
+    .describe(
+      'Approval policy for relation instance changes. "required" is not yet supported — see #2574.'
+    ),
+  created_at: z.string().describe('ISO 8601 creation timestamp'),
+  updated_at: z.string().describe('ISO 8601 last update timestamp')
+});
+
+const relationSchemaVersionSchema = z.object({
+  version: z.number().int().min(1).describe('Version number'),
+  name: z.string().describe('Relation schema name at this version'),
+  description: z.string().describe('Relation schema description at this version'),
+  in: relationEndpointSchema.describe('"in" endpoint constraint at this version'),
+  out: relationEndpointSchema.describe('"out" endpoint constraint at this version'),
+  fields: z.array(relationFieldResponseSchema).describe('Field definitions at this version'),
+  groups: z.array(relationSchemaGroupSchema).describe('Field groups at this version'),
+  shared_field_group_links: z
+    .array(sharedFieldGroupLinkSchema)
+    .optional()
+    .describe('Included workspace shared fieldgroups at this version'),
+  color: z.string().nullable().describe('Relation schema color at this version'),
+  icon: z.string().nullable().describe('Relation schema icon at this version'),
+  changeSummary: z
+    .record(z.string(), z.unknown())
+    .describe('Summary of what changed relative to the previous version'),
+  createdBy: z.string().nullable().describe('User id who made this change'),
+  createdAt: z.string().describe('ISO 8601 timestamp of this version')
+});
+
+const createRelationSchemaBodySchema = z.object({
+  name: z.string().describe('Relation schema name'),
+  description: z.preprocess(
+    v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
+    z.string().optional().describe('Relation schema description')
+  ),
+  in: relationEndpointSchema.describe('Allowed entity schemas for the "in" endpoint'),
+  out: relationEndpointSchema.describe('Allowed entity schemas for the "out" endpoint'),
+  fields: z.preprocess(
+    v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
+    z.array(relationFieldInputSchema).optional().describe('Initial field definitions')
+  ),
+  groups: z.preprocess(
+    v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
+    z.array(relationSchemaGroupSchema).optional().describe('Named, presentation-only field groups')
+  ),
+  shared_field_group_links: z.preprocess(
+    v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
+    z.array(sharedFieldGroupLinkSchema).optional().describe('Included workspace shared fieldgroups')
+  ),
+  color: z.preprocess(
+    v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
+    z.string().nullable().optional().describe('Relation schema color (hex format)')
+  ),
+  icon: z.preprocess(
+    v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
+    z.string().nullable().optional().describe('Relation schema icon identifier')
+  ),
+  relation_approval_policy: z
+    .enum(['required', 'disabled'])
+    .optional()
+    .describe(
+      'Approval policy for relation instance changes. "required" is not yet supported — see #2574.'
+    )
+});
+
+const fieldMigrationActionSchema = z
+  .object({
+    action: z.enum(['rename', 'remove', 'archive']).describe('Migration action for this field'),
+    renameTo: z.string().optional().describe('New field id when action is "rename"')
+  })
+  .describe('How to migrate a changed/removed field');
+
+const updateRelationSchemaBodySchema = createRelationSchemaBodySchema.extend({
+  fieldMigrations: z
+    .record(z.string(), fieldMigrationActionSchema)
+    .optional()
+    .describe(
+      'Resolutions for fields being renamed/removed/archived while relation instances exist, keyed by the old field id'
+    )
+});
+
+const deleteRelationSchemaResponseSchema = z.object({
+  success: z.boolean().describe('Whether the deletion was successful'),
+  message: z.string().describe('Status message or error details')
+});
+
+export const workspaceRelationSchemaContract = oc.tag('RelationSchemas').router({
+  relationSchemas: {
+    list: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/relation-schemas',
+        inputStructure: 'detailed',
+        summary: 'List relation schemas',
+        description:
+          'Retrieves all relation schema definitions for the workspace. Relation schemas define typed, ' +
+          'first-class relationship types between entities, with their own configurable fields.',
+        tags: ['RelationSchemas']
+      })
+      .input(z.object({ params: ws }))
+      .output(z.array(relationSchemaSchema)),
+    get: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/relation-schemas/{id}',
+        inputStructure: 'detailed',
+        summary: 'Get relation schema details',
+        description:
+          'Retrieves a specific relation schema definition by ID, including endpoint constraints, field ' +
+          'definitions, and metadata.',
+        tags: ['RelationSchemas']
+      })
+      .input(z.object({ params: wsAndUUID }))
+      .output(relationSchemaSchema),
+    create: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/relation-schemas',
+        inputStructure: 'detailed',
+        summary: 'Create relation schema',
+        description:
+          'Creates a new relation schema definition with the specified endpoint constraints and fields.',
+        tags: ['RelationSchemas']
+      })
+      .input(z.object({ params: ws, body: createRelationSchemaBodySchema }))
+      .output(relationSchemaSchema),
+    update: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/relation-schemas/{id}',
+        inputStructure: 'detailed',
+        summary: 'Update relation schema',
+        description:
+          'Updates an existing relation schema definition. Changes to fields will affect all relation ' +
+          'instances using this schema.',
+        tags: ['RelationSchemas']
+      })
+      .input(z.object({ params: wsAndUUID, body: updateRelationSchemaBodySchema }))
+      .output(relationSchemaSchema),
+    remove: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/relation-schemas/{id}',
+        inputStructure: 'detailed',
+        summary: 'Delete relation schema',
+        description:
+          'Deletes a relation schema definition. This operation will fail if there are relation instances ' +
+          'using this schema.',
+        tags: ['RelationSchemas']
+      })
+      .input(z.object({ params: wsAndUUID }))
+      .output(deleteRelationSchemaResponseSchema),
+    listVersions: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/relation-schemas/{id}/versions',
+        inputStructure: 'detailed',
+        summary: 'List relation schema version history',
+        description:
+          'Retrieves the version history for a relation schema, newest first, including who changed what and when.',
+        tags: ['RelationSchemas']
+      })
+      .input(z.object({ params: wsAndUUID }))
+      .output(z.array(relationSchemaVersionSchema))
+  }
+});
+
+// ── Relation Field Types ──────────────────────────────────────
+
+export type RelationField = z.infer<typeof relationFieldInputSchema>;
+export type RelationFieldInput = z.infer<typeof relationFieldInputSchema>;
+
+// ── Relation Schema ────────────────────────────────────────────
+
+export type RelationSchema = z.infer<typeof relationSchemaSchema>;
+export type RelationEndpoint = z.infer<typeof relationEndpointSchema>;
+export type RelationSchemaGroup = z.infer<typeof relationSchemaGroupSchema>;
+
+// ── Relation Schema Versioning & Field Migrations ─────────────
+
+export type RelationSchemaVersion = z.infer<typeof relationSchemaVersionSchema>;
