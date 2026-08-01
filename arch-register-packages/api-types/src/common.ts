@@ -61,7 +61,6 @@ export const workspaceCapabilitySchema = z.enum([
   'ent.override',
   'ent.external_update',
   'comments',
-  'export',
   'schema.edit',
   'schema.publish'
 ]);

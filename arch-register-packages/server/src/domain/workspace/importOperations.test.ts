@@ -134,7 +134,7 @@ describe('workspace export/import guards', () => {
   });
 
   it('requires ws.settings for workspace export', async () => {
-    hasWorkspaceCapability.mockImplementation((_ctx, capability) => capability === 'export');
+    hasWorkspaceCapability.mockImplementation((_ctx, capability) => capability === 'ent.propose');
 
     await expect(
       exportWorkspace(makeDb(), undefined, makeAuthCtx(), 'workspace-1', { include: ['config'] })
