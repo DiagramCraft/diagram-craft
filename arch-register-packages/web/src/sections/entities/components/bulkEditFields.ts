@@ -1,5 +1,7 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
+import { resolveGroupAccessControl } from '../../../lib/fieldGroupAccess';
 
 type ResolvedSchemaField = EntitySchema['fields'][number];
 
@@ -28,11 +30,28 @@ const isRequired = (field: BulkSchemaField): boolean => {
   return field.type === 'reference' && field.minCount > 0;
 };
 
+const fieldGroupAccessInSchema = (
+  schema: EntitySchema,
+  field: ResolvedSchemaField,
+  getFieldGroupAccess: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess
+): FieldGroupAccess => {
+  if (!field.groupId) return 'edit';
+  const group = schema.groups.find(g => g.id === field.groupId);
+  if (!group) return 'edit';
+  return getFieldGroupAccess(
+    resolveGroupAccessControl(group, schema.shared_field_group_links ?? [])
+  );
+};
+
 // Fields common (by id and type) to every schema of the currently-selected entities, plus the
-// two always-present core attributes (owner, lifecycle).
+// two always-present core attributes (owner, lifecycle). A field is only offered for bulk-edit
+// when the caller has edit access to its field group in every involved schema — bulk-edit is a
+// write-only surface, so view-only access (which would need a disabled/read-only affordance) is
+// excluded the same as no access.
 export const getBulkEditableFields = (
   selectedEntities: EntityRecord[],
-  schemaMap: Map<string, { schema: EntitySchema; index: number }>
+  schemaMap: Map<string, { schema: EntitySchema; index: number }>,
+  getFieldGroupAccess: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess
 ): BulkEditableField[] => {
   const fields: BulkEditableField[] = [
     { kind: 'owner', id: '_owner', label: 'Owner', required: false },
@@ -53,6 +72,11 @@ export const getBulkEditableFields = (
       return match != null && match.type === field.type;
     });
     if (!consistent) continue;
+    if (fieldGroupAccessInSchema(first, field, getFieldGroupAccess) !== 'edit') continue;
+    if (
+      rest.some(schema => fieldGroupAccessInSchema(schema, field, getFieldGroupAccess) !== 'edit')
+    )
+      continue;
 
     fields.push({
       kind: 'schema',
