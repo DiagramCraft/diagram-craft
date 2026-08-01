@@ -40,20 +40,36 @@ const PSEUDO_FIELD_IDS = new Set([
   '_assessment'
 ]);
 
+// Which schema ids actually grant unrestricted access to a field id, and whether at least one
+// schema in the catalog restricts it. A field id can be defined by multiple schemas (e.g. two
+// unrelated schemas both use `salary`); resolution at the parse/validate layer intentionally
+// collapses this to "is the field id known at all" (matching `isKnownFieldId`'s pre-#2592
+// behavior), but the compiler needs the full granting set to scope compiled SQL to only the rows
+// whose schema actually grants the field — see entityQueryIRCompiler.ts's `schemaScopeClause`.
+export type FieldSchemaScope = { grantedSchemaIds: Set<string>; needsScoping: boolean };
+
+export const resolveFieldSchemaScope = (
+  fieldId: string,
+  schemas: SchemaCatalog,
+  authCtx: WorkspaceAuthorizationContext | null
+): FieldSchemaScope => {
+  const grantedSchemaIds = new Set<string>();
+  let needsScoping = false;
+  for (const schema of schemas.values()) {
+    if (!schema.fields.some(f => f.id === fieldId)) continue;
+    if (isFieldViewRestricted(authCtx, schema, fieldId)) needsScoping = true;
+    else grantedSchemaIds.add(schema.id);
+  }
+  return { grantedSchemaIds, needsScoping };
+};
+
 const isKnownFieldId = (
   fieldId: string,
   schemas: SchemaCatalog,
   authCtx: WorkspaceAuthorizationContext | null
 ): boolean => {
   if (PSEUDO_FIELD_IDS.has(fieldId) || fieldId.startsWith('_assessment:')) return true;
-  for (const schema of schemas.values()) {
-    if (
-      schema.fields.some(f => f.id === fieldId) &&
-      !isFieldViewRestricted(authCtx, schema, fieldId)
-    )
-      return true;
-  }
-  return false;
+  return resolveFieldSchemaScope(fieldId, schemas, authCtx).grantedSchemaIds.size > 0;
 };
 
 const validatePathSteps = (

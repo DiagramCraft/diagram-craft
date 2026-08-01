@@ -15,7 +15,8 @@ import {
   isValidFieldId,
   buildConditionClause
 } from './db/filterBuilder';
-import type { SchemaCatalog } from './entityQueryIRValidator';
+import { resolveFieldSchemaScope, type SchemaCatalog } from './entityQueryIRValidator';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 
 export type EntityQueryDialect = 'postgres' | 'sqlite';
 
@@ -46,6 +47,7 @@ const ROOT_ALIAS = 'e0';
 type CompileState = {
   dialect: EntityQueryDialect;
   workspace: string;
+  authCtx: WorkspaceAuthorizationContext | null;
   assessmentId: string | undefined;
   projectId: string | undefined;
   projectScope: 'project' | 'all';
@@ -164,6 +166,24 @@ const resolveColumn = (
   };
 };
 
+// Renders `alias.schema_id IN (...)` for a field id that some (but not all) schemas in the
+// catalog restrict, so a bare field-id read against `alias` doesn't leak rows from a schema that
+// puts the same field id in a restricted group (#2592). Returns null when no schema restricts the
+// field at all — the overwhelmingly common case — so non-colliding queries emit no extra SQL.
+const schemaScopeClause = (
+  alias: string,
+  fieldId: string,
+  schemas: SchemaCatalog,
+  state: CompileState
+): string | null => {
+  const scope = resolveFieldSchemaScope(fieldId, schemas, state.authCtx);
+  if (!scope.needsScoping) return null;
+  if (scope.grantedSchemaIds.size === 0) return '1=0';
+  return `${alias}.schema_id IN (${[...scope.grantedSchemaIds]
+    .map(id => addParam(state, id))
+    .join(', ')})`;
+};
+
 const requireAssessmentId = (state: CompileState): void => {
   if (!state.assessmentId) {
     throw new UnsupportedEntityQueryIRError(
@@ -211,6 +231,7 @@ const compilePredicateTerminal =
     fieldId: string,
     op: FilterCondition['op'],
     value: unknown,
+    schemas: SchemaCatalog,
     dialect: EntityQueryDialect,
     state: CompileState
   ) =>
@@ -245,13 +266,19 @@ const compilePredicateTerminal =
         `Operator '${op}' has no SQL translation for field '${fieldId}'`
       );
     }
-    return clause;
+    const scopeClause = schemaScopeClause(alias, fieldId, schemas, state);
+    return scopeClause ? `(${clause} AND ${scopeClause})` : clause;
   };
 
-const compileFreeTextTerminal = (alias: string, value: string, state: CompileState): string =>
+const compileFreeTextTerminal = (
+  alias: string,
+  value: string,
+  schemas: SchemaCatalog,
+  state: CompileState
+): string =>
   `(${['_name', '_slug', '_description']
     .map(fieldId =>
-      compilePredicateTerminal(fieldId, 'contains', value, state.dialect, state)(alias)
+      compilePredicateTerminal(fieldId, 'contains', value, schemas, state.dialect, state)(alias)
     )
     .join(' OR ')})`;
 
@@ -285,6 +312,16 @@ const compilePathSteps = (
     step.kind === 'backward'
       ? ` AND ${alias}.schema_id = ${addParam(state, step.ownerSchemaId)}`
       : '';
+  // A forward step's fieldId is read off `curAlias` (the hop's source row), so a field id that
+  // collides across schemas needs `curAlias` (not the newly-joined `alias`) scoped to the schemas
+  // that actually grant it (#2592) — mirrors ownerSchemaClause's role for backward steps.
+  const forwardScopeClause =
+    step.kind === 'forward'
+      ? (() => {
+          const scope = schemaScopeClause(curAlias, step.fieldId, schemas, state);
+          return scope ? ` AND ${scope}` : '';
+        })()
+      : '';
   const filterClause = step.filter
     ? ` AND ${compileNode(step.filter, alias, schemas, state, false)}`
     : '';
@@ -292,7 +329,7 @@ const compilePathSteps = (
 
   return (
     `EXISTS (SELECT 1 FROM ${SCOPE_CTE} ${alias} WHERE ${joinClause}${ownerSchemaClause}` +
-    `${filterClause} AND ${rest})`
+    `${forwardScopeClause}${filterClause} AND ${rest})`
   );
 };
 
@@ -300,6 +337,7 @@ const compileBoundNode = (
   node: Extract<QueryNode, { kind: 'predicate' | 'relationExists' }>,
   alias: string,
   binding: ProjectionBinding,
+  schemas: SchemaCatalog,
   state: CompileState
 ): string => {
   const bindingAlias = `pb_${binding.name}`;
@@ -314,6 +352,7 @@ const compileBoundNode = (
     node.fieldId,
     node.op,
     node.value,
+    schemas,
     state.dialect,
     state
   )(targetAlias);
@@ -352,11 +391,11 @@ const compileNode = (
           "'freeText' is only valid for the starting entity list"
         );
       }
-      return compileFreeTextTerminal(alias, node.value, state);
+      return compileFreeTextTerminal(alias, node.value, schemas, state);
     case 'predicate':
       if (alias === ROOT_ALIAS && !state.compilingBinding) {
         const binding = state.bindingByPath.get(pathKey(node.path));
-        if (binding) return compileBoundNode(node, alias, binding, state);
+        if (binding) return compileBoundNode(node, alias, binding, schemas, state);
       }
       return compilePathSteps(
         node.path,
@@ -364,12 +403,12 @@ const compileNode = (
         alias,
         schemas,
         state,
-        compilePredicateTerminal(node.fieldId, node.op, node.value, state.dialect, state)
+        compilePredicateTerminal(node.fieldId, node.op, node.value, schemas, state.dialect, state)
       );
     case 'relationExists':
       if (alias === ROOT_ALIAS && !state.compilingBinding) {
         const binding = state.bindingByPath.get(pathKey(node.path));
-        if (binding) return compileBoundNode(node, alias, binding, state);
+        if (binding) return compileBoundNode(node, alias, binding, schemas, state);
       }
       return compilePathSteps(node.path, 0, alias, schemas, state, () => '1=1');
   }
@@ -423,10 +462,18 @@ const buildProjectionBindings = (
         step.kind === 'backward'
           ? ` AND ${targetAlias}.schema_id = ${addParam(state, step.ownerSchemaId)}`
           : '';
+      // Same rationale as compilePathSteps' forwardScopeClause: a forward step's fieldId is read
+      // off `currentAlias`, so that's the alias that needs scoping when the field id collides
+      // across schemas (#2592).
+      const forwardScope = (() => {
+        if (step.kind !== 'forward') return '';
+        const scope = schemaScopeClause(currentAlias, step.fieldId, schemas, state);
+        return scope ? ` AND ${scope}` : '';
+      })();
       const filter = step.filter
         ? ` AND ${compileNode(step.filter, targetAlias, schemas, state, false)}`
         : '';
-      from += `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${filter}`;
+      from += `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${forwardScope}${filter}`;
       selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
       currentAlias = targetAlias;
     });
@@ -489,8 +536,13 @@ const projectionValue = (
   const isArray = relationIsMultiValued(projection.path, schemas);
   const binding = projectionBindingFor(projection, state);
   if (!binding) {
+    const raw = projectionRawValue(ROOT_ALIAS, projection.fieldId, state.dialect);
+    // Root-level projection (no path): reading `data->fieldId` off e0 directly, so a colliding
+    // field id needs e0 itself gated to the granting schemas, else a non-granting row's own
+    // (unrelated) value at that key would leak (#2592).
+    const scope = schemaScopeClause(ROOT_ALIAS, projection.fieldId, schemas, state);
     return {
-      value: projectionRawValue(ROOT_ALIAS, projection.fieldId, state.dialect),
+      value: scope ? `(CASE WHEN ${scope} THEN ${raw} ELSE NULL END)` : raw,
       isArray: false
     };
   }
@@ -499,10 +551,11 @@ const projectionValue = (
   const targetAlias = `pv_target_${binding.name}`;
   const targetId = `${bindingAlias}.hop_${projection.path.length}_id`;
   const raw = projectionRawValue(targetAlias, projection.fieldId, state.dialect);
+  const scope = schemaScopeClause(targetAlias, projection.fieldId, schemas, state);
   const source =
     `FROM ${binding.name} ${bindingAlias} ` +
     `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
-    `WHERE ${bindingAlias}.root_id = ${ROOT_ALIAS}.id`;
+    `WHERE ${bindingAlias}.root_id = ${ROOT_ALIAS}.id${scope ? ` AND ${scope}` : ''}`;
 
   if (!isArray) {
     return { value: `(SELECT ${raw} ${source} LIMIT 1)`, isArray: false };
@@ -843,11 +896,13 @@ export const compileEntityQueryIR = (
   schemas: SchemaCatalog,
   dialect: EntityQueryDialect,
   workspace: string,
-  options: CompiledEntityQueryOptions = {}
+  options: CompiledEntityQueryOptions = {},
+  authCtx: WorkspaceAuthorizationContext | null = null
 ): CompiledEntityQuery => {
   const state: CompileState = {
     dialect,
     workspace,
+    authCtx,
     assessmentId: query.assessmentId,
     projectId: query.projectId,
     projectScope: query.projectScope ?? 'all',

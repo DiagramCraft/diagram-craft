@@ -209,9 +209,14 @@ export const collectEntitiesFromIR = async (
   const visibleEntityIds = await visibleEntityIdsForQuery(db, workspace, authCtx);
   let compiledQuery: ReturnType<typeof compileEntityQueryIR>;
   try {
-    compiledQuery = compileEntityQueryIR(query, schemaCatalog, db.core.driver, workspace, {
-      visibleEntityIds
-    });
+    compiledQuery = compileEntityQueryIR(
+      query,
+      schemaCatalog,
+      db.core.driver,
+      workspace,
+      { visibleEntityIds },
+      authCtx
+    );
   } catch (error) {
     if (error instanceof UnsupportedEntityQueryIRError) {
       httpAssert.true(false, { status: 400, message: error.message });

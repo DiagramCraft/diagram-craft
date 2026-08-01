@@ -35,6 +35,7 @@ const createSchema = async (
     name: overrides.name,
     description: '',
     fields: overrides.fields ?? [],
+    groups: overrides.groups,
     color: null,
     icon: null,
     default_owner: null,
@@ -1194,5 +1195,106 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
 
     expect(page.items.map(item => item._uid)).toEqual([allowed.id]);
     expect(page.items.map(item => item._uid)).not.toContain(denied.id);
+  });
+
+  // #2592: a field id restricted in one schema's field group but also defined, unrestricted, by
+  // an unrelated schema used to resolve/compile with no `schema_id` scoping at all, so a caller
+  // with no access to the restricted group could still filter/sort/count/project on the field via
+  // the unrestricted schema's grant, and the restricted schema's own rows still participated in
+  // (or leaked their value into) the result. Reproduces the issue's exact Employee/Contractor
+  // scenario end to end (real SQL, both dialects).
+  it('scopes compiled SQL to the schemas that granted a field id colliding across schemas', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+
+    const employee = await createSchema(db, workspace, {
+      name: 'Employee',
+      fields: [{ id: 'salary', name: 'Salary', type: 'number', groupId: 'hr' }],
+      groups: [{ id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } }]
+    });
+    const contractor = await createSchema(db, workspace, {
+      name: 'Contractor',
+      fields: [{ id: 'salary', name: 'Salary', type: 'number' }]
+    });
+
+    const employeeEntity = await createFixtureCatalogEntity(db, workspace, employee.id, {
+      name: 'Restricted Employee',
+      data: { salary: 500 }
+    });
+    const contractorEntity = await createFixtureCatalogEntity(db, workspace, contractor.id, {
+      name: 'Visible Contractor',
+      data: { salary: 200 }
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [employee.id, employee],
+      [contractor.id, contractor]
+    ]);
+
+    const noAccess = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: null,
+      schemas: [employee, contractor],
+      entities: [employeeEntity, contractorEntity],
+      grants: []
+    });
+    const hrAccess = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-hr', role: 'team_reviewer' }],
+      schemas: [employee, contractor],
+      entities: [employeeEntity, contractorEntity],
+      grants: []
+    });
+
+    const filterQuery: EntityQuery = {
+      root: { kind: 'predicate', path: [], fieldId: 'salary', op: 'gt', value: 100 }
+    };
+
+    const runFiltered = async (authCtx: ReturnType<typeof buildAuthorizationContext> | null) => {
+      const validation = validateEntityQueryIR(filterQuery, schemas, authCtx);
+      expect(validation.ok, JSON.stringify(validation)).toBe(true);
+      const { sql, params } = compileEntityQueryIR(
+        filterQuery,
+        schemas,
+        driver,
+        workspace,
+        {},
+        authCtx
+      );
+      return db.catalog.runCompiledEntityQuery(sql, params);
+    };
+
+    const noAccessMatches = await runFiltered(noAccess);
+    expect(noAccessMatches.map(entity => entity.id)).toEqual([contractorEntity.id]);
+    expect(noAccessMatches.map(entity => entity.id)).not.toContain(employeeEntity.id);
+
+    const hrAccessMatches = await runFiltered(hrAccess);
+    expect(hrAccessMatches.map(entity => entity.id)).toEqual(
+      expect.arrayContaining([employeeEntity.id, contractorEntity.id])
+    );
+
+    const projectionQuery: EntityQuery = {
+      root: { kind: 'and', children: [] },
+      projections: [{ path: [], fieldId: 'salary' }]
+    };
+    const projValidation = validateEntityQueryIR(projectionQuery, schemas, noAccess);
+    expect(projValidation.ok, JSON.stringify(projValidation)).toBe(true);
+    const { sql: projSql, params: projParams } = compileEntityQueryIR(
+      projectionQuery,
+      schemas,
+      driver,
+      workspace,
+      {},
+      noAccess
+    );
+    const projRows = await db.catalog.runCompiledEntityQuery(projSql, projParams);
+    const employeeRow = projRows.find(row => row.id === employeeEntity.id);
+    const contractorRow = projRows.find(row => row.id === contractorEntity.id);
+    expect(employeeRow?.projections['salary']).toBeNull();
+    expect(contractorRow?.projections['salary']).toBe(200);
   });
 });
