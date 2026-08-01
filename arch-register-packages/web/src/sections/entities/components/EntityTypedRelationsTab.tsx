@@ -227,6 +227,7 @@ const RelationRow = ({
     .filter((v): v is string => v !== null);
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: a <button> can't legally contain the nested <a> (entity link)
     <div
       className={styles.relation}
       role="button"
