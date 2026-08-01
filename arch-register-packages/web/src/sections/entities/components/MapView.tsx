@@ -57,6 +57,7 @@ import {
   textColorForFill
 } from './mapColorScales';
 import { useMapMetricRollup } from './useMapMetricRollup';
+import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
 import { MapLegend } from './MapLegend';
 import { MapBreadcrumb, type MapFocusEntry } from './MapBreadcrumb';
 
@@ -404,9 +405,10 @@ export const MapView = ({
   const metricSourceSchema = metricConfig
     ? schemaMap.get(metricConfig.sourceSchemaId)?.schema
     : undefined;
+  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
   const metricSourceOptions = useMemo(
-    () => getMetricSourceOptions(metricSourceSchema, joinedAssessment),
-    [metricSourceSchema, joinedAssessment]
+    () => getMetricSourceOptions(metricSourceSchema, joinedAssessment, getFieldGroupAccess),
+    [metricSourceSchema, joinedAssessment, getFieldGroupAccess]
   );
   const activeSourceOption = metricConfig
     ? metricSourceOptions.find(o => sourceKey(o.source) === sourceKey(metricConfig.source))

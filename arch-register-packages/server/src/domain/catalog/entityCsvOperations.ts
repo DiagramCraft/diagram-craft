@@ -4,6 +4,7 @@ import { decodeRefs } from '../../types';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { filterVisibleEntities, requireSchemaRead } from '../auth/authorization';
+import { restrictedFieldIds } from '../auth/fieldGroupAccessControl';
 import { relationFields } from './dataHelpers';
 import { listAllCatalogEntities } from './entityLoader';
 import { listEntities, type EntityQueryOptions } from './entityQueryOperations';
@@ -52,7 +53,9 @@ export const exportEntitiesCsv = async (
     orpcAssert.present(schema, { code: 'NOT_FOUND', message: 'Schema not found' });
   }
 
-  const dynamicColumns = schema?.fields.map(field => field.name) ?? [];
+  const restricted = restrictedFieldIds(authCtx, schema);
+  const visibleFields = schema?.fields.filter(field => !restricted.has(field.id)) ?? [];
+  const dynamicColumns = visibleFields.map(field => field.name);
   const referenceLookup = new Map<string, string>();
   if (schema) {
     const referenceIds = new Set<string>();
@@ -86,7 +89,7 @@ export const exportEntitiesCsv = async (
       'Schema Type': schema?.name ?? entitySchema.name ?? entitySchema.id
     };
     if (schema) {
-      for (const field of schema.fields) {
+      for (const field of visibleFields) {
         const value = entity[field.id];
         if (field.type === 'reference' || field.type === 'containment') {
           row[field.name] = formatArrayForCsv(
@@ -120,6 +123,7 @@ export const downloadEntityImportTemplate = async (
   requireSchemaRead(authCtx);
   const schema = await db.catalog.getSchema(workspace, schemaId);
   orpcAssert.present(schema, { code: 'NOT_FOUND', message: 'Schema not found' });
+  const restricted = restrictedFieldIds(authCtx, schema);
   const columns = [
     'ID',
     'Name',
@@ -129,7 +133,7 @@ export const downloadEntityImportTemplate = async (
     'Owner',
     'Lifecycle',
     'Tags',
-    ...schema.fields.map(field => field.name)
+    ...schema.fields.filter(field => !restricted.has(field.id)).map(field => field.name)
   ];
   return csvResponse(
     columns.map(column => `"${column}"`).join(';'),

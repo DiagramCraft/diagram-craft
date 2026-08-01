@@ -22,7 +22,10 @@ import {
 import { listAllCatalogEntities } from './entityLoader';
 import { entityRequiresApproval } from './entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
-import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
+import {
+  requireNoRestrictedFieldWrites,
+  filterRestrictedFieldGroups
+} from '../auth/fieldGroupAccessControl';
 import { equalEntityValue } from './entityDiff';
 
 const checker = new PermissionChecker();
@@ -182,7 +185,7 @@ export const importParse = async (
               ...(existingEntity.links && existingEntity.links.length > 0
                 ? { _links: existingEntity.links }
                 : {}),
-              ...existingEntity.data
+              ...filterRestrictedFieldGroups(authCtx, schema, existingEntity.data)
             }
           : null,
       constraintViolations: constraintViolations.length > 0 ? constraintViolations : undefined
@@ -300,17 +303,18 @@ export const importCommit = async (
       }
     }
 
+    const dataFieldEntries = Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'));
+    const presentFieldIds = new Set(dataFieldEntries.map(([key]) => key));
+
     const normalizedRelationFields = normalizeEntityRelationFields({
       schema,
-      fields: Object.fromEntries(
-        Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'))
-      ),
+      fields: Object.fromEntries(dataFieldEntries),
       entities: allEntities
     });
 
     const changedFieldIds =
       isUpdate && existingEntity
-        ? Object.keys(normalizedRelationFields).filter(
+        ? [...presentFieldIds].filter(
             fieldId =>
               !equalEntityValue(existingEntity.data[fieldId], normalizedRelationFields[fieldId])
           )
@@ -321,6 +325,16 @@ export const importCommit = async (
       changedFieldIds,
       'You do not have permission to set one or more restricted fields on this entity'
     );
+
+    const finalData =
+      isUpdate && existingEntity
+        ? extractEntityFields({
+            ...existingEntity.data,
+            ...Object.fromEntries(
+              [...presentFieldIds].map(id => [id, normalizedRelationFields[id]])
+            )
+          })
+        : extractEntityFields(normalizedRelationFields);
 
     if (isUpdate && existingId && existingEntity) {
       requireEntityAction(
@@ -344,7 +358,7 @@ export const importCommit = async (
           : existingEntity.tags,
         links: existingEntity.links,
         schema_id: existingEntity.schema_id,
-        data: extractEntityFields(normalizedRelationFields),
+        data: finalData,
         project_id: existingEntity.project_id,
         updated_at: new Date(),
         completeness: computeEntityCompleteness(
@@ -352,7 +366,7 @@ export const importCommit = async (
             description: (resolvedData._description as string) ?? existingEntity.description,
             owner,
             lifecycle,
-            data: extractEntityFields(normalizedRelationFields)
+            data: finalData
           },
           schema
         )
@@ -402,7 +416,7 @@ export const importCommit = async (
         target_lifecycle_date,
         tags: Array.isArray(resolvedData._tags) ? (resolvedData._tags as string[]) : [],
         links: [],
-        data: extractEntityFields(normalizedRelationFields),
+        data: finalData,
         project_id: null,
         created_at: new Date(),
         updated_at: new Date(),
@@ -411,7 +425,7 @@ export const importCommit = async (
             description: (resolvedData._description as string) ?? '',
             owner,
             lifecycle,
-            data: extractEntityFields(normalizedRelationFields)
+            data: finalData
           },
           schema
         )

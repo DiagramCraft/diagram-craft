@@ -159,7 +159,10 @@
         - @id:ar.entity-views.map Users can inspect containment hierarchies as a nested capability map, colouring boxes
           by a configurable metric rolled up from descendant entities (numeric fields, lifecycle state, or assessment
           fields), using dominant-option or worst aggregation. For enum-sourced metrics, "worst" ranks options by the
-          admin-configured top-to-bottom order of the enum's options.
+          admin-configured top-to-bottom order of the enum's options. A metric source in an access-restricted field
+          group evaluates as unavailable (no value, distribution, or dominant option) for viewers without view access
+          to that group, rather than exposing the underlying data; the field picker also excludes such fields when
+          configuring the metric.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view.
 
@@ -423,6 +426,10 @@
           including recursively resolved dependencies and remapped references.
 
         - @id:ar.import-export.entity-csv Users can import and export entity collections through CSV workflows.
+          Columns for fields in access-restricted field groups are omitted from exported CSVs and import templates
+          for viewers without view access to that group, mirroring the redaction applied elsewhere. Field values
+          from access-restricted field groups are scrubbed from import previews, and CSV updates cannot write or
+          clear fields in field groups the importer lacks edit access to.
 
     - @id:ar.integrations Arch Register exposes integration surfaces for external clients, content sources, event
       delivery, and scheduled work.

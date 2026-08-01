@@ -106,6 +106,32 @@ describe('getMetricSourceOptions', () => {
     ]);
   });
 
+  it('omits a field in a group the caller cannot view', () => {
+    const restrictedSchema: EntitySchema = {
+      ...schema,
+      fields: schema.fields.map(f => (f.id === 'score' ? { ...f, groupId: 'restricted' } : f)),
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-1'] } }]
+    } as unknown as EntitySchema;
+
+    const options = getMetricSourceOptions(restrictedSchema, undefined, () => 'none');
+    expect(options.map(o => sourceKey(o.source))).toEqual(['lifecycle', 'enum:tier']);
+  });
+
+  it('keeps a restricted field when the caller has view or edit access', () => {
+    const restrictedSchema: EntitySchema = {
+      ...schema,
+      fields: schema.fields.map(f => (f.id === 'score' ? { ...f, groupId: 'restricted' } : f)),
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-1'] } }]
+    } as unknown as EntitySchema;
+
+    const options = getMetricSourceOptions(restrictedSchema, undefined, () => 'view');
+    expect(options.map(o => sourceKey(o.source))).toEqual([
+      'lifecycle',
+      'field:score',
+      'enum:tier'
+    ]);
+  });
+
   it('adds joined assessment rating/enum fields, keyed distinctly from schema fields', () => {
     const joined: JoinedAssessmentContext = {
       assessment: {
