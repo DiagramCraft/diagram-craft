@@ -47,6 +47,9 @@ import { DerivedExpressionTestDialog } from '../../components/DerivedExpressionT
 import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
 import { FieldGroupEditorScreen } from './FieldGroupEditorScreen';
+import { useFieldGroupAccess } from '../../auth/useFieldGroupAccess';
+import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
+import type { FieldGroupAccess } from '@arch-register/permissions';
 
 const deriveKeyPrefix = (value: string) =>
   value
@@ -73,6 +76,7 @@ export const SchemaSettingsScreen = () => {
     lifecycleStates
   } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
+  const getFieldGroupAccess = useFieldGroupAccess(workspaceSlug);
   const [name, setName] = useState('');
   const [keyPrefix, setKeyPrefix] = useState('');
   const [description, setDescription] = useState('');
@@ -442,9 +446,17 @@ export const SchemaSettingsScreen = () => {
     if (f.groupId && groupIds.has(f.groupId)) fieldsByGroup.get(f.groupId)!.push(f);
   }
 
+  const groupAccessById = new Map<string, FieldGroupAccess>(
+    groups.map(group => [
+      group.id,
+      getFieldGroupAccess(resolveGroupAccessControl(group, sharedFieldGroupLinks))
+    ])
+  );
+
   const renderFieldRow = (f: SchemaField) => {
     const inherited =
       f.groupId != null && sharedFieldGroupLinks.some(link => link.groupId === f.groupId);
+    const groupAccess = f.groupId ? (groupAccessById.get(f.groupId) ?? 'edit') : 'edit';
     const hasOtherContainment = fields.some(
       other => other.id !== f.id && other.type === 'containment'
     );
@@ -456,11 +468,14 @@ export const SchemaSettingsScreen = () => {
         schemas={schemas}
         enums={enums}
         groups={groups}
+        groupAccessById={groupAccessById}
         onUpdate={patch => updateField(f.id, patch)}
         onChangeType={t => changeFieldType(f.id, t)}
-        onRemove={canEdit && !inherited ? () => removeField(f.id) : undefined}
+        onRemove={
+          canEdit && !inherited && groupAccess === 'edit' ? () => removeField(f.id) : undefined
+        }
         containmentDisabled={hasOtherContainment}
-        canEdit={canEdit && !inherited}
+        canEdit={canEdit && !inherited && groupAccess === 'edit'}
       />
     );
   };
@@ -629,9 +644,10 @@ export const SchemaSettingsScreen = () => {
                         const link = sharedFieldGroupLinks.find(item => item.groupId === group.id);
                         const inherited = link !== undefined;
                         const groupFields = fieldsByGroup.get(group.id) ?? [];
-                        const teamIds = inherited
-                          ? (link!.teamIds ?? [])
-                          : (group.accessControl?.teamIds ?? []);
+                        const teamIds =
+                          resolveGroupAccessControl(group, sharedFieldGroupLinks)?.teamIds ?? [];
+                        const groupAccess = groupAccessById.get(group.id) ?? 'edit';
+                        const canEditGroup = canEdit && groupAccess === 'edit';
                         return (
                           <div className={styles.groupSection} key={group.id}>
                             <div className={styles.groupHeader}>
@@ -663,7 +679,7 @@ export const SchemaSettingsScreen = () => {
                               </div>
                               {canEdit && (
                                 <div className={styles.groupActions}>
-                                  {!inherited && (
+                                  {!inherited && canEditGroup && (
                                     <Button
                                       variant="ghost"
                                       icon={<TbPlus size={11} />}
@@ -682,7 +698,7 @@ export const SchemaSettingsScreen = () => {
                                     />
                                     <MenuButton.Menu>
                                       <Menu.Item
-                                        disabled={inherited}
+                                        disabled={inherited || !canEditGroup}
                                         onClick={() => {
                                           setEditingGroup(group);
                                           setGroupDialogOpen(true);
@@ -696,6 +712,7 @@ export const SchemaSettingsScreen = () => {
                                       <Menu.Separator />
                                       <Menu.Item
                                         type="danger"
+                                        disabled={!canEditGroup}
                                         onClick={() =>
                                           inherited
                                             ? removeSharedFieldGroup(group.id)
@@ -942,6 +959,7 @@ export const FieldRow = ({
   schemas,
   enums,
   groups,
+  groupAccessById,
   onUpdate,
   onChangeType,
   onRemove,
@@ -953,6 +971,7 @@ export const FieldRow = ({
   schemas: EntitySchema[];
   enums: WorkspaceEnum[];
   groups: SchemaGroup[];
+  groupAccessById?: Map<string, FieldGroupAccess>;
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
   onRemove?: () => void;
@@ -1160,15 +1179,19 @@ export const FieldRow = ({
             <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
               No group
             </Menu.RadioItem>
-            {groups.map(group => (
-              <Menu.RadioItem
-                key={group.id}
-                value={group.id}
-                onClick={() => onUpdate({ groupId: group.id })}
-              >
-                {group.name}
-              </Menu.RadioItem>
-            ))}
+            {groups.map(group => {
+              const targetAccess = groupAccessById?.get(group.id) ?? 'edit';
+              return (
+                <Menu.RadioItem
+                  key={group.id}
+                  value={group.id}
+                  disabled={targetAccess !== 'edit'}
+                  onClick={() => onUpdate({ groupId: group.id })}
+                >
+                  {group.name}
+                </Menu.RadioItem>
+              );
+            })}
           </Menu.RadioGroup>
         </Menu.SubMenu>
         {field.type === 'derived' && (

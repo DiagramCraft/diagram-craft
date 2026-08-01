@@ -29,6 +29,9 @@ import {
   flattenChangeCaseMembers
 } from './snapshotDisplay';
 import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
+import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import { resolveGroupAccessControl } from '../../../lib/fieldGroupAccess';
+import type { FieldGroupAccess } from '@arch-register/permissions';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -86,12 +89,17 @@ export const EntityOverviewTab = ({
     milestones.filter(milestone => futureSnapshotProjectIds.includes(milestone.project_id))
   );
 
-  const renderPropertyRow = (f: EntitySchema['fields'][number]) => (
+  const getFieldGroupAccess = useFieldGroupAccess(workspaceSlug);
+
+  const renderPropertyRow = (
+    f: EntitySchema['fields'][number],
+    groupAccess: FieldGroupAccess = 'edit'
+  ) => (
     <PropertyRow
       key={f.id}
       field={f}
       value={entity[f.id]}
-      editing={editing}
+      editing={editing && groupAccess !== 'view'}
       editValue={editState[f.id]}
       onChange={v => {
         setEditState(s => ({ ...s, [f.id]: v }));
@@ -111,8 +119,14 @@ export const EntityOverviewTab = ({
 
   const ungroupedFields = schema?.fields.filter(f => !f.groupId) ?? [];
   const groupedSections = (schema?.groups ?? [])
-    .map(group => ({ group, fields: schema!.fields.filter(f => f.groupId === group.id) }))
-    .filter(section => section.fields.length > 0);
+    .map(group => ({
+      group,
+      fields: schema!.fields.filter(f => f.groupId === group.id),
+      access: getFieldGroupAccess(
+        resolveGroupAccessControl(group, schema?.shared_field_group_links ?? [])
+      )
+    }))
+    .filter(section => section.fields.length > 0 && section.access !== 'none');
 
   return (
     <div className={styles.overviewGrid}>
@@ -124,17 +138,21 @@ export const EntityOverviewTab = ({
                 <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
                   Properties
                 </div>
-                <div className={styles.propList}>{ungroupedFields.map(renderPropertyRow)}</div>
+                <div className={styles.propList}>
+                  {ungroupedFields.map(f => renderPropertyRow(f))}
+                </div>
               </>
             )}
-            {groupedSections.map(({ group, fields: groupFields }) => (
+            {groupedSections.map(({ group, fields: groupFields, access }) => (
               <div key={group.id}>
                 <hr className={styles.divider} />
                 <div className={styles.sectionLabel}>{group.name}</div>
                 {group.description && (
                   <div className={styles.groupDescription}>{group.description}</div>
                 )}
-                <div className={styles.propList}>{groupFields.map(renderPropertyRow)}</div>
+                <div className={styles.propList}>
+                  {groupFields.map(f => renderPropertyRow(f, access))}
+                </div>
               </div>
             ))}
           </>

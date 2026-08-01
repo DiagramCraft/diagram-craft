@@ -9,12 +9,14 @@ export const EntityFieldInput = ({
   field,
   value,
   onChange,
-  referenceOptions
+  referenceOptions,
+  disabled
 }: {
   field: EntitySchema['fields'][number];
   value: string | string[];
   onChange: (value: string | string[]) => void;
   referenceOptions?: Record<string, EntitySummary[]>;
+  disabled?: boolean;
 }) => {
   if (field.type === 'reference') {
     const candidates = referenceOptions?.[field.schemaId] ?? [];
@@ -22,6 +24,7 @@ export const EntityFieldInput = ({
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <select
           multiple
+          disabled={disabled}
           value={Array.isArray(value) ? value : []}
           onChange={event =>
             onChange(Array.from(event.currentTarget.selectedOptions, option => option.value))
@@ -45,6 +48,7 @@ export const EntityFieldInput = ({
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
           value={selected ?? undefined}
+          disabled={disabled}
           onChange={next => onChange(next ? [next] : [])}
           placeholder="—"
           style={{ width: '100%' }}
@@ -64,6 +68,7 @@ export const EntityFieldInput = ({
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
           value={typeof value === 'string' ? (value ?? undefined) : undefined}
+          disabled={disabled}
           onChange={next => onChange(next ?? '')}
           placeholder="—"
           style={{ width: '100%' }}
@@ -83,6 +88,7 @@ export const EntityFieldInput = ({
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <TextArea
           value={typeof value === 'string' ? value : ''}
+          disabled={disabled}
           onChange={next => onChange(next ?? '')}
           rows={3}
           style={{ width: '100%' }}
@@ -96,6 +102,7 @@ export const EntityFieldInput = ({
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
           value={typeof value === 'string' ? (value ?? undefined) : undefined}
+          disabled={disabled}
           onChange={next => onChange(next ?? '')}
           placeholder="Not set"
           style={{ width: '100%' }}
@@ -112,6 +119,7 @@ export const EntityFieldInput = ({
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <input
           type="date"
+          disabled={disabled}
           value={typeof value === 'string' ? value : ''}
           onChange={event => onChange(event.target.value)}
           style={{ width: '100%' }}
@@ -128,6 +136,7 @@ export const EntityFieldInput = ({
           step="1"
           min={field.min}
           max={field.max}
+          disabled={disabled}
           value={typeof value === 'string' ? value : ''}
           onChange={event => onChange(event.target.value)}
           style={{ width: '100%' }}
@@ -140,6 +149,7 @@ export const EntityFieldInput = ({
     <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
       <TextInput
         value={typeof value === 'string' ? value : ''}
+        disabled={disabled}
         onChange={next => onChange(next ?? '')}
         style={{ width: '100%' }}
       />

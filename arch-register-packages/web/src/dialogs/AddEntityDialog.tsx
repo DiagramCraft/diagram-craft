@@ -14,11 +14,14 @@ import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import type { FieldGroupAccess } from '@arch-register/permissions';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntityFieldInput } from './EntityFieldInput';
 import { applyEntityTemplate, createEntityFormDefaults } from '../lib/entityTemplates';
 import { useAutoFocus } from '../hooks/useAutoFocus';
+import { useFieldGroupAccess } from '../auth/useFieldGroupAccess';
+import { resolveGroupAccessControl } from '../lib/fieldGroupAccess';
 
 type EntityApiResponse = {
   _uid: string;
@@ -96,6 +99,25 @@ export const AddEntityDialog = ({
   }, [canCreateWithoutOwner, creatableTeams, open, preselectedSchemaId, schemas]);
 
   const selectedSchema = schemas.find(s => s.id === schemaId);
+
+  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const fieldAccessById = useMemo(() => {
+    if (!selectedSchema) return new Map<string, FieldGroupAccess>();
+    const groupAccessById = new Map(
+      selectedSchema.groups.map(group => [
+        group.id,
+        getFieldGroupAccess(
+          resolveGroupAccessControl(group, selectedSchema.shared_field_group_links ?? [])
+        )
+      ])
+    );
+    return new Map<string, FieldGroupAccess>(
+      selectedSchema.fields.map(f => [
+        f.id,
+        f.groupId ? (groupAccessById.get(f.groupId) ?? 'edit') : 'edit'
+      ])
+    );
+  }, [selectedSchema, getFieldGroupAccess]);
 
   const targetSchemaIds = useMemo(() => {
     if (!selectedSchema) return [];
@@ -222,6 +244,7 @@ export const AddEntityDialog = ({
     const dataFields: Record<string, unknown> = {};
     if (selectedSchema) {
       for (const f of selectedSchema.fields) {
+        if (fieldAccessById.get(f.id) === 'none') continue;
         const val = fields[f.id];
         const isEmptyArray = Array.isArray(val) && val.length === 0;
         if (val !== undefined && val !== '' && !isEmptyArray) {
@@ -384,7 +407,12 @@ export const AddEntityDialog = ({
             {selectedSchema && (
               <div className={styles.propertiesList}>
                 {selectedSchema.fields
-                  .filter(f => f.id !== 'name' && f.type !== 'derived')
+                  .filter(
+                    f =>
+                      f.id !== 'name' &&
+                      f.type !== 'derived' &&
+                      fieldAccessById.get(f.id) !== 'none'
+                  )
                   .map(f => (
                     <EntityFieldInput
                       key={f.id}
@@ -396,6 +424,7 @@ export const AddEntityDialog = ({
                       }
                       onChange={v => setField(f.id, v)}
                       referenceOptions={derivedReferenceOptions}
+                      disabled={fieldAccessById.get(f.id) === 'view'}
                     />
                   ))}
               </div>

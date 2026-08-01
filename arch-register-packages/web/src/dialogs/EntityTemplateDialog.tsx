@@ -22,6 +22,9 @@ import {
 } from '../lib/entityTemplates';
 import { EntityFieldInput } from './EntityFieldInput';
 import styles from './AddEntityDialog.module.css';
+import { useFieldGroupAccess } from '../auth/useFieldGroupAccess';
+import { resolveGroupAccessControl } from '../lib/fieldGroupAccess';
+import type { FieldGroupAccess } from '@arch-register/permissions';
 
 export const EntityTemplateDialog = ({
   open,
@@ -48,6 +51,22 @@ export const EntityTemplateDialog = ({
   const [fields, setFields] = useState<Record<string, unknown>>({});
   const [meta, setMeta] = useState(createEntityFormDefaults().meta);
   const [error, setError] = useState('');
+
+  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const fieldAccessById = useMemo(() => {
+    const groupAccessById = new Map(
+      schema.groups.map(group => [
+        group.id,
+        getFieldGroupAccess(resolveGroupAccessControl(group, schema.shared_field_group_links ?? []))
+      ])
+    );
+    return new Map<string, FieldGroupAccess>(
+      schema.fields.map(f => [
+        f.id,
+        f.groupId ? (groupAccessById.get(f.groupId) ?? 'edit') : 'edit'
+      ])
+    );
+  }, [schema, getFieldGroupAccess]);
 
   const targetSchemaIds = useMemo(
     () => [
@@ -108,10 +127,14 @@ export const EntityTemplateDialog = ({
       setError(`A template named "${trimmedName}" already exists`);
       return;
     }
+    const templateValues = toEntityTemplateValues(schema, fields, meta);
+    for (const fieldId of Object.keys(templateValues.fields)) {
+      if (fieldAccessById.get(fieldId) === 'none') delete templateValues.fields[fieldId];
+    }
     onSave({
       id: template?.id ?? crypto.randomUUID(),
       name: trimmedName,
-      values: toEntityTemplateValues(schema, fields, meta)
+      values: templateValues
     });
   };
 
@@ -139,7 +162,12 @@ export const EntityTemplateDialog = ({
           <FormGroup label="Properties" icon={<TbAdjustments size={12} />}>
             <div className={styles.propertiesList}>
               {schema.fields
-                .filter(field => field.id !== 'name' && field.type !== 'derived')
+                .filter(
+                  field =>
+                    field.id !== 'name' &&
+                    field.type !== 'derived' &&
+                    fieldAccessById.get(field.id) !== 'none'
+                )
                 .map(field => (
                   <EntityFieldInput
                     key={field.id}
@@ -153,6 +181,7 @@ export const EntityTemplateDialog = ({
                     }
                     onChange={value => setFields(current => ({ ...current, [field.id]: value }))}
                     referenceOptions={referenceOptions}
+                    disabled={fieldAccessById.get(field.id) === 'view'}
                   />
                 ))}
             </div>
