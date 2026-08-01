@@ -129,8 +129,8 @@ export const createWorkspaceRelation = async (
         id: randomUUID(),
         workspace: ws,
         schema_id: schemaId,
-        in_entity_id: inEntityId,
-        out_entity_id: outEntityId,
+        in_entity_id: inEntity!.id,
+        out_entity_id: outEntity!.id,
         data,
         created_at: timestamp,
         updated_at: timestamp
@@ -263,7 +263,7 @@ export const listTypedRelationsForEntity = async (
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
 
       const [{ outgoing, incoming }, schemas] = await Promise.all([
-        db.relation.listRelationsForEntity(ws, entityId),
+        db.relation.listRelationsForEntity(ws, entity.id),
         db.relation.listRelationSchemas(ws)
       ]);
       const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
