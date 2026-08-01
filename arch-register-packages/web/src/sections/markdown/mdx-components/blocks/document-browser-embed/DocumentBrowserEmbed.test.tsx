@@ -33,6 +33,7 @@ const workspaceContext = {
   workspace: null,
   workspaceSlug: 'demo',
   schemas: [],
+  relationSchemas: [],
   enums: [],
   projects: [project],
   lifecycleStates: [],

@@ -25,6 +25,10 @@ export const entityKeys = {
     [...entityKeys.all, 'batch-relations', workspaceId] as const,
   batchRelations: (workspaceId: string, ids: string[]) =>
     [...entityKeys.workspaceBatchRelations(workspaceId), ids] as const,
+  workspaceTypedRelations: (workspaceId: string) =>
+    [...entityKeys.all, 'typed-relations', workspaceId] as const,
+  typedRelations: (workspaceId: string, entityId: string) =>
+    [...entityKeys.workspaceTypedRelations(workspaceId), entityId] as const,
   workspaceDependents: (workspaceId: string) =>
     [...entityKeys.all, 'dependents', workspaceId] as const,
   dependents: (workspaceId: string, entityId: string, transitive: boolean) =>
