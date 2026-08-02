@@ -15,6 +15,12 @@ import { computeEntityCompleteness } from '../../utils/completeness';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterEntities, matchesFilterCondition } from './dataHelpers';
 import { resolveJoinedAssessment } from './entityQueryOperations';
+import { filterConditionsToEntityQueryIR } from './entityQueryIRMapping';
+import {
+  resolveFieldSchemaScope,
+  validateEntityQueryIR,
+  type SchemaCatalog
+} from './entityQueryIRValidator';
 import {
   splitAssessmentConditions,
   matchesAssessmentConditions
@@ -72,6 +78,39 @@ const resolveProjectScope = async (
 
 const parseStateDate = (state: EntityLandscapeDiffState): Date => new Date(state.asOf);
 
+const validateStateConditions = (
+  state: EntityLandscapeDiffState,
+  schemas: SchemaCatalog,
+  authCtx: AuthorizationContext
+) => {
+  const query = filterConditionsToEntityQueryIR(
+    null,
+    state.assessmentId ?? null,
+    state.conditions ?? []
+  );
+  const validation = validateEntityQueryIR(query, schemas, authCtx);
+  httpAssert.true(validation.ok, {
+    status: 400,
+    message: validation.ok
+      ? undefined
+      : validation.errors.map(error => `${error.path.join('.')}: ${error.message}`).join('; ')
+  });
+};
+
+const matchesVisibleFilterCondition = (
+  entity: EntityDbResult,
+  condition: Parameters<typeof matchesFilterCondition>[1],
+  completeness: number | null,
+  schemas: SchemaCatalog,
+  authCtx: AuthorizationContext
+): boolean => {
+  const fieldScope = resolveFieldSchemaScope(condition.fieldId, schemas, authCtx);
+  if (fieldScope.needsScoping && !fieldScope.grantedSchemaIds.has(entity.schema_id)) {
+    return false;
+  }
+  return matchesFilterCondition(entity, condition, completeness);
+};
+
 // Applies the same filtering rules the entity browser uses for its live/point-in-time entity
 // list (schema/owner/lifecycle/q via `filterEntities`, conditions, joined-assessment conditions,
 // and collection membership), evaluated against one side's reconstructed entity list. Run
@@ -82,7 +121,8 @@ const applyStateFilters = async (
   workspace: string,
   authCtx: AuthorizationContext,
   state: EntityLandscapeDiffState,
-  entities: EntityDbResult[]
+  entities: EntityDbResult[],
+  schemas: SchemaCatalog
 ): Promise<EntityDbResult[]> => {
   const conditions = state.conditions ?? [];
   const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
@@ -112,7 +152,9 @@ const applyStateFilters = async (
     if (collectionEntityIdSet && !collectionEntityIdSet.has(entity.id)) return false;
     if (
       otherConditions.length > 0 &&
-      !otherConditions.every(c => matchesFilterCondition(entity, c, entity.completeness))
+      !otherConditions.every(c =>
+        matchesVisibleFilterCondition(entity, c, entity.completeness, schemas, authCtx)
+      )
     )
       return false;
     if (
@@ -134,7 +176,8 @@ const reconstructState = async (
   authCtx: AuthorizationContext,
   state: EntityLandscapeDiffState,
   projectScope: ProjectScope | null,
-  now: Date
+  now: Date,
+  schemas: SchemaCatalog
 ): Promise<EntityDbResult[]> => {
   const reconstructed = await reconstructEntitiesAsOf(
     db,
@@ -163,7 +206,7 @@ const reconstructState = async (
     return entity.project_id == null || entity.project_id === projectScope.projectId;
   });
   const visible = filterVisibleEntities(authCtx, scoped);
-  return applyStateFilters(db, workspace, authCtx, state, visible);
+  return applyStateFilters(db, workspace, authCtx, state, visible, schemas);
 };
 
 const toApi = (
@@ -196,6 +239,11 @@ export const diffEntityLandscapes = async (
     });
   }
 
+  const schemas = await db.catalog.listSchemas(workspace);
+  const schemaCatalog: SchemaCatalog = new Map(schemas.map(schema => [schema.id, schema]));
+  validateStateConditions(from, schemaCatalog, authCtx);
+  validateStateConditions(to, schemaCatalog, authCtx);
+
   const [fromScope, toScope] = isScenarioComparison
     ? await Promise.all([
         resolveProjectScope(db, workspace, authCtx, from.projectId, 'all'),
@@ -223,8 +271,8 @@ export const diffEntityLandscapes = async (
     : [fromScope, fromScope];
   const now = new Date();
   const [fromEntities, toEntities, currentEntities] = await Promise.all([
-    reconstructState(db, workspace, authCtx, from, scopes[0] ?? null, now),
-    reconstructState(db, workspace, authCtx, to, scopes[1] ?? null, now),
+    reconstructState(db, workspace, authCtx, from, scopes[0] ?? null, now, schemaCatalog),
+    reconstructState(db, workspace, authCtx, to, scopes[1] ?? null, now, schemaCatalog),
     isScenarioComparison
       ? reconstructState(
           db,
@@ -236,7 +284,8 @@ export const diffEntityLandscapes = async (
             includeOverdueChanges: false
           },
           null,
-          now
+          now,
+          schemaCatalog
         )
       : Promise.resolve([])
   ]);
@@ -244,7 +293,6 @@ export const diffEntityLandscapes = async (
   const toById = new Map(toEntities.map(entity => [entity.id, entity]));
   const currentById = new Map(currentEntities.map(entity => [entity.id, entity]));
 
-  const schemas = await db.catalog.listSchemas(workspace);
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   const schemaFor = (entity: EntityDbResult) => schemaById.get(entity.schema_id) ?? null;
 
