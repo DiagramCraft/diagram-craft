@@ -24,6 +24,7 @@ const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 const SharedFieldRow = ({
   field,
   schemas,
+  relationSchemas,
   enums,
   onUpdate,
   onChangeType,
@@ -33,6 +34,7 @@ const SharedFieldRow = ({
 }: {
   field: SchemaField;
   schemas: { id: string; name: string }[];
+  relationSchemas: { id: string; name: string }[];
   enums: { id: string; name: string }[];
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
@@ -77,6 +79,40 @@ const SharedFieldRow = ({
             ))}
           </Select.Root>
         </FormElement>
+      );
+    }
+    if (field.type === 'typedRelation') {
+      return (
+        <>
+          <FormElement label="Relation type">
+            <Select.Root
+              value={field.relationSchemaId || undefined}
+              disabled={!canEdit}
+              onChange={value =>
+                onUpdate({ relationSchemaId: value ?? '' } as Partial<SchemaField>)
+              }
+              placeholder="Select a relation type..."
+            >
+              {relationSchemas.map(item => (
+                <Select.Item key={item.id} value={item.id}>
+                  {item.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+          <FormElement label="Direction">
+            <Select.Root
+              value={field.direction}
+              disabled={!canEdit}
+              onChange={value =>
+                onUpdate({ direction: (value ?? 'out') as 'in' | 'out' } as Partial<SchemaField>)
+              }
+            >
+              <Select.Item value="out">Out (this entity is the "out" endpoint)</Select.Item>
+              <Select.Item value="in">In (this entity is the "in" endpoint)</Select.Item>
+            </Select.Root>
+          </FormElement>
+        </>
       );
     }
     if (field.type === 'derived') {
@@ -167,7 +203,14 @@ const SharedFieldRow = ({
 export const FieldGroupEditorScreen = () => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
-  const { workspaceSlug, fieldGroups = [], schemas, enums, permissions } = useWorkspaceContext();
+  const {
+    workspaceSlug,
+    fieldGroups = [],
+    schemas,
+    relationSchemas,
+    enums,
+    permissions
+  } = useWorkspaceContext();
   const selected = fieldGroups.find(group => group.id === search.fieldGroupId) ?? null;
   const canEdit = permissions.canEditSchemas;
   const [name, setName] = useState('');
@@ -275,7 +318,6 @@ export const FieldGroupEditorScreen = () => {
               resultType: 'text'
             } as SchemaField;
           case 'typedRelation':
-            // Not yet offered via FIELD_TYPES for shared fieldgroups.
             return { ...base, type, relationSchemaId: '', direction: 'out' } as SchemaField;
         }
       })
@@ -343,6 +385,7 @@ export const FieldGroupEditorScreen = () => {
               key={field.id}
               field={field}
               schemas={schemas}
+              relationSchemas={relationSchemas}
               enums={enums}
               onUpdate={patch => {
                 setFields(current =>

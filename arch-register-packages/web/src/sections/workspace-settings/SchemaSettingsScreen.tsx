@@ -25,6 +25,7 @@ import {
   getSchemaMigrationRequired
 } from '../../hooks/useSchemas';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -69,6 +70,7 @@ export const SchemaSettingsScreen = () => {
   const {
     workspaceSlug,
     schemas,
+    relationSchemas,
     enums,
     fieldGroups = [],
     permissions,
@@ -384,7 +386,6 @@ export const SchemaSettingsScreen = () => {
             };
           }
           case 'typedRelation':
-            // Not yet offered via FIELD_TYPES; schema authoring UI for this type lands separately.
             return { ...base, type: 'typedRelation', relationSchemaId: '', direction: 'out' };
         }
       })
@@ -467,6 +468,7 @@ export const SchemaSettingsScreen = () => {
         field={f}
         fields={fields}
         schemas={schemas}
+        relationSchemas={relationSchemas}
         enums={enums}
         groups={groups}
         onUpdate={patch => updateField(f.id, patch)}
@@ -955,6 +957,7 @@ export const FieldRow = ({
   field,
   fields,
   schemas,
+  relationSchemas,
   enums,
   groups,
   onUpdate,
@@ -966,6 +969,7 @@ export const FieldRow = ({
   field: SchemaField;
   fields: SchemaField[];
   schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
   enums: WorkspaceEnum[];
   groups: SchemaGroup[];
   onUpdate: (patch: Partial<SchemaField>) => void;
@@ -1061,6 +1065,40 @@ export const FieldRow = ({
               </FormElement>
             </>
           )}
+        </>
+      );
+    }
+    if (field.type === 'typedRelation') {
+      return (
+        <>
+          <FormElement label="Relation type">
+            <Select.Root
+              value={field.relationSchemaId || undefined}
+              disabled={!canEdit}
+              onChange={value =>
+                onUpdate({ relationSchemaId: value ?? '' } as Partial<SchemaField>)
+              }
+              placeholder="Select a relation type..."
+            >
+              {relationSchemas.map(rs => (
+                <Select.Item key={rs.id} value={rs.id}>
+                  {rs.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+          <FormElement label="Direction">
+            <Select.Root
+              value={field.direction}
+              disabled={!canEdit}
+              onChange={value =>
+                onUpdate({ direction: (value ?? 'out') as 'in' | 'out' } as Partial<SchemaField>)
+              }
+            >
+              <Select.Item value="out">Out (this entity is the "out" endpoint)</Select.Item>
+              <Select.Item value="in">In (this entity is the "in" endpoint)</Select.Item>
+            </Select.Root>
+          </FormElement>
         </>
       );
     }

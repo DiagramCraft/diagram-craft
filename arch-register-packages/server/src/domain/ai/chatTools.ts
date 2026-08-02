@@ -16,7 +16,11 @@ import {
 } from '../catalog/entityMutations';
 import { Entity } from '../catalog/db/catalogDatabase';
 import { equalEntityValue } from '../catalog/entityDiff';
-import { SchemaField, isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import {
+  SchemaField,
+  isReferenceOrContainmentField,
+  isTypedRelationField
+} from '@arch-register/api-types/schemaContract';
 import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
@@ -333,6 +337,21 @@ const getDataPreview = (data: Entity['data'], matchedFields: string[]) => {
 
 const relationFields = (fields: SchemaField[]) => fields.filter(isReferenceOrContainmentField);
 
+// Typed relations aren't part of the entity's data blob and have no dedicated AI tool yet — reject
+// rather than silently writing raw values into a field that expects none.
+const assertNoTypedRelationFieldWrites = (
+  schema: { fields: SchemaField[] },
+  fields: Record<string, unknown> | undefined
+) => {
+  const typedRelationFieldIds = new Set(schema.fields.filter(isTypedRelationField).map(f => f.id));
+  const offending = Object.keys(fields ?? {}).filter(id => typedRelationFieldIds.has(id));
+  if (offending.length > 0) {
+    throw new Error(
+      `Cannot set typed-relation field(s) via this tool: ${offending.join(', ')}. Typed relations are not yet supported through AI tools.`
+    );
+  }
+};
+
 const summarizeRelationTarget = (entity: Entity, schemaName: string | undefined) => ({
   id: entity.id,
   name: entity.name,
@@ -532,6 +551,7 @@ export const createAiChatTools = (
     const args = rawArgs as CreateEntityArgs;
     const schema = await db.catalog.getSchema(workspaceId, args.schemaId);
     if (!schema) throw new Error(`Schema '${args.schemaId}' not found`);
+    assertNoTypedRelationFieldWrites(schema, args.fields);
 
     const requestedName =
       typeof args.name === 'string'
@@ -628,6 +648,7 @@ export const createAiChatTools = (
     if (schema && entityRequiresApproval(schema, current)) {
       throw new Error('This entity requires an approved change proposal before it can be edited');
     }
+    if (schema) assertNoTypedRelationFieldWrites(schema, args.fields);
 
     if (authCtx !== null) {
       requireEntityAction(

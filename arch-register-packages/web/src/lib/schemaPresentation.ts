@@ -14,16 +14,21 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'select', label: 'Select' },
   { value: 'reference', label: 'Reference' },
   { value: 'containment', label: 'Containment' },
+  { value: 'typedRelation', label: 'Typed relation' },
   { value: 'derived', label: 'Derived' }
 ];
 
 export type RelationFieldType = RelationField['type'];
 
-// Relation fields intentionally exclude reference/containment/derived — see relationSchemaContract.ts
+// Relation fields intentionally exclude reference/containment/typedRelation/derived — see
+// relationSchemaContract.ts
 export const RELATION_FIELD_TYPES: { value: RelationFieldType; label: string }[] =
   FIELD_TYPES.filter(
     (t): t is { value: RelationFieldType; label: string } =>
-      t.value !== 'reference' && t.value !== 'containment' && t.value !== 'derived'
+      t.value !== 'reference' &&
+      t.value !== 'containment' &&
+      t.value !== 'typedRelation' &&
+      t.value !== 'derived'
   );
 
 export const schemaColor = (index: number): string => SCHEMA_COLORS[index % SCHEMA_COLORS.length]!;

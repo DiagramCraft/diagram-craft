@@ -71,6 +71,16 @@ const isKnownFieldId = (
   return resolveFieldSchemaScope(fieldId, schemas, authCtx).grantedSchemaIds.size > 0;
 };
 
+// typedRelation fields aren't stored on the entity row/data blob, so they aren't queryable/
+// filterable/projectable — reject explicitly rather than silently resolving to nothing.
+const isTypedRelationFieldId = (fieldId: string, schemas: SchemaCatalog): boolean => {
+  for (const schema of schemas.values()) {
+    const field = schema.fields.find(f => f.id === fieldId);
+    if (field?.type === 'typedRelation') return true;
+  }
+  return false;
+};
+
 const validatePathSteps = (
   steps: PathStep[],
   schemas: SchemaCatalog,
@@ -196,6 +206,11 @@ const validateNode = (
       );
       if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
         errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
+      } else if (isTypedRelationFieldId(node.fieldId, schemas)) {
+        errors.push({
+          path: [...path, 'fieldId'],
+          message: `Field '${node.fieldId}' is a typed relation and is not queryable`
+        });
       }
       return hopsAfterPath;
     }
@@ -303,6 +318,11 @@ export const validateEntityQueryIR = (
       errors.push({
         path: [...projectionPath, 'fieldId'],
         message: `Unknown field '${projection.fieldId}'`
+      });
+    } else if (isTypedRelationFieldId(projection.fieldId, schemas)) {
+      errors.push({
+        path: [...projectionPath, 'fieldId'],
+        message: `Field '${projection.fieldId}' is a typed relation and is not queryable`
       });
     }
     const alias = projectionAlias(projection);

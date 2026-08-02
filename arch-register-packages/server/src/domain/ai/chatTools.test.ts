@@ -24,7 +24,14 @@ const schemas: SchemaDbResult[] = [
         maxCount: -1,
         groupId: 'finance'
       },
-      { id: 'budget', name: 'Budget', type: 'text', groupId: 'finance' }
+      { id: 'budget', name: 'Budget', type: 'text', groupId: 'finance' },
+      {
+        id: 'typedDeps',
+        name: 'Typed dependency',
+        type: 'typedRelation',
+        relationSchemaId: 'rel-1',
+        direction: 'out'
+      } as never
     ],
     groups: [{ id: 'finance', name: 'Finance', accessControl: { teamIds: ['team-finance'] } }],
     color: null,
@@ -445,6 +452,31 @@ describe('createAiChatTools', () => {
     expect(createdNotifications.at(-1)).toMatchObject({
       changedByDisplayName: actor.displayName
     });
+  });
+
+  it('rejects create_entity writes to a typedRelation field', async () => {
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
+    const createEntity = tools.find(tool => tool.name === 'create_entity');
+
+    await expect(
+      createEntity!.execute?.({
+        schemaId: 'application',
+        name: 'Orders API',
+        fields: { typedDeps: ['entity-x'] }
+      })
+    ).rejects.toThrow(/typed-relation/i);
+  });
+
+  it('rejects update_entity writes to a typedRelation field', async () => {
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
+    const updateEntity = tools.find(tool => tool.name === 'update_entity');
+
+    await expect(
+      updateEntity!.execute?.({
+        entityId: 'entity-app-1',
+        fields: { typedDeps: ['entity-x'] }
+      })
+    ).rejects.toThrow(/typed-relation/i);
   });
 
   it('traverses outgoing relations one hop', async () => {

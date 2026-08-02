@@ -73,6 +73,13 @@ describe('validateCsvData', () => {
   const boolField: SchemaField = { id: 'active', name: 'Active', type: 'boolean' };
   const dateField: SchemaField = { id: 'go_live', name: 'Go Live', type: 'date' };
   const numberField: SchemaField = { id: 'headcount', name: 'Headcount', type: 'number' };
+  const typedRelationField: SchemaField = {
+    id: 'deps',
+    name: 'Depends on',
+    type: 'typedRelation',
+    relationSchemaId: 'rel-1',
+    direction: 'out'
+  } as never;
 
   it('passes through rows with no schema fields', () => {
     const rows = [{ rowNumber: 2, data: { Name: 'Foo' }, errors: [] }];
@@ -170,6 +177,20 @@ describe('validateCsvData', () => {
   it('skips number validation when value is empty', () => {
     const rows = [{ rowNumber: 2, data: { Headcount: '' }, errors: [] }];
     const result = validateCsvData(rows, [numberField]);
+    expect(result[0]!.errors).toHaveLength(0);
+  });
+
+  it('rejects a value in a typedRelation column', () => {
+    const rows = [{ rowNumber: 2, data: { 'Depends on': 'other-entity' }, errors: [] }];
+    const result = validateCsvData(rows, [typedRelationField]);
+    expect(result[0]!.errors).toContain(
+      'Depends on is a typed relation field and cannot be set via CSV import'
+    );
+  });
+
+  it('does not report an error for an empty typedRelation column', () => {
+    const rows = [{ rowNumber: 2, data: { 'Depends on': '' }, errors: [] }];
+    const result = validateCsvData(rows, [typedRelationField]);
     expect(result[0]!.errors).toHaveLength(0);
   });
 });
@@ -275,5 +296,19 @@ describe('csvRowToEntity', () => {
     const numberField: SchemaField = { id: 'headcount', name: 'Headcount', type: 'number' };
     const result = csvRowToEntity({ Name: 'X', Headcount: '42' }, [numberField]);
     expect(result.headcount).toBe(42);
+  });
+
+  it('drops a typedRelation column instead of writing it into entity data', () => {
+    const typedRelationField: SchemaField = {
+      id: 'deps',
+      name: 'Depends on',
+      type: 'typedRelation',
+      relationSchemaId: 'rel-1',
+      direction: 'out'
+    } as never;
+    const result = csvRowToEntity({ Name: 'X', 'Depends on': 'other-entity' }, [
+      typedRelationField
+    ]);
+    expect(result).not.toHaveProperty('deps');
   });
 });

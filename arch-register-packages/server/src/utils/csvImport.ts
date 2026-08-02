@@ -192,6 +192,9 @@ export const validateCsvData = (rows: ParsedCsvRow[], fields: SchemaField[]): Pa
               errors.push(`${field.name} must be a whole number`);
             }
             break;
+          case 'typedRelation':
+            errors.push(`${field.name} is a typed relation field and cannot be set via CSV import`);
+            break;
         }
       }
     }
@@ -284,6 +287,9 @@ export const csvRowToEntity = (
         break;
       case 'number':
         entity[field.id] = Number(trimmedValue);
+        break;
+      case 'typedRelation':
+        // Rejected in validateCsvData — relation instances aren't part of the entity's data blob.
         break;
     }
   }
