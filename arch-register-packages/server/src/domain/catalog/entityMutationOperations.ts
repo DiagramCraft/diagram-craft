@@ -50,6 +50,8 @@ import {
   assertValidExternalUpdateTarget
 } from '../externalMetadata/externalMetadataHelpers';
 import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
+import { isTypedRelationField } from '@arch-register/api-types/schemaContract';
+import { applyRelationFieldDelta } from './relationFieldMutations';
 
 export const allocateEntityPublicId = async (
   db: DatabaseAdapter,
@@ -435,208 +437,231 @@ export const updateEntity = async (
     payload.requestedOwner && teamIds.has(payload.requestedOwner) ? payload.requestedOwner : null;
 
   try {
-    const [oldRow, schema, globalEntities, projectEntities] = await Promise.all([
-      db.catalog.getEntity(workspace, id),
-      db.catalog.getSchema(workspace, payload.schemaId),
-      listAllCatalogEntities(db, workspace),
-      versionOptions?.projectId
-        ? listAllCatalogEntities(db, workspace, {
-            projectId: versionOptions.projectId,
-            projectScope: 'project'
-          })
-        : Promise.resolve([])
-    ]);
-    const entities = [
-      ...new Map(
-        [...globalEntities, ...projectEntities].map(entity => [entity.id, entity])
-      ).values()
-    ];
-    httpAssert.present(oldRow, { status: 404, message: `Data record '${id}' not found` });
-    httpAssert.present(schema, {
-      status: 404,
-      message: `Schema '${payload.schemaId}' not found`
-    });
-    httpAssert.true(!entityRequiresApproval(schema, oldRow), {
-      status: 409,
-      statusText: 'Conflict',
-      message: 'This entity requires an approved change proposal before it can be edited'
-    });
-    if (authCtx) {
-      if (payload.external) {
+    return await db.core.transaction(async tx => {
+      const [oldRow, schema, globalEntities, projectEntities] = await Promise.all([
+        tx.catalog.getEntity(workspace, id),
+        tx.catalog.getSchema(workspace, payload.schemaId),
+        listAllCatalogEntities(tx, workspace),
+        versionOptions?.projectId
+          ? listAllCatalogEntities(tx, workspace, {
+              projectId: versionOptions.projectId,
+              projectScope: 'project'
+            })
+          : Promise.resolve([])
+      ]);
+      const entities = [
+        ...new Map(
+          [...globalEntities, ...projectEntities].map(entity => [entity.id, entity])
+        ).values()
+      ];
+      httpAssert.present(oldRow, { status: 404, message: `Data record '${id}' not found` });
+      httpAssert.present(schema, {
+        status: 404,
+        message: `Schema '${payload.schemaId}' not found`
+      });
+      httpAssert.true(!entityRequiresApproval(schema, oldRow), {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'This entity requires an approved change proposal before it can be edited'
+      });
+      if (authCtx) {
+        if (payload.external) {
+          requireEntityAction(
+            authCtx,
+            oldRow,
+            'view_entity',
+            'You do not have permission to view this entity'
+          );
+          requireWorkspaceCapability(
+            authCtx,
+            'ent.external_update',
+            'You do not have permission to perform external updates on entities'
+          );
+        } else {
+          requireEntityAction(
+            authCtx,
+            oldRow,
+            'edit_entity',
+            'You do not have permission to edit this entity'
+          );
+        }
+      }
+      const isCasePromotion =
+        versionOptions?.versionKind === 'case_applied' &&
+        versionOptions.projectId != null &&
+        oldRow.project_id === versionOptions.projectId &&
+        payload.projectId == null;
+      if (
+        authCtx &&
+        (owner !== oldRow.owner || (payload.projectId !== oldRow.project_id && !isCasePromotion))
+      ) {
         requireEntityAction(
           authCtx,
           oldRow,
-          'view_entity',
-          'You do not have permission to view this entity'
-        );
-        requireWorkspaceCapability(
-          authCtx,
-          'ent.external_update',
-          'You do not have permission to perform external updates on entities'
-        );
-      } else {
-        requireEntityAction(
-          authCtx,
-          oldRow,
-          'edit_entity',
-          'You do not have permission to edit this entity'
+          'admin_entity',
+          'You do not have permission to change ownership or project assignment'
         );
       }
-    }
-    const isCasePromotion =
-      versionOptions?.versionKind === 'case_applied' &&
-      versionOptions.projectId != null &&
-      oldRow.project_id === versionOptions.projectId &&
-      payload.projectId == null;
-    if (
-      authCtx &&
-      (owner !== oldRow.owner || (payload.projectId !== oldRow.project_id && !isCasePromotion))
-    ) {
-      requireEntityAction(
-        authCtx,
-        oldRow,
-        'admin_entity',
-        'You do not have permission to change ownership or project assignment'
-      );
-    }
 
-    const normalizedFields = normalizeEntityRelationFields({
-      schema,
-      fields: payload.fields,
-      entities
-    });
-    assertNoDerivedFieldWrites(schema.fields, normalizedFields);
-    if (authCtx) {
-      const changedFieldIds = Object.keys(normalizedFields).filter(
-        fieldId => !equalEntityValue(oldRow.data[fieldId], normalizedFields[fieldId])
-      );
-      requireNoRestrictedFieldWrites(
-        authCtx,
+      const normalizedFields = normalizeEntityRelationFields({
         schema,
-        changedFieldIds,
-        'You do not have permission to edit one or more restricted fields on this entity'
-      );
-    }
+        fields: payload.fields,
+        entities
+      });
+      assertNoDerivedFieldWrites(schema.fields, normalizedFields);
+      if (authCtx) {
+        const changedFieldIds = Object.keys(normalizedFields).filter(
+          fieldId => !equalEntityValue(oldRow.data[fieldId], normalizedFields[fieldId])
+        );
+        requireNoRestrictedFieldWrites(
+          authCtx,
+          schema,
+          changedFieldIds,
+          'You do not have permission to edit one or more restricted fields on this entity'
+        );
+      }
 
-    const timestamp = new Date();
-    let nextGeneratedMetadata: ExternalMetadata | undefined;
-    let auditMetadata: Record<string, unknown> | undefined;
-    if (payload.external) {
-      assertValidExternalUpdateTarget(
-        schema.fields,
-        payload.external,
-        oldRow.data,
-        normalizedFields
-      );
-      assertExternalUpdateOnlyChangesTarget(
-        payload.external.fieldId,
-        oldRow.data,
-        normalizedFields
-      );
-      httpAssert.true(payload.schemaId === oldRow.schema_id, {
-        status: 400,
-        message: 'An external update cannot change the entity schema'
-      });
-      httpAssert.true(payload.name === oldRow.name, {
-        status: 400,
-        message: 'An external update cannot change the entity name'
-      });
-      httpAssert.true(payload.slug === oldRow.slug, {
-        status: 400,
-        message: 'An external update cannot change the entity slug'
-      });
-      httpAssert.true(payload.namespace === oldRow.namespace, {
-        status: 400,
-        message: 'An external update cannot change the entity namespace'
-      });
-      httpAssert.true(payload.description === oldRow.description, {
-        status: 400,
-        message: 'An external update cannot change the entity description'
-      });
-      httpAssert.true(payload.requestedOwner === oldRow.owner, {
-        status: 400,
-        message: 'An external update cannot change the entity owner'
-      });
-      httpAssert.true(payload.requestedLifecycle === oldRow.lifecycle, {
-        status: 400,
-        message: 'An external update cannot change the entity lifecycle'
-      });
-      httpAssert.true(payload.requestedTargetLifecycle === oldRow.target_lifecycle, {
-        status: 400,
-        message: 'An external update cannot change the target lifecycle'
-      });
-      httpAssert.true(payload.requestedTargetLifecycleDate === oldRow.target_lifecycle_date, {
-        status: 400,
-        message: 'An external update cannot change the target lifecycle date'
-      });
-      httpAssert.true(JSON.stringify(payload.tags) === JSON.stringify(oldRow.tags), {
-        status: 400,
-        message: 'An external update cannot change entity tags'
-      });
-      httpAssert.true(JSON.stringify(payload.links) === JSON.stringify(oldRow.links), {
-        status: 400,
-        message: 'An external update cannot change entity links'
-      });
-      httpAssert.true(payload.projectId === oldRow.project_id, {
-        status: 400,
-        message: 'An external update cannot change entity project assignment'
-      });
-      nextGeneratedMetadata = {
-        ...(oldRow.generated_metadata ?? {}),
-        [payload.external.fieldId]: applyExternalFieldUpdate(
-          payload.external.fieldId,
+      const timestamp = new Date();
+      let nextGeneratedMetadata: ExternalMetadata | undefined;
+      let auditMetadata: Record<string, unknown> | undefined;
+      if (payload.external) {
+        assertValidExternalUpdateTarget(
+          schema.fields,
           payload.external,
-          timestamp
-        )
-      };
-      auditMetadata = {
-        external_kind: payload.external.kind,
-        external_field_id: payload.external.fieldId,
-        source: payload.external.source,
-        status: payload.external.status,
-        requestId: payload.external.requestId ?? null,
-        explanation: payload.external.explanation ?? null,
-        failureNotice: payload.external.failureNotice ?? null
-      };
-    } else {
-      assertNoExternalEntityFieldWrites(schema.fields, oldRow.data, normalizedFields);
-    }
+          oldRow.data,
+          normalizedFields
+        );
+        assertExternalUpdateOnlyChangesTarget(
+          payload.external.fieldId,
+          oldRow.data,
+          normalizedFields
+        );
+        httpAssert.true(payload.schemaId === oldRow.schema_id, {
+          status: 400,
+          message: 'An external update cannot change the entity schema'
+        });
+        httpAssert.true(payload.name === oldRow.name, {
+          status: 400,
+          message: 'An external update cannot change the entity name'
+        });
+        httpAssert.true(payload.slug === oldRow.slug, {
+          status: 400,
+          message: 'An external update cannot change the entity slug'
+        });
+        httpAssert.true(payload.namespace === oldRow.namespace, {
+          status: 400,
+          message: 'An external update cannot change the entity namespace'
+        });
+        httpAssert.true(payload.description === oldRow.description, {
+          status: 400,
+          message: 'An external update cannot change the entity description'
+        });
+        httpAssert.true(payload.requestedOwner === oldRow.owner, {
+          status: 400,
+          message: 'An external update cannot change the entity owner'
+        });
+        httpAssert.true(payload.requestedLifecycle === oldRow.lifecycle, {
+          status: 400,
+          message: 'An external update cannot change the entity lifecycle'
+        });
+        httpAssert.true(payload.requestedTargetLifecycle === oldRow.target_lifecycle, {
+          status: 400,
+          message: 'An external update cannot change the target lifecycle'
+        });
+        httpAssert.true(payload.requestedTargetLifecycleDate === oldRow.target_lifecycle_date, {
+          status: 400,
+          message: 'An external update cannot change the target lifecycle date'
+        });
+        httpAssert.true(JSON.stringify(payload.tags) === JSON.stringify(oldRow.tags), {
+          status: 400,
+          message: 'An external update cannot change entity tags'
+        });
+        httpAssert.true(JSON.stringify(payload.links) === JSON.stringify(oldRow.links), {
+          status: 400,
+          message: 'An external update cannot change entity links'
+        });
+        httpAssert.true(payload.projectId === oldRow.project_id, {
+          status: 400,
+          message: 'An external update cannot change entity project assignment'
+        });
+        nextGeneratedMetadata = {
+          ...(oldRow.generated_metadata ?? {}),
+          [payload.external.fieldId]: applyExternalFieldUpdate(
+            payload.external.fieldId,
+            payload.external,
+            timestamp
+          )
+        };
+        auditMetadata = {
+          external_kind: payload.external.kind,
+          external_field_id: payload.external.fieldId,
+          source: payload.external.source,
+          status: payload.external.status,
+          requestId: payload.external.requestId ?? null,
+          explanation: payload.external.explanation ?? null,
+          failureNotice: payload.external.failureNotice ?? null
+        };
+      } else {
+        assertNoExternalEntityFieldWrites(schema.fields, oldRow.data, normalizedFields);
+      }
 
-    const row = await updateEntityWithAudit(db, {
-      workspace,
-      entityId: oldRow.id,
-      previous: oldRow,
-      actor,
-      auditMetadata,
-      next: {
-        slug: payload.slug,
-        namespace: payload.namespace,
-        name: payload.name,
-        description: payload.description,
-        owner,
-        lifecycle,
-        target_lifecycle,
-        target_lifecycle_date,
-        tags: payload.tags,
-        links: payload.links,
-        schema_id: payload.schemaId,
-        data: normalizedFields,
-        project_id: payload.projectId,
-        updated_at: timestamp,
-        completeness: computeEntityCompleteness(
-          { description: payload.description, owner, lifecycle, data: normalizedFields },
-          schema
-        ),
-        ...(nextGeneratedMetadata !== undefined
-          ? { generated_metadata: nextGeneratedMetadata }
-          : {})
-      },
-      versionKind: versionOptions?.versionKind,
-      appliedCaseRevisionId: versionOptions?.appliedCaseRevisionId
+      if (Object.keys(payload.relations).length > 0) {
+        const typedRelationFieldById = new Map(
+          schema.fields.filter(isTypedRelationField).map(field => [field.id, field])
+        );
+        for (const [fieldId, delta] of Object.entries(payload.relations)) {
+          const field = typedRelationFieldById.get(fieldId);
+          httpAssert.present(field, {
+            status: 400,
+            message: `'${fieldId}' is not a typedRelation field on schema '${schema.name}'`
+          });
+          await applyRelationFieldDelta(tx, {
+            workspace,
+            ownerEntityId: oldRow.id,
+            field,
+            delta,
+            authCtx,
+            actor
+          });
+        }
+      }
+
+      const row = await updateEntityWithAudit(tx, {
+        workspace,
+        entityId: oldRow.id,
+        previous: oldRow,
+        actor,
+        auditMetadata,
+        next: {
+          slug: payload.slug,
+          namespace: payload.namespace,
+          name: payload.name,
+          description: payload.description,
+          owner,
+          lifecycle,
+          target_lifecycle,
+          target_lifecycle_date,
+          tags: payload.tags,
+          links: payload.links,
+          schema_id: payload.schemaId,
+          data: normalizedFields,
+          project_id: payload.projectId,
+          updated_at: timestamp,
+          completeness: computeEntityCompleteness(
+            { description: payload.description, owner, lifecycle, data: normalizedFields },
+            schema
+          ),
+          ...(nextGeneratedMetadata !== undefined
+            ? { generated_metadata: nextGeneratedMetadata }
+            : {})
+        },
+        versionKind: versionOptions?.versionKind,
+        appliedCaseRevisionId: versionOptions?.appliedCaseRevisionId
+      });
+
+      httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
+      return toApiEntity(row, authCtx, schema);
     });
-
-    httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
-    return toApiEntity(row, authCtx, schema);
   } catch (error) {
     return handleError(error, 'Failed to update data record');
   }

@@ -56,8 +56,8 @@ const baseEntity = (data: Record<string, unknown>): EntityDbResult => ({
   completeness: 0
 });
 
-const makeDb = (entity: EntityDbResult) =>
-  ({
+const makeDb = (entity: EntityDbResult) => {
+  const db = {
     catalog: {
       getEntity: vi.fn(async () => entity),
       getSchema: vi.fn(async () => schema),
@@ -79,8 +79,13 @@ const makeDb = (entity: EntityDbResult) =>
     watch: {
       listWatcherUserIds: vi.fn(async () => []),
       createNotificationsFromAudit: vi.fn(async () => {})
+    },
+    core: {
+      transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(db))
     }
-  }) as unknown as DatabaseAdapter;
+  } as unknown as DatabaseAdapter;
+  return db;
+};
 
 // Workspace role 'editor' grants general edit_entity access without the 'people.role'
 // capability that would otherwise bypass field-group restriction (see admin bypass test below).
@@ -195,6 +200,173 @@ describe('updateEntity — restricted field group writes', () => {
 
     expect(result.secret).toBe('changed');
     expect(db.catalog.updateEntity).toHaveBeenCalled();
+  });
+});
+
+const typedRelationSchema: SchemaDbResult = {
+  ...schema,
+  fields: [
+    ...schema.fields,
+    {
+      id: 'deps',
+      name: 'Depends on',
+      requirementLevel: null,
+      type: 'typedRelation',
+      relationSchemaId: 'rel-schema-1',
+      direction: 'out'
+    } as never
+  ]
+};
+
+const makeTypedRelationDb = (entity: EntityDbResult) => {
+  const relationRows = new Map<string, Record<string, unknown>>();
+  const entitiesById = new Map<string, EntityDbResult>([
+    [entity.id, entity],
+    ['entity-2', { ...entity, id: 'entity-2', schema_id: 'schema-2' }]
+  ]);
+  const db = {
+    catalog: {
+      getEntity: vi.fn(async (_ws: string, id: string) => entitiesById.get(id) ?? null),
+      getSchema: vi.fn(async () => typedRelationSchema),
+      listEntitiesPaginated: vi.fn(async () => []),
+      updateEntity: vi.fn(async (_ws: string, _id: string, input: Record<string, unknown>) => ({
+        ...entity,
+        ...input
+      })),
+      createEntityVersion: vi.fn(async () => ({})),
+      pruneAutosaveVersions: vi.fn(async () => {})
+    },
+    relation: {
+      getRelationSchema: vi.fn(async () => ({
+        id: 'rel-schema-1',
+        workspace: 'ws-1',
+        name: 'Dependency',
+        description: '',
+        in_schema_ids: ['schema-2'],
+        out_schema_ids: ['schema-1'],
+        fields: [],
+        groups: [],
+        created_at: now,
+        updated_at: now
+      })),
+      createRelation: vi.fn(async (input: Record<string, unknown>) => {
+        const row = {
+          ...input,
+          schema_name: 'Dependency',
+          in_entity_name: 'Other',
+          out_entity_name: 'My Entity',
+          version: 1
+        };
+        relationRows.set(input.id as string, row);
+        return row;
+      }),
+      getRelation: vi.fn(async (_ws: string, id: string) => relationRows.get(id) ?? null),
+      updateRelation: vi.fn(async (_ws: string, id: string, input: Record<string, unknown>) => {
+        const existing = relationRows.get(id);
+        const row = { ...existing, ...input };
+        relationRows.set(id, row);
+        return row;
+      }),
+      deleteRelation: vi.fn(async (_ws: string, id: string) => {
+        const existing = relationRows.get(id) ?? null;
+        relationRows.delete(id);
+        return existing;
+      })
+    },
+    workspace: {
+      listLifecycleStates: vi.fn(async () => []),
+      listTeams: vi.fn(async () => [{ id: 'team-owner' }])
+    },
+    audit: {
+      createAuditLog: vi.fn(async () => ({ id: 'audit-1' }))
+    },
+    watch: {
+      listWatcherUserIds: vi.fn(async () => []),
+      createNotificationsFromAudit: vi.fn(async () => {})
+    },
+    core: {
+      transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(db))
+    }
+  } as unknown as DatabaseAdapter;
+  return db;
+};
+
+describe('updateEntity — typed relation deltas', () => {
+  it('creates a relation instance atomically alongside the entity field update', async () => {
+    const db = makeTypedRelationDb(baseEntity({ name_field: 'x' }));
+    const authCtx = authCtxWithTeamRole('team_editor');
+
+    const result = await updateEntity(
+      db,
+      'ws-1',
+      'entity-1',
+      {
+        ...updatePayload({ name_field: 'y' }),
+        _relations: {
+          deps: { create: [{ otherEntityId: 'entity-2', data: {} }] }
+        }
+      },
+      authCtx,
+      { id: 'user-1', displayName: 'User' }
+    );
+
+    expect(result.name_field).toBe('y');
+    expect(db.relation.createRelation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schema_id: 'rel-schema-1',
+        in_entity_id: 'entity-2',
+        out_entity_id: 'entity-1'
+      })
+    );
+    expect(db.catalog.updateEntity).toHaveBeenCalled();
+  });
+
+  it('rolls back the whole mutation when a relation delta fails endpoint validation', async () => {
+    const db = makeTypedRelationDb(baseEntity({ name_field: 'x' }));
+    const authCtx = authCtxWithTeamRole('team_editor');
+
+    await expect(
+      updateEntity(
+        db,
+        'ws-1',
+        'entity-1',
+        {
+          ...updatePayload({ name_field: 'y' }),
+          _relations: {
+            // 'entity-1' is not a valid "in" endpoint for rel-schema-1 (in_schema_ids: ['schema-2'])
+            deps: { create: [{ otherEntityId: 'entity-1', data: {} }] }
+          }
+        },
+        authCtx,
+        { id: 'user-1', displayName: 'User' }
+      )
+    ).rejects.toThrow();
+
+    expect(db.relation.createRelation).not.toHaveBeenCalled();
+    expect(db.catalog.updateEntity).not.toHaveBeenCalled();
+  });
+
+  it('rejects a delta keyed by a field id that is not a typedRelation field', async () => {
+    const db = makeTypedRelationDb(baseEntity({ name_field: 'x' }));
+    const authCtx = authCtxWithTeamRole('team_editor');
+
+    await expect(
+      updateEntity(
+        db,
+        'ws-1',
+        'entity-1',
+        {
+          ...updatePayload({ name_field: 'y' }),
+          _relations: {
+            name_field: { create: [{ otherEntityId: 'entity-2', data: {} }] }
+          }
+        },
+        authCtx,
+        { id: 'user-1', displayName: 'User' }
+      )
+    ).rejects.toThrow();
+
+    expect(db.catalog.updateEntity).not.toHaveBeenCalled();
   });
 });
 

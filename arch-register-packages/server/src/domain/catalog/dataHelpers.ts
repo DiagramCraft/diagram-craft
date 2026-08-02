@@ -11,7 +11,11 @@ import {
   SchemaField,
   isReferenceOrContainmentField
 } from '@arch-register/api-types/schemaContract';
-import { EntityLink } from '@arch-register/api-types/entityContract';
+import {
+  EntityLink,
+  type RelationDeltas,
+  relationDeltasSchema
+} from '@arch-register/api-types/entityContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
   externalUpdateEnvelopeSchema,
@@ -198,9 +202,11 @@ export type EntityMutationPayload = {
   projectId: string | null;
   external: ExternalUpdateEnvelope | null;
   fields: Record<string, unknown>;
+  relations: RelationDeltas;
 };
 
-export const relationFields = (fields: SchemaField[]) => fields.filter(isReferenceOrContainmentField);
+export const relationFields = (fields: SchemaField[]) =>
+  fields.filter(isReferenceOrContainmentField);
 
 const normalizeRelationIds = (
   value: unknown,
@@ -307,6 +313,7 @@ export const parseEntityMutationPayload = (
     _links = [],
     _projectId = null,
     _external,
+    _relations,
     ...fields
   } = body;
 
@@ -314,6 +321,13 @@ export const parseEntityMutationPayload = (
   httpAssert.true(_external === undefined || externalParsed?.success === true, {
     status: 400,
     message: '_external is not a valid external update envelope'
+  });
+
+  const relationsParsed =
+    _relations !== undefined ? relationDeltasSchema.safeParse(_relations) : undefined;
+  httpAssert.true(_relations === undefined || relationsParsed?.success === true, {
+    status: 400,
+    message: '_relations is not a valid set of typed-relation deltas'
   });
 
   const resolvedSchemaId = extractId(_schemaId) ?? extractId(_schema);
@@ -345,7 +359,8 @@ export const parseEntityMutationPayload = (
     links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
     projectId: extractId(_projectId),
     external: externalParsed?.success ? externalParsed.data : null,
-    fields
+    fields,
+    relations: relationsParsed?.success ? relationsParsed.data : {}
   };
 };
 

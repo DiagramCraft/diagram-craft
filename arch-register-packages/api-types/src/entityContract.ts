@@ -108,6 +108,29 @@ const ownerOrIdSchema = z
   .optional()
   .describe('Owner reference (ID string or object with id)');
 
+const relationRecordDraftSchema = z.object({
+  otherEntityId: z.string().describe('Id of the entity at the non-owning end of the relation'),
+  data: z.record(z.string(), z.unknown()).describe('Relation instance field values')
+});
+
+const relationRecordUpdateDraftSchema = z.object({
+  id: z.string().describe('Relation record _uid to update'),
+  data: z.record(z.string(), z.unknown()).describe('Relation instance field values to merge')
+});
+
+const relationFieldDeltaSchema = z.object({
+  create: z.array(relationRecordDraftSchema).optional().describe('New relation instances to add'),
+  update: z
+    .array(relationRecordUpdateDraftSchema)
+    .optional()
+    .describe('Existing relation instances to update'),
+  delete: z.array(z.string()).optional().describe('Relation record _uids to remove')
+});
+
+export const relationDeltasSchema = z
+  .record(z.string(), relationFieldDeltaSchema)
+  .describe('Typed-relation instance deltas, keyed by typedRelation field id');
+
 export const entityMutationBodySchema = z
   .object({
     _schemaId: z.string().optional().describe('Schema identifier'),
@@ -136,6 +159,13 @@ export const entityMutationBodySchema = z
       .describe(
         'Present when this mutation is an external update (AI/integration/automation) rather ' +
           'than a user edit; required to write to any field with external_kind set'
+      ),
+    _relations: relationDeltasSchema
+      .optional()
+      .describe(
+        'Typed-relation instance deltas to apply atomically with this entity update, keyed by ' +
+          "typedRelation field id. Each field's create/update/delete entries are applied in the " +
+          'same transaction as the rest of this mutation.'
       )
   })
   .catchall(z.unknown())
@@ -895,6 +925,10 @@ export const workspaceEntityContract = oc.tag('Entities').router({
 });
 
 export type EntityLink = z.infer<typeof entityLinkSchema>;
+export type RelationDeltas = z.infer<typeof relationDeltasSchema>;
+export type RelationFieldDelta = RelationDeltas[string];
+export type RelationRecordDraft = z.infer<typeof relationRecordDraftSchema>;
+export type RelationRecordUpdateDraft = z.infer<typeof relationRecordUpdateDraftSchema>;
 export type EntitySummary = z.infer<typeof entitySummarySchema>;
 export type EntityRecord = z.infer<typeof entityRecordSchema>;
 export type EntityFacets = z.infer<typeof entityFacetsSchema>;
