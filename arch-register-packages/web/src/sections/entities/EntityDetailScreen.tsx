@@ -778,7 +778,10 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             lifecycleStates,
             entityProjects,
             changeCases: entityChangeCases,
-            entityDiagramFiles
+            entityDiagramFiles,
+            typedRelationsOutgoing: typedRelations.outgoing,
+            typedRelationsIncoming: typedRelations.incoming,
+            relationSchemas
           }}
           relationsProps={{ outgoing, incoming, schemas }}
           typedRelationsProps={{
