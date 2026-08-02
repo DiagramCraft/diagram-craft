@@ -66,8 +66,13 @@ export const TypedRelationFieldEditor = ({
         return (
           <div
             key={record._uid}
-            style={{ marginBottom: 6, opacity: removed ? 0.5 : 1 }}
-            className={styles.relationsList}
+            style={{
+              marginBottom: 6,
+              opacity: removed ? 0.5 : 1,
+              border: '1px solid var(--base-border)',
+              borderRadius: 4,
+              padding: 8
+            }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
@@ -78,14 +83,19 @@ export const TypedRelationFieldEditor = ({
                 onClick={() => setExpandedUid(expanded ? null : record._uid)}
               >
                 <span className={styles.relationLead}>
+                  <TbChevronRight
+                    size={10}
+                    className={sharedStyles.dim}
+                    style={{
+                      transform: expanded ? 'rotate(90deg)' : undefined,
+                      transition: 'transform 0.1s ease'
+                    }}
+                  />
                   {/* Plain text, not a navigation link — in edit mode a click here should expand
                       this row's fields, not carry the user away to the other entity. */}
                   <span className={styles.relationName}>{otherEndpointInfo.name}</span>
-                  {fieldSummaries.length > 0 && (
-                    <>
-                      <TbChevronRight size={10} className={sharedStyles.dim} />
-                      <span className={sharedStyles.dim}>{fieldSummaries.join(' · ')}</span>
-                    </>
+                  {!expanded && fieldSummaries.length > 0 && (
+                    <span className={sharedStyles.dim}> · {fieldSummaries.join(' · ')}</span>
                   )}
                 </span>
               </button>
@@ -96,7 +106,7 @@ export const TypedRelationFieldEditor = ({
               )}
             </div>
             {expanded && !removed && !disabled && (
-              <div style={{ padding: '4px 0 8px 0' }}>
+              <div style={{ padding: '8px 0 0 16px' }}>
                 {activeFields.map(f => (
                   <RelationFieldInput
                     key={f.id}
