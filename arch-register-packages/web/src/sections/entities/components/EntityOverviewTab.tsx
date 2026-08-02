@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { TbExternalLink, TbPlus, TbX } from 'react-icons/tb';
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
@@ -42,7 +42,6 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationRecordDraft } from '@arch-register/api-types/entityContract';
 import { RelationRecordList } from './RelationRecordList';
-import { RelationDetailDialog } from '../../../dialogs/RelationDetailDialog';
 import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
@@ -112,7 +111,6 @@ export const EntityOverviewTab = ({
   );
 
   const getFieldGroupAccess = useFieldGroupAccess(workspaceSlug);
-  const [inspectedRelation, setInspectedRelation] = useState<RelationRecord | null>(null);
 
   const getTypedRelationFieldState = (fieldId: string) =>
     typedRelationEditState[fieldId] ?? emptyTypedRelationFieldState();
@@ -146,7 +144,6 @@ export const EntityOverviewTab = ({
       typedRelationsOutgoing={typedRelationsOutgoing}
       typedRelationsIncoming={typedRelationsIncoming}
       relationSchemas={relationSchemas}
-      onInspectRelation={setInspectedRelation}
       workspaceSlug={workspaceSlug}
       typedRelationFieldState={getTypedRelationFieldState(f.id)}
       onTypedRelationCreate={draft =>
@@ -199,378 +196,369 @@ export const EntityOverviewTab = ({
     .filter(section => section.fields.length > 0 && section.access !== 'none');
 
   return (
-    <>
-      <div className={styles.overviewGrid}>
-        <div className={styles.propsPanel}>
-          {schema && schema.fields.length > 0 && (
-            <>
-              {ungroupedFields.length > 0 && (
-                <>
-                  <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
-                    Properties
-                  </div>
-                  <div className={styles.propList}>
-                    {ungroupedFields.map(f => renderPropertyRow(f))}
-                  </div>
-                </>
-              )}
-              {groupedSections.map(({ group, fields: groupFields, access }) => (
-                <div key={group.id}>
-                  <hr className={styles.divider} />
-                  <div className={styles.sectionLabel}>{group.name}</div>
-                  {group.description && (
-                    <div className={styles.groupDescription}>{group.description}</div>
-                  )}
-                  <div className={styles.propList}>
-                    {groupFields.map(f => renderPropertyRow(f, access))}
-                  </div>
+    <div className={styles.overviewGrid}>
+      <div className={styles.propsPanel}>
+        {schema && schema.fields.length > 0 && (
+          <>
+            {ungroupedFields.length > 0 && (
+              <>
+                <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
+                  Properties
                 </div>
-              ))}
-            </>
-          )}
-        </div>
-
-        <div className={styles.sidePanel}>
-          <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
-            Metadata
-          </div>
-          {schema && <MetaPropRow label="Schema" value={schema.name} />}
-          <MetaPropRow label="Public ID" value={entity._publicId} />
-          <MetaPropRow label="Namespace" value={entity._namespace} />
-
-          <hr className={styles.divider} />
-
-          <MetaPropRow
-            label="Name"
-            value={entity._name ?? '—'}
-            editing={editing}
-            editValue={editState['_name'] as string}
-            onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugifyEntityName(v) }))}
-          />
-          <MetaPropRow
-            label="Slug"
-            value={entity._slug}
-            editing={editing}
-            editValue={editState['_slug'] as string}
-            onChange={v => setEditState(s => ({ ...s, _slug: v }))}
-          />
-          {((entity._description != null && entity._description !== '') || editing) && (
-            <div className={styles.metaPropRow}>
-              <span className={styles.metaPropLabel}>Description</span>
-              <span className={styles.metaPropValue}>
-                {editing ? (
-                  <textarea
-                    className={styles.textareaInline}
-                    value={editState['_description'] as string}
-                    onChange={e => setEditState(s => ({ ...s, _description: e.target.value }))}
-                  />
-                ) : (
-                  entity._description
-                )}
-              </span>
-            </div>
-          )}
-          <MetaPropRow
-            label="Owner"
-            value={entity._owner?.name ?? '—'}
-            editing={editing}
-            editValue={editState['_owner'] as string}
-            onChange={v => setEditState(s => ({ ...s, _owner: v }))}
-            selectOptions={[
-              { value: '', label: '—' },
-              ...teams.map(team => ({ value: team.id, label: team.name }))
-            ]}
-          />
-          <MetaPropRow
-            label="Lifecycle"
-            value={entity._lifecycle?.name ?? '—'}
-            editing={editing}
-            editValue={editState['_lifecycle'] as string}
-            onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))}
-            selectOptions={[
-              { value: '', label: '—' },
-              ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
-            ]}
-          />
-          <MetaPropRow
-            label="Target Lifecycle"
-            value={entity._targetLifecycle?.name ?? '—'}
-            editing={editing}
-            editValue={editState['_targetLifecycle'] as string}
-            onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))}
-            selectOptions={[
-              { value: '', label: '—' },
-              ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
-            ]}
-          />
-          <MetaPropRow
-            label="Target Date"
-            value={entity._targetLifecycleDate ?? '—'}
-            editing={editing}
-            editValue={editState['_targetLifecycleDate'] as string}
-            onChange={v => setEditState(s => ({ ...s, _targetLifecycleDate: v }))}
-            type="date"
-          />
-          {(entity._tags.length > 0 || editing) && (
-            <div className={styles.metaPropRow}>
-              <span className={styles.metaPropLabel}>Tags</span>
-              <span className={styles.metaPropValue}>
-                {editing ? (
-                  <input
-                    className={styles.inputInline}
-                    value={editState['_tags'] as string}
-                    onChange={e => setEditState(s => ({ ...s, _tags: e.target.value }))}
-                    placeholder="comma-separated"
-                  />
-                ) : (
-                  <span className={styles.tags}>
-                    {entity._tags.map(t => (
-                      <Chip key={t} tone="ghost">
-                        {t}
-                      </Chip>
-                    ))}
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
-          {editing ? (
-            <div className={styles.linksEdit}>
-              <div className={styles.metaPropLabel}>Links</div>
-              {editLinks.map((l, i) => (
-                <div key={i} className={styles.linkRow}>
-                  <input
-                    className={styles.inputInline}
-                    value={l.type ?? ''}
-                    onChange={e =>
-                      setEditLinks(ls =>
-                        ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x))
-                      )
-                    }
-                    placeholder="Type"
-                    style={{ width: 70, flex: 'none' }}
-                  />
-                  <input
-                    className={styles.inputInline}
-                    value={l.title}
-                    onChange={e =>
-                      setEditLinks(ls =>
-                        ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x))
-                      )
-                    }
-                    placeholder="Title"
-                  />
-                  <input
-                    className={styles.inputInline}
-                    value={l.url}
-                    onChange={e =>
-                      setEditLinks(ls =>
-                        ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x))
-                      )
-                    }
-                    placeholder="URL"
-                  />
-                  <button
-                    type="button"
-                    className={styles.iconBtn}
-                    onClick={() => setEditLinks(ls => ls.filter((_, j) => j !== i))}
-                  >
-                    <TbX size={12} />
-                  </button>
+                <div className={styles.propList}>
+                  {ungroupedFields.map(f => renderPropertyRow(f))}
                 </div>
-              ))}
-              <button
-                type="button"
-                className={styles.addLinkBtn}
-                onClick={() => setEditLinks(ls => [...ls, { url: '', title: '', type: '' }])}
-              >
-                <TbPlus size={11} /> Add link
-              </button>
-            </div>
-          ) : (
-            entity._links.length > 0 &&
-            entity._links.map((l, i) => (
-              <div key={i} className={styles.metaPropRow}>
-                <span className={styles.metaPropLabel}>
-                  {l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}
-                </span>
-                <span className={styles.metaPropValue}>
-                  <a
-                    className={styles.propLink}
-                    href={l.url.startsWith('http') ? l.url : `https://${l.url}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <TbExternalLink size={11} /> {l.title ?? l.url}
-                  </a>
-                </span>
+              </>
+            )}
+            {groupedSections.map(({ group, fields: groupFields, access }) => (
+              <div key={group.id}>
+                <hr className={styles.divider} />
+                <div className={styles.sectionLabel}>{group.name}</div>
+                {group.description && (
+                  <div className={styles.groupDescription}>{group.description}</div>
+                )}
+                <div className={styles.propList}>
+                  {groupFields.map(f => renderPropertyRow(f, access))}
+                </div>
               </div>
-            ))
-          )}
-
-          <hr className={styles.divider} />
-
-          <div className={styles.sectionLabel}>Projects</div>
-          {entityProjects.length === 0 ? (
-            <div className={styles.metaPropRow}>
-              <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-                Not in any project
-              </span>
-            </div>
-          ) : (
-            entityProjects.map(({ project, entity_type }) => (
-              <div key={project.id} className={styles.metaPropRow}>
-                <span className={styles.metaPropLabel}>{project.name}</span>
-                <span className={styles.metaPropValue}>
-                  {entity_type ? (
-                    entity_type.name
-                  ) : (
-                    <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
-                  )}
-                </span>
-              </div>
-            ))
-          )}
-
-          {futureEntries.length > 0 && (
-            <>
-              <hr className={styles.divider} />
-              <div className={styles.sectionLabel}>Future plans</div>
-              {futureEntries.map(entry => {
-                const projectName =
-                  entityProjects.find(ep => ep.project.id === entry.changeCase.project_id)?.project
-                    .name ?? entry.changeCase.project_id;
-                const dateLabel = entry.changeCase.milestone_id
-                  ? getSnapshotDateLabel(entry.changeCase, milestonesById)
-                  : entry.changeCase.target_date
-                    ? formatDate(entry.changeCase.target_date)
-                    : null;
-                return (
-                  <div key={entry.member.id} className={styles.futurePlan}>
-                    <div className={styles.futurePlanMeta}>
-                      <span className={styles.futurePlanProject}>{projectName}</span>
-                      {dateLabel && <span className={styles.futurePlanDate}>{dateLabel}</span>}
-                    </div>
-                    {entry.changeCase.commit_message && (
-                      <div className={styles.futurePlanNote}>{entry.changeCase.commit_message}</div>
-                    )}
-                  </div>
-                );
-              })}
-            </>
-          )}
-
-          <hr className={styles.divider} />
-
-          <div className={styles.sectionLabel}>Diagrams</div>
-          {entityDiagramFiles.length === 0 ? (
-            <div className={styles.metaPropRow}>
-              <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-                Not in any diagram
-              </span>
-            </div>
-          ) : (
-            <div className={styles.miniDiagramList}>
-              {entityDiagramFiles.map(({ file, project }) => (
-                <DiagramMetadataPopover
-                  key={file.id}
-                  type={file.type}
-                  fallbackTitle={file.name}
-                  contentMetadata={file.content_metadata}
-                  commentCount={file.comment_count}
-                  unresolvedCommentCount={file.unresolved_comment_count}
-                >
-                  <a
-                    className={styles.miniDiagramRow}
-                    href={projectDiagramHref(
-                      workspaceSlug,
-                      asProjectPublicId(project.public_id),
-                      file.id
-                    )}
-                  >
-                    <div className={styles.miniDiagramThumb}>
-                      <div className={styles.miniDiagramThumbGrid} />
-                      {file.preview_svg ? (
-                        <div
-                          className={styles.miniDiagramThumbPreview}
-                          dangerouslySetInnerHTML={{ __html: file.preview_svg }}
-                        />
-                      ) : (
-                        <svg
-                          className={styles.miniDiagramThumbSvg}
-                          viewBox="0 0 60 30"
-                          preserveAspectRatio="none"
-                        >
-                          <rect
-                            x="3"
-                            y="7"
-                            width="12"
-                            height="7"
-                            rx="1"
-                            fill="var(--cmp-bg)"
-                            stroke="var(--base-fg-more-dim)"
-                            strokeWidth="0.7"
-                          />
-                          <rect
-                            x="23"
-                            y="3"
-                            width="12"
-                            height="7"
-                            rx="1"
-                            fill="var(--cmp-bg)"
-                            stroke="var(--base-fg-more-dim)"
-                            strokeWidth="0.7"
-                          />
-                          <rect
-                            x="23"
-                            y="20"
-                            width="12"
-                            height="7"
-                            rx="1"
-                            fill="var(--cmp-bg)"
-                            stroke="var(--base-fg-more-dim)"
-                            strokeWidth="0.7"
-                          />
-                          <rect
-                            x="43"
-                            y="10"
-                            width="12"
-                            height="7"
-                            rx="1"
-                            fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
-                            stroke="var(--tag-component)"
-                            strokeWidth="0.7"
-                          />
-                          <path
-                            d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
-                            stroke="var(--cmp-fg-disabled)"
-                            fill="none"
-                            strokeWidth="0.7"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    <div className={styles.miniDiagramBody}>
-                      <div className={styles.miniDiagramName}>
-                        {file.content_metadata?.title ?? file.name}
-                      </div>
-                      <div className={styles.miniDiagramSub}>{project.name}</div>
-                    </div>
-                  </a>
-                </DiagramMetadataPopover>
-              ))}
-            </div>
-          )}
-        </div>
+            ))}
+          </>
+        )}
       </div>
-      <RelationDetailDialog
-        open={inspectedRelation !== null}
-        onClose={() => setInspectedRelation(null)}
-        workspaceId={workspaceSlug}
-        relation={inspectedRelation}
-        relationSchema={relationSchemas.find(rs => rs.id === inspectedRelation?._schema.id)}
-      />
-    </>
+
+      <div className={styles.sidePanel}>
+        <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
+          Metadata
+        </div>
+        {schema && <MetaPropRow label="Schema" value={schema.name} />}
+        <MetaPropRow label="Public ID" value={entity._publicId} />
+        <MetaPropRow label="Namespace" value={entity._namespace} />
+
+        <hr className={styles.divider} />
+
+        <MetaPropRow
+          label="Name"
+          value={entity._name ?? '—'}
+          editing={editing}
+          editValue={editState['_name'] as string}
+          onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugifyEntityName(v) }))}
+        />
+        <MetaPropRow
+          label="Slug"
+          value={entity._slug}
+          editing={editing}
+          editValue={editState['_slug'] as string}
+          onChange={v => setEditState(s => ({ ...s, _slug: v }))}
+        />
+        {((entity._description != null && entity._description !== '') || editing) && (
+          <div className={styles.metaPropRow}>
+            <span className={styles.metaPropLabel}>Description</span>
+            <span className={styles.metaPropValue}>
+              {editing ? (
+                <textarea
+                  className={styles.textareaInline}
+                  value={editState['_description'] as string}
+                  onChange={e => setEditState(s => ({ ...s, _description: e.target.value }))}
+                />
+              ) : (
+                entity._description
+              )}
+            </span>
+          </div>
+        )}
+        <MetaPropRow
+          label="Owner"
+          value={entity._owner?.name ?? '—'}
+          editing={editing}
+          editValue={editState['_owner'] as string}
+          onChange={v => setEditState(s => ({ ...s, _owner: v }))}
+          selectOptions={[
+            { value: '', label: '—' },
+            ...teams.map(team => ({ value: team.id, label: team.name }))
+          ]}
+        />
+        <MetaPropRow
+          label="Lifecycle"
+          value={entity._lifecycle?.name ?? '—'}
+          editing={editing}
+          editValue={editState['_lifecycle'] as string}
+          onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))}
+          selectOptions={[
+            { value: '', label: '—' },
+            ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
+          ]}
+        />
+        <MetaPropRow
+          label="Target Lifecycle"
+          value={entity._targetLifecycle?.name ?? '—'}
+          editing={editing}
+          editValue={editState['_targetLifecycle'] as string}
+          onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))}
+          selectOptions={[
+            { value: '', label: '—' },
+            ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
+          ]}
+        />
+        <MetaPropRow
+          label="Target Date"
+          value={entity._targetLifecycleDate ?? '—'}
+          editing={editing}
+          editValue={editState['_targetLifecycleDate'] as string}
+          onChange={v => setEditState(s => ({ ...s, _targetLifecycleDate: v }))}
+          type="date"
+        />
+        {(entity._tags.length > 0 || editing) && (
+          <div className={styles.metaPropRow}>
+            <span className={styles.metaPropLabel}>Tags</span>
+            <span className={styles.metaPropValue}>
+              {editing ? (
+                <input
+                  className={styles.inputInline}
+                  value={editState['_tags'] as string}
+                  onChange={e => setEditState(s => ({ ...s, _tags: e.target.value }))}
+                  placeholder="comma-separated"
+                />
+              ) : (
+                <span className={styles.tags}>
+                  {entity._tags.map(t => (
+                    <Chip key={t} tone="ghost">
+                      {t}
+                    </Chip>
+                  ))}
+                </span>
+              )}
+            </span>
+          </div>
+        )}
+        {editing ? (
+          <div className={styles.linksEdit}>
+            <div className={styles.metaPropLabel}>Links</div>
+            {editLinks.map((l, i) => (
+              <div key={i} className={styles.linkRow}>
+                <input
+                  className={styles.inputInline}
+                  value={l.type ?? ''}
+                  onChange={e =>
+                    setEditLinks(ls =>
+                      ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x))
+                    )
+                  }
+                  placeholder="Type"
+                  style={{ width: 70, flex: 'none' }}
+                />
+                <input
+                  className={styles.inputInline}
+                  value={l.title}
+                  onChange={e =>
+                    setEditLinks(ls =>
+                      ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x))
+                    )
+                  }
+                  placeholder="Title"
+                />
+                <input
+                  className={styles.inputInline}
+                  value={l.url}
+                  onChange={e =>
+                    setEditLinks(ls =>
+                      ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x))
+                    )
+                  }
+                  placeholder="URL"
+                />
+                <button
+                  type="button"
+                  className={styles.iconBtn}
+                  onClick={() => setEditLinks(ls => ls.filter((_, j) => j !== i))}
+                >
+                  <TbX size={12} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className={styles.addLinkBtn}
+              onClick={() => setEditLinks(ls => [...ls, { url: '', title: '', type: '' }])}
+            >
+              <TbPlus size={11} /> Add link
+            </button>
+          </div>
+        ) : (
+          entity._links.length > 0 &&
+          entity._links.map((l, i) => (
+            <div key={i} className={styles.metaPropRow}>
+              <span className={styles.metaPropLabel}>
+                {l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}
+              </span>
+              <span className={styles.metaPropValue}>
+                <a
+                  className={styles.propLink}
+                  href={l.url.startsWith('http') ? l.url : `https://${l.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <TbExternalLink size={11} /> {l.title ?? l.url}
+                </a>
+              </span>
+            </div>
+          ))
+        )}
+
+        <hr className={styles.divider} />
+
+        <div className={styles.sectionLabel}>Projects</div>
+        {entityProjects.length === 0 ? (
+          <div className={styles.metaPropRow}>
+            <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+              Not in any project
+            </span>
+          </div>
+        ) : (
+          entityProjects.map(({ project, entity_type }) => (
+            <div key={project.id} className={styles.metaPropRow}>
+              <span className={styles.metaPropLabel}>{project.name}</span>
+              <span className={styles.metaPropValue}>
+                {entity_type ? (
+                  entity_type.name
+                ) : (
+                  <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
+                )}
+              </span>
+            </div>
+          ))
+        )}
+
+        {futureEntries.length > 0 && (
+          <>
+            <hr className={styles.divider} />
+            <div className={styles.sectionLabel}>Future plans</div>
+            {futureEntries.map(entry => {
+              const projectName =
+                entityProjects.find(ep => ep.project.id === entry.changeCase.project_id)?.project
+                  .name ?? entry.changeCase.project_id;
+              const dateLabel = entry.changeCase.milestone_id
+                ? getSnapshotDateLabel(entry.changeCase, milestonesById)
+                : entry.changeCase.target_date
+                  ? formatDate(entry.changeCase.target_date)
+                  : null;
+              return (
+                <div key={entry.member.id} className={styles.futurePlan}>
+                  <div className={styles.futurePlanMeta}>
+                    <span className={styles.futurePlanProject}>{projectName}</span>
+                    {dateLabel && <span className={styles.futurePlanDate}>{dateLabel}</span>}
+                  </div>
+                  {entry.changeCase.commit_message && (
+                    <div className={styles.futurePlanNote}>{entry.changeCase.commit_message}</div>
+                  )}
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        <hr className={styles.divider} />
+
+        <div className={styles.sectionLabel}>Diagrams</div>
+        {entityDiagramFiles.length === 0 ? (
+          <div className={styles.metaPropRow}>
+            <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+              Not in any diagram
+            </span>
+          </div>
+        ) : (
+          <div className={styles.miniDiagramList}>
+            {entityDiagramFiles.map(({ file, project }) => (
+              <DiagramMetadataPopover
+                key={file.id}
+                type={file.type}
+                fallbackTitle={file.name}
+                contentMetadata={file.content_metadata}
+                commentCount={file.comment_count}
+                unresolvedCommentCount={file.unresolved_comment_count}
+              >
+                <a
+                  className={styles.miniDiagramRow}
+                  href={projectDiagramHref(
+                    workspaceSlug,
+                    asProjectPublicId(project.public_id),
+                    file.id
+                  )}
+                >
+                  <div className={styles.miniDiagramThumb}>
+                    <div className={styles.miniDiagramThumbGrid} />
+                    {file.preview_svg ? (
+                      <div
+                        className={styles.miniDiagramThumbPreview}
+                        dangerouslySetInnerHTML={{ __html: file.preview_svg }}
+                      />
+                    ) : (
+                      <svg
+                        className={styles.miniDiagramThumbSvg}
+                        viewBox="0 0 60 30"
+                        preserveAspectRatio="none"
+                      >
+                        <rect
+                          x="3"
+                          y="7"
+                          width="12"
+                          height="7"
+                          rx="1"
+                          fill="var(--cmp-bg)"
+                          stroke="var(--base-fg-more-dim)"
+                          strokeWidth="0.7"
+                        />
+                        <rect
+                          x="23"
+                          y="3"
+                          width="12"
+                          height="7"
+                          rx="1"
+                          fill="var(--cmp-bg)"
+                          stroke="var(--base-fg-more-dim)"
+                          strokeWidth="0.7"
+                        />
+                        <rect
+                          x="23"
+                          y="20"
+                          width="12"
+                          height="7"
+                          rx="1"
+                          fill="var(--cmp-bg)"
+                          stroke="var(--base-fg-more-dim)"
+                          strokeWidth="0.7"
+                        />
+                        <rect
+                          x="43"
+                          y="10"
+                          width="12"
+                          height="7"
+                          rx="1"
+                          fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
+                          stroke="var(--tag-component)"
+                          strokeWidth="0.7"
+                        />
+                        <path
+                          d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
+                          stroke="var(--cmp-fg-disabled)"
+                          fill="none"
+                          strokeWidth="0.7"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                  <div className={styles.miniDiagramBody}>
+                    <div className={styles.miniDiagramName}>
+                      {file.content_metadata?.title ?? file.name}
+                    </div>
+                    <div className={styles.miniDiagramSub}>{project.name}</div>
+                  </div>
+                </a>
+              </DiagramMetadataPopover>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -640,7 +628,6 @@ const PropertyRow = ({
   typedRelationsOutgoing,
   typedRelationsIncoming,
   relationSchemas,
-  onInspectRelation,
   workspaceSlug,
   typedRelationFieldState,
   onTypedRelationCreate,
@@ -660,7 +647,6 @@ const PropertyRow = ({
   typedRelationsOutgoing: RelationRecord[];
   typedRelationsIncoming: RelationRecord[];
   relationSchemas: RelationSchema[];
-  onInspectRelation: (record: RelationRecord) => void;
   workspaceSlug: string;
   typedRelationFieldState: TypedRelationFieldEditState;
   onTypedRelationCreate: (draft: RelationRecordDraft) => void;
@@ -781,7 +767,7 @@ const PropertyRow = ({
           records={records}
           direction={field.direction === 'out' ? 'outgoing' : 'incoming'}
           relationSchema={relationSchemas.find(rs => rs.id === field.relationSchemaId)}
-          onInspect={onInspectRelation}
+          workspaceId={workspaceSlug}
         />
       );
     }

@@ -64,12 +64,11 @@ const buildBaseMutationBody = (
   };
 
   for (const field of schema?.fields ?? []) {
-    body[field.id] =
-      isReferenceOrContainmentField(field)
-        ? Array.isArray(entity[field.id])
-          ? entity[field.id]
-          : []
-        : (entity[field.id] ?? '');
+    body[field.id] = isReferenceOrContainmentField(field)
+      ? Array.isArray(entity[field.id])
+        ? entity[field.id]
+        : []
+      : (entity[field.id] ?? '');
   }
 
   return body;

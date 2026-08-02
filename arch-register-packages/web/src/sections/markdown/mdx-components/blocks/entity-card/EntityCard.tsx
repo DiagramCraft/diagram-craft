@@ -16,7 +16,9 @@ import styles from './EntityCard.module.css';
 import { formatDate } from '../../../../../utils/dateFormat';
 
 export const filterSchemaFields = <T extends { type: string }>(fields: T[]): T[] =>
-  fields.filter(f => f.type !== 'containment' && f.type !== 'reference' && f.type !== 'typedRelation');
+  fields.filter(
+    f => f.type !== 'containment' && f.type !== 'reference' && f.type !== 'typedRelation'
+  );
 
 export const STANDARD_FIELD_OPTIONS = [
   { id: 'lifecycle', label: 'Lifecycle' },

@@ -18,6 +18,10 @@ vi.mock('../../../components/EntityNavigationLink', () => ({
   )
 }));
 
+vi.mock('../../../dialogs/RelationAuditLogDialog', () => ({
+  RelationAuditLogDialog: () => null
+}));
+
 const { RelationRecordList, formatRelationFieldValue } = await import('./RelationRecordList');
 
 const relationSchema: RelationSchema = {
@@ -27,9 +31,7 @@ const relationSchema: RelationSchema = {
   description: '',
   in: { schemaIds: ['schema-2'] },
   out: { schemaIds: ['schema-1'] },
-  fields: [
-    { id: 'protocol', name: 'Protocol', requirementLevel: null, type: 'text' } as never
-  ],
+  fields: [{ id: 'protocol', name: 'Protocol', requirementLevel: null, type: 'text' } as never],
   groups: [],
   color: null,
   icon: null,
@@ -60,7 +62,7 @@ describe('RelationRecordList', () => {
         records={[record]}
         direction="outgoing"
         relationSchema={relationSchema}
-        onInspect={() => {}}
+        workspaceId="ws-1"
       />
     );
 
@@ -75,7 +77,7 @@ describe('RelationRecordList', () => {
         records={[]}
         direction="outgoing"
         relationSchema={relationSchema}
-        onInspect={() => {}}
+        workspaceId="ws-1"
       />
     );
 
@@ -88,7 +90,7 @@ describe('RelationRecordList', () => {
         records={[record]}
         direction="incoming"
         relationSchema={relationSchema}
-        onInspect={() => {}}
+        workspaceId="ws-1"
       />
     );
 

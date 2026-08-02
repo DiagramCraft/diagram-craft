@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TbChevronRight, TbPlus, TbX } from 'react-icons/tb';
+import { TbChevronRight, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
@@ -72,16 +72,28 @@ export const TypedRelationFieldEditor = ({
             style={{
               marginBottom: 6,
               opacity: removed ? 0.5 : 1,
-              border: '1px solid var(--base-border)',
+              border: '1px solid var(--panel-border)',
               borderRadius: 4,
-              padding: 8
+              padding: 8,
+              background: 'var(--base-bg)'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* Not `styles.relation` — that class carries its own border/background, which
+                  would look like a second, inner card competing with the one wrapping this
+                  whole row (header + expanded form). Plain/unstyled here so there's only one. */}
               <button
                 type="button"
-                className={styles.relation}
-                style={{ flex: 1, textAlign: 'left' }}
+                style={{
+                  flex: 1,
+                  textAlign: 'left',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 0,
+                  cursor: removed ? 'default' : 'pointer',
+                  font: 'inherit',
+                  color: 'inherit'
+                }}
                 disabled={removed}
                 onClick={() => setExpandedUid(expanded ? null : record._uid)}
               >
@@ -95,28 +107,33 @@ export const TypedRelationFieldEditor = ({
                     }}
                   />
                   {/* Plain text, not a navigation link — in edit mode a click here should expand
-                      this row's fields, not carry the user away to the other entity. */}
-                  <span className={styles.relationName}>{otherEndpointInfo.name}</span>
+                      this row's fields, not carry the user away to the other entity. Not
+                      `styles.relationName` either: that class's hover-underline signals "this is
+                      a link", which is no longer true here. */}
+                  <span style={{ color: 'var(--base-fg)', fontWeight: 500, minWidth: 0 }}>
+                    {otherEndpointInfo.name}
+                  </span>
                   {!expanded && fieldSummaries.length > 0 && (
-                    <span className={sharedStyles.dim}> · {fieldSummaries.join(' · ')}</span>
+                    <span className={sharedStyles.dim}> {fieldSummaries.join(' · ')}</span>
                   )}
                 </span>
               </button>
               {!disabled && (
                 <Button variant="ghost" onClick={() => onToggleRemove(record._uid)}>
-                  {removed ? 'Undo' : <TbX size={12} />}
+                  {removed ? 'Undo' : <TbTrash size={12} />}
                 </Button>
               )}
             </div>
             {expanded && !removed && !disabled && (
-              <div style={{ padding: '8px 0 0 16px' }}>
-                {activeFields.map(f => (
-                  <RelationFieldInput
-                    key={f.id}
-                    field={f}
-                    value={String(pendingUpdate?.[f.id] ?? record[f.id] ?? '')}
-                    onChange={value => onUpdateField(record._uid, f.id, value)}
-                  />
+              <div style={{ padding: '8px 10px 8px 16px' }}>
+                {activeFields.map((f, index) => (
+                  <div key={f.id} style={{ marginBottom: index < activeFields.length - 1 ? 8 : 0 }}>
+                    <RelationFieldInput
+                      field={f}
+                      value={String(pendingUpdate?.[f.id] ?? record[f.id] ?? '')}
+                      onChange={value => onUpdateField(record._uid, f.id, value)}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -135,7 +152,7 @@ export const TypedRelationFieldEditor = ({
           </span>
           {!disabled && (
             <Button variant="ghost" onClick={() => onRemoveDraft(index)}>
-              <TbX size={12} />
+              <TbTrash size={12} />
             </Button>
           )}
         </div>
@@ -191,12 +208,19 @@ const NewRelationDraftForm = ({
   };
 
   return (
-    <div style={{ border: '1px solid var(--base-border)', borderRadius: 4, padding: 8 }}>
+    <div
+      style={{
+        border: '1px solid var(--panel-border)',
+        borderRadius: 4,
+        padding: '16px 18px 12px 24px',
+        background: 'var(--base-bg)'
+      }}
+    >
       <Select.Root
         value={otherEntityId || undefined}
         onChange={value => setOtherEntityId(value ?? '')}
         placeholder="Select an entity"
-        style={{ width: '100%', marginBottom: 6 }}
+        style={{ width: '100%', marginBottom: 16 }}
       >
         {candidates.map(entity => (
           <Select.Item key={entity._uid} value={entity._uid}>
@@ -205,15 +229,16 @@ const NewRelationDraftForm = ({
         ))}
       </Select.Root>
       {fields.map(f => (
-        <RelationFieldInput
-          key={f.id}
-          field={f}
-          value={values[f.id] ?? ''}
-          onChange={value => setField(f.id, value)}
-        />
+        <div key={f.id} style={{ marginBottom: 8 }}>
+          <RelationFieldInput
+            field={f}
+            value={values[f.id] ?? ''}
+            onChange={value => setField(f.id, value)}
+          />
+        </div>
       ))}
-      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-        <Button variant="secondary" onClick={onCancel}>
+      <div style={{ display: 'flex', gap: 6, marginTop: 16 }}>
+        <Button onClick={onCancel} style={{ marginLeft: 'auto' }}>
           Cancel
         </Button>
         <Button variant="primary" disabled={!otherEntityId} onClick={confirm}>
