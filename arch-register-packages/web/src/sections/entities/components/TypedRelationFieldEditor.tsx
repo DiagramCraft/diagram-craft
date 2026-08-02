@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TbPlus, TbX } from 'react-icons/tb';
+import { TbChevronRight, TbPlus, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
@@ -9,7 +9,7 @@ import type { RelationRecordDraft } from '@arch-register/api-types/entityContrac
 import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import { RelationFieldInput } from '../../../dialogs/RelationFieldInput';
-import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
+import { KEY_FIELD_COUNT, formatRelationFieldValue } from './RelationRecordList';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import styles from './EntityRelationsTab.module.css';
 
@@ -55,6 +55,14 @@ export const TypedRelationFieldEditor = ({
         const otherEndpointInfo = direction === 'outgoing' ? record._out : record._in;
         const pendingUpdate = fieldState.update.get(record._uid);
         const expanded = expandedUid === record._uid;
+        const fieldSummaries = activeFields
+          .slice(0, KEY_FIELD_COUNT)
+          .map(f => {
+            const value = pendingUpdate?.[f.id] ?? record[f.id];
+            const formatted = formatRelationFieldValue(f, value);
+            return formatted !== null ? `${f.name}: ${formatted}` : null;
+          })
+          .filter((v): v is string => v !== null);
         return (
           <div
             key={record._uid}
@@ -62,30 +70,25 @@ export const TypedRelationFieldEditor = ({
             className={styles.relationsList}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {/* biome-ignore lint/a11y/useSemanticElements: nested entity link can't sit inside a <button> */}
-              <div
+              <button
+                type="button"
                 className={styles.relation}
-                role="button"
-                tabIndex={0}
-                style={{ flex: 1 }}
-                onClick={() => !removed && setExpandedUid(expanded ? null : record._uid)}
-                onKeyDown={event => {
-                  if ((event.key === 'Enter' || event.key === ' ') && !removed) {
-                    event.preventDefault();
-                    setExpandedUid(expanded ? null : record._uid);
-                  }
-                }}
+                style={{ flex: 1, textAlign: 'left' }}
+                disabled={removed}
+                onClick={() => setExpandedUid(expanded ? null : record._uid)}
               >
                 <span className={styles.relationLead}>
-                  <EntityNavigationLink
-                    publicId={otherEndpointInfo.id}
-                    className={styles.relationName}
-                    onClick={event => event.stopPropagation()}
-                  >
-                    {otherEndpointInfo.name}
-                  </EntityNavigationLink>
+                  {/* Plain text, not a navigation link — in edit mode a click here should expand
+                      this row's fields, not carry the user away to the other entity. */}
+                  <span className={styles.relationName}>{otherEndpointInfo.name}</span>
+                  {fieldSummaries.length > 0 && (
+                    <>
+                      <TbChevronRight size={10} className={sharedStyles.dim} />
+                      <span className={sharedStyles.dim}>{fieldSummaries.join(' · ')}</span>
+                    </>
+                  )}
                 </span>
-              </div>
+              </button>
               {!disabled && (
                 <Button variant="ghost" onClick={() => onToggleRemove(record._uid)}>
                   {removed ? 'Undo' : <TbX size={12} />}

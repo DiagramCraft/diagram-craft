@@ -8,7 +8,7 @@ import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import styles from './EntityRelationsTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 
-const KEY_FIELD_COUNT = 3;
+export const KEY_FIELD_COUNT = 3;
 
 export const formatRelationFieldValue = (field: RelationField, value: unknown): string | null => {
   if (value === undefined || value === null || value === '') return null;
