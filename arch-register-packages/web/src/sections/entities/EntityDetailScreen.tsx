@@ -507,7 +507,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
   const relationCount = outgoing.length + incoming.length;
-  const typedRelationCount = typedRelations.outgoing.length + typedRelations.incoming.length;
 
   const {
     editing,
@@ -761,7 +760,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           tab={tab}
           setTab={setTab}
           relationCount={relationCount}
-          typedRelationCount={typedRelationCount}
           canViewAudit={canViewAudit}
           overviewProps={{
             workspaceSlug,
@@ -788,16 +786,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             relationSchemas
           }}
           relationsProps={{ outgoing, incoming, schemas }}
-          typedRelationsProps={{
-            workspaceId,
-            entityId: entity?._uid ?? entityId,
-            entityName: entity?._name ?? '',
-            entitySchemaId: entity?._schema.id ?? '',
-            canEdit: entity?.canEdit ?? false,
-            outgoing: typedRelations.outgoing,
-            incoming: typedRelations.incoming,
-            relationSchemas
-          }}
           changeHistoryProps={{
             workspaceId,
             entityId,
