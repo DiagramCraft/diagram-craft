@@ -16,6 +16,7 @@ import { updateEntityWithAudit } from './entityMutations';
 import { entityRequiresApproval } from './entityChangeOperations';
 import {
   assertVersionCanBeRestored,
+  assertVersionDataCanBeRestored,
   redactVersionState,
   serializeEntityVersion
 } from './entityVersionOperations';
@@ -31,6 +32,28 @@ const entityVersionRouter = implement(entityVersionContract)
   .use(orpcErrorMiddleware)
   .use(workspaceScoped)
   .use(entityScoped);
+
+const getVersionSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  version: { state: Record<string, unknown>; created_at: Date },
+  fallbackSchemaId?: string
+) => {
+  const schemaId = String(version.state['schema_id'] ?? fallbackSchemaId ?? '');
+  const [versionSchema, fallbackSchema, schemaVersions] = await Promise.all([
+    schemaId ? db.catalog.getSchema(workspace, schemaId) : Promise.resolve(null),
+    fallbackSchemaId && fallbackSchemaId !== schemaId
+      ? db.catalog.getSchema(workspace, fallbackSchemaId)
+      : Promise.resolve(null),
+    schemaId ? db.catalog.listSchemaVersions(workspace, schemaId) : Promise.resolve([])
+  ]);
+  const schema = versionSchema ?? fallbackSchema;
+  const historicalSchema =
+    [...schemaVersions]
+      .filter(schemaVersion => schemaVersion.created_at <= version.created_at)
+      .sort((left, right) => right.created_at.getTime() - left.created_at.getTime())[0] ?? null;
+  return { schema, historicalSchema };
+};
 
 const entityVersionHandlers = {
   list: entityVersionRouter.entityVersions.list.handler(async ({ input, context }) => {
@@ -125,7 +148,13 @@ const entityVersionHandlers = {
       input.body.commitMessage ?? null
     );
     orpcAssert.present(updated, { code: 'NOT_FOUND', message: 'Version not found' });
-    return serializeEntityVersion(updated);
+    const { schema, historicalSchema } = await getVersionSchemas(
+      context.db,
+      workspace,
+      updated,
+      entity.schema_id
+    );
+    return serializeEntityVersion(redactVersionState(updated, authCtx, schema, historicalSchema));
   }),
 
   restore: entityVersionRouter.entityVersions.restore.handler(async ({ input, context }) => {
@@ -157,6 +186,25 @@ const entityVersionHandlers = {
     orpcAssert.present(version, { code: 'NOT_FOUND', message: 'Version not found' });
     assertVersionCanBeRestored(version, entity.id);
 
+    const { schema: versionSchema, historicalSchema } = await getVersionSchemas(
+      context.db,
+      workspace,
+      version,
+      entity.schema_id
+    );
+    const restoredData = version.state['data'];
+    httpAssert.true(restoredData != null && typeof restoredData === 'object', {
+      status: 400,
+      message: 'Entity version does not contain a valid data state'
+    });
+    assertVersionDataCanBeRestored(
+      authCtx,
+      schema,
+      historicalSchema,
+      entity.data,
+      restoredData as Record<string, unknown>
+    );
+
     const auditUser = context.event.context.user;
     await updateEntityWithAudit(context.db, {
       workspace,
@@ -180,7 +228,9 @@ const entityVersionHandlers = {
       }
     });
 
-    return serializeEntityVersion(version);
+    return serializeEntityVersion(
+      redactVersionState(version, authCtx, versionSchema, historicalSchema)
+    );
   })
 };
 

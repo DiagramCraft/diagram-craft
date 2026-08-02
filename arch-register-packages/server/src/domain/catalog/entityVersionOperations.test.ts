@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { buildAuthorizationContext } from '@arch-register/permissions';
-import { redactVersionState } from './entityVersionOperations';
+import {
+  assertVersionDataCanBeRestored,
+  changedVersionDataFieldIds,
+  redactVersionState
+} from './entityVersionOperations';
 import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import type { EntityVersionDbResult } from './db/catalogDatabase';
 
@@ -73,5 +77,91 @@ describe('redactVersionState', () => {
     const noDataVersion = { ...version, state: { name: 'Entity' } };
     const redacted = redactVersionState(noDataVersion, authCtxWithNoTeams(), schema);
     expect(redacted).toBe(noDataVersion);
+  });
+
+  it('redacts historical-only fields using the historical schema', () => {
+    const historicalSchema: FieldGroupSchemaShape = {
+      fields: [
+        {
+          id: 'removed_secret',
+          name: 'Removed secret',
+          requirementLevel: null,
+          type: 'text',
+          groupId: 'restricted'
+        } as never
+      ],
+      groups: schema.groups
+    };
+    const historicalVersion = {
+      ...version,
+      state: { ...version.state, data: { removed_secret: 'old-secret' } }
+    };
+
+    expect(
+      redactVersionState(historicalVersion, authCtxWithNoTeams(), schema, historicalSchema).state
+        .data
+    ).toEqual({});
+  });
+
+  it('omits fields unknown to both schemas for authenticated callers', () => {
+    const unknownVersion = {
+      ...version,
+      state: { ...version.state, data: { unknown: 'secret' } }
+    };
+
+    expect(redactVersionState(unknownVersion, authCtxWithNoTeams(), schema).state.data).toEqual({});
+  });
+});
+
+describe('changedVersionDataFieldIds', () => {
+  it('includes added, removed, and changed values', () => {
+    expect(
+      changedVersionDataFieldIds(
+        { unchanged: 'same', changed: 'before', removed: 'value' },
+        { unchanged: 'same', changed: 'after', added: 'value' }
+      )
+    ).toEqual(expect.arrayContaining(['changed', 'removed', 'added']));
+  });
+});
+
+describe('assertVersionDataCanBeRestored', () => {
+  it('rejects a changed restricted field without edit access', () => {
+    expect(() =>
+      assertVersionDataCanBeRestored(
+        authCtxWithNoTeams(),
+        schema,
+        null,
+        { secret: 'current' },
+        { secret: 'historical' }
+      )
+    ).toThrow();
+  });
+
+  it('rejects changed fields unknown to current and historical schemas', () => {
+    expect(() =>
+      assertVersionDataCanBeRestored(
+        authCtxWithNoTeams(),
+        schema,
+        null,
+        {},
+        { obsolete_secret: 'historical' }
+      )
+    ).toThrow();
+  });
+
+  it('allows unchanged restricted fields for a view-only caller', () => {
+    const viewer = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-restricted', role: 'team_reviewer' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(() =>
+      assertVersionDataCanBeRestored(viewer, schema, null, { secret: 'same' }, { secret: 'same' })
+    ).not.toThrow();
   });
 });
