@@ -3,7 +3,10 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AutomationRuleInput } from '@arch-register/api-types/automationRuleContract';
 import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
-import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import {
+  isFieldViewRestricted,
+  requireNoRestrictedFieldWrites
+} from '../auth/fieldGroupAccessControl';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type { AutomationRuleDbResult } from './db/automationRuleDatabase';
@@ -40,6 +43,11 @@ const validateInput = async (
   authCtx: WorkspaceAuthorizationContext
 ) => {
   let schemas: SchemaDbResult[] = [];
+  const hasAccessSensitiveAction = input.actions.some(
+    action =>
+      action.kind === 'set_field_value' ||
+      (action.kind === 'send_notification' && action.recipient.kind === 'reference_owner')
+  );
   if (input.schema_id != null) {
     const schema = await db.catalog.getSchema(workspace, input.schema_id);
     httpAssert.true(schema != null, {
@@ -47,9 +55,9 @@ const validateInput = async (
       message: 'Automation rule references an entity type from another workspace'
     });
     if (schema) schemas = [schema];
-  } else if (input.conditions.length > 0) {
-    // Rule isn't scoped to a single schema, so a condition field could resolve against any
-    // schema in the workspace — check restriction against all of them.
+  } else if (input.conditions.length > 0 || hasAccessSensitiveAction) {
+    // Rule isn't scoped to a single schema, so a condition or action field could resolve against
+    // any schema in the workspace — check restriction against all of them.
     schemas = await db.catalog.listSchemas(workspace);
   }
   httpAssert.true(input.actions.length > 0, {
@@ -66,6 +74,28 @@ const validateInput = async (
       statusText: 'Forbidden',
       message: `Automation rule condition references a restricted field: ${condition.field}`
     });
+  }
+
+  for (const action of input.actions) {
+    if (action.kind === 'set_field_value') {
+      for (const schema of schemas) {
+        requireNoRestrictedFieldWrites(
+          authCtx,
+          schema,
+          [action.field],
+          `Automation rule action cannot edit a restricted field: ${action.field}`
+        );
+      }
+    } else if (action.kind === 'send_notification') {
+      if (action.recipient.kind !== 'reference_owner') continue;
+      const field = action.recipient.field;
+      const restricted = schemas.some(schema => isFieldViewRestricted(authCtx, schema, field));
+      httpAssert.true(!restricted, {
+        status: 403,
+        statusText: 'Forbidden',
+        message: `Automation rule notification recipient references a restricted field: ${field}`
+      });
+    }
   }
 };
 

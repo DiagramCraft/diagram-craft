@@ -135,6 +135,91 @@ describe('createAutomationRule', () => {
     const rule = await createAutomationRule(db, 'ws-1', input, eventFor(peopleManagerRole));
     expect(rule.name).toBe('Flag high earners');
   });
+
+  it('rejects a set_field_value action targeting a field the author cannot edit', async () => {
+    const db = makeDb();
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [],
+      actions: [{ kind: 'set_field_value', field: 'salary', value: 90000 }]
+    };
+
+    await expect(
+      createAutomationRule(db, 'ws-1', input, eventFor(peopleManagerRole))
+    ).rejects.toThrow('restricted field');
+    expect(db.automationRule.createRule).not.toHaveBeenCalled();
+  });
+
+  it('rejects a reference_owner notification targeting a field the author cannot view', async () => {
+    const db = makeDb();
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [],
+      actions: [
+        {
+          kind: 'send_notification',
+          recipient: { kind: 'reference_owner', field: 'salary' },
+          message: 'Review this entity'
+        }
+      ]
+    };
+
+    await expect(
+      createAutomationRule(db, 'ws-1', input, eventFor(peopleManagerRole))
+    ).rejects.toThrow('restricted field');
+    expect(db.automationRule.createRule).not.toHaveBeenCalled();
+  });
+
+  it('checks access-sensitive actions on every schema for an unscoped rule', async () => {
+    const db = makeDb();
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      schema_id: null,
+      conditions: [],
+      actions: [{ kind: 'set_field_value', field: 'salary', value: 90000 }]
+    };
+
+    await expect(
+      createAutomationRule(db, 'ws-1', input, eventFor(peopleManagerRole))
+    ).rejects.toThrow('restricted field');
+    expect(db.catalog.listSchemas).toHaveBeenCalledWith('ws-1');
+  });
+
+  it('allows a set_field_value action with edit access', async () => {
+    const db = makeDb();
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [],
+      actions: [{ kind: 'set_field_value', field: 'salary', value: 90000 }]
+    };
+    const event = eventFor(peopleManagerRole, [{ teamId: 'team-restricted', role: 'team_editor' }]);
+
+    await expect(createAutomationRule(db, 'ws-1', input, event)).resolves.toMatchObject({
+      name: 'Flag high earners'
+    });
+  });
+
+  it('allows a reference_owner notification with view access', async () => {
+    const db = makeDb();
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [],
+      actions: [
+        {
+          kind: 'send_notification',
+          recipient: { kind: 'reference_owner', field: 'salary' },
+          message: 'Review this entity'
+        }
+      ]
+    };
+    const event = eventFor(peopleManagerRole, [
+      { teamId: 'team-restricted', role: 'team_reviewer' }
+    ]);
+
+    await expect(createAutomationRule(db, 'ws-1', input, event)).resolves.toMatchObject({
+      name: 'Flag high earners'
+    });
+  });
 });
 
 describe('updateAutomationRule', () => {
@@ -156,6 +241,20 @@ describe('updateAutomationRule', () => {
     const db = makeDb(existingRule);
     await expect(
       updateAutomationRule(db, 'ws-1', 'rule-1', baseInput, eventFor(peopleManagerRole))
+    ).rejects.toThrow('restricted field');
+    expect(db.automationRule.updateRule).not.toHaveBeenCalled();
+  });
+
+  it('rejects adding a restricted-field action to an existing rule', async () => {
+    const db = makeDb(existingRule);
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [],
+      actions: [{ kind: 'set_field_value', field: 'salary', value: 90000 }]
+    };
+
+    await expect(
+      updateAutomationRule(db, 'ws-1', 'rule-1', input, eventFor(peopleManagerRole))
     ).rejects.toThrow('restricted field');
     expect(db.automationRule.updateRule).not.toHaveBeenCalled();
   });
