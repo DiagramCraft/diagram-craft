@@ -110,11 +110,28 @@ const restrictedSchema = {
       requirementLevel: null,
       type: 'text',
       groupId: 'restricted'
+    },
+    {
+      id: 'relatedSecret',
+      name: 'Related secret',
+      requirementLevel: null,
+      type: 'reference',
+      schemaId: 'schema-1',
+      minCount: 0,
+      maxCount: 1,
+      groupId: 'restricted'
     }
   ],
   groups: [
     { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
   ]
+} as unknown as SchemaDbResult;
+
+const unrestrictedSecretSchema = {
+  ...restrictedSchema,
+  id: 'schema-2',
+  fields: [{ id: 'secret', name: 'Secret', requirementLevel: null, type: 'text' }],
+  groups: []
 } as unknown as SchemaDbResult;
 
 const db = {
@@ -383,6 +400,121 @@ describe('diffEntityLandscapes', () => {
   describe('field-group redaction', () => {
     beforeEach(() => {
       vi.mocked(db.catalog.listSchemas).mockResolvedValue([restrictedSchema] as never);
+    });
+
+    it.each(['equals', 'not_equals', 'empty', 'not_empty'] as const)(
+      'rejects unauthorized %s conditions before evaluating entity data',
+      async op => {
+        vi.mocked(db.catalog.listSchemas).mockResolvedValue([restrictedSchema] as never);
+
+        await expect(
+          diffEntityLandscapes(
+            db,
+            'ws-1',
+            authCtxWithTeamRoles({}),
+            state({ conditions: [{ fieldId: 'secret', op, value: 'guess' }] }),
+            state({})
+          )
+        ).rejects.toThrow("Unknown field 'secret'");
+
+        expect(reconstructEntitiesAsOf).not.toHaveBeenCalled();
+      }
+    );
+
+    it('rejects unauthorized conditions on restricted relation fields', async () => {
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([restrictedSchema] as never);
+
+      await expect(
+        diffEntityLandscapes(
+          db,
+          'ws-1',
+          authCtxWithTeamRoles({}),
+          state({
+            conditions: [{ fieldId: 'relatedSecret', op: 'not_empty', value: '' }]
+          }),
+          state({})
+        )
+      ).rejects.toThrow("Unknown field 'relatedSecret'");
+    });
+
+    it('validates assessment conditions before splitting them from entity conditions', async () => {
+      await expect(
+        diffEntityLandscapes(
+          db,
+          'ws-1',
+          authCtxWithTeamRoles({}),
+          state({ conditions: [{ fieldId: '_assessment:review', op: 'equals', value: 'yes' }] }),
+          state({})
+        )
+      ).rejects.toThrow('assessmentId');
+
+      expect(reconstructEntitiesAsOf).not.toHaveBeenCalled();
+    });
+
+    it('allows a caller with view access to filter on a restricted field', async () => {
+      const from = [makeEntity('e1', { data: { secret: 'before' } })];
+      const to = [makeEntity('e1', { data: { secret: 'after' } })];
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] }),
+        state({ conditions: [{ fieldId: 'secret', op: 'equals', value: 'before' }] }),
+        state({ conditions: [{ fieldId: 'secret', op: 'equals', value: 'after' }] })
+      );
+
+      expect(result.changed).toHaveLength(1);
+    });
+
+    it('rejects an entity editor without field-group access', async () => {
+      const entityEditor = buildAuthorizationContext({
+        userId: 'user-1',
+        globalRoles: [],
+        workspaceRole: 'editor',
+        schemas: [],
+        entities: [],
+        grants: []
+      });
+
+      await expect(
+        diffEntityLandscapes(
+          db,
+          'ws-1',
+          entityEditor,
+          state({ conditions: [{ fieldId: 'secret', op: 'equals', value: 'guess' }] }),
+          state({})
+        )
+      ).rejects.toThrow("Unknown field 'secret'");
+    });
+
+    it('does not evaluate a restricted field on a schema that only collides by field id', async () => {
+      const restrictedEntity = makeEntity('restricted', {
+        data: { secret: 'match' },
+        schema_id: 'schema-1'
+      });
+      const unrestrictedEntity = makeEntity('unrestricted', {
+        data: { secret: 'match' },
+        schema_id: 'schema-2',
+        schema_name: 'Other'
+      });
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([
+        restrictedSchema,
+        unrestrictedSecretSchema
+      ] as never);
+      vi.mocked(reconstructEntitiesAsOf)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([restrictedEntity, unrestrictedEntity]);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({}),
+        state({ conditions: [{ fieldId: 'secret', op: 'equals', value: 'match' }] })
+      );
+
+      expect(result.added.map(entity => entity._uid)).toEqual(['unrestricted']);
     });
 
     it('keeps a restricted-only data change in `changed` with an empty diff', async () => {
