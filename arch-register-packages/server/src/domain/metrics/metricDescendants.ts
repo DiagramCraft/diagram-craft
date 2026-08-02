@@ -1,5 +1,7 @@
 import { decodeRefs } from '../../types';
+import type { AuthorizationContext } from '@arch-register/permissions';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 
 // Defensive cap on traversal size - containment should form a tree/DAG, but malformed data
 // (a stray self-reference) shouldn't be able to hang the server.
@@ -8,15 +10,19 @@ const MAX_DESCENDANTS = 5000;
 /**
  * Builds a `parentId -> childId[]` index from containment fields across `schemas`, over
  * `entities`. Mirrors `containmentFieldsBySchema`/edge construction in `getEntityTree`, just
- * inverted (child -> parent there, parent -> children here).
+ * inverted (child -> parent there, parent -> children here). Containment fields hidden by the
+ * caller's field-group permissions are excluded from the index.
  */
 export const buildContainmentChildrenIndex = (
   schemas: SchemaDbResult[],
-  entities: EntityDbResult[]
+  entities: EntityDbResult[],
+  authCtx: AuthorizationContext | null = null
 ): Map<string, string[]> => {
   const containmentFieldsBySchema = new Map<string, string[]>();
   for (const schema of schemas) {
-    const cFields = schema.fields.filter(f => f.type === 'containment').map(f => f.id);
+    const cFields = schema.fields
+      .filter(f => f.type === 'containment' && !isFieldViewRestricted(authCtx, schema, f.id))
+      .map(f => f.id);
     if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);
   }
 

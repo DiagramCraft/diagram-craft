@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
 
@@ -109,5 +110,68 @@ describe('buildContainmentChildrenIndex / collectDescendantIds', () => {
     const descendants = collectDescendantIds('c1', index);
     expect(new Set(descendants).size).toBe(descendants.length);
     expect(descendants.length).toBeLessThan(10);
+  });
+
+  it('excludes containment edges in field groups the caller cannot view', () => {
+    const restrictedCapabilitySchema: SchemaDbResult = {
+      ...capabilitySchema,
+      fields: capabilitySchema.fields.map(field => ({ ...field, groupId: 'restricted' })),
+      groups: [
+        {
+          id: 'restricted',
+          name: 'Restricted',
+          accessControl: { teamIds: ['team-restricted'] }
+        }
+      ]
+    };
+    const entities = [makeEntity('d1', 'domain', null), makeEntity('c1', 'capability', 'd1')];
+    const noAccessAuthCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const index = buildContainmentChildrenIndex(
+      [domainSchema, restrictedCapabilitySchema],
+      entities,
+      noAccessAuthCtx
+    );
+
+    expect(collectDescendantIds('d1', index)).toEqual([]);
+  });
+
+  it('includes restricted containment edges for callers with group access', () => {
+    const restrictedCapabilitySchema: SchemaDbResult = {
+      ...capabilitySchema,
+      fields: capabilitySchema.fields.map(field => ({ ...field, groupId: 'restricted' })),
+      groups: [
+        {
+          id: 'restricted',
+          name: 'Restricted',
+          accessControl: { teamIds: ['team-restricted'] }
+        }
+      ]
+    };
+    const entities = [makeEntity('d1', 'domain', null), makeEntity('c1', 'capability', 'd1')];
+    const viewerAuthCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-restricted', role: 'team_reviewer' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const index = buildContainmentChildrenIndex(
+      [domainSchema, restrictedCapabilitySchema],
+      entities,
+      viewerAuthCtx
+    );
+
+    expect(collectDescendantIds('d1', index)).toEqual(['c1']);
   });
 });

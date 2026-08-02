@@ -781,6 +781,68 @@ describe('computeBoxMetrics - restricted field groups', () => {
     );
     expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
   });
+
+  it('does not count entities reachable only through a restricted containment field', () => {
+    const restrictedContainmentSchema: SchemaDbResult = {
+      ...serviceSchema,
+      fields: serviceSchema.fields.map(field =>
+        field.id === 'parent' ? { ...field, groupId: 'restricted' } : field
+      ),
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', score: 10 } })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      numericMetric,
+      entities,
+      [domainSchema, restrictedContainmentSchema],
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      null,
+      noAccessAuthCtx
+    );
+
+    expect(result.results[0]).toMatchObject({
+      value: null,
+      sourceCount: 0,
+      populatedCount: 0
+    });
+  });
+
+  it('counts restricted containment descendants when the caller has group access', () => {
+    const restrictedContainmentSchema: SchemaDbResult = {
+      ...serviceSchema,
+      fields: serviceSchema.fields.map(field =>
+        field.id === 'parent' ? { ...field, groupId: 'restricted' } : field
+      ),
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', score: 10 } })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      numericMetric,
+      entities,
+      [domainSchema, restrictedContainmentSchema],
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      null,
+      viewerAuthCtx
+    );
+
+    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
+  });
 });
 
 describe('getBoxMetrics', () => {
