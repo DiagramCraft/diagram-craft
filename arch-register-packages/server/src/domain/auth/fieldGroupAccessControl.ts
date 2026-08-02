@@ -43,6 +43,17 @@ export const isFieldViewRestricted = (
   return groupAccessByFieldId(authCtx, schema).get(fieldId) === 'none';
 };
 
+/** True when the caller cannot edit the field's group. */
+export const isFieldEditRestricted = (
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null | undefined,
+  fieldId: string
+): boolean => {
+  if (!authCtx || !schema) return false;
+  const access = groupAccessByFieldId(authCtx, schema).get(fieldId);
+  return access === 'view' || access === 'none';
+};
+
 /**
  * Ids of fields whose group the caller cannot view. Empty when authCtx or schema is absent
  * (internal/system callers bypass field-group restriction, same as filterRestrictedFieldGroups

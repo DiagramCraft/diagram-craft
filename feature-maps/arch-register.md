@@ -484,9 +484,10 @@
           automation rules that match an entity trigger (creation, deletion, a field change, or a lifecycle transition)
           and an optional set of field conditions, then run one or more configured actions — recording an audit note,
           sending an in-app notification, or setting a field value on the triggering entity. Field conditions and
-          field-targeting actions respect the rule author's field-group access. Rules are matched synchronously on
-          every entity mutation; their actions execute asynchronously through the job queue, and administrators can
-          inspect recent rule runs, including failures, from workspace settings.
+          field-targeting actions respect the rule author's current field-group access. Rules are matched synchronously on
+          every entity mutation and rechecked before asynchronous actions execute, so access revocation or field reassignment
+          cannot leave an existing rule with restricted access. Administrators can inspect recent rule runs, including failures,
+          from workspace settings.
 
         - @id:ar.integrations.external-content @status:experimental Configured external content providers can be mounted
           and synchronized into supported workspace content workflows.

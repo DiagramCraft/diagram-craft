@@ -27,6 +27,7 @@ vi.mock('../auth/authorization', () => ({
 const rule: AutomationRuleDbResult = {
   id: 'rule-1',
   workspace: 'ws-1',
+  created_by: 'user-1',
   name: 'Flag deprecated',
   description: null,
   schema_id: null,
@@ -49,8 +50,7 @@ const event: AutomationRuleEvent = {
   schemaId: 'schema-1',
   actor: { id: 'user-1', displayName: 'Ada' },
   occurredAt: new Date('2026-07-15T10:00:00.000Z').toISOString(),
-  changes: { old: { _lifecycle: 'Production' }, new: { _lifecycle: 'Deprecated' } },
-  fieldValues: { _lifecycle: 'Deprecated' }
+  changes: { old: { _lifecycle: 'Production' }, new: { _lifecycle: 'Deprecated' } }
 };
 
 describe('create_audit_note action', () => {

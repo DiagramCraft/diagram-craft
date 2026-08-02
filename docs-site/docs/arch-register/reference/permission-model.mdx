@@ -22,6 +22,14 @@ This page summarizes the implemented permission model without repeating the full
 - entity- and workspace-scoped content requires `content.view` for reads and `content.edit` for mutations
 - project-scoped content continues to use project authorization rather than the `content.*` capabilities
 
+## Automation rule authorization
+
+Automation rules run as the user who created the rule, not as a trusted system principal. The
+owner's current team memberships, workspace role, and field-group access are checked when an entity
+event is matched and again immediately before queued actions execute. Removing access or moving a
+field into a restricted group therefore prevents an existing rule from reading that field, writing
+it, or using it to resolve notification recipients.
+
 ## Related Pages
 
 - [Roles and Permissions](../admin/roles-permissions)

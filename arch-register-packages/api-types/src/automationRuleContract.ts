@@ -50,6 +50,7 @@ export const automationActionSchema = z.discriminatedUnion('kind', [
 const automationRuleSchema = z.object({
   id: z.string(),
   workspace: z.string(),
+  created_by: z.string().nullable(),
   name: z.string(),
   description: z.string().nullable(),
   schema_id: z.string().nullable(),
