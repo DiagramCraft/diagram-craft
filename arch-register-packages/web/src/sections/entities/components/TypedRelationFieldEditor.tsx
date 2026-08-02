@@ -49,7 +49,10 @@ export const TypedRelationFieldEditor = ({
   const activeFields = (relationSchema?.fields ?? []).filter(f => !f.archived);
 
   return (
-    <div>
+    // The parent .propValue is a flex row (`align-items: center`, no stretch), so without an
+    // explicit width this whole editor — and each record's card border below — shrinks to fit
+    // its content instead of filling the available row width.
+    <div style={{ width: '100%' }}>
       {existingRecords.map(record => {
         const removed = fieldState.remove.has(record._uid);
         const otherEndpointInfo = direction === 'outgoing' ? record._out : record._in;
