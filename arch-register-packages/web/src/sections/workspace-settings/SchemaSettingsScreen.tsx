@@ -383,6 +383,9 @@ export const SchemaSettingsScreen = () => {
               resultType: 'text' as const
             };
           }
+          case 'typedRelation':
+            // Not yet offered via FIELD_TYPES; schema authoring UI for this type lands separately.
+            return { ...base, type: 'typedRelation', relationSchemaId: '', direction: 'out' };
         }
       })
     );

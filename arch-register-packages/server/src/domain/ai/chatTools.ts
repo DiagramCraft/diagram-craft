@@ -16,7 +16,7 @@ import {
 } from '../catalog/entityMutations';
 import { Entity } from '../catalog/db/catalogDatabase';
 import { equalEntityValue } from '../catalog/entityDiff';
-import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { SchemaField, isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
@@ -331,11 +331,7 @@ const getDataPreview = (data: Entity['data'], matchedFields: string[]) => {
   return Object.fromEntries(fieldIds.map(fieldId => [fieldId, data[fieldId] ?? null]));
 };
 
-const relationFields = (fields: SchemaField[]) =>
-  fields.filter(
-    (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-      field.type === 'reference' || field.type === 'containment'
-  );
+const relationFields = (fields: SchemaField[]) => fields.filter(isReferenceOrContainmentField);
 
 const summarizeRelationTarget = (entity: Entity, schemaName: string | undefined) => ({
   id: entity.id,

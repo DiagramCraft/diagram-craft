@@ -13,7 +13,10 @@ import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
-import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import {
+  EntitySchema,
+  isReferenceOrContainmentField
+} from '@arch-register/api-types/schemaContract';
 import type { FieldGroupAccess } from '@arch-register/permissions';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -124,10 +127,7 @@ export const AddEntityDialog = ({
     return [
       ...new Set(
         selectedSchema.fields
-          .filter(
-            (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-              field.type === 'reference' || field.type === 'containment'
-          )
+          .filter(isReferenceOrContainmentField)
           .map(field => field.schemaId)
           .filter(Boolean)
       )
@@ -152,10 +152,7 @@ export const AddEntityDialog = ({
 
   useEffect(() => {
     if (!templateId || !selectedSchema || entitiesQueries.some(query => query.isPending)) return;
-    const relationshipFields = selectedSchema.fields.filter(
-      (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-        field.type === 'reference' || field.type === 'containment'
-    );
+    const relationshipFields = selectedSchema.fields.filter(isReferenceOrContainmentField);
     const template = selectedSchema.templates.find(item => item.id === templateId);
     const removedLabels = relationshipFields.flatMap(field => {
       const value = template?.values.fields[field.id];

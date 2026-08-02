@@ -4,7 +4,11 @@ import {
   type PathStep,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
-import type { ReferenceField, SchemaField } from '@arch-register/api-types/schemaContract';
+import {
+  isReferenceOrContainmentField,
+  type ReferenceField,
+  type SchemaField
+} from '@arch-register/api-types/schemaContract';
 import {
   ASSESSMENT_PRESENCE_FIELD_ID,
   ASSESSMENT_FIELD_PREFIX
@@ -18,11 +22,6 @@ export type SchemaCatalog = Map<string, SchemaDbResult>;
 export type ValidationError = { path: (string | number)[]; message: string };
 
 export type ValidationResult = { ok: true } | { ok: false; errors: ValidationError[] };
-
-const isRelationField = (
-  field: SchemaField
-): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-  field.type === 'reference' || field.type === 'containment';
 
 // Underscore pseudo-fields matched against the entity row itself, never against schema `fields`.
 const PSEUDO_FIELD_IDS = new Set([
@@ -102,7 +101,7 @@ const validatePathSteps = (
         const field = ownerSchema.fields.find(f => f.id === step.fieldId);
         if (
           !field ||
-          !isRelationField(field) ||
+          !isReferenceOrContainmentField(field) ||
           isFieldViewRestricted(authCtx, ownerSchema, step.fieldId)
         ) {
           errors.push({
@@ -327,5 +326,5 @@ export const validateEntityQueryIR = (
 
 // Re-exported for callers that need to distinguish a reference field from a plain scalar when
 // deciding whether a path step is even legal to take (used by the compiler as well).
-export const isReferenceOrContainmentField = isRelationField;
+export { isReferenceOrContainmentField };
 export type RelationField = ReferenceField | Extract<SchemaField, { type: 'containment' }>;

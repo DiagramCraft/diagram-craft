@@ -55,7 +55,7 @@ import {
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useWorkspacePermissions } from '../../auth/useWorkspacePermissions';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
-import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
 import { EntityOverviewSection } from './components/EntityOverviewSection';
 import { EntityContextSection } from './components/EntityContextSection';
@@ -479,10 +479,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     return [
       ...new Set(
         schema.fields
-          .filter(
-            (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-              field.type === 'reference' || field.type === 'containment'
-          )
+          .filter(isReferenceOrContainmentField)
           .map(field => field.schemaId)
           .filter(Boolean)
       )

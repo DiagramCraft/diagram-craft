@@ -9,7 +9,8 @@ import {
   SchemaField,
   SchemaGroup,
   SchemaVersion,
-  SharedFieldGroupLink
+  SharedFieldGroupLink,
+  isReferenceOrContainmentField
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
@@ -84,7 +85,7 @@ const normalizeTemplateFieldValue = (
     return undefined;
   }
 
-  if (field.type === 'reference' || field.type === 'containment') {
+  if (isReferenceOrContainmentField(field)) {
     httpAssert.true(Array.isArray(value) && value.every(item => typeof item === 'string'), {
       message: `Template value for "${field.name}" must be an array of entity ids`
     });

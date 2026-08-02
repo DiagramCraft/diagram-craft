@@ -1,7 +1,8 @@
-import type {
-  EntitySchema,
-  EntityTemplate,
-  EntityTemplateValues
+import {
+  isReferenceOrContainmentField,
+  type EntitySchema,
+  type EntityTemplate,
+  type EntityTemplateValues
 } from '@arch-register/api-types/schemaContract';
 
 export type EntityFormMeta = {
@@ -54,7 +55,7 @@ export const applyEntityTemplate = ({
       }
     }
 
-    if (field.type === 'reference' || field.type === 'containment') {
+    if (isReferenceOrContainmentField(field)) {
       const available = referenceOptions[field.schemaId];
       if (Array.isArray(value) && available) {
         const validIds = value.filter(id => available.has(id));

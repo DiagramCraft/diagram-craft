@@ -1,5 +1,8 @@
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import {
+  isReferenceOrContainmentField,
+  type EntitySchema
+} from '@arch-register/api-types/schemaContract';
 
 export type EntityEditState = Record<string, unknown>;
 export type EntityUpdateBody = Record<string, unknown>;
@@ -32,10 +35,9 @@ export const createEntityEditState = (
     _tags: (entity._tags ?? []).join(', ')
   };
   for (const field of schema.fields) {
-    state[field.id] =
-      field.type === 'reference' || field.type === 'containment'
-        ? relationIds(entity[field.id])
-        : (entity[field.id] ?? '');
+    state[field.id] = isReferenceOrContainmentField(field)
+      ? relationIds(entity[field.id])
+      : (entity[field.id] ?? '');
   }
   return state;
 };
@@ -67,10 +69,9 @@ export const createEntityUpdateBody = (
 ): EntityUpdateBody => {
   const dataFields: Record<string, unknown> = {};
   for (const field of schema.fields) {
-    dataFields[field.id] =
-      field.type === 'reference' || field.type === 'containment'
-        ? relationIds(editState[field.id])
-        : (editState[field.id] ?? '');
+    dataFields[field.id] = isReferenceOrContainmentField(field)
+      ? relationIds(editState[field.id])
+      : (editState[field.id] ?? '');
   }
   const tags = ((editState._tags as string) ?? '')
     .split(',')

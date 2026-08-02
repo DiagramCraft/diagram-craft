@@ -274,6 +274,9 @@ export const FieldGroupEditorScreen = () => {
               expression: '""',
               resultType: 'text'
             } as SchemaField;
+          case 'typedRelation':
+            // Not yet offered via FIELD_TYPES for shared fieldgroups.
+            return { ...base, type, relationSchemaId: '', direction: 'out' } as SchemaField;
         }
       })
     );

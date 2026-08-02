@@ -27,6 +27,7 @@ import {
   filterRestrictedFieldGroups
 } from '../auth/fieldGroupAccessControl';
 import { equalEntityValue } from './entityDiff';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 
 const checker = new PermissionChecker();
 
@@ -284,7 +285,7 @@ export const importCommit = async (
 
     const resolvedData = { ...entityData };
     for (const field of schema.fields) {
-      if ((field.type === 'reference' || field.type === 'containment') && resolvedData[field.id]) {
+      if (isReferenceOrContainmentField(field) && resolvedData[field.id]) {
         const value = resolvedData[field.id];
         if (typeof value === 'string') {
           const refNames = value

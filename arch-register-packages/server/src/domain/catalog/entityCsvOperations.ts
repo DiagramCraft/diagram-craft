@@ -6,6 +6,7 @@ import { orpcAssert } from '../../utils/orpcAssert';
 import { filterVisibleEntities, requireSchemaRead } from '../auth/authorization';
 import { restrictedFieldIds } from '../auth/fieldGroupAccessControl';
 import { relationFields } from './dataHelpers';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { listAllCatalogEntities } from './entityLoader';
 import { listEntities, type EntityQueryOptions } from './entityQueryOperations';
 
@@ -91,7 +92,7 @@ export const exportEntitiesCsv = async (
     if (schema) {
       for (const field of visibleFields) {
         const value = entity[field.id];
-        if (field.type === 'reference' || field.type === 'containment') {
+        if (isReferenceOrContainmentField(field)) {
           row[field.name] = formatArrayForCsv(
             decodeRefs(value).map(id => referenceLookup.get(id) ?? id)
           );

@@ -18,6 +18,7 @@ import { AddEntityDialog } from '../../../dialogs/AddEntityDialog';
 import { createEntityEditState, type EntityEditState } from '../../../lib/entityEditState';
 import { buildProposedState } from '../../../lib/entityProposedStateBuilder';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { isRelationLikeField } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
@@ -49,8 +50,7 @@ const draftKey = (draftId: string) => `draft:${draftId}`;
 const isDraftKey = (key: string) => key.startsWith('draft:');
 const draftIdFromKey = (key: string) => key.slice('draft:'.length);
 
-const isReferenceField = (f: EntitySchema['fields'][number]) =>
-  f.type === 'reference' || f.type === 'containment';
+const isReferenceField = (f: EntitySchema['fields'][number]) => isRelationLikeField(f);
 
 const normalize = (value: unknown): string => {
   if (value == null) return '';

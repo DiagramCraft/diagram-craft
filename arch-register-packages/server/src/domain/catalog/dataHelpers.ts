@@ -6,7 +6,11 @@ import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalo
 import type { EntityDbResult } from './db/catalogDatabase';
 import { handleDbError, slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
-import { ContainmentField, SchemaField } from '@arch-register/api-types/schemaContract';
+import {
+  ContainmentField,
+  SchemaField,
+  isReferenceOrContainmentField
+} from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
@@ -196,11 +200,7 @@ export type EntityMutationPayload = {
   fields: Record<string, unknown>;
 };
 
-export const relationFields = (fields: SchemaField[]) =>
-  fields.filter(
-    (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-      field.type === 'reference' || field.type === 'containment'
-  );
+export const relationFields = (fields: SchemaField[]) => fields.filter(isReferenceOrContainmentField);
 
 const normalizeRelationIds = (
   value: unknown,

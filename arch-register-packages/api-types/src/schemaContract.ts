@@ -85,6 +85,14 @@ const containmentFieldSchema = baseFieldSchema.extend({
   maxCount: z.literal(1).describe('Maximum count (always 1 for containment)')
 });
 
+const typedRelationFieldSchema = baseFieldSchema.extend({
+  type: z.literal('typedRelation').describe('First-class typed relation to other entities'),
+  relationSchemaId: z.string().describe('Relation schema identifier this field surfaces'),
+  direction: z
+    .enum(['in', 'out'])
+    .describe('Which endpoint of the relation schema this entity schema occupies')
+});
+
 const derivedResultTypeSchema = z.enum(['text', 'number', 'select', 'boolean', 'rating']);
 
 const derivedFieldBaseSchema = baseFieldSchema
@@ -129,6 +137,7 @@ export const schemaFieldInputSchema = z
     selectFieldInputSchema,
     referenceFieldSchema,
     containmentFieldSchema,
+    typedRelationFieldSchema,
     derivedFieldInputSchema
   ])
   .superRefine((field, ctx) => {
@@ -170,6 +179,7 @@ export const schemaFieldResponseSchema = z
     selectFieldResponseSchema,
     referenceFieldSchema,
     containmentFieldSchema,
+    typedRelationFieldSchema,
     derivedFieldResponseSchema
   ])
   .superRefine((field, ctx) => {
@@ -443,6 +453,18 @@ export type SchemaField = z.infer<typeof schemaFieldInputSchema>;
 export type ApiSelectField = z.infer<typeof selectFieldResponseSchema>;
 export type ReferenceField = Extract<SchemaField, { type: 'reference' }>;
 export type ContainmentField = Extract<SchemaField, { type: 'containment' }>;
+export type TypedRelationField = Extract<SchemaField, { type: 'typedRelation' }>;
+
+export const isReferenceOrContainmentField = (
+  field: SchemaField
+): field is ReferenceField | ContainmentField =>
+  field.type === 'reference' || field.type === 'containment';
+
+export const isTypedRelationField = (field: SchemaField): field is TypedRelationField =>
+  field.type === 'typedRelation';
+
+export const isRelationLikeField = (field: SchemaField): boolean =>
+  isReferenceOrContainmentField(field) || isTypedRelationField(field);
 
 // ── Entity Schema ─────────────────────────────────────────────
 

@@ -8,6 +8,7 @@ import type {
   DefinitionImportSource
 } from '@arch-register/api-types/workspaceContract';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import type { DocumentAiAction, DocumentField } from '@arch-register/api-types/documentContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -308,7 +309,7 @@ const buildPlan = async (
     }
     resolvedSchemaIds.add(schemaId);
     for (const field of schema.fields) {
-      if (field.type === 'reference' || field.type === 'containment') {
+      if (isReferenceOrContainmentField(field)) {
         if (!schemaById.has(field.schemaId)) {
           errors.push(`Schema '${schema.name}' references missing schema '${field.schemaId}'`);
         } else {
@@ -585,7 +586,7 @@ export const executeDefinitionImport = async (
 
         for (const schema of plan.schemas) {
           const fields = schema.fields.map(field => {
-            if (field.type === 'reference' || field.type === 'containment') {
+            if (isReferenceOrContainmentField(field)) {
               return { ...field, schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId };
             }
             if (field.type === 'select') {

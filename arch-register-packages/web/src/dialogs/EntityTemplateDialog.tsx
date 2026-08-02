@@ -6,10 +6,10 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbAdjustments, TbInfoCircle } from 'react-icons/tb';
-import type {
-  EntitySchema,
-  EntityTemplate,
-  SchemaField
+import {
+  isReferenceOrContainmentField,
+  type EntitySchema,
+  type EntityTemplate
 } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -72,10 +72,7 @@ export const EntityTemplateDialog = ({
     () => [
       ...new Set(
         schema.fields
-          .filter(
-            (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-              field.type === 'reference' || field.type === 'containment'
-          )
+          .filter(isReferenceOrContainmentField)
           .map(field => field.schemaId)
           .filter(Boolean)
       )
