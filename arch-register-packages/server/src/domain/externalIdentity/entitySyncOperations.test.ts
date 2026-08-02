@@ -25,6 +25,40 @@ const createSyncableSchema = async (db: DatabaseAdapter, workspace: string) => {
   return schemaId;
 };
 
+const createRestrictedSyncableSchema = async (db: DatabaseAdapter, workspace: string) => {
+  const schemaId = await createSyncableSchema(db, workspace);
+  const schema = await db.catalog.getSchema(workspace, schemaId);
+  await db.catalog.updateSchema(workspace, schemaId, {
+    ...schema!,
+    fields: [
+      { id: 'visible', name: 'Visible', requirementLevel: null, type: 'text' } as never,
+      {
+        id: 'secret',
+        name: 'Secret',
+        requirementLevel: null,
+        type: 'text',
+        groupId: 'restricted'
+      } as never
+    ],
+    groups: [
+      { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+    ]
+  });
+  return schemaId;
+};
+
+const restrictedSyncAuthCtx = () =>
+  buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: 'editor',
+    workspaceCapabilityCeiling: ['ws.view', 'content.view', 'ent.edit', 'ent.external_update'],
+    teamAssignments: [],
+    schemas: [],
+    entities: [],
+    grants: []
+  });
+
 describe('syncEntityByExternalKey', () => {
   let provisioned: ProvisionedDatabase;
   let actor: { id: string; displayName: string | null };
@@ -204,5 +238,87 @@ describe('syncEntityByExternalKey', () => {
         actor
       )
     ).rejects.toThrow();
+  });
+
+  it('rejects restricted fields on create for a capability-ceilinged integration caller', async () => {
+    const db = provisioned.db;
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createRestrictedSyncableSchema(db, workspace);
+
+    await expect(
+      syncEntityByExternalKey(
+        db,
+        workspace,
+        SOURCE,
+        EXTERNAL_KEY,
+        { _schemaId: schema, _name: 'Foo Service', visible: 'public', secret: 'private' },
+        restrictedSyncAuthCtx(),
+        actor
+      )
+    ).rejects.toMatchObject({ status: 403 });
+
+    expect(await db.externalIdentity.find(workspace, SOURCE, EXTERNAL_KEY)).toBeNull();
+  });
+
+  it('rejects changed restricted fields on update for a capability-ceilinged integration caller', async () => {
+    const db = provisioned.db;
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createRestrictedSyncableSchema(db, workspace);
+
+    const first = await syncEntityByExternalKey(
+      db,
+      workspace,
+      SOURCE,
+      EXTERNAL_KEY,
+      { _schemaId: schema, _name: 'Foo Service', visible: 'public', secret: 'private' },
+      null,
+      actor
+    );
+
+    await expect(
+      syncEntityByExternalKey(
+        db,
+        workspace,
+        SOURCE,
+        EXTERNAL_KEY,
+        { _schemaId: schema, _name: 'Foo Service', visible: 'public', secret: 'changed' },
+        restrictedSyncAuthCtx(),
+        actor
+      )
+    ).rejects.toMatchObject({ status: 403 });
+
+    const stored = await db.catalog.getEntity(workspace, first.entity['_uid'] as string);
+    expect(stored?.data).toEqual({ visible: 'public', secret: 'private' });
+  });
+
+  it('ignores hidden fields when determining whether a visible sync is unchanged', async () => {
+    const db = provisioned.db;
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createRestrictedSyncableSchema(db, workspace);
+
+    await syncEntityByExternalKey(
+      db,
+      workspace,
+      SOURCE,
+      EXTERNAL_KEY,
+      { _schemaId: schema, _name: 'Foo Service', visible: 'public', secret: 'private' },
+      null,
+      actor
+    );
+
+    const result = await syncEntityByExternalKey(
+      db,
+      workspace,
+      SOURCE,
+      EXTERNAL_KEY,
+      { _schemaId: schema, _name: 'Foo Service', visible: 'public' },
+      restrictedSyncAuthCtx(),
+      actor
+    );
+
+    expect(result.status).toBe('unchanged');
+    expect(result.entity).not.toHaveProperty('secret');
+    const stored = await db.catalog.getEntity(workspace, result.entity['_uid'] as string);
+    expect(stored?.data.secret).toBe('private');
   });
 });
