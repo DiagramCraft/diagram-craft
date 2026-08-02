@@ -163,6 +163,9 @@ export const EntityTemplateDialog = ({
                   field =>
                     field.id !== 'name' &&
                     field.type !== 'derived' &&
+                    // typedRelation instances aren't part of the entity's data blob and have no
+                    // create/template-editor UI yet (#2606).
+                    field.type !== 'typedRelation' &&
                     fieldAccessById.get(field.id) !== 'none'
                 )
                 .map(field => (

@@ -10,7 +10,8 @@ import {
   SchemaGroup,
   SchemaVersion,
   SharedFieldGroupLink,
-  isReferenceOrContainmentField
+  isReferenceOrContainmentField,
+  isTypedRelationField
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
@@ -94,6 +95,17 @@ const normalizeTemplateFieldValue = (
       message: `Template value for "${field.name}" allows at most ${field.maxCount} relation(s)`
     });
     return ids;
+  }
+
+  if (isTypedRelationField(field)) {
+    // No target entity ids here (unknowable ahead of instantiation) — just an array of
+    // relation-instance field-value drafts to prefill once a target is chosen.
+    httpAssert.true(
+      Array.isArray(value) &&
+        value.every(item => typeof item === 'object' && item !== null && !Array.isArray(item)),
+      { message: `Template value for "${field.name}" must be an array of field-value objects` }
+    );
+    return value as EntityTemplate['values']['fields'][string];
   }
 
   if (field.type === 'boolean') {

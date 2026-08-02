@@ -213,7 +213,8 @@ const typedRelationSchema: SchemaDbResult = {
       requirementLevel: null,
       type: 'typedRelation',
       relationSchemaId: 'rel-schema-1',
-      direction: 'out'
+      direction: 'out',
+      groupId: 'restricted'
     } as never
   ]
 };
@@ -366,6 +367,30 @@ describe('updateEntity — typed relation deltas', () => {
       )
     ).rejects.toThrow();
 
+    expect(db.catalog.updateEntity).not.toHaveBeenCalled();
+  });
+
+  it('rejects a relation delta when the field is in an entity-schema group the caller cannot edit, even though the relation schema itself is unrestricted', async () => {
+    const db = makeTypedRelationDb(baseEntity({ name_field: 'x' }));
+    const authCtx = authCtxWithTeamRole(null);
+
+    await expect(
+      updateEntity(
+        db,
+        'ws-1',
+        'entity-1',
+        {
+          ...updatePayload({ name_field: 'x' }),
+          _relations: {
+            deps: { create: [{ otherEntityId: 'entity-2', data: {} }] }
+          }
+        },
+        authCtx,
+        { id: 'user-1', displayName: 'User' }
+      )
+    ).rejects.toThrow();
+
+    expect(db.relation.createRelation).not.toHaveBeenCalled();
     expect(db.catalog.updateEntity).not.toHaveBeenCalled();
   });
 });

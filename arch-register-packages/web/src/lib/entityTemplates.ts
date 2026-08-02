@@ -48,6 +48,13 @@ export const applyEntityTemplate = ({
     const value = template.values.fields[field.id];
     if (value === undefined) continue;
 
+    if (field.type === 'typedRelation') {
+      // Relation-instance field-value drafts, prefilled once the create flow supports picking a
+      // target entity inline (#2606) — pass through unedited for now rather than discard.
+      fields[field.id] = value;
+      continue;
+    }
+
     if (field.type === 'select') {
       if (typeof value !== 'string' || !field.options.some(option => option.value === value)) {
         warnings.push(`${field.name} is no longer available`);
@@ -57,7 +64,11 @@ export const applyEntityTemplate = ({
 
     if (isReferenceOrContainmentField(field)) {
       const available = referenceOptions[field.schemaId];
-      if (Array.isArray(value) && available) {
+      if (
+        Array.isArray(value) &&
+        available &&
+        value.every((item): item is string => typeof item === 'string')
+      ) {
         const validIds = value.filter(id => available.has(id));
         if (validIds.length !== value.length)
           warnings.push(`${field.name} contains unavailable entities`);

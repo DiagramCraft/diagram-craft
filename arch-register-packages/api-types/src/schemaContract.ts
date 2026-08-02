@@ -188,11 +188,17 @@ export const schemaFieldResponseSchema = z
   })
   .describe('Schema field with resolved options');
 
+// A typedRelation field's template default is an array of relation-instance field-value
+// drafts — no target entity (that can't be known ahead of instantiation), just the relation's
+// own field defaults to prefill once a target is chosen.
+const typedRelationTemplateDraftSchema = z.record(z.string(), z.unknown());
+
 const entityTemplateFieldValueSchema = z.union([
   z.string(),
   z.number(),
   z.boolean(),
-  z.array(z.string())
+  z.array(z.string()),
+  z.array(typedRelationTemplateDraftSchema)
 ]);
 
 const entityTemplateSchema = z

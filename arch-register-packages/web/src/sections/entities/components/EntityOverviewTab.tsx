@@ -6,7 +6,13 @@ import { Chip } from '../../../components/Chip';
 import { DiagramMetadataPopover } from '../../../components/DiagramMetadataPopover';
 import { asProjectPublicId, projectDiagramHref } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
-import { slugifyEntityName, relationIds } from '../../../lib/entityEditState';
+import {
+  slugifyEntityName,
+  relationIds,
+  emptyTypedRelationFieldState,
+  type TypedRelationEditState,
+  type TypedRelationFieldEditState
+} from '../../../lib/entityEditState';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { ExternalMetadataResult } from '@arch-register/api-types/common';
@@ -34,8 +40,10 @@ import { resolveGroupAccessControl } from '../../../lib/fieldGroupAccess';
 import type { FieldGroupAccess } from '@arch-register/permissions';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import type { RelationRecordDraft } from '@arch-register/api-types/entityContract';
 import { RelationRecordList } from './RelationRecordList';
 import { RelationDetailDialog } from '../../../dialogs/RelationDetailDialog';
+import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -46,6 +54,8 @@ type Props = {
   editing: boolean;
   editState: Record<string, unknown>;
   setEditState: Dispatch<SetStateAction<Record<string, unknown>>>;
+  typedRelationEditState: TypedRelationEditState;
+  setTypedRelationEditState: Dispatch<SetStateAction<TypedRelationEditState>>;
   editLinks: EntitySummary['_links'];
   setEditLinks: Dispatch<SetStateAction<EntitySummary['_links']>>;
   validationErrors: Set<string>;
@@ -69,6 +79,8 @@ export const EntityOverviewTab = ({
   editing,
   editState,
   setEditState,
+  typedRelationEditState,
+  setTypedRelationEditState,
   editLinks,
   setEditLinks,
   validationErrors,
@@ -102,6 +114,25 @@ export const EntityOverviewTab = ({
   const getFieldGroupAccess = useFieldGroupAccess(workspaceSlug);
   const [inspectedRelation, setInspectedRelation] = useState<RelationRecord | null>(null);
 
+  const getTypedRelationFieldState = (fieldId: string) =>
+    typedRelationEditState[fieldId] ?? emptyTypedRelationFieldState();
+
+  const updateTypedRelationFieldState = (
+    fieldId: string,
+    updater: (state: ReturnType<typeof getTypedRelationFieldState>) => void
+  ) => {
+    setTypedRelationEditState(prev => {
+      const current = prev[fieldId] ?? emptyTypedRelationFieldState();
+      const next = {
+        create: [...current.create],
+        update: new Map(current.update),
+        remove: new Set(current.remove)
+      };
+      updater(next);
+      return { ...prev, [fieldId]: next };
+    });
+  };
+
   const renderPropertyRow = (
     f: EntitySchema['fields'][number],
     groupAccess: FieldGroupAccess = 'edit'
@@ -116,6 +147,30 @@ export const EntityOverviewTab = ({
       typedRelationsIncoming={typedRelationsIncoming}
       relationSchemas={relationSchemas}
       onInspectRelation={setInspectedRelation}
+      workspaceSlug={workspaceSlug}
+      typedRelationFieldState={getTypedRelationFieldState(f.id)}
+      onTypedRelationCreate={draft =>
+        updateTypedRelationFieldState(f.id, state => {
+          state.create.push(draft);
+        })
+      }
+      onTypedRelationRemoveDraft={index =>
+        updateTypedRelationFieldState(f.id, state => {
+          state.create.splice(index, 1);
+        })
+      }
+      onTypedRelationUpdateField={(relationUid, subFieldId, value) =>
+        updateTypedRelationFieldState(f.id, state => {
+          const existing = state.update.get(relationUid) ?? {};
+          state.update.set(relationUid, { ...existing, [subFieldId]: value });
+        })
+      }
+      onTypedRelationToggleRemove={relationUid =>
+        updateTypedRelationFieldState(f.id, state => {
+          if (state.remove.has(relationUid)) state.remove.delete(relationUid);
+          else state.remove.add(relationUid);
+        })
+      }
       onChange={v => {
         setEditState(s => ({ ...s, [f.id]: v }));
         if (validationErrors.has(f.id))
@@ -585,7 +640,13 @@ const PropertyRow = ({
   typedRelationsOutgoing,
   typedRelationsIncoming,
   relationSchemas,
-  onInspectRelation
+  onInspectRelation,
+  workspaceSlug,
+  typedRelationFieldState,
+  onTypedRelationCreate,
+  onTypedRelationRemoveDraft,
+  onTypedRelationUpdateField,
+  onTypedRelationToggleRemove
 }: {
   field: EntitySchema['fields'][number];
   value: unknown;
@@ -600,6 +661,12 @@ const PropertyRow = ({
   typedRelationsIncoming: RelationRecord[];
   relationSchemas: RelationSchema[];
   onInspectRelation: (record: RelationRecord) => void;
+  workspaceSlug: string;
+  typedRelationFieldState: TypedRelationFieldEditState;
+  onTypedRelationCreate: (draft: RelationRecordDraft) => void;
+  onTypedRelationRemoveDraft: (index: number) => void;
+  onTypedRelationUpdateField: (relationUid: string, fieldId: string, value: unknown) => void;
+  onTypedRelationToggleRemove: (relationUid: string) => void;
 }) => {
   const isExternal = field.external_kind !== undefined;
   const isDerived = field.type === 'derived';
@@ -758,6 +825,26 @@ const PropertyRow = ({
 
   const typeLabel = field.type.charAt(0).toUpperCase() + field.type.slice(1);
 
+  const renderTypedRelationEditor = () => {
+    if (field.type !== 'typedRelation') return null;
+    const records = (
+      field.direction === 'out' ? typedRelationsOutgoing : typedRelationsIncoming
+    ).filter(record => record._schema.id === field.relationSchemaId);
+    return (
+      <TypedRelationFieldEditor
+        workspaceId={workspaceSlug}
+        field={field}
+        relationSchema={relationSchemas.find(rs => rs.id === field.relationSchemaId)}
+        existingRecords={records}
+        fieldState={typedRelationFieldState}
+        onCreate={onTypedRelationCreate}
+        onRemoveDraft={onTypedRelationRemoveDraft}
+        onUpdateField={onTypedRelationUpdateField}
+        onToggleRemove={onTypedRelationToggleRemove}
+      />
+    );
+  };
+
   return (
     <div className={`${styles.propRow} ${hasError ? styles.propRowError : ''}`}>
       <div className={styles.propLabel}>
@@ -774,9 +861,11 @@ const PropertyRow = ({
         className={styles.propValue}
         style={hasError ? { flexDirection: 'column', alignItems: 'flex-start' } : undefined}
       >
-        {editing && !isExternal && !isDerived && !isTypedRelation
-          ? renderEditor()
-          : renderDisplay()}
+        {editing && isTypedRelation
+          ? renderTypedRelationEditor()
+          : editing && !isExternal && !isDerived
+            ? renderEditor()
+            : renderDisplay()}
         {isExternal && (
           <ExternalMetadataIndicator kind={field.external_kind!} result={externalMeta} />
         )}

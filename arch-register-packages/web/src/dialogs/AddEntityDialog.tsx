@@ -156,7 +156,8 @@ export const AddEntityDialog = ({
     const template = selectedSchema.templates.find(item => item.id === templateId);
     const removedLabels = relationshipFields.flatMap(field => {
       const value = template?.values.fields[field.id];
-      if (!Array.isArray(value)) return [];
+      if (!Array.isArray(value) || !value.every((item): item is string => typeof item === 'string'))
+        return [];
       const available = new Set(
         (derivedReferenceOptions[field.schemaId] ?? []).map(entity => entity._uid)
       );
@@ -242,6 +243,7 @@ export const AddEntityDialog = ({
     if (selectedSchema) {
       for (const f of selectedSchema.fields) {
         if (fieldAccessById.get(f.id) === 'none') continue;
+        if (f.type === 'typedRelation') continue;
         const val = fields[f.id];
         const isEmptyArray = Array.isArray(val) && val.length === 0;
         if (val !== undefined && val !== '' && !isEmptyArray) {
@@ -408,6 +410,9 @@ export const AddEntityDialog = ({
                     f =>
                       f.id !== 'name' &&
                       f.type !== 'derived' &&
+                      // typedRelation instances aren't part of the entity's data blob and have no
+                      // create-flow editor yet (#2606) — set them after creation instead.
+                      f.type !== 'typedRelation' &&
                       fieldAccessById.get(f.id) !== 'none'
                   )
                   .map(f => (
