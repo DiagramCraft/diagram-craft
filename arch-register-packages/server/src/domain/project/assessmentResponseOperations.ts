@@ -15,6 +15,7 @@ import {
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { generateCsv } from '../../utils/csv';
 import { assertNoDerivedFieldWrites, materializeDerivedFields } from '../derived/derivedFields';
+import { assessmentScopeHasRestrictedConditions } from './assessmentScopeAccess';
 
 const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: string) => {
   const project = await db.project.getProject(ws, projectId);
@@ -46,6 +47,8 @@ export const listAssessmentResponses = async (
       const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
       const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAccess(authCtx, project.owner);
+      const schemas = await db.catalog.listSchemas(ws);
+      if (assessmentScopeHasRestrictedConditions(assessment, schemas, authCtx)) return [];
       const rows = await db.project.listAssessmentResponses(
         ws,
         assessmentId,
@@ -160,17 +163,19 @@ export const exportAssessmentResponsesCsv = async (
       const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
       const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAccess(authCtx, project.owner);
-      const [allEntities, responses, enums] = await Promise.all([
+      const [allEntities, responses, enums, schemas] = await Promise.all([
         listAllCatalogEntities(db, ws),
         db.project.listAssessmentResponses(ws, assessmentId, assessment.current_occurrence),
-        db.catalog.listEnums(ws)
+        db.catalog.listEnums(ws),
+        db.catalog.listSchemas(ws)
       ]);
 
       const { columns, rows } = buildAssessmentResultsCsvData(
         allEntities,
         responses,
         assessment,
-        enums
+        enums,
+        { authCtx, schemas }
       );
       const csvContent = generateCsv(rows, columns, ';');
       const timestamp = new Date().toISOString().split('T')[0];

@@ -13,6 +13,9 @@ import {
 } from '@arch-register/api-types/assessmentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { buildDerivedPlan } from '../derived/derivedFields';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { visibleAssessmentScopeConditions } from './assessmentScopeAccess';
 
 const toAssessmentFields = (value: unknown, fallback: AssessmentField[]) => {
   const fields = Array.isArray(value) ? (value as AssessmentField[]) : fallback;
@@ -178,7 +181,9 @@ export const toApiAssessment = (
     completed_entity_count: number;
     team_acknowledge_status?: AssessmentTeamAcknowledgeStatus[];
   },
-  projectId: string
+  projectId: string,
+  authCtx: WorkspaceAuthorizationContext | null = null,
+  schemas: SchemaDbResult[] = []
 ): Assessment => ({
   id: row.id,
   workspace: row.workspace,
@@ -188,7 +193,7 @@ export const toApiAssessment = (
   status: row.status,
   mode: row.mode,
   scope: row.scope,
-  scope_conditions: row.scope_conditions,
+  scope_conditions: visibleAssessmentScopeConditions(row, schemas, authCtx),
   fields: row.fields,
   groups: row.groups,
   assigned_team_ids: row.assigned_team_ids,

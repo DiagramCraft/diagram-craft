@@ -75,7 +75,8 @@ describe('listAssessments', () => {
           { id: 'project-hidden', name: 'Hidden project', owner: 'denied' }
         ]),
         listAssessmentResponses: vi.fn(async () => [])
-      }
+      },
+      catalog: { listSchemas: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
 
     const result = await listAssessments(db, 'ws-1', event);
@@ -123,6 +124,7 @@ describe('updateAssessmentStatus', () => {
         })),
         listAssessmentResponses: vi.fn(async () => [])
       },
+      catalog: { listSchemas: vi.fn(async () => []) },
       workspace: {
         listTeams: vi.fn(async () => [])
       },
@@ -217,6 +219,7 @@ describe('getAssessment team_acknowledge_status', () => {
         getProject: vi.fn(async () => project),
         listAssessmentResponses: vi.fn(async () => [])
       },
+      catalog: { listSchemas: vi.fn(async () => []) },
       governance: { listCases: vi.fn(async () => []) },
       workspace: { listTeams: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
@@ -264,7 +267,8 @@ describe('getAssessment team_acknowledge_status', () => {
           { id: 'team-a', name: 'Team A' },
           { id: 'team-b', name: 'Team B' }
         ])
-      }
+      },
+      catalog: { listSchemas: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
 
     const result = await getAssessment(db, 'ws-1', 'assessment-1', event);

@@ -6,6 +6,8 @@ import {
 } from './assessmentResponseHelpers';
 import type { AssessmentDbResult, AssessmentResponseDbResult } from './db/projectDatabase';
 import type { EntityDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
+import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
@@ -236,5 +238,66 @@ describe('buildAssessmentResultsCsvData', () => {
     const { rows } = buildAssessmentResultsCsvData(entities, responses, assessment, []);
 
     expect(rows[0]!['Migration strategy']).toBe('Rehost (Lift and Shift)');
+  });
+
+  it('fails closed for an inaccessible scope condition regardless of the restricted value', () => {
+    const restrictedSchema = {
+      id: 'schema-service',
+      fields: [{ id: 'secret', groupId: 'restricted' }],
+      groups: [{ id: 'restricted', accessControl: { teamIds: ['team-security'] } }]
+    } as unknown as SchemaDbResult;
+    const restrictedAssessment = makeAssessment({
+      scope_conditions: [{ fieldId: 'secret', op: 'equals', value: 'classified' }]
+    });
+    const restrictedCaller = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['content.view'],
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const entities = [makeEntity({ data: { secret: 'classified' } })];
+    const responses = [makeResponse({ values: { f1: 'Managed' } })];
+
+    const result = buildAssessmentResultsCsvData(entities, responses, restrictedAssessment, [], {
+      authCtx: restrictedCaller,
+      schemas: [restrictedSchema]
+    });
+
+    expect(result.rows).toEqual([]);
+  });
+
+  it('evaluates restricted scope conditions for a caller with view access', () => {
+    const restrictedSchema = {
+      id: 'schema-service',
+      fields: [{ id: 'secret', groupId: 'restricted' }],
+      groups: [{ id: 'restricted', accessControl: { teamIds: ['team-security'] } }]
+    } as unknown as SchemaDbResult;
+    const restrictedAssessment = makeAssessment({
+      scope_conditions: [{ fieldId: 'secret', op: 'equals', value: 'classified' }]
+    });
+    const permittedCaller = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['content.view'],
+      teamAssignments: [{ teamId: 'team-security', role: 'team_reviewer' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const result = buildAssessmentResultsCsvData(
+      [makeEntity({ data: { secret: 'classified' } })],
+      [],
+      restrictedAssessment,
+      [],
+      { authCtx: permittedCaller, schemas: [restrictedSchema] }
+    );
+
+    expect(result.rows).toHaveLength(1);
   });
 });

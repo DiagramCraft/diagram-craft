@@ -5,6 +5,9 @@ import { matchesFilterCondition } from '../catalog/dataHelpers';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
 import { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import { getInlineAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { assessmentScopeHasRestrictedConditions } from './assessmentScopeAccess';
 
 export const toApiAssessmentResponse = (
   row: AssessmentResponseDbResult,
@@ -32,16 +35,34 @@ const CSV_COLUMNS_STATIC_TAIL = ['Status'];
 
 export const isEntityInAssessmentScope = (
   entity: EntityDbResult,
-  assessment: AssessmentDbResult
-): boolean =>
-  assessment.scope.includes(entity.schema_id) &&
-  assessment.scope_conditions.every(condition => matchesFilterCondition(entity, condition, null));
+  assessment: AssessmentDbResult,
+  options: {
+    authCtx?: WorkspaceAuthorizationContext | null;
+    schemas?: SchemaDbResult[];
+  } = {}
+): boolean => {
+  if (!assessment.scope.includes(entity.schema_id)) return false;
+  if (
+    options.authCtx &&
+    options.schemas &&
+    assessmentScopeHasRestrictedConditions(assessment, options.schemas, options.authCtx)
+  ) {
+    return false;
+  }
+  return assessment.scope_conditions.every(condition =>
+    matchesFilterCondition(entity, condition, null)
+  );
+};
 
 export const buildAssessmentResultsCsvData = (
   entities: EntityDbResult[],
   responses: AssessmentResponseDbResult[],
   assessment: AssessmentDbResult,
-  enums: WorkspaceEnumDbResult[]
+  enums: WorkspaceEnumDbResult[],
+  options: {
+    authCtx?: WorkspaceAuthorizationContext | null;
+    schemas?: SchemaDbResult[];
+  } = {}
 ): { columns: string[]; rows: Record<string, unknown>[] } => {
   const responseByEntity = new Map(responses.map(r => [r.entity_id, r]));
   const enumOptionLabel = (
@@ -60,7 +81,7 @@ export const buildAssessmentResultsCsvData = (
   ];
 
   const rows = entities
-    .filter(entity => isEntityInAssessmentScope(entity, assessment))
+    .filter(entity => isEntityInAssessmentScope(entity, assessment, options))
     .sort((a, b) => a.name.localeCompare(b.name))
     .map(entity => {
       const response = responseByEntity.get(entity.id);

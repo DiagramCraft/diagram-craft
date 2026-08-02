@@ -35,6 +35,11 @@ import {
   closeAssessmentGovernanceCase
 } from './assessmentGovernance';
 import { materializeDerivedFields } from '../derived/derivedFields';
+import {
+  assessmentScopeHasRestrictedConditions,
+  assertAssessmentScopeConditionsAuthorized,
+  mergeVisibleAssessmentScopeConditions
+} from './assessmentScopeAccess';
 
 export {
   ASSESSMENT_RESPONSE_CASE_KIND,
@@ -80,6 +85,8 @@ const getAssessmentStats = async (
   db: DatabaseAdapter,
   ws: string,
   row: AssessmentDbResult,
+  authCtx: Parameters<typeof assessmentScopeHasRestrictedConditions>[2],
+  schemas: Awaited<ReturnType<DatabaseAdapter['catalog']['listSchemas']>>,
   entities?: EntityDbResult[]
 ) => {
   const [responses, scopedEntities, team_acknowledge_status] = await Promise.all([
@@ -88,11 +95,14 @@ const getAssessmentStats = async (
     getTeamAcknowledgeStatus(db, ws, row)
   ]);
   const scopedEntityIds = new Set(
-    scopedEntities.filter(entity => isEntityInAssessmentScope(entity, row)).map(entity => entity.id)
+    scopedEntities
+      .filter(entity => isEntityInAssessmentScope(entity, row, { authCtx, schemas }))
+      .map(entity => entity.id)
   );
   const scopedResponses = responses.filter(response => scopedEntityIds.has(response.entity_id));
+  const hasRestrictedConditions = assessmentScopeHasRestrictedConditions(row, schemas, authCtx);
   return {
-    response_count: responses.length,
+    response_count: hasRestrictedConditions ? 0 : responses.length,
     completed_entity_count: countCompletedEntities(scopedResponses, row),
     team_acknowledge_status
   };
@@ -120,10 +130,11 @@ export const listAssessments = async (
       }
     },
     async ({ ws, authCtx }) => {
-      const [rows, projects, entities] = await Promise.all([
+      const [rows, projects, entities, schemas] = await Promise.all([
         db.project.listAssessments(ws),
         db.project.listProjects(ws),
-        listAllCatalogEntities(db, ws)
+        listAllCatalogEntities(db, ws),
+        db.catalog.listSchemas(ws)
       ]);
       const visibleProjects = new Map(
         projects
@@ -134,7 +145,13 @@ export const listAssessments = async (
         rows
           .filter(row => visibleProjects.has(row.project_id))
           .map(async row =>
-            toApiAssessment(row, await getAssessmentStats(db, ws, row, entities), row.project_id)
+            toApiAssessment(
+              row,
+              await getAssessmentStats(db, ws, row, authCtx, schemas, entities),
+              row.project_id,
+              authCtx,
+              schemas
+            )
           )
       );
     }
@@ -162,7 +179,14 @@ export const getAssessment = async (
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, row.project_id);
       requireProjectAccess(authCtx, project.owner);
-      return toApiAssessment(row, await getAssessmentStats(db, ws, row), project.id);
+      const schemas = await db.catalog.listSchemas(ws);
+      return toApiAssessment(
+        row,
+        await getAssessmentStats(db, ws, row, authCtx, schemas),
+        project.id,
+        authCtx,
+        schemas
+      );
     }
   );
 };
@@ -192,6 +216,11 @@ export const createAssessment = async (
         'You do not have permission to create assessments in this project'
       );
 
+      const schemas = await db.catalog.listSchemas(ws);
+      const scope = Array.isArray(body.scope) ? body.scope : [];
+      const scopeConditions = Array.isArray(body.scope_conditions) ? body.scope_conditions : [];
+      assertAssessmentScopeConditionsAuthorized(scope, scopeConditions, schemas, authCtx);
+
       const timestamp = new Date();
       const row = await db.project.createAssessment(
         buildCreateAssessmentInput(ws, { ...body, project_id: project.id }, timestamp)
@@ -207,7 +236,13 @@ export const createAssessment = async (
         changes: { new: extractEntityFields(row) }
       });
 
-      return toApiAssessment(row, { response_count: 0, completed_entity_count: 0 }, project.id);
+      return toApiAssessment(
+        row,
+        { response_count: 0, completed_entity_count: 0 },
+        project.id,
+        authCtx,
+        schemas
+      );
     }
   );
 };
@@ -245,12 +280,30 @@ export const updateAssessment = async (
         'You do not have permission to edit assessments in this project'
       );
 
+      const schemas = await db.catalog.listSchemas(ws);
+      const requestedScope = Array.isArray(body.scope) ? body.scope : existing.scope;
+      if (Array.isArray(body.scope_conditions)) {
+        assertAssessmentScopeConditionsAuthorized(
+          requestedScope,
+          body.scope_conditions,
+          schemas,
+          authCtx
+        );
+      }
+      const scopeConditions = Array.isArray(body.scope_conditions)
+        ? mergeVisibleAssessmentScopeConditions(existing, body.scope_conditions, schemas, authCtx)
+        : undefined;
+
       const row = await db.core.transaction(async tx => {
         const updated = await tx.project.updateAssessment(
           ws,
           project.id,
           id,
-          buildUpdateAssessmentInput(body, existing, new Date())
+          buildUpdateAssessmentInput(
+            scopeConditions === undefined ? body : { ...body, scope_conditions: scopeConditions },
+            existing,
+            new Date()
+          )
         );
         if (updated) {
           const responses = await tx.project.listAllAssessmentResponses(ws, id);
@@ -287,7 +340,13 @@ export const updateAssessment = async (
         changes
       });
 
-      return toApiAssessment(row, await getAssessmentStats(db, ws, row), project.id);
+      return toApiAssessment(
+        row,
+        await getAssessmentStats(db, ws, row, authCtx, schemas),
+        project.id,
+        authCtx,
+        schemas
+      );
     }
   );
 };
@@ -319,6 +378,8 @@ export const updateAssessmentStatus = async (
         'edit_project',
         'You do not have permission to change assessment status in this project'
       );
+
+      const schemas = await db.catalog.listSchemas(ws);
 
       const row = await db.core.transaction(async tx => {
         const now = new Date();
@@ -363,7 +424,13 @@ export const updateAssessmentStatus = async (
         changes: computeChanges(extractEntityFields(oldRow), extractEntityFields(row))
       });
 
-      return toApiAssessment(row, await getAssessmentStats(db, ws, row), project.id);
+      return toApiAssessment(
+        row,
+        await getAssessmentStats(db, ws, row, authCtx, schemas),
+        project.id,
+        authCtx,
+        schemas
+      );
     }
   );
 };
