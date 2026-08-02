@@ -26,6 +26,10 @@ import { assertNoExternalEntityFieldWrites } from '../catalog/entityValidation';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { valueEquals } from '../externalMetadata/externalMetadataHelpers';
+import {
+  filterRestrictedFieldGroups,
+  requireNoRestrictedFieldWrites
+} from '../auth/fieldGroupAccessControl';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 
@@ -68,7 +72,9 @@ const entityUnchanged = (
     links: unknown[];
     project_id: string | null;
     data: Record<string, unknown>;
-  }
+  },
+  authCtx: AuthorizationContext | null,
+  schema: SchemaDbResult
 ) =>
   oldRow.name === next.name &&
   oldRow.slug === next.slug &&
@@ -81,7 +87,10 @@ const entityUnchanged = (
   oldRow.project_id === next.project_id &&
   JSON.stringify(oldRow.tags) === JSON.stringify(next.tags) &&
   JSON.stringify(oldRow.links) === JSON.stringify(next.links) &&
-  dataUnchanged(oldRow.data, next.data);
+  dataUnchanged(
+    filterRestrictedFieldGroups(authCtx, schema, oldRow.data),
+    filterRestrictedFieldGroups(authCtx, schema, next.data)
+  );
 
 const runSync = async (
   db: DatabaseAdapter,
@@ -152,6 +161,17 @@ const runSync = async (
       entities
     });
     assertNoExternalEntityFieldWrites(schema.fields, oldRow.data, normalizedFields);
+    if (authCtx) {
+      const changedFieldIds = Object.keys(normalizedFields).filter(
+        fieldId => !valueEquals(oldRow.data[fieldId] ?? null, normalizedFields[fieldId] ?? null)
+      );
+      requireNoRestrictedFieldWrites(
+        authCtx,
+        schema,
+        changedFieldIds,
+        'You do not have permission to edit one or more restricted fields on this entity'
+      );
+    }
 
     const teamIds = await getTeamIds(db, workspace);
     const owner =
@@ -172,7 +192,7 @@ const runSync = async (
       data: normalizedFields
     };
 
-    if (entityUnchanged(oldRow, next)) {
+    if (entityUnchanged(oldRow, next, authCtx, schema)) {
       return { status: 'unchanged', entity: toApiEntity(oldRow, authCtx, schema) };
     }
 
@@ -218,6 +238,14 @@ const runSync = async (
     entities
   });
   assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
+  if (authCtx) {
+    requireNoRestrictedFieldWrites(
+      authCtx,
+      schema,
+      Object.keys(normalizedFields),
+      'You do not have permission to set one or more restricted fields on this entity'
+    );
+  }
 
   const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
   const parents = getEntityParentsFromPayload(schema, normalizedFields, entityLookup);

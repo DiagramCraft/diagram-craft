@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { createApiTest, expect } from '../helpers/fixtures';
-import { seedCatalogEntities } from '../helpers/seedHelper';
+import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 
 const test = createApiTest({
   afterSeed: async server => {
@@ -84,6 +85,108 @@ test.describe('integration entity surface', () => {
       body: JSON.stringify(mutationBody('Should be rejected'))
     });
     expect(readOnly.status).toBe(403);
+
+    await orpc.authProtected.apiTokens.revoke({ params: { id: token.id } });
+  });
+
+  test('enforces restricted field writes and hides restricted data from sync status', async ({
+    server,
+    orpc
+  }) => {
+    const workspace = seedIds.workspace.default;
+    const schemaId = randomUUID();
+    const entityId = randomUUID();
+    const source = 'issue-2608';
+    const externalKey = 'restricted-sync-entity';
+    const now = new Date();
+
+    await server.db.catalog.createSchema({
+      id: schemaId,
+      workspace,
+      name: 'Restricted sync test',
+      description: '',
+      fields: [
+        { id: 'visible', name: 'Visible', type: 'text', requirementLevel: null },
+        {
+          id: 'secret',
+          name: 'Secret',
+          type: 'text',
+          requirementLevel: null,
+          groupId: 'restricted'
+        }
+      ],
+      groups: [
+        {
+          id: 'restricted',
+          name: 'Restricted',
+          accessControl: { teamIds: [seedIds.teams.security] }
+        }
+      ],
+      templates: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      default_owner: null,
+      key_prefix: 'R2608',
+      created_at: now,
+      updated_at: now
+    });
+    await server.db.workspace.registerPublicIdPrefix('R2608', 'schema', schemaId, now);
+    await server.db.catalog.createEntity({
+      id: entityId,
+      workspace,
+      public_id: 'R2608-001',
+      slug: 'restricted-sync-entity',
+      namespace: 'default',
+      name: 'Restricted Sync Entity',
+      description: '',
+      owner: null,
+      lifecycle: null,
+      target_lifecycle: null,
+      target_lifecycle_date: null,
+      tags: [],
+      links: [],
+      schema_id: schemaId,
+      data: { visible: 'public', secret: 'private' },
+      project_id: null,
+      created_at: now,
+      updated_at: now,
+      completeness: 0
+    });
+    await server.db.externalIdentity.create({
+      workspace,
+      source,
+      external_key: externalKey,
+      entity_id: entityId
+    });
+
+    const token = await orpc.authProtected.apiTokens.create({
+      body: {
+        workspace: 'default',
+        name: 'Restricted sync regression',
+        capabilities: ['ws.view', 'content.view', 'ent.edit', 'ent.external_update']
+      }
+    });
+    const url = integrationUrl(server.baseUrl, `/entities/byExternalKey/${source}/${externalKey}`);
+    const base = mutationBody('Restricted Sync Entity');
+
+    const rejected = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token.token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ ...base, _schemaId: schemaId, visible: 'public', secret: 'changed' })
+    });
+    expect(rejected.status).toBe(403);
+
+    const unchanged = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token.token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ ...base, _schemaId: schemaId, visible: 'public' })
+    });
+    expect(unchanged.status).toBe(200);
+    expect((await unchanged.json()).status).toBe('unchanged');
+
+    const stored = await server.db.catalog.getEntity(workspace, entityId);
+    expect(stored?.data).toEqual({ visible: 'public', secret: 'private' });
 
     await orpc.authProtected.apiTokens.revoke({ params: { id: token.id } });
   });
