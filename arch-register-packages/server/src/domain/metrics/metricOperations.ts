@@ -210,7 +210,7 @@ export const computeBoxMetrics = (
   enumOptions: EnumOption[] | null = null,
   authCtx: AuthorizationContext | null = null
 ): MetricRollupResponse => {
-  const childrenOf = buildContainmentChildrenIndex(schemas, entities);
+  const childrenOf = buildContainmentChildrenIndex(schemas, entities, authCtx);
   const entityById = new Map(entities.map(e => [e.id, e]));
   const lifecycleSortOrder = new Map(lifecycleStates.map(s => [s.id, s.sort_order]));
   const worstDirection = metric.worstDirection ?? 'high';
