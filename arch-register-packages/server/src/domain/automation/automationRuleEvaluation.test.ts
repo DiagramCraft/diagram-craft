@@ -8,9 +8,20 @@ import {
   enqueueAutomationRuleRuns
 } from './automationRuleEvaluation';
 
+vi.mock('../auth/authorization', () => ({
+  buildUserAuthCtx: vi.fn(async () => ({
+    userId: 'user-1',
+    globalPermissions: new Set(),
+    workspaceRole: null,
+    workspaceRoles: new Map(),
+    teamRolesByTeam: new Map()
+  }))
+}));
+
 const baseRule: AutomationRuleDbResult = {
   id: 'rule-1',
   workspace: 'ws-1',
+  created_by: 'user-1',
   name: 'Flag deprecated entities',
   description: null,
   schema_id: null,
@@ -41,7 +52,10 @@ const baseAuditLog: AuditLogDbResult = {
 const makeDb = (rule: AutomationRuleDbResult, enqueueOneOffRun = vi.fn(async input => input)) =>
   ({
     automationRule: { listRules: vi.fn(async () => [rule]) },
-    catalog: { getEntity: vi.fn(async () => null) },
+    catalog: {
+      getEntity: vi.fn(async () => null),
+      getSchema: vi.fn(async () => ({ fields: [] }))
+    },
     jobs: { enqueueOneOffRun }
   }) as unknown as DatabaseAdapter;
 
@@ -86,7 +100,10 @@ describe('enqueueAutomationRuleRuns', () => {
     const enqueueOneOffRun = vi.fn(async input => input);
     const db = {
       automationRule: { listRules: vi.fn(async () => [rule]) },
-      catalog: { getEntity: vi.fn(async () => ({ owner: null, data: {} })) },
+      catalog: {
+        getEntity: vi.fn(async () => ({ owner: null, data: {} })),
+        getSchema: vi.fn(async () => ({ fields: [] }))
+      },
       jobs: { enqueueOneOffRun }
     } as unknown as DatabaseAdapter;
 

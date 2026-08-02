@@ -31,9 +31,9 @@ export class PostgresAutomationRuleDatabase implements AutomationRuleDatabase {
   async createRule(input: AutomationRuleDbCreate) {
     const rows = await this.sql<DatabaseRow[]>`
       INSERT INTO workspace_automation_rule
-        (id, workspace, name, description, schema_id, trigger, conditions, actions, enabled, created_at, updated_at)
+        (id, workspace, created_by, name, description, schema_id, trigger, conditions, actions, enabled, created_at, updated_at)
       VALUES (
-        ${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.schema_id},
+        ${input.id}, ${input.workspace}, ${input.created_by}, ${input.name}, ${input.description}, ${input.schema_id},
         ${this.json(input.trigger)}, ${this.json(input.conditions)}, ${this.json(input.actions)},
         ${input.enabled}, ${input.created_at}, ${input.updated_at}
       )

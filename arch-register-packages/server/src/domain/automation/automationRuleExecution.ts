@@ -2,6 +2,8 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AutomationAction } from '@arch-register/api-types/automationRuleContract';
 import { runAutomationAction } from './automationActionHandlers';
 import type { AutomationRuleEvent } from './automationRuleEvaluation';
+import { buildUserAuthCtx } from '../auth/authorization';
+import { isAutomationRuleAuthorized } from './automationRuleAuthorization';
 
 const isAutomationRuleEvent = (value: unknown): value is AutomationRuleEvent =>
   typeof value === 'object' &&
@@ -36,6 +38,15 @@ export const createAutomationRuleExecutionHandler =
 
     const rule = await db.automationRule.getRule(context.workspace, ruleId);
     if (!rule?.enabled) return { skipped: true };
+    if (!rule.created_by) return { skipped: true, reason: 'missing-rule-owner' };
+
+    const authCtx = await buildUserAuthCtx(db, context.workspace, rule.created_by);
+    const schema = event.schemaId
+      ? await db.catalog.getSchema(context.workspace, event.schemaId)
+      : null;
+    if (!isAutomationRuleAuthorized(authCtx, schema, rule)) {
+      return { skipped: true, reason: 'rule-owner-no-longer-authorized' };
+    }
 
     const errors: string[] = [];
     for (const action of rule.actions as AutomationAction[]) {

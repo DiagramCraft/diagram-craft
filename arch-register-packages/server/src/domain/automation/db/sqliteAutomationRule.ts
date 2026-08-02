@@ -29,11 +29,12 @@ export class SqliteAutomationRuleDatabase
   async createRule(input: AutomationRuleDbCreate) {
     this.run(
       `INSERT INTO workspace_automation_rule
-       (id, workspace, name, description, schema_id, trigger, conditions, actions, enabled, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, workspace, created_by, name, description, schema_id, trigger, conditions, actions, enabled, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
+        input.created_by,
         input.name,
         input.description,
         input.schema_id,

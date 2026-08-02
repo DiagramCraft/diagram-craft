@@ -226,6 +226,7 @@ describe('updateAutomationRule', () => {
   const existingRule: AutomationRuleDbResult = {
     id: 'rule-1',
     workspace: 'ws-1',
+    created_by: 'user-1',
     name: 'Flag high earners',
     description: null,
     schema_id: 'schema-1',

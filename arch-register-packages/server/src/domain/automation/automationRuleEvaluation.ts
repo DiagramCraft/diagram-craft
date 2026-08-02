@@ -8,6 +8,8 @@ import type {
   AutomationRuleTrigger
 } from '@arch-register/api-types/automationRuleContract';
 import type { AutomationRuleDbResult } from './db/automationRuleDatabase';
+import { buildUserAuthCtx } from '../auth/authorization';
+import { isAutomationRuleAuthorized } from './automationRuleAuthorization';
 
 /** Job type used for every automation rule action execution. Exported so the job server can
  *  register its handler and `listJobRuns` can filter the shared `job_run` table down to just
@@ -32,7 +34,6 @@ export type AutomationRuleEvent = {
   actor: { id: string | null; displayName: string | null };
   occurredAt: string;
   changes: AuditLogDbResult['changes'];
-  fieldValues: Record<string, unknown>;
 };
 
 const matchesTrigger = (trigger: AutomationRuleTrigger, auditLog: AuditLogDbResult): boolean => {
@@ -103,10 +104,7 @@ const resolveFieldValues = async (
   return { ...(auditLog.changes.old ?? {}), ...(auditLog.changes.new ?? {}) };
 };
 
-const toAutomationRuleEvent = (
-  auditLog: AuditLogDbResult,
-  fieldValues: Record<string, unknown>
-): AutomationRuleEvent => ({
+const toAutomationRuleEvent = (auditLog: AuditLogDbResult): AutomationRuleEvent => ({
   version: '1',
   auditLogId: auditLog.id,
   workspace: auditLog.workspace,
@@ -117,8 +115,7 @@ const toAutomationRuleEvent = (
   schemaId: auditLog.schema_id,
   actor: { id: auditLog.user_id, displayName: auditLog.user_display_name },
   occurredAt: auditLog.timestamp.toISOString(),
-  changes: auditLog.changes,
-  fieldValues
+  changes: auditLog.changes
 });
 
 /**
@@ -157,10 +154,29 @@ export const enqueueAutomationRuleRuns = async (
   if (matchingRules.length === 0) return 0;
 
   const fieldValues = await resolveFieldValues(db, auditLog);
-  const toRun = matchingRules.filter(rule => evaluateConditions(rule.conditions, fieldValues));
+  const schema = auditLog.schema_id
+    ? await db.catalog.getSchema(auditLog.workspace, auditLog.schema_id)
+    : null;
+  const authContexts = new Map<string, Promise<Awaited<ReturnType<typeof buildUserAuthCtx>>>>();
+  const toRun: AutomationRuleDbResult[] = [];
+  for (const rule of matchingRules) {
+    if (!schema || !rule.created_by) continue;
+    let authCtxPromise = authContexts.get(rule.created_by);
+    if (!authCtxPromise) {
+      authCtxPromise = buildUserAuthCtx(db, auditLog.workspace, rule.created_by);
+      authContexts.set(rule.created_by, authCtxPromise);
+    }
+    const authCtx = await authCtxPromise;
+    if (
+      isAutomationRuleAuthorized(authCtx, schema, rule) &&
+      evaluateConditions(rule.conditions, fieldValues)
+    ) {
+      toRun.push(rule);
+    }
+  }
   if (toRun.length === 0) return 0;
 
-  const event = toAutomationRuleEvent(auditLog, fieldValues);
+  const event = toAutomationRuleEvent(auditLog);
   for (const rule of toRun) {
     await enqueueOneOffJobRun(db, {
       id: randomUUID(),

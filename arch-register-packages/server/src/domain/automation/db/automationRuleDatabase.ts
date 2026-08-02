@@ -13,6 +13,7 @@ import type {
 export type AutomationRuleDbResult = {
   id: string;
   workspace: string;
+  created_by: string | null;
   name: string;
   description: string | null;
   schema_id: string | null;
@@ -27,7 +28,7 @@ export type AutomationRuleDbResult = {
 export type AutomationRuleDbCreate = AutomationRuleDbResult;
 export type AutomationRuleDbUpdate = Omit<
   AutomationRuleDbResult,
-  'id' | 'workspace' | 'created_at'
+  'id' | 'workspace' | 'created_by' | 'created_at'
 >;
 
 export type AutomationRuleDatabase = {
@@ -45,6 +46,7 @@ export type AutomationRuleDatabase = {
 export const automationRuleMapper = (row: DatabaseRow): AutomationRuleDbResult => ({
   id: String(row['id']),
   workspace: String(row['workspace']),
+  created_by: row['created_by'] == null ? null : String(row['created_by']),
   name: String(row['name']),
   description: row['description'] == null ? null : String(row['description']),
   schema_id: row['schema_id'] == null ? null : String(row['schema_id']),

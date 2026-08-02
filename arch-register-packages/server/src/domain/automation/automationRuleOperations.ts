@@ -18,6 +18,7 @@ import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 export const toApiAutomationRule = (rule: AutomationRuleDbResult) => ({
   id: rule.id,
   workspace: rule.workspace,
+  created_by: rule.created_by,
   name: rule.name,
   description: rule.description,
   schema_id: rule.schema_id,
@@ -48,6 +49,7 @@ const validateInput = async (
       action.kind === 'set_field_value' ||
       (action.kind === 'send_notification' && action.recipient.kind === 'reference_owner')
   );
+  const hasAccessSensitiveTrigger = input.trigger.kind === 'field_changed';
   if (input.schema_id != null) {
     const schema = await db.catalog.getSchema(workspace, input.schema_id);
     httpAssert.true(schema != null, {
@@ -55,7 +57,7 @@ const validateInput = async (
       message: 'Automation rule references an entity type from another workspace'
     });
     if (schema) schemas = [schema];
-  } else if (input.conditions.length > 0 || hasAccessSensitiveAction) {
+  } else if (input.conditions.length > 0 || hasAccessSensitiveAction || hasAccessSensitiveTrigger) {
     // Rule isn't scoped to a single schema, so a condition or action field could resolve against
     // any schema in the workspace — check restriction against all of them.
     schemas = await db.catalog.listSchemas(workspace);
@@ -64,6 +66,16 @@ const validateInput = async (
     status: 400,
     message: 'A rule needs at least one action'
   });
+
+  if (input.trigger.kind === 'field_changed') {
+    const triggerField = input.trigger.field;
+    const restricted = schemas.some(schema => isFieldViewRestricted(authCtx, schema, triggerField));
+    httpAssert.true(!restricted, {
+      status: 403,
+      statusText: 'Forbidden',
+      message: `Automation rule trigger references a restricted field: ${triggerField}`
+    });
+  }
 
   for (const condition of input.conditions) {
     const restricted = schemas.some(schema =>
@@ -120,6 +132,7 @@ export const createAutomationRule = async (
   const rule = await db.automationRule.createRule({
     id: randomUUID(),
     workspace: ws,
+    created_by: authCtx.userId,
     name: input.name,
     description: input.description ?? null,
     schema_id: input.schema_id ?? null,

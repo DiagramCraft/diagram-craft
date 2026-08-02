@@ -82294,6 +82294,16 @@
                       "workspace": {
                         "type": "string"
                       },
+                      "created_by": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "name": {
                         "type": "string"
                       },
@@ -82536,6 +82546,7 @@
                     "required": [
                       "id",
                       "workspace",
+                      "created_by",
                       "name",
                       "description",
                       "schema_id",
@@ -82836,6 +82847,16 @@
                     "workspace": {
                       "type": "string"
                     },
+                    "created_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "name": {
                       "type": "string"
                     },
@@ -83078,6 +83099,7 @@
                   "required": [
                     "id",
                     "workspace",
+                    "created_by",
                     "name",
                     "description",
                     "schema_id",
@@ -83388,6 +83410,16 @@
                     "workspace": {
                       "type": "string"
                     },
+                    "created_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "name": {
                       "type": "string"
                     },
@@ -83630,6 +83662,7 @@
                   "required": [
                     "id",
                     "workspace",
+                    "created_by",
                     "name",
                     "description",
                     "schema_id",
