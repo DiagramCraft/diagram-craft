@@ -13,7 +13,10 @@ import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
-import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import {
+  EntitySchema,
+  isReferenceOrContainmentField
+} from '@arch-register/api-types/schemaContract';
 import type { FieldGroupAccess } from '@arch-register/permissions';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -124,10 +127,7 @@ export const AddEntityDialog = ({
     return [
       ...new Set(
         selectedSchema.fields
-          .filter(
-            (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-              field.type === 'reference' || field.type === 'containment'
-          )
+          .filter(isReferenceOrContainmentField)
           .map(field => field.schemaId)
           .filter(Boolean)
       )
@@ -152,14 +152,12 @@ export const AddEntityDialog = ({
 
   useEffect(() => {
     if (!templateId || !selectedSchema || entitiesQueries.some(query => query.isPending)) return;
-    const relationshipFields = selectedSchema.fields.filter(
-      (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-        field.type === 'reference' || field.type === 'containment'
-    );
+    const relationshipFields = selectedSchema.fields.filter(isReferenceOrContainmentField);
     const template = selectedSchema.templates.find(item => item.id === templateId);
     const removedLabels = relationshipFields.flatMap(field => {
       const value = template?.values.fields[field.id];
-      if (!Array.isArray(value)) return [];
+      if (!Array.isArray(value) || !value.every((item): item is string => typeof item === 'string'))
+        return [];
       const available = new Set(
         (derivedReferenceOptions[field.schemaId] ?? []).map(entity => entity._uid)
       );
@@ -245,6 +243,7 @@ export const AddEntityDialog = ({
     if (selectedSchema) {
       for (const f of selectedSchema.fields) {
         if (fieldAccessById.get(f.id) === 'none') continue;
+        if (f.type === 'typedRelation') continue;
         const val = fields[f.id];
         const isEmptyArray = Array.isArray(val) && val.length === 0;
         if (val !== undefined && val !== '' && !isEmptyArray) {
@@ -411,6 +410,9 @@ export const AddEntityDialog = ({
                     f =>
                       f.id !== 'name' &&
                       f.type !== 'derived' &&
+                      // typedRelation instances aren't part of the entity's data blob and have no
+                      // create-flow editor yet (#2606) — set them after creation instead.
+                      f.type !== 'typedRelation' &&
                       fieldAccessById.get(f.id) !== 'none'
                   )
                   .map(f => (

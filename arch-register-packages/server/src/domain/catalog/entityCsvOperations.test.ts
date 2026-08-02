@@ -217,6 +217,52 @@ describe('exportEntitiesCsv', () => {
     expect(viewerCsv).toContain('top secret');
     expect(viewerCsv.split('\n')[0]).toContain('Secret Plan');
   });
+
+  it('exports a typedRelation column as a joined summary of related entity names', async () => {
+    const typedRelationSchema: SchemaDbResult = {
+      ...schema,
+      fields: [
+        { id: 'criticality', name: 'Criticality', type: 'text' },
+        {
+          id: 'deps',
+          name: 'Depends on',
+          type: 'typedRelation',
+          relationSchemaId: 'rel-1',
+          direction: 'out'
+        } as never
+      ]
+    };
+    const entities = [makeEntity(1, { name: 'Payments API' })];
+    const base = makeDb(entities);
+    const db = {
+      ...base,
+      catalog: { ...base.catalog, listSchemas: vi.fn(async () => [typedRelationSchema]) },
+      relation: {
+        listRelations: vi.fn(async () => ({
+          items: [
+            {
+              id: 'rel-row-1',
+              out_entity_id: 'entity-1',
+              in_entity_id: 'entity-2',
+              in_entity_name: 'Database'
+            }
+          ],
+          total: 1
+        }))
+      }
+    } as unknown as DatabaseAdapter;
+
+    const response = await exportEntitiesCsv(
+      db,
+      'ws-1',
+      adminContext,
+      { schemaId: 'schema-1' },
+      now
+    );
+    const csv = await response.body.text();
+    expect(csv.split('\n')[0]).toContain('Depends on');
+    expect(csv).toContain('Database');
+  });
 });
 
 describe('downloadEntityImportTemplate', () => {

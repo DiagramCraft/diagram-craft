@@ -55,7 +55,7 @@ import {
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useWorkspacePermissions } from '../../auth/useWorkspacePermissions';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
-import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
 import { EntityOverviewSection } from './components/EntityOverviewSection';
 import { EntityContextSection } from './components/EntityContextSection';
@@ -479,10 +479,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     return [
       ...new Set(
         schema.fields
-          .filter(
-            (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-              field.type === 'reference' || field.type === 'containment'
-          )
+          .filter(isReferenceOrContainmentField)
           .map(field => field.schemaId)
           .filter(Boolean)
       )
@@ -510,12 +507,13 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
   const relationCount = outgoing.length + incoming.length;
-  const typedRelationCount = typedRelations.outgoing.length + typedRelations.incoming.length;
 
   const {
     editing,
     editState,
     setEditState,
+    typedRelationEditState,
+    setTypedRelationEditState,
     editLinks,
     setEditLinks,
     validationErrors,
@@ -762,7 +760,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           tab={tab}
           setTab={setTab}
           relationCount={relationCount}
-          typedRelationCount={typedRelationCount}
           canViewAudit={canViewAudit}
           overviewProps={{
             workspaceSlug,
@@ -771,6 +768,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             editing,
             editState,
             setEditState,
+            typedRelationEditState,
+            setTypedRelationEditState,
             editLinks,
             setEditLinks,
             validationErrors,
@@ -781,19 +780,12 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             lifecycleStates,
             entityProjects,
             changeCases: entityChangeCases,
-            entityDiagramFiles
-          }}
-          relationsProps={{ outgoing, incoming, schemas }}
-          typedRelationsProps={{
-            workspaceId,
-            entityId: entity?._uid ?? entityId,
-            entityName: entity?._name ?? '',
-            entitySchemaId: entity?._schema.id ?? '',
-            canEdit: entity?.canEdit ?? false,
-            outgoing: typedRelations.outgoing,
-            incoming: typedRelations.incoming,
+            entityDiagramFiles,
+            typedRelationsOutgoing: typedRelations.outgoing,
+            typedRelationsIncoming: typedRelations.incoming,
             relationSchemas
           }}
+          relationsProps={{ outgoing, incoming, schemas }}
           changeHistoryProps={{
             workspaceId,
             entityId,

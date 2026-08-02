@@ -1,5 +1,6 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import {
   exploreViewConfigSchema,
   type ExploreViewConfig
@@ -88,7 +89,7 @@ export const buildRelationFieldOptions = (
 
   for (const schema of schemas) {
     for (const field of schema.fields) {
-      if (field.type === 'reference' || field.type === 'containment') {
+      if (isReferenceOrContainmentField(field)) {
         labels.set(field.name, field.predicate ?? field.name);
       }
     }

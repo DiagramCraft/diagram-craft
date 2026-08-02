@@ -754,6 +754,26 @@ export const seedSchemas: SchemaDbResult[] = (
           schemaId: '00000000-0000-0000-0000-000000000001',
           minCount: 1,
           maxCount: 1
+        },
+        // Surfaces the "Data Flow" typed relation (see seedRelationSchemas below) inline as two
+        // directional fields, rather than only via the relation's own listing UI — demonstrates
+        // #2606's typedRelation SchemaField binding a relation schema + direction to an entity
+        // schema field.
+        {
+          id: 'data_flows_out',
+          name: 'Data Flows Out',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000030',
+          direction: 'out'
+        },
+        {
+          id: 'data_flows_in',
+          name: 'Data Flows In',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000030',
+          direction: 'in'
         }
       ],
       color: AR_COLOR_PURPLE,

@@ -4,6 +4,7 @@ import { useSubmitBulkEntityChangeApproval } from '../../../hooks/useEntityChang
 import { orpcClient } from '../../../lib/orpcClient';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { canClearBulkField, getBulkEditableFields, type BulkEditableField } from './bulkEditFields';
 import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
@@ -63,12 +64,11 @@ const buildBaseMutationBody = (
   };
 
   for (const field of schema?.fields ?? []) {
-    body[field.id] =
-      field.type === 'reference' || field.type === 'containment'
-        ? Array.isArray(entity[field.id])
-          ? entity[field.id]
-          : []
-        : (entity[field.id] ?? '');
+    body[field.id] = isReferenceOrContainmentField(field)
+      ? Array.isArray(entity[field.id])
+        ? entity[field.id]
+        : []
+      : (entity[field.id] ?? '');
   }
 
   return body;

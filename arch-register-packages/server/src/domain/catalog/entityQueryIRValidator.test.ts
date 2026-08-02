@@ -40,7 +40,14 @@ const COMPONENT = makeSchema('component-schema', [
     id: 'eol_date',
     name: 'EOL Date',
     type: 'date'
-  }
+  },
+  {
+    id: 'deps',
+    name: 'Depends on',
+    type: 'typedRelation',
+    relationSchemaId: 'rel-1',
+    direction: 'out'
+  } as never
 ]);
 
 const schemas: SchemaCatalog = new Map([
@@ -160,6 +167,41 @@ describe('validateEntityQueryIR', () => {
     };
     const result = validateEntityQueryIR(query, schemas);
     expect(result.ok).toBe(false);
+  });
+
+  it('rejects a predicate on a typedRelation field', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'deps',
+        op: 'equals',
+        value: 'x'
+      }
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors).toContainEqual({
+        path: ['root', 'fieldId'],
+        message: "Field 'deps' is a typed relation and is not queryable"
+      });
+    }
+  });
+
+  it('rejects a projection on a typedRelation field', () => {
+    const query: EntityQuery = {
+      root: { kind: 'freeText', value: 'x' },
+      projections: [{ path: [], fieldId: 'deps' }]
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors).toContainEqual({
+        path: ['projections', 0, 'fieldId'],
+        message: "Field 'deps' is a typed relation and is not queryable"
+      });
+    }
   });
 
   it('accepts underscore pseudo-fields without checking them against schema fields', () => {

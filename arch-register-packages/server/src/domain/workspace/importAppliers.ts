@@ -17,6 +17,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import type {
   ExportConfig,
   ExportSchema,
@@ -200,10 +201,11 @@ export const importSchemas = async (
       const templateFields: typeof template.values.fields = {};
       for (const [fieldId, value] of Object.entries(template.values.fields)) {
         const field = fieldById.get(fieldId);
-        if (field?.type === 'reference' || field?.type === 'containment') {
-          const remapped = Array.isArray(value)
-            ? value.flatMap(id => idMapping.entities.get(id) ?? [])
-            : [];
+        if (field !== undefined && isReferenceOrContainmentField(field)) {
+          const remapped =
+            Array.isArray(value) && value.every((item): item is string => typeof item === 'string')
+              ? value.flatMap(id => idMapping.entities.get(id) ?? [])
+              : [];
           if (remapped.length > 0) templateFields[fieldId] = remapped;
         } else {
           templateFields[fieldId] = value;

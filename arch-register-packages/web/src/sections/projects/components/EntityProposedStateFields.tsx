@@ -1,13 +1,13 @@
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { isRelationLikeField } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { EntityEditState } from '../../../lib/entityEditState';
 import styles from './EntityProposedStateFields.module.css';
 
-const isReference = (f: EntitySchema['fields'][number]) =>
-  f.type === 'reference' || f.type === 'containment';
+const isReference = (f: EntitySchema['fields'][number]) => isRelationLikeField(f);
 
 type Props = {
   schema: EntitySchema | null;

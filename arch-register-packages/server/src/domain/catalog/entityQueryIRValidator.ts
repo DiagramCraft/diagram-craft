@@ -4,7 +4,11 @@ import {
   type PathStep,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
-import type { ReferenceField, SchemaField } from '@arch-register/api-types/schemaContract';
+import {
+  isReferenceOrContainmentField,
+  type ReferenceField,
+  type SchemaField
+} from '@arch-register/api-types/schemaContract';
 import {
   ASSESSMENT_PRESENCE_FIELD_ID,
   ASSESSMENT_FIELD_PREFIX
@@ -18,11 +22,6 @@ export type SchemaCatalog = Map<string, SchemaDbResult>;
 export type ValidationError = { path: (string | number)[]; message: string };
 
 export type ValidationResult = { ok: true } | { ok: false; errors: ValidationError[] };
-
-const isRelationField = (
-  field: SchemaField
-): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-  field.type === 'reference' || field.type === 'containment';
 
 // Underscore pseudo-fields matched against the entity row itself, never against schema `fields`.
 const PSEUDO_FIELD_IDS = new Set([
@@ -72,6 +71,16 @@ const isKnownFieldId = (
   return resolveFieldSchemaScope(fieldId, schemas, authCtx).grantedSchemaIds.size > 0;
 };
 
+// typedRelation fields aren't stored on the entity row/data blob, so they aren't queryable/
+// filterable/projectable — reject explicitly rather than silently resolving to nothing.
+const isTypedRelationFieldId = (fieldId: string, schemas: SchemaCatalog): boolean => {
+  for (const schema of schemas.values()) {
+    const field = schema.fields.find(f => f.id === fieldId);
+    if (field?.type === 'typedRelation') return true;
+  }
+  return false;
+};
+
 const validatePathSteps = (
   steps: PathStep[],
   schemas: SchemaCatalog,
@@ -102,7 +111,7 @@ const validatePathSteps = (
         const field = ownerSchema.fields.find(f => f.id === step.fieldId);
         if (
           !field ||
-          !isRelationField(field) ||
+          !isReferenceOrContainmentField(field) ||
           isFieldViewRestricted(authCtx, ownerSchema, step.fieldId)
         ) {
           errors.push({
@@ -197,6 +206,11 @@ const validateNode = (
       );
       if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
         errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
+      } else if (isTypedRelationFieldId(node.fieldId, schemas)) {
+        errors.push({
+          path: [...path, 'fieldId'],
+          message: `Field '${node.fieldId}' is a typed relation and is not queryable`
+        });
       }
       return hopsAfterPath;
     }
@@ -305,6 +319,11 @@ export const validateEntityQueryIR = (
         path: [...projectionPath, 'fieldId'],
         message: `Unknown field '${projection.fieldId}'`
       });
+    } else if (isTypedRelationFieldId(projection.fieldId, schemas)) {
+      errors.push({
+        path: [...projectionPath, 'fieldId'],
+        message: `Field '${projection.fieldId}' is a typed relation and is not queryable`
+      });
     }
     const alias = projectionAlias(projection);
     if (aliases.has(alias)) {
@@ -327,5 +346,5 @@ export const validateEntityQueryIR = (
 
 // Re-exported for callers that need to distinguish a reference field from a plain scalar when
 // deciding whether a path step is even legal to take (used by the compiler as well).
-export const isReferenceOrContainmentField = isRelationField;
+export { isReferenceOrContainmentField };
 export type RelationField = ReferenceField | Extract<SchemaField, { type: 'containment' }>;

@@ -1,5 +1,9 @@
 import { Link } from '@tanstack/react-router';
-import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
+import {
+  isRelationLikeField,
+  type ApiSelectField,
+  type EntitySchema
+} from '@arch-register/api-types/schemaContract';
 import { Banner } from '../../../../../components/Banner';
 import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
@@ -12,7 +16,9 @@ import styles from './EntityCard.module.css';
 import { formatDate } from '../../../../../utils/dateFormat';
 
 export const filterSchemaFields = <T extends { type: string }>(fields: T[]): T[] =>
-  fields.filter(f => f.type !== 'containment' && f.type !== 'reference');
+  fields.filter(
+    f => f.type !== 'containment' && f.type !== 'reference' && f.type !== 'typedRelation'
+  );
 
 export const STANDARD_FIELD_OPTIONS = [
   { id: 'lifecycle', label: 'Lifecycle' },
@@ -37,7 +43,7 @@ export const renderSchemaFieldValue = (
     return opt?.label ?? String(value);
   }
   if (field.type === 'date') return formatDate(value, String(value));
-  if (field.type === 'reference' || field.type === 'containment') return null;
+  if (isRelationLikeField(field)) return null;
   return String(value);
 };
 

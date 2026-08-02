@@ -17,6 +17,7 @@ import {
 } from './db/filterBuilder';
 import { resolveFieldSchemaScope, type SchemaCatalog } from './entityQueryIRValidator';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 
 export type EntityQueryDialect = 'postgres' | 'sqlite';
 
@@ -103,8 +104,7 @@ const relationIsMultiValued = (path: PathStep[], schemas: SchemaCatalog): boolea
             schema.fields.find(field => field.id === step.fieldId)
           );
     return fields.some(
-      field =>
-        (field?.type === 'reference' || field?.type === 'containment') && field.maxCount !== 1
+      field => field !== undefined && isReferenceOrContainmentField(field) && field.maxCount !== 1
     );
   });
 

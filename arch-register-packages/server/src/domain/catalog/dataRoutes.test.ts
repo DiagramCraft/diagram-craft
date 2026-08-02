@@ -232,7 +232,8 @@ describe('data route helpers', () => {
       links: [],
       projectId: 'project-1',
       external: null,
-      fields: { system: ['system-1'] }
+      fields: { system: ['system-1'] },
+      relations: {}
     });
   });
 

@@ -2,15 +2,24 @@ import { describe, expect, it } from 'vitest';
 import {
   createEntityEditState,
   createEntityUpdateBody,
+  emptyTypedRelationFieldState,
   requiredEntityFieldIds,
-  slugifyEntityName
+  slugifyEntityName,
+  typedRelationEditStateToDeltas
 } from './entityEditState';
 
 const schema = {
   id: 'service',
   fields: [
     { id: 'owner', type: 'text', requirementLevel: 'required' },
-    { id: 'dependsOn', type: 'reference', requirementLevel: 'required', schemaId: 'service' }
+    { id: 'dependsOn', type: 'reference', requirementLevel: 'required', schemaId: 'service' },
+    {
+      id: 'runsOn',
+      type: 'typedRelation',
+      requirementLevel: null,
+      relationSchemaId: 'rel-1',
+      direction: 'out'
+    }
   ]
 } as never;
 
@@ -88,5 +97,50 @@ describe('entity detail edit state', () => {
 
   it('creates stable slugs from names', () => {
     expect(slugifyEntityName('Payments & Billing API')).toBe('payments-billing-api');
+  });
+
+  it('excludes typedRelation fields from the edit state and update body dataFields', () => {
+    const state = createEntityEditState(entity, schema);
+    expect(state).not.toHaveProperty('runsOn');
+
+    const body = createEntityUpdateBody(entity, schema, state, links);
+    expect(body).not.toHaveProperty('runsOn');
+    expect(body).not.toHaveProperty('_relations');
+  });
+
+  it('carries a non-empty typed-relation delta as _relations on the update body', () => {
+    const typedRelationEditState = {
+      runsOn: {
+        create: [{ otherEntityId: 'entity-9', data: { protocol: 'https' } }],
+        update: new Map([['rel-1', { note: 'changed' }]]),
+        remove: new Set(['rel-2'])
+      }
+    };
+
+    const body = createEntityUpdateBody(
+      entity,
+      schema,
+      createEntityEditState(entity, schema),
+      links,
+      typedRelationEditState
+    );
+
+    expect(body._relations).toEqual({
+      runsOn: {
+        create: [{ otherEntityId: 'entity-9', data: { protocol: 'https' } }],
+        update: [{ id: 'rel-1', data: { note: 'changed' } }],
+        delete: ['rel-2']
+      }
+    });
+  });
+});
+
+describe('typedRelationEditStateToDeltas', () => {
+  it('omits fields with no pending changes', () => {
+    expect(
+      typedRelationEditStateToDeltas({
+        runsOn: emptyTypedRelationFieldState()
+      })
+    ).toEqual({});
   });
 });

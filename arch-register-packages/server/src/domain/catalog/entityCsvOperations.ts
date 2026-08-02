@@ -6,8 +6,60 @@ import { orpcAssert } from '../../utils/orpcAssert';
 import { filterVisibleEntities, requireSchemaRead } from '../auth/authorization';
 import { restrictedFieldIds } from '../auth/fieldGroupAccessControl';
 import { relationFields } from './dataHelpers';
+import {
+  isReferenceOrContainmentField,
+  isTypedRelationField
+} from '@arch-register/api-types/schemaContract';
 import { listAllCatalogEntities } from './entityLoader';
 import { listEntities, type EntityQueryOptions } from './entityQueryOperations';
+import { ENTITY_DEFAULTS } from '../../constants';
+
+/** Fetches every relation instance for a relation schema, following pagination to completion. */
+const listAllRelationsForSchema = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationSchemaId: string
+) => {
+  const rows = [];
+  const pageSize = ENTITY_DEFAULTS.PAGE_SIZE;
+  let offset = 0;
+  while (true) {
+    const { items } = await db.relation.listRelations(
+      workspace,
+      { schemaId: relationSchemaId, inEntityId: null, outEntityId: null },
+      { limit: pageSize, offset }
+    );
+    if (items.length === 0) break;
+    rows.push(...items);
+    if (items.length < pageSize) break;
+    offset += pageSize;
+  }
+  return rows;
+};
+
+/** Builds an ownerEntityId -> other-endpoint-name[] lookup per typedRelation field, for CSV export. */
+const buildTypedRelationLookups = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  typedRelationFields: Array<{ id: string; relationSchemaId: string; direction: 'in' | 'out' }>
+) => {
+  const lookups = new Map<string, Map<string, string[]>>();
+  for (const field of typedRelationFields) {
+    const relations = await listAllRelationsForSchema(db, workspace, field.relationSchemaId);
+    const byOwner = new Map<string, string[]>();
+    for (const relation of relations) {
+      const ownerEntityId =
+        field.direction === 'out' ? relation.out_entity_id : relation.in_entity_id;
+      const otherName =
+        field.direction === 'out' ? relation.in_entity_name : relation.out_entity_name;
+      const list = byOwner.get(ownerEntityId) ?? [];
+      list.push(otherName);
+      byOwner.set(ownerEntityId, list);
+    }
+    lookups.set(field.id, byOwner);
+  }
+  return lookups;
+};
 
 const csvResponse = (content: string, filename: string) => ({
   headers: {
@@ -69,6 +121,10 @@ export const exportEntitiesCsv = async (
     }
   }
 
+  const typedRelationLookups = schema
+    ? await buildTypedRelationLookups(db, workspace, visibleFields.filter(isTypedRelationField))
+    : new Map<string, Map<string, string[]>>();
+
   const rows = entities.map(entity => {
     const owner = entity._owner as { id: string; name: string } | null;
     const lifecycle = entity._lifecycle as { id: string; name: string } | null;
@@ -91,9 +147,13 @@ export const exportEntitiesCsv = async (
     if (schema) {
       for (const field of visibleFields) {
         const value = entity[field.id];
-        if (field.type === 'reference' || field.type === 'containment') {
+        if (isReferenceOrContainmentField(field)) {
           row[field.name] = formatArrayForCsv(
             decodeRefs(value).map(id => referenceLookup.get(id) ?? id)
+          );
+        } else if (isTypedRelationField(field)) {
+          row[field.name] = formatArrayForCsv(
+            typedRelationLookups.get(field.id)?.get(entity._uid as string) ?? []
           );
         } else if (field.type === 'boolean') {
           row[field.name] = value === true ? 'true' : value === false ? 'false' : '';

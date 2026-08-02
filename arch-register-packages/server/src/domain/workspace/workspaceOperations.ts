@@ -17,6 +17,7 @@ import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
 import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
 import { ensureGovernanceDeadlineScanSchedule } from '../governance/governanceDeadlineScanJob';
 import { computeEntityCompleteness } from '../../utils/completeness';
+import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -465,15 +466,13 @@ export const createWorkspace = async (
             for (const schema of srcSchemas) schemaMap.set(schema.id, randomUUID());
             for (const schema of srcSchemas) {
               const remappedFields = schema.fields.map(field => {
-                if (field.type === 'reference' || field.type === 'containment') {
+                if (isReferenceOrContainmentField(field)) {
                   return { ...field, schemaId: schemaMap.get(field.schemaId) ?? field.schemaId };
                 }
                 return field;
               });
               const relationshipFieldIds = new Set(
-                schema.fields
-                  .filter(field => field.type === 'reference' || field.type === 'containment')
-                  .map(field => field.id)
+                schema.fields.filter(isReferenceOrContainmentField).map(field => field.id)
               );
               const templates = (schema.templates ?? []).map(template => {
                 const templateFields = Object.fromEntries(

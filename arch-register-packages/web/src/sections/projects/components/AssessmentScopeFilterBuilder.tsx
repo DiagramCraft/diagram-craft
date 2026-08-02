@@ -3,6 +3,7 @@ import { TbPlus, TbX } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { isRelationLikeField } from '@arch-register/api-types/schemaContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
@@ -87,7 +88,7 @@ const useScopeFields = ({
     const customFields = new Map<string, ScopeField>();
     for (const schema of schemas.filter(schema => scope.includes(schema.id))) {
       for (const field of schema.fields) {
-        if (field.type === 'reference' || field.type === 'containment') continue;
+        if (isRelationLikeField(field)) continue;
         if (customFields.has(field.id)) continue;
         if (field.groupId) {
           const group = schema.groups?.find(g => g.id === field.groupId);

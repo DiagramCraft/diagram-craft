@@ -97,26 +97,31 @@
           descendants and related records.
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
-          lifecycle, links, references, and custom values. A schema field marked as externally managed (by AI, an
-          integration, or an internal automation) is read-only to users; its current value stays visible alongside the
-          latest update's source, timestamp, status, and any explanation or findings. A user edit to any other field on
-          the entity marks that entity's external field results outdated. Fields belonging to a schema group render
-          under a labeled section in the entity's Properties panel, with ungrouped fields shown first.
+          lifecycle, links, references, typed relations, and custom values. A schema field marked as externally
+          managed (by AI, an integration, or an internal automation) is read-only to users; its current value stays
+          visible alongside the latest update's source, timestamp, status, and any explanation or findings. A user
+          edit to any other field on the entity marks that entity's external field results outdated. Fields belonging
+          to a schema group render under a labeled section in the entity's Properties panel, with ungrouped fields
+          shown first.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
-          dependent, and referenced records. Alongside these generic reference/containment relations, workspace
-          admins can define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of
-          allowed entity schemas) and their own configurable fields, field groups, and access control; relation
-          instances are first-class, independently addressable, audited records rather than entity-data values.
-          An entity's detail view has a "Typed relations" tab, alongside its generic "Relationships" tab, that lists
-          the typed relation instances the entity participates in (outgoing and incoming), grouped by relation type,
-          with each row showing the connected entity and its key field values (subject to field-group redaction) and
-          linking to that entity. From this tab, users can create a new relation instance connecting the current
-          entity to another entity, choosing among relation types whose endpoint constraints allow the entity's
-          schema and filling in the relation's fields (also subject to field-group access control). Each row can
-          also be inspected in a detail view showing its fields (editable subject to access and the user's
-          edit/delete capability on that instance) and its audit trail of create/update/delete events. Versioning
-          and change-approval for relation instances are not yet supported.
+          dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
+          define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of allowed
+          entity schemas) and their own configurable fields, field groups, and access control; relation instances are
+          first-class, independently addressable, audited records rather than entity-data values. A typed relation
+          schema is surfaced on an entity by adding a "typed relation" field to that entity's schema, bound to a
+          relation schema and a direction ("in" or "out"); like any other field, it can be placed in a named field
+          group and is subject to that group's access control on top of the target relation schema's own field-group
+          access control (a user needs edit access under both to change it). The field renders inline among the
+          entity's other Properties, listing the relation instances the entity participates in with each row showing
+          the connected entity and key field values (subject to field-group redaction) and linking to that entity.
+          While editing the entity, users can add, edit, and remove relation instances directly inline — adding
+          picks another entity from schemas the relation type allows and fills in the relation's own fields (subject
+          to field-group access control); these changes are saved together with the rest of the entity's edits in one
+          atomic update. Each existing instance can also be expanded inline to edit its fields, or opened in a detail
+          dialog showing its audit trail of create/update/delete events. Versioning and change-approval specifically
+          for relation instances are not yet supported; when an entity's changes go through change-approval,
+          in-progress relation edits are not yet guaranteed to carry through the proposal/approval workflow.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.

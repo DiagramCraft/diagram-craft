@@ -160,6 +160,8 @@ export const SchemaGraphView = () => {
 
     for (const schema of schemas) {
       for (const field of schema.fields) {
+        // typedRelation edges aren't visualized here yet (#2606) — the graph only reflects
+        // reference/containment fields, which point at an EntitySchema directly via schemaId.
         if (field.type !== 'reference' && field.type !== 'containment') continue;
         if (!field.schemaId) continue;
 

@@ -5,7 +5,8 @@ import {
   createEntityEditState,
   createEntityUpdateBody,
   requiredEntityFieldIds,
-  type EntityEditState
+  type EntityEditState,
+  type TypedRelationEditState
 } from '../lib/entityEditState';
 import { useDeleteEntity, useUpdateEntity } from './useEntities';
 import { usePromoteEntityVersion } from './useEntityVersions';
@@ -38,6 +39,7 @@ export const useEntityEditController = ({
 
   const [editing, setEditing] = useState(false);
   const [editState, setEditState] = useState<EntityEditState>({});
+  const [typedRelationEditState, setTypedRelationEditState] = useState<TypedRelationEditState>({});
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
   const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
@@ -50,6 +52,7 @@ export const useEntityEditController = ({
   const startEdit = () => {
     if (!entity || !schema) return;
     setEditState(createEntityEditState(entity, schema));
+    setTypedRelationEditState({});
     setEditLinks(entity._links.map(l => ({ ...l })));
     setEditing(true);
   };
@@ -57,6 +60,7 @@ export const useEntityEditController = ({
   const cancelEdit = () => {
     setEditing(false);
     setEditState({});
+    setTypedRelationEditState({});
     setEditLinks([]);
     setValidationErrors(new Set());
   };
@@ -71,7 +75,13 @@ export const useEntityEditController = ({
     }
     setValidationErrors(new Set());
 
-    const body = createEntityUpdateBody(entity, schema, editState, editLinks);
+    const body = createEntityUpdateBody(
+      entity,
+      schema,
+      editState,
+      editLinks,
+      typedRelationEditState
+    );
 
     setPendingSaveBody(body);
     setSaveConfirmMessage('');
@@ -95,6 +105,7 @@ export const useEntityEditController = ({
           onSuccess: () => {
             setEditing(false);
             setEditState({});
+            setTypedRelationEditState({});
             setEditLinks([]);
             setPendingSaveBody(null);
           }
@@ -111,6 +122,7 @@ export const useEntityEditController = ({
           }
           setEditing(false);
           setEditState({});
+          setTypedRelationEditState({});
           setEditLinks([]);
           setPendingSaveBody(null);
         }
@@ -132,6 +144,7 @@ export const useEntityEditController = ({
         onSuccess: () => {
           setEditing(false);
           setEditState({});
+          setTypedRelationEditState({});
           setEditLinks([]);
           setPendingSaveBody(null);
         }
@@ -150,6 +163,8 @@ export const useEntityEditController = ({
     editing,
     editState,
     setEditState,
+    typedRelationEditState,
+    setTypedRelationEditState,
     editLinks,
     setEditLinks,
     validationErrors,
