@@ -274,7 +274,9 @@
 
         - @id:ar.assessments.definitions Users can create and edit assessment definitions with status, scope, filters,
           and required or optional fields, start from built-in assessment templates, or configure a confirm-only mode
-          with no fields. Enum fields can reference reusable workspace enums or define assessment-local option values.
+          with no fields. Scope filters honor field-group view access: unauthorized restricted fields cannot be used
+          when defining a condition, and existing inaccessible conditions are hidden and fail closed for that caller.
+          Enum fields can reference reusable workspace enums or define assessment-local option values.
           Rating fields use a 1-5 scale by default but a template or definition can widen it up to 1-10. Read-only
           derived fields can calculate typed values from sibling responses and are excluded from response
           completeness and status. Fields can be organized into named, presentation-only groups (with an optional
@@ -289,12 +291,14 @@
           accurate" action per entity.
 
         - @id:ar.assessments.progress Users can inspect assessment completion, status, summary, and aggregate results,
-          including a per-team acknowledgement breakdown when the assessment has assigned teams.
+          including a per-team acknowledgement breakdown when the assessment has assigned teams. Scope-derived
+          results are evaluated with the caller's field-group access and do not disclose inaccessible conditions.
 
         - @id:ar.assessments.entity-views Users can join assessment data to entity views and use the assessment fields
           for filtering, sorting, and analysis.
 
-        - @id:ar.assessments.export Users can export assessment results to CSV.
+        - @id:ar.assessments.export Users can export assessment results to CSV. Exports do not include rows or
+          statuses derived from scope conditions the caller cannot view.
 
         - @id:ar.assessments.team-assignment Users can assign one or more teams to an assessment, with an optional
           due date, before opening it. Opening the assessment surfaces an acknowledgement task per assigned team in
