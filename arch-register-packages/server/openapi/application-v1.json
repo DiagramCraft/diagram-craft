@@ -22468,7 +22468,7 @@
                           },
                           "fieldName": {
                             "type": "string",
-                            "description": "Relationship field name (relation schema name when kind is \"typed\")"
+                            "description": "Relationship field name (for kind \"typed\", the entity schema's typedRelation field name bound to this relation, falling back to the relation schema name)"
                           },
                           "fieldPredicate": {
                             "type": "string",
@@ -22561,7 +22561,7 @@
                           },
                           "fieldName": {
                             "type": "string",
-                            "description": "Relationship field name (relation schema name when kind is \"typed\")"
+                            "description": "Relationship field name (for kind \"typed\", the entity schema's typedRelation field name bound to this relation, falling back to the relation schema name)"
                           },
                           "fieldPredicate": {
                             "type": "string",
@@ -22720,7 +22720,7 @@
                             },
                             "fieldName": {
                               "type": "string",
-                              "description": "Relationship field name (relation schema name when kind is \"typed\")"
+                              "description": "Relationship field name (for kind \"typed\", the entity schema's typedRelation field name bound to this relation, falling back to the relation schema name)"
                             },
                             "fieldPredicate": {
                               "type": "string",
@@ -22813,7 +22813,7 @@
                             },
                             "fieldName": {
                               "type": "string",
-                              "description": "Relationship field name (relation schema name when kind is \"typed\")"
+                              "description": "Relationship field name (for kind \"typed\", the entity schema's typedRelation field name bound to this relation, falling back to the relation schema name)"
                             },
                             "fieldPredicate": {
                               "type": "string",
@@ -22978,7 +22978,7 @@
                           },
                           "fieldName": {
                             "type": "string",
-                            "description": "Relationship field name (relation schema name when kind is \"typed\")"
+                            "description": "Relationship field name (for kind \"typed\", the entity schema's typedRelation field name bound to this relation, falling back to the relation schema name)"
                           },
                           "fieldPredicate": {
                             "type": "string",
