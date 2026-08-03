@@ -696,17 +696,29 @@ describe('data route helpers', () => {
     );
   });
 
-  it('hides typed relation dependents when the owner field is not viewable', () => {
+  it('hides typed relation dependents when neither owner field endpoint is viewable', () => {
+    // component and dependency share schema-component in these fixtures, so both the 'in' and
+    // 'out' typedRelation bindings must be restricted for canViewTypedRelation's OR-across-
+    // endpoints check to hide the edge (an unbound endpoint would otherwise keep it visible).
     const schemaWithRestrictedTypedRelation = {
       ...componentSchema,
       fields: [
         ...componentSchema.fields,
         {
-          id: 'data_flow',
-          name: 'Data flow',
+          id: 'data_flow_in',
+          name: 'Data flow (in)',
           type: 'typedRelation',
           relationSchemaId: 'relschema-dataflow',
           direction: 'in',
+          requirementLevel: null,
+          groupId: 'restricted'
+        },
+        {
+          id: 'data_flow_out',
+          name: 'Data flow (out)',
+          type: 'typedRelation',
+          relationSchemaId: 'relschema-dataflow',
+          direction: 'out',
           requirementLevel: null,
           groupId: 'restricted'
         }
