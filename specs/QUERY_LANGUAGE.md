@@ -418,6 +418,7 @@ type PathStep =
       fieldId: string;
       relationSchemaId: string;
       direction: 'in' | 'out';
+      ownerSchemaIds: string[]; // owner schemas whose typed-relation field is viewable
       filter?: QueryNode;
     };
 
@@ -432,6 +433,12 @@ type PathStep =
 // than one schema qualifies, parsing fails rather than emitting an IR node with a guessed or missing owner. The
 // visual filter builder always has this available directly (the author picks a relation from a concrete schema's
 // field list), so it never faces the ambiguity the text form has to resolve.
+
+// `ownerSchemaIds` is the corresponding provenance for a typed-relation step. It contains only owner schemas
+// whose matching typed-relation field is viewable to the caller. A valid IR never omits it, leaves it empty, or
+// includes an unknown/restricted owner schema; the SQL compiler applies it to the current entity before joining
+// the relation row. This preserves the field-group boundary when multiple owner schemas bind the same field id,
+// relation schema, and direction.
 
 // `filter`, when present, is evaluated against the entity reached by an ordinary step, or against the relation
 // instance reached by a `typedRelation` step, and must hold for the SAME existential witness that satisfies the rest

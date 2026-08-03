@@ -7,6 +7,7 @@ import { createFixtureUser } from './authFixtures';
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter, DbDriver } from '../database';
 import type { SchemaDbResult } from '../../domain/catalog/db/catalogDatabase';
+import type { RelationSchemaDbResult } from '../../domain/catalog/db/relationDatabase';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
   compileEntityQueryIR,
@@ -1296,5 +1297,182 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const contractorRow = projRows.find(row => row.id === contractorEntity.id);
     expect(employeeRow?.projections['salary']).toBeNull();
     expect(contractorRow?.projections['salary']).toBe(200);
+  });
+
+  it('scopes typed-relation hops and projection bindings to accessible owner schemas', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+    const relationSchemaId = randomUUID();
+
+    const targetSchema = await createSchema(db, workspace, { name: 'Target' });
+    const openOwnerSchema = await createSchema(db, workspace, {
+      name: 'Open Owner',
+      fields: [
+        {
+          id: 'depends_on',
+          name: 'Depends on',
+          type: 'typedRelation',
+          relationSchemaId,
+          direction: 'out'
+        }
+      ]
+    });
+    const lockedOwnerSchema = await createSchema(db, workspace, {
+      name: 'Locked Owner',
+      fields: [
+        {
+          id: 'depends_on',
+          name: 'Depends on',
+          type: 'typedRelation',
+          relationSchemaId,
+          direction: 'out',
+          groupId: 'locked'
+        }
+      ],
+      groups: [{ id: 'locked', name: 'Locked', accessControl: { teamIds: ['team-locked'] } }]
+    });
+    const relationSchema: RelationSchemaDbResult = await db.relation.createRelationSchema({
+      id: relationSchemaId,
+      workspace,
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [targetSchema.id],
+      out_schema_ids: [openOwnerSchema.id, lockedOwnerSchema.id],
+      fields: [{ id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const target = await createFixtureCatalogEntity(db, workspace, targetSchema.id, {
+      name: 'Target Entity'
+    });
+    const openOwner = await createFixtureCatalogEntity(db, workspace, openOwnerSchema.id, {
+      name: 'Open Owner'
+    });
+    const lockedOwner = await createFixtureCatalogEntity(db, workspace, lockedOwnerSchema.id, {
+      name: 'Locked Owner'
+    });
+    const relationData = { note: 'visible relation note' };
+    await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: target.id,
+      out_entity_id: openOwner.id,
+      data: relationData,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: target.id,
+      out_entity_id: lockedOwner.id,
+      data: relationData,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [targetSchema.id, targetSchema],
+      [openOwnerSchema.id, openOwnerSchema],
+      [lockedOwnerSchema.id, lockedOwnerSchema]
+    ]);
+    const relationSchemas = new Map([[relationSchema.id, relationSchema]]);
+    const noAccess = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: null,
+      schemas: [targetSchema, openOwnerSchema, lockedOwnerSchema],
+      entities: [target, openOwner, lockedOwner],
+      grants: []
+    });
+    const privileged = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'admin',
+      schemas: [targetSchema, openOwnerSchema, lockedOwnerSchema],
+      entities: [target, openOwner, lockedOwner],
+      grants: []
+    });
+
+    const path = (ownerSchemaIds: string[]) => [
+      {
+        kind: 'typedRelation' as const,
+        fieldId: 'depends_on',
+        relationSchemaId: relationSchema.id,
+        direction: 'out' as const,
+        ownerSchemaIds
+      }
+    ];
+    const query: EntityQuery = {
+      root: { kind: 'relationExists', path: path([openOwnerSchema.id]) },
+      projections: [
+        { path: path([openOwnerSchema.id]), fieldId: '_name', alias: 'target_name' },
+        {
+          path: path([openOwnerSchema.id]),
+          fieldId: 'note',
+          source: 'relation',
+          alias: 'relation_note'
+        }
+      ]
+    };
+
+    const compileAndRun = async (
+      authCtx: ReturnType<typeof buildAuthorizationContext>,
+      ownerSchemaIds: string[]
+    ) => {
+      const scopedQuery: EntityQuery = {
+        ...query,
+        root: { kind: 'relationExists', path: path(ownerSchemaIds) },
+        projections: query.projections!.map(projection => ({
+          ...projection,
+          path: path(ownerSchemaIds)
+        }))
+      };
+      const validation = validateEntityQueryIR(scopedQuery, schemas, authCtx, relationSchemas);
+      expect(validation.ok, JSON.stringify(validation)).toBe(true);
+      const compiled = compileEntityQueryIR(
+        scopedQuery,
+        schemas,
+        driver,
+        workspace,
+        {},
+        authCtx,
+        relationSchemas
+      );
+      return db.catalog.runCompiledEntityQuery(compiled.sql, compiled.params);
+    };
+
+    const noAccessMatches = await compileAndRun(noAccess, [openOwnerSchema.id]);
+    expect(noAccessMatches.map(entity => entity.id)).toEqual([openOwner.id]);
+    expect(noAccessMatches[0]?.projections['target_name']).toEqual(['Target Entity']);
+    expect(noAccessMatches[0]?.projections['relation_note']).toEqual([relationData.note]);
+
+    const privilegedMatches = await compileAndRun(privileged, [
+      openOwnerSchema.id,
+      lockedOwnerSchema.id
+    ]);
+    expect(privilegedMatches.map(entity => entity.id)).toEqual(
+      expect.arrayContaining([openOwner.id, lockedOwner.id])
+    );
+
+    const restrictedBinding: EntityQuery = {
+      root: { kind: 'relationExists', path: path([openOwnerSchema.id, lockedOwnerSchema.id]) }
+    };
+    const restrictedValidation = validateEntityQueryIR(
+      restrictedBinding,
+      schemas,
+      noAccess,
+      relationSchemas
+    );
+    expect(restrictedValidation.ok).toBe(false);
   });
 });

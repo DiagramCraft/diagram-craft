@@ -237,7 +237,12 @@ type FieldResolution =
   | { kind: 'pseudo' }
   | { kind: 'scalar'; field: SchemaField }
   | { kind: 'relation'; field: Extract<SchemaField, { type: 'reference' | 'containment' }> }
-  | { kind: 'typedRelation'; field: TypedRelationField; relationSchemaId: string }
+  | {
+      kind: 'typedRelation';
+      field: TypedRelationField;
+      relationSchemaId: string;
+      ownerSchemaIds: string[];
+    }
   | { kind: 'relationScalar'; field: RelationField; relationSchemaId: string };
 
 const relationSchemaNameById = (
@@ -306,7 +311,23 @@ const resolveField = (
         offset
       );
     }
-    return { kind: 'typedRelation', field, relationSchemaId: field.relationSchemaId };
+    const ownerSchemaIds = candidateSchemas
+      .filter(schema =>
+        schema.fields.some(
+          candidate =>
+            candidate.id === fieldId &&
+            candidate.type === 'typedRelation' &&
+            candidate.relationSchemaId === field.relationSchemaId &&
+            candidate.direction === field.direction
+        )
+      )
+      .map(schema => schema.id);
+    return {
+      kind: 'typedRelation',
+      field,
+      relationSchemaId: field.relationSchemaId,
+      ownerSchemaIds
+    };
   }
   if (relationMatches.length > 0) {
     if (relationMatches.length !== matches.length) {
@@ -706,6 +727,7 @@ const parseStep = (
             fieldId,
             relationSchemaId: resolution.relationSchemaId,
             direction: resolution.field.direction,
+            ownerSchemaIds: resolution.ownerSchemaIds,
             ...(filter ? { filter } : {})
           }
         : { kind: 'forward', fieldId, ...(filter ? { filter } : {}) },

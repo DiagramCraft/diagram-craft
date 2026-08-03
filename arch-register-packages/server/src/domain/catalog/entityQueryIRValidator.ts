@@ -50,6 +50,11 @@ const PSEUDO_FIELD_IDS = new Set([
 // whose schema actually grants the field — see entityQueryIRCompiler.ts's `schemaScopeClause`.
 export type FieldSchemaScope = { grantedSchemaIds: Set<string>; needsScoping: boolean };
 
+export type TypedRelationOwnerSchemaScope = {
+  matchingSchemaIds: Set<string>;
+  grantedSchemaIds: Set<string>;
+};
+
 export const resolveFieldSchemaScope = (
   fieldId: string,
   schemas: SchemaCatalog,
@@ -63,6 +68,36 @@ export const resolveFieldSchemaScope = (
     else grantedSchemaIds.add(schema.id);
   }
   return { grantedSchemaIds, needsScoping };
+};
+
+export const resolveTypedRelationOwnerSchemaScope = (
+  fieldId: string,
+  relationSchemaId: string,
+  direction: 'in' | 'out',
+  schemas: SchemaCatalog,
+  authCtx: WorkspaceAuthorizationContext | null,
+  currentSchemaId?: string
+): TypedRelationOwnerSchemaScope => {
+  const candidateSchemas = currentSchemaId
+    ? [schemas.get(currentSchemaId)].filter((schema): schema is SchemaDbResult => schema != null)
+    : [...schemas.values()];
+  const matchingSchemaIds = new Set<string>();
+  const grantedSchemaIds = new Set<string>();
+
+  for (const schema of candidateSchemas) {
+    const field = schema.fields.find(
+      candidate =>
+        candidate.id === fieldId &&
+        candidate.type === 'typedRelation' &&
+        candidate.relationSchemaId === relationSchemaId &&
+        candidate.direction === direction
+    );
+    if (!field) continue;
+    matchingSchemaIds.add(schema.id);
+    if (!isFieldViewRestricted(authCtx, schema, field.id)) grantedSchemaIds.add(schema.id);
+  }
+
+  return { matchingSchemaIds, grantedSchemaIds };
 };
 
 const isKnownFieldId = (
@@ -192,25 +227,57 @@ const validatePathSteps = (
       }
     } else if (step.kind === 'typedRelation') {
       const relationSchema = relationSchemas.get(step.relationSchemaId);
-      const matchingFields = [...schemas.values()].flatMap(schema =>
-        schema.fields
-          .filter(
-            field =>
-              field.id === step.fieldId &&
-              field.type === 'typedRelation' &&
-              field.relationSchemaId === step.relationSchemaId &&
-              field.direction === step.direction &&
-              !isFieldViewRestricted(authCtx, schema, field.id)
-          )
-          .map(field => ({ schema, field }))
-      );
       if (!relationSchema) {
         errors.push({
           path: [...stepPath, 'relationSchemaId'],
           message: `Unknown relation schema '${step.relationSchemaId}'`
         });
       }
-      if (matchingFields.length === 0) {
+      const ownerSchemaIds = Array.isArray(step.ownerSchemaIds) ? step.ownerSchemaIds : [];
+      const uniqueOwnerSchemaIds = new Set(ownerSchemaIds);
+      if (ownerSchemaIds.length === 0) {
+        errors.push({
+          path: [...stepPath, 'ownerSchemaIds'],
+          message: 'Typed-relation hops require at least one owner schema'
+        });
+      }
+      if (uniqueOwnerSchemaIds.size !== ownerSchemaIds.length) {
+        errors.push({
+          path: [...stepPath, 'ownerSchemaIds'],
+          message: 'Typed-relation owner schema ids must be unique'
+        });
+      }
+
+      for (const ownerSchemaId of uniqueOwnerSchemaIds) {
+        const ownerSchema = schemas.get(ownerSchemaId);
+        const ownerField = ownerSchema?.fields.find(
+          field =>
+            field.id === step.fieldId &&
+            field.type === 'typedRelation' &&
+            field.relationSchemaId === step.relationSchemaId &&
+            field.direction === step.direction
+        );
+        if (!ownerSchema) {
+          errors.push({
+            path: [...stepPath, 'ownerSchemaIds'],
+            message: `Unknown owner schema '${ownerSchemaId}'`
+          });
+        } else if (!ownerField || isFieldViewRestricted(authCtx, ownerSchema, ownerField.id)) {
+          errors.push({
+            path: [...stepPath, 'ownerSchemaIds'],
+            message: `Owner schema '${ownerSchemaId}' does not grant a viewable typed-relation field '${step.fieldId}'`
+          });
+        }
+      }
+
+      const scope = resolveTypedRelationOwnerSchemaScope(
+        step.fieldId,
+        step.relationSchemaId,
+        step.direction,
+        schemas,
+        authCtx
+      );
+      if (scope.grantedSchemaIds.size === 0) {
         errors.push({
           path: [...stepPath, 'fieldId'],
           message: `No viewable typed-relation field '${step.fieldId}' binds relation schema '${step.relationSchemaId}' at direction '${step.direction}'`
