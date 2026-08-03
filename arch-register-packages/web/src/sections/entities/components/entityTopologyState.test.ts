@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupRelationsByField } from './entityTopologyState';
+import { groupRelationsByField, groupRelationsByRelationSchema } from './entityTopologyState';
 import type { Relation } from '../types/entityDetailTypes';
 
 const relation = (fieldName: string, entityId: string, fieldPredicate?: string): Relation => ({
@@ -11,6 +11,23 @@ const relation = (fieldName: string, entityId: string, fieldPredicate?: string):
   fieldName,
   fieldPredicate,
   kind: 'reference'
+});
+
+const typedRelation = (
+  fieldName: string,
+  entityId: string,
+  relationSchemaId: string,
+  relationId: string
+): Relation => ({
+  entityId,
+  publicId: entityId.toUpperCase(),
+  entitySlug: entityId,
+  entityName: entityId,
+  entitySchemaId: 'service',
+  fieldName,
+  kind: 'typed',
+  relationId,
+  relationSchemaId
 });
 
 describe('groupRelationsByField', () => {
@@ -34,5 +51,29 @@ describe('groupRelationsByField', () => {
 
   it('returns no groups for an empty relation list', () => {
     expect(groupRelationsByField([])).toEqual([]);
+  });
+});
+
+describe('groupRelationsByRelationSchema', () => {
+  it('groups typed relations by relationSchemaId rather than fieldName', () => {
+    const first = typedRelation('dependsOn', 'one', 'schema-a', 'rel-1');
+    const second = typedRelation('supports', 'two', 'schema-a', 'rel-2');
+    const third = typedRelation('ownedBy', 'three', 'schema-b', 'rel-3');
+
+    expect(groupRelationsByRelationSchema([first, second, third])).toEqual([
+      { key: 'schema-a', label: 'dependsOn', relations: [first, second] },
+      { key: 'schema-b', label: 'ownedBy', relations: [third] }
+    ]);
+  });
+
+  it('falls back to fieldName when relationSchemaId is absent', () => {
+    const withoutSchema = relation('dependsOn', 'one');
+    expect(groupRelationsByRelationSchema([withoutSchema])).toEqual([
+      { key: 'dependsOn', label: 'dependsOn', relations: [withoutSchema] }
+    ]);
+  });
+
+  it('returns no groups for an empty relation list', () => {
+    expect(groupRelationsByRelationSchema([])).toEqual([]);
   });
 });

@@ -21,13 +21,7 @@ export const getEntityRelations = async (
   authCtx: AuthorizationContext | null
 ): Promise<EntityRelations> => {
   try {
-    const [entity, schemas, entitiesRaw, typedRelations, relationSchemas] = await Promise.all([
-      db.catalog.getEntity(workspace, id),
-      db.catalog.listSchemas(workspace),
-      listAllCatalogEntities(db, workspace),
-      db.relation.listRelationsForEntity(workspace, id),
-      db.relation.listRelationSchemas(workspace)
-    ]);
+    const entity = await db.catalog.getEntity(workspace, id);
     httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
     if (authCtx)
       requireEntityAction(
@@ -36,6 +30,12 @@ export const getEntityRelations = async (
         'view_entity',
         'You do not have access to view this entity'
       );
+    const [schemas, entitiesRaw, typedRelations, relationSchemas] = await Promise.all([
+      db.catalog.listSchemas(workspace),
+      listAllCatalogEntities(db, workspace),
+      db.relation.listRelationsForEntity(workspace, entity.id),
+      db.relation.listRelationSchemas(workspace)
+    ]);
     const entities = authCtx
       ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
       : entitiesRaw;

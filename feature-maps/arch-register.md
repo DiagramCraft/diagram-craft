@@ -121,7 +121,10 @@
           atomic update. Each existing instance can also be expanded inline to edit its fields, or opened in a detail
           dialog showing its audit trail of create/update/delete events. Versioning and change-approval specifically
           for relation instances are not yet supported; when an entity's changes go through change-approval,
-          in-progress relation edits are not yet guaranteed to carry through the proposal/approval workflow.
+          in-progress relation edits are not yet guaranteed to carry through the proposal/approval workflow. The
+          entity detail screen's Relations tab and Topology view also surface typed relation instances (grouped by
+          relation schema in Topology, using the schema's own color), each expandable in place to view field values
+          and open the same audit-trail history dialog.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.
@@ -150,9 +153,13 @@
 
         - @id:ar.entity-views.graph Users can explore entity relationships and dependencies through a graph view,
           including typed relationship instances alongside generic reference/containment relations, each rendered
-          with its relation schema's color and clickable to navigate to the related entity.
+          with its relation schema's color; clicking a typed relation edge opens a popup with its field values,
+          links to both endpoint entities, and access to its audit history.
 
-        - @id:ar.entity-views.topology Users can inspect entity relationships and dependencies in a topology view.
+        - @id:ar.entity-views.topology Users can inspect entity relationships and dependencies in a topology view,
+          including a dedicated section grouping typed relation instances by relation schema alongside the
+          containment/reference sections; clicking a typed relation opens the same detail popup used in the graph
+          view.
 
         - @id:ar.entity-views.radar Users can compare entities in a radar-oriented view when the required data is
           available.
@@ -171,7 +178,9 @@
           diffs for viewers without view access to that group; an entity whose only changes are restricted shows an
           undifferentiated "Restricted changes" indicator rather than being silently omitted.
 
-        - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view.
+        - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view, filterable
+          by a specific relation field where typed relation instances are included alongside generic
+          reference/containment relations and marked with their relation schema's colour/icon in the field picker.
 
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
           colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views
@@ -185,7 +194,9 @@
           to that group, rather than exposing the underlying data; the field picker also excludes such fields when
           configuring the metric.
 
-        - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view.
+        - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
+          toggling which relation fields draw connections; typed relation instances are included by default
+          alongside generic reference relations and their toggle is marked with the relation schema's colour/icon.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware

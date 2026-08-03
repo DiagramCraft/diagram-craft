@@ -14,14 +14,19 @@ const entity = (id: string, schemaId = 'service', fields: Record<string, unknown
     ...fields
   }) as unknown as EntityRecord;
 
-const relation = (entityId: string, entitySchemaId: string, fieldName = 'uses') =>
+const relation = (
+  entityId: string,
+  entitySchemaId: string,
+  fieldName = 'uses',
+  kind: EntityRelation['kind'] = 'reference'
+) =>
   ({
     entityId,
     publicId: entityId,
     entitySlug: entityId,
     entitySchemaId,
     fieldName,
-    kind: 'reference',
+    kind,
     entityName: entityId
   }) as EntityRelation;
 
@@ -87,5 +92,29 @@ describe('matrix view state', () => {
       fullRowsMap: new Map([['r1', full]])
     });
     expect(data.cellMatrix).toEqual([[true, false]]);
+  });
+
+  it('buckets typed relations the same as reference relations', () => {
+    const rows = [entity('r1'), entity('r2')];
+    const cols = [entity('a', 'app'), entity('b', 'app')];
+    const relationsMap = new Map([
+      ['r1', { outgoing: [relation('a', 'app', 'flowsInto', 'typed')], incoming: [] }],
+      ['r2', { outgoing: [], incoming: [] }]
+    ]);
+    const data = buildMatrixData({
+      rows,
+      colMode: 'entity',
+      colEntities: cols,
+      attrField: null,
+      colFieldId: null,
+      relationsMap,
+      filterFieldName: 'flowsInto',
+      hideEmptyRows: true,
+      hideEmptyCols: true,
+      fullRowsMap: new Map()
+    });
+    expect(data.displayRows.map(row => row._uid)).toEqual(['r1']);
+    expect(data.displayCols.map(column => column.id)).toEqual(['a']);
+    expect(data.cellMatrix).toEqual([[true]]);
   });
 });
