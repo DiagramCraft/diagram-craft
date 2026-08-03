@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   toDiagramCraftData,
   toDiagramCraftField,
+  toDiagramCraftRelationReferences,
   toDiagramCraftSchema
 } from './diagramCraftTransforms';
 import { Entity, SchemaDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
@@ -66,6 +67,87 @@ describe('diagram craft transforms', () => {
         }
       ]
     });
+  });
+
+  it('projects typed relation fields to multi-target references', () => {
+    const relationSchema = {
+      id: 'relation-1',
+      in_schema_ids: ['schema-1'],
+      out_schema_ids: ['schema-2', 'schema-3']
+    } as never;
+    const schema = {
+      id: 'schema-1',
+      name: 'Source',
+      fields: [
+        {
+          id: 'flows_to',
+          name: 'Flows to',
+          type: 'typedRelation',
+          relationSchemaId: 'relation-1',
+          direction: 'in'
+        }
+      ]
+    } as SchemaDbResult;
+
+    expect(toDiagramCraftSchema(schema, [], [relationSchema]).fields).toContainEqual({
+      id: 'flows_to',
+      name: 'Flows to',
+      type: 'reference',
+      schemaId: 'schema-2',
+      schemaIds: ['schema-2', 'schema-3'],
+      minCount: 0,
+      maxCount: -1
+    });
+  });
+
+  it('projects visible typed relation endpoints without relation attributes', () => {
+    const source = {
+      id: 'source',
+      schema_id: 'schema-1',
+      name: 'Source'
+    } as Entity;
+    const target = {
+      id: 'target',
+      schema_id: 'schema-2',
+      name: 'Target'
+    } as Entity;
+    const schemas = [
+      {
+        id: 'schema-1',
+        fields: [
+          {
+            id: 'flows_to',
+            name: 'Flows to',
+            type: 'typedRelation',
+            relationSchemaId: 'relation-1',
+            direction: 'in'
+          }
+        ]
+      },
+      { id: 'schema-2', fields: [] }
+    ] as SchemaDbResult[];
+    const row = {
+      id: 'relation-instance',
+      schema_id: 'relation-1',
+      in_entity_id: 'source',
+      out_entity_id: 'target',
+      data: { classification: 'PII' }
+    } as never;
+
+    const references = toDiagramCraftRelationReferences(
+      [row],
+      [source, target],
+      schemas,
+      authCtxWithTeamRoles({})
+    );
+
+    expect(references).toEqual(new Map([['source', new Map([['flows_to', ['target']]])]]));
+    expect(toDiagramCraftData(source, schemas[0]!, null, references.get('source'))).toMatchObject({
+      flows_to: 'target'
+    });
+    expect(
+      toDiagramCraftData(source, schemas[0]!, null, references.get('source'))
+    ).not.toHaveProperty('classification');
   });
 
   it('adds name and description metadata fields when missing', () => {

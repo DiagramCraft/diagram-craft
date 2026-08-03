@@ -50,6 +50,14 @@ function assertDataSchemaField(value: unknown): asserts value is DataSchemaField
     case 'reference':
     case 'containment':
       assertString(field.schemaId, 'Relationship field schemaId');
+      if (field.schemaIds !== undefined) {
+        if (!Array.isArray(field.schemaIds)) {
+          throw new Error('Relationship field schemaIds must be an array');
+        }
+        field.schemaIds.forEach((schemaId, index) =>
+          assertString(schemaId, `Relationship field schemaIds[${index}]`)
+        );
+      }
       if (typeof field.minCount !== 'number') {
         throw new Error('Relationship field minCount must be a number');
       }
