@@ -266,6 +266,8 @@ describe('listEntities with asOf', () => {
     return {
       catalog: {
         listSchemas: vi.fn(async () => [schema]),
+        getSchema: vi.fn(async () => schema),
+        listSchemaVersions: vi.fn(async () => []),
         listEntityVersionsAsOf,
         listPlannedEntityChangesAsOf: vi.fn(async () => []),
         listEntityIdsWithVersionHistory: vi.fn(async () => []),

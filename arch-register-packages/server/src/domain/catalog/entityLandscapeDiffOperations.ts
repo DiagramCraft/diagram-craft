@@ -9,10 +9,10 @@ import { requireProjectAccess, filterVisibleEntities } from '../auth/authorizati
 import { httpAssert } from '../../utils/httpAssert';
 import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
-import { buildDiff, redactDataDiff } from './entityDiff';
-import { toApiEntity } from './entityHelpers';
+import { buildDiff, redactKnownDataDiff } from './entityDiff';
+import { toApiEntity, toApiHistoricalEntity } from './entityHelpers';
 import { computeEntityCompleteness } from '../../utils/completeness';
-import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import { filterKnownRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterEntities, matchesFilterCondition } from './dataHelpers';
 import { resolveJoinedAssessment } from './entityQueryOperations';
 import { filterConditionsToEntityQueryIR } from './entityQueryIRMapping';
@@ -25,7 +25,12 @@ import {
   splitAssessmentConditions,
   matchesAssessmentConditions
 } from '@arch-register/api-types/assessmentFilter';
-import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import type { EntityDbResult } from './db/catalogDatabase';
+import {
+  availableSchemaCatalog,
+  resolveEntitySchemaCatalogAt,
+  type HistoricalSchemaCatalog
+} from './schemaHistory';
 
 const entityState = (entity: EntityDbResult): Record<string, unknown> => ({
   slug: entity.slug,
@@ -212,13 +217,16 @@ const reconstructState = async (
 const toApi = (
   entity: EntityDbResult,
   authCtx: AuthorizationContext,
-  schemaById: Map<string, SchemaDbResult>
+  schemaById: HistoricalSchemaCatalog,
+  historical: boolean
 ): EntityRecord => {
   const schema = schemaById.get(entity.schema_id) ?? null;
   const visibleCompleteness = schema
     ? computeEntityCompleteness(entity, schema, authCtx)
     : entity.completeness;
-  return toApiEntity(entity, authCtx, schema, visibleCompleteness);
+  return historical
+    ? toApiHistoricalEntity(entity, authCtx, schema, visibleCompleteness)
+    : toApiEntity(entity, authCtx, schema, visibleCompleteness);
 };
 
 export const diffEntityLandscapes = async (
@@ -240,9 +248,14 @@ export const diffEntityLandscapes = async (
   }
 
   const schemas = await db.catalog.listSchemas(workspace);
-  const schemaCatalog: SchemaCatalog = new Map(schemas.map(schema => [schema.id, schema]));
-  validateStateConditions(from, schemaCatalog, authCtx);
-  validateStateConditions(to, schemaCatalog, authCtx);
+  const [fromSchemas, toSchemas] = await Promise.all([
+    resolveEntitySchemaCatalogAt(db, workspace, schemas, parseStateDate(from)),
+    resolveEntitySchemaCatalogAt(db, workspace, schemas, parseStateDate(to))
+  ]);
+  const fromSchemaCatalog = availableSchemaCatalog(fromSchemas);
+  const toSchemaCatalog = availableSchemaCatalog(toSchemas);
+  validateStateConditions(from, fromSchemaCatalog, authCtx);
+  validateStateConditions(to, toSchemaCatalog, authCtx);
 
   const [fromScope, toScope] = isScenarioComparison
     ? await Promise.all([
@@ -270,9 +283,12 @@ export const diffEntityLandscapes = async (
       ]
     : [fromScope, fromScope];
   const now = new Date();
+  const currentSchemas: HistoricalSchemaCatalog = new Map(
+    schemas.map(schema => [schema.id, schema] as const)
+  );
   const [fromEntities, toEntities, currentEntities] = await Promise.all([
-    reconstructState(db, workspace, authCtx, from, scopes[0] ?? null, now, schemaCatalog),
-    reconstructState(db, workspace, authCtx, to, scopes[1] ?? null, now, schemaCatalog),
+    reconstructState(db, workspace, authCtx, from, scopes[0] ?? null, now, fromSchemaCatalog),
+    reconstructState(db, workspace, authCtx, to, scopes[1] ?? null, now, toSchemaCatalog),
     isScenarioComparison
       ? reconstructState(
           db,
@@ -285,7 +301,7 @@ export const diffEntityLandscapes = async (
           },
           null,
           now,
-          schemaCatalog
+          availableSchemaCatalog(currentSchemas)
         )
       : Promise.resolve([])
   ]);
@@ -293,17 +309,17 @@ export const diffEntityLandscapes = async (
   const toById = new Map(toEntities.map(entity => [entity.id, entity]));
   const currentById = new Map(currentEntities.map(entity => [entity.id, entity]));
 
-  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
-  const schemaFor = (entity: EntityDbResult) => schemaById.get(entity.schema_id) ?? null;
+  const schemaFor = (entity: EntityDbResult, catalog: HistoricalSchemaCatalog) =>
+    catalog.get(entity.schema_id) ?? null;
 
   const added = [...toById.values()]
     .filter(entity => !fromById.has(entity.id))
     .sort((a, b) => a.id.localeCompare(b.id))
-    .map(entity => toApi(entity, authCtx, schemaById));
+    .map(entity => toApi(entity, authCtx, toSchemas, true));
   const removed = [...fromById.values()]
     .filter(entity => !toById.has(entity.id))
     .sort((a, b) => a.id.localeCompare(b.id))
-    .map(entity => toApi(entity, authCtx, schemaById));
+    .map(entity => toApi(entity, authCtx, fromSchemas, true));
   const changed = [...toById.values()]
     .filter(entity => fromById.has(entity.id))
     .map(entity => ({
@@ -318,11 +334,11 @@ export const diffEntityLandscapes = async (
     .sort((a, b) => a.entity.id.localeCompare(b.entity.id))
     .map(entry => {
       const fromEntity = fromById.get(entry.entity.id)!;
-      const redactedDiff = redactDataDiff(
+      const redactedDiff = redactKnownDataDiff(
         entry.diff,
         authCtx,
-        schemaFor(fromEntity),
-        schemaFor(entry.entity)
+        schemaFor(fromEntity, fromSchemas),
+        schemaFor(entry.entity, toSchemas)
       );
       const currentEntity = entry.current ?? entry.entity;
       const diff = isScenarioComparison
@@ -331,16 +347,16 @@ export const diffEntityLandscapes = async (
               if (key !== 'data') {
                 return [key, { ...fieldDiff, current: entityState(currentEntity)[key] ?? null }];
               }
-              const current = filterRestrictedFieldGroups(
+              const current = filterKnownRestrictedFieldGroups(
                 authCtx,
-                schemaFor(currentEntity),
+                schemaFor(currentEntity, currentSchemas),
                 (entityState(currentEntity)[key] ?? {}) as Record<string, unknown>
               );
               return [key, { ...fieldDiff, current }];
             })
           )
         : redactedDiff;
-      return { entity: toApi(entry.entity, authCtx, schemaById), diff };
+      return { entity: toApi(entry.entity, authCtx, toSchemas, true), diff };
     });
 
   return { added, removed, changed };
