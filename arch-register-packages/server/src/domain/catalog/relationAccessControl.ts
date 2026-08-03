@@ -1,8 +1,5 @@
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
-import {
-  isTypedRelationField,
-  type TypedRelationField
-} from '@arch-register/api-types/schemaContract';
+import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import {
   isFieldEditRestricted,
@@ -19,12 +16,14 @@ const matchingOwnerFields = (
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ): TypedRelationField[] =>
-  (schema?.fields ?? []).filter(
-    (field): field is TypedRelationField =>
-      isTypedRelationField(field) &&
-      field.relationSchemaId === relationSchemaId &&
-      field.direction === direction
-  );
+  (schema?.fields ?? []).filter(field => {
+    const candidate = field as unknown as Record<string, unknown>;
+    return (
+      candidate['type'] === 'typedRelation' &&
+      candidate['relationSchemaId'] === relationSchemaId &&
+      candidate['direction'] === direction
+    );
+  }) as unknown as TypedRelationField[];
 
 /**
  * Returns whether a relation can be surfaced through an endpoint. Multiple bindings for the
