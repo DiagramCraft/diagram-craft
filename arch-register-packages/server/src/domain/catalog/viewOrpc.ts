@@ -48,12 +48,13 @@ export const workspaceViewORPCRouter = viewRouter.router({
         requireProjectAccess(authCtx, project.owner);
         return await listSavedViews(context.db, workspace, {
           projectId: project.id,
-          includeWorkspace
+          includeWorkspace,
+          authCtx
         });
       }
 
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await listSavedViews(context.db, workspace);
+      return await listSavedViews(context.db, workspace, { authCtx });
     }),
     create: viewRouter.views.create.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
@@ -74,17 +75,22 @@ export const workspaceViewORPCRouter = viewRouter.router({
       if (input.body.isAdminView) {
         requireWorkspaceCapability(authCtx, 'ws.settings');
       }
-      return await createSavedView(context.db, workspace, {
-        scope: input.body.scope,
-        projectId: input.body.projectId,
-        projectScope: input.body.projectScope,
-        name: input.body.name,
-        description: input.body.description,
-        isAdminView: input.body.isAdminView,
-        viewMode: input.body.viewMode,
-        filters: input.body.filters,
-        config: input.body.config
-      });
+      return await createSavedView(
+        context.db,
+        workspace,
+        {
+          scope: input.body.scope,
+          projectId: input.body.projectId,
+          projectScope: input.body.projectScope,
+          name: input.body.name,
+          description: input.body.description,
+          isAdminView: input.body.isAdminView,
+          viewMode: input.body.viewMode,
+          filters: input.body.filters,
+          config: input.body.config
+        },
+        authCtx
+      );
     }),
     update: viewRouter.views.update.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
@@ -102,15 +108,21 @@ export const workspaceViewORPCRouter = viewRouter.router({
         });
         requireProjectAction(authCtx, project.owner, 'edit_project');
       }
-      return await updateSavedView(context.db, workspace, input.params.id, {
-        projectScope: input.body.projectScope,
-        name: input.body.name,
-        description: input.body.description,
-        isAdminView: input.body.isAdminView,
-        viewMode: input.body.viewMode,
-        filters: input.body.filters,
-        config: input.body.config
-      });
+      return await updateSavedView(
+        context.db,
+        workspace,
+        input.params.id,
+        {
+          projectScope: input.body.projectScope,
+          name: input.body.name,
+          description: input.body.description,
+          isAdminView: input.body.isAdminView,
+          viewMode: input.body.viewMode,
+          filters: input.body.filters,
+          config: input.body.config
+        },
+        authCtx
+      );
     }),
     remove: viewRouter.views.remove.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;

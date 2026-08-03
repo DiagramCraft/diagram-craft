@@ -14,11 +14,210 @@ import type {
   SavedView as ApiSavedView
 } from '@arch-register/api-types/viewContract';
 import { PermissionChecker } from '@arch-register/permissions';
-import type { Entity, SavedViewDbResult } from './db/catalogDatabase';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
+import type { Entity, SavedViewDbResult, SchemaDbResult } from './db/catalogDatabase';
 import { PinnedEntity } from '@arch-register/api-types/watchContract';
 import { listAllCatalogEntities } from './entityLoader';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 
 const checker = new PermissionChecker();
+
+const PSEUDO_FIELD_IDS = new Set([
+  '_id',
+  '_schemaId',
+  '_lifecycle',
+  '_owner',
+  '_name',
+  '_slug',
+  '_description',
+  '_namespace',
+  '_completeness',
+  '_updatedAt',
+  '_tags',
+  '_assessment'
+]);
+
+const fieldIsRestricted = (
+  fieldId: string,
+  schemas: SchemaDbResult[],
+  authCtx: WorkspaceAuthorizationContext,
+  schemaId?: string
+) => {
+  if (PSEUDO_FIELD_IDS.has(fieldId) || fieldId.startsWith('_assessment:')) return false;
+  const candidates = schemaId ? schemas.filter(schema => schema.id === schemaId) : schemas;
+  return candidates.some(
+    schema =>
+      schema.fields.some(field => field.id === fieldId) &&
+      isFieldViewRestricted(authCtx, schema, fieldId)
+  );
+};
+
+const pathUsesRestrictedField = (
+  path: PathStep[],
+  schemas: SchemaDbResult[],
+  authCtx: WorkspaceAuthorizationContext
+): boolean =>
+  path.some(step => {
+    const stepRestricted =
+      step.kind === 'backward'
+        ? fieldIsRestricted(step.fieldId, schemas, authCtx, step.ownerSchemaId)
+        : fieldIsRestricted(step.fieldId, schemas, authCtx);
+    return (
+      stepRestricted ||
+      (step.filter ? nodeUsesRestrictedField(step.filter, schemas, authCtx) : false)
+    );
+  });
+
+const nodeUsesRestrictedField = (
+  node: QueryNode,
+  schemas: SchemaDbResult[],
+  authCtx: WorkspaceAuthorizationContext,
+  rootSchemaId?: string
+): boolean => {
+  switch (node.kind) {
+    case 'and':
+    case 'or':
+      return node.children.some(child =>
+        nodeUsesRestrictedField(child, schemas, authCtx, rootSchemaId)
+      );
+    case 'not':
+      return nodeUsesRestrictedField(node.child, schemas, authCtx, rootSchemaId);
+    case 'predicate':
+      return (
+        fieldIsRestricted(
+          node.fieldId,
+          schemas,
+          authCtx,
+          node.path.length === 0 ? rootSchemaId : undefined
+        ) || pathUsesRestrictedField(node.path, schemas, authCtx)
+      );
+    case 'relationExists':
+      return pathUsesRestrictedField(node.path, schemas, authCtx);
+    case 'freeText':
+      return false;
+  }
+};
+
+const configUsesRestrictedField = (
+  config: unknown,
+  schemas: SchemaDbResult[],
+  authCtx: WorkspaceAuthorizationContext
+): boolean => {
+  if (config == null || typeof config !== 'object') return false;
+  const root = config as Record<string, unknown>;
+  const references: Array<{ fieldId: string; schemaId?: string }> = [];
+  const addField = (fieldId: unknown, schemaId?: unknown) => {
+    if (typeof fieldId === 'string' && fieldId.length > 0) {
+      references.push({ fieldId, schemaId: typeof schemaId === 'string' ? schemaId : undefined });
+    }
+  };
+  const addFields = (value: unknown, schemaId?: unknown) => {
+    if (Array.isArray(value)) value.forEach(fieldId => addField(fieldId, schemaId));
+  };
+
+  if (typeof root.sort === 'string' && root.sort.startsWith('date:')) {
+    addField(root.sort.slice('date:'.length));
+  }
+
+  for (const key of ['table', 'cards', 'tree', 'explore']) {
+    const viewConfig = root[key];
+    if (viewConfig && typeof viewConfig === 'object') {
+      addFields((viewConfig as Record<string, unknown>).fieldIds);
+    }
+  }
+
+  const radar = root.radar;
+  if (radar && typeof radar === 'object') {
+    const value = radar as Record<string, unknown>;
+    addField(value.quadrantFieldId, value.schemaId);
+    addField(value.ringFieldId, value.schemaId);
+    // ringOrder contains the literal values for ringFieldId. Blocking the complete view when
+    // that field is restricted prevents those values from becoming an alternate disclosure path.
+    if (
+      typeof value.ringFieldId === 'string' &&
+      fieldIsRestricted(
+        value.ringFieldId,
+        schemas,
+        authCtx,
+        typeof value.schemaId === 'string' ? value.schemaId : undefined
+      )
+    ) {
+      return true;
+    }
+  }
+
+  const timeline = root.timeline;
+  if (timeline && typeof timeline === 'object') {
+    const value = timeline as Record<string, unknown>;
+    addField(value.startFieldId);
+    addField(value.endFieldId);
+  }
+
+  const matrix = root.matrix;
+  if (matrix && typeof matrix === 'object') {
+    const value = matrix as Record<string, unknown>;
+    addField(value.colEnumFieldId, value.colSchemaId);
+  }
+
+  const bubble = root.bubble;
+  if (bubble && typeof bubble === 'object') {
+    const value = bubble as Record<string, unknown>;
+    addField(value.xFieldId);
+    addField(value.yFieldId);
+    addField(value.sizeFieldId);
+    addField(value.colorFieldId);
+  }
+
+  const map = root.map;
+  if (map && typeof map === 'object') {
+    const value = map as Record<string, unknown>;
+    addFields(value.fieldIds);
+    const metric = value.metricConfig;
+    if (metric && typeof metric === 'object') {
+      const metricValue = metric as Record<string, unknown>;
+      const source = metricValue.source;
+      if (source && typeof source === 'object') {
+        addField((source as Record<string, unknown>).fieldId, metricValue.sourceSchemaId);
+      }
+    }
+  }
+
+  return references.some(reference =>
+    fieldIsRestricted(reference.fieldId, schemas, authCtx, reference.schemaId)
+  );
+};
+
+export const savedViewUsesRestrictedField = (
+  filters: EntityQuery,
+  config: unknown,
+  schemas: SchemaDbResult[],
+  authCtx: WorkspaceAuthorizationContext
+) =>
+  nodeUsesRestrictedField(filters.root, schemas, authCtx, filters.schemaId) ||
+  (filters.projections ?? []).some(
+    projection =>
+      fieldIsRestricted(
+        projection.fieldId,
+        schemas,
+        authCtx,
+        projection.path.length === 0 ? filters.schemaId : undefined
+      ) || pathUsesRestrictedField(projection.path, schemas, authCtx)
+  ) ||
+  configUsesRestrictedField(config, schemas, authCtx);
+
+const assertSavedViewAccessible = (
+  filters: EntityQuery,
+  config: unknown,
+  schemas: SchemaDbResult[],
+  authCtx: WorkspaceAuthorizationContext
+) => {
+  httpAssert.true(!savedViewUsesRestrictedField(filters, config, schemas, authCtx), {
+    status: 403,
+    statusText: 'Forbidden',
+    message: 'You do not have permission to access fields used by this saved view'
+  });
+};
 
 export const toApi = (view: SavedViewDbResult): ApiSavedView => ({
   id: view.id,
@@ -52,16 +251,24 @@ export const listSavedViews = async (
   options?: {
     projectId?: string | null;
     includeWorkspace?: boolean;
+    authCtx?: WorkspaceAuthorizationContext;
   }
 ): Promise<ApiSavedView[]> => {
   const views = await db.view.listSavedViews(workspace, options);
-  return views.map(toApi);
+  if (!options?.authCtx) return views.map(toApi);
+  const schemas = await db.catalog.listSchemas(workspace);
+  return views
+    .filter(
+      view => !savedViewUsesRestrictedField(view.filters, view.config, schemas, options.authCtx!)
+    )
+    .map(toApi);
 };
 
 export const createSavedView = async (
   db: DatabaseAdapter,
   workspace: string,
-  body: CreateSavedViewRequest
+  body: CreateSavedViewRequest,
+  authCtx?: WorkspaceAuthorizationContext
 ): Promise<ApiSavedView> => {
   httpAssert.true(body.name, { status: 400, message: 'Name is required' });
   httpAssert.true(body.viewMode, { status: 400, message: 'viewMode is required' });
@@ -73,6 +280,11 @@ export const createSavedView = async (
     status: 400,
     message: 'projectId is required for project-scoped views'
   });
+
+  if (authCtx) {
+    const schemas = await db.catalog.listSchemas(workspace);
+    assertSavedViewAccessible(body.filters, body.config ?? null, schemas, authCtx);
+  }
 
   const now = new Date();
   const view = await db.view.createSavedView({
@@ -97,12 +309,23 @@ export const updateSavedView = async (
   db: DatabaseAdapter,
   workspace: string,
   id: string,
-  body: UpdateSavedViewRequest
+  body: UpdateSavedViewRequest,
+  authCtx?: WorkspaceAuthorizationContext
 ): Promise<ApiSavedView> => {
   httpAssert.true(id, { status: 400, message: 'ID is required' });
 
   const existing = await db.view.getSavedView(workspace, id);
   httpAssert.true(existing, { status: 404, message: 'View not found' });
+
+  if (authCtx) {
+    const schemas = await db.catalog.listSchemas(workspace);
+    assertSavedViewAccessible(
+      body.filters ?? existing.filters,
+      body.config === undefined ? existing.config : body.config,
+      schemas,
+      authCtx
+    );
+  }
 
   const updated = await db.view.updateSavedView(workspace, id, {
     name: body.name,
