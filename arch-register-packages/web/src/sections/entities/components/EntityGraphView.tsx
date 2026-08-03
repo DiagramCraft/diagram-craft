@@ -1,6 +1,10 @@
-import { useCallback, useMemo, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { DependencyGraph } from '../../../components/DependencyGraph';
-import type { LayoutAlgorithm, DependencyGraphNode } from '../../../components/DependencyGraph';
+import type {
+  LayoutAlgorithm,
+  DependencyGraphNode,
+  DependencyGraphEdge
+} from '../../../components/DependencyGraph';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -12,6 +16,7 @@ import { TbEyeOff, TbFileExport, TbPlus, TbVectorTriangle } from 'react-icons/tb
 import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
+import { RelationDetailPopover } from './RelationDetailPopover';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { type EntityGraphDirection, type EntityNodeData } from './entityGraphState';
 import { useEntityGraphController } from './useEntityGraphController';
@@ -110,6 +115,18 @@ export const EntityGraphView = ({
     },
     [setContextMenu]
   );
+
+  const [relationPopover, setRelationPopover] = useState<{
+    relationId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleEdgeClick = useCallback((edge: DependencyGraphEdge, e: React.MouseEvent) => {
+    if (edge.kind === 'typed' && edge.relationId) {
+      setRelationPopover({ relationId: edge.relationId, x: e.clientX, y: e.clientY });
+    }
+  }, []);
 
   const rootHighlight = useMemo(() => new Set([rootEntityId]), [rootEntityId]);
 
@@ -264,6 +281,7 @@ export const EntityGraphView = ({
             renderNode={renderNode}
             onNodeClick={onEntityClick}
             onNodeContextMenu={readOnly ? undefined : handleNodeContextMenu}
+            onEdgeClick={handleEdgeClick}
             highlightedIds={rootHighlight}
           />
         )}
@@ -289,6 +307,16 @@ export const EntityGraphView = ({
             Expand one level deeper
           </Menu.Item>
         </ContextMenu.Imperative>
+      )}
+
+      {relationPopover && (
+        <RelationDetailPopover
+          workspaceId={workspaceId}
+          relationId={relationPopover.relationId}
+          x={relationPopover.x}
+          y={relationPopover.y}
+          onClose={() => setRelationPopover(null)}
+        />
       )}
 
       {!readOnly && saveDiagramOpen && pendingDiagramContent && (

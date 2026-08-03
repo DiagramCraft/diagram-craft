@@ -148,7 +148,10 @@ export const buildEntityGraphData = ({
     let hiddenCount = 0;
     for (const { from, to, relation } of getDirectedRelations(id, data, direction)) {
       if (visibleNodes.has(relation.entityId)) {
-        const edgeId = `${from}::${to}::${relation.fieldName}`;
+        const edgeId =
+          relation.kind === 'typed' && relation.relationId
+            ? `${from}::${to}::typed::${relation.relationId}`
+            : `${from}::${to}::${relation.fieldName}`;
         if (!edgeSet.has(edgeId)) {
           edgeSet.add(edgeId);
           edges.push({
@@ -156,7 +159,10 @@ export const buildEntityGraphData = ({
             from,
             to,
             label: getRelationDisplayLabel(relation),
-            kind: relation.kind
+            kind: relation.kind,
+            color:
+              relation.kind === 'typed' ? (relation.relationSchemaColor ?? undefined) : undefined,
+            relationId: relation.kind === 'typed' ? relation.relationId : undefined
           });
         }
       } else {

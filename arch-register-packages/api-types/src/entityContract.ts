@@ -377,7 +377,10 @@ const entityRelationSchema = z.object({
   entitySchemaId: z.string().describe('Related entity schema identifier'),
   fieldName: z
     .string()
-    .describe('Relationship field name (relation schema name when kind is "typed")'),
+    .describe(
+      'Relationship field name (for kind "typed", the entity schema\'s typedRelation field ' +
+        'name bound to this relation, falling back to the relation schema name)'
+    ),
   fieldPredicate: z.string().optional().describe('Relationship predicate/label'),
   kind: z.enum(['reference', 'containment', 'typed']).describe('Relationship type'),
   relationId: z

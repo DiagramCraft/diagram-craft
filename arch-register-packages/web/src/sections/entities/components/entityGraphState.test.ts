@@ -16,6 +16,23 @@ const relation = (entityId: string, fieldName = 'dependsOn') => ({
   kind: 'reference' as const
 });
 
+const typedRelation = (
+  entityId: string,
+  relationId: string,
+  overrides: { fieldName?: string; relationSchemaColor?: string | null } = {}
+) => ({
+  entityId,
+  publicId: entityId.toUpperCase(),
+  entitySlug: entityId,
+  entityName: entityId,
+  entitySchemaId: 'service',
+  fieldName: overrides.fieldName ?? 'dataFlow',
+  kind: 'typed' as const,
+  relationId,
+  relationSchemaId: 'flow-schema',
+  relationSchemaColor: overrides.relationSchemaColor ?? '#ff0000'
+});
+
 const data = (value: Partial<EntityRelationData> = {}): EntityRelationData => ({
   outgoing: value.outgoing ?? [],
   incoming: value.incoming ?? [],
@@ -169,5 +186,55 @@ describe('buildEntityGraphData', () => {
         to: 'root'
       })
     ]);
+  });
+
+  it('keeps distinct typed relation instances of the same relation schema as separate edges', () => {
+    const relations = new Map([
+      [
+        'root',
+        data({
+          outgoing: [
+            typedRelation('child', 'rel-1'),
+            typedRelation('child', 'rel-2'),
+            typedRelation('child', 'rel-1') // duplicate fetch/render of the same instance
+          ]
+        })
+      ],
+      ['child', data()]
+    ]);
+
+    const result = buildEntityGraphData({
+      ...options(relations),
+      rootEntityName: 'Root',
+      rootEntitySchemaId: 'application'
+    });
+
+    expect(result.edges).toHaveLength(2);
+    expect(result.edges.map(e => e.id).sort()).toEqual([
+      'root::child::typed::rel-1',
+      'root::child::typed::rel-2'
+    ]);
+    expect(result.edges[0]).toMatchObject({ kind: 'typed', color: '#ff0000', relationId: 'rel-1' });
+  });
+
+  it('does not collapse a typed relation with a generic relation between the same pair', () => {
+    const relations = new Map([
+      [
+        'root',
+        data({
+          outgoing: [relation('child', 'dataFlow'), typedRelation('child', 'rel-1')]
+        })
+      ],
+      ['child', data()]
+    ]);
+
+    const result = buildEntityGraphData({
+      ...options(relations),
+      rootEntityName: 'Root',
+      rootEntitySchemaId: 'application'
+    });
+
+    expect(result.edges).toHaveLength(2);
+    expect(result.edges.map(e => e.kind).sort()).toEqual(['reference', 'typed']);
   });
 });
