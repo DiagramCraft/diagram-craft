@@ -11,7 +11,7 @@ permissions.
 2. Create a token for the workspace you want the AI client to use.
 3. Give it a descriptive name, such as `Claude architecture assistant`.
 4. Select **View workspace** (`ws.view`) for read-only access.
-5. Also select **Edit entities** (`ent.edit`) if the client should be allowed to create or update entities.
+5. Also select **Edit entities** (`ent.edit`) if the client should be allowed to create or update entities or typed relations.
 6. Copy the token immediately. The complete `ar_pat_...` secret is shown only once.
 
 API tokens are limited to one workspace and can be revoked from the same screen. Use the smallest capability set
@@ -26,6 +26,9 @@ that fits the integration. A token used for MCP reads needs `ws.view`; mutation 
 | `search_entities` | Search visible entities by text, schema, owner, lifecycle, and entity-browser filter conditions. Results include metadata and schema fields. |
 | `get_entity` | Fetch one entity by ID, exact name, or exact slug, including its schema fields and incoming/outgoing relations. |
 | `list_schemas` | List the workspace schemas and their field definitions. |
+| `list_relation_schemas` | List typed relation schemas, endpoint constraints, fields, groups, and metadata. |
+| `list_relations` | List typed relation instances with optional endpoint filters and pagination. |
+| `get_relation` | Fetch one typed relation instance with redacted relation fields. |
 | `get_entity_dependencies` | Follow outgoing references from an entity to a bounded depth. |
 | `get_entity_dependents` | Find entities that reference an entity, directly or transitively. |
 | `get_workspace_summary` | Get total entity counts grouped by schema and lifecycle state. |
@@ -42,9 +45,13 @@ Mutation tools are not advertised unless the MCP process is explicitly started w
 - `create_entity` creates an entity from a schema ID and optional metadata and field values.
 - `update_entity_field` updates one schema field while preserving the entity's other values.
 - `update_entity` applies a metadata and/or field update while preserving unspecified values.
+- `create_relation` creates a typed relation between two entities.
+- `update_relation` updates typed relation fields without changing its endpoints.
+- `delete_relation` removes a typed relation instance.
 
-The API token must also include `ent.edit`. The Arch Register API still applies entity-level and workspace-level
-authorization to every request.
+The API token must also include `ent.edit`. The Arch Register API still applies workspace capability, endpoint
+visibility, relation field-group access, audit, and approval-policy checks to every request. Relation schemas whose
+approval policy is `required` remain unavailable for direct mutation until relation approval workflows are enabled.
 
 ## Connect a local client
 

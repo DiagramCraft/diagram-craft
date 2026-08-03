@@ -28,6 +28,32 @@ export const mcpGetEntityInput = z
 
 export const mcpListSchemasInput = z.object({});
 
+export const mcpListRelationSchemasInput = z.object({});
+
+export const mcpListRelationsInput = z.object({
+  schemaId: z.string().optional(),
+  inEntityId: z.string().optional(),
+  outEntityId: z.string().optional(),
+  limit: boundedLimit,
+  offset: boundedOffset
+});
+
+export const mcpGetRelationInput = z.object({ relationId: z.string() });
+
+export const mcpCreateRelationInput = z.object({
+  schemaId: z.string(),
+  inEntityId: z.string(),
+  outEntityId: z.string(),
+  fields: z.record(z.string(), z.unknown()).optional()
+});
+
+export const mcpUpdateRelationInput = z.object({
+  relationId: z.string(),
+  fields: z.record(z.string(), z.unknown())
+});
+
+export const mcpDeleteRelationInput = z.object({ relationId: z.string() });
+
 export const mcpRelationTraversalInput = z.object({
   entityId: z.string(),
   depth: z.number().int().min(1).max(5).default(1),
@@ -72,6 +98,11 @@ export const mcpUpdateEntityFieldInput = z.object({
 
 export type McpSearchEntitiesInput = z.infer<typeof mcpSearchEntitiesInput>;
 export type McpGetEntityInput = z.infer<typeof mcpGetEntityInput>;
+export type McpListRelationsInput = z.infer<typeof mcpListRelationsInput>;
+export type McpGetRelationInput = z.infer<typeof mcpGetRelationInput>;
+export type McpCreateRelationInput = z.infer<typeof mcpCreateRelationInput>;
+export type McpUpdateRelationInput = z.infer<typeof mcpUpdateRelationInput>;
+export type McpDeleteRelationInput = z.infer<typeof mcpDeleteRelationInput>;
 export type McpRelationTraversalInput = z.infer<typeof mcpRelationTraversalInput>;
 export type McpCreateEntityInput = z.infer<typeof mcpCreateEntityInput>;
 export type McpUpdateEntityInput = z.infer<typeof mcpUpdateEntityInput>;
@@ -99,7 +130,11 @@ export type McpRelation = {
   entitySchemaId: string;
   fieldName: string;
   fieldPredicate?: string;
-  kind: 'reference' | 'containment';
+  kind: 'reference' | 'containment' | 'typed';
+  relationId?: string;
+  relationSchemaId?: string;
+  relationSchemaName?: string;
+  fields?: Record<string, unknown>;
 };
 
 export type McpEntityDetails = McpEntitySummary & {
