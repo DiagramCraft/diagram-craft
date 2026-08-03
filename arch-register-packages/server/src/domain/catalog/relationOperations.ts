@@ -10,14 +10,11 @@ import {
 } from '../auth/authorization';
 import { defineOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
-import {
-  filterRestrictedFieldGroups,
-  requireNoRestrictedFieldWrites
-} from '../auth/fieldGroupAccessControl';
+import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import {
   extractRelationFieldData,
   flattenRelationAuditFields,
-  toApiRelation,
+  toRedactedApiRelation,
   validateRelationEndpoints
 } from './relationHelpers';
 import type {
@@ -60,10 +57,7 @@ export const listWorkspaceRelations = async (
       return {
         items: items.map(row => {
           const schema = schemaById.get(row.schema_id);
-          const record = toApiRelation(row);
-          return schema
-            ? (filterRestrictedFieldGroups(authCtx, schema, record) as RelationRecord)
-            : record;
+          return toRedactedApiRelation(row, authCtx, schema);
         }),
         total
       };
@@ -87,10 +81,7 @@ export const getWorkspaceRelation = async (
       const row = await db.relation.getRelation(ws, id);
       httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
       const schema = await db.relation.getRelationSchema(ws, row.schema_id);
-      const record = toApiRelation(row);
-      return schema
-        ? (filterRestrictedFieldGroups(authCtx, schema, record) as RelationRecord)
-        : record;
+      return toRedactedApiRelation(row, authCtx, schema);
     }
   );
 };
@@ -154,8 +145,7 @@ export const createWorkspaceRelation = async (
         changes: { new: flattenRelationAuditFields(row) }
       });
 
-      const record = toApiRelation(row);
-      return filterRestrictedFieldGroups(authCtx, schema, record) as RelationRecord;
+      return toRedactedApiRelation(row, authCtx, schema);
     }
   );
 };
@@ -213,8 +203,7 @@ export const updateWorkspaceRelation = async (
         changes
       });
 
-      const record = toApiRelation(row);
-      return filterRestrictedFieldGroups(authCtx, schema, record) as RelationRecord;
+      return toRedactedApiRelation(row, authCtx, schema);
     }
   );
 };
@@ -284,10 +273,7 @@ export const listTypedRelationsForEntity = async (
       const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
       const toRecord = (row: (typeof outgoing)[number]) => {
         const schema = schemaById.get(row.schema_id);
-        const record = toApiRelation(row);
-        return schema
-          ? (filterRestrictedFieldGroups(authCtx, schema, record) as RelationRecord)
-          : record;
+        return toRedactedApiRelation(row, authCtx, schema);
       };
       return {
         outgoing: outgoing.filter(row => isEntityVisible(row.out_entity_id)).map(toRecord),
