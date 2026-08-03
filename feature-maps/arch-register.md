@@ -178,7 +178,9 @@
           diffs for viewers without view access to that group; an entity whose only changes are restricted shows an
           undifferentiated "Restricted changes" indicator rather than being silently omitted.
 
-        - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view.
+        - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view, filterable
+          by a specific relation field where typed relation instances are included alongside generic
+          reference/containment relations and marked with their relation schema's colour/icon in the field picker.
 
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
           colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views
@@ -192,7 +194,9 @@
           to that group, rather than exposing the underlying data; the field picker also excludes such fields when
           configuring the metric.
 
-        - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view.
+        - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
+          toggling which relation fields draw connections; typed relation instances are included by default
+          alongside generic reference relations and their toggle is marked with the relation schema's colour/icon.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware
