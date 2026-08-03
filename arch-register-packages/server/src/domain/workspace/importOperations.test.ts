@@ -28,7 +28,7 @@ vi.mock('../../utils/logger', () => ({
 import { exportWorkspace } from './exportOperations';
 import { parseImport } from './importParseOperations';
 import { executeImport } from './importExecutionOperations';
-import { importEntities } from './importAppliers';
+import { importEntities, importRelations } from './importAppliers';
 
 const makeAuthCtx = (): AuthorizationContext => ({ userId: 'user-1' }) as AuthorizationContext;
 
@@ -75,6 +75,7 @@ const makeDb = () =>
         ...input
       })),
       listEntities: vi.fn(async () => []),
+      getEntity: vi.fn(async () => null),
       createSchema: vi.fn(async input => input),
       updateSchema: vi.fn(async (_ws, _id, input) => ({
         id: _id,
@@ -480,7 +481,9 @@ describe('workspace entity import field-group authorization', () => {
     const mapping = {
       schemas: new Map([['source-schema', 'schema-1']]),
       shared_field_groups: new Map(),
+      relation_schemas: new Map(),
       entities: new Map(),
+      relations: new Map(),
       teams: new Map(),
       lifecycle_states: new Map(),
       projects: new Map(),
@@ -517,5 +520,97 @@ describe('workspace entity import field-group authorization', () => {
       )
     ).rejects.toMatchObject({ status: 403 });
     expect(db.catalog.createEntity).not.toHaveBeenCalled();
+  });
+});
+
+describe('workspace relation import', () => {
+  it('remaps both relation endpoints when entity IDs change', async () => {
+    const db = makeDb();
+    const relationSchema = {
+      id: 'target-relation-schema',
+      workspace: 'workspace-1',
+      name: 'Depends on',
+      description: '',
+      in_schema_ids: ['target-in-schema'],
+      out_schema_ids: ['target-out-schema'],
+      fields: [{ id: 'strength', name: 'Strength', type: 'text' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled' as const,
+      version: 1,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    const entities = new Map([
+      ['target-in', { id: 'target-in', schema_id: 'target-in-schema' }],
+      ['target-out', { id: 'target-out', schema_id: 'target-out-schema' }]
+    ]);
+    const createRelation = vi.fn(async input => input);
+    db.relation = {
+      listRelations: vi.fn(async () => ({ items: [], total: 0 })),
+      getRelationSchema: vi.fn(async () => relationSchema),
+      createRelation,
+      updateRelation: vi.fn(),
+      deleteRelation: vi.fn()
+    };
+    db.catalog.getEntity.mockImplementation(
+      async (_workspace: string, id: string) => entities.get(id) ?? null
+    );
+
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'owner',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const result = await importRelations(
+      db,
+      authCtx,
+      'workspace-1',
+      [
+        {
+          id: 'source-relation',
+          schema_id: 'source-relation-schema',
+          in_entity_id: 'source-in',
+          out_entity_id: 'source-out',
+          data: { strength: 'strong' },
+          version: 2,
+          approval_policy_override: null,
+          created_at: '2026-01-01T00:00:00.000Z',
+          updated_at: '2026-01-02T00:00:00.000Z'
+        }
+      ],
+      false,
+      {},
+      {
+        schemas: new Map(),
+        shared_field_groups: new Map(),
+        relation_schemas: new Map([['source-relation-schema', 'target-relation-schema']]),
+        entities: new Map([
+          ['source-in', 'target-in'],
+          ['source-out', 'target-out']
+        ]),
+        relations: new Map(),
+        teams: new Map(),
+        lifecycle_states: new Map(),
+        projects: new Map(),
+        content_nodes: new Map()
+      }
+    );
+
+    expect(result).toEqual({ created: 1, updated: 0, skipped: 0 });
+    expect(createRelation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schema_id: 'target-relation-schema',
+        in_entity_id: 'target-in',
+        out_entity_id: 'target-out',
+        data: { strength: 'strong' }
+      })
+    );
   });
 });

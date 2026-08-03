@@ -8,7 +8,9 @@ import type {
   ExportManifest,
   ExportConfig,
   ExportSchema,
+  ExportRelationSchema,
   ExportEntity,
+  ExportRelation,
   ExportProject,
   ExportContentNode,
   ExportDataType,
@@ -27,7 +29,9 @@ export const parseImport = async (
   data: {
     config?: ExportConfig;
     schemas?: ExportSchema[];
+    relation_schemas?: ExportRelationSchema[];
     entities?: ExportEntity[];
+    relations?: ExportRelation[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
@@ -46,6 +50,16 @@ export const parseImport = async (
 
   diagnostics.push(...validateArchiveData(manifest, data));
   errors.push(...diagnostics.map(diagnostic => diagnostic.message));
+  for (const diagnostic of manifest.export_diagnostics ?? []) {
+    const message = `Source export diagnostic: ${diagnostic.message}`;
+    diagnostics.push({
+      code: 'missing_reference',
+      item_type: diagnostic.item_type,
+      item_id: diagnostic.item_id,
+      message
+    });
+    warnings.push(message);
+  }
 
   // Validate version compatibility
   if (manifest.version !== '1.0') {
@@ -90,6 +104,27 @@ export const parseImport = async (
     }
   }
 
+  // Parse and validate relation schemas
+  if (data.relation_schemas) {
+    if (!hasSchemaPermission) {
+      errors.push('You do not have permission to import relation schemas');
+    } else {
+      const relationSchemaResult = await validateRelationSchemas(
+        db,
+        workspace,
+        data.relation_schemas,
+        data.schemas
+      );
+      summary.relation_schemas = {
+        count: data.relation_schemas.length,
+        conflicts: relationSchemaResult.conflicts.length
+      };
+      conflicts.push(...relationSchemaResult.conflicts);
+      warnings.push(...relationSchemaResult.warnings);
+      errors.push(...relationSchemaResult.errors);
+    }
+  }
+
   // Parse and validate entities
   if (data.entities) {
     if (!hasEntityPermission) {
@@ -102,6 +137,28 @@ export const parseImport = async (
       };
       conflicts.push(...entityResult.conflicts);
       warnings.push(...entityResult.warnings);
+    }
+  }
+
+  // Parse and validate relation instances
+  if (data.relations) {
+    if (!hasEntityPermission) {
+      errors.push('You do not have permission to import relations');
+    } else {
+      const relationResult = await validateRelations(
+        db,
+        workspace,
+        data.relations,
+        data.relation_schemas,
+        data.entities
+      );
+      summary.relations = {
+        count: data.relations.length,
+        conflicts: relationResult.conflicts.length
+      };
+      conflicts.push(...relationResult.conflicts);
+      warnings.push(...relationResult.warnings);
+      errors.push(...relationResult.errors);
     }
   }
 
@@ -241,7 +298,9 @@ const validateArchiveData = (
   data: {
     config?: ExportConfig;
     schemas?: ExportSchema[];
+    relation_schemas?: ExportRelationSchema[];
     entities?: ExportEntity[];
+    relations?: ExportRelation[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
@@ -250,7 +309,9 @@ const validateArchiveData = (
   const diagnostics: ImportDiagnostic[] = [];
   const collections: Array<[ExportDataType, Array<{ id: string }> | undefined]> = [
     ['schemas', data.schemas],
+    ['relation_schemas', data.relation_schemas],
     ['entities', data.entities],
+    ['relations', data.relations],
     ['projects', data.projects],
     ['content_nodes', data.content_nodes]
   ];
@@ -399,6 +460,95 @@ const validateSchemas = async (
   return { conflicts, warnings };
 };
 
+const validateRelationSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationSchemas: ExportRelationSchema[],
+  schemas?: ExportSchema[]
+): Promise<{ conflicts: ImportConflict[]; warnings: string[]; errors: string[] }> => {
+  const conflicts: ImportConflict[] = [];
+  const warnings: string[] = [];
+  const errors: string[] = [];
+  const [existingRelationSchemas, existingEntitySchemas, existingSharedGroups] = await Promise.all([
+    db.relation.listRelationSchemas(workspace),
+    db.catalog.listSchemas(workspace),
+    db.catalog.listSharedFieldGroups(workspace)
+  ]);
+  const sourceEntitySchemaIds = new Set(schemas?.map(schema => schema.id) ?? []);
+  const existingEntitySchemaIds = new Set(existingEntitySchemas.map(schema => schema.id));
+  const existingSharedGroupIds = new Set(existingSharedGroups.map(group => group.id));
+
+  for (const relationSchema of relationSchemas) {
+    const existing = existingRelationSchemas.find(
+      schema =>
+        schema.id === relationSchema.id ||
+        schema.name.toLowerCase() === relationSchema.name.toLowerCase()
+    );
+    if (existing) {
+      conflicts.push({
+        type: 'relation_schemas',
+        item_id: relationSchema.id,
+        item_name: relationSchema.name,
+        conflict_reason: 'duplicate_name',
+        existing_item: { id: existing.id, name: existing.name },
+        import_item: relationSchema,
+        suggested_resolution: 'merge'
+      });
+    }
+
+    for (const entitySchemaId of [
+      ...relationSchema.in_schema_ids,
+      ...relationSchema.out_schema_ids
+    ]) {
+      if (
+        sourceEntitySchemaIds.has(entitySchemaId) ||
+        existingEntitySchemaIds.has(entitySchemaId)
+      ) {
+        continue;
+      }
+      conflicts.push({
+        type: 'relation_schemas',
+        item_id: relationSchema.id,
+        item_name: relationSchema.name,
+        conflict_reason: 'missing_dependency',
+        import_item: relationSchema,
+        suggested_resolution: 'skip'
+      });
+      warnings.push(
+        `Relation schema '${relationSchema.name}' references missing entity schema '${entitySchemaId}' and will be skipped`
+      );
+    }
+
+    const includedSharedGroupIds = new Set(
+      (relationSchema.shared_field_groups ?? []).map(group => group.id)
+    );
+    for (const link of relationSchema.shared_field_group_links ?? []) {
+      if (includedSharedGroupIds.has(link.groupId) || existingSharedGroupIds.has(link.groupId)) {
+        continue;
+      }
+      conflicts.push({
+        type: 'relation_schemas',
+        item_id: relationSchema.id,
+        item_name: relationSchema.name,
+        conflict_reason: 'missing_dependency',
+        import_item: relationSchema,
+        suggested_resolution: 'skip'
+      });
+      warnings.push(
+        `Relation schema '${relationSchema.name}' references missing shared field group '${link.groupId}' and will be skipped`
+      );
+    }
+
+    if (relationSchema.relation_approval_policy === 'required') {
+      errors.push(
+        `Relation schema '${relationSchema.name}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
+      );
+    }
+  }
+
+  return { conflicts, warnings, errors };
+};
+
 const validateEntities = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -449,6 +599,143 @@ const validateEntities = async (
   }
 
   return { conflicts, warnings };
+};
+
+const listAllRelations = async (db: DatabaseAdapter, workspace: string) => {
+  const pageSize = 200;
+  const relations = [] as Awaited<ReturnType<typeof db.relation.listRelations>>['items'];
+  let offset = 0;
+  while (true) {
+    const page = await db.relation.listRelations(
+      workspace,
+      { schemaId: null, inEntityId: null, outEntityId: null },
+      { limit: pageSize, offset }
+    );
+    if (page.items.length === 0) break;
+    relations.push(...page.items);
+    if (page.items.length < pageSize) break;
+    offset += pageSize;
+  }
+  return relations;
+};
+
+const validateRelations = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relations: ExportRelation[],
+  relationSchemas?: ExportRelationSchema[],
+  entities?: ExportEntity[]
+): Promise<{ conflicts: ImportConflict[]; warnings: string[]; errors: string[] }> => {
+  const conflicts: ImportConflict[] = [];
+  const warnings: string[] = [];
+  const errors: string[] = [];
+  const [existingRelations, existingRelationSchemas, existingEntities] = await Promise.all([
+    listAllRelations(db, workspace),
+    db.relation.listRelationSchemas(workspace),
+    db.catalog.listEntities(workspace)
+  ]);
+  const sourceRelationSchemaIds = new Set(relationSchemas?.map(schema => schema.id) ?? []);
+  const sourceEntityIds = new Set(entities?.map(entity => entity.id) ?? []);
+  const existingEntityIds = new Set(existingEntities.map(entity => entity.id));
+  const sourceRelationSchemasById = new Map(
+    (relationSchemas ?? []).map(schema => [schema.id, schema])
+  );
+  const sourceEntitiesById = new Map((entities ?? []).map(entity => [entity.id, entity]));
+
+  for (const relation of relations) {
+    const existingSchema = existingRelationSchemas.find(
+      schema =>
+        schema.id === relation.schema_id ||
+        schema.name.toLowerCase() ===
+          sourceRelationSchemasById.get(relation.schema_id)?.name.toLowerCase()
+    );
+    const targetSchemaId = existingSchema?.id ?? relation.schema_id;
+    const existing = existingRelations.find(
+      candidate =>
+        candidate.id === relation.id ||
+        (candidate.schema_id === targetSchemaId &&
+          candidate.in_entity_id === relation.in_entity_id &&
+          candidate.out_entity_id === relation.out_entity_id)
+    );
+    if (existing) {
+      conflicts.push({
+        type: 'relations',
+        item_id: relation.id,
+        item_name: `${relation.in_entity_id} → ${relation.out_entity_id}`,
+        conflict_reason: 'duplicate_identity',
+        existing_item: {
+          id: existing.id,
+          schema_id: existing.schema_id,
+          in_entity_id: existing.in_entity_id,
+          out_entity_id: existing.out_entity_id
+        },
+        import_item: relation,
+        suggested_resolution: 'overwrite'
+      });
+    }
+
+    if (!sourceRelationSchemaIds.has(relation.schema_id) && !existingSchema) {
+      conflicts.push({
+        type: 'relations',
+        item_id: relation.id,
+        item_name: `${relation.in_entity_id} → ${relation.out_entity_id}`,
+        conflict_reason: 'missing_dependency',
+        import_item: relation,
+        suggested_resolution: 'skip'
+      });
+      warnings.push(
+        `Relation '${relation.id}' references missing relation schema '${relation.schema_id}' and will be skipped`
+      );
+    }
+    for (const endpointId of [relation.in_entity_id, relation.out_entity_id]) {
+      if (sourceEntityIds.has(endpointId) || existingEntityIds.has(endpointId)) continue;
+      conflicts.push({
+        type: 'relations',
+        item_id: relation.id,
+        item_name: `${relation.in_entity_id} → ${relation.out_entity_id}`,
+        conflict_reason: 'missing_dependency',
+        import_item: relation,
+        suggested_resolution: 'skip'
+      });
+      warnings.push(
+        `Relation '${relation.id}' references missing entity '${endpointId}' and will be skipped`
+      );
+    }
+
+    const schema = sourceRelationSchemasById.get(relation.schema_id);
+    const inEntity = sourceEntitiesById.get(relation.in_entity_id);
+    const outEntity = sourceEntitiesById.get(relation.out_entity_id);
+    if (
+      schema &&
+      inEntity &&
+      outEntity &&
+      (!schema.in_schema_ids.includes(inEntity.schema_id) ||
+        !schema.out_schema_ids.includes(outEntity.schema_id))
+    ) {
+      conflicts.push({
+        type: 'relations',
+        item_id: relation.id,
+        item_name: `${relation.in_entity_id} → ${relation.out_entity_id}`,
+        conflict_reason: 'schema_mismatch',
+        import_item: relation,
+        suggested_resolution: 'skip'
+      });
+    }
+
+    const targetSchema = schema ?? existingSchema;
+    if (targetSchema?.relation_approval_policy === 'required') {
+      errors.push(
+        `Relation '${relation.id}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
+      );
+    }
+    if (relation.approval_policy_override === 'required') {
+      errors.push(
+        `Relation '${relation.id}' uses unsupported approval policy override 'required'; relation approval workflow is provided by #2574`
+      );
+    }
+  }
+
+  return { conflicts, warnings, errors };
 };
 
 const validateProjects = async (

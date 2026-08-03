@@ -27385,7 +27385,9 @@
                       "enum": [
                         "config",
                         "schemas",
+                        "relation_schemas",
                         "entities",
+                        "relations",
                         "projects",
                         "content_nodes",
                         "documents"
@@ -27550,7 +27552,9 @@
                         "enum": [
                           "config",
                           "schemas",
+                          "relation_schemas",
                           "entities",
+                          "relations",
                           "projects",
                           "content_nodes",
                           "documents"
@@ -27614,6 +27618,28 @@
                           ],
                           "description": "Schema summary"
                         },
+                        "relation_schemas": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Total number of relation schemas"
+                            },
+                            "conflicts": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of conflicting relation schemas"
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "conflicts"
+                          ],
+                          "description": "Typed relation schema summary"
+                        },
                         "entities": {
                           "type": "object",
                           "properties": {
@@ -27635,6 +27661,28 @@
                             "conflicts"
                           ],
                           "description": "Entity summary"
+                        },
+                        "relations": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Total number of relation instances"
+                            },
+                            "conflicts": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of conflicting relation instances"
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "conflicts"
+                          ],
+                          "description": "Typed relation instance summary"
                         },
                         "projects": {
                           "type": "object",
@@ -27724,7 +27772,9 @@
                             "enum": [
                               "config",
                               "schemas",
+                              "relation_schemas",
                               "entities",
+                              "relations",
                               "projects",
                               "content_nodes",
                               "documents"
@@ -27744,6 +27794,7 @@
                             "enum": [
                               "duplicate_name",
                               "duplicate_slug",
+                              "duplicate_identity",
                               "missing_dependency",
                               "schema_mismatch"
                             ],
@@ -27823,7 +27874,9 @@
                             "enum": [
                               "config",
                               "schemas",
+                              "relation_schemas",
                               "entities",
+                              "relations",
                               "projects",
                               "content_nodes",
                               "documents"
@@ -27898,7 +27951,9 @@
                       "enum": [
                         "config",
                         "schemas",
+                        "relation_schemas",
                         "entities",
+                        "relations",
                         "projects",
                         "content_nodes",
                         "documents"
@@ -28027,6 +28082,28 @@
                           ],
                           "description": "Schema import results"
                         },
+                        "relation_schemas": {
+                          "type": "object",
+                          "properties": {
+                            "created": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of relation schemas created"
+                            },
+                            "updated": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of relation schemas updated"
+                            }
+                          },
+                          "required": [
+                            "created",
+                            "updated"
+                          ],
+                          "description": "Relation schema import results"
+                        },
                         "entities": {
                           "type": "object",
                           "properties": {
@@ -28055,6 +28132,35 @@
                             "skipped"
                           ],
                           "description": "Entity import results"
+                        },
+                        "relations": {
+                          "type": "object",
+                          "properties": {
+                            "created": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of relation instances created"
+                            },
+                            "updated": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of relation instances updated"
+                            },
+                            "skipped": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of relation instances skipped"
+                            }
+                          },
+                          "required": [
+                            "created",
+                            "updated",
+                            "skipped"
+                          ],
+                          "description": "Relation instance import results"
                         },
                         "projects": {
                           "type": "object",

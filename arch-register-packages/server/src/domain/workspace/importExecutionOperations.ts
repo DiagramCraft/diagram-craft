@@ -9,7 +9,9 @@ import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type {
   ExportConfig,
   ExportSchema,
+  ExportRelationSchema,
   ExportEntity,
+  ExportRelation,
   ExportProject,
   ExportContentNode,
   ImportExecuteOptions,
@@ -21,7 +23,9 @@ import { buildImportPlan, applyConflictRenames } from './importPlanningOperation
 import {
   importConfig,
   importSchemas,
+  importRelationSchemas,
   importEntities,
+  importRelations,
   importProjects,
   importContentNodes,
   importDocuments
@@ -46,7 +50,9 @@ export const executeImport = async (
   data: {
     config?: ExportConfig;
     schemas?: ExportSchema[];
+    relation_schemas?: ExportRelationSchema[];
     entities?: ExportEntity[];
+    relations?: ExportRelation[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
@@ -115,12 +121,31 @@ export const executeImport = async (
             options.conflict_resolutions,
             idMapping
           );
+        if (options.include.includes('relation_schemas') && resolvedData.relation_schemas)
+          result.imported.relation_schemas = await importRelationSchemas(
+            transactionDb,
+            workspace,
+            resolvedData.relation_schemas,
+            options.preserve_ids ?? false,
+            options.conflict_resolutions,
+            idMapping
+          );
         if (options.include.includes('entities') && resolvedData.entities)
           result.imported.entities = await importEntities(
             transactionDb,
             authCtx,
             workspace,
             resolvedData.entities,
+            options.preserve_ids ?? false,
+            options.conflict_resolutions,
+            idMapping
+          );
+        if (options.include.includes('relations') && resolvedData.relations)
+          result.imported.relations = await importRelations(
+            transactionDb,
+            authCtx,
+            workspace,
+            resolvedData.relations,
             options.preserve_ids ?? false,
             options.conflict_resolutions,
             idMapping

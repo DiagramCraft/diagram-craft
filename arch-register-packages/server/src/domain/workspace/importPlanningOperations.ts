@@ -6,7 +6,9 @@ import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type {
   ExportConfig,
   ExportSchema,
+  ExportRelationSchema,
   ExportEntity,
+  ExportRelation,
   ExportProject,
   ExportContentNode,
   ImportExecuteOptions,
@@ -27,7 +29,9 @@ const resolveMappedId = (mapping: Map<string, string>, id: string | null | undef
 const createIdMapping = (): IdMapping => ({
   schemas: new Map(),
   shared_field_groups: new Map(),
+  relation_schemas: new Map(),
   entities: new Map(),
+  relations: new Map(),
   teams: new Map(),
   lifecycle_states: new Map(),
   projects: new Map(),
@@ -37,7 +41,9 @@ const createIdMapping = (): IdMapping => ({
 const toSerializableMapping = (mapping: IdMapping): WorkspaceImportPlan['id_mapping'] => ({
   schemas: Object.fromEntries(mapping.schemas),
   shared_field_groups: Object.fromEntries(mapping.shared_field_groups),
+  relation_schemas: Object.fromEntries(mapping.relation_schemas),
   entities: Object.fromEntries(mapping.entities),
+  relations: Object.fromEntries(mapping.relations),
   teams: Object.fromEntries(mapping.teams),
   lifecycle_states: Object.fromEntries(mapping.lifecycle_states),
   projects: Object.fromEntries(mapping.projects),
@@ -52,7 +58,9 @@ export const buildImportPlan = async (
   data: {
     config?: ExportConfig;
     schemas?: ExportSchema[];
+    relation_schemas?: ExportRelationSchema[];
     entities?: ExportEntity[];
+    relations?: ExportRelation[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
@@ -76,6 +84,8 @@ export const buildImportPlan = async (
         entity_count: 0,
         project_count: 0,
         schema_count: 0,
+        relation_schema_count: 0,
+        relation_count: 0,
         content_node_count: 0,
         total_content_size_bytes: 0
       },
@@ -86,8 +96,6 @@ export const buildImportPlan = async (
   const diagnostics: ImportDiagnostic[] = (parsed.diagnostics ?? []).filter(
     diagnostic => !(diagnostic.code === 'missing_reference' && diagnostic.item_type === 'documents')
   );
-  const conflictById = new Map(parsed.conflicts.map(conflict => [conflict.item_id, conflict]));
-
   for (const conflict of parsed.conflicts) {
     const resolution = options.conflict_resolutions[conflict.item_id];
     if (!resolution) {
@@ -115,10 +123,22 @@ export const buildImportPlan = async (
         message: `${conflict.item_name} has a missing dependency and can only be skipped`
       });
     }
+    if (conflict.type === 'relations' && resolution.action === 'rename') {
+      diagnostics.push({
+        code: 'unresolved_conflict',
+        item_type: conflict.type,
+        item_id: conflict.item_id,
+        message: `Relation '${conflict.item_name}' cannot be renamed; choose skip or overwrite`
+      });
+    }
   }
 
-  const existingId = (id: string) =>
-    conflictById.get(id)?.existing_item?.['id'] as string | undefined;
+  const existingId = (id: string) => {
+    const conflict = parsed.conflicts.find(
+      item => item.item_id === id && item.existing_item?.['id'] != null
+    );
+    return conflict?.existing_item?.['id'] as string | undefined;
+  };
   const assign = (items: Array<{ id: string }>, bucket: Map<string, string>) => {
     for (const item of items) {
       const resolution = options.conflict_resolutions[item.id];
@@ -139,14 +159,20 @@ export const buildImportPlan = async (
     assign(data.config.lifecycle_states, mapping.lifecycle_states);
   }
   if (options.include.includes('schemas') && data.schemas) assign(data.schemas, mapping.schemas);
-  if (options.include.includes('schemas') && data.schemas) {
+  if (options.include.includes('relation_schemas') && data.relation_schemas) {
+    assign(data.relation_schemas, mapping.relation_schemas);
+  }
+  if (
+    (options.include.includes('schemas') && data.schemas) ||
+    (options.include.includes('relation_schemas') && data.relation_schemas)
+  ) {
     const existingSharedGroups = await db.catalog.listSharedFieldGroups(workspace);
     const existingById = new Map(existingSharedGroups.map(group => [group.id, group]));
     const existingByName = new Map(
       existingSharedGroups.map(group => [group.name.toLowerCase(), group])
     );
     const sharedGroups = new Map(
-      data.schemas
+      [...(data.schemas ?? []), ...(data.relation_schemas ?? [])]
         .flatMap(schema => schema.shared_field_groups ?? [])
         .map(group => [group.id, group])
     );
@@ -162,6 +188,8 @@ export const buildImportPlan = async (
   }
   if (options.include.includes('entities') && data.entities)
     assign(data.entities, mapping.entities);
+  if (options.include.includes('relations') && data.relations)
+    assign(data.relations, mapping.relations);
   if (options.include.includes('projects') && data.projects)
     assign(data.projects, mapping.projects);
   if (options.include.includes('content_nodes') && data.content_nodes)
@@ -220,7 +248,9 @@ export const applyConflictRenames = <
   T extends {
     config?: ExportConfig;
     schemas?: ExportSchema[];
+    relation_schemas?: ExportRelationSchema[];
     entities?: ExportEntity[];
+    relations?: ExportRelation[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
@@ -249,6 +279,10 @@ export const applyConflictRenames = <
     ...item,
     name: resolvedName(item.id, item.name, resolutions)
   })),
+  relation_schemas: data.relation_schemas?.map(item => ({
+    ...item,
+    name: resolvedName(item.id, item.name, resolutions)
+  })),
   entities: data.entities?.map(item => ({
     ...item,
     name: resolvedName(item.id, item.name, resolutions)
@@ -271,7 +305,8 @@ export const applyConflictRenames = <
       ...item,
       name: resolvedName(item.id, item.name, resolutions)
     }))
-  }
+  },
+  relations: data.relations
 });
 
 const storageScope = (
