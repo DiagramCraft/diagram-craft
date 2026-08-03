@@ -112,7 +112,6 @@ describe('applyAiKeyMigration', () => {
         transaction: async (callback: (tx: DatabaseAdapter) => Promise<unknown>) =>
           callback(db as never),
         close: async () => {},
-        reset: async () => {},
         driver: 'sqlite' as const
       },
       ai: {
@@ -144,7 +143,6 @@ describe('applyAiKeyMigration', () => {
         transaction: async (callback: (tx: DatabaseAdapter) => Promise<unknown>) =>
           callback(db as never),
         close: async () => {},
-        reset: async () => {},
         driver: 'sqlite' as const
       },
       ai: {

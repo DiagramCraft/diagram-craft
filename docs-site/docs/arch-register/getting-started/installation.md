@@ -18,11 +18,11 @@ pnpm install
 From `arch-register-packages/server`:
 
 ```bash
-pnpm bootstrap
+NODE_ENV=development pnpm bootstrap -- --reset
 pnpm dev
 ```
 
-`pnpm bootstrap` resets the database and loads the local development data.
+The bootstrap command requires an explicit `--reset` confirmation and resets the database before loading local development data. Normal server startup is non-destructive.
 
 ## Start the web app
 

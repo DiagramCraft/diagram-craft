@@ -1,4 +1,5 @@
 import { dirname, resolve } from 'node:path';
+import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 import { seededUserAuthStatePath } from './src/ui/support/authState';
@@ -9,9 +10,14 @@ const webPackageDir = resolve(packageDir, '../web');
 const serverSetupPath = resolve(packageDir, '../server/src/serverSetup.mjs');
 
 const e2eDriver = process.env['E2E_DB_DRIVER'] ?? 'sqlite';
+const postgresSchema = `e2e_${randomBytes(8).toString('hex')}`;
 const dbEnv: Record<string, string> =
   e2eDriver === 'postgres'
-    ? { DB_DRIVER: 'postgres', DATABASE_URL: process.env['DATABASE_URL'] ?? '' }
+    ? {
+        DB_DRIVER: 'postgres',
+        DATABASE_URL: process.env['DATABASE_URL'] ?? '',
+        POSTGRES_SCHEMA: postgresSchema
+      }
     : { DB_DRIVER: 'sqlite', SQLITE_PATH: '/tmp/ar-e2e-ui/test.sqlite' };
 
 export default defineConfig({
