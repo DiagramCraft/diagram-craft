@@ -17,6 +17,7 @@ import { PermissionChecker } from '@arch-register/permissions';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { Entity, SavedViewDbResult, SchemaDbResult } from './db/catalogDatabase';
+import type { RelationSchemaDbResult } from './db/relationDatabase';
 import { PinnedEntity } from '@arch-register/api-types/watchContract';
 import { listAllCatalogEntities } from './entityLoader';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
@@ -53,19 +54,48 @@ const fieldIsRestricted = (
   );
 };
 
+const relationFieldIsRestricted = (
+  fieldId: string,
+  relationSchemas: RelationSchemaDbResult[],
+  authCtx: WorkspaceAuthorizationContext,
+  relationSchemaId: string
+) => {
+  const schema = relationSchemas.find(candidate => candidate.id === relationSchemaId);
+  return (
+    !schema?.fields.some(field => field.id === fieldId) ||
+    isFieldViewRestricted(authCtx, schema, fieldId)
+  );
+};
+
 const pathUsesRestrictedField = (
   path: PathStep[],
   schemas: SchemaDbResult[],
-  authCtx: WorkspaceAuthorizationContext
+  authCtx: WorkspaceAuthorizationContext,
+  relationSchemas: RelationSchemaDbResult[]
 ): boolean =>
   path.some(step => {
+    if (step.kind === 'typedRelation') {
+      return (
+        relationFieldIsRestricted(step.fieldId, relationSchemas, authCtx, step.relationSchemaId) ||
+        (step.filter
+          ? nodeUsesRestrictedField(
+              step.filter,
+              schemas,
+              authCtx,
+              undefined,
+              relationSchemas,
+              step.relationSchemaId
+            )
+          : false)
+      );
+    }
     const stepRestricted =
       step.kind === 'backward'
         ? fieldIsRestricted(step.fieldId, schemas, authCtx, step.ownerSchemaId)
         : fieldIsRestricted(step.fieldId, schemas, authCtx);
     return (
       stepRestricted ||
-      (step.filter ? nodeUsesRestrictedField(step.filter, schemas, authCtx) : false)
+      (step.filter ? nodeUsesRestrictedField(step.filter, schemas, authCtx, undefined, relationSchemas) : false)
     );
   });
 
@@ -73,27 +103,31 @@ const nodeUsesRestrictedField = (
   node: QueryNode,
   schemas: SchemaDbResult[],
   authCtx: WorkspaceAuthorizationContext,
-  rootSchemaId?: string
+  rootSchemaId?: string,
+  relationSchemas: RelationSchemaDbResult[] = [],
+  currentRelationSchemaId?: string
 ): boolean => {
   switch (node.kind) {
     case 'and':
     case 'or':
       return node.children.some(child =>
-        nodeUsesRestrictedField(child, schemas, authCtx, rootSchemaId)
+        nodeUsesRestrictedField(child, schemas, authCtx, rootSchemaId, relationSchemas, currentRelationSchemaId)
       );
     case 'not':
-      return nodeUsesRestrictedField(node.child, schemas, authCtx, rootSchemaId);
+      return nodeUsesRestrictedField(node.child, schemas, authCtx, rootSchemaId, relationSchemas, currentRelationSchemaId);
     case 'predicate':
       return (
-        fieldIsRestricted(
-          node.fieldId,
-          schemas,
-          authCtx,
-          node.path.length === 0 ? rootSchemaId : undefined
-        ) || pathUsesRestrictedField(node.path, schemas, authCtx)
+        (currentRelationSchemaId
+          ? relationFieldIsRestricted(node.fieldId, relationSchemas, authCtx, currentRelationSchemaId)
+          : fieldIsRestricted(
+              node.fieldId,
+              schemas,
+              authCtx,
+              node.path.length === 0 ? rootSchemaId : undefined
+            )) || pathUsesRestrictedField(node.path, schemas, authCtx, relationSchemas)
       );
     case 'relationExists':
-      return pathUsesRestrictedField(node.path, schemas, authCtx);
+      return pathUsesRestrictedField(node.path, schemas, authCtx, relationSchemas);
     case 'freeText':
       return false;
   }
@@ -102,7 +136,8 @@ const nodeUsesRestrictedField = (
 const configUsesRestrictedField = (
   config: unknown,
   schemas: SchemaDbResult[],
-  authCtx: WorkspaceAuthorizationContext
+  authCtx: WorkspaceAuthorizationContext,
+  _relationSchemas: RelationSchemaDbResult[] = []
 ): boolean => {
   if (config == null || typeof config !== 'object') return false;
   const root = config as Record<string, unknown>;
@@ -192,17 +227,28 @@ export const savedViewUsesRestrictedField = (
   filters: EntityQuery,
   config: unknown,
   schemas: SchemaDbResult[],
-  authCtx: WorkspaceAuthorizationContext
+  authCtx: WorkspaceAuthorizationContext,
+  relationSchemas: RelationSchemaDbResult[] = []
 ) =>
-  nodeUsesRestrictedField(filters.root, schemas, authCtx, filters.schemaId) ||
+  nodeUsesRestrictedField(filters.root, schemas, authCtx, filters.schemaId, relationSchemas) ||
   (filters.projections ?? []).some(
     projection =>
-      fieldIsRestricted(
-        projection.fieldId,
-        schemas,
-        authCtx,
-        projection.path.length === 0 ? filters.schemaId : undefined
-      ) || pathUsesRestrictedField(projection.path, schemas, authCtx)
+      (projection.source === 'relation'
+        ? (() => {
+            const step = [...projection.path].reverse().find(candidate => candidate.kind === 'typedRelation');
+            return step == null || relationFieldIsRestricted(
+              projection.fieldId,
+              relationSchemas,
+              authCtx,
+              step.relationSchemaId
+            );
+          })()
+        : fieldIsRestricted(
+            projection.fieldId,
+            schemas,
+            authCtx,
+            projection.path.length === 0 ? filters.schemaId : undefined
+          )) || pathUsesRestrictedField(projection.path, schemas, authCtx, relationSchemas)
   ) ||
   configUsesRestrictedField(config, schemas, authCtx);
 
@@ -210,9 +256,10 @@ const assertSavedViewAccessible = (
   filters: EntityQuery,
   config: unknown,
   schemas: SchemaDbResult[],
-  authCtx: WorkspaceAuthorizationContext
+  authCtx: WorkspaceAuthorizationContext,
+  relationSchemas: RelationSchemaDbResult[] = []
 ) => {
-  httpAssert.true(!savedViewUsesRestrictedField(filters, config, schemas, authCtx), {
+  httpAssert.true(!savedViewUsesRestrictedField(filters, config, schemas, authCtx, relationSchemas), {
     status: 403,
     statusText: 'Forbidden',
     message: 'You do not have permission to access fields used by this saved view'
@@ -256,10 +303,20 @@ export const listSavedViews = async (
 ): Promise<ApiSavedView[]> => {
   const views = await db.view.listSavedViews(workspace, options);
   if (!options?.authCtx) return views.map(toApi);
-  const schemas = await db.catalog.listSchemas(workspace);
+  const [schemas, relationSchemas] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    db.relation.listRelationSchemas(workspace)
+  ]);
   return views
     .filter(
-      view => !savedViewUsesRestrictedField(view.filters, view.config, schemas, options.authCtx!)
+      view =>
+        !savedViewUsesRestrictedField(
+          view.filters,
+          view.config,
+          schemas,
+          options.authCtx!,
+          relationSchemas
+        )
     )
     .map(toApi);
 };
@@ -282,8 +339,11 @@ export const createSavedView = async (
   });
 
   if (authCtx) {
-    const schemas = await db.catalog.listSchemas(workspace);
-    assertSavedViewAccessible(body.filters, body.config ?? null, schemas, authCtx);
+    const [schemas, relationSchemas] = await Promise.all([
+      db.catalog.listSchemas(workspace),
+      db.relation.listRelationSchemas(workspace)
+    ]);
+    assertSavedViewAccessible(body.filters, body.config ?? null, schemas, authCtx, relationSchemas);
   }
 
   const now = new Date();
@@ -318,12 +378,16 @@ export const updateSavedView = async (
   httpAssert.true(existing, { status: 404, message: 'View not found' });
 
   if (authCtx) {
-    const schemas = await db.catalog.listSchemas(workspace);
+    const [schemas, relationSchemas] = await Promise.all([
+      db.catalog.listSchemas(workspace),
+      db.relation.listRelationSchemas(workspace)
+    ]);
     assertSavedViewAccessible(
       body.filters ?? existing.filters,
       body.config === undefined ? existing.config : body.config,
       schemas,
-      authCtx
+      authCtx,
+      relationSchemas
     );
   }
 

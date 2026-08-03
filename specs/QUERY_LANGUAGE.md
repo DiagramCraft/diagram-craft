@@ -56,8 +56,9 @@ a small, precedented addition alongside the existing underscore fields.
 ## 3. Design goals / non-goals
 
 Goals: field predicates (reuse existing `op` set), boolean grouping (`AND`/`OR`/`NOT`), bounded relation traversal
-(named forward/backward single hops, chained), one grammar with two representations (text ⇄ structured IR), assessment
-fields addressable at any traversal depth.
+(named forward/backward entity-field hops and typed relation hops, chained), one grammar with two representations
+(text ⇄ structured IR), assessment fields addressable at any traversal depth, and scalar predicates over typed
+relation instances.
 
 Non-goals (per issue): arbitrary joins outside the entity graph, user-defined functions, aggregates beyond simple
 counts, replacing the flat `filterConditionSchema` in one pass.
@@ -87,6 +88,9 @@ path            := segment ( "." segment )*
 segment         := step [ "[" or_expr "]" ]                  (* optional scoped sub-condition, see 4.3 *)
 step            := field_id
                  | "<-" [ schema_ref "." ] field_id            (* reverse traversal; schema_ref required if ambiguous, see 4.2 *)
+
+(* A field_id whose schema type is `typedRelation` is compiled to a typedRelation PathStep. Its relation schema and
+   endpoint direction come from schema metadata; they are not repeated in the text syntax. *)
 
 field_id        := identifier                                (* schema field id, e.g. eol_date, technology_releases *)
                  | "_assessment"
@@ -121,6 +125,11 @@ schema_ref      := identifier | quoted_string            (* bare identifier only
   `_description` using case-insensitive contains semantics. It may participate in the root boolean tree, but it is
   invalid inside a forward/backward relation scope (`[...]`); relation predicates remain field-specific. Empty or
   whitespace-only values are invalid, while an empty browser search omits the clause.
+- A typed relation field uses the same endpoint-transparent path syntax as other relation fields. For example,
+  `data_flows_out[status = "active"]._name = "B"` traverses an outgoing `Data Flow` relation and evaluates `status`
+  against that same relation instance before testing the target entity's `_name`. A bare `data_flows_out` is
+  `relationExists`. The bracket condition may contain boolean grouping and scalar relation-field predicates only;
+  entity-valued relation fields are tracked separately in follow-up issue #2670.
 - **`empty`/`not_empty`/`on` comparator gap, resolved:** `empty` and `not_empty` are bare keyword *values*, not a new
   comparator token — `field:empty` / `field = empty` compiles straight to `{ op: 'empty', value: null }`
   (`not_empty` likewise), reusing the existing `:`/`=` comparator rather than inventing a new symbol. Any other
@@ -354,9 +363,10 @@ which is worse than requiring the caller to disambiguate.
 
 ```ts
 type ProjectionField = {
-  path: PathStep[];  // same PathStep as a filter predicate's path — forward/backward hops, no `[...]` brackets
+  path: PathStep[];  // same PathStep as a filter predicate's path; IR stores scoped filters on the path step
   // (nothing to match here, just a value to read)
-  fieldId: string;   // terminal scalar field (or _name/_slug/etc., or _assessment:<fieldId>)
+  fieldId: string;   // terminal entity scalar or, with source:'relation', relation scalar field
+  source?: 'entity' | 'relation'; // relation reads the scalar data on the terminal typedRelation hop
   alias?: string;    // display column label; defaults to a path-derived name, e.g. "technology_releases.eol_date"
 };
 ```
@@ -402,7 +412,14 @@ type QueryNode =
 
 type PathStep =
   | { kind: 'forward'; fieldId: string; filter?: QueryNode }
-  | { kind: 'backward'; fieldId: string; ownerSchemaId: string; filter?: QueryNode };
+  | { kind: 'backward'; fieldId: string; ownerSchemaId: string; filter?: QueryNode }
+  | {
+      kind: 'typedRelation';
+      fieldId: string;
+      relationSchemaId: string;
+      direction: 'in' | 'out';
+      filter?: QueryNode;
+    };
 
 // No recursive step kind (no 'ancestors'/'descendants', no generic undirected walk) — every PathStep is a single
 // named hop, so a `path: PathStep[]` is a finite, statically-known-length chain of ordinary joins, never a
@@ -416,10 +433,12 @@ type PathStep =
 // visual filter builder always has this available directly (the author picks a relation from a concrete schema's
 // field list), so it never faces the ambiguity the text form has to resolve.
 
-// `filter`, when present, is evaluated against the entity reached by this step and must hold for the SAME
-// existential witness that satisfies the rest of the path through this step (the `[...]` grouping in §4.3).
+// `filter`, when present, is evaluated against the entity reached by an ordinary step, or against the relation
+// instance reached by a `typedRelation` step, and must hold for the SAME existential witness that satisfies the rest
+// of the path through this step (the `[...]` grouping in §4.3).
 // It composes recursively: a QueryNode inside `filter` can itself be a 'predicate' or 'relationExists' with its
-// own `path` rooted at this step's target schema.
+// own `path` rooted at this step's target schema. Typed-relation filters are restricted to direct scalar relation
+// predicates; entity-valued relation fields are a follow-up extension (#2670).
 
 // FilterOp reuses filterConditionSchema's existing op enum (equals, contains, before, gte, ...).
 // fieldId reuses the existing '_assessment' / '_assessment:<fieldId>' addressing for joined-assessment predicates,
@@ -690,6 +709,10 @@ The v1 design described here is implemented in the repository:
 - The structured IR, validator, hop bound, projections, and legacy flat-filter mapping are implemented.
 - Forward and backward relation paths compile to SQL for both PostgreSQL and SQLite, with permission and project-scope
   handling covered by contract tests.
+- Typed relation paths compile in both dialects, including same-instance scalar relation-field filters and scalar
+  relation-field projections. Relation schemas and fields are permission-checked before parsing, validation, saved-view
+  persistence, and execution. Typed relation queries are not available with `asOf` because relation instance history
+  is not yet reconstructed; entity-valued relation fields are deferred to #2670.
 - The text compiler supports parsing and canonical printing, and is exposed through the entity-query API.
 - Entity list/count endpoints, saved views, and the Advanced query UI use the same `EntityQuery` representation.
 

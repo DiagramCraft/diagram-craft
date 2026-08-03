@@ -15,7 +15,11 @@ import {
   isValidFieldId,
   buildConditionClause
 } from './db/filterBuilder';
-import { resolveFieldSchemaScope, type SchemaCatalog } from './entityQueryIRValidator';
+import {
+  resolveFieldSchemaScope,
+  type RelationSchemaCatalog,
+  type SchemaCatalog
+} from './entityQueryIRValidator';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 
@@ -49,6 +53,7 @@ type CompileState = {
   dialect: EntityQueryDialect;
   workspace: string;
   authCtx: WorkspaceAuthorizationContext | null;
+  relationSchemas: RelationSchemaCatalog;
   assessmentId: string | undefined;
   projectId: string | undefined;
   projectScope: 'project' | 'all';
@@ -56,6 +61,7 @@ type CompileState = {
   includePlannedChanges: boolean;
   params: unknown[];
   nextAliasIndex: number;
+  nextRelationAliasIndex: number;
   projectionBindings: ProjectionBinding[];
   bindingByPath: Map<string, ProjectionBinding>;
   compilingBinding: boolean;
@@ -73,6 +79,7 @@ const addParam = (state: CompileState, value: unknown): string => {
 };
 
 const nextAlias = (state: CompileState): string => `e${state.nextAliasIndex++}`;
+const nextRelationAlias = (state: CompileState): string => `r${state.nextRelationAliasIndex++}`;
 
 const pathKey = (path: PathStep[]): string => JSON.stringify(path);
 
@@ -95,8 +102,13 @@ const collectRootPathOccurrences = (node: QueryNode, occurrences: PathStep[][]):
   }
 };
 
-const relationIsMultiValued = (path: PathStep[], schemas: SchemaCatalog): boolean =>
+const relationIsMultiValued = (
+  path: PathStep[],
+  schemas: SchemaCatalog,
+  _relationSchemas: RelationSchemaCatalog
+): boolean =>
   path.some(step => {
+    if (step.kind === 'typedRelation') return true;
     const fields =
       step.kind === 'backward'
         ? [schemas.get(step.ownerSchemaId)?.fields.find(field => field.id === step.fieldId)]
@@ -112,7 +124,11 @@ const effectiveProjectionAlias = (projection: ProjectionField): string => {
   if (projection.alias) return projection.alias;
   const path = projection.path
     .map(step =>
-      step.kind === 'forward' ? step.fieldId : `<-${step.ownerSchemaId}.${step.fieldId}`
+      step.kind === 'forward'
+        ? step.fieldId
+        : step.kind === 'backward'
+          ? `<-${step.ownerSchemaId}.${step.fieldId}`
+          : step.fieldId
     )
     .join('.');
   return path ? `${path}.${projection.fieldId}` : projection.fieldId;
@@ -282,6 +298,83 @@ const compileFreeTextTerminal = (
     )
     .join(' OR ')})`;
 
+const resolveRelationColumn = (
+  alias: string,
+  fieldId: string,
+  dialect: EntityQueryDialect
+): { col: string; kind: 'scalar' } | null => {
+  if (!isValidFieldId(fieldId)) return null;
+  return {
+    col:
+      dialect === 'postgres'
+        ? `(${alias}.data->>'${fieldId}')`
+        : `json_extract(${alias}.data, '$.${fieldId}')`,
+    kind: 'scalar'
+  };
+};
+
+const compileRelationNode = (
+  node: QueryNode,
+  alias: string,
+  relationSchemaId: string,
+  relationSchemas: RelationSchemaCatalog,
+  state: CompileState
+): string => {
+  switch (node.kind) {
+    case 'and':
+      return node.children.length === 0
+        ? '1=1'
+        : `(${node.children
+            .map(child =>
+              compileRelationNode(child, alias, relationSchemaId, relationSchemas, state)
+            )
+            .join(' AND ')})`;
+    case 'or':
+      return node.children.length === 0
+        ? '1=0'
+        : `(${node.children
+            .map(child =>
+              compileRelationNode(child, alias, relationSchemaId, relationSchemas, state)
+            )
+            .join(' OR ')})`;
+    case 'not':
+      return `NOT (${compileRelationNode(node.child, alias, relationSchemaId, relationSchemas, state)})`;
+    case 'predicate': {
+      if (node.path.length > 0) {
+        throw new UnsupportedEntityQueryIRError(
+          'Relation-instance filters cannot traverse nested entity paths'
+        );
+      }
+      const relationSchema = relationSchemas.get(relationSchemaId);
+      const field = relationSchema?.fields.find(candidate => candidate.id === node.fieldId);
+      const resolved = resolveRelationColumn(alias, node.fieldId, state.dialect);
+      if (!relationSchema || !field || !resolved) {
+        throw new UnsupportedEntityQueryIRError(
+          `Relation schema '${relationSchemaId}' has no scalar field '${node.fieldId}'`
+        );
+      }
+      const clause = buildConditionClause(
+        resolved.col,
+        { fieldId: node.fieldId, op: node.op, value: node.value },
+        value => addParam(state, value),
+        state.dialect,
+        resolved.kind
+      );
+      if (!clause) {
+        throw new UnsupportedEntityQueryIRError(
+          `Operator '${node.op}' has no SQL translation for relation field '${node.fieldId}'`
+        );
+      }
+      return clause;
+    }
+    case 'freeText':
+    case 'relationExists':
+      throw new UnsupportedEntityQueryIRError(
+        'Relation-instance filters may only contain scalar field predicates'
+      );
+  }
+};
+
 // Walks a PathStep[] emitting one correlated EXISTS subquery per hop (forward: the current alias's
 // JSON field contains the next alias's id; backward: the next alias's JSON field contains the
 // current alias's id, scoped to `ownerSchemaId`). `step.filter`, when present, is ANDed into the
@@ -294,12 +387,51 @@ const compilePathSteps = (
   index: number,
   curAlias: string,
   schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
   state: CompileState,
   terminal: (alias: string) => string
 ): string => {
   if (index >= steps.length) return terminal(curAlias);
 
   const step = steps[index]!;
+  if (step.kind === 'typedRelation') {
+    const relationAlias = nextRelationAlias(state);
+    const targetAlias = nextAlias(state);
+    const ownerId =
+      step.direction === 'in'
+        ? `${relationAlias}.in_entity_id`
+        : `${relationAlias}.out_entity_id`;
+    const targetId =
+      step.direction === 'in'
+        ? `${relationAlias}.out_entity_id`
+        : `${relationAlias}.in_entity_id`;
+    const relationSchemaParam = addParam(state, step.relationSchemaId);
+    const filterClause = step.filter
+      ? ` AND ${compileRelationNode(
+          step.filter,
+          relationAlias,
+          step.relationSchemaId,
+          relationSchemas,
+          state
+        )}`
+      : '';
+    const rest = compilePathSteps(
+      steps,
+      index + 1,
+      targetAlias,
+      schemas,
+      relationSchemas,
+      state,
+      terminal
+    );
+    return (
+      `EXISTS (SELECT 1 FROM relation ${relationAlias} ` +
+      `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
+      `WHERE ${relationAlias}.workspace = ${curAlias}.workspace ` +
+      `AND ${relationAlias}.schema_id = ${relationSchemaParam} ` +
+      `AND ${ownerId} = ${curAlias}.id${filterClause} AND ${rest})`
+    );
+  }
   const alias = nextAlias(state);
   const joinClause =
     step.kind === 'forward'
@@ -323,9 +455,9 @@ const compilePathSteps = (
         })()
       : '';
   const filterClause = step.filter
-    ? ` AND ${compileNode(step.filter, alias, schemas, state, false)}`
+    ? ` AND ${compileNode(step.filter, alias, schemas, relationSchemas, state, false)}`
     : '';
-  const rest = compilePathSteps(steps, index + 1, alias, schemas, state, terminal);
+  const rest = compilePathSteps(steps, index + 1, alias, schemas, relationSchemas, state, terminal);
 
   return (
     `EXISTS (SELECT 1 FROM ${SCOPE_CTE} ${alias} WHERE ${joinClause}${ownerSchemaClause}` +
@@ -367,6 +499,7 @@ const compileNode = (
   node: QueryNode,
   alias: string,
   schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
   state: CompileState,
   allowFreeText: boolean
 ): string => {
@@ -375,16 +508,16 @@ const compileNode = (
       return node.children.length === 0
         ? '1=1'
         : `(${node.children
-            .map(child => compileNode(child, alias, schemas, state, allowFreeText))
+            .map(child => compileNode(child, alias, schemas, relationSchemas, state, allowFreeText))
             .join(' AND ')})`;
     case 'or':
       return node.children.length === 0
         ? '1=0'
         : `(${node.children
-            .map(child => compileNode(child, alias, schemas, state, allowFreeText))
+            .map(child => compileNode(child, alias, schemas, relationSchemas, state, allowFreeText))
             .join(' OR ')})`;
     case 'not':
-      return `NOT (${compileNode(node.child, alias, schemas, state, allowFreeText)})`;
+      return `NOT (${compileNode(node.child, alias, schemas, relationSchemas, state, allowFreeText)})`;
     case 'freeText':
       if (!allowFreeText) {
         throw new UnsupportedEntityQueryIRError(
@@ -402,6 +535,7 @@ const compileNode = (
         0,
         alias,
         schemas,
+        relationSchemas,
         state,
         compilePredicateTerminal(node.fieldId, node.op, node.value, schemas, state.dialect, state)
       );
@@ -410,13 +544,14 @@ const compileNode = (
         const binding = state.bindingByPath.get(pathKey(node.path));
         if (binding) return compileBoundNode(node, alias, binding, schemas, state);
       }
-      return compilePathSteps(node.path, 0, alias, schemas, state, () => '1=1');
+      return compilePathSteps(node.path, 0, alias, schemas, relationSchemas, state, () => '1=1');
   }
 };
 
 const buildProjectionBindings = (
   query: EntityQuery,
   schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
   state: CompileState
 ): string[] => {
   const rootPaths: PathStep[][] = [];
@@ -429,7 +564,7 @@ const buildProjectionBindings = (
   for (const projection of projections) {
     if (projection.path.length === 0) continue;
     const candidates = rootPaths.filter(path => pathStartsWith(path, projection.path));
-    if (candidates.length > 1 && relationIsMultiValued(projection.path, schemas)) {
+    if (candidates.length > 1 && relationIsMultiValued(projection.path, schemas, relationSchemas)) {
       throw new UnsupportedEntityQueryIRError(
         `Projection '${effectiveProjectionAlias(projection)}' is ambiguous because its multi-valued relation path is constrained by multiple independent predicates`
       );
@@ -453,6 +588,39 @@ const buildProjectionBindings = (
 
     state.compilingBinding = true;
     binding.path.forEach((step, stepIndex) => {
+      if (step.kind === 'typedRelation') {
+        const relationAlias = `pb_rel_${binding.name}_${stepIndex + 1}`;
+        const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
+        const ownerId =
+          step.direction === 'in'
+            ? `${relationAlias}.in_entity_id`
+            : `${relationAlias}.out_entity_id`;
+        const targetId =
+          step.direction === 'in'
+            ? `${relationAlias}.out_entity_id`
+            : `${relationAlias}.in_entity_id`;
+        const relationSchema = addParam(state, step.relationSchemaId);
+        const filter = step.filter
+          ? ` AND ${compileRelationNode(
+              step.filter,
+              relationAlias,
+              step.relationSchemaId,
+              relationSchemas,
+              state
+            )}`
+          : '';
+        from +=
+          `\n      JOIN relation ${relationAlias} ON ${relationAlias}.workspace = ${currentAlias}.workspace` +
+          ` AND ${relationAlias}.schema_id = ${relationSchema}` +
+          ` AND ${ownerId} = ${currentAlias}.id${filter}` +
+          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}`;
+        selectParts.push(
+          `${relationAlias}.id AS relation_${stepIndex + 1}_id`,
+          `${targetAlias}.id AS hop_${stepIndex + 1}_id`
+        );
+        currentAlias = targetAlias;
+        return;
+      }
       const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
       const relation =
         step.kind === 'forward'
@@ -471,7 +639,7 @@ const buildProjectionBindings = (
         return scope ? ` AND ${scope}` : '';
       })();
       const filter = step.filter
-        ? ` AND ${compileNode(step.filter, targetAlias, schemas, state, false)}`
+        ? ` AND ${compileNode(step.filter, targetAlias, schemas, relationSchemas, state, false)}`
         : '';
       from += `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${forwardScope}${filter}`;
       selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
@@ -533,7 +701,7 @@ const projectionValue = (
   schemas: SchemaCatalog,
   state: CompileState
 ): { value: string; isArray: boolean } => {
-  const isArray = relationIsMultiValued(projection.path, schemas);
+  const isArray = relationIsMultiValued(projection.path, schemas, state.relationSchemas);
   const binding = projectionBindingFor(projection, state);
   if (!binding) {
     const raw = projectionRawValue(ROOT_ALIAS, projection.fieldId, state.dialect);
@@ -548,13 +716,30 @@ const projectionValue = (
   }
 
   const bindingAlias = `pv_${binding.name}`;
+  const terminalStep = projection.path[projection.path.length - 1];
+  if (projection.source === 'relation' && terminalStep?.kind !== 'typedRelation') {
+    throw new UnsupportedEntityQueryIRError(
+      'Relation projections must terminate at a typed relation hop'
+    );
+  }
   const targetAlias = `pv_target_${binding.name}`;
   const targetId = `${bindingAlias}.hop_${projection.path.length}_id`;
-  const raw = projectionRawValue(targetAlias, projection.fieldId, state.dialect);
-  const scope = schemaScopeClause(targetAlias, projection.fieldId, schemas, state);
+  const relationAlias = `pv_relation_${binding.name}`;
+  const raw =
+    projection.source === 'relation'
+      ? state.dialect === 'postgres'
+        ? `${relationAlias}.data->'${projection.fieldId}'`
+        : `json_extract(${relationAlias}.data, '$.${projection.fieldId}')`
+      : projectionRawValue(targetAlias, projection.fieldId, state.dialect);
+  const scope =
+    projection.source === 'relation'
+      ? null
+      : schemaScopeClause(targetAlias, projection.fieldId, schemas, state);
   const source =
     `FROM ${binding.name} ${bindingAlias} ` +
-    `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
+    (projection.source === 'relation'
+      ? `JOIN relation ${relationAlias} ON ${relationAlias}.id = ${bindingAlias}.relation_${projection.path.length}_id `
+      : `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} `) +
     `WHERE ${bindingAlias}.root_id = ${ROOT_ALIAS}.id${scope ? ` AND ${scope}` : ''}`;
 
   if (!isArray) {
@@ -897,12 +1082,14 @@ export const compileEntityQueryIR = (
   dialect: EntityQueryDialect,
   workspace: string,
   options: CompiledEntityQueryOptions = {},
-  authCtx: WorkspaceAuthorizationContext | null = null
+  authCtx: WorkspaceAuthorizationContext | null = null,
+  relationSchemas: RelationSchemaCatalog = new Map()
 ): CompiledEntityQuery => {
   const state: CompileState = {
     dialect,
     workspace,
     authCtx,
+    relationSchemas,
     assessmentId: query.assessmentId,
     projectId: query.projectId,
     projectScope: query.projectScope ?? 'all',
@@ -910,6 +1097,7 @@ export const compileEntityQueryIR = (
     includePlannedChanges: query.includePlannedChanges ?? true,
     params: [],
     nextAliasIndex: 1,
+    nextRelationAliasIndex: 1,
     projectionBindings: [],
     bindingByPath: new Map(),
     compilingBinding: false,
@@ -921,13 +1109,13 @@ export const compileEntityQueryIR = (
   }
 
   const cte = buildScopeCte(state);
-  const projectionCtes = buildProjectionBindings(query, schemas, state);
+  const projectionCtes = buildProjectionBindings(query, schemas, relationSchemas, state);
   const projectionObject = compileProjectionObject(query.projections ?? [], schemas, state);
   const whereParts: string[] = [];
   if (query.schemaId) {
     whereParts.push(`${ROOT_ALIAS}.schema_id = ${addParam(state, query.schemaId)}`);
   }
-  whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, state, true));
+  whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, relationSchemas, state, true));
 
   const sql = `
     WITH${state.asOf ? ' RECURSIVE' : ''} ${cte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}

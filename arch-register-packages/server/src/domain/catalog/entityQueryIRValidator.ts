@@ -9,15 +9,18 @@ import {
   type ReferenceField,
   type SchemaField
 } from '@arch-register/api-types/schemaContract';
+import type { RelationField as RelationScalarField } from '@arch-register/api-types/relationSchemaContract';
 import {
   ASSESSMENT_PRESENCE_FIELD_ID,
   ASSESSMENT_FIELD_PREFIX
 } from '@arch-register/api-types/assessmentFilter';
 import type { SchemaDbResult } from './db/catalogDatabase';
+import type { RelationSchemaDbResult } from './db/relationDatabase';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 
 export type SchemaCatalog = Map<string, SchemaDbResult>;
+export type RelationSchemaCatalog = Map<string, RelationSchemaDbResult>;
 
 export type ValidationError = { path: (string | number)[]; message: string };
 
@@ -71,19 +74,86 @@ const isKnownFieldId = (
   return resolveFieldSchemaScope(fieldId, schemas, authCtx).grantedSchemaIds.size > 0;
 };
 
-// typedRelation fields aren't stored on the entity row/data blob, so they aren't queryable/
-// filterable/projectable — reject explicitly rather than silently resolving to nothing.
-const isTypedRelationFieldId = (fieldId: string, schemas: SchemaCatalog): boolean => {
-  for (const schema of schemas.values()) {
-    const field = schema.fields.find(f => f.id === fieldId);
-    if (field?.type === 'typedRelation') return true;
+const relationFieldById = (
+  relationSchemaId: string,
+  fieldId: string,
+  relationSchemas: RelationSchemaCatalog
+): RelationScalarField | undefined =>
+  relationSchemas.get(relationSchemaId)?.fields.find(f => f.id === fieldId);
+
+const validateRelationNode = (
+  node: QueryNode,
+  relationSchemaId: string,
+  relationSchemas: RelationSchemaCatalog,
+  path: (string | number)[],
+  errors: ValidationError[],
+  authCtx: WorkspaceAuthorizationContext | null
+): number => {
+  switch (node.kind) {
+    case 'and':
+    case 'or':
+      node.children.forEach((child, index) =>
+        validateRelationNode(
+          child,
+          relationSchemaId,
+          relationSchemas,
+          [...path, 'children', index],
+          errors,
+          authCtx
+        )
+      );
+      return 0;
+    case 'not':
+      return validateRelationNode(
+        node.child,
+        relationSchemaId,
+        relationSchemas,
+        [...path, 'child'],
+        errors,
+        authCtx
+      );
+    case 'freeText':
+      errors.push({
+        path,
+        message: "'freeText' is only valid for the starting entity list"
+      });
+      return 0;
+    case 'relationExists':
+      errors.push({
+        path,
+        message: 'Relation-instance filters may only contain scalar field predicates'
+      });
+      return 0;
+    case 'predicate': {
+      if (node.path.length > 0) {
+        errors.push({
+          path: [...path, 'path'],
+          message: 'Relation-instance filters cannot traverse nested entity paths'
+        });
+        return 0;
+      }
+      const field = relationFieldById(relationSchemaId, node.fieldId, relationSchemas);
+      const relationSchema = relationSchemas.get(relationSchemaId);
+      if (!relationSchema) {
+        errors.push({
+          path: [...path, 'fieldId'],
+          message: `Unknown relation schema '${relationSchemaId}'`
+        });
+      } else if (!field || isFieldViewRestricted(authCtx, relationSchema, node.fieldId)) {
+        errors.push({
+          path: [...path, 'fieldId'],
+          message: `Relation schema '${relationSchema.name}' does not define a viewable scalar field '${node.fieldId}'`
+        });
+      }
+      return 0;
+    }
   }
-  return false;
 };
 
 const validatePathSteps = (
   steps: PathStep[],
   schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
   path: (string | number)[],
   hopsUsedBefore: number,
   errors: ValidationError[],
@@ -120,6 +190,42 @@ const validatePathSteps = (
           });
         }
       }
+    } else if (step.kind === 'typedRelation') {
+      const relationSchema = relationSchemas.get(step.relationSchemaId);
+      const matchingFields = [...schemas.values()].flatMap(schema =>
+        schema.fields
+          .filter(
+            field =>
+              field.id === step.fieldId &&
+              field.type === 'typedRelation' &&
+              field.relationSchemaId === step.relationSchemaId &&
+              field.direction === step.direction &&
+              !isFieldViewRestricted(authCtx, schema, field.id)
+          )
+          .map(field => ({ schema, field }))
+      );
+      if (!relationSchema) {
+        errors.push({
+          path: [...stepPath, 'relationSchemaId'],
+          message: `Unknown relation schema '${step.relationSchemaId}'`
+        });
+      }
+      if (matchingFields.length === 0) {
+        errors.push({
+          path: [...stepPath, 'fieldId'],
+          message: `No viewable typed-relation field '${step.fieldId}' binds relation schema '${step.relationSchemaId}' at direction '${step.direction}'`
+        });
+      }
+      if (step.filter && relationSchema) {
+        validateRelationNode(
+          step.filter,
+          step.relationSchemaId,
+          relationSchemas,
+          [...stepPath, 'filter'],
+          errors,
+          authCtx
+        );
+      }
     } else {
       if (!isKnownFieldId(step.fieldId, schemas, authCtx)) {
         errors.push({
@@ -129,10 +235,11 @@ const validatePathSteps = (
       }
     }
 
-    if (step.filter) {
+    if (step.filter && step.kind !== 'typedRelation') {
       hopsUsed = validateNode(
         step.filter,
         schemas,
+        relationSchemas,
         [...stepPath, 'filter'],
         hopsUsed,
         false,
@@ -147,6 +254,7 @@ const validatePathSteps = (
 const validateNode = (
   node: QueryNode,
   schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
   path: (string | number)[],
   hopsUsedBefore: number,
   allowFreeText: boolean,
@@ -164,6 +272,7 @@ const validateNode = (
         const childHops = validateNode(
           child,
           schemas,
+          relationSchemas,
           [...path, 'children', index],
           hopsUsedBefore,
           allowFreeText,
@@ -178,6 +287,7 @@ const validateNode = (
       return validateNode(
         node.child,
         schemas,
+        relationSchemas,
         [...path, 'child'],
         hopsUsedBefore,
         allowFreeText,
@@ -197,8 +307,9 @@ const validateNode = (
       return hopsUsedBefore;
     case 'predicate': {
       const hopsAfterPath = validatePathSteps(
-        node.path,
-        schemas,
+      node.path,
+      schemas,
+      relationSchemas,
         [...path, 'path'],
         hopsUsedBefore,
         errors,
@@ -206,7 +317,9 @@ const validateNode = (
       );
       if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
         errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
-      } else if (isTypedRelationFieldId(node.fieldId, schemas)) {
+      } else if ([...schemas.values()].some(schema =>
+        schema.fields.some(field => field.id === node.fieldId && field.type === 'typedRelation')
+      )) {
         errors.push({
           path: [...path, 'fieldId'],
           message: `Field '${node.fieldId}' is a typed relation and is not queryable`
@@ -224,6 +337,7 @@ const validateNode = (
       return validatePathSteps(
         node.path,
         schemas,
+        relationSchemas,
         [...path, 'path'],
         hopsUsedBefore,
         errors,
@@ -265,11 +379,32 @@ const projectionUsesAssessmentField = (fieldId: string, path: PathStep[]): boole
   fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) ||
   pathUsesAssessmentField(path);
 
+const queryUsesTypedRelation = (node: QueryNode): boolean => {
+  switch (node.kind) {
+    case 'and':
+    case 'or':
+      return node.children.some(queryUsesTypedRelation);
+    case 'not':
+      return queryUsesTypedRelation(node.child);
+    case 'predicate':
+    case 'relationExists':
+      return node.path.some(
+        step => step.kind === 'typedRelation' || (step.filter ? queryUsesTypedRelation(step.filter) : false)
+      );
+    case 'freeText':
+      return false;
+  }
+};
+
 const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[number]): string => {
   if (projection.alias) return projection.alias;
   const path = projection.path
     .map(step =>
-      step.kind === 'forward' ? step.fieldId : `<-${step.ownerSchemaId}.${step.fieldId}`
+      step.kind === 'forward'
+        ? step.fieldId
+        : step.kind === 'backward'
+          ? `<-${step.ownerSchemaId}.${step.fieldId}`
+          : `${step.fieldId}[${step.relationSchemaId}]`
     )
     .join('.');
   return path ? `${path}.${projection.fieldId}` : projection.fieldId;
@@ -278,7 +413,8 @@ const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[num
 export const validateEntityQueryIR = (
   query: EntityQuery,
   schemas: SchemaCatalog,
-  authCtx: WorkspaceAuthorizationContext | null = null
+  authCtx: WorkspaceAuthorizationContext | null = null,
+  relationSchemas: RelationSchemaCatalog = new Map()
 ): ValidationResult => {
   const errors: ValidationError[] = [];
   if (query.schemaId && !schemas.has(query.schemaId)) {
@@ -300,12 +436,32 @@ export const validateEntityQueryIR = (
   if (query.asOf != null && Number.isNaN(Date.parse(query.asOf))) {
     errors.push({ path: ['asOf'], message: `Invalid asOf date '${query.asOf}'` });
   }
-  validateNode(query.root, schemas, ['root'], 0, true, errors, authCtx);
+  if (
+    query.asOf != null &&
+    (queryUsesTypedRelation(query.root) ||
+      (query.projections ?? []).some(projection =>
+        projection.path.some(step => step.kind === 'typedRelation')
+      ))
+  ) {
+    errors.push({
+      path: ['asOf'],
+      message: 'Typed relation queries are not supported with asOf until relation history is available'
+    });
+  }
+  validateNode(query.root, schemas, relationSchemas, ['root'], 0, true, errors, authCtx);
 
   const aliases = new Set<string>();
   for (const [index, projection] of (query.projections ?? []).entries()) {
     const projectionPath = ['projections', index] as (string | number)[];
-    validatePathSteps(projection.path, schemas, [...projectionPath, 'path'], 0, errors, authCtx);
+    validatePathSteps(
+      projection.path,
+      schemas,
+      relationSchemas,
+      [...projectionPath, 'path'],
+      0,
+      errors,
+      authCtx
+    );
     projection.path.forEach((step, stepIndex) => {
       if (step.filter) {
         errors.push({
@@ -314,12 +470,49 @@ export const validateEntityQueryIR = (
         });
       }
     });
-    if (!isKnownFieldId(projection.fieldId, schemas, authCtx)) {
+    const relationProjectionStep =
+      projection.source === 'relation'
+        ? [...projection.path].reverse().find(step => step.kind === 'typedRelation')
+        : undefined;
+    if (
+      projection.source === 'relation' &&
+      projection.path[projection.path.length - 1]?.kind !== 'typedRelation'
+    ) {
+      errors.push({
+        path: [...projectionPath, 'source'],
+        message: 'Relation projections must terminate at a typedRelation path step'
+      });
+    }
+    if (projection.source === 'relation' && !relationProjectionStep) {
+      errors.push({
+        path: [...projectionPath, 'source'],
+        message: "Relation projections require a typedRelation path step"
+      });
+    } else if (
+      relationProjectionStep &&
+      (!relationFieldById(
+        relationProjectionStep.relationSchemaId,
+        projection.fieldId,
+        relationSchemas
+      ) ||
+        isFieldViewRestricted(
+          authCtx,
+          relationSchemas.get(relationProjectionStep.relationSchemaId),
+          projection.fieldId
+        ))
+    ) {
+      errors.push({
+        path: [...projectionPath, 'fieldId'],
+        message: `Unknown or restricted relation field '${projection.fieldId}'`
+      });
+    } else if (projection.source !== 'relation' && !isKnownFieldId(projection.fieldId, schemas, authCtx)) {
       errors.push({
         path: [...projectionPath, 'fieldId'],
         message: `Unknown field '${projection.fieldId}'`
       });
-    } else if (isTypedRelationFieldId(projection.fieldId, schemas)) {
+    } else if (projection.source !== 'relation' && [...schemas.values()].some(schema =>
+      schema.fields.some(field => field.id === projection.fieldId && field.type === 'typedRelation')
+    )) {
       errors.push({
         path: [...projectionPath, 'fieldId'],
         message: `Field '${projection.fieldId}' is a typed relation and is not queryable`
