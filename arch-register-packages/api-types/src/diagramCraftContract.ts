@@ -2,6 +2,23 @@ import { oc, eventIterator } from '@orpc/contract';
 import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 
+const diagramCraftSchemaFieldSchema = z
+  .object({
+    id: z.string().describe('Schema field identifier'),
+    name: z.string().describe('Schema field name'),
+    type: z.string().describe('Diagram Craft field type')
+  })
+  .passthrough();
+
+const diagramCraftSchemaSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  fields: z.array(diagramCraftSchemaFieldSchema)
+});
+
+const diagramCraftDataSchema = z.record(z.string(), z.unknown());
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const diagramCraftContract = oc.tag('Diagram Craft').router({
@@ -17,7 +34,7 @@ export const diagramCraftContract = oc.tag('Diagram Craft').router({
         tags: ['Diagram Craft']
       })
       .input(z.object({ params: ws }))
-      .output(z.array(z.unknown())),
+      .output(z.array(diagramCraftSchemaSchema)),
 
     getData: oc
       .route({
@@ -30,7 +47,7 @@ export const diagramCraftContract = oc.tag('Diagram Craft').router({
         tags: ['Diagram Craft']
       })
       .input(z.object({ params: ws }))
-      .output(z.array(z.unknown())),
+      .output(z.array(diagramCraftDataSchema)),
 
     generate: oc
       .route({

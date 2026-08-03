@@ -28,6 +28,7 @@ export type DataSchemaField =
       name: string;
       type: 'reference';
       schemaId: string;
+      schemaIds?: string[];
       minCount: number;
       maxCount: number;
     }
@@ -36,6 +37,7 @@ export type DataSchemaField =
       name: string;
       type: 'containment';
       schemaId: string;
+      schemaIds?: string[];
       minCount: number;
       maxCount: number;
     };
@@ -50,6 +52,9 @@ export const isRelationshipField = (
 ): field is RelationshipDataSchemaField => {
   return field.type === 'reference' || field.type === 'containment';
 };
+
+export const getRelationshipSchemaIds = (field: RelationshipDataSchemaField): string[] =>
+  field.schemaIds ?? [field.schemaId];
 
 export const encodeDataReferences = (refs: string[]) => refs.join(',');
 export const decodeDataReferences = (refs: string | undefined) =>

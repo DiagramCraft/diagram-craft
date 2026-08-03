@@ -1,6 +1,9 @@
 import { useDocument } from '../../application';
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { RelationshipDataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import {
+  getRelationshipSchemaIds,
+  RelationshipDataSchemaField
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type ReferenceFieldEditorProps = {
   field: RelationshipDataSchemaField;
@@ -17,26 +20,19 @@ export const ReferenceFieldEditor = ({
   const db = document.data.db;
   const normalizedSelectedValues = selectedValues ?? [];
 
-  const referencedSchema = db.schemas.find(s => s.id === field.schemaId);
-  if (!referencedSchema) {
+  const referencedSchemas = getRelationshipSchemaIds(field)
+    .map(schemaId => db.schemas.find(schema => schema.id === schemaId))
+    .filter((schema): schema is (typeof db.schemas)[number] => schema !== undefined);
+  if (referencedSchemas.length === 0) {
     return <div>Referenced schema not found</div>;
   }
 
-  const referencedData = db.getData(referencedSchema);
-  const displayField = referencedSchema.fields[0]?.id;
-
-  const availableItems: MultiSelectItem[] = referencedData.map(item => {
-    const fieldValue = displayField ? item[displayField] : undefined;
-    let label: string = item._uid;
-
-    if (fieldValue) {
-      label = fieldValue;
-    }
-
-    return {
+  const availableItems: MultiSelectItem[] = referencedSchemas.flatMap(referencedSchema => {
+    const displayField = referencedSchema.fields[0]?.id;
+    return db.getData(referencedSchema).map(item => ({
       value: item._uid,
-      label: label
-    };
+      label: (displayField ? item[displayField] : undefined) ?? item._uid
+    }));
   });
 
   return (
@@ -45,7 +41,7 @@ export const ReferenceFieldEditor = ({
         selectedValues={normalizedSelectedValues}
         availableItems={availableItems}
         onSelectionChange={onSelectionChange}
-        placeholder={`Search ${referencedSchema.name}...`}
+        placeholder={`Search ${referencedSchemas.map(schema => schema.name).join(', ')}...`}
       />
 
       <div style={{ fontSize: '0.8em', color: 'var(--cmp-fg-dim)' }}>

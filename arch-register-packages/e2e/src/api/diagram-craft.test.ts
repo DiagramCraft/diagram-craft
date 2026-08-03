@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createApiTest, expect } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import { NO_AI_WORKSPACE_ID } from '../helpers/testIds';
+import { seedRelationSchemas, seedRelations } from '@arch-register/server/db/seedData';
 
 type MockAIState = {
   baseUrl: string;
@@ -10,6 +11,7 @@ type MockAIState = {
 };
 
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
+const systemSchemaId = '00000000-0000-0000-0000-000000000002';
 const frontendAppId = '00000000-0000-0000-0003-000000000002';
 
 const startMockAIProvider = async (): Promise<MockAIState> => {
@@ -84,6 +86,8 @@ const test = createApiTest().extend<{ mockAI: MockAIState }>({
   mockAI: [
     async ({ server }, use) => {
       await seedCatalogEntities(server.db);
+      await server.db.relation.createRelationSchema(seedRelationSchemas[0]!);
+      await server.db.relation.createRelation(seedRelations[0]!);
 
       const mockAI = await startMockAIProvider();
       await server.db.ai.upsertAiConfig(seedIds.workspace.default, {
@@ -140,6 +144,22 @@ test.describe('diagram craft routes', () => {
             expect.objectContaining({ id: 'system', type: 'containment' }),
             expect.objectContaining({ id: 'depends_on', type: 'reference' })
           ])
+        }),
+        expect.objectContaining({
+          id: systemSchemaId,
+          name: 'System',
+          fields: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'data_flows_in',
+              type: 'reference',
+              schemaIds: [systemSchemaId]
+            }),
+            expect.objectContaining({
+              id: 'data_flows_out',
+              type: 'reference',
+              schemaIds: [systemSchemaId]
+            })
+          ])
         })
       ])
     );
@@ -170,6 +190,12 @@ test.describe('diagram craft routes', () => {
         })
       ])
     );
+
+    const source = body.find(item => item._uid === seedRelations[0]!.in_entity_id);
+    const target = body.find(item => item._uid === seedRelations[0]!.out_entity_id);
+    expect(source).toMatchObject({ data_flows_in: seedRelations[0]!.out_entity_id });
+    expect(target).toMatchObject({ data_flows_out: seedRelations[0]!.in_entity_id });
+    expect(source).not.toHaveProperty('data_classification');
   });
 
   test('POST /api/adapters/diagram-craft/:workspace/ai/generate returns JSON output from the mock provider', async ({

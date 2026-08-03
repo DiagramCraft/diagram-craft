@@ -37,11 +37,48 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "anyOf": [
-                      {},
-                      {
-                        "type": "null"
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Schema field identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Schema field name"
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Diagram Craft field type"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "type"
+                          ],
+                          "additionalProperties": {}
+                        }
                       }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "fields"
                     ]
                   }
                 }
@@ -78,12 +115,11 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "anyOf": [
-                      {},
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 }
               }

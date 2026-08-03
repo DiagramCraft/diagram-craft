@@ -18,7 +18,9 @@ import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import type { AIGenerateRequest } from '../ai/aiServer';
 import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransforms';
+import { toDiagramCraftRelationReferences } from './diagramCraftTransforms';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+import { ENTITY_DEFAULTS } from '../../constants';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -37,11 +39,12 @@ export const createDiagramCraftORPCRouter = () => {
         const { workspace, authCtx } = context;
         requireWorkspaceCapability(authCtx, 'ws.view');
 
-        const [schemas, enums] = await Promise.all([
+        const [schemas, enums, relationSchemas] = await Promise.all([
           context.db.catalog.listSchemas(workspace),
-          context.db.catalog.listEnums(workspace)
+          context.db.catalog.listEnums(workspace),
+          context.db.relation.listRelationSchemas(workspace)
         ]);
-        return schemas.map(schema => toDiagramCraftSchema(schema, enums));
+        return schemas.map(schema => toDiagramCraftSchema(schema, enums, relationSchemas));
       }),
 
       getData: diagramCraftRouter.diagramCraft.getData.handler(async ({ context }) => {
@@ -55,8 +58,36 @@ export const createDiagramCraftORPCRouter = () => {
         ]);
         const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
         const entities = filterVisibleEntities(entityAuthCtx, allEntities);
+        const visibleEntityIds = new Set(entities.map(entity => entity.id));
+        const relationRows = [];
+        let relationOffset = 0;
+        while (true) {
+          const page = await context.db.relation.listRelations(
+            workspace,
+            {},
+            { limit: ENTITY_DEFAULTS.PAGE_SIZE, offset: relationOffset }
+          );
+          relationRows.push(...page.items);
+          if (page.items.length < ENTITY_DEFAULTS.PAGE_SIZE || relationRows.length >= page.total) {
+            break;
+          }
+          relationOffset += ENTITY_DEFAULTS.PAGE_SIZE;
+        }
+        const relationReferences = toDiagramCraftRelationReferences(
+          relationRows.filter(
+            row => visibleEntityIds.has(row.in_entity_id) && visibleEntityIds.has(row.out_entity_id)
+          ),
+          entities,
+          schemas,
+          entityAuthCtx
+        );
         return entities.map(entity =>
-          toDiagramCraftData(entity, schemaById.get(entity.schema_id) ?? null, entityAuthCtx)
+          toDiagramCraftData(
+            entity,
+            schemaById.get(entity.schema_id) ?? null,
+            entityAuthCtx,
+            relationReferences.get(entity.id)
+          )
         );
       }),
 

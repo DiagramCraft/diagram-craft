@@ -7,6 +7,7 @@ import type { Data } from '@diagram-craft/model/dataProvider';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import {
   decodeDataReferences,
+  getRelationshipSchemaIds,
   isRelationshipField
 } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
@@ -72,18 +73,17 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
             referencedUIDs = decodeDataReferences(dataEntry.data[field.id] as string);
           }
 
-          // Get the referenced schema
-          const referencedSchema = diagram.document.data.db.getSchema(field.schemaId);
-
-          // Find the actual data entries for these UIDs
           const dataProvider = diagram.document.data.db;
-
-          const referencedData = dataProvider.getData(referencedSchema);
+          const referencedData = getRelationshipSchemaIds(field).flatMap(schemaId => {
+            const referencedSchema = diagram.document.data.db.getSchema(schemaId);
+            return dataProvider.getData(referencedSchema).map(data => ({ data, referencedSchema }));
+          });
 
           for (const uid of referencedUIDs) {
             // Find the data entry with this UID
-            const dataItem = referencedData.find(item => item._uid === uid);
-            if (!dataItem) continue;
+            const match = referencedData.find(item => item.data._uid === uid);
+            if (!match) continue;
+            const { data: dataItem, referencedSchema } = match;
 
             // Get display name (use 'name' field if exists, otherwise first field)
             assert.arrayNotEmpty(referencedSchema.fields);
