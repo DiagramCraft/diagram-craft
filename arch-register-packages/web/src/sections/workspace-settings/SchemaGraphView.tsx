@@ -20,6 +20,7 @@ import { createDiagramFromGraph } from '../../lib/diagramFromGraph';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import type { ModelOverviewSearchParams } from '../../routes/searchParams';
+import { buildSchemaGraphEdges } from './schemaGraphState';
 
 const DEFAULT_LAYOUT: LayoutAlgorithm = 'hierarchy';
 
@@ -124,7 +125,7 @@ const serializeSearch = (
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/model-overview');
 
 export const SchemaGraphView = () => {
-  const { schemas, workspaceSlug, workspace } = useWorkspaceContext();
+  const { schemas, relationSchemas, workspaceSlug, workspace } = useWorkspaceContext();
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const layout = search.layout ?? DEFAULT_LAYOUT;
@@ -155,44 +156,10 @@ export const SchemaGraphView = () => {
 
   const nodes = useMemo(() => schemas.map(s => ({ id: s.id, data: s })), [schemas]);
 
-  const edges = useMemo((): DependencyGraphEdge[] => {
-    const edgeMap = new Map<string, { fields: string[]; kind: string }>();
-
-    for (const schema of schemas) {
-      for (const field of schema.fields) {
-        // typedRelation edges aren't visualized here yet (#2606) — the graph only reflects
-        // reference/containment fields, which point at an EntitySchema directly via schemaId.
-        if (field.type !== 'reference' && field.type !== 'containment') continue;
-        if (!field.schemaId) continue;
-
-        const pairKey = `${schema.id}::${field.schemaId}`;
-        const existing = edgeMap.get(pairKey);
-
-        if (existing) {
-          existing.fields.push(field.name);
-          if (field.type === 'containment' && existing.kind !== 'containment') {
-            existing.kind = 'containment';
-          }
-        } else {
-          edgeMap.set(pairKey, {
-            fields: [field.name],
-            kind: field.type
-          });
-        }
-      }
-    }
-
-    return Array.from(edgeMap.entries()).map(([pairKey, data]) => {
-      const [from, to] = pairKey.split('::');
-      return {
-        id: pairKey,
-        from: from!,
-        to: to!,
-        label: data.fields.join(', '),
-        kind: data.kind
-      };
-    });
-  }, [schemas]);
+  const edges = useMemo(
+    () => buildSchemaGraphEdges(schemas, relationSchemas),
+    [schemas, relationSchemas]
+  );
 
   const handleNodeClick = useCallback(
     (schemaId: string) => {
@@ -200,6 +167,18 @@ export const SchemaGraphView = () => {
         to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
         search: { tab: 'types', schema: schemaId }
+      });
+    },
+    [navigate, workspaceSlug]
+  );
+
+  const handleEdgeClick = useCallback(
+    (edge: DependencyGraphEdge) => {
+      if (edge.kind !== 'typed' || !edge.relationId) return;
+      navigate({
+        to: '/$workspaceSlug/settings/schemas',
+        params: { workspaceSlug },
+        search: { tab: 'relation-types', relationSchema: edge.relationId }
       });
     },
     [navigate, workspaceSlug]
@@ -405,6 +384,7 @@ export const SchemaGraphView = () => {
             );
           }}
           onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
         />
       </div>
 

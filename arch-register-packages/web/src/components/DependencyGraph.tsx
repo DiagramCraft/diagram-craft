@@ -518,7 +518,7 @@ export const DependencyGraph = <T,>({
                 nodeHeight,
                 styles.eArcEdge!,
                 connectedEdges.has(edge.id),
-                false
+                true
               );
             }
 
@@ -564,6 +564,7 @@ export const DependencyGraph = <T,>({
                 <path
                   d={arcD}
                   className={styles.eArcEdge}
+                  data-kind={edge.kind}
                   data-highlighted={connectedEdges.has(edge.id)}
                   markerEnd="url(#dep-arrow)"
                   style={arcStyle}
